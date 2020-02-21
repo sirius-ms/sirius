@@ -25,18 +25,18 @@ CSI:FingerID.</span>
 
 ### Documentation
 - [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-manual.pdf)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.0-SNAPSHOT/sirius-4.4.0-SNAPSHOT-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.0.1 (Build 1 from 2018-09-25)
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-win64.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-linux64.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-osx64.zip)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.4.0-SNAPSHOT (2020-01-06)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.0-SNAPSHOT/sirius-4.4.0-SNAPSHOT-win32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.0-SNAPSHOT/sirius-4.4.0-SNAPSHOT-win64.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.0-SNAPSHOT/sirius-4.4.0-SNAPSHOT-linux32.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.0-SNAPSHOT/sirius-4.4.0-SNAPSHOT-linux64.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.0-SNAPSHOT/sirius-4.4.0-SNAPSHOT-osx64.zip)
 
-### SIRIUS+CSI:FingerID Commandline only - Version 4.0.1 (Build 1 from 2018-09-25)
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-win64-headless.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-linux64-headless.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.0.1/sirius-4.0.1-osx64-headless.zip)
+### SIRIUS+CSI:FingerID Commandline only - Version 4.4.0-SNAPSHOT (2020-01-06)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.0-SNAPSHOT/sirius-4.4.0-SNAPSHOT-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.0-SNAPSHOT/sirius-4.4.0-SNAPSHOT-win64-headless.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.0-SNAPSHOT/sirius-4.4.0-SNAPSHOT-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.0-SNAPSHOT/sirius-4.4.0-SNAPSHOT-linux64-headless.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.0-SNAPSHOT/sirius-4.4.0-SNAPSHOT-osx64-headless.zip)
 
 ### Sources on GitHub
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)
@@ -84,7 +84,11 @@ identify the elemental composition of the sample molecule. SIRIUS can be
 downloaded either as graphical user interface (see Sirius GUI) or as
 command-line tool.
 
+<!--begin cite-->
 ## Main citations
+Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
+[Sirius 4: turning tandem mass spectra into metabolite structure information](https://doi.org/10.1038/s41592-019-0344-8), 
+*Nat methods*, 16, 2019.
 
 Kai Dührkop and Sebastian Böcker. [Fragmentation trees
 reloaded.](http://dx.doi.org/10.1007/978-3-319-16706-0_10)  *J
@@ -144,6 +148,8 @@ tandem mass
 spectra](http://bioinformatics.oxfordjournals.org/content/24/16/i49.abstract).
 *Bioinformatics* (2008) 24 (16): i49-i55. (The very *first paper to
 mention fragmentation trees* as used by SIRIUS)
+
+<!--end cite-->
 
 ## License
 

@@ -1,0 +1,158 @@
+import java.nio.file.Files
+
+dependencies {
+//project
+    compile project(':sirius_cli')
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+}
+
+/*################### Environment variables ################### */
+mainClassName = 'de.unijena.bioinf.ms.frontend.SiriusCLIApplication'
+project.ext.set("type", ['console'])
+
+/*################### Jar build Stuff ################### */
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
+/*################### Windows release Stuff ################### */
+project.type.each{t ->
+    project.arch.each { a ->
+        tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
+            group = 'launch4j'
+            mainClassName = project.mainClassName
+            headerType = t
+            jreRuntimeBits = a
+
+            jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
+
+            classpath.add('../../../All/Sirius/lib/*') //add
+            println(classpath)
+
+            outfile = "${project.appName}-${t}-${a}.exe"
+        }
+    }
+}
+
+
+startScripts {
+    applicationName = "${project.appName}"
+
+    doLast {
+        def openMSLibPath = '$APP_HOME/../../../All/Sirius/lib'
+        String[] lines = unixScript.text.split(System.lineSeparator())
+
+        int insert = -1;
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].startsWith('APP_HOME="`pwd -P`"')) {
+                insert = i + 1;
+            }
+            if (lines[i].startsWith('CLASSPATH=')) {
+                lines[i] = "CLASSPATH=\"${openMSLibPath}/*:${runtimeClasspath}\""
+            }
+        }
+        if (insert >= 0)
+            lines = (lines as List).plus(insert, 'APP_HOME="$APP_HOME/Sirius"')
+        unixScript.text = lines.join(System.lineSeparator())
+    }
+}
+
+/*################### Build distributions ################### */
+task distribute { group = 'distribution' }
+
+distributions {
+    //create OpenMS dist
+    def n = "multiOS"
+    create(n, {
+        baseName = "${project.appName}-$n"
+        contents {
+            into('All/Sirius/lib') {
+                from("build/install/${project.name}/lib") {
+                    exclude libExclude
+                }
+            }
+
+            project.arch.each { ar ->
+                into("Linux/${ar}bit/Sirius/lib") {
+                    from("${project.glpkPath}/l${ar}/") {
+                        include('libglpk.so.40')
+                        include('libglpk_java.so')
+                    }
+                    from("${project.clpPath}/l${ar}/")
+                    exclude('*.zip')
+                }
+
+                into("Linux/${ar}bit/Sirius") {
+//                    from project.openmsScript
+                    from("build/install/${project.name}/bin") {
+                        exclude("*.bat")
+                    }
+                    from("${project.distPath}") {
+                        include('COPYING.txt')
+                    }
+                    from("${getRootDir()}/LICENSE.txt")
+                }
+
+                into("Windows/${ar}bit/Sirius") {
+                    from("${project.glpkPath}/w${ar}/")
+                    from("${project.clpPath}/w${ar}/")
+
+                    from("${project.distPath}") {
+                        include('COPYING.txt')
+                    }
+                    from { "${getRootDir()}/LICENSE.txt" }
+                    from('build/launch4j') {
+                        include("sirius-console-${ar}.exe")
+                    }
+                }
+
+            }
+            into('MacOS/64bit/Sirius/lib') {
+                from("${project.glpkPath}/osx/")
+                from("${project.clpPath}/osx/")
+                exclude('*.zip')
+            }
+
+            into('MacOS/64bit/Sirius') {
+//                from project.openmsScript
+                from("build/install/${project.name}/bin") {
+                    exclude("*.bat")
+                }
+                from("${project.distPath}") {
+                    include('COPYING.txt')
+                }
+                from("${getRootDir()}/LICENSE.txt")
+            }
+        }
+    })
+//    distribute.dependsOn 'downloadOpenmsScript'
+    distribute.dependsOn "${n}DistZip"
+    getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+    getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
+    getTasks().findByPath("${n}DistZip").dependsOn 'createAllExecutables'
+    getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
+
+    project.getTasksByName("distTar", false).each { it.setEnabled(false) }
+    project.getTasksByName("distZip", false).each { it.setEnabled(false) }
+
+    multiOSDistZip.dependsOn 'installDist'
+    multiOSDistTar.dependsOn 'installDist'
+    installMultiOSDist.dependsOn 'installDist'
+    multiOSDistZip.dependsOn 'createExe'
+    multiOSDistTar.dependsOn 'createExe'
+    installMultiOSDist.dependsOn 'createExe'
+}
+
+// what should be published
+publishing {
+    publications {
+        sirius(MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+            pom.withXml {}
+            artifact source: multiOSDistZip, classifier: 'multiOS', extension: 'zip'
+        }
+    }
+}

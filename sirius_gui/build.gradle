@@ -1,6 +1,21 @@
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE")
+    }
+}
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+ext['jna.version'] = '5.4.0'
+
 dependencies {
 //project
-    compile project(':sirius_cli')
+    compile project(':sirius_rest_service')
+
 
 //internal
     compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
@@ -9,7 +24,7 @@ dependencies {
     compile group: 'org.glassfish', name: 'javax.json', version: "$json_impl_version"
 
     compile "net.sf.opencsv:opencsv:2.3"
-    compile "org.swinglabs.swingx:swingx-all:1.+"
+    compile "org.swinglabs.swingx:swingx-all:1.6.5-1"
     compile "org.openscience.cdk:cdk-render:$cdk_version"
     compile "org.openscience.cdk:cdk-renderextra:$cdk_version"
     compile "org.openscience.cdk:cdk-renderawt:$cdk_version"
@@ -24,13 +39,15 @@ dependencies {
     compile "org.openscience.cdk:cdk-smarts:$cdk_version"
     compile "org.openscience.cdk:cdk-legacy:$cdk_version"
 
-    compile group: 'net.java.dev.glazedlists', name: 'glazedlists_java16', version: '1.10.0'
+    compile group: 'com.glazedlists', name: 'glazedlists', version: '1.11.0'
 
     //compile group: 'com.kitfox.svg', name: 'svg-salamander', version: '1.0'
+    compile group: 'org.apache.xmlgraphics', name: 'batik-rasterizer', version: '1.8'
+    compile group: 'org.apache.xmlgraphics', name: 'fop', version: '2.3'
 }
 
 /*################### Environment variables ################### */
-mainClassName = "de.unijena.bioinf.ms.cli.SiriusGUIApplication"
+mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 project.ext.set("type", ['gui','console'])
 
 /*################### Jar build Stuff ################### */
@@ -75,6 +92,7 @@ distributions {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
                     }
+                    from("${project.clpPath}/l${ar}/")
                     exclude('*.zip')
                 }
 
@@ -95,6 +113,7 @@ distributions {
         })
         distribute.dependsOn "${n}DistZip"
         getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
         getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
     }
 
@@ -112,6 +131,7 @@ distributions {
                     exclude('*.zip')
                 }
                 from { "${project.glpkPath}/w${ar}/" }
+                from("${project.clpPath}/w${ar}/")
                 from("${project.distPath}") {
                     exclude('sirius-gui')
                 }
@@ -129,6 +149,7 @@ distributions {
         })
         distribute.dependsOn "${n}DistZip"
         getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+        getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
         getTasks().findByPath("${n}DistZip").dependsOn 'createAllExecutables'
         getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
     }
@@ -143,6 +164,7 @@ distributions {
                     exclude libExclude
                 }
                 from("${project.glpkPath}/osx/")
+                from("${project.clpPath}/osx/")
                 exclude('*.zip')
             }
 
@@ -163,6 +185,7 @@ distributions {
     })
     distribute.dependsOn "${n}DistZip"
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
+    getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
     getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
 
     project.getTasksByName("distTar", false).each { it.setEnabled(false) }

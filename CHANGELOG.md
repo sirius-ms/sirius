@@ -1,3 +1,21 @@
+#### 4.4
+-   **Java 11 or higher is now mandatory**
+-   **Project-Space:** A standardized persistence layer shared by CLI and GUI that makes both fully compatible.
+-   Redesigned **Command line interface**: SIRIUS is now a toolbox containing many 
+subtools that may be combined to ToolChains based on the project-space
+-   **New (and newly integrated) tools:**
+    - **ZODIAC:** Builds upon the SIRIUS molecular formula identifications and uses, say, its top 50 molecular formula 
+    annotations as candidates for one compound. It then re-ranks molecular formula candidates using Bayesian statistics.
+    - **PASSATUTTO:** Is now part of SIRIUS and allows you to generate dataset specific decoy databases from computed fragmentation trees. 
+    - **LCMS-align:** SIRIUS can now handle full LCMS-Runs given in mzML/mzXML format. The lcms-align preprocessing tool
+    performs feature detection and feature alignment based on the available the MS/MS spectra.
+    - Other handy standalone tools e.g. compound similarity calculation. 
+ 
+- **Interactive fragmentation tree viewer** with vector graphics export.
+- New version of the CSI:FingerID PubChem copy that uses now **standardized structures**.    
+- New REST service with openAPI specification and Swagger-UI.
+- Many improvements and Bugfixes 
+
 #### 4.0.1
 
 -   **Java 9 and higher are now supported**

@@ -1,7 +1,10 @@
 rootProject.name = 'sirius_frontend'
 include ':sirius_cli'
+include ':sirius_cli_dist'
+    include ':sirius_cli_dist:sirius_cli_single_os'
+    include ':sirius_cli_dist:sirius_cli_single_os_service'
+    include ':sirius_cli_dist:sirius_cli_multi_os'
 include ':sirius_gui'
-include 'sirius_openms_plugin'
+include ':sirius_rest_service'
 include ':sirius_utils'
-//include 'fingerid_cli'
 
