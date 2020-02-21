@@ -22,6 +22,7 @@ dependencies {
     compile "org.openscience.cdk:cdk-ioformats:$cdk_version"
     compile "org.openscience.cdk:cdk-sdg:$cdk_version"
     compile "org.openscience.cdk:cdk-smarts:$cdk_version"
+    compile "org.openscience.cdk:cdk-legacy:$cdk_version"
 
     compile group: 'net.java.dev.glazedlists', name: 'glazedlists_java16', version: '1.10.0'
 

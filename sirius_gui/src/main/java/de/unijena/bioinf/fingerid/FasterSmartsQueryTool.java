@@ -26,7 +26,6 @@ import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.*;
-import org.openscience.cdk.isomorphism.ComponentGrouping;
 import org.openscience.cdk.isomorphism.SmartsStereoMatch;
 import org.openscience.cdk.isomorphism.Ullmann;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
@@ -98,6 +97,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * cdk.bug 1760973
  * cdk.bug 1761027
  */
+@Deprecated
 public class FasterSmartsQueryTool {
 
     private String smarts;
@@ -332,8 +332,7 @@ public class FasterSmartsQueryTool {
             }
         } else {
             mappings = FluentIterable.from(Ullmann.findSubstructure(query).matchAll(atomContainer))
-                    .filter(new SmartsStereoMatch(query, atomContainer))
-                    .filter(new ComponentGrouping(query, atomContainer)).toList();
+                    .filter(new SmartsStereoMatch(query, atomContainer)).toList();
         }
 
         return !mappings.isEmpty();
