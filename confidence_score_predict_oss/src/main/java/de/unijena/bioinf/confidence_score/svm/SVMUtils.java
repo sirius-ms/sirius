@@ -186,6 +186,9 @@ public class SVMUtils {
 
             for(int i=0;i<element.length;i++) {
 
+                if(element[i]<scales.getMin_feature_values()[i])element[i]=scales.getMin_feature_values()[i];
+                if(element[i]>scales.getMax_feature_values()[i])element[i]=scales.getMax_feature_values()[i];
+
                 if(scales.deviations[i]==0){
                     System.out.println("?");
                     System.out.println(i);
@@ -208,6 +211,8 @@ public class SVMUtils {
         for (double[] element: features){
 
             for(int i=0;i<element.length;i++){
+                //if(element[i]<scales.getMin_feature_values()[i])element[i]=scales.getMin_feature_values()[i];
+               // if(element[i]>scales.getMax_feature_values()[i])element[i]=scales.getMax_feature_values()[i];
 
                 if(scales.max_feature_values[i]-scales.min_feature_values[i] ==0){
                     System.out.println("Something is wrong with the SVM!- "+i);
