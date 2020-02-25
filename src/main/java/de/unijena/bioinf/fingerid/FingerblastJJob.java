@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult> implements AnnotationJJob<FingerblastResult, FingerIdResult> {
 
     private final FingerblastScoringMethod scoring;
-    private final long dbSearchFlag;
+    public final long dbSearchFlag;
     private final TrainingStructuresSet trainingStructuresSet;
 
     private List<FingerprintCandidate> unfilteredSearchList = null;
