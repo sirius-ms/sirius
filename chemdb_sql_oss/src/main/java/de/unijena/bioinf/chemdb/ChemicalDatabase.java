@@ -343,29 +343,6 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             throw new ChemicalDatabaseException(e);
         }
     }
-    public int lookupAllWithFlag(long flag) throws ChemicalDatabaseException {
-        int counter=0;
-        final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
-        try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT s.inchi_key_1, s.inchi, s.name, s.smiles, s.flags, s.xlogp, f.fingerprint FROM "+STRUCTURES_TABLE+" as s, "+FINGERPRINT_TABLE+" as f WHERE f.fp_id = "+FINGERPRINT_ID+" AND s.flags&"+flag+"!=0")) {
-
-                   // statement.setString(1, String.valueOf(flag));
-                    try (final ResultSet set = statement.executeQuery()) {
-                        if (set.next()) {
-                           counter++;
-                           System.out.println(counter);
-                        }
-                    }
-
-            }
-            return counter;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return counter;
-        } catch (IOException | SQLException e) {
-            throw new ChemicalDatabaseException(e);
-        }
-    }
 
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
@@ -434,8 +411,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                     try (final ResultSet set = statement.executeQuery()) {
                         while (set.next()) {
                             write.write(set.getString(2)+"\t"+set.getString(1)+"\n");
-                            System.out.println(set.getString(2)+"\t"+set.getString(1)+"\n");
-
+//                            System.out.println(set.getString(2)+"\t"+set.getString(1)+"\n");
                         }
                         write.close();
                     }
