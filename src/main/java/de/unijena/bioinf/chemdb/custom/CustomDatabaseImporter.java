@@ -433,9 +433,15 @@ public class CustomDatabaseImporter {
     }
 
     public static void importDatabase(File dbPath, List<File> files, WebAPI api, int bufferSize) {
+        importDatabase(dbPath, files, false, false, api, bufferSize);
+    }
+
+    public static void importDatabase(File dbPath, List<File> files, boolean derivePubChem, boolean deriveBio, WebAPI api, int bufferSize) {
         final Logger log = LoggerFactory.getLogger(CustomDatabaseImporter.class);
         try {
             final CustomDatabase db = CustomDatabase.createNewDatabase(dbPath.getName(), dbPath, api.getCDKChemDBFingerprintVersion());
+            db.setDeriveFromPubchem(derivePubChem);
+            db.setDeriveFromBioDb(deriveBio);
             db.buildDatabase(files, inchi -> log.debug(inchi.in2D + " imported"), api, bufferSize);
         } catch (IOException | CDKException e) {
             LoggerFactory.getLogger(CustomDatabaseImporter.class).error("Error during database import!", e);
