@@ -27,7 +27,7 @@ public class Feature implements Annotated<DataAnnotation> {
     protected final Set<PrecursorIonType> alternativeIonTypes;
     protected final UnivariateFunction rtRecalibration;
     protected Annotated.Annotations<DataAnnotation> annotations = new Annotations<>();
-
+    protected final CollisionEnergy collisionEnergy;
     // quality terms
     protected final Quality peakShapeQuality, ms1Quality, ms2Quality;
     protected double chimericPollution;
@@ -35,7 +35,7 @@ public class Feature implements Annotated<DataAnnotation> {
     // debug
     public ScanPoint[] completeTraceDebug;
 
-    public Feature(LCMSRun origin, double mz, double intensity, ScanPoint[] trace, SimpleSpectrum[] correlatedFeatures, int isotope, SimpleSpectrum[] ms2Spectra, PrecursorIonType ionType, Set<PrecursorIonType> alternativeIonTypes, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality, double chimericPollution) {
+    public Feature(LCMSRun origin, double mz, double intensity, ScanPoint[] trace, SimpleSpectrum[] correlatedFeatures, int isotope, SimpleSpectrum[] ms2Spectra, CollisionEnergy collisionEnergy,PrecursorIonType ionType, Set<PrecursorIonType> alternativeIonTypes, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality, double chimericPollution) {
         this.origin = origin;
         this.mz = mz;
         this.intensity = intensity;
@@ -50,6 +50,7 @@ public class Feature implements Annotated<DataAnnotation> {
         this.ms2Quality = ms2Quality;
         this.alternativeIonTypes = alternativeIonTypes;
         this.chimericPollution = chimericPollution;
+        this.collisionEnergy=collisionEnergy;
     }
 
     public Set<PrecursorIonType> getPossibleAdductTypes() {
@@ -96,6 +97,8 @@ public class Feature implements Annotated<DataAnnotation> {
         return ms2Spectra;
     }
 
+    public CollisionEnergy getCollisionEnergy() {return collisionEnergy;};
+
     public PrecursorIonType getIonType() {
         return ionType;
     }
@@ -122,7 +125,7 @@ public class Feature implements Annotated<DataAnnotation> {
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(getCorrelatedFeatures()));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
         for (SimpleSpectrum s : getMs2Spectra()) {
-            ms2Spectra.add(new MutableMs2Spectrum(s, mz, CollisionEnergy.none(), 2));
+            ms2Spectra.add(new MutableMs2Spectrum(s, mz, this.collisionEnergy, 2));
         }
         exp.setMs2Spectra(ms2Spectra);
         exp.setIonMass(mz);

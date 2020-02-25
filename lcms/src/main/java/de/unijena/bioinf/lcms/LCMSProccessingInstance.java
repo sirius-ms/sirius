@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -153,6 +154,8 @@ public class LCMSProccessingInstance {
                 charge = 1;
             }
         }
+        CollisionEnergy collisionEnergy= new CollisionEnergy(ion.getMsMsScan().getCollisionEnergy(),ion.getMsMsScan().getCollisionEnergy());
+
         final ArrayList<ScanPoint> trace = new ArrayList<>();
         final ArrayList<ScanPoint> debugTrace = new ArrayList<>();
 
@@ -213,7 +216,7 @@ public class LCMSProccessingInstance {
             fitPeakShape(sample,ion);
 
 
-        final Feature feature = new Feature(sample.run, ionMass, intensity, trace.toArray(new ScanPoint[0]), correlatedFeatures.toArray(new SimpleSpectrum[0]), 0,ion.getMsMsScan()==null ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ms2Storage.getScan(ion.getMsMsScan())}, ionType, ion.getPossibleAdductTypes(), sample.recalibrationFunction,
+        final Feature feature = new Feature(sample.run, ionMass, intensity, trace.toArray(new ScanPoint[0]), correlatedFeatures.toArray(new SimpleSpectrum[0]), 0,ion.getMsMsScan()==null ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ms2Storage.getScan(ion.getMsMsScan())},collisionEnergy, ionType, ion.getPossibleAdductTypes(), sample.recalibrationFunction,
                 ion.getPeakShape().getPeakShapeQuality(), ion.getMsQuality(), ion.getMsMsQuality(),ion.getChimericPollution()
 
                 );
