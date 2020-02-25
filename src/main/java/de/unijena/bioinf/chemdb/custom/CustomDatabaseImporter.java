@@ -23,12 +23,9 @@ import org.openscience.cdk.interfaces.IChemModel;
 import org.openscience.cdk.interfaces.IChemSequence;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.ReaderFactory;
-import org.openscience.cdk.qsar.descriptors.molecular.XLogPDescriptor;
-import org.openscience.cdk.qsar.result.DoubleResult;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,8 +136,8 @@ public class CustomDatabaseImporter {
             molecule = new CustomDatabase.Molecule(smilesParser.parseSmiles(str));
             molecule.smiles = new Smiles(str);
         }
-        if (id != null) molecule.container.setID(id);
-        if (name != null) molecule.container.setTitle(name);
+        molecule.id = id;
+        molecule.name = name;
         addMolecule(molecule);
     }
 
@@ -295,25 +292,22 @@ public class CustomDatabaseImporter {
 
         protected FingerprintCandidate computeCompound(CustomDatabase.Molecule molecule, FingerprintCandidate fc) throws CDKException, IOException {
 
-            if (fc == null) return computeCompound(molecule);
+            if (fc == null)
+                return computeCompound(molecule);
 
-            final String commonName = molecule.container.getTitle();
-            final String id = molecule.container.getID();
-
-
-//        CustomDatabase.logger.info("download fingerprint " + fc.getInchiKey2D());
-            if (fc.getLinks() == null) fc.setLinks(new DBLink[0]);
+            if (fc.getLinks() == null)
+                fc.setLinks(new DBLink[0]);
 
             if (fc.getName() == null || fc.getName().isEmpty()) {
-                if (commonName != null)
-                    fc.setName(commonName);
+                if (molecule.name != null)
+                    fc.setName(molecule.name);
             }
 
-            if (id != null) {
+            if (molecule.id != null) {
                 if (fc.getName() == null || fc.getName().isEmpty())
-                    fc.setName(id);
+                    fc.setName(molecule.id);
                 DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length + 1);
-                ls[ls.length - 1] = new DBLink(dbname, id);
+                ls[ls.length - 1] = new DBLink(dbname, molecule.id);
                 fc.setLinks(ls);
             } else {
                 DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length + 1);
@@ -329,6 +323,7 @@ public class CustomDatabaseImporter {
             final InChI inchi = new InChI(gen.getInchiKey(), gen.getInchi());
             molecule.container = inChIGeneratorFactory.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance()).getAtomContainer();
 
+
             if (molecule.smiles == null) {
                 LoggerFactory.getLogger(getClass()).warn("Computing fingerprint from non smiles input. NO standardization has happened!");
                 molecule.smiles = new Smiles(smilesGen.create(molecule.container));
@@ -340,25 +335,25 @@ public class CustomDatabaseImporter {
             final FingerprintCandidate fc = new FingerprintCandidate(inchi, fps);
             fc.setSmiles(molecule.smiles.smiles);
 
-            if (molecule.container.getTitle() != null)
-                fc.setName(molecule.container.getTitle());
+            if (molecule.name != null)
+                fc.setName(molecule.name);
 
-            final String id = molecule.container.getID();
-            if (id != null) {
-                fc.setLinks(new DBLink[]{new DBLink(dbname, id)});
+            if (molecule.id != null) {
+                fc.setLinks(new DBLink[]{new DBLink(dbname, molecule.id)});
                 if (fc.getName() == null || fc.getName().isEmpty())
-                    fc.setName(id);//set id as name if no name was set
+                    fc.setName(molecule.id);//set id as name if no name was set
             } else {
                 fc.setLinks(new DBLink[0]);
             }
             fc.setBitset(CustomDataSourceService.getSourceFromName(dbname).flag());
 
             {
-                // compute XLOGP
+                LoggerFactory.getLogger(getClass()).warn("The current Database has Beta state. Currently XLOGP values are not available!");
+                /*// compute XLOGP
                 final XLogPDescriptor descriptor = new XLogPDescriptor();
                 AtomContainerManipulator.convertImplicitToExplicitHydrogens(molecule.container);
                 descriptor.setParameters(new Object[]{true, true});
-                fc.setXlogp(((DoubleResult) descriptor.calculate(molecule.container).getValue()).doubleValue());
+                fc.setXlogp(((DoubleResult) descriptor.calculate(molecule.container).getValue()).doubleValue());*/
             }
             return fc;
         }

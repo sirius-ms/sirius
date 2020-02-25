@@ -1,6 +1,5 @@
 package de.unijena.bioinf.chemdb.custom;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.WebAPI;
@@ -249,6 +248,8 @@ public class CustomDatabase implements SearchableDatabase {
 
     static class Molecule {
         Smiles smiles = null;
+        String id = null;
+        String name = null;
         @NotNull IAtomContainer container;
 
         Molecule(Smiles smiles, @NotNull AtomContainer container) {
