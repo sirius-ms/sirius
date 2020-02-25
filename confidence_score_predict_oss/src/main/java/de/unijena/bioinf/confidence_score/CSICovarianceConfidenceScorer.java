@@ -217,9 +217,9 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
             if (ceMin != ceMax) return CE_RAMP;
         }
 
-        if (ceMin <= 10) //10
+        if (ceMin <= 15) //10
             return CE_LOW;
-        else if (ceMin < 20) //20
+        else if (ceMin < 30) //20
             return CE_MED;
         else
             return CE_HIGH; //40
