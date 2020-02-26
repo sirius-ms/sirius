@@ -8,6 +8,8 @@ import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -145,7 +147,8 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         //fingerid components
         config.defineProjectSpaceProperty(FingerIdData.class, new CsiClientSerializer());
         config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
-        config.registerComponent(FormulaResult.class, FingerblastResult.class, new FingerblastResultSerializer());
+        config.registerComponent(FormulaResult.class, FBCandidates.class, new FBCandidatesSerializer());
+        config.registerComponent(FormulaResult.class, FBCandidateFingerprints.class, new FBCandidateFingerprintSerializer());
         //canopus
         config.defineProjectSpaceProperty(CanopusData.class, new CanopusClientSerializer());
         config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());

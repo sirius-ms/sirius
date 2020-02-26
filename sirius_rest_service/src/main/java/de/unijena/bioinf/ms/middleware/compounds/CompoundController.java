@@ -15,6 +15,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
@@ -114,13 +115,13 @@ public class CompoundController extends BaseApiController {
                         });
 
                 // fingerid result
-                space.getFormulaResult(topHit.getId(), FingerblastResult.class).getAnnotation(FingerblastResult.class).
+                space.getFormulaResult(topHit.getId(), FBCandidates.class).getAnnotation(FBCandidates.class).
                         ifPresent(fbres -> {
                             final StructureResultSummary sSum = new StructureResultSummary();
                             cSum.setStructureResultSummary(sSum);
 
                             if (!fbres.getResults().isEmpty()) {
-                                final Scored<FingerprintCandidate> can = fbres.getResults().get(0);
+                                final Scored<CompoundCandidate> can = fbres.getResults().get(0);
 
                                 // scores
                                 sSum.setCsiScore(can.getScore());

@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.FormulaScoring;
@@ -26,7 +27,7 @@ public class StructureSummaryWriter implements Summarizer {
     public List<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations() {
         return Arrays.asList(
                 FormulaScoring.class,
-                FingerblastResult.class
+                FBCandidates.class
         );
     }
 
@@ -46,14 +47,14 @@ public class StructureSummaryWriter implements Summarizer {
                     final List<SScored<String, ConfidenceScore>> topHits = new ArrayList<>();
 
                     for (SScored<FormulaResult, ? extends FormulaScore> result : formulaResults) {
-                        if (result.getCandidate().hasAnnotation(FingerblastResult.class)) {
-                            final List<Scored<FingerprintCandidate>> frs = result.getCandidate().getAnnotationOrThrow(FingerblastResult.class).getResults();
+                        if (result.getCandidate().hasAnnotation(FBCandidates.class)) {
+                            final List<Scored<CompoundCandidate>> frs = result.getCandidate().getAnnotationOrThrow(FBCandidates.class).getResults();
 
                             //create buffer
                             final StringWriter w = new StringWriter(128);
-                            for (Scored<FingerprintCandidate> res : frs) {
-                                new StructureCSVExporter().exportFingerIdResult(w, res, false, null);
-                            }
+                            for (Scored<CompoundCandidate> res : frs)
+                                new StructureCSVExporter().exportFingerIdResult(w, res, result.getCandidate().getId(), false, null);
+
                             final String[] lines = w.toString().split("\n");
 
                             if (lines.length > 0) {
@@ -68,7 +69,6 @@ public class StructureSummaryWriter implements Summarizer {
                                             fileWriter.write("\n");
                                     }
                                 }
-
 
                                 // collect data for project wide summary
                                 final ConfidenceScore confidence = result.getCandidate().getAnnotation(FormulaScoring.class).
