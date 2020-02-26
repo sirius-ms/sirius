@@ -20,6 +20,7 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -103,14 +104,14 @@ public class MztabMExporter implements Summarizer {
             final FormulaScoring bestHitScores = bestHitSource.getAnnotationOrThrow(FormulaScoring.class);
 
             // check if fingerid results are available
-            Scored<FingerprintCandidate> bestHit = null;
+            Scored<CompoundCandidate> bestHit = null;
             int bestHitSourceRank = 1;
             if (bestHitScores.hasAnnotation(TopFingerblastScore.class)) {
                 bestHitSource = results.stream()
                         .filter(s -> s.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(TopFingerblastScore.class))
                         .map(s -> new SScored<>(s.getCandidate(), s.getCandidate().getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(TopFingerblastScore.class)))
                         .sorted().findFirst().map(SScored::getCandidate).orElseThrow();
-                bestHit = bestHitSource.getAnnotationOrThrow(FingerblastResult.class).getResults().get(0);
+                bestHit = bestHitSource.getAnnotationOrThrow(FBCandidates.class).getResults().get(0);
 
                 //rerank
                 results.stream().map(SScored::getCandidate).collect(Collectors.toList()).indexOf(bestHitSource);
@@ -179,7 +180,7 @@ public class MztabMExporter implements Summarizer {
 
     @Override
     public List<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations() {
-        return Arrays.asList(FormulaScoring.class, FTree.class, FingerblastResult.class);
+        return Arrays.asList(FormulaScoring.class, FTree.class, FBCandidates.class);
     }
 
 

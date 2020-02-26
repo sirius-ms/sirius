@@ -46,7 +46,6 @@ public class FormulaSummaryWriter implements Summarizer {
         writer.inDirectory(exp.getId().getDirectoryName(), () -> {
             writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> {
                 final LinkedHashMap<Class<? extends FormulaScore>, String> types = new LinkedHashMap<>();
-                final LinkedHashMap<FormulaResult, FormulaScoring> scorings = new LinkedHashMap<>();
 
                 final AtomicBoolean first = new AtomicBoolean(true);
                 results.forEach(r -> {
@@ -56,8 +55,6 @@ public class FormulaSummaryWriter implements Summarizer {
                                     this.globalResults.put(r.getCandidate(), r.getScoreObject().getClass());
                                     this.prefix.put(r.getCandidate(), exp.getId().getDirectoryName() + "\t");
                                 }
-
-                                scorings.put(r.getCandidate(), s);
                                 s.annotations().forEach((key, value) -> {
                                     if (value != null && !value.isNa()) {
                                         types.putIfAbsent(value.getClass(), value.name());
@@ -96,7 +93,7 @@ public class FormulaSummaryWriter implements Summarizer {
         return headerBuilder.toString();
     }
 
-    private void writeCSV(Writer w, LinkedHashMap<Class<? extends FormulaScore>, String> types, List<? extends SScored<? extends FormulaResult, ? extends Score>> results, Map<FormulaResult, String> prefix) throws IOException {
+    private void writeCSV(Writer w, LinkedHashMap<Class<? extends FormulaScore>, String> types, List<? extends SScored<? extends FormulaResult, ? extends Score<?>>> results, Map<FormulaResult, String> prefix) throws IOException {
         final List<Class<? extends FormulaScore>> scoreOrder = ProjectSpaceManager.scorePriorities().stream().filter(types::containsKey).collect(Collectors.toList());
         results = results.stream()
                 .sorted((i1, i2) -> FormulaScoring.comparingMultiScore(scoreOrder).compare(
@@ -112,7 +109,7 @@ public class FormulaSummaryWriter implements Summarizer {
         w.write("rank\t" + header + "\n");
 
         int rank = 0;
-        for (SScored<? extends FormulaResult, ? extends Score> s : results) {
+        for (SScored<? extends FormulaResult, ? extends Score<?>> s : results) {
             FormulaResult r = s.getCandidate();
             PrecursorIonType ion = r.getId().getIonType();
             FormulaScoring scores = r.getAnnotationOrThrow(FormulaScoring.class);
