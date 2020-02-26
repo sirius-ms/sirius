@@ -130,7 +130,7 @@ public class InstanceImporter {
         public void importProject(SiriusProjectSpace inputSpace) throws IOException {
             Files.list(inputSpace.getRootPath()).filter(Files::isRegularFile).filter(p -> !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME))
                     .forEach(s -> {
-                        final Path t = importTarget.projectSpace().getRootPath().resolve(s.getFileName());
+                        final Path t = importTarget.projectSpace().getRootPath().resolve(s.getFileName().toString());
                         try {
                             if (Files.notExists(t))
                                 Files.copy(s, t);
@@ -153,7 +153,7 @@ public class InstanceImporter {
                     Files.list(inputSpace.getRootPath().resolve(sourceId.getDirectoryName()))
                             .filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO) && !p.getFileName().toString().equals(SiriusLocations.MS2_EXPERIMENT))
                             .forEach(s -> {
-                                final Path t = importTarget.projectSpace().getRootPath().resolve(inst.getID().getDirectoryName()).resolve(s.getFileName());
+                                final Path t = importTarget.projectSpace().getRootPath().resolve(inst.getID().getDirectoryName()).resolve(s.getFileName().toString());
                                 try {
                                     Files.createDirectories(t);
                                     FileUtils.copyFolder(s, t);
