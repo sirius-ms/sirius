@@ -33,7 +33,7 @@ public class FingerIdResult implements Annotated<ResultAnnotation> {
         return getAnnotation(FingerprintResult.class).map(r -> r.fingerprint).orElse(null);
     }
 
-    public List<Scored<FingerprintCandidate>> getCandidates() {
+    public List<Scored<FingerprintCandidate>> getFingerprintCandidates() {
         return getAnnotation(FingerblastResult.class).map(FingerblastResult::getResults).orElse(null);
     }
 }
