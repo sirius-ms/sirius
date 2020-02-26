@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -162,11 +163,12 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         final String distanceType;
         final String dbType;
 
+
         if (rankedSearchDBCandidatesCov == null || rankedSearchDBCandidatesCSI == null) { //calculate score for pubChem lists
             comb = new CombinedFeatureCreatorALL(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, csiPerformances, covarianceScoring);
             distanceType = null;
             dbType = DB_ALL_ID;
-        } else if (rankedSearchDBCandidatesCov.length > 1) { //calculate score for filtered lists
+        } else if (moreThanOneUniqueFPs(rankedSearchDBCandidatesCov)) { //calculate score for filtered lists
             comb = new CombinedFeatureCreatorBIODISTANCE(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring);
             distanceType = DISTANCE_ID;
             dbType = DB_BIO_ID;
@@ -179,6 +181,16 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         comb.prepare(csiPerformances);
         final double[] features = comb.computeFeatures(query, idResult);
         return calculateConfidence(features, dbType, distanceType, ce);
+    }
+
+    private boolean moreThanOneUniqueFPs(Scored<FingerprintCandidate>[] candidates) {
+        if (candidates.length < 2)
+            return false;
+        short[] first = candidates[0].getCandidate().getFingerprint().toIndizesArray();
+        for (int i = 1; i < candidates.length; i++)
+            if (!Arrays.equals(first, candidates[i].getCandidate().getFingerprint().toIndizesArray()))
+                return true;
+        return false;
     }
 
 
