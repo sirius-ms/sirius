@@ -102,7 +102,7 @@ final class WebJobWatcher {
                                 job = waitingJobs.get(up.getGlobalId());
 
                                 if (job == null) {
-                                    logWarn("Job \"" + up.getGlobalId().toString() + "\" was found on the server but is unknown locally. Trying to match it again later!");
+                                    logDebug("Job \"" + up.getGlobalId().toString() + "\" was found on the server but is unknown locally. Trying to match it again later!");
                                     return false;
                                 }
 
