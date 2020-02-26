@@ -154,7 +154,13 @@ public class LCMSProccessingInstance {
                 charge = 1;
             }
         }
-        CollisionEnergy collisionEnergy= new CollisionEnergy(ion.getMsMsScan().getCollisionEnergy(),ion.getMsMsScan().getCollisionEnergy());
+        CollisionEnergy collisionEnergy;
+        if (ion.getMsMsScan()!=null){
+            collisionEnergy= new CollisionEnergy(ion.getMsMsScan().getCollisionEnergy(),ion.getMsMsScan().getCollisionEnergy());
+        }else {
+            collisionEnergy= null;
+        }
+
 
         final ArrayList<ScanPoint> trace = new ArrayList<>();
         final ArrayList<ScanPoint> debugTrace = new ArrayList<>();
