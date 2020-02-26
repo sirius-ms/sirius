@@ -1,26 +1,19 @@
 package de.unijena.bioinf.projectspace.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.PubmedLinks;
-import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.projectspace.ComponentSerializer;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectReader;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import gnu.trove.list.array.TShortArrayList;
 import org.slf4j.LoggerFactory;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,17 +24,16 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.FINGERBLAST;
-import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.FINGERBLAST_FPs;
 
-public class FingerblastResultSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FingerblastResult> {
+public class FBCandidatesSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FBCandidates> {
 
     @Override
-    public FingerblastResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
+    public FBCandidates read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         if (!reader.exists(FINGERBLAST.relFilePath(id)))
             return null;
 
         final Pattern dblinkPat = Pattern.compile("^.+?:\\(.+\\)$");
-        final ArrayList<Scored<FingerprintCandidate>> results = new ArrayList<>();
+        final ArrayList<Scored<CompoundCandidate>> results = new ArrayList<>();
         reader.table(FINGERBLAST.relFilePath(id), true, (row) -> {
             if (row.length == 0) return;
             final double score = Double.parseDouble(row[4]);
@@ -49,7 +41,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             final String name = row[5], smiles = row[6];
             final double xlogp = (row[7] != null && !row[7].isBlank() && !row[7].equals("N/A")) ? Double.parseDouble(row[7]) : Double.NaN;
 
-            final FingerprintCandidate candidate = new FingerprintCandidate(inchi, null);
+            final CompoundCandidate candidate = new CompoundCandidate(inchi);
             candidate.setName(name);
             candidate.setXlogp(xlogp);
             candidate.setSmiles(smiles);
@@ -84,34 +76,13 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             results.add(new Scored<>(candidate, score));
         });
 
-        //read fingerprints from binary
-        final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdData.class).orElseThrow();
-        if (reader.exists(FINGERBLAST_FPs.relFilePath(id)) && !results.isEmpty()) {
-            reader.binaryFile(FINGERBLAST_FPs.relFilePath(id), br -> {
-                try (DataInputStream dis = new DataInputStream(br)) {
-                    TShortArrayList shorts = new TShortArrayList(2000); //use it to reconstruct the array
-                    int j = 0;
-                    while (dis.available() > 0) {
-                        short value = dis.readShort();
-                        if (value < 0) {
-                            results.get(j).getCandidate().setFingerprint(new ArrayFingerprint(fingerIdData.getFingerprintVersion(), shorts.toArray()));
-                            shorts.clear();
-                            j++;
-                        } else {
-                            shorts.add(value);
-                        }
-                    }
-                }
-                return results;
-            });
-        }
 
-        return new FingerblastResult(results);
+        return new FBCandidates(results);
     }
 
     @Override
-    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<FingerblastResult> optFingeridResult) throws IOException {
-        final FingerblastResult fingerblastResult = optFingeridResult.orElseThrow(() -> new IllegalArgumentException("Could not find FingerIdResult to write for ID: " + id));
+    public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<FBCandidates> optFingeridResult) throws IOException {
+        final FBCandidates fingerblastResult = optFingeridResult.orElseThrow(() -> new IllegalArgumentException("Could not find FingerIdResult to write for ID: " + id));
 
         final String[] header = new String[]{
                 "inchikey2D", "inchi", "molecularFormula", "rank", "score", "name", "smiles", "xlogp", "PubMedIds", "links", "tanimotoSimilarity"
@@ -119,7 +90,7 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
         final String[] row = new String[header.length];
         final AtomicInteger ranking = new AtomicInteger(0);
         writer.table(FINGERBLAST.relFilePath(id), header, fingerblastResult.getResults().stream().map((hit) -> {
-            FingerprintCandidate c = hit.getCandidate();
+            CompoundCandidate c = hit.getCandidate();
             row[0] = c.getInchiKey2D();
             row[1] = c.getInchi().in2D;
             row[2] = id.getMolecularFormula().toString();
@@ -133,27 +104,10 @@ public class FingerblastResultSerializer implements ComponentSerializer<FormulaR
             row[10] = c.getTanimoto() == null ? "N/A" : String.valueOf(c.getTanimoto());
             return row;
         })::iterator);
-
-        if (!fingerblastResult.getResults().isEmpty()) {
-            writer.binaryFile(FINGERBLAST_FPs.relFilePath(id), (w) -> {
-                try (DataOutputStream da = new DataOutputStream(w)) {
-                    List<short[]> fpIdxs = fingerblastResult.getResults().stream()
-                            .map(SScored::getCandidate).map(FingerprintCandidate::getFingerprint).map(Fingerprint::toIndizesArray)
-                            .collect(Collectors.toList());
-                    for (short[] fpIdx : fpIdxs) {
-                        for (short idx : fpIdx) {
-                            da.writeShort(idx);
-                        }
-                        da.writeShort(-1); //separator
-                    }
-                }
-            });
-        }
     }
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
         writer.delete(FINGERBLAST.relFilePath(id));
-        writer.delete(FINGERBLAST_FPs.relFilePath(id));
     }
 }
