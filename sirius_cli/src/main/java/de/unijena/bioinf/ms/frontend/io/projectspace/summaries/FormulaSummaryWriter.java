@@ -3,9 +3,13 @@ package de.unijena.bioinf.ms.frontend.io.projectspace.summaries;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
+import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.FormulaScoring;
@@ -37,15 +41,17 @@ public class FormulaSummaryWriter implements Summarizer {
 
 
     @Override
-    public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
+    public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults) throws IOException {
         if (!writer.exists(exp.getId().getDirectoryName()))
             return;
-        if (results == null || results.isEmpty())
+        if (formulaResults == null || formulaResults.isEmpty())
             return;
 
+        List<SScored<FormulaResult, ? extends FormulaScore>> results = FormulaScoring.reRankBy(formulaResults, List.of(ZodiacScore.class, SiriusScore.class, TopFingerblastScore.class), true);
+
         writer.inDirectory(exp.getId().getDirectoryName(), () -> {
-            writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> {
-                final LinkedHashMap<Class<? extends FormulaScore>, String> types = new LinkedHashMap<>();
+            writer.textFile(SummaryLocations.FORMULA_CANDIDATES, w -> {
+                LinkedHashMap<Class<? extends FormulaScore>, String> types = new LinkedHashMap<>();
 
                 final AtomicBoolean first = new AtomicBoolean(true);
                 results.forEach(r -> {
@@ -65,6 +71,8 @@ public class FormulaSummaryWriter implements Summarizer {
                 });
 
                 //writing stuff
+                types.remove(TopFingerblastScore.class);
+                types.remove(ConfidenceScore.class);
                 writeCSV(w, types, results, null);
             });
 
@@ -74,19 +82,18 @@ public class FormulaSummaryWriter implements Summarizer {
 
     @Override
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
-
         final Class<? extends FormulaScore> rankingScore = ProjectSpaceManager.scorePriorities().stream().filter(globalTypes::containsKey).findFirst().orElse(SiriusScore.class);
         List<SScored<? extends FormulaResult, ? extends FormulaScore>> r = globalResults.keySet().stream()
                 .map(res -> new SScored<>(res, res.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOr(rankingScore, FormulaScore::NA))).collect(Collectors.toList());
 
 
-        writer.textFile(SummaryLocations.FORMULA_SUMMARY_GLOBAL, w -> {
+        writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> {
             writeCSV(w, globalTypes, r, prefix);
         });
     }
 
     private String makeHeader(String scorings) {
-        final StringBuilder headerBuilder = new StringBuilder("molecularFormula\tadduct\tprecursorFormula\trankingScore");
+        final StringBuilder headerBuilder = new StringBuilder("molecularFormula\tadduct\tprecursorFormula");/*	rankingScore*/
         if (scorings != null && !scorings.isEmpty())
             headerBuilder.append("\t").append(scorings);
         headerBuilder.append("\texplainedPeaks\texplainedIntensity");
@@ -109,26 +116,30 @@ public class FormulaSummaryWriter implements Summarizer {
         w.write("rank\t" + header + "\n");
 
         int rank = 0;
+        MolecularFormula preFormula = null;
         for (SScored<? extends FormulaResult, ? extends Score<?>> s : results) {
             FormulaResult r = s.getCandidate();
             PrecursorIonType ion = r.getId().getIonType();
             FormulaScoring scores = r.getAnnotationOrThrow(FormulaScoring.class);
             FTree tree = r.getAnnotationOrNull(FTree.class);
+            if (preFormula == null || !r.getId().getPrecursorFormula().equals(preFormula))
+                rank++;
+            preFormula = r.getId().getPrecursorFormula();
 
 
-            w.write(String.valueOf(++rank));
+            w.write(String.valueOf(rank));
             w.write('\t');
             w.write(r.getId().getMolecularFormula().toString());
             w.write('\t');
             w.write(ion != null ? ion.toString() : "?");
             w.write('\t');
 
-            w.write(r.getId().getPrecursorFormula().toString());
+            w.write(preFormula.toString());
             w.write('\t');
 
 
-            w.write(s.getScoreObject().toString());
-            w.write('\t');
+//            w.write(s.getScoreObject().toString());
+//            w.write('\t');
             //writing different Scores to file e.g. sirius and zodiac
             for (Class<? extends FormulaScore> k : scoreOrder) {
                 w.write(scores.getAnnotationOr(k, FormulaScore::NA).toString());

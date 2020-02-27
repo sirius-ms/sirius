@@ -37,7 +37,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class StructureCSVExporter {
-    public static final String HEADER = new TopFingerblastScore(0).name() + "\tmolecularFormula\tadduct\tInChIkey2D\tInChI\tname\tsmiles\txlogp\tpubchemids\tlinks";
+    public static final List<String> HEADER_LIST = List.of(new TopFingerblastScore(0).name(), "molecularFormula", "adduct", "InChIkey2D", "InChI", "name", "smiles", "xlogp", "pubchemids", "links");
+    public static final String HEADER = String.join("\t", HEADER_LIST);
 
     public void exportFingerIdResults(Writer writer, FormulaResult formulaResult) throws IOException {
         List<Scored<CompoundCandidate>> candidates = formulaResult.getAnnotationOrThrow(FBCandidates.class).getResults();

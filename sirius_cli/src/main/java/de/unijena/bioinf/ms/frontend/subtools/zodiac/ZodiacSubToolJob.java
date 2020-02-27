@@ -167,14 +167,12 @@ public class ZodiacSubToolJob extends DataSetJob {
                     });
 
                     // set zodiac as ranking score
-                    if (inst.getExperiment().getAnnotationOrThrow(FormulaResultRankingScore.class).isAuto()) {
+                    if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
                         inst.getID().setRankingScoreType(ZodiacScore.class);
                         inst.updateCompoundID();
                     }
                 } catch (Throwable e) {
-                    System.err.println("Error for instance " + inst.getID().getDirectoryName());
-                    e.printStackTrace();
-                    // DO NOT CRASH -_-
+                    logError("Error when retrieving Zodiac Results for instance: " + inst.getID().getDirectoryName(), e);
                 }
             });
 
