@@ -122,7 +122,7 @@ public class FingeridSubToolJob extends InstanceJob {
                     .setAnnotation(TopFingerblastScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
 
             formRes.getAnnotationOrThrow(FormulaScoring.class)
-                    .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x->x.score).orElse(null));
+                    .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
 
             // write results
             inst.updateFormulaResult(formRes,

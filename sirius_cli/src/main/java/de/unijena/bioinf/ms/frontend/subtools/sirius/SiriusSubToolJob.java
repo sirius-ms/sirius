@@ -65,7 +65,7 @@ public class SiriusSubToolJob extends InstanceJob {
                 inst.newFormulaResultWithUniqueId(result.getTree());
 
             // set sirius to ranking score
-            if (exp.getAnnotationOrThrow(FormulaResultRankingScore.class).isAuto()) {
+            if (exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
                 inst.getID().setRankingScoreType(SiriusScore.class);
                 inst.updateCompoundID();
             }
