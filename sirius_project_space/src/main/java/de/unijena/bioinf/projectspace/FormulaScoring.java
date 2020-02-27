@@ -1,15 +1,16 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * contains any score associated with a molecular formula. This includes:
@@ -58,13 +59,38 @@ public class FormulaScoring implements Iterable<FormulaScore>, Annotated<Formula
     }
 
     public static Comparator<FormulaScoring> comparingMultiScore(List<Class<? extends FormulaScore>> scoreTypes) {
+        return comparingMultiScore(scoreTypes,true);
+    }
+
+    public static Comparator<FormulaScoring> comparingMultiScore(List<Class<? extends FormulaScore>> scoreTypes, boolean descending) {
         if (scoreTypes == null || scoreTypes.isEmpty())
             throw new IllegalArgumentException("NO score type given");
 
-        Comparator<FormulaScoring> comp = Comparator.comparing(s -> s.getAnnotationOr(scoreTypes.get(0), FormulaScore::NA));
+        Comparator<FormulaScoring> comp = Comparator.comparing(s -> s == null ? FormulaScore.NA(scoreTypes.get(0)): s.getAnnotationOr(scoreTypes.get(0), FormulaScore::NA));
         for (Class<? extends FormulaScore> type : scoreTypes.subList(1, scoreTypes.size()))
-            comp = comp.thenComparing(s -> s.getAnnotationOr(type, FormulaScore::NA));
+            comp = comp.thenComparing(s -> s == null ? FormulaScore.NA(type): s.getAnnotationOr(type, FormulaScore::NA));
 
-        return comp.reversed();
+        return descending ? comp.reversed() : comp;
+    }
+
+    public static <T extends FormulaResult> List<SScored<T, ? extends FormulaScore>> reRankBy(@Nullable List<? extends SScored<T, ? extends FormulaScore>> data, @NotNull Class<? extends FormulaScore> scoreType, boolean descending) {
+        return reRankBy(data, Collections.singletonList(scoreType), descending);
+    }
+
+    public static <T extends FormulaResult> List<SScored<T, ? extends FormulaScore>> reRankBy(@Nullable List<? extends SScored<T, ? extends FormulaScore>> data, @NotNull List<Class<? extends FormulaScore>> scoreTypes, boolean descending) {
+        if (scoreTypes.isEmpty())
+            throw new IllegalArgumentException("NO score type given");
+
+        if (data == null)
+            return null;
+
+        if (data.isEmpty())
+            return Collections.emptyList();
+
+        return data.stream().map(SScored::getCandidate)
+                .sorted((c1,c2) -> comparingMultiScore(scoreTypes,descending).compare(c1.getAnnotationOrNull(FormulaScoring.class), c2.getAnnotationOrNull(FormulaScoring.class)))
+                .map(c -> c.hasAnnotation(FormulaScoring.class)
+                        ? new SScored<>(c, c.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOr(scoreTypes.get(0), FormulaScore::NA))
+                        : new SScored<>(c, FormulaScore.NA(scoreTypes.get(0)))).collect(Collectors.toList());
     }
 }
