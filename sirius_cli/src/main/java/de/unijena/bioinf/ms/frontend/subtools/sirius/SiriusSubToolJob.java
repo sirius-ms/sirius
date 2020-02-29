@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
@@ -15,8 +16,9 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SiriusSubToolJob extends InstanceJob {
     protected final SiriusOptions cliOptions;
@@ -66,7 +68,7 @@ public class SiriusSubToolJob extends InstanceJob {
 
             // set sirius to ranking score
             if (exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getID().setRankingScoreType(SiriusScore.class);
+                inst.getID().setRankingScoreTypes(new ArrayList<>(List.of(SiriusScore.class)));
                 inst.updateCompoundID();
             }
 

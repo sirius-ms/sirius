@@ -17,7 +17,9 @@ import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.Summarizer;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
+import de.unijena.bioinf.sirius.scores.TreeScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -27,6 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class FormulaSummaryWriter implements Summarizer {
+
+    final static List<Class<? extends FormulaScore>> RANKING_SCORES = List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class, TopFingerblastScore.class);
     final LinkedHashMap<Class<? extends FormulaScore>, String> globalTypes = new LinkedHashMap<>();
     final Map<FormulaResult, Class<? extends FormulaScore>> globalResults = new HashMap<>();
     final Map<FormulaResult, String> prefix = new HashMap<>();
@@ -47,28 +51,27 @@ public class FormulaSummaryWriter implements Summarizer {
         if (formulaResults == null || formulaResults.isEmpty())
             return;
 
-        List<SScored<FormulaResult, ? extends FormulaScore>> results = FormulaScoring.reRankBy(formulaResults, List.of(ZodiacScore.class, SiriusScore.class, TopFingerblastScore.class), true);
+        //todo add adducts
+        List<SScored<FormulaResult, ? extends FormulaScore>> results = FormulaScoring.reRankBy(formulaResults, RANKING_SCORES, true);
 
         writer.inDirectory(exp.getId().getDirectoryName(), () -> {
             writer.textFile(SummaryLocations.FORMULA_CANDIDATES, w -> {
                 LinkedHashMap<Class<? extends FormulaScore>, String> types = new LinkedHashMap<>();
 
                 final AtomicBoolean first = new AtomicBoolean(true);
-                results.forEach(r -> {
-                    r.getCandidate().getAnnotation(FormulaScoring.class)
-                            .ifPresent(s -> {
-                                if (first.getAndSet(false)) {
-                                    this.globalResults.put(r.getCandidate(), r.getScoreObject().getClass());
-                                    this.prefix.put(r.getCandidate(), exp.getId().getDirectoryName() + "\t");
+                results.forEach(r -> r.getCandidate().getAnnotation(FormulaScoring.class)
+                        .ifPresent(s -> {
+                            if (first.getAndSet(false)) {
+                                this.globalResults.put(r.getCandidate(), r.getScoreObject().getClass());
+                                this.prefix.put(r.getCandidate(), exp.getId().getDirectoryName() + "\t");
+                            }
+                            s.annotations().forEach((key, value) -> {
+                                if (value != null && !value.isNa()) {
+                                    types.putIfAbsent(value.getClass(), value.name());
+                                    this.globalTypes.putIfAbsent(value.getClass(), value.name());
                                 }
-                                s.annotations().forEach((key, value) -> {
-                                    if (value != null && !value.isNa()) {
-                                        types.putIfAbsent(value.getClass(), value.name());
-                                        this.globalTypes.putIfAbsent(value.getClass(), value.name());
-                                    }
-                                });
                             });
-                });
+                        }));
 
                 //writing stuff
                 types.remove(TopFingerblastScore.class);
@@ -82,11 +85,9 @@ public class FormulaSummaryWriter implements Summarizer {
 
     @Override
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
-        final Class<? extends FormulaScore> rankingScore = ProjectSpaceManager.scorePriorities().stream().filter(globalTypes::containsKey).findFirst().orElse(SiriusScore.class);
-        List<SScored<? extends FormulaResult, ? extends FormulaScore>> r = globalResults.keySet().stream()
-                .map(res -> new SScored<>(res, res.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOr(rankingScore, FormulaScore::NA))).collect(Collectors.toList());
-
-
+        final List<SScored<FormulaResult, ? extends FormulaScore>> r = FormulaScoring.rankBy(globalResults.keySet(), RANKING_SCORES, true);
+        globalTypes.remove(ConfidenceScore.class);
+        globalTypes.remove(TopFingerblastScore.class);
         writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> {
             writeCSV(w, globalTypes, r, prefix);
         });

@@ -10,7 +10,6 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -29,11 +28,11 @@ public class Instance {
         this.spaceManager = spaceManager;
     }
 
-    public Ms2Experiment getExperiment() {
+    public final Ms2Experiment getExperiment() {
         return compoundCache.getAnnotationOrThrow(Ms2Experiment.class); //todo decide if it shlould be allowed to be dropped from cache -> currently NOT!
     }
 
-    public CompoundContainerId getID() {
+    public final CompoundContainerId getID() {
         return compoundCache.getId();
     }
 
@@ -52,11 +51,12 @@ public class Instance {
 
 
     //load from projectSpace
-    public synchronized Optional<ProjectSpaceConfig> loadConfig() {
+    public final synchronized Optional<ProjectSpaceConfig> loadConfig() {
         return loadCompoundContainer(ProjectSpaceConfig.class).getAnnotation(ProjectSpaceConfig.class);
     }
 
-    public synchronized CompoundContainer loadCompoundContainer(Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final synchronized CompoundContainer loadCompoundContainer(Class<? extends DataAnnotation>... components) {
         try {
             Class[] missingComps = Arrays.stream(components).filter(comp -> !compoundCache.hasAnnotation(comp)).distinct().toArray(Class[]::new);
             if (missingComps.length > 0) { //load missing comps
@@ -69,7 +69,8 @@ public class Instance {
         }
     }
 
-    public synchronized FormulaResult loadFormulaResult(FormulaResultId fid, Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final synchronized FormulaResult loadFormulaResult(FormulaResultId fid, Class<? extends DataAnnotation>... components) {
         try {
             if (!formulaResultCache.containsKey(fid)) {
                 final FormulaResult fr = projectSpace().getFormulaResult(fid, components);
@@ -88,7 +89,8 @@ public class Instance {
         }
     }
 
-    public synchronized void reloadCompoundCache (Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final synchronized void reloadCompoundCache(Class<? extends DataAnnotation>... components) {
         try {
             compoundCache = projectSpace().getCompound(getID(), components);
         } catch (IOException e) {
@@ -100,12 +102,23 @@ public class Instance {
     /**
      * @return Sorted List of FormulaResults scored by the currently defined RankingScore
      */
-    public synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends DataAnnotation>... components) {
-        return loadFormulaResults(getID().getRankingScoreType().orElse(SiriusScore.class), components);
+    @SafeVarargs
+    public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends DataAnnotation>... components) {
+        return loadFormulaResults(getID().getRankingScoreTypes(), components);
     }
 
-    public synchronized Optional<FormulaResult> loadTopFormulaResult(Class<? extends DataAnnotation>... components) {
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds = loadFormulaResults(components);
+    @SafeVarargs
+    public final synchronized Optional<FormulaResult> loadTopFormulaResult(Class<? extends DataAnnotation>... components) {
+        return getTop(loadFormulaResults(components));
+    }
+
+    @SafeVarargs
+    public final synchronized Optional<FormulaResult> loadTopFormulaResult(List<Class<? extends FormulaScore>> rankingScoreTypes, Class<? extends DataAnnotation>... components) {
+        return getTop(loadFormulaResults(rankingScoreTypes, components));
+    }
+
+    @SafeVarargs
+    private Optional<FormulaResult> getTop(List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds, Class<? extends DataAnnotation>... components) {
         if (sScoreds.isEmpty()) return Optional.empty();
         else {
             FormulaResult candidate = sScoreds.get(0).getCandidate();
@@ -113,10 +126,11 @@ public class Instance {
         }
     }
 
-    public synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends FormulaScore> rankingScoreType, Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(List<Class<? extends FormulaScore>> rankingScoreTypes, Class<? extends DataAnnotation>... components) {
         try {
             if (!formulaResultCache.keySet().containsAll(compoundCache.getResults().values())) {
-                final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = projectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreType, components);
+                final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = projectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreTypes, components);
                 formulaResultCache = returnList.stream().collect(Collectors.toMap(r -> r.getCandidate().getId(), SScored::getCandidate));
                 return returnList;
             } else {
@@ -141,9 +155,7 @@ public class Instance {
                 });
 
                 //return updated an sorted formula results
-                return formulaResultCache.values().stream()
-                        .map(rs -> new SScored<>(rs, rs.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(rankingScoreType)))
-                        .sorted(Collections.reverseOrder()).collect(Collectors.toList());
+                return FormulaScoring.rankBy(formulaResultCache.values(), rankingScoreTypes, true);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -151,7 +163,8 @@ public class Instance {
     }
 
     //write to projectSpace
-    public synchronized void updateCompound(CompoundContainer container, Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final synchronized void updateCompound(CompoundContainer container, Class<? extends DataAnnotation>... components) {
         try {
             updateAnnotations(compoundCache, container, components);
             projectSpace().updateCompound(compoundCache, components);
@@ -160,7 +173,8 @@ public class Instance {
         }
     }
 
-    public synchronized void updateFormulaResult(FormulaResult result, Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final synchronized void updateFormulaResult(FormulaResult result, Class<? extends DataAnnotation>... components) {
         try {
             if (!formulaResultCache.containsKey(result.getId())) {
                 formulaResultCache.put(result.getId(), result);
@@ -197,7 +211,8 @@ public class Instance {
         compoundCache.clearAnnotations();
     }
 
-    public synchronized void clearCompoundCache(Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final synchronized void clearCompoundCache(Class<? extends DataAnnotation>... components) {
         if (compoundCache == null)
             return;
 
@@ -210,18 +225,21 @@ public class Instance {
         formulaResultCache.clear();
     }
 
-    public synchronized void clearFormulaResultsCache(Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final synchronized void clearFormulaResultsCache(Class<? extends DataAnnotation>... components) {
         clearFormulaResultsCache(compoundCache.getResults().values(), components);
     }
 
-    public synchronized void clearFormulaResultsCache(Collection<FormulaResultId> results, Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final synchronized void clearFormulaResultsCache(Collection<FormulaResultId> results, Class<? extends DataAnnotation>... components) {
         if (components == null || components.length == 0)
             return;
         for (FormulaResultId result : results)
             clearFormulaResultCache(result, components);
     }
 
-    public synchronized void clearFormulaResultCache(FormulaResultId id, Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final synchronized void clearFormulaResultCache(FormulaResultId id, Class<? extends DataAnnotation>... components) {
         if (formulaResultCache.containsKey(id))
             for (Class<? extends DataAnnotation> comp : components)
                 formulaResultCache.get(id).removeAnnotation(comp);
@@ -235,6 +253,7 @@ public class Instance {
 
 
     // static helper methods
+    @SafeVarargs
     private static <T extends DataAnnotation> void updateAnnotations(final Annotated<T> toRefresh, final Annotated<T> refresher, final Class<? extends DataAnnotation>... components) {
         if (toRefresh != refresher) {
             Set<Class<? extends DataAnnotation>> comps = Arrays.stream(components).collect(Collectors.toSet());

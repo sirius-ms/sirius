@@ -45,7 +45,7 @@ public class ZodiacSubToolJob extends DataSetJob {
     protected void computeAndAnnotateResult(@NotNull List<Instance> instances) throws Exception {
         final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream().distinct().collect(Collectors.toMap(
                 Instance::getExperiment,
-                in -> in.loadFormulaResults(SiriusScore.class, FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
+                in -> in.loadFormulaResults(List.of(SiriusScore.class), FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
         ));
 
         //remove instances from input which don't have a single FTree
@@ -168,7 +168,7 @@ public class ZodiacSubToolJob extends DataSetJob {
 
                     // set zodiac as ranking score
                     if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                        inst.getID().setRankingScoreType(ZodiacScore.class);
+                        inst.getID().setRankingScoreTypes(ZodiacScore.class, SiriusScore.class);
                         inst.updateCompoundID();
                     }
                 } catch (Throwable e) {

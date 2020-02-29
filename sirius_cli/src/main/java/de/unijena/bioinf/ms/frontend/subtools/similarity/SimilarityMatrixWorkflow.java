@@ -12,8 +12,10 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.ftalign.StandardScoring;
 import de.unijena.bioinf.ftalign.analyse.Pearson;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -33,6 +35,7 @@ import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.treealign.multijoin.DPMultiJoin;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
@@ -46,7 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -55,6 +58,8 @@ import java.util.stream.Collectors;
 
 public class SimilarityMatrixWorkflow implements Workflow {
 
+    private final static List<Class<? extends FormulaScore>> rankSores =
+            List.of(TopFingerblastScore.class, ZodiacScore.class, SiriusScore.class);
     protected final SimilarityMatrixOptions options;
     protected ProjectSpaceManager ps;
     protected final ParameterConfig config;
@@ -77,11 +82,16 @@ public class SimilarityMatrixWorkflow implements Workflow {
             if (options.useCosine)
                 cosine(xs);
             //filter all instances without a single fragTree
-            xs = xs.stream().filter(i -> !i.loadCompoundContainer().getResults().isEmpty()).collect(Collectors.toList());
+            xs = xs.stream().filter(i -> !i.loadCompoundContainer().getResults().isEmpty())
+                .filter(x-> x.loadTopFormulaResult(rankSores, FTree.class).map(y->y.hasAnnotation(FTree.class)).orElse(false))
+                    .collect(Collectors.toList());
+            FTree[] trees = xs.stream().map(x->x.loadTopFormulaResult(rankSores, FTree.class).get().getAnnotationOrThrow(FTree.class))
+                    .toArray(FTree[]::new);
+
             if (options.useAlignment)
-                align(xs);
+                align(xs, trees);
             if (options.useFtblast != null)
-                ftblast(xs);
+                ftblast(xs, trees);
             if (options.useTanimoto)
                 tanimoto(xs);
         } catch (ExecutionException e) {
@@ -91,14 +101,16 @@ public class SimilarityMatrixWorkflow implements Workflow {
 
     private void tanimoto(List<Instance> xs) {
         final JobManager J = SiriusJobs.getGlobalJobManager();
+        xs.removeIf(x -> x.loadTopFormulaResult(rankSores, FingerprintResult.class).filter(y -> y.hasAnnotation(FingerprintResult.class)).isEmpty());
 
-        final Instance[] ys = xs.stream().filter(x->x.loadTopFormulaResult(FingerprintResult.class).filter(y->y.getAnnotation(FingerprintResult.class).isPresent()).isPresent()).toArray(Instance[]::new);
-        final ProbabilityFingerprint[] fps = Arrays.stream(ys).map(f->f.loadTopFormulaResult(FingerprintResult.class).orElseThrow().getAnnotationOrThrow(FingerprintResult.class).fingerprint).toArray(ProbabilityFingerprint[]::new);
-        final double[][] M = new double[ys.length][ys.length];
+        final ProbabilityFingerprint[] fps = xs.stream().map(f ->
+                f.loadTopFormulaResult(rankSores, FingerprintResult.class)
+                        .map(it -> it.getAnnotationOrThrow(FingerprintResult.class).fingerprint).orElseThrow()).toArray(ProbabilityFingerprint[]::new);
 
-        J.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i,j)-> Tanimoto.fastTanimoto(fps[i],fps[j]))).takeResult();
+        final double[][] M = new double[xs.size()][xs.size()];
+        J.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i, j) -> Tanimoto.fastTanimoto(fps[i], fps[j]))).takeResult();
         MatrixUtils.normalize(M);
-        writeMatrix("tanimoto", M, Arrays.stream(ys).map(y->y.getID().getCompoundName()).toArray(String[]::new));
+        writeMatrix("tanimoto", M, xs.stream().map(y -> y.getID().getCompoundName()).toArray(String[]::new));
     }
 
     private void writeMatrix(String name, double[][] M, String[] header) {
@@ -139,15 +151,14 @@ public class SimilarityMatrixWorkflow implements Workflow {
         }
     }
 
-    private void ftblast(List<Instance> xs) {
+    private void ftblast(List<Instance> xs, FTree[] trees) {
         final JobManager Jobs= SiriusJobs.getGlobalJobManager();
         final List<FTree> libTrees = new ArrayList<>();
-        FTree[] lib;
         if (ProjectSpaceIO.isExistingProjectspaceDirectory(options.useFtblast.toPath())) {
             try {
                 SiriusProjectSpace compoundContainerIds = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(options.useFtblast.toPath());
                 for (CompoundContainerId id : compoundContainerIds) {
-                    List<? extends SScored<FormulaResult, ? extends FormulaScore>> list = compoundContainerIds.getFormulaResultsOrderedBy(id, id.getRankingScoreType().get());
+                    List<? extends SScored<FormulaResult, ? extends FormulaScore>> list = compoundContainerIds.getFormulaResultsOrderedBy(id, id.getRankingScoreTypes());
                     if (list.size()>0) {
                         compoundContainerIds.getFormulaResult(list.get(0).getCandidate().getId(),FTree.class).getAnnotation(FTree.class).ifPresent(libTrees::add);
                     }
@@ -161,7 +172,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
             for (File f : options.useFtblast.listFiles()) {
                 if (f.getName().endsWith(".json")) {
                    try (BufferedReader br = FileUtils.getReader(f)){
-                       libTrees.add(new FTJsonReader(cache).parse(br,f.toURI().toURL()));
+                       libTrees.add(new FTJsonReader(cache).parse(br, f.toURI().toURL()));
                    } catch (IOException e) {
                        e.printStackTrace();
                    }
@@ -170,25 +181,21 @@ public class SimilarityMatrixWorkflow implements Workflow {
         }
 
         System.out.println("Library consists of " + libTrees.size() + " fragmentation libTrees");
-
-        xs.removeIf(x-> x.loadTopFormulaResult(FTree.class).filter(y->y.getAnnotation(FTree.class).isPresent()).isEmpty());
-        FTree[] trees = xs.stream().map(x->x.loadTopFormulaResult(FTree.class).get().getAnnotation(FTree.class).get()).toArray(FTree[]::new);
-
-        for (FTree tree : trees) libTrees.add(tree);
+        Collections.addAll(libTrees, trees);
 
         final double[][] M = new double[trees.length][trees.length];
         final double[][] C = new double[trees.length][libTrees.size()];
         final StandardScoring standardScoring = new StandardScoring(true);
         final ArrayList<BasicJJob<Double>> jobs = new ArrayList<>();
-        for (int i=0; i < trees.length; ++i) {
+        for (int i = 0; i < trees.length; ++i) {
             final int I = i;
             final double selfScore = standardScoring.selfAlignScore(trees[i].getRoot());
-            for (int j=0; j < libTrees.size(); ++j) {
+            for (int j = 0; j < libTrees.size(); ++j) {
                 final int J = j;
                 jobs.add(Jobs.submitJob(new BasicJJob<Double>() {
                     @Override
                     protected Double compute() throws Exception {
-                        final double score = new DPMultiJoin(standardScoring, 2, trees[I].getRoot(),libTrees.get(J).getRoot(),trees[I].treeAdapter()).compute();
+                        final double score = new DPMultiJoin<>(standardScoring, 2, trees[I].getRoot(),libTrees.get(J).getRoot(),trees[I].treeAdapter()).compute();
                         C[I][J] = score / Math.sqrt(Math.min(selfScore, standardScoring.selfAlignScore(libTrees.get(J).getRoot())));
                         return C[I][J];
                     }
@@ -202,14 +209,11 @@ public class SimilarityMatrixWorkflow implements Workflow {
         writeMatrix("ftblast", M, xs.stream().map(x->x.getID().getCompoundName()).toArray(String[]::new));
     }
 
-    private void align(List<Instance> xs) {
-        xs.removeIf(x-> x.loadTopFormulaResult(FTree.class).filter(y->y.getAnnotation(FTree.class).isPresent()).isEmpty());
-        FTree[] trees = xs.stream().map(x->x.loadTopFormulaResult(FTree.class).get().getAnnotation(FTree.class).get()).toArray(FTree[]::new);
-
+    private void align(List<Instance> xs, FTree[] trees) {
         final JobManager J = SiriusJobs.getGlobalJobManager();
         final double[][] M = new double[trees.length][trees.length];
         J.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i,j)->
-            new DPMultiJoin(new StandardScoring(true), 2, trees[i].getRoot(),trees[j].getRoot(),trees[i].treeAdapter()).compute())).takeResult();
+            new DPMultiJoin<>(new StandardScoring(true), 2, trees[i].getRoot(),trees[j].getRoot(),trees[i].treeAdapter()).compute())).takeResult();
         final double[] norm = MatrixUtils.selectDiagonal(M);
         for (int i=0; i < M.length; ++i) {
             for (int j=0; j < M.length; ++j) {

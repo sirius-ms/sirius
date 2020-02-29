@@ -42,8 +42,4 @@ public enum FormulaResultRankingScoreType {
     public boolean isDefined() {
         return !this.equals(AUTO);
     }
-
-    public FormulaResultRankingScore asFormulaResultRankingScore() {
-        return new FormulaResultRankingScore(clazz);
-    }
 }

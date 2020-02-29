@@ -13,6 +13,9 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 public class AddConfigsJob extends InstanceJob {
@@ -50,14 +53,16 @@ public class AddConfigsJob extends InstanceJob {
         // this value is a commandline parameter that specifies how to handle the ranking score. If auto we decide how to
         // handle, otherwise we set the user defined value
         if (it.isAuto()) {
-            if (inst.getID().getRankingScoreType().isEmpty()) //set a default if nothing else is already set
-                inst.getID().setRankingScoreType(SiriusScore.class);
+            if (inst.getID().getRankingScoreTypes().isEmpty()) //set a default if nothing else is already set
+                inst.getID().setRankingScoreTypes(SiriusScore.class);
         } else {
-            inst.getID().setRankingScoreType(it.value);
+            inst.getID().setRankingScoreTypes(it.value);
         }
 
         inst.updateExperiment();
         inst.updateConfig();
+//        inst.updateCompoundID();
+
     }
 
 }

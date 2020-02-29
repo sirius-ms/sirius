@@ -27,9 +27,7 @@ public class CanopusSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
 //        System.out.println("I am Canopus on Experiment " + inst);
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(
-                SiriusScore.class,
-                FormulaScoring.class, FingerprintResult.class, CanopusResult.class);
+        List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(FormulaScoring.class, FingerprintResult.class, CanopusResult.class);
 
         // check if we need to skip
         if (!isRecompute(inst) && input.stream().anyMatch((it -> it.getCandidate().hasAnnotation(CanopusResult.class)))) {
