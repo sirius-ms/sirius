@@ -3,12 +3,12 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public final class CompoundContainerId extends ProjectSpaceContainerId {
     public static final String RANKING_KEY = "rankingScoreType";
@@ -25,7 +25,8 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     //todo switch that to annotations?
     private Double ionMass = null;
     private PrecursorIonType ionType = null;
-    private Class<? extends FormulaScore> rankingScoreType = null;
+    @NotNull
+    private List<Class<? extends FormulaScore>> rankingScores = Collections.emptyList();
 
 
     protected CompoundContainerId(String directoryName, String compoundName, int compoundIndex) {
@@ -72,12 +73,17 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.ionType = ionType;
     }
 
-    public Optional<Class<? extends FormulaScore>> getRankingScoreType() {
-        return Optional.ofNullable(rankingScoreType);
+    public List<Class<? extends FormulaScore>> getRankingScoreTypes() {
+        return rankingScores;
     }
 
-    public void setRankingScoreType(Class<? extends FormulaScore> rankingScoreType) {
-        this.rankingScoreType = rankingScoreType;
+    @SafeVarargs
+    public final void setRankingScoreTypes(@NotNull Class<? extends FormulaScore>... rankingScores) {
+        setRankingScoreTypes(Arrays.asList(rankingScores));
+    }
+
+    public void setRankingScoreTypes(@NotNull List<Class<? extends FormulaScore>> rankingScores) {
+        this.rankingScores = new ArrayList<>(rankingScores);
     }
 
     /**
@@ -100,8 +106,8 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         kv.put("ionMass", String.valueOf(ionMass));
         if (ionType != null)
             kv.put("ionType", ionType.toString());
-        if (rankingScoreType != null)
-            kv.put(RANKING_KEY, Score.simplify(rankingScoreType));
+        if (!rankingScores.isEmpty())
+            kv.put(RANKING_KEY, rankingScores.stream().map(Score::simplify).collect(Collectors.joining(",")));
 
         return kv;
     }
@@ -109,7 +115,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     public void setAllNonFinal(final CompoundContainerId cid) {
         if (cid == null || cid == this)
             return;
-        setRankingScoreType(cid.rankingScoreType);
+        setRankingScoreTypes(cid.rankingScores);
         setIonMass(cid.ionMass);
         setIonType(cid.ionType);
     }
