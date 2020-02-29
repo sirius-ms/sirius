@@ -52,7 +52,7 @@ public class StructureSummaryWriter implements Summarizer {
 
 
             final List<SScored<FormulaResult, ? extends FormulaScore>> results =
-                    FormulaScoring.reRankBy(formulaResults, List.of(ZodiacScore.class, SiriusScore.class, TopFingerblastScore.class), true);
+                    FormulaScoring.reRankBy(formulaResults, List.of(SiriusScore.class), true); //sorted by SiriusScore to detect adducts
 
 
             writer.inDirectory(exp.getId().getDirectoryName(), () -> {
@@ -116,6 +116,8 @@ public class StructureSummaryWriter implements Summarizer {
                         }
                     }
                     topHits.forEach(hit -> hit.numberOfAdducts = adductCounts.get(hit.formulaRank));
+                    topHits.forEach(hit -> hit.numberOfFps = topHits.size());
+                    topHits.sort(Hit.compareByFingerIdScore());
                 });
 
 
@@ -151,12 +153,14 @@ public class StructureSummaryWriter implements Summarizer {
     }
 
     static void write(BufferedWriter w, List<Hit> data) throws IOException {
-        w.write("rank\t" + "#adducts" + "\t" + new ConfidenceScore(0).name() + "\t" + StructureCSVExporter.HEADER_LIST.get(0) + "\t" + new ZodiacScore(0).name() + "\t" + new SiriusScore(0).name() + "\t" + String.join("\t", StructureCSVExporter.HEADER_LIST.subList(1, StructureCSVExporter.HEADER_LIST.size())) + "\tid" + "\n");
+        w.write("rank\t" + "#adducts\t" + "#predictedFPs\t" + new ConfidenceScore(0).name() + "\t" + StructureCSVExporter.HEADER_LIST.get(0) + "\t" + new ZodiacScore(0).name() + "\t" + new SiriusScore(0).name() + "\t" + String.join("\t", StructureCSVExporter.HEADER_LIST.subList(1, StructureCSVExporter.HEADER_LIST.size())) + "\tid" + "\n");
         int rank = 0;
         for (Hit s : data) {
             w.write(String.valueOf(++rank));
             w.write("\t");
             w.write(String.valueOf(s.numberOfAdducts));
+            w.write("\t");
+            w.write(String.valueOf(s.numberOfFps));
             w.write("\t");
             w.write(s.line);
         }
@@ -168,6 +172,7 @@ public class StructureSummaryWriter implements Summarizer {
         final TopFingerblastScore csiScore;
         final int formulaRank;
         int numberOfAdducts = 1;
+        int numberOfFps = 1;
 
         Hit(String line, ConfidenceScore confidenceScore, TopFingerblastScore csiScore, int formulaRank) {
             this.line = line;
