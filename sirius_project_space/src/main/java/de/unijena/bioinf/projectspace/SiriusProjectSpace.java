@@ -13,7 +13,6 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -107,7 +106,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType);
 
                 try {
-                    cid.setRankingScoreType(FormulaResultRankingScore.fromString(keyValues.get(CompoundContainerId.RANKING_KEY)).value);
+                    cid.setRankingScoreTypes(FormulaResultRankingScore.fromString(keyValues.get(CompoundContainerId.RANKING_KEY)).value);
                 } catch (Exception e) {
                     LoggerFactory.getLogger(getClass()).warn("Could not parse ionType of '" + dirName + "'", e);
                 }
@@ -248,11 +247,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     // shorthand methods
-    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(CompoundContainerId cid, Class<T> score, Class<? extends DataAnnotation>... components) throws IOException {
-        return getFormulaResultsOrderedBy(getCompound(cid).getResults().values(), score, components);
+    @SafeVarargs
+    public final List<SScored<FormulaResult, ? extends FormulaScore>> getFormulaResultsOrderedBy(CompoundContainerId cid, List<Class<? extends FormulaScore>> scores, Class<? extends DataAnnotation>... components) throws IOException {
+        return getFormulaResultsOrderedBy(getCompound(cid).getResults().values(), scores, components);
     }
 
-    public <T extends FormulaScore> List<SScored<FormulaResult, T>> getFormulaResultsOrderedBy(Collection<FormulaResultId> results, Class<T> score, Class<? extends DataAnnotation>... components) throws IOException {
+    @SafeVarargs
+    public final List<SScored<FormulaResult, ? extends FormulaScore>> getFormulaResultsOrderedBy(Collection<FormulaResultId> results, List<Class<? extends FormulaScore>> scores, Class<? extends DataAnnotation>... components) throws IOException {
         ArrayList<Class<? extends DataAnnotation>> comps = new ArrayList<>(components.length + 1);
         comps.addAll(Arrays.asList(components));
         if (!comps.contains(FormulaScoring.class))
@@ -263,22 +264,16 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         for (FormulaResultId fid : results)
             res.add(getFormulaResult(fid, comps.toArray(Class[]::new)));
 
-        return res.stream().map(fr -> {
-//            try {
-            T fs = fr.getAnnotation(FormulaScoring.class).map(sc -> sc.getAnnotationOr(score, FormulaScore::NA)).orElse(FormulaScore.NA(score));
-                return new SScored<>(fr, fs);
-            /*} catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).warn("Could not load Scores of '" + fr.getId() + "' from Project Space! Score might be NaN", e); //todo remove stack trace
-                try {
-                    return new SScored<>(fr, score.getConstructor(double.class).newInstance(Double.NEGATIVE_INFINITY));
-                } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
-                    throw new RuntimeException("Error when Instantiating Score class: " + score.getName(), e);
-                }
-            }*/
-        }).sorted(Collections.reverseOrder()).collect(Collectors.toList());
+        return FormulaScoring.rankBy(res,scores,true);
+
+//                res.stream().map(fr -> {
+//            T fs = fr.getAnnotation(FormulaScoring.class).map(sc -> sc.getAnnotationOr(score, FormulaScore::NA)).orElse(FormulaScore.NA(score));
+//                return new SScored<>(fr, fs);
+//        }).sorted(Collections.reverseOrder()).collect(Collectors.toList());
     }
 
-    public FormulaResult getFormulaResult(FormulaResultId id, Class<? extends DataAnnotation>... components) throws IOException {
+    @SafeVarargs
+    public final FormulaResult getFormulaResult(FormulaResultId id, Class<? extends DataAnnotation>... components) throws IOException {
         CompoundContainerId parentId = id.getParentId();
         parentId.containerLock.lock();
         try {
@@ -288,7 +283,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public void updateFormulaResult(FormulaResult result, Class<? extends DataAnnotation>... components) throws IOException {
+    @SafeVarargs
+    public final void updateFormulaResult(FormulaResult result, Class<? extends DataAnnotation>... components) throws IOException {
         CompoundContainerId parentId = result.getId().getParentId();
         parentId.containerLock.lock();
         try {
@@ -299,7 +295,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public void deleteFormulaResult(FormulaResultId resultId) throws IOException {
+    public final void deleteFormulaResult(FormulaResultId resultId) throws IOException {
         CompoundContainerId parentId = resultId.getParentId();
         parentId.containerLock.lock();
         try {
@@ -311,7 +307,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
 
-    public CompoundContainer getCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) throws IOException {
+    @SafeVarargs
+    public final CompoundContainer getCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) throws IOException {
         id.containerLock.lock();
         try {
             return getContainer(CompoundContainer.class, id, components);
@@ -320,7 +317,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public void updateCompound(CompoundContainer result, Class<? extends DataAnnotation>... components) throws IOException {
+    @SafeVarargs
+    public final void updateCompound(CompoundContainer result, Class<? extends DataAnnotation>... components) throws IOException {
         final CompoundContainerId id = result.getId();
         id.containerLock.lock();
         try {
@@ -390,8 +388,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     // generic methods
 
-
-    <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
+    @SafeVarargs
+    final <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     Container getContainer(Class<Container> klass, Id id, Class<? extends DataAnnotation>... components) throws IOException {
         // read container
         final Container container = configuration.getContainerSerializer(klass).readFromProjectSpace(new FileBasedProjectSpaceReader(root, this::getProjectSpaceProperty), (r, c, f) -> {
@@ -403,7 +401,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return container;
     }
 
-    <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
+    @SafeVarargs
+    final <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     void updateContainer(Class<Container> klass, Container container, Class<? extends DataAnnotation>... components) throws IOException {
         // write container
         configuration.getContainerSerializer(klass).writeToProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), (r, c, f) -> {
@@ -415,7 +414,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }, container.getId(), container);
     }
 
-    <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
+    final <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     void deleteContainer(Class<Container> klass, Id containerId) throws IOException {
         configuration.getContainerSerializer(klass).deleteFromProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), (r, id) -> {
             // write components
@@ -439,7 +438,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return compoundCounter.get();
     }
 
-    public <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
+    public final <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
         T property = (T) projectSpaceProperties.get(key);
         if (property == null) {
             synchronized (this) {
@@ -463,7 +462,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         } else return Optional.of(property);
     }
 
-    public synchronized <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
+    public final  synchronized <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
         synchronized (projectSpaceProperties) {
             try {
                 configuration.getProjectSpacePropertySerializer(key).write(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), null, null, value != null ? Optional.of(value) : Optional.empty());
@@ -487,7 +486,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
             for (CompoundContainerId cid : ids.values()) {
                 final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
-                final List<SScored<FormulaResult, SiriusScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreType().orElse(SiriusScore.class), annotations);
+                final List<SScored<FormulaResult, ? extends FormulaScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), annotations);
                 for (Summarizer sim : summarizers)
                     sim.addWriteCompoundSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), c, results);
             }
