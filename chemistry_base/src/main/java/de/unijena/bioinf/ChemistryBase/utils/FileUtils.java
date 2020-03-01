@@ -16,6 +16,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 import java.util.zip.*;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -91,12 +92,15 @@ public class FileUtils {
         if (Files.notExists(dest))
             throw new IllegalArgumentException("Root destination dir/file must exist!");
 
-        Files.walk(src).filter(filter).forEach(source -> {
-            String relative = src.relativize(source).toString();
-            final Path target = dest.resolve(relative);
-            if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
-                copy(source, target);
-        });
+        try(final Stream<Path> walker = Files.walk(src)){
+            walker.filter(filter).forEach(source -> {
+                String relative = src.relativize(source).toString();
+                final Path target = dest.resolve(relative);
+                if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
+                    copy(source, target);
+            });
+        }
+
     }
 
     private static void copy(Path source, Path dest) {
