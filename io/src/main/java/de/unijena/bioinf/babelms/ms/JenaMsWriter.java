@@ -28,22 +28,12 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class JenaMsWriter implements DataWriter<Ms2Experiment> {
 
-    public static String toMs(Ms2Experiment experiment) {
-        final StringWriter w = new StringWriter();
-        try (BufferedWriter w2 = new BufferedWriter(w)) {
-            new JenaMsWriter().write(w2, experiment);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return w.toString();
-    }
 
     @Override
     public void write(BufferedWriter writer, Ms2Experiment data) throws IOException {
@@ -107,6 +97,8 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         for (Ms2Spectrum spec : data.getMs2Spectra()) {
             writeMs2(writer, spec);
         }
+
+       // writer.close();
     }
 
     private void writeMs1(BufferedWriter writer, Spectrum spec, boolean isMergedSpectrum) throws IOException {

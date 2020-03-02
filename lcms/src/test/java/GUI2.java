@@ -261,7 +261,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
 
     public static void main(String[] args) {
         final File mzxmlFile = new File(
-                "/home/kaidu/data/raw/Stachybotrys"
+                "/home/kaidu/data/raw/debug"
                 //"/home/kaidu/analysis/canopus/mice/raw/cecum"
                 //"/home/kaidu/analysis/example"
                 //"/home/kaidu/data/raw/rosmarin"
