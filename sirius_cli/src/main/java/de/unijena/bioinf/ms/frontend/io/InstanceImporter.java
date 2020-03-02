@@ -25,16 +25,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class InstanceImporter {
     protected static final Logger LOG = LoggerFactory.getLogger(InstanceImporter.class);
     private final ProjectSpaceManager importTarget;
-    private final double maxMz;
+    //    private final double maxMz;
+    private final Predicate<Ms2Experiment> filter;
 
-    public InstanceImporter(ProjectSpaceManager importTarget, double maxMzToImport/*, boolean ignoreFormula*/) {
+    public InstanceImporter(ProjectSpaceManager importTarget, Predicate<Ms2Experiment> filter) {
         this.importTarget = importTarget;
-        this.maxMz = maxMzToImport;
+        this.filter = filter;
     }
 
     public ImportInstancesJJob makeImportJJob(@NotNull InputFilesOptions files) {
@@ -74,7 +76,7 @@ public class InstanceImporter {
         private void importCSVInput(List<InputFilesOptions.CsvInput> csvInputs) {
             if (csvInputs == null || csvInputs.isEmpty())
                 return;
-            final InstanceIteratorMS2Exp it = new CsvMS2ExpIterator(csvInputs, maxMz).asInstanceIterator(importTarget);
+            final InstanceIteratorMS2Exp it = new CsvMS2ExpIterator(csvInputs, filter).asInstanceIterator(importTarget);
 
             long count = 0;
             while (it.hasNext()) {
@@ -89,7 +91,7 @@ public class InstanceImporter {
             if (files == null || files.isEmpty())
                 return;
 
-            final InstanceIteratorMS2Exp it = new MS2ExpInputIterator(files, maxMz, inputFiles.msInput.ignoreFormula).asInstanceIterator(importTarget);
+            final InstanceIteratorMS2Exp it = new MS2ExpInputIterator(files, filter, inputFiles.msInput.ignoreFormula).asInstanceIterator(importTarget);
 
             long count = 0;
             while (it.hasNext()) {
@@ -139,11 +141,13 @@ public class InstanceImporter {
                         }
                     });
 
-            Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator((cid) -> cid.getIonMass().orElse(0d) <= maxMz);
+            final Iterator<CompoundContainer> psIter = inputSpace.filteredCompoundIterator((c) -> filter.test(c.getAnnotationOrThrow(Ms2Experiment.class)), Ms2Experiment.class);
             while (psIter.hasNext()) {
-                final CompoundContainerId sourceId = psIter.next();
+                final CompoundContainer sourceComp = psIter.next();//inputSpace.getCompound(sourceId, Ms2Experiment.class/*importTarget.projectSpace().getRegisteredCompoundComponents()*/);
+                final CompoundContainerId sourceId = sourceComp.getId();
+
+
                 if (importTarget.compoundFilter.test(sourceId)) {
-                    final CompoundContainer sourceComp = inputSpace.getCompound(sourceId, importTarget.projectSpace().getRegisteredCompoundComponents());
 
                     // create compound
                     @NotNull Instance inst = importTarget.newCompoundWithUniqueId(sourceComp.getAnnotationOrThrow(Ms2Experiment.class));

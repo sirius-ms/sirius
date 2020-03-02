@@ -5,26 +5,28 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 
 import java.util.Iterator;
+import java.util.function.Predicate;
 
 class InstanceIteratorMS2Exp implements Iterator<Instance> {
 
     private final ProjectSpaceManager spaceManager;
-    private final Iterator<Ms2Experiment> MS2ExpInputIterator;
+    private final Iterator<Ms2Experiment> ms2ExperimentIterator;
 
 
-    public InstanceIteratorMS2Exp(Iterator<Ms2Experiment> MS2ExpInputIterator, ProjectSpaceManager spaceManager) {
-        this.MS2ExpInputIterator = MS2ExpInputIterator;
+    public InstanceIteratorMS2Exp(Iterator<Ms2Experiment> ms2ExperimentIterator, ProjectSpaceManager spaceManager) {
+        this.ms2ExperimentIterator = ms2ExperimentIterator;
         this.spaceManager = spaceManager;
     }
 
+
     @Override
     public boolean hasNext() {
-        return MS2ExpInputIterator.hasNext();
+        return ms2ExperimentIterator.hasNext();
     }
 
     @Override
     public Instance next() {
-        Ms2Experiment input = MS2ExpInputIterator.next();
+        Ms2Experiment input = ms2ExperimentIterator.next();
         if (input == null) return null;
         return spaceManager.newCompoundWithUniqueId(input); //this writers
     }

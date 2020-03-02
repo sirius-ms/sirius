@@ -18,8 +18,6 @@ import picocli.CommandLine.Option;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.text.ParseException;
 
 /**
  * This is for not algorithm related parameters.
@@ -84,18 +82,11 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
 
     @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Specify OUTPUT Project-Space: %n|@", order = 200)
-    private ProjectSpaceOptions psOpts = new ProjectSpaceOptions();
+    private OutputOptions psOpts = new OutputOptions();
 
-    private static class ProjectSpaceOptions {
-        @Option(names = {"--output", "--project", "-o"}, description = "Specify the project-space to write into. If no [--input] is specified it is also used as input. For compression use the File ending .zip or .sirius.", order = 210)
-        private Path outputProjectLocation;
-
-        @Option(names = "--naming-convention", description = "Specify a naming scheme for the  compound directories ins the project-space. Default %%index_%%filename_%%compoundname", order = 220)
-        private void setProjectSpaceFilenameFormatter(String projectSpaceFilenameFormatter) throws ParseException {
-            this.projectSpaceFilenameFormatter = new StandardMSFilenameFormatter(projectSpaceFilenameFormatter);
-        }
-
-        private FilenameFormatter projectSpaceFilenameFormatter = null;
+    @Override
+    public OutputOptions getOutput(){
+        return psOpts;
     }
 
     private M projectSpaceToWriteOn = null;
@@ -183,7 +174,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                 InputFilesOptions input = getInput();
                 if (space != null) {
                     if (input != null)
-                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, maxMz).makeImportJJob(input)).awaitResult();
+                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz).makeImportJJob(input)).awaitResult();
                     if (space.size() < 1)
                         logInfo("No Input has been imported to Project-Space. Starting application without input data.");
                     return space;

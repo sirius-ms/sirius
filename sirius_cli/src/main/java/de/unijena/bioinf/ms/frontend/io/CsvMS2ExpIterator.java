@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class CsvMS2ExpIterator implements InstIterProvider {
@@ -16,17 +17,17 @@ public class CsvMS2ExpIterator implements InstIterProvider {
 
     private final Iterator<InputFilesOptions.CsvInput> basIter;
     private final CsvParser parer = new CsvParser();
-    private final double maxMz;
+    private final Predicate<Ms2Experiment> filter;
 
-    private InputFilesOptions.CsvInput next = null;
+    private Ms2Experiment next = null;
 
-    public CsvMS2ExpIterator(List<InputFilesOptions.CsvInput> basIter, double maxMz) {
-        this(basIter.iterator(), maxMz);
+    public CsvMS2ExpIterator(List<InputFilesOptions.CsvInput> basIter, Predicate<Ms2Experiment> filter) {
+        this(basIter.iterator(), filter);
     }
 
-    public CsvMS2ExpIterator(Iterator<InputFilesOptions.CsvInput> basIter, double maxMz) {
+    public CsvMS2ExpIterator(Iterator<InputFilesOptions.CsvInput> basIter, Predicate<Ms2Experiment> filter) {
         this.basIter = basIter;
-        this.maxMz = maxMz;
+        this.filter = filter;
     }
 
     @Override
@@ -35,12 +36,13 @@ public class CsvMS2ExpIterator implements InstIterProvider {
             return true;
 
         if (basIter.hasNext()) {
-            InputFilesOptions.CsvInput csvInput = basIter.next();
-            if (csvInput.parentMz > maxMz) {
-                LOG.info("Skipping instance (CSV)" + csvInput.ms2.stream().map(File::getAbsolutePath).collect(Collectors.joining(",")) + " with mass: " + csvInput.parentMz + " > " + maxMz);
+            final InputFilesOptions.CsvInput csvInput = basIter.next();
+            final Ms2Experiment exp = parer.parseSpectra(csvInput.ms1, csvInput.ms2, csvInput.parentMz, csvInput.ionType, csvInput.formula);
+            if (!filter.test(exp)) {
+                LOG.info("Skipping instance (CSV)" + csvInput.ms2.stream().map(File::getAbsolutePath).collect(Collectors.joining(",")) + " because it does not match the Filter criterion.");
                 return hasNext();
             } else {
-                next = csvInput;
+                next = exp;
                 return true;
             }
         }
@@ -52,7 +54,7 @@ public class CsvMS2ExpIterator implements InstIterProvider {
         try {
             if (!hasNext())
                 return null;
-            return parer.parseSpectra(next.ms1, next.ms2, next.parentMz, next.ionType, next.formula);
+            return next;
         } finally {
             next = null;
         }
