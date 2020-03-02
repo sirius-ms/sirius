@@ -600,8 +600,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                 } else {
                     c = DriverManager.getConnection("jdbc:postgresql://" + host + "/pubchem", username, password);
                 }
-//                c.setNetworkTimeout(Runnable::run, 30000);
-                c.setNetworkTimeout(Runnable::run, 3000000);
+                c.setNetworkTimeout(Runnable::run, 30000);
                 return c;
             } catch (SQLException e) {
                 throw new IOException(e);
