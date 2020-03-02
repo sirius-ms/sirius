@@ -434,6 +434,30 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return ids.values().stream().filter(predicate).iterator();
     }
 
+    @SafeVarargs
+    public final Iterator<CompoundContainer> compoundIterator(Class<? extends DataAnnotation>... components) {
+        return ids.values().stream().map(id -> {
+            try {
+                return getCompound(id, components);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).error("Could not read Compound with ID '" + id.getDirectoryName() + "'. Skipping this Compound!", e);
+            }
+            return null;
+        }).filter(Objects::nonNull).iterator();
+    }
+
+    @SafeVarargs
+    public final Iterator<CompoundContainer> filteredCompoundIterator(Predicate<CompoundContainer> predicate, Class<? extends DataAnnotation>... components) {
+        return ids.values().stream().map(id -> {
+            try {
+                return getCompound(id, components);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).error("Could not read Compound with ID '" + id.getDirectoryName() + "'. Skipping this Compound!", e);
+            }
+            return null;
+        }).filter(Objects::nonNull).filter(predicate).iterator();
+    }
+
     public int size() {
         return compoundCounter.get();
     }
