@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 public class NoiseStatistics {
 
-    private final float[] noise;
+    private float[] noise;
     private int offset, len;
     private TIntArrayList scanNumbers;
     private TFloatArrayList noiseLevels;
@@ -29,8 +29,18 @@ public class NoiseStatistics {
     }
 
     public LocalNoiseModel getLocalNoiseModel() {
+        done();
         return new LocalNoiseModel(noiseLevels.toArray(), scanNumbers.toArray());
     }
+
+    private void done() {
+        if (len < noise.length) {
+            double v = avgNoise/len;
+            for (int k = 0; k < len; ++k) noiseLevels.add((float)v);
+            noise = Arrays.copyOf(noise,len);
+        }
+    }
+
     public GlobalNoiseModel getGlobalNoiseModel() {
         final double noiseLevel = Quickselect.quickselectInplace(noiseLevels.toArray(), 0, noiseLevels.size (),(int)Math.floor(noiseLevels.size()*0.5));
         return new GlobalNoiseModel(noiseLevel, noiseLevel*10);
