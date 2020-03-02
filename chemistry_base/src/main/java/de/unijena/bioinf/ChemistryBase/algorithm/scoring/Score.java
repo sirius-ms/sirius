@@ -39,13 +39,13 @@ public interface Score<T extends Score> extends DataAnnotation, Comparable<T> {
         }
     }
 
-    static String simplify(Class<? extends Score> klass) {
+    static String simplify(Class<? extends Score<?>> klass) {
         return klass.getCanonicalName().replace("de.unijena.bioinf.", "");
     }
 
 
-    abstract class AbstDoubleScore<T extends AbstDoubleScore> implements Score<T> {
-        private static final Map<Class<? extends Score>, Score> MISSINGS = new HashMap<>();
+    abstract class AbstDoubleScore<T extends AbstDoubleScore<?>> implements Score<T> {
+        private static final Map<Class<? extends Score<?>>, Score<?>> MISSINGS = new HashMap<>();
 
         private final double score;
 
@@ -66,7 +66,7 @@ public interface Score<T extends Score> extends DataAnnotation, Comparable<T> {
             return "N/A";
         }
 
-        public synchronized static <T extends Score> T NA(@NotNull Class<T> scoreType, double missingValue) {
+        public synchronized static <T extends Score<?>> T NA(@NotNull Class<T> scoreType, double missingValue) {
             T inst = (T) MISSINGS.get(scoreType);
             if (inst == null) {
                 try {
