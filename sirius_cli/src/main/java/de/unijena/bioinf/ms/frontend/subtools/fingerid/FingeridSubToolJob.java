@@ -7,6 +7,8 @@ import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
@@ -35,7 +37,7 @@ public class FingeridSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
-                inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FingerblastResult.class);
+                inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FBCandidates.class);
 
         if (formulaResults == null || formulaResults.isEmpty()) {
             logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are not trees computed.");
@@ -43,7 +45,7 @@ public class FingeridSubToolJob extends InstanceJob {
         }
 
         if (!isRecompute(inst) && formulaResults.stream().findFirst().map(SScored::getCandidate)
-                .map(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FingerblastResult.class)).orElse(true)) {
+                .map(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FBCandidates.class)).orElse(true)) {
             logInfo("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist or result list is empty.");
             return;
         }
@@ -88,10 +90,11 @@ public class FingeridSubToolJob extends InstanceJob {
 
         assert formulaResultsMap.size() >= result.size();
 
+        //calculate and annotate tanimoto scores
         List<BasicJJob<Double>> tanimotoJobs = new ArrayList<>();
         result.stream().filter(it -> it.hasAnnotation(FingerprintResult.class) && it.hasAnnotation(FingerblastResult.class)).forEach(it -> {
             final ProbabilityFingerprint fp = it.getPredictedFingerprint();
-            it.getCandidates().stream().map(SScored::getCandidate).forEach(candidate ->
+            it.getFingerprintCandidates().stream().map(SScored::getCandidate).forEach(candidate ->
                     tanimotoJobs.add(new BasicJJob<>() {
                         @Override
                         protected Double compute() {
@@ -105,27 +108,30 @@ public class FingeridSubToolJob extends InstanceJob {
 
         SiriusJobs.getGlobalJobManager().submitJobsInBatches(tanimotoJobs).forEach(JJob::getResult);
 
-
+        //annotate FingerIdResults to FormulaResult
         for (FingerIdResult structRes : result) {
             final FormulaResult formRes = formulaResultsMap.get(structRes.sourceTree);
-            // annotate results
-
             assert structRes.sourceTree == formRes.getAnnotationOrThrow(FTree.class);
 
+            // annotate results
             formRes.setAnnotation(FingerprintResult.class, structRes.getAnnotationOrNull(FingerprintResult.class));
-            formRes.setAnnotation(FingerblastResult.class, structRes.getAnnotationOrNull(FingerblastResult.class));
 
-            formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(TopFingerblastScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
-            formRes.getAnnotationOrThrow(FormulaScoring.class).setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x->x.score).orElse(null));
+            formRes.setAnnotation(FBCandidates.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidates).orElse(null));
+            formRes.setAnnotation(FBCandidateFingerprints.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidateFingerprints).orElse(null));
+            formRes.getAnnotationOrThrow(FormulaScoring.class)
+                    .setAnnotation(TopFingerblastScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
 
-//            setRanking score
+            formRes.getAnnotationOrThrow(FormulaScoring.class)
+                    .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
+
+            // write results
             inst.updateFormulaResult(formRes,
-                    FormulaScoring.class, FingerprintResult.class, FingerblastResult.class);
+                    FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
         }
     }
 
     @Override
     protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
-        return new Class[]{FTree.class, FingerblastResult.class};
+        return new Class[]{FTree.class, FBCandidates.class, FBCandidateFingerprints.class};
     }
 }

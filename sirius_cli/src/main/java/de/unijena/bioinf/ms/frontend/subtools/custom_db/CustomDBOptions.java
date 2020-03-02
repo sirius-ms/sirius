@@ -3,7 +3,10 @@ package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.subtools.*;
+import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import org.slf4j.LoggerFactory;
@@ -32,8 +35,14 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     @Option(names = {"--buffer-size", "--buffer"}, description = "Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory).", defaultValue = "1000", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
     public int writeBuffer;
 
+    @Option(names = {"--derive-pubchem"}, description = "The resulting custom-db will be the Union of the CSI:FingerID 'PubChem' database and the imported structures", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+    public boolean deriveFromPubchem;
+
+    @Option(names = {"--derive-bio"}, description = "The resulting custom-db will be the Union of the CSI:FingerID 'BIO' database and the imported structures", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+    public boolean deriveFromBio;
+
     @Override
-    public Workflow makeWorkflow(RootOptions<?,?> rootOptions, ParameterConfig config) {
+    public Workflow makeWorkflow(RootOptions<?, ?> rootOptions, ParameterConfig config) {
         return () -> {
 
             final InputFilesOptions input = rootOptions.getInput();
@@ -46,6 +55,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 Files.createDirectories(loc);
                 CustomDatabaseImporter.importDatabase(loc.resolve(dbName).toFile(),
                         input.msInput.unknownFiles.stream().map(Path::toFile).collect(Collectors.toList()),
+                        deriveFromPubchem, deriveFromBio,
                         ApplicationCore.WEB_API, writeBuffer);
                 LoggerFactory.getLogger(CustomDatabaseImporter.class).info("Database imported. Use 'structure --db=\"" + loc.toString() + "\"' to search in this database.");
             } catch (IOException e) {
