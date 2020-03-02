@@ -50,9 +50,9 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     public final BiFunction<Integer, String, String> namingScheme;
     @NotNull
     public final Predicate<CompoundContainerId> compoundFilter;
-    protected final InstanceFactory instFac;
+    protected final InstanceFactory<?>  instFac;
 
-    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
+    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
         this.space = space;
         this.instFac = factory;
         this.nameFormatter = formatter != null ? formatter : new StandardMSFilenameFormatter();
@@ -72,7 +72,8 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         return instFac.create(container, this);
     }
 
-    public Instance newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final Instance newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
         try {
             CompoundContainer c = projectSpace().getCompound(id, components);
             return instFac.create(c, this);

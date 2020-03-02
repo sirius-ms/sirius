@@ -7,6 +7,9 @@ import org.jetbrains.annotations.Nullable;
 public interface RootOptions<T extends PreprocessingJob<?>, P extends PostprocessingJob<?>> {
     InputFilesOptions getInput();
 
+    OutputOptions getOutput();
+
+
     ProjectSpaceManager getProjectSpace();
 
     @NotNull
