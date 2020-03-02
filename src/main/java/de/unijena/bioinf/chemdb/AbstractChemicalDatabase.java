@@ -50,7 +50,7 @@ public abstract class AbstractChemicalDatabase implements Closeable, Cloneable, 
      * @return
      */
     public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        return lookupStructuresAndFingerprintsByFormula(formula, new ArrayList<FingerprintCandidate>());
+        return lookupStructuresAndFingerprintsByFormula(formula, new ArrayList<>());
     }
 
     public abstract List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;

@@ -23,8 +23,13 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
-import javax.json.*;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonNumber;
+import javax.json.JsonObject;
 import javax.json.stream.JsonGenerator;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -39,6 +44,8 @@ public class CompoundCandidate {
     protected int pLayer;
     protected int qLayer;
     protected double xlogp = Double.NaN;
+    @Nullable //this is the tanimoto to a matched fingerprint.
+    protected Double tanimoto = null;
 
     //database info
     protected long bitset;
@@ -57,6 +64,7 @@ public class CompoundCandidate {
         this.pLayer = c.pLayer;
         this.qLayer = c.qLayer;
         this.xlogp = c.xlogp;
+        this.tanimoto = c.tanimoto;
         if (c.pubmedIDs != null)
             this.pubmedIDs = c.pubmedIDs;
     }
@@ -77,7 +85,18 @@ public class CompoundCandidate {
         this.smiles = o.getString("smiles", null);
         this.pLayer = o.getInt("pLayer", 0);
         this.qLayer = o.getInt("qLayer", 0);
-        this.xlogp = !o.containsKey("xlogp") || o.isNull("xlogp") || o.getJsonNumber("xlogp").equals(JsonNumber.NULL) ? Double.NaN : o.getJsonNumber("xlogp").doubleValue();
+        this.xlogp = Double.NaN;
+        try {//todo HACK:  sometimes this is not parsable
+            if (o.containsKey("xlogp") && !o.isNull("xlogp")) {
+                this.xlogp = o.getJsonNumber("xlogp").doubleValue();
+            }
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass()).warn("Could not parse xlogp from String.", e);
+        }
+        this.tanimoto = null;
+        if (o.containsKey("tanimoto") && !o.isNull("tanimoto"))
+            this.tanimoto = o.getJsonNumber("tanimoto").doubleValue();
+
         final JsonObject map = o.getJsonObject("links");
         if (map != null) {
             final ArrayList<DBLink> links = new ArrayList<>();
@@ -139,11 +158,16 @@ public class CompoundCandidate {
         writer.write("pLayer", pLayer);
         writer.write("qLayer", qLayer);
 
-        if (Double.isNaN(xlogp)) {
+        if (Double.isNaN(xlogp))
             writer.write("xlogp", JsonNumber.NULL);
-        } else {
+        else
             writer.write("xlogp", xlogp);
-        }
+
+        if (tanimoto == null || Double.isNaN(tanimoto))
+            writer.write("tanimoto", JsonNumber.NULL);
+        else
+            writer.write("tanimoto", tanimoto);
+
         if (name != null) writer.write("name", name);
         if (smiles != null) writer.write("smiles", smiles);
         writer.write("bitset", bitset);
@@ -241,6 +265,15 @@ public class CompoundCandidate {
 
     public void setXlogp(double xlogp) {
         this.xlogp = xlogp;
+    }
+
+
+    public Double getTanimoto() {
+        return tanimoto;
+    }
+
+    public void setTanimoto(Double tanimoto) {
+        this.tanimoto = tanimoto;
     }
 
     public boolean canBeNeutralCharged() {
