@@ -48,10 +48,10 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     public final Function<Ms2Experiment, String> nameFormatter;
     public final BiFunction<Integer, String, String> namingScheme;
     @NotNull
-    public final Predicate<CompoundContainerId> compoundFilter;
-    protected final InstanceFactory<?>  instFac;
+    public final Predicate<CompoundContainer> compoundFilter;
+    protected final InstanceFactory<?> instFac;
 
-    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
+    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainer> compoundFilter) {
         this.space = space;
         this.instFac = factory;
         this.nameFormatter = formatter != null ? formatter : new StandardMSFilenameFormatter();
@@ -95,7 +95,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     @Override
     public Iterator<Instance> iterator() {
         return new Iterator<>() {
-            final Iterator<CompoundContainerId> it = space.filteredIterator(compoundFilter);
+            final Iterator<CompoundContainer> it = space.filteredCompoundIterator(compoundFilter, Ms2Experiment.class);
 
             @Override
             public boolean hasNext() {
@@ -104,9 +104,9 @@ public class ProjectSpaceManager implements Iterable<Instance> {
 
             @Override
             public Instance next() {
-                final CompoundContainerId id = it.next();
-                if (id == null) return null;
-                return newInstanceFromCompound(id, Ms2Experiment.class);
+                final CompoundContainer c = it.next();
+                if (c == null) return null;
+                return instFac.create(c, ProjectSpaceManager.this);
             }
         };
     }
