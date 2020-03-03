@@ -3,9 +3,9 @@ package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 
-public class TopFingerblastScore extends FormulaScore {
+public class TopCSIScore extends FormulaScore {
 
-    public TopFingerblastScore(double score) {
+    public TopCSIScore(double score) {
         super(score);
     }
 

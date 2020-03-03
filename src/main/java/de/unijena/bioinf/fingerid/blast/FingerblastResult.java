@@ -28,10 +28,10 @@ public class FingerblastResult implements ResultAnnotation {
         return Collections.unmodifiableList(results);
     }
 
-    public TopFingerblastScore getTopHitScore() {
+    public TopCSIScore getTopHitScore() {
         if (results == null || results.isEmpty())
             return null;
-        return new TopFingerblastScore(results.get(0).getScore());
+        return new TopCSIScore(results.get(0).getScore());
     }
 
     public FBCandidateFingerprints getCandidateFingerprints(){
