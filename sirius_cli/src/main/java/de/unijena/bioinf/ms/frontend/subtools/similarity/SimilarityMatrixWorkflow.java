@@ -15,7 +15,7 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ftalign.StandardScoring;
 import de.unijena.bioinf.ftalign.analyse.Pearson;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 public class SimilarityMatrixWorkflow implements Workflow {
 
     private final static List<Class<? extends FormulaScore>> rankSores =
-            List.of(TopFingerblastScore.class, ZodiacScore.class, SiriusScore.class);
+            List.of(TopCSIScore.class, ZodiacScore.class, SiriusScore.class);
     protected final SimilarityMatrixOptions options;
     protected ProjectSpaceManager ps;
     protected final ParameterConfig config;

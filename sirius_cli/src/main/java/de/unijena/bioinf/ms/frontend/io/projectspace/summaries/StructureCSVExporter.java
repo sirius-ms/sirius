@@ -25,7 +25,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class StructureCSVExporter {
-    public static final List<String> HEADER_LIST = List.of(new TopFingerblastScore(0).name(), "molecularFormula", "adduct", "InChIkey2D", "InChI", "name", "smiles", "xlogp", "pubchemids", "links");
+    public static final List<String> HEADER_LIST = List.of(new TopCSIScore(0).name(), "molecularFormula", "adduct", "InChIkey2D", "InChI", "name", "smiles", "xlogp", "pubchemids", "links");
     public static final String HEADER = String.join("\t", HEADER_LIST);
 
     public void exportFingerIdResults(Writer writer, FormulaResult formulaResult) throws IOException {

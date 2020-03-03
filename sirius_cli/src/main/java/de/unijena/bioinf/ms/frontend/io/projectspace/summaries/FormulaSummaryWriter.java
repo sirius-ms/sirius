@@ -9,7 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
-import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.FormulaScoring;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 public class FormulaSummaryWriter implements Summarizer {
 
-    final static List<Class<? extends FormulaScore>> RANKING_SCORES = List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class, TopFingerblastScore.class);
+    final static List<Class<? extends FormulaScore>> RANKING_SCORES = List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class, TopCSIScore.class);
     final LinkedHashMap<Class<? extends FormulaScore>, String> globalTypes = new LinkedHashMap<>();
     final Map<FormulaResult, Class<? extends FormulaScore>> globalResults = new HashMap<>();
     final Map<FormulaResult, String> prefix = new HashMap<>();
@@ -74,7 +74,7 @@ public class FormulaSummaryWriter implements Summarizer {
                         }));
 
                 //writing stuff
-                types.remove(TopFingerblastScore.class);
+                types.remove(TopCSIScore.class);
                 types.remove(ConfidenceScore.class);
                 writeCSV(w, types, results, null);
             });
@@ -87,7 +87,7 @@ public class FormulaSummaryWriter implements Summarizer {
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
         final List<SScored<FormulaResult, ? extends FormulaScore>> r = FormulaScoring.rankBy(globalResults.keySet(), RANKING_SCORES, true);
         globalTypes.remove(ConfidenceScore.class);
-        globalTypes.remove(TopFingerblastScore.class);
+        globalTypes.remove(TopCSIScore.class);
         writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> {
             writeCSV(w, globalTypes, r, prefix);
         });

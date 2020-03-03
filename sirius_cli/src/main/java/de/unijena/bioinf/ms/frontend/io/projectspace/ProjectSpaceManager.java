@@ -10,8 +10,7 @@ import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.FormulaSummaryWriter;
 import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.StructureSummaryWriter;
@@ -123,7 +122,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     public static List<Class<? extends FormulaScore>> scorePriorities() {
         final LinkedList<Class<? extends FormulaScore>> list = new LinkedList<>();
         list.add(ConfidenceScore.class);
-        list.add(TopFingerblastScore.class);
+        list.add(TopCSIScore.class);
         list.add(ZodiacScore.class);
         list.add(SiriusScore.class);
         list.add(TreeScore.class);
