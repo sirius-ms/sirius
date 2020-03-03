@@ -31,6 +31,7 @@ public interface Score<T extends Score> extends DataAnnotation, Comparable<T> {
             return null;
 
         try {
+            name = name.replace("TopFingerblastScore","TopCSIScore");
             if (name.startsWith("de.unijena.bioinf"))
                 return (Class<? extends Score>) Class.forName(name);
             else return (Class<? extends Score>) Class.forName("de.unijena.bioinf." + name);
