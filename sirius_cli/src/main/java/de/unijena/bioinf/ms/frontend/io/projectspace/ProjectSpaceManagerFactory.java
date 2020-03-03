@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.frontend.io.projectspace;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,16 +16,16 @@ public interface ProjectSpaceManagerFactory<M extends ProjectSpaceManager> {
     }
 
 
-    default M create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
+    default M create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainer> compoundFilter) {
         return create(space, new InstanceFactory.Default(), formatter, compoundFilter);
     }
 
-    M create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter);
+    M create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainer> compoundFilter);
 
 
     final class Default implements ProjectSpaceManagerFactory<ProjectSpaceManager> {
         @Override
-        public ProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
+        public ProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainer> compoundFilter) {
             return new ProjectSpaceManager(space, factory, formatter, compoundFilter);
         }
     }

@@ -130,11 +130,11 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                 psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(psOpts.projectSpaceFilenameFormatter));
             }
 
-            return spaceManagerFactory.create(psTmp, psOpts.projectSpaceFilenameFormatter, id -> {
-                if (id.getIonMass().orElse(Double.NaN) <= maxMz)
+            return spaceManagerFactory.create(psTmp, psOpts.projectSpaceFilenameFormatter, c -> {
+                if (c.getId().getIonMass().orElse(Double.NaN) <= maxMz)
                     return true;
                 else {
-                    LOG.info("Skipping instance " + id.toString() + " with mass: " + id.getIonMass().orElse(Double.NaN) + " > " + maxMz);
+                    LOG.info("Skipping instance " + c.getId().toString() + " with mass: " + c.getId().getIonMass().orElse(Double.NaN) + " > " + maxMz);
                     return false;
                 }
             });

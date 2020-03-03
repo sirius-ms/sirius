@@ -103,11 +103,15 @@ public class InstanceImporter {
         }
 
         public void importProjectsInput(@Nullable List<Path> files) {
+            importProjectsInput(files, (c) -> true);
+        }
+
+        public void importProjectsInput(@Nullable List<Path> files, @NotNull final Predicate<CompoundContainerId> idFilter) {
             if (files == null || files.isEmpty())
                 return;
             files.forEach(f -> {
                 try {
-                    importProject(f);
+                    importProject(f, idFilter);
                     updateProgress(0, max, ++current);
                 } catch (IOException e) {
                     LOG.error("Could not Unpack archived Project `" + f.toString() + "'. Skipping this location!", e);
@@ -116,20 +120,28 @@ public class InstanceImporter {
         }
 
         public void importProject(@NotNull Path file) throws IOException {
+            importProject(file, (c) -> true);
+        }
+
+        public void importProject(@NotNull Path file, @NotNull final Predicate<CompoundContainerId> idFilter) throws IOException {
             if (file.toAbsolutePath().equals(importTarget.projectSpace().getLocation().toAbsolutePath())) {
                 LOG.warn("target location '" + importTarget.projectSpace().getLocation() + "' was also part of the INPUT and will be ignored!");
                 return;
             }
 
             try (final SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(file)) {
-                importProject(ps);
+                importProject(ps, idFilter);
                 // rescale progress to have at least some weighting regarding throu the compounds
                 current += ps.size();
                 max += ps.size();
             }
         }
 
-        public void importProject(SiriusProjectSpace inputSpace) throws IOException {
+        public void importProject(@NotNull SiriusProjectSpace inputSpace) throws IOException {
+            importProject(inputSpace, (c) -> true);
+        }
+
+        public void importProject(@NotNull SiriusProjectSpace inputSpace, @NotNull final Predicate<CompoundContainerId> idFilter) throws IOException {
             Files.list(inputSpace.getRootPath()).filter(Files::isRegularFile).filter(p -> !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME))
                     .forEach(s -> {
                         final Path t = importTarget.projectSpace().getRootPath().resolve(s.getFileName().toString());
@@ -141,32 +153,28 @@ public class InstanceImporter {
                         }
                     });
 
-            final Iterator<CompoundContainer> psIter = inputSpace.filteredCompoundIterator((c) -> filter.test(c.getAnnotationOrThrow(Ms2Experiment.class)), Ms2Experiment.class);
+            final Iterator<CompoundContainer> psIter = inputSpace.
+                    filteredCompoundIterator((c) -> idFilter.test(c.getId()) && filter.test(c.getAnnotationOrThrow(Ms2Experiment.class)), Ms2Experiment.class);
             while (psIter.hasNext()) {
-                final CompoundContainer sourceComp = psIter.next();//inputSpace.getCompound(sourceId, Ms2Experiment.class/*importTarget.projectSpace().getRegisteredCompoundComponents()*/);
+                final CompoundContainer sourceComp = psIter.next();
                 final CompoundContainerId sourceId = sourceComp.getId();
+                // create compound
+                @NotNull Instance inst = importTarget.newCompoundWithUniqueId(sourceComp.getAnnotationOrThrow(Ms2Experiment.class));
+                inst.getID().setAllNonFinal(sourceId);
+                inst.updateCompoundID();
 
-
-                if (importTarget.compoundFilter.test(sourceId)) {
-
-                    // create compound
-                    @NotNull Instance inst = importTarget.newCompoundWithUniqueId(sourceComp.getAnnotationOrThrow(Ms2Experiment.class));
-                    inst.getID().setAllNonFinal(sourceId);
-                    inst.updateCompoundID();
-
-                    Files.list(inputSpace.getRootPath().resolve(sourceId.getDirectoryName()))
-                            .filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO) && !p.getFileName().toString().equals(SiriusLocations.MS2_EXPERIMENT))
-                            .forEach(s -> {
-                                final Path t = importTarget.projectSpace().getRootPath().resolve(inst.getID().getDirectoryName()).resolve(s.getFileName().toString());
-                                try {
-                                    Files.createDirectories(t);
-                                    FileUtils.copyFolder(s, t);
-                                    inst.reloadCompoundCache(Ms2Experiment.class);
-                                } catch (IOException e) {
-                                    LOG.error("Could not Copy instance `" + inst.getID().getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
-                                }
-                            });
-                }
+                Files.list(inputSpace.getRootPath().resolve(sourceId.getDirectoryName()))
+                        .filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO) && !p.getFileName().toString().equals(SiriusLocations.MS2_EXPERIMENT))
+                        .forEach(s -> {
+                            final Path t = importTarget.projectSpace().getRootPath().resolve(inst.getID().getDirectoryName()).resolve(s.getFileName().toString());
+                            try {
+                                Files.createDirectories(t);
+                                FileUtils.copyFolder(s, t);
+                                inst.reloadCompoundCache(Ms2Experiment.class);
+                            } catch (IOException e) {
+                                LOG.error("Could not Copy instance `" + inst.getID().getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
+                            }
+                        });
             }
         }
     }

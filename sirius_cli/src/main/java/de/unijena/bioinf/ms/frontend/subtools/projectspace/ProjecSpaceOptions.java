@@ -94,7 +94,7 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
     }
 
     public ProjectSpaceWorkflow makeWorkflow(RootOptions<?, ?> rootOptions, ParameterConfig config) {
-        return new ProjectSpaceWorkflow(rootOptions);
+        return new ProjectSpaceWorkflow(rootOptions, this);
     }
 }
 
