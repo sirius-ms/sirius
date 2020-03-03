@@ -22,7 +22,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.SummaryLocations;
 import de.unijena.bioinf.projectspace.FormulaScoring;
@@ -106,10 +106,10 @@ public class MztabMExporter implements Summarizer {
             // check if fingerid results are available
             Scored<CompoundCandidate> bestHit = null;
             int bestHitSourceRank = 1;
-            if (bestHitScores.hasAnnotation(TopFingerblastScore.class)) {
+            if (bestHitScores.hasAnnotation(TopCSIScore.class)) {
                 bestHitSource = results.stream()
-                        .filter(s -> s.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(TopFingerblastScore.class))
-                        .map(s -> new SScored<>(s.getCandidate(), s.getCandidate().getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(TopFingerblastScore.class)))
+                        .filter(s -> s.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(TopCSIScore.class))
+                        .map(s -> new SScored<>(s.getCandidate(), s.getCandidate().getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(TopCSIScore.class)))
                         .sorted().findFirst().map(SScored::getCandidate).orElseThrow();
                 bestHit = bestHitSource.getAnnotationOrThrow(FBCandidates.class).getResults().get(0);
 
@@ -235,7 +235,7 @@ public class MztabMExporter implements Summarizer {
         smeItem.setSmiles(bestHit.getCandidate().getSmiles());
 
         @NotNull final FormulaScoring scoring = bestHitSource.getAnnotationOrThrow(FormulaScoring.class);
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_SCORE, scoring.getAnnotation(TopFingerblastScore.class).map(String::valueOf).orElse(FormulaScore.NA())));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_SCORE, scoring.getAnnotation(TopCSIScore.class).map(String::valueOf).orElse(FormulaScore.NA())));
 //        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.FINGERID_TANIMOTO_SIMILARITY, bestHit.getCandidate().));
 
         final ConfidenceScore c = scoring.getAnnotationOr(ConfidenceScore.class, FormulaScore::NA);

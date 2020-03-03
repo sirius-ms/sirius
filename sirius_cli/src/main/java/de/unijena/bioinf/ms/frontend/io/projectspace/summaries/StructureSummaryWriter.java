@@ -8,7 +8,7 @@ import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.fingerid.blast.TopFingerblastScore;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.ProjectWriter;
@@ -103,8 +103,8 @@ public class StructureSummaryWriter implements Summarizer {
                                 if (!lines.get(0).isEmpty()) {
                                     final ConfidenceScore confidence = result.getCandidate().getAnnotation(FormulaScoring.class).
                                             map(s -> s.getAnnotationOr(ConfidenceScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ConfidenceScore.class));
-                                    final TopFingerblastScore csiScore = result.getCandidate().getAnnotation(FormulaScoring.class).
-                                            map(s -> s.getAnnotationOr(TopFingerblastScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(TopFingerblastScore.class));
+                                    final TopCSIScore csiScore = result.getCandidate().getAnnotation(FormulaScoring.class).
+                                            map(s -> s.getAnnotationOr(TopCSIScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(TopCSIScore.class));
                                     final SiriusScore siriusScore = result.getCandidate().getAnnotation(FormulaScoring.class).
                                             map(s -> s.getAnnotationOr(SiriusScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(SiriusScore.class));
                                     final ZodiacScore zodiacScore = result.getCandidate().getAnnotation(FormulaScoring.class).
@@ -169,12 +169,12 @@ public class StructureSummaryWriter implements Summarizer {
     static class Hit {
         final String line;
         final ConfidenceScore confidenceScore;
-        final TopFingerblastScore csiScore;
+        final TopCSIScore csiScore;
         final int formulaRank;
         int numberOfAdducts = 1;
         int numberOfFps = 1;
 
-        Hit(String line, ConfidenceScore confidenceScore, TopFingerblastScore csiScore, int formulaRank) {
+        Hit(String line, ConfidenceScore confidenceScore, TopCSIScore csiScore, int formulaRank) {
             this.line = line;
             this.confidenceScore = confidenceScore;
             this.csiScore = csiScore;
