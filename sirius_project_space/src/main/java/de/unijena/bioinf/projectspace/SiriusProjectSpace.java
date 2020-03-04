@@ -436,26 +436,16 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     @SafeVarargs
     public final Iterator<CompoundContainer> compoundIterator(Class<? extends DataAnnotation>... components) {
-        return ids.values().stream().map(id -> {
-            try {
-                return getCompound(id, components);
-            } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).error("Could not read Compound with ID '" + id.getDirectoryName() + "'. Skipping this Compound!", e);
-            }
-            return null;
-        }).filter(Objects::nonNull).iterator();
+        return new CompoundContainerIterator(this, components);
     }
 
     @SafeVarargs
-    public final Iterator<CompoundContainer> filteredCompoundIterator(Predicate<CompoundContainer> predicate, Class<? extends DataAnnotation>... components) {
-        return ids.values().stream().map(id -> {
-            try {
-                return getCompound(id, components);
-            } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).error("Could not read Compound with ID '" + id.getDirectoryName() + "'. Skipping this Compound!", e);
-            }
-            return null;
-        }).filter(Objects::nonNull).filter(predicate).iterator();
+    public final Iterator<CompoundContainer> filteredCompoundIterator(@Nullable Predicate<CompoundContainerId> prefilter, @Nullable Predicate<CompoundContainer> filter, @NotNull Class<? extends DataAnnotation>... components) {
+        return new CompoundContainerIterator(this, prefilter, filter, components);
+    }
+
+    public final Iterator<CompoundContainer> filteredCompoundIterator(@Nullable Predicate<CompoundContainerId> prefilter, @Nullable Predicate<Ms2Experiment> filter) {
+        return new CompoundContainerIterator(this, prefilter, filter != null ? (c) -> filter.test(c.getAnnotationOrThrow(Ms2Experiment.class)) : null, Ms2Experiment.class);
     }
 
     public int size() {
