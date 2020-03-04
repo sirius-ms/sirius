@@ -12,21 +12,21 @@ import java.util.function.Predicate;
 
 public interface ProjectSpaceManagerFactory<M extends ProjectSpaceManager> {
     default M create(SiriusProjectSpace space) {
-        return create(space, null, null);
+        return create(space, null);
     }
 
 
-    default M create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainer> compoundFilter) {
-        return create(space, new InstanceFactory.Default(), formatter, compoundFilter);
+    default M create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
+        return create(space, new InstanceFactory.Default(), formatter);
     }
 
-    M create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainer> compoundFilter);
+    M create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter);
 
 
     final class Default implements ProjectSpaceManagerFactory<ProjectSpaceManager> {
         @Override
-        public ProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainer> compoundFilter) {
-            return new ProjectSpaceManager(space, factory, formatter, compoundFilter);
+        public ProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter) {
+            return new ProjectSpaceManager(space, factory, formatter);
         }
     }
 }

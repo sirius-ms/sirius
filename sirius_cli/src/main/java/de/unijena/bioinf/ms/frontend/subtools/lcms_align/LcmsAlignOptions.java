@@ -10,7 +10,7 @@ import picocli.CommandLine;
 public class LcmsAlignOptions implements PreprocessingTool<LcmsAlignSubToolJob> {
 
     @Override
-    public LcmsAlignSubToolJob makePreprocessingJob(RootOptions<?,?> rootOptions, ParameterConfig config) {
+    public LcmsAlignSubToolJob makePreprocessingJob(RootOptions<?,?, ?> rootOptions, ParameterConfig config) {
         return new LcmsAlignSubToolJob(rootOptions);
     }
 }

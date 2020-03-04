@@ -47,16 +47,16 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     private final SiriusProjectSpace space;
     public final Function<Ms2Experiment, String> nameFormatter;
     public final BiFunction<Integer, String, String> namingScheme;
-    @NotNull
-    public final Predicate<CompoundContainer> compoundFilter;
+    private Predicate<CompoundContainerId> compoundIdFilter;
     protected final InstanceFactory<?> instFac;
 
-    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainer> compoundFilter) {
+    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
         this.space = space;
         this.instFac = factory;
-        this.nameFormatter = formatter != null ? formatter : new StandardMSFilenameFormatter();
+        this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class).map(p -> (Function<Ms2Experiment, String>) new StandardMSFilenameFormatter(p.formatExpression))
+                .orElse((formatter != null ? formatter : new StandardMSFilenameFormatter()));
+
         this.namingScheme = (idx, name) -> idx + "_" + name;
-        this.compoundFilter = compoundFilter != null ? compoundFilter : id -> true;
     }
 
     public SiriusProjectSpace projectSpace() {
@@ -69,6 +69,14 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         final String name = nameFormatter.apply(inputExperiment);
         final CompoundContainer container = projectSpace().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name), inputExperiment).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
         return instFac.create(container, this);
+    }
+
+    public Predicate<CompoundContainerId> getCompoundIdFilter() {
+        return compoundIdFilter;
+    }
+
+    public void setCompoundIdFilter(Predicate<CompoundContainerId> compoundFilter) {
+        this.compoundIdFilter = compoundFilter;
     }
 
     @SafeVarargs
@@ -90,21 +98,35 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         return projectSpace().setProjectSpaceProperty(key, value);
     }
 
+    @NotNull
+    public Iterator<Instance> filteredIterator(@Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter) {
+        if (compoundFilter == null && cidFilter == null)
+            return iterator();
+        final Predicate<CompoundContainerId> cidF = (cidFilter != null && compoundFilter != null)
+                ? (cid) -> cidFilter.test(cid) && this.compoundIdFilter.test(cid)
+                : cidFilter == null ? this.compoundIdFilter : cidFilter;
+        return makeInstanceIterator(space.filteredCompoundIterator(cidF, compoundFilter, Ms2Experiment.class));
+    }
+
 
     @NotNull
     @Override
     public Iterator<Instance> iterator() {
-        return new Iterator<>() {
-            final Iterator<CompoundContainer> it = space.filteredCompoundIterator(compoundFilter, Ms2Experiment.class);
+        if (compoundIdFilter != null)
+            return filteredIterator(compoundIdFilter, null);
+        return makeInstanceIterator(space.compoundIterator(Ms2Experiment.class));
+    }
 
+    private Iterator<Instance> makeInstanceIterator(@NotNull final Iterator<CompoundContainer> compoundIt) {
+        return new Iterator<>() {
             @Override
             public boolean hasNext() {
-                return it.hasNext();
+                return compoundIt.hasNext();
             }
 
             @Override
             public Instance next() {
-                final CompoundContainer c = it.next();
+                final CompoundContainer c = compoundIt.next();
                 if (c == null) return null;
                 return instFac.create(c, ProjectSpaceManager.this);
             }

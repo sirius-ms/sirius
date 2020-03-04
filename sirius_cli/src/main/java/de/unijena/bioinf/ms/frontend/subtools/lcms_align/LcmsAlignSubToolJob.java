@@ -34,9 +34,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
-    protected final RootOptions<?,?> rootCLI;
+    protected final RootOptions<?,?,?> rootCLI;
 
-    public LcmsAlignSubToolJob(RootOptions<?,?> rootCLI) {
+    public LcmsAlignSubToolJob(RootOptions<?,?,?> rootCLI) {
         super();
         this.rootCLI = rootCLI;
     }

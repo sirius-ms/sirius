@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ms.annotations.WriteSummaries;
 import de.unijena.bioinf.ms.frontend.io.InstanceImporter;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManagerFactory;
@@ -29,7 +30,7 @@ import java.nio.file.Files;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "sirius", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
-public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOptions<PreprocessingJob<ProjectSpaceManager>, PostprocessingJob<Boolean>> {
+public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOptions<M, PreprocessingJob<M>, PostprocessingJob<Boolean>> {
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
@@ -85,11 +86,15 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     private OutputOptions psOpts = new OutputOptions();
 
     @Override
-    public OutputOptions getOutput(){
+    public OutputOptions getOutput() {
         return psOpts;
     }
 
     private M projectSpaceToWriteOn = null;
+
+    public ProjectSpaceManagerFactory<M> getSpaceManagerFactory() {
+        return spaceManagerFactory;
+    }
 
     @Override
     public M getProjectSpace() {
@@ -130,14 +135,16 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                 psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(psOpts.projectSpaceFilenameFormatter));
             }
 
-            return spaceManagerFactory.create(psTmp, psOpts.projectSpaceFilenameFormatter, c -> {
-                if (c.getId().getIonMass().orElse(Double.NaN) <= maxMz)
+            final M space = spaceManagerFactory.create(psTmp, psOpts.projectSpaceFilenameFormatter);
+            space.setCompoundIdFilter(cid -> {
+                if (cid.getIonMass().orElse(Double.NaN) <= maxMz)
                     return true;
                 else {
-                    LOG.info("Skipping instance " + c.getId().toString() + " with mass: " + c.getId().getIonMass().orElse(Double.NaN) + " > " + maxMz);
+                    LOG.info("Skipping instance " + cid.toString() + " with mass: " + cid.getIonMass().orElse(Double.NaN) + " > " + maxMz);
                     return false;
                 }
             });
+            return space;
         } catch (IOException e) {
             throw new CommandLine.PicocliException("Could not initialize workspace!", e);
         }
@@ -166,15 +173,15 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     @NotNull
     @Override
-    public PreprocessingJob<ProjectSpaceManager> makeDefaultPreprocessingJob() {
-        return new PreprocessingJob<ProjectSpaceManager>() {
+    public PreprocessingJob<M> makeDefaultPreprocessingJob() {
+        return new PreprocessingJob<>() {
             @Override
-            protected ProjectSpaceManager compute() throws Exception {
+            protected M compute() throws Exception {
                 M space = getProjectSpace();
                 InputFilesOptions input = getInput();
                 if (space != null) {
                     if (input != null)
-                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz).makeImportJJob(input)).awaitResult();
+                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz, (c) -> true).makeImportJJob(input)).awaitResult();
                     if (space.size() < 1)
                         logInfo("No Input has been imported to Project-Space. Starting application without input data.");
                     return space;
@@ -195,7 +202,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                     //remove recompute annotation since it should be cli only option
 //                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null)); //todo fix needed?
                     //use all experiments in workspace to create summaries
-                    if (Boolean.parseBoolean(defaultConfigOptions.config.getConfigValue("WriteSummaries"))) {
+                    if (defaultConfigOptions.config.createInstanceWithDefaults(WriteSummaries.class).value) {
                         LOG.info("Writing summary files...");
                         project.updateSummaries(ProjectSpaceManager.defaultSummarizer());
                         LOG.info("Project-Space summaries successfully written!");
