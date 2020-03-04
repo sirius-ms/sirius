@@ -39,7 +39,7 @@ import java.util.concurrent.Callable;
  * We just have to define its parameters in h
  */
 
-public class WorkflowBuilder<R extends RootOptions<?, ?>> {
+public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
     //root
     private CommandLine.Model.CommandSpec rootSpec;

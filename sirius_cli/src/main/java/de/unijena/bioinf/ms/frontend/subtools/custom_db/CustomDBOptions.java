@@ -42,7 +42,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     public boolean deriveFromBio;
 
     @Override
-    public Workflow makeWorkflow(RootOptions<?, ?> rootOptions, ParameterConfig config) {
+    public Workflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
         return () -> {
 
             final InputFilesOptions input = rootOptions.getInput();

@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.frontend.subtools;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.io.InstanceImporter;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -16,6 +16,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class InputFilesOptions {
+
+    public InputFilesOptions() {
+    }
+
+    public InputFilesOptions(@NotNull List<Path> projects) {
+        msInput = new MsInput();
+        msInput.projects.addAll(projects);
+        csvInputs = null;
+    }
 
     public Stream<Path> getAllFilesStream() {
         if (msInput == null)
