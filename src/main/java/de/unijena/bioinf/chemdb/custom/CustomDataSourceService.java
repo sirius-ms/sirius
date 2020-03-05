@@ -48,8 +48,6 @@ public class CustomDataSourceService {
 
         String name();
 
-        String sqlQuery();
-
         long searchFlag();
 
         String URI();
@@ -74,11 +72,6 @@ public class CustomDataSourceService {
         @Override
         public String name() {
             return source.realName;
-        }
-
-        @Override
-        public String sqlQuery() {
-            return source.sqlQuery;
         }
 
         @Override
@@ -125,11 +118,6 @@ public class CustomDataSourceService {
         @Override
         public String name() {
             return name;
-        }
-
-        @Override
-        public String sqlQuery() {
-            return null;
         }
 
         @Override

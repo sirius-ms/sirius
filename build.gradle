@@ -1,6 +1,7 @@
 dependencies {
     compile project(":rest_service:rest_client_oss")
     compile project(':chemical_db_oss:chemdb_rest_oss')
+    compile project(':chemical_db_oss:chemdb_utils_oss')
     compile project(':fingerprinter_oss')
     compile project(':fingerblast_oss')
     compile project(':chemical_db_oss:chemdb_file_oss')

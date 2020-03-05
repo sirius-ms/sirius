@@ -284,10 +284,12 @@ public class CustomDatabaseImporter {
     private class FingerprintCalculator {
         private final String dbname;
         private final FixedFingerprinter fingerprinter;
+        private final LogPEstimator logPEstimator;
 
         public FingerprintCalculator(String dbname, CdkFingerprintVersion version) {
             this.dbname = dbname;
             this.fingerprinter = new FixedFingerprinter(version);
+            this.logPEstimator = new LogPEstimator();
         }
 
         protected FingerprintCandidate computeCompound(CustomDatabase.Molecule molecule, FingerprintCandidate fc) throws CDKException, IOException {
@@ -346,15 +348,8 @@ public class CustomDatabaseImporter {
                 fc.setLinks(new DBLink[0]);
             }
             fc.setBitset(CustomDataSourceService.getSourceFromName(dbname).flag());
-
-            {
-                LoggerFactory.getLogger(getClass()).warn("The current Database has Beta state. Currently XLOGP values are not available!");
-                /*// compute XLOGP
-                final XLogPDescriptor descriptor = new XLogPDescriptor();
-                AtomContainerManipulator.convertImplicitToExplicitHydrogens(molecule.container);
-                descriptor.setParameters(new Object[]{true, true});
-                fc.setXlogp(((DoubleResult) descriptor.calculate(molecule.container).getValue()).doubleValue());*/
-            }
+            // compute XLOGP
+            fc.setXlogp(logPEstimator.prepareMolAndComputeLogP(molecule.container));
             return fc;
         }
 
