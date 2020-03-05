@@ -103,6 +103,12 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJ
         summaryFile = Paths.get(filePath);
     }
 
+    public Path bestMFSimilarityGraphFile;
+    @Option(names = "--graph", description = "Writes the similarity graph for based on the top molecular formula annotations of each compound.", hidden = true)
+    public void setSimilarityGraphFile(String filePath) throws Exception {
+        bestMFSimilarityGraphFile = Paths.get(filePath);
+    }
+
     @Override
     public DataSetJob.Factory<ZodiacSubToolJob> call() throws Exception {
         return () -> new ZodiacSubToolJob(this);
