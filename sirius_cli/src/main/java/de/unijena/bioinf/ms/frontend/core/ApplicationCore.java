@@ -10,6 +10,7 @@ import de.unijena.bioinf.sirius.SiriusFactory;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
@@ -57,6 +58,10 @@ public abstract class ApplicationCore {
             t1 = System.currentTimeMillis();
         measureTime("Start AppCore");
         try {
+            System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
+            org.apache.log4j.Logger.getLogger("net.sf.jnati").setLevel(Level.WARN);
+
+
             System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
 
             final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
@@ -209,6 +214,7 @@ public abstract class ApplicationCore {
 
             DEFAULT_LOGGER = LoggerFactory.getLogger(ApplicationCore.class);
             DEFAULT_LOGGER.debug("Logging service initialized!");
+
             DEFAULT_LOGGER.debug("java.library.path = " + System.getProperty("java.library.path"));
             DEFAULT_LOGGER.debug("LD_LIBRARY_PATH = " + System.getenv("LD_LIBRARY_PATH"));
             DEFAULT_LOGGER.debug("java.class.path = " + System.getProperty("java.class.path"));
