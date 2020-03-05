@@ -1,0 +1,10 @@
+dependencies {
+
+	//project
+    compile project(':chemical_db_oss')
+	//internal
+	compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
+    // CDK
+    for (module in ["inchi", "io", "data", "smiles", "ctab", 'formula', 'qsarmolecular', "bundle"])
+        compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
+}	

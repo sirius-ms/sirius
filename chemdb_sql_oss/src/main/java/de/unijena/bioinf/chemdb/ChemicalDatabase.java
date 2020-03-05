@@ -29,11 +29,19 @@ import java.util.*;
 public class ChemicalDatabase extends AbstractChemicalDatabase implements PooledDB<Connection> {
 
     // temporary switch
-    public static final boolean USE_NEW_FINGERPRINTS = true;
+    public static final boolean USE_EXTENDED_FINGERPRINTS = PropertyManager.getBoolean("de.unijena.bioinf.chemdb.fingerprint.extended", null, false);
 
-    public final static String STRUCTURES_TABLE = USE_NEW_FINGERPRINTS ? "tmp.structures" : "structures";
-    public final static String FINGERPRINT_TABLE = USE_NEW_FINGERPRINTS ? "tmp.fingerprints" : "fingerprints";
-    public final static String FINGERPRINT_ID = USE_NEW_FINGERPRINTS ? "2" : "1";
+    //
+    public final static String REF_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references", null, "ref");
+    public final static String PUBCHEM_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.pubchem", null, "pubchem");
+    public final static String DEFAULT_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.default", null, "public");
+    public final static String FINGERPRINT_ID = PropertyManager.getProperty("de.unijena.bioinf.chemdb.fingerprint.id", null, "1");
+
+
+    public final static String STRUCTURES_TABLE = DEFAULT_SCHEME + ".structures";
+    public final static String FINGERPRINT_TABLE = DEFAULT_SCHEME + ".fingerprints";
+    public final static String SYNONYMS_TABLE = PUBCHEM_SCHEME + ".synonyms";
+    public final static String PUBCHEM_REF_TABLE = REF_SCHEME + ".pubchem";
 
     private static final int DEFAULT_SQL_CAPACITY = 5;
     protected static final Logger log = LoggerFactory.getLogger(ChemicalDatabase.class);
@@ -132,7 +140,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         final ArrayList<FormulaCandidate> xs = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             try (final PreparedStatement statement = c.connection.prepareStatement(
-                    "SELECT formula, flags FROM formulas WHERE exactmass >= ? AND exactmass <= ?"
+                    String.format("SELECT formula, flags FROM %s.formulas WHERE exactmass >= ? AND exactmass <= ?", DEFAULT_SCHEME)
             )) {
                 xs.addAll(lookupFormulaWithIon(bioFilter, statement, mass, deviation, ionType));
             }
@@ -456,6 +464,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         }
     }
 
+
     @Override
     public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
@@ -463,7 +472,8 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             final PreparedStatement[] statements = new PreparedStatement[sources.length];
             int k = 0;
             for (DataSource source : sources) {
-                statements[k++] = source.sqlQuery == null ? null : c.connection.prepareStatement(source.sqlQuery);
+                statements[k++] = source.sqlRefTable == null ? null : c.connection.prepareStatement(
+                        String.format("SELECT %s FROM %s.%s WHERE inchi_key_1 = ?", source.sqlIdColumn, REF_SCHEME, source. sqlRefTable));
             }
             final ArrayList<DBLink> buffer = new ArrayList<>();
             for (CompoundCandidate candidate : sublist) {
@@ -495,7 +505,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     @Override
     public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT distinct r.inchi_key_1, r.inchi FROM pubchem.synonyms as syn, ref.pubchem as r WHERE lower(syn.name) = lower(?) AND r.compound_id = syn.compound_id")) {
+            try (final PreparedStatement statement = c.connection.prepareStatement("SELECT distinct r.inchi_key_1, r.inchi FROM " + SYNONYMS_TABLE + " as syn, " + PUBCHEM_REF_TABLE + " as r WHERE lower(syn.name) = lower(?) AND r.compound_id = syn.compound_id")) {
                 final HashSet<InChI> inchis = new HashSet<>();
                 for (String name : names) {
                     statement.setString(1, name);
@@ -640,6 +650,6 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             final short s = fp.getShort(2);
             shorts.add(s);
         }
-        return new ArrayFingerprint(USE_NEW_FINGERPRINTS ?  CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getComplete(), shorts.toArray());
+        return new ArrayFingerprint(USE_EXTENDED_FINGERPRINTS ? CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getDefault(), shorts.toArray());
     }
 }
