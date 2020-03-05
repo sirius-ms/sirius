@@ -30,35 +30,48 @@ public class InChI implements Ms2ExperimentAnnotation {
     public MolecularFormula extractFormula() throws UnknownElementException {
         int a=0;
         int b=0;
-        for (a=0; a < in2D.length(); ++a) {
-            if (in2D.charAt(a)=='/') break;
+        for (a = 0; a < in2D.length(); ++a) {
+            if (in2D.charAt(a) == '/') break;
         }
         ++a;
-        for (b=a; b < in2D.length(); ++b) {
-            if (in2D.charAt(b)=='/') break;
+        for (b = a; b < in2D.length(); ++b) {
+            if (in2D.charAt(b) == '/') break;
         }
 
-        MolecularFormula formula =  MolecularFormula.parse(in2D.substring(a, b));
+        MolecularFormula formula = MolecularFormula.parse(in2D.substring(a, b));
         int q = getQCharge();
-        if (q==0) return formula;
-        else if (q<0){
-            return formula.add(MolecularFormula.parse(String.valueOf(Math.abs(q)+"H")));
+        if (q == 0) return formula;
+        else if (q < 0) {
+            return formula.add(MolecularFormula.parse(String.valueOf(Math.abs(q) + "H")));
         } else {
-            return formula.subtract(MolecularFormula.parse(String.valueOf(q+"H")));
+            return formula.subtract(MolecularFormula.parse(String.valueOf(q + "H")));
         }
     }
 
-    private static final Pattern Q_LAYER = Pattern.compile("\\/(q([^\\/]*))");
+    private static final Pattern Q_LAYER = Pattern.compile("/(q([^/]*))");
+//    private static final Pattern Q_LAYER = Pattern.compile("(\\/q(\\+|\\-)+[1-9]+[0-9]*)?");
+
     /**
      * if structure is disconnected return charge of first connected component
+     *
      * @return
      */
     private int getQCharge() {
         Matcher matcher = Q_LAYER.matcher(in2D);
-        if (matcher.find()){
-            String charge = matcher.group(2).split(";")[0];
-            if (charge.length()==0) return 0;
-            return Integer.parseInt(charge);
+        if (matcher.find()) {
+            int charge = 0;
+            String[] charges = matcher.group(2).split(";");
+            if (charges.length == 0) return 0;
+            for (String c : charges) {
+                String[] cs = c.split("\\*");
+                if (cs.length > 0 && !cs[0].isBlank()) {
+                    int num = Integer.parseInt(cs[0]);
+                    if (cs.length > 1 && !cs[1].isBlank())
+                        num *= Integer.parseInt(cs[1]);
+                    charge += num;
+                }
+            }
+            return charge;
         }
         return 0;
     }
