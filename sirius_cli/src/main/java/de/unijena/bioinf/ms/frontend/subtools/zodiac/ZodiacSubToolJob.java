@@ -184,6 +184,13 @@ public class ZodiacSubToolJob extends DataSetJob {
             } catch (Exception e) {
                 logError("Error when writing Deprecated ZodiacSummary", e);
             }
+
+            try { //ensure that summary does not crash job
+                if (cliOptions.bestMFSimilarityGraphFile != null)
+                    ZodiacUtils.writeResultSummary(clusterResults, cliOptions.bestMFSimilarityGraphFile);
+            } catch (Exception e) {
+                logError("Error when writing ZODIAC graph", e);
+            }
         }
     }
 
