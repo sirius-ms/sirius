@@ -472,8 +472,8 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             final PreparedStatement[] statements = new PreparedStatement[sources.length];
             int k = 0;
             for (DataSource source : sources) {
-                statements[k++] = source.sqlRefTable == null ? null : c.connection.prepareStatement(
-                        String.format("SELECT %s FROM %s.%s WHERE inchi_key_1 = ?", source.sqlIdColumn, REF_SCHEME, source. sqlRefTable));
+                String sql = String.format("SELECT %s FROM %s.%s WHERE inchi_key_1 = ?", source.sqlIdColumn, REF_SCHEME, source. sqlRefTable);
+                statements[k++] = source.sqlRefTable == null ? null : c.connection.prepareStatement(sql);
             }
             final ArrayList<DBLink> buffer = new ArrayList<>();
             for (CompoundCandidate candidate : sublist) {
