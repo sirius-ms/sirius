@@ -31,6 +31,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ZodiacUtils {
     private static final String[] reactionStringsMyCompoundID = new String[]{"H2", "CH2", "NH", "O", "NH3", "H2O", "CO", "C2H4", "C2H2O", "CO2", "C2H3NO", "SO3", "HPO3", "C4H3N3", "C4H2N2O", "C3H5NOS", "C2H5NO2S", "C5H4N2O", "C3H5NO2S", "C5H8O4", "C5H3N5", "C7H13NO2", "C5H7NO3S", "C6H10O5", "C6H8O6", "C10H12N2O4", "C9H11N3O4", "C9H10N2O5", "C16H30O", "C6H11O8P", "C10H11N5O3", "C10H11N5O4", "C10H15N3O5S", "C10H15N3O6S", "C12H20O10", "C18H30O15"};
@@ -669,6 +670,47 @@ public class ZodiacUtils {
 
         writer.close();
 
+    }
+
+    /*
+    create a matrix of similarities between all compounds based on ZODIAC edge scores of best MF candidates
+     */
+    public static void writeResultSummary(ZodiacResultsWithClusters clusterResults, Path outputFile) throws IOException {
+        Graph<FragmentsCandidate> graph = clusterResults.getGraph();
+        CompoundResult<FragmentsCandidate>[] results = clusterResults.getResults();
+        String[] ids = clusterResults.getIds();
+        String headerWithIds = Arrays.stream(ids).collect(Collectors.joining(SEP));
+
+        int[] indexInZODIACGraphForBestMFs = new int[results.length];
+        for (int i = 0; i < results.length; i++) {
+            CompoundResult<FragmentsCandidate> result = results[i];
+            int index = result.getCandidates()[0].getCandidate().getIndexInGraph();
+            if (index<0) {
+                LoggerFactory.getLogger(ZodiacUtils.class).error("Index not set for candidate "+result.getId()+". Cannot write ZODIAC graph.");
+                return;
+            }
+            indexInZODIACGraphForBestMFs[i] = index;
+        }
+
+        try (BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset())){
+            writer.write(headerWithIds);
+
+            for (int i = 0; i < indexInZODIACGraphForBestMFs.length; i++) {
+                int indexI = indexInZODIACGraphForBestMFs[i];
+                StringJoiner joiner = new StringJoiner(SEP);
+                for (int j = 0; j < indexInZODIACGraphForBestMFs.length; j++) {
+                    int indexJ = indexInZODIACGraphForBestMFs[j];
+                    double edgeWeight = graph.getLogWeight(indexI, indexJ);
+                    joiner.add(String.valueOf(edgeWeight));
+                }
+
+                String line = joiner.toString();
+                writer.newLine();
+                writer.write(line);
+                writer.flush();
+            }
+
+        }
     }
 
     private static int maxNumberOfCandidates(CompoundResult<FragmentsCandidate>[] result) {

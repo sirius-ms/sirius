@@ -45,6 +45,10 @@ public class Graph<C extends Candidate<?>> {
             this.weights[i] = new TDoubleArrayList(this.size / 100);
         }
 
+        for (int i = 0; i < possibleFormulas1D.length; i++) {
+            possibleFormulas1D[i].getCandidate().setIndexInGraph(i);
+        }
+
         this.assertInput(this);
     }
 
@@ -62,6 +66,10 @@ public class Graph<C extends Candidate<?>> {
         for(int i = 0; i < this.indexMap.length; ++i) {
             this.indexMap[i] = new TIntIntHashMap(this.size / 100, 0.75F, -1, -1);
             this.weights[i] = new TDoubleArrayList(this.size / 100);
+        }
+
+        for (int i = 0; i < possibleFormulas1D.length; i++) {
+            possibleFormulas1D[i].getCandidate().setIndexInGraph(i);
         }
 
         this.assertInput(this);

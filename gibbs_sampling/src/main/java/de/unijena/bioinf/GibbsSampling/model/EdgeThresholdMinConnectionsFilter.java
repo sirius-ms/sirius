@@ -12,6 +12,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 
 public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
+
+    /*
+    logarithm!
+     */
     private double basicThreshold;
     private int numberOfCandidatesWithMinConnCount;
     private int minimumConnectionCount;
@@ -30,6 +34,8 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
     }
 
     public void filterEdgesAndSetThreshold(Graph graph, int candidateIdx, double[] logEdgeScores) {
+        //select edges for on MF candidate to all other MF candidates of other compounds
+        // all edges better than (lower) basicThreshold are taken and at least so many edges that the candidate is connected to minimumConnectionCount other compounds
         int peakIdx = graph.getPeakIdx(candidateIdx);
 
         double[] minThresholdPerPeak = new double[graph.numberOfCompounds()];
@@ -95,6 +101,9 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
     }
 
     public int[][] postprocessCompleteGraph(Graph graph, MasterJJob masterJJob) throws ExecutionException {
+        //for every compound at least numberOfCandidatesWithMinConnCount candidates must have connections ot at least minimumConnectionCount compounds
+        //make graph symmetric
+
         long start = System.currentTimeMillis();
         TIntArrayList[] connectionsList = new TIntArrayList[graph.getSize()];
 
@@ -153,6 +162,7 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
                 }
             }
         }
+        //todo after this, edge scores which are not used could be deleted.
 
 //todo this part is not parallel yet. Fast enough?
 

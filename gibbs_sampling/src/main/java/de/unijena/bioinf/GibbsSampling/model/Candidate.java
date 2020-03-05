@@ -12,6 +12,7 @@ public class Candidate<T> implements Comparable<Candidate> {
     protected final Map<Class<Object>, Object> annotations;
     protected final double score;
     private final TDoubleArrayList nodeScores;
+    protected int indexInGraph = -1;
 
     public Candidate(T candidate, double score) {
         this.candidate = candidate;
@@ -90,5 +91,13 @@ public class Candidate<T> implements Comparable<Candidate> {
 
     public int compareTo(Candidate o) {
         return Double.compare(o.getScore(), this.score);
+    }
+
+    protected void setIndexInGraph(int index) {
+        this.indexInGraph = index;
+    }
+
+    public int getIndexInGraph() {
+        return indexInGraph;
     }
 }
