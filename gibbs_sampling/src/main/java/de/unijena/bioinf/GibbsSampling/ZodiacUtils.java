@@ -675,7 +675,7 @@ public class ZodiacUtils {
     /*
     create a matrix of similarities between all compounds based on ZODIAC edge scores of best MF candidates
      */
-    public static void writeResultSummary(ZodiacResultsWithClusters clusterResults, Path outputFile) throws IOException {
+    public static void writeSimilarityGraphOfBestMF(ZodiacResultsWithClusters clusterResults, Path outputFile) throws IOException {
         Graph<FragmentsCandidate> graph = clusterResults.getGraph();
         CompoundResult<FragmentsCandidate>[] results = clusterResults.getResults();
         String[] ids = clusterResults.getIds();
