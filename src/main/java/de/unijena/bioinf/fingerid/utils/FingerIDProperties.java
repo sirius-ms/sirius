@@ -3,9 +3,6 @@ package de.unijena.bioinf.fingerid.utils;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 /**
  * All version numbers are directly taken from the build. So there is no more redundant data. Note that version a.b.c-SNAPSHOT lower than a.b.c
  */

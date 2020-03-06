@@ -2,7 +2,6 @@ package de.unijena.bioinf.fingerid.connection_pooling;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.sql.Connection;
 
 public final class PooledConnection<T> implements Closeable, AutoCloseable{
     public final T connection;
