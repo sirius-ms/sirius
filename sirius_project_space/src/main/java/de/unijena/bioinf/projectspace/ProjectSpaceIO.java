@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 
 public class ProjectSpaceIO {
@@ -26,9 +27,10 @@ public class ProjectSpaceIO {
 
     public SiriusProjectSpace openExistingProjectSpace(Path path) throws IOException {
         final SiriusProjectSpace space;
+
         if (isZipProjectSpace(path)) {
             space = newZipProjectSpace(path, false);
-        } else if (isExistingProjectspaceDirectory(path) || (Files.isDirectory(path) && Files.list(path).count() == 0)) {
+        } else if (isExistingProjectspaceDirectory(path) || (Files.isDirectory(path) && FileUtils.listAndClose(path, Stream::count) == 0)) {
             space = new SiriusProjectSpace(configuration, path);
         } else throw new IOException("Location '" + path + "' is not a valid Project Location");
 
@@ -45,7 +47,7 @@ public class ProjectSpaceIO {
             space = newZipProjectSpace(path, true);
         } else {
             if (Files.exists(path)) {
-                if (Files.isRegularFile(path) || Files.list(path).count() > 0)
+                if (Files.isRegularFile(path) || FileUtils.listAndClose(path, Stream::count) > 0)
                     throw new IOException("Could not create new Project '" + path + "' because it directory already exists and is not empty");
             } else {
                 Files.createDirectories(path);
@@ -128,7 +130,7 @@ public class ProjectSpaceIO {
 
     public static int isExistingProjectspaceDirectoryNum(@NotNull Path f) {
         try {
-            if (!Files.exists(f) || Files.isRegularFile(f) || Files.list(f).count() == 0)
+            if (!Files.exists(f) || Files.isRegularFile(f) || FileUtils.listAndClose(f, Stream::count) == 0)
                 return -1;
             try (SiriusProjectSpace space = new SiriusProjectSpace(new ProjectSpaceConfiguration(), f)) {
                 space.open();
