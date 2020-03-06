@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class InstanceImporter {
     protected static final Logger LOG = LoggerFactory.getLogger(InstanceImporter.class);
@@ -143,46 +144,48 @@ public class InstanceImporter {
 
 
     public static void importProject(@NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget, @NotNull Predicate<Ms2Experiment> expFilter, @NotNull Predicate<CompoundContainerId> cidFilter) throws IOException {
-        Files.list(inputSpace.getRootPath()).filter(Files::isRegularFile).filter(p ->
-                        !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME) &&
-                        !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
-                        !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY) &&
-                        !p.getFileName().toString().equals(SummaryLocations.FORMULA_SUMMARY) &&
-                        !p.getFileName().toString().equals(SummaryLocations.MZTAB_SUMMARY)
-        ).forEach(s -> {
-            final Path t = importTarget.projectSpace().getRootPath().resolve(s.getFileName().toString());
-            try {
-                if (Files.notExists(t))
-                    Files.copy(s, t);
-            } catch (IOException e) {
-                LOG.error("Could not Copy `" + s.toString() + "` to new location `" + t.toString() + "` Project might be corrupted!", e);
-            }
-        });
+        try (Stream<Path> lister = Files.list(inputSpace.getRootPath())) {
+            lister.filter(Files::isRegularFile).filter(p ->
+                    !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME) &&
+                            !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
+                            !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY) &&
+                            !p.getFileName().toString().equals(SummaryLocations.FORMULA_SUMMARY) &&
+                            !p.getFileName().toString().equals(SummaryLocations.MZTAB_SUMMARY)
+            ).forEach(s -> {
+                final Path t = importTarget.projectSpace().getRootPath().resolve(s.getFileName().toString());
+                try {
+                    if (Files.notExists(t))
+                        Files.copy(s, t);
+                } catch (IOException e) {
+                    LOG.error("Could not Copy `" + s.toString() + "` to new location `" + t.toString() + "` Project might be corrupted!", e);
+                }
+            });
+        }
 
         final Iterator<CompoundContainer> psIter = inputSpace.filteredCompoundIterator(cidFilter, expFilter);
         while (psIter.hasNext()) {
             final CompoundContainer sourceComp = psIter.next(); //inputSpace.getCompound(sourceId, Ms2Experiment.class);
             final CompoundContainerId sourceId = sourceComp.getId();
             final Ms2Experiment sourcEexp = sourceComp.getAnnotationOrThrow(Ms2Experiment.class);
-//            if (expFilter.test(sourcEexp)) {
             // create compound
             @NotNull Instance inst = importTarget.newCompoundWithUniqueId(sourcEexp);
             inst.getID().setAllNonFinal(sourceId);
             inst.updateCompoundID();
 
-            Files.list(inputSpace.getRootPath().resolve(sourceId.getDirectoryName()))
-                    .filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO) && !p.getFileName().toString().equals(SiriusLocations.MS2_EXPERIMENT))
-                    .forEach(s -> {
-                        final Path t = importTarget.projectSpace().getRootPath().resolve(inst.getID().getDirectoryName()).resolve(s.getFileName().toString());
-                        try {
-                            Files.createDirectories(t);
-                            FileUtils.copyFolder(s, t);
-                            inst.reloadCompoundCache(Ms2Experiment.class);
-                        } catch (IOException e) {
-                            LOG.error("Could not Copy instance `" + inst.getID().getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
-                        }
-                    });
-//            }
+
+            try (Stream<Path> lister = Files.list(inputSpace.getRootPath().resolve(sourceId.getDirectoryName()))) {
+                lister.filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO) && !p.getFileName().toString().equals(SiriusLocations.MS2_EXPERIMENT))
+                        .forEach(s -> {
+                            final Path t = importTarget.projectSpace().getRootPath().resolve(inst.getID().getDirectoryName()).resolve(s.getFileName().toString());
+                            try {
+                                Files.createDirectories(t);
+                                FileUtils.copyFolder(s, t);
+                                inst.reloadCompoundCache(Ms2Experiment.class);
+                            } catch (IOException e) {
+                                LOG.error("Could not Copy instance `" + inst.getID().getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
+                            }
+                        });
+            }
         }
     }
 
@@ -253,7 +256,9 @@ public class InstanceImporter {
                         inputFiles.projects.add(g);
                     } else {
                         try {
-                            final List<Path> ins = Files.list(g).filter(Files::isRegularFile).sorted().collect(Collectors.toList());
+                            final List<Path> ins =
+                                    FileUtils.listAndClose(g, l -> l.filter(Files::isRegularFile).sorted().collect(Collectors.toList()));
+
                             if (ins.contains(Path.of(FilenameFormatter.PSPropertySerializer.FILENAME)))
                                 throw new IOException("Unreadable project found!");
 
