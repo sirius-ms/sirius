@@ -140,6 +140,8 @@ public class Graph<C extends Candidate<?>> {
     }
 
     public void setLogWeight(int i, int j, double weight) {
+        assert !Double.isNaN(weight);
+
         int relJ = this.indexMap[i].get(j);
         if(relJ < 0) {
             this.indexMap[i].put(j, this.weights[i].size());
