@@ -39,7 +39,9 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         LoggerFactory.getLogger(CommonFragmentAndLossScorer.class).debug("prepare.");
 
 
-        if (normalizationMap==null & (used_minimum_number_matched_peaks_losses != minimum_number_matched_peaks_losses)){
+        if (normalizationMap==null || (used_minimum_number_matched_peaks_losses != minimum_number_matched_peaks_losses)
+                || !containsAllCompounds(normalizationMap, Arrays.stream(candidates).map(c->c[0].getExperiment()).toArray(s->new Ms2Experiment[s]))){
+            //something changed, so recompute all.
             long start = System.currentTimeMillis();
             used_minimum_number_matched_peaks_losses = minimum_number_matched_peaks_losses;
             norm = this.normalization(candidates, minimum_number_matched_peaks_losses);
@@ -103,6 +105,13 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
         LoggerFactory.getLogger(CommonFragmentAndLossScorer.class).debug("prepare, computed maybeSimilar in "+(System.currentTimeMillis()-start));
 
         if (GibbsMFCorrectionNetwork.DEBUG) LoggerFactory.getLogger(CommonFragmentAndLossScorer.class).debug("compounds: " + this.maybeSimilar.length + " | maybeSimilar: " + sum + " | threshold was "+threshold);
+    }
+
+    private boolean containsAllCompounds(TObjectDoubleHashMap<Ms2Experiment> normalizationMap, Ms2Experiment[] ms2Experiments) {
+        for (Ms2Experiment ms2Experiment : ms2Experiments) {
+            if (!normalizationMap.containsKey(ms2Experiment)) return false;
+        }
+        return true;
     }
 
 //    private void prepareData(){
