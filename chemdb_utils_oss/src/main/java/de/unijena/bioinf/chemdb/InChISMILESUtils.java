@@ -1,7 +1,6 @@
 package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
@@ -19,16 +18,18 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class InChISMILESUtils extends InChIs {
+import static de.unijena.bioinf.ChemistryBase.chem.InChIs.*;
+import static de.unijena.bioinf.ChemistryBase.chem.SmileS.*;
+
+public class InChISMILESUtils {
 
     public static InChI getStandardInchi(InChI inChI) {
         String inchi = inChI.in3D;
@@ -38,8 +39,8 @@ public class InChISMILESUtils extends InChIs {
         return newInChI(newKey, sinchi);
     }
 
-    private static String getStandardInchi(String inChI){
-        if (isStandardInchi(inChI)){
+    private static String getStandardInchi(String inChI) {
+        if (isStandardInchi(inChI)) {
             return inChI;
         } else {
             return getStdInchi(inChI);
@@ -73,7 +74,7 @@ public class InChISMILESUtils extends InChIs {
             JniInchiInput input = new JniInchiInput(structure);
             JniInchiOutput output = JniInchiWrapper.getStdInchi(input);
             if(output.getReturnStatus() == INCHI_RET.WARNING) {
-                LOG.warn("Warning issued while computing standard InChI: "+output.getMessage());
+                LoggerFactory.getLogger(InChISMILESUtils.class).warn("Warning issued while computing standard InChI: " + output.getMessage());
                 return output.getInchi();
             } else if(output.getReturnStatus() == INCHI_RET.OKAY) {
                 return output.getInchi();
@@ -189,46 +190,6 @@ public class InChISMILESUtils extends InChIs {
         return get2DSmiles(getAtomContainer(smiles));
     }
 
-
-    /**
-     * using CDK to create a canonical SMILES without stereo info throw several InvalidSmiles exceptions
-     * @param smiles
-     * @return
-     */
-    public static String get2DSmilesByTextReplace(Smiles smiles) {
-        return stripDoubleBondGeometry(stripStereoCentres(smiles.smiles));
-    }
-
-
-    /**
-     * Regex to match any sterecentre designation including simple @ / @@ forms
-     * along with @TH @OH etc with subsquent IDs
-     */
-    private static Pattern ALL_STEREOCENTRE_INCL_LABEL_PATTERN =
-            Pattern.compile("@+(?:(?:TH|AL|SP|TB|OH)\\d*)?");
-
-    /**
-     * @param smi
-     *            the SMILES String
-     * @return The SMILES String with all stereocentre labels removed
-     */
-    public static String stripStereoCentres(String smi) {
-        return ALL_STEREOCENTRE_INCL_LABEL_PATTERN.matcher(smi).replaceAll("");
-
-    }
-
-    /**
-     * @param smi
-     *            the SMILES String
-     * @return The SMILES String with all double bonde geometry labels removed
-     */
-    public static String stripDoubleBondGeometry(String smi) {
-        return smi.replace("\\", "-").replace("/", "-");
-    }
-
-
-
-
     public static MolecularFormula formulaFromSmiles(String smiles) throws InvalidSmilesException, UnknownElementException {
         SmilesParser smilesParser = new SmilesParser(DefaultChemObjectBuilder.getInstance());
         IAtomContainer iAtomContainer = smilesParser.parseSmiles(smiles);
@@ -246,20 +207,8 @@ public class InChISMILESUtils extends InChIs {
     }
 
 
-
-    public static int numberOfPartialChargesFromSmiles(String smiles) {
-        int count = 0;
-        for (int i = 0; i < smiles.length(); i++) {
-            char c = smiles.charAt(i);
-            if (c=='-' || c=='+') {
-                ++count;
-            }
-        }
-        return count;
-    }
-
-public static void main(String... args) throws CDKException, IOException {
-    //todo remove after testing
+    public static void main(String... args) throws CDKException, IOException {
+        //todo remove after testing
 
 //    System.out.println(formulaFromSmiles("CCCCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)(O)OCC[N+](C)(C)C)O").formatByHill());
 //    System.out.println(InChIs.newInChI(null,"InChI=1S/C26H55NO7P/c1-5-6-7-8-9-10-11-12-13-14-15-16-17-18-19-20-26(29)32-23-25(28)24-34-35(30,31)33-22-21-27(2,3)4/h25,28H,5-24H2,1-4H3,(H,30,31)/t25-/m1/s1").extractFormula().formatByHill());
@@ -273,30 +222,8 @@ public static void main(String... args) throws CDKException, IOException {
     s = stripStereoCentres(s);
     s = stripDoubleBondGeometry(s);
     Smiles smiles = new Smiles(s);
-    System.out.println(get2DSmiles(smiles));
-    System.out.println(get2DSmilesByTextReplace(new Smiles("C(C(/O)=C/C=C1(CC2(/C(\\C(=O)1)=C/C=CC=2)))([O-])=O")));
+        System.out.println(get2DSmiles(smiles));
+        System.out.println(get2DSmilesByTextReplace("C(C(/O)=C/C=C1(CC2(/C(\\C(=O)1)=C/C=CC=2)))([O-])=O"));
 }
 
-
-    private static final Pattern SMILES_CHARGE = Pattern.compile("([-+])(\\d?)");
-    public static int getFormalChargeFromSmiles(String smiles) {
-        int abscharge = 0;
-        Matcher m = SMILES_CHARGE.matcher(smiles);
-        while (m.find()){
-            String c = m.group(1);
-            int currentCharge;
-            if (m.group(2).length()>0){
-                currentCharge = Integer.parseInt(m.group(2));
-            } else {
-                currentCharge = 1;
-            }
-            if (c.equals("-")){
-                currentCharge = -currentCharge;
-            } else if (!c.equals("+")){
-                throw new RuntimeException("unexpected charge");
-            }
-            abscharge += currentCharge;
-        }
-        return abscharge;
-    }
 }
