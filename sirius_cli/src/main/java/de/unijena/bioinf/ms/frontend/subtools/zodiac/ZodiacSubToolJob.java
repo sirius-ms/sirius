@@ -187,7 +187,7 @@ public class ZodiacSubToolJob extends DataSetJob {
 
             try { //ensure that summary does not crash job
                 if (cliOptions.bestMFSimilarityGraphFile != null)
-                    ZodiacUtils.writeResultSummary(clusterResults, cliOptions.bestMFSimilarityGraphFile);
+                    ZodiacUtils.writeSimilarityGraphOfBestMF(clusterResults, cliOptions.bestMFSimilarityGraphFile);
             } catch (Exception e) {
                 logError("Error when writing ZODIAC graph", e);
             }
