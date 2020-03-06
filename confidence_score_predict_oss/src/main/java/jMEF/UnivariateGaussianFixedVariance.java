@@ -1,8 +1,8 @@
 package jMEF;
 
-import java.util.Random;
-
 import jMEF.Parameter.TYPE;
+
+import java.util.Random;
 
 
 /**

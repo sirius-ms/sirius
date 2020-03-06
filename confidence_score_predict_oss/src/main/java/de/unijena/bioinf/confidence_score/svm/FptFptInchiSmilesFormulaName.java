@@ -3,7 +3,6 @@ package de.unijena.bioinf.confidence_score.svm;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.fingerid.blast.Fingerblast;
 
 /**
  * Created by martin on 03.08.18.
