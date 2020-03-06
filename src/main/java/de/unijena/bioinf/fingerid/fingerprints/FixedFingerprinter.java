@@ -1,6 +1,7 @@
 package de.unijena.bioinf.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.BooleanFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
@@ -243,13 +244,13 @@ public class FixedFingerprinter {
     }
 
     public static IAtomContainer parseInchi(String __inchi, boolean standardizeInChI) {
-        String inchi = InChI.inchi2d(__inchi);
+        String inchi = InChIs.inchi2d(__inchi);
         if (standardizeInChI && inchi.startsWith("InChI=1/")) {
             try {
                 LoggerFactory.getLogger(FixedFingerprinter.class).warn("Fix non-standard InChI '" + inchi + "'");
                 final InChIToStructure structureGenerator = InChIGeneratorFactory.getInstance().getInChIToStructure(inchi, SilentChemObjectBuilder.getInstance());
                 IAtomContainer m = structureGenerator.getAtomContainer();
-                inchi = InChI.inchi2d(InChIGeneratorFactory.getInstance().getInChIGenerator(m).getInchi());
+                inchi = InChIs.inchi2d(InChIGeneratorFactory.getInstance().getInChIGenerator(m).getInchi());
             } catch (CDKException e) {
                 LoggerFactory.getLogger(FixedFingerprinter.class).warn(e.getMessage());
             }
