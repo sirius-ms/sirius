@@ -84,7 +84,7 @@ public class CompoundController extends BaseApiController {
             final CompoundContainer c = space.getCompound(cid);
             if (!c.getResults().isEmpty()) {
                 SScored<FormulaResult, ? extends FormulaScore> scoredTopHit =
-                        space.getFormulaResultsOrderedBy(cid, cid.getRankingScoreType().orElse(SiriusScore.class), FormulaScoring.class).get(0);
+                        space.getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), FormulaScoring.class).get(0);
 
                 final FormulaResult topHit = scoredTopHit.getCandidate();
                 final FormulaScoring scorings = topHit.getAnnotationOrThrow(FormulaScoring.class);
