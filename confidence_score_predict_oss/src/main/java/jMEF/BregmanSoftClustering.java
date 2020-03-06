@@ -1,8 +1,8 @@
 package jMEF;
 
-import java.util.Vector;
-
 import jMEF.Parameter.TYPE;
+
+import java.util.Vector;
 
 
 /**

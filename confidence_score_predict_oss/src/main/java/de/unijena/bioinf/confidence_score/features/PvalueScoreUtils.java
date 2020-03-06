@@ -4,7 +4,6 @@ import Tools.ExpectationMaximization1D;
 import Tools.KMeans;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import it.unimi.dsi.fastutil.Hash;
 import jMEF.MixtureModel;
 import jMEF.PVector;
 import org.apache.commons.math3.distribution.LogNormalDistribution;

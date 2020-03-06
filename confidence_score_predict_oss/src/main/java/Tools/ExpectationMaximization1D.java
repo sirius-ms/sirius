@@ -1,8 +1,10 @@
 package Tools;
 
-import java.util.Vector;
+import jMEF.MixtureModel;
+import jMEF.PVector;
+import jMEF.UnivariateGaussian;
 
-import jMEF.*;
+import java.util.Vector;
 
 public class ExpectationMaximization1D {
 
