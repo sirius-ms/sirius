@@ -2,7 +2,6 @@ package de.unijena.bioinf.ms.rest.model.worker;
 
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import org.jetbrains.annotations.NotNull;
