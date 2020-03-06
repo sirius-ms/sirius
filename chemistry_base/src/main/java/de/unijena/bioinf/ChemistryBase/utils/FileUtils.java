@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ChemistryBase.utils;
 
-import com.google.common.base.Function;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
@@ -14,7 +13,9 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.*;
@@ -650,7 +651,6 @@ public class FileUtils {
     }
 
 
-
     public static Path newTempFile(@NotNull String directory, @NotNull String prefix, @NotNull String suffix) {
         return Paths.get(directory, MessageFormat.format("{0}{1}{2}", prefix, UUID.randomUUID(), suffix));
     }
@@ -659,6 +659,37 @@ public class FileUtils {
         return newTempFile(System.getProperty("java.io.tmpdir"), prefix, suffix);
     }
 
+    public static <R> R listAndClose(Path p, Function<Stream<Path>, R> tryWith) throws IOException {
+        try (Stream<Path> s = Files.list(p)) {
+            return tryWith.apply(s);
+        }
+    }
+
+    public static <R> R findAndClose(Function<Stream<Path>, R> tryWith, Path p, int maxDepth,
+                              BiPredicate<Path, BasicFileAttributes> matcher,
+                              FileVisitOption... options) throws IOException {
+        try (Stream<Path> s = Files.find(p, maxDepth, matcher, options)) {
+            return tryWith.apply(s);
+        }
+    }
+
+    public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, FileVisitOption... options) throws IOException {
+        try (Stream<Path> s = Files.walk(p, options)) {
+            return tryWith.apply(s);
+        }
+    }
+
+    public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, int maxDepth, FileVisitOption... options) throws IOException {
+        try (Stream<Path> s = Files.walk(p, maxDepth, options)) {
+            return tryWith.apply(s);
+        }
+    }
+
+    public static <R> R linesAndClose(Path p, Function<Stream<String>, R> tryWith) throws IOException {
+        try (Stream<String> s = Files.lines(p)) {
+            return tryWith.apply(s);
+        }
+    }
 
 
 }
