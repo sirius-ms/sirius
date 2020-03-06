@@ -1,11 +1,10 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.fingerid.CanopusResult;
+import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
-import de.unijena.bioinf.fingerid.CanopusResult;
-import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;

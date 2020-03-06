@@ -1,8 +1,8 @@
 package de.unijena.bioinf.projectspace.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.fingerid.CanopusResult;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.projectspace.ComponentSerializer;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectReader;

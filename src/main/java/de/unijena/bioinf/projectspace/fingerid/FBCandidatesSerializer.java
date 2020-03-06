@@ -2,6 +2,7 @@ package de.unijena.bioinf.projectspace.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DatasourceService;
@@ -37,7 +38,7 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
         reader.table(FINGERBLAST.relFilePath(id), true, (row) -> {
             if (row.length == 0) return;
             final double score = Double.parseDouble(row[4]);
-            final InChI inchi = new InChI(row[0], row[1]);
+            final InChI inchi = InChIs.newInChI(row[0], row[1]);
             final String name = row[5], smiles = row[6];
             final double xlogp = (row[7] != null && !row[7].isBlank() && !row[7].equals("N/A")) ? Double.parseDouble(row[7]) : Double.NaN;
 

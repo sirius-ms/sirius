@@ -3,9 +3,6 @@ package de.unijena.bioinf.projectspace.fingerid;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.Location;
 
-import java.util.Locale;
-import java.util.function.Function;
-
 public interface FingerIdLocations {
 
     Location
