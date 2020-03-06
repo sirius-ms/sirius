@@ -1,7 +1,7 @@
 package de.unijena.bioinf.fingerid;
 
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.WebAPI;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 
 import java.io.IOException;
 

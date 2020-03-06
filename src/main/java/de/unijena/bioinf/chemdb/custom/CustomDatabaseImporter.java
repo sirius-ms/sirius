@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.stream.JsonWriter;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
@@ -261,7 +262,7 @@ public class CustomDatabaseImporter {
         }
     }
 
-    private FingerprintCalculator getFingerprintCalculator() throws CDKException {
+    private FingerprintCalculator getFingerprintCalculator() {
         FingerprintCalculator calc = freeFingerprinter.poll();
         if (calc == null)
             calc = new FingerprintCalculator(database.name, fingerprintVersion);
@@ -293,7 +294,6 @@ public class CustomDatabaseImporter {
         }
 
         protected FingerprintCandidate computeCompound(CustomDatabase.Molecule molecule, FingerprintCandidate fc) throws CDKException, IOException {
-
             if (fc == null)
                 return computeCompound(molecule);
 
@@ -320,19 +320,20 @@ public class CustomDatabaseImporter {
             return fc;
         }
 
-        protected FingerprintCandidate computeCompound(CustomDatabase.Molecule molecule) throws CDKException, IllegalArgumentException, IOException {
+        protected FingerprintCandidate computeCompound(CustomDatabase.Molecule molecule) throws CDKException, IllegalArgumentException {
             InChIGenerator gen = inChIGeneratorFactory.getInChIGenerator(molecule.container);
-            final InChI inchi = new InChI(gen.getInchiKey(), gen.getInchi());
-            molecule.container = inChIGeneratorFactory.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance()).getAtomContainer();
+            final InChI inchi = InChIs.newInChI(gen.getInchiKey(), gen.getInchi());
 
 
             if (molecule.smiles == null) {
                 LoggerFactory.getLogger(getClass()).warn("Computing fingerprint from non smiles input. NO standardization has happened!");
+                //eliminate 3d info to have a minial amount of standardization.
+                molecule.container = inChIGeneratorFactory.getInChIToStructure(inchi.in2D, SilentChemObjectBuilder.getInstance()).getAtomContainer();
                 molecule.smiles = new Smiles(smilesGen.create(molecule.container));
             }
-            final ArrayFingerprint fps = fingerprinter.computeFingerprintFromSMILES(molecule.smiles.smiles);
 
             CustomDatabase.logger.info("Compute fingerprint for " + inchi.key2D());
+            final ArrayFingerprint fps = fingerprinter.computeFingerprintFromSMILES(molecule.smiles.smiles);
 
             final FingerprintCandidate fc = new FingerprintCandidate(inchi, fps);
             fc.setSmiles(molecule.smiles.smiles);

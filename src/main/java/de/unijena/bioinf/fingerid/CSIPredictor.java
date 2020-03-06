@@ -16,7 +16,6 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import gnu.trove.list.array.TIntArrayList;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 

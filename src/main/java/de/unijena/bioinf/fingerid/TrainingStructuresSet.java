@@ -2,7 +2,8 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TrainingStructuresSet {
 
