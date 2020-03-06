@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.rest.client.fingerid;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -19,13 +20,10 @@ import net.sf.jniinchi.INCHI_KEY;
 import net.sf.jniinchi.JniInchiException;
 import net.sf.jniinchi.JniInchiOutputKey;
 import net.sf.jniinchi.JniInchiWrapper;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +36,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -189,9 +186,9 @@ public class FingerIdClient extends AbstractClient {
                                 //no InChiKeys contained. Compute them.
                                 String inchi = tabs[0];
                                 String key = inchi2inchiKey(inchi);
-                                inChI = new InChI(key, inchi);
+                                inChI = InChIs.newInChI(key, inchi);
                             } else {
-                                inChI = new InChI(tabs[0], tabs[1]);
+                                inChI = InChIs.newInChI(tabs[0], tabs[1]);
                             }
 
                             inchis.add(inChI);
