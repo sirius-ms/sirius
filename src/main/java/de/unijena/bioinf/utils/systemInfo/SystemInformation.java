@@ -9,13 +9,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 import oshi.hardware.*;
-import oshi.hardware.CentralProcessor.TickType;
 import oshi.software.os.FileSystem;
 import oshi.software.os.OSFileStore;
 import oshi.software.os.OSProcess;
 import oshi.software.os.OperatingSystem;
 import oshi.util.FormatUtil;
-import oshi.util.Util;
 
 import javax.swing.*;
 import java.io.*;
