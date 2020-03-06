@@ -20,6 +20,7 @@ package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
@@ -416,7 +417,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     private static class PrototypeCompoundCandidate extends FingerprintCandidateBean {
         private static FingerprintCandidate makeSourceCandidate() {
             final FingerprintCandidate candidate = new FingerprintCandidate(
-                    new InChI("WQZGKKKJIJFFOK-GASJEMHNSA-N", "InChI=1S/C6H12O6/c7-1-2-3(8)4(9)5(10)6(11)12-2/h2-11H,1H2/t2-,3-,4+,5-,6?/m1/s1"),
+                    InChIs.newInChI("WQZGKKKJIJFFOK-GASJEMHNSA-N", "InChI=1S/C6H12O6/c7-1-2-3(8)4(9)5(10)6(11)12-2/h2-11H,1H2/t2-,3-,4+,5-,6?/m1/s1"),
                     new ArrayFingerprint(CdkFingerprintVersion.getDefault(), new short[]{
                             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 34, 35, 38, 80, 120
                     })

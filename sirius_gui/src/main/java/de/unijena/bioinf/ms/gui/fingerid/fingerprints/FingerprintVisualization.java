@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
@@ -79,7 +80,7 @@ class FingerprintVisualization {
                     }
                 }
 
-                Fingerprint fingerprint = db.lookupFingerprintByInChI(new InChI(inchikey, inchi));
+                Fingerprint fingerprint = db.lookupFingerprintByInChI(InChIs.newInChI(inchikey, inchi));
                 if (fingerprint==null) {
                     // compute it...
                     final Fingerprinter fingerprinter1 = Fingerprinter.getFor(CdkFingerprintVersion.getComplete());
