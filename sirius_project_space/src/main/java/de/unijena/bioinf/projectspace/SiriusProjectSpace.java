@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCloseable {
 
@@ -86,7 +87,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected synchronized void open() throws IOException {
         ids.clear();
         int maxIndex = -1;
-        for (Path dir : Files.list(root).filter(Files::isDirectory).collect(Collectors.toList())) {
+
+        for (Path dir : FileUtils.listAndClose(root, l -> l.filter(Files::isDirectory).collect(Collectors.toList()))) {
             final Path expInfo = dir.resolve(SiriusLocations.COMPOUND_INFO);
             if (Files.exists(expInfo)) {
                 final Map<String, String> keyValues = FileUtils.readKeyValues(expInfo);
