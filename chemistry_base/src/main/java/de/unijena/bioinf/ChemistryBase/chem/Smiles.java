@@ -32,4 +32,9 @@ public class Smiles implements Ms2ExperimentAnnotation {
     public String toString() {
         return smiles;
     }
+
+    public boolean isConnected(){
+        return smiles.indexOf('.') < 0;
+    }
+
 }
