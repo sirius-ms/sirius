@@ -1,6 +1,7 @@
 package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
@@ -25,6 +26,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
+
+import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
 
 public class ChemicalDatabase extends AbstractChemicalDatabase implements PooledDB<Connection> {
 
@@ -286,7 +289,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         ArrayList<CompoundCandidate> candidates = new ArrayList<>();
         try (final ResultSet set = statement.executeQuery()) {
             while (set.next()) {
-                final CompoundCandidate candidate = new CompoundCandidate(new InChI(set.getString(1), set.getString(2)));
+                final CompoundCandidate candidate = new CompoundCandidate(newInChI(set.getString(1), set.getString(2)));
                 candidate.setName(set.getString(3));
                 candidate.setSmiles(set.getString(4));
                 candidate.setBitset(set.getLong(5));
@@ -367,7 +370,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                     statement.setString(1, inchikey);
                     try (final ResultSet set = statement.executeQuery()) {
                         if (set.next()) {
-                            final FingerprintCandidate candidate = new FingerprintCandidate(new InChI(set.getString(1), set.getString(2)), parseFingerprint(set, 7));
+                            final FingerprintCandidate candidate = new FingerprintCandidate(InChIs.newInChI(set.getString(1), set.getString(2)), parseFingerprint(set, 7));
                             candidate.setName(set.getString(3));
                             candidate.setSmiles(set.getString(4));
                             candidate.setBitset(set.getLong(5));
@@ -398,7 +401,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                     statement.setString(1, inchikey);
                     try (final ResultSet set = statement.executeQuery()) {
                         if (set.next()) {
-                            candidates.add(new InChI(set.getString(1), set.getString(2)));
+                            candidates.add(InChIs.newInChI(set.getString(1), set.getString(2)));
                         }
                     }
                 }
@@ -511,7 +514,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                     statement.setString(1, name);
                     try (final ResultSet set = statement.executeQuery()) {
                         while (set.next()) {
-                            inchis.add(new InChI(set.getString(1), set.getString(2)));
+                            inchis.add(InChIs.newInChI(set.getString(1), set.getString(2)));
                         }
                     }
                 }

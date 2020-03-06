@@ -37,6 +37,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.IntConsumer;
 
+import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
+
 public class CompoundCandidate {
     protected final InChI inchi;
     protected String name;
@@ -131,7 +133,7 @@ public class CompoundCandidate {
     protected static InChI inchiFromJson(JsonObject obj) {
         final String inchikey = obj.getString("inchikey");
         final String inchi = obj.getString("inchi");
-        return new InChI(inchikey, inchi);
+        return newInChI(inchikey, inchi);
     }
 
     public final String toJSON() {

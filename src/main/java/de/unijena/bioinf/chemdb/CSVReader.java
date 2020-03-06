@@ -1,6 +1,5 @@
 package de.unijena.bioinf.chemdb;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.babelms.CloseableIterator;
@@ -10,6 +9,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayDeque;
 import java.util.regex.Pattern;
+
+import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
 
 class CSVReader extends CompoundReader {
 
@@ -93,9 +94,9 @@ class CSVReader extends CompoundReader {
             final String key = parts[keyCol];
             if (version!=null && fpCol>=0) {
                 final Fingerprint fp = Fingerprint.fromOneZeroString(version, parts[fpCol]);
-                return new FingerprintCandidate(new InChI(key,inchi), fp);
+                return new FingerprintCandidate(newInChI(key,inchi), fp);
             } else {
-                return new CompoundCandidate(new InChI(key,inchi));
+                return new CompoundCandidate(newInChI(key,inchi));
             }
         }
 
