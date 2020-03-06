@@ -227,7 +227,7 @@ class DefaultDescriptors {
             if (document.hasKeyInDictionary(dictionary, "inchikey")) {
                 inchikey = document.getStringFromDictionary(dictionary, "inchikey");
             }
-            if (inchi!=null || inchikey!=null) return new InChI(inchikey, inchi);
+            if (inchi!=null || inchikey!=null) return InChIs.newInChI(inchikey, inchi);
             else return null;
         }
 

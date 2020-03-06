@@ -424,7 +424,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
             if (spectrumQualityString != null)
                 exp.setAnnotation(CompoundQuality.class, CompoundQuality.fromString(spectrumQualityString));
-            if (inchi != null || inchikey != null) exp.setAnnotation(InChI.class, new InChI(inchikey, inchi));
+            if (inchi != null || inchikey != null) exp.setAnnotation(InChI.class, InChIs.newInChI(inchikey, inchi));
             if (instrumentation != null) exp.setAnnotation(MsInstrumentation.class, instrumentation);
             if (retentionTime != 0)
                 exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTimeStart, retentionTimeEnd, retentionTime));

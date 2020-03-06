@@ -32,4 +32,35 @@ public class Smiles implements Ms2ExperimentAnnotation {
     public String toString() {
         return smiles;
     }
+
+    public boolean isConnected() {
+        return SmileS.isConnected(smiles);
+    }
+
+    public int getFormalCharge() {
+        return SmileS.getFormalChargeFromSmiles(smiles);
+    }
+
+    public boolean isMultipleCharged() {
+        return SmileS.isMultipleCharged(smiles);
+    }
+
+    public int getNumberOfPartialCharges() {
+        return SmileS.getNumberOfPartialChargesFromSmiles(smiles);
+    }
+
+    /**
+     * @return 2d smiles created by regex Text replace.
+     */
+    public Smiles get2DSmiles() {
+        return new Smiles(SmileS.get2DSmilesByTextReplace(smiles));
+    }
+
+    public Smiles stripStereoCentres() {
+        return new Smiles(SmileS.stripStereoCentres(smiles));
+    }
+
+    public Smiles stripDoubleBondGeometry() {
+        return new Smiles(SmileS.stripDoubleBondGeometry(smiles));
+    }
 }

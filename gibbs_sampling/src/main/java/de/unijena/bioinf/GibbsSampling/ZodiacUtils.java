@@ -478,7 +478,7 @@ public class ZodiacUtils {
         MolecularFormula formula = null;
         if (isInchi(inchi)){
             try {
-                formula = new InChI(null, inchi).extractFormula();
+                formula = InChIs.extractFormula(inchi);
             } catch (UnknownElementException e) {
                 LoggerFactory.getLogger(ZodiacUtils.class).warn("Cannot parse molecular formula from InChI.: "+inchi);
                 formula = null;
