@@ -3,10 +3,7 @@ package de.unijena.bioinf.chemdb.custom;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.stream.JsonWriter;
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.chem.InChIs;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -131,9 +128,35 @@ public class CustomDatabaseImporter {
 
     public void importFromString(String str, String id, String name) throws IOException, CDKException {
         final CustomDatabase.Molecule molecule;
-        if (str.startsWith("InChI")) {
+        if (InChIs.isInchi(str)) {
+            if (!InChIs.isConnected(str)){
+                LoggerFactory.getLogger(getClass()).warn(
+                        String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
+                return;
+            }
+
+            if (InChIs.isMultipleCharged(str)) {
+                LoggerFactory.getLogger(getClass()).warn(
+                        String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
+                return;
+            }
+
+
+
             molecule = new CustomDatabase.Molecule(inChIGeneratorFactory.getInChIToStructure(str, SilentChemObjectBuilder.getInstance()).getAtomContainer());
         } else {
+            if (!SmileS.isConnected(str)){
+                LoggerFactory.getLogger(getClass()).warn(
+                        String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
+                return;
+            }
+
+            if (SmileS.isMultipleCharged(str)) {
+                LoggerFactory.getLogger(getClass()).warn(
+                        String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
+                return;
+            }
+
             molecule = new CustomDatabase.Molecule(smilesParser.parseSmiles(str));
             molecule.smiles = new Smiles(str);
         }
