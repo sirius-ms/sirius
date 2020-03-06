@@ -32,6 +32,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
+
 public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
     private static enum SpecType {
@@ -341,7 +343,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 exp.setPrecursorIonType(spec.ionType);
             }
             if (spec.inchi != null && spec.inchi.startsWith("InChI=")) {
-                exp.setAnnotation(InChI.class, new InChI(null, spec.inchi));
+                exp.setAnnotation(InChI.class, newInChI(null, spec.inchi));
             }
             if (spec.smiles != null) {
                 exp.setAnnotation(Smiles.class, new Smiles(spec.smiles));

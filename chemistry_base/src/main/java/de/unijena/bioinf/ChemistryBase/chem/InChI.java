@@ -2,7 +2,11 @@ package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,84 +16,155 @@ public class InChI implements Ms2ExperimentAnnotation {
     public final String in2D;
     public final String key;
 
-    public InChI(String inchikey, String inchi) {
-        if (inchi != null && inchi.endsWith("/")) inchi = inchi.substring(0, inchi.length()-1);
-        this.in3D = inchi;
+    protected InChI(String inchikey, String inchi3D, String inchi2D) {
+        this.in3D = inchi3D;
         this.key = inchikey;
-        this.in2D = inchi==null ? null : inchi2d(inchi);
+        this.in2D = inchi2D;
     }
 
     public MolecularFormula extractFormulaOrThrow() {
-        try {
-            return extractFormula();
-        } catch (UnknownElementException e) {
-            throw new RuntimeException("Cannot extract molecular formula from InChi: " + toString(), e);
-        }
+        return extractFormulas().next();
     }
 
     public MolecularFormula extractFormula() throws UnknownElementException {
-        int a=0;
-        int b=0;
-        for (a = 0; a < in2D.length(); ++a) {
-            if (in2D.charAt(a) == '/') break;
-        }
-        ++a;
-        for (b = a; b < in2D.length(); ++b) {
-            if (in2D.charAt(b) == '/') break;
+        return extractFormulas().nextFormula();
+    }
+
+    public InChIFormulaExtractor extractFormulas() {
+        return new InChIFormulaExtractor();
+    }
+
+    public class InChIFormulaExtractor implements Iterator<MolecularFormula> {
+        final String[] formulaStrings = extractFormulaLayer().split("[.]");
+        final String[] chargeString = extractQLayer().split(";");
+
+
+        int index = 0;
+        int multiplier = 0;
+        MolecularFormula cache = null;
+
+        @Override
+        public boolean hasNext() {
+            return index < formulaStrings.length;
         }
 
-        MolecularFormula formula = MolecularFormula.parse(in2D.substring(a, b));
-        int q = getQCharge();
-        if (q == 0) return formula;
-        else if (q < 0) {
-            return formula.add(MolecularFormula.parse(String.valueOf(Math.abs(q) + "H")));
-        } else {
-            return formula.subtract(MolecularFormula.parse(String.valueOf(q + "H")));
+        @Override
+        public MolecularFormula next() {
+            try {
+                return nextFormula();
+            } catch (UnknownElementException e) {
+                throw new RuntimeException("Cannot extract molecular formula from InChi: " + toString(), e);
+            }
+        }
+
+        public MolecularFormula nextFormula() throws UnknownElementException {
+            if (multiplier < 1) {
+                String[] fc = splitOnNumericPrefix(formulaStrings[index]);
+                multiplier = fc[0].isBlank() ? 1 : Integer.parseInt(fc[0]);
+                cache = extractFormula(fc[1], chargeString[index]);
+                index++;
+            }
+
+            multiplier--;
+            return cache;
         }
     }
 
-    private static final Pattern Q_LAYER = Pattern.compile("/(q([^/]*))");
-//    private static final Pattern Q_LAYER = Pattern.compile("(\\/q(\\+|\\-)+[1-9]+[0-9]*)?");
+    public String extractFormulaLayer() {
+        int a;
+        for (a = 0; a < in2D.length(); ++a)
+            if (in2D.charAt(a) == '/') break;
 
-    /**
-     * if structure is disconnected return charge of first connected component
-     *
-     * @return
-     */
-    private int getQCharge() {
-        Matcher matcher = Q_LAYER.matcher(in2D);
-        if (matcher.find()) {
-            int charge = 0;
-            String[] charges = matcher.group(2).split(";");
-            if (charges.length == 0) return 0;
-            for (String c : charges) {
-                String[] cs = c.split("\\*");
-                if (cs.length > 0 && !cs[0].isBlank()) {
-                    int num = Integer.parseInt(cs[0]);
-                    if (cs.length > 1 && !cs[1].isBlank())
-                        num *= Integer.parseInt(cs[1]);
-                    charge += num;
-                }
-            }
-            return charge;
+        int b;
+        for (b = a + 1; b < in2D.length(); ++b)
+            if (in2D.charAt(b) == '/') break;
+
+        return in2D.substring(a, b);
+    }
+
+    private String[] splitOnNumericPrefix(String formula) {
+        for (int i = 0; i < formula.length(); i++)
+            if (!Character.isDigit(formula.charAt(i)))
+                return new String[]{formula.substring(0, i), formula.substring(i)};
+
+        throw new IllegalArgumentException("This Molecular formula contains only digits!");
+    }
+
+    private MolecularFormula extractFormula(String formulaString, String chargeString) throws UnknownElementException {
+        final MolecularFormula formula = MolecularFormula.parse(formulaString);
+        final int q = parseCharge(chargeString);
+
+        if (q == 0) return formula;
+        else if (q < 0) {
+            return formula.add(MolecularFormula.parse(Math.abs(q) + "H"));
+        } else {
+            return formula.subtract(MolecularFormula.parse(q + "H"));
         }
+    }
+
+
+    private static final Pattern Q_LAYER = Pattern.compile("/(q([^/]*))");
+
+    @NotNull
+    public String extractQLayer() {
+        return extractChargeLayer(Q_LAYER);
+    }
+
+    private static final Pattern P_LAYER = Pattern.compile("/(p([^/]*))");
+
+    @NotNull
+    public String extractPLayer() {
+        return extractChargeLayer(P_LAYER);
+    }
+
+    @NotNull
+    private String extractChargeLayer(@NotNull Pattern regex) {
+        Matcher matcher = regex.matcher(in2D);
+        if (matcher.find())
+            return matcher.group(2);
+        return "";
+    }
+
+    private int parseCharge(String chargeString) {
+        if (chargeString != null && !chargeString.isBlank())
+            return Integer.parseInt(chargeString.substring(chargeString.indexOf('*') + 1));
         return 0;
     }
 
-    public String key2D() {
-        return key.substring(0,14);
+    private int[] getCharges(String chargeLayer) {
+        return Arrays.stream(chargeLayer.split(";")).mapToInt(this::parseCharge).toArray();
     }
 
-    private static Pattern inchi2dPattern = Pattern.compile("/[btmrsfi]");
-    public static String inchi2d(String inchi) {
-        if (inchi.endsWith("/")) inchi = inchi.substring(0, inchi.length()-1);
-        final Matcher m = inchi2dPattern.matcher(inchi);
-        if (m.find()) {
-            return inchi.substring(0, m.start());
-        } else {
-            return inchi;
-        }
+    public int getQCharge() {
+        return parseCharge(extractQLayer().split(";")[0]);
     }
+
+    public int getPCharge() {
+        return parseCharge(extractPLayer().split(";")[0]);
+    }
+
+    public int getFormalCharges() {
+        return getQCharge() + getPCharge();
+    }
+
+
+    public String key2D() {
+        return key.substring(0, 14);
+    }
+
+    public boolean isStandardInchi() {
+        return in3D.startsWith("InChI=1S/");
+    }
+
+    public boolean hasIsotopes() {
+        return in3D.contains("/i");
+    }
+
+    public boolean isConnected() {
+        final String[] fl = extractFormulaLayer().split("[.]");
+        return fl.length == 1 && Arrays.stream(fl).filter(String::isBlank).noneMatch(f -> Character.isDigit(f.charAt(0)));
+    }
+
 
     @Override
     public String toString(){
@@ -110,7 +185,7 @@ public class InChI implements Ms2ExperimentAnnotation {
         InChI inChI = (InChI) o;
         if (in3D==null) return ((InChI) o).in3D==null;
         if (!in3D.equals(inChI.in3D)) return false;
-        return !(key != null ? !key.equals(inChI.key) : inChI.key != null);
+        return Objects.equals(key, inChI.key);
 
     }
 
