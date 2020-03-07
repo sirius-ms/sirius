@@ -49,7 +49,7 @@ public class FileBasedProjectSpaceWriter extends FileBasedProjectSpaceIO impleme
 
     @Override
     public void delete(String relativePath) throws IOException {
-        Files.delete(asPath(relativePath));
+        FileUtils.deleteRecursively((asPath(relativePath)));
     }
 
     @Override
