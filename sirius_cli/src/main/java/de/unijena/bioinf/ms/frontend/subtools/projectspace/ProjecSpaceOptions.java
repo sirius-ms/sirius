@@ -92,6 +92,7 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
                 ;
     }
 
+
     @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Split the project into chunks: %n|@")
     protected SplitProject splitOptions = new SplitProject();
 
@@ -110,6 +111,9 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
 
 
     }
+
+    @CommandLine.Option(names = {"--move", "-m"}, description = "Move instead of copy data where possible when merging or splitting to save time. Be aware of the risk that you may end up with corrupted input and output data when the program crashes")
+    public boolean move = false;
 
     public ProjectSpaceWorkflow makeWorkflow(RootOptions<?,?,?> rootOptions, ParameterConfig config) {
         return new ProjectSpaceWorkflow(rootOptions, this, config);

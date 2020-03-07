@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.annotations.WriteSummaries;
 import de.unijena.bioinf.ms.frontend.io.InstanceImporter;
@@ -39,20 +40,22 @@ public class ProjectSpaceWorkflow implements Workflow {
         final Predicate<CompoundContainerId> cidFilter = projecSpaceOptions.getCombinedFilter();
         final Predicate<Ms2Experiment> expFilter = projecSpaceOptions.getCombinedMS2ExpFilter();
         final ProjecSpaceOptions.SplitProject splitOpts = projecSpaceOptions.splitOptions;
+        boolean move = projecSpaceOptions.move;
 
         try {
             if (!splitOpts.type.equals(ProjecSpaceOptions.SplitProject.SplitType.NO) && splitOpts.count > 1) {
-                LoggerFactory.getLogger(getClass()).info("The Splitting tool works only on project-spaces. Other inputs will be ignored!");
-                final InputFilesOptions projectInput = new InputFilesOptions(rootOptions.getInput().msInput.projects);
+//                LoggerFactory.getLogger(getClass()).info("The Splitting tool works only on project-spaces. Other inputs will be ignored!");
+                final InputFilesOptions projectInput = rootOptions.getInput();
 
                 ProjectSpaceManager source = null;
                 try {
-                    if (projectInput.msInput.projects.size() > 1) {
+                    if (projectInput.msInput.projects.size() > 1 || !projectInput.msInput.msParserfiles.isEmpty() || (projectInput.csvInputs != null && !projectInput.csvInputs.isEmpty())) {
                         source = rootOptions.getSpaceManagerFactory().create(
                                 new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace(),
                                 rootOptions.getOutput().getProjectSpaceFilenameFormatter());
-                        InstanceImporter importer = new InstanceImporter(source, expFilter, cidFilter);
+                        InstanceImporter importer = new InstanceImporter(source, expFilter, cidFilter, projecSpaceOptions.move);
                         importer.doImport(projectInput);
+                        move = true;
                     } else if (projectInput.msInput.projects.size() == 1) {
                         source = rootOptions.getSpaceManagerFactory().create(
                                 new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(projectInput.msInput.projects.get(0)));
@@ -89,7 +92,6 @@ public class ProjectSpaceWorkflow implements Workflow {
 
                     final String name = idx < 0 ? fileName : fileName.substring(0,idx);
                     final String ext = idx < 0 ? "" : fileName.substring(idx);
-
                     for (int i = 0; i < part.size(); i++) {
                         final Set<CompoundContainerId> p = new HashSet<>(part.get(i));
                         ProjectSpaceManager batchSpace = null;
@@ -97,10 +99,11 @@ public class ProjectSpaceWorkflow implements Workflow {
                             batchSpace = rootOptions.getSpaceManagerFactory().create(
                                     new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(parent.resolve(name + "_" + i + ext)),
                                     source.nameFormatter);
-                            LoggerFactory.getLogger(getClass()).info("Copying compounds '" + p.stream().map(CompoundContainerId::getDirectoryName).collect(Collectors.joining(",")) + "' to Batch '" + batchSpace.projectSpace().getLocation().toString());
-                            InstanceImporter.importProject(source.projectSpace(), batchSpace, expFilter, (cid) -> p.contains(cid) && cidFilter.test(cid));
 
-                            if (config.createInstanceWithDefaults(WriteSummaries.class).value){
+                            LoggerFactory.getLogger(getClass()).info("Copying compounds '" + p.stream().map(CompoundContainerId::getDirectoryName).collect(Collectors.joining(",")) + "' to Batch '" + batchSpace.projectSpace().getLocation().toString());
+                            InstanceImporter.importProject(source.projectSpace(), batchSpace, expFilter, (cid) -> p.contains(cid) && cidFilter.test(cid), move);
+
+                            if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
                                 LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of Batch '" + batchSpace.projectSpace().getLocation().toString());
                                 batchSpace.updateSummaries(ProjectSpaceManager.defaultSummarizer());
                             }
@@ -110,6 +113,10 @@ public class ProjectSpaceWorkflow implements Workflow {
                         }
                         LoggerFactory.getLogger(getClass()).info("Batch '" + batchSpace.projectSpace().getLocation().toString() + "' successfully written!");
                     }
+
+                    source.close();
+                    if (move)
+                        FileUtils.deleteRecursively(source.projectSpace().getLocation());
                 } catch (IOException | ExecutionException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when filtering and splitting Project(s)!",e);
                 } finally {
@@ -132,9 +139,10 @@ public class ProjectSpaceWorkflow implements Workflow {
                         });
                     }
 
-                    InstanceImporter importer = new InstanceImporter(space, expFilter, cidFilter);
-                    importer.doImport(input);
-                    if (config.createInstanceWithDefaults(WriteSummaries.class).value){
+                    new InstanceImporter(space, expFilter, cidFilter, projecSpaceOptions.move)
+                            .doImport(input);
+
+                    if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
                         LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of '" + space.projectSpace().getLocation().toString());
                         space.updateSummaries(ProjectSpaceManager.defaultSummarizer());
                     }

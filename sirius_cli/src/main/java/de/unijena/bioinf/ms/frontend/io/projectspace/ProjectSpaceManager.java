@@ -54,7 +54,12 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         this.space = space;
         this.instFac = factory;
         this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class).map(p -> (Function<Ms2Experiment, String>) new StandardMSFilenameFormatter(p.formatExpression))
-                .orElse((formatter != null ? formatter : new StandardMSFilenameFormatter()));
+                .orElseGet(() -> {
+                    Function<Ms2Experiment, String> f = (formatter != null) ? formatter : new StandardMSFilenameFormatter();
+                    if (f instanceof FilenameFormatter)
+                        space.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty((FilenameFormatter) f));
+                    return f;
+                });
 
         this.namingScheme = (idx, name) -> idx + "_" + name;
     }
