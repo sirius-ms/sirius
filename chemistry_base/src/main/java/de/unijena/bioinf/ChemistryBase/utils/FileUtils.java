@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.*;
 
@@ -85,30 +85,71 @@ public class FileUtils {
      * @param dest Target location
      * @throws IOException if I/O Error occurs
      */
-    public static void copyFolder(Path src, Path dest) throws IOException {
-        copyFolder(src, dest, p -> true);
-    }
 
-    public static void copyFolder(Path src, Path dest, Predicate<Path> filter) throws IOException {
+
+    public static void copyFolder(Path src, Path dest) throws IOException {
         if (Files.notExists(dest))
             throw new IllegalArgumentException("Root destination dir/file must exist!");
 
-        try(final Stream<Path> walker = Files.walk(src)){
-            walker.filter(filter).forEach(source -> {
+        List<Path> files = walkAndClose(w -> w.collect(Collectors.toList()), src);
+        for (Path source : files) {
+                String relative = src.relativize(source).toString();
+                final Path target = dest.resolve(relative);
+                if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
+                    Files.copy(source, target, REPLACE_EXISTING);
+
+        }
+
+
+        /*try (final Stream<Path> walker = Files.walk(src)) {
+            walker.forEach(source -> {
                 String relative = src.relativize(source).toString();
                 final Path target = dest.resolve(relative);
                 if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
                     copy(source, target);
             });
-        }
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof IOException)
+                throw (IOException) e.getCause();
+            throw e;
+        }*/
 
     }
 
-    private static void copy(Path source, Path dest) {
+    /*private static void copy(Path source, Path dest) {
         try {
             Files.copy(source, dest, REPLACE_EXISTING);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }*/
+
+    /**
+     * Lazy move operation. If move not possible files will be copied but source will not be deleted
+     *
+     * @param src  Source location
+     * @param dest Target location
+     * @throws IOException if I/O Error occurs
+     */
+    public static boolean moveFolder(Path src, Path dest) throws IOException {
+        if (src.getFileSystem().provider() == dest.getFileSystem().provider()) {
+            Files.move(src, dest, REPLACE_EXISTING);
+            return true;
+        } else {
+            copyFolder(src, dest);
+            return false;
+        }
+    }
+
+    public static void deleteRecursively(Path rootPath) throws IOException {
+        if (Files.notExists(rootPath))
+            return;
+        if (Files.isRegularFile(rootPath)) {
+            Files.deleteIfExists(rootPath);
+        } else {
+            List<Path> files = walkAndClose(w -> w.sorted(Comparator.reverseOrder()).collect(Collectors.toList()), rootPath);
+            for (Path file : files)
+                Files.deleteIfExists(file);
         }
     }
 
@@ -117,6 +158,7 @@ public class FileUtils {
             return mapLines(br, f);
         }
     }
+
     public static <T> List<T> mapTable(File file, String separator, Function<String[], T> f) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return mapTable(br, separator, f);
