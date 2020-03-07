@@ -5,7 +5,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.SummaryLocations;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
@@ -13,7 +12,6 @@ import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.FilenameFormatter;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,19 +27,24 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class InstanceImporter {
     protected static final Logger LOG = LoggerFactory.getLogger(InstanceImporter.class);
     private final ProjectSpaceManager importTarget;
     private final Predicate<Ms2Experiment> expFilter;
     private final Predicate<CompoundContainerId> cidFilter;
+    private final boolean move; //try to move instead of copy the data where possible
 
 
-    public InstanceImporter(ProjectSpaceManager importTarget, Predicate<Ms2Experiment> expFilter, Predicate<CompoundContainerId> cidFilter) {
+    public InstanceImporter(ProjectSpaceManager importTarget, Predicate<Ms2Experiment> expFilter, Predicate<CompoundContainerId> cidFilter, boolean move) {
         this.importTarget = importTarget;
         this.expFilter = expFilter;
         this.cidFilter = cidFilter;
+        this.move = move;
+    }
+
+    public InstanceImporter(ProjectSpaceManager importTarget, Predicate<Ms2Experiment> expFilter, Predicate<CompoundContainerId> cidFilter) {
+        this(importTarget, expFilter, cidFilter, false);
     }
 
     public ImportInstancesJJob makeImportJJob(@NotNull InputFilesOptions files) {
@@ -117,14 +120,14 @@ public class InstanceImporter {
         public void importProjectsInput(@Nullable List<Path> files) {
             if (files == null || files.isEmpty())
                 return;
-            files.forEach(f -> {
+            for (Path f : files) {
                 try {
                     importProject(f);
                     updateProgress(0, max, ++current);
                 } catch (IOException e) {
                     LOG.error("Could not Unpack archived Project `" + f.toString() + "'. Skipping this location!", e);
                 }
-            });
+            }
         }
 
         public void importProject(@NotNull Path file) throws IOException {
@@ -134,58 +137,60 @@ public class InstanceImporter {
             }
 
             try (final SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(file)) {
-                InstanceImporter.importProject(ps, importTarget, expFilter, cidFilter);
+                InstanceImporter.importProject(ps, importTarget, expFilter, cidFilter, move);
                 // rescale progress to have at least some weighting regarding through the compounds
                 current += ps.size();
                 max += ps.size();
             }
+            if (move)
+                FileUtils.deleteRecursively(file);
         }
     }
 
 
-    public static void importProject(@NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget, @NotNull Predicate<Ms2Experiment> expFilter, @NotNull Predicate<CompoundContainerId> cidFilter) throws IOException {
-        try (Stream<Path> lister = Files.list(inputSpace.getRootPath())) {
-            lister.filter(Files::isRegularFile).filter(p ->
-                    !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME) &&
-                            !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
-                            !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY) &&
-                            !p.getFileName().toString().equals(SummaryLocations.FORMULA_SUMMARY) &&
-                            !p.getFileName().toString().equals(SummaryLocations.MZTAB_SUMMARY)
-            ).forEach(s -> {
-                final Path t = importTarget.projectSpace().getRootPath().resolve(s.getFileName().toString());
-                try {
-                    if (Files.notExists(t))
-                        Files.copy(s, t);
-                } catch (IOException e) {
-                    LOG.error("Could not Copy `" + s.toString() + "` to new location `" + t.toString() + "` Project might be corrupted!", e);
-                }
-            });
+    public static void importProject(@NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget, @NotNull Predicate<Ms2Experiment> expFilter, @NotNull Predicate<CompoundContainerId> cidFilter, boolean move) throws IOException {
+        List<Path> globalFiles = FileUtils.listAndClose(inputSpace.getRootPath(), l -> l.filter(Files::isRegularFile).filter(p ->
+                !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME) &&
+                        !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
+                        !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY) &&
+                        !p.getFileName().toString().equals(SummaryLocations.FORMULA_SUMMARY) &&
+                        !p.getFileName().toString().equals(SummaryLocations.MZTAB_SUMMARY)
+        ).collect(Collectors.toList()));
+
+        for (Path s : globalFiles) {
+            final Path t = importTarget.projectSpace().getRootPath().resolve(s.getFileName().toString());
+            try {
+                if (Files.notExists(t))
+                    Files.copy(s, t); // no copying here because this may be needed multiple times
+            } catch (IOException e) {
+                LOG.error("Could not Copy `" + s.toString() + "` to new location `" + t.toString() + "` Project might be corrupted!", e);
+            }
         }
 
-        final Iterator<CompoundContainer> psIter = inputSpace.filteredCompoundIterator(cidFilter, expFilter);
+        final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);/*, expFilter*/
         while (psIter.hasNext()) {
-            final CompoundContainer sourceComp = psIter.next(); //inputSpace.getCompound(sourceId, Ms2Experiment.class);
-            final CompoundContainerId sourceId = sourceComp.getId();
-            final Ms2Experiment sourcEexp = sourceComp.getAnnotationOrThrow(Ms2Experiment.class);
+            final CompoundContainerId sourceId = psIter.next();
             // create compound
-            @NotNull Instance inst = importTarget.newCompoundWithUniqueId(sourcEexp);
-            inst.getID().setAllNonFinal(sourceId);
-            inst.updateCompoundID();
+            CompoundContainerId id = importTarget.projectSpace().newUniqueCompoundId(sourceId.getCompoundName(), (idx) -> importTarget.namingScheme.apply(idx, sourceId.getCompoundName())).orElseThrow();
+            id.setAllNonFinal(sourceId);
+            importTarget.projectSpace().updateCompoundContainerID(id);
 
-
-            try (Stream<Path> lister = Files.list(inputSpace.getRootPath().resolve(sourceId.getDirectoryName()))) {
-                lister.filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO) && !p.getFileName().toString().equals(SiriusLocations.MS2_EXPERIMENT))
-                        .forEach(s -> {
-                            final Path t = importTarget.projectSpace().getRootPath().resolve(inst.getID().getDirectoryName()).resolve(s.getFileName().toString());
-                            try {
-                                Files.createDirectories(t);
-                                FileUtils.copyFolder(s, t);
-                                inst.reloadCompoundCache(Ms2Experiment.class);
-                            } catch (IOException e) {
-                                LOG.error("Could not Copy instance `" + inst.getID().getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
-                            }
-                        });
+            final List<Path> files = FileUtils.listAndClose(inputSpace.getRootPath().resolve(sourceId.getDirectoryName()), l ->
+                    l.filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO)).collect(Collectors.toList()));
+            for (Path s : files) {
+                final Path t = importTarget.projectSpace().getRootPath().resolve(id.getDirectoryName()).resolve(s.getFileName().toString());
+                try {
+                    Files.createDirectories(t);
+                    if (move)
+                        FileUtils.moveFolder(s, t);
+                    else
+                        FileUtils.copyFolder(s, t);
+                } catch (IOException e) {
+                    LOG.error("Could not Copy instance `" + id.getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
+                }
             }
+            if (move)
+                inputSpace.deleteCompound(sourceId);
         }
     }
 

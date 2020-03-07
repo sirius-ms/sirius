@@ -131,7 +131,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                     LOG.warn("Could not Parse 'FilenameFormatter' -> Using default");
                     psOpts.projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
                 }
-                //todo when do we write this?
+
                 psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(psOpts.projectSpaceFilenameFormatter));
             }
 
