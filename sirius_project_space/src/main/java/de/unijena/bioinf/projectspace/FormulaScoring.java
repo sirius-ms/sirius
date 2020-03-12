@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,8 +100,7 @@ public class FormulaScoring implements Iterable<FormulaScore>, Annotated<Formula
 
     public static List<SScored<FormulaResult, ? extends FormulaScore>> rankBy(@NotNull Stream<FormulaResult> dataStream, @NotNull List<Class<? extends FormulaScore>> scoreTypes, boolean descending) {
         if (scoreTypes.isEmpty())
-            throw new IllegalArgumentException("NO score type given");
-
+            return dataStream.map(c -> new SScored<>(c, FormulaScore.NA(SiriusScore.class))).collect(Collectors.toList());
 
         return dataStream
                 .sorted((c1, c2) -> comparingMultiScore(scoreTypes, descending).compare(c1.getAnnotationOrNull(FormulaScoring.class), c2.getAnnotationOrNull(FormulaScoring.class)))

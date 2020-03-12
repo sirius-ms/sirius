@@ -4,9 +4,11 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -36,7 +38,20 @@ public class FormulaResultRankingScore implements Ms2ExperimentAnnotation {
         this.value = (value != null && value.isEmpty()) ? null : value;
     }
 
+    public List<Class<? extends FormulaScore>> value() {
+        return value;
+    }
+
     //this is used for default property stuff
+    public static Optional<FormulaResultRankingScore> parseFromString(String value) {
+        try {
+            return Optional.of(fromString(value));
+        } catch (Exception e) {
+            LoggerFactory.getLogger("Could not Parse FormulaResultRankingScores '" + value + "'!");
+            return Optional.empty();
+        }
+    }
+
     public static FormulaResultRankingScore fromString(String value) {
         if (value == null || value.isBlank() || value.toLowerCase().equals("null") || value.toLowerCase().equals("auto"))
             return AUTO;

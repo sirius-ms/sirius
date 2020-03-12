@@ -3,10 +3,7 @@ package de.unijena.bioinf.sirius;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.MergedMs1Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
@@ -91,35 +88,51 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
      * Detect ion mode based on MS spectrum
      * @param pinput
      */
+
+
     @Provides(PossibleAdducts.class)
     public void adductDetection(ProcessedInput pinput) {
+        final MutableMs2Experiment exp = pinput.getExperimentInformation();
+
         // if input file contains an adduct annotation, disable adduct detection
-        if (!pinput.getExperimentInformation().getPrecursorIonType().isIonizationUnknown()) {
-            pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(pinput.getExperimentInformation().getPrecursorIonType()));
+        if (!exp.getPrecursorIonType().isIonizationUnknown()) {
+            pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(exp.getPrecursorIonType()));
             return;
         }
 
         if (pinput.hasAnnotation(PossibleAdducts.class)) return;
 
-        if (pinput.getExperimentInformation().hasAnnotation(PossibleAdducts.class)) {
-            pinput.setAnnotation(PossibleAdducts.class, pinput.getExperimentInformation().getAnnotationOrNull(PossibleAdducts.class));
+        if (exp.hasAnnotation(PossibleAdducts.class)) {
+            pinput.setAnnotation(PossibleAdducts.class, exp.getAnnotationOrNull(PossibleAdducts.class));
             return;
         }
-        final int charge = pinput.getExperimentInformation().getPrecursorIonType().getCharge();
+        final int charge = exp.getPrecursorIonType().getCharge();
 
         final AdductSettings settings = pinput.getAnnotationOrDefault(AdductSettings.class);
         final PossibleAdducts ionModes = ionModeDetection.detect(pinput, settings.getDetectable(charge));
 
         final HashSet<PrecursorIonType> set = new HashSet<>(settings.getEnforced(charge));
+        exp.getAnnotation(DetectedAdducts.class).map(DetectedAdducts::getAdducts).ifPresent(set::addAll);
 
-        if (ionModes==null || (ionModes.isEmpty() && set.isEmpty())) set.addAll(settings.getFallback(charge));
-        else set.addAll(ionModes.getAdducts());
+        if (ionModes == null || (ionModes.isEmpty() && set.isEmpty())) {
+            set.addAll(settings.getFallback(charge));
+        } else {
+            set.addAll(ionModes.getAdducts());
+        }
 
         pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(set));
+        pinput.getAnnotation(PossibleAdducts.class).ifPresent(it ->
+                exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(Ms1Preprocessor.getPossibleAdductKey(), it));
+
+
     }
 
+    public static String getPossibleAdductKey() {
+        return Ms1Preprocessor.class.getSimpleName();
+    }
 
     public Set<Element> getSetOfPredictableElements() {
         return elementDetection.getPredictableElements();
     }
+
 }

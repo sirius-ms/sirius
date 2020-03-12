@@ -8,6 +8,7 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown, CSI:FingerID will use this
