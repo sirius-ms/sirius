@@ -129,9 +129,13 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         if (!goodMs2) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.FewPeaks);
         if (!goodPeakShape) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.BadPeakShape);
         if (chimeric)
-            quality=quality.updateQuality(CompoundQuality.CompoundQualityFlag.Chimeric);
+            quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.Chimeric);
 
         exp.setAnnotation(CompoundQuality.class, quality);
+
+        final Set<PrecursorIonType> ionTypes = getPossibleAdductTypes();
+//        if (!ionTypes.isEmpty())
+            exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put("lcms-align", new PossibleAdducts(ionTypes));
 
         return exp;
     }

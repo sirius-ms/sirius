@@ -2,6 +2,9 @@ package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 /**
  * The IonType is an arbitrary modification of the molecular formula of the precursor ion
@@ -46,6 +49,15 @@ public class PrecursorIonType implements TreeAnnotation {
             return PeriodicTable.getInstance().ionByName(name);
         } catch (UnknownElementException e) {
             throw new IllegalArgumentException("Illegal IonType: " + name, e);
+        }
+    }
+
+    public static Optional<PrecursorIonType> parsePrecursorIonType(String name) {
+        try {
+            return Optional.of(PeriodicTable.getInstance().ionByName(name));
+        } catch (UnknownElementException e) {
+            LoggerFactory.getLogger(PrecursorIonType.class).error("Could not parse IonType from String", e);
+            return Optional.empty();
         }
     }
 
@@ -186,17 +198,27 @@ public class PrecursorIonType implements TreeAnnotation {
     }
 
     public boolean isUnknownPositive() {
-        return isIonizationUnknown() && getCharge() > 0;
+        return isIonizationUnknown() && isPositive();
 
     }
 
     public boolean isUnknownNegative() {
-        return isIonizationUnknown() && getCharge() < 0;
+        return isIonizationUnknown() && isNegative();
 
     }
 
     public boolean isUnknownNoCharge() {
         return isIonizationUnknown() && getCharge() == 0;
+
+    }
+
+    public boolean isPositive() {
+        return getCharge() > 0;
+
+    }
+
+    public boolean isNegative() {
+        return getCharge() < 0;
 
     }
 

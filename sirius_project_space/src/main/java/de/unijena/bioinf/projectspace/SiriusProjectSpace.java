@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
@@ -91,26 +92,23 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             final Path expInfo = dir.resolve(SiriusLocations.COMPOUND_INFO);
             if (Files.exists(expInfo)) {
                 final Map<String, String> keyValues = FileUtils.readKeyValues(expInfo);
-                final int index = Integer.parseInt(keyValues.getOrDefault("index", "0"));
+                final int index = Integer.parseInt(keyValues.getOrDefault("index", "-1"));
                 final String name = keyValues.getOrDefault("name", "");
                 final String dirName = dir.getFileName().toString();
-                final double ionMass = Double.parseDouble(keyValues.getOrDefault("ionMass", String.valueOf(Double.NaN)));
+                final Double ionMass = Optional.ofNullable(keyValues.get("ionMass")).map(Double::parseDouble).orElse(null);
 
-                PrecursorIonType ionType = null;
-                if (keyValues.containsKey("ionType"))
-                    try {
-                        ionType = PrecursorIonType.fromString(keyValues.get("ionType"));
-                    } catch (Exception e) {
-                        LoggerFactory.getLogger(getClass()).warn("Could not parse ionType of '" + dirName + "'", e);
-                    }
+                final PrecursorIonType ionType = Optional.ofNullable(keyValues.get("ionType"))
+                        .flatMap(PrecursorIonType::parsePrecursorIonType).orElse(null);
 
                 final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType);
 
-                try {
-                    cid.setRankingScoreTypes(FormulaResultRankingScore.fromString(keyValues.get(CompoundContainerId.RANKING_KEY)).value);
-                } catch (Exception e) {
-                    LoggerFactory.getLogger(getClass()).warn("Could not parse ionType of '" + dirName + "'", e);
-                }
+                cid.setDetectedAdducts(
+                        Optional.ofNullable(keyValues.get("detectedAdducts")).map(DetectedAdducts::fromString).orElse(null));
+
+                cid.setRankingScoreTypes(
+                        Optional.ofNullable(keyValues.get(CompoundContainerId.RANKING_KEY))
+                                .flatMap(FormulaResultRankingScore::parseFromString).map(FormulaResultRankingScore::value)
+                                .orElse(Collections.emptyList()));
 
                 ids.put(dirName, cid);
                 maxIndex = Math.max(index, maxIndex);

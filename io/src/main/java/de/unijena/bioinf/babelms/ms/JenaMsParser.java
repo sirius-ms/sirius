@@ -20,6 +20,7 @@ package de.unijena.bioinf.babelms.ms;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.data.Tagging;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -264,8 +265,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 //set additional index for backward compatibility
                 //index is replaced against .index file during new
                 //project-space implementation. This is for compatibility
-                final Integer index = Integer.parseInt(value);
-                addAsAdditionalField("index", index.toString());
+                final int index = Integer.parseInt(value);
+                addAsAdditionalField("index", Integer.toString(index));
             } else if (optionName.equals("source")) {
                 //override in source set in ms file
                 this.externalSource = new SpectrumFileSource(new URL(value));
@@ -379,11 +380,12 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             fields.put(key, value);
         }
 
-        private void changeConfig(@NotNull String key, @NotNull String value) throws IOException {
+        private Optional<Class<?>> changeConfig(@NotNull String key, @NotNull String value) throws IOException {
             try {
-                config.changeConfig(key, value);
+                return Optional.of(config.changeConfig(key, value));
             } catch (Throwable e) {
                 error("Could not parse Config key = " + key + " with value = " + value + ".");
+                return Optional.empty();
             }
         }
 
@@ -543,7 +545,6 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             newSpectrum();
         }
 
-
         private MolecularFormula[] parseFormulas(String formulas) {
             if (formulas.contains(",")) {
                 return Arrays.stream(formulas.split(",")).map(MolecularFormula::parseOrNull).filter(Objects::nonNull).toArray(MolecularFormula[]::new);
@@ -554,7 +555,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private void parseIonizations(String ions) throws IOException {
             if (ions.contains(",")) {
-                changeConfig("AdductSettings.enforced",ions);
+                changeConfig("AdductSettings.enforced", ions).ifPresent(key -> {
+                    AdductSettings adducts = (AdductSettings) config.createInstanceWithDefaults(key);
+                    if (adducts.getEnforced().stream().anyMatch(PrecursorIonType::isPositive) && adducts.getEnforced().stream().anyMatch(PrecursorIonType::isNegative))
+                        warn("Adducts with positive and negative charge are given in the input '" + ions + "'. Choosing one charge randomly!");
+
+                    this.ionization = PrecursorIonType.unknown(
+                            adducts.getEnforced().stream().findAny().map(PrecursorIonType::getCharge).orElse(1));
+                });
             } else {
                 final PrecursorIonType ion = PeriodicTable.getInstance().ionByNameOrNull(ions.trim());
                 if (ion == null) {
