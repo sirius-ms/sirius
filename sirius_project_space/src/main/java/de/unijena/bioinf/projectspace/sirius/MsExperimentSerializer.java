@@ -1,12 +1,10 @@
 package de.unijena.bioinf.projectspace.sirius;
 
+import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
-import de.unijena.bioinf.projectspace.ComponentSerializer;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.ProjectReader;
-import de.unijena.bioinf.projectspace.ProjectWriter;
+import de.unijena.bioinf.projectspace.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -16,7 +14,9 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
 
     @Override
     public Ms2Experiment read(ProjectReader reader, CompoundContainerId id, CompoundContainer container) throws IOException {
-        return reader.textFile(SiriusLocations.MS2_EXPERIMENT, (b) -> new JenaMsParser().parse(b, Path.of(id.getDirectoryName(), SiriusLocations.MS2_EXPERIMENT).toUri().toURL()));
+        Ms2Experiment exp = reader.textFile(SiriusLocations.MS2_EXPERIMENT, (b) -> new JenaMsParser().parse(b, Path.of(id.getDirectoryName(), SiriusLocations.MS2_EXPERIMENT).toUri().toURL()));
+        id.getDetectedAdducts().ifPresent(pa -> exp.setAnnotation(DetectedAdducts.class, pa));
+        return exp;
     }
 
     @Override
@@ -27,9 +27,9 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
         // actualize optional values in ID
         id.setIonMass(experiment.getIonMass());
         id.setIonType(experiment.getPrecursorIonType());
+        id.setDetectedAdducts(experiment.getAnnotationOrNull(DetectedAdducts.class));
 
         writer.keyValues(SiriusLocations.COMPOUND_INFO, id.asKeyValuePairs());
-
     }
 
     @Override

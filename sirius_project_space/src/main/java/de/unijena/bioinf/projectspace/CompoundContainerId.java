@@ -3,7 +3,9 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -22,18 +24,21 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     private int compoundIndex;
 
     // fields for fast compound filtering
-    //todo switch that to annotations?
+    @Nullable
     private Double ionMass = null;
+    @Nullable
     private PrecursorIonType ionType = null;
+    @Nullable
+    private DetectedAdducts possibleAdducts = null;
     @NotNull
     private List<Class<? extends FormulaScore>> rankingScores = Collections.emptyList();
 
 
     protected CompoundContainerId(String directoryName, String compoundName, int compoundIndex) {
-        this(directoryName, compoundName, compoundIndex, Double.NaN, null);
+        this(directoryName, compoundName, compoundIndex, null, null);
     }
 
-    protected CompoundContainerId(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType) {
+    protected CompoundContainerId(String directoryName, String compoundName, int compoundIndex, @Nullable Double ionMass, @Nullable PrecursorIonType ionType) {
         this.directoryName = directoryName;
         this.compoundName = compoundName;
         this.compoundIndex = compoundIndex;
@@ -54,14 +59,11 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         return compoundIndex;
     }
 
-
-
-
     public Optional<Double> getIonMass() {
         return Optional.ofNullable(ionMass);
     }
 
-    public void setIonMass(double ionMass) {
+    public void setIonMass(@Nullable Double ionMass) {
         this.ionMass = ionMass;
     }
 
@@ -69,12 +71,20 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         return Optional.ofNullable(ionType);
     }
 
-    public void setIonType(PrecursorIonType ionType) {
+    public void setIonType(@Nullable PrecursorIonType ionType) {
         this.ionType = ionType;
     }
 
     public List<Class<? extends FormulaScore>> getRankingScoreTypes() {
         return rankingScores;
+    }
+
+    public Optional<DetectedAdducts> getDetectedAdducts() {
+        return Optional.ofNullable(possibleAdducts);
+    }
+
+    public void setDetectedAdducts(@Nullable DetectedAdducts possibleAdducts) {
+        this.possibleAdducts = possibleAdducts;
     }
 
     @SafeVarargs
@@ -96,16 +106,17 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
 
     @Override
     public String toString() {
-        return directoryName + "@" + Math.round(ionMass) + "m/z";
+        return directoryName + "@" + getIonMass().map(Math::round).map(String::valueOf).orElse("N/A") + "m/z";
     }
 
     public Map<String, String> asKeyValuePairs() {
         Map<String, String> kv = new LinkedHashMap<>(3);
         kv.put("index", String.valueOf(getCompoundIndex()));
         kv.put("name", getCompoundName());
-        kv.put("ionMass", String.valueOf(ionMass));
-        if (ionType != null)
-            kv.put("ionType", ionType.toString());
+        getIonMass().ifPresent(im -> kv.put("ionMass", String.valueOf(im)));
+        getIonType().ifPresent(it -> kv.put("ionType", it.toString()));
+        getDetectedAdducts().ifPresent(pa -> kv.put("detectedAdducts", pa.toString()));
+
         if (!rankingScores.isEmpty())
             kv.put(RANKING_KEY, rankingScores.stream().map(Score::simplify).collect(Collectors.joining(",")));
 
@@ -118,5 +129,6 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         setRankingScoreTypes(cid.rankingScores);
         setIonMass(cid.ionMass);
         setIonType(cid.ionType);
+        setDetectedAdducts(cid.possibleAdducts);
     }
 }

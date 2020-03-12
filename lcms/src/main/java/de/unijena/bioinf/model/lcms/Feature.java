@@ -145,6 +145,11 @@ public class Feature implements Annotated<DataAnnotation> {
         exp.setAnnotation(Quantification.class, new Quantification(Collections.singletonMap(origin.identifier, intensity)));
         exp.setAnnotation(CompoundQuality.class,quality);
         exp.setSource(new SpectrumFileSource(origin.source.getUrl()));
+
+        final Set<PrecursorIonType> ionTypes = getPossibleAdductTypes();
+//        if (!ionTypes.isEmpty())
+            exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put("lcms-align",new PossibleAdducts(ionTypes));
+
         return exp;
     }
 

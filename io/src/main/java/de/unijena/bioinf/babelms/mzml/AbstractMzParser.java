@@ -1,11 +1,8 @@
 package de.unijena.bioinf.babelms.mzml;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.Iterators;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.Parser;
-import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.lcms.InMemoryStorage;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.ProcessedSample;
@@ -13,15 +10,12 @@ import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.Feature;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
 import de.unijena.bioinf.model.lcms.LCMSRun;
-import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
-import java.util.Set;
 
 public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
     protected InMemoryStorage inMemoryStorage;
@@ -51,18 +45,7 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
 
             if (ions.hasNext()) {
                 Feature feature = instance.makeFeature(sample, ions.next(), false);
-                Ms2Experiment experiment = feature.toMsExperiment();
-
-                // TODO: =/
-                final Set<PrecursorIonType> ionTypes = feature.getPossibleAdductTypes();
-                if (!ionTypes.isEmpty()) {
-                    ParameterConfig parameterConfig = PropertyManager.DEFAULTS.newIndependentInstance("LCMS-" + experiment.getName());
-                    parameterConfig.changeConfig("AdductSettings.enforced", Joiner.on(',').join(ionTypes));
-                    final MsFileConfig config = new MsFileConfig(parameterConfig);
-                    experiment.setAnnotation(MsFileConfig.class, config);
-                }
-
-                return experiment;
+                return feature.toMsExperiment();
             } else {
                 instance = null;
                 inMemoryStorage = null;
@@ -71,7 +54,7 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
                 return null;
             }
         } catch (Throwable e) {
-            LoggerFactory.getLogger(AbstractMzParser.class).error("Error while parsing " + String.valueOf(sourceURL) + ": " + e.getMessage());
+            LoggerFactory.getLogger(AbstractMzParser.class).error("Error while parsing " + sourceURL + ": " + e.getMessage());
             throw e;
         }
         }
