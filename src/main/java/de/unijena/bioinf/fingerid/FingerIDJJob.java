@@ -3,6 +3,7 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
@@ -139,7 +140,10 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
             return Collections.emptyList();
         }
 
-        PossibleAdducts adducts = experiment.getPrecursorIonType().isIonizationUnknown() ? experiment.getAnnotation(PossibleAdducts.class, () -> new Ms1Preprocessor().preprocess(experiment).getAnnotation(PossibleAdducts.class).orElseGet(PossibleAdducts::new)) : new PossibleAdducts(experiment.getPrecursorIonType());
+        PossibleAdducts adducts = experiment.getPrecursorIonType().isIonizationUnknown()
+                ? experiment.getAnnotation(DetectedAdducts.class).map(DetectedAdducts::asPossibleAdducts)
+                    .orElseGet(() -> new Ms1Preprocessor().preprocess(experiment).getAnnotation(PossibleAdducts.class).orElseGet(PossibleAdducts::new))
+                : new PossibleAdducts(experiment.getPrecursorIonType());
 
         // EXPAND LIST for different Adducts
         logDebug("Expanding Identification Results for different Adducts.");
