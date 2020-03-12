@@ -2,7 +2,9 @@ package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
@@ -13,8 +15,10 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
+import javafx.geometry.Pos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -67,10 +71,12 @@ public class SiriusSubToolJob extends InstanceJob {
                 inst.newFormulaResultWithUniqueId(result.getTree());
 
             // set sirius to ranking score
-            if (exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
+            if (exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto())
                 inst.getID().setRankingScoreTypes(new ArrayList<>(List.of(SiriusScore.class)));
-                inst.updateCompoundID();
-            }
+
+            //set make possible adduct persistent
+            inst.getID().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
+            inst.updateCompoundID();
 
 
             /*String out = "#####################################\n"
@@ -84,5 +90,13 @@ public class SiriusSubToolJob extends InstanceJob {
             logInfo("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
 //            System.out.println("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
         }
+    }
+
+    @Override
+    public void invalidateResults(@NotNull Instance result) {
+        super.invalidateResults(result);
+        result.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(Ms1Preprocessor.getPossibleAdductKey()));
+        result.getID().setDetectedAdducts(result.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
+        result.updateCompoundID();
     }
 }
