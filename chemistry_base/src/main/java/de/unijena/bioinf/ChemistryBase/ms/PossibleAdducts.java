@@ -4,7 +4,9 @@ import com.google.common.collect.Sets;
 import de.unijena.bioinf.ChemistryBase.chem.IonMode;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -14,7 +16,7 @@ import java.util.stream.Stream;
  * Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown, CSI:FingerID will use this
  * object and for all different adducts.
  */
-public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2ExperimentAnnotation {
+public final class PossibleAdducts implements Iterable<PrecursorIonType>, ProcessedInputAnnotation {
 
     protected final LinkedHashSet<PrecursorIonType> value;
 
@@ -81,26 +83,6 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Ms2Exp
             }
         }
         return ions;
-    }
-
-    public void addAdduct(String adductName) {
-        addAdduct(PrecursorIonType.getPrecursorIonType(adductName));
-    }
-
-    public void addAdduct(PrecursorIonType adduct) {
-        value.add(adduct);
-    }
-
-    public void addAdducts(Collection<PrecursorIonType> adductsToAdd) {
-        value.addAll(adductsToAdd);
-    }
-
-    public void addAdducts(PrecursorIonType... adductsToAdd) {
-        value.addAll(Arrays.asList(adductsToAdd));
-    }
-
-    public void addAdducts(PossibleAdducts adductsToAdd) {
-        value.addAll(adductsToAdd.value);
     }
 
     @Override
