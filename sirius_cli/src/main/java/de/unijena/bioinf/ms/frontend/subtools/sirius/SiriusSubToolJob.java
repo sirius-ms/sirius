@@ -1,10 +1,8 @@
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
@@ -15,14 +13,13 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
-import javafx.geometry.Pos;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class SiriusSubToolJob extends InstanceJob {
     protected final SiriusOptions cliOptions;
@@ -95,7 +92,7 @@ public class SiriusSubToolJob extends InstanceJob {
     @Override
     public void invalidateResults(@NotNull Instance result) {
         super.invalidateResults(result);
-        result.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(Ms1Preprocessor.getPossibleAdductKey()));
+        result.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
         result.getID().setDetectedAdducts(result.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
         result.updateCompoundID();
     }

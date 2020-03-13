@@ -47,7 +47,7 @@ public class AddConfigsJob extends InstanceJob {
         exp.addAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
 
         //reduce basic list of possible Adducts to charge
-        exp.getAnnotation(PossibleAdducts.class).ifPresent(add -> add.keepOnly(exp.getPrecursorIonType().getCharge()));
+//        exp.getAnnotation(PossibleAdducts.class).ifPresent(add -> add.keepOnly(exp.getPrecursorIonType().getCharge()));
 
         final FormulaResultRankingScore it = exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO);
         // this value is a commandline parameter that specifies how to handle the ranking score. If auto we decide how to
