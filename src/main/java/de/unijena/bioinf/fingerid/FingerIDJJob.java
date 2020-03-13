@@ -14,6 +14,7 @@ import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -140,10 +141,15 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
             return Collections.emptyList();
         }
 
-        PossibleAdducts adducts = experiment.getPrecursorIonType().isIonizationUnknown()
-                ? experiment.getAnnotation(DetectedAdducts.class).map(DetectedAdducts::asPossibleAdducts)
-                    .orElseGet(() -> new Ms1Preprocessor().preprocess(experiment).getAnnotation(PossibleAdducts.class).orElseGet(PossibleAdducts::new))
-                : new PossibleAdducts(experiment.getPrecursorIonType());
+        final PossibleAdducts adducts;
+        if (experiment.getPrecursorIonType().isIonizationUnknown()) {
+            if (!experiment.hasAnnotation(DetectedAdducts.class))
+                new Ms1Preprocessor().preprocess(experiment);
+            adducts = experiment.getPossibleAdductsOrFallback();
+        } else {
+            adducts = new PossibleAdducts(experiment.getPrecursorIonType());
+        }
+
 
         // EXPAND LIST for different Adducts
         logDebug("Expanding Identification Results for different Adducts.");
