@@ -19,13 +19,16 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A Ms2Experiment is a MS/MS measurement of a *single* compound. If there are multiple compounds measured in your
@@ -40,9 +43,39 @@ public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotat
 
     /**
      * Either the ion/adduct type of the ion OR the charge.
+     *
      * @return the ionization type of the ion (not null)
      */
     @NotNull PrecursorIonType getPrecursorIonType();
+
+
+    /**
+     * Returns a list of detected adducts, if available
+     *
+     * @return Optional collection of possible adducts
+     */
+    @NotNull
+    default Optional<PossibleAdducts> getPossibleAdducts() {
+        final PossibleAdducts adducts = getAnnotation(DetectedAdducts.class).flatMap(DetectedAdducts::getAdducts)
+                .orElseGet(PossibleAdducts::new);
+        getAnnotation(AdductSettings.class).ifPresent(as -> PossibleAdducts.union(adducts, as.getEnforced(getPrecursorIonType().getCharge())));
+
+        return adducts.isEmpty() ? Optional.empty() : Optional.of(adducts);
+    }
+
+
+    /**
+     * Returns a list of detected adducts, if no adducts are found a fallback list will be returned
+     *
+     * @return collection of possible adducts
+     */
+    @NotNull
+    default PossibleAdducts getPossibleAdductsOrFallback() {
+        return getPossibleAdducts().
+                orElseGet(() -> getAnnotation(AdductSettings.class).map(as -> as.getFallback(getPrecursorIonType().getCharge())).filter(it -> !it.isEmpty()).map(PossibleAdducts::new).
+                        orElseGet(() -> new PossibleAdducts(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getFallback(getPrecursorIonType().getCharge())))
+                );
+    }
 
 
     /**

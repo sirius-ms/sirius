@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -135,7 +136,7 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
 
         final Set<PrecursorIonType> ionTypes = getPossibleAdductTypes();
 //        if (!ionTypes.isEmpty())
-            exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put("lcms-align", new PossibleAdducts(ionTypes));
+            exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(LCMSProccessingInstance.POSSIBLE_ADDUCTS_KEY, new PossibleAdducts(ionTypes));
 
         return exp;
     }

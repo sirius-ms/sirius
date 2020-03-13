@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LCMSProccessingInstance {
+    public static final String POSSIBLE_ADDUCTS_KEY = "lcms-align";//LCMSProccessingInstance.class.getSimpleName();
 
     protected HashMap<ProcessedSample, SpectrumStorage> storages;
     protected List<ProcessedSample> samples;

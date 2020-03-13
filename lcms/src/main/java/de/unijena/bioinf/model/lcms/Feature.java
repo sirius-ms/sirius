@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -121,7 +122,6 @@ public class Feature implements Annotated<DataAnnotation> {
         }
         exp.setName(String.valueOf(trace[apex].getScanNumber()));
         exp.setPrecursorIonType(ionType);
-        exp.setAnnotation(PossibleAdducts.class, new PossibleAdducts(alternativeIonTypes));
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(getCorrelatedFeatures()));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
         for (SimpleSpectrum s : getMs2Spectra()) {
@@ -147,8 +147,7 @@ public class Feature implements Annotated<DataAnnotation> {
         exp.setSource(new SpectrumFileSource(origin.source.getUrl()));
 
         final Set<PrecursorIonType> ionTypes = getPossibleAdductTypes();
-//        if (!ionTypes.isEmpty())
-            exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put("lcms-align",new PossibleAdducts(ionTypes));
+        exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(LCMSProccessingInstance.POSSIBLE_ADDUCTS_KEY,new PossibleAdducts(ionTypes));
 
         return exp;
     }
