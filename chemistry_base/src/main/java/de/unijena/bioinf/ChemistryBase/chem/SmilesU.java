@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SmileS {
+public class SmilesU {
 
     public static boolean isConnected(@NotNull String smiles){
         return smiles.indexOf('.') < 0;
