@@ -27,7 +27,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static de.unijena.bioinf.ChemistryBase.chem.InChIs.*;
-import static de.unijena.bioinf.ChemistryBase.chem.SmileS.*;
+import static de.unijena.bioinf.ChemistryBase.chem.SmilesU.*;
+
 
 public class InChISMILESUtils {
 
