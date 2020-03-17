@@ -145,13 +145,13 @@ public class CustomDatabaseImporter {
 
             molecule = new CustomDatabase.Molecule(inChIGeneratorFactory.getInChIToStructure(str, SilentChemObjectBuilder.getInstance()).getAtomContainer());
         } else {
-            if (!SmileS.isConnected(str)){
+            if (!SmilesU.isConnected(str)){
                 LoggerFactory.getLogger(getClass()).warn(
                         String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
                 return;
             }
 
-            if (SmileS.isMultipleCharged(str)) {
+            if (SmilesU.isMultipleCharged(str)) {
                 LoggerFactory.getLogger(getClass()).warn(
                         String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
                 return;
