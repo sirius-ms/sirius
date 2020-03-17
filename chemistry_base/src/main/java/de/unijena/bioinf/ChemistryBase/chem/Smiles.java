@@ -34,33 +34,33 @@ public class Smiles implements Ms2ExperimentAnnotation {
     }
 
     public boolean isConnected() {
-        return SmileS.isConnected(smiles);
+        return SmilesU.isConnected(smiles);
     }
 
     public int getFormalCharge() {
-        return SmileS.getFormalChargeFromSmiles(smiles);
+        return SmilesU.getFormalChargeFromSmiles(smiles);
     }
 
     public boolean isMultipleCharged() {
-        return SmileS.isMultipleCharged(smiles);
+        return SmilesU.isMultipleCharged(smiles);
     }
 
     public int getNumberOfPartialCharges() {
-        return SmileS.getNumberOfPartialChargesFromSmiles(smiles);
+        return SmilesU.getNumberOfPartialChargesFromSmiles(smiles);
     }
 
     /**
      * @return 2d smiles created by regex Text replace.
      */
     public Smiles get2DSmiles() {
-        return new Smiles(SmileS.get2DSmilesByTextReplace(smiles));
+        return new Smiles(SmilesU.get2DSmilesByTextReplace(smiles));
     }
 
     public Smiles stripStereoCentres() {
-        return new Smiles(SmileS.stripStereoCentres(smiles));
+        return new Smiles(SmilesU.stripStereoCentres(smiles));
     }
 
     public Smiles stripDoubleBondGeometry() {
-        return new Smiles(SmileS.stripDoubleBondGeometry(smiles));
+        return new Smiles(SmilesU.stripDoubleBondGeometry(smiles));
     }
 }
