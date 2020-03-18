@@ -33,9 +33,11 @@ import javax.json.JsonObject;
 import javax.json.stream.JsonGenerator;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.IntConsumer;
+import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
 
@@ -52,7 +54,6 @@ public class CompoundCandidate {
     //database info
     protected long bitset;
     protected DBLink[] links;
-    protected Multimap<String, String> linkedDatabases = null;
 
     //citation info
     protected PubmedLinks pubmedIDs = null;
@@ -224,9 +225,9 @@ public class CompoundCandidate {
     }
 
     public @NotNull Multimap<String, String> getLinkedDatabases() {
-        if (linkedDatabases == null)
-            linkedDatabases = DatasourceService.getLinkedDataSources(this);
-        return linkedDatabases;
+//        if (linkedDatabases == null)
+        return DataSources.getLinkedDataSources(this);
+//        return linkedDatabases;
     }
 
     public String getSmiles() {
@@ -307,6 +308,14 @@ public class CompoundCandidate {
 
     public String toString() {
         return getInchiKey2D() + " (dbflags=" + bitset + ")";
+    }
+
+    public void mergeDBLinks(DBLink[] links){
+        this.links = Stream.concat(Arrays.stream(this.links),Arrays.stream(links)).distinct().toArray(DBLink[]::new);
+    }
+
+    public void mergeBits(long bitset) {
+        this.bitset |= bitset;
     }
 }
 

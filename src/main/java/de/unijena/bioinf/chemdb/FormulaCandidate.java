@@ -47,7 +47,7 @@ public final class FormulaCandidate {
     }
 
     public Set<String> getDataSources() {
-        return DatasourceService.getDataSourcesFromBitFlags(bitset);
+        return DataSources.getDataSourcesFromBitFlags(bitset);
     }
 
 

@@ -2,7 +2,6 @@ package de.unijena.bioinf.chemdb;
 
 import java.util.Arrays;
 import java.util.Locale;
-//"SELECT compound_id FROM ref.pubchem WHERE inchi_key_1 = ?"
 
 public enum DataSource {
     ALL("all", 0, null, null, null),
@@ -61,19 +60,31 @@ public enum DataSource {
 
     public String getLink(String id) {
         if (this.URI == null) return null;
-        if (DatasourceService.NUMPAT.matcher(URI).find()) {
+        if (DataSources.NUMPAT.matcher(URI).find()) {
             return String.format(Locale.US, URI, Integer.parseInt(id));
         } else {
             return String.format(Locale.US, URI, id);
         }
     }
 
-    public static boolean isBio(long flags) {
+    public String realName() {
+        return realName;
+    }
+
+    public long flag() {
+        return flag;
+    }
+
+    public static boolean isBioOnly(long flags) {
         return (flags & BIO.flag) != 0;
     }
 
-    public boolean isBio() {
-        return isBio(flag);
+    public boolean isBioOnly() {
+        return isBioOnly(flag);
+    }
+
+    public boolean isNotBioOnly() {
+        return !isBioOnly(flag);
     }
 
     public static DataSource[] valuesNoALL() {

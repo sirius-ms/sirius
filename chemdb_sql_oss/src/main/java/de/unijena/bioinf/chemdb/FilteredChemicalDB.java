@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 // this class is just a workaround to prevent old api for the internal csi Fingerid tools and should not
@@ -15,7 +16,7 @@ import java.util.List;
 public class FilteredChemicalDB extends AbstractChemicalDatabase implements Cloneable {
 
 
-    private BioFilter biofilter = BioFilter.ALL;
+    private long filter = DataSource.ALL.flag();
     private final ChemicalDatabase wrappedDB;
 
     public FilteredChemicalDB() throws ChemicalDatabaseException {
@@ -27,28 +28,28 @@ public class FilteredChemicalDB extends AbstractChemicalDatabase implements Clon
         wrappedDB = db;
     }
 
-    public BioFilter getBioFilter() {
-        return biofilter;
+    public long getBioFilter() {
+        return filter;
     }
 
-    public void setBioFilter(BioFilter biofilter) {
-        this.biofilter = biofilter;
+    public void setBioFilter(long filter) {
+        this.filter = filter;
     }
 
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
-        return wrappedDB.lookupMolecularFormulas(biofilter, mass, deviation, ionType);
+        return wrappedDB.lookupMolecularFormulas(filter, mass, deviation, ionType);
     }
 
     @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        return wrappedDB.lookupStructuresByFormula(biofilter, formula);
+        return wrappedDB.lookupStructuresByFormula(filter, formula);
     }
 
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        return wrappedDB.lookupStructuresAndFingerprintsByFormula(biofilter, formula, fingerprintCandidates);
+        return wrappedDB.lookupStructuresAndFingerprintsByFormula(filter, formula, fingerprintCandidates);
     }
 
     @Override
@@ -88,12 +89,8 @@ public class FilteredChemicalDB extends AbstractChemicalDatabase implements Clon
 
     public FilteredChemicalDB clone(){
         FilteredChemicalDB clone = new FilteredChemicalDB(wrappedDB.clone()); //todo maybe we should not clone wrapped db here
-        clone.setBioFilter(biofilter);
+        clone.setBioFilter(filter);
         return clone;
-    }
-
-    public boolean isWrappedDBChemDB(){
-        return wrappedDB instanceof ChemicalDatabase;
     }
 
     public ChemicalDatabase getWrappedDB() {

@@ -21,11 +21,9 @@ package de.unijena.bioinf.chemdb;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -33,7 +31,7 @@ import java.util.regex.Pattern;
  * References to other databases can be stored as 32 or 64 bit sets. This class decodes these
  * bitsets into names.
  */
-public class DatasourceService {
+public class DataSources {
     //static fields
     protected static Pattern NUMPAT = Pattern.compile("%(?:[0-9 ,+\\-]*)d");
     private static final Map<String, DataSource> SOURCES_ALIAS_MAP = new ConcurrentHashMap<>();
@@ -52,25 +50,33 @@ public class DatasourceService {
         return Collections.unmodifiableSet(SOURCES_ALIAS_MAP.keySet());
     }
 
+    @NotNull
+    public static Optional<DataSource> getSourceFromName(@NotNull final String name) {
+        return Optional.ofNullable(getSourceFromNameOrNull(name));
+    }
 
-    public static DataSource getSourceFromName(@NotNull final String name) {
+
+    @Nullable
+    public static DataSource getSourceFromNameOrNull(@NotNull final String name) {
         return SOURCES_ALIAS_MAP.get(name.toLowerCase());
     }
 
     public static String getRealSourceName(@NotNull final String name) {
-        final DataSource source = getSourceFromName(name);
+        final DataSource source = getSourceFromNameOrNull(name);
         if (source == null) return null;
         return source.realName;
     }
 
     public static boolean containsSource(@NotNull final String name) {
-        return getSourceFromName(name) != null;
+        return getSourceFromNameOrNull(name) != null;
     }
 
-    public static long getDBFlagFromName(@NotNull String dbName) {
-        DataSource s = DatasourceService.getSourceFromName(dbName);
-        if (s != null) return s.searchFlag;
-        return 0L;
+    public static long getDBFlag(@NotNull String dbName) {
+        return DataSources.getSourceFromName(dbName).map(DataSource::flag).orElse(0L);
+    }
+
+    public static long getDBFlag(@NotNull Set<DataSource> sources) {
+        return sources.stream().mapToLong(DataSource::flag).reduce((a, b) -> a |= b).orElse(0L);
     }
 
     public static Multimap<String, String> getLinkedDataSources(CompoundCandidate candidate) {
@@ -104,5 +110,7 @@ public class DatasourceService {
     }
 
 
-
+    public static long bioOrAll(boolean searchInBio) {
+        return searchInBio ? DataSource.BIO.flag() : DataSource.ALL.flag();
+    }
 }

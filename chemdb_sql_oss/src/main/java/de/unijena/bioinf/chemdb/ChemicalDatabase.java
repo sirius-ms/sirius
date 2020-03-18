@@ -17,6 +17,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,14 +120,6 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         this(host, username, password, null);
     }
 
-//    public BioFilter getBioFilter() {
-//        return bioFilter;
-//    }
-
-   /* public void setBioFilter(BioFilter bioFilter) {
-        this.bioFilter = bioFilter;
-    }*/
-
     /**
      * Search for molecular formulas in the database
      *
@@ -136,16 +129,16 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
-        return lookupMolecularFormulas(BioFilter.ALL, mass, deviation, ionType);
+        return lookupMolecularFormulas(DataSource.ALL.flag(), mass, deviation, ionType);
     }
 
-    public List<FormulaCandidate> lookupMolecularFormulas(BioFilter bioFilter, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
+    public List<FormulaCandidate> lookupMolecularFormulas(long filter, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         final ArrayList<FormulaCandidate> xs = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             try (final PreparedStatement statement = c.connection.prepareStatement(
                     String.format("SELECT formula, flags FROM %s.formulas WHERE exactmass >= ? AND exactmass <= ?", DEFAULT_SCHEME)
             )) {
-                xs.addAll(lookupFormulaWithIon(bioFilter, statement, mass, deviation, ionType));
+                xs.addAll(lookupFormulaWithIon(filter, statement, mass, deviation, ionType));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -193,7 +186,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
      * @param ionTypes  allowed adducts of the ion
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
-    public List<List<FormulaCandidate>> lookupMolecularFormulas(BioFilter bioFilter, double mass, Deviation deviation, PrecursorIonType[] ionTypes) throws ChemicalDatabaseException {
+    public List<List<FormulaCandidate>> lookupMolecularFormulas(long filter, double mass, Deviation deviation, PrecursorIonType[] ionTypes) throws ChemicalDatabaseException {
         final ArrayList<List<FormulaCandidate>> xs = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             final PreparedStatement statement = c.connection.prepareStatement(
@@ -201,7 +194,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             );
             for (PrecursorIonType ionType : ionTypes) {
                 try {
-                    xs.add(lookupFormulaWithIon(bioFilter, statement, mass, deviation, ionType));
+                    xs.add(lookupFormulaWithIon(filter, statement, mass, deviation, ionType));
                 } catch (ChemicalDatabaseException e) {
                     throw new ChemicalDatabaseException(e);
                 }
@@ -217,10 +210,10 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         return xs;
     }
 
-    private List<FormulaCandidate> lookupFormulaWithIon(BioFilter bioFilter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException, SQLException {
+    private List<FormulaCandidate> lookupFormulaWithIon(long filter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException, SQLException {
         if (ionType.isIntrinsicalCharged()) {
-            final List<FormulaCandidate> protonated = lookupFormulaWithIonIntrinsicalChargedAreConsidered(bioFilter, statement, mass, deviation, ionType.getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-"));
-            final List<FormulaCandidate> intrinsical = lookupFormulaWithIonIntrinsicalChargedAreConsidered(bioFilter, statement, mass, deviation, ionType);
+            final List<FormulaCandidate> protonated = lookupFormulaWithIonIntrinsicalChargedAreConsidered(filter, statement, mass, deviation, ionType.getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-"));
+            final List<FormulaCandidate> intrinsical = lookupFormulaWithIonIntrinsicalChargedAreConsidered(filter, statement, mass, deviation, ionType);
             // merge both together
             final HashMap<MolecularFormula, FormulaCandidate> map = new HashMap<>();
             for (FormulaCandidate fc : intrinsical) {
@@ -233,11 +226,11 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             }
             return new ArrayList<>(map.values());
         } else {
-            return lookupFormulaWithIonIntrinsicalChargedAreConsidered(bioFilter, statement, mass, deviation, ionType);
+            return lookupFormulaWithIonIntrinsicalChargedAreConsidered(filter, statement, mass, deviation, ionType);
         }
     }
 
-    private List<FormulaCandidate> lookupFormulaWithIonIntrinsicalChargedAreConsidered(BioFilter bioFilter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException, SQLException {
+    private List<FormulaCandidate> lookupFormulaWithIonIntrinsicalChargedAreConsidered(final long filter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException, SQLException {
         final double delta = deviation.absoluteFor(mass);
         final double neutralMass = ionType.precursorMassToNeutralMass(mass);
         final double minmz = neutralMass - delta;
@@ -246,11 +239,13 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         statement.setDouble(1, minmz);
         statement.setDouble(2, maxmz);
         try (final ResultSet set = statement.executeQuery()) {
+            //todo why do we not filter on Database level?
             while (set.next()) {
                 final long flag = set.getLong(2);
-                final boolean isPubchemOnly = !DataSource.isBio(flag);
+                if ((flag & filter) == 0) continue;
+                /*final boolean isPubchemOnly = !DataSource.isBioOnly(flag);
                 if (bioFilter == BioFilter.ONLY_BIO && isPubchemOnly) continue;
-                if (bioFilter == BioFilter.ONLY_NONBIO && !isPubchemOnly) continue;
+                if (bioFilter == BioFilter.ONLY_NONBIO && !isPubchemOnly) continue;*/
                 final FormulaCandidate fc = new FormulaCandidate(MolecularFormula.parseOrThrow(set.getString(1)), ionType, set.getLong(2));
                 list.add(fc);
             }
@@ -262,12 +257,12 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
 
     @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        return lookupStructuresByFormula(BioFilter.ALL, formula);
+        return lookupStructuresByFormula(DataSource.ALL.flag(), formula);
     }
 
-    public List<CompoundCandidate> lookupStructuresByFormula(BioFilter bioFilter, MolecularFormula formula) throws ChemicalDatabaseException {
+    public List<CompoundCandidate> lookupStructuresByFormula(long filter, MolecularFormula formula) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            return lookupStructuresByFormula(bioFilter, formula, c);
+            return lookupStructuresByFormula(filter, formula, c);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return new ArrayList<>();
@@ -276,15 +271,21 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         }
     }
 
-    private List<CompoundCandidate> lookupStructuresByFormula(BioFilter bioFilter, MolecularFormula formula, final PooledConnection<Connection> c) throws SQLException {
-        final boolean enforceBio = bioFilter == BioFilter.ONLY_BIO;
+
+    private final static String SELECT_BY_FORMULA = "SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM ";
+    private final static String SELECT_BY_FORMULA_FILTERED = SELECT_BY_FORMULA + STRUCTURES_TABLE + " WHERE formula = ? AND (flags & %s) != 0";
+    private final static String SELECT_BY_FORMULA_UNFILTERED = SELECT_BY_FORMULA + STRUCTURES_TABLE + " WHERE formula = ?";
+
+    private List<CompoundCandidate> lookupStructuresByFormula(long filter, @NotNull MolecularFormula formula, @NotNull final PooledConnection<Connection> c) throws SQLException {
+
+
         final PreparedStatement statement;
-        if (enforceBio) {
-            final long bioflag = DataSource.BIO.flag;
-            statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ? AND (flags & " + bioflag + " ) != 0");
+        if (filter == 0) {
+            statement = c.connection.prepareStatement(SELECT_BY_FORMULA_UNFILTERED);
         } else {
-            statement = c.connection.prepareStatement("SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM " + STRUCTURES_TABLE + " WHERE formula = ?");
+            statement = c.connection.prepareStatement(String.format(SELECT_BY_FORMULA_FILTERED, filter));
         }
+
         statement.setString(1, formula.toString());
         ArrayList<CompoundCandidate> candidates = new ArrayList<>();
         try (final ResultSet set = statement.executeQuery()) {
@@ -301,19 +302,19 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     }
 
 
-    public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(BioFilter bioFilter, MolecularFormula formula) throws ChemicalDatabaseException {
-        return lookupStructuresAndFingerprintsByFormula(bioFilter, formula, new ArrayList<>());
+    public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(long filter, MolecularFormula formula) throws ChemicalDatabaseException {
+        return lookupStructuresAndFingerprintsByFormula(filter, formula, new ArrayList<>());
     }
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        return lookupStructuresAndFingerprintsByFormula(BioFilter.ALL, formula, fingerprintCandidates);
+        return lookupStructuresAndFingerprintsByFormula(DataSource.ALL.flag(), formula, fingerprintCandidates);
     }
 
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(BioFilter bioFilter, MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(long filter, MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             // first lookup structures
-            final List<CompoundCandidate> candidates = lookupStructuresByFormula(bioFilter, formula, c);
+            final List<CompoundCandidate> candidates = lookupStructuresByFormula(filter, formula, c);
             final HashMap<String, CompoundCandidate> hashMap = new HashMap<>(candidates.size());
             for (CompoundCandidate candidate : candidates)
                 hashMap.put(candidate.getInchiKey2D(), candidate);

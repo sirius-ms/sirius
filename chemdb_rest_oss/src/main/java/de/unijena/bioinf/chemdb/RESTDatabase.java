@@ -20,15 +20,18 @@ import org.slf4j.LoggerFactory;
 import javax.json.JsonException;
 import java.io.*;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 public class RESTDatabase extends AbstractChemicalDatabase {
-    private static Logger LOG = LoggerFactory.getLogger(RESTDatabase.class);
+    private static Logger logger = LoggerFactory.getLogger(RESTDatabase.class);
 
 
     public static void SHUT_UP_STUPID_LOGGING() {
@@ -47,10 +50,12 @@ public class RESTDatabase extends AbstractChemicalDatabase {
 //        SHUT_UP_STUPID_LOGGING();
     }
 
+
     private final CloseableHttpClient client;
     protected ChemDBClient chemDBClient;
-    protected BioFilter bioFilter;
     protected File cacheDir;
+
+    protected long filter;
 
 
     public static File defaultCacheDir() {
@@ -60,56 +65,44 @@ public class RESTDatabase extends AbstractChemicalDatabase {
     }
 
 
-    public RESTDatabase(@Nullable File cacheDir, @NotNull BioFilter bioFilter, @NotNull ChemDBClient chemDBClient, @NotNull CloseableHttpClient client) {
-        this.bioFilter = bioFilter;
+    public RESTDatabase(@Nullable File cacheDir, long filter, @NotNull ChemDBClient chemDBClient, @NotNull CloseableHttpClient client) {
+        this.filter = filter;
         this.cacheDir = cacheDir != null ? cacheDir : defaultCacheDir();
         this.chemDBClient = chemDBClient;
         this.client = client;
     }
 
-    public RESTDatabase(@NotNull File cacheDir, @NotNull BioFilter bioFilter, @Nullable URI host, @NotNull CloseableHttpClient client) {
-        this(cacheDir, bioFilter, new ChemDBClient(host), client);
+    public RESTDatabase(@NotNull File cacheDir, long filter, @Nullable URI host, @NotNull CloseableHttpClient client) {
+        this(cacheDir, filter, new ChemDBClient(host), client);
     }
 
-    public RESTDatabase(File cacheDir, BioFilter bioFilter, String host, CloseableHttpClient client) {
-        this(cacheDir, bioFilter, URI.create(host), client);
+    public RESTDatabase(File cacheDir, long filter, String host, CloseableHttpClient client) {
+        this(cacheDir, filter, URI.create(host), client);
     }
 
-    public RESTDatabase(File cacheDir, BioFilter bioFilter, String host) {
-        this(cacheDir, bioFilter, host, HttpClients.createDefault());
+    public RESTDatabase(File cacheDir, long filter, String host) {
+        this(cacheDir, filter, host, HttpClients.createDefault());
     }
 
-    public RESTDatabase(File cacheDir, BioFilter bioFilter, URI host) {
-        this(cacheDir, bioFilter, host, HttpClients.createDefault());
+    public RESTDatabase(File cacheDir, long filter, URI host) {
+        this(cacheDir, filter, host, HttpClients.createDefault());
     }
 
-    public RESTDatabase(File cacheDir, BioFilter bioFilter) {
-        this(cacheDir, bioFilter, (URI) null);
+    public RESTDatabase(File cacheDir, long filter) {
+        this(cacheDir, filter, (URI) null);
     }
 
-    public RESTDatabase(BioFilter bioFilter) {
-        this(defaultCacheDir(), bioFilter, (URI) null);
-    }
-
-    public BioFilter getBioFilter() {
-        return bioFilter;
-    }
-
-    public void setBioFilter(BioFilter bioFilter) {
-        this.bioFilter = bioFilter;
+    public RESTDatabase(long filter) {
+        this(defaultCacheDir(), filter, (URI) null);
     }
 
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
         try {
-            return chemDBClient.getFormulasDB(mass, deviation, ionType, bioFilter, client);
+            return chemDBClient.getFormulasDB(mass, deviation, ionType, filter, client);
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
-    }
-
-    protected FingerprintCandidate wrap(FingerprintCandidate c) {
-        return c;
     }
 
     @Override
@@ -120,10 +113,89 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         return candidates;
     }
 
-    private List<FingerprintCandidate> requestFormula(final @NotNull File output, MolecularFormula formula, BioFilter bioFilter) throws IOException {
-        final List<FingerprintCandidate> fpcs = chemDBClient.getCompounds(formula, bioFilter, client);
 
-        // write cache in background
+    /*@Override
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
+        if (bioFilter == BioFilter.ALL) {
+            lookupStructuresAndFingerprintsByFormula(formula, fingerprintCandidates, BioFilter.ONLY_BIO);
+            return lookupStructuresAndFingerprintsByFormula(formula, fingerprintCandidates, BioFilter.ONLY_NONBIO);
+        } else {
+            return lookupStructuresAndFingerprintsByFormula(formula, fingerprintCandidates, bioFilter);
+        }
+    }*/
+
+    @Override
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
+        final File stfile = new File(cacheDir, "/" + formula.toString() + ".json.gz");
+        try {
+            List<FingerprintCandidate> fpcs = new ArrayList<>();
+            if (stfile.exists()) {
+                try {
+                    final GZIPInputStream zin = new GZIPInputStream(new BufferedInputStream(new FileInputStream(stfile)));
+                    try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(zin))) {
+                        while (fciter.hasNext())
+                            fpcs.add(fciter.next());
+                    }
+                } catch (IOException | JsonException e) {
+                    LoggerFactory.getLogger(RESTDatabase.class).error("Error when searching for " + formula.toString() + " in file database. Deleting cache file '" + stfile.getAbsolutePath() + "' an try fetching from Server");
+                    stfile.delete();
+                    fpcs = requestFormula(stfile, formula);
+                }
+            } else {
+                fpcs = requestFormula(stfile, formula);
+            }
+
+            fingerprintCandidates.addAll(
+                    fpcs.stream().filter(fpc -> (fpc.bitset & filter) != 0L).collect(Collectors.toList()));
+            return fingerprintCandidates;
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    /*protected <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates, EnumSet<DataSource> filter) throws ChemicalDatabaseException {
+        final File stfile = new File(cacheDir, "all/" + formula.toString() + ".json.gz");
+//        switch (bioFilter) {
+//            case ONLY_BIO:
+//                stfile = new File(cacheDir, "bio/" + formula.toString() + ".json.gz");
+//                break;
+//            case ONLY_NONBIO:
+//                stfile = new File(cacheDir, "not-bio/" + formula.toString() + ".json.gz");
+//                break;
+//            default:
+//                throw new IllegalArgumentException("Only 'BioFilter.ONLY_BIO' and 'BioFilter.ONLY_NONBIO' are not allowed here!");
+//        }
+
+        //return result from cach
+        if (stfile.exists()) {
+            try {
+                final GZIPInputStream zin = new GZIPInputStream(new BufferedInputStream(new FileInputStream(stfile)));
+                try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(zin))) {
+                    while (fciter.hasNext())
+                        fingerprintCandidates.add(fciter.next());
+                }
+                return fingerprintCandidates;
+            } catch (IOException | JsonException e) {
+                LoggerFactory.getLogger(RESTDatabase.class).error("Error when searching for " + formula.toString() + " in " + bioFilter.name() + "file database. Deleting cache file '" + stfile.getAbsolutePath() + "' an try fetching from Server");
+                stfile.delete();
+            }
+        }else {
+
+        }
+
+        try {
+            fingerprintCandidates.addAll(requestFormula(stfile, formula, bioFilter));
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+        return fingerprintCandidates;
+    }*/
+
+    private List<FingerprintCandidate> requestFormula(final @NotNull File output, MolecularFormula formula) throws IOException {
+        //get unfiltered list from server to write cache.
+        final List<FingerprintCandidate> fpcs = chemDBClient.getCompounds(formula, DataSource.ALL.flag(), client);
+
+        // write cache in background -> cache has to be unfiltered
         SiriusJobs.runInBackground(() -> {
             output.getParentFile().mkdirs();
             final File tempFile = File.createTempFile("sirius_formula", ".json.gz", output.getParentFile());
@@ -148,40 +220,6 @@ public class RESTDatabase extends AbstractChemicalDatabase {
         return fpcs;
     }
 
-    @Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        if (bioFilter != BioFilter.ALL)
-            return lookupStructuresAndFingerprintsByFormula(formula, fingerprintCandidates, bioFilter);
-        else {
-            lookupStructuresAndFingerprintsByFormula(formula, fingerprintCandidates, BioFilter.ONLY_BIO);
-            return lookupStructuresAndFingerprintsByFormula(formula, fingerprintCandidates, BioFilter.ONLY_NONBIO);
-        }
-    }
-
-    protected <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates, BioFilter bioFilter) throws ChemicalDatabaseException {
-        final File stfile = new File(cacheDir, (bioFilter == BioFilter.ONLY_BIO ? "bio/" : (bioFilter == BioFilter.ONLY_NONBIO) ? "not-bio/" : "") + formula.toString() + ".json.gz");
-        if (stfile.exists()) {
-            try {
-                final GZIPInputStream zin = new GZIPInputStream(new BufferedInputStream(new FileInputStream(stfile)));
-                try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(zin))) {
-                    while (fciter.hasNext()) fingerprintCandidates.add(wrap(fciter.next()));
-                }
-                return fingerprintCandidates;
-            } catch (IOException | JsonException e) {
-                LoggerFactory.getLogger(RESTDatabase.class).error("Error when searching for " + formula.toString() + " in " + bioFilter.name() + "file database. Deleting cache file '" + stfile.getAbsolutePath() + "' an try fetching from Server");
-                stfile.delete();
-            }
-        }
-
-        try {
-            for (FingerprintCandidate fc : requestFormula(stfile, formula, bioFilter))
-                fingerprintCandidates.add(wrap(fc));
-        } catch (IOException e) {
-            throw new ChemicalDatabaseException(e);
-        }
-
-        return fingerprintCandidates;
-    }
 
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {

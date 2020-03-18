@@ -14,9 +14,9 @@ public interface SearchStructureByFormula {
      * ConcurrentLinkedQueue), allowing the caller to process
      * asynchronously.
      */
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T candidates) throws ChemicalDatabaseException;
+    <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T candidates) throws ChemicalDatabaseException;
 
-    default public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        return lookupStructuresAndFingerprintsByFormula(formula, new ArrayList<FingerprintCandidate>());
+    default List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
+        return lookupStructuresAndFingerprintsByFormula(formula, new ArrayList<>());
     }
 }

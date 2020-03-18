@@ -19,7 +19,7 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
     AbstractChemicalDatabase[] databases;
     AtomicBoolean[] isRunning;
     Executor executor;
-    private volatile BioFilter bioFilter = BioFilter.ALL;
+    private volatile long filter = DataSource.ALL.flag;
     public AbstractChemicalDatabaseSynchronousExecutor(AbstractChemicalDatabase... chemicalDatabases) {
         this.databases = chemicalDatabases;
         this.isRunning = new AtomicBoolean[this.databases.length];
@@ -31,29 +31,29 @@ public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemica
         t.start();
     }
 
-    public BioFilter getBioFilter() {
-        return bioFilter;
+    public long getBioFilter() {
+        return filter;
     }
 
-    public synchronized void setBioFilter(BioFilter bioFilter) {
-        this.bioFilter = bioFilter;
+    public synchronized void setFilter(long filter) {
+        this.filter = filter;
     }
 
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
-        ChemicalDatabaseFuture<List<FormulaCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupMolecularFormulas", new Class<?>[]{BioFilter.class, double.class, Deviation.class, PrecursorIonType.class}, new Object[]{bioFilter, mass, deviation, ionType});
+        ChemicalDatabaseFuture<List<FormulaCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupMolecularFormulas", new Class<?>[]{Long.class, double.class, Deviation.class, PrecursorIonType.class}, new Object[]{filter, mass, deviation, ionType});
         return future.get();
     }
 
     @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        ChemicalDatabaseFuture<List<CompoundCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresByFormula", new Class<?>[]{BioFilter.class, MolecularFormula.class}, new Object[]{bioFilter, formula});
+        ChemicalDatabaseFuture<List<CompoundCandidate>> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresByFormula", new Class<?>[]{Long.class, MolecularFormula.class}, new Object[]{filter, formula});
         return future.get();
     }
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        ChemicalDatabaseFuture<T> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresAndFingerprintsByFormula", new Class<?>[]{BioFilter.class, MolecularFormula.class, Collection.class}, new Object[]{bioFilter, formula, fingerprintCandidates});
+        ChemicalDatabaseFuture<T> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresAndFingerprintsByFormula", new Class<?>[]{Long.class, MolecularFormula.class, Collection.class}, new Object[]{filter, formula, fingerprintCandidates});
         return future.get();
     }
 
