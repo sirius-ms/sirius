@@ -7,14 +7,12 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.chemdb.SearchStructureByFormula;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -188,8 +186,6 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
         }
 
         final StructureSearchDB searchDB = experiment.getAnnotationOrThrow(StructureSearchDB.class);
-        final SearchStructureByFormula fingerBlastSearchEngine = predictor.database.getSearchEngine(searchDB.value);
-        final long dbFlag = searchDB.getDBFlag();
 
         logDebug("Preparing CSI:FingerID search jobs.");
         ////////////////////////////////////////
@@ -198,9 +194,15 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
         final PredictorTypeAnnotation predictors = experiment.getAnnotationOrThrow(PredictorTypeAnnotation.class);
         final Map<AnnotationJJob<?, FingerIdResult>, FingerIdResult> annotationJJobs = new LinkedHashMap<>(filteredResults.size());
 
-        // formula job: retrieve fingerprint candidates for specific MF
-        //no SubmitSubJob needed because ist is not a CPU or IO job
-        final List<FormulaJob> formulaJobs = filteredResults.stream().map(fingeridInput -> new FormulaJob(fingeridInput.getMolecularFormula(), fingerBlastSearchEngine, fingeridInput.getPrecursorIonType())).collect(Collectors.toList());
+        // formula job: retrieve fingerprint candidates for specific MF;
+        // no SubmitSubJob needed because ist is not a CPU or IO job
+        final List<FormulaJob> formulaJobs = filteredResults.stream().map(fingeridInput ->
+                new FormulaJob(
+                        fingeridInput.getMolecularFormula(),
+                        predictor.database.makeSearchEngine(searchDB.searchDBs),
+                        fingeridInput.getPrecursorIonType())
+        ).collect(Collectors.toList());
+
         jobManager.submitJobsInBatches(formulaJobs);
 
         int i = 0;
@@ -228,13 +230,13 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
                 final ConfidenceJJob confidenceJJob = new ConfidenceJJob(predictor, experiment, fingeridInput);
                 confidenceJJob.setSearchDBJob(blastJob);
                 // fetch additional candidate list from Pubchem for custom-db because they are not a subset of pubchem
-                if (searchDB.isCustomDb()) {
+                /*if (searchDB.isCustomDb()) {
                     final FingerblastJJob pubchemBlastJob = new FingerblastJJob(predictor.getFingerblastScoring(), dbFlag, predictor.getTrainingStructures());
                     pubchemBlastJob.addRequiredJob(jobManager.submitJob(
-                            new FormulaJob(fingeridInput.getMolecularFormula(), predictor.database.getSearchEngine(SearchableDatabases.getPubchemDb()), fingeridInput.getPrecursorIonType())));
+                            new FormulaJob(fingeridInput.getMolecularFormula(), predictor.database.makeSearchEngine(SearchableDatabases.getAllDb()), fingeridInput.getPrecursorIonType())));
                     pubchemBlastJob.addRequiredJob(predictionJob);
                     confidenceJJob.setAdditionalPubchemDBJob(submitSubJob(pubchemBlastJob));
-                }
+                }*/
 
                 annotationJJobs.put(submitSubJob(confidenceJJob), fres);
             }

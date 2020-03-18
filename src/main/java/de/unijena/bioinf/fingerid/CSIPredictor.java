@@ -103,7 +103,7 @@ public class CSIPredictor extends AbstractStructurePredictor {
     }
 
     public Fingerblast newFingerblast(SearchableDatabase searchDB) {
-        final FingerblastSearchEngine searchEngine = database.getSearchEngine(searchDB);
+        final FingerblastSearchEngine searchEngine = database.makeSearchEngine(searchDB);
         return new Fingerblast(fingerblastScoring, searchEngine);
     }
 

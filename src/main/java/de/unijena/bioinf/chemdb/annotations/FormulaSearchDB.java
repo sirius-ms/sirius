@@ -5,29 +5,24 @@ import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 @DefaultProperty
 public class FormulaSearchDB extends SearchableDBAnnotation {
-    private static FormulaSearchDB CONSIDER_ALL_FORMULAS = null; //No DB for Search
+    public final static FormulaSearchDB CONSIDER_ALL_FORMULAS = new FormulaSearchDB(null); //No DB for Search
 
-    public static FormulaSearchDB noDBSearchAnnotation() {
-        if (CONSIDER_ALL_FORMULAS == null)
-            CONSIDER_ALL_FORMULAS = new FormulaSearchDB(null);
+    public static FormulaSearchDB noSearchDBAnnotation() {
         return CONSIDER_ALL_FORMULAS;
     }
 
-
-    public FormulaSearchDB(SearchableDatabase value) {
-        super(value);
-    }
-
-    public boolean hasSearchableDB() {
-        return value != null;
+    public FormulaSearchDB(Collection<SearchableDatabase> source) {
+        super(source);
     }
 
     @DefaultInstanceProvider
     public static FormulaSearchDB fromString(@DefaultProperty @Nullable String value) {
         if (value == null || value.isEmpty() || value.toLowerCase().equals(NO_DB))
-            return noDBSearchAnnotation();
+            return noSearchDBAnnotation();
         return new FormulaSearchDB(makeDB(value));
     }
 }

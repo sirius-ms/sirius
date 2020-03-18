@@ -4,57 +4,80 @@ import de.unijena.bioinf.WebAPI;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public class SearchableDatabases {
     private SearchableDatabases() {
     }
-
 
     public static File getDatabaseDirectory() {
         final String val = PropertyManager.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
         return Paths.get(val).toFile();
     }
 
-    public static File getBioDirectory() {
-        return CachedRESTDB.getBioDirectory(getDatabaseDirectory());
-    }
-
-    public static File getNonBioDirectory() {
-        return CachedRESTDB.getNonBioDirectory(getDatabaseDirectory());
+    public static File getRESTDatabaseCacheDirectory() {
+        return CachedRESTDB.getRESTDatabaseCacheDirectory(getDatabaseDirectory());
     }
 
     public static File getCustomDatabaseDirectory() {
         return CachedRESTDB.getCustomDatabaseDirectory(getDatabaseDirectory());
     }
 
-    public static SearchableDatabase getDatabaseByPath(@NotNull Path dbDir) {
+    public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name) {
+        return getCustomDatabaseByName(name).
+                orElseThrow(() -> new IllegalArgumentException("Database with name: " + name + " does not exist!"));
+    }
+
+    @NotNull
+    public static Optional<CustomDatabase> getCustomDatabaseByName(@NotNull String name) {
+        @NotNull List<CustomDatabase> custom = getCustomDatabases();
+        for (CustomDatabase customDatabase : custom)
+            if (customDatabase.name().equalsIgnoreCase(name))
+                return Optional.of(customDatabase);
+        return Optional.empty();
+    }
+
+    @NotNull
+    public static Optional<CustomDatabase> getCustomDatabase(@NotNull Path dbDir) {
+        try {
+            return Optional.of(getCustomDatabaseOrThrow(dbDir));
+        } catch (RuntimeException e) {
+            LoggerFactory.getLogger(SearchableDatabases.class).error(e.getMessage(), e.getCause());
+            return Optional.empty();
+        }
+    }
+
+    @NotNull
+    public static CustomDatabase getCustomDatabaseOrThrow(@NotNull Path dbDir) {
         try {
             return CustomDatabase.loadCustomDatabaseFromLocation(dbDir.toFile(), true);
         } catch (IOException e) {
-            throw new IllegalArgumentException("Could not load DB from path: " + dbDir.toString(), e);
+            throw new RuntimeException("Could not load DB from path: " + dbDir.toString(), e);
         }
     }
 
 
     @NotNull
-    public static SearchableDatabase getDatabaseByName(@NotNull String name) {
-        final DataSource source = DatasourceService.getSourceFromName(name);
+    public static SearchableDatabase getDatabaseByNameOrThrow(@NotNull String name) {
+        return getDatabaseByName(name)
+                .orElseThrow(() -> new IllegalArgumentException("Database with name: " + name + " does not exist!"));
+    }
+
+    @NotNull
+    public static Optional<? extends SearchableDatabase> getDatabaseByName(@NotNull String name) {
+        final DataSource source = DataSources.getSourceFromNameOrNull(name);
         if (source != null)
-            return new SearchableDbOnDisc(source.realName, getBioDirectory(), true, source.isBio(), false);
-
-        @NotNull List<CustomDatabase> custom = getCustomDatabases();
-        for (CustomDatabase customDatabase : custom)
-            if (customDatabase.name().equalsIgnoreCase(name))
-                return customDatabase;
-
-        throw new IllegalArgumentException("Database with name: " + name + " does not exist!");
+            return Optional.of(new SearchableRestDB(source.realName, source.flag()));
+        return getCustomDatabaseByName(name);
     }
 
     @NotNull
@@ -74,20 +97,18 @@ public class SearchableDatabases {
     @NotNull
     public static List<SearchableDatabase> getAvailableDatabases() {
         final List<SearchableDatabase> db = new ArrayList<>();
-        db.add(getPubchemDb());
+        db.add(getAllDb());
         db.add(getBioDb());
         db.addAll(getCustomDatabases());
 
         return db;
     }
 
-    public static SearchableDatabase getPubchemDb() {
-        return getDatabaseByName(DataSource.PUBCHEM.realName);
+    public static SearchableDatabase getAllDb() {
+        return getDatabaseByNameOrThrow(DataSource.ALL.realName);
     }
 
     public static SearchableDatabase getBioDb() {
-        return getDatabaseByName(DataSource.BIO.realName);
+        return getDatabaseByNameOrThrow(DataSource.BIO.realName);
     }
-
-
 }

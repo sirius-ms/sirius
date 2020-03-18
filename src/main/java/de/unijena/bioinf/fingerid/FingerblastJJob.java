@@ -54,11 +54,6 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
         }
     }
 
-
-    private void computeUnfiltered() throws Exception{
-        unfilteredScored = Fingerblast.score(scoring, unfilteredSearchList, fp).stream().map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
-    }
-
     public List<Scored<FingerprintCandidate>> getUnfilteredList() {
         return unfilteredScored;
     }

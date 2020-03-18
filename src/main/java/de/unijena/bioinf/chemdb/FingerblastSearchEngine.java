@@ -9,11 +9,11 @@ import java.util.List;
 public class FingerblastSearchEngine implements SearchStructureByFormula, AnnotateStructures{
 
     protected final CachedRESTDB underlyingDatabase;
-    protected final SearchableDatabase queryDB;
+    protected final Collection<SearchableDatabase> queryDBs;
 
-    FingerblastSearchEngine(CachedRESTDB underlyingDatabase, SearchableDatabase queryDB) {
+    FingerblastSearchEngine(CachedRESTDB underlyingDatabase, Collection<SearchableDatabase> queryDBs) {
         this.underlyingDatabase = underlyingDatabase;
-        this.queryDB = queryDB;
+        this.queryDBs = queryDBs;
     }
 
     @Override
@@ -24,7 +24,7 @@ public class FingerblastSearchEngine implements SearchStructureByFormula, Annota
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula molecularFormula, T fingerprintCandidates) throws ChemicalDatabaseException {
         try  {
-            fingerprintCandidates.addAll(underlyingDatabase.loadCompoundsByFormula(molecularFormula, queryDB));
+            fingerprintCandidates.addAll(underlyingDatabase.loadCompoundsByFormula(molecularFormula, queryDBs));
             return fingerprintCandidates;
         } catch (IOException e) {
             throw new ChemicalDatabaseException("", e);

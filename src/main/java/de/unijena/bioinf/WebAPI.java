@@ -26,7 +26,6 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.CSIPredictor;
@@ -175,12 +174,13 @@ public final class WebAPI {
     //endregion
 
     //region ChemDB
-    public RESTDatabase getRESTDb(BioFilter bioFilter) {
-        return getRESTDb(bioFilter, null);
+    public RESTDatabase getRESTDb(long filter) {
+        return getRESTDb(filter, null);
     }
 
-    public RESTDatabase getRESTDb(BioFilter bioFilter, @Nullable File cacheDir) {
-        return ProxyManager.doWithClient(client -> new RESTDatabase(cacheDir, bioFilter, chemDBClient, client));
+
+    public RESTDatabase getRESTDb(long filter, @Nullable File cacheDir) {
+        return ProxyManager.doWithClient(client -> new RESTDatabase(cacheDir, filter, chemDBClient, client));
     }
     //endregion
 

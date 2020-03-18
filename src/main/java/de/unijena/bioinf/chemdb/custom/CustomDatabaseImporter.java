@@ -12,6 +12,7 @@ import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
@@ -243,7 +244,7 @@ public class CustomDatabaseImporter {
             moleculeBuffer.clear();
             CustomDatabase.logger.info("Try downloading compounds");
             try {
-                try (final RESTDatabase db = api.getRESTDb(BioFilter.ALL, new File("."))) {
+                try (final RESTDatabase db = api.getRESTDb(DataSource.ALL.flag(), new File("."))) {
                     try {
                         for (FingerprintCandidate fc : db.lookupManyFingerprintsByInchis(dict.keySet())) {
                             CustomDatabase.logger.info(fc.getInchiKey2D() + " downloaded");
@@ -420,10 +421,9 @@ public class CustomDatabaseImporter {
             try (final JsonWriter writer = new JsonWriter(new FileWriter(database.settingsFile()))) {
                 writer.beginObject();
                 writer.name("inheritance");
-                writer.beginArray();
-                if (database.deriveFromBioDb) writer.value(DataSource.BIO.realName);
-                if (database.deriveFromPubchem) writer.value(DataSource.PUBCHEM.realName);
-                writer.endArray();
+                writer.value(database.deriveFromRestDb);
+                writer.name("filter");
+                writer.value(database.restDbFilter);
                 writer.name("fingerprintVersion");
                 writer.beginArray();
                 for (int t = 0; t < fingerprintVersion.numberOfFingerprintTypesInUse(); ++t) {
@@ -452,15 +452,17 @@ public class CustomDatabaseImporter {
     }
 
     public static void importDatabase(File dbPath, List<File> files, WebAPI api, int bufferSize) {
-        importDatabase(dbPath, files, false, false, api, bufferSize);
+        importDatabase(dbPath, files, null, api, bufferSize);
     }
 
-    public static void importDatabase(File dbPath, List<File> files, boolean derivePubChem, boolean deriveBio, WebAPI api, int bufferSize) {
+    public static void importDatabase(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, WebAPI api, int bufferSize) {
         final Logger log = LoggerFactory.getLogger(CustomDatabaseImporter.class);
         try {
             final CustomDatabase db = CustomDatabase.createNewDatabase(dbPath.getName(), dbPath, api.getCDKChemDBFingerprintVersion());
-            db.setDeriveFromPubchem(derivePubChem);
-            db.setDeriveFromBioDb(deriveBio);
+            if (deriveFrom != null && !deriveFrom.isEmpty()) {
+                db.setDeriveFromRestDb(true);
+                db.setFilterFlag(DataSources.getDBFlag(deriveFrom));
+            }
             db.buildDatabase(files, inchi -> log.debug(inchi.in2D + " imported"), api, bufferSize);
         } catch (IOException | CDKException e) {
             LoggerFactory.getLogger(CustomDatabaseImporter.class).error("Error during database import!", e);

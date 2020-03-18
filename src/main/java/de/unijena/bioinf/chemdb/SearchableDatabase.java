@@ -1,17 +1,26 @@
 package de.unijena.bioinf.chemdb;
 
-import java.io.File;
+import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 
 public interface SearchableDatabase {
 
     String name();
 
-    boolean searchInPubchem();
+//    boolean searchInNonBio();
+//
+//    boolean searchInBio();
 
-    boolean searchInBio();
+    boolean isRestDb();
 
-    boolean isCustomDb();
+    default boolean isCustomDb() {
+        return this instanceof CustomDatabase;
+    }
 
-    File getDatabasePath();
+
+//    File getDatabasePath();
+
+    long getFilterFlag();
+
+
 
 }

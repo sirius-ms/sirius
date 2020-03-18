@@ -6,9 +6,11 @@ import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 @DefaultProperty
 public class StructureSearchDB extends SearchableDBAnnotation {
-    public StructureSearchDB(SearchableDatabase value) {
+    public StructureSearchDB(Collection<SearchableDatabase> value) {
         super(value);
     }
 

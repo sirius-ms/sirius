@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class CustomDatabase implements SearchableDatabase {
     protected static Logger logger = LoggerFactory.getLogger(CustomDatabase.class);
@@ -46,7 +47,8 @@ public class CustomDatabase implements SearchableDatabase {
     }
 
 
-    protected boolean deriveFromPubchem, deriveFromBioDb;
+    protected boolean deriveFromRestDb = false;
+    protected long restDbFilter = DataSource.ALL.flag();
     protected CdkFingerprintVersion version;
     protected int databaseVersion;
 
@@ -102,41 +104,25 @@ public class CustomDatabase implements SearchableDatabase {
         // should be done automatically
     }
 
-    public boolean isDeriveFromPubchem() {
-        return deriveFromPubchem;
+    public boolean isDeriveFromRestDb() {
+        return deriveFromRestDb;
     }
 
-    public void setDeriveFromPubchem(boolean deriveFromPubchem) {
-        this.deriveFromPubchem = deriveFromPubchem;
-    }
-
-    public boolean isDeriveFromBioDb() {
-        return deriveFromBioDb;
-    }
-
-    public void setDeriveFromBioDb(boolean deriveFromBioDb) {
-        this.deriveFromBioDb = deriveFromBioDb;
+    public void setDeriveFromRestDb(boolean deriveFromRestDb) {
+        this.deriveFromRestDb = deriveFromRestDb;
     }
 
     public void readSettings() throws IOException {
         synchronized (this) {
             if (settingsFile().exists()) {
-                deriveFromPubchem = false;
-                deriveFromBioDb = false;
+                deriveFromRestDb = false;
+                restDbFilter = 0;
                 try (FileReader r = new FileReader(settingsFile())) {
                     JsonObject o = Json.createReader(r).readObject();
-                    JsonArray ary = o.getJsonArray("inheritance");
-                    if (ary != null) {
-                        for (JsonValue v : ary) {
-                            if (v instanceof JsonString) {
-                                final String s = ((JsonString) v).getString();
-                                if (s.equals(DataSource.PUBCHEM.realName))
-                                    deriveFromPubchem = true;
-                                if (s.equals(DataSource.BIO.realName))
-                                    deriveFromBioDb = true;
-                            }
-                        }
-                    }
+                    if (o.containsKey("inheritance"))
+                        deriveFromRestDb = o.getBoolean("inheritance");
+                    if (o.containsKey("filter"))
+                        restDbFilter = o.getJsonNumber("filter").longValue();
                     JsonArray fpAry = o.getJsonArray("fingerprintVersion");
                     if (fpAry == null) {
                         this.version = CdkFingerprintVersion.getDefault();
@@ -200,13 +186,17 @@ public class CustomDatabase implements SearchableDatabase {
     }
 
     @Override
-    public boolean searchInPubchem() {
-        return deriveFromPubchem;
+    public boolean isRestDb() {
+        return deriveFromRestDb;
     }
 
     @Override
-    public boolean searchInBio() {
-        return deriveFromBioDb || deriveFromPubchem;
+    public long getFilterFlag() {
+        return restDbFilter;
+    }
+
+    public void setFilterFlag(long restDbFilter) {
+        this.restDbFilter = restDbFilter;
     }
 
     @Override
@@ -214,7 +204,7 @@ public class CustomDatabase implements SearchableDatabase {
         return true;
     }
 
-    @Override
+//    @Override
     public File getDatabasePath() {
         return path;
     }
@@ -234,6 +224,20 @@ public class CustomDatabase implements SearchableDatabase {
 
     public long getMegabytes() {
         return megabytes;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CustomDatabase)) return false;
+        CustomDatabase that = (CustomDatabase) o;
+        return name.equals(that.name) &&
+                Objects.equals(path, that.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, path);
     }
 
     public void buildDatabase(List<File> files, CustomDatabaseImporter.Listener listener, @NotNull WebAPI api, int bufferSize) throws IOException, CDKException {
