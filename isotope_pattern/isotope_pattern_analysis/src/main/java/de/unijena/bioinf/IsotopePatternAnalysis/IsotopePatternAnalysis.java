@@ -195,7 +195,7 @@ public class IsotopePatternAnalysis implements Parameterized {
             final PossibleAdducts ionModes = input.getAnnotationOrDefault(PossibleAdducts.class);
             final FormulaConstraints constraints = input.getAnnotationOrDefault(FormulaConstraints.class);
             for (IonMode ionMode : ionModes.getIonModes()) {
-                List<MolecularFormula> formulas = decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(ionMode.subtractFromMass(pattern.getPeaks()[0].getMass()), massDev.allowedMassDeviation, constraints);
+                List<MolecularFormula> formulas = decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(pattern.getPeaks()[0].getMass(), ionMode, massDev.allowedMassDeviation, constraints);
                 PrecursorIonType precursorIonType = input.getExperimentInformation().getPrecursorIonType();
                 if (!precursorIonType.hasNeitherAdductNorInsource()) {
                     formulas=formulas.stream().filter(f->precursorIonType.measuredNeutralMoleculeToNeutralMolecule(f).isAllPositiveOrZero()).collect(Collectors.toList());
@@ -233,7 +233,7 @@ public class IsotopePatternAnalysis implements Parameterized {
             List<IonMode> ionModes = new ArrayList<>();
             for (Ionization ion : ionModes) {
                 final List<MolecularFormula> formulas =
-                        decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(ion.subtractFromMass(pattern.getMzAt(0)), deviation.allowedMassDeviation, constraints);
+                        decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(pattern.getMzAt(0), ion, deviation.allowedMassDeviation, constraints);
                 ionFormulas.addAll(scoreFormulas(pattern, formulas, experiment, PrecursorIonType.getPrecursorIonType(ion)));
             }
             ionFormulas.sort(Comparator.reverseOrder());
@@ -241,7 +241,7 @@ public class IsotopePatternAnalysis implements Parameterized {
         } else {
             // use given ionization
             final List<MolecularFormula> formulas =
-                    decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(ionization.precursorMassToNeutralMass(pattern.getMzAt(0)), deviation.allowedMassDeviation, constraints);
+                    decomposer.getDecomposer(constraints.getChemicalAlphabet()).decomposeToFormulas(pattern.getMzAt(0)-ionization.getModificationMass(), ionization.getIonization(), deviation.allowedMassDeviation, constraints);
             return scoreFormulas(pattern, formulas, experiment);
         }
     }
