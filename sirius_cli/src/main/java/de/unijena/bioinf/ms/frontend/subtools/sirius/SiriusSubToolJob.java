@@ -44,8 +44,8 @@ public class SiriusSubToolJob extends InstanceJob {
 
             // create WhiteSet from DB if necessary
             final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
-            if (searchDB.isPresent() && searchDB.get().hasSearchableDB()) {
-                FormulaWhiteListJob wsJob = new FormulaWhiteListJob(ApplicationCore.WEB_API, searchDB.get().value, exp);
+            if (searchDB.isPresent() && searchDB.get().hasSearchableDBs()) {
+                FormulaWhiteListJob wsJob = new FormulaWhiteListJob(ApplicationCore.WEB_API, searchDB.get(), exp);
                 wSet = SiriusJobs.getGlobalJobManager().submitJob(wsJob).awaitResult();
             }
 
