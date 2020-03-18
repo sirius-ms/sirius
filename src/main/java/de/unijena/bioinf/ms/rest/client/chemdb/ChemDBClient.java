@@ -9,7 +9,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.CloseableIterator;
-import de.unijena.bioinf.chemdb.BioFilter;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
@@ -56,13 +55,13 @@ public class ChemDBClient extends AbstractClient {
         return fpVersion;
     }
 
-    public List<FormulaCandidate> getFormulasDB(double mass, Deviation deviation, PrecursorIonType ionType, BioFilter bioFilter, CloseableHttpClient client) throws IOException {
+    public List<FormulaCandidate> getFormulasDB(double mass, Deviation deviation, PrecursorIonType ionType, long filter, CloseableHttpClient client) throws IOException {
         return execute(client,
                 () -> new HttpGet(buildVersionSpecificWebapiURI("/formulasdb")
                         .setParameter("mass", String.valueOf(mass))
                         .setParameter("ppm", String.valueOf(deviation.getPpm()))
                         .setParameter("ion", ionType.toString())
-                        .setParameter("db", bioFilter.name())
+                        .setParameter("dbfilter", String.valueOf(filter))
                         .setParameter("charge", Integer.toString(ionType.getCharge()))
                         .build()),
                 br -> {
@@ -77,16 +76,15 @@ public class ChemDBClient extends AbstractClient {
         );
     }
 
-    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, @NotNull BioFilter bioFilter, CloseableHttpClient client) throws IOException {
-        return getCompounds(formula, bioFilter, getCDKFingerprintVersion(client), client);
+    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, long filter, CloseableHttpClient client) throws IOException {
+        return getCompounds(formula, filter, getCDKFingerprintVersion(client), client);
     }
 
-    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, @NotNull BioFilter bioFilter, @NotNull CdkFingerprintVersion fpVersion, CloseableHttpClient client) throws IOException {
-        if (bioFilter == BioFilter.ALL) throw new IllegalArgumentException();
+    public List<FingerprintCandidate> getCompounds(@NotNull MolecularFormula formula, long filter, @NotNull CdkFingerprintVersion fpVersion, CloseableHttpClient client) throws IOException {
         return execute(client,
                 () -> {
                     final HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/compounds/" + formula.toString())
-                            .setParameter("db", bioFilter.name())
+                            .setParameter("dbfilter", String.valueOf(filter))
                             .build());
                     get.setConfig(RequestConfig.custom().setSocketTimeout(120000).setConnectTimeout(120000).setContentCompressionEnabled(true).build());
                     return get;
