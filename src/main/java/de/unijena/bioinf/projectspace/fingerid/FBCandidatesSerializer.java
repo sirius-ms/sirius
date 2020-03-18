@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DBLink;
-import de.unijena.bioinf.chemdb.DatasourceService;
+import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.projectspace.ComponentSerializer;
@@ -62,7 +62,7 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
                     for (String dbId : ids.substring(1, ids.length() - 1).split(","))
                         links.add(new DBLink(dbName, dbId.trim()));
 
-                    bitset |= DatasourceService.getDBFlagFromName(dbName);
+                    bitset |= DataSources.getDBFlag(dbName);
                 } else {
                     LoggerFactory.getLogger(getClass()).warn("Could not match DB link '" + db + "' Skipping this entry!");
                 }
