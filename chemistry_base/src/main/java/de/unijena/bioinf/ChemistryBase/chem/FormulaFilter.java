@@ -22,6 +22,14 @@ package de.unijena.bioinf.ChemistryBase.chem;
  */
 public interface FormulaFilter {
 
-    boolean isValid(MolecularFormula formula);
+    /**
+     *
+     * @param measuredNeutralFormula
+     * @param ionization some ionizations allow for adducts which are not covalent bound and hence should result in a different RDBE
+     * @return
+     */
+    boolean isValid(MolecularFormula measuredNeutralFormula, Ionization ionization);
+
+    boolean isValid(MolecularFormula measuredNeutralFormula, PrecursorIonType ionType);
 
 }

@@ -47,9 +47,14 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
         return orderedCharacterIds;
     }
 
-    public Iterator<MolecularFormula> formulaIterator(double mass, Deviation deviation, final FormulaConstraints constraints) {
+    public Iterator<MolecularFormula> neutralMassFormulaIterator(double measuredMass,  Deviation deviation, final FormulaConstraints constraints) {
+        return formulaIterator(measuredMass, PeriodicTable.getInstance().neutralIonization(), deviation, constraints);
+    }
+
+    public Iterator<MolecularFormula> formulaIterator(double measuredMass, Ionization ionization,  Deviation deviation, final FormulaConstraints constraints) {
         final Map<Element, Interval> boundaries = getBoundaries(constraints);
-        final DecompIterator<Element> decompIterator = decomposeIterator(mass, deviation, boundaries);
+        final double neutralMass = ionization.subtractFromMass(measuredMass);
+        final DecompIterator<Element> decompIterator = decomposeIterator(neutralMass, deviation, boundaries);
         return new Iterator<MolecularFormula>() {
 
             MolecularFormula current = fetchNextFormula();
@@ -76,7 +81,7 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
                 while (decompIterator.next()) {
                     final MolecularFormula formula = alphabet.decompositionToFormula(decompIterator.getCurrentCompomere());
                     for (FormulaFilter g : constraints.getFilters()) {
-                        if (!g.isValid(formula))
+                        if (!g.isValid(formula, ionization))
                             continue outerLoop;
                     }
                     return formula;
@@ -86,14 +91,24 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
         };
     }
 
-    public List<MolecularFormula> decomposeToFormulas(double mass, double massTolerance, FormulaConstraints constraints) {
-
-        return decomposeToFormulas(mass, massTolerance, getBoundaries(constraints), FormulaFilterList.create(constraints.getFilters()));
+    public List<MolecularFormula> decomposeNeutralMassToFormulas(double mass, double massTolerance, FormulaConstraints constraints) {
+        final Ionization ionization = PeriodicTable.getInstance().neutralIonization();
+        return decomposeToFormulas(mass, ionization, massTolerance, getBoundaries(constraints), FormulaFilterList.create(constraints.getFilters()));
     }
 
-    public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, FormulaConstraints constraints) {
+    public List<MolecularFormula> decomposeNeutralMassToFormulas(double mass, Deviation deviation, FormulaConstraints constraints) {
+        final Ionization ionization = PeriodicTable.getInstance().neutralIonization();
+        return decomposeToFormulas(mass, ionization, deviation, getBoundaries(constraints), FormulaFilterList.create(constraints.getFilters()));
+    }
 
-        return decomposeToFormulas(mass, deviation, getBoundaries(constraints), FormulaFilterList.create(constraints.getFilters()));
+    public List<MolecularFormula> decomposeToFormulas(double mass, Ionization ionization, double massTolerance, FormulaConstraints constraints) {
+
+        return decomposeToFormulas(mass, ionization, massTolerance, getBoundaries(constraints), FormulaFilterList.create(constraints.getFilters()));
+    }
+
+    public List<MolecularFormula> decomposeToFormulas(double mass, Ionization ionization, Deviation deviation, FormulaConstraints constraints) {
+
+        return decomposeToFormulas(mass, ionization, deviation, getBoundaries(constraints), FormulaFilterList.create(constraints.getFilters()));
     }
 
     private Map<Element, Interval> getBoundaries(FormulaConstraints constraints) {
@@ -117,36 +132,50 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
         return boundaries;
     }
 
-    public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation) {
-        return decomposeToFormulas(mass, deviation, null, null);
+
+    public List<MolecularFormula> decomposeNeutralMassToFormulas(double neutralMass, Deviation deviation) {
+        final Ionization ionization = PeriodicTable.getInstance().neutralIonization();
+        return decomposeToFormulas(neutralMass, ionization, deviation, null, null);
     }
 
-    public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, Map<Element, Interval> boundaries) {
-        return decomposeToFormulas(mass, deviation, boundaries, null);
+    public List<MolecularFormula> decomposeNeutralMassToFormulas(double neutralMass, Deviation deviation, Map<Element, Interval> boundaries) {
+        final Ionization ionization = PeriodicTable.getInstance().neutralIonization();
+        return decomposeToFormulas(neutralMass, ionization, deviation, boundaries, null);
     }
 
-    public List<MolecularFormula> decomposeToFormulas(double mass, Deviation deviation, Map<Element, Interval> boundaries, final FormulaFilter filter) {
+    public List<MolecularFormula> decomposeToFormulas(double mass, Ionization ionization, Deviation deviation) {
+        return decomposeToFormulas(mass, ionization, deviation, null, null);
+    }
+
+    public List<MolecularFormula> decomposeToFormulas(double mass, Ionization ionization, Deviation deviation, Map<Element, Interval> boundaries) {
+        return decomposeToFormulas(mass, ionization, deviation, boundaries, null);
+    }
+
+    public List<MolecularFormula> decomposeToFormulas(double measuredMass, Ionization ionization, Deviation deviation, Map<Element, Interval> boundaries, final FormulaFilter filter) {
         final Map<Element, Interval> boundaryMap;
         boundaryMap = boundaries;
-        final List<int[]> decompositions = super.decompose(mass, deviation, boundaryMap);
+        double neutralMass = ionization.subtractFromMass(measuredMass);
+        final List<int[]> decompositions = super.decompose(neutralMass, deviation, boundaryMap);
         final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(decompositions.size());
         for (int[] ary : decompositions) {
             final MolecularFormula formula = alphabet.decompositionToFormula(ary);
-            if (filter!=null && !filter.isValid(formula)) continue;
+            if (filter!=null && !filter.isValid(formula, ionization)) continue;
             formulas.add(formula);
         }
         return formulas;
     }
-    public List<MolecularFormula> decomposeToFormulas(double mass, double massTolerance, Map<Element, Interval> boundaries, final FormulaFilter filter) {
-        if (mass < 0d)
-            throw new IllegalArgumentException("Expect positive mass for decomposition: " + mass);
+
+    public List<MolecularFormula> decomposeToFormulas(double measuredMass, Ionization ionization, double massTolerance, Map<Element, Interval> boundaries, final FormulaFilter filter) {
+        if (measuredMass < 0d)
+            throw new IllegalArgumentException("Expect positive mass for decomposition: " + measuredMass);
         final Map<Element, Interval> boundaryMap;
         boundaryMap = boundaries;
-        final List<int[]> decompositions = super.decompose(Math.max(0,mass-massTolerance), mass+massTolerance, boundaryMap);
+        double neutralMass = ionization.subtractFromMass(measuredMass);
+        final List<int[]> decompositions = super.decompose(Math.max(0,neutralMass-massTolerance), neutralMass+massTolerance, boundaryMap);
         final ArrayList<MolecularFormula> formulas = new ArrayList<MolecularFormula>(decompositions.size());
         for (int[] ary : decompositions) {
             final MolecularFormula formula = alphabet.decompositionToFormula(ary);
-            if (filter!=null && !filter.isValid(formula)) continue;
+            if (filter!=null && !filter.isValid(formula, ionization)) continue;
             formulas.add(formula);
         }
         return formulas;

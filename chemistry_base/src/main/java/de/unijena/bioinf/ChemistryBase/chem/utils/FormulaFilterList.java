@@ -20,7 +20,9 @@ package de.unijena.bioinf.ChemistryBase.chem.utils;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 
 import java.util.ArrayList;
@@ -47,10 +49,24 @@ public class FormulaFilterList implements FormulaFilter, Parameterized {
         return filters;
     }
 
+//    @Override
+//    public boolean isValid(MolecularFormula formula) {
+//        for (FormulaFilter filter : filters)
+//            if (!filter.isValid(formula)) return false;
+//        return true;
+//    }
+
     @Override
-    public boolean isValid(MolecularFormula formula) {
+    public boolean isValid(MolecularFormula measuredNeutralFormula, Ionization ionization) {
         for (FormulaFilter filter : filters)
-            if (!filter.isValid(formula)) return false;
+            if (!filter.isValid(measuredNeutralFormula, ionization)) return false;
+        return true;
+    }
+
+    @Override
+    public boolean isValid(MolecularFormula measuredNeutralFormula, PrecursorIonType ionType) {
+        for (FormulaFilter filter : filters)
+            if (!filter.isValid(measuredNeutralFormula, ionType)) return false;
         return true;
     }
 
@@ -71,5 +87,4 @@ public class FormulaFilterList implements FormulaFilter, Parameterized {
         }
         document.addListToDictionary(dictionary, "filters", list);
     }
-
 }

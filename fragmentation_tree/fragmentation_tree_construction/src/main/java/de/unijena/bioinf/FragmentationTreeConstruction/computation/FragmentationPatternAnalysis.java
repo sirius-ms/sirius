@@ -191,7 +191,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         } else if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
             // use given ionization
             final PrecursorIonType ionType = experiment.getPrecursorIonType();
-            final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ionType.precursorMassToNeutralMass(parentMass), parentDeviation.absoluteFor(parentMass), constraints);
+            final List<MolecularFormula> forms = decomposer.decomposeToFormulas(parentMass-ionType.getModificationMass(), ionType.getIonization(), parentDeviation.absoluteFor(parentMass), constraints);
             pmds = new ArrayList<>();
             for (MolecularFormula f : forms)  {
                 final MolecularFormula neutralMeasuredFormula = ionType.neutralMoleculeToMeasuredNeutralMolecule(f);
@@ -204,7 +204,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
             pmds = new ArrayList<>();
             for (Ionization ion : ionModes) {
-                final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ion.subtractFromMass(parentMass), parentDeviation.absoluteFor(parentMass), constraints);
+                final List<MolecularFormula> forms = decomposer.decomposeToFormulas(parentMass, ion, parentDeviation.absoluteFor(parentMass), constraints);
                 pmds.addAll(forms);
                 for (MolecularFormula f : forms) decomps.add(new Decomposition(f, ion, 0d));
             }
@@ -236,7 +236,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 if (mass > 0) {
                     final HashSet<MolecularFormula> formulas = new HashSet<>();
                     for (int D=0; D < decomposers.size(); ++D) {
-                        formulas.addAll(decomposers.get(D).decomposeToFormulas(mass, fragmentDeviation.absoluteFor(peak.getMass()), constraintList.get(D)));
+                        formulas.addAll(decomposers.get(D).decomposeToFormulas(mz, ion, fragmentDeviation.absoluteFor(peak.getMass()), constraintList.get(D)));
                     }
                     for (MolecularFormula f : formulas){
                         decompositions.add(new Decomposition(f, ion, 0d));
