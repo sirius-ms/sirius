@@ -7,11 +7,11 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.WebAPI;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
@@ -244,7 +244,7 @@ public class CustomDatabaseImporter {
             moleculeBuffer.clear();
             CustomDatabase.logger.info("Try downloading compounds");
             try {
-                try (final RESTDatabase db = api.getRESTDb(DataSource.ALL.flag(), new File("."))) {
+                api.consumeRestDB(DataSource.ALL.flag(), new File("."), db -> {
                     try {
                         for (FingerprintCandidate fc : db.lookupManyFingerprintsByInchis(dict.keySet())) {
                             CustomDatabase.logger.info(fc.getInchiKey2D() + " downloaded");
@@ -253,7 +253,7 @@ public class CustomDatabaseImporter {
                     } catch (ChemicalDatabaseException e) {
                         CustomDatabase.logger.error(e.getMessage(), e);
                     }
-                }
+                });
             } catch (Exception e) {
                 CustomDatabase.logger.error(e.getMessage(), e);
             }

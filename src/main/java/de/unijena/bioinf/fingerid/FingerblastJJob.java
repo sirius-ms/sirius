@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
@@ -15,70 +16,73 @@ import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult> implements AnnotationJJob<FingerblastResult, FingerIdResult> {
 
     private final FingerblastScoringMethod scoring;
-    public final long dbSearchFlag;
     private final TrainingStructuresSet trainingStructuresSet;
 
-    private List<FingerprintCandidate> unfilteredSearchList = null;
-    private List<Scored<FingerprintCandidate>> unfilteredScored = null;
+    private RestWithCustomDatabase.CandidateResult candidates = null;
+    private List<Scored<FingerprintCandidate>> scoredCandidates = null;
 
-    public FingerblastJJob(FingerblastScoringMethod scoring, long dbSearchFlag, TrainingStructuresSet trainingStructuresSet) {
-        this(scoring, dbSearchFlag, null, null, null, trainingStructuresSet);
+    public FingerblastJJob(FingerblastScoringMethod scoring, TrainingStructuresSet trainingStructuresSet) {
+        this(scoring, null, null, null, trainingStructuresSet);
     }
 
-    public FingerblastJJob(FingerblastScoringMethod scoring, long dbSearchFlag, FTree tree, ProbabilityFingerprint fp, MolecularFormula formula, TrainingStructuresSet trainingStructuresSet) {
+    public FingerblastJJob(FingerblastScoringMethod scoring, FTree tree, ProbabilityFingerprint fp, MolecularFormula formula, TrainingStructuresSet trainingStructuresSet) {
         super(JobType.CPU, fp, formula, tree);
         this.scoring = scoring;
-        this.dbSearchFlag = dbSearchFlag;
         this.trainingStructuresSet = trainingStructuresSet;
     }
 
 
     protected void checkInput() {
-        if (unfilteredSearchList == null)
+        if (candidates == null)
             throw new IllegalArgumentException("No Input Data found.");
     }
 
     @Override
     public synchronized void handleFinishedRequiredJob(JJob required) {
         super.handleFinishedRequiredJob(required);
-        if (unfilteredSearchList == null) {
+        if (candidates == null) {
             if (required instanceof FormulaJob) {
                 FormulaJob job = ((FormulaJob) required);
-                unfilteredSearchList = job.result();
+                candidates = job.result();
             }
         }
     }
 
-    public List<Scored<FingerprintCandidate>> getUnfilteredList() {
-        return unfilteredScored;
+    public List<Scored<FingerprintCandidate>> getAllScoredCandidates() {
+        return scoredCandidates;
+    }
+
+    public RestWithCustomDatabase.CandidateResult getCandidates() {
+        return candidates;
     }
 
     @Override
-    protected FingerblastResult compute() throws Exception {
+    protected FingerblastResult compute() {
         checkInput();
 
-        List<JJob<List<Scored<FingerprintCandidate>>>> jobs = Fingerblast.makeScoringJobs(scoring, unfilteredSearchList, fp);
-        jobs.forEach(this::submitSubJob);
+        //we want to score all available candidates and may create subsets later.
+        final Set<FingerprintCandidate> combinedCandidates = candidates.getCombCandidates();
 
-        unfilteredScored = jobs.stream().flatMap(r -> r.takeResult().stream()).sorted(Comparator.reverseOrder()).map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
+        List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(scoring, combinedCandidates, fp);
+        scoreJobs.forEach(this::submitSubJob);
 
-        unfilteredScored.forEach(sc -> postprocessCandidate(sc.getCandidate()));
+        scoredCandidates = scoreJobs.stream().flatMap(r -> r.takeResult().stream()).sorted(Comparator.reverseOrder()).map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
+        scoredCandidates.forEach(sc -> postprocessCandidate(sc.getCandidate()));
 
-        final List<Scored<FingerprintCandidate>> cds;
-        if (dbSearchFlag == 0) {
-            cds = unfilteredScored;
-        } else {
-            cds = unfilteredScored.stream().filter(c -> (c.getCandidate().getBitset() & dbSearchFlag) != 0).collect(Collectors.toList());
-        }
+        //create filtered result for FingerblastResult result
+        Set<FingerprintCandidate> requestedCandidates = candidates.getReqCandidates();
+        final List<Scored<FingerprintCandidate>> cds = scoredCandidates.stream().
+                filter(sc -> requestedCandidates.contains(sc.getCandidate())).collect(Collectors.toList());
+
 
         return new FingerblastResult(cds);
     }
-
 
     protected void postprocessCandidate(CompoundCandidate candidate) {
         //annotate training compounds;

@@ -16,7 +16,7 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.bioinf;
+package de.unijena.bioinf.webapi;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -26,7 +26,11 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.chemdb.RESTDatabase;
+import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
+import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.CanopusWebJJob;
@@ -53,7 +57,6 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
-import de.unijena.bioinf.utils.ProxyManager;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +68,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Frontend WebAPI class, that represents the client to our backend rest api
@@ -174,14 +178,22 @@ public final class WebAPI {
     //endregion
 
     //region ChemDB
-    public RESTDatabase getRESTDb(long filter) {
-        return getRESTDb(filter, null);
+    public RestWithCustomDatabase getChemDB(){
+            return SearchableDatabases.makeRestWithCustomDB(this);
     }
 
-
-    public RESTDatabase getRESTDb(long filter, @Nullable File cacheDir) {
-        return ProxyManager.doWithClient(client -> new RESTDatabase(cacheDir, filter, chemDBClient, client));
+    public void consumeRestDB(long filter, @Nullable File cacheDir, IOFunctions.IOConsumer<RESTDatabase> doWithClient) throws IOException {
+        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, chemDBClient, ProxyManager.client())) {
+            doWithClient.accept(restDB);
+        }
     }
+
+    public <T> T applyRestDB(long filter, @Nullable File cacheDir, IOFunctions.IOFunction<RESTDatabase, T> doWithClient) throws IOException {
+        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, chemDBClient, ProxyManager.client())) {
+            return doWithClient.apply(restDB);
+        }
+    }
+
     //endregion
 
     //region Canopus

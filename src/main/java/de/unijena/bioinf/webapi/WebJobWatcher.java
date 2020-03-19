@@ -1,4 +1,4 @@
-package de.unijena.bioinf;
+package de.unijena.bioinf.webapi;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicJJob;

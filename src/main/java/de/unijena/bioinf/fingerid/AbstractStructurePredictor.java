@@ -1,7 +1,7 @@
 package de.unijena.bioinf.fingerid;
 
-import de.unijena.bioinf.WebAPI;
-import de.unijena.bioinf.chemdb.CachedRESTDB;
+import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.confidence_score.ConfidenceScorer;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
@@ -9,7 +9,7 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 public abstract class AbstractStructurePredictor implements StructurePredictor {
     protected final PredictorType predictorType;
     protected final WebAPI csiWebAPI;
-    protected CachedRESTDB database;
+    protected RestWithCustomDatabase database;
     protected FingerblastScoringMethod fingerblastScoring;
     protected ConfidenceScorer confidenceScorer;
     protected TrainingStructuresSet trainingStructures;
@@ -23,7 +23,7 @@ public abstract class AbstractStructurePredictor implements StructurePredictor {
         return predictorType;
     }
 
-    public CachedRESTDB getDatabase() {
+    public RestWithCustomDatabase getDatabase() {
         return database;
     }
 

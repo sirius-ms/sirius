@@ -1,4 +1,4 @@
-package de.unijena.bioinf;
+package de.unijena.bioinf.webapi;
 
 import de.unijena.bioinf.jjobs.WaiterJJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;

@@ -28,12 +28,20 @@ public abstract class SearchableDBAnnotation implements Ms2ExperimentAnnotation 
         return searchDBs.stream().map(SearchableDatabase::name).collect(Collectors.joining(","));
     }
 
-    public boolean containsRestDb() {
+    public boolean containsRestDB() {
         return containsRestDb;
     }
 
-    public boolean containsCustomDb() {
+    public boolean containsCustomDB() {
         return containsCustomDb;
+    }
+
+    public boolean containsDBs() {
+        return !isEmpty();
+    }
+
+    public boolean isEmpty() {
+        return searchDBs == null || searchDBs.isEmpty();
     }
 
     public long getDBFlag() {

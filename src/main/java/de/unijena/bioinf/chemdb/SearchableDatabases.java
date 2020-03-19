@@ -1,6 +1,6 @@
 package de.unijena.bioinf.chemdb;
 
-import de.unijena.bioinf.WebAPI;
+import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,11 +24,11 @@ public class SearchableDatabases {
     }
 
     public static File getRESTDatabaseCacheDirectory() {
-        return CachedRESTDB.getRESTDatabaseCacheDirectory(getDatabaseDirectory());
+        return RestWithCustomDatabase.getRESTDatabaseCacheDirectory(getDatabaseDirectory());
     }
 
     public static File getCustomDatabaseDirectory() {
-        return CachedRESTDB.getCustomDatabaseDirectory(getDatabaseDirectory());
+        return RestWithCustomDatabase.getCustomDatabaseDirectory(getDatabaseDirectory());
     }
 
     public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name) {
@@ -90,8 +89,8 @@ public class SearchableDatabases {
         return CustomDatabase.loadCustomDatabases(up2date);
     }
 
-    public static CachedRESTDB makeCachedRestDB(WebAPI webAPI) {
-        return new CachedRESTDB(webAPI, getDatabaseDirectory());
+    public static RestWithCustomDatabase makeRestWithCustomDB(WebAPI webAPI) {
+        return new RestWithCustomDatabase(webAPI, getDatabaseDirectory());
     }
 
     @NotNull

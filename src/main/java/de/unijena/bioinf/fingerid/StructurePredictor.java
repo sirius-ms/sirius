@@ -1,7 +1,7 @@
 package de.unijena.bioinf.fingerid;
 
-import de.unijena.bioinf.WebAPI;
-import de.unijena.bioinf.chemdb.CachedRESTDB;
+import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.confidence_score.ConfidenceScorer;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
@@ -15,7 +15,7 @@ public interface StructurePredictor {
 
     WebAPI getWebAPI();
 
-    CachedRESTDB getDatabase();
+    RestWithCustomDatabase getDatabase();
 
     ConfidenceScorer getConfidenceScorer();
 

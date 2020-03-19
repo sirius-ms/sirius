@@ -3,7 +3,7 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.WebAPI;
+import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.chemdb.FingerblastSearchEngine;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
@@ -49,7 +49,7 @@ public class CSIPredictor extends AbstractStructurePredictor {
 
     @Override
     public void refreshCacheDir() throws IOException {
-        database = SearchableDatabases.makeCachedRestDB(csiWebAPI);
+        database = csiWebAPI.getChemDB();
         database.checkCache();
     }
 

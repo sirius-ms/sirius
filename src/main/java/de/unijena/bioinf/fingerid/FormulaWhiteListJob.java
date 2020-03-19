@@ -8,22 +8,20 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
-import de.unijena.bioinf.WebAPI;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.jjobs.BasicJJob;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * retrieves a {@Whiteset} of {@MolecularFormula}s based on the given {@SearchableDatabase}
+ * retrieves a {@link Whiteset} of {@link MolecularFormula}s based on the given {@link SearchableDatabase}
  */
 public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
-    private final WebAPI webAPI;
-    private final SearchableDatabase searchableDatabase;
-
+    private final List<SearchableDatabase> searchableDatabases;
+    private final RestWithCustomDatabase searchDB;
     //job parameter
     private final boolean onlyOrganic;
     private final boolean annotate;
@@ -33,28 +31,26 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
     private final Deviation massDev;
 
 
-    public FormulaWhiteListJob(WebAPI api, SearchableDatabase searchableDatabase, Ms2Experiment experiment) {
-        this(api, searchableDatabase, experiment, false);
+    /*public FormulaWhiteListJob(RestWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment) {
+        this(searchDB, searchableDatabases, experiment, false);
+    }*/
+
+    public FormulaWhiteListJob(RestWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment, boolean onlyOrganic, boolean annotateResult) {
+        this(searchDB, searchableDatabases, experiment, experiment.getAnnotationOrThrow(MS2MassDeviation.class).allowedMassDeviation, onlyOrganic, annotateResult);
     }
 
-    public FormulaWhiteListJob(WebAPI api, SearchableDatabase searchableDatabase, Ms2Experiment experiment, boolean annotateResult) {
-        this(api, searchableDatabase, experiment, experiment.getAnnotationOrThrow(MS2MassDeviation.class).allowedMassDeviation, true, annotateResult);
-    }
-
-    public FormulaWhiteListJob(WebAPI api, SearchableDatabase searchableDatabase, Ms2Experiment experiment, Deviation massDev, boolean onlyOrganic, boolean annotateResult) {
+    public FormulaWhiteListJob(RestWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment, Deviation massDev, boolean onlyOrganic, boolean annotateResult) {
         super(JobType.WEBSERVICE);
         this.massDev = massDev;
-        this.onlyOrganic = onlyOrganic;
-        this.searchableDatabase = searchableDatabase;
+        this.searchableDatabases = searchableDatabases;
         this.experiment = experiment;
         this.annotate = annotateResult;
-        this.webAPI = api;
+        this.searchDB = searchDB;
+        this.onlyOrganic = onlyOrganic;
     }
 
     @Override
     protected Whiteset compute() throws Exception {
-        final Set<MolecularFormula> formulas = new HashSet<>();
-
         PrecursorIonType ionType = experiment.getPrecursorIonType();
         PrecursorIonType[] allowedIons;
         if (ionType.isIonizationUnknown()) {
@@ -63,33 +59,18 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
             allowedIons = new PrecursorIonType[]{ionType};
         }
 
-        if (searchableDatabase.isCustomDb()) {
-            for (List<FormulaCandidate> fc : new FilebasedDatabase(webAPI.getCDKMaskedFingerprintVersion(ionType.getCharge()), searchableDatabase.getDatabasePath()).lookupMolecularFormulas(experiment.getIonMass(), massDev, allowedIons)) {
-                formulas.addAll(getFromCandidates(fc));
-            }
-        }
+        final Set<MolecularFormula> formulas = searchDB.loadMolecularFormulas(experiment.getIonMass(), massDev, allowedIons, searchableDatabases)
+                .stream().map(FormulaCandidate::getFormula).filter(f -> !onlyOrganic || f.isCHNOPSBBrClFI())
+                .collect(Collectors.toSet());
 
-        if (searchableDatabase.searchInBio()) {
-            try (final RESTDatabase db = webAPI.getRESTDb(BioFilter.ONLY_BIO, null)) {
-                formulas.addAll(searchInOnlineDB(db, allowedIons));
-            }
-        }
-
-        if (searchableDatabase.searchInPubchem()) {
-            try (final RESTDatabase db = webAPI.getRESTDb(searchableDatabase.searchInBio() ? BioFilter.ONLY_NONBIO : BioFilter.ALL, null)) {
-                formulas.addAll(searchInOnlineDB(db, allowedIons));
-            }
-        }
-
-        Whiteset whiteset = Whiteset.of(formulas);
-        if (annotate) {
+        final Whiteset whiteset = Whiteset.of(formulas);
+        if (annotate)
             experiment.setAnnotation(Whiteset.class, whiteset);
-        }
 
         return whiteset;
     }
 
-    private List<MolecularFormula> searchInOnlineDB(final RESTDatabase db, PrecursorIonType[] allowedIons) throws ChemicalDatabaseException {
+    /*private List<MolecularFormula> searchInOnlineDB(final RESTDatabase db, PrecursorIonType[] allowedIons) throws ChemicalDatabaseException {
         final List<MolecularFormula> formulas = new ArrayList<>();
         for (List<FormulaCandidate> fc : db.lookupMolecularFormulas(experiment.getIonMass(), massDev, allowedIons)) {
             formulas.addAll(getFromCandidates(fc));
@@ -108,7 +89,7 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
             }
         }
         return formulas;
-    }
+    }*/
 
     /*public static Whiteset searchFormulasInBackround(double ppm, boolean onlyOrganic, SearchableDatabase searchableDatabase, Ms2Experiment ex) {
         FormulaWhiteListJob j = new FormulaWhiteListJob(new Deviation(ppm), onlyOrganic, searchableDatabase, ex, false);

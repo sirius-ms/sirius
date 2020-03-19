@@ -199,8 +199,9 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
         final List<FormulaJob> formulaJobs = filteredResults.stream().map(fingeridInput ->
                 new FormulaJob(
                         fingeridInput.getMolecularFormula(),
-                        predictor.database.makeSearchEngine(searchDB.searchDBs),
-                        fingeridInput.getPrecursorIonType())
+                        predictor.database,
+                        searchDB.searchDBs,
+                        fingeridInput.getPrecursorIonType(), true) //todo maybe only if confidence is "enabled"
         ).collect(Collectors.toList());
 
         jobManager.submitJobsInBatches(formulaJobs);
@@ -219,7 +220,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
             annotationJJobs.put(predictionJob, fres);
 
             // fingerblast job: score candidate fingerprints against predicted fingerprint
-            final FingerblastJJob blastJob = new FingerblastJJob(predictor.getFingerblastScoring(), dbFlag, predictor.getTrainingStructures());
+            final FingerblastJJob blastJob = new FingerblastJJob(predictor.getFingerblastScoring(), predictor.getTrainingStructures());
             blastJob.addRequiredJob(formulaJobs.get(i++));
             blastJob.addRequiredJob(predictionJob);
             annotationJJobs.put(submitSubJob(blastJob), fres);
@@ -228,16 +229,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
             //confidence job: calculate confidence of scored candidate list
             if (predictor.getConfidenceScorer() != null) {
                 final ConfidenceJJob confidenceJJob = new ConfidenceJJob(predictor, experiment, fingeridInput);
-                confidenceJJob.setSearchDBJob(blastJob);
-                // fetch additional candidate list from Pubchem for custom-db because they are not a subset of pubchem
-                /*if (searchDB.isCustomDb()) {
-                    final FingerblastJJob pubchemBlastJob = new FingerblastJJob(predictor.getFingerblastScoring(), dbFlag, predictor.getTrainingStructures());
-                    pubchemBlastJob.addRequiredJob(jobManager.submitJob(
-                            new FormulaJob(fingeridInput.getMolecularFormula(), predictor.database.makeSearchEngine(SearchableDatabases.getAllDb()), fingeridInput.getPrecursorIonType())));
-                    pubchemBlastJob.addRequiredJob(predictionJob);
-                    confidenceJJob.setAdditionalPubchemDBJob(submitSubJob(pubchemBlastJob));
-                }*/
-
+                confidenceJJob.addRequiredJob(blastJob);
                 annotationJJobs.put(submitSubJob(confidenceJJob), fres);
             }
         }

@@ -1,4 +1,4 @@
-package de.unijena.bioinf.utils;
+package de.unijena.bioinf.webapi;
 
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -244,7 +244,7 @@ public class ProxyManager {
         }
     }
 
-    private static LockedClosableHttpClient client() {
+    static LockedClosableHttpClient client() {
         return new LockedClosableHttpClient(clientContainer);
     }
 
