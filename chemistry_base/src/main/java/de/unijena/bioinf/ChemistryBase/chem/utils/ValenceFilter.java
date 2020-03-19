@@ -23,6 +23,8 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
+import java.util.Set;
+
 /**
  * A formula passes this filter, if its RDBE value is greater or equal to the given limit
  */
@@ -34,8 +36,10 @@ public class ValenceFilter implements FormulaFilter {
 
     private final PossibleAdducts possibleAdducts;
 
+    private static final double MIN_VALENCE_DEFAULT  = -0.5d;
+
     public ValenceFilter() {
-        this(-0.5d);
+        this(MIN_VALENCE_DEFAULT);
     }
 
     public ValenceFilter(@Parameter("minValence") double minValence) {
@@ -43,10 +47,15 @@ public class ValenceFilter implements FormulaFilter {
 
     }
 
+    //todo what about the parameter annotation?
     public ValenceFilter(@Parameter("minValence") double minValence, PossibleAdducts possibleAdducts) {
         this.minValenceInt = (int)(2*minValence);
         this.minValence = minValence;
         this.possibleAdducts = possibleAdducts;
+    }
+
+    public ValenceFilter filterWithoutAdducts(){
+        return new ValenceFilter(MIN_VALENCE_DEFAULT, new PossibleAdducts(PeriodicTable.getInstance().getIonizations()));
     }
 
 //    @Override
@@ -69,7 +78,11 @@ public class ValenceFilter implements FormulaFilter {
 
     @Override
     public boolean isValid(MolecularFormula measuredNeutralFormula, Ionization ionization) {
-        for (PrecursorIonType ionType : possibleAdducts.getAdducts(ionization)) {
+        Set<PrecursorIonType> adducts = possibleAdducts.getAdducts(ionization);
+        if (adducts.size()==0) {
+            throw new RuntimeException("Ionization not known in ValenceFilter: "+ionization);
+        }
+        for (PrecursorIonType ionType : adducts) {
             if (isValid(measuredNeutralFormula, ionType)){
                 return true;
             }
