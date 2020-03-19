@@ -14,7 +14,7 @@ dependencies {
 
 repositories {
     maven {
-        url "http://repo.spring.io/plugins-release/" //org.antlr:com.springsource.antlr
+        url "https://repo.spring.io/plugins-release/" //org.antlr:com.springsource.antlr
     }
 
 }
