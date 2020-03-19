@@ -6,7 +6,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
-import de.unijena.bioinf.utils.ProxyManager;
+import de.unijena.bioinf.webapi.ProxyManager;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;

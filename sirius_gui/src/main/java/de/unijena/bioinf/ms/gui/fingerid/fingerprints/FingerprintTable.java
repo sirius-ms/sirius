@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
-import de.unijena.bioinf.WebAPI;
+import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
