@@ -15,6 +15,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -73,33 +74,16 @@ public class Fingerblast {
     }
 
 
-    public static List<JJob<List<Scored<FingerprintCandidate>>>> makeScoringJobs(@NotNull final FingerblastScoringMethod scoringMethod, @NotNull final List<FingerprintCandidate> candidates, @NotNull final ProbabilityFingerprint fingerprint) {
+    public static List<JJob<List<Scored<FingerprintCandidate>>>> makeScoringJobs(@NotNull final FingerblastScoringMethod scoringMethod, @NotNull final Collection<FingerprintCandidate> candidates, @NotNull final ProbabilityFingerprint fingerprint) {
         final List<List<FingerprintCandidate>> inputs = Partition.ofNumber(candidates, PropertyManager.getNumberOfThreads());
 
         return inputs.stream().map(can ->
                 new BasicJJob<List<Scored<FingerprintCandidate>>>(JJob.JobType.CPU) {
                     @Override
-                    protected List<Scored<FingerprintCandidate>> compute() throws Exception {
+                    protected List<Scored<FingerprintCandidate>> compute() {
                         return score(scoringMethod, can, fingerprint);
                     }
                 }
         ).collect(Collectors.toList());
     }
-
-    /*public static class FingeriblastScoringJJob extends BasicJJob<Scored<FingerprintCandidate>> {
-        private final FingerblastScoringMethod scoringMethod;
-        private final List<FingerprintCandidate> candidates;
-        private final ProbabilityFingerprint fingerprint;
-
-        public FingeriblastScoringJJob(@NotNull final FingerblastScoringMethod scoringMethod, @NotNull final FingerprintCandidate candidate, @NotNull final ProbabilityFingerprint fingerprint) {
-            this.scoringMethod = scoringMethod;
-            this.candidates = Collections.singletonList(candidate);
-            this.fingerprint = fingerprint;
-        }
-
-        @Override
-        protected Scored<FingerprintCandidate> compute() throws Exception {
-            return score(scoringMethod, candidates, fingerprint).get(0);
-        }
-    }*/
 }
