@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -16,6 +17,7 @@ import picocli.CommandLine.Option;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.stream.Collectors;
 
 /**
@@ -35,11 +37,11 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     @Option(names = {"--buffer-size", "--buffer"}, description = "Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory).", defaultValue = "1000", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
     public int writeBuffer;
 
-    @Option(names = {"--derive-pubchem"}, description = "The resulting custom-db will be the Union of the CSI:FingerID 'PubChem' database and the imported structures", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-    public boolean deriveFromPubchem;
+    @Option(names = {"--derive-from"}, description = "The resulting custom-db will be the Union of the given parent database and the imported structures.", split = ",")
+    public EnumSet<DataSource> parentDBs = null;
 
-    @Option(names = {"--derive-bio"}, description = "The resulting custom-db will be the Union of the CSI:FingerID 'BIO' database and the imported structures", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-    public boolean deriveFromBio;
+   /* @Option(names = {"--derive-bio"}, description = "The resulting custom-db will be the Union of the CSI:FingerID 'BIO' database and the imported structures", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+    public boolean deriveFromBio;*/
 
     @Override
     public Workflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
@@ -55,7 +57,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 Files.createDirectories(loc);
                 CustomDatabaseImporter.importDatabase(loc.resolve(dbName).toFile(),
                         input.msInput.unknownFiles.stream().map(Path::toFile).collect(Collectors.toList()),
-                        deriveFromPubchem, deriveFromBio,
+                        parentDBs,
                         ApplicationCore.WEB_API, writeBuffer);
                 LoggerFactory.getLogger(CustomDatabaseImporter.class).info("Database imported. Use 'structure --db=\"" + loc.toString() + "\"' to search in this database.");
             } catch (IOException e) {

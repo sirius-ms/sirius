@@ -6,7 +6,7 @@ import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
-import de.unijena.bioinf.utils.ProxyManager;
+import de.unijena.bioinf.webapi.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 

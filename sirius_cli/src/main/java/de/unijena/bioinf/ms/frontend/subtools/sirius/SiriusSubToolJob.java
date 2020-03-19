@@ -43,9 +43,10 @@ public class SiriusSubToolJob extends InstanceJob {
             Whiteset wSet = null;
 
             // create WhiteSet from DB if necessary
+            //todo do we really want to restrict to organic even if the db is user selected
             final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
-            if (searchDB.isPresent() && searchDB.get().hasSearchableDBs()) {
-                FormulaWhiteListJob wsJob = new FormulaWhiteListJob(ApplicationCore.WEB_API, searchDB.get(), exp);
+            if (searchDB.isPresent() && searchDB.get().containsDBs()){
+                FormulaWhiteListJob wsJob = new FormulaWhiteListJob(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp, true, false);
                 wSet = SiriusJobs.getGlobalJobManager().submitJob(wsJob).awaitResult();
             }
 

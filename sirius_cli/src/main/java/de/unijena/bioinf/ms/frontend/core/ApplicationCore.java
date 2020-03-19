@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.frontend.core;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
-import de.unijena.bioinf.WebAPI;
+import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;

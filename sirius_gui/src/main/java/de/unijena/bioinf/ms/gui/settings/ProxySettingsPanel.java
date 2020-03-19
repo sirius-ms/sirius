@@ -8,7 +8,7 @@ package de.unijena.bioinf.ms.gui.settings;
 import de.unijena.bioinf.ms.frontend.core.PasswordCrypter;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
-import de.unijena.bioinf.utils.ProxyManager;
+import de.unijena.bioinf.webapi.ProxyManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

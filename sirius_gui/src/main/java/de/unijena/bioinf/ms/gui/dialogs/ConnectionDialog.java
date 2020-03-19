@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import de.unijena.bioinf.WebAPI;
+import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;

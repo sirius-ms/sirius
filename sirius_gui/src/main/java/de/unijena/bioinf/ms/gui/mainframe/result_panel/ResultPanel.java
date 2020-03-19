@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
-import de.unijena.bioinf.WebAPI;
+import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.ms.gui.canopus.CanopusPanel;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.CandidateListDetailViewPanel;
