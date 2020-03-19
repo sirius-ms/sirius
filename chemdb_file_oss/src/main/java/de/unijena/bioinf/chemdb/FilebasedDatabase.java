@@ -11,6 +11,7 @@ import de.unijena.bioinf.babelms.CloseableIterator;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
@@ -60,18 +61,18 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
             if (upName.startsWith("SETTINGS")) continue;
             boolean found = false;
 
-            eachFormat:
             for (String s : SUPPORTED_FORMATS) {
                 if (upName.endsWith(s)) {
                     if (format == null || format.equals(s)) {
                         format = s;
                         found = true;
-                        break eachFormat;
+                        break;
                     } else {
                         throw new IOException("Database contains several formats. Only one format is allowed! Given format is " + String.valueOf(format) + " but " + name + " found.");
                     }
                 }
             }
+
             if (!found) continue;
             final String form = name.substring(0, name.length() - format.length());
             MolecularFormula.parseAndExecute(form, formulas::add);
@@ -80,7 +81,7 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
         format = format.toLowerCase();
         this.reader = format.equals(".json") || format.equals(".json.gz") ? new JSONReader() : new CSVReader();
         this.compressed = format.endsWith(".gz");
-        this.formulas = formulas.toArray(new MolecularFormula[formulas.size()]);
+        this.formulas = formulas.toArray(MolecularFormula[]::new);
         Arrays.sort(this.formulas);
     }
 
@@ -89,25 +90,25 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
 
         final double mass = ionType.precursorMassToNeutralMass(ionMass);
 
-        final int searchP = Arrays.binarySearch(formulas, mass - deviation.absoluteFor(ionMass), new Comparator<Comparable<? extends Comparable<?>>>() {
-            @Override
-            public int compare(Comparable<? extends Comparable<?>> o1, Comparable<? extends Comparable<?>> o2) {
-                double mzL = (o1 instanceof MolecularFormula ? ((MolecularFormula) o1).getMass() : (Double)o1);
-                double mzR = (o2 instanceof MolecularFormula ? ((MolecularFormula) o2).getMass() : (Double)o2);
-                return Double.compare(mzL, mzR);
-            }
+        final int searchP = Arrays.binarySearch(formulas, mass - deviation.absoluteFor(ionMass), (o1, o2) -> {
+            double mzL = (o1 instanceof MolecularFormula ? ((MolecularFormula) o1).getMass() : (Double) o1);
+            double mzR = (o2 instanceof MolecularFormula ? ((MolecularFormula) o2).getMass() : (Double) o2);
+            return Double.compare(mzL, mzR);
         });
+
         int insertionPoint;
         if (searchP >= 0) {
             insertionPoint = searchP;
         } else {
             insertionPoint = -searchP - 1;
         }
+
         final double max = mass+deviation.absoluteFor(ionMass);
         ArrayList<FormulaCandidate> candidates = new ArrayList<>();
         while (insertionPoint < formulas.length && formulas[insertionPoint].getMass() <= max) {
             candidates.add(new FormulaCandidate(formulas[insertionPoint++], ionType, 0)); // TODO: add bitset?
         }
+
         return candidates;
     }
 
@@ -130,9 +131,9 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
 
     private Reader getReaderFor(File structureFile) throws IOException {
         if (compressed) {
-            return new InputStreamReader(new GZIPInputStream(new FileInputStream(structureFile)),Charset.forName("UTF-8")) ;
+            return new InputStreamReader(new GZIPInputStream(new FileInputStream(structureFile)), StandardCharsets.UTF_8);
         } else {
-            return Files.newBufferedReader( structureFile.toPath(), Charset.forName("UTF-8"));
+            return Files.newBufferedReader(structureFile.toPath(), StandardCharsets.UTF_8);
         }
     }
 
@@ -157,6 +158,24 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
         } else return fingerprintCandidates;
     }
 
+    /*@Override
+    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
+
+        final File name = new File(databasePath, formula.toString() + ".json.gz");
+        if (name.exists()) {
+            try (final GZIPInputStream zin = new GZIPInputStream(new BufferedInputStream(new FileInputStream(name)))) {
+                try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(version, new InputStreamReader(zin))) {
+                    while (fciter.hasNext()) fingerprintCandidates.add(fciter.next());
+                }
+            } catch (IOException e) {
+                throw new ChemicalDatabaseException(e);
+            }
+            return fingerprintCandidates;
+        } else {
+            return fingerprintCandidates;
+        }
+    }*/
+
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
@@ -171,6 +190,8 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
     public List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
+
+
 
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {

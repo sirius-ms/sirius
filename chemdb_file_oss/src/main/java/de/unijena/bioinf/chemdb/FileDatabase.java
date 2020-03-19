@@ -18,6 +18,7 @@ import java.util.zip.GZIPInputStream;
  * Chemical compounds are stored as compressed json files, one file per formula
  *
  * TODO: implement cache? Or better do this as an extra database implementation
+ * TODO: May be replacable by with {@link FilebasedDatabase}
  */
 @Deprecated
 public class FileDatabase extends AbstractChemicalDatabase {
