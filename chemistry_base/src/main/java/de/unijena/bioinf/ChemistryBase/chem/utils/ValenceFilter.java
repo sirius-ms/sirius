@@ -19,10 +19,7 @@ package de.unijena.bioinf.ChemistryBase.chem.utils;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
@@ -37,17 +34,12 @@ public class ValenceFilter implements FormulaFilter {
 
     private final PossibleAdducts possibleAdducts;
 
-    /*
-    lowest rdbe share ignoring the +2 offset for the 'start' of a molecule
-     */
-    private final TObjectDoubleHashMap<Ionization> ionizationToLowestAdductRDBE;
-
     public ValenceFilter() {
         this(-0.5d);
     }
 
     public ValenceFilter(@Parameter("minValence") double minValence) {
-        this(minValence, null);
+        this(minValence, new PossibleAdducts(PeriodicTable.getInstance().getAdducts()));
 
     }
 
@@ -55,19 +47,6 @@ public class ValenceFilter implements FormulaFilter {
         this.minValenceInt = (int)(2*minValence);
         this.minValence = minValence;
         this.possibleAdducts = possibleAdducts;
-        this.ionizationToLowestAdductRDBE = new TObjectDoubleHashMap<>(10, 0.75f, Double.NaN);
-        if (possibleAdducts != null) {
-            for (PrecursorIonType ionType : possibleAdducts) {
-                Ionization ionization = ionType.getIonization();
-                MolecularFormula adduct = ionType.getAdduct();
-                //-2 = RDBE share for not starting a new molecule
-                double doubleRDBE = adduct.doubledRDBE()-2;
-                double current = ionizationToLowestAdductRDBE.get(ionization);
-                if (Double.isNaN(current) || (doubleRDBE<current)) {
-                    ionizationToLowestAdductRDBE.put(ionization, doubleRDBE);
-                }
-            }
-        }
     }
 
 //    @Override
@@ -90,13 +69,12 @@ public class ValenceFilter implements FormulaFilter {
 
     @Override
     public boolean isValid(MolecularFormula measuredNeutralFormula, Ionization ionization) {
-        final double drdbe = measuredNeutralFormula.doubledRDBE();
-        double adjustment = ionizationToLowestAdductRDBE.get(ionization);
-        if (Double.isNaN(adjustment)){
-            return drdbe >= minValenceInt;
-        } else {
-            return drdbe >= minValenceInt-adjustment;
+        for (PrecursorIonType ionType : possibleAdducts.getAdducts(ionization)) {
+            if (isValid(measuredNeutralFormula, ionType)){
+                return true;
+            }
         }
+        return false;
     }
 
     @Override
