@@ -276,7 +276,7 @@ public class RestWithCustomDatabase {
                 if (requestFilter == restFilter)
                     return getCombCandidates(); //requested rest candidates equals the searched rest candidates
                 else
-                    return Stream.concat(restDbInChIs.stream(), customInChIs.values().stream().flatMap(Set::stream)).
+                    return Stream.concat(restDbInChIs.stream().filter(ChemDBs.inFilter((it) -> it.bitset, requestFilter)), customInChIs.values().stream().flatMap(Set::stream)).
                             unordered().collect(Collectors.toSet());
             } else {
                 // only custom db without inheritance was requested
