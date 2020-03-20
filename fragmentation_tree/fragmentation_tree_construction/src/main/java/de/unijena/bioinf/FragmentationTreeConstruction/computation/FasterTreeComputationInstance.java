@@ -1,7 +1,6 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon;
@@ -143,8 +142,9 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         }
 
         //we do not resolve here anymore -> because we need unresolved trees to expand adducts for fingerid
-        final List<FTree> trees = Arrays.stream(results).map(r -> fixIonization(r.tree)).collect(Collectors.toList());
+        List<FTree> trees = Arrays.stream(results).map(r -> fixIonization(r.tree)).collect(Collectors.toList());
 
+        trees = trees.stream().map(t -> fixIonization(resolveAdductIfPossible(t, pinput.getAnnotationOrThrow(PossibleAdducts.class)))).collect(Collectors.toList());
 
         return new FinalResult(trees);
     }
@@ -157,6 +157,49 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         } else return tree;
         */
         return tree;
+    }
+
+    /**
+     *     Based on RDBE a MF might only be possible given a certain adduct.
+     *     In this case we can fix the adduct.
+     *     //todo is this the correct position to do that? The same should hold for Isotope pattern Analysis
+     * @param tree may be null?
+     * @param possibleAdducts
+     * @return
+     */
+    private FTree resolveAdductIfPossible(FTree tree, PossibleAdducts possibleAdducts) {
+        PrecursorIonType ionType = pinput.getExperimentInformation().getPrecursorIonType();
+        //if adduct or insource already set, return tree unchanged
+        if (!ionType.getModification().isEmpty()) return tree;
+
+        Set<PrecursorIonType> adducts = possibleAdducts.getAdducts(ionType.getIonization());
+        if (adducts.size()==0) {
+            throw new RuntimeException("Ionization not known in FasterTreeComputationInstance: "+ionType.getIonization());
+        }
+
+        final MolecularFormula mf = tree.getRoot().getFormula();
+        final FormulaConstraints constraints = pinput.getAnnotationOrThrow(FormulaConstraints.class);
+
+        PrecursorIonType validIontype = null;
+        for (PrecursorIonType precursorIonType : adducts) {
+            boolean isValid = true;
+            for (FormulaFilter filter : constraints.getFilters()) {
+                if (!filter.isValid(mf, precursorIonType)){
+                    isValid = false;
+                    break;
+                }
+            }
+            if (isValid) {
+                if (validIontype != null){
+                    //at least 2 valid iontypes, cannot decide for one
+                    //return input
+                    return tree;
+                } else {
+                    validIontype = precursorIonType;
+                }
+            }
+        }
+        return new IonTreeUtils().treeToNeutralTree(tree, validIontype);
     }
 
     protected void recalculateScore(ProcessedInput input, FTree tree, String prefix) {

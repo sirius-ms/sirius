@@ -530,4 +530,11 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         }
         return intersection;
     }
+
+    public FormulaConstraints withNewFilters(List<FormulaFilter> formulaFilters){
+        final FormulaConstraints fc = this.clone();
+        fc.filters.clear();
+        fc.filters.addAll(formulaFilters);
+        return fc;
+    }
 }
