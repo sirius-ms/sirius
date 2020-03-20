@@ -103,7 +103,7 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
     }
 
     //todo make some nice view of the possible DataSources
-    @Option(names = {"--database", "-d", "--db"}, description = "Search formulas in given database: all, pubchem, bio, kegg, hmdb")
+    @Option(names = {"--database", "-d", "--db"}, description = "Search formulas in the Union of the given databases: all,bio,pubchem,kegg,hmdb")
     public void setDatabase(String name) throws Exception {
         defaultConfigOptions.changeOption("FormulaSearchDB", name);
     }
