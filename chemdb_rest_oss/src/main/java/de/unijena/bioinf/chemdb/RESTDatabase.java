@@ -146,7 +146,7 @@ public class RESTDatabase extends AbstractChemicalDatabase {
             }
 
             fingerprintCandidates.addAll(
-                    fpcs.stream().filter(fpc -> (fpc.bitset & filter) != 0L).collect(Collectors.toList()));
+                    fpcs.stream().filter(ChemDBs.inFilter((it)-> it.bitset,filter)).collect(Collectors.toList()));
             return fingerprintCandidates;
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);

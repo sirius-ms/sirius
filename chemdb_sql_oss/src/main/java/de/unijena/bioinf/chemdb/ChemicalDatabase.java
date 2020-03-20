@@ -242,10 +242,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             //todo why do we not filter on Database level?
             while (set.next()) {
                 final long flag = set.getLong(2);
-                if ((flag & filter) == 0) continue;
-                /*final boolean isPubchemOnly = !DataSource.isBioOnly(flag);
-                if (bioFilter == BioFilter.ONLY_BIO && isPubchemOnly) continue;
-                if (bioFilter == BioFilter.ONLY_NONBIO && !isPubchemOnly) continue;*/
+                if (!ChemDBs.inFilter(flag, filter)) continue;
                 final FormulaCandidate fc = new FormulaCandidate(MolecularFormula.parseOrThrow(set.getString(1)), ionType, set.getLong(2));
                 list.add(fc);
             }
@@ -425,10 +422,14 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         try {
             BufferedWriter write = new BufferedWriter(new FileWriter(file));
             try (final PooledConnection<Connection> c = connection.orderConnection()) {
-                try (final PreparedStatement statement = c.connection.prepareStatement("SELECT s.flags, s.smiles FROM " + STRUCTURES_TABLE + " as s WHERE s.flags & "+flag+"!=0")) {
+                String query = "SELECT s.flags, s.smiles FROM " + STRUCTURES_TABLE;
+                if (flag != 0)
+                    query = query + " as s WHERE s.flags & " + flag + "!=0";
+
+                try (final PreparedStatement statement = c.connection.prepareStatement(query)) {
                     try (final ResultSet set = statement.executeQuery()) {
                         while (set.next()) {
-                            write.write(set.getString(2)+"\t"+set.getString(1)+"\n");
+                            write.write(set.getString(2) + "\t" + set.getString(1) + "\n");
 //                            System.out.println(set.getString(2)+"\t"+set.getString(1)+"\n");
                         }
                         write.close();
