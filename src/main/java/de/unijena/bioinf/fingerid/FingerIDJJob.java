@@ -209,7 +209,6 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
         int i = 0;
         for (IdentificationResult<S> fingeridInput : filteredResults) {
             final FingerIdResult fres = new FingerIdResult(fingeridInput.getTree());
-
             // prediction job: predict fingerprint
             final FingerprintPredictionJJob predictionJob = NetUtils.tryAndWait(
                     () -> predictor.csiWebAPI.submitFingerprintJob(

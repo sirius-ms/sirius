@@ -70,7 +70,7 @@ public class ConfidenceJJob extends BasicDependentJJob<ConfidenceResult> impleme
             predictedFpt = searchDBJob.fp;
             allScoredCandidates = searchDBJob.getAllScoredCandidates();
             candidates = searchDBJob.getCandidates();
-            requestedScoredCandidates = searchDBJob.getResult().getResults();
+            requestedScoredCandidates = searchDBJob.result().getResults();
         }
     }
 
