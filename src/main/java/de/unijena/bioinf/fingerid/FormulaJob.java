@@ -37,7 +37,6 @@ public class FormulaJob extends BasicJJob<RestWithCustomDatabase.CandidateResult
         return NetUtils.tryAndWait(() -> {
             final RestWithCustomDatabase.CandidateResult result = searchDatabase.loadCompoundsByFormula(formula, dbs, includeRestAllDb);
 
-
             final CompoundCandidateChargeState chargeState = CompoundCandidateChargeState.getFromPrecursorIonType(ionType);
             if (chargeState != CompoundCandidateChargeState.NEUTRAL_CHARGE) {
                 final MolecularFormula hydrogen = MolecularFormula.parseOrThrow("H");

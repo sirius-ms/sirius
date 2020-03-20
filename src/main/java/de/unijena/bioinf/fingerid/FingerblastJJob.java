@@ -76,10 +76,9 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
         scoredCandidates.forEach(sc -> postprocessCandidate(sc.getCandidate()));
 
         //create filtered result for FingerblastResult result
-        Set<FingerprintCandidate> requestedCandidates = candidates.getReqCandidates();
+        Set<String> requestedCandidatesInChIs = candidates.getReqCandidatesInChIs();
         final List<Scored<FingerprintCandidate>> cds = scoredCandidates.stream().
-                filter(sc -> requestedCandidates.contains(sc.getCandidate())).collect(Collectors.toList());
-
+                filter(sc -> requestedCandidatesInChIs.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList());
 
         return new FingerblastResult(cds);
     }

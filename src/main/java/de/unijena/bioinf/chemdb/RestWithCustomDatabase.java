@@ -268,35 +268,76 @@ public class RestWithCustomDatabase {
             customInChIs.put(name, mergeCompounds(compounds, cs));
         }
 
+
+
+        public Set<String> getCombCandidatesInChIs() {
+            return getCombCandidatesStr().map(FingerprintCandidate::getInchiKey2D).collect(Collectors.toSet());
+        }
+
         public Set<FingerprintCandidate> getCombCandidates() {
-            return new HashSet<>(cs.values());
+            return getCombCandidatesStr().collect(Collectors.toSet());
+        }
+
+        public Stream<FingerprintCandidate> getCombCandidatesStr() {
+            return cs.values().stream();
+        }
+
+
+        public Set<String> getReqCandidatesInChIs() {
+            return getReqCandidatesStr().map(FingerprintCandidate::getInchiKey2D).collect(Collectors.toSet());
         }
 
         public Set<FingerprintCandidate> getReqCandidates() {
+            return getReqCandidatesStr().collect(Collectors.toSet());
+        }
+
+        private Stream<FingerprintCandidate> getReqCandidatesStr() {
             if (requestFilter > -1) {
                 if (requestFilter == restFilter)
-                    return getCombCandidates(); //requested rest candidates equals the searched rest candidates
+                    return getCombCandidatesStr(); //requested rest candidates equals the searched rest candidates
                 else
                     return Stream.concat(restDbInChIs.stream().filter(ChemDBs.inFilter((it) -> it.bitset, requestFilter)), customInChIs.values().stream().flatMap(Set::stream)).
-                            unordered().collect(Collectors.toSet());
+                            unordered();
             } else {
                 // only custom db without inheritance was requested
                 return customInChIs.values().stream().flatMap(Set::stream).
-                        unordered().collect(Collectors.toSet());
+                        unordered();
             }
         }
 
+
+
+        public Optional<Set<String>> getCustomDbCandidatesInChIs(String name) {
+            return getCustomDbCandidatesOpt(name).map(it -> it.stream().map(FingerprintCandidate::getInchiKey2D).collect(Collectors.toSet()));
+        }
+
         public Optional<Set<FingerprintCandidate>> getCustomDbCandidates(String name) {
+            return getCustomDbCandidatesOpt(name).map(HashSet::new);
+        }
+
+        private Optional<Set<FingerprintCandidate>> getCustomDbCandidatesOpt(String name) {
             if (name == null)
                 return Optional.empty();
-            return Optional.ofNullable(customInChIs.get(name)).map(HashSet::new);
+            return Optional.ofNullable(customInChIs.get(name));
+        }
+
+
+
+        public Optional<Set<String>> getAllDbCandidatesInChIs() {
+            return getAllDbCandidatesOpt().map(it -> it.stream().map(FingerprintCandidate::getInchiKey2D).collect(Collectors.toSet()));
         }
 
         public Optional<Set<FingerprintCandidate>> getAllDbCandidates() {
+            return getAllDbCandidatesOpt().map(HashSet::new);
+        }
+
+        private Optional<Set<FingerprintCandidate>> getAllDbCandidatesOpt() {
             if (!containsAllDb())
                 return Optional.empty();
-            return Optional.of(new HashSet<>(restDbInChIs));
+            return Optional.of(restDbInChIs);
         }
+
+
 
         public boolean containsAllDb() {
             return restFilter == 0;

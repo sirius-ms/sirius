@@ -90,8 +90,8 @@ public class ConfidenceJJob extends BasicDependentJJob<ConfidenceResult> impleme
     protected ConfidenceResult compute() throws Exception {
         checkInput();
 
-        final List<Scored<FingerprintCandidate>> allRestDbScoredCandidates = candidates.getAllDbCandidates().map(set ->
-                allScoredCandidates.stream().filter(sc -> set.contains(sc.getCandidate())).collect(Collectors.toList())).
+        final List<Scored<FingerprintCandidate>> allRestDbScoredCandidates = candidates.getAllDbCandidatesInChIs().map(set ->
+                allScoredCandidates.stream().filter(sc -> set.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList())).
                 orElseThrow(() -> new IllegalArgumentException("Additional candidates Flag 'ALL' from DataSource is not Available but mandatory to compute Confidence scores!"));
 
         final double score = scorer.computeConfidence(experiment, siriusidresult, allRestDbScoredCandidates, requestedScoredCandidates, predictedFpt);
