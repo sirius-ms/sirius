@@ -29,7 +29,7 @@ import java.util.stream.Stream;
  * the {@link SearchStructureByFormula} API.
  */
 public class RestWithCustomDatabase {
-    public static final String REST_CACHE_DIR = "rest"; //chache directory for all rest dbs
+    public static final String REST_CACHE_DIR = "rest-cache"; //chache directory for all rest dbs
     public static final String CUSTOM_DB_DIR = "custom";
     protected static Logger logger = LoggerFactory.getLogger(RestWithCustomDatabase.class);
 
@@ -80,7 +80,7 @@ public class RestWithCustomDatabase {
 
 
     public synchronized void destroyCache() throws IOException {
-        final File all = getRESTDatabaseCacheDirectory(directory);
+        final File all = getRestDBCacheDir(directory);
         if (all.exists()) {
             for (File f : all.listFiles()) {
                 Files.deleteIfExists(f.toPath());
@@ -91,6 +91,7 @@ public class RestWithCustomDatabase {
             directory.mkdirs();
             all.mkdirs();
         }
+
         try (BufferedWriter bw = Files.newBufferedWriter(new File(directory, "version").toPath(), StandardCharsets.UTF_8)) {
             bw.write(versionInfo().databaseDate);
         }
@@ -120,7 +121,7 @@ public class RestWithCustomDatabase {
 
         final long requestFilter = extractFilterBits(dbs);
         if (requestFilter >= 0) {
-            api.consumeRestDB(requestFilter, directory, restDb -> {
+            api.consumeRestDB(requestFilter, getRestDBCacheDir(directory), restDb -> {
                 candidates.addAll(restDb.lookupMolecularFormulas(ionMass, deviation, ionType));
             });
         }
@@ -146,7 +147,7 @@ public class RestWithCustomDatabase {
             final long searchFilter = includeRestAllDb ? 0 : requestFilter;
 
             if (requestFilter >= 0)
-                result = api.applyRestDB(searchFilter, directory, restDb -> new CandidateResult(
+                result = api.applyRestDB(searchFilter, getRestDBCacheDir(directory), restDb -> new CandidateResult(
                         restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
             else
                 result = new CandidateResult();
@@ -311,12 +312,12 @@ public class RestWithCustomDatabase {
     }
 
     @NotNull
-    public static File getRESTDatabaseCacheDirectory(final File root) {
+    public static File getRestDBCacheDir(final File root) {
         return new File(root, REST_CACHE_DIR);
     }
 
     @NotNull
-    public static File getCustomDatabaseDirectory(final File root) {
+    public static File getCustomDBDirectory(final File root) {
         return new File(root, CUSTOM_DB_DIR);
     }
 

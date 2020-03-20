@@ -24,11 +24,11 @@ public class SearchableDatabases {
     }
 
     public static File getRESTDatabaseCacheDirectory() {
-        return RestWithCustomDatabase.getRESTDatabaseCacheDirectory(getDatabaseDirectory());
+        return RestWithCustomDatabase.getRestDBCacheDir(getDatabaseDirectory());
     }
 
     public static File getCustomDatabaseDirectory() {
-        return RestWithCustomDatabase.getCustomDatabaseDirectory(getDatabaseDirectory());
+        return RestWithCustomDatabase.getCustomDBDirectory(getDatabaseDirectory());
     }
 
     public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name) {
