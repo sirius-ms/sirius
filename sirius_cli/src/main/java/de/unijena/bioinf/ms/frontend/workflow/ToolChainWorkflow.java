@@ -59,7 +59,7 @@ public class ToolChainWorkflow implements Workflow {
         try {
             checkForCancellation();
 
-            //todo the tool chain should not know anythin about the project space. that should be outside this class.
+            //todo the tool chain should not know anything about the project space. that should be outside this class.
             //todo maybe closing the space should be a "postprocess" job??
 //            final ProjectSpaceManager project = (ProjectSpaceManager) ;
             // prepare input
