@@ -23,6 +23,8 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransform
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformer;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -651,8 +653,73 @@ public class Sirius {
                         .filter(idr -> idr.getMolecularFormula().isSubtractable(ionType.getAdduct()))
                         .map(idr -> IdentificationResult.withPrecursorIonType(idr, ionType))
                         .collect(Collectors.toList());
+            } else {
+                //check if MF is only valid with a certain adduct
+                //todo this only help if there is only a single valid adduct, but does not reduce the list of possible addcuts for subsequent methods
+                ProcessedInput pinput = computationInstance.getProcessedInput();
+                PossibleAdducts pa = pinput.getAnnotationOrThrow(PossibleAdducts.class);
+                irs = irs.stream()
+                        .map(idr->new IdentificationResult<SiriusScore>(resolveAdductIfPossible(idr.getTree(), pa, pinput), idr.getScoreObject()))
+                        .collect(Collectors.toList());
             }
             return irs;
+        }
+
+        /**
+         *     Based on RDBE a MF might only be possible given a certain adduct.
+         *     In this case we can fix the adduct.
+         *     //todo is this the correct position to do that? The same should hold for Isotope pattern Analysis
+         * @param tree may be null?
+         * @param possibleAdducts
+         * @return
+         */
+        private FTree resolveAdductIfPossible(FTree tree, PossibleAdducts possibleAdducts, ProcessedInput pinput) {
+            PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElseThrow();
+            //if adduct or insource already set, return tree unchanged
+            if (!ionType.getModification().isEmpty()) return tree;
+
+            final MolecularFormula mf = tree.getRoot().getFormula();
+            final FormulaConstraints constraints = pinput.getAnnotationOrThrow(FormulaConstraints.class);
+            final AdductSettings adductSettings = pinput.getAnnotationOrThrow(AdductSettings.class);
+
+            Set<PrecursorIonType> usedIonTypes;
+            if (possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
+                //todo check if it makes sense to use the detectables
+                usedIonTypes = adductSettings.getDetectable(possibleAdducts.getIonModes());
+            } else {
+                //there seem to be some information from the preprocessing
+                usedIonTypes = possibleAdducts.getAdducts();
+            }
+
+            Set<PrecursorIonType> adducts = new PossibleAdducts(usedIonTypes).getAdducts(ionType.getIonization());
+            if (adducts.size()==0) {
+                throw new RuntimeException("Ionization not known in FasterTreeComputationInstance: "+ionType.getIonization());
+            }
+
+            PrecursorIonType validIontype = null;
+            for (PrecursorIonType precursorIonType : adducts) {
+                boolean isValid = true;
+                for (FormulaFilter filter : constraints.getFilters()) {
+                    if (!filter.isValid(mf, precursorIonType)){
+                        isValid = false;
+                        break;
+                    }
+                }
+                if (isValid) {
+                    if (validIontype != null){
+                        //at least 2 valid iontypes, cannot decide for one
+                        //return input
+                        return tree;
+                    } else {
+                        validIontype = precursorIonType;
+                    }
+                }
+            }
+            if (validIontype.hasNeitherAdductNorInsource()) {
+                return tree;
+            } else {
+                return new IonTreeUtils().treeToNeutralTree(tree, validIontype);
+            }
         }
 
 

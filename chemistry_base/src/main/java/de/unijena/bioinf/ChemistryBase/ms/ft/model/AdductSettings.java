@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
@@ -77,8 +78,33 @@ public class AdductSettings implements Ms2ExperimentAnnotation {
         return ensureRightPolarity(fallback, polarity);
     }
 
+    public Set<PrecursorIonType> getEnforced(Iterable<? extends Ionization> ionizations) {
+        return availableAdductsForIonizations(enforced, ionizations);
+    }
+
+    public Set<PrecursorIonType> getDetectable(Iterable<? extends Ionization> ionizations) {
+        return availableAdductsForIonizations(detectable, ionizations);
+    }
+
+    public Set<PrecursorIonType> getFallback(Iterable<? extends Ionization> ionizations) {
+        return availableAdductsForIonizations(getFallback(), ionizations);
+    }
+
     private Set<PrecursorIonType> ensureRightPolarity(Set<PrecursorIonType> set, int polarity) {
         return set.stream().filter(x->x.getCharge()==polarity).collect(Collectors.toSet());
+    }
+
+    private Set<PrecursorIonType> availableAdductsForIonizations(Set<PrecursorIonType> set, Iterable<? extends Ionization> ionizations){
+        Set<PrecursorIonType> availableAdducts = new HashSet<>();
+        for (Ionization ionization : ionizations) {
+            for (PrecursorIonType ionType : set) {
+                if (ionType.getIonization().equals(ionization)){
+                    availableAdducts.add (ionType);
+
+                }
+            }
+        }
+        return availableAdducts;
     }
 
 }

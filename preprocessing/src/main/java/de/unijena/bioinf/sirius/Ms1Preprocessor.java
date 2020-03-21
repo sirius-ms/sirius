@@ -3,6 +3,7 @@ package de.unijena.bioinf.sirius;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
@@ -121,13 +122,25 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
 
     @Requires(FormulaConstraints.class)
     @Requires(PossibleAdducts.class)
-    public void adjustValenceFilter(ProcessedInput pinput) {
+    @Requires(AdductSettings.class)
+    public void adjustValenceFilter(ProcessedInput pinput) { ;
         final FormulaConstraints fc = pinput.getAnnotationOrThrow(FormulaConstraints.class);
         final PossibleAdducts possibleAdducts = pinput.getAnnotationOrThrow(PossibleAdducts.class);
+        final AdductSettings adductSettings = pinput.getAnnotationOrThrow(AdductSettings.class);
+
+        Set<PrecursorIonType> usedIonTypes;
+        if (possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
+            //todo check if it makes sense to use the detectables
+            usedIonTypes = adductSettings.getDetectable(possibleAdducts.getIonModes());
+        } else {
+            //there seem to be some information from the preprocessing
+            usedIonTypes = possibleAdducts.getAdducts();
+        }
+
         List<FormulaFilter> newFilters = new ArrayList<>();
         for (FormulaFilter filter : fc.getFilters()) {
             if (filter instanceof ValenceFilter) {
-                newFilters.add(new ValenceFilter(((ValenceFilter) filter).getMinValence(), possibleAdducts));
+                newFilters.add(new ValenceFilter(((ValenceFilter) filter).getMinValence(), usedIonTypes));
             } else {
                 newFilters.add(filter);
             }
