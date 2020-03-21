@@ -21,7 +21,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 import java.util.Set;
 
@@ -43,19 +42,20 @@ public class ValenceFilter implements FormulaFilter {
     }
 
     public ValenceFilter(@Parameter("minValence") double minValence) {
-        this(minValence, new PossibleAdducts(PeriodicTable.getInstance().getAdducts()));
+        this(minValence, PeriodicTable.getInstance().getAdducts());
 
     }
 
     //todo what about the parameter annotation?
-    public ValenceFilter(@Parameter("minValence") double minValence, PossibleAdducts possibleAdducts) {
+    public ValenceFilter(@Parameter("minValence") double minValence, Set<PrecursorIonType> possibleAdducts) {
         this.minValenceInt = (int)(2*minValence);
         this.minValence = minValence;
-        this.possibleAdducts = possibleAdducts;
+        this.possibleAdducts = new PossibleAdducts(possibleAdducts);
     }
 
     public ValenceFilter filterWithoutAdducts(){
-        return new ValenceFilter(MIN_VALENCE_DEFAULT, new PossibleAdducts(PeriodicTable.getInstance().getIonizations()));
+        //todo or get AdductSettings from Somewhere
+        return new ValenceFilter(MIN_VALENCE_DEFAULT, new PossibleAdducts(PeriodicTable.getInstance().getIonizations()).getAdducts());
     }
 
 //    @Override
