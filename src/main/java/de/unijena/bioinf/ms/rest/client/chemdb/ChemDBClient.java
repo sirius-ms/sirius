@@ -109,6 +109,8 @@ public class ChemDBClient extends AbstractClient {
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/compounds").build());
                     post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(inChIs), ContentType.APPLICATION_JSON));
+                    post.setConfig(RequestConfig.custom().setSocketTimeout(120000).setConnectTimeout(120000).setContentCompressionEnabled(true).build());
+
                     return post;
                 },
                 br -> {
