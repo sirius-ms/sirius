@@ -199,22 +199,6 @@ public class Sirius {
         experiment.setAnnotation(deviationType, experiment.getAnnotationOrDefault(deviationType).withAllowedMassDeviation(fragmentMassDeviation));
     }
 
-    /*public static void setAllowedAdducts(@NotNull Ms2Experiment experiment, PrecursorIonType... adducts) {
-        setAllowedAdducts(experiment, new PossibleAdducts(adducts));
-    }
-
-    public static void setAllowedAdducts(@NotNull Ms2Experiment experiment, PossibleAdducts adducts) {
-        experiment.setAnnotation(PossibleAdducts.class, adducts);
-    }
-
-    public static void setAllowedAdducts(@NotNull ProcessedInput processedInput, PrecursorIonType... adducts) {
-        setAllowedAdducts(processedInput, new PossibleAdducts(adducts));
-    }
-
-    public static void setAllowedAdducts(@NotNull ProcessedInput processedInput, PossibleAdducts adducts) {
-        processedInput.setAnnotation(PossibleAdducts.class, adducts);
-    }*/
-
     public static void setFormulaSearchList(@NotNull Ms2Experiment experiment, MolecularFormula... formulas) {
         setFormulaSearchList(experiment, Arrays.asList(formulas));
     }
