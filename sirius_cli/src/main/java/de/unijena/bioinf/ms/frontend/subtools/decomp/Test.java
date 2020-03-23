@@ -26,7 +26,7 @@ public class Test {
         constraints.getFilters().clear(); // remove RDBE>=0
         for (double mass : new double[]{10000d}) {
             final long time = System.currentTimeMillis();
-            List<MolecularFormula> formulas = decomposer.decomposeToFormulas(mass, new Deviation(allowedPPM, allowedMz), constraints);
+            List<MolecularFormula> formulas = decomposer.decomposeToFormulas(mass, PeriodicTable.getInstance().neutralIonization(), new Deviation(allowedPPM, allowedMz), constraints);
             final long time2 = System.currentTimeMillis();
             System.out.println(time2-time);
             System.out.println(formulas.size());
