@@ -87,10 +87,23 @@ public class ChemicalValidator implements DecompositionValidator<Element>, Formu
 
     }
 
-    @Override
+//    @Override
     public boolean isValid(MolecularFormula formula) {
-        final double rdbe = formula.rdbe();
+        final double rdbe = formula.rdbe(); //todo shouldn't this be doubleRDBE? compare to ValenceFilter
         return rdbe >= rdbeLowerbound && rdbe < rdbeThreshold && formula.hetero2CarbonRatio() < heteroToCarbonThreshold &&
                 formula.hydrogen2CarbonRatio() < hydrogenToCarbonThreshold;
+    }
+
+    @Override
+    public boolean isValid(MolecularFormula measuredNeutralFormula, Ionization ionization) {
+        //todo currently does not account for adducts as ValenceFilter does.
+        return isValid(measuredNeutralFormula);
+    }
+
+    @Override
+    public boolean isValid(MolecularFormula measuredNeutralFormula, PrecursorIonType ionType) {
+        MolecularFormula compoundMF = ionType.measuredNeutralMoleculeToNeutralMolecule(measuredNeutralFormula);
+        if (!compoundMF.isAllPositiveOrZero()) return false;
+        return isValid(compoundMF);
     }
 }

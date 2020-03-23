@@ -409,9 +409,9 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         return result;
     }
 
-    public boolean isViolated(MolecularFormula formula) {
+    public boolean isViolated(MolecularFormula formula, Ionization ionization) {
         for (FormulaFilter f : filters)
-            if (!f.isValid(formula)) return true;
+            if (!f.isValid(formula, ionization)) return true;
         /*
         formula.visit(new FormulaVisitor<Object>() {
             @Override
@@ -441,8 +441,8 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         return true;
     }
 
-    public boolean isSatisfied(MolecularFormula formula) {
-        return !isViolated(formula);
+    public boolean isSatisfied(MolecularFormula formula, Ionization ionization) {
+        return !isViolated(formula, ionization);
     }
     public boolean isSatisfied(ChemicalAlphabet formula) {
         return !isViolated(formula);
@@ -529,5 +529,12 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
             intersection.setBound(e, Math.max(getLowerbound(e), formulaConstraints.getLowerbound(e)), Math.min(getUpperbound(e), formulaConstraints.getUpperbound(e)));
         }
         return intersection;
+    }
+
+    public FormulaConstraints withNewFilters(List<FormulaFilter> formulaFilters){
+        final FormulaConstraints fc = this.clone();
+        fc.filters.clear();
+        fc.filters.addAll(formulaFilters);
+        return fc;
     }
 }
