@@ -185,6 +185,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
     private Charge UNKNOWN_IONIZATION, POSITIVE_IONIZATION, NEGATIVE_IONIZATION;
     private IonMode PROTONATION, DEPROTONATION;
     private PrecursorIonType UNKNOWN_IONTYPE, UNKNOWN_POSITIVE_IONTYPE, UNKNOWN_NEGATIVE_IONTYPE, INTRINSICALLY_CHARGED_POSITIVE, INTRINSICALLY_CHARGED_NEGATIVE;
+    private IonMode NEUTRAL_IONIZATION_DUMMY;
 
     public Iterable<Ionization> getKnownIonModes(int charge) {
         if (Math.abs(charge) != 1) throw new MultipleChargeException("Do not support multiple charges yet");
@@ -237,6 +238,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         this.POSITIVE_IONIZATION = new Charge(1);
         this.NEGATIVE_IONIZATION = new Charge(-1);
         this.UNKNOWN_IONIZATION = new Charge(0); //lets use zero for unknown
+        this.NEUTRAL_IONIZATION_DUMMY = new IonMode(0, 1, "NEUTRAL_IONIZATION", MolecularFormula.emptyFormula());
         PROTONATION = new IonMode(1, "[M + H]+", MolecularFormula.parseOrThrow("H"));
         DEPROTONATION = new IonMode(-1, "[M - H]-", MolecularFormula.parseOrThrow("H").negate());
         this.UNKNOWN_NEGATIVE_IONTYPE = new PrecursorIonType(NEGATIVE_IONIZATION, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), PrecursorIonType.SPECIAL_TYPES.UNKNOWN);
@@ -569,6 +571,10 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
 
     public PrecursorIonType unknownNegativePrecursorIonType() {
         return UNKNOWN_NEGATIVE_IONTYPE;
+    }
+
+    public Ionization neutralIonization() {
+        return NEUTRAL_IONIZATION_DUMMY;
     }
 
     public PrecursorIonType getUnknownPrecursorIonType(int charge) {

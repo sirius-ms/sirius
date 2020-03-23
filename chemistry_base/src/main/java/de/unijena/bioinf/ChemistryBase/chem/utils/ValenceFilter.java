@@ -19,8 +19,10 @@ package de.unijena.bioinf.ChemistryBase.chem.utils;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+
+import java.util.Set;
 
 /**
  * A formula passes this filter, if its RDBE value is greater or equal to the given limit
@@ -31,20 +33,37 @@ public class ValenceFilter implements FormulaFilter {
     private final int minValenceInt;
     private final double minValence;
 
+    private final PossibleAdducts possibleAdducts;
+
+    private static final double MIN_VALENCE_DEFAULT  = -0.5d;
+
     public ValenceFilter() {
-        this(-0.5d);
+        this(MIN_VALENCE_DEFAULT);
     }
 
     public ValenceFilter(@Parameter("minValence") double minValence) {
+        this(minValence, PeriodicTable.getInstance().getAdducts());
+
+    }
+
+    //todo what about the parameter annotation?
+    public ValenceFilter(@Parameter("minValence") double minValence, Set<PrecursorIonType> possibleAdducts) {
         this.minValenceInt = (int)(2*minValence);
         this.minValence = minValence;
-
+        this.possibleAdducts = new PossibleAdducts(possibleAdducts);
     }
 
-    @Override
-    public boolean isValid(MolecularFormula formula) {
-        return formula.doubledRDBE() >= minValenceInt;
+    public ValenceFilter filterWithoutAdducts(){
+        //todo or get AdductSettings from Somewhere
+        return new ValenceFilter(MIN_VALENCE_DEFAULT, new PossibleAdducts(PeriodicTable.getInstance().getIonizations()).getAdducts());
     }
+
+//    @Override
+//    public boolean isValid(MolecularFormula formula) {
+//        return formula.doubledRDBE() >= minValenceInt;
+//    }
+
+
 
     public double getMinValence() {
         return minValence;
@@ -55,5 +74,26 @@ public class ValenceFilter implements FormulaFilter {
         if (obj instanceof ValenceFilter && obj.getClass().equals(this.getClass())) {
             return ((ValenceFilter) obj).minValenceInt == minValenceInt;
         } else return false;
+    }
+
+    @Override
+    public boolean isValid(MolecularFormula measuredNeutralFormula, Ionization ionization) {
+        Set<PrecursorIonType> adducts = possibleAdducts.getAdducts(ionization);
+        if (adducts.size()==0) {
+            throw new RuntimeException("Ionization not known in ValenceFilter: "+ionization);
+        }
+        for (PrecursorIonType ionType : adducts) {
+            if (isValid(measuredNeutralFormula, ionType)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isValid(MolecularFormula measuredNeutralFormula, PrecursorIonType ionType) {
+        MolecularFormula compoundMF = ionType.measuredNeutralMoleculeToNeutralMolecule(measuredNeutralFormula);
+        if (!compoundMF.isAllPositiveOrZero()) return false;
+        return compoundMF.doubledRDBE() >= minValenceInt;
     }
 }
