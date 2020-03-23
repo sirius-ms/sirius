@@ -117,7 +117,7 @@ public class StructureSummaryWriter implements Summarizer {
                     }
                     topHits.forEach(hit -> hit.numberOfAdducts = adductCounts.get(hit.formulaRank));
                     topHits.forEach(hit -> hit.numberOfFps = topHits.size());
-                    topHits.sort(Hit.compareByFingerIdScore());
+                    topHits.sort(Hit.compareByFingerIdScore().reversed());
                 });
 
 
