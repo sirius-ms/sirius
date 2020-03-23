@@ -47,7 +47,9 @@ public class Run extends ApplicationCore {
         if (args == null || args.length < 1)
             args = new String[]{"--help"};
 
-        flow = new CommandLine(builder.getRootSpec()).parseWithHandler(builder.makeParseResultHandler(), args);
+        final CommandLine commandline = new CommandLine(builder.getRootSpec());
+        commandline.setCaseInsensitiveEnumValuesAllowed(true);
+        flow = commandline.parseWithHandler(builder.makeParseResultHandler(), args);
         return flow != null; //todo maybe workflow validation would be nice here???
     }
 
