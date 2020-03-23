@@ -18,6 +18,8 @@
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
+import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -27,8 +29,10 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * This is for SIRIUS specific parameters.
@@ -41,6 +45,7 @@ import java.util.concurrent.Callable;
 //todo got descriprions from defaultConfigOptions
 @Command(name = "formula", aliases = {"tree","sirius", "F"}, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, sortOptions = false)
 public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubToolJob>> {
+    public static final List<String> SEARCHABLE_DBS = Arrays.stream(DataSource.values()).filter(it -> it != DataSource.TRAIN).map(Enum::name).collect(Collectors.toList());
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
     public SiriusOptions(DefaultParameterConfigLoader defaultConfigOptions) {
@@ -102,10 +107,10 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
         defaultConfigOptions.changeOption("FormulaSettings.enforced", elements);
     }
 
-    //todo make some nice view of the possible DataSources
-    @Option(names = {"--database", "-d", "--db"}, description = "Search formulas in the Union of the given databases: all,bio,pubchem,kegg,hmdb")
-    public void setDatabase(String name) throws Exception {
-        defaultConfigOptions.changeOption("FormulaSearchDB", name);
+    @Option(names = {"--database", "-d", "--db"}, paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
+            description = "Search formulas in the Union of the given databases. If no database is given all possible molecular formulas will be respected (no database is used). " + DataSourceCandidates.VALID_DATA_STRING)
+    public void setDatabase(String dbList) throws Exception {
+        defaultConfigOptions.changeOption("FormulaSearchDB", dbList);
     }
 
     @Option(names = {"-f", "--formulas"}, description = "Specify a list of candidate formulas the method should use. Omit this option if you want to consider all possible molecular formulas")

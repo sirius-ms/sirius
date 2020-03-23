@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.fingerid;
 
+import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -30,9 +31,10 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
     @Option(names = {"--info", "--webservice-info"}, description = "Information about connection of CSI:FingerID Webservice")
     public boolean fingeridInfo;
 
-    @Option(names = {"-d", "--database", "--db", "--fingerid-db", "--fingerid_db", "--fingeriddb"}, description = "search structure in given database. By default the same database for molecular formula search is also used for structure search. If no database is used for molecular formula search, PubChem is used for structure search.")/*Accepts also a filepath to a valid database directory.*/
-    public void setDatabase(String name) throws Exception {
-        defaultConfigOptions.changeOption("StructureSearchDB", name);
+    @Option(names = {"-d", "--database", "--db"}, paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
+            description = "Search structure in the union og the given databases. If no database is given 'ALL' internal databases are used. " + DataSourceCandidates.VALID_DATA_STRING)
+    public void setDatabase(String dbList) throws Exception {
+        defaultConfigOptions.changeOption("StructureSearchDB", dbList);
     }
 
     @Option(names = {"-p", "--structure-predictors"}, description = "Predictors used to search structures. Currently only CSI:FingerID is working.", hidden = true)
