@@ -1,13 +1,14 @@
 package de.unijena.bioinf.chemdb;
 
-import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -46,9 +47,12 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static Optional<CustomDatabase> getCustomDatabase(@NotNull Path dbDir) {
+    public static Optional<CustomDatabase> getCustomDatabaseByPath(@NotNull Path dbDir) {
+        if (!Files.isDirectory(dbDir))
+            return Optional.empty();
+
         try {
-            return Optional.of(getCustomDatabaseOrThrow(dbDir));
+            return Optional.of(getCustomDatabaseByPathOrThrow(dbDir));
         } catch (RuntimeException e) {
             LoggerFactory.getLogger(SearchableDatabases.class).error(e.getMessage(), e.getCause());
             return Optional.empty();
@@ -56,7 +60,7 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static CustomDatabase getCustomDatabaseOrThrow(@NotNull Path dbDir) {
+    public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir) {
         try {
             return CustomDatabase.loadCustomDatabaseFromLocation(dbDir.toFile(), true);
         } catch (IOException e) {
@@ -77,6 +81,14 @@ public class SearchableDatabases {
         if (source != null)
             return Optional.of(new SearchableRestDB(source.realName, source.flag()));
         return getCustomDatabaseByName(name);
+    }
+
+    @NotNull
+    public static Optional<? extends SearchableDatabase> getDatabase(@NotNull String nameOrPath) {
+        Optional<? extends SearchableDatabase> it = getDatabaseByName(nameOrPath);
+        if (it.isEmpty())
+            it = getCustomDatabaseByPath(Path.of(nameOrPath));
+        return it;
     }
 
     @NotNull

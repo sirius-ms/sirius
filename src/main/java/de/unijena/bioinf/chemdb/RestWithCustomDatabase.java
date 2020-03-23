@@ -146,7 +146,7 @@ public class RestWithCustomDatabase {
             final long requestFilter = extractFilterBits(dbs);
             final long searchFilter = includeRestAllDb ? 0 : requestFilter;
 
-            if (requestFilter >= 0)
+            if (searchFilter >= 0)
                 result = api.applyRestDB(searchFilter, getRestDBCacheDir(directory), restDb -> new CandidateResult(
                         restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
             else

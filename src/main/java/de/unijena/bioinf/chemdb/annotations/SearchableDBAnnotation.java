@@ -50,6 +50,6 @@ public abstract class SearchableDBAnnotation implements Ms2ExperimentAnnotation 
 
     public static List<SearchableDatabase> makeDB(@NotNull String names) {
         return Arrays.stream(names.trim().split("\\s*,\\s*"))
-                .map(SearchableDatabases::getDatabaseByName).flatMap(Optional::stream).distinct().collect(Collectors.toList());
+                .map(SearchableDatabases::getDatabase).flatMap(Optional::stream).distinct().collect(Collectors.toList());
     }
 }
