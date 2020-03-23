@@ -30,11 +30,6 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
     private final Ms2Experiment experiment;
     private final Deviation massDev;
 
-
-    /*public FormulaWhiteListJob(RestWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment) {
-        this(searchDB, searchableDatabases, experiment, false);
-    }*/
-
     public FormulaWhiteListJob(RestWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment, boolean onlyOrganic, boolean annotateResult) {
         this(searchDB, searchableDatabases, experiment, experiment.getAnnotationOrThrow(MS2MassDeviation.class).allowedMassDeviation, onlyOrganic, annotateResult);
     }
