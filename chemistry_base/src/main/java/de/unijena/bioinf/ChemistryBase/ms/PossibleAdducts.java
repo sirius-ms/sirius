@@ -4,13 +4,10 @@ import com.google.common.collect.Sets;
 import de.unijena.bioinf.ChemistryBase.chem.IonMode;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown, CSI:FingerID will use this
@@ -134,5 +131,12 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Proces
     public PrecursorIonType asPrecursorIonType() {
         if (isPrecursorIonType()) return value.iterator().next();
         return null;
+    }
+
+    public boolean hasOnlyPlainIonizationsWithoutModifications() {
+        for (PrecursorIonType precursorIonType : value) {
+            if (!precursorIonType.hasNeitherAdductNorInsource()) return false;
+        }
+        return true;
     }
 }
