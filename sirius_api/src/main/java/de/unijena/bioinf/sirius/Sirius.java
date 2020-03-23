@@ -631,7 +631,8 @@ public class Sirius {
 
             final PrecursorIonType ionType = computationInstance.getProcessedInput().getExperimentInformation().getPrecursorIonType();
 
-            if (!ionType.isIonizationUnknown()) {
+            if (!ionType.isIonizationUnknown() && !ionType.getAdduct().isEmpty()) {
+                //resolve in case it has an adduct
                 logDebug("Compound has set a fixed Adduct: " + ionType.toString() + ". Transforming trees to Adduct if necessary.");
                 irs = irs.stream()
                         .filter(idr -> idr.getMolecularFormula().isSubtractable(ionType.getAdduct()))
@@ -659,12 +660,13 @@ public class Sirius {
          */
         private FTree resolveAdductIfPossible(FTree tree, PossibleAdducts possibleAdducts, ProcessedInput pinput) {
             PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElseThrow();
-            //if adduct or insource already set, return tree unchanged
-            if (!ionType.getModification().isEmpty()) return tree;
 
             final MolecularFormula mf = tree.getRoot().getFormula();
             final FormulaConstraints constraints = pinput.getAnnotationOrThrow(FormulaConstraints.class);
             final AdductSettings adductSettings = pinput.getAnnotationOrThrow(AdductSettings.class);
+
+            //todo if an ion source fragment is set. is it then always already set for all possible adducts?
+            final MolecularFormula inSourceFragmentation = pinput.getExperimentInformation().getPrecursorIonType().getInSourceFragmentation();
 
             Set<PrecursorIonType> usedIonTypes;
             if (possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
@@ -693,19 +695,27 @@ public class Sirius {
                     if (validIontype != null){
                         //at least 2 valid iontypes, cannot decide for one
                         //return input
-                        return tree;
+                        return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
                     } else {
                         validIontype = precursorIonType;
                     }
                 }
             }
             if (validIontype.hasNeitherAdductNorInsource()) {
-                return tree;
+                return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
             } else {
-                return new IonTreeUtils().treeToNeutralTree(tree, validIontype);
+                if (!inSourceFragmentation.isEmpty()){
+                    return new IonTreeUtils().treeToNeutralTree(tree, validIontype.substituteInsource(inSourceFragmentation));
+                } else {
+                    return new IonTreeUtils().treeToNeutralTree(tree, validIontype);
+                }
             }
         }
 
+        private FTree treeWithInSourceIfNotEmpty(FTree tree, Ionization ionization, MolecularFormula inSource) {
+            if (inSource.isEmpty()) return tree;
+            else return new IonTreeUtils().treeToNeutralTree(tree, PrecursorIonType.getPrecursorIonType(ionization).substituteInsource(inSource));
+        }
 
         public Ms2Experiment getExperiment() {
             return experiment;
