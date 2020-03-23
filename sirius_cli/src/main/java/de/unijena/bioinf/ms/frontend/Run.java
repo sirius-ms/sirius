@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 
 /**
@@ -46,7 +47,7 @@ public class Run extends ApplicationCore {
     public boolean parseArgs(String[] args) {
         if (args == null || args.length < 1)
             args = new String[]{"--help"};
-
+        logger.info("Running with following arguments: " + Arrays.toString(args));
         final CommandLine commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         flow = commandline.parseWithHandler(builder.makeParseResultHandler(), args);
