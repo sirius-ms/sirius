@@ -12,8 +12,8 @@ import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
 
 import javax.swing.*;

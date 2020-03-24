@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.frontend.io.projectspace.summaries;
+package de.unijena.bioinf.projectspace.summaries;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;

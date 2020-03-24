@@ -17,7 +17,7 @@ import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistr
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorerNoiseIntensityWeighted;
 import de.unijena.bioinf.GibbsSampling.properties.*;
-import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;

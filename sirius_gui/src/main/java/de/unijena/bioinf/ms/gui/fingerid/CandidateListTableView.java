@@ -4,14 +4,12 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
 import de.unijena.bioinf.chemdb.PubmedLinks;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URI;
 import java.util.List;
 
 /**

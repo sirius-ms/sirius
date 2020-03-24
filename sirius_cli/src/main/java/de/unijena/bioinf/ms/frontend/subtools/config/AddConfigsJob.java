@@ -1,11 +1,10 @@
 package de.unijena.bioinf.ms.frontend.subtools.config;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
-import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
@@ -13,9 +12,6 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 
 public class AddConfigsJob extends InstanceJob {

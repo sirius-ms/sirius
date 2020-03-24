@@ -33,4 +33,5 @@ public abstract class Colors {
     public final static Color DB_UNLINKED = Color.GRAY;
     public final static Color DB_CUSTOM = ICON_YELLOW;
     public final static Color DB_TRAINING = Color.BLACK;
+    public final static Color DB_UNKNOWN = new Color(178,34,34);
 }

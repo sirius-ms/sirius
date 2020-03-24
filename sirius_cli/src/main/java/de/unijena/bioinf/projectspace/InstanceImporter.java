@@ -1,17 +1,12 @@
-package de.unijena.bioinf.ms.frontend.io;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.ms.frontend.io.projectspace.summaries.SummaryLocations;
+import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.FilenameFormatter;
-import de.unijena.bioinf.projectspace.ProjectSpaceIO;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -189,6 +184,8 @@ public class InstanceImporter {
                     LOG.error("Could not Copy instance `" + id.getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
                 }
             }
+            importTarget.projectSpace().fireCompoundCreated(id);
+
             if (move)
                 inputSpace.deleteCompound(sourceId);
         }

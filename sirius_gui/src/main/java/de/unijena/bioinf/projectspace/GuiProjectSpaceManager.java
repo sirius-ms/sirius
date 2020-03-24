@@ -1,15 +1,11 @@
-package de.unijena.bioinf.ms.frontend.io.projectspace;
+package de.unijena.bioinf.projectspace;
 
 import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.frontend.io.InstanceImporter;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.ProjectSpaceIO;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -21,7 +17,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.inEDTAndWait;
@@ -36,16 +31,21 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
     }
 
     public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList) {
-        this(space, compoundList, null, null);
+        this(space, compoundList, null);
     }
 
-    public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, @Nullable Function<Ms2Experiment, String> formatter, @Nullable Predicate<CompoundContainerId> compoundFilter) {
-        super(space, new InstanceBeanFactory(), formatter, compoundFilter);
+    public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, @Nullable Function<Ms2Experiment, String> formatter) {
+        super(space, new InstanceBeanFactory(), formatter);
         COMPOUNT_LIST = compoundList;
         inEDTAndWait(() -> {
             COMPOUNT_LIST.clear();
             forEach(ins -> COMPOUNT_LIST.add((InstanceBean) ins));
         });
+
+        ContainerListener.Defined createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
+            final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID(), Ms2Experiment.class);
+            inEDTAndWait(() -> COMPOUNT_LIST.add(inst));
+        })).register();
     }
 
     public void deleteCompounds(@Nullable final List<InstanceBean> insts) {
@@ -76,13 +76,6 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         deleteCompounds(COMPOUNT_LIST);
     }
 
-    @Override
-    public @NotNull Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
-        final InstanceBean inst = (InstanceBean) super.newCompoundWithUniqueId(inputExperiment);
-        inEDTAndWait(() -> COMPOUNT_LIST.add(inst));
-        return inst;
-    }
-
     public InputFilesOptions importOneExperimentPerLocation(@NotNull final List<File> rawFiles) {
         final InputFilesOptions.MsInput inputFiles = Jobs.runInBackgroundAndLoad(MF, "Analyzing Files...", false, InstanceImporter.makeExpandFilesJJob(rawFiles)).getResult();
         final InputFilesOptions inputF = new InputFilesOptions();
@@ -92,7 +85,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
     }
 
     public void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
-        InstanceImporter importer = new InstanceImporter(this, Double.MAX_VALUE);
+        InstanceImporter importer = new InstanceImporter(this, x -> true, x -> true);
         Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", true, importer.makeImportJJob(input));
     }
 

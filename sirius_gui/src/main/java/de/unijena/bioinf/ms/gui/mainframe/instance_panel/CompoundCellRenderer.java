@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import org.slf4j.LoggerFactory;
 

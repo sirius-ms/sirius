@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.frontend.io.projectspace.summaries;
+package de.unijena.bioinf.projectspace.summaries;
 
 public interface SummaryLocations {
     String

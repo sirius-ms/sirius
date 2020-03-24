@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ms.frontend.io.InstanceImporter;
+import de.unijena.bioinf.projectspace.InstanceImporter;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 

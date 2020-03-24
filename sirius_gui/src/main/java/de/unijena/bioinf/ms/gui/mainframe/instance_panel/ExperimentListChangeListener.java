@@ -6,7 +6,7 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;/**
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)

@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.middleware;
 
-import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.middleware.projectspace.ProjectSpaceId;
 import de.unijena.bioinf.projectspace.ProjectSpaceIO;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;

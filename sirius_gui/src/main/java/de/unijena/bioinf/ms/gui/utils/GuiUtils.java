@@ -6,7 +6,6 @@ package de.unijena.bioinf.ms.gui.utils;
  */
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.frontend.io.projectspace.ComputingStatus;
 
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;

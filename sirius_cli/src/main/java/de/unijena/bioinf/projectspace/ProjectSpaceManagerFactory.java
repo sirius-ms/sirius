@@ -1,14 +1,10 @@
-package de.unijena.bioinf.ms.frontend.io.projectspace;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 public interface ProjectSpaceManagerFactory<M extends ProjectSpaceManager> {
     default M create(SiriusProjectSpace space) {

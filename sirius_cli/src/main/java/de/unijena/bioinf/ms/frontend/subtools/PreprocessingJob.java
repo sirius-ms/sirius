@@ -1,9 +1,7 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
-import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Only one preprocessing Subtool is allowed per Workflow. They can only run in first position

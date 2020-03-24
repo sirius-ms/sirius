@@ -5,7 +5,7 @@ import de.unijena.bioinf.jjobs.BufferedJJobSubmitter;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
-import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;

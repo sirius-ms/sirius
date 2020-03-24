@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
-import de.unijena.bioinf.chemdb.custom.CustomDataSourceService;
-import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 
@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FormulaResultBean>>, CustomDataSourceService.DataSourceChangeListener {
+public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FormulaResultBean>>, CustomDataSources.DataSourceChangeListener {
     private final List<FilterChangeListener> listeners = new LinkedList<>();
 
     protected long bitSet;
@@ -22,12 +22,12 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
 
     public DBFilterPanel(CandidateList sourceList) {
         setLayout(new WrapLayout(FlowLayout.LEFT, 5, 1));
-        this.checkboxes = new ArrayList<>(CustomDataSourceService.size());
-        for (CustomDataSourceService.Source source : CustomDataSourceService.sources()) {
+        this.checkboxes = new ArrayList<>(CustomDataSources.size());
+        for (CustomDataSources.Source source : CustomDataSources.sources()) {
             checkboxes.add(new JCheckBox(source.name()));
         }
         addBoxes();
-        CustomDataSourceService.addListener(this);
+        CustomDataSources.addListener(this);
         sourceList.addActiveResultChangedListener(this);
     }
 
@@ -52,16 +52,16 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
         this.bitSet = 0L;
         for (final JCheckBox box : checkboxes) {
             if (box.isSelected())
-                this.bitSet |= CustomDataSourceService.getSourceFromName(box.getText()).flag();
+                this.bitSet |= CustomDataSources.getSourceFromName(box.getText()).flag();
             add(box);
             box.addChangeListener(new ChangeListener() {
                 @Override
                 public void stateChanged(ChangeEvent e) {
                     if (!isRefreshing.get()) {
                         if (box.isSelected())
-                            bitSet |= CustomDataSourceService.getSourceFromName(box.getText()).flag();
+                            bitSet |= CustomDataSources.getSourceFromName(box.getText()).flag();
                         else
-                            bitSet &= ~CustomDataSourceService.getSourceFromName(box.getText()).flag();
+                            bitSet &= ~CustomDataSources.getSourceFromName(box.getText()).flag();
                         fireFilterChangeEvent();
                     }
                 }

@@ -6,7 +6,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
@@ -169,8 +169,9 @@ public class SearchProfilePanel extends JPanel {
 
     public SearchableDatabase getFormulaSource() {
         //todo this is ugly and error prone
+        System.out.println("IMplement same DB Selection panel here!!!");
         if (formulaCombobox.getSelectedIndex() == 0) return null;
-        else if (formulaCombobox.getSelectedIndex() <= 2) return SearchableDatabases.getPubchemDb();
+        else if (formulaCombobox.getSelectedIndex() <= 2) return SearchableDatabases.getAllDb();
         else if (formulaCombobox.getSelectedIndex() == 3) return SearchableDatabases.getBioDb();
         else {
             final String name = (String) formulaCombobox.getSelectedItem();

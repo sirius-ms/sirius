@@ -8,7 +8,7 @@ import ca.odell.glazedlists.matchers.RangeMatcherEditor;
  */
 public class MinMaxMatcherEditor<E> extends RangeMatcherEditor<Double, E> {
 
-    public MinMaxMatcherEditor(final FilterRangeSlider slider, final Filterator<Double, E> filterator) {
+    public MinMaxMatcherEditor(final FilterRangeSlider<?,?,?> slider, final Filterator<Double, E> filterator) {
         super(filterator);
         slider.addRangeListener(evt -> {
             final FilterRangeSlider s = (FilterRangeSlider) evt.getSource();

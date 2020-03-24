@@ -7,8 +7,6 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -58,6 +56,10 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
                 }
             }
         });
+    }
+
+    public D getData() {
+        return data;
     }
 
     public ObservableElementList<E> getElementList() {

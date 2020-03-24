@@ -1,8 +1,8 @@
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.ms.gui.compute.AdductSelectionList;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
@@ -15,7 +15,9 @@ import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Optional;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -98,11 +100,8 @@ public class FingerIDComputationPanel extends JPanel {
     }
 
     public PossibleAdducts getPossibleAdducts() {
-        PossibleAdducts adds = new PossibleAdducts();
-        for (String adductName : adductOptions.checkBoxList.getCheckedItems()) {
-            adds.addAdduct(adductName);
-        }
-        return adds;
+        return adductOptions.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType)
+                .flatMap(Optional::stream).collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new));
     }
 
     public static class DBSelectionPanel extends TextHeaderBoxPanel {
@@ -114,14 +113,8 @@ public class FingerIDComputationPanel extends JPanel {
             super("Search in");
             this.databases = databases;
             this.db = new JComboBox<>(new Vector<>(databases));
-            add(db);
-            for (int k = 0; k < databases.size(); ++k) {
-                if (!databases.get(k).isCustomDb()) {
-                    if (databases.get(k).searchInPubchem()) {
-                        pubchemIndex = k;
-                    } else bioIndex = k;
-                }
-            }
+            System.out.println("implement Search DB selector!");
+            //todo implement me
         }
 
         public void setIsBioDB(boolean isBio) {

@@ -7,7 +7,7 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
