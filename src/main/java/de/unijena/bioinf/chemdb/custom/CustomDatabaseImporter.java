@@ -340,7 +340,7 @@ public class CustomDatabaseImporter {
                 ls[ls.length - 1] = new DBLink(dbname, "");
                 fc.setLinks(ls);
             }
-            fc.setBitset(fc.getBitset() | CustomDataSourceService.getSourceFromName(dbname).flag());
+            fc.setBitset(fc.getBitset() | CustomDataSources.getSourceFromName(dbname).flag());
             return fc;
         }
 
@@ -372,7 +372,7 @@ public class CustomDatabaseImporter {
             } else {
                 fc.setLinks(new DBLink[0]);
             }
-            fc.setBitset(CustomDataSourceService.getSourceFromName(dbname).flag());
+            fc.setBitset(CustomDataSources.getSourceFromName(dbname).flag());
             // compute XLOGP
             fc.setXlogp(logPEstimator.prepareMolAndComputeLogP(molecule.container));
             return fc;

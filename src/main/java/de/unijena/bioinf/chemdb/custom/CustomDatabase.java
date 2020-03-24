@@ -41,7 +41,7 @@ public class CustomDatabase implements SearchableDatabase {
                     f.delete();
                 }
                 path.delete();
-                CustomDataSourceService.removeCustomSource(name);
+                CustomDataSources.removeCustomSource(name);
             }
         }
     }
@@ -93,7 +93,7 @@ public class CustomDatabase implements SearchableDatabase {
     public CustomDatabase(String name, File path) {
         this.name = name;
         this.path = path;
-        CustomDataSourceService.addCustomSourceIfAbsent(this.name);
+        CustomDataSources.addCustomSourceIfAbsent(this.name);
     }
 
     public boolean needsUpgrade() {

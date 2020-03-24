@@ -26,7 +26,7 @@ import java.util.*;
  * References to other databases can be stored as 32 or 64 bit sets. This class decodes these
  * bitsets into names.
  */
-public class CustomDataSourceService {
+public class CustomDataSources {
     private static final Set<DataSourceChangeListener> listeners = new LinkedHashSet<>();
     private static final int lastEnumBit;
     private static final BitSet bits;
