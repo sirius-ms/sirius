@@ -40,7 +40,7 @@ public class FingeridSubToolJob extends InstanceJob {
                 inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FBCandidates.class);
 
         if (formulaResults == null || formulaResults.isEmpty()) {
-            logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are not trees computed.");
+            logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are no trees computed.");
             return;
         }
 
