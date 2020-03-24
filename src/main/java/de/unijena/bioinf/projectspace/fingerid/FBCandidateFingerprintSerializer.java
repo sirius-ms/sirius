@@ -30,7 +30,7 @@ public class FBCandidateFingerprintSerializer implements ComponentSerializer<For
         final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdData.class).orElseThrow();
 
         if (reader.exists(FINGERBLAST_FPs.relFilePath(id))) {
-            reader.binaryFile(FINGERBLAST_FPs.relFilePath(id), br -> {
+            return reader.binaryFile(FINGERBLAST_FPs.relFilePath(id), br -> {
                 List<Fingerprint> fps = new ArrayList<>();
                 try (DataInputStream dis = new DataInputStream(br)) {
                     TShortArrayList shorts = new TShortArrayList(2000); //use it to reconstruct the array
