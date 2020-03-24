@@ -8,8 +8,8 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpaceManager;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.utils.SearchTextField;
 import org.jetbrains.annotations.NotNull;
 

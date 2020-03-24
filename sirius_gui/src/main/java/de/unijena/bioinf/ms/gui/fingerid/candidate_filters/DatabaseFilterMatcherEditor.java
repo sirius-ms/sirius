@@ -2,17 +2,12 @@ package de.unijena.bioinf.ms.gui.fingerid.candidate_filters;
 
 import ca.odell.glazedlists.matchers.AbstractMatcherEditor;
 import ca.odell.glazedlists.matchers.Matcher;
-import de.unijena.bioinf.chemdb.custom.CustomDataSourceService;
-import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.DBFilterPanel;
-
-import java.util.Map;
-
+import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 /**
  * Created by fleisch on 19.05.17.
  */
 public class DatabaseFilterMatcherEditor extends AbstractMatcherEditor<FingerprintCandidateBean> {
-//    Map<String, CustomDataSourceService.Source> SOURCE_MAP = CustomDataSourceService.SOURCE_MAP;
 
     public DatabaseFilterMatcherEditor(DBFilterPanel panel) {
         panel.addFilterChangeListener(filterSet -> fireChanged(new DatabaseMatcher(filterSet)));

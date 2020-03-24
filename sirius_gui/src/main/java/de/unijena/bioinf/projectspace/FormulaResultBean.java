@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.frontend.io.projectspace;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -7,15 +7,13 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.projectspace.ContainerListener;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -69,15 +67,15 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
                     }
                 })).register();
 
-        fingerprintListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FingerprintResult.class).
+        fingerprintListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
                 thenDo((event -> {
-                    FingerprintResult fpRes = (FingerprintResult) event.getAffectedComponent(FingerprintResult.class).orElse(null);
+                    FingerprintResult fpRes = (FingerprintResult) event.getAffectedComponent(FBCandidates.class).orElse(null);
                     pcs.firePropertyChange("fingerprint", null, fpRes);
                 })).register();
 
-        fingerBlastListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FingerblastResult.class).
+        fingerBlastListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
                 thenDo((event -> {
-                    FingerblastResult fbRes = (FingerblastResult) event.getAffectedComponent(FingerblastResult.class).orElse(null);
+                    FingerblastResult fbRes = (FingerblastResult) event.getAffectedComponent(FBCandidates.class).orElse(null);
                     pcs.firePropertyChange("fingerblast", null, fbRes);
                 })).register();
 
@@ -94,16 +92,9 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return fid;
     }
 
-    public FormulaResult getResult(Class<? extends DataAnnotation>... components) {
+    @SafeVarargs
+    public final FormulaResult getResult(Class<? extends DataAnnotation>... components) {
         return parent.loadFormulaResult(getID(), components);
-    }
-
-    public FormulaScore getRankingScore() {
-        return getResult(FormulaScoring.class).getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(parent.getID().getRankingScoreType().orElse(SiriusScore.class));
-    }
-
-    public double getRankingScoreValue() {
-        return getRankingScore().score();
     }
 
     public <T extends FormulaScore> double getScoreValue(Class<T> scoreType) {
@@ -117,12 +108,20 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     public Optional<FTree> getFragTree(){
         return getResult(FTree.class).getAnnotation(FTree.class);
     }
+
+
     public Optional<FingerprintResult> getFingerprintResult(){
         return getResult(FingerprintResult.class).getAnnotation(FingerprintResult.class);
     }
-    public Optional<FingerblastResult> getFingerblastResult(){
-        return getResult(FingerblastResult.class).getAnnotation(FingerblastResult.class);
+    public Optional<FBCandidates> getFingerIDCandidates(){
+        return getResult(FBCandidates.class).getAnnotation(FBCandidates.class);
     }
+
+    public Optional<FBCandidateFingerprints> getFingerIDCandidatesFPs(){
+        return getResult(FBCandidateFingerprints.class).getAnnotation(FBCandidateFingerprints.class);
+    }
+
+
     public Optional<CanopusResult> getCanopusResult(){
         return getResult(CanopusResult.class).getAnnotation(CanopusResult.class);
     }

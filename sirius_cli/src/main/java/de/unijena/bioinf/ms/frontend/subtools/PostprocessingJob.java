@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
 
 /**
  * Only one postprocessing Subtool is allowed per Workflow. They can only run in last position

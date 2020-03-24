@@ -5,7 +5,7 @@ import ca.odell.glazedlists.gui.AbstractTableComparatorChooser;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.TableComparatorChooser;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
@@ -22,7 +22,7 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
     protected FingerprintTableFormat format;
     protected int maxAtomSize;
 
-    protected FilterRangeSlider probabilitySlider, atomSizeSlider;
+    protected FilterRangeSlider<FingerprintTable, MolecularPropertyTableEntry, FormulaResultBean> probabilitySlider, atomSizeSlider;
 
     private DoubleListStats __atomsizestats__;
 
@@ -101,31 +101,18 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
     @Override
     protected EventList<MatcherEditor<MolecularPropertyTableEntry>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                (MatcherEditor<MolecularPropertyTableEntry>) new TextMatcher(searchField.textField),
-                new MinMaxMatcherEditor<>(probabilitySlider, new Filterator<Double, MolecularPropertyTableEntry>() {
-                    @Override
-                    public void getFilterValues(java.util.List<Double> baseList, MolecularPropertyTableEntry element) {
-                        baseList.add(element.getProbability());
-                    }
-                }),
-                new MinMaxMatcherEditor<>(atomSizeSlider, new Filterator<Double, MolecularPropertyTableEntry>() {
-                    @Override
-                    public void getFilterValues(java.util.List<Double> baseList, MolecularPropertyTableEntry element) {
-                        baseList.add((double)element.getMatchSize());
-                    }
-                })
+                new TextMatcher(searchField.textField),
+                new MinMaxMatcherEditor<>(probabilitySlider, (baseList, element) -> baseList.add(element.getProbability())),
+                new MinMaxMatcherEditor<>(atomSizeSlider, (baseList, element) -> baseList.add((double) element.getMatchSize()))
         );
     }
 
     protected static class TextMatcher extends TextComponentMatcherEditor<MolecularPropertyTableEntry> {
 
         public TextMatcher(JTextComponent textComponent) {
-            super(textComponent, new TextFilterator<MolecularPropertyTableEntry>() {
-                @Override
-                public void getFilterStrings(java.util.List<String> baseList, MolecularPropertyTableEntry element) {
-                    baseList.add(element.getFingerprintTypeName());
-                    baseList.add(element.getMolecularProperty().getDescription());
-                }
+            super(textComponent, (baseList, element) -> {
+                baseList.add(element.getFingerprintTypeName());
+                baseList.add(element.getMolecularProperty().getDescription());
             });
         }
     }

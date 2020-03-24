@@ -1,7 +1,6 @@
-package de.unijena.bioinf.ms.frontend.io;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 
 import java.util.Iterator;

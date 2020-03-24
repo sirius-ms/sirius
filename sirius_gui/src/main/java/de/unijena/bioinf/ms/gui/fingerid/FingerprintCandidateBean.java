@@ -19,21 +19,18 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeLayer;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.custom.CustomDataSourceService;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import net.sf.jniinchi.INCHI_RET;
@@ -108,6 +105,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected ReentrantLock compoundLock = new ReentrantLock();
 
 
+    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<CompoundCandidate> scoredCandidate, Fingerprint candidatefp, PrecursorIonType adduct) {
+        this(rank, fp, new FingerprintCandidate(scoredCandidate.getCandidate(), candidatefp), scoredCandidate.getScore(), adduct);
+    }
+
     public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<FingerprintCandidate> scoredCandidate, PrecursorIonType adduct) {
         this(rank, fp, scoredCandidate.getCandidate(), scoredCandidate.getScore(), adduct);
     }
@@ -117,23 +118,6 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         this.fp = fp;
         this.score = candidateScore;
         this.candidate = candidate;
-        if (candidate.getTanimoto() == null || candidate.getTanimoto().isNaN()) {
-            if (this.fp != null && candidate.getFingerprint() != null) {
-                candidate.setTanimoto(null);
-                BasicJJob<Double> j = new BasicJJob<>() {
-                    @Override
-                    protected Double compute() {
-                        double t = Tanimoto.probabilisticTanimoto(fp, candidate.getFingerprint()).expectationValue();
-                        setTanimoto(t);
-                        return t;
-                    }
-                };
-                j.setPriority(JJob.JobPriority.NOW);
-                SiriusJobs.getGlobalJobManager().submitJob(j);
-            } else {
-                candidate.setTanimoto(Double.NaN);
-            }
-        }
         this.molecularFormulaString = candidate.getInchi().extractFormulaOrThrow().toString();
         this.adduct = adduct;
         this.relevantFps = null;
@@ -244,6 +228,13 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
 
     public double getXLogP() {
         return getFingerprintCandidate().getXlogp();
+    }
+
+    public Double getXLogPOrNull() {
+        Double xLogP = getXLogP();
+        if (xLogP.isNaN())
+            return null;
+        return xLogP;
     }
 
     public boolean computeAtomCoordinates() {
@@ -425,7 +416,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
             candidate.setSmiles(new Smiles("OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O").smiles);
             candidate.setName("Glucose");
 
-            CustomDataSourceService.Source c = CustomDataSourceService.getSourceFromName("PubChem");
+            CustomDataSources.Source c = CustomDataSources.getSourceFromName("PubChem");
             long bit = c.flag();
             candidate.getLinkedDatabases().put("PubChem", "5793");
             candidate.setBitset(candidate.getBitset() | bit);

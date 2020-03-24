@@ -1,17 +1,12 @@
-package de.unijena.bioinf.ms.frontend.io;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ms.frontend.io.projectspace.Instance;
-import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
 

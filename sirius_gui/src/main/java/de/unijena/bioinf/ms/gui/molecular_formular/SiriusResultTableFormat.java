@@ -6,7 +6,7 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
  */
 
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
 import de.unijena.bioinf.ms.gui.table.list_stats.ListStats;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;

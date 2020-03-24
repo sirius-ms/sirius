@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
@@ -258,7 +259,7 @@ public class DatabaseDialog extends JDialog {
 
         public void updateContent(CustomDatabase c) {
             if (c.getNumberOfCompounds() > 0) {
-                content.setText("<html>Custom database. Containing " + c.getNumberOfCompounds() + " compounds with " + c.getNumberOfFormulas() + " different molecular formulas. Consumes " + c.getMegabytes() + " mb on the hard drive." + ((c.searchInBio() || c.searchInPubchem()) ? "<br>This database will also include all compounds from " + (c.searchInPubchem() ? "PubChem" : "our bio database") : "") + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>");
+                content.setText("<html>Custom database. Containing " + c.getNumberOfCompounds() + " compounds with " + c.getNumberOfFormulas() + " different molecular formulas. Consumes " + c.getMegabytes() + " mb on the hard drive." + ((c.isDeriveFromRestDb()) ? "<br>This database will also include all compounds from `"+ DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()) +"`." : "") + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>");
             } else {
                 content.setText("Empty custom database.");
             }
@@ -652,7 +653,9 @@ public class DatabaseDialog extends JDialog {
                 vbox.add(hbox);
                 vbox.add(Box.createVerticalStrut(4));
 
-                final JXRadioGroup<String> inh = new JXRadioGroup<String>(new String[]{NONE, BIO, PUBCHEM});
+                //todo inheritance handling
+                System.out.println("Implement DB inheritance");
+                /*final JXRadioGroup<String> inh = new JXRadioGroup<String>(new String[]{NONE, BIO, PUBCHEM});
                 inh.setLayoutAxis(BoxLayout.X_AXIS);
                 vbox.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Inherit compounds from"));
                 final Box hbox2 = Box.createHorizontalBox();
@@ -678,7 +681,7 @@ public class DatabaseDialog extends JDialog {
                             LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
                         }
                     }
-                });
+                });*/
 
                 final Box box = Box.createVerticalBox();
                 box.setAlignmentX(Component.LEFT_ALIGNMENT);

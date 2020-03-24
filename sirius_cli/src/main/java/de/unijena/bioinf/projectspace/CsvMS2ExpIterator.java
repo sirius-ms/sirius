@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.frontend.io;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.CsvParser;

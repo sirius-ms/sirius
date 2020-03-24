@@ -19,8 +19,8 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateList;
@@ -89,7 +89,7 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
         else {
             if (ec.isComputing()) {
                 layout.show(this, "loader");
-            }else if (resultElement.getFingerblastResult().isPresent()){
+            }else if (resultElement.getFingerIDCandidates().isPresent()){
                 if (list.getSource().getElementList().isEmpty()) {
                     layout.show(this, "empty");
                 } else {

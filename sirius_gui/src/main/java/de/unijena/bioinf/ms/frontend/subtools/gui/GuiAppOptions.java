@@ -4,8 +4,8 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.frontend.io.projectspace.GuiProjectSpaceManager;
-import de.unijena.bioinf.ms.frontend.io.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
@@ -30,7 +30,7 @@ import java.io.IOException;
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 
     @Override
-    public Flow makeWorkflow(RootOptions<?,?> rootOptions, ParameterConfig config) {
+    public Flow makeWorkflow(RootOptions<?,?,?> rootOptions, ParameterConfig config) {
         return new Flow(rootOptions, config);
 
     }
@@ -40,14 +40,14 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
         private final ParameterConfig config;
 
 
-        private Flow(RootOptions<?,?> rootOptions, ParameterConfig config) {
+        private Flow(RootOptions<?,?,?> rootOptions, ParameterConfig config) {
             this.preproJob = (PreprocessingJob<ProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob();
             this.config = config;
         }
 
         @Override
         public void run() {
-//todo minor: cancellation handling
+            //todo minor: cancellation handling
 
             // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
             final ProjectSpaceManager projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
@@ -72,7 +72,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
                         ApplicationCore.DEFAULT_LOGGER.info("Writing Summaries to Project-Space before termination.");
                         Jobs.runInBackgroundAndLoad(MainFrame.MF, "Writing Summaries to Project-Space", true, new TinyBackgroundJJob<Boolean>() {
-                            @Override //todo summary job with rel loading screen
+                            @Override //todo summary job with real loading screen
                             protected Boolean compute() throws Exception {
                                 projectSpace.updateSummaries(ProjectSpaceManager.defaultSummarizer());
                                 return true;

@@ -7,8 +7,8 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.MSViewerPanel;
 import de.unijena.bioinf.ms.gui.ms_viewer.MSViewerPanelListener;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.ExperimentContainerDataModel;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 
 import javax.swing.*;

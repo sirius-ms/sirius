@@ -1,9 +1,8 @@
 package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ms.frontend.io.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.slf4j.LoggerFactory;
 

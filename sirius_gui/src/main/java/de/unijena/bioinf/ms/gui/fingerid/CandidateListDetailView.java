@@ -21,9 +21,8 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventListModel;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.DatasourceService;
-import de.unijena.bioinf.ms.frontend.io.projectspace.InstanceBean;
+import de.unijena.bioinf.chemdb.DataSources;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
@@ -158,17 +157,19 @@ public class CandidateListDetailView extends CandidateListView implements Active
             }
         } else if (e.getSource() == OpenInBrowser2) {
             for (Map.Entry<String, String> entry : c.candidate.getLinkedDatabases().entries()) {
-                final DataSource s = DatasourceService.getSourceFromName(entry.getKey());
-                if (entry.getValue() == null || s == null || s.URI == null) continue;
-                try {
-                    if (s.URI.contains("%s")) {
-                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(entry.getValue(), "UTF-8"))));
-                    } else {
-                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(entry.getValue()))));
+                DataSources.getSourceFromName(entry.getKey()).ifPresent(s -> {
+                    if (entry.getValue() == null || s.URI == null)
+                        return;
+                    try {
+                        if (s.URI.contains("%s")) {
+                            Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(entry.getValue(), "UTF-8"))));
+                        } else {
+                            Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(entry.getValue()))));
+                        }
+                    } catch (IOException | URISyntaxException e1) {
+                        LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
                     }
-                } catch (IOException | URISyntaxException e1) {
-                    LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
-                }
+                });
             }
         } else if (c!=null && e.getSource() == this.highlight) {
             SwingWorker w = new SwingWorker<Object, Object>() {
@@ -243,20 +244,22 @@ public class CandidateListDetailView extends CandidateListView implements Active
     }
 
     private void clickOnDBLabel(DatabaseLabel label) {
-        final DataSource s = DatasourceService.getSourceFromName(label.name);
-        if (label.values == null || label.values.length == 0 || s == null || s.URI == null) return;
-        try {
-            for (String id : label.values) {
-                if (id == null) continue;
-                if (s.URI.contains("%s")) {
-                    Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(id, "UTF-8"))));
-                } else {
-                    Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(id))));
+        DataSources.getSourceFromName(label.name).ifPresent(s -> {
+            if (label.values == null || label.values.length == 0 || s.URI == null)
+                return;
+            try {
+                for (String id : label.values) {
+                    if (id == null) continue;
+                    if (s.URI.contains("%s")) {
+                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(id, "UTF-8"))));
+                    } else {
+                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(id))));
+                    }
                 }
+            } catch (IOException | URISyntaxException e1) {
+                LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }
-        } catch (IOException | URISyntaxException e1) {
-            LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
-        }
+        });
     }
 
 

@@ -16,7 +16,7 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.unijena.bioinf.ms.frontend.io.projectspace;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 
