@@ -213,6 +213,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         formulaResultListener.forEach(x -> x.containerChanged(event));
     }
 
+    protected void fireCompoundCreated(CompoundContainerId id) throws IOException {
+        CompoundContainer comp = getCompound(id);
+        fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.CREATED, id, comp, Collections.emptySet()));
+    }
+
     protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType) {
         if (containsCompound(directoryName)) return Optional.empty();
         synchronized (ids) {
