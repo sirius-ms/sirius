@@ -36,11 +36,11 @@ public class TreeViewerBridge {
     static public final String COLOR_SCHEME_3 = "red to blue";
 
     static public final String[] NODE_ANNOTATIONS = {
-        "m/z", "mass deviation in m/z", "mass deviation in ppm", "score",
-        "relative intensity" };
+        "m/z", "mass deviation in m/z", "mass deviation in ppm",
+        "relative intensity", "score" };
     static public final String[] NODE_ANNOTATIONS_IDS = {
-        "mz", "massDeviationMz", "massDeviationPpm", "score",
-        "relativeIntensity" };
+        "mz", "massDeviationMz", "massDeviationPpm",
+        "relativeIntensity", "score", };
 
     public static final int TREE_SCALE_MIN = 25;
     public static final int TREE_SCALE_MAX = 200;

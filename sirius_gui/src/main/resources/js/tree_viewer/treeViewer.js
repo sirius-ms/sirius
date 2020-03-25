@@ -14,7 +14,7 @@ var SNAP_THR = 0;
 var md_ppm_max, md_ppm_min, md_mz_max, md_mz_min,
     rel_int_max;
 // misc
-var max_node_label_text;
+var max_box_text;
 var nodeToMove = null, unambig_mode = 'none',
     moveModes = {};
 var brushTransition = d3.transition().duration(500),
@@ -445,20 +445,26 @@ function linkTextX(sx, tx) {
 // returns the x (dx) value of annotation text.
 // Attempts to center the text to the decimal separator
 function getAnnotX(d){
-    var base_dx = this.parentNode.parentNode.__data__.x +
-        (centered_node_labels?0: (-(boxwidth / 2) + 5));
+    var base_dx = this.parentNode.parentNode.__data__.x -
+        (boxwidth / 2) + 5;
     var orig_content = this.textContent;
     // works with both '.' and ',' as decimal separator
     var decimal = orig_content.match(/[\.,]/);
     if (decimal == null)
         return base_dx;
     var dec_sep = decimal[0];
-    if (orig_content.indexOf('.'))
-        this.textContent = this.textContent.split(dec_sep)[0] + dec_sep;
-    var max_offset = boxwidth/4; // somewhat arbitrary
+    this.textContent = this.textContent.split(dec_sep)[0] + dec_sep;
+    /*
+      NOTE:
+      determine maximum offset: ~ the x-value the decimals are aligned to.
+      with a third (<=3.15 exactly) of the boxwidth, 1-4 digit numbers (before decimal)
+      can be perfectly aligned; this is dependent on the font though!!
+    */
+    var max_offset = boxwidth/3.15;
     var offset = max_offset - d3.select(this).node().getBBox().width;
     if (offset < 0)
-        console.log('WARNING: decimals could not be perfectly aligned');
+        console.log('WARNING: decimals could not be perfectly aligned: '
+                    + this.parentNode.parentNode.__data__.data.name);
     this.textContent = orig_content;
     return base_dx + Math.max(offset, 0);
 }
@@ -991,7 +997,7 @@ function generateTree(data) {
         // NOTE: edgeData contains redundant information 'source' and 'target'
     });
     addFragmentData(data);
-    boxwidth = calcBoxwidth(max_node_label_text,
+    boxwidth = calcBoxwidth(max_box_text,
                             {'font-weight': 'bold', 'font-size': '12'});
 }
 
@@ -1003,7 +1009,7 @@ function addFragmentData(data) {
     md_mz_max = 0.0;
     md_mz_min = 0.0;
     rel_int_max = 0.0;
-    max_node_label_text = '';
+    max_box_text = '';
     data.fragments.forEach(function(fragment) { // must not be empty!
         // Pre-processing of 'fragment' to make things simpler later
         // for display of these attributes as annotations
@@ -1036,8 +1042,8 @@ function addFragmentData(data) {
             throw 'fragment ' + fragment.molecularFormula + ' does '
             + 'not exist in the tree';
         }
-        if (fragment.molecularFormula.length > max_node_label_text.length)
-            max_node_label_text = fragment.molecularFormula;
+        if (fragment.molecularFormula.length > max_box_text.length)
+            max_box_text = fragment.molecularFormula;
     });
 }
 
@@ -1145,9 +1151,8 @@ function drawNodes(root) {
     enter.append('g')
         .attr('class', 'node_annotations')
         .attr('dx', function(d) { return d.x
-            + (centered_node_labels?0:
-                (-(boxwidth / 2) + 5));})
-        .attr('text-anchor', centered_node_labels?'middle':'start');
+                                  -(boxwidth / 2) + 5;})
+        .attr('text-anchor', 'start');
 
     node.exit().remove();
 }
@@ -1178,7 +1183,7 @@ function drawNodeAnnots() {
                 - boxheight + (2 + i) * lineheight + 5;
         })
         .attr('dx', getAnnotX)
-        .attr('text-anchor', centered_node_labels?'middle':'start')
+        .attr('text-anchor', 'start')
         .style('fill', (deviation_colors?
                         (function (d) {return getAnnotColor(
                             d, this.parentNode. parentNode.__data__.data
@@ -1314,7 +1319,7 @@ var tree, node_map;
 // layout
 // Parameters
 var boxheight = 60;             // adapts to content
-var boxwidth = 100;
+var boxwidth = 120;
 var margin_left = 0;
 var margin_top = boxheight + 3;
 var lineheight = 13;
@@ -1329,16 +1334,24 @@ function calcLayout() {
     margin_top = boxheight + 3;
 }
 
-function calcBoxwidth(max_node_label_text, styles){
-    var test_text_field = svg.append('text')
-        .attr('class', 'test_text')
-        .style('fill', 'white')
-        .text(max_node_label_text);
-    for (var style in styles)
-        test_text_field.style(style, styles[style]);
-    var bbox = test_text_field.node().getBBox();
-    svg.selectAll('.test_text').remove();
-    return Math.max(bbox.width + 10, 100);
+function calcBoxwidth(max_box_text, styles){
+    // NOTE: maxtext only considers formulae, annotations could be
+    // longer! (hard to calculate beforehand though)
+    var min_boxwidth = 120;
+    var adapt_to_maxtext = true;
+    if (!adapt_to_maxtext)
+        return min_boxwidth;
+    else{
+        var test_text_field = svg.append('text')
+            .attr('class', 'test_text')
+            .style('fill', 'white')
+            .text(max_box_text);
+        for (var style in styles)
+            test_text_field.style(style, styles[style]);
+        var bbox = test_text_field.node().getBBox();
+        svg.selectAll('.test_text').remove();
+        return Math.max(bbox.width + 10, min_boxwidth);
+    }
 }
 
 function scaleTree(x_mag, y_mag = undefined) {
