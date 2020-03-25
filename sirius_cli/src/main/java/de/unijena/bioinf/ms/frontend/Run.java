@@ -48,6 +48,7 @@ public class Run extends ApplicationCore {
         logger.info("Running with following arguments: " + Arrays.toString(args));
         final CommandLine commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
+        commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
         flow = commandline.parseWithHandler(builder.makeParseResultHandler(), args);
         return flow != null; //todo maybe workflow validation would be nice here???
     }

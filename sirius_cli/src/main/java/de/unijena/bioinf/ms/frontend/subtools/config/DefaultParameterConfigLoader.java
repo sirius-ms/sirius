@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.config;
 
+import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -36,11 +37,12 @@ public class DefaultParameterConfigLoader {
     private Map<String, CommandLine.Model.OptionSpec> loadDefaultParameterOptions() throws IOException {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(config.getConfigKeys(), Spliterator.ORDERED), false)
                 .map((key) -> {
-                    final String value = config.getConfigValue(key);
+                    final String shortKey = key.replace(config.configRoot + ".", "");
                     final String descr = config.getConfigDescription(key);
             CommandLine.Model.OptionSpec.Builder pSpec = CommandLine.Model.OptionSpec
-                    .builder("--" + key.replace(config.configRoot + ".", ""))
-                    .description((descr != null) ? descr.replaceAll(System.lineSeparator()," ").replaceAll("#\\s*","") : "")
+                    .builder("--" + shortKey)
+                    .description((descr != null) ? descr.replaceAll(System.lineSeparator(), " ").replaceAll("#\\s*", "") : "")
+                    .paramLabel(PropertyManager.DEFAULTS.getConfigValue(shortKey))
                     .hasInitialValue(false);
 
                     pSpec.type(String.class)
@@ -71,6 +73,10 @@ public class DefaultParameterConfigLoader {
         return commandSpec;
     }
 
+    public void changeOption(String optionName, DefaultParameter para) throws Exception {
+        changeOption(optionName, para.value);
+    }
+
     public void changeOption(String optionName, String value) throws Exception {
         options.get(optionName).setter().set(value);
     }
@@ -79,6 +85,7 @@ public class DefaultParameterConfigLoader {
         options.get(optionName).setter().set(value.stream().collect(Collectors.joining(",")));
     }
 
-    @CommandLine.Command(name = "config", description = "<CONFIGURATION> Override all possible default configurations of this toolbox from the command line.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-    public final class ConfigOptions{}
+    @CommandLine.Command(name = "config", description = "<CONFIGURATION> Override all possible default configurations of this toolbox from the command line.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+    public final class ConfigOptions {
+    }
 }

@@ -7,6 +7,7 @@ import picocli.CommandLine;
 
 public class Provide {
 
+
     public static class Defaults implements CommandLine.IDefaultValueProvider {
         public static final String PROPERTY_BASE = "de.unijena.bioinf.sirius.parameters";
 
@@ -19,19 +20,9 @@ public class Provide {
     }
 
     public static class Versions implements CommandLine.IVersionProvider {
-        public static final String PROPERTY_BASE = "de.unijena.bioinf.sirius.parameters";
-
         @Override
         public String[] getVersion() throws Exception {
             return new String[]{ApplicationCore.VERSION_STRING(), "SIRIUS lib: " + FingerIDProperties.siriusVersion(), "CSI:FingerID lib: " + FingerIDProperties.fingeridVersion()};
-        }
-    }
-
-    public static class DefaultPropertyTypeConverter implements CommandLine.ITypeConverter<Object>{
-        @Override
-        public Object convert(String value) throws Exception {
-//            if (PropertyManager.DEFAULTS.isInstantiatableWithDefaults())
-            return null;
         }
     }
 }

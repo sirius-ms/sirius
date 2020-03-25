@@ -19,6 +19,7 @@ package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
@@ -52,93 +53,93 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
         this.defaultConfigOptions = defaultConfigOptions;
     }
 
-    @Option(names = "--ppm-max", description = "Maximum allowed mass deviation in ppm for decomposing masses.")
-    public void setPpmMax(double value) throws Exception {
+    @Option(names = "--ppm-max", descriptionKey = "MS1MassDeviation.allowedMassDeviation", description = "Maximum allowed mass deviation in ppm for decomposing masses.")
+    public void setPpmMax(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("MS1MassDeviation.allowedMassDeviation", value + "ppm");
     }
 
-    @Option(names = "--ppm-max-ms2", description = "Maximum allowed mass deviation in ppm for decomposing masses in MS2. If not specified, the same value as for the MS1 is used.")
-    public void setPpmMaxMs2(double value) throws Exception {
+    @Option(names = "--ppm-max-ms2", descriptionKey = "MS2MassDeviation.allowedMassDeviation", description = "Maximum allowed mass deviation in ppm for decomposing masses in MS2. If not specified, the same value as for the MS1 is used.")
+    public void setPpmMaxMs2(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("MS2MassDeviation.allowedMassDeviation", value + "ppm");
     }
 
-    @Option(names = "--tree-timeout", description = "Time out in seconds per fragmentation tree computations. 0 for an infinite amount of time. Default: 0"/*, defaultValue = "0"*/)
-    public void setTreeTimeout(String value) throws Exception {
+    @Option(names = "--tree-timeout", descriptionKey = "Timeout.secondsPerTree", description = "Time out in seconds per fragmentation tree computations. 0 for an infinite amount of time.")
+    public void setTreeTimeout(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("Timeout.secondsPerTree", value);
     }
 
-    @Option(names = "--compound-timeout", description = "Maximal computation time in seconds for a single compound. 0 for an infinite amount of time. Default: 0"/*, defaultValue = "0"*/)
-    public void setInstanceTimeout(String value) throws Exception {
+    @Option(names = "--compound-timeout", descriptionKey = "Timeout.secondsPerInstance", description = "Maximal computation time in seconds for a single compound. 0 for an infinite amount of time.")
+    public void setInstanceTimeout(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("Timeout.secondsPerInstance", value);
     }
 
-    @Option(names = "--no-recalibration", description = "Disable Recalibration of input Spectra")
-    public void disableRecalibration(boolean disable) throws Exception {
-        if (disable){
+    @Option(names = "--no-recalibration", descriptionKey = "ForbidRecalibration" , description = "Disable Recalibration of input Spectra")
+    public void disableRecalibration(DefaultParameter disable) throws Exception {
+        if (disable.asBoolean()){
             defaultConfigOptions.changeOption("ForbidRecalibration", "FORBIDDEN");
         }
     }
 
-    @Option(names = {"-p", "--profile"}, description = "Name of the configuration profile. Some of the default profiles are: 'qtof', 'orbitrap', 'fticr'.")
-    public void setProfile(String value) throws Exception {
+    @Option(names = {"-p", "--profile"}, descriptionKey ="AlgorithmProfile" , description = {"Name of the configuration profile.", "Predefined profiles are: `default`, 'qtof', 'orbitrap', 'fticr'."})
+    public void setProfile(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("AlgorithmProfile", value);
     }
 
     // candidates
-    @Option(names = {"-c", "--candidates"}, description = "Number of formula candidates in the output.")
-    public void setNumberOfCandidates(String value) throws Exception {
+    @Option(names = {"-c", "--candidates"}, descriptionKey ="NumberOfCandidates" , description = "Number of formula candidates in the output.")
+    public void setNumberOfCandidates(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("NumberOfCandidates", value);
     }
 
-    @Option(names = "--candidates-per-ion", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.")
-    public void setNumberOfCandidatesPerIon(String value) throws Exception {
+    @Option(names = "--candidates-per-ion", descriptionKey = "NumberOfCandidatesPerIon", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.")
+    public void setNumberOfCandidatesPerIon(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("NumberOfCandidatesPerIon", value);
     }
 
     // Elements
-    @Option(names = {"-e", "--elements-considered"}, description = "Set the allowed elements for rare element detection. Write SBrClBSe to allow the elements S,Br,Cl,B and Se.")
-    public void setDetectableElements(String elements) throws Exception {
+    @Option(names = {"-e", "--elements-considered"}, description = {"Set the allowed elements for rare element detection.", "Example: `SBrClBSe` to allow the elements S,Br,Cl,B and Se.","Default: Is autodetected, see 'FormulaSettings.detectable' and 'FormulaSettings.fallback' for details."})
+    public void setDetectableElements(List<String> elements) throws Exception {
         defaultConfigOptions.changeOption("FormulaSettings.detectable", elements);
         defaultConfigOptions.changeOption("FormulaSettings.fallback", elements);
     }
 
-    @Option(names = {"-E", "--elements-enforced"}, description = "Enforce elements for molecular formula determination. Write CHNOPSCl to allow the elements C, H, N, O, P, S and Cl. Add numbers in brackets to restrict the minimal and maximal allowed occurrence of these elements: CHNOP[5]S[8]Cl[1-2]. When one number is given then it is interpreted as upper bound. Default is CHNOP")
-    public void setEnforcedElements(String elements) throws Exception {
+    @Option(names = {"-E", "--elements-enforced"}, descriptionKey = "FormulaSettings.enforced", description = {"Enforce elements for molecular formula determination. ", "Example: CHNOPSCl to allow the elements C, H, N, O, P, S and Cl. Add numbers in brackets to restrict the minimal and maximal allowed occurrence of these elements: CHNOP[5]S[8]Cl[1-2]. When one number is given then it is interpreted as upper bound."})
+    public void setEnforcedElements(DefaultParameter elements) throws Exception {
         defaultConfigOptions.changeOption("FormulaSettings.enforced", elements);
     }
 
-    @Option(names = {"--database", "-d", "--db"}, paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
-            description = "Search formulas in the Union of the given databases. If no database is given all possible molecular formulas will be respected (no database is used). " + DataSourceCandidates.VALID_DATA_STRING)
-    public void setDatabase(String dbList) throws Exception {
+    @Option(names = {"--database", "-d", "--db"}, descriptionKey = "FormulaSearchDB" , paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
+            description = {"Search formulas in the Union of the given databases. If no database is given all possible molecular formulas will be respected (no database is used).", DataSourceCandidates.VALID_DATA_STRING})
+    public void setDatabase(DefaultParameter dbList) throws Exception {
         defaultConfigOptions.changeOption("FormulaSearchDB", dbList);
     }
 
     @Option(names = {"-f", "--formulas"}, description = "Specify a list of candidate formulas the method should use. Omit this option if you want to consider all possible molecular formulas")
-    public void setFormulaWhiteList(List<String> formulaWhiteList) throws Exception {
+    public void setFormulaWhiteList(List<String> formulaWhiteList) {
         formulaWhiteSet = Whiteset.of(formulaWhiteList);
     }
     public Whiteset formulaWhiteSet =  null;
 
 
-    @Option(names = {"--no-isotope-filter"}, description = "Disable molecular formula filter. When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.")
-    public void disableIsotopeFilter(boolean disable) throws Exception {
-        defaultConfigOptions.changeOption("IsotopeSettings.filter", String.valueOf(!disable));
+    @Option(names = {"--no-isotope-filter"}, descriptionKey = "IsotopeSettings.filter", description = "Disable molecular formula filter. When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.")
+    public void disableIsotopeFilter(DefaultParameter disable) throws Exception {
+        defaultConfigOptions.changeOption("IsotopeSettings.filter", disable.invertBool());
     }
 
-    @Option(names = {"--no-isotope-score"}, description = "Disable isotope pattern score.")
-    public void disableIsotopeScore(boolean disable) throws Exception {
-        if (disable)
+    @Option(names = {"--no-isotope-score"}, descriptionKey = "IsotopeSettings.multiplier", description = "Disable isotope pattern score.")
+    public void disableIsotopeScore(DefaultParameter disable) throws Exception {
+        if (disable.asBoolean())
             defaultConfigOptions.changeOption("IsotopeSettings.multiplier", "0");
     }
 
     //Adducts
-    @Option(names = {"-i", "--ions-considered"}, description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
-    public void setIonsConsidered(List<String> adducts) throws Exception {
+    @Option(names = {"-i", "--ions-considered"}, descriptionKey = "AdductSettings.detectable" , description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
+    public void setIonsConsidered(DefaultParameter adducts) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.detectable", adducts);
     }
 
-    @Option(names = {"-I", "--ions-enforced"}, description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
-    public void setIonsEnforced(List<String> adducts) throws Exception {
+    @Option(names = {"-I", "--ions-enforced"}, descriptionKey = "AdductSettings.enforced", description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
+    public void setIonsEnforced(DefaultParameter adducts) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.enforced", adducts);
     }
 
