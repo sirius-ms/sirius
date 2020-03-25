@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import com.google.common.collect.Streams;
+import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 /**
  * This class is used to create a toolchain workflow to be executed
@@ -116,9 +118,17 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     }
 
     protected CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subsToolInExecutionOrder) {
-        final CommandLine.Model.CommandSpec parentSpec = parent instanceof CommandLine.Model.CommandSpec
-                ? (CommandLine.Model.CommandSpec) parent
-                : CommandLine.Model.CommandSpec.forAnnotatedObject(parent);
+        final CommandLine.Model.CommandSpec parentSpec;
+        if (parent instanceof CommandLine.Model.CommandSpec) {
+            parentSpec = (CommandLine.Model.CommandSpec) parent;
+        } else {
+            parentSpec = CommandLine.Model.CommandSpec.forAnnotatedObject(parent);
+            new ArrayList<>(parentSpec.options()).stream().filter(it -> DefaultParameter.class.isAssignableFrom(it.type())).forEach(opt -> {
+                parentSpec.remove(opt);
+                String[] desc = Stream.concat(Stream.of(opt.description()), Stream.of("Default: " + configOptionLoader.config.getConfigValue(opt.descriptionKey()))).toArray(String[]::new);
+                parentSpec.addOption(opt.toBuilder().description(desc).descriptionKey("").build());
+            });
+        }
 
         for (Object sub : subsToolInExecutionOrder) {
             final CommandLine.Model.CommandSpec subSpec = sub instanceof CommandLine.Model.CommandSpec

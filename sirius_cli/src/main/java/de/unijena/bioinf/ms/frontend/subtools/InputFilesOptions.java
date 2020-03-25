@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+//@CommandLine.Command(sortOptions = false, showDefaultValues = true)
 public class InputFilesOptions {
 
     public InputFilesOptions() {
@@ -90,7 +91,7 @@ public class InputFilesOptions {
         @CommandLine.Option(names = {"-z", "--parentmass", "--precursor", "--mz"}, description = "The mass of the parent ion for the specified ms2 spectra", required = true, order = 333)
         public Double parentMz;
 
-        @CommandLine.Option(names = {"--ionization", "--adduct"}, description = "Specify the adduct for this compound", defaultValue = "[M+?]+", showDefaultValue = CommandLine.Help.Visibility.ALWAYS, order = 334)
+        @CommandLine.Option(names = {"--ionization", "--adduct"}, description = "Specify the adduct for this compound", defaultValue = "[M+?]+", order = 334)
         protected void setIonType(String ionType) {
             this.ionType = PrecursorIonType.fromString(ionType);
         }

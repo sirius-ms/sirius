@@ -2,15 +2,10 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.annotations.WriteSummaries;
-import de.unijena.bioinf.projectspace.InstanceImporter;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.FilenameFormatter;
-import de.unijena.bioinf.projectspace.ProjectSpaceIO;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.StandardMSFilenameFormatter;
+import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +24,7 @@ import java.nio.file.Files;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "sirius", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
+@CommandLine.Command(name = "sirius", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false, showDefaultValues = true)
 public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOptions<M, PreprocessingJob<M>, PostprocessingJob<Boolean>> {
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
@@ -59,13 +54,9 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 30, hidden = true)
     public Files workspace; //todo change in application core
 
-    @Option(names = "--recompute", description = "Recompute results of ALL tools where results are already present. Per default already present results will be preserved and the instance will be skipped for the corresponding Task/Tool", order = 100, defaultValue = "FALSE")
-    public void setRecompute(boolean recompute) throws Exception {
-        try {
-            defaultConfigOptions.changeOption("RecomputeResults", String.valueOf((recompute)));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    @Option(names = "--recompute", descriptionKey = "RecomputeResults", description = "Recompute results of ALL tools where results are already present. Per default already present results will be preserved and the instance will be skipped for the corresponding Task/Tool", order = 100)
+    public void setRecompute(DefaultParameter para) throws Exception {
+        defaultConfigOptions.changeOption("RecomputeResults", para);
     }
 
     @Option(names = "--maxmz", description = "Only considers compounds with a precursor m/z lower or equal [--maxmz]. All other compounds in the input will be skipped.", defaultValue = "Infinity", order = 110)
@@ -76,9 +67,9 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     // region Options: INPUT/OUTPUT
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    @Option(names = {"--no-summaries", "--noSummaries"}, description = "Do not write summary files to the project-space", order = 299)
-    private void setNoSummaries(boolean noSummaries) throws Exception {
-        defaultConfigOptions.changeOption("WriteSummaries", String.valueOf((!noSummaries)));
+    @Option(names = {"--no-summaries", "--noSummaries"}, descriptionKey = "WriteSummaries", description = "Do not write summary files to the project-space", order = 299)
+    private void setNoSummaries(DefaultParameter noSummaries) throws Exception {
+        defaultConfigOptions.changeOption("WriteSummaries", noSummaries.invertBool());
     }
 
 
