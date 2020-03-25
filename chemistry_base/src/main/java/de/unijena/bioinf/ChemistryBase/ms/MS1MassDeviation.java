@@ -12,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 public final class MS1MassDeviation extends MassDeviation {
 
     /**
-     * @param allowedMassDeviation maximum allowed mass deviation. Only molecular formulas within this mass window are considered.
-     * @param standardMassDeviation expected mass deviation of the instrument. Is used for the scoring.
-     * @param massDifferenceDeviation expected mass deviation of the instrument for two close peaks or for recalibrated spectra. Should be smaller than the standard mass deviation
+     * @param allowedMassDeviation allowedMassDeviation: Maximum allowed mass deviation. Only molecular formulas within this mass window are considered.
+     * @param standardMassDeviation standardMassDeviation: Expected mass deviation of the instrument. Is used for the scoring.
+     * @param massDifferenceDeviation massDifferenceDeviation: Expected mass deviation of the instrument for two close peaks or for recalibrated spectra. Should be smaller than the standard mass deviation
      */
     public MS1MassDeviation(@NotNull Deviation allowedMassDeviation, @NotNull Deviation standardMassDeviation, @NotNull Deviation massDifferenceDeviation) {
         super(allowedMassDeviation, standardMassDeviation, massDifferenceDeviation);
