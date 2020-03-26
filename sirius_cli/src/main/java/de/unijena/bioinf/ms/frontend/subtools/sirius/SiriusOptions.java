@@ -72,9 +72,9 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
         defaultConfigOptions.changeOption("Timeout.secondsPerInstance", value);
     }
 
-    @Option(names = "--no-recalibration", descriptionKey = "ForbidRecalibration" , description = "Disable Recalibration of input Spectra")
-    public void disableRecalibration(DefaultParameter disable) throws Exception {
-        if (disable.asBoolean()){
+    @Option(names = "--no-recalibration", description = "Disable Recalibration of input Spectra")
+    public void disableRecalibration(boolean disable) throws Exception {
+        if (disable){
             defaultConfigOptions.changeOption("ForbidRecalibration", "FORBIDDEN");
         }
     }
@@ -120,14 +120,14 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
     public Whiteset formulaWhiteSet =  null;
 
 
-    @Option(names = {"--no-isotope-filter"}, descriptionKey = "IsotopeSettings.filter", description = "Disable molecular formula filter. When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.")
-    public void disableIsotopeFilter(DefaultParameter disable) throws Exception {
-        defaultConfigOptions.changeOption("IsotopeSettings.filter", disable.invertBool());
+    @Option(names = {"--no-isotope-filter"}, description = "Disable molecular formula filter. When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.")
+    public void disableIsotopeFilter(boolean disable) throws Exception {
+        defaultConfigOptions.changeOption("IsotopeSettings.filter", !disable);
     }
 
-    @Option(names = {"--no-isotope-score"}, descriptionKey = "IsotopeSettings.multiplier", description = "Disable isotope pattern score.")
-    public void disableIsotopeScore(DefaultParameter disable) throws Exception {
-        if (disable.asBoolean())
+    @Option(names = {"--no-isotope-score"}, description = "Disable isotope pattern score.")
+    public void disableIsotopeScore(boolean disable) throws Exception {
+        if (disable)
             defaultConfigOptions.changeOption("IsotopeSettings.multiplier", "0");
     }
 

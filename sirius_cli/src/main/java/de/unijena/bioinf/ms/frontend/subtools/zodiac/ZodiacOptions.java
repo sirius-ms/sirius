@@ -100,10 +100,10 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJ
     // others               //
     /////////////////////////
 
-    @Option(names = "--ignore-spectra-quality", descriptionKey = "ZodiacRunInTwoSteps",
+    @Option(names = "--ignore-spectra-quality",
             description = {"As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining."})
-    public void disableZodiacTwoStepApproach(DefaultParameter disable) throws Exception {
-        if (disable.asBoolean())
+    public void disableZodiacTwoStepApproach(boolean disable) throws Exception {
+        if (disable)
             defaultConfigOptions.changeOption("ZodiacRunInTwoSteps", "false");
     }
 
