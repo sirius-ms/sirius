@@ -25,23 +25,24 @@ import java.util.stream.Collectors;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "<STANDALONE> Generate a custom searchable structure database. Import multiple files with compounds as SMILES or InChi into this DB.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "<STANDALONE> Generate a custom searchable structure database. Import multiple files with compounds as SMILES or InChi into this DB.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class CustomDBOptions implements StandaloneTool<Workflow> {
 
-    @Option(names = "--name", description = "Name of the custom database that will be stored at the default ('$USER_HOME/.sirius') or the specified sirius workspace (--workspace).", required = true)
+    @Option(names = "--name", required = true,
+            description = {"Name of the custom database. It will be stored at in ('$USER_HOME/.sirius/csi_fingerid_cache/custom') or the specified sirius workspace (--workspace)."})
     public String dbName;
 
-    @Option(names = "--output", description = "Alternative output directory of the custom database. The db will be a sub directory with the given name (--name).")
+    @Option(names = "--output",
+            description = {"Alternative output directory of the custom database. The db will be a sub directory with the given name (--name).", "Default: '$USER_HOME/.sirius/csi_fingerid_cache/custom'"})
     public Path outputDir = null;
 
-    @Option(names = {"--buffer-size", "--buffer"}, description = "Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory).", defaultValue = "1000", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+    @Option(names = {"--buffer-size", "--buffer"}, defaultValue = "1000",
+            description = {"Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory)."})
     public int writeBuffer;
 
-    @Option(names = {"--derive-from"}, description = "The resulting custom-db will be the Union of the given parent database and the imported structures.", split = ",")
+    @Option(names = {"--derive-from"}, split = ",",
+            description = {"The resulting custom-db will be the Union of the given parent database and the imported structures."})
     public EnumSet<DataSource> parentDBs = null;
-
-   /* @Option(names = {"--derive-bio"}, description = "The resulting custom-db will be the Union of the CSI:FingerID 'BIO' database and the imported structures", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-    public boolean deriveFromBio;*/
 
     @Override
     public Workflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {

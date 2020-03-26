@@ -44,9 +44,8 @@ import java.util.stream.Collectors;
  */
 
 //todo got descriprions from defaultConfigOptions
-@Command(name = "formula", aliases = {"tree","sirius", "F"}, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", defaultValueProvider = Provide.Defaults.class, versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, sortOptions = false)
+@Command(name = "formula", aliases = {"tree","sirius", "F"}, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.",  versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, sortOptions = false)
 public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubToolJob>> {
-    public static final List<String> SEARCHABLE_DBS = Arrays.stream(DataSource.values()).filter(it -> it != DataSource.TRAIN).map(Enum::name).collect(Collectors.toList());
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
     public SiriusOptions(DefaultParameterConfigLoader defaultConfigOptions) {
