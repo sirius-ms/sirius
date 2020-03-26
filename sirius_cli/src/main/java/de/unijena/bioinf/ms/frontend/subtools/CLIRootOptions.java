@@ -55,7 +55,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     public Files workspace; //todo change in application core
 
     @Option(names = "--recompute", descriptionKey = "RecomputeResults", description = "Recompute results of ALL tools where results are already present. Per default already present results will be preserved and the instance will be skipped for the corresponding Task/Tool", order = 100)
-    public void setRecompute(DefaultParameter para) throws Exception {
+    public void setRecompute(boolean para) throws Exception {
         defaultConfigOptions.changeOption("RecomputeResults", para);
     }
 
@@ -67,9 +67,9 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     // region Options: INPUT/OUTPUT
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    @Option(names = {"--no-summaries", "--noSummaries"}, descriptionKey = "WriteSummaries", description = "Do not write summary files to the project-space", order = 299)
-    private void setNoSummaries(DefaultParameter noSummaries) throws Exception {
-        defaultConfigOptions.changeOption("WriteSummaries", noSummaries.invertBool());
+    @Option(names = {"--no-summaries", "--noSummaries"}, description = "Do not write summary files to the project-space", order = 299)
+    private void setNoSummaries(boolean noSummaries) throws Exception {
+        defaultConfigOptions.changeOption("WriteSummaries", !noSummaries);
     }
 
 
