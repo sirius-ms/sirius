@@ -86,7 +86,7 @@ public class DefaultParameterConfigLoader {
     }
 
     public void changeOption(String optionName, List<String> value) throws Exception {
-        options.get(optionName).setter().set(String.join(",", value));
+        options.get(optionName).setter().set(value.stream().collect(Collectors.joining(",")));
     }
 
     @CommandLine.Command(name = "config", description = "<CONFIGURATION> Override all possible default configurations of this toolbox from the command line.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)

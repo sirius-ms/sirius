@@ -96,8 +96,8 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
     }
 
     // Elements
-    @Option(names = {"-e", "--elements-considered"}, description = {"Set the allowed elements for rare element detection.", "Example: `SBrClBSe` to allow the elements S,Br,Cl,B and Se.","Default: Is autodetected, see 'FormulaSettings.detectable' and 'FormulaSettings.fallback' for details."})
-    public void setDetectableElements(List<String> elements) throws Exception {
+    @Option(names = {"-e", "--elements-considered"}, descriptionKey = "FormulaSettings.detectable", description = {"Set the allowed elements for rare element detection.", "Example: `SBrClBSe` to allow the elements S,Br,Cl,B and Se."})
+    public void setDetectableElements(DefaultParameter elements) throws Exception {
         defaultConfigOptions.changeOption("FormulaSettings.detectable", elements);
         defaultConfigOptions.changeOption("FormulaSettings.fallback", elements);
     }
@@ -133,13 +133,13 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
 
     //Adducts
     @Option(names = {"-i", "--ions-considered"}, descriptionKey = "AdductSettings.detectable" , description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
-    public void setIonsConsidered(DefaultParameter adducts) throws Exception {
-        defaultConfigOptions.changeOption("AdductSettings.detectable", adducts);
+    public void setIonsConsidered(DefaultParameter adductList) throws Exception {
+        defaultConfigOptions.changeOption("AdductSettings.detectable", adductList);
     }
 
     @Option(names = {"-I", "--ions-enforced"}, descriptionKey = "AdductSettings.enforced", description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
-    public void setIonsEnforced(DefaultParameter adducts) throws Exception {
-        defaultConfigOptions.changeOption("AdductSettings.enforced", adducts);
+    public void setIonsEnforced(DefaultParameter adductList) throws Exception {
+        defaultConfigOptions.changeOption("AdductSettings.enforced", adductList);
     }
 
 
