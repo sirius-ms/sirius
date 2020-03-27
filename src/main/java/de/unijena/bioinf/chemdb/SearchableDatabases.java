@@ -14,6 +14,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SearchableDatabases {
     private SearchableDatabases() {
@@ -107,11 +109,8 @@ public class SearchableDatabases {
 
     @NotNull
     public static List<SearchableDatabase> getAvailableDatabases() {
-        final List<SearchableDatabase> db = new ArrayList<>();
-        db.add(getAllDb());
-        db.add(getBioDb());
+        final List<SearchableDatabase> db = Stream.of(DataSource.values()).map(DataSource::realName).map(SearchableDatabases::getDatabaseByNameOrThrow).collect(Collectors.toList());
         db.addAll(getCustomDatabases());
-
         return db;
     }
 
