@@ -7,7 +7,7 @@ package de.unijena.bioinf.ms.gui.settings;
 
 import de.unijena.bioinf.ms.frontend.core.PasswordCrypter;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.webapi.ProxyManager;
 
 import javax.swing.*;
@@ -21,11 +21,11 @@ import java.util.Properties;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener, SettingsPanel {
+public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener, SettingsPanel {
     private Properties props;
     private JCheckBox useCredentials;
     private JComboBox<ProxyManager.ProxyStrategy> useProxy;
-    private TwoCloumnPanel cred;
+    private TwoColumnPanel cred;
     private JTextField proxyHost, proxyUser;
     private JSpinner proxyPort;
     private JComboBox<String> proxyScheme;
@@ -62,7 +62,7 @@ public class ProxySettingsPanel extends TwoCloumnPanel implements ActionListener
         //############# Credentials Stuff ########################
 
 
-        cred = new TwoCloumnPanel();
+        cred = new TwoColumnPanel();
         cred.setBorder(new TitledBorder(new EmptyBorder(5, 5, 5, 5), "Proxy Credentials"));
         both.insets = new Insets(15, 0, 0, 0);
         add(cred);

@@ -7,7 +7,7 @@ import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.TreeVisualizationPanel;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -44,7 +44,7 @@ public class TreeViewerMain {
 
         JFrame frame = new JFrame("FragTree Viewer");
         JPanel mainPanel = new JPanel(new BorderLayout());
-        TwoCloumnPanel north = new TwoCloumnPanel(laod, input);
+        TwoColumnPanel north = new TwoColumnPanel(laod, input);
 
         TreeVisualizationPanel tvp = new TreeVisualizationPanel();
 

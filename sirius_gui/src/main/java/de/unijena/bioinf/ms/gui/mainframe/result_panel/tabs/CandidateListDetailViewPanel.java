@@ -29,7 +29,7 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,7 +71,7 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
         add(new ComputeElement(), "computeButton");
         add(new JLabel(Icons.FP_LOADER), "loader");
 
-        TwoCloumnPanel nothing = new TwoCloumnPanel();
+        TwoColumnPanel nothing = new TwoColumnPanel();
         nothing.add(new JLabel(Icons.NO_MATCH_128));
         nothing.add(new JLabel("<html><B>No candidates found for to this Molecular Formula.</B></html>"), 5, false);
         add(nothing, "empty");
@@ -114,7 +114,7 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
         list.resultsChanged();
     }
 
-    public class ComputeElement extends TwoCloumnPanel {
+    public class ComputeElement extends TwoColumnPanel {
         public ComputeElement() {
             searchCSIButton = new ToolbarButton(SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
             add(searchCSIButton);

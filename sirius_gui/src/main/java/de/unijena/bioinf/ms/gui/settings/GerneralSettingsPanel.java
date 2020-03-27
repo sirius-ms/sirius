@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.gui.settings;
 
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class GerneralSettingsPanel extends TwoCloumnPanel implements SettingsPanel {
+public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPanel {
     private Properties props;
     final FileChooserPanel db;
     final JComboBox<String> solver;

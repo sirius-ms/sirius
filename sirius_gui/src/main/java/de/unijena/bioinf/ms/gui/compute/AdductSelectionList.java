@@ -9,6 +9,10 @@ import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Panel to select Adducts e.g. for CSI:FingerID, Based on a given list of Ionizations.
+ * Provides: AdductSettings
+ */
 public class AdductSelectionList extends JCheckBoxList<String> implements ListSelectionListener {
 
     private final JCheckBoxList<String> source;

@@ -33,13 +33,13 @@ import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import javafx.application.Platform;
 
 public class TreeViewerSettings extends JFrame implements ItemListener,
                                                ActionListener {
 
-    TwoCloumnPanel panel;
+    TwoColumnPanel panel;
     TreeVisualizationPanel treePanel;
     TreeViewerBridge bridge;
     JButton addCustomBtn;
@@ -127,7 +127,7 @@ public class TreeViewerSettings extends JFrame implements ItemListener,
         this.localConfig = treePanel.getLocalConfig();
         this.selectedPreset = PropertyManager.getProperty("customPreset", null, "Custom");
 
-        this.panel = new TwoCloumnPanel();
+        this.panel = new TwoColumnPanel();
 
         panel.add(new JXTitledSeparator("Node annotations"));
         nodeLabelCB = new JCheckBox("molecular formula");

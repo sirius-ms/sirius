@@ -20,8 +20,7 @@ import de.unijena.bioinf.ms.gui.io.csv.GeneralCSVDialog;
 import de.unijena.bioinf.ms.gui.io.csv.SimpleCsvParser;
 import de.unijena.bioinf.ms.gui.utils.ListAction;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
-import org.jdesktop.swingx.JXRadioGroup;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.ReaderFactory;
 import org.slf4j.LoggerFactory;
@@ -809,7 +808,7 @@ public class DatabaseDialog extends JDialog {
             JPanel main = new JPanel(new BorderLayout());
             add(main);
 
-            TwoCloumnPanel panel = new TwoCloumnPanel();
+            TwoColumnPanel panel = new TwoColumnPanel();
             panel.add(new JLabel("<html>Please specify the names of the fields that have to be parsed in a comma separated list. <br> The list should be ordered from highest to lowest priority</html>"));
             panel.add(new JLabel("Database ID"), idField);
             panel.add(new JLabel("Name"), nameField);
