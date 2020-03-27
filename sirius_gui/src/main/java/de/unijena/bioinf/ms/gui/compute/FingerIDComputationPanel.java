@@ -125,8 +125,9 @@ public class FingerIDComputationPanel extends JPanel {
             }
         }
 
-        public void setDb(SearchableDatabase database) {
-            if (database != null) {
+        public void setDb(List<SearchableDatabase> database) {
+            //todo select the same as for sirius
+            /*if (database != null) {
                 for (int i = 0; i < db.getModel().getSize(); ++i) {
                     final SearchableDatabase d = db.getModel().getElementAt(i);
                     if (database.name().equals(d.name())) {
@@ -134,7 +135,7 @@ public class FingerIDComputationPanel extends JPanel {
                         return;
                     }
                 }
-            }
+            }*/
         }
 
         @Override

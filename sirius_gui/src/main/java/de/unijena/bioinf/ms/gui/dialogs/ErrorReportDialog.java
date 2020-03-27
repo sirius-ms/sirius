@@ -12,7 +12,7 @@ import de.unijena.bioinf.ms.gui.errorReport.FingerIDWebErrorReporter;
 import de.unijena.bioinf.ms.gui.errorReport.SiriusDefaultErrorReport;
 import de.unijena.bioinf.ms.gui.settings.ErrorReportSettingsPanel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 
 import javax.swing.*;
@@ -78,7 +78,7 @@ public class ErrorReportDialog extends AbstractArccordeoDialog {
     @Override
     protected JPanel buildSouthPanel() {
 
-        final TwoCloumnPanel south = new TwoCloumnPanel();
+        final TwoColumnPanel south = new TwoColumnPanel();
         south.setBorder(new TitledBorder(new EmptyBorder(GuiUtils.MEDIUM_GAP, GuiUtils.MEDIUM_GAP, GuiUtils.SMALL_GAP, GuiUtils.MEDIUM_GAP), "Send error report?"));
 
 

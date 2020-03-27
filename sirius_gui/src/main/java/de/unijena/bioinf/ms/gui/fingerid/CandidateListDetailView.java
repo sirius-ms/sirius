@@ -28,7 +28,7 @@ import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatc
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -119,7 +119,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
         filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MolecularProperty_24, "filter by highlighted molecular property");
 
         smartFilterTextField = new JTextField();
-        TwoCloumnPanel panel2 = new TwoCloumnPanel();
+        TwoColumnPanel panel2 = new TwoColumnPanel();
         panel2.setBorder(new EmptyBorder(0, 0, 0, 0));
         smartFilterTextField.setPreferredSize(new Dimension(100, smartFilterTextField.getPreferredSize().height));
         panel2.add(new JLabel("SMARTS Filter"), smartFilterTextField);

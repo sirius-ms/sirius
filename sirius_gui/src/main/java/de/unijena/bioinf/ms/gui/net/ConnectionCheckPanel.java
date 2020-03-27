@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.gui.net;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ import java.util.EnumSet;
 /**
  * Created by fleisch on 06.06.17.
  */
-public class ConnectionCheckPanel extends TwoCloumnPanel {
+public class ConnectionCheckPanel extends TwoColumnPanel {
     public static final String WORKER_WARNING_MESSAGE =
             "<b>Warning:</b> For some predictors there is currently no worker <br>" +
                     "instance available! Corresponding jobs will need to wait until<br> " +
@@ -93,7 +93,7 @@ public class ConnectionCheckPanel extends TwoCloumnPanel {
     }
 
     private JPanel createResultPanel(final int state, final EnumSet<PredictorType> neededTypes, final EnumSet<PredictorType> availableTypes, final int pendingJobs) {
-        TwoCloumnPanel resultPanel = new TwoCloumnPanel();
+        TwoColumnPanel resultPanel = new TwoColumnPanel();
         resultPanel.setBorder(BorderFactory.createEmptyBorder());
         resultPanel.add(new JXTitledSeparator("Description"), 15, false);
 

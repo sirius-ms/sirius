@@ -5,14 +5,14 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Enumeration;
 import java.util.Properties;
 
-public class AdductSettingsPanel extends TwoCloumnPanel implements SettingsPanel {
+public class AdductSettingsPanel extends TwoColumnPanel implements SettingsPanel {
     private Properties props;
     private boolean restart = false;
     private final DefaultListModel<String> positiveList = new DefaultListModel<>();

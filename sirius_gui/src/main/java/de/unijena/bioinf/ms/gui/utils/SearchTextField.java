@@ -7,7 +7,7 @@ import java.awt.*;
 /**
  * Created by fleisch on 18.05.17.
  */
-public class SearchTextField extends TwoCloumnPanel {
+public class SearchTextField extends TwoColumnPanel {
     public final JTextField textField;
 
     public SearchTextField() {

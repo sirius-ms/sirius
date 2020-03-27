@@ -28,7 +28,6 @@ import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
@@ -40,6 +39,7 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
@@ -52,8 +52,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
@@ -73,7 +71,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     private ElementsPanel elementPanel;
     private ExperimentEditPanel editPanel;
-    private SearchProfilePanel searchProfilePanel; //Sirius configs
+    private FormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
     private FingerIDComputationPanel csiOptions; //FingerIS configs
 
     private MainFrame owner;
@@ -103,19 +101,16 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         detectableElements.sort(Comparator.naturalOrder());
 
 
-        searchProfilePanel = new SearchProfilePanel(this, compoundsToProcess);
-        mainPanel.add(searchProfilePanel);
-        searchProfilePanel.formulaCombobox.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                SearchableDatabase source = searchProfilePanel.getFormulaSource();
-                enableElementSelection(source == null);
-                if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(source);
-            }
+        formulaIDConfigPanel = new FormulaIDConfigPanel(compoundsToProcess);
+        mainPanel.add(formulaIDConfigPanel);
+        formulaIDConfigPanel.searchDBList.checkBoxList.addListSelectionListener(e -> {
+            List<SearchableDatabase> source = formulaIDConfigPanel.getFormulaSearchDB();
+            enableElementSelection(source.isEmpty()); //todo add none filer
+            if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(source);
         });
 
-        csiOptions = new FingerIDComputationPanel(SearchableDatabases.getAvailableDatabases(), searchProfilePanel.ionizationPanel.checkBoxList, true, true);
-        if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(searchProfilePanel.getFormulaSource());
+        csiOptions = new FingerIDComputationPanel(SearchableDatabases.getAvailableDatabases(), formulaIDConfigPanel.ionizationPanel.checkBoxList, true, true);
+        if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(formulaIDConfigPanel.getFormulaSearchDB());
         csiOptions.setMaximumSize(csiOptions.getPreferredSize());
 
         if (compoundsToProcess.size() > 1) {
@@ -265,12 +260,12 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         checkConnection();
 
         //collect job parameter from view
-        final SearchProfilePanel.Instruments instrument = searchProfilePanel.getInstrument();
-        final SearchableDatabase searchableDatabase = searchProfilePanel.getFormulaSource();
+        final FormulaIDConfigPanel.Instrument instrument = formulaIDConfigPanel.getInstrument();
+        final List<SearchableDatabase> searchableDatabase = formulaIDConfigPanel.getFormulaSearchDB();
         final FormulaConstraints constraints = elementPanel.getElementConstraints();
         final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.EMPTY_LIST;
-        final double ppm = searchProfilePanel.getPpm();
-        final int candidates = searchProfilePanel.getNumberOfCandidates();
+        final double ppm = formulaIDConfigPanel.getPpm();
+        final int candidates = formulaIDConfigPanel.getNumberOfCandidates();
         ////////////////////////////////////////////////////////////////
 
         // CHECK ILP SOLVER
@@ -303,13 +298,13 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     configs.add("--AlgorithmProfile=" + instrument.profile);
                     configs.add("--MS2MassDeviation.allowedMassDeviation=" + ppm + "ppm");
 
-                    configs.add("--FormulaSearchDB=" + (searchableDatabase != null ? searchableDatabase.name() : "none"));
+                    configs.add("--FormulaSearchDB=" + (searchableDatabase != null ? searchableDatabase.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) : "none"));
                     configs.add("--StructureSearchDB=" + csiOptions.dbSelectionOptions.getDb().name());
 
 
                     FormulaConstraints c = constraints;
-                    if (searchProfilePanel.restrictToOrganics())
-                        c = constraints.intersection(new FormulaConstraints("C,H,N,O,P,S,B,Br,Cl,F,I"));
+//                    if (formulaIDConfigPanel.restrictToOrganics())// todo add restrict to organics parameter to cli
+//                        c = constraints.intersection(new FormulaConstraints("C,H,N,O,P,S,B,Br,Cl,F,I"));
                     configs.add("--FormulaSettings.fallback=" + c.toString());
 
                     configs.add("--FormulaSettings.detectable=" + (elementsToAutoDetect.isEmpty() ? "," :
@@ -388,15 +383,15 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     new WorkerWarningDialog(MF, cc.workerInfo == null);
                 }
             } else {
-                if (searchProfilePanel.getFormulaSource() != null) {
+                if (formulaIDConfigPanel.getFormulaSearchDB() != null) {
                     new WarnFormulaSourceDialog(MF);
-                    searchProfilePanel.formulaCombobox.setSelectedIndex(0);
+//                    formulaIDConfigPanel.formulaCombobox.setSelectedIndex(0); //todo set NONE
                 }
             }
         } else {
-            if (searchProfilePanel.getFormulaSource() != null) {
+            if (formulaIDConfigPanel.getFormulaSearchDB() != null) {
                 new WarnFormulaSourceDialog(MF);
-                searchProfilePanel.formulaCombobox.setSelectedIndex(0);
+//                formulaIDConfigPanel.formulaCombobox.setSelectedIndex(0); //todo set NONE
             }
         }
     }
@@ -428,14 +423,14 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             @Override
             public void changedUpdate(DocumentEvent e) {
                 boolean enable = e.getDocument().getLength() == 0;
-                searchProfilePanel.formulaCombobox.setEnabled(enable);
-                searchProfilePanel.candidatesSpinner.setEnabled(enable);
+                formulaIDConfigPanel.searchDBList.setEnabled(enable);
+                formulaIDConfigPanel.candidatesSpinner.setEnabled(enable);
             }
         });
 
         editPanel.ionizationCB.addActionListener(e -> {
             PrecursorIonType ionType = editPanel.getSelectedIonization();
-            searchProfilePanel.refreshPossibleIonizations(Collections.singleton(ionType.getIonization().getName()));
+            formulaIDConfigPanel.refreshPossibleIonizations(Collections.singleton(ionType.getIonization().getName()));
             pack();
         });
 

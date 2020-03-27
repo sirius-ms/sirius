@@ -11,15 +11,15 @@ import java.awt.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class TwoCloumnPanel extends JPanel {
+public class TwoColumnPanel extends JPanel {
     public  final GridBagConstraints both, left, right;
 
 
 
-    public TwoCloumnPanel() {
+    public TwoColumnPanel() {
         this(GridBagConstraints.EAST,GridBagConstraints.WEST);
     }
-    public TwoCloumnPanel(final int leftAnchor, final int rightAnchor) {
+    public TwoColumnPanel(final int leftAnchor, final int rightAnchor) {
         super();
         setLayout(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
@@ -49,9 +49,13 @@ public class TwoCloumnPanel extends JPanel {
         setRow(0);
     }
 
-    public TwoCloumnPanel(JComponent left, JComponent right) {
+    public TwoColumnPanel(String leftLabel, JComponent right) {
+        this(new JLabel(leftLabel), right);
+    }
+
+    public TwoColumnPanel(JComponent left, JComponent right) {
         this();
-        add(left,right);
+        add(left, right);
     }
 
     public void setRow(int i) {

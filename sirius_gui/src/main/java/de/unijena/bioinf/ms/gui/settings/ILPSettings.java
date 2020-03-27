@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.gui.settings;
 
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
 
 import javax.swing.*;
@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.Vector;
 
-public class ILPSettings extends TwoCloumnPanel implements SettingsPanel {
+public class ILPSettings extends TwoColumnPanel implements SettingsPanel {
     private Properties props;
     final JComboBox<String> solver;
     final FileChooserPanel gurobi;

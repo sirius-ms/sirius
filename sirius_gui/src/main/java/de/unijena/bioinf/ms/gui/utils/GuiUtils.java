@@ -6,6 +6,9 @@ package de.unijena.bioinf.ms.gui.utils;
  */
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
@@ -121,5 +124,14 @@ public class GuiUtils {
             g.setColor(trans);
             g.drawRect(1, 1, (w - 3), (h - 3));
         }
+    }
+
+    public static boolean assignParameterToolTip(@NotNull final JComponent comp, @NotNull String parameterKey){
+        parameterKey = PropertyManager.DEFAULTS.shortKey(parameterKey);
+        if(PropertyManager.DEFAULTS.getConfigValue(parameterKey) != null){
+            comp.setToolTipText(PropertyManager.DEFAULTS.getConfigDescription(parameterKey) + "\nCommandline: 'CONFIG --" + parameterKey + "'");
+            return true;
+        }
+        return false;
     }
 }

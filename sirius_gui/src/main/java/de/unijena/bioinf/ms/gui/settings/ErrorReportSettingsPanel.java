@@ -6,7 +6,7 @@ package de.unijena.bioinf.ms.gui.settings;
  */
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.gui.utils.TwoCloumnPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.utils.mailService.Mail;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +18,7 @@ import static de.unijena.bioinf.ms.gui.utils.GuiUtils.SMALL_GAP;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ErrorReportSettingsPanel extends TwoCloumnPanel implements SettingsPanel {
+public class ErrorReportSettingsPanel extends TwoColumnPanel implements SettingsPanel {
     private Properties props;
     private JTextField emailField;
     private JCheckBox uesrCopy, hardwareInfo;
