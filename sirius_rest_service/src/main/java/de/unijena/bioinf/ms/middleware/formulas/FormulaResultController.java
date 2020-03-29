@@ -8,10 +8,7 @@ import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -29,7 +26,7 @@ public class FormulaResultController extends BaseApiController {
     }
 
     @GetMapping(value = "/formulas", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public List<FormulaId> getFormulaIds(@PathVariable String pid, @PathVariable String cid) {
+    public List<FormulaId> getFormulaIds(@PathVariable String pid, @PathVariable String cid, @RequestParam(required = false) boolean includeFormulaScores) {
         SiriusProjectSpace space = projectSpace(pid);
         return space.findCompound(cid).map(ccId -> {
             try {
@@ -38,7 +35,19 @@ public class FormulaResultController extends BaseApiController {
                 e.printStackTrace();
                 return null;
             }
-        }).map(con -> con.getResults().values().stream().map(FormulaId::new).collect(Collectors.toList())).orElse(Collections.emptyList());
+        }).map(con -> con.getResults().values().stream().map(frId -> {
+            try{
+                return space.getFormulaResult(frId, FormulaScoring.class);
+            } catch (IOException e) {
+                return null;
+            }
+        }).map(fr -> {
+            FormulaId formulaId = new FormulaId(fr.getId());
+            if(includeFormulaScores){
+                fr.getAnnotation(FormulaScoring.class).ifPresent(fs -> formulaId.setResultScores(new FormulaResultScores(fs)));
+            }
+            return formulaId;
+        }).collect(Collectors.toList())).orElse(Collections.emptyList());
     }
 
     @GetMapping(value = "/formulas/{fid}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
