@@ -325,7 +325,7 @@ function popupClose(d) {
 function formatAnnot(id, value) {
     switch (id) {
     case "score":
-        return "Score: " + parseFloat(value).toFixed(3);
+        return "Score: " + parseFloat(value).toFixed(4);
     case "ion":
         return value;
     case "mz":
@@ -333,13 +333,13 @@ function formatAnnot(id, value) {
     case "massDeviation":
         // example: "-5.479016320565768 ppm (-0.0035791853184719002 m/z)"
         var number = parseFloat(value.split(' ')[0]);
-        return number.toFixed(3) + ' ppm';
+        return number.toFixed(4) + ' ppm';
     case 'massDeviationPpm':
-        return parseFloat(value).toFixed(3) + ' ppm';
+        return parseFloat(value).toFixed(4) + ' ppm';
     case 'massDeviationMz':
-        return (value>0?"+":"")+(parseFloat(value) * 1000).toFixed(3) + ' mDa';
+        return (value>0?"+":"")+(parseFloat(value) * 1000).toFixed(4) + ' mDa';
     case 'relativeIntensity':
-        return parseFloat(value).toFixed(3) + " rel. int.";
+        return parseFloat(value).toFixed(4) + " rel. int.";
     default:
         // for showing custom (not predefined) information,
         // that has to be present in 'data' though
@@ -1319,7 +1319,7 @@ var tree, node_map;
 // layout
 // Parameters
 var boxheight = 60;             // adapts to content
-var boxwidth = 120;
+var boxwidth = 130;
 var margin_left = 0;
 var margin_top = boxheight + 3;
 var lineheight = 13;
@@ -1337,7 +1337,7 @@ function calcLayout() {
 function calcBoxwidth(max_box_text, styles){
     // NOTE: maxtext only considers formulae, annotations could be
     // longer! (hard to calculate beforehand though)
-    var min_boxwidth = 120;
+    var min_boxwidth = 130;
     var adapt_to_maxtext = true;
     if (!adapt_to_maxtext)
         return min_boxwidth;
