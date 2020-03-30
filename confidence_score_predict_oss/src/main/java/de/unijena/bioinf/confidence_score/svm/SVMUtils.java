@@ -184,6 +184,8 @@ public class SVMUtils {
 
 
 
+
+
             for(int i=0;i<element.length;i++) {
 
                 if(element[i]<scales.getMin_feature_values()[i])element[i]=scales.getMin_feature_values()[i];
