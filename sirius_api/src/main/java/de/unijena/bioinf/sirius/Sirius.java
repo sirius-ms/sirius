@@ -660,16 +660,15 @@ public class Sirius {
          */
         private FTree resolveAdductIfPossible(FTree tree, PossibleAdducts possibleAdducts, ProcessedInput pinput) {
             PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElseThrow();
-
             final MolecularFormula mf = tree.getRoot().getFormula();
             final FormulaConstraints constraints = pinput.getAnnotationOrThrow(FormulaConstraints.class);
-            final AdductSettings adductSettings = pinput.getAnnotationOrThrow(AdductSettings.class);
 
             //todo if an ion source fragment is set. is it then always already set for all possible adducts?
             final MolecularFormula inSourceFragmentation = pinput.getExperimentInformation().getPrecursorIonType().getInSourceFragmentation();
 
             Set<PrecursorIonType> usedIonTypes;
-            if (possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
+            final AdductSettings adductSettings = pinput.getAnnotationOrNull(AdductSettings.class);
+            if (adductSettings != null && possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
                 //todo check if it makes sense to use the detectables
                 usedIonTypes = adductSettings.getDetectable(possibleAdducts.getIonModes());
             } else {
