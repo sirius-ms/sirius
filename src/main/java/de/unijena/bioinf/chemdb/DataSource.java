@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Locale;
 
 public enum DataSource {
-    ALL("all", 0, null, null, null),
+    ALL("All included DBs", 0, null, null, null),
     PUBCHEM("PubChem", 2, "compound_id","pubchem", "https://pubchem.ncbi.nlm.nih.gov/compound/%s"),
     MESH("MeSH", 4, "compound_id", "hasmesh", "http://www.ncbi.nlm.nih.gov/mesh/%s"),
     HMDB("HMDB", 8, "hmdb_id", "hmdb", "http://www.hmdb.ca/metabolites/%s"),
