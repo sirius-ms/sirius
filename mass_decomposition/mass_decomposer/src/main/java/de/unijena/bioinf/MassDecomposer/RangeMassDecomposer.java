@@ -366,7 +366,7 @@ public class RangeMassDecomposer<T> extends MassDecomposer<T> {
 
         final long[][][] _ERTs_ = this.ERTs;
         //calculate the required ERTs
-        if ((1 << (ERTs.length - 1)) <= deviation) {
+        if ((1 << (_ERTs_.length - 1)) <= deviation) {
             calcERT(deviation);
         }
         final long[][][] ERTs = this.ERTs;
@@ -519,8 +519,9 @@ public class RangeMassDecomposer<T> extends MassDecomposer<T> {
         synchronized (this) {
             final long[][][] tables = this.ERTs;
             if (tables.length == currentLength) {
-                this.ERTs = Arrays.copyOf(this.ERTs, this.ERTs.length + 1);
-                this.ERTs[this.ERTs.length - 1] = nextERT;
+                final long[][][] __tmp__ = Arrays.copyOf(this.ERTs, this.ERTs.length + 1);
+                __tmp__[__tmp__.length - 1] = nextERT;
+                this.ERTs = __tmp__;
             } else {
                 // another background thread did already compute the ERT. So we don't have to do this again
             }
