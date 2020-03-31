@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -110,15 +111,16 @@ public class SearchableDatabases {
     @NotNull
     public static List<SearchableDatabase> getAvailableDatabases() {
         final List<SearchableDatabase> db = Stream.of(DataSource.values()).map(DataSource::realName).map(SearchableDatabases::getDatabaseByNameOrThrow).collect(Collectors.toList());
+        Collections.swap(db,2, DataSource.BIO.ordinal()); //just to put bio on index 3
         db.addAll(getCustomDatabases());
         return db;
     }
 
     public static SearchableDatabase getAllDb() {
-        return getDatabaseByNameOrThrow(DataSource.ALL.realName);
+        return getDatabaseByNameOrThrow(DataSource.ALL.name());
     }
 
     public static SearchableDatabase getBioDb() {
-        return getDatabaseByNameOrThrow(DataSource.BIO.realName);
+        return getDatabaseByNameOrThrow(DataSource.BIO.name());
     }
 }
