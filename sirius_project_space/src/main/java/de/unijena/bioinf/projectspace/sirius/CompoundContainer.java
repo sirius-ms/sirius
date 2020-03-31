@@ -26,6 +26,10 @@ public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId
         return results;
     }
 
+    public boolean hasResult() {
+        return !getResults().isEmpty();
+    }
+
     public boolean containsResult(FormulaResultId id) {
         return id != null && id == (results.get(id.fileName()));
     }
