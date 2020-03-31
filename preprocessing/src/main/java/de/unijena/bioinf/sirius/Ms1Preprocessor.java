@@ -46,7 +46,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         isotopePatternDetection(pinput);
         elementDetection(pinput);
         adductDetection(pinput);
-        adjustValenceFilter(pinput); //todo this is
+        adjustValenceFilter(pinput);
 
         return pinput;
     }
@@ -123,13 +123,13 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
     @Requires(FormulaConstraints.class)
     @Requires(PossibleAdducts.class)
     @Requires(AdductSettings.class)
-    public void adjustValenceFilter(ProcessedInput pinput) { ;
-        final FormulaConstraints fc = pinput.getAnnotationOrThrow(FormulaConstraints.class);
+    public void adjustValenceFilter(ProcessedInput pinput) {
+        ;
         final PossibleAdducts possibleAdducts = pinput.getAnnotationOrThrow(PossibleAdducts.class);
-        final AdductSettings adductSettings = pinput.getAnnotationOrThrow(AdductSettings.class);
 
         Set<PrecursorIonType> usedIonTypes;
-        if (possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
+        final AdductSettings adductSettings = pinput.getAnnotationOrNull(AdductSettings.class);
+        if (adductSettings != null && possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
             //todo check if it makes sense to use the detectables
             usedIonTypes = adductSettings.getDetectable(possibleAdducts.getIonModes());
         } else {
@@ -138,6 +138,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         }
 
         List<FormulaFilter> newFilters = new ArrayList<>();
+        final FormulaConstraints fc = pinput.getAnnotationOrThrow(FormulaConstraints.class);
         for (FormulaFilter filter : fc.getFilters()) {
             if (filter instanceof ValenceFilter) {
                 newFilters.add(new ValenceFilter(((ValenceFilter) filter).getMinValence(), usedIonTypes));
