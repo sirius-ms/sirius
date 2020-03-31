@@ -8,6 +8,7 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
  * If lower than 0, all available candidates are considered.
  */
 @DefaultProperty
+@Deprecated
 public class ZodiacNumberOfConsideredCandidates implements Ms2ExperimentAnnotation {
     public final int value;
 
