@@ -12,6 +12,8 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
@@ -26,6 +28,7 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
     }
 
     public static void main(String[] args) {
+
         configureShutDownHook(()->{
             Jobs.cancelALL();//cancel all instances to quit
         });
@@ -35,6 +38,12 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
         SiriusJobs.setGlobalJobManager(new SwingJobManager(PropertyManager.getNumberOfThreads(), Math.min(cpuThreads, 3)));
         ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
 
+        try {
+            InChIGeneratorFactory.getInstance();
+            ApplicationCore.DEFAULT_LOGGER.info("CDK InChIGeneratorFactory configured.");
+        } catch (CDKException e) {
+            ApplicationCore.DEFAULT_LOGGER.error("Error configuring CDK InChIGeneratorFactory.",e);
+        }
         //todo why do we need this?
 //        if (ProxyManager.getProxyStrategy() == null)
 //            SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty("de.unijena.bioinf.sirius.proxy", ProxyManager.DEFAULT_STRATEGY.name());
