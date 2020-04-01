@@ -7,6 +7,8 @@ import java.util.Collection;
 
 public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDConfigPanel> {
 
+
+
     public ActFormulaIDConfigPanel(Collection<InstanceBean> ecs) {
         super("SIRIUS", Icons.DB_32, false, () -> new FormulaIDConfigPanel(ecs));
     }

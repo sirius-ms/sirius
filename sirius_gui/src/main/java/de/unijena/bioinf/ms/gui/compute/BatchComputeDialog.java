@@ -261,8 +261,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         //collect job parameter from view
         final FormulaIDConfigPanel.Instrument instrument = formulaIDConfigPanel.content.getInstrument();
         final List<SearchableDatabase> searchableDatabase = formulaIDConfigPanel.content.getFormulaSearchDBs();
-        final FormulaConstraints constraints = elementPanel.getElementConstraints();
-        final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.EMPTY_LIST;
+
         final double ppm = formulaIDConfigPanel.content.getPpm();
         final int candidates = formulaIDConfigPanel.content.getNumOfCandidates();
         ////////////////////////////////////////////////////////////////
@@ -298,16 +297,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     configs.add("--MS2MassDeviation.allowedMassDeviation=" + ppm + "ppm");
 
                     configs.add("--FormulaSearchDB=" + (searchableDatabase != null ? searchableDatabase.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) : "none"));
-//                    configs.add("--StructureSearchDB=" + csiOptions.dbSelectionOptions.getDb().name());
+                    configs.add("--StructureSearchDB=" + csiOptions.dbSelectionOptions.getDb().name());
 
 
-                    FormulaConstraints c = constraints;
-//                    if (formulaIDConfigPanel.restrictToOrganics())// todo add restrict to organics parameter to cli
-//                        c = constraints.intersection(new FormulaConstraints("C,H,N,O,P,S,B,Br,Cl,F,I"));
-                    configs.add("--FormulaSettings.fallback=" + c.toString());
 
-                    configs.add("--FormulaSettings.detectable=" + (elementsToAutoDetect.isEmpty() ? "," :
-                            elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(","))));
 
                     configs.add("--AdductSettings.enforced=" + csiConfigs.content.getSelectedAdducts().toString());
 
