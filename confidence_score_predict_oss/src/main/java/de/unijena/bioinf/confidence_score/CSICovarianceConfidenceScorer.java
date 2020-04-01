@@ -36,8 +36,8 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
     public static final String NO_DISTANCE_ID = "Nodist";
     public static final String DISTANCE_ID = "dist";
 
-    public static final String DB_ALL_ID = DataSource.ALL.realName;
-    public static final String DB_BIO_ID = DataSource.BIO.realName;
+    public static final String DB_ALL_ID = "All";
+    public static final String DB_BIO_ID = "Bio";
 
     public static final String CE_LOW = "feLow";
     public static final String CE_MED = "feMed";
