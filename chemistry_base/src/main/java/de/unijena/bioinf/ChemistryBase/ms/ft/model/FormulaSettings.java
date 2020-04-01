@@ -13,21 +13,20 @@ import java.util.Set;
 /**
  * This configurations hold the information how to autodetect elements based on the given formula constraints.
  * Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.
- * */
-
+ */
 public class FormulaSettings implements Ms2ExperimentAnnotation {
     @NotNull protected final FormulaConstraints enforced;
     @NotNull protected final FormulaConstraints fallback;
     @NotNull protected final ChemicalAlphabet detectable;
 
     /**
-     * @param enforced elements that are always considered
-     * @param detectable detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)
-     * @param fallback these elements are used, if the autodetection fails (e.g. no isotope pattern available)
+     * @param enforced   Enforced elements are always considered
+     * @param detectable Detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)
+     * @param fallback   Fallback elements are used, if the autodetection fails (e.g. no isotope pattern available)
      */
     @DefaultInstanceProvider
-    public static FormulaSettings newInstance(@DefaultProperty(propertyKey = "enforced") FormulaConstraints enforced, @DefaultProperty(propertyKey = "detectable") ChemicalAlphabet detectable, @DefaultProperty(propertyKey = "fallback") FormulaConstraints fallback) {
-        return new FormulaSettings(enforced,detectable,fallback);
+    public static FormulaSettings newInstance(@DefaultProperty FormulaConstraints enforced, @DefaultProperty ChemicalAlphabet detectable, @DefaultProperty FormulaConstraints fallback) {
+        return new FormulaSettings(enforced, detectable, fallback);
     }
 
     public FormulaSettings(@NotNull FormulaConstraints enforced, @NotNull ChemicalAlphabet detectable, @NotNull FormulaConstraints fallback) {

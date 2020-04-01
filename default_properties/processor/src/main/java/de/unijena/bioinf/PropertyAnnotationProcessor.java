@@ -167,11 +167,12 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
         private void addInstanceProvider(VariableElement parameter) {
             final ExecutableElement method = (ExecutableElement) parameter.getEnclosingElement();
             final TypeElement klass = (TypeElement) method.getEnclosingElement();
-            if (method.getAnnotation(DefaultInstanceProvider.class)==null) {
+            if (method.getAnnotation(DefaultInstanceProvider.class) == null) {
                 System.err.println("Warning: @DefaultProperty is used for a parameter of a method which does not contain an @DefaultInstanceProvider annotation!");
                 return;
             }
-            addFieldInGroup(klass, new Field(resolveParentName(klass, parameter), resolveKeyName(parameter)));
+            final String comment = getParamTagFor(method,parameter);
+            addFieldInGroup(klass, new Field(resolveParentName(klass, parameter), resolveKeyName(parameter), comment));
         }
 
         private void addEnum(TypeElement element) {
