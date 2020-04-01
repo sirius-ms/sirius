@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -14,8 +15,14 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
     }
 
     public ConfigPanel() {
+        applyDefaultLayout(this);
+    }
+
+
+    protected JPanel applyDefaultLayout(@NotNull final JPanel pToStyle) {
         RelativeLayout rl = new RelativeLayout(RelativeLayout.X_AXIS, GuiUtils.LARGE_GAP);
         rl.setAlignment(RelativeLayout.LEADING);
-        setLayout(rl);
+        pToStyle.setLayout(rl);
+        return pToStyle;
     }
 }

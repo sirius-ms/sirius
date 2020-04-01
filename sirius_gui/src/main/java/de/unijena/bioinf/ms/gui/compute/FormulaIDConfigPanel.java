@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
@@ -58,19 +60,26 @@ public class FormulaIDConfigPanel extends ConfigPanel {
     protected final JComboBox<Instrument> profileSelector;
     protected final SpinnerNumberModel ppm, candidates, candidatesPerIon;
     protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner;
+    protected final JCheckBox restrictToOrganics;
+    protected final ElementsPanel elementPanel;
+
 
 
     public FormulaIDConfigPanel(Collection<InstanceBean> ecs) {
         super();
+        setLayout(new BorderLayout());
+        final JPanel center = applyDefaultLayout(new JPanel());
+        add(center, BorderLayout.CENTER);
+
         final TwoColumnPanel smallParameters = new TwoColumnPanel();
-        add(smallParameters);
+        center.add(smallParameters);
 
         Vector<Instrument> instruments = new Vector<>();
         Collections.addAll(instruments, Instrument.values());
         profileSelector = new JComboBox<>(instruments);
         GuiUtils.assignParameterToolTip(profileSelector, "AlgorithmProfile");
-        smallParameters.addNamed("Instrument", profileSelector);
         parameterBindings.put("AlgorithmProfile", () -> getInstrument().name);
+        smallParameters.addNamed("Instrument", profileSelector);
 
 
         ppm = new SpinnerNumberModel(10, 0.25, 20, 0.25);
@@ -78,8 +87,8 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         ppmSpinner.setMinimumSize(new Dimension(70, 26));
         ppmSpinner.setPreferredSize(new Dimension(70, 26));
         GuiUtils.assignParameterToolTip(ppmSpinner, "MS2MassDeviation.allowedMassDeviation");
-        smallParameters.addNamed("Ms2MassDev (ppm)", ppmSpinner);
         parameterBindings.put("MS2MassDeviation.allowedMassDeviation", () -> String.valueOf(getPpm()));
+        smallParameters.addNamed("Ms2MassDev (ppm)", ppmSpinner);
 
 
         candidates = new SpinnerNumberModel(10, 1, 10000, 1);
@@ -87,8 +96,8 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         candidatesSpinner.setMinimumSize(new Dimension(70, 26));
         candidatesSpinner.setPreferredSize(new Dimension(70, 26));
         GuiUtils.assignParameterToolTip(candidatesSpinner, "NumberOfCandidates");
-        smallParameters.addNamed("Candidates", candidatesSpinner);
         parameterBindings.put("NumberOfCandidates", () -> String.valueOf(getNumOfCandidates()));
+        smallParameters.addNamed("Candidates", candidatesSpinner);
 
 
         candidatesPerIon = new SpinnerNumberModel(0, 0, 10000, 1);
@@ -96,26 +105,51 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         candidatesPerIonSpinner.setMinimumSize(new Dimension(70, 26));
         candidatesPerIonSpinner.setPreferredSize(new Dimension(70, 26));
         GuiUtils.assignParameterToolTip(candidatesPerIonSpinner, "NumberOfCandidatesPerIon");
-        smallParameters.addNamed("Candidates per Ion", candidatesPerIonSpinner);
         parameterBindings.put("NumberOfCandidatesPerIon", () -> String.valueOf(getNumOfCandidatesPerIon()));
+        smallParameters.addNamed("Candidates per Ion", candidatesPerIonSpinner);
 
+        restrictToOrganics = new JCheckBox();
+        GuiUtils.assignParameterToolTip(restrictToOrganics, "RestrictToOrganics");
+        parameterBindings.put("RestrictToOrganics", () -> String.valueOf(restrictToOrganics.isSelected()));
+        smallParameters.add("Restrict to organics", restrictToOrganics);
+
+        //sync profile with ppm spinner
         profileSelector.addItemListener(e -> {
             final Instrument i = (Instrument) e.getItem();
             final double recommendedPPM = i.ppm;
             ppmSpinner.setValue(recommendedPPM);
         });
 
+
+
+
         //configure ionization panels
         ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations", "Set possible ionisation for data with unknown ionization");
         ionizationList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
-        add(ionizationList);
+        center.add(ionizationList);
 
         // configure database to search list
         searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Consider only formulas in:");
         GuiUtils.assignParameterToolTip(searchDBList, "FormulaSearchDB");
-        add(searchDBList);
+        center.add(searchDBList);
         parameterBindings.put("FormulaSearchDB", () -> getFormulaSearchDBs().stream().map(SearchableDatabase::name).
                 collect(Collectors.joining(",")));
+
+        // configure Element panel
+        elementPanel = makeElementPanel(ecs.size() == 1);
+        add(elementPanel, BorderLayout.NORTH);
+        parameterBindings.put("FormulaSettings.enforced")
+        parameterBindings.put("FormulaSettings.detectable")
+
+        final FormulaConstraints constraints = elementPanel.getElementConstraints();
+        final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.EMPTY_LIST;
+
+        configs.add("--FormulaSettings.fallback=" + c.toString());
+
+        configs.add("--FormulaSettings.detectable=" + (elementsToAutoDetect.isEmpty() ? "," :
+                elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(","))));
+
+
 
         //enable disable element panel if db is selected
         searchDBList.checkBoxList.addListSelectionListener(e -> {
