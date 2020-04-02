@@ -6,12 +6,17 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.sirius.Ms1Preprocessor;
+import de.unijena.bioinf.sirius.ProcessedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,18 +66,40 @@ public class FormulaIDConfigPanel extends ConfigPanel {
     protected final SpinnerNumberModel ppm, candidates, candidatesPerIon;
     protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner;
     protected final JCheckBox restrictToOrganics;
-    protected final ElementsPanel elementPanel;
+    protected ElementsPanel elementPanel;
+    protected JButton elementAutoDetect;
 
 
+    protected final List<InstanceBean> ecs;
 
-    public FormulaIDConfigPanel(Collection<InstanceBean> ecs) {
+
+    protected final Dialog owner;
+
+    public FormulaIDConfigPanel(Dialog owner, List<InstanceBean> ecs) {
         super();
-        setLayout(new BorderLayout());
-        final JPanel center = applyDefaultLayout(new JPanel());
-        add(center, BorderLayout.CENTER);
+        this.ecs = ecs;
+        this.owner = owner;
 
+
+        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+        final JPanel center = applyDefaultLayout(new JPanel());
+        add(center);
+
+        // configure database to search list
+        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Consider only formulas in:");
+        GuiUtils.assignParameterToolTip(searchDBList, "FormulaSearchDB");
+        center.add(searchDBList);
+        parameterBindings.put("FormulaSearchDB", () -> getFormulaSearchDBs().stream().map(SearchableDatabase::name).
+                collect(Collectors.joining(",")));
+
+        //configure ionization panels
+        ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations", "Set possible ionisation for data with unknown ionization");
+        ionizationList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
+        center.add(ionizationList);
+
+        // configure small stuff panel
         final TwoColumnPanel smallParameters = new TwoColumnPanel();
-        center.add(smallParameters);
+        center.add(new TextHeaderBoxPanel("Parameters", smallParameters));
 
         Vector<Instrument> instruments = new Vector<>();
         Collections.addAll(instruments, Instrument.values());
@@ -111,7 +138,7 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         restrictToOrganics = new JCheckBox();
         GuiUtils.assignParameterToolTip(restrictToOrganics, "RestrictToOrganics");
         parameterBindings.put("RestrictToOrganics", () -> String.valueOf(restrictToOrganics.isSelected()));
-        smallParameters.add("Restrict to organics", restrictToOrganics);
+        smallParameters.addNamed("Restrict to organics", restrictToOrganics);
 
         //sync profile with ppm spinner
         profileSelector.addItemListener(e -> {
@@ -121,40 +148,26 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         });
 
 
-
-
-        //configure ionization panels
-        ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations", "Set possible ionisation for data with unknown ionization");
-        ionizationList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
-        center.add(ionizationList);
-
-        // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Consider only formulas in:");
-        GuiUtils.assignParameterToolTip(searchDBList, "FormulaSearchDB");
-        center.add(searchDBList);
-        parameterBindings.put("FormulaSearchDB", () -> getFormulaSearchDBs().stream().map(SearchableDatabase::name).
-                collect(Collectors.joining(",")));
-
         // configure Element panel
-        elementPanel = makeElementPanel(ecs.size() == 1);
-        add(elementPanel, BorderLayout.NORTH);
-        parameterBindings.put("FormulaSettings.enforced")
-        parameterBindings.put("FormulaSettings.detectable")
+        makeElementPanel(ecs.size() > 1);
+        add(elementPanel);
+        parameterBindings.put("FormulaSettings.enforced", () -> {
+            return elementPanel.getElementConstraints().toString(); //todo check if this makes scence
+        });
 
-        final FormulaConstraints constraints = elementPanel.getElementConstraints();
-        final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.EMPTY_LIST;
-
-        configs.add("--FormulaSettings.fallback=" + c.toString());
-
-        configs.add("--FormulaSettings.detectable=" + (elementsToAutoDetect.isEmpty() ? "," :
-                elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(","))));
-
-
+        parameterBindings.put("FormulaSettings.detectable", () -> {
+            final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.emptyList();
+            return (elementsToAutoDetect.isEmpty() ? "," :
+                    elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
+        }); //todo check if this makes scence
 
         //enable disable element panel if db is selected
         searchDBList.checkBoxList.addListSelectionListener(e -> {
             final List<SearchableDatabase> source = getFormulaSearchDBs();
-            enableElementSelection(source == null || source.isEmpty());
+            //todo does this make scence
+            elementPanel.enableElementSelection(source == null || source.isEmpty());
+            if (elementAutoDetect != null)
+                elementAutoDetect.setEnabled(source == null || source.isEmpty());
         });
 
         refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()));
@@ -172,7 +185,6 @@ public class FormulaIDConfigPanel extends ConfigPanel {
                 ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizationsAsString());
             }
         }
-
         if (ionizations.isEmpty()) {
             ionizationList.checkBoxList.replaceElements(ionTypes.stream().sorted().collect(Collectors.toList()));
             ionizationList.checkBoxList.checkAll();
@@ -185,20 +197,13 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         }
     }
 
-    protected ElementsPanel makeElementPanel(boolean single){
-        final  ElementsPanel elementPanel;
-        final  JButton elementAutoDetect;
-
-        if (single) {
-            ///////////////////Multi Element//////////////////////
-            elementPanel = new ElementsPanel(this, 4, detectableElements);
-            add(elementPanel, BorderLayout.NORTH);
-            /////////////////////////////////////////////
+    protected void makeElementPanel(boolean multi) {
+        List<Element> detectableElements = new ArrayList<>(ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements());
+        if (multi) {
+            elementPanel = new ElementsPanel(owner, 4, detectableElements);
         } else {
             /////////////Solo Element//////////////////////
-            elementPanel = new ElementsPanel(this, 4);
-            add(elementPanel, BorderLayout.SOUTH);
-
+            elementPanel = new ElementsPanel(owner, 4);
             StringBuilder builder = new StringBuilder();
             builder.append("Auto detectable element are: ");
             for (int i = 0; i < detectableElements.size(); i++) {
@@ -207,20 +212,39 @@ public class FormulaIDConfigPanel extends ConfigPanel {
             }
             elementAutoDetect = new JButton("Auto detect");
             elementAutoDetect.setToolTipText(builder.toString());
-            elementAutoDetect.addActionListener(this);
+            elementAutoDetect.addActionListener(e -> detectElements());
             elementAutoDetect.setEnabled(true);
             elementPanel.lowerPanel.add(elementAutoDetect);
-            /////////////////////////////////////////////
         }
-
-        return elementPanel;
+        elementPanel.setBorder(BorderFactory.createEmptyBorder(0,GuiUtils.LARGE_GAP,0,0));
     }
 
-    public void enableElementSelection(boolean enabled) {
-        elementPanel.enableElementSelection(enabled);
-        if (elementAutoDetect != null)
-            elementAutoDetect.setEnabled(enabled);
+    protected void detectElements() {
+        String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
+        InstanceBean ec = ecs.get(0);
+        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
+            final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
+            ProcessedInput pi = pp.preprocess(ec.getExperiment());
+
+            pi.getAnnotation(FormulaConstraints.class).
+                    ifPresentOrElse(c -> {
+                                final Set<Element> pe = pp.getSetOfPredictableElements();
+                                for (Element element : c.getChemicalAlphabet()) {
+                                    if (!pe.contains(element)) {
+                                        c.setLowerbound(element, 0);
+                                        c.setUpperbound(element, 0);
+                                    }
+                                }
+                                elementPanel.setSelectedElements(c);
+                            },
+                            () -> new ExceptionDialog(owner, notWorkingMessage)
+                    );
+
+        } else {
+            new ExceptionDialog(owner, notWorkingMessage);
+        }
     }
+
 
     @Override
     public void setEnabled(boolean enabled) {
@@ -231,6 +255,7 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         ppmSpinner.setEnabled(enabled);
         candidatesSpinner.setEnabled(enabled);
         candidatesPerIonSpinner.setEnabled(enabled);
+        restrictToOrganics.setEnabled(enabled);
     }
 
     public Instrument getInstrument() {
