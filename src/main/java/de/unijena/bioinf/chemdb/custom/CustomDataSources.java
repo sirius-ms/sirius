@@ -166,7 +166,7 @@ public class CustomDataSources {
         if (s == null) {
             int bitIndex = bits.nextClearBit(lastEnumBit);
             bits.set(bitIndex);
-            long flag = 1 << bitIndex;
+            long flag = 1L << bitIndex;
             Source r = new CustomSource(flag, name);
             SOURCE_MAP.put(name, r);
             notifyListeners(Collections.singleton(r.name()));
