@@ -51,6 +51,6 @@ public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId
     public boolean contains(FormulaResultId fid) {
         if (!fid.getParentId().getDirectoryName().equals(getId().getDirectoryName()))
             return false;
-        return false;
+        return results.containsKey(fid.fileName());
     }
 }
