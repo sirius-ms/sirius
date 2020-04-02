@@ -2,16 +2,16 @@ package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.annotations.WriteSummaries;
-import de.unijena.bioinf.projectspace.InstanceImporter;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.*;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -129,18 +129,36 @@ public class ProjectSpaceWorkflow implements Workflow {
                     InputFilesOptions input = rootOptions.getInput();
 
                     // if the output project is also part of the input, we have to filter it also
-                    if (space.size() > 0 && input.msInput.projects.contains(space.projectSpace().getLocation())) {
+                    if (space.size() > 0 && input == null || input.msInput.projects.contains(space.projectSpace().getLocation())) {
                         space.projectSpace().filteredIterator(c -> !cidFilter.test(c)).forEachRemaining(id -> {
                             try {
                                 space.projectSpace().deleteCompound(id);
+                                LoggerFactory.getLogger(getClass()).error("Deleting: " + id.getDirectoryName());
                             } catch (IOException e) {
                                 LoggerFactory.getLogger(getClass()).error("Could not delete Instance with ID: " + id.getDirectoryName());
                             }
                         });
                     }
 
+
                     new InstanceImporter(space, expFilter, cidFilter, projecSpaceOptions.move)
                             .doImport(input);
+
+
+                    if (projecSpaceOptions.repairScores)
+                        space.forEach(instance -> {
+                            instance.loadFormulaResults(FormulaScoring.class, FBCandidates.class).forEach(res -> {
+                                if (res.getCandidate().getAnnotation(FormulaScoring.class).map(s -> (s.hasAnnotation(TopCSIScore.class) || s.hasAnnotation(ConfidenceScore.class))).orElse(false)) {
+                                    if (!res.getCandidate().hasAnnotation(FBCandidates.class)) {
+                                        LoggerFactory.getLogger(getClass()).info("Repairing score file of: " + res.getCandidate().getId());
+                                        res.getCandidate().getAnnotationOrThrow(FormulaScoring.class).removeAnnotation(TopCSIScore.class);
+                                        res.getCandidate().getAnnotationOrThrow(FormulaScoring.class).removeAnnotation(ConfidenceScore.class);
+                                        instance.updateFormulaResult(res.getCandidate(), FormulaScoring.class);
+                                    }
+                                }
+                            });
+                        });
+
 
                     if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
                         LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of '" + space.projectSpace().getLocation().toString());
