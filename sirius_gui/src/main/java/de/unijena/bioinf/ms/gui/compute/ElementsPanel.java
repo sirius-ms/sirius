@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ms.gui.utils.SliderWithTextField;
+import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +17,7 @@ import java.util.List;
 /**
  * Created by Marcus Ludwig on 12.01.17.
  */
-public class ElementsPanel extends JPanel implements ActionListener {
+public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener {
 
     private Window owner;
 
@@ -42,6 +43,7 @@ public class ElementsPanel extends JPanel implements ActionListener {
     }
 
     public ElementsPanel(Window owner, int columns, Collection<Element> detectableElements){
+        super("Elements allowed in Molecular Formula");
         this.owner = owner;
         this.individualAutoDetect = (detectableElements!=null);
         if (individualAutoDetect){
@@ -49,9 +51,6 @@ public class ElementsPanel extends JPanel implements ActionListener {
         }
 
         periodicTable = PeriodicTable.getInstance();
-
-        this.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Elements allowd in Molecular Formula"));
-        this.setLayout(new BoxLayout(this,BoxLayout.LINE_AXIS));
 
         mainP = new JPanel();
         mainP.setLayout(new BoxLayout(mainP,BoxLayout.Y_AXIS));

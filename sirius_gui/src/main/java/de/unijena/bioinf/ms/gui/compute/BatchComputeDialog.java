@@ -18,8 +18,6 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
@@ -32,15 +30,16 @@ import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.*;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
+import de.unijena.bioinf.ms.gui.dialogs.WorkerWarningDialog;
 import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.sirius.Ms1Preprocessor;
-import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -52,8 +51,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
@@ -97,11 +98,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         // set list of detectable elements
         this.sirius = ApplicationCore.SIRIUS_PROVIDER.sirius();
-        List<Element> detectableElements = new ArrayList<>(sirius.getMs1Preprocessor().getSetOfPredictableElements());
-        detectableElements.sort(Comparator.naturalOrder());
 
 
-        formulaIDConfigPanel = new ActFormulaIDConfigPanel(compoundsToProcess);
+        formulaIDConfigPanel = new ActFormulaIDConfigPanel(this, compoundsToProcess);
         addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
 
@@ -121,7 +120,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         //The North
         if (compoundsToProcess.size() == 1)
-            initSingleExperimentDialog(detectableElements);
+            initSingleExperimentDialog();
 
         /////////////////////////////////////////////////////////
         //The South
@@ -198,30 +197,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             if (editPanel != null && compoundsToProcess.size() == 1)
                 saveEdits(compoundsToProcess.get(0));
             startComputing();
-        } else if (e.getSource() == elementAutoDetect) {
-            String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
-            InstanceBean ec = compoundsToProcess.get(0);
-            if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
-                final Ms1Preprocessor pp = sirius.getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(ec.getExperiment());
-
-                pi.getAnnotation(FormulaConstraints.class).
-                        ifPresentOrElse(c -> {
-                                    final Set<Element> pe = pp.getSetOfPredictableElements();
-                                    for (Element element : c.getChemicalAlphabet()) {
-                                        if (!pe.contains(element)) {
-                                            c.setLowerbound(element, 0);
-                                            c.setUpperbound(element, 0);
-                                        }
-                                    }
-                                    elementPanel.setSelectedElements(c);
-                                },
-                                () -> new ExceptionDialog(this, notWorkingMessage)
-                        );
-
-            } else {
-                new ExceptionDialog(this, notWorkingMessage);
-            }
         }
     }
 
@@ -297,7 +272,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     configs.add("--MS2MassDeviation.allowedMassDeviation=" + ppm + "ppm");
 
                     configs.add("--FormulaSearchDB=" + (searchableDatabase != null ? searchableDatabase.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) : "none"));
-                    configs.add("--StructureSearchDB=" + csiOptions.dbSelectionOptions.getDb().name());
+//                    configs.add("--StructureSearchDB=" + csiOptions.dbSelectionOptions.getDb().name()); //todo solve
 
 
 
@@ -392,7 +367,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         return this.success;
     }
 
-    public void initSingleExperimentDialog(List<Element> detectableElements) {
+    public void initSingleExperimentDialog() {
         JPanel north = new JPanel(new BorderLayout());
 
         InstanceBean ec = compoundsToProcess.get(0);
