@@ -247,7 +247,7 @@ public class CustomDatabaseImporter {
                 api.consumeRestDB(DataSource.ALL.flag(), new File("."), db -> {
                     try {
                         for (FingerprintCandidate fc : db.lookupManyFingerprintsByInchis(dict.keySet())) {
-                            CustomDatabase.logger.info(fc.getInchiKey2D() + " downloaded");
+                            CustomDatabase.logger.info(fc.getInchi().in2D + " downloaded");
                             dict.get(fc.getInchiKey2D()).candidate = fc;
                         }
                     } catch (ChemicalDatabaseException e) {
@@ -356,7 +356,7 @@ public class CustomDatabaseImporter {
                 molecule.smiles = new Smiles(smilesGen.create(molecule.container));
             }
 
-            CustomDatabase.logger.info("Compute fingerprint for " + inchi.key2D());
+            CustomDatabase.logger.info("Compute fingerprint for " + inchi.in2D);
             final ArrayFingerprint fps = fingerprinter.computeFingerprintFromSMILES(molecule.smiles.smiles);
 
             final FingerprintCandidate fc = new FingerprintCandidate(inchi, fps);
