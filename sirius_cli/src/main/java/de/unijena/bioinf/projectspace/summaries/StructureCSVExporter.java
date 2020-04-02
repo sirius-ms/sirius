@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.projectspace.FormulaResultId;
