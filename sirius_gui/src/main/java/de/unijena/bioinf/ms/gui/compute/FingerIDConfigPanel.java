@@ -54,7 +54,7 @@ public class FingerIDConfigPanel extends ConfigPanel {
         }*/
 
         // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Search in:");
+        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Search in DBs:");
         GuiUtils.assignParameterToolTip(searchDBList, "StructureSearchDB");
         parameterBindings.put("StructureSearchDB", () -> getStructureSearchDBs().stream().map(SearchableDatabase::name).
                 collect(Collectors.joining(",")));

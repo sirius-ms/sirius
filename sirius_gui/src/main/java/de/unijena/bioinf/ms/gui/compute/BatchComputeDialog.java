@@ -78,7 +78,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     private MainFrame owner;
     List<InstanceBean> compoundsToProcess;
 
-    private Sirius sirius;
     private boolean success;
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
@@ -94,10 +93,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         mainPanel = Box.createVerticalBox();
         add(mainPanel, BorderLayout.CENTER);
         //mainpanel done
-
-
-        // set list of detectable elements
-        this.sirius = ApplicationCore.SIRIUS_PROVIDER.sirius();
 
 
         formulaIDConfigPanel = new ActFormulaIDConfigPanel(this, compoundsToProcess);
@@ -116,7 +111,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         addConfigPanel("CSI:FingerID - Structure Elucidation", csiConfigs);
 
         canopusConfigPanel = new ActCanopusConfigPanel();
-        addConfigPanel("CANOPUS - De novo compound class prediction", canopusConfigPanel);
+        addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel);
 
         //The North
         if (compoundsToProcess.size() == 1)
@@ -170,13 +165,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                 }
             });
         }
-
-
         pack();
         setResizable(false);
         setLocationRelativeTo(getParent());
         setVisible(true);
-
     }
 
 
@@ -211,22 +203,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
     private void startComputing() {
         if (recompute.isSelected()) {
-            boolean isSuccsess = true;
+            boolean recompute = false;
             if (!PropertyManager.getBoolean(DONT_ASK_RECOMPUTE_KEY, false) && this.compoundsToProcess.size() > 1) {
                 QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
-                isSuccsess = questionDialog.isSuccess();
+                recompute = questionDialog.isSuccess();
             }
-
-            //reset status of already computed values to uncomputed if needed
-            /*if (isSuccsess) {
-                final Iterator<InstanceBean> compounds = this.compoundsToProcess.iterator();
-                while (compounds.hasNext()) {
-                    final InstanceBean ec = compounds.next();
-                    ec.setSiriusComputeState(ComputingStatus.UNCOMPUTED);
-                    ec.setBestHit(null);
-                    ec.getMs2Experiment().clearAllAnnotations();
-                }
-            }*/
             //todo implement compute state handling
         }
 
@@ -234,11 +215,11 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         checkConnection();
 
         //collect job parameter from view
-        final FormulaIDConfigPanel.Instrument instrument = formulaIDConfigPanel.content.getInstrument();
-        final List<SearchableDatabase> searchableDatabase = formulaIDConfigPanel.content.getFormulaSearchDBs();
+//        final FormulaIDConfigPanel.Instrument instrument = formulaIDConfigPanel.content.getInstrument();
+//        final List<SearchableDatabase> searchableDatabase = formulaIDConfigPanel.content.getFormulaSearchDBs();
 
-        final double ppm = formulaIDConfigPanel.content.getPpm();
-        final int candidates = formulaIDConfigPanel.content.getNumOfCandidates();
+//        final double ppm = formulaIDConfigPanel.content.getPpm();
+//        final int candidates = formulaIDConfigPanel.content.getNumOfCandidates();
         ////////////////////////////////////////////////////////////////
 
         // CHECK ILP SOLVER
@@ -303,38 +284,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     e.printStackTrace();
                 }
 
-
-                        /*//prepare input data for identication
-                        PrepareSiriusIdentificationInputJob prepareJob = new PrepareSiriusIdentificationInputJob(
-                                ec,
-                                instrument,
-                                ppm,
-                                searchProfilePanel.restrictToOrganics(),
-                                searchableDatabase,
-                                new FormulaConstraints(constraints),
-                                Collections.unmodifiableList(elementsToAutoDetect),
-                                searchProfilePanel.getPossibleIonModes(),
-                                csiOptions.getPossibleAdducts()
-                        );
-                        Jobs.submit(prepareJob);*/
-
-                      /*  SiriusIdentificationGuiJob identificationJob = null;
-                        if (!ec.isComputed()) {
-                            identificationJob = new SiriusIdentificationGuiJob(instrument.profile, candidates, ec);
-                            identificationJob.addRequiredJob(prepareJob);
-                            Jobs.submit(identificationJob);
-                        }*/
-
-                        /*if (csiOptions.isCSISelected() && ec.getBestHit() == null) {
-                            FingerIDSearchGuiJob fingeridJob = new FingerIDSearchGuiJob(csiOptions.dbSelectionOptions.getDb(), ec);
-                            fingeridJob.addRequiredJob(identificationJob);
-                            fingeridJob.addRequiredJob(prepareJob);
-                            Jobs.submit(fingeridJob);
-                        }*/
-//                    }
-
                 updateProgress(0, 1, 1, "DONE!");
-//                }
                 return true;
             }
         });
