@@ -27,7 +27,7 @@ public class AdductSettings implements Ms2ExperimentAnnotation {
      * @param fallback   Fallback ion modes which are considered if the auto detection did not find any indication for an ion mode.
      */
     @DefaultInstanceProvider
-    public static AdductSettings newInstance(@DefaultProperty Set<PrecursorIonType> enforced, @DefaultProperty Set<PrecursorIonType> detectable, @DefaultProperty Set<PrecursorIonType> fallback) {
+    public static AdductSettings newInstance(@DefaultProperty(propertyKey = "enforced") Set<PrecursorIonType> enforced, @DefaultProperty(propertyKey = "detectable") Set<PrecursorIonType> detectable, @DefaultProperty(propertyKey = "fallback") Set<PrecursorIonType> fallback) {
         return new AdductSettings(enforced, detectable, fallback);
     }
 
