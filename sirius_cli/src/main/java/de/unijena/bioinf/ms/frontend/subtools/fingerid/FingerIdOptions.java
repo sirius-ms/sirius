@@ -37,8 +37,9 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
         defaultConfigOptions.changeOption("StructureSearchDB", dbList);
     }
 
-    //todo implement candidate number restriction in FingerIDJJob after confidence calculation
-    @Option(names = {"-c", "--candidates"}, descriptionKey = "NumberOfStructureCandidates", description = {"Number of molecular structure candidates in the output."})
+    //todo implement candidate number restriction in FingerIDJJob after confidence calculation?
+    //this would result in an projectspace where some score cannot be reconstructed form data anymore?
+    @Option(names = {"-c", "--candidates"}, descriptionKey = "NumberOfStructureCandidates", hidden = true, description = {"Number of molecular structure candidates in the output."})
     public void setNumberOfCandidates(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("NumberOfStructureCandidates", value);
     }

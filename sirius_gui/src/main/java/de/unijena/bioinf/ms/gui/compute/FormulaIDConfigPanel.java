@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
@@ -86,21 +87,9 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         final JPanel center = applyDefaultLayout(new JPanel());
         add(center);
 
-        // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Consider only formulas in:");
-        GuiUtils.assignParameterToolTip(searchDBList, "FormulaSearchDB");
-        center.add(searchDBList);
-        parameterBindings.put("FormulaSearchDB", () -> getFormulaSearchDBs().stream().map(SearchableDatabase::name).
-                collect(Collectors.joining(",")));
-
-        //configure ionization panels
-        ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations", "Set possible ionisation for data with unknown ionization");
-        ionizationList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
-        center.add(ionizationList);
-
         // configure small stuff panel
         final TwoColumnPanel smallParameters = new TwoColumnPanel();
-        center.add(new TextHeaderBoxPanel("Parameters", smallParameters));
+        center.add(new TextHeaderBoxPanel("General", smallParameters));
 
         Vector<Instrument> instruments = new Vector<>();
         Collections.addAll(instruments, Instrument.values());
@@ -112,7 +101,7 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
                 PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
                 0.25, 20, 0.25, m -> m.getNumber().doubleValue() + "ppm");
-        smallParameters.addNamed("Ms2MassDev (ppm)", ppmSpinner);
+        smallParameters.addNamed("MS2 MassDev (ppm)", ppmSpinner);
 
         candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
         smallParameters.addNamed("Candidates", candidatesSpinner);
@@ -120,7 +109,7 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
         smallParameters.addNamed("Candidates per Ion", candidatesPerIonSpinner);
 
-        restrictToOrganics = new JCheckBox();
+        restrictToOrganics = new JCheckBox(); //todo implement parameter?? or has constraint?
         GuiUtils.assignParameterToolTip(restrictToOrganics, "RestrictToOrganics");
         parameterBindings.put("RestrictToOrganics", () -> String.valueOf(restrictToOrganics.isSelected()));
         smallParameters.addNamed("Restrict to organics", restrictToOrganics);
@@ -132,6 +121,17 @@ public class FormulaIDConfigPanel extends ConfigPanel {
             ppmSpinner.setValue(recommendedPPM);
         });
 
+        // configure database to search list
+        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Consider only formulas in DBs:");
+        GuiUtils.assignParameterToolTip(searchDBList, "FormulaSearchDB");
+        center.add(searchDBList);
+        parameterBindings.put("FormulaSearchDB", () -> getFormulaSearchDBs().stream().map(SearchableDatabase::name).
+                collect(Collectors.joining(",")));
+
+        //configure ionization panels
+        ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations", "Set possible ionisation for data with unknown ionization");
+        ionizationList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
+        center.add(ionizationList);
 
         // configure Element panel
         makeElementPanel(ecs.size() > 1);
@@ -215,40 +215,28 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
         InstanceBean ec = ecs.get(0);
         if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
-            final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-            ProcessedInput pi = pp.preprocess(ec.getExperiment());
+            Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
+                final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
+                ProcessedInput pi = pp.preprocess(ec.getExperiment());
 
-            pi.getAnnotation(FormulaConstraints.class).
-                    ifPresentOrElse(c -> {
-                                final Set<Element> pe = pp.getSetOfPredictableElements();
-                                for (Element element : c.getChemicalAlphabet()) {
-                                    if (!pe.contains(element)) {
-                                        c.setLowerbound(element, 0);
-                                        c.setUpperbound(element, 0);
+                pi.getAnnotation(FormulaConstraints.class).
+                        ifPresentOrElse(c -> {
+                                    final Set<Element> pe = pp.getSetOfPredictableElements();
+                                    for (Element element : c.getChemicalAlphabet()) {
+                                        if (!pe.contains(element)) {
+                                            c.setLowerbound(element, 0);
+                                            c.setUpperbound(element, 0);
+                                        }
                                     }
-                                }
-                                elementPanel.setSelectedElements(c);
-                            },
-                            () -> new ExceptionDialog(owner, notWorkingMessage)
-                    );
+                                    elementPanel.setSelectedElements(c);
+                                },
+                                () -> new ExceptionDialog(owner, notWorkingMessage)
+                        );
+            }).getResult();
         } else {
             new ExceptionDialog(owner, notWorkingMessage);
         }
     }
-
-
-    /*@Override
-    public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
-        ionizationList.setEnabled(enabled);
-        searchDBList.setEnabled(enabled);
-        profileSelector.setEnabled(enabled);
-        ppmSpinner.setEnabled(enabled);
-        candidatesSpinner.setEnabled(enabled);
-        candidatesPerIonSpinner.setEnabled(enabled);
-        restrictToOrganics.setEnabled(enabled);
-        GuiUtils.setEnabled(elementPanel.getBody(), enabled);
-    }*/
 
     public Instrument getInstrument() {
         return (Instrument) profileSelector.getSelectedItem();
