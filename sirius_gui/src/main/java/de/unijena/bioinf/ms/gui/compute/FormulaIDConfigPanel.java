@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -14,6 +15,7 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
@@ -63,11 +65,10 @@ public class FormulaIDConfigPanel extends ConfigPanel {
     protected final JCheckboxListPanel<String> ionizationList;
     protected final JCheckboxListPanel<SearchableDatabase> searchDBList;
     protected final JComboBox<Instrument> profileSelector;
-    protected final SpinnerNumberModel ppm, candidates, candidatesPerIon;
     protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner;
     protected final JCheckBox restrictToOrganics;
     protected ElementsPanel elementPanel;
-    protected JButton elementAutoDetect;
+//    protected JButton elementAutoDetect;
 
 
     protected final List<InstanceBean> ecs;
@@ -108,31 +109,15 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         parameterBindings.put("AlgorithmProfile", () -> getInstrument().name);
         smallParameters.addNamed("Instrument", profileSelector);
 
-
-        ppm = new SpinnerNumberModel(10, 0.25, 20, 0.25);
-        ppmSpinner = new JSpinner(this.ppm);
-        ppmSpinner.setMinimumSize(new Dimension(70, 26));
-        ppmSpinner.setPreferredSize(new Dimension(70, 26));
-        GuiUtils.assignParameterToolTip(ppmSpinner, "MS2MassDeviation.allowedMassDeviation");
-        parameterBindings.put("MS2MassDeviation.allowedMassDeviation", () -> String.valueOf(getPpm()));
+        ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
+                PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
+                0.25, 20, 0.25, m -> m.getNumber().doubleValue() + "ppm");
         smallParameters.addNamed("Ms2MassDev (ppm)", ppmSpinner);
 
-
-        candidates = new SpinnerNumberModel(10, 1, 10000, 1);
-        candidatesSpinner = new JSpinner(candidates);
-        candidatesSpinner.setMinimumSize(new Dimension(70, 26));
-        candidatesSpinner.setPreferredSize(new Dimension(70, 26));
-        GuiUtils.assignParameterToolTip(candidatesSpinner, "NumberOfCandidates");
-        parameterBindings.put("NumberOfCandidates", () -> String.valueOf(getNumOfCandidates()));
+        candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
         smallParameters.addNamed("Candidates", candidatesSpinner);
 
-
-        candidatesPerIon = new SpinnerNumberModel(0, 0, 10000, 1);
-        candidatesPerIonSpinner = new JSpinner(candidates);
-        candidatesPerIonSpinner.setMinimumSize(new Dimension(70, 26));
-        candidatesPerIonSpinner.setPreferredSize(new Dimension(70, 26));
-        GuiUtils.assignParameterToolTip(candidatesPerIonSpinner, "NumberOfCandidatesPerIon");
-        parameterBindings.put("NumberOfCandidatesPerIon", () -> String.valueOf(getNumOfCandidatesPerIon()));
+        candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
         smallParameters.addNamed("Candidates per Ion", candidatesPerIonSpinner);
 
         restrictToOrganics = new JCheckBox();
@@ -161,14 +146,6 @@ public class FormulaIDConfigPanel extends ConfigPanel {
                     elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
         }); //todo check if this makes scence
 
-        //enable disable element panel if db is selected
-        searchDBList.checkBoxList.addListSelectionListener(e -> {
-            final List<SearchableDatabase> source = getFormulaSearchDBs();
-            //todo does this make scence
-            elementPanel.enableElementSelection(source == null || source.isEmpty());
-            if (elementAutoDetect != null)
-                elementAutoDetect.setEnabled(source == null || source.isEmpty());
-        });
 
         refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()));
     }
@@ -201,6 +178,11 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         List<Element> detectableElements = new ArrayList<>(ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements());
         if (multi) {
             elementPanel = new ElementsPanel(owner, 4, detectableElements);
+            searchDBList.checkBoxList.addListSelectionListener(e -> {
+                final List<SearchableDatabase> source = getFormulaSearchDBs();
+                //todo does this make scence
+                elementPanel.enableElementSelection(source == null || source.isEmpty());
+            });
         } else {
             /////////////Solo Element//////////////////////
             elementPanel = new ElementsPanel(owner, 4);
@@ -210,13 +192,23 @@ public class FormulaIDConfigPanel extends ConfigPanel {
                 if (i != 0) builder.append(", ");
                 builder.append(detectableElements.get(i).getSymbol());
             }
-            elementAutoDetect = new JButton("Auto detect");
+            final JButton elementAutoDetect = new JButton("Auto detect");
             elementAutoDetect.setToolTipText(builder.toString());
             elementAutoDetect.addActionListener(e -> detectElements());
             elementAutoDetect.setEnabled(true);
             elementPanel.lowerPanel.add(elementAutoDetect);
+
+            //enable disable element panel if db is selected
+            searchDBList.checkBoxList.addListSelectionListener(e -> {
+                final List<SearchableDatabase> source = getFormulaSearchDBs();
+                //todo does this make scence
+                elementPanel.enableElementSelection(source == null || source.isEmpty());
+                elementAutoDetect.setEnabled(source == null || source.isEmpty());
+            });
         }
         elementPanel.setBorder(BorderFactory.createEmptyBorder(0,GuiUtils.LARGE_GAP,0,0));
+
+
     }
 
     protected void detectElements() {
@@ -239,14 +231,13 @@ public class FormulaIDConfigPanel extends ConfigPanel {
                             },
                             () -> new ExceptionDialog(owner, notWorkingMessage)
                     );
-
         } else {
             new ExceptionDialog(owner, notWorkingMessage);
         }
     }
 
 
-    @Override
+    /*@Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         ionizationList.setEnabled(enabled);
@@ -256,22 +247,23 @@ public class FormulaIDConfigPanel extends ConfigPanel {
         candidatesSpinner.setEnabled(enabled);
         candidatesPerIonSpinner.setEnabled(enabled);
         restrictToOrganics.setEnabled(enabled);
-    }
+        GuiUtils.setEnabled(elementPanel.getBody(), enabled);
+    }*/
 
     public Instrument getInstrument() {
         return (Instrument) profileSelector.getSelectedItem();
     }
 
     public double getPpm() {
-        return ppm.getNumber().doubleValue();
+        return ((SpinnerNumberModel) ppmSpinner.getModel()).getNumber().doubleValue();
     }
 
     public int getNumOfCandidates() {
-        return candidates.getNumber().intValue();
+        return ((SpinnerNumberModel) candidatesSpinner.getModel()).getNumber().intValue();
     }
 
     public int getNumOfCandidatesPerIon() {
-        return candidatesPerIon.getNumber().intValue();
+        return ((SpinnerNumberModel) candidatesPerIonSpinner.getModel()).getNumber().intValue();
     }
 
     public List<SearchableDatabase> getFormulaSearchDBs() {

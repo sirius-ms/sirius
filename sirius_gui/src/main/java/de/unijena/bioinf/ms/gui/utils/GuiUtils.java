@@ -6,7 +6,6 @@ package de.unijena.bioinf.ms.gui.utils;
  */
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +25,7 @@ public class GuiUtils {
 
 
     public static void initUI() {
-        //load nimbus look and feel, befor mainframe is built
+        //load nimbus look and feel, before mainframe is built
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -126,12 +125,21 @@ public class GuiUtils {
         }
     }
 
-    public static boolean assignParameterToolTip(@NotNull final JComponent comp, @NotNull String parameterKey){
+    public static boolean assignParameterToolTip(@NotNull final JComponent comp, @NotNull String parameterKey) {
         parameterKey = PropertyManager.DEFAULTS.shortKey(parameterKey);
-        if(PropertyManager.DEFAULTS.getConfigValue(parameterKey) != null){
+        if (PropertyManager.DEFAULTS.getConfigValue(parameterKey) != null) {
             comp.setToolTipText(PropertyManager.DEFAULTS.getConfigDescription(parameterKey) + "\nCommandline: 'CONFIG --" + parameterKey + "'");
             return true;
         }
         return false;
+    }
+
+    public static void setEnabled(Component component, boolean enabled) {
+        component.setEnabled(enabled);
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                setEnabled(child, enabled);
+            }
+        }
     }
 }

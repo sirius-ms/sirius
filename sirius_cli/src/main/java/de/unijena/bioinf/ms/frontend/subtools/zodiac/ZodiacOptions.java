@@ -59,16 +59,16 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJ
     ///////////////////////
     //number of epochs///
     /////////////////////
-    @Option(names = "--iterations", descriptionKey = "ZodiacEdgeFilterThresholds.iterations",
+    @Option(names = "--iterations", descriptionKey = "ZodiacEpochs.iterations",
             description = {"Number of epochs to run the Gibbs sampling. When multiple Markov chains are computed, all chains' iterations sum up to this value."})
     public void setIterationSteps(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.iterations", value);
+        defaultConfigOptions.changeOption("ZodiacEpochs.iterations", value);
     }
 
-    @Option(names = "--burn-in", descriptionKey = "ZodiacEdgeFilterThresholds.burnInPeriod",
+    @Option(names = "--burn-in", descriptionKey = "ZodiacEpochs.burnInPeriod",
             description = {"Number of epochs considered as 'burn-in period'."})
     public void setBurnInSteps(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("ZodiacEdgeFilterThresholds.burnInPeriod", value);
+        defaultConfigOptions.changeOption("ZodiacEpochs.burnInPeriod", value);
     }
 
     @Option(names = "--separateRuns", hidden = true, descriptionKey = "ZodiacEdgeFilterThresholds.numberOfMarkovChains",

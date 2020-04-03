@@ -2,9 +2,12 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.function.Function;
 
 public abstract class ConfigPanel extends JPanel implements ParameterProvider {
     protected final ParameterBinding parameterBindings = new ParameterBinding();
@@ -24,5 +27,31 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
         rl.setAlignment(RelativeLayout.LEADING);
         pToStyle.setLayout(rl);
         return pToStyle;
+    }
+
+    public JSpinner makeIntParameterSpinner(@NotNull String parameterKey, double minimum, double maximum, double stepSize) {
+        return makeParameterSpinner(parameterKey, Integer.parseInt(PropertyManager.DEFAULTS.getConfigValue(parameterKey)), minimum, maximum, stepSize, m -> String.valueOf(m.getNumber().intValue()));
+    }
+
+    public JSpinner makeDoubleParameterSpinner(@NotNull String parameterKey, double minimum, double maximum, double stepSize) {
+        return makeParameterSpinner(parameterKey, Double.parseDouble(PropertyManager.DEFAULTS.getConfigValue(parameterKey)), minimum, maximum, stepSize, m -> String.valueOf(m.getNumber().doubleValue()));
+    }
+
+    public JSpinner makeParameterSpinner(@NotNull String parameterKey, double value, double minimum, double maximum, double stepSize, Function<SpinnerNumberModel, String> result) {
+        SpinnerNumberModel model = new SpinnerNumberModel(value, minimum, maximum, stepSize);
+        JSpinner spinner = new JSpinner(model);
+        spinner.setMinimumSize(new Dimension(70, 26));
+        spinner.setPreferredSize(new Dimension(70, 26));
+        GuiUtils.assignParameterToolTip(spinner, parameterKey);
+        parameterBindings.put(parameterKey, () -> result.apply(model));
+        return spinner;
+    }
+
+    public JCheckBox makeParameterCheckBox(@NotNull String parameterKey) {
+        JCheckBox cb = new JCheckBox();
+        cb.setEnabled(Boolean.parseBoolean(PropertyManager.DEFAULTS.getConfigValue(parameterKey)));
+        GuiUtils.assignParameterToolTip(cb, parameterKey);
+        parameterBindings.put(parameterKey, () -> String.valueOf(cb.isSelected()));
+        return cb;
     }
 }
