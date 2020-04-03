@@ -49,7 +49,7 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
             candidate.setPubmedIDs(PubmedLinks.fromString(row[8]));
 
             final List<DBLink> links = new ArrayList<>();
-            long bitset = 0;
+            long linkReconstructuredBitset = 0;
 
             for (String db : row[9].split(";")) {
                 Matcher matcher = dblinkPat.matcher(db);
@@ -62,17 +62,19 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
                     for (String dbId : ids.substring(1, ids.length() - 1).split(","))
                         links.add(new DBLink(dbName, dbId.trim()));
 
-                    bitset |= DataSources.getDBFlag(dbName);
+                    linkReconstructuredBitset |= DataSources.getDBFlag(dbName);
                 } else {
                     LoggerFactory.getLogger(getClass()).warn("Could not match DB link '" + db + "' Skipping this entry!");
                 }
             }
             candidate.setLinks(links.toArray(DBLink[]::new));
-            candidate.setBitset(bitset);
+
             if (row.length > 10 && row[10] != null && !row[10].isBlank() && !row[10].equals("N/A")) {
                 candidate.setTanimoto(Double.valueOf(row[10]));
             } else
                 candidate.setTanimoto(null);
+
+            candidate.setBitset(row.length > 11 && !row[11].isBlank() ? Long.parseLong(row[11]) : linkReconstructuredBitset);
 
             results.add(new Scored<>(candidate, score));
         });
@@ -86,7 +88,7 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
         final FBCandidates fingerblastResult = optFingeridResult.orElseThrow(() -> new IllegalArgumentException("Could not find FingerIdResult to write for ID: " + id));
 
         final String[] header = new String[]{
-                "inchikey2D", "inchi", "molecularFormula", "rank", "score", "name", "smiles", "xlogp", "PubMedIds", "links", "tanimotoSimilarity"
+                "inchikey2D", "inchi", "molecularFormula", "rank", "score", "name", "smiles", "xlogp", "PubMedIds", "links", "tanimotoSimilarity", "dbflags"
         };
         final String[] row = new String[header.length];
         final AtomicInteger ranking = new AtomicInteger(0);
@@ -103,6 +105,7 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
             row[8] = c.getPubmedIDs() != null ? c.getPubmedIDs().toString() : "";
             row[9] = c.getLinkedDatabases().asMap().entrySet().stream().map((k) -> k.getValue().isEmpty() ? k.getKey() : k.getKey() + ":(" + String.join(", ", k.getValue()) + ")").collect(Collectors.joining("; "));
             row[10] = c.getTanimoto() == null ? "N/A" : String.valueOf(c.getTanimoto());
+            row[11] = String.valueOf(c.getBitset());
             return row;
         })::iterator);
     }
