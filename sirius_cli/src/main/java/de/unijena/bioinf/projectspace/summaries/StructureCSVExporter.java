@@ -100,7 +100,7 @@ public class StructureCSVExporter {
         writer.write('\t');
         links(writer, dbMap);
         writer.write('\t');
-        writer.write(DataSources.getDataSourcesFromBitFlags(r.getCandidate().getBitset()).stream().sorted().collect(Collectors.joining(";")));
+        writer.write(String.valueOf(r.getCandidate().getBitset()));
         writer.write('\n');
     }
 
