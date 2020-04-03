@@ -22,7 +22,7 @@ public class FingerIDConfigPanel extends ConfigPanel {
 
     protected final JCheckboxListPanel<SearchableDatabase> searchDBList;
     public final JCheckboxListPanel<String> adductOptions;
-    private ToolbarToggleButton csiButton = null;
+//    private ToolbarToggleButton csiButton = null;
 
     public FingerIDConfigPanel(final JCheckBoxList<String> sourceIonization) {
 //        JPanel target = this;

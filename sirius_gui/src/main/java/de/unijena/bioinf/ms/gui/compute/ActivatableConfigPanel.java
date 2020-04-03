@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,7 @@ public abstract class ActivatableConfigPanel<C extends JComponent> extends TwoCo
     }
 
     protected void setComponentsEnabled(final boolean enabled){
-        content.setEnabled(enabled);
+        GuiUtils.setEnabled(content,enabled);
     }
 
 

@@ -1,17 +1,13 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 
 import javax.swing.*;
 
-public class ActZodiacConfigPanel extends ActivatableConfigPanel<JLabel> {
+public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPanel> {
 
     public ActZodiacConfigPanel() {
-        super("ZODIAC", Icons.NET_32, false, () ->  new JLabel("PLEASE ADD ME SOME Parameters"));
-    }
-
-    @Override
-    protected void setComponentsEnabled(boolean enabled) {
-        super.setComponentsEnabled(enabled);
+        super("ZODIAC", Icons.NET_32, false, ZodiacConfigPanel::new);
     }
 }
