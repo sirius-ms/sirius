@@ -34,9 +34,9 @@ public class PossibleAdductSwitches implements Ms2ExperimentAnnotation {
     private final static PossibleAdductSwitches DISABLED = new PossibleAdductSwitches(Collections.emptyMap());
 
     @DefaultInstanceProvider
-    protected static PossibleAdductSwitches fromListOfAdductsSwitches(@DefaultProperty List<String> adducts) {
+    protected static PossibleAdductSwitches fromListOfAdductsSwitches(@DefaultProperty List<String> value) {
         final HashMap<Ionization, Set<Ionization>> map = new HashMap<>();
-        for (String ad : adducts) {
+        for (String ad : value) {
             String[] parts = ad.split("\\s*(:|->)\\s*",2); //->,
             Ionization left = IonMode.fromString(parts[0]);
             Ionization right = IonMode.fromString(parts[1]);
