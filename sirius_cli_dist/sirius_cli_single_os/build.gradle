@@ -36,7 +36,11 @@ project.type.each { t ->
 
 /*################### Build distributions ################### */
 task distribute { group = 'distribution' }
-distribute.dependsOn ':buildDoku'
+
+task distributeWithDoc { group = 'distribution' }
+distributeWithDoc.dependsOn ':buildDoku'
+distributeWithDoc.dependsOn ':distribute'
+distribute.mustRunAfter ':buildDoku'
 
 distributions {
     project.arch.each { ar ->
