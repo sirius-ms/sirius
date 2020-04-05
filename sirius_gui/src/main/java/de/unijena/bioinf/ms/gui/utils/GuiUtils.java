@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
+import java.util.List;
 
 
 /**
@@ -141,5 +142,26 @@ public class GuiUtils {
                 setEnabled(child, enabled);
             }
         }
+    }
+
+
+    public static final int toolTipWidth = 500;
+
+    public static String formatToolTip(String... lines) {
+        return formatToolTip(toolTipWidth, lines);
+    }
+
+    public static String formatToolTip(java.util.List<String> lines) {
+        return formatToolTip(toolTipWidth, lines);
+    }
+
+    public static String formatToolTip(int width, String... lines) {
+        return formatToolTip(width, List.of(lines));
+    }
+
+    public static String formatToolTip(int width, java.util.List<String> lines) {
+        return "<html><p width=\"" + width + "\">"
+                + String.join("<br>", lines)
+                + "</p></html>";
     }
 }

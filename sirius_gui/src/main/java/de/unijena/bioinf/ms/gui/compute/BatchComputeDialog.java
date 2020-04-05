@@ -21,10 +21,8 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.Run;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
@@ -49,42 +47,35 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
-public class BatchComputeDialog extends JDialog implements ActionListener {
+public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
-
-    private JButton compute;
-    private JButton abort;
 
     private JCheckBox recompute;
 
     private Box mainPanel;
+
     private ExperimentEditPanel editPanel;
 
     private ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
-    private ActZodiacConfigPanel zodiacConfigs;
-    private ActFingerIDConfigPanel csiConfigs; //FingerIS configs
-    private ActCanopusConfigPanel canopusConfigPanel;
+    private ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
+    private ActFingerIDConfigPanel csiConfigs; //FingerID configs
+    private ActCanopusConfigPanel canopusConfigPanel; //Canopus configs
 
     private MainFrame owner;
     List<InstanceBean> compoundsToProcess;
-
-    private boolean success;
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
         super(owner, "compute", true);
         this.owner = owner;
         this.compoundsToProcess = compoundsToProcess;
-        this.success = false;
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -132,10 +123,10 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         if (compoundsToProcess.size() == 1) recompute.setSelected(true);
 
         JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        compute = new JButton("Compute");
-        compute.addActionListener(this);
-        abort = new JButton("Abort");
-        abort.addActionListener(this);
+        JButton compute = new JButton("Compute");
+        compute.addActionListener(e -> startComputing());
+        JButton abort = new JButton("Abort");
+        abort.addActionListener(e -> dispose());
         rsouthPanel.add(compute);
         rsouthPanel.add(abort);
 
@@ -181,17 +172,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         mainPanel.add(stack);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == abort) {
-            this.dispose();
-        } else if (e.getSource() == this.compute) {
-            if (editPanel != null && compoundsToProcess.size() == 1)
-                saveEdits(compoundsToProcess.get(0));
-            startComputing();
-        }
-    }
-
     private void abortComputing() {
         this.dispose();
     }
@@ -202,6 +182,9 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
     private void startComputing() {
+        if (editPanel != null && compoundsToProcess.size() == 1)
+            saveEdits(compoundsToProcess.get(0));
+
         if (recompute.isSelected()) {
             boolean recompute = false;
             if (!PropertyManager.getBoolean(DONT_ASK_RECOMPUTE_KEY, false) && this.compoundsToProcess.size() > 1) {
@@ -211,34 +194,33 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             //todo implement compute state handling
         }
 
-        //CHECK worker availability
-        checkConnection();
 
-        //collect job parameter from view
-//        final FormulaIDConfigPanel.Instrument instrument = formulaIDConfigPanel.content.getInstrument();
-//        final List<SearchableDatabase> searchableDatabase = formulaIDConfigPanel.content.getFormulaSearchDBs();
-
-//        final double ppm = formulaIDConfigPanel.content.getPpm();
-//        final int candidates = formulaIDConfigPanel.content.getNumOfCandidates();
-        ////////////////////////////////////////////////////////////////
-
-        // CHECK ILP SOLVER
-        TreeBuilder builder = new Sirius().getMs2Analyzer().getTreeBuilder();
-        if (builder == null) {
-            String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
-            LoggerFactory.getLogger(this.getClass()).error(noILPSolver);
-            new ErrorReportDialog(this, noILPSolver);
-            dispose();
-            return;
-        }
-        LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
 
 
         Jobs.runInBackgroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
             @Override
-            protected Object compute() throws InterruptedException {
-                updateProgress(0, 1, 0, "Configuring Computation...");
-                        checkForInterruption();
+            protected Boolean compute() throws InterruptedException {
+                updateProgress(0, 100, 0, "Configuring Computation...");
+                checkForInterruption();
+
+                // CHECK ILP SOLVER
+                TreeBuilder builder = new Sirius().getMs2Analyzer().getTreeBuilder();
+                if (builder == null) {
+                    String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
+                    LoggerFactory.getLogger(BatchComputeDialog.class).error(noILPSolver);
+                    new ErrorReportDialog(BatchComputeDialog.this, noILPSolver);
+                    dispose();
+                    return false;
+                }
+                LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
+                updateProgress(0, 100, 1, "ILP solver check DONE!");
+                checkForInterruption();
+
+                //CHECK worker availability
+                checkConnection();
+
+                updateProgress(0, 100, 2, "Connection check DONE!");
+                checkForInterruption();
 
                 try {
                     final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
@@ -246,45 +228,65 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                     Run computation = new Run(wfBuilder);
 
                     // create computation parameters
-                    List<String> configs = new ArrayList<>();
-                    configs.add("config");
+                    List<String> command = new ArrayList<>();
+                    command.add("--RecomputeResults=" + recompute.isSelected());
 
-                    configs.add("--AlgorithmProfile=" + instrument.profile);
-                    configs.add("--MS2MassDeviation.allowedMassDeviation=" + ppm + "ppm");
+                    command.add("config");
+                    if (formulaIDConfigPanel.isToolSelected()){
+                        command.add(formulaIDConfigPanel.content.toolCommand());
+                        command.addAll(formulaIDConfigPanel.asParameterList());
+                    }
 
-                    configs.add("--FormulaSearchDB=" + (searchableDatabase != null ? searchableDatabase.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) : "none"));
+                    if (zodiacConfigs.isToolSelected()){
+                        command.add(zodiacConfigs.content.toolCommand());
+                        command.addAll(zodiacConfigs.asParameterList());
+                    }
+
+                    if (csiConfigs.isToolSelected()){
+                        command.add(csiConfigs.content.toolCommand());
+                        command.addAll(csiConfigs.asParameterList());
+                    }
+
+                    if (canopusConfigPanel.isToolSelected()){
+                        command.add(canopusConfigPanel.content.toolCommand());
+                        command.addAll(canopusConfigPanel.asParameterList());
+                    }
+
+//                    configs.add("--AlgorithmProfile=" + instrument.profile);
+//                    configs.add("--MS2MassDeviation.allowedMassDeviation=" + ppm + "ppm");
+
+//                    configs.add("--FormulaSearchDB=" + (searchableDatabase != null ? searchableDatabase.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) : "none"));
 //                    configs.add("--StructureSearchDB=" + csiOptions.dbSelectionOptions.getDb().name()); //todo solve
 
 
 
 
-                    configs.add("--AdductSettings.enforced=" + csiConfigs.content.getSelectedAdducts().toString());
+//                    configs.add("--AdductSettings.enforced=" + csiConfigs.content.getSelectedAdducts().toString());
 
-                    configs.add("--NumberOfCandidates=" + candidates);
+//                    configs.add("--NumberOfCandidates=" + candidates);
 //                            configs.add("--NumberOfCandidatesPerIon=" + candidatesPerIon);
 //                            configs.add("--NumberOfStructureCandidates=" + structureCandidates);
 
-                    configs.add("--RecomputeResults=" + recompute.isSelected());
 
 
-                    configs.add("sirius");
+                    command.add("sirius");
 
 //                    if (zodiac)
 //                        configs.add("zodiac");
 
 
                     if (csiConfigs.isToolSelected())
-                        configs.add("fingerid");
+                        command.add("fingerid");
 
 //                    if (canopus)
 //                        configs.add("canopus");
-                    computation.parseArgs(configs.toArray(String[]::new));
+                    computation.parseArgs(command.toArray(String[]::new));
                     Jobs.runInBackground(computation::compute);//todo make som nice head job that does some organizing stuff
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-                updateProgress(0, 1, 1, "DONE!");
+                updateProgress(0, 100, 100, "Computation Configured!");
                 return true;
             }
         });
@@ -313,10 +315,6 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         }
     }
 
-    public boolean isSuccessful() {
-        return this.success;
-    }
-
     public void initSingleExperimentDialog() {
         JPanel north = new JPanel(new BorderLayout());
 
@@ -325,7 +323,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         editPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Edit Input Data"));
         north.add(editPanel, BorderLayout.NORTH);
 
-        //todo beging ugly hack --> we want to manage this by the edit panel instead and fire eit panel events
+        //todo beging ugly hack --> we want to manage this by the edit panel instead and fire edit panel events
         editPanel.formulaTF.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -366,7 +364,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
 //        searchProfilePanel.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()));
         editPanel.setData(ec);
-        ///////ugly hack end
+        /////// todo ugly hack end
         add(north, BorderLayout.NORTH);
     }
 
