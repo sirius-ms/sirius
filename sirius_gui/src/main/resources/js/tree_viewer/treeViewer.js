@@ -839,6 +839,8 @@ function colorCode(variant, scheme) {
         svg.select('#cb').remove();
         colorBar.remove();
     }
+    if (typeof(cb_label) != 'undefined')
+        cb_label.text('');
     if (typeof (scheme) == "string") {
         // Java, when executing this function, can not pass the function
         // objects, so it will have to use strings
@@ -897,8 +899,20 @@ function colorCode(variant, scheme) {
                                                            max]);
     colorBar = svg.append('g')
         .attr('id', 'cb')
-        .call(colorbarH(colorScale, 200, 10))
-        .attr('transform', 'translate(' + parseInt(width - 220) + ',10)');
+        .call(colorbarH(colorScale, cb_width, 10))
+        .attr('transform', 'translate(' + parseInt(width - cb_width - cb_pad_right)
+              + ',' + parseInt(cb_pad_top + 6) + ')');
+    // label for the colorbar
+    cb_label
+        .attr('transform', 'translate(' + parseInt(width - cb_width - cb_pad_right)
+              + ',' + parseInt(cb_pad_top) + ')')
+        .style('font-size', '12')
+        .style('font-family', 'sans-serif')
+        .text({md_mz: 'mass deviation in m/z',
+               md_mz_abs: 'mass deviation in mz (absolute)',
+               md_ppm: 'mass deviation in ppm',
+               md_ppm_abs: 'mass deviation in ppm (absolute)',
+               rel_int: 'relative intensity'}[variant]);
     max *= 1.5;           // avoid extreme coloring, e.g., black on dark red
     d3.selectAll('.node').selectAll('rect').
         transition(t).
@@ -927,6 +941,7 @@ function toggleEdgeLabels(state) {
 
 function toggleColorBar(state) {
     svg.select('#cb').style('opacity', state ? 100 : 0);
+    svg.select('#cb_label').style('opacity', state ? 100 : 0);
 }
 
 // generates d3 tree layout calculating node coordinates
@@ -1318,12 +1333,15 @@ var tree, node_map;
 
 // layout
 // Parameters
-var boxheight = 60;             // adapts to content
-var boxwidth = 130;
-var margin_left = 0;
-var margin_top = boxheight + 3;
-var lineheight = 13;
-var width, height;
+var width, height,
+    boxheight = 60,             // adapts to content
+    boxwidth = 130,
+    margin_left = 0,
+    margin_top = boxheight + 3,
+    lineheight = 13,
+    cb_width = 200,
+    cb_pad_right = 40,
+    cb_pad_top = 10;
 
 function calcLayout() {
     var window_width = window_use_inner?window.innerWidth:window.outerWidth;
@@ -1410,11 +1428,16 @@ function applyWindowSize() {
     d3.select('.overlay')
         .attr('width', width)
         .attr('height', height);
-    d3.select('#cb').attr('transform', 'translate(' + parseInt(width - 220) + ',10)');
+    d3.select('#cb')
+        .attr('transform', 'translate(' + parseInt(width - cb_width - cb_pad_right)
+              + ',' + parseInt(cb_pad_top + 6) + ')');
+    d3.select('#cb_label')
+        .attr('transform', 'translate(' + parseInt(width - cb_width - cb_pad_right)
+              + ',' + parseInt(cb_pad_top) + ')');
 }
 
 // DOM elements
-var svg, zoom_base, scale_base, popup_div, collapse_button, colorBar,
+var svg, zoom_base, scale_base, popup_div, cb_label, collapse_button, colorBar,
     zoom, currentZoom, brush, brush_g, tree_scale, tree_scale_min;
 svg = d3.select('body').append('svg')
     .attr('width', width).attr('height', height)
@@ -1442,6 +1465,10 @@ popup_div = d3.select('body').append('div')
     .style('font-family', 'sans-serif')
     .style('padding', '2px')
     .style('border-radius', '8px');
+
+cb_label = svg.append('text')
+    .attr('id', 'cb_label')
+    .attr('width', cb_width);
 
 var collapse_button_width, collapse_button_line_coords;
 function adjustCollapseButton(){
@@ -1479,19 +1506,19 @@ collapse_button
     .attr('id', 'collapse_line2')
     .style('stroke', 'red');
 
-svg.append("svg:defs").selectAll("marker")
-    .data(["end", "start"])
-    .enter().append("svg:marker")
-    .attr("id", String)
-    .attr("viewBox", "-10 -5 20 10")
-    .attr("refX", function (d, i) {return [10, -10][i];})
-    .attr("refY", -0)
-    .attr("markerWidth", 15)
-    .attr("markerHeight", 15)
-    .attr("orient", "auto")
-    .append("svg:path")
-    .attr("d", function(d, i){
-        return ["M0,-5L10,0L0,5", "M0,-5L-10,0L0,5"][i];
+svg.append('svg:defs').selectAll('marker')
+    .data(['end', 'start'])
+    .enter().append('svg:marker')
+    .attr('id', String)
+    .attr('viewBox', '-10 -5 20 10')
+    .attr('refX', function (d, i) {return [10, -10][i];})
+    .attr('refY', -0)
+    .attr('markerWidth', 15)
+    .attr('markerHeight', 15)
+    .attr('orient', 'auto')
+    .append('svg:path')
+    .attr('d', function(d, i){
+        return ['M0,-5L10,0L0,5', 'M0,-5L-10,0L0,5'][i];
     })
     .style('fill', 'blue');
 
