@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 
-public class ZodiacConfigPanel extends ConfigPanel {
+public class ZodiacConfigPanel extends SubToolConfigPanel {
 
     public ZodiacConfigPanel() {
         final TwoColumnPanel general = new TwoColumnPanel();

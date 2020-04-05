@@ -9,15 +9,20 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.function.Supplier;
 
-public abstract class ActivatableConfigPanel<C extends JComponent> extends TwoColumnPanel {
+public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoColumnPanel {
 
     protected ToolbarToggleButton activationButton;
     protected final String toolName;
     protected final C content;
 
-    public ActivatableConfigPanel(String toolname, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl ) {
+    public ActivatableConfigPanel(String toolname, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
+        this(toolname, null, buttonIcon, needsCSIConnection, contentSuppl);
+    }
+
+    public ActivatableConfigPanel(String toolname, String toolDescription, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
         super();
         this.toolName = toolname;
         this.content = contentSuppl.get();
@@ -26,6 +31,10 @@ public abstract class ActivatableConfigPanel<C extends JComponent> extends TwoCo
         activationButton.setPreferredSize(new Dimension(110, 60));
         activationButton.setMaximumSize(new Dimension(110, 60));
         activationButton.setMinimumSize(new Dimension(110, 60));
+        if (toolDescription != null)
+            activationButton.setToolTipText(toolDescription);
+        else if (content instanceof SubToolConfigPanel)
+            activationButton.setToolTipText(GuiUtils.formatToolTip(((SubToolConfigPanel<?>) content).toolDescription()));
         add(activationButton, content);
 
 
@@ -71,5 +80,11 @@ public abstract class ActivatableConfigPanel<C extends JComponent> extends TwoCo
     public boolean isToolSelected() {
         return activationButton == null || activationButton.isSelected();
     }
+
+    public List<String> asParameterList() {
+        return content.asParameterList();
+    }
+
+
 }
 

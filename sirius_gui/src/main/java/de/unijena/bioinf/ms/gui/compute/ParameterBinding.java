@@ -23,7 +23,7 @@ public class ParameterBinding extends HashMap<String, Supplier<String>> {
         final List<String> out = new ArrayList<>(size() * 2);
 
         forEach((k, v) -> {
-            out.add(k);
+            out.add("--" + k);
             out.add(v.get());
         });
 

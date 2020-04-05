@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * @author Marcus Ludwig, Markus Fleischauer
  * @since 12.01.17
  */
-public class FormulaIDConfigPanel extends ConfigPanel {
+public class FormulaIDConfigPanel extends SubToolConfigPanel {
     protected Logger logger = LoggerFactory.getLogger(FormulaIDConfigPanel.class);
 
     public enum Instrument {
