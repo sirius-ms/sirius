@@ -13,6 +13,8 @@ import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -127,9 +129,10 @@ public class GuiUtils {
     }
 
     public static boolean assignParameterToolTip(@NotNull final JComponent comp, @NotNull String parameterKey) {
-        parameterKey = PropertyManager.DEFAULTS.shortKey(parameterKey);
-        if (PropertyManager.DEFAULTS.getConfigValue(parameterKey) != null) {
-            comp.setToolTipText(PropertyManager.DEFAULTS.getConfigDescription(parameterKey) + "\nCommandline: 'CONFIG --" + parameterKey + "'");
+        final String parameterKeyShort = PropertyManager.DEFAULTS.shortKey(parameterKey);
+        if (PropertyManager.DEFAULTS.getConfigValue(parameterKeyShort) != null) {
+            PropertyManager.DEFAULTS.getConfigDescription(parameterKeyShort).ifPresent(des ->
+                    comp.setToolTipText(formatToolTip(Stream.concat(Stream.of(des), Stream.of("Commandline: 'CONFIG --" + parameterKeyShort + "'")).collect(Collectors.toList()))));
             return true;
         }
         return false;
@@ -156,12 +159,16 @@ public class GuiUtils {
     }
 
     public static String formatToolTip(int width, String... lines) {
+        if (lines == null)
+            return null;
         return formatToolTip(width, List.of(lines));
     }
 
     public static String formatToolTip(int width, java.util.List<String> lines) {
+        if (lines == null || lines.isEmpty())
+            return null;
         return "<html><p width=\"" + width + "\">"
-                + String.join("<br>", lines)
+                + lines.stream().map(it -> it.replace("\n", "<br>")).collect(Collectors.joining("<br>"))
                 + "</p></html>";
     }
 }

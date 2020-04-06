@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
  * @author Marcus Ludwig, Markus Fleischauer
  * @since 12.01.17
  */
-public class FormulaIDConfigPanel extends SubToolConfigPanel {
+public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected Logger logger = LoggerFactory.getLogger(FormulaIDConfigPanel.class);
 
     public enum Instrument {
@@ -78,7 +79,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel {
     protected final Dialog owner;
 
     public FormulaIDConfigPanel(Dialog owner, List<InstanceBean> ecs) {
-        super();
+        super(SiriusOptions.class);
         this.ecs = ecs;
         this.owner = owner;
 

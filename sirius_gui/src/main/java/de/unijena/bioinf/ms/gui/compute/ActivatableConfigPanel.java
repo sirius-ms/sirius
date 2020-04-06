@@ -47,7 +47,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
 
         activationButton.addActionListener(e -> {
             setComponentsEnabled(activationButton.isSelected());
-            activationButton.setToolTipText((activationButton.isSelected() ? "Disable " + this.toolName : "Enable " + this.toolName));
+            //todo do we want switch?
+            //            activationButton.setToolTipText((activationButton.isSelected() ? "Disable " + this.toolName : "Enable " + this.toolName));
         });
 
         activationButton.setSelected(false);
@@ -64,9 +65,10 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     }
 
     protected void setButtonEnabled(final boolean enabled, @Nullable String toolTip) {
-        activationButton.setToolTipText(toolTip != null ? toolTip :
-                (enabled ? "Enable " + toolName : toolName + " Not available!")
-        );
+//todo do we want switch?
+        //        activationButton.setToolTipText(toolTip != null ? toolTip :
+//                (enabled ? "Enable " + toolName : toolName + " Not available!")
+//        );
 
         if (enabled) {
             activationButton.setEnabled(true);
