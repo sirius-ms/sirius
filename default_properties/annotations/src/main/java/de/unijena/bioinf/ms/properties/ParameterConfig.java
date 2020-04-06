@@ -134,8 +134,10 @@ public final class ParameterConfig {
         return (PropertiesConfiguration) config.getConfiguration(localConfigName);
     }
 
-    public String getConfigDescription(String key) {
-        return layout.getComment(shortKey(key));
+    public Optional<String[]> getConfigDescription(String key) {
+        return Optional.ofNullable(layout.getComment(shortKey(key)))
+                .map(it -> Arrays.stream(it.split("\n"))
+                        .map(it2 -> it2.replaceFirst("^\\s*#\\s*", "")).toArray(String[]::new));
     }
 
     public String getConfigValue(@NotNull String key) {
