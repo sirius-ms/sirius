@@ -12,7 +12,7 @@ import javax.swing.*;
 
 public class ActCanopusConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<CanopusOptions>>{
     public ActCanopusConfigPanel() {
-        super("CANOPUS", "", Icons.BUG_32, true, () -> {
+        super("CANOPUS", Icons.BUG_32, true, () -> {
             SubToolConfigPanel<CanopusOptions> p =  new SubToolConfigPanel<>(CanopusOptions.class) {};
             p.add(new JLabel("Parameter-Free! Nothing to set up here. =)"));
 //            l.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));

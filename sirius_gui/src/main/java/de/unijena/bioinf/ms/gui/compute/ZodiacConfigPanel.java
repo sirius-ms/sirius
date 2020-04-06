@@ -1,11 +1,13 @@
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 
-public class ZodiacConfigPanel extends SubToolConfigPanel {
+public class ZodiacConfigPanel extends SubToolConfigPanel<ZodiacOptions> {
 
     public ZodiacConfigPanel() {
+        super(ZodiacOptions.class);
         final TwoColumnPanel general = new TwoColumnPanel();
         add(new TextHeaderBoxPanel("General", general));
         general.addNamed("Considered candidates", makeIntParameterSpinner("ZodiacNumberOfConsideredCandidates", -1, 10000, 1));

@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
  */
 
 //here we can show fingerid options. If it becomes to much, we can change this to a setting like tabbed pane
-public class FingerIDConfigPanel extends SubToolConfigPanel {
+public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
     //todo sync db selection with sirius panel
 
     protected final JCheckboxListPanel<SearchableDatabase> searchDBList;
@@ -24,6 +25,7 @@ public class FingerIDConfigPanel extends SubToolConfigPanel {
 //    private ToolbarToggleButton csiButton = null;
 
     public FingerIDConfigPanel(final JCheckBoxList<String> sourceIonization) {
+        super(FingerIdOptions.class);
 //        JPanel target = this;
 //        if (horizontal) {
            /* if (button) {
