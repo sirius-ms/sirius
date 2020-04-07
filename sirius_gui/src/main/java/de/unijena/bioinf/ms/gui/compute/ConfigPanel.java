@@ -49,7 +49,7 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
 
     public JCheckBox makeParameterCheckBox(@NotNull String parameterKey) {
         JCheckBox cb = new JCheckBox();
-        cb.setEnabled(Boolean.parseBoolean(PropertyManager.DEFAULTS.getConfigValue(parameterKey)));
+        cb.setSelected(Boolean.parseBoolean(PropertyManager.DEFAULTS.getConfigValue(parameterKey)));
         GuiUtils.assignParameterToolTip(cb, parameterKey);
         parameterBindings.put(parameterKey, () -> String.valueOf(cb.isSelected()));
         return cb;

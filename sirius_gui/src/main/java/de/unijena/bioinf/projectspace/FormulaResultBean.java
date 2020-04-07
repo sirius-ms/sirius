@@ -69,13 +69,13 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
         fingerprintListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
                 thenDo((event -> {
-                    FingerprintResult fpRes = (FingerprintResult) event.getAffectedComponent(FBCandidates.class).orElse(null);
+                    FingerprintResult fpRes = (FingerprintResult) event.getAffectedComponent(FingerprintResult.class).orElse(null);
                     pcs.firePropertyChange("fingerprint", null, fpRes);
                 })).register();
 
         fingerBlastListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
                 thenDo((event -> {
-                    FingerblastResult fbRes = (FingerblastResult) event.getAffectedComponent(FBCandidates.class).orElse(null);
+                    FBCandidates fbRes = (FBCandidates) event.getAffectedComponent(FBCandidates.class).orElse(null);
                     pcs.firePropertyChange("fingerblast", null, fbRes);
                 })).register();
 

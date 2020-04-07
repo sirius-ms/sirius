@@ -11,8 +11,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * Created by Marcus Ludwig on 12.01.17.
@@ -34,45 +34,48 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
     private JPanel mainP;
     public JPanel lowerPanel;
 
-    private Set<Element> detectableElements;
+    private Set<Element> possDetectableElements;
+    private Set<Element> enabledDetectableElements;
 
     private final PeriodicTable periodicTable;
 
-    public ElementsPanel(Window owner, int columns){
-        this(owner, columns, null);
+    public ElementsPanel(Window owner, int columns, FormulaConstraints enforcedElements) {
+        this(owner, columns, null, null, enforcedElements);
     }
 
-    public ElementsPanel(Window owner, int columns, Collection<Element> detectableElements){
+    public ElementsPanel(Window owner, int columns, Collection<Element> possibleDetectable, Collection<Element> enabledDetectable, FormulaConstraints enforced) {
         super("Elements allowed in Molecular Formula");
         this.owner = owner;
-        this.individualAutoDetect = (detectableElements!=null);
-        if (individualAutoDetect){
-            this.detectableElements = new HashSet<>(detectableElements);
+        this.individualAutoDetect = (possibleDetectable != null && enabledDetectable != null);
+        if (individualAutoDetect) {
+            this.possDetectableElements = new HashSet<>(possibleDetectable);
+            this.enabledDetectableElements = new HashSet<>(enabledDetectable);
         }
 
         periodicTable = PeriodicTable.getInstance();
 
         mainP = new JPanel();
-        mainP.setLayout(new BoxLayout(mainP,BoxLayout.Y_AXIS));
+        mainP.setLayout(new BoxLayout(mainP, BoxLayout.Y_AXIS));
         this.add(mainP);
 
-        elementsPanel = new JPanel(new GridLayout(0,columns));
+        elementsPanel = new JPanel(new GridLayout(0, columns));
         element2Slider = new HashMap<>();
 
+        enforced.getChemicalAlphabet().getElements().stream().filter(e -> !element2Slider.containsKey(e.getSymbol()))
+                .forEach(e -> addElementSlider(new ElementSlider(e, enforced.getLowerbound(e), enforced.getUpperbound(e))));
 
-        if (individualAutoDetect){
-            for (Element detectableElement : detectableElements) {
-                if (!element2Slider.containsKey(detectableElement.getSymbol())){
-                    ElementSlider elementSlider = new ElementSlider(detectableElement, 0, 0);
-                    addElementSlider(elementSlider);
-                }
-            }
+        if (individualAutoDetect) {
+            possibleDetectable.stream().filter(e -> !element2Slider.containsKey(e.getSymbol())).map(e -> new ElementSlider(e, 0, 0)).
+                    forEach(es -> {
+                        addElementSlider(es);
+                        es.setAutoDetectable(enabledDetectable.contains(es.element));
+                    });
         }
 
         for (int i = 0; i < additionalElementSymbols.length; i++) {
             String symbol = additionalElementSymbols[i];
             int count = additionalElementStartCounts[i];
-            if (!element2Slider.containsKey(symbol)){
+            if (!element2Slider.containsKey(symbol)) {
                 Element element = PeriodicTable.getInstance().getByName(symbol);
                 ElementSlider elementSlider = new ElementSlider(element, 0, count);
                 addElementSlider(elementSlider);
@@ -231,11 +234,11 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
             this.panel = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
             panel.add(slider);
             if (individualAutoDetect){
-                if (detectableElements.contains(element)){
+                if (possDetectableElements.contains(element)) {
                     checkBox = new JCheckBox();
                     checkBox.addActionListener(this);
                     panel.add(checkBox);
-                    setAutoDetectable(true);
+                    setAutoDetectable(enabledDetectableElements.contains(element));
                 }
             }
         }
@@ -258,10 +261,14 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
 
 
         void setEnabled(boolean enabled){
-            if (!isAutoDetectable()){
+            if (!isAutoDetectable()) {
                 panel.setEnabled(enabled);
                 slider.setEnabled(enabled);
+            } else {
+                panel.setEnabled(false);
+                slider.setEnabled(false);
             }
+
             if (checkBox!=null) checkBox.setEnabled(enabled);
         }
 

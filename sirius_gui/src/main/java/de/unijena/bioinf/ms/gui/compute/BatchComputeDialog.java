@@ -80,23 +80,16 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
-
         mainPanel = Box.createVerticalBox();
         add(mainPanel, BorderLayout.CENTER);
         //mainpanel done
 
-
+        // make subtool config panels
         formulaIDConfigPanel = new ActFormulaIDConfigPanel(this, compoundsToProcess);
         addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
-
-
         zodiacConfigs = new ActZodiacConfigPanel();
         addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
-
-//        if (!csiConfigs.isEnabled())
-//            csiOptions.dbSelectionOptions.setDb(formulaIDConfigPanel.getFormulaSearchDBs());
-//        csiConfigs.setMaximumSize(csiConfigs.getPreferredSize());
 
         csiConfigs = new ActFingerIDConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList);
         addConfigPanel("CSI:FingerID - Structure Elucidation", csiConfigs);
@@ -104,13 +97,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         canopusConfigPanel = new ActCanopusConfigPanel();
         addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel);
 
-        //The North
+        //Make edit panel for single compound mode if needed
         if (compoundsToProcess.size() == 1)
             initSingleExperimentDialog();
 
-        /////////////////////////////////////////////////////////
-        //The South
-        ////////////////////////////////////////////////////////
+        // make south panel with Recompute/Compute/Abort
         JPanel southPanel = new JPanel();
         southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
 
@@ -162,8 +153,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         setVisible(true);
     }
 
-
-
     private void addConfigPanel(String header, JPanel configPanel) {
         JPanel stack = new JPanel();
         stack.setLayout(new BorderLayout());
@@ -194,9 +183,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             //todo implement compute state handling
         }
 
-
-
-
         Jobs.runInBackgroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
             @Override
             protected Boolean compute() throws InterruptedException {
@@ -223,65 +209,47 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 checkForInterruption();
 
                 try {
-                    final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                    WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(),compoundsToProcess), configOptionLoader);
-                    Run computation = new Run(wfBuilder);
-
                     // create computation parameters
-                    List<String> command = new ArrayList<>();
-                    command.add("--RecomputeResults=" + recompute.isSelected());
+                    List<String> toolCommands = new ArrayList<>();
+                    List<String> configCommand = new ArrayList<>();
 
-                    command.add("config");
-                    if (formulaIDConfigPanel.isToolSelected()){
-                        command.add(formulaIDConfigPanel.content.toolCommand());
-                        command.addAll(formulaIDConfigPanel.asParameterList());
+                    configCommand.add("config");
+                    if (formulaIDConfigPanel.isToolSelected()) {
+                        toolCommands.add(formulaIDConfigPanel.content.toolCommand());
+                        configCommand.addAll(formulaIDConfigPanel.asParameterList());
                     }
 
-                    if (zodiacConfigs.isToolSelected()){
-                        command.add(zodiacConfigs.content.toolCommand());
-                        command.addAll(zodiacConfigs.asParameterList());
+                    if (zodiacConfigs.isToolSelected()) {
+                        toolCommands.add(zodiacConfigs.content.toolCommand());
+                        configCommand.addAll(zodiacConfigs.asParameterList());
                     }
 
-                    if (csiConfigs.isToolSelected()){
-                        command.add(csiConfigs.content.toolCommand());
-                        command.addAll(csiConfigs.asParameterList());
+                    if (csiConfigs.isToolSelected()) {
+                        toolCommands.add(csiConfigs.content.toolCommand());
+                        configCommand.addAll(csiConfigs.asParameterList());
                     }
 
-                    if (canopusConfigPanel.isToolSelected()){
-                        command.add(canopusConfigPanel.content.toolCommand());
-                        command.addAll(canopusConfigPanel.asParameterList());
+                    if (canopusConfigPanel.isToolSelected()) {
+                        toolCommands.add(canopusConfigPanel.content.toolCommand());
+                        configCommand.addAll(canopusConfigPanel.asParameterList());
                     }
 
-//                    configs.add("--AlgorithmProfile=" + instrument.profile);
-//                    configs.add("--MS2MassDeviation.allowedMassDeviation=" + ppm + "ppm");
+                    final List<String> command = new ArrayList<>();
 
-//                    configs.add("--FormulaSearchDB=" + (searchableDatabase != null ? searchableDatabase.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) : "none"));
-//                    configs.add("--StructureSearchDB=" + csiOptions.dbSelectionOptions.getDb().name()); //todo solve
+                    configCommand.add("--RecomputeResults");
+                    configCommand.add(String.valueOf(recompute.isSelected()));
 
+                    command.addAll(configCommand);
+                    command.addAll(toolCommands);
 
+                    final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+                    final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), compoundsToProcess), configOptionLoader);
+                    final Run computation = new Run(wfBuilder);
 
-
-//                    configs.add("--AdductSettings.enforced=" + csiConfigs.content.getSelectedAdducts().toString());
-
-//                    configs.add("--NumberOfCandidates=" + candidates);
-//                            configs.add("--NumberOfCandidatesPerIon=" + candidatesPerIon);
-//                            configs.add("--NumberOfStructureCandidates=" + structureCandidates);
-
-
-
-                    command.add("sirius");
-
-//                    if (zodiac)
-//                        configs.add("zodiac");
-
-
-                    if (csiConfigs.isToolSelected())
-                        command.add("fingerid");
-
-//                    if (canopus)
-//                        configs.add("canopus");
                     computation.parseArgs(command.toArray(String[]::new));
-                    Jobs.runInBackground(computation::compute);//todo make som nice head job that does some organizing stuff
+                    if (computation.isWorkflowDefined())
+                        Jobs.runInBackground(computation::compute);//todo make som nice head job that does some organizing stuff
+                    //todo else some error message with pico cli output
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -304,7 +272,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             } else {
                 if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
                     new WarnFormulaSourceDialog(MF);
-//                    formulaIDConfigPanel.formulaCombobox.setSelectedIndex(0); //todo set NONE
+                    formulaIDConfigPanel.content.searchDBList.checkBoxList.uncheckAll();
                 }
             }
         } else {

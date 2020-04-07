@@ -11,4 +11,10 @@ public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDCon
     public ActFormulaIDConfigPanel(Dialog owner, java.util.List<InstanceBean> ecs) {
         super("SIRIUS", Icons.DB_32, false, () -> new FormulaIDConfigPanel(owner, ecs));
     }
+
+    @Override
+    protected void setComponentsEnabled(boolean enabled) {
+        super.setComponentsEnabled(enabled);
+        content.elementPanel.enableElementSelection(enabled);
+    }
 }
