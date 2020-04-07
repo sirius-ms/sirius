@@ -15,6 +15,11 @@ import java.util.stream.Collectors;
  */
 public final class PossibleAdducts implements Iterable<PrecursorIonType>, ProcessedInputAnnotation {
 
+    private final static PossibleAdducts EMPTY = new PossibleAdducts();
+    public static PossibleAdducts empty() {
+        return EMPTY;
+    }
+
     protected final LinkedHashSet<PrecursorIonType> value;
 
     public PossibleAdducts(Collection<? extends PrecursorIonType> c) {
