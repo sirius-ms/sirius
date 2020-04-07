@@ -6,6 +6,9 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
+import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
@@ -68,7 +71,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected final JCheckboxListPanel<SearchableDatabase> searchDBList;
     protected final JComboBox<Instrument> profileSelector;
     protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner;
-    protected final JCheckBox restrictToOrganics;
+//    protected final JCheckBox restrictToOrganics;
     protected ElementsPanel elementPanel;
 //    protected JButton elementAutoDetect;
 
@@ -96,7 +99,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         Collections.addAll(instruments, Instrument.values());
         profileSelector = new JComboBox<>(instruments);
         GuiUtils.assignParameterToolTip(profileSelector, "AlgorithmProfile");
-        parameterBindings.put("AlgorithmProfile", () -> getInstrument().name);
+        parameterBindings.put("AlgorithmProfile", () -> getInstrument().asProfile());
         smallParameters.addNamed("Instrument", profileSelector);
 
         ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
@@ -110,10 +113,10 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
         smallParameters.addNamed("Candidates per Ion", candidatesPerIonSpinner);
 
-        restrictToOrganics = new JCheckBox(); //todo implement parameter?? or has constraint?
-        GuiUtils.assignParameterToolTip(restrictToOrganics, "RestrictToOrganics");
-        parameterBindings.put("RestrictToOrganics", () -> String.valueOf(restrictToOrganics.isSelected()));
-        smallParameters.addNamed("Restrict to organics", restrictToOrganics);
+//        restrictToOrganics = new JCheckBox(); //todo implement parameter?? or has constraint?
+//        GuiUtils.assignParameterToolTip(restrictToOrganics, "RestrictToOrganics");
+//        parameterBindings.put("RestrictToOrganics", () -> String.valueOf(restrictToOrganics.isSelected()));
+//        smallParameters.addNamed("Restrict to organics", restrictToOrganics);
 
         //sync profile with ppm spinner
         profileSelector.addItemListener(e -> {
@@ -126,8 +129,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Consider only formulas in DBs:");
         GuiUtils.assignParameterToolTip(searchDBList, "FormulaSearchDB");
         center.add(searchDBList);
-        parameterBindings.put("FormulaSearchDB", () -> getFormulaSearchDBs().stream().map(SearchableDatabase::name).
-                collect(Collectors.joining(",")));
+        parameterBindings.put("FormulaSearchDB", () -> String.join(",", getFormulaSearchDBStrings()));
 
         //configure ionization panels
         ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations", "Set possible ionisation for data with unknown ionization");
@@ -176,38 +178,32 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     }
 
     protected void makeElementPanel(boolean multi) {
-        List<Element> detectableElements = new ArrayList<>(ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements());
+        final FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
+        List<Element> possDetectableElements = new ArrayList<>(ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements());
+
+        final JButton elementAutoDetect;
         if (multi) {
-            elementPanel = new ElementsPanel(owner, 4, detectableElements);
-            searchDBList.checkBoxList.addListSelectionListener(e -> {
-                final List<SearchableDatabase> source = getFormulaSearchDBs();
-                //todo does this make scence
-                elementPanel.enableElementSelection(source == null || source.isEmpty());
-            });
+            elementAutoDetect = null;
+            elementPanel = new ElementsPanel(owner, 4, possDetectableElements, formulaSettings.getAutoDetectionElements(), formulaSettings.getEnforcedAlphabet());
         } else {
             /////////////Solo Element//////////////////////
-            elementPanel = new ElementsPanel(owner, 4);
-            StringBuilder builder = new StringBuilder();
-            builder.append("Auto detectable element are: ");
-            for (int i = 0; i < detectableElements.size(); i++) {
-                if (i != 0) builder.append(", ");
-                builder.append(detectableElements.get(i).getSymbol());
-            }
-            final JButton elementAutoDetect = new JButton("Auto detect");
-            elementAutoDetect.setToolTipText(builder.toString());
+            elementPanel = new ElementsPanel(owner, 4, formulaSettings.getEnforcedAlphabet());
+            elementAutoDetect = new JButton("Auto detect");
+            elementAutoDetect.setToolTipText("Auto detectable element are: "
+                    + possDetectableElements.stream().map(Element::toString).collect(Collectors.joining(",")));
             elementAutoDetect.addActionListener(e -> detectElements());
             elementAutoDetect.setEnabled(true);
             elementPanel.lowerPanel.add(elementAutoDetect);
-
-            //enable disable element panel if db is selected
-            searchDBList.checkBoxList.addListSelectionListener(e -> {
-                final List<SearchableDatabase> source = getFormulaSearchDBs();
-                //todo does this make scence
-                elementPanel.enableElementSelection(source == null || source.isEmpty());
-                elementAutoDetect.setEnabled(source == null || source.isEmpty());
-            });
         }
-        elementPanel.setBorder(BorderFactory.createEmptyBorder(0,GuiUtils.LARGE_GAP,0,0));
+
+        //enable disable element panel if db is selected
+        searchDBList.checkBoxList.addListSelectionListener(e -> {
+            final List<SearchableDatabase> source = getFormulaSearchDBs();
+            elementPanel.enableElementSelection(source == null || source.isEmpty());
+            if (elementAutoDetect != null)
+                elementAutoDetect.setEnabled(source == null || source.isEmpty());
+        });
+        elementPanel.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
 
 
     }
@@ -259,7 +255,14 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         return searchDBList.checkBoxList.getCheckedItems();
     }
 
-
+    public List<String> getFormulaSearchDBStrings() {
+        return getFormulaSearchDBs().stream().map(db -> {
+            if (db.isCustomDb())
+                return db.name();
+            else
+                return DataSources.getSourceFromName(db.name()).map(DataSource::name).orElse(null);
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
 
 
 }
