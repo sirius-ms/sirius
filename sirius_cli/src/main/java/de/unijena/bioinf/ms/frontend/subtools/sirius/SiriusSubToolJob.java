@@ -8,6 +8,8 @@ import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
 import de.unijena.bioinf.fingerid.FormulaWhiteListJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
@@ -96,5 +98,10 @@ public class SiriusSubToolJob extends InstanceJob {
         result.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
         result.getID().setDetectedAdducts(result.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
         result.updateCompoundID();
+    }
+
+    @Override
+    public String getToolName() {
+        return PicoUtils.getCommand(SiriusOptions.class).name();
     }
 }

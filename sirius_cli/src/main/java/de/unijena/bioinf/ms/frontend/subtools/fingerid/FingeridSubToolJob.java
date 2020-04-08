@@ -17,6 +17,8 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -133,5 +135,10 @@ public class FingeridSubToolJob extends InstanceJob {
     @Override
     protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
         return new Class[]{FTree.class, FBCandidates.class, FBCandidateFingerprints.class};
+    }
+
+    @Override
+    public String getToolName() {
+        return PicoUtils.getCommand(FingerIdOptions.class).name();
     }
 }

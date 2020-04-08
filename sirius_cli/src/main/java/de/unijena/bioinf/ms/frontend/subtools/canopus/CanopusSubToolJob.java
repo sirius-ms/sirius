@@ -8,6 +8,7 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
@@ -22,7 +23,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public class CanopusSubToolJob extends InstanceJob {
-
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
 //        System.out.println("I am Canopus on Experiment " + inst);
@@ -82,5 +82,10 @@ public class CanopusSubToolJob extends InstanceJob {
     @Override
     protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
         return new Class[]{CanopusResult.class};
+    }
+
+    @Override
+    public String getToolName() {
+        return PicoUtils.getCommand(CanopusOptions.class).name();
     }
 }

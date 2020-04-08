@@ -26,7 +26,7 @@ public class GuiComputeRoot implements RootOptions<GuiProjectSpaceManager, Prepr
      * here we need to provide the PP to write on.
      * */
     @Override
-    public ProjectSpaceManager getProjectSpace() {
+    public GuiProjectSpaceManager getProjectSpace() {
         return guiProjectSpace;
     }
 
