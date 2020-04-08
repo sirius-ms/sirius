@@ -58,95 +58,80 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
 
-    private JCheckBox recompute;
-
-    private Box mainPanel;
-
+    // main parts
     private ExperimentEditPanel editPanel;
+    private final Box mainPanel;
+    private final JCheckBox recompute;
 
-    private ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
-    private ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
-    private ActFingerIDConfigPanel csiConfigs; //FingerID configs
-    private ActCanopusConfigPanel canopusConfigPanel; //Canopus configs
+    // tool configurations
+    private final ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
+    private final ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
+    private final ActFingerIDConfigPanel csiConfigs; //FingerID configs
+    private final ActCanopusConfigPanel canopusConfigPanel; //Canopus configs
 
-    private MainFrame owner;
-    List<InstanceBean> compoundsToProcess;
+    // compounds on which the configured Run will be executed
+    private final List<InstanceBean> compoundsToProcess;
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
         super(owner, "compute", true);
-        this.owner = owner;
-        this.compoundsToProcess = compoundsToProcess;
+        {
+            this.compoundsToProcess = compoundsToProcess;
 
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setLayout(new BorderLayout());
+            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            setLayout(new BorderLayout());
 
-        mainPanel = Box.createVerticalBox();
-        add(mainPanel, BorderLayout.CENTER);
-        //mainpanel done
+            mainPanel = Box.createVerticalBox();
+            add(mainPanel, BorderLayout.CENTER);
+        }
 
-        // make subtool config panels
-        formulaIDConfigPanel = new ActFormulaIDConfigPanel(this, compoundsToProcess);
-        addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
-
-        zodiacConfigs = new ActZodiacConfigPanel();
-        addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
-
-        csiConfigs = new ActFingerIDConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList);
-        addConfigPanel("CSI:FingerID - Structure Elucidation", csiConfigs);
-
-        canopusConfigPanel = new ActCanopusConfigPanel();
-        addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel);
-
-        //Make edit panel for single compound mode if needed
-        if (compoundsToProcess.size() == 1)
-            initSingleExperimentDialog();
-
-        // make south panel with Recompute/Compute/Abort
-        JPanel southPanel = new JPanel();
-        southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
-
-        JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        recompute = new JCheckBox("Recompute already computed tasks?", false);
-        recompute.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
-        lsouthPanel.add(recompute);
-
-        //checkConnectionToUrl by default when just one experiment is selected
-        if (compoundsToProcess.size() == 1) recompute.setSelected(true);
-
-        JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        JButton compute = new JButton("Compute");
-        compute.addActionListener(e -> startComputing());
-        JButton abort = new JButton("Abort");
-        abort.addActionListener(e -> dispose());
-        rsouthPanel.add(compute);
-        rsouthPanel.add(abort);
-
-        southPanel.add(lsouthPanel);
-        southPanel.add(rsouthPanel);
-
-        this.add(southPanel, BorderLayout.SOUTH);
 
         {
-            InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-            KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
-            KeyStroke escKey = KeyStroke.getKeyStroke("ESCAPE");
-            String enterAction = "compute";
-            String escAction = "abort";
-            inputMap.put(enterKey, enterAction);
-            inputMap.put(escKey, escAction);
-            getRootPane().getActionMap().put(enterAction, new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    startComputing();
-                }
-            });
-            getRootPane().getActionMap().put(escAction, new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    abortComputing();
-                }
-            });
+            // make subtool config panels
+            formulaIDConfigPanel = new ActFormulaIDConfigPanel(this, compoundsToProcess);
+            addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
+
+            zodiacConfigs = new ActZodiacConfigPanel();
+            addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
+
+            csiConfigs = new ActFingerIDConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList);
+            addConfigPanel("CSI:FingerID - Structure Elucidation", csiConfigs);
+
+            canopusConfigPanel = new ActCanopusConfigPanel();
+            addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel);
+
+            //Make edit panel for single compound mode if needed
+            if (compoundsToProcess.size() == 1)
+                initSingleExperimentDialog();
         }
+        // make south panel with Recompute/Compute/Abort
+        {
+            JPanel southPanel = new JPanel();
+            southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
+
+            JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+            recompute = new JCheckBox("Recompute already computed tasks?", false);
+            recompute.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
+            lsouthPanel.add(recompute);
+
+            //checkConnectionToUrl by default when just one experiment is selected
+            if (compoundsToProcess.size() == 1) recompute.setSelected(true);
+
+            JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+            JButton compute = new JButton("Compute");
+            compute.addActionListener(e -> startComputing());
+            JButton abort = new JButton("Abort");
+            abort.addActionListener(e -> dispose());
+            rsouthPanel.add(compute);
+            rsouthPanel.add(abort);
+
+            southPanel.add(lsouthPanel);
+            southPanel.add(rsouthPanel);
+
+            this.add(southPanel, BorderLayout.SOUTH);
+        }
+
+        //finalize panel build
+        configureActions();
         pack();
         setResizable(false);
         setLocationRelativeTo(getParent());
@@ -159,6 +144,28 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), header));
         stack.add(configPanel, BorderLayout.CENTER);
         mainPanel.add(stack);
+    }
+
+    private void configureActions() {
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
+        KeyStroke escKey = KeyStroke.getKeyStroke("ESCAPE");
+        String enterAction = "compute";
+        String escAction = "abort";
+        inputMap.put(enterKey, enterAction);
+        inputMap.put(escKey, escAction);
+        getRootPane().getActionMap().put(enterAction, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                startComputing();
+            }
+        });
+        getRootPane().getActionMap().put(escAction, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                abortComputing();
+            }
+        });
     }
 
     private void abortComputing() {
@@ -183,7 +190,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             //todo implement compute state handling
         }
 
-        Jobs.runInBackgroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
+
+        Jobs.runInBackgroundAndLoad(getOwner(), "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
             @Override
             protected Boolean compute() throws InterruptedException {
                 updateProgress(0, 100, 0, "Configuring Computation...");
