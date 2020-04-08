@@ -52,7 +52,7 @@ public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotat
     /**
      * Returns a list of detected adducts, if available
      *
-     * Do not add any enforded adducts or fallbacks!
+     * Do not add any enforced or fallback adducts!
      * Use the #getPossibleAdductsOrFallback for that!
      *
      * @return Optional collection of detected adducts
