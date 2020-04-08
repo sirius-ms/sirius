@@ -107,6 +107,10 @@ public class InstanceBean extends Instance implements SiriusPCS {
         return computeLock.get();
     }
 
+    public void setComputing(boolean computing) {
+        pcs.firePropertyChange("computeState", computeLock.getAndSet(computing), computeLock.get());
+    }
+
     private MutableMs2Experiment getMutableExperiment() {
         return (MutableMs2Experiment) getExperiment();
     }

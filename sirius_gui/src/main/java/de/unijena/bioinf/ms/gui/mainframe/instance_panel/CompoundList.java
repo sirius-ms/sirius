@@ -35,7 +35,7 @@ public class CompoundList {
         searchField = new SearchTextField();
 
 
-        compoundList = new FilterList<>(new ObservableElementList<>(ps.COMPOUNT_LIST, GlazedLists.beanConnector(InstanceBean.class)),
+        compoundList = new FilterList<>(new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class)),
                 new TextComponentMatcherEditor<>(searchField.textField, new TextFilterator<InstanceBean>() {
                     @Override
                     public void getFilterStrings(List<String> baseList, InstanceBean element) {
