@@ -75,31 +75,31 @@ public class Jobs {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
-    public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final JFrame owner, final Runnable task) {
+    public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final Window owner, final Runnable task) {
         return runInBackgroundAndLoad(owner, "Please wait", task);
     }
 
-    public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final JFrame owner, final String title, final Runnable task) {
+    public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final Window owner, final String title, final Runnable task) {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
-    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, Callable<T> task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, Callable<T> task) {
         return runInBackgroundAndLoad(owner, "Please wait", task);
     }
 
-    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, String title, Callable<T> task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, String title, Callable<T> task) {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
-    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, ProgressJJob<T> task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, ProgressJJob<T> task) {
         return runInBackgroundAndLoad(owner, "Please wait", task);
     }
 
-    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, String title, ProgressJJob<T> task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, String title, ProgressJJob<T> task) {
         return LoadingBackroundTask.runInBackground(owner, title, MANAGER, task);
     }
 
-    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(JFrame owner, String title, boolean indeterminateProgress, ProgressJJob<T> task) {
+    public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, String title, boolean indeterminateProgress, ProgressJJob<T> task) {
         return LoadingBackroundTask.runInBackground(owner, title, indeterminateProgress, MANAGER, task);
     }
 
