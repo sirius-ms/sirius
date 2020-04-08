@@ -61,12 +61,11 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
                 for (InstanceJob.Factory<?> task : tasks) {
                     jobToWaitOn = task.createToolJob(jobToWaitOn);
                     collector.addRequiredJob(jobToWaitOn);
-                    jobSubmitter.accept(jobToWaitOn);
+                    submitJob(jobToWaitOn);
                 }
 
                 checkForCancellation();
-                jobSubmitter.accept(collector);
-                runningInstances.add(collector);
+                runningInstances.add(submitJob(collector));
 
                 // add dependency if necessary
                 if (dependJob != null)
@@ -111,6 +110,12 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
         } finally {
             lock.unlock();
         }
+    }
+
+    @Override
+    public <Job extends JJob<Result>, Result> Job submitJob(Job job) {
+        jobSubmitter.accept(job);
+        return job;
     }
 
     protected void checkForCancellation() throws InterruptedException {
