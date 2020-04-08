@@ -79,7 +79,7 @@ public class ToolChainWorkflow implements Workflow {
                     final DataSetJob dataSetJob = ((DataSetJob.Factory<?>) o).makeJob();
                     submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, dataSetJob);
                     submitter.start();
-                    iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(dataSetJob).awaitResult();
+                    iteratorSource = submitter.submitJob(dataSetJob).awaitResult();
 
                     checkForCancellation();
                     instanceJobChain.clear();
@@ -100,7 +100,7 @@ public class ToolChainWorkflow implements Workflow {
             checkForCancellation();
             if (postprocessingJob != null){
                 LOG.info("Executing Postprocessing...");
-                SiriusJobs.getGlobalJobManager().submitJob(postprocessingJob).awaitResult();
+                submitter.submitJob(postprocessingJob).awaitResult();
             }
 
         } catch (ExecutionException e) {
