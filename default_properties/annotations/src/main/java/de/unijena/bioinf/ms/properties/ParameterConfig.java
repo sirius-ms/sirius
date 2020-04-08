@@ -69,29 +69,41 @@ public final class ParameterConfig {
     }
 
     public ParameterConfig newIndependentInstance(@NotNull final String name) {
-        return newIdependendInstance(SiriusConfigUtils.newConfiguration(), name);
+        return newIndependentInstance(name, false);
     }
 
-    public ParameterConfig newIndependentInstance(@NotNull final ParameterConfig modificationLayer) {
+    public ParameterConfig newIndependentInstance(@NotNull final String name, boolean overrideExisting) {
+        return newIdependendInstance(SiriusConfigUtils.newConfiguration(), name, overrideExisting);
+    }
+
+    public ParameterConfig newIndependentInstance(@NotNull final ParameterConfig modificationLayer, boolean overrideExisting) {
         if (!modificationLayer.isModifiable())
             throw new IllegalArgumentException("Unmodifiable \"modificationLayer\"! Only modifiable ParameterConfigs are allowed as modification layer.");
 
-        return newIdependendInstance(modificationLayer.localConfig(), modificationLayer.localConfigName);
+        return newIdependendInstance(modificationLayer.localConfig(), modificationLayer.localConfigName, overrideExisting);
     }
 
-    public ParameterConfig newIndependentInstance(@NotNull final InputStream streamToLoad, @NotNull final String name) throws ConfigurationException {
-        return newIdependendInstance(SiriusConfigUtils.makeConfigFromStream(streamToLoad), name);
+    public ParameterConfig newIndependentInstance(@NotNull final InputStream streamToLoad, @NotNull final String name, boolean overrideExisting) throws ConfigurationException {
+        return newIdependendInstance(SiriusConfigUtils.makeConfigFromStream(streamToLoad), name, overrideExisting);
     }
 
-    private ParameterConfig newIdependendInstance(@NotNull final PropertiesConfiguration modifiableLayer, @NotNull final String name) {
+    private ParameterConfig newIdependendInstance(@NotNull final PropertiesConfiguration modifiableLayer, @NotNull final String name, boolean overrideExisting) {
         if (name.isEmpty())
             throw new IllegalArgumentException("Empty name is not Allowed here");
 
         final CombinedConfiguration nuConfig = SiriusConfigUtils.newCombinedConfiguration();
         nuConfig.addConfiguration(modifiableLayer, name);
-        this.config.getConfigurationNames().forEach(n -> nuConfig.addConfiguration(config.getConfiguration(n), n));
+        this.config.getConfigurationNames().stream().filter(n -> !overrideExisting || !n.equals(name)).forEach(n -> nuConfig.addConfiguration(config.getConfiguration(n), n));
 
         return new ParameterConfig(nuConfig, classesConfig, layout, name, configRoot, classRoot);
+    }
+
+    public String getLocalConfigName() {
+        return localConfigName;
+    }
+
+    public boolean containsConfiguration(@NotNull String name) {
+        return this.config.getConfiguration(name) != null;
     }
 
 
