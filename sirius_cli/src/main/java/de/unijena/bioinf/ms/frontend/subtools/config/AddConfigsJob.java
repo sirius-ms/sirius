@@ -33,13 +33,16 @@ public class AddConfigsJob extends InstanceJob {
 
         //override defaults
         baseConfig = psConfig
-                .map(projectSpaceConfig -> projectSpaceConfig.config.newIndependentInstance(cliConfig))
+                .map(projectSpaceConfig -> projectSpaceConfig.config.newIndependentInstance(cliConfig,true))
                 .orElseGet(() -> cliConfig);
 
-        if (exp.hasAnnotation(MsFileConfig.class))
-            baseConfig = baseConfig.newIndependentInstance(exp.getAnnotationOrThrow(MsFileConfig.class).config);
+        if (exp.hasAnnotation(MsFileConfig.class)){
+            @NotNull MsFileConfig msConf = exp.getAnnotationOrThrow(MsFileConfig.class);
+            if (!baseConfig.containsConfiguration(msConf.config.getLocalConfigName()))
+                baseConfig = baseConfig.newIndependentInstance(msConf.config, false);
+        }
 
-        baseConfig = baseConfig.newIndependentInstance("RUNTIME_CONFIGS:" + inst.getID()); //runtime modification layer,  that does not effect the other configs
+        baseConfig = baseConfig.newIndependentInstance("RUNTIME_CONFIGS:" + inst.getID(),true); //runtime modification layer,  that does not effect the other configs
         //fill all annotations
         exp.setAnnotation(FinalConfig.class, new FinalConfig(baseConfig));
         exp.addAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
