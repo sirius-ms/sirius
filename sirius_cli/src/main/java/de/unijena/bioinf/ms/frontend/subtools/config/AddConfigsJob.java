@@ -4,6 +4,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -58,7 +60,11 @@ public class AddConfigsJob extends InstanceJob {
         inst.updateExperiment();
         inst.updateConfig();
 //        inst.updateCompoundID();
+    }
 
+    @Override
+    public String getToolName() {
+        return "Config Job";
     }
 
 }

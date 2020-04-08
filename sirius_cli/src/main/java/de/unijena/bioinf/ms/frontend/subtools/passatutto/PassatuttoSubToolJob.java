@@ -5,6 +5,8 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.passatutto.Decoy;
@@ -54,5 +56,10 @@ public class PassatuttoSubToolJob extends InstanceJob {
     @Override
     protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
         return new Class[]{Decoy.class};
+    }
+
+    @Override
+    public String getToolName() {
+        return PicoUtils.getCommand(PassatuttoOptions.class).name();
     }
 }

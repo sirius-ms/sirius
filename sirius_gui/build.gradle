@@ -47,7 +47,7 @@ dependencies {
 }
 
 /*################### Environment variables ################### */
-mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
+mainClassName = "de.unijena.bioinf.ms.middleware.SiriusGUIApplication"
 project.ext.set("type", ['gui','console'])
 
 /*################### Jar build Stuff ################### */

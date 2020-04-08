@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * NOT necessary and NOT recommended.
  */
 
-public abstract class InstanceJob extends BasicDependentJJob<Instance> implements SubToolJob {
+public abstract class InstanceJob extends BasicDependentJJob<Instance> implements SubToolJob<Instance> {
     private Instance input = null;
 
     public InstanceJob() {

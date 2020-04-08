@@ -17,6 +17,8 @@ import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistr
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorerNoiseIntensityWeighted;
 import de.unijena.bioinf.GibbsSampling.properties.*;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.projectspace.FormulaScoring;
@@ -204,5 +206,10 @@ public class ZodiacSubToolJob extends DataSetJob {
             return null;
         }
         return anchors;
+    }
+
+    @Override
+    public String getToolName() {
+        return PicoUtils.getCommand(ZodiacOptions.class).name();
     }
 }

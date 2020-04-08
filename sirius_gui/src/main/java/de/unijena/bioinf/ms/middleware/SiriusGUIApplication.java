@@ -1,17 +1,16 @@
-package de.unijena.bioinf.ms.frontend;
+package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.projectspace.GPSMFactory;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
+import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workfow.GuiWorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.middleware.SiriusContext;
-import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.GPSMFactory;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -28,10 +27,8 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
     }
 
     public static void main(String[] args) {
-
-        configureShutDownHook(()->{
-            Jobs.cancelALL();//cancel all instances to quit
-        });
+        //cancel all instances to quit
+        configureShutDownHook(Jobs::cancelALL);
 
         ApplicationCore.DEFAULT_LOGGER.info("Application Core started");
         final int cpuThreads = Integer.valueOf(PropertyManager.getProperty("de.unijena.bioinf.sirius.cpu.cores", null, "1"));
@@ -44,14 +41,11 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
         } catch (CDKException e) {
             ApplicationCore.DEFAULT_LOGGER.error("Error configuring CDK InChIGeneratorFactory.",e);
         }
-        //todo why do we need this?
-//        if (ProxyManager.getProxyStrategy() == null)
-//            SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty("de.unijena.bioinf.sirius.proxy", ProxyManager.DEFAULT_STRATEGY.name());
 
         run(args, () -> {
             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-            rootOptions = new CLIRootOptions(configOptionLoader, new GPSMFactory());
-            return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader);
+            rootOptions = new CLIRootOptions<>(configOptionLoader, new GPSMFactory());
+            return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, new GuiInstanceBufferFactory());
         });
 
         if (!(RUN.getFlow() instanceof ServiceWorkflow)) {

@@ -3,10 +3,10 @@ package de.unijena.bioinf.ms.frontend.workflow;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -17,11 +17,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 public class SimpleInstanceBuffer implements InstanceBuffer {
     private final Iterator<? extends Instance> instances;
     private final List<InstanceJob.Factory<?>> tasks;
     private final DataSetJob dependJob;
+    protected final Consumer<JJob<?>> jobSubmitter;
 
     private final Set<InstanceJobCollectorJob> runningInstances = new LinkedHashSet<>();
 
@@ -30,13 +32,13 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
     private final int bufferSize;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-    public SimpleInstanceBuffer(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob dependJob) {
+    public SimpleInstanceBuffer(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob dependJob, Consumer<JJob<?>> jobSubmitter) {
         this.bufferSize = bufferSize < 1 ? Integer.MAX_VALUE : bufferSize;
+        this.jobSubmitter = jobSubmitter;
         this.instances = instances;
         this.tasks = tasks;
         this.dependJob = dependJob;
     }
-
 
     @Override
     public void start() throws InterruptedException {
@@ -59,11 +61,12 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
                 for (InstanceJob.Factory<?> task : tasks) {
                     jobToWaitOn = task.createToolJob(jobToWaitOn);
                     collector.addRequiredJob(jobToWaitOn);
-                    SiriusJobs.getGlobalJobManager().submitJob(jobToWaitOn);
+                    jobSubmitter.accept(jobToWaitOn);
                 }
 
                 checkForCancellation();
-                runningInstances.add(SiriusJobs.getGlobalJobManager().submitJob(collector));
+                jobSubmitter.accept(collector);
+                runningInstances.add(collector);
 
                 // add dependency if necessary
                 if (dependJob != null)
@@ -146,6 +149,13 @@ public class SimpleInstanceBuffer implements InstanceBuffer {
         @Override
         public void handleFinishedRequiredJob(JJob required) {
 //            System.out.println(required.identifier() +" - " + required.getState().name());
+        }
+    }
+
+    public static class Factory implements InstanceBufferFactory<SimpleInstanceBuffer> {
+        @Override
+        public SimpleInstanceBuffer create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob dependJob) {
+            return new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, (j) -> SiriusJobs.getGlobalJobManager().submitJob(j));
         }
     }
 }

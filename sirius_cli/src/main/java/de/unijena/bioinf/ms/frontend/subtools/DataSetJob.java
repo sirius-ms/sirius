@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public abstract class DataSetJob extends BasicDependentJJob<Iterable<Instance>> implements SubToolJob {
+public abstract class DataSetJob extends BasicDependentJJob<Iterable<Instance>> implements SubToolJob<Iterable<Instance>> {
     private List<JJob<?>> failedJobs = new ArrayList<>();
     private List<Instance> failedInstances = new ArrayList<>();
     private List<Instance> inputInstances = new ArrayList<>();
