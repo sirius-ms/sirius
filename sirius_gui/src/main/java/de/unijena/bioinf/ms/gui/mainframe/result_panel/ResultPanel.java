@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.ms.gui.canopus.CanopusPanel;
-import de.unijena.bioinf.ms.gui.fingerid.CandidateList;
+import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.CandidateListDetailViewPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.FingerprintPanel;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
@@ -40,8 +40,8 @@ public class ResultPanel extends JTabbedPane {
         rvp = new FormulaOverviewPanel(suriusResultElements);
         tvp = new TreeVisualizationPanel();
         svp = new SpectraVisualizationPanel();
-        cov = new CandidateOverviewPanel(new CandidateList(suriusResultElements, ActionList.DataSelectionStrategy.ALL));
-        ccv = new CandidateListDetailViewPanel(new CandidateList(suriusResultElements));
+        cov = new CandidateOverviewPanel(new StructureList(suriusResultElements, ActionList.DataSelectionStrategy.ALL));
+        ccv = new CandidateListDetailViewPanel(new StructureList(suriusResultElements));
         try {
             fpt = new FingerprintPanel(new FingerprintTable(suriusResultElements,webAPI));
         } catch (IOException e) {

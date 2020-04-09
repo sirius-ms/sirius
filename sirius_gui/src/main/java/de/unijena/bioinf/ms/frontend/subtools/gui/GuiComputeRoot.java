@@ -49,7 +49,7 @@ public class GuiComputeRoot implements RootOptions<GuiProjectSpaceManager, Prepr
         return new PreprocessingJob<>() {
             @Override
             protected List<InstanceBean> compute() {
-                instances.forEach(it -> it.setComputing(true));
+//                instances.forEach(it -> it.setComputing(true));
                 return instances;
             }
         };
@@ -62,7 +62,7 @@ public class GuiComputeRoot implements RootOptions<GuiProjectSpaceManager, Prepr
         return new PostprocessingJob<Boolean>() {
             @Override
             protected Boolean compute() throws Exception {
-                instances.forEach(it -> it.setComputing(false));
+//                instances.forEach(it -> it.setComputing(false));
                 return true;
             }
         };

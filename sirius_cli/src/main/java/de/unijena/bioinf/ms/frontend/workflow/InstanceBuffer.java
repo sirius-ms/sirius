@@ -1,10 +1,12 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
-import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobSubmitter;
 
-public interface InstanceBuffer extends Runnable {
+public interface InstanceBuffer extends JobSubmitter, Runnable {
     void start() throws InterruptedException;
+
     void cancel();
+
     @Override
     default void run() {
         try {
@@ -13,6 +15,4 @@ public interface InstanceBuffer extends Runnable {
             throw new RuntimeException(e);
         }
     }
-
-    <Job extends JJob<Result>, Result> Job submitJob(final Job job);
 }

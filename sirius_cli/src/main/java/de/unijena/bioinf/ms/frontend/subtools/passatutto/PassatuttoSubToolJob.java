@@ -1,17 +1,16 @@
 package de.unijena.bioinf.ms.frontend.subtools.passatutto;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
+import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
-import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.passatutto.Passatutto;
 import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +18,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class PassatuttoSubToolJob extends InstanceJob {
+    public PassatuttoSubToolJob(JobSubmitter submitter) {
+        super(submitter);
+    }
+
     @Override
     protected void computeAndAnnotateResult(@NotNull Instance inst) {
         final FormulaResult best = inst.loadTopFormulaResult(List.of(ZodiacScore.class, SiriusScore.class), FormulaScoring.class, FTree.class)
@@ -43,7 +46,7 @@ public class PassatuttoSubToolJob extends InstanceJob {
         }
 
 
-        final Decoy decoyByRerootingTree = SiriusJobs.getGlobalJobManager().submitJob(
+        final Decoy decoyByRerootingTree = submitJob(
                 Passatutto.makePassatuttoJob(tree, tree.getAnnotationOrThrow(PrecursorIonType.class)))
                 .takeResult();
         best.setAnnotation(Decoy.class, decoyByRerootingTree);

@@ -66,7 +66,7 @@ public class ToolChainWorkflow implements Workflow {
             // build toolchain
             final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
-            instanceJobChain.add(() -> new AddConfigsJob(parameters));
+            instanceJobChain.add((jj) -> new AddConfigsJob(parameters));
             // get buffer size
             final int bufferSize = PropertyManager.getInteger("de.unijena.bioinf.sirius.instanceBuffer", "de.unijena.bioinf.sirius.cpu.cores", 0);
 
@@ -76,7 +76,7 @@ public class ToolChainWorkflow implements Workflow {
                 if (o instanceof InstanceJob.Factory) {
                     instanceJobChain.add((InstanceJob.Factory<?>) o);
                 } else if (o instanceof DataSetJob.Factory) {
-                    final DataSetJob dataSetJob = ((DataSetJob.Factory<?>) o).makeJob();
+                    final DataSetJob dataSetJob = ((DataSetJob.Factory<?>) o).makeJob(submitter);
                     submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, dataSetJob);
                     submitter.start();
                     iteratorSource = submitter.submitJob(dataSetJob).awaitResult();
@@ -106,7 +106,7 @@ public class ToolChainWorkflow implements Workflow {
         } catch (ExecutionException e) {
             LOG.error("Error When Executing ToolChain", e);
         } catch (InterruptedException e) {
-            LOG.info("Workflow successfully canceled!", e);
+            LOG.info("Workflow successfully canceled!");
         }
     }
 }

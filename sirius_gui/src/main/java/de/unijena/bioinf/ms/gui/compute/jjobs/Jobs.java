@@ -2,22 +2,30 @@ package de.unijena.bioinf.ms.gui.compute.jjobs;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
-import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.frontend.Run;
+import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
-import de.unijena.bioinf.projectspace.ComputingStatus;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Jobs {
     public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
+    private static final AtomicInteger COMPUTATION_COUNTER = new AtomicInteger(0);
+    public static final Set<ComputationJJob> ACTIVE_COMPUTATIONS = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private static final HashMap<String, Sirius> siriusPerProfile = new HashMap<>();
+
 
     private Jobs() {/*prevent instantiation*/}
 
@@ -29,7 +37,7 @@ public class Jobs {
         return submit(new TextAreaJJobContainer<>(j, jobName, jobCategory));
     }
 
-    public static <JJ extends SwingJJobContainer> JJ submit(final JJ j) {
+    public static <JJ extends SwingJJobContainer<?>> JJ submit(final JJ j) {
         MANAGER.submitSwingJob(j);
         return j;
     }
@@ -104,32 +112,62 @@ public class Jobs {
     }
 
     private static void checkProfile(String profile) {
-        if (siriusPerProfile.containsKey(profile)) return;
-        else try {
-            siriusPerProfile.put(profile, new Sirius(profile));
-        } catch (RuntimeException e) {
-            LoggerFactory.getLogger(Jobs.class).error("Unknown instrument: '" + profile + "'", e);
-            throw new RuntimeException(e);
-        }
+        if (!siriusPerProfile.containsKey(profile))
+            try {
+                siriusPerProfile.put(profile, new Sirius(profile));
+            } catch (RuntimeException e) {
+                LoggerFactory.getLogger(Jobs.class).error("Unknown instrument: '" + profile + "'", e);
+                throw new RuntimeException(e);
+            }
     }
+
 
     public static void cancelALL() {
         //iterator needed to prevent current modification exception
-        Iterator<SwingJJobContainer> it = MANAGER.getJobs().iterator();
+        final Iterator<ComputationJJob> it = ACTIVE_COMPUTATIONS.iterator();
         while (it.hasNext())
-            it.next().getSourceJob().cancel();
+            it.next().cancel();
     }
 
-    public static void cancel(java.util.List<InstanceBean> cont) {
-        //todo cancel job by container???
+    //todo Singelton runs that are cancelable
+
+    public static void runWorkflow(Workflow computation, List<InstanceBean> compoundsToProcess) {
+        //todo the run could be a job that reports progress. That would also be great for the cli
+        submit(new ComputationJJob(computation,compoundsToProcess), String.valueOf(COMPUTATION_COUNTER.incrementAndGet()), "Computation");
     }
 
-    private static final ComputingStatus[] stateMap = {
-            ComputingStatus.QUEUED, ComputingStatus.QUEUED, ComputingStatus.QUEUED, ComputingStatus.QUEUED,
-            ComputingStatus.COMPUTING, ComputingStatus.UNCOMPUTED, ComputingStatus.FAILED, ComputingStatus.COMPUTED
-    };
+    private static class ComputationJJob extends BasicJJob<Boolean> {
+        final Workflow computation;
+        final List<InstanceBean> compoundsToProcess;
 
-    public static ComputingStatus getComputingState(JJob.JobState newValue) {
-        return stateMap[newValue.ordinal()];
+        private ComputationJJob(Workflow computation, List<InstanceBean> compoundsToProcess) {
+            super(JobType.SCHEDULER);
+            this.computation = computation;
+            this.compoundsToProcess = compoundsToProcess;
+        }
+
+        @Override
+        protected Boolean compute() throws Exception {
+            //todo progress? maybe move to CLI to have progress there to?
+            ACTIVE_COMPUTATIONS.add(this);
+            compoundsToProcess.forEach(i -> i.setComputing(true));
+            checkForInterruption();
+            computation.run();
+            checkForInterruption();
+            return true;
+        }
+
+        @Override
+        public void cancel(boolean mayInterruptIfRunning) {
+            super.cancel(mayInterruptIfRunning);
+            computation.cancel();
+        }
+
+        @Override
+        protected void cleanup() {
+            super.cleanup();
+            ACTIVE_COMPUTATIONS.remove(this);
+            compoundsToProcess.forEach(i -> i.setComputing(false));
+        }
     }
 }

@@ -123,6 +123,6 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJ
 
     @Override
     public DataSetJob.Factory<ZodiacSubToolJob> call() throws Exception {
-        return () -> new ZodiacSubToolJob(this);
+        return (sub) -> new ZodiacSubToolJob(this, sub);
     }
 }

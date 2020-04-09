@@ -20,7 +20,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     protected List<JCheckBox> checkboxes;
     private final AtomicBoolean isRefreshing = new AtomicBoolean(false);
 
-    public DBFilterPanel(CandidateList sourceList) {
+    public DBFilterPanel(StructureList sourceList) {
         setLayout(new WrapLayout(FlowLayout.LEFT, 5, 1));
         this.checkboxes = new ArrayList<>(CustomDataSources.size());
         for (CustomDataSources.Source source : CustomDataSources.sources()) {

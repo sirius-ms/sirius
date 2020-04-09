@@ -13,12 +13,13 @@ import javax.swing.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusExperimentPopUpMenu extends JPopupMenu {
-    private JMenuItem newExpMI, batchMI, editMI, closeMI, computeMI/*, cancelMI*/;
+    private JMenuItem newExpMI, batchMI, editMI, removeFormMI, closeMI, computeMI/*, cancelMI*/;
 
     public SiriusExperimentPopUpMenu() {
         newExpMI = new JMenuItem(SiriusActions.IMPORT_EXP.getInstance());
         batchMI = new JMenuItem(SiriusActions.IMPORT_EXP_BATCH.getInstance());
         editMI = new JMenuItem(SiriusActions.EDIT_EXP.getInstance());
+        removeFormMI = new JMenuItem(SiriusActions.REMOVE_FORMULA_EXP.getInstance());
         closeMI = new JMenuItem(SiriusActions.DELETE_EXP.getInstance());
         computeMI = new JMenuItem(SiriusActions.COMPUTE.getInstance());
 //        cancelMI = new JMenuItem(SiriusActions.CANCEL_COMPUTE.getInstance());
@@ -30,6 +31,7 @@ public class SiriusExperimentPopUpMenu extends JPopupMenu {
         add(batchMI);
 //		addSeparator();
         add(editMI);
+        add(removeFormMI);
         add(closeMI);
         addSeparator();
         add(new JMenuItem(SiriusActions.ORDER_BY_MASS.getInstance()));

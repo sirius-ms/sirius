@@ -10,7 +10,7 @@ import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workfow.GuiWorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.GPSMFactory;
+import de.unijena.bioinf.projectspace.GuiProjectSpaceManagerFactory;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -44,7 +44,7 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
 
         run(args, () -> {
             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-            rootOptions = new CLIRootOptions<>(configOptionLoader, new GPSMFactory());
+            rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
             return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, new GuiInstanceBufferFactory());
         });
 
