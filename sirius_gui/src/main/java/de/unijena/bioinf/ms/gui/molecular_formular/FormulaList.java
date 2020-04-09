@@ -64,12 +64,11 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     private void setData(final InstanceBean ec) {
         this.data = ec;
         if (this.data != null && this.data.getResults() != null && !this.data.getResults().isEmpty()) {
-            if (!this.data.getResults().equals(elementList)) {
-                selectionModel.clearSelection();
-                elementList.clear();
+            if (!this.data.getResults().equals(elementList))
                 intiResultList();
-            }
+
         } else {
+            elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
             selectionModel.clearSelection();
             elementList.clear();
             zodiacScoreStats.update(new double[0]);
@@ -91,6 +90,10 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     }
 
     private void intiResultList() {
+        elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
+        selectionModel.clearSelection();
+        elementList.clear();
+
         List<FormulaResultBean> r = data.getResults();
         if (r != null && !r.isEmpty()) {
             double[] zscores = new double[r.size()];
@@ -99,6 +102,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             double[] tScores = new double[r.size()];
             int i = 0;
             for (FormulaResultBean element : r) {
+                element.registerProjectSpaceListeners();
                 elementList.add(element);
                 zscores[i] = element.getScoreValue(ZodiacScore.class);
                 sscores[i] = element.getScoreValue(SiriusScore.class);

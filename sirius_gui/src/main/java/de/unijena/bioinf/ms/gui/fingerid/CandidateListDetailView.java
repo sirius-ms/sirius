@@ -73,7 +73,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
     private JTextField smartFilterTextField;
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
-    public CandidateListDetailView(CandidateList sourceList) {
+    public CandidateListDetailView(StructureList sourceList) {
         super(sourceList);
         candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
 

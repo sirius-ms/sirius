@@ -14,7 +14,7 @@ import javax.swing.*;
 public enum SiriusActions {
 
     COMPUTE(ComputeAction.class),
-    CANCEL_COMPUTE(CancelComputeAction.class),
+//    CANCEL_COMPUTE(CancelComputeAction.class),
     COMPUTE_ALL(ComputeAllAction.class),
 //    CANCEL_ALL(CancelComputeAllAction.class),
     ORDER_BY_MASS(OrderByMass.class),
@@ -27,6 +27,8 @@ public enum SiriusActions {
     IMPORT_EXP_BATCH(ImportAction.class),
     EDIT_EXP(EditExperimentAction.class),
     DELETE_EXP(DeleteExperimentAction.class),
+    REMOVE_FORMULA_EXP(RemoveFormulaAction.class),
+
 
     LOAD_WS(ProjectOpenAction.class),
     SAVE_WS(ProjectSaveAction.class),

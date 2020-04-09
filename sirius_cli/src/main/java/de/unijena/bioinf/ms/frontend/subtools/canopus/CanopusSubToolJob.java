@@ -6,13 +6,14 @@ import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.CanopusWebJJob;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
+import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public class CanopusSubToolJob extends InstanceJob {
+
+    public CanopusSubToolJob(JobSubmitter submitter) {
+        super(submitter);
+    }
+
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
 //        System.out.println("I am Canopus on Experiment " + inst);
@@ -60,13 +66,6 @@ public class CanopusSubToolJob extends InstanceJob {
         for (FormulaResult r : res)
             inst.updateFormulaResult(r, CanopusResult.class);
     }
-
-    /*private CanopusJJob buildAndSubmit(@NotNull final FormulaResult ir) {
-        final CanopusJJob canopusJob = new CanopusJJob(ApplicationCore.CANOPUS);
-        canopusJob.setFormula(ir.getId().getMolecularFormula())
-                .setFingerprint(ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint);
-        return SiriusJobs.getGlobalJobManager().submitJob(canopusJob);
-    }*/
 
     private CanopusWebJJob buildAndSubmitRemote(@NotNull final FormulaResult ir) {
         try {

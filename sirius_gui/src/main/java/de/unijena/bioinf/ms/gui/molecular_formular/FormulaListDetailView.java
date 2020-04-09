@@ -30,7 +30,6 @@ import java.util.Map;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FormulaListDetailView extends ActionListDetailView<FormulaResultBean, InstanceBean, FormulaList> {
-    //    private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<FormulaResultBean> table;
     private final ConnectedSelection<FormulaResultBean> selectionConnection; //this object synchronizes selection models and is not obsolete
 
@@ -39,7 +38,7 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
 
     public FormulaListDetailView(final FormulaList source) {
         super(source);
-        //todo dirty hack until search fied bug is fixed
+        //todo dirty hack until search field bug is fixed
         getNorth().remove(searchField);
 
         tableFormat = new SiriusResultTableFormat(source.siriusScoreStats);

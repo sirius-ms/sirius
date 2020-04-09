@@ -254,10 +254,10 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                     final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
                     final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), compoundsToProcess), configOptionLoader, new GuiInstanceBufferFactory());
                     final Run computation = new Run(wfBuilder);
-
                     computation.parseArgs(command.toArray(String[]::new));
+
                     if (computation.isWorkflowDefined())
-                        Jobs.runInBackground(computation::compute);//todo make som nice head job that does some organizing stuff
+                        Jobs.runWorkflow(computation.getFlow(), compoundsToProcess);//todo make som nice head job that does some organizing stuff
                     //todo else some error message with pico cli output
                 } catch (IOException e) {
                     e.printStackTrace();

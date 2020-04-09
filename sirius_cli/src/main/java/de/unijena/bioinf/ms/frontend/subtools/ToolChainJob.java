@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-public interface SubToolJob<T> extends ProgressJJob<T> {
+public interface ToolChainJob<T> extends ProgressJJob<T> {
     default void invalidateResults(final @NotNull Instance result) {
         final Optional<RecomputeResults> recomp = result.getExperiment().getAnnotation(RecomputeResults.class);
         if (recomp.isEmpty() || !recomp.get().value)

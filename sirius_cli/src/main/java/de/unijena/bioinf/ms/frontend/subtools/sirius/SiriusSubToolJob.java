@@ -7,11 +7,11 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
 import de.unijena.bioinf.fingerid.FormulaWhiteListJob;
+import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
+import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -26,7 +26,8 @@ import java.util.Optional;
 public class SiriusSubToolJob extends InstanceJob {
     protected final SiriusOptions cliOptions;
 
-    public SiriusSubToolJob(SiriusOptions cliOptions) {
+    public SiriusSubToolJob(SiriusOptions cliOptions, JobSubmitter jobSubmitter) {
+        super(jobSubmitter);
         this.cliOptions = cliOptions;
     }
 

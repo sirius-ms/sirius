@@ -23,7 +23,7 @@ import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.fingerid.CandidateList;
+import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
@@ -53,7 +53,7 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
     protected CardLayout layout;
 
 
-    public CandidateListDetailViewPanel(CandidateList sourceList) {
+    public CandidateListDetailViewPanel(StructureList sourceList) {
         super();
         list = new CandidateListDetailView(sourceList);
         init();

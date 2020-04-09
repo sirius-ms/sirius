@@ -1,8 +1,11 @@
 package de.unijena.bioinf.ms.frontend.subtools.config;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
+import de.unijena.bioinf.jjobs.JobSubmitter;
+import de.unijena.bioinf.jjobs.SubjobSubmitter;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
@@ -20,6 +23,7 @@ public class AddConfigsJob extends InstanceJob {
     private ParameterConfig cliConfig;
 
     public AddConfigsJob(ParameterConfig cliConfig) {
+        super(SiriusJobs.getGlobalJobManager());
         this.cliConfig = cliConfig;
     }
 

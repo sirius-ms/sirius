@@ -1,6 +1,6 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
-import de.unijena.bioinf.ms.gui.fingerid.CandidateList;
+import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListStructureView;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
@@ -20,7 +20,7 @@ public class CandidateOverviewPanel extends JPanel implements PanelDescription {
                 + "Selected candidate structures are rendered in the bottom panel."
                 + "</html>";
     }
-    public CandidateOverviewPanel(final CandidateList sourceList) {
+    public CandidateOverviewPanel(final StructureList sourceList) {
         super(new BorderLayout());
 
         final CandidateListTableView north = new CandidateListTableView(sourceList);

@@ -1,7 +1,8 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.jjobs.BasicDependentJJob;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,19 +12,19 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public abstract class DataSetJob extends BasicDependentJJob<Iterable<Instance>> implements SubToolJob<Iterable<Instance>> {
+public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> implements ToolChainJob<Iterable<Instance>> {
     private List<JJob<?>> failedJobs = new ArrayList<>();
     private List<Instance> failedInstances = new ArrayList<>();
     private List<Instance> inputInstances = new ArrayList<>();
 
     private final Predicate<Instance> inputValidator;
 
-    public DataSetJob(@NotNull Predicate<Instance> inputValidator) {
-        this(inputValidator, ReqJobFailBehaviour.WARN);
+    public DataSetJob(@NotNull Predicate<Instance> inputValidator, @NotNull JobSubmitter submitter) {
+        this(inputValidator, submitter, ReqJobFailBehaviour.WARN);
     }
 
-    public DataSetJob(@NotNull Predicate<Instance> inputValidator, @NotNull ReqJobFailBehaviour failBehaviour) {
-        super(JobType.SCHEDULER, failBehaviour);
+    public DataSetJob(@NotNull Predicate<Instance> inputValidator, @NotNull JobSubmitter submitter, @NotNull ReqJobFailBehaviour failBehaviour) {
+        super(submitter, failBehaviour);
         this.inputValidator = inputValidator;
     }
 
@@ -86,12 +87,16 @@ public abstract class DataSetJob extends BasicDependentJJob<Iterable<Instance>> 
     @FunctionalInterface
     public interface Factory<T extends DataSetJob> {
         default T createToolJob(Iterable<JJob<Instance>> dataSet) {
-            final T job = makeJob();
+            return createToolJob(dataSet, SiriusJobs.getGlobalJobManager());
+        }
+
+        default T createToolJob(Iterable<JJob<Instance>> dataSet, @NotNull JobSubmitter jobSubmitter) {
+            final T job = makeJob(jobSubmitter);
             dataSet.forEach(job::addRequiredJob);
             return job;
         }
 
-        T makeJob();
+        T makeJob(@NotNull JobSubmitter jobSubmitter);
     }
 
 
