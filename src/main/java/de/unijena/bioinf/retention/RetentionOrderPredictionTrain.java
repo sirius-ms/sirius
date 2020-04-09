@@ -14,21 +14,21 @@ public class RetentionOrderPredictionTrain {
     protected final RetentionOrderDataset dataset;
     private double[][] kernel;
     private KernelCentering centering[];
-    private MoleculeKernel[] kernels;
+    private MoleculeKernel<?>[] kernels;
 
     public RetentionOrderPredictionTrain(RetentionOrderDataset dataset) {
         this.dataset = dataset;
         this.kernels = new MoleculeKernel[]{new SubstructureKernel(), new ShortestPathKernel()};
     }
 
-    public BasicJJob computeKernel() {
-        return new BasicMasterJJob(JJob.JobType.SCHEDULER) {
+    public BasicJJob<Object> computeKernel() {
+        return new BasicMasterJJob<>(JJob.JobType.SCHEDULER) {
             @Override
             protected Object compute() throws Exception {
                 int[] usedIndizes = dataset.getUsedIndizes();
 
                 final List<JJob<double[][]>> kernelComputations = new ArrayList<>();
-                for (MoleculeKernel k : kernels) {
+                for (MoleculeKernel<?> k : kernels) {
                     kernelComputations.add(submitSubJob(dataset.computeTrainKernel(k)));
                 }
                 centering = new KernelCentering[kernels.length];
