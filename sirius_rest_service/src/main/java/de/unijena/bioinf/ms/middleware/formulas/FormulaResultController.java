@@ -1,11 +1,14 @@
 package de.unijena.bioinf.ms.middleware.formulas;
 
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
+import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
+import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -66,6 +69,24 @@ public class FormulaResultController extends BaseApiController {
                     fr.getAnnotation(FormulaScoring.class).ifPresent(fs -> formulaId.setResultScores(new FormulaResultScores(fs)));
                     return formulaId;
         }).orElse(null);
+    }
+
+    @RequestMapping(value = "formulas/{fid}/tree", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public FTree getFragmentationTree(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
+        SiriusProjectSpace projectSpace = super.projectSpace(pid);
+        Optional<FormulaResult> fResult = this.getCompound(projectSpace,cid).map(cc -> {
+            Optional<FormulaResultId> fResultId = cc.findResult(fid);
+            return fResultId.map(frId -> {
+                try {
+                    return projectSpace.getFormulaResult(frId, FTree.class);
+                } catch (IOException e) {
+                    return null;
+                }
+            }).orElse(null);
+        });
+        FTree fTree = fResult.map(fr -> fr.getAnnotation(FTree.class).orElse(null)).orElse(null);
+        return fTree;
+        // The FTree object needs an extra class for JSON. It can't be displayed well. Nevertheless, it works with attributes of the FTree object.
     }
 
     private Optional<CompoundContainer> getCompound(SiriusProjectSpace space, String cid, Class<? extends DataAnnotation>... components) {
