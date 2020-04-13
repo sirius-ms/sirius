@@ -1,7 +1,8 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.jjobs.BasicDependentJJob;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
@@ -14,20 +15,20 @@ import org.jetbrains.annotations.NotNull;
  * NOT necessary and NOT recommended.
  */
 
-public abstract class InstanceJob extends BasicDependentJJob<Instance> implements SubToolJob {
-    private Instance input = null;
+public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements ToolChainJob<Instance> {
+    protected Instance input = null;
 
-    public InstanceJob() {
-        super(JobType.SCHEDULER);
+
+    public InstanceJob(JobSubmitter submitter) {
+        super(submitter);
     }
 
     @Override
     public synchronized void handleFinishedRequiredJob(JJob required) {
-        if (input == null) {
-            final Object r = required.result();
-            if (r instanceof Instance)
+        final Object r = required.result();
+        if (r instanceof Instance)
+            if (input == null || input.equals(r))
                 input = (Instance) r;
-        }
     }
 
 
@@ -36,7 +37,6 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
         checkInput();
         computeAndAnnotateResult(input);
         updateProgress(0,100, 99, "DONE!");
-
         return input;
     }
 
@@ -53,7 +53,7 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
 
     @Override
     public String identifier() {
-        return super.identifier() + " | Instance: " + (input != null ? input.toString() : "NULL");
+        return super.identifier() + " | Instance: " + (input != null ? input.toString() : "Awaiting Instance!");
     }
 
     protected void checkInput() {
@@ -73,12 +73,16 @@ public abstract class InstanceJob extends BasicDependentJJob<Instance> implement
 
     @FunctionalInterface
     public interface Factory<T extends InstanceJob> {
-        default T createToolJob(JJob<Instance> inputProvidingJob) {
-            final T job = makeJob();
+        default T createToolJob(@NotNull JJob<Instance> inputProvidingJob) {
+            return createToolJob(inputProvidingJob, SiriusJobs.getGlobalJobManager());
+        }
+
+        default T createToolJob(@NotNull JJob<Instance> inputProvidingJob, @NotNull JobSubmitter submitter) {
+            final T job = makeJob(submitter);
             job.addRequiredJob(inputProvidingJob);
             return job;
         }
 
-        T makeJob();
+        T makeJob(JobSubmitter submitter);
     }
 }

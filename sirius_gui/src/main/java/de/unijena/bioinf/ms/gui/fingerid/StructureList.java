@@ -18,17 +18,17 @@ import java.util.*;
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateList extends ActionList<FingerprintCandidateBean, Set<FormulaResultBean>> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
+public class StructureList extends ActionList<FingerprintCandidateBean, Set<FormulaResultBean>> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
     public final DoubleListStats scoreStats;
     public final DoubleListStats logPStats;
     public final DoubleListStats tanimotoStats;
 
-    public CandidateList(final FormulaList source) {
+    public StructureList(final FormulaList source) {
         this(source, DataSelectionStrategy.ALL_SELECTED);
     }
 
-    public CandidateList(final FormulaList source, DataSelectionStrategy strategy) {
+    public StructureList(final FormulaList source, DataSelectionStrategy strategy) {
         super(FingerprintCandidateBean.class, strategy);
 
         scoreStats = new DoubleListStats();

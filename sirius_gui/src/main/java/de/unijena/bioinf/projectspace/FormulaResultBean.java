@@ -9,12 +9,13 @@ import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -36,7 +37,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
     private int rank;
 
-    private ContainerListener.Defined scoreListener, fingerBlastListener, fingerprintListener, canopusListener;
+    private List<ContainerListener.Defined> listeners = null;
 
     protected FormulaResultBean(int rank) {
         this.rank = rank;
@@ -48,44 +49,65 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         this.fid = fid;
         this.parent = parent;
         this.rank = rank;
-        configureListeners();
     }
 
-    //todo  compute states need to be observable
-    private void configureListeners() {
+    private List<ContainerListener.Defined> configureListeners() {
+        List<ContainerListener.Defined> listeners = new ArrayList<>(5);
         //this is used to detect a new tree as well as a new zodiac score
-        scoreListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FormulaScoring.class).
+        listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FormulaScoring.class).
                 thenDo((event -> {
+                    if (!event.id.equals(fid))
+                        return;
                     FormulaScoring fScores = (FormulaScoring) event.getAffectedComponent(FormulaScoring.class).orElse(null);
-                    pcs.firePropertyChange("formulaScore", null, fScores);
+                    pcs.firePropertyChange("formulaResult.formulaScore", null, fScores);
+                })));
 
-
-                    if (event.hasChanged(FTree.class)) {
-                        final FTree fTree = (FTree) event.getAffectedComponent(FTree.class).orElse(null);
-                        //todo create gui tree here?
-                        pcs.firePropertyChange("tree", null, fTree);
-                    }
-                })).register();
-
-        fingerprintListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
+        listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FTree.class).
                 thenDo((event -> {
-                    FingerprintResult fpRes = (FingerprintResult) event.getAffectedComponent(FBCandidates.class).orElse(null);
-                    pcs.firePropertyChange("fingerprint", null, fpRes);
-                })).register();
+                    if (!event.id.equals(fid))
+                        return;
+                    FTree ftree = (FTree) event.getAffectedComponent(FTree.class).orElse(null);
+                    pcs.firePropertyChange("formulaResult.ftree", null, ftree);
+                })));
 
-        fingerBlastListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
+        listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
                 thenDo((event -> {
-                    FingerblastResult fbRes = (FingerblastResult) event.getAffectedComponent(FBCandidates.class).orElse(null);
-                    pcs.firePropertyChange("fingerblast", null, fbRes);
-                })).register();
+                    if (!event.id.equals(fid))
+                        return;
+                    FingerprintResult fpRes = (FingerprintResult) event.getAffectedComponent(FingerprintResult.class).orElse(null);
+                    pcs.firePropertyChange("formulaResult.fingerprint", null, fpRes);
+                })));
 
-        canopusListener = parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(CanopusResult.class).
+        listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
                 thenDo((event -> {
+                    if (!event.id.equals(fid))
+                        return;
+                    FBCandidates fbRes = (FBCandidates) event.getAffectedComponent(FBCandidates.class).orElse(null);
+                    pcs.firePropertyChange("formulaResult.fingerid", null, fbRes);
+                })));
+
+        listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(CanopusResult.class).
+                thenDo((event -> {
+                    if (!event.id.equals(fid))
+                        return;
                     CanopusResult cRes = (CanopusResult) event.getAffectedComponent(CanopusResult.class).orElse(null);
-                    pcs.firePropertyChange("canopus", null, cRes);
-                })).register();
+                    pcs.firePropertyChange("formulaResult.canopus", null, cRes);
+                })));
+        return listeners;
     }
 
+    public void registerProjectSpaceListeners() {
+        if (listeners == null)
+            listeners = configureListeners();
+        listeners.forEach(ContainerListener.Defined::register);
+
+    }
+
+    public void unregisterProjectSpaceListeners() {
+        if (listeners == null)
+            return;
+        listeners.forEach(ContainerListener.Defined::unregister);
+    }
 
 
     public FormulaResultId getID() {

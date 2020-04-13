@@ -14,7 +14,10 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -24,7 +27,8 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.inEDTAndWait;
 public class GuiProjectSpaceManager extends ProjectSpaceManager {
     //    todo ringbuffer???
     protected static final Logger LOG = LoggerFactory.getLogger(GuiProjectSpaceManager.class);
-    public final BasicEventList<InstanceBean> COMPOUNT_LIST;
+    public final BasicEventList<InstanceBean> INSTANCE_LIST;
+//    private final Set<InstanceBean> COMPUTING_INTANCES = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space) {
         this(space, new BasicEventList<>());
@@ -36,15 +40,15 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
 
     public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, @Nullable Function<Ms2Experiment, String> formatter) {
         super(space, new InstanceBeanFactory(), formatter);
-        COMPOUNT_LIST = compoundList;
+        INSTANCE_LIST = compoundList;
         inEDTAndWait(() -> {
-            COMPOUNT_LIST.clear();
-            forEach(ins -> COMPOUNT_LIST.add((InstanceBean) ins));
+            INSTANCE_LIST.clear();
+            forEach(ins -> INSTANCE_LIST.add((InstanceBean) ins));
         });
 
         ContainerListener.Defined createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
             final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID(), Ms2Experiment.class);
-            inEDTAndWait(() -> COMPOUNT_LIST.add(inst));
+            inEDTAndWait(() -> INSTANCE_LIST.add(inst));
         })).register();
     }
 
@@ -58,7 +62,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                 updateProgress(0, insts.size(), pro.get(), "Deleting...");
                 insts.iterator().forEachRemaining(inst -> {
                     try {
-                        inEDTAndWait(() -> COMPOUNT_LIST.remove(inst));
+                        inEDTAndWait(() -> INSTANCE_LIST.remove(inst));
                         projectSpace().deleteCompound(inst.getID());
                     } catch (IOException e) {
                         LOG.error("Could not delete Compound: " + inst.getID(), e);
@@ -73,7 +77,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
     }
 
     public synchronized void deleteAll() {
-        deleteCompounds(COMPOUNT_LIST);
+        deleteCompounds(INSTANCE_LIST);
     }
 
     public InputFilesOptions importOneExperimentPerLocation(@NotNull final List<File> rawFiles) {

@@ -10,8 +10,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.InputStream;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseListener, ComponentListener, KeyListener, MSViewerDataModelListener {
 
@@ -655,9 +655,11 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 //		int maxFirstLength  = Math.max(absIntLabelLength,Math.max(Math.max(relIntLabelLength,massLabelLength),snLabelLength));
 //		int maxSecondLength = Math.max(absIntValLength,Math.max(Math.max(relIntValLength,massValLength),snValLength));
 
+
+		boolean noExtendedInfo = mfVal == null || ionVal == null;
+
 		int totalHorizontalSize = maxFirstLength + maxSecondLength + 20;
-//		int totalVerticalSize = mfVal==null ? 50 : 65;
-		int totalVerticalSize = mfVal==null ? 50 : 80; //ion==null iff mfVal==null
+		int totalVerticalSize = noExtendedInfo ? 50 : 80;
 
 		int leftX = 0;
 		int leftY = 0;
@@ -680,26 +682,26 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 		}
 
 		g2.setColor(innerBlue);
-		g2.fillRect(leftX,leftY,totalHorizontalSize,totalVerticalSize);
+		g2.fillRect(leftX, leftY, totalHorizontalSize, totalVerticalSize);
 		g2.setColor(outerBlue);
-		g2.drawRect(leftX,leftY,totalHorizontalSize,totalVerticalSize);
+		g2.drawRect(leftX, leftY, totalHorizontalSize, totalVerticalSize);
 		g2.setColor(defaultColor);
 
-		int firstColumnX = leftX+5;
+		int firstColumnX = leftX + 5;
 
-		int secondColumnX = leftX+15+maxFirstLength;
+		int secondColumnX = leftX + 15 + maxFirstLength;
 
-		if(mfVal==null){
-			g2.drawString(massLabel, firstColumnX, leftY+15);
-			g2.drawString(relIntLabel, firstColumnX, leftY+30);
-			g2.drawString(absIntLabel, firstColumnX, leftY+45);
+		if (noExtendedInfo) {
+			g2.drawString(massLabel, firstColumnX, leftY + 15);
+			g2.drawString(relIntLabel, firstColumnX, leftY + 30);
+			g2.drawString(absIntLabel, firstColumnX, leftY + 45);
 
-			g2.drawString(massVal,secondColumnX,leftY+15);
-			g2.drawString(relIntVal,secondColumnX,leftY+30);
-			g2.drawString(absIntVal,secondColumnX,leftY+45);
-		}else{
-			g2.drawString(mfLabel, firstColumnX, leftY+15);
-			g2.drawString(massLabel, firstColumnX, leftY+30);
+			g2.drawString(massVal, secondColumnX, leftY + 15);
+			g2.drawString(relIntVal, secondColumnX, leftY + 30);
+			g2.drawString(absIntVal, secondColumnX, leftY + 45);
+		} else {
+			g2.drawString(mfLabel, firstColumnX, leftY + 15);
+			g2.drawString(massLabel, firstColumnX, leftY + 30);
 			g2.drawString(relIntLabel, firstColumnX, leftY+45);
 			g2.drawString(absIntLabel, firstColumnX, leftY+60);
 			g2.drawString(ionLabel, firstColumnX, leftY+75);

@@ -6,13 +6,15 @@ package de.unijena.bioinf.ms.gui.utils;
  */
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -26,7 +28,7 @@ public class GuiUtils {
 
 
     public static void initUI() {
-        //load nimbus look and feel, befor mainframe is built
+        //load nimbus look and feel, before mainframe is built
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -126,12 +128,47 @@ public class GuiUtils {
         }
     }
 
-    public static boolean assignParameterToolTip(@NotNull final JComponent comp, @NotNull String parameterKey){
-        parameterKey = PropertyManager.DEFAULTS.shortKey(parameterKey);
-        if(PropertyManager.DEFAULTS.getConfigValue(parameterKey) != null){
-            comp.setToolTipText(PropertyManager.DEFAULTS.getConfigDescription(parameterKey) + "\nCommandline: 'CONFIG --" + parameterKey + "'");
+    public static boolean assignParameterToolTip(@NotNull final JComponent comp, @NotNull String parameterKey) {
+        final String parameterKeyShort = PropertyManager.DEFAULTS.shortKey(parameterKey);
+        if (PropertyManager.DEFAULTS.getConfigValue(parameterKeyShort) != null) {
+            PropertyManager.DEFAULTS.getConfigDescription(parameterKeyShort).ifPresent(des ->
+                    comp.setToolTipText(formatToolTip(Stream.concat(Stream.of(des), Stream.of("Commandline: 'CONFIG --" + parameterKeyShort + "'")).collect(Collectors.toList()))));
             return true;
         }
         return false;
+    }
+
+    public static void setEnabled(Component component, boolean enabled) {
+        component.setEnabled(enabled);
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                setEnabled(child, enabled);
+            }
+        }
+    }
+
+
+    public static final int toolTipWidth = 500;
+
+    public static String formatToolTip(String... lines) {
+        return formatToolTip(toolTipWidth, lines);
+    }
+
+    public static String formatToolTip(java.util.List<String> lines) {
+        return formatToolTip(toolTipWidth, lines);
+    }
+
+    public static String formatToolTip(int width, String... lines) {
+        if (lines == null)
+            return null;
+        return formatToolTip(width, List.of(lines));
+    }
+
+    public static String formatToolTip(int width, java.util.List<String> lines) {
+        if (lines == null || lines.isEmpty())
+            return null;
+        return "<html><p width=\"" + width + "\">"
+                + lines.stream().map(it -> it.replace("\n", "<br>")).collect(Collectors.joining("<br>"))
+                + "</p></html>";
     }
 }

@@ -26,7 +26,7 @@ public class GuiComputeRoot implements RootOptions<GuiProjectSpaceManager, Prepr
      * here we need to provide the PP to write on.
      * */
     @Override
-    public ProjectSpaceManager getProjectSpace() {
+    public GuiProjectSpaceManager getProjectSpace() {
         return guiProjectSpace;
     }
 
@@ -49,6 +49,7 @@ public class GuiComputeRoot implements RootOptions<GuiProjectSpaceManager, Prepr
         return new PreprocessingJob<>() {
             @Override
             protected List<InstanceBean> compute() {
+//                instances.forEach(it -> it.setComputing(true));
                 return instances;
             }
         };
@@ -57,10 +58,14 @@ public class GuiComputeRoot implements RootOptions<GuiProjectSpaceManager, Prepr
     @Nullable
     @Override
     public PostprocessingJob<?> makeDefaultPostprocessingJob() {
-        // currently no preprocessing needed for gui computations
-        // maybe we can do some notifications here.
-        //todo handle summary writing here?
-        return null;
+
+        return new PostprocessingJob<Boolean>() {
+            @Override
+            protected Boolean compute() throws Exception {
+//                instances.forEach(it -> it.setComputing(false));
+                return true;
+            }
+        };
     }
 
     @Override

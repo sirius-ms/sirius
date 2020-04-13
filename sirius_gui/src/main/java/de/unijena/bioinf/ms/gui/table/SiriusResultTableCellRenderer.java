@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.table;
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -12,7 +13,6 @@ import java.text.NumberFormat;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
-    //    public final static NumberFormat NF = new DecimalFormat("#0.00");
     protected NumberFormat nf = new DecimalFormat("#0.00");
 
 
@@ -72,6 +72,8 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
             table.getColumnModel().getColumn(column).setMaxWidth(50);
             setHorizontalAlignment(SwingConstants.CENTER);
         }
+
+        setToolTipText(GuiUtils.formatToolTip(Math.min(getFontMetrics(getFont()).stringWidth(this.value), GuiUtils.toolTipWidth), this.value));
 
         return super.getTableCellRendererComponent(table, this.value, isSelected, hasFocus, row, column);
     }

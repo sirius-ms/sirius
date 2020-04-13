@@ -20,7 +20,7 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
     private final ActionTable<FingerprintCandidateBean> table;
     private SortedList<FingerprintCandidateBean> sortedSource;
 
-    public CandidateListTableView(final CandidateList list) {
+    public CandidateListTableView(final StructureList list) {
         super(list);
 
         final CandidateTableFormat tf = new CandidateTableFormat(source.scoreStats);

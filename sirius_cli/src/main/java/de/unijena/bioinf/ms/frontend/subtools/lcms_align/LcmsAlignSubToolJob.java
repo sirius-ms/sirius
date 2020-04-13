@@ -11,6 +11,8 @@ import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.model.lcms.ConsensusFeature;
 import de.unijena.bioinf.model.lcms.LCMSRun;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
@@ -86,3 +88,5 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         return space;
     }
 }
+
+

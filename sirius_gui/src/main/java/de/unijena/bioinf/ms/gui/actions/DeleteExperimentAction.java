@@ -42,7 +42,7 @@ public class DeleteExperimentAction extends AbstractAction {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                setEnabled(!selection.isSelectionEmpty());
+                setEnabled(!selection.isSelectionEmpty() && selection.getSelected().stream().noneMatch(InstanceBean::isComputing));
             }
         });
     }
@@ -56,7 +56,6 @@ public class DeleteExperimentAction extends AbstractAction {
         }
 
         List<InstanceBean> toRemove = new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
-        Jobs.cancel(toRemove);
         MF.ps().deleteCompounds(toRemove);
 
     }

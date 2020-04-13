@@ -49,7 +49,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
         if (column == col++) return result.candidate.getName() != null ? result.candidate.getName() : "";
         if (column == col++) return result.candidate.getSmiles();
         if (column == col++) return result.getMolecularFormula();
-        if (column == col++) return result.adduct;
+        if (column == col++) return result.adduct.toString();
         if (column == col++) return result.getScore();
         if (column == col++) return result.getTanimotoScore();
         if (column == col++) return result.getFingerprintCandidate().getPubmedIDs();

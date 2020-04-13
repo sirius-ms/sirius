@@ -72,10 +72,13 @@ public class TwoColumnPanel extends JPanel {
     }
 
 
+    public void addNamed(String name, JComponent rightComp) {
+        add(new JLabel(name), rightComp);
+    }
 
     public void add(JComponent leftComp, JComponent rightComp) {
 
-        add(leftComp,rightComp,0,false);
+        add(leftComp, rightComp, 0, false);
     }
 
     public void add(JComponent leftComp, JComponent rightComp, int gap, boolean verticalResize) {
