@@ -32,6 +32,11 @@ public class SiriusJobs {
 
     }
 
+    public static int getCPUThreads() {
+        return getGlobalJobManager().getCPUThreads();
+    }
+
+
     public static void setGlobalJobManager(JobManager manager) {
         replace(manager);
     }
