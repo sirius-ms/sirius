@@ -37,7 +37,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     //Project-space listener
-    private ContainerListener.Defined msExperimentListener, createListener, deleteListener;
+    private List<ContainerListener.Defined> listeners;
 
 //    private volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
 
@@ -46,27 +46,50 @@ public class InstanceBean extends Instance implements SiriusPCS {
     // e.g. if the scoring changes from sirius to zodiac
 
     //todo make compute state nice
-    //todo we may nee backround loading tasks for retriving informaion from project space
+    //todo we may nee background loading tasks for retriving informaion from project space
 
     //todo som unregister listener stategy
 
     public InstanceBean(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
         super(compoundContainer, spaceManager);
-        configureListeners();
     }
 
-    private void configureListeners() {
-        msExperimentListener = projectSpace().defineCompoundListener().onUpdate().onlyFor(Ms2Experiment.class).thenDo((event -> {
-            pcs.firePropertyChange("ms2Experiment", null, event.getAffectedComponent(Ms2Experiment.class));
-        })).register();
+    private List<ContainerListener.Defined> configureListeners() {
+        final List<ContainerListener.Defined> listeners = new ArrayList<>(3);
 
-        createListener = projectSpace().defineFormulaResultListener().onCreate().thenDo((event -> {
-            pcs.firePropertyChange("createFormulaResult", null, event.getAffectedID());
-        })).register();
+        listeners.add(projectSpace().defineCompoundListener().onUpdate().onlyFor(Ms2Experiment.class).thenDo((event -> {
+            if (!event.getAffectedID().equals(getID()))
+                return;
+            pcs.firePropertyChange("instance.ms2Experiment", null, event.getAffectedComponent(Ms2Experiment.class));
+        })));
 
-        deleteListener = projectSpace().defineFormulaResultListener().onDelete().thenDo((event -> {
-            pcs.firePropertyChange("deleteFormulaResult", event.getAffectedID(), null);
-        })).register();
+        listeners.add(projectSpace().defineFormulaResultListener().onCreate().thenDo((event -> {
+            if (!event.getAffectedID().getParentId().equals(getID()))
+                return;
+            pcs.firePropertyChange("instance.createFormulaResult", null, event.getAffectedID());
+        })));
+
+        listeners.add(projectSpace().defineFormulaResultListener().onDelete().thenDo((event -> {
+            if (!event.getAffectedID().getParentId().equals(getID()))
+                return;
+            pcs.firePropertyChange("instance.deleteFormulaResult", event.getAffectedID(), null);
+        })));
+
+        return listeners;
+
+    }
+
+    public void registerProjectSpaceListeners() {
+        if (listeners == null)
+            listeners = configureListeners();
+        listeners.forEach(ContainerListener.Defined::register);
+
+    }
+
+    public void unregisterProjectSpaceListeners() {
+        if (listeners == null)
+            return;
+        listeners.forEach(ContainerListener.Defined::unregister);
     }
 
     public String getName() {
@@ -105,6 +128,10 @@ public class InstanceBean extends Instance implements SiriusPCS {
     // Computing State
     public boolean isComputing() {
         return computeLock.get();
+    }
+
+    public void setComputing(boolean computing) {
+        pcs.firePropertyChange("computeState", computeLock.getAndSet(computing), computeLock.get());
     }
 
     private MutableMs2Experiment getMutableExperiment() {

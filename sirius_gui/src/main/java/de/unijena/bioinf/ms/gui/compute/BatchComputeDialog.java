@@ -18,30 +18,27 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.Run;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.*;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
+import de.unijena.bioinf.ms.gui.dialogs.WorkerWarningDialog;
 import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.sirius.Ms1Preprocessor;
-import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -51,179 +48,125 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
-public class BatchComputeDialog extends JDialog implements ActionListener {
+public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
 
-    private JButton compute;
-    private JButton abort;
-
-    private JCheckBox recompute;
-
-    private JButton elementAutoDetect = null;
-
-    private ElementsPanel elementPanel;
+    // main parts
     private ExperimentEditPanel editPanel;
-    private FormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
-    private FingerIDComputationPanel csiOptions; //FingerIS configs
+    private final Box mainPanel;
+    private final JCheckBox recompute;
 
-    private MainFrame owner;
-    List<InstanceBean> compoundsToProcess;
+    // tool configurations
+    private final ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
+    private final ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
+    private final ActFingerIDConfigPanel csiConfigs; //FingerID configs
+    private final ActCanopusConfigPanel canopusConfigPanel; //Canopus configs
 
-    private Sirius sirius;
-    private boolean success;
+    // compounds on which the configured Run will be executed
+    private final List<InstanceBean> compoundsToProcess;
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
         super(owner, "compute", true);
-        this.owner = owner;
-        this.compoundsToProcess = compoundsToProcess;
-        this.success = false;
+        {
+            this.compoundsToProcess = compoundsToProcess;
 
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setLayout(new BorderLayout());
+            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            setLayout(new BorderLayout());
 
-
-        Box mainPanel = Box.createVerticalBox();
-        add(mainPanel, BorderLayout.CENTER);
-        //mainpanel done
-
-
-        // set list of detectable elements
-        this.sirius = ApplicationCore.SIRIUS_PROVIDER.sirius();
-        List<Element> detectableElements = new ArrayList<>(sirius.getMs1Preprocessor().getSetOfPredictableElements());
-        detectableElements.sort(Comparator.naturalOrder());
-
-
-        formulaIDConfigPanel = new FormulaIDConfigPanel(compoundsToProcess);
-        mainPanel.add(formulaIDConfigPanel);
-        formulaIDConfigPanel.searchDBList.checkBoxList.addListSelectionListener(e -> {
-            List<SearchableDatabase> source = formulaIDConfigPanel.getFormulaSearchDB();
-            enableElementSelection(source.isEmpty()); //todo add none filer
-            if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(source);
-        });
-
-        csiOptions = new FingerIDComputationPanel(SearchableDatabases.getAvailableDatabases(), formulaIDConfigPanel.ionizationPanel.checkBoxList, true, true);
-        if (!csiOptions.isEnabled()) csiOptions.dbSelectionOptions.setDb(formulaIDConfigPanel.getFormulaSearchDB());
-        csiOptions.setMaximumSize(csiOptions.getPreferredSize());
-
-        if (compoundsToProcess.size() > 1) {
-            ///////////////////Multi Element//////////////////////
-            elementPanel = new ElementsPanel(this, 4, detectableElements);
-            add(elementPanel, BorderLayout.NORTH);
-            /////////////////////////////////////////////
-        } else {
-            initSingleExperimentDialog(detectableElements);
+            mainPanel = Box.createVerticalBox();
+            add(mainPanel, BorderLayout.CENTER);
         }
 
-
-        JPanel stack = new JPanel();
-        stack.setLayout(new BorderLayout());
-        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "CSI:FingerID - Structure Elucidation"));
-
-        stack.add(csiOptions, BorderLayout.CENTER);
-        mainPanel.add(stack);
-
-
-        JPanel southPanel = new JPanel();
-        southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
-
-        JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        recompute = new JCheckBox("Recompute already computed tasks?", false);
-        recompute.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
-        lsouthPanel.add(recompute);
-
-        //checkConnectionToUrl by default when just one experiment is selected
-        if (compoundsToProcess.size() == 1) recompute.setSelected(true);
-
-        JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        compute = new JButton("Compute");
-        compute.addActionListener(this);
-        abort = new JButton("Abort");
-        abort.addActionListener(this);
-        rsouthPanel.add(compute);
-        rsouthPanel.add(abort);
-
-        southPanel.add(lsouthPanel);
-        southPanel.add(rsouthPanel);
-
-        this.add(southPanel, BorderLayout.SOUTH);
 
         {
-            InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-            KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
-            KeyStroke escKey = KeyStroke.getKeyStroke("ESCAPE");
-            String enterAction = "compute";
-            String escAction = "abort";
-            inputMap.put(enterKey, enterAction);
-            inputMap.put(escKey, escAction);
-            getRootPane().getActionMap().put(enterAction, new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    startComputing();
-                }
-            });
-            getRootPane().getActionMap().put(escAction, new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    abortComputing();
-                }
-            });
+            // make subtool config panels
+            formulaIDConfigPanel = new ActFormulaIDConfigPanel(this, compoundsToProcess);
+            addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
+
+            zodiacConfigs = new ActZodiacConfigPanel();
+            addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
+
+            csiConfigs = new ActFingerIDConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList);
+            addConfigPanel("CSI:FingerID - Structure Elucidation", csiConfigs);
+
+            canopusConfigPanel = new ActCanopusConfigPanel();
+            addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel);
+
+            //Make edit panel for single compound mode if needed
+            if (compoundsToProcess.size() == 1)
+                initSingleExperimentDialog();
+        }
+        // make south panel with Recompute/Compute/Abort
+        {
+            JPanel southPanel = new JPanel();
+            southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
+
+            JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+            recompute = new JCheckBox("Recompute already computed tasks?", false);
+            recompute.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
+            lsouthPanel.add(recompute);
+
+            //checkConnectionToUrl by default when just one experiment is selected
+            if (compoundsToProcess.size() == 1) recompute.setSelected(true);
+
+            JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+            JButton compute = new JButton("Compute");
+            compute.addActionListener(e -> startComputing());
+            JButton abort = new JButton("Abort");
+            abort.addActionListener(e -> dispose());
+            rsouthPanel.add(compute);
+            rsouthPanel.add(abort);
+
+            southPanel.add(lsouthPanel);
+            southPanel.add(rsouthPanel);
+
+            this.add(southPanel, BorderLayout.SOUTH);
         }
 
-
+        //finalize panel build
+        configureActions();
         pack();
         setResizable(false);
         setLocationRelativeTo(getParent());
         setVisible(true);
-
     }
 
-    public void enableElementSelection(boolean enabled) {
-        elementPanel.enableElementSelection(enabled);
-        if (elementAutoDetect != null)
-            elementAutoDetect.setEnabled(enabled);
+    private void addConfigPanel(String header, JPanel configPanel) {
+        JPanel stack = new JPanel();
+        stack.setLayout(new BorderLayout());
+        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), header));
+        stack.add(configPanel, BorderLayout.CENTER);
+        mainPanel.add(stack);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == abort) {
-            this.dispose();
-        } else if (e.getSource() == this.compute) {
-            if (editPanel != null && compoundsToProcess.size() == 1)
-                saveEdits(compoundsToProcess.get(0));
-            startComputing();
-        } else if (e.getSource() == elementAutoDetect) {
-            String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
-            InstanceBean ec = compoundsToProcess.get(0);
-            if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
-                final Ms1Preprocessor pp = sirius.getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(ec.getExperiment());
-
-                pi.getAnnotation(FormulaConstraints.class).
-                        ifPresentOrElse(c -> {
-                                    final Set<Element> pe = pp.getSetOfPredictableElements();
-                                    for (Element element : c.getChemicalAlphabet()) {
-                                        if (!pe.contains(element)) {
-                                            c.setLowerbound(element, 0);
-                                            c.setUpperbound(element, 0);
-                                        }
-                                    }
-                                    elementPanel.setSelectedElements(c);
-                                },
-                                () -> new ExceptionDialog(this, notWorkingMessage)
-                        );
-
-            } else {
-                new ExceptionDialog(this, notWorkingMessage);
+    private void configureActions() {
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
+        KeyStroke escKey = KeyStroke.getKeyStroke("ESCAPE");
+        String enterAction = "compute";
+        String escAction = "abort";
+        inputMap.put(enterKey, enterAction);
+        inputMap.put(escKey, escAction);
+        getRootPane().getActionMap().put(enterAction, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                startComputing();
             }
-        }
+        });
+        getRootPane().getActionMap().put(escAction, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                abortComputing();
+            }
+        });
     }
 
     private void abortComputing() {
@@ -236,138 +179,91 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
     }
 
     private void startComputing() {
+        if (editPanel != null && compoundsToProcess.size() == 1)
+            saveEdits(compoundsToProcess.get(0));
+
         if (recompute.isSelected()) {
-            boolean isSuccsess = true;
+            boolean recompute = false;
             if (!PropertyManager.getBoolean(DONT_ASK_RECOMPUTE_KEY, false) && this.compoundsToProcess.size() > 1) {
                 QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
-                isSuccsess = questionDialog.isSuccess();
+                recompute = questionDialog.isSuccess();
             }
-
-            //reset status of already computed values to uncomputed if needed
-            /*if (isSuccsess) {
-                final Iterator<InstanceBean> compounds = this.compoundsToProcess.iterator();
-                while (compounds.hasNext()) {
-                    final InstanceBean ec = compounds.next();
-                    ec.setSiriusComputeState(ComputingStatus.UNCOMPUTED);
-                    ec.setBestHit(null);
-                    ec.getMs2Experiment().clearAllAnnotations();
-                }
-            }*/
             //todo implement compute state handling
         }
 
-        //CHECK worker availability
-        checkConnection();
 
-        //collect job parameter from view
-        final FormulaIDConfigPanel.Instrument instrument = formulaIDConfigPanel.getInstrument();
-        final List<SearchableDatabase> searchableDatabase = formulaIDConfigPanel.getFormulaSearchDB();
-        final FormulaConstraints constraints = elementPanel.getElementConstraints();
-        final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.EMPTY_LIST;
-        final double ppm = formulaIDConfigPanel.getPpm();
-        final int candidates = formulaIDConfigPanel.getNumberOfCandidates();
-        ////////////////////////////////////////////////////////////////
-
-        // CHECK ILP SOLVER
-        TreeBuilder builder = new Sirius().getMs2Analyzer().getTreeBuilder();
-        if (builder == null) {
-            String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
-            LoggerFactory.getLogger(this.getClass()).error(noILPSolver);
-            new ErrorReportDialog(this, noILPSolver);
-            dispose();
-            return;
-        }
-        LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
-
-
-        Jobs.runInBackgroundAndLoad(owner, "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
+        Jobs.runInBackgroundAndLoad(getOwner(), "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
             @Override
-            protected Object compute() throws InterruptedException {
-                updateProgress(0, 1, 0, "Configuring Computation...");
-                        checkForInterruption();
+            protected Boolean compute() throws InterruptedException {
+                updateProgress(0, 100, 0, "Configuring Computation...");
+                checkForInterruption();
+
+                // CHECK ILP SOLVER
+                TreeBuilder builder = new Sirius().getMs2Analyzer().getTreeBuilder();
+                if (builder == null) {
+                    String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
+                    LoggerFactory.getLogger(BatchComputeDialog.class).error(noILPSolver);
+                    new ErrorReportDialog(BatchComputeDialog.this, noILPSolver);
+                    dispose();
+                    return false;
+                }
+                LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + builder);
+                updateProgress(0, 100, 1, "ILP solver check DONE!");
+                checkForInterruption();
+
+                //CHECK worker availability
+                checkConnection();
+
+                updateProgress(0, 100, 2, "Connection check DONE!");
+                checkForInterruption();
 
                 try {
-                    final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                    WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(),compoundsToProcess), configOptionLoader);
-                    Run computation = new Run(wfBuilder);
-
                     // create computation parameters
-                    List<String> configs = new ArrayList<>();
-                    configs.add("config");
+                    List<String> toolCommands = new ArrayList<>();
+                    List<String> configCommand = new ArrayList<>();
 
-                    configs.add("--AlgorithmProfile=" + instrument.profile);
-                    configs.add("--MS2MassDeviation.allowedMassDeviation=" + ppm + "ppm");
+                    configCommand.add("config");
+                    if (formulaIDConfigPanel.isToolSelected()) {
+                        toolCommands.add(formulaIDConfigPanel.content.toolCommand());
+                        configCommand.addAll(formulaIDConfigPanel.asParameterList());
+                    }
 
-                    configs.add("--FormulaSearchDB=" + (searchableDatabase != null ? searchableDatabase.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) : "none"));
-                    configs.add("--StructureSearchDB=" + csiOptions.dbSelectionOptions.getDb().name());
+                    if (zodiacConfigs.isToolSelected()) {
+                        toolCommands.add(zodiacConfigs.content.toolCommand());
+                        configCommand.addAll(zodiacConfigs.asParameterList());
+                    }
 
+                    if (csiConfigs.isToolSelected()) {
+                        toolCommands.add(csiConfigs.content.toolCommand());
+                        configCommand.addAll(csiConfigs.asParameterList());
+                    }
 
-                    FormulaConstraints c = constraints;
-//                    if (formulaIDConfigPanel.restrictToOrganics())// todo add restrict to organics parameter to cli
-//                        c = constraints.intersection(new FormulaConstraints("C,H,N,O,P,S,B,Br,Cl,F,I"));
-                    configs.add("--FormulaSettings.fallback=" + c.toString());
+                    if (canopusConfigPanel.isToolSelected()) {
+                        toolCommands.add(canopusConfigPanel.content.toolCommand());
+                        configCommand.addAll(canopusConfigPanel.asParameterList());
+                    }
 
-                    configs.add("--FormulaSettings.detectable=" + (elementsToAutoDetect.isEmpty() ? "," :
-                            elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(","))));
+                    final List<String> command = new ArrayList<>();
 
-                    configs.add("--AdductSettings.enforced=" + csiOptions.getPossibleAdducts().toString());
+                    configCommand.add("--RecomputeResults");
+                    configCommand.add(String.valueOf(recompute.isSelected()));
 
-                    configs.add("--NumberOfCandidates=" + candidates);
-//                            configs.add("--NumberOfCandidatesPerIon=" + candidatesPerIon);
-//                            configs.add("--NumberOfStructureCandidates=" + structureCandidates);
+                    command.addAll(configCommand);
+                    command.addAll(toolCommands);
 
-                    configs.add("--RecomputeResults=" + recompute.isSelected());
+                    final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+                    final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), compoundsToProcess), configOptionLoader, new GuiInstanceBufferFactory());
+                    final Run computation = new Run(wfBuilder);
+                    computation.parseArgs(command.toArray(String[]::new));
 
-
-                    configs.add("sirius");
-
-//                    if (zodiac)
-//                        configs.add("zodiac");
-
-
-                    if (csiOptions.isCSISelected())
-                        configs.add("fingerid");
-
-//                    if (canopus)
-//                        configs.add("canopus");
-                    computation.parseArgs(configs.toArray(String[]::new));
-                    Jobs.runInBackground(computation::compute);//todo make som nice head job that does some organizing stuff
+                    if (computation.isWorkflowDefined())
+                        Jobs.runWorkflow(computation.getFlow(), compoundsToProcess);//todo make som nice head job that does some organizing stuff
+                    //todo else some error message with pico cli output
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
-
-                        /*//prepare input data for identication
-                        PrepareSiriusIdentificationInputJob prepareJob = new PrepareSiriusIdentificationInputJob(
-                                ec,
-                                instrument,
-                                ppm,
-                                searchProfilePanel.restrictToOrganics(),
-                                searchableDatabase,
-                                new FormulaConstraints(constraints),
-                                Collections.unmodifiableList(elementsToAutoDetect),
-                                searchProfilePanel.getPossibleIonModes(),
-                                csiOptions.getPossibleAdducts()
-                        );
-                        Jobs.submit(prepareJob);*/
-
-                      /*  SiriusIdentificationGuiJob identificationJob = null;
-                        if (!ec.isComputed()) {
-                            identificationJob = new SiriusIdentificationGuiJob(instrument.profile, candidates, ec);
-                            identificationJob.addRequiredJob(prepareJob);
-                            Jobs.submit(identificationJob);
-                        }*/
-
-                        /*if (csiOptions.isCSISelected() && ec.getBestHit() == null) {
-                            FingerIDSearchGuiJob fingeridJob = new FingerIDSearchGuiJob(csiOptions.dbSelectionOptions.getDb(), ec);
-                            fingeridJob.addRequiredJob(identificationJob);
-                            fingeridJob.addRequiredJob(prepareJob);
-                            Jobs.submit(fingeridJob);
-                        }*/
-//                    }
-
-                updateProgress(0, 1, 1, "DONE!");
-//                }
+                updateProgress(0, 100, 100, "Computation Configured!");
                 return true;
             }
         });
@@ -379,28 +275,24 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
 
         if (cc != null) {
             if (cc.isConnected()) {
-                if (csiOptions.isCSISelected() && cc.hasWorkerWarning()) {
+                if (csiConfigs.isToolSelected() && cc.hasWorkerWarning()) {
                     new WorkerWarningDialog(MF, cc.workerInfo == null);
                 }
             } else {
-                if (formulaIDConfigPanel.getFormulaSearchDB() != null) {
+                if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
                     new WarnFormulaSourceDialog(MF);
-//                    formulaIDConfigPanel.formulaCombobox.setSelectedIndex(0); //todo set NONE
+                    formulaIDConfigPanel.content.searchDBList.checkBoxList.uncheckAll();
                 }
             }
         } else {
-            if (formulaIDConfigPanel.getFormulaSearchDB() != null) {
+            if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
                 new WarnFormulaSourceDialog(MF);
 //                formulaIDConfigPanel.formulaCombobox.setSelectedIndex(0); //todo set NONE
             }
         }
     }
 
-    public boolean isSuccessful() {
-        return this.success;
-    }
-
-    public void initSingleExperimentDialog(List<Element> detectableElements) {
+    public void initSingleExperimentDialog() {
         JPanel north = new JPanel(new BorderLayout());
 
         InstanceBean ec = compoundsToProcess.get(0);
@@ -408,7 +300,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
         editPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Edit Input Data"));
         north.add(editPanel, BorderLayout.NORTH);
 
-        //todo beging ugly hack --> we want to manage this by the edit panel instead and fire eit panel events
+        //todo beging ugly hack --> we want to manage this by the edit panel instead and fire edit panel events
         editPanel.formulaTF.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -423,54 +315,37 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
             @Override
             public void changedUpdate(DocumentEvent e) {
                 boolean enable = e.getDocument().getLength() == 0;
-                formulaIDConfigPanel.searchDBList.setEnabled(enable);
-                formulaIDConfigPanel.candidatesSpinner.setEnabled(enable);
+                formulaIDConfigPanel.content.searchDBList.setEnabled(enable);
+                formulaIDConfigPanel.content.candidatesSpinner.setEnabled(enable);
+                formulaIDConfigPanel.content.candidatesPerIonSpinner.setEnabled(enable);
             }
         });
 
         editPanel.ionizationCB.addActionListener(e -> {
             PrecursorIonType ionType = editPanel.getSelectedIonization();
-            formulaIDConfigPanel.refreshPossibleIonizations(Collections.singleton(ionType.getIonization().getName()));
+            formulaIDConfigPanel.content.refreshPossibleIonizations(Collections.singleton(ionType.getIonization().getName()));
             pack();
         });
 
 
-        csiOptions.adductOptions.checkBoxList.addPropertyChangeListener("refresh", evt -> {
+        csiConfigs.content.adductOptions.checkBoxList.addPropertyChangeListener("refresh", evt -> {
             PrecursorIonType ionType = editPanel.getSelectedIonization();
             if (!ionType.getAdduct().isEmpty()) {
-                csiOptions.adductOptions.checkBoxList.uncheckAll();
-                csiOptions.adductOptions.checkBoxList.check(ionType.toString());
-                csiOptions.adductOptions.setEnabled(false);
+                csiConfigs.content.adductOptions.checkBoxList.uncheckAll();
+                csiConfigs.content.adductOptions.checkBoxList.check(ionType.toString());
+                csiConfigs.content.adductOptions.setEnabled(false);
             } else {
-                csiOptions.adductOptions.setEnabled(csiOptions.isCSISelected());
+                csiConfigs.content.adductOptions.setEnabled(csiConfigs.isToolSelected());
             }
         });
 
 //        searchProfilePanel.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()));
         editPanel.setData(ec);
-        ///////ugly hack end
-
-        /////////////Solo Element//////////////////////
-        elementPanel = new ElementsPanel(this, 4);
-        north.add(elementPanel, BorderLayout.SOUTH);
-
-        StringBuilder builder = new StringBuilder();
-        builder.append("Auto detectable element are: ");
-        for (int i = 0; i < detectableElements.size(); i++) {
-            if (i != 0) builder.append(", ");
-            builder.append(detectableElements.get(i).getSymbol());
-        }
-        elementAutoDetect = new JButton("Auto detect");
-        elementAutoDetect.setToolTipText(builder.toString());
-        elementAutoDetect.addActionListener(this);
-        elementAutoDetect.setEnabled(true);
-        elementPanel.lowerPanel.add(elementAutoDetect);
-        /////////////////////////////////////////////
-
+        /////// todo ugly hack end
         add(north, BorderLayout.NORTH);
     }
 
-    private class WarnFormulaSourceDialog extends WarningDialog {
+    private static class WarnFormulaSourceDialog extends WarningDialog {
         private final static String DONT_ASK_KEY = PropertyManager.PROPERTY_BASE + ".sirius.computeDialog.formulaSourceWarning.dontAskAgain";
         public static final String FORMULA_SOURCE_WARNING_MESSAGE =
                 "<b>Warning:</b> No connection to webservice available! <br>" +
@@ -479,7 +354,7 @@ public class BatchComputeDialog extends JDialog implements ActionListener {
                         "(all molecular formulas) will be used instead.";
 
         public WarnFormulaSourceDialog(Frame owner) {
-            super(owner, "<html>" + FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY + "</html>" );
+            super(owner, "<html>" + FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY + "</html>");
         }
     }
 }

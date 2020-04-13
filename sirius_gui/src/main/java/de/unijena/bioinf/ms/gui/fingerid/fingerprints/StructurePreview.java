@@ -36,7 +36,7 @@ public class StructurePreview extends JPanel implements Runnable {
     protected final SMARTSQueryTool queryTool;
     protected final Thread backgroundThread;
     protected final AtomContainerRenderer renderer;
-    protected volatile MolecularPropertyTableEntry entry;
+    protected volatile FingerIdPropertyBean entry;
     protected volatile IAtomContainer[] depiction;
     protected volatile int state = 0; // needRefresh=0, recalculated=1, done=2
     protected volatile boolean shutdown = false;
@@ -96,7 +96,7 @@ public class StructurePreview extends JPanel implements Runnable {
 
     }
 
-    public void setMolecularProperty(MolecularPropertyTableEntry entry) {
+    public void setMolecularProperty(FingerIdPropertyBean entry) {
         if (entry == this.entry) return;
         synchronized (this) {
             this.entry = entry;
@@ -111,7 +111,7 @@ public class StructurePreview extends JPanel implements Runnable {
             try {
                 if (state == 0 && entry != null) {
                     final FingerprintVisualization viz;
-                    final MolecularPropertyTableEntry entry;
+                    final FingerIdPropertyBean entry;
                     synchronized (this) {
                         entry = this.entry;
                         viz = this.visualizations[entry.absoluteIndex];

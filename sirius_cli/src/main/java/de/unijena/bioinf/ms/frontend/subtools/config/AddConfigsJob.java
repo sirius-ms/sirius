@@ -1,9 +1,14 @@
 package de.unijena.bioinf.ms.frontend.subtools.config;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ms.MsFileConfig;
+import de.unijena.bioinf.jjobs.JobSubmitter;
+import de.unijena.bioinf.jjobs.SubjobSubmitter;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -18,6 +23,7 @@ public class AddConfigsJob extends InstanceJob {
     private ParameterConfig cliConfig;
 
     public AddConfigsJob(ParameterConfig cliConfig) {
+        super(SiriusJobs.getGlobalJobManager());
         this.cliConfig = cliConfig;
     }
 
@@ -31,13 +37,16 @@ public class AddConfigsJob extends InstanceJob {
 
         //override defaults
         baseConfig = psConfig
-                .map(projectSpaceConfig -> projectSpaceConfig.config.newIndependentInstance(cliConfig))
+                .map(projectSpaceConfig -> projectSpaceConfig.config.newIndependentInstance(cliConfig,true))
                 .orElseGet(() -> cliConfig);
 
-        if (exp.hasAnnotation(MsFileConfig.class))
-            baseConfig = baseConfig.newIndependentInstance(exp.getAnnotationOrThrow(MsFileConfig.class).config);
+        if (exp.hasAnnotation(MsFileConfig.class)){
+            @NotNull MsFileConfig msConf = exp.getAnnotationOrThrow(MsFileConfig.class);
+            if (!baseConfig.containsConfiguration(msConf.config.getLocalConfigName()))
+                baseConfig = baseConfig.newIndependentInstance(msConf.config, false);
+        }
 
-        baseConfig = baseConfig.newIndependentInstance("RUNTIME_CONFIGS:" + inst.getID()); //runtime modification layer,  that does not effect the other configs
+        baseConfig = baseConfig.newIndependentInstance("RUNTIME_CONFIGS:" + inst.getID(),true); //runtime modification layer,  that does not effect the other configs
         //fill all annotations
         exp.setAnnotation(FinalConfig.class, new FinalConfig(baseConfig));
         exp.addAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
@@ -58,7 +67,11 @@ public class AddConfigsJob extends InstanceJob {
         inst.updateExperiment();
         inst.updateConfig();
 //        inst.updateCompoundID();
+    }
 
+    @Override
+    public String getToolName() {
+        return "Config Job";
     }
 
 }

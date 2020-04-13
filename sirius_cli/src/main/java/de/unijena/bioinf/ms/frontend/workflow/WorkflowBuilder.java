@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 
 public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
+    private final InstanceBufferFactory<?> bufferFactory;
     //root
     private CommandLine.Model.CommandSpec rootSpec;
 
@@ -71,15 +72,9 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     public final CanopusOptions canopusOptions;
     public final PassatuttoOptions passatuttoOptions;
 
-
-
-    public WorkflowBuilder(@NotNull R rootOptions) throws IOException {
-        this(rootOptions,new DefaultParameterConfigLoader());
-    }
-
-    public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader) throws IOException {
+    public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
+        this.bufferFactory = bufferFactory;
         this.rootOptions = rootOptions;
-
         this.configOptionLoader = configOptionLoader;
 
         siriusOptions = new SiriusOptions(configOptionLoader);
@@ -88,7 +83,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         canopusOptions = new CanopusOptions(configOptionLoader);
         passatuttoOptions = new PassatuttoOptions(configOptionLoader);
 
-        customDBOptions =  new CustomDBOptions();
+        customDBOptions = new CustomDBOptions();
         projectSpaceOptions = new ProjecSpaceOptions();
         similarityMatrixOptions = new SimilarityMatrixOptions();
         decompOptions =  new DecompOptions();
@@ -190,7 +185,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
             if (postproJob == null)
                 postproJob = rootOptions.makeDefaultPostprocessingJob();
 
-            final ToolChainWorkflow wf = new ToolChainWorkflow(preproJob, postproJob, configOptionLoader.config, toolchain);
+            final ToolChainWorkflow wf = new ToolChainWorkflow(preproJob, postproJob, configOptionLoader.config, toolchain, bufferFactory);
             return returnResultOrExit(wf);
         }
 

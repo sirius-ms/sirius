@@ -1,8 +1,12 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
-public interface InstanceBuffer extends Runnable {
+import de.unijena.bioinf.jjobs.JobSubmitter;
+
+public interface InstanceBuffer extends JobSubmitter, Runnable {
     void start() throws InterruptedException;
+
     void cancel();
+
     @Override
     default void run() {
         try {

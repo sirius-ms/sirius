@@ -3,24 +3,23 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.ObservableElementList;
-import ca.odell.glazedlists.TextFilterator;
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
+import de.unijena.bioinf.ms.gui.utils.SearchTextField;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.gui.utils.SearchTextField;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * This is the main List of the SIRIUS UI.
+ * It shows the main Instances (former Compounds or Experiments)
+ * It is usually a singleton and backed by the INSTANCE_LIST of the  {@link GuiProjectSpaceManager}
+ *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class CompoundList {
@@ -34,55 +33,37 @@ public class CompoundList {
     public CompoundList(@NotNull final GuiProjectSpaceManager ps) {
         searchField = new SearchTextField();
 
-
-        compoundList = new FilterList<>(new ObservableElementList<>(ps.COMPOUNT_LIST, GlazedLists.beanConnector(InstanceBean.class)),
-                new TextComponentMatcherEditor<>(searchField.textField, new TextFilterator<InstanceBean>() {
-                    @Override
-                    public void getFilterStrings(List<String> baseList, InstanceBean element) {
-                        baseList.add(element.getGUIName());
-                        baseList.add(element.getIonization().toString());
-                        baseList.add(String.valueOf(element.getIonMass()));
-                    }
+        compoundList = new FilterList<>(new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class)),
+                new TextComponentMatcherEditor<>(searchField.textField, (baseList, element) -> {
+                    baseList.add(element.getGUIName());
+                    baseList.add(element.getIonization().toString());
+                    baseList.add(String.valueOf(element.getIonMass()));
                 }, true));
 
 
         compountListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
-        compountListSelectionModel.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    notifyListenerSelectionChange();
-                }
+        compountListSelectionModel.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()){
+                compountListSelectionModel.getDeselected().forEach(InstanceBean::unregisterProjectSpaceListeners);
+                compountListSelectionModel.getSelected().forEach(InstanceBean::registerProjectSpaceListeners);
+                notifyListenerSelectionChange();
             }
         });
-        compoundList.addListEventListener(new ListEventListener<InstanceBean>() {
-            @Override
-            public void listChanged(final ListEvent<InstanceBean> listChanges) {
-                notifyListenerDataChange(listChanges);
-            }
-        });
+        compoundList.addListEventListener(this::notifyListenerDataChange);
     }
 
     public void orderById() {
-        Collections.sort(compoundList, new Comparator<InstanceBean>() {
-            @Override
-            public int compare(InstanceBean o1, InstanceBean o2) {
-                return o1.getGUIName().compareTo(o2.getGUIName());
-            }
-        });
+        compoundList.sort(Comparator.comparing(InstanceBean::getGUIName));
     }
 
     public void orderByMass() {
-        Collections.sort(compoundList, new Comparator<InstanceBean>() {
-            @Override
-            public int compare(InstanceBean o1, InstanceBean o2) {
-                double mz1 = o1.getIonMass();
-                if (mz1 <= 0 || Double.isNaN(mz1)) mz1 = Double.POSITIVE_INFINITY;
-                double mz2 = o2.getIonMass();
-                if (mz2 <= 0 || Double.isNaN(mz2)) mz2 = Double.POSITIVE_INFINITY;
-                return Double.compare(mz1, mz2);
-            }
+        compoundList.sort((o1, o2) -> {
+            double mz1 = o1.getIonMass();
+            if (mz1 <= 0 || Double.isNaN(mz1)) mz1 = Double.POSITIVE_INFINITY;
+            double mz2 = o2.getIonMass();
+            if (mz2 <= 0 || Double.isNaN(mz2)) mz2 = Double.POSITIVE_INFINITY;
+            return Double.compare(mz1, mz2);
         });
     }
 
@@ -115,6 +96,4 @@ public class CompoundList {
     public FilterList<InstanceBean> getCompoundList() {
         return compoundList;
     }
-
-
 }

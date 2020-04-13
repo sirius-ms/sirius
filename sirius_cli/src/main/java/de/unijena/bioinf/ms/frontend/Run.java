@@ -36,9 +36,13 @@ public class Run extends ApplicationCore {
 
 
     public void compute() {
-        if (flow == null)
+        if (!isWorkflowDefined())
             throw new IllegalStateException("No Workflow defined for computation.");
         flow.run();
+    }
+
+    public boolean isWorkflowDefined(){
+        return flow != null;
     }
 
     /*Returns true if a workflow was parsed*/
