@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,10 @@ public class InstanceBean extends Instance implements SiriusPCS {
 
     }
 
+    protected void addToCache(){
+        ((GuiProjectSpaceManager) getProjectSpaceManager()).ringBuffer.add(this);
+    }
+
     public void registerProjectSpaceListeners() {
         if (listeners == null)
             listeners = configureListeners();
@@ -117,6 +122,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     public List<FormulaResultBean> getResults() {
+        addToCache();
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> form = loadFormulaResults(FormulaScoring.class);
         return IntStream.range(0, form.size()).mapToObj(i -> new FormulaResultBean(form.get(i).getCandidate().getId(), this, i)).collect(Collectors.toList());
     }
@@ -135,6 +141,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     private MutableMs2Experiment getMutableExperiment() {
+        addToCache();
         return (MutableMs2Experiment) getExperiment();
     }
 

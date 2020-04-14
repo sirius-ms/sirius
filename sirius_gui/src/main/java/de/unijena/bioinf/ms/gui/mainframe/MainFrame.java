@@ -5,6 +5,7 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
@@ -17,6 +18,7 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableExperimentLis
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -112,7 +114,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         super(ApplicationCore.VERSION_STRING());
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this); //todo do we want to have the left table as drop target?
+        new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
     }
 
     public void setTitlePath(String path) {
@@ -125,7 +127,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
             SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile);
             Jobs.cancelALL();
-            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList);
+            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY,9));
             inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
             gps.projectSpace().addProjectSpaceListener(event -> {
                 if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
