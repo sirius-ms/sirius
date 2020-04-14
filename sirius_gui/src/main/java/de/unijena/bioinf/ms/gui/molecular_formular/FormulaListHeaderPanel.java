@@ -18,15 +18,18 @@ public class FormulaListHeaderPanel extends JPanel {
         this(table,center,false);
     }
 
-    public FormulaListHeaderPanel(FormulaList table, JComponent center, boolean detailed) {
+    public FormulaListHeaderPanel(FormulaList formulaList, JComponent center, boolean detailed) {
         super(new BorderLayout());
+        if (center instanceof ActiveElementChangedListener)
+            formulaList.addActiveResultChangedListener((ActiveElementChangedListener) center);
+
         if (detailed){
-            add(new FormulaListDetailView(table),BorderLayout.NORTH);
+            add(new FormulaListDetailView(formulaList),BorderLayout.NORTH);
         }else{
-            add(new FormulaListCompactView(table),BorderLayout.NORTH);
+            add(new FormulaListCompactView(formulaList),BorderLayout.NORTH);
         }
         add(center,BorderLayout.CENTER);
-        if (center instanceof ActiveElementChangedListener)
-            table.addActiveResultChangedListener((ActiveElementChangedListener) center);
+
+
     }
 }
