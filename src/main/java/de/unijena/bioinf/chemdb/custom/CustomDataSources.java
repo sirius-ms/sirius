@@ -194,7 +194,6 @@ public class CustomDataSources {
         return SOURCE_MAP.get(name);
     }
 
-
     public static void notifyListeners(Collection<String> changed) {
         for (DataSourceChangeListener listener : listeners) {
             listener.fireDataSourceChanged(changed);
