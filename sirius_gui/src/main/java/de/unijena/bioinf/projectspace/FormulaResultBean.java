@@ -116,6 +116,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
     @SafeVarargs
     public final FormulaResult getResult(Class<? extends DataAnnotation>... components) {
+        parent.addToCache();
         return parent.loadFormulaResult(getID(), components);
     }
 
@@ -154,8 +155,8 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     public boolean isBestHit() {
-        return getRank() == 1;
-    }
+        return getRank() == 0;
+    } //todo us also fingerid score for marking best hit
 
     //id based info
     public PrecursorIonType getPrecursorIonType() {
