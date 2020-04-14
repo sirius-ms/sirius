@@ -4,8 +4,10 @@ import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -14,10 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -81,10 +80,22 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
     }
 
     public InputFilesOptions importOneExperimentPerLocation(@NotNull final List<File> rawFiles) {
-        final InputFilesOptions.MsInput inputFiles = Jobs.runInBackgroundAndLoad(MF, "Analyzing Files...", false, InstanceImporter.makeExpandFilesJJob(rawFiles)).getResult();
         final InputFilesOptions inputF = new InputFilesOptions();
-        inputF.msInput = inputFiles;
-        importOneExperimentPerLocation(inputF);
+        inputF.msInput = Jobs.runInBackgroundAndLoad(MF, "Analyzing Files...", false, InstanceImporter.makeExpandFilesJJob(rawFiles)).getResult();
+        boolean align = Jobs.runInBackgroundAndLoad(MF, "Checking for alignable input...", () ->
+                (inputF.msInput.msParserfiles.size() > 1 && inputF.msInput.projects.size() == 0 && inputF.msInput.msParserfiles.stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
+                .getResult();
+
+        // todo this is hacky we need some real view for that at some stage.
+        if (align)
+            align = new QuestionDialog(MF, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
+
+        if (align) {
+            Jobs.runInBackgroundAndLoad(MF, new LcmsAlignSubToolJob(inputF, this));
+        } else {
+            importOneExperimentPerLocation(inputF);
+        }
+
         return inputF;
     }
 

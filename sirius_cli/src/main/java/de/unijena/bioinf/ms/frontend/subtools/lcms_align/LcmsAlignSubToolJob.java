@@ -1,7 +1,10 @@
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MultipleSources;
+import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.io.lcms.LCMSParsing;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -11,13 +14,11 @@ import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.model.lcms.ConsensusFeature;
 import de.unijena.bioinf.model.lcms.LCMSRun;
-import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
-import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -26,17 +27,22 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
-    protected final RootOptions<?,?,?> rootCLI;
+    protected final InputFilesOptions input;
+    protected final ProjectSpaceManager space;
 
-    public LcmsAlignSubToolJob(RootOptions<?,?,?> rootCLI) {
+    public LcmsAlignSubToolJob(RootOptions<?, ?, ?> rootCLI) {
+        this(rootCLI.getInput(), rootCLI.getProjectSpace());
+    }
+
+    public LcmsAlignSubToolJob(InputFilesOptions input, ProjectSpaceManager space) {
         super();
-        this.rootCLI = rootCLI;
+        this.input = input;
+        this.space = space;
     }
 
     @Override
     protected ProjectSpaceManager compute() throws Exception {
-        final InputFilesOptions input = rootCLI.getInput();
-        final ProjectSpaceManager space = rootCLI.getProjectSpace();
+
 
         final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
