@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
+import de.unijena.bioinf.jjobs.DependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
@@ -106,6 +107,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
         lock.lock();
         try {
             isCanceled.set(true);
+            new ArrayList<>(runningInstances).forEach(JJob::cancel);
             isFull.signal();
         } finally {
             lock.unlock();
@@ -125,6 +127,18 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
     private class InstanceJobCollectorJob extends BasicDependentJJob<CompoundContainerId> {
         final Instance instance;
 
+        @Override
+        public void cancel(boolean mayInterruptIfRunning) {
+            final LinkedList<JJob<?>> deps = new LinkedList<>(this.requiredJobs());
+            while (deps.peekFirst() != null){
+                JJob<?> current = deps.pollFirst();
+                if (current instanceof DependentJJob)
+                    deps.addAll(((DependentJJob<?>)current).requiredJobs());
+                current.cancel();
+            }
+            super.cancel(mayInterruptIfRunning);
+        }
+
         public InstanceJobCollectorJob(Instance instance) {
             super(JobType.SCHEDULER,ReqJobFailBehaviour.IGNORE); //we want to ignore failing because we do not want to multiply exceptions
             this.instance = instance;
@@ -140,6 +154,8 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                     }
                 }
             });
+
+
         }
 
 
