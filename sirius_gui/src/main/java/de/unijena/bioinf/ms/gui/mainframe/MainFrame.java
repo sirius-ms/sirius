@@ -124,8 +124,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final BasicEventList<InstanceBean> psList = this.ps.INSTANCE_LIST;
         this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
             SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile);
-            //todo we need to cancel all running computations here.
-            System.out.println("todo we need to cancel all running computations here!");
+            Jobs.cancelALL();
             final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList);
             inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
             gps.projectSpace().addProjectSpaceListener(event -> {
@@ -254,24 +253,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         lc.addSpectra(csvFiles, msFiles, mgfFiles);
         lc.showDialog();
     }
-
-    /*public static List<File> resolveFileList(List<File> files) {
-        final ArrayList<File> filelist = new ArrayList<>();
-        if (files != null) {
-            for (File f : files) {
-                if (f.isDirectory() && !ProjectSpaceIO.isExistingProjectspaceDirectory(f.toPath())) {
-                    final File[] fl = f.listFiles();
-                    if (fl != null) {
-                        for (File g : fl)
-                            if (!g.isDirectory()) filelist.add(g);
-                    }
-                } else {
-                    filelist.add(f);
-                }
-            }
-        }
-        return filelist;
-    }*/
 
     public static void inEDTAndWait(@NotNull final Runnable run) {
         if (SwingUtilities.isEventDispatchThread()) {
