@@ -10,8 +10,8 @@ public class CompoundClassTableFormat implements TableFormat<ClassyfirePropertyB
             "Description",
             "ID",
             "ParentID",
-            "Positive training examples",
-            "Predictor quality (F1)"
+//            "Positive training examples",
+//            "Predictor quality (F1)"
     };
 
     @Override
@@ -33,8 +33,8 @@ public class CompoundClassTableFormat implements TableFormat<ClassyfirePropertyB
         if (column == col++) return prop.getMolecularProperty().getDescription();
         if (column == col++) return prop.getMolecularProperty().getChemontIdentifier();
         if (column == col++) return prop.getMolecularProperty().getParent().getChemontIdentifier();
-        if (column == col++) return prop.getNumberOfTrainingExamples();
-        if (column == col) return prop.getFScore();
+//        if (column == col++) return prop.getNumberOfTrainingExamples();
+//        if (column == col) return prop.getFScore();
         return null;
     }
 }
