@@ -22,7 +22,7 @@ public class EditExperimentAction extends AbstractAction {
         putValue(Action.SMALL_ICON, Icons.EDIT_16);
         putValue(Action.SHORT_DESCRIPTION, "Edit the selected data");
 
-        setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty());
+        setEnabled(SiriusActions.notComputingOrEmptyFirst(MF.getCompoundListSelectionModel()));
 
         MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -31,7 +31,7 @@ public class EditExperimentAction extends AbstractAction {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                setEnabled(!selection.isSelectionEmpty() && !selection.getSelected().get(0).isComputing());
+                setEnabled(SiriusActions.notComputingOrEmptyFirst(selection));
             }
         });
     }

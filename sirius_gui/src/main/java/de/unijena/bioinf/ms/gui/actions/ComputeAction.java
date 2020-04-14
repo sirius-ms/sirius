@@ -27,7 +27,7 @@ public class ComputeAction extends AbstractAction {
         putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
         putValue(Action.SHORT_DESCRIPTION, "Compute selected compound(s)");
 
-        setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty() );
+        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundListSelectionModel()));
 
         MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -35,7 +35,7 @@ public class ComputeAction extends AbstractAction {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                setEnabled(!selection.isSelectionEmpty() && selection.getSelected().stream().noneMatch(InstanceBean::isComputing));
+                setEnabled(SiriusActions.notComputingOrEmpty(selection));
             }
         });
     }
