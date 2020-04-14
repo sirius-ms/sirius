@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -40,9 +41,11 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
     public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, @Nullable Function<Ms2Experiment, String> formatter) {
         super(space, new InstanceBeanFactory(), formatter);
         INSTANCE_LIST = compoundList;
+        final ArrayList<InstanceBean> buf = new ArrayList<>(size());
+        forEach(it -> buf.add((InstanceBean) it));
         inEDTAndWait(() -> {
             INSTANCE_LIST.clear();
-            forEach(ins -> INSTANCE_LIST.add((InstanceBean) ins));
+            INSTANCE_LIST.addAll(buf);
         });
 
         ContainerListener.Defined createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
@@ -79,11 +82,17 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         deleteCompounds(INSTANCE_LIST);
     }
 
-    public InputFilesOptions importOneExperimentPerLocation(@NotNull final List<File> rawFiles) {
+
+    public void importOneExperimentPerLocation(@NotNull final List<File> inputFiles) {
         final InputFilesOptions inputF = new InputFilesOptions();
-        inputF.msInput = Jobs.runInBackgroundAndLoad(MF, "Analyzing Files...", false, InstanceImporter.makeExpandFilesJJob(rawFiles)).getResult();
+        inputF.msInput = Jobs.runInBackgroundAndLoad(MF, "Analyzing Files...", false,
+                InstanceImporter.makeExpandFilesJJob(inputFiles)).getResult();
+        importOneExperimentPerLocation(inputF);
+    }
+
+    public void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
         boolean align = Jobs.runInBackgroundAndLoad(MF, "Checking for alignable input...", () ->
-                (inputF.msInput.msParserfiles.size() > 1 && inputF.msInput.projects.size() == 0 && inputF.msInput.msParserfiles.stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
+                (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
                 .getResult();
 
         // todo this is hacky we need some real view for that at some stage.
@@ -91,17 +100,11 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
             align = new QuestionDialog(MF, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
         if (align) {
-            Jobs.runInBackgroundAndLoad(MF, new LcmsAlignSubToolJob(inputF, this));
+            Jobs.runInBackgroundAndLoad(MF, new LcmsAlignSubToolJob(input, this));
         } else {
-            importOneExperimentPerLocation(inputF);
+            InstanceImporter importer = new InstanceImporter(this, x -> true, x -> true);
+            Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", true, importer.makeImportJJob(input));
         }
-
-        return inputF;
-    }
-
-    public void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
-        InstanceImporter importer = new InstanceImporter(this, x -> true, x -> true);
-        Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", true, importer.makeImportJJob(input));
     }
 
     protected void copy(Path newlocation, boolean switchLocation) {

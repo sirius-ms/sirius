@@ -69,6 +69,18 @@ public class InputFilesOptions {
 
         @CommandLine.Option(names = {"--ignore-formula"}, description = "ignore given molecular formula if present in .ms or .mgf input files.", defaultValue = "false", order = 322)
         public boolean ignoreFormula;
+
+        public boolean hasProjectsOnly() {
+            return msParserfiles.isEmpty() && unknownFiles.isEmpty() && !projects.isEmpty();
+        }
+
+        public boolean isSingleProject() {
+            return hasProjectsOnly() && projects.size() == 1;
+        }
+
+        public boolean isEmpty() {
+            return msParserfiles.isEmpty() && unknownFiles.isEmpty() && projects.isEmpty();
+        }
     }
 
     // region Options: CSV Input
