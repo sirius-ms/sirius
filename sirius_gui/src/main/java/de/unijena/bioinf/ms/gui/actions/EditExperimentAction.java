@@ -31,7 +31,7 @@ public class EditExperimentAction extends AbstractAction {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                setEnabled(!selection.isSelectionEmpty());
+                setEnabled(!selection.isSelectionEmpty() && !selection.getSelected().get(0).isComputing());
             }
         });
     }

@@ -159,8 +159,8 @@ public class Jobs {
 
         @Override
         public void cancel(boolean mayInterruptIfRunning) {
-            super.cancel(mayInterruptIfRunning);
             computation.cancel();
+            super.cancel(mayInterruptIfRunning);
         }
 
         @Override
