@@ -15,7 +15,7 @@ ext['jna.version'] = '5.4.0'
 dependencies {
 //project
     compile project(':sirius_rest_service')
-
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 
 //internal
     compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
@@ -52,9 +52,14 @@ project.ext.set("type", ['gui','console'])
 
 /*################### Jar build Stuff ################### */
 jar {
+    enabled = true
     manifest {
         attributes 'Main-Class': mainClassName
     }
+}
+
+bootJar {
+    classifier = 'boot'
 }
 
 /*################### Windows release Stuff ################### */
@@ -67,7 +72,7 @@ project.type.each{t ->
             jreRuntimeBits = a
             outfile = "${project.appName}-${t}-${a}.exe"
             if(t.equals('gui'))
-                cmdLine = '--gui'
+                cmdLine = 'gui'
 
         }
     }
@@ -75,7 +80,7 @@ project.type.each{t ->
 
 /*################### Build distributions ################### */
 task distribute { group = 'distribution' }
-distribute.dependsOn ':buildDoku'
+//distribute.dependsOn ':buildDoku' //todo fix doku creation
 
 distributions {
     project.arch.each { ar ->
@@ -128,7 +133,6 @@ distributions {
                     from('build/launch4j/lib') {
                         exclude libExclude
                     }
-                    exclude('*.zip')
                 }
                 from { "${project.glpkPath}/w${ar}/" }
                 from("${project.clpPath}/w${ar}/")
@@ -212,7 +216,7 @@ distributions {
 publishing {
     publications {
         sirius(MavenPublication) {
-            artifactId = "$name"
+            artifactId = "${project.appName}"
             groupId = "$group"
 
             pom.withXml {}
@@ -225,8 +229,12 @@ publishing {
     }
 }
 
-//artifactoryPublish.dependsOn 'distribute'
+artifactoryPublish.dependsOn 'distribute'
+
 task runGUI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
+    doFirst {
+        getLogger().lifecycle("====> Note: This uses the Systen JRE!")
+    }
     File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}-gui").toFile()
     commandLine([command.absolutePath])
 }
