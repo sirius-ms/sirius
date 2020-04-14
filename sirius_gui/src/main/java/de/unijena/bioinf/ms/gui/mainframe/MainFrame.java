@@ -4,9 +4,6 @@ import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
-import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -20,9 +17,7 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableExperimentLis
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.projectspace.ProjectSpaceEvent;
-import de.unijena.bioinf.projectspace.ProjectSpaceIO;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +26,6 @@ import java.awt.dnd.*;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -224,28 +218,30 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        final List<File> newFiles = resolveFileList(DragAndDrop.getFileListFromDrop(dtde));
         boolean openNewProject = false;
 
-        if (newFiles.size() > 0) {
-            if (newFiles.size() == 1 && (ProjectSpaceIO.isExistingProjectspaceDirectory(newFiles.get(0).toPath()) || ProjectSpaceIO.isZipProjectSpace(newFiles.get(0).toPath())))
+        final InputFilesOptions inputF = new InputFilesOptions();
+        inputF.msInput = Jobs.runInBackgroundAndLoad(MF, "Analyzing Dropped Files...", false,
+                InstanceImporter.makeExpandFilesJJob(DragAndDrop.getFileListFromDrop(dtde))).getResult();
+
+        if (!inputF.msInput.isEmpty()) {
+            if (inputF.msInput.isSingleProject())
                 openNewProject = new QuestionDialog(MF, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
             if (openNewProject)
-                MF.openNewProjectSpace(newFiles.get(0).toPath());
+                MF.openNewProjectSpace(inputF.msInput.projects.get(0));
             else
-                importDragAndDropFiles(newFiles);
-
+                importDragAndDropFiles(inputF);
         }
     }
 
 
-    private void importDragAndDropFiles(List<File> rawFiles) {
-        final InputFilesOptions input = ps.importOneExperimentPerLocation(rawFiles); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
+    private void importDragAndDropFiles(InputFilesOptions files) {
+        ps.importOneExperimentPerLocation(files); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
 
         // check if unknown files contain csv files with spectra
         final CSVFormatReader csvChecker = new CSVFormatReader();
-        List<File> csvFiles = input.msInput != null ? input.msInput.unknownFiles.stream().map(Path::toFile)
+        List<File> csvFiles = files.msInput != null ? files.msInput.unknownFiles.stream().map(Path::toFile)
                 .filter(f -> csvChecker.isCompatible(f) || f.getName().toLowerCase().endsWith(".txt"))
                 .collect(Collectors.toList()) : Collections.emptyList();
 
@@ -259,7 +255,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         lc.showDialog();
     }
 
-    public static List<File> resolveFileList(List<File> files) {
+    /*public static List<File> resolveFileList(List<File> files) {
         final ArrayList<File> filelist = new ArrayList<>();
         if (files != null) {
             for (File f : files) {
@@ -275,7 +271,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             }
         }
         return filelist;
-    }
+    }*/
 
     public static void inEDTAndWait(@NotNull final Runnable run) {
         if (SwingUtilities.isEventDispatchThread()) {
