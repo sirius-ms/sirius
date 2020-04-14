@@ -33,7 +33,7 @@ public class DeleteExperimentAction extends AbstractAction {
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Delete the selected data");
 
-        setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty());
+        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundListSelectionModel()));
 
         MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -42,7 +42,7 @@ public class DeleteExperimentAction extends AbstractAction {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                setEnabled(!selection.isSelectionEmpty() && selection.getSelected().stream().noneMatch(InstanceBean::isComputing));
+                setEnabled(SiriusActions.notComputingOrEmpty(selection));
             }
         });
     }

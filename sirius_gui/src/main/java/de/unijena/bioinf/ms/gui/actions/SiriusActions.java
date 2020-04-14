@@ -4,6 +4,8 @@ package de.unijena.bioinf.ms.gui.actions;/**
  * 28.01.17.
  */
 
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -86,6 +88,26 @@ public enum SiriusActions {
 
     SiriusActions(Class<? extends Action> action) {
         this.actionClass = action;
+    }
+
+    public static boolean notComputingOrEmpty(AdvancedListSelectionModel<InstanceBean> selection) {
+        return !isComputingOrEmpty(selection);
+    }
+
+    public static boolean isComputingOrEmpty(AdvancedListSelectionModel<InstanceBean> selection) {
+        if (selection == null || selection.isSelectionEmpty())
+            return true;
+        return selection.getSelected().stream().anyMatch(InstanceBean::isComputing);
+    }
+
+    public static boolean notComputingOrEmptyFirst(AdvancedListSelectionModel<InstanceBean> selection) {
+        return !isComputingOrEmptyFirst(selection);
+    }
+
+    public static boolean isComputingOrEmptyFirst(AdvancedListSelectionModel<InstanceBean> selection) {
+        if (selection == null || selection.isSelectionEmpty())
+            return true;
+        return selection.getSelected().get(0).isComputing();
     }
 
 
