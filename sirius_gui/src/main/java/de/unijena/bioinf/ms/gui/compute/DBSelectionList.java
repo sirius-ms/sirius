@@ -38,7 +38,7 @@ public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
     }
 
     public DBSelectionList(@Nullable String descKey, @NotNull List<SearchableDatabase> values) {
-        super(values);
+        super(values, (a,b) -> a.name().equals(b.name()));
         if (descKey != null)
             GuiUtils.assignParameterToolTip(this, descKey);
     }

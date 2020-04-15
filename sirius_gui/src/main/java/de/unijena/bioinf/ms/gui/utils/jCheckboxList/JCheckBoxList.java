@@ -20,6 +20,8 @@
  */
 package de.unijena.bioinf.ms.gui.utils.jCheckboxList;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.function.BiFunction;
 
 /**
  * An implementation of JCheckboxList, a JList with checkboxes
@@ -38,9 +41,10 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
 
 
     private final MouseAdapter mouseAdapter;
+    private final BiFunction<E, E, Boolean> equals;
 
-    public JCheckBoxList(java.util.List<E> listElements) {
-        this();
+    public JCheckBoxList(java.util.List<E> listElements, @NotNull BiFunction<E, E, Boolean> equals) {
+        this(equals);
         DefaultListModel<CheckBoxListItem<E>> m = (DefaultListModel<CheckBoxListItem<E>>) getModel();
         for (E listElement : listElements) {
             m.addElement(new CheckBoxListItem<>(listElement, false));
@@ -48,20 +52,23 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
     }
 
     public JCheckBoxList() {
+        this(Object::equals);
+    }
+
+    public JCheckBoxList(@NotNull BiFunction<E, E, Boolean> equals) {
         super();
+        this.equals = equals;
         setModel(new DefaultListModel<>());
         setCellRenderer(new CheckboxCellRenderer());
 
         mouseAdapter = new MouseAdapter() {
-
             @Override
             public void mousePressed(MouseEvent e) {
                 int index = locationToIndex(e.getPoint());
                 Rectangle bounds = getCellBounds(index, index);
                 if (index != -1) {
-                    Object obj = getModel().getElementAt(index);
-                    if (obj instanceof JCheckBox) {
-                        JCheckBox checkbox = (JCheckBox) obj;
+                    JCheckBox checkbox = getModel().getElementAt(index);
+                    if (checkbox != null) {
                         //check if the click is on checkbox (including the label)
                         boolean inCheckbox = getComponentOrientation().isLeftToRight() ? e.getX() < bounds.x + checkbox.getPreferredSize().getWidth() : e.getX() > bounds.x + checkbox.getPreferredSize().getWidth();
                         //change the state of the checkbox on double click or if the click is on checkbox (including the label)
@@ -131,7 +138,7 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
 
         while (dlm.hasMoreElements()) {
             CheckBoxListItem<E> checkboxListItem = dlm.nextElement();
-            if (checkboxListItem.getValue().equals(item)) {
+            if (equals.apply(checkboxListItem.getValue(), item)) {
                 checkboxListItem.setSelected(checked);
             }
         }

@@ -1,11 +1,13 @@
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
+import org.jetbrains.annotations.Nullable;
 
 public class ActFingerIDConfigPanel extends ActivatableConfigPanel<FingerIDConfigPanel> {
-    public ActFingerIDConfigPanel(final JCheckBoxList<String> sourceIonization) {
-        super("CSI:FingerID", Icons.FINGER_32, true, () -> new FingerIDConfigPanel(sourceIonization));
+    public ActFingerIDConfigPanel(final JCheckBoxList<String> sourceIonization, @Nullable final JCheckBoxList<SearchableDatabase> syncSource) {
+        super("CSI:FingerID", Icons.FINGER_32, true, () -> new FingerIDConfigPanel(sourceIonization, syncSource));
     }
 
     @Override

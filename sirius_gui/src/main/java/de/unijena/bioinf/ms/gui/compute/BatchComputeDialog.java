@@ -94,7 +94,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             zodiacConfigs = new ActZodiacConfigPanel();
             addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
 
-            csiConfigs = new ActFingerIDConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList);
+            csiConfigs = new ActFingerIDConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList, formulaIDConfigPanel.content.searchDBList.checkBoxList);
             addConfigPanel("CSI:FingerID - Structure Elucidation", csiConfigs);
 
             canopusConfigPanel = new ActCanopusConfigPanel();

@@ -37,7 +37,7 @@ public class FingerIdDialog extends JDialog {
 
     public FingerIdDialog(Frame owner, boolean showComputeButton, boolean local) {
         super(owner, "Search with CSI:FingerID", true);
-        dbForm = new FingerIDConfigPanel(null);
+        dbForm = new FingerIDConfigPanel(null, null);
         this.showComputeButton = showComputeButton;
         setLocationRelativeTo(owner);
         if (local)
