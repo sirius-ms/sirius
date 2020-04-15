@@ -3,11 +3,10 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.ObservableElementList;
+import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.SearchTextField;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -27,6 +26,7 @@ import java.util.List;
 public class CompoundList {
 
     final SearchTextField searchField;
+    final SortedList<InstanceBean> sortedScource;
     final FilterList<InstanceBean> compoundList;
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
 
@@ -35,7 +35,8 @@ public class CompoundList {
     public CompoundList(@NotNull final GuiProjectSpaceManager ps) {
         searchField = new SearchTextField();
 
-        compoundList = new FilterList<>(new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class)),
+        sortedScource = new SortedList<>(new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class)), Comparator.comparing(b -> b.getID().getCompoundIndex()));
+        compoundList = new FilterList<>(sortedScource,
                 new TextComponentMatcherEditor<>(searchField.textField, (baseList, element) -> {
                     baseList.add(element.getGUIName());
                     baseList.add(element.getIonization().toString());
@@ -46,7 +47,7 @@ public class CompoundList {
         compountListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
         compountListSelectionModel.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()){
+            if (!e.getValueIsAdjusting()) {
                 compountListSelectionModel.getDeselected().forEach(InstanceBean::unregisterProjectSpaceListeners);
                 compountListSelectionModel.getSelected().forEach(InstanceBean::registerProjectSpaceListeners);
                 notifyListenerSelectionChange();
@@ -55,24 +56,24 @@ public class CompoundList {
         compoundList.addListEventListener(this::notifyListenerDataChange);
     }
 
-    public void orderById() {
-        compoundList.sort(Comparator.comparing(InstanceBean::getGUIName));
-    }
-
-    public void orderByMass() {
-        compoundList.sort((o1, o2) -> {
-            double mz1 = o1.getIonMass();
-            if (mz1 <= 0 || Double.isNaN(mz1)) mz1 = Double.POSITIVE_INFINITY;
-            double mz2 = o2.getIonMass();
-            if (mz2 <= 0 || Double.isNaN(mz2)) mz2 = Double.POSITIVE_INFINITY;
-            return Double.compare(mz1, mz2);
-        });
+    public void orderBy(@NotNull final Comparator<InstanceBean> comp) {
+        sortedScource.setComparator(comp);
+        /* final Lock l = compoundList.getReadWriteLock().writeLock();
+        l.lock();
+        compountListSelectionModel.setValueIsAdjusting(true);
+        try {
+            SwingUtilities.invokeAndWait(() -> compoundList.sort(comp));
+        } catch (InterruptedException | InvocationTargetException ignored) {
+        } finally {
+            compountListSelectionModel.setValueIsAdjusting(false);
+            l.unlock();
+        }*/
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
         for (ExperimentListChangeListener l : listeners) {
             event.reset();//this is hell important to reset the iterator
-            l.listChanged(event,compountListSelectionModel);
+            l.listChanged(event, compountListSelectionModel);
         }
     }
 
