@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.gui.mainframe;
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
@@ -30,6 +31,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame implements DropTargetListener {
@@ -123,9 +125,17 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     public void openNewProjectSpace(Path selFile) {
+        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile));
+    }
+
+    public void createNewProjectSpace(Path selFile) {
+        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(selFile));
+    }
+
+    protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace){
         final BasicEventList<InstanceBean> psList = this.ps.INSTANCE_LIST;
         this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
-            SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile);
+            final SiriusProjectSpace ps = makeSpace.get();
             Jobs.cancelALL();
             final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY,9));
             inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
