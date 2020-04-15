@@ -93,9 +93,11 @@ public class ProjectSpaceIO {
      * @throws IOException if an I/O error happens
      */
     public static boolean copyProject(@NotNull final SiriusProjectSpace space, @NotNull final Path copyLocation, final boolean switchToNewLocation) throws IOException {
+        //todo zip to zip copy by simple file copy
         return space.withAllLockedDo(() -> {
             @NotNull final Path nuSpaceLocation;
-            if (isZipProjectSpace(copyLocation)) { //create new mounted zip file for target location
+            final boolean isZipTarget = isZipProjectSpace(copyLocation);
+            if (isZipTarget) { //create new mounted zip file for target location
                 nuSpaceLocation = asZipFS(copyLocation, true);
             } else {
                 nuSpaceLocation = copyLocation;
@@ -106,6 +108,9 @@ public class ProjectSpaceIO {
 
             if (switchToNewLocation)
                 return space.changeLocation(nuSpaceLocation);
+            else if (isZipTarget){
+                nuSpaceLocation.getFileSystem().close();
+            }
 
             return false;
         });
