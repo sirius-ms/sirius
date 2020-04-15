@@ -301,9 +301,6 @@ public class CandidateListDetailView extends CandidateListView implements Active
     public void resultsChanged(InstanceBean experiment, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
         if (sre != null)
             this.structureSearcher.reloadList(source);
-    }
-
-    public void resultsChanged() {
         filterByMolecularPropertyButton.setSelected(false);
     }
 

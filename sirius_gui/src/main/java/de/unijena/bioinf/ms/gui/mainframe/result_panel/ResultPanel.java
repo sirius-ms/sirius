@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
-import de.unijena.bioinf.ms.gui.canopus.CanopusPanel;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
@@ -27,7 +26,6 @@ public class ResultPanel extends JTabbedPane {
     private FingerprintPanel fpt;
     private CompoundClassPanel ccp;
 
-    private CanopusPanel classyfireTreePanel;
     private FormulaList fl;
 
     public ResultPanel(final FormulaList suriusResultElements, WebAPI webAPI) {
@@ -60,14 +58,4 @@ public class ResultPanel extends JTabbedPane {
 
         this.fl = suriusResultElements;
     }
-
-    public void dispose() {
-        ccv.dispose();
-    }
-
-    public void enableCanopus() {
-        classyfireTreePanel = new CanopusPanel();
-        addTab("Compound Classification", null, new FormulaListHeaderPanel(fl, classyfireTreePanel));
-    }
-
 }

@@ -180,12 +180,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     }
 
-    @Override
-    public void dispose() {
-        resultsPanel.dispose();
-        super.dispose();
-    }
-
 
     //////////////////////////////////////////////////
     ////////////////// drag and drop /////////////////

@@ -3,9 +3,9 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
@@ -15,9 +15,10 @@ import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.tree_viewer.*;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -148,44 +149,83 @@ public class TreeVisualizationPanel extends JPanel
         applyPreset((String) presetBox.getSelectedItem());
     }
 
-    public void showTree(@NotNull FTree tree) {
-        this.ftree = tree;
-        String jsonTree = new FTJsonWriter().treeToJsonString(tree);
-        if (jsonTree.isEmpty()){
-            clearPanel();
-            return;
-        }
-        browser.loadTree(jsonTree);
-        for (Component comp : toolBar.getComponents())
-            comp.setEnabled(true);
-        Platform.runLater(() -> {
-            // adapt scale slider to tree scales
-            scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin()
-                    * 100));
-            scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
-            scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
-        });
-        if (settings == null)
-            settings = new TreeViewerSettings(this);
-
-    }
-
-    public void clearPanel(){
-        browser.clear();
-        for (Component comp : toolBar.getComponents())
-            comp.setEnabled(false);
-    }
+    private JJob<Boolean> backgroundLoader = null;
 
     @Override
     public void resultsChanged(InstanceBean experiment,
                                FormulaResultBean sre,
                                List<FormulaResultBean> resultElements,
                                ListSelectionModel selections) {
-        if (sre != null && sre.getFragTree().isPresent())
-            showTree(sre.getFragTree().get());
-        else {
-            clearPanel();
+        //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
+        if (backgroundLoader != null && !backgroundLoader.isFinished()) {
+            backgroundLoader.cancel();
+            backgroundLoader.getResult(); //await cancellation so that nothing strange can happen.
         }
+        browser.clear();
+
+        if (sre != null) {
+            backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
+                @Override
+                protected Boolean compute() throws Exception {
+                    checkForInterruption();
+                    // At som stage we can think about directly load the json representation vom the project space
+                    TreeVisualizationPanel.this.ftree = sre.getFragTree().orElse(null);
+
+                    checkForInterruption();
+                    if (ftree != null) {
+                        String jsonTree = new FTJsonWriter().treeToJsonString(TreeVisualizationPanel.this.ftree);
+                        checkForInterruption();
+                        if (!jsonTree.isBlank()) {
+                            browser.loadTree(jsonTree);
+
+                            checkForInterruption();
+                            SwingUtilities.invokeAndWait(() -> setToolbarEnabled(true));
+
+                            checkForInterruption();
+                            Platform.runLater(() -> {
+                                // adapt scale slider to tree scales
+                                scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin() * 100));
+                                scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
+                                scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
+                            });
+
+                            checkForInterruption();
+                            if (settings == null)
+                                SwingUtilities.invokeAndWait(() -> settings = new TreeViewerSettings(TreeVisualizationPanel.this));
+                            return true;
+                        }
+                    }
+                    browser.clear(); //todo maybe not needed
+                    SwingUtilities.invokeAndWait(() -> setToolbarEnabled(false));
+                    return false;
+                }
+            });
+        }
+    }
+
+
+    public void showTree(String jsonTree) {
+        if (jsonTree != null && !jsonTree.isBlank()) {
+            browser.loadTree(jsonTree);
+            setToolbarEnabled(true);
+            Platform.runLater(() -> {
+                // adapt scale slider to tree scales
+                scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin() * 100));
+                scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
+                scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
+            });
+
+            if (settings == null)
+                settings = new TreeViewerSettings(TreeVisualizationPanel.this);
+        } else {
+            browser.clear();
+            setToolbarEnabled(false);
+        }
+    }
+
+    protected void setToolbarEnabled(boolean enabled) {
+        for (Component comp : toolBar.getComponents())
+            comp.setEnabled(enabled);
     }
 
     public void applyPreset(String preset) {
@@ -196,10 +236,10 @@ public class TreeVisualizationPanel extends JPanel
 
         for (String setting : TreeConfig.SETTINGS)
             localConfig.setFromString(
-                setting, PropertyManager.getProperty(
-                    // preferably use preset value
-                    presetPropertyPrefix + setting,
-                    propertyPrefix + setting, null));
+                    setting, PropertyManager.getProperty(
+                            // preferably use preset value
+                            presetPropertyPrefix + setting,
+                            propertyPrefix + setting, null));
 
         updateConfig();
         if (settings != null)
