@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
@@ -47,7 +49,10 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         i.setDetectableIonTypes(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
-        for (Path f : input.msInput.msParserfiles.stream().sorted().collect(Collectors.toList())) {
+        final List<Path> files = input.msInput.msParserfiles.stream().sorted().collect(Collectors.toList());
+        updateProgress(0, files.size(), 1, "Parse LC/MS runs");
+        AtomicInteger counter = new AtomicInteger(0);
+        for (Path f : files) {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<>() {
                 @Override
                 protected Object compute() {
@@ -58,6 +63,8 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
                         i.detectFeatures(sample);
                         storage.backOnDisc();
                         storage.dropBuffer();
+                        final int c = counter.incrementAndGet();
+                        LcmsAlignSubToolJob.this.updateProgress(0, files.size(), c, "Parse LC/MS runs");
                     } catch (Throwable e) {
                         LoggerFactory.getLogger(LcmsAlignSubToolJob.class).error("Error while parsing file '" + f + "': " + e.getMessage());
                         e.printStackTrace();
@@ -72,13 +79,17 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         for (BasicJJob<?> j : jobs) j.takeResult();
         i.getMs2Storage().backOnDisc();
         i.getMs2Storage().dropBuffer();
-        Cluster alignment = i.alignAndGapFilling();
-        i.detectAdductsWithGibbsSampling(alignment).writeToFile(i, File.createTempFile("network", ".js"));
+        Cluster alignment = i.alignAndGapFilling(this);
+        updateProgress(0, 2, 0, "Assign adducts.");
+        i.detectAdductsWithGibbsSampling(alignment);
+        updateProgress(0, 2, 1, "Merge features.");
         final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(alignment);
-        logInfo("Gapfilling Done.");
+
 
         int totalFeatures = 0, goodFeatures = 0;
-        //save to project space
+        //save
+        updateProgress(0, consensusFeatures.length, 0, "Write project space.");
+        int progress=0;
         for (ConsensusFeature feature : consensusFeatures) {
             final Ms2Experiment experiment = feature.toMs2Experiment();
             ++totalFeatures;
@@ -89,8 +100,8 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
             // kaidu: this is super slow, so we just ignore the filename
             experiment.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(sourcelocation.value));
             space.newCompoundWithUniqueId(experiment);
+            updateProgress(0, consensusFeatures.length, ++progress, "Write project space.");
         }
-        logInfo("LCMS-Align done. " + goodFeatures + " of " + totalFeatures + " are in qood quality.");
         return space;
     }
 }
