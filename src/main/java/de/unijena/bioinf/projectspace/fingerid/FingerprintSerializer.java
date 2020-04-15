@@ -18,11 +18,14 @@ public class FingerprintSerializer implements ComponentSerializer<FormulaResultI
 
     @Override
     public FingerprintResult read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
-        String loc = FINGERPRINTS.relFilePath(id);
-        if (!reader.exists(loc)) return null;
-        final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdData.class).orElseThrow();
-        final double[] probabilities = reader.doubleVector(loc);
-        return new FingerprintResult(new ProbabilityFingerprint(fingerIdData.getFingerprintVersion(), probabilities));
+        if (!reader.exists(FINGERPRINTS.relFilePath(id)))
+            return null;
+
+        return reader.inDirectory(FINGERPRINTS.relDir(), () -> {
+            final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdData.class).orElseThrow();
+            final double[] probabilities = reader.doubleVector(FINGERPRINTS.fileName(id));
+            return new FingerprintResult(new ProbabilityFingerprint(fingerIdData.getFingerprintVersion(), probabilities));
+        });
     }
 
     @Override
