@@ -372,7 +372,7 @@ public class CustomDatabaseImporter {
             } else {
                 fc.setLinks(new DBLink[0]);
             }
-            fc.setBitset(CustomDataSources.getSourceFromName(dbname).flag());
+//            fc.setBitset(CustomDataSources.getSourceFromName(dbname).flag()); //todo this should only be in memory or?
             // compute XLOGP
             fc.setXlogp(logPEstimator.prepareMolAndComputeLogP(molecule.container));
             return fc;

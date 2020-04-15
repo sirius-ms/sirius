@@ -21,6 +21,8 @@ package de.unijena.bioinf.chemdb.custom;
 import de.unijena.bioinf.chemdb.DataSource;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * References to other databases can be stored as 32 or 64 bit sets. This class decodes these
@@ -189,6 +191,19 @@ public class CustomDataSources {
         }
         return set;
     }
+
+    public static long getDBFlagsFromNames(Collection<String> names) {
+        return getSourcesFromNamesStrm(names).mapToLong(Source::flag).reduce((a, b) -> a | b).orElse(0);
+    }
+
+    public static List<Source> getSourcesFromNames(Collection<String> names) {
+        return getSourcesFromNamesStrm(names).collect(Collectors.toList());
+    }
+
+    protected static Stream<Source> getSourcesFromNamesStrm(Collection<String> names) {
+        return names.stream().map(CustomDataSources::getSourceFromName).filter(Objects::nonNull);
+    }
+
 
     public static Source getSourceFromName(String name) {
         return SOURCE_MAP.get(name);
