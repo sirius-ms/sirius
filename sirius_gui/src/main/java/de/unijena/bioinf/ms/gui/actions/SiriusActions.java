@@ -33,6 +33,7 @@ public enum SiriusActions {
     REMOVE_FORMULA_EXP(RemoveFormulaAction.class),
 
 
+    NEW_WS(ProjectCreateAction.class),
     LOAD_WS(ProjectOpenAction.class),
     SAVE_WS(ProjectSaveAction.class),
     EXPORT_WS(ProjectExportAction.class),

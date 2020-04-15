@@ -43,7 +43,7 @@ public class ProjectExportAction extends AbstractAction {
         File selectedFile = null;
 
         while (selectedFile == null) {
-            int returnval = jfc.showSaveDialog(MF);
+            int returnval = jfc.showDialog(MF,"SaveCopy");
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
 

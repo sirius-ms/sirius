@@ -35,6 +35,7 @@ public abstract class Icons {
     public static final Icon NET_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network.png"));
     public static final Icon NET_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-16px.png"));
 
+    public static final Icon ADD_DOC_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-add-doc@0.5x.png"));
     public static final Icon DOC_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-document@0.5x.png"));
     public static final Icon DOCS_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-documents@0.5x.png"));
 
