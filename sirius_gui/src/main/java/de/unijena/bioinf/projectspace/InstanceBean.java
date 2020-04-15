@@ -140,7 +140,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     private MutableMs2Experiment getMutableExperiment() {
-        addToCache();
+//        addToCache(); //todo enable if we can cache preview for compound list
         return (MutableMs2Experiment) getExperiment();
     }
 
