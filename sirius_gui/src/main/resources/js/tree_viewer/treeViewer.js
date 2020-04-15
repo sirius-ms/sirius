@@ -87,12 +87,16 @@ function loadJSONTree(data_json){
 // remove all drawn SVG objects
 function clearSVG(){
     d3.selectAll('.node, .link, .brush').remove();
+    toggleColorBar(false);
+    data = null;
 }
 
 // when width/height of the page has changed, and/or node/link
 // coordinates, but the data remains the same
 function update(data_changed=false) {
     applyWindowSize();
+    if (data == null)
+        return;
     if (data_changed)
         generateTree(data);
     root = calcTreeLayout();

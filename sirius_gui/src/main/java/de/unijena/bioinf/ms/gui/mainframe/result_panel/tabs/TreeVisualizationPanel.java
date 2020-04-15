@@ -152,6 +152,7 @@ public class TreeVisualizationPanel extends JPanel
         this.ftree = tree;
         String jsonTree = new FTJsonWriter().treeToJsonString(tree);
         if (jsonTree.isEmpty()){
+            this.ftree = null;
             clearPanel();
             return;
         }
@@ -183,9 +184,8 @@ public class TreeVisualizationPanel extends JPanel
                                ListSelectionModel selections) {
         if (sre != null && sre.getFragTree().isPresent())
             showTree(sre.getFragTree().get());
-        else {
+        else
             clearPanel();
-        }
     }
 
     public void applyPreset(String preset) {
