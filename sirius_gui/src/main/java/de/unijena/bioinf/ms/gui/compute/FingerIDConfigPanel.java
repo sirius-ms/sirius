@@ -5,10 +5,12 @@ import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -25,37 +27,9 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
 
     protected final JCheckboxListPanel<SearchableDatabase> searchDBList;
     public final JCheckboxListPanel<String> adductOptions;
-//    private ToolbarToggleButton csiButton = null;
 
-    public FingerIDConfigPanel(final JCheckBoxList<String> sourceIonization) {
+    public FingerIDConfigPanel(final JCheckBoxList<String> sourceIonization, @Nullable final JCheckBoxList<SearchableDatabase> syncSource) {
         super(FingerIdOptions.class);
-//        JPanel target = this;
-//        if (horizontal) {
-           /* if (button) {
-                setLayout(new FlowLayout(FlowLayout.LEFT));
-                target = new JPanel();
-                csiButton = new ToolbarToggleButton("CSI:FingerID", Icons.FINGER_32);
-                csiButton.setPreferredSize(new Dimension(110, 60));
-                csiButton.setMaximumSize(new Dimension(110, 60));
-                csiButton.setMinimumSize(new Dimension(110, 60));
-                MainFrame.CONNECTION_MONITOR.addConectionStateListener(evt -> setCsiButtonEnabled(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck().isConnected()));
-                setCsiButtonEnabled(MainFrame.MF.isFingerid());
-
-                csiButton.addActionListener(e -> {
-                    setComponentsEnabled(csiButton.isSelected());
-                    csiButton.setToolTipText((csiButton.isSelected() ? "Disable CSI:FingerID search" : "Enable CSI:FingerID search"));
-                });
-                csiButton.setSelected(false);
-                add(csiButton);
-                add(target);
-            }*/
-//            RelativeLayout rl = new RelativeLayout(RelativeLayout.X_AXIS, 15);
-//            rl.setAlignment(RelativeLayout.LEADING);
-//            target.setLayout(rl);
-
-       /* } else {
-            target.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        }*/
 
         // configure database to search list
         searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Search in DBs:");
@@ -66,6 +40,17 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
         adductOptions = new JCheckboxListPanel<>(new AdductSelectionList(sourceIonization), "Possible Adducts");
         parameterBindings.put("AdductSettings.detectable", () -> getSelectedAdducts().toString());
         add(adductOptions);
+
+        searchDBList.checkBoxList.check(SearchableDatabases.getBioDb());
+
+        if (syncSource != null)
+            syncSource.addListSelectionListener(e -> {
+                searchDBList.checkBoxList.uncheckAll();
+                if (syncSource.getCheckedItems().isEmpty())
+                    searchDBList.checkBoxList.check(SearchableDatabases.getBioDb());
+                else
+                    searchDBList.checkBoxList.checkAll(syncSource.getCheckedItems());
+            });
     }
 
 
