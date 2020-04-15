@@ -32,7 +32,7 @@ public class InstanceBuffer {
             if (buffer.remove(toRemove)) {
                 System.out.println("+++++++ Removing from cache: " + toRemove.toString());
                 toRemove.clearFormulaResultsCache();
-                toRemove.clearCompoundCache();
+//                toRemove.clearCompoundCache(); //todo enable if we can cache preview for compound list
                 return true;
             }
             return false;
