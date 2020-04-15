@@ -48,6 +48,10 @@ public class FingerIdPropertyBean extends MolecularPropertyBean<MolecularPropert
                 return "PubChem";
             case SUBSTRUCTURE:
                 return "CDK Substructure";
+            case BIOSMARTS:
+                return "custom made SMARTS";
+            case RINGSYSTEMS:
+                return "ring systems";
             default:
                 return null;
         }

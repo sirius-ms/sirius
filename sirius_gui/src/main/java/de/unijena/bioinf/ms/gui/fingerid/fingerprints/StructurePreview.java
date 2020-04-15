@@ -118,6 +118,15 @@ public class StructurePreview extends JPanel implements Runnable {
                     }
                     IAtomContainer[] depiction;
                     if (viz==null) {
+
+                        if (entry.getMolecularProperty().getClass() == SubstructureProperty.class) {
+                            // try to parse the SMARTS itself
+                            SmilesParser parser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+                            parser.kekulise(true);
+                            depiction = new IAtomContainer[]{parser.parseSmiles(((SubstructureProperty)(entry.getMolecularProperty())).getSmarts())};
+
+                        }
+
                         depiction = new IAtomContainer[0];
                     } else {
                         final SmilesParser parser = new SmilesParser(SilentChemObjectBuilder.getInstance());
@@ -139,16 +148,18 @@ public class StructurePreview extends JPanel implements Runnable {
                                 }
                             }
                         } else if (entry.getMolecularProperty() instanceof ExtendedConnectivityProperty) {
-                            depiction = new IAtomContainer[1];
-                            try {
-                                depiction[0] = parser.parseSmiles(viz.getExample(1));
-                                sdg.setMolecule(depiction[0]);
-                                sdg.generateCoordinates();
-                                depiction[0] = sdg.getMolecule();
-                                highlight(depiction[0], viz.getExample(0));
-                            } catch (CDKException | NullPointerException e) {
-                                logger.error(e.getMessage(), e);
-                                depiction[0] = null; // do not draw the molecule
+                            depiction = new IAtomContainer[viz.getNumberOfExamples()];
+                            for (int i = 0; i < viz.getNumberOfExamples(); ++i) {
+                                try {
+                                    depiction[i] = parser.parseSmiles(viz.getExample(i));
+                                    sdg.setMolecule(depiction[i]);
+                                    sdg.generateCoordinates();
+                                    depiction[i] = sdg.getMolecule();
+                                    highlight(depiction[i], viz.getSmarts());
+                                } catch (CDKException | NullPointerException e) {
+                                    logger.error(e.getMessage(), e);
+                                    depiction[i] = null; // do not draw the molecule
+                                }
                             }
                         } else {
                             depiction = new IAtomContainer[0];
@@ -218,17 +229,25 @@ public class StructurePreview extends JPanel implements Runnable {
     }
 
     private void highlightAtomsAndBonds(IAtomContainer molecule, HashSet<IAtom> atoms) {
+        // reduce glow effect when ALL atoms of the molecule are highlighted
+        Color highlightColor = CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR;
+        if (atoms.size() == molecule.getAtomCount()) {
+            highlightColor = new Color(highlightColor.getRed(), highlightColor.getGreen(), highlightColor.getBlue(), (int)(highlightColor.getAlpha()*0.33));
+        }
+
         for (IAtom atom : atoms) {
-            atom.setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
+            atom.setProperty(StandardGenerator.HIGHLIGHT_COLOR, highlightColor);
             for (IBond b : molecule.getConnectedBondsList(atom)) {
                 if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {
-                    b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
+                    b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, highlightColor);
                 }
             }
         }
     }
 
     private void hightlightAll(IAtomContainer molecule) {
+        Color highlightColor = CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR;
+        highlightColor = new Color(highlightColor.getRed(), highlightColor.getGreen(), highlightColor.getBlue(), (int)(highlightColor.getAlpha()*0.33));
         for (IAtom atom : molecule.atoms()) {
             atom.setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
         }
