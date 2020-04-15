@@ -239,7 +239,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             g.fillRoundRect(2, 2, w, h, 4, 4);
             g.setColor(Color.BLACK);
             g.drawRoundRect(2, 2, w, h, 4, 4);
-            g.setColor(Color.WHITE);
+            g.setColor(color.equals(Colors.DB_CUSTOM) ? Color.BLACK : Color.WHITE);
             g.drawString(label.name, 2 + (w - tw) / 2, h - (h - th) / 2);
         }
     }

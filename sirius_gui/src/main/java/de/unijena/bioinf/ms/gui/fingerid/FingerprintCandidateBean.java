@@ -104,7 +104,6 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected boolean atomCoordinatesAreComputed = false;
     protected ReentrantLock compoundLock = new ReentrantLock();
 
-
     public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<CompoundCandidate> scoredCandidate, Fingerprint candidatefp, PrecursorIonType adduct) {
         this(rank, fp, new FingerprintCandidate(scoredCandidate.getCandidate(), candidatefp), scoredCandidate.getScore(), adduct);
     }
@@ -181,6 +180,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
 
     public FingerprintCandidate getFingerprintCandidate() {
         return candidate;
+    }
+
+    public long getMergedDBFlags(){
+        return CustomDataSources.getDBFlagsFromNames(getFingerprintCandidate().getLinkedDatabases().keySet());
     }
 
     public String getMolecularFormula() {
@@ -442,5 +445,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         public ProbabilityFingerprint getPlatts() {
             return null;
         }
+
+
     }
 }

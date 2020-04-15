@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.gui;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
@@ -69,7 +70,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 //            ps.forEach(inst -> configsJobs.add(SiriusJobs.getGlobalJobManager().submitJob(new AddConfigsJob(config))));
 //            configsJobs.forEach(JJob::takeResult);
 //            configsJobs.clear();
-
+            ApplicationCore.DEFAULT_LOGGER.info("Initializing available DBs");
+            SearchableDatabases.getAvailableDatabases();
             //todo 3: init GUI with given project space.
             GuiUtils.initUI();
             ApplicationCore.DEFAULT_LOGGER.info("Swing parameters for GUI initialized");

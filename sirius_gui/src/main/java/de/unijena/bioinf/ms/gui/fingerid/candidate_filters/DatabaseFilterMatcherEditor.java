@@ -23,7 +23,7 @@ public class DatabaseFilterMatcherEditor extends AbstractMatcherEditor<Fingerpri
 
         @Override
         public boolean matches(FingerprintCandidateBean candidate) {
-            return (filterSet == 0 || (filterSet & candidate.getFingerprintCandidate().getBitset()) != 0);
+            return (filterSet == 0 || (filterSet & candidate.getMergedDBFlags()) != 0);
         }
     }
 }
