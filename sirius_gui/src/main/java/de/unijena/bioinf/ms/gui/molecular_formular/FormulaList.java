@@ -70,7 +70,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     private void setData(final InstanceBean ec) {
         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
         if (backgroundLoader != null && !backgroundLoader.isFinished()) {
-            backgroundLoader.cancel();
+            backgroundLoader.cancel(false);
             backgroundLoader.getResult(); //await cancellation so that nothing strange can happen.
         }
         this.data = ec;

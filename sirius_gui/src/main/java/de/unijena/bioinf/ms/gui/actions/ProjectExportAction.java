@@ -55,7 +55,6 @@ public class ProjectExportAction extends AbstractAction {
                     );
                 }
 
-                String name = selFile.getName();
                 if (!selFile.getAbsolutePath().endsWith(".sirius")) {
                     selFile = new File(selFile.getAbsolutePath() + ".sirius");
                 }
