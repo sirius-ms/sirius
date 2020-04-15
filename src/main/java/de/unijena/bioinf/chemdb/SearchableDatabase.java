@@ -20,7 +20,4 @@ public interface SearchableDatabase {
 //    File getDatabasePath();
 
     long getFilterFlag();
-
-
-
 }
