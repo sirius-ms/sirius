@@ -59,10 +59,6 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
         public void run() {
             //todo minor: cancellation handling
 
-            // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
-            final ProjectSpaceManager projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
-
-
             // NOTE: we do not want to run ConfigJob here because we want to set
             // final config for experient if something will be computed and that is not the case here
             //todo maybe invalidate cache here!
@@ -87,12 +83,12 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                             Jobs.runInBackgroundAndLoad(MainFrame.MF, "Writing Summaries to Project-Space", true, new TinyBackgroundJJob<Boolean>() {
                                 @Override //todo summary job with real loading screen
                                 protected Boolean compute() throws Exception {
-                                    projectSpace.updateSummaries(ProjectSpaceManager.defaultSummarizer());
+                                    MainFrame.MF.ps().updateSummaries(ProjectSpaceManager.defaultSummarizer());
                                     return true;
                                 }
                             });
                         }
-                        projectSpace.close();
+                        MainFrame.MF.ps().close();
                     } catch (IOException e) {
                         ApplicationCore.DEFAULT_LOGGER.error("Could not write summaries", e);
                     } finally {
@@ -102,6 +98,10 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                 }
             });
             MainFrame.MF.setLocationRelativeTo(null); //init mainframe
+
+            ApplicationCore.DEFAULT_LOGGER.info("Initializing Startup Project-Space...");
+            // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
+            final ProjectSpaceManager projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
             ApplicationCore.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
             MainFrame.MF.decoradeMainFrameInstance((GuiProjectSpaceManager) projectSpace);
 

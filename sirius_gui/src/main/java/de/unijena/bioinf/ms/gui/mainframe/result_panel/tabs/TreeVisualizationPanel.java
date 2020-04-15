@@ -158,7 +158,7 @@ public class TreeVisualizationPanel extends JPanel
                                ListSelectionModel selections) {
         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
         if (backgroundLoader != null && !backgroundLoader.isFinished()) {
-            backgroundLoader.cancel();
+            backgroundLoader.cancel(false);
             backgroundLoader.getResult(); //await cancellation so that nothing strange can happen.
         }
         browser.clear();
