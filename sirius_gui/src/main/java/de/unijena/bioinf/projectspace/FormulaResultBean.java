@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
  */
 public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBean>, DataAnnotation {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
-    //todo som unregister listener stategy
 
     @Override
     public HiddenChangeSupport pcs() {
@@ -155,7 +154,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     public boolean isBestHit() {
-        return getRank() == 0;
+        return getRank() == 1;
     } //todo us also fingerid score for marking best hit
 
     //id based info

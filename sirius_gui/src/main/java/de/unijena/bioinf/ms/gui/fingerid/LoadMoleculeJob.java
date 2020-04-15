@@ -29,6 +29,7 @@ public class LoadMoleculeJob extends BasicJJob<Boolean> {
     @Override
     protected Boolean compute() throws Exception {
         for (FingerprintCandidateBean c : compounds) {
+            checkForInterruption();
             c.getMolecule();
         }
         return true;
