@@ -118,8 +118,7 @@ public class CdkFingerprintVersion extends FingerprintVersion {
 
         BIOSMARTS(6, 283, false, true),
         RINGSYSTEMS(7, 463, false, true),
-        SHORTEST_PATH(8, 2718, false, true),
-        CLASSYFIRE_SMARTS(9, 84, true, true);
+        SHORTEST_PATH(8, 2718, false, true);
 
         public final int defaultPosition, length;
         /*
@@ -291,15 +290,6 @@ public class CdkFingerprintVersion extends FingerprintVersion {
             String line = null;
             while ((line = r.readLine()) != null) {
                 properties.add(new ShortestPathProperty(line));
-            }
-        }
-
-        // CLASSYFIRE PROPERTIES
-        try (final BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(CdkFingerprintVersion.class.getResourceAsStream("/fingerprints/classyfire_smarts.txt")))) {
-            String line = null;
-            while ((line = r.readLine()) != null) {
-                String[] pts = line.split("\t#");
-                properties.add(new SubstructureProperty(pts[0], pts[1]));
             }
         }
 

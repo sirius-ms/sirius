@@ -5,6 +5,7 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.HashSet;
 import java.util.TreeMap;
 import java.util.zip.GZIPInputStream;
 
@@ -12,6 +13,7 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
 
     protected ClassyfireProperty[] properties;
     protected TIntIntHashMap chemOntIdToIndex;
+    protected int root;
 
     private static final ClassyFireFingerprintVersion DEFAULT;
     static {
@@ -31,10 +33,29 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
     public ClassyFireFingerprintVersion(ClassyfireProperty[] classyfireProperties) {
         this.properties = classyfireProperties;
         this.chemOntIdToIndex = new TIntIntHashMap(classyfireProperties.length);
+        int root=0;
         for (int k=0; k < classyfireProperties.length; ++k) {
             chemOntIdToIndex.put(classyfireProperties[k].getChemOntId(), k);
+            if (classyfireProperties[k].parentId<0) {
+                root = k;
+            }
         }
+        this.root = root;
         updateParents();
+        getChemicalEntity().level = 0;
+        for (ClassyfireProperty prop : properties) {
+            updateLevel(prop);
+        }
+    }
+
+    private int updateLevel(ClassyfireProperty prop) {
+        if (prop.level>=0) return prop.level;
+        prop.level = updateLevel(prop.parent)+1;
+        return prop.level;
+    }
+
+    public ClassyfireProperty getChemicalEntity() {
+        return this.properties[root];
     }
 
     private void updateParents() {
@@ -64,9 +85,9 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
             final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(fr));
             String line;
             while ((line=br.readLine())!=null) {
-                String[] tbs = line.split("\t", 4);
+                String[] tbs = line.split("\t", 5);
                 final int id = Integer.parseInt(tbs[1]);
-                properties.put(id, new ClassyfireProperty(id, tbs[0], tbs[3], Integer.parseInt(tbs[2])));
+                properties.put(id, new ClassyfireProperty(id, tbs[0], tbs[3], Integer.parseInt(tbs[2]), Integer.parseInt(tbs[4])));
             }
         } finally {
             if (fr!=null) fr.close();
@@ -92,5 +113,39 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
     @Override
     public boolean compatible(FingerprintVersion fingerprintVersion) {
         return fingerprintVersion instanceof ClassyFireFingerprintVersion && ((ClassyFireFingerprintVersion) fingerprintVersion).properties.length == properties.length;
+    }
+
+    public ClassyfireProperty getPrimaryClass(ProbabilityFingerprint classyfireFingerprint) {
+        ClassyfireProperty bestAbove50 = this.getChemicalEntity();
+        for (FPIter iter : classyfireFingerprint.presentFingerprints()) {
+            ClassyfireProperty prop = (ClassyfireProperty)iter.getMolecularProperty();
+            final int thisPrio = prop.getFixedPriority();
+            final int bestPrio = bestAbove50.getFixedPriority();
+            if (thisPrio >= bestPrio) {
+                if (thisPrio>bestPrio || prop.level>bestAbove50.level)
+                    bestAbove50 = prop;
+            }
+        }
+        return bestAbove50;
+    }
+
+    public ClassyfireProperty[] getPredictedLeafs(ProbabilityFingerprint classyfireFingerprint) {
+        return getPredictedLeafs(classyfireFingerprint,0.5d);
+    }
+
+    public ClassyfireProperty[] getPredictedLeafs(ProbabilityFingerprint classyfireFingerprint, double probabilityThreshold) {
+        HashSet<ClassyfireProperty> predictedClasses = new HashSet<>();
+        for (FPIter iter : classyfireFingerprint) {
+            if (iter.getProbability()>=probabilityThreshold) {
+                predictedClasses.add((ClassyfireProperty) iter.getMolecularProperty());
+            }
+        }
+        ClassyfireProperty[] nodes = predictedClasses.toArray(ClassyfireProperty[]::new);
+        for (ClassyfireProperty node : nodes) {
+            for (ClassyfireProperty ancestor : node.getAncestors()) {
+                predictedClasses.remove(ancestor);
+            }
+        }
+        return predictedClasses.toArray(ClassyfireProperty[]::new);
     }
 }
