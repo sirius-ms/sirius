@@ -8,23 +8,23 @@ import java.text.NumberFormat;
 /**
  * Created by fleisch on 24.05.17.
  */
-public class ListStatBarTableCellRenderer extends AbstractBarTableCellRenderer {
-    protected final ListStats stats;
+public class ListStatBarTableCellRenderer<L extends ListStats> extends AbstractBarTableCellRenderer {
+    protected final L stats;
 
 
-    public ListStatBarTableCellRenderer(ListStats stats) {
+    public ListStatBarTableCellRenderer(L stats) {
         this(stats, false);
     }
 
-    public ListStatBarTableCellRenderer(ListStats stats, boolean percentage) {
+    public ListStatBarTableCellRenderer( L stats, boolean percentage) {
         this(-1, stats, percentage, false, null);
     }
 
-    public ListStatBarTableCellRenderer(int highlightColumn, ListStats stats, boolean percentage) {
+    public ListStatBarTableCellRenderer(int highlightColumn,  L stats, boolean percentage) {
         this(highlightColumn, stats, percentage, false, null);
     }
 
-    public ListStatBarTableCellRenderer(int highlightColumn, ListStats stats, boolean percentage, boolean printMaxValue, NumberFormat lableFormat) {
+    public ListStatBarTableCellRenderer(int highlightColumn,  L stats, boolean percentage, boolean printMaxValue, NumberFormat lableFormat) {
         super(highlightColumn, percentage, printMaxValue, lableFormat);
         this.stats = stats;
     }
@@ -44,8 +44,9 @@ public class ListStatBarTableCellRenderer extends AbstractBarTableCellRenderer {
         return percentage ? stats.getSum() : Double.NaN;
     }
 
+
     @Override
     protected double getPercentage(JTable table, double value, boolean isSelected, boolean hasFocus, int row, int column) {
-        return (value / getSum(table, isSelected, hasFocus, row, column) * 100f);
+        return (value / getSum(table, isSelected, hasFocus, row, column) * 100d);
     }
 }

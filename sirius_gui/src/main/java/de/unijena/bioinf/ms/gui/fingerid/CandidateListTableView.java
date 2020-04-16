@@ -4,9 +4,9 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
 import de.unijena.bioinf.chemdb.PubmedLinks;
-import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,14 +23,14 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
     public CandidateListTableView(final StructureList list) {
         super(list);
 
-        final CandidateTableFormat tf = new CandidateTableFormat(source.scoreStats);
+        final CandidateTableFormat tf = new CandidateTableFormat(getSource().getBestFunc());
         this.table = new ActionTable<>(filteredSource, sortedSource, tf);
 
         table.setSelectionModel(filteredSelectionModel);
         final SiriusResultTableCellRenderer defaultRenderer = new SiriusResultTableCellRenderer(tf.highlightColumnIndex());
         table.setDefaultRenderer(Object.class, defaultRenderer);
 
-        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer(tf.highlightColumnIndex(), source.scoreStats, false, false, null));
+        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tf.highlightColumnIndex(), source.csiScoreStats, false, false, null));
         table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
         LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, (LinkedSiriusTableCellRenderer.LinkCreator<PubmedLinks>) s -> s == null ? null : s.getPubmedLink());
         linkRenderer.registerToTable(table, 7);
@@ -38,8 +38,6 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
                 new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
                 BorderLayout.CENTER
         );
-
-
     }
 
     @Override

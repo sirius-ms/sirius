@@ -21,18 +21,20 @@ public class FormulaScoreListStats extends DoubleListStats {
         return expScoreSum;
     }
 
+    public double getExpMaxScore() {
+        return Math.exp(getMax() - getMax());
+    }
+
+    public double getExpMinScore() {
+        return Math.exp(getMin() - getMax());
+    }
+
     @Override
     public void update(double[] values) {
-        reset();
-        if (values != null) {
-            for (double score : values) {
-                expScoreSum += Math.exp(score);
-                scoreSum += score;
-
-                minScoreValue = Math.min(minScoreValue, score);
-                maxScoreValue = Math.max(maxScoreValue, score);
-            }
-        }
+        super.update(values);
+        if (values != null)
+            for (double value : values)
+                expScoreSum += Math.exp(value - getMax());
     }
 
     @Override

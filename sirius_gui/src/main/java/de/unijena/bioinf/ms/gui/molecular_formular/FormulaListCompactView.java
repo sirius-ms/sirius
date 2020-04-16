@@ -6,9 +6,12 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
  */
 
 import ca.odell.glazedlists.swing.DefaultEventListModel;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActionListView;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +28,7 @@ public class FormulaListCompactView extends ActionListView<FormulaList> {
 
         final JList<FormulaResultBean> resultListView;
         resultListView = new JList<>(new DefaultEventListModel<>(source.getElementList()));
-        resultListView.setCellRenderer(new FormulaListTextCellRenderer(source.siriusScoreStats));
+        resultListView.setCellRenderer(new FormulaListTextCellRenderer(source.getRenderScoreFunc(),source.getBestFunc()));
         resultListView.setSelectionModel(source.getResultListSelectionModel());
         resultListView.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         resultListView.setVisibleRowCount(1);
@@ -35,7 +38,7 @@ public class FormulaListCompactView extends ActionListView<FormulaList> {
         setLayout(new BorderLayout());
 
 
-        JScrollPane listJSP = new JScrollPane(resultListView,ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        JScrollPane listJSP = new JScrollPane(resultListView, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         add(listJSP, BorderLayout.NORTH);
 
 

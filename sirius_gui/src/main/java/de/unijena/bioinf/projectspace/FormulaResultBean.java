@@ -34,7 +34,8 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     private final FormulaResultId fid;
     private final InstanceBean parent;
 
-    private int rank;
+    //additional UI fields
+    private final int rank;
 
     private List<ContainerListener.Defined> listeners = null;
 
@@ -153,9 +154,9 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return rank;
     }
 
-    public boolean isBestHit() {
-        return getRank() == 1;
-    } //todo us also fingerid score for marking best hit
+//    public boolean isBestHit() {
+//        return getRank() == 1;
+//    } //todo us also fingerid score for marking best hit
 
     //id based info
     public PrecursorIonType getPrecursorIonType() {
