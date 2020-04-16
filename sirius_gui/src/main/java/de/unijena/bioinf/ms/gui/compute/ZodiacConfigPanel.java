@@ -24,10 +24,10 @@ public class ZodiacConfigPanel extends SubToolConfigPanel<ZodiacOptions> {
         gibbsSampling.addNamed("Burn-In", makeIntParameterSpinner("ZodiacEpochs.burnInPeriod", 0, 9999, 1));
         gibbsSampling.addNamed("Separate Runs", makeIntParameterSpinner("ZodiacEpochs.numberOfMarkovChains", 1, 1000, 1));
 
-        final TwoColumnPanel libraryHits = new TwoColumnPanel();
-        add(new TextHeaderBoxPanel("Library Hits (Anchors)", libraryHits));
-        //todo library file input
-        libraryHits.addNamed("Minimal Cosine", makeDoubleParameterSpinner("ZodiacLibraryScoring.minCosine", 0, 1, .02));
-        libraryHits.addNamed("Lamda", makeIntParameterSpinner("ZodiacLibraryScoring.lambda", 0, 99999, 1));
+//        final TwoColumnPanel libraryHits = new TwoColumnPanel();
+//        add(new TextHeaderBoxPanel("Library Hits (Anchors)", libraryHits));
+//        //todo library file input
+//        libraryHits.addNamed("Minimal Cosine", makeDoubleParameterSpinner("ZodiacLibraryScoring.minCosine", 0, 1, .02));
+//        libraryHits.addNamed("Lamda", makeIntParameterSpinner("ZodiacLibraryScoring.lambda", 0, 99999, 1));
     }
 }
