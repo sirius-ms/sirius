@@ -116,7 +116,7 @@ public interface Annotated<A extends DataAnnotation> {
 
     default <T extends A> void addAnnotation(Class<T> klass, T value) {
         if (annotations().map.containsKey(klass))
-            throw new RuntimeException("Peak annotation '" + klass.getName() + "' is already present.");
+            throw new RuntimeException("Annotation '" + klass.getName() + "' is already present.");
         setAnnotation(klass, value);
     }
 
