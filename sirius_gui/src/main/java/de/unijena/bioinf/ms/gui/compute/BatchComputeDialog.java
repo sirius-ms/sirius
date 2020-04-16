@@ -179,6 +179,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     }
 
     private void startComputing() {
+
         if (editPanel != null && compoundsToProcess.size() == 1)
             saveEdits(compoundsToProcess.get(0));
 
@@ -191,6 +192,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             //todo implement compute state handling
         }
 
+        // todo hotfix to prevent gui from going crazy
+        {
+            int index = MF.getCompoundListSelectionModel().getMinSelectionIndex();
+            MF.getCompoundListSelectionModel().setSelectionInterval(index,index);
+        }
 
         Jobs.runInBackgroundAndLoad(getOwner(), "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
             @Override

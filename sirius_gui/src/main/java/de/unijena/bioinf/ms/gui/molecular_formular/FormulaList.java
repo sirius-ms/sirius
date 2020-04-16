@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -19,6 +20,7 @@ import de.unijena.bioinf.sirius.scores.TreeScore;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -30,6 +32,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     public final DoubleListStats treeScoreStats = new DoubleListStats();
     public final DoubleListStats explainedPeaks = new DoubleListStats();
     public final DoubleListStats explainedIntensity = new DoubleListStats();
+    public final DoubleListStats csiScoreStats = new DoubleListStats();
 
     public FormulaList(final CompoundList compoundList) {
         super(FormulaResultBean.class);
@@ -95,6 +98,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                         siriusScoreStats.update(new double[0]);
                         isotopeScoreStats.update(new double[0]);
                         treeScoreStats.update(new double[0]);
+                        csiScoreStats.update(new double[0]);
                     });
                 }
 
@@ -127,6 +131,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             double[] sscores = new double[r.size()];
             double[] iScores = new double[r.size()];
             double[] tScores = new double[r.size()];
+            double[] csiScores = new double[r.size()];
             int i = 0;
             for (FormulaResultBean element : r) {
                 element.registerProjectSpaceListeners();
@@ -134,14 +139,15 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 zscores[i] = element.getScoreValue(ZodiacScore.class);
                 sscores[i] = element.getScoreValue(SiriusScore.class);
                 iScores[i] = element.getScoreValue(IsotopeScore.class);
-                tScores[i++] = element.getScoreValue(TreeScore.class);
+                tScores[i] = element.getScoreValue(TreeScore.class);
+                csiScores[i++] = element.getScoreValue(TopCSIScore.class);
             }
 
             this.zodiacScoreStats.update(zscores);
             this.siriusScoreStats.update(sscores);
             this.isotopeScoreStats.update(iScores);
             this.treeScoreStats.update(tScores);
-
+            this.csiScoreStats.update(csiScores);
 
             this.explainedIntensity.setMinScoreValue(0);
             this.explainedIntensity.setMaxScoreValue(1);
@@ -154,7 +160,6 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
 
     }
 
-
     public List<FormulaResultBean> getSelectedValues() {
         List<FormulaResultBean> selected = new ArrayList<>();
         for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
@@ -163,5 +168,19 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             }
         }
         return selected;
+    }
+
+    protected Function<FormulaResultBean, Boolean> getBestFunc() {
+        return sre -> Double.isFinite(csiScoreStats.getMax()) && !Double.isNaN(csiScoreStats.getMax())
+                ? sre.getScoreValue(TopCSIScore.class) >= csiScoreStats.getMax()
+                : sre.getScore(ZodiacScore.class)
+                .map(it -> it.score() >= zodiacScoreStats.getMax())
+                .orElse(sre.getScoreValue(SiriusScore.class) >= siriusScoreStats.getMax());
+    }
+
+    protected Function<FormulaResultBean, Double> getRenderScoreFunc() {
+        return sre -> sre.getScore(ZodiacScore.class)
+                .map(it -> it.score() * 100d)
+                .orElse(Math.exp(sre.getScoreValue(SiriusScore.class) - siriusScoreStats.getMax()) / siriusScoreStats.getExpScoreSum() * 100d);
     }
 }

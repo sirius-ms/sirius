@@ -16,13 +16,14 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Created by fleisch on 15.05.17.
  */
 public class StructureList extends ActionList<FingerprintCandidateBean, Set<FormulaResultBean>> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
-    public final DoubleListStats scoreStats;
+    public final DoubleListStats csiScoreStats;
     public final DoubleListStats logPStats;
     public final DoubleListStats tanimotoStats;
 
@@ -34,7 +35,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
     public StructureList(final FormulaList source, DataSelectionStrategy strategy) {
         super(FingerprintCandidateBean.class, strategy);
 
-        scoreStats = new DoubleListStats();
+        csiScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
         tanimotoStats = new DoubleListStats();
         source.addActiveResultChangedListener(this);
@@ -59,7 +60,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                 checkForInterruption();
                 SwingUtilities.invokeAndWait(() -> {
                     elementList.clear();
-                    scoreStats.reset();
+                    csiScoreStats.reset();
                     logPStats.reset();
                     tanimotoStats.reset();
                 });
@@ -100,7 +101,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                                                 fbfps.getFingerprints().get(j),
                                                 e.getPrecursorIonType());
                                         emChache.add(c);
-                                        scoreStats.addValue(c.getScore());
+                                        csiScoreStats.addValue(c.getScore());
                                         logPStats.addValue(c.getXlogp());
                                         Double tm = c.getTanimotoScore();
                                         tanimotoStats.addValue(tm == null ? Double.NaN : tm);
@@ -125,8 +126,12 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
             public void cancel(boolean mayInterruptIfRunning) {
                 super.cancel(mayInterruptIfRunning);
                 if (loadMols != null && !loadMols.isFinished())
-                loadMols.cancel();
+                    loadMols.cancel();
             }
         });
+    }
+
+    protected Function<FingerprintCandidateBean, Boolean> getBestFunc() {
+        return c -> c.getScore() >= csiScoreStats.getMax();
     }
 }

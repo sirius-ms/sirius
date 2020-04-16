@@ -75,7 +75,8 @@ public class ZodiacSubToolJob extends DataSetJob {
                         quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.PoorlyExplained);
                         experiment.removeAnnotation(CompoundQuality.class);
                     }
-                    experiment.addAnnotation(CompoundQuality.class, quality);
+                    //todo what do we want todo if annotation is present? override or not?
+                    experiment.setAnnotation(CompoundQuality.class, quality);
                 }
             }
 

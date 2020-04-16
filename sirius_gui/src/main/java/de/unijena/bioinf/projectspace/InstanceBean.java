@@ -8,9 +8,11 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -122,7 +124,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
 
     public List<FormulaResultBean> getResults() {
         addToCache();
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> form = loadFormulaResults(FormulaScoring.class);
+        List<? extends SScored<FormulaResult, ? extends FormulaScore>> form = loadFormulaResults(List.of(ZodiacScore.class, SiriusScore.class), FormulaScoring.class);
         return IntStream.range(0, form.size()).mapToObj(i -> new FormulaResultBean(form.get(i).getCandidate().getId(), this, i + 1)).collect(Collectors.toList());
     }
 

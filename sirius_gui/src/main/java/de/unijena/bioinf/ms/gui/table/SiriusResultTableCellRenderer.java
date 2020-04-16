@@ -13,7 +13,7 @@ import java.text.NumberFormat;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
-    protected NumberFormat nf = new DecimalFormat("#0.00");
+    protected NumberFormat nf = new DecimalFormat("#0.000");
 
 
     protected Color foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
