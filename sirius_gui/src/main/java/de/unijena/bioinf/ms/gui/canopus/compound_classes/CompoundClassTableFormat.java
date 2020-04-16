@@ -9,7 +9,7 @@ public class CompoundClassTableFormat implements TableFormat<ClassyfirePropertyB
             "Posterior Probability",
             "Description",
             "ID",
-            "ParentID",
+            "Parent",
 //            "Positive training examples",
 //            "Predictor quality (F1)"
     };
@@ -32,7 +32,7 @@ public class CompoundClassTableFormat implements TableFormat<ClassyfirePropertyB
         if (column == col++) return prop.getProbability();
         if (column == col++) return prop.getMolecularProperty().getDescription();
         if (column == col++) return prop.getMolecularProperty().getChemontIdentifier();
-        if (column == col++) return prop.getMolecularProperty().getParent().getChemontIdentifier();
+        if (column == col++) return prop.getMolecularProperty().getParent().getName();
 //        if (column == col++) return prop.getNumberOfTrainingExamples();
 //        if (column == col) return prop.getFScore();
         return null;
