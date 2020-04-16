@@ -1,8 +1,10 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
+import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassDetailView;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassTableView;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
+import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +22,7 @@ public class CompoundClassPanel extends JPanel implements PanelDescription {
     }
 
     protected Logger logger = LoggerFactory.getLogger(CompoundClassPanel.class);
-    public CompoundClassPanel(CompoundClassList table) {
+    public CompoundClassPanel(CompoundClassList table, FormulaList siriusResultElements) {
         super(new BorderLayout());
 
         final CompoundClassTableView center = new CompoundClassTableView(table);
@@ -38,6 +40,9 @@ public class CompoundClassPanel extends JPanel implements PanelDescription {
 //        south.setBorder(BorderFactory.createEmptyBorder(1,1,1,1));
 //        south.add(preview,BorderLayout.CENTER);
 
+        final CompoundClassDetailView detail = new CompoundClassDetailView(siriusResultElements);
+
+        add(detail, BorderLayout.NORTH);
         add(center, BorderLayout.CENTER);
 //        add(south, BorderLayout.SOUTH);
     }
