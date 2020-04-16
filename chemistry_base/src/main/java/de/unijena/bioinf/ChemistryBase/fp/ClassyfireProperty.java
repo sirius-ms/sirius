@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 public class ClassyfireProperty extends MolecularProperty {
@@ -8,14 +9,45 @@ public class ClassyfireProperty extends MolecularProperty {
     protected final String name;
     protected final String description;
     protected final int parentId;
-
+    /**
+     * if a compound has two classes, it's main class is the class with higher priority,
+     * while the other class becomes its alternative class
+     */
+    protected final int priority;
+    protected int fixedPriority;
+    protected int level;
     protected ClassyfireProperty parent;
 
-    public ClassyfireProperty(int chemOntId, String name, String description, int parentId) {
+    public ClassyfireProperty(int chemOntId, String name, String description, int parentId, int priority) {
         this.chemOntId = chemOntId;
         this.name = name;
         this.description = description;
         this.parentId = parentId;
+        this.priority = priority;
+        this.fixedPriority=-1;
+        this.level=-1;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public int getFixedPriority() {
+        if (fixedPriority<0) fixedPriority = __getFixedPriority();
+        return fixedPriority;
+    }
+
+    /*
+        strangely, sometimes a subclass has a lower priority than the superclass..
+         */
+    private int __getFixedPriority() {
+        int prio = priority;
+        ClassyfireProperty node = this;
+        while (node.parent!=null) {
+            node = node.parent;
+            prio = Math.max(prio,node.priority);
+        }
+        return prio;
     }
 
     void setParent(ClassyfireProperty parent) {
@@ -44,5 +76,15 @@ public class ClassyfireProperty extends MolecularProperty {
 
     public ClassyfireProperty getParent() {
         return parent;
+    }
+
+    public ClassyfireProperty[] getAncestors() {
+        ArrayList<ClassyfireProperty> prop = new ArrayList<>();
+        ClassyfireProperty node = this;
+        while (node.parent!=null) {
+            node=node.parent;
+            prop.add(node);
+        }
+        return prop.toArray(ClassyfireProperty[]::new);
     }
 }
