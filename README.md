@@ -61,9 +61,9 @@ The training Structures of CSI:FingerID predictors are available through
 the CSI:FingerID WebAPI.
 
 ##### Training structures for positive ion mode:
-https://www.csi-fingerid.uni-jena.de/webapi/trainingstructures.csv?predictor=pos 
-##### Training structures for negative ion mode:
-https://www.csi-fingerid.uni-jena.de/webapi/trainingstructures.csv?predictor=neg
+https://www.csi-fingerid.uni-jena.de/v1.4.2-SNAPSHOT/api/fingerid/trainingstructures?predictor=1~~
+##### ~~Training structures for negative ion mode:~~
+~~https://www.csi-fingerid.uni-jena.de/v1.4.2-SNAPSHOT/api/fingerid/trainingstructures?predictor=4~~
 
 ### Fragmentation Tree Computation
 
