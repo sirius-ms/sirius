@@ -35,7 +35,7 @@ CSI:FingerID.</span>
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.11-SNAPSHOT/sirius-4.4.11-SNAPSHOT-osx64.zip)
 
 ### SIRIUS+CSI:FingerID Commandline only - Version 4.4.11-SNAPSHOT (2020-04-17)
-##### Java Runtime Environment 11 or higher required. 
+##### Java Runtime Environment 11 (JRE-11) or higher required. 
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.11-SNAPSHOT/sirius-4.4.11-SNAPSHOT-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.11-SNAPSHOT/sirius-4.4.11-SNAPSHOT-win64-headless.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.11-SNAPSHOT/sirius-4.4.11-SNAPSHOT-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.11-SNAPSHOT/sirius-4.4.11-SNAPSHOT-linux64-headless.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.11-SNAPSHOT/sirius-4.4.11-SNAPSHOT-osx64-headless.zip)
