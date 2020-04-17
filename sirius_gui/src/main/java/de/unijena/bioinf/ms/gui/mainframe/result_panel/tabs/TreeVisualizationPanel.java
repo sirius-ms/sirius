@@ -205,6 +205,7 @@ public class TreeVisualizationPanel extends JPanel
                                 return true;
                             }
                         }
+                        ftree = null;
                         browser.clear(); //todo maybe not needed
                         SwingUtilities.invokeAndWait(() -> setToolbarEnabled(false));
                         return false;
