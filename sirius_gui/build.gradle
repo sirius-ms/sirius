@@ -51,7 +51,7 @@ dependencies {
 
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.ms.middleware.SiriusGUIApplication"
-project.ext.set("arch", ['64']) // for the  gui we only support 64bit because of JDKFX availability
+//project.ext.set("arch", ['64']) // // todo for the  gui we only support 64bit because of JDKFX availability
 project.ext.set("type", ['gui','console'])
 
 /*################### Jar build Stuff ################### */
