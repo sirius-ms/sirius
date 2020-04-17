@@ -84,7 +84,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                     return p.parse();
                 }
             } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).warn("Error when parsing Compound '" + p.compoundName + "'. Skipping this entry!");
+                LoggerFactory.getLogger(getClass()).warn("Error when parsing Compound '" + p.compoundName + "'. Skipping this entry! \n" + e.getMessage());
             } finally {
                 if (p != null) {
                     if (p.compoundName != null) {
