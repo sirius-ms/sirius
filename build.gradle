@@ -518,12 +518,13 @@ task refreshDownloadLinks {
                 "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
                 "",
                 "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
+                "##### This versions have the JRE already included! Just download, unpack and execute.",
                 "- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
                 "- for Linux [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
                 "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
-                "JRE included! Just download, unpack and start.",
                 "",
                 "### SIRIUS+CSI:FingerID Commandline only - Version $version (${new Date().format('yyyy-MM-dd')})",
+                "##### [Java Runtime Environment 11 (JRE-11)](https://www.azul.com/downloads/zulu-community/?version=java-11-lts&architecture=x86-64-bit&package=jre) or higher required.",
                 "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32-headless.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
                 "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32-headless.zip) / " +
