@@ -61,7 +61,7 @@ The training Structures of CSI:FingerID predictors are available through
 the CSI:FingerID WebAPI.
 
 ##### Training structures for positive ion mode:
-https://www.csi-fingerid.uni-jena.de/v1.4.2-SNAPSHOT/api/fingerid/trainingstructures?predictor=1~~
+https://www.csi-fingerid.uni-jena.de/v1.4.2-SNAPSHOT/api/fingerid/trainingstructures?predictor=1
 ##### ~~Training structures for negative ion mode:~~
 ~~https://www.csi-fingerid.uni-jena.de/v1.4.2-SNAPSHOT/api/fingerid/trainingstructures?predictor=4~~
 
