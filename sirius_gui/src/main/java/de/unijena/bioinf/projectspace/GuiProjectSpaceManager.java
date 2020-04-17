@@ -17,8 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -109,7 +107,17 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         if (align) {
             Jobs.runInBackgroundAndLoad(MF, new LcmsAlignSubToolJob(input, this));
         } else {
-            InstanceImporter importer = new InstanceImporter(this, x -> true, x -> true);
+            InstanceImporter importer = new InstanceImporter(this,
+                    x -> {
+                        if (x.getPrecursorIonType() != null) {
+                            return true;
+                        } else {
+                            LOG.warn("Skipping `" + x.getName() + "` because of Missing IonType! This is likely to be A empty Measurement.");
+                            return false;
+                        }
+                    },
+                    x -> true
+            );
             Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", true, importer.makeImportJJob(input));
         }
     }

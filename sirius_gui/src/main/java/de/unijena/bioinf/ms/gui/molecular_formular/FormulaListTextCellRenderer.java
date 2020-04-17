@@ -1,14 +1,12 @@
 package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
-import org.slf4j.LoggerFactory;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.InputStream;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -41,25 +39,11 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 
     public void initColorsAndFonts() {
         //todo replace font with them from utils class
-        try {
-            InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
-            Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-            mfFont = tempFont.deriveFont(13f);
-            propertyFont = tempFont.deriveFont(12f);
-            statusFont = tempFont.deriveFont(24f);
-            rankFont = tempFont.deriveFont(16f);
-        } catch (Exception e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-        }
-
-        try {
-            InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans.ttf");
-            Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-            valueFont = tempFont.deriveFont(12f);
-
-        } catch (Exception e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-        }
+        mfFont = Fonts.FONT_BOLD.deriveFont(13f);
+        propertyFont = Fonts.FONT_BOLD.deriveFont(12f);
+        statusFont = Fonts.FONT_BOLD.deriveFont(24f);
+        rankFont = Fonts.FONT_BOLD.deriveFont(16f);
+        valueFont = Fonts.FONT.deriveFont(12f);
 
         selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
         selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
@@ -68,7 +52,6 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         unevenBackground = new Color(213, 227, 238);
         activatedForeground = UIManager.getColor("List.foreground");
         deactivatedForeground = Color.GRAY;
-
     }
 
     @Override

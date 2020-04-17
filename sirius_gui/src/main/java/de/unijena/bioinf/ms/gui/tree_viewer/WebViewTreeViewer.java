@@ -8,7 +8,6 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;

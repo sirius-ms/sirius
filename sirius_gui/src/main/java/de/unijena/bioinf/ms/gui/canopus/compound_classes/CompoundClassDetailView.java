@@ -187,8 +187,10 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
         }
 
         @Override
-        public void paint(Graphics g_) {
+        public void paintComponent(Graphics g_) {
             final Graphics2D g = (Graphics2D)g_;
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
             final Color color = main ? Colors.CLASSIFIER_MAIN : Colors.CLASSIFIER_OTHER;
             g.setColor(color);
             final int boxwidth = Math.max(classBox.width,typeBox.width)+2*PADDING;

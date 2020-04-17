@@ -5,8 +5,10 @@ package de.unijena.bioinf.ms.gui.configs;
  * 26.01.17.
  */
 
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 
@@ -31,8 +33,7 @@ public class Fonts {
              tm2 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream("/ttf/DejaVuSans.ttf"));
              tm3 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream("/ttf/DejaVuSans-Oblique.ttf"));
              tm4 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream("/ttf/DejaVuSans-BoldOblique.ttf"));
-             tm4 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream("/ttf/DejaVuSans-BoldOblique.ttf"));
-             tm4 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream("/ttf/DejaVuSansMono-Bold.ttf"));
+             tm5 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream("/ttf/DejaVuSansMono-Bold.ttf"));
          } catch (FontFormatException | IOException e) {
              LoggerFactory.getLogger(Fonts.class).error("Could not load default font", e);
          }
@@ -42,5 +43,18 @@ public class Fonts {
          FONT_BOLD_ITALIC = tm4;
          FONT_MONO = tm5;
 
+     }
+
+     public static void initFonts(){
+         if (PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.enableaa",false)){
+             System.setProperty("awt.useSystemAAFontSettings","on");
+             System.setProperty("swing.aatext", "true");
+             LoggerFactory.getLogger(Fonts.class).debug("Global Anti Aliasing enabled");
+         }
+
+         if (PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.enforcefont",false)){
+             UIManager.getLookAndFeelDefaults().put("defaultFont", FONT);
+             LoggerFactory.getLogger(Fonts.class).debug(FONT.getFontName() +  " enforced!");
+         }
      }
 }

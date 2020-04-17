@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.ms_viewer;
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.MSViewerDataModel;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.MSViewerDataModelListener;
 import org.slf4j.Logger;
@@ -9,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.InputStream;
 import java.util.List;
 import java.util.*;
 
@@ -152,25 +152,13 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 		dragged = false;
 		pressXPos = -1;
 
-		this.setPreferredSize(new Dimension(500,500));
+		this.setPreferredSize(new Dimension(500, 500));
 
-		try{
-			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSansMono.ttf");
-			monoFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-			monoFont = monoFont.deriveFont(12f);
-		}catch(Exception e){
-			logger.error(e.getMessage(), e);
-		}
+		monoFont = Fonts.FONT_MONO.deriveFont(12f);
 
-		try{
-			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
-			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-			detailFont = tempFont.deriveFont(10f);
-			labelFont = tempFont.deriveFont(12f);
-			titleFont = tempFont.deriveFont(24f);
-		}catch(Exception e){
-			logger.error(e.getMessage(), e);
-		}
+		detailFont = Fonts.FONT_BOLD.deriveFont(10f);
+		labelFont = Fonts.FONT_BOLD.deriveFont(12f);
+		titleFont = Fonts.FONT_BOLD.deriveFont(24f);
 
 		this.initColors();
 		this.initForMarking();
@@ -369,6 +357,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	 * @param g2
 	 */
 	private void paintBasics(Graphics2D g2){
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 		g2.setColor(backgroundColor);
 		g2.fillRect(0, 0, sizeX+1, sizeY+1);
 
@@ -392,7 +381,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	 * @param g2
 	 */
 	private void paintAxes(Graphics2D g2){
-
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 		g2.setFont(monoFont);
 		g2.setColor(this.defaultColor);
 
@@ -536,6 +525,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	}
 
 	private void paintSelectionRect(Graphics2D g2){
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 
 		if(dragStartPos<=yAxisHorizontalPos) dragStartPos = yAxisHorizontalPos+1;
 		if(dragEndPos>xAxisHorizontalEndPos) dragEndPos = xAxisHorizontalEndPos;
@@ -568,6 +558,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	}
 
 	private void paintPeaks(Graphics2D g2){
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 		final Stroke before = g2.getStroke();
 		try {
 			final Stroke largePeak = new BasicStroke(1.5f);
@@ -614,6 +605,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	}
 
 	private void paintExtendedPeakInformation(Graphics2D g2){
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 		g2.setFont(detailFont);
 		FontMetrics fm = g2.getFontMetrics();
 

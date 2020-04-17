@@ -48,6 +48,8 @@ public class GuiUtils {
     }
 
     public static void drawListStatusElement(boolean isComputing, Graphics2D g2, Component c) {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
         final Color prevCol = g2.getColor();
         String icon = isComputing ? "\u2699" :"";
 
@@ -91,6 +93,7 @@ public class GuiUtils {
         @Override
         protected void doPaint(Graphics2D g, JComponent c, int width,
                                int height, Object[] extendedCacheKeys) {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
             g.setColor(fillColor);
             g.fillRect(0, 0, width, height);
         }
