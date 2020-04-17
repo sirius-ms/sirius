@@ -33,6 +33,8 @@ import java.awt.event.ComponentListener;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -150,56 +152,67 @@ public class TreeVisualizationPanel extends JPanel
     }
 
     private JJob<Boolean> backgroundLoader = null;
+    private final Lock backgroundLoaderLock = new ReentrantLock();
 
     @Override
     public void resultsChanged(InstanceBean experiment,
                                FormulaResultBean sre,
                                List<FormulaResultBean> resultElements,
                                ListSelectionModel selections) {
-        //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
-        if (backgroundLoader != null && !backgroundLoader.isFinished()) {
-            backgroundLoader.cancel(false);
-            backgroundLoader.getResult(); //await cancellation so that nothing strange can happen.
-        }
-        browser.clear();
+
 
         if (sre != null) {
-            backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
-                @Override
-                protected Boolean compute() throws Exception {
-                    checkForInterruption();
-                    // At som stage we can think about directly load the json representation vom the project space
-                    TreeVisualizationPanel.this.ftree = sre.getFragTree().orElse(null);
+            try {
+                backgroundLoaderLock.lock();
+                final JJob<Boolean> old = backgroundLoader;
+                backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
+                    @Override
+                    protected Boolean compute() throws Exception {
 
-                    checkForInterruption();
-                    if (ftree != null) {
-                        String jsonTree = new FTJsonWriter().treeToJsonString(TreeVisualizationPanel.this.ftree);
-                        checkForInterruption();
-                        if (!jsonTree.isBlank()) {
-                            browser.loadTree(jsonTree);
 
-                            checkForInterruption();
-                            SwingUtilities.invokeAndWait(() -> setToolbarEnabled(true));
-
-                            checkForInterruption();
-                            Platform.runLater(() -> {
-                                // adapt scale slider to tree scales
-                                scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin() * 100));
-                                scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
-                                scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
-                            });
-
-                            checkForInterruption();
-                            if (settings == null)
-                                SwingUtilities.invokeAndWait(() -> settings = new TreeViewerSettings(TreeVisualizationPanel.this));
-                            return true;
+                        //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
+                        if (old != null && !old.isFinished()) {
+                            old.cancel(false);
+                            old.getResult(); //await cancellation so that nothing strange can happen.
                         }
+
+                        checkForInterruption();
+                        SwingUtilities.invokeAndWait(() -> browser.clear());
+                        checkForInterruption();
+                        // At som stage we can think about directly load the json representation vom the project space
+                        TreeVisualizationPanel.this.ftree = sre.getFragTree().orElse(null);
+                        checkForInterruption();
+                        if (ftree != null) {
+                            String jsonTree = new FTJsonWriter().treeToJsonString(TreeVisualizationPanel.this.ftree);
+                            checkForInterruption();
+                            if (!jsonTree.isBlank()) {
+                                browser.loadTree(jsonTree);
+
+                                checkForInterruption();
+                                SwingUtilities.invokeAndWait(() -> setToolbarEnabled(true));
+
+                                checkForInterruption();
+                                Platform.runLater(() -> {
+                                    // adapt scale slider to tree scales
+                                    scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin() * 100));
+                                    scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
+                                    scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
+                                });
+
+                                checkForInterruption();
+                                if (settings == null)
+                                    SwingUtilities.invokeAndWait(() -> settings = new TreeViewerSettings(TreeVisualizationPanel.this));
+                                return true;
+                            }
+                        }
+                        browser.clear(); //todo maybe not needed
+                        SwingUtilities.invokeAndWait(() -> setToolbarEnabled(false));
+                        return false;
                     }
-                    browser.clear(); //todo maybe not needed
-                    SwingUtilities.invokeAndWait(() -> setToolbarEnabled(false));
-                    return false;
-                }
-            });
+                });
+            } finally {
+                backgroundLoaderLock.unlock();
+            }
         }
     }
 

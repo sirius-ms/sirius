@@ -20,6 +20,9 @@ import de.unijena.bioinf.sirius.scores.TreeScore;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 /**
@@ -69,55 +72,61 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     }
 
     private JJob<Boolean> backgroundLoader = null;
+    private final Lock backgroundLoaderLock = new ReentrantLock();
 
     private void setData(final InstanceBean ec) {
         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
-        if (backgroundLoader != null && !backgroundLoader.isFinished()) {
-            backgroundLoader.cancel(false);
-            backgroundLoader.getResult(); //await cancellation so that nothing strange can happen.
-        }
-        this.data = ec;
+        try {
+            backgroundLoaderLock.lock();
+            this.data = ec; //todo not secure!
+            final JJob<Boolean> old = backgroundLoader;
+            backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
+                @Override
+                protected Boolean compute() throws Exception {
 
-        backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
-            @Override
-            protected Boolean compute() throws Exception {
-                checkForInterruption();
-                if (ec != null && ec.getResults() != null && !ec.getResults().isEmpty()) {
+                    if (old != null && !old.isFinished()) {
+                        old.cancel(false);
+                        old.getResult(); //await cancellation so that nothing strange can happen.
+                    }
                     checkForInterruption();
-                    if (!ec.getResults().equals(elementList)){
+                    if (ec != null && ec.getResults() != null && !ec.getResults().isEmpty()) {
                         checkForInterruption();
-                        SwingUtilities.invokeAndWait(FormulaList.this::intiResultList);
+                        if (!ec.getResults().equals(elementList)) {
+                            checkForInterruption();
+                            SwingUtilities.invokeAndWait(FormulaList.this::intiResultList);
+                        }
+                    } else {
+                        checkForInterruption();
+                        SwingUtilities.invokeAndWait(() -> {
+                            elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
+                            selectionModel.clearSelection();
+                            elementList.clear();
+                            zodiacScoreStats.update(new double[0]);
+                            siriusScoreStats.update(new double[0]);
+                            isotopeScoreStats.update(new double[0]);
+                            treeScoreStats.update(new double[0]);
+                            csiScoreStats.update(new double[0]);
+                        });
                     }
-                } else {
+
                     checkForInterruption();
-                    SwingUtilities.invokeAndWait(() -> {
-                        elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
-                        selectionModel.clearSelection();
-                        elementList.clear();
-                        zodiacScoreStats.update(new double[0]);
-                        siriusScoreStats.update(new double[0]);
-                        isotopeScoreStats.update(new double[0]);
-                        treeScoreStats.update(new double[0]);
-                        csiScoreStats.update(new double[0]);
-                    });
-                }
-
-                checkForInterruption();
-
-                //set selection
-                SwingUtilities.invokeAndWait(() -> {
-                    FormulaResultBean sre = null;
                     if (!elementList.isEmpty()) {
-                        //we have sorted results so best hit is always at 0
-                        selectionModel.setSelectionInterval(0, 0);
-                        sre = elementList.get(selectionModel.getMinSelectionIndex());
+                        final AtomicInteger index = new AtomicInteger(0);
+                        final Function<FormulaResultBean, Boolean> f = getBestFunc();
+                        for (FormulaResultBean resultBean : elementList) {
+                            if (f.apply(resultBean))
+                                break;
+                            index.incrementAndGet();
+                        }
+                        //set selection
+                        SwingUtilities.invokeAndWait(() -> selectionModel.setSelectionInterval(index.get(), index.get()));
                     }
-                    selectionModel.setValueIsAdjusting(false);
-                    notifyListeners(ec, sre, elementList, selectionModel);
-                });
-                return true;
-            }
-        });
+                    return true;
+                }
+            });
+        } finally {
+            backgroundLoaderLock.unlock();
+        }
     }
 
     private void intiResultList() {
