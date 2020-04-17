@@ -25,6 +25,12 @@ plugins {
 
 //Global Properties
 ext {
+    // version for bundeled JRE
+    jre_version = '11.0.7'
+    zulu_jre_version = '11.39.15'
+    //jre path relative tu app home
+    jre_path = 'zulu'
+
     //version for external libraries
     slf4j_version = '1.7.25'
     jjobs_version = '0.9.17-SNAPSHOT'
@@ -155,10 +161,12 @@ task downloadGLPK(type: Copy) {
             Files.createDirectories(dir)
 
             def glpkZipFile = Paths.get('glpk.zip')
+            getLogger().lifecycle("Downloading glpk...")
             def file = dir.resolve(glpkZipFile).newOutputStream()
             file << glpkURL.openStream()
             file.close()
 
+            getLogger().lifecycle("Unpacking glpk...")
             from zipTree(dir.resolve(glpkZipFile).toFile())
             into dir.toFile()
         }
@@ -177,16 +185,39 @@ task downloadCLP(type: Copy) {
             Files.createDirectories(dir)
 
             def zipFile = Paths.get('clp.zip')
+            getLogger().lifecycle("Downloading CLP...")
             def file = dir.resolve(zipFile).newOutputStream()
             file << url.openStream()
             file.close()
 
+            getLogger().lifecycle("Unpacking CLP...")
             from zipTree(dir.resolve(zipFile).toFile())
             into dir.toFile()
         }
     }
 }
 
+task downloadJRE(type: Copy) {
+    def zuluURL = new URL("https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/zulu${zulu_jre_version}-ca-fx-jre${jre_version}.zip")
+    project.ext.set("jreBuildPath", getBuildDir().toPath().resolve('tmp/zulu/').toFile())
+
+    java.nio.file.Path dir = project.jreBuildPath.toPath()
+    def zipFileToDownload = dir.getParent().resolve("zuluFX.zip")
+    if (!dir.toFile().exists()) {
+        copy {
+            Files.createDirectories(dir)
+            if (!Files.exists(zipFileToDownload)) {
+                getLogger().lifecycle("Downloading Zulu JREs")
+                def file = zipFileToDownload.newOutputStream()
+                file << zuluURL.openStream()
+                file.close()
+            }
+            getLogger().lifecycle("Unpacking Zulu JREs")
+            from zipTree(zipFileToDownload.toFile())
+            into dir.toFile()
+        }
+    }
+}
 
 /*################### Building the Documentation ################### */
 
@@ -371,19 +402,34 @@ subprojects {
 
 //        defaultJvmOpts = ["-Djava.library.path=\\\"${siriusLibPath}\\\" -XX:+UseG1GC -XX:+UseStringDeduplication"]
         doLast {
-            def lines = unixScript.text.split(System.lineSeparator())
-            int insertIndex = -1
-            for (int i = 0; i < lines.length; i++) {
+            def lines = unixScript.text.split(System.lineSeparator()) as List
+            //classpath and opts
+            int insertOptsIndex = -1
+            for (int i = 0; i < lines.size(); i++) {
                 if (lines[i].startsWith('CLASSPATH=')) {
                     lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
                 }
                 if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
-                    insertIndex = i - 1
+                    insertOptsIndex = i - 1
                     lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\" -XX:+UseG1GC -XX:+UseStringDeduplication\"")
                 }
             }
-            lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
-            lines = (lines as List).plus(insertIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
+            lines = lines.plus(insertOptsIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
+            lines = lines.plus(insertOptsIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
+
+            //bundled JRE stuff
+            int insertJREIndex = -1
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines[i].startsWith('# Determine the Java command to use to start the JVM.'))
+                    if (lines[i + 1].startsWith('if [ -n "$JAVA_HOME" ] ; then')) {
+                        lines[i + 1] = 'elif [ -n "$JAVA_HOME" ] ; then'
+                        insertJREIndex = i + 1
+
+                    }
+            }
+            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
+            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/bin/java\"")
+
             unixScript.text = lines.join(System.lineSeparator())
         }
     }
