@@ -115,7 +115,7 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
         return fingerprintVersion instanceof ClassyFireFingerprintVersion && ((ClassyFireFingerprintVersion) fingerprintVersion).properties.length == properties.length;
     }
 
-    public ClassyfireProperty getPrimaryClass(ProbabilityFingerprint classyfireFingerprint) {
+    public ClassyfireProperty getPrimaryClass(AbstractFingerprint classyfireFingerprint) {
         ClassyfireProperty bestAbove50 = this.getChemicalEntity();
         for (FPIter iter : classyfireFingerprint.presentFingerprints()) {
             ClassyfireProperty prop = (ClassyfireProperty)iter.getMolecularProperty();
