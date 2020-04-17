@@ -1,12 +1,11 @@
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
-import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import org.slf4j.LoggerFactory;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.InputStream;
 import java.text.DecimalFormat;
 
 public class CompoundCellRenderer extends JLabel implements ListCellRenderer<InstanceBean>{
@@ -29,30 +28,17 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 		this.numberFormat = new DecimalFormat("#0.00");
 	}
 	
-	public void initColorsAndFonts(){
-		try{
-			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
-			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-			compoundFont = tempFont.deriveFont(13f);
-			propertyFont = tempFont.deriveFont(12f);
-			statusFont = tempFont.deriveFont(24f);
-		}catch(Exception e){
-			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
-		}
-		
-		try{
-			InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans.ttf");
-			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-			valueFont = tempFont.deriveFont(12f);
-		}catch(Exception e){
-			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
-		}
-		
+	public void initColorsAndFonts() {
+		compoundFont = Fonts.FONT_BOLD.deriveFont(13f);
+		propertyFont = Fonts.FONT_BOLD.deriveFont(12f);
+		statusFont = Fonts.FONT_BOLD.deriveFont(24f);
+		valueFont = Fonts.FONT.deriveFont(12f);
+
 		selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
 		selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
 		evenBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\".background");
 		disableBackground = UIManager.getColor("ComboBox.background");
-		unevenBackground = new Color(213,227,238);
+		unevenBackground = new Color(213, 227, 238);
 		activatedForeground = UIManager.getColor("List.foreground");
 		deactivatedForeground = Color.GRAY;
 	}

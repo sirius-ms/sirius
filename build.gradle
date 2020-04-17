@@ -13,7 +13,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'edu.sc.seis.gradle:launch4j:2.4.4'
+        classpath 'edu.sc.seis.gradle:launch4j:2.4.6'
 //        classpath 'org.apache.commons:commons-configuration2:2.4'
         classpath 'commons-configuration:commons-configuration:1.10'
     }
@@ -361,7 +361,7 @@ subprojects {
 
         classpath.add('./lib/*')
         classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
-        println(classpath)
+        println("================THE PATH: $classpath")
     }
 
     /*################### Linux release Stuff ################### */
@@ -472,11 +472,10 @@ task refreshDownloadLinks {
                 "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
                 "",
                 "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
-                "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32.zip) / " +
-                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
-                "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32.zip) / " +
-                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
+                "- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
+                "- for Linux [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
                 "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
+                "JRE included! Just download, unpack and start.",
                 "",
                 "### SIRIUS+CSI:FingerID Commandline only - Version $version (${new Date().format('yyyy-MM-dd')})",
                 "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32-headless.zip) / " +

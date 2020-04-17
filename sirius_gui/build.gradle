@@ -68,6 +68,7 @@ project.type.each{t ->
         tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
             group = 'launch4j'
             mainClassName = project.mainClassName
+            bundledJrePath = 'zulu'
             headerType = t
             jreRuntimeBits = a
             outfile = "${project.appName}-${t}-${a}.exe"

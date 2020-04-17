@@ -71,10 +71,11 @@ public class StructurePreview extends JPanel implements Runnable {
 
 
     @Override
-    public void paint(Graphics g) {
-        super.paint(g);
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
         if (state < 1) return;
         final Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
         final IAtomContainer[] mols = depiction;
         if (mols == null || mols.length==0) {
             g2d.clearRect(0,0,getWidth(),getHeight());

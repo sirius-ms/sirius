@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
 import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workfow.GuiWorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManagerFactory;
 import org.openscience.cdk.exception.CDKException;
@@ -29,11 +30,13 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
     public static void main(String[] args) {
         //cancel all instances to quit
         configureShutDownHook(Jobs::cancelALL);
-
         ApplicationCore.DEFAULT_LOGGER.info("Application Core started");
         final int cpuThreads = Integer.valueOf(PropertyManager.getProperty("de.unijena.bioinf.sirius.cpu.cores", null, "1"));
         SiriusJobs.setGlobalJobManager(new SwingJobManager(PropertyManager.getNumberOfThreads(), Math.min(cpuThreads, 3)));
         ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
+
+        //improve rendering?
+        Fonts.initFonts();
 
         try {
             InChIGeneratorFactory.getInstance();
