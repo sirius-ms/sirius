@@ -8,15 +8,10 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-
 import org.jdesktop.swingx.WrapLayout;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.Style;
-import javax.swing.text.StyledDocument;
-import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -24,9 +19,8 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class CompoundClassDetailView extends JPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean>  {
 
@@ -45,20 +39,25 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
         super();
         //setPreferredSize(new Dimension(Integer.MAX_VALUE, 256));
         setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
+        setAlignmentX(0f);
         mainClassPanel = new JPanel();
+        mainClassPanel.setAlignmentX(0f);
         mainClassPanel.setLayout(new WrapLayout(WrapLayout.LEFT));
 
         descriptionPanel = new JPanel();
         descriptionPanel.setLayout(new WrapLayout(WrapLayout.LEFT));
+        descriptionPanel.setAlignmentX(0f);
 
         alternativeClassPanels = new JPanel();
         alternativeClassPanels.setLayout(new WrapLayout(WrapLayout.LEFT));
+        alternativeClassPanels.setAlignmentX(0f);
         /*
         container = new JPanel();
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
         */
 
         container=new JPanel();
+        container.setAlignmentX(0);
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
         add(new JScrollPane(container, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
 
