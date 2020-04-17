@@ -33,12 +33,13 @@ CSI:FingerID.</span>
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
 ### SIRIUS+CSI:FingerID GUI and CLI - Version 4.4.12-SNAPSHOT (2020-04-17)
+##### This versions have the JRE already included! Just download, unpack and execute.
 - for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.12-SNAPSHOT/sirius-4.4.12-SNAPSHOT-win64.zip)
 - for Linux [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.12-SNAPSHOT/sirius-4.4.12-SNAPSHOT-linux64.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.12-SNAPSHOT/sirius-4.4.12-SNAPSHOT-osx64.zip)
-JRE included! Just download, unpack and start.
 
 ### SIRIUS+CSI:FingerID Commandline only - Version 4.4.12-SNAPSHOT (2020-04-17)
+##### [Java Runtime Environment 11 (JRE-11)](https://www.azul.com/downloads/zulu-community/?version=java-11-lts&architecture=x86-64-bit&package=jre) or higher required.
 - for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.12-SNAPSHOT/sirius-4.4.12-SNAPSHOT-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.12-SNAPSHOT/sirius-4.4.12-SNAPSHOT-win64-headless.zip)
 - for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.12-SNAPSHOT/sirius-4.4.12-SNAPSHOT-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.12-SNAPSHOT/sirius-4.4.12-SNAPSHOT-linux64-headless.zip)
 - for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.12-SNAPSHOT/sirius-4.4.12-SNAPSHOT-osx64-headless.zip)
