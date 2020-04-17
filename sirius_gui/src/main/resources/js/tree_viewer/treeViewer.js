@@ -87,12 +87,16 @@ function loadJSONTree(data_json){
 // remove all drawn SVG objects
 function clearSVG(){
     d3.selectAll('.node, .link, .brush').remove();
+    toggleColorBar(false);
+    data = null;
 }
 
 // when width/height of the page has changed, and/or node/link
 // coordinates, but the data remains the same
 function update(data_changed=false) {
     applyWindowSize();
+    if (data == null)
+        return;
     if (data_changed)
         generateTree(data);
     root = calcTreeLayout();
@@ -949,8 +953,9 @@ function toggleColorBar(state) {
 function calcTreeLayout() {
     var root = d3.hierarchy(tree);  // generate hierarchy (necessary)
     var treeLayout = d3.tree();     // empty tree
-    treeLayout.size([width - margin_left, height - margin_top
+    treeLayout.size([width - margin_left - 10, height - margin_top
                      - 2]); // -2 as extra bottom margin
+    treeLayout.separation(function(a,b){return 1;});
     treeLayout(root);               // generates x/y coordinates
     root.descendants().forEach(function(d) {
         d.y += margin_top;
@@ -1346,8 +1351,8 @@ var width, height,
 function calcLayout() {
     var window_width = window_use_inner?window.innerWidth:window.outerWidth;
     var window_height = window_use_inner?window.innerHeight:window.outerHeight;
-    width = window_width - boxwidth / 2;
-    height = window_height - boxheight / 2;
+    width = window_width - 10; //- boxwidth / 2;
+    height = window_height - 20; //- boxheight / 2;
     margin_left = 0;
     margin_top = boxheight + 3;
 }
@@ -1373,14 +1378,22 @@ function calcBoxwidth(max_box_text, styles){
 }
 
 function scaleTree(x_mag, y_mag = undefined) {
+    if (typeof (y_mag) == 'undefined'){
+        var tree_scale_min_2d = computeMinScale(true);
+        // if (tree_scale_min_2d[0] > tree_scale_min_2d[1])
+        //     y_mag = tree_scale_min_2d[1];
+        // else{
+        //     y_mag = x_mag;
+        //     x_mag = tree_scale_min_2d[0];
+        // }
+        y_mag = tree_scale_min_2d[1];
+    }
     root.descendants().forEach(function(node) {
         node.x = node.x_def * x_mag;
-        if (typeof (y_mag) == 'undefined')
-            y_mag = x_mag;
         node.y = node.y_def * y_mag;
         node.y -= margin_top * (y_mag - 1);
     });
-    tree_scale = 1 / x_mag;
+    tree_scale = 1 / Math.max(x_mag, y_mag);
     if (typeof (scale_base) !== 'undefined')
         scale_base.attr('transform', 'scale(' + tree_scale + ')');
     drawNodes(root);
@@ -1389,14 +1402,15 @@ function scaleTree(x_mag, y_mag = undefined) {
 }
 
 function scaleToFit() {
-    tree_scale_min = computeMinScale();
-    if (1 / tree_scale < tree_scale_min || typeof(tree_scale) == 'undefined')
-        scaleTree(tree_scale_min);
-    else
-        scaleTree(Math.max(1, tree_scale_min));
+    var tree_scale_min_2d = computeMinScale(true);
+    tree_scale_min = Math.max.apply(Math, tree_scale_min_2d);
+    if (1 / tree_scale < tree_scale_min || typeof(tree_scale) == 'undefined' || tree_scale_min >= 1)
+        scaleTree(tree_scale_min_2d[0], tree_scale_min_2d[1]);
+    else{
+        scaleTree(1, 1);}
 }
 
-function computeMinScale() {
+function computeMinScale(two_d=false) {
     if (root.descendants().length == 1)
         // only one node
         return Math.min(boxwidth/width, boxheight/height);
@@ -1416,15 +1430,17 @@ function computeMinScale() {
     }
 
     computeMinDx([root]);
-    var min_scale_y = (boxheight + 30) / min_dy;
-    var min_scale_x = (boxwidth + 20) / min_dx;
+    var min_scale_y = (boxheight + 60) / min_dy;
+    var min_scale_x = (boxwidth + 40) / min_dx;
+    if (two_d)
+        return [min_scale_x, min_scale_y];
     return Math.max(min_scale_x, min_scale_y);
 }
 
 function applyWindowSize() {
     calcLayout();
     d3.select('svg').attr('width', width).attr('height', height);
-    zoom_base.attr('width', width).attr('height', height);
+    zoom_base.attr('width', '100%').attr('height', '100%');
     d3.select('.overlay')
         .attr('width', width)
         .attr('height', height);
@@ -1441,6 +1457,8 @@ var svg, zoom_base, scale_base, popup_div, cb_label, collapse_button, colorBar,
     zoom, currentZoom, brush, brush_g, tree_scale, tree_scale_min;
 svg = d3.select('body').append('svg')
     .attr('width', width).attr('height', height)
+    .attr('top', 0)
+    .attr('left', 0)
     .attr('id', 'svg')
     .append('g');
 
