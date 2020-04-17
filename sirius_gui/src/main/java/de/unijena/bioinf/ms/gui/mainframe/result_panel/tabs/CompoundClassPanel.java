@@ -41,9 +41,7 @@ public class CompoundClassPanel extends JPanel implements PanelDescription {
 //        south.add(preview,BorderLayout.CENTER);
 
         final CompoundClassDetailView detail = new CompoundClassDetailView(siriusResultElements);
-
-        add(detail, BorderLayout.NORTH);
-        add(center, BorderLayout.CENTER);
+        add(new JSplitPane(JSplitPane.VERTICAL_SPLIT, detail, center), BorderLayout.CENTER);
 //        add(south, BorderLayout.SOUTH);
     }
 
