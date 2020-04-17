@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
+import com.google.common.collect.Lists;
+
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -78,6 +80,23 @@ public class ClassyfireProperty extends MolecularProperty {
         return parent;
     }
 
+    /*
+        @return the path from root to this node (inclusive)
+     */
+    public ClassyfireProperty[] getLineage() {
+        ArrayList<ClassyfireProperty> prop = new ArrayList<>();
+        prop.add(this);
+        ClassyfireProperty node = this;
+        while (node.parent!=null) {
+            node=node.parent;
+            prop.add(node);
+        }
+        return Lists.reverse(prop).toArray(ClassyfireProperty[]::new);
+    }
+
+    /**
+     * @return all ancestors of this class, from direct parent up to the root
+     */
     public ClassyfireProperty[] getAncestors() {
         ArrayList<ClassyfireProperty> prop = new ArrayList<>();
         ClassyfireProperty node = this;
@@ -86,5 +105,10 @@ public class ClassyfireProperty extends MolecularProperty {
             prop.add(node);
         }
         return prop.toArray(ClassyfireProperty[]::new);
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
