@@ -953,8 +953,9 @@ function toggleColorBar(state) {
 function calcTreeLayout() {
     var root = d3.hierarchy(tree);  // generate hierarchy (necessary)
     var treeLayout = d3.tree();     // empty tree
-    treeLayout.size([width - margin_left, height - margin_top
+    treeLayout.size([width - margin_left - 10, height - margin_top
                      - 2]); // -2 as extra bottom margin
+    treeLayout.separation(function(a,b){return 1;});
     treeLayout(root);               // generates x/y coordinates
     root.descendants().forEach(function(d) {
         d.y += margin_top;
@@ -1428,7 +1429,7 @@ function computeMinScale() {
 function applyWindowSize() {
     calcLayout();
     d3.select('svg').attr('width', width).attr('height', height);
-    zoom_base.attr('width', width).attr('height', height);
+    zoom_base.attr('width', '100%').attr('height', '100%');
     d3.select('.overlay')
         .attr('width', width)
         .attr('height', height);
@@ -1445,6 +1446,8 @@ var svg, zoom_base, scale_base, popup_div, cb_label, collapse_button, colorBar,
     zoom, currentZoom, brush, brush_g, tree_scale, tree_scale_min;
 svg = d3.select('body').append('svg')
     .attr('width', width).attr('height', height)
+    .attr('top', 0)
+    .attr('left', 0)
     .attr('id', 'svg')
     .append('g');
 
