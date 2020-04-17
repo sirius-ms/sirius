@@ -430,6 +430,8 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
 
             // draw axes
             Graphics2D g = (Graphics2D)g_;
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
 
             BasicStroke s = new BasicStroke(2f);
             g.setStroke(s);

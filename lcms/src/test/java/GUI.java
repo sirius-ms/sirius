@@ -220,6 +220,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
             // draw axes
             Graphics2D g = (Graphics2D)g_;
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
             g.setFont(small);
             g.translate(12, 34);
             g.drawLine(0, 700, (int)Math.ceil((end-start)/deltaRT), 700);
