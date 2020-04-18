@@ -71,7 +71,7 @@ public class TreeViewerBridge {
     }
 
     public void scaleTree(float mag) {
-        // browser.executeJS(functionString("scaleTree", String.valueOf(mag)));
+        browser.executeJS(functionString("scaleTree", String.valueOf(mag)));
     }
 
     public float getTreeScale() {
