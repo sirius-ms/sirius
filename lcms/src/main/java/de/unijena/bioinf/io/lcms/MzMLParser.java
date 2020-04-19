@@ -3,6 +3,7 @@ package de.unijena.bioinf.io.lcms;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.InMemoryStorage;
@@ -17,6 +18,7 @@ import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,8 +37,19 @@ public class MzMLParser implements LCMSParser {
     public LCMSRun parse(@NotNull DataSource source, @NotNull MzMLUnmarshaller um, @NotNull SpectrumStorage storage) throws IOException {
         try {
             final LCMSRun run = new LCMSRun(source);
+            final String mzMlId = um.getMzMLId();
             InstrumentConfigurationList instrumentList = um.unmarshalFromXpath("/instrumentConfigurationList", InstrumentConfigurationList.class);
             Map<String, String> runAtts = um.getSingleElementAttributes("/run");
+            final String runId = runAtts.get("id");
+
+            {
+                // get source location oO
+                URI s = source.getUrl().toURI();
+                URI parent = s.getPath().endsWith("/") ? s.resolve("..") : s.resolve(".");
+                String fileName = parent.relativize(s).toString();
+                run.setReference(new MsDataSourceReference(parent, fileName, runId, mzMlId));
+            }
+
             //todo run wide (default instrumentation) may differ from ms2 analyzer?
             // do we have to handle this
 

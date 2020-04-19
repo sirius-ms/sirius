@@ -3,6 +3,7 @@ package de.unijena.bioinf.model.lcms;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,8 @@ public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
     protected EnumSet<MsDataProcessing> processings;
     protected TreeMap<Integer, Scan> scans;
 
+    protected MsDataSourceReference reference;
+
     protected Annotated.Annotations<DataAnnotation> annotations;
 
     public LCMSRun(DataSource source) {
@@ -32,11 +35,19 @@ public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
         this.identifier = name;
     }
 
+    public MsDataSourceReference getReference() {
+        return reference;
+    }
+
+    public void setReference(MsDataSourceReference reference) {
+        this.reference = reference;
+    }
 
     public Range<Integer> scanRange() {
         return Range.closed(scans.firstKey(), scans.lastKey());
     }
 
+    @Deprecated
     public DataSource getSource() {
         return source;
     }

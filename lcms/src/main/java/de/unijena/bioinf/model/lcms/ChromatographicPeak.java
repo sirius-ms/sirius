@@ -96,6 +96,13 @@ public interface ChromatographicPeak {
             this.fwhmStart = fwhm.lowerEndpoint();
         }
 
+        void setMinMaxScanIndex(int[] scanIndex, int surrounding) {
+            int k=Math.max(0,startIndex-surrounding);
+            scanIndex[0] = Math.min(scanIndex[0],peak.getScanNumberAt(k));
+            k=Math.min(peak.numberOfScans()-1,endIndex+surrounding);
+            scanIndex[1] = Math.max(scanIndex[1],peak.getScanNumberAt(k));
+        }
+
         public double getApexIntensity() {
             return peak.getIntensityAt(apex);
         }
