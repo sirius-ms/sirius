@@ -128,7 +128,7 @@ public class DecompWorkflow implements Workflow {
 
                 final DecimalFormat formater = (DecimalFormat) NumberFormat.getInstance(Locale.ENGLISH);
                 formater.applyPattern("#.####");
-                ow.write(formater.format(mass));
+                ow.write(formater.format(mz));
                 ow.write("\t");
                 ow.write(formulas.stream().map(MolecularFormula::toString).collect(Collectors.joining(",")));
                 if (printErrors) {
