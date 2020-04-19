@@ -82,4 +82,11 @@ public class IonGroup {
     public double getMass() {
         return peak.getMzAt(getSegment().apex);
     }
+
+    protected void setMinMaxScanIndex(int[] scanIndex, int surrounding) {
+        segment.setMinMaxScanIndex(scanIndex,surrounding);
+        for (CorrelationGroup iso : isotopes) {
+            iso.rightSegment.setMinMaxScanIndex(scanIndex,surrounding);
+        }
+    }
 }
