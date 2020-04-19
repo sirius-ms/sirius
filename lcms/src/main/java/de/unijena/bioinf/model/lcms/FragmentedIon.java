@@ -1,9 +1,14 @@
 package de.unijena.bioinf.model.lcms;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.Trace;
+import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TLongArrayList;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +43,48 @@ public class FragmentedIon extends IonGroup {
         this.ms2Quality = ms2Quality;
         this.alternativeIonTypes = Collections.emptySet();
         this.chimerics = new ArrayList<>();
+    }
+
+    public CoelutingTraceSet asLCMSSubtrace(ProcessedSample sample) {
+        int[] scanNumberRange = new int[]{Integer.MAX_VALUE, Integer.MIN_VALUE};
+        setMinMaxScanIndex(scanNumberRange, 10);
+        final TLongArrayList retentionTimes = new TLongArrayList(scanNumberRange[1]-scanNumberRange[0]);
+        final TIntArrayList scanIds = new TIntArrayList(scanNumberRange[1]-scanNumberRange[0]);
+        for (Scan s : sample.run.getScans(scanNumberRange[0], scanNumberRange[1]).values()) {
+            if (!s.isMsMs()) {
+                retentionTimes.add(s.getRetentionTime());
+                scanIds.add(s.getIndex());
+            }
+        }
+        scanNumberRange[0] = scanIds.get(0);
+        scanNumberRange[1] = scanIds.get(scanIds.size()-1);
+
+
+return null;
+    }
+
+    private Trace getTrace(ChromatographicPeak.Segment segment, int[] range) {
+        ChromatographicPeak P = segment.getPeak();
+        int mindex = Math.max(P.getScanNumberAt(0), range[0]);
+        int maxdex = Math.min(P.getScanNumberAt(P.numberOfScans()-1), range[1]);
+        int offset = range[0]-mindex;
+        final double[] mz = new double[maxdex-mindex+1];
+        final float[] intensity = new float[maxdex-mindex+1];
+        int i=0;
+        for (int k=mindex; k <= maxdex; ++k) {
+            mz[i] = P.getMzAt(k);
+            intensity[i] = (float)P.getIntensityAt(k);
+            ++i;
+        }
+        final int detectorOffset = segment.getStartIndex();
+
+return null;
+    }
+
+    protected void setMinMaxScanIndex(int[] scanIndex, int surrounding) {
+        super.setMinMaxScanIndex(scanIndex,surrounding);
+        for (CorrelatedIon a : adducts) a.ion.setMinMaxScanIndex(scanIndex,surrounding);
+        for (CorrelatedIon a : inSourceFragments) a.ion.setMinMaxScanIndex(scanIndex,surrounding);
     }
 
     public double getIntensityAfterPrecursor() {
