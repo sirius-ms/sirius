@@ -21,10 +21,10 @@ subtools that may be combined to ToolChains based on the project-space.
 
 - **CSI:FingerID** had some massive updates, including more and larger molecular properties. 
   - **Structure DBs** New version of the CSI:FingerID PubChem copy that now uses **PubChem standardized structures**.
-  - **NORMAN** is now available as search DB
+  - [**NORMAN**](https://www.norman-network.com/nds/common/) is now available as search DB
   - All available database filters can now be combined to arbitrary subsets for searching (even with custom databases).      
 - **Interactive fragmentation tree viewer** with vector graphics export in the GUI.
-- New REST service with openAPI specification and Swagger-UI.
+- New REST service with [openAPI](https://www.csi-fingerid.uni-jena.de/v1.4.2-SNAPSHOT/v2/api-docs) specification and [Swagger-UI](https://www.csi-fingerid.uni-jena.de/v1.4.2-SNAPSHOT/swagger-ui.html).
 - **Java 11** or higher is now mandatory
   - **GUI** version ships with an **integrated JRE**
 - Many minor improvements and Bugfixes
