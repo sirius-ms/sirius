@@ -877,6 +877,11 @@ function colorCode(variant, scheme) {
         }
     } else if (typeof (scheme) == 'function')
         scheme_fn = scheme;
+    var orig_scheme_fn = scheme_fn;
+    // adapt color grading to avoid colors too light/dark
+    scheme_fn = function(x){
+        return orig_scheme_fn(x*0.5 + 0.15);
+    };
     // select respective maximum
     switch (variant) {
     case 'none':
@@ -927,7 +932,6 @@ function colorCode(variant, scheme) {
                md_ppm: 'mass deviation in ppm',
                md_ppm_abs: 'mass deviation in ppm (absolute)',
                rel_int: 'relative intensity'}[variant]);
-    max *= 1.5;           // avoid extreme coloring, e.g., black on dark red
     d3.selectAll('.node').selectAll('rect').
         transition(t).
         style('fill', function(d) {
