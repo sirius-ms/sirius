@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 public class AddConfigsJob extends InstanceJob {
-    private ParameterConfig cliConfig;
+    private final ParameterConfig cliConfig;
 
     public AddConfigsJob(ParameterConfig cliConfig) {
         super(SiriusJobs.getGlobalJobManager());
@@ -38,7 +38,7 @@ public class AddConfigsJob extends InstanceJob {
         //override defaults
         baseConfig = psConfig
                 .map(projectSpaceConfig -> projectSpaceConfig.config.newIndependentInstance(cliConfig,true))
-                .orElseGet(() -> cliConfig);
+                .orElse(cliConfig);
 
         if (exp.hasAnnotation(MsFileConfig.class)){
             @NotNull MsFileConfig msConf = exp.getAnnotationOrThrow(MsFileConfig.class);
@@ -51,8 +51,6 @@ public class AddConfigsJob extends InstanceJob {
         exp.setAnnotation(FinalConfig.class, new FinalConfig(baseConfig));
         exp.addAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
 
-        //reduce basic list of possible Adducts to charge
-//        exp.getAnnotation(PossibleAdducts.class).ifPresent(add -> add.keepOnly(exp.getPrecursorIonType().getCharge()));
 
         final FormulaResultRankingScore it = exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO);
         // this value is a commandline parameter that specifies how to handle the ranking score. If auto we decide how to
@@ -64,9 +62,8 @@ public class AddConfigsJob extends InstanceJob {
             inst.getID().setRankingScoreTypes(it.value);
         }
 
-        inst.updateExperiment();
+        inst.updateExperiment(); //todo we should optize this, so that this is not needed anymore
         inst.updateConfig();
-//        inst.updateCompoundID();
     }
 
     @Override
