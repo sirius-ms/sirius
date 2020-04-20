@@ -46,7 +46,7 @@ ext {
 
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
-    libExclude = ['gurobi-*.jar', 'cplex-*.jar']
+//    libExclude = ['gurobi-*.jar', 'cplex-*.jar']
 
     jetbrains_version = "17.0.0"
 
@@ -376,7 +376,6 @@ subprojects {
 
     /*################### Windows release Stuff ################### */
     launch4j {
-
         icon = getRootProject().getRootDir().toPath().resolve('dist/sirius.ico').toFile()
         copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
         companyName = "Friedrich-Schiller-University Jena"
@@ -384,23 +383,22 @@ subprojects {
         textVersion = project.version
         supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
 
-        initialHeapPercent = 50
+        initialHeapSize = 1024 // initial heap not too big improves startup time on windows
+        maxHeapSize = 4096
         maxHeapPercent = 80
 
         dontWrapJar = true
-        jdkPreference = "preferJre"
-
-        classpath.add('./lib/*')
+        jdkPreference = 'preferJre'
+        classpath.add(project.jar.archiveFileName.get())
         classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
         println("================THE PATH: $classpath")
     }
 
     /*################### Linux release Stuff ################### */
     startScripts {
+        classpath = files(project.jar.archiveFileName)
         applicationName = "${project.appName}"
         def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib'
-
-//        defaultJvmOpts = ["-Djava.library.path=\\\"${siriusLibPath}\\\" -XX:+UseG1GC -XX:+UseStringDeduplication"]
         doLast {
             def lines = unixScript.text.split(System.lineSeparator()) as List
             //classpath and opts
@@ -439,13 +437,13 @@ subprojects {
 
 task sourceJar(type: Jar) {
     group = 'build'
-    classifier = 'sources'
+    archiveClassifier.set('sources')
     from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
     group = 'documentation'
-    classifier = 'javadoc'
+    archiveClassifier.set('javadoc')
     from javadoc.destinationDir
 }
 

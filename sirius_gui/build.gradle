@@ -51,14 +51,19 @@ dependencies {
 
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.ms.middleware.SiriusGUIApplication"
-//project.ext.set("arch", ['64']) // // todo for the  gui we only support 64bit because of JDKFX availability
+project.ext.set("arch", ['64'])
 project.ext.set("type", ['gui','console'])
 
 /*################### Jar build Stuff ################### */
 jar {
+    zip64=true
     enabled = true
     manifest {
         attributes 'Main-Class': mainClassName
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 
@@ -76,8 +81,10 @@ project.type.each{t ->
             headerType = t
             jreRuntimeBits = a
             outfile = "${project.appName}-${t}-${a}.exe"
-            if(t.equals('gui'))
+            if(t.equals('gui')){
                 cmdLine = 'gui'
+                splashFileName = "${project.distPath}/sirius-splash.bmp"
+            }
 
         }
     }
@@ -85,7 +92,7 @@ project.type.each{t ->
 
 /*################### Build distributions ################### */
 task distribute { group = 'distribution' }
-//distribute.dependsOn ':buildDoku' //todo fix doku creation
+distribute.dependsOn ':buildDoku'
 
 distributions {
     project.arch.each { ar ->
@@ -95,9 +102,7 @@ distributions {
             baseName = "${project.appName}-$n"
             contents {
                 into('lib') {
-                    from("build/install/${project.name}/lib") {
-                        exclude libExclude
-                    }
+                    from('build/libs/')
                     from("${project.glpkPath}/l${ar}/") {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
@@ -139,11 +144,7 @@ distributions {
 
             baseName = "${project.appName}-$n"
             contents {
-                into('lib') {
-                    from('build/launch4j/lib') {
-                        exclude libExclude
-                    }
-                }
+                from('build/libs/')
                 from("${project.glpkPath}/w${ar}/")
                 from("${project.clpPath}/w${ar}/")
                 from("${project.distPath}") {
@@ -178,9 +179,7 @@ distributions {
         baseName = "${project.appName}-$n"
         contents {
             into('lib') {
-                from("build/install/${project.name}/lib") {
-                    exclude libExclude
-                }
+                from('build/libs/')
                 from("${project.glpkPath}/osx/")
                 from("${project.clpPath}/osx/")
                 exclude('*.zip')
@@ -214,17 +213,9 @@ distributions {
     project.getTasksByName("distTar", false).each { it.setEnabled(false) }
     project.getTasksByName("distZip", false).each { it.setEnabled(false) }
 
-    linux32DistZip.dependsOn 'installDist'
-    linux32DistTar.dependsOn 'installDist'
-    installLinux32Dist.dependsOn 'installDist'
-
     linux64DistZip.dependsOn 'installDist'
     linux64DistTar.dependsOn 'installDist'
     installLinux64Dist.dependsOn 'installDist'
-
-    win32DistZip.dependsOn 'createExe'
-    win32DistTar.dependsOn 'createExe'
-    installWin32Dist.dependsOn 'createExe'
 
     win64DistZip.dependsOn 'createExe'
     win64DistTar.dependsOn 'createExe'
@@ -240,8 +231,6 @@ publishing {
 
             pom.withXml {}
             artifact source: win64DistZip, classifier: 'win64', extension: 'zip'
-            artifact source: win32DistZip, classifier: 'win32', extension: 'zip'
-            artifact source: linux32DistZip, classifier: 'linux32', extension: 'zip'
             artifact source: linux64DistZip, classifier: 'linux64', extension: 'zip'
             artifact source: osx64DistZip, classifier: 'osx64', extension: 'zip'
         }
