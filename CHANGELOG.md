@@ -21,15 +21,20 @@ subtools that may be combined to ToolChains based on the project-space.
 
 - **CSI:FingerID** had some massive updates, including more and larger molecular properties. 
   - **Structure DBs** New version of the CSI:FingerID PubChem copy that now uses **PubChem standardized structures**.
-    - NOTE: *The structure database will change again as we have massive issues with the way PubChem handles structure standardization*
   - **NORMAN** is now available as search DB
   - All available database filters can now be combined to arbitrary subsets for searching (even with custom databases).      
 - **Interactive fragmentation tree viewer** with vector graphics export in the GUI.
 - New REST service with openAPI specification and Swagger-UI.
-- Many improvements and Bugfixes 
-- **Java 11 or higher is now mandatory**
-  - **GUI version ships with an integrated JRE**
+- **Java 11** or higher is now mandatory
+  - **GUI** version ships with an **integrated JRE**
+- Many minor improvements and Bugfixes
 
+##### Coming soon...
+- Another Structure DB update due to major changes in PubChem standardization since the last one.
+- GUI: Custom-DB importer View
+- GUI: Progress information for running jobs
+- GUI: More detailed Visualisation of what has already been computed
+- more bugfixes ;-)
 
 #### 4.0.1
 
