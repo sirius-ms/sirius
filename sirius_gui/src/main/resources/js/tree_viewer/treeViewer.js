@@ -73,28 +73,33 @@ function loadJSONTree(data_json){
         nodeToMove = null;
     // input
     try {
-        data = validateInput(data_json);
+        window.data = validateInput(data_json);
+        window.data_json = data_json;
     } catch (e) {
         // remove previously drawn SVG elements
         clearSVG();
         console.error('could not load tree: ' + e);
         return;
     }
-    apply(data);
+    apply(window.data);
     scaleToFit();
 }
 
 // remove all drawn SVG objects
 function clearSVG(){
     d3.selectAll('.node, .link, .brush').remove();
+    toggleColorBar(false);
+    window.data = null;
 }
 
 // when width/height of the page has changed, and/or node/link
 // coordinates, but the data remains the same
 function update(data_changed=false) {
     applyWindowSize();
+    if (window.data == null)
+        return;
     if (data_changed)
-        generateTree(data);
+        generateTree(window.data);
     root = calcTreeLayout();
     drawNodes(root);
     drawNodeAnnots();
@@ -277,6 +282,7 @@ function apply(data) {
     applyWindowSize();
     // reset, remove SVG objects
     clearSVG();
+    window.data = data;
     currentZoom = d3.zoomIdentity;
     brush_g = svg.append('g')   // all events are hooked to this DOM
         .attr('class', 'brush')
@@ -302,8 +308,8 @@ function apply(data) {
 }
 
 function reset(){
-    data = JSON.parse(data_json);
-    apply(data);
+    window.data = JSON.parse(window.data_json);
+    apply(window.data);
     scaleToFit();
 }
 
@@ -312,10 +318,17 @@ function popupOpen(d) {
     popup_annot_fields.forEach(function(a) {
         popupStrings.push(formatAnnot(a, d.data.fragmentData[a]));
     });
+    var open_left = 0, open_above=0;
+    var popup_width = parseFloat(popup_div.style('width').replace('px', ''));
+    var popup_height = parseFloat(popup_div.style('height').replace('px', ''));
+    if (d3.event.clientX > width - popup_width)
+        open_left = popup_width + 10; // 10 -> cursor offset
+    if (d3.event.clientY > height - popup_height)
+        open_above = popup_height + 10; // 10 -> cursor offset
     popup_div.style('opacity', 1);
     popup_div.html(popupStrings.join('<br>'))
-        .style('left', (d3.event.clientX + 10) + 'px')
-        .style('top', (d3.event.clientY + 10) + 'px');
+        .style('left', (d3.event.clientX - open_left + 10) + 'px')
+        .style('top', (d3.event.clientY - open_above + 10) + 'px');
 }
 
 function popupClose(d) {
@@ -325,7 +338,7 @@ function popupClose(d) {
 function formatAnnot(id, value) {
     switch (id) {
     case "score":
-        return "Score: " + parseFloat(value).toFixed(3);
+        return "Score: " + parseFloat(value).toFixed(4);
     case "ion":
         return value;
     case "mz":
@@ -333,13 +346,13 @@ function formatAnnot(id, value) {
     case "massDeviation":
         // example: "-5.479016320565768 ppm (-0.0035791853184719002 m/z)"
         var number = parseFloat(value.split(' ')[0]);
-        return number.toFixed(3) + ' ppm';
+        return number.toFixed(4) + ' ppm';
     case 'massDeviationPpm':
-        return parseFloat(value).toFixed(3) + ' ppm';
+        return parseFloat(value).toFixed(4) + ' ppm';
     case 'massDeviationMz':
-        return (value>0?"+":"")+(parseFloat(value) * 1000).toFixed(3) + ' mDa';
+        return (value>0?"+":"")+(parseFloat(value) * 1000).toFixed(4) + ' mDa';
     case 'relativeIntensity':
-        return parseFloat(value).toFixed(3) + " rel. int.";
+        return parseFloat(value).toFixed(4) + " rel. int.";
     default:
         // for showing custom (not predefined) information,
         // that has to be present in 'data' though
@@ -494,14 +507,14 @@ function alignText(x, y, text, align, styles={}){
 function getTransformedCoordinate(coord, axis, reverse=false){
     if (axis == 'x'){
         if (!reverse)
-            return ((coord/tree_scale)-currentZoom.x)/currentZoom.k;
+            return ((coord/tree_scale)-currentZoom.x/tree_scale)/currentZoom.k;
         else
-            return (coord*currentZoom.k+currentZoom.x)*tree_scale;
+            return (coord*currentZoom.k+currentZoom.x/tree_scale)*tree_scale;
     }else{
         if (!reverse)
-            return ((coord/tree_scale)-currentZoom.y)/currentZoom.k;
+            return ((coord/tree_scale)-currentZoom.y/tree_scale)/currentZoom.k;
         else
-            return (coord*currentZoom.k+currentZoom.y)*tree_scale;
+            return (coord*currentZoom.k+currentZoom.y/tree_scale)*tree_scale;
     }
 }
 
@@ -657,33 +670,33 @@ function moveNode(source, target, mode){
     switch (mode){
     case 'swap':
         var indices = [];
-        for (var i = 0; i < data.losses.length; i++)
-            if (data.losses[i].target == source_name
-                || data.losses[i].target == source_id
-                || data.losses[i].target == target_name
-                || data.losses[i].target == target_id)
+        for (var i = 0; i < window.data.losses.length; i++)
+            if (window.data.losses[i].target == source_name
+                || window.data.losses[i].target == source_id
+                || window.data.losses[i].target == target_name
+                || window.data.losses[i].target == target_id)
                 indices.push(i);
         if (indices.length == 2){
-            var toInsert = data.losses.splice(indices[1], 1)[0];
-            data.losses.splice(indices[0], 0, toInsert);
+            var toInsert = window.data.losses.splice(indices[1], 1)[0];
+            window.data.losses.splice(indices[0], 0, toInsert);
             update(true);
         } else
             console.error('could not find exactly 2 losses to be swapped');
         break;
     case 'pull-up':
         var source_loss_i, new_source, new_target;
-        for (var i = 0; i < data.losses.length; i++){
-            if (data.losses[i].target == source_name
-                || data.losses[i].target == source_id){
+        for (var i = 0; i < window.data.losses.length; i++){
+            if (window.data.losses[i].target == source_name
+                || window.data.losses[i].target == source_id){
                 source_loss_i = i;
-                new_target = data.losses[i].target;
+                new_target = window.data.losses[i].target;
             }
-            else if (data.losses[i].source == source_grandparent_name
-                     || data.losses[i].source == source_grandparent_id){
-                new_source = data.losses[i].source;
+            else if (window.data.losses[i].source == source_grandparent_name
+                     || window.data.losses[i].source == source_grandparent_id){
+                new_source = window.data.losses[i].source;
             }
         }
-        data.losses.splice(source_loss_i, 1);
+        window.data.losses.splice(source_loss_i, 1);
         insertLoss({'molecularFormula':
                     formulaDiff(target_name,
                                 source_name),
@@ -692,16 +705,16 @@ function moveNode(source, target, mode){
                     'score': 'nan',
                     'scores' : {}});
         update(true);
-        requestNewScores(data);
+        requestNewScores(window.data);
         drawNodeAnnots();
         break;
     case 'reconnect':
         var source_loss_i, new_source, new_target;
-        for (var i = 0; i < data.losses.length; i++){
-            if (data.losses[i].target == source_name
-                || data.losses[i].target == source_id) {
+        for (var i = 0; i < window.data.losses.length; i++){
+            if (window.data.losses[i].target == source_name
+                || window.data.losses[i].target == source_id) {
                 source_loss_i = i;
-                if (data.losses[i].target == source_id){
+                if (window.data.losses[i].target == source_id){
                     new_source = target_id;
                     new_target = source_id;
                 } else {
@@ -710,7 +723,7 @@ function moveNode(source, target, mode){
                 }
             }
         }
-        data.losses.splice(source_loss_i, 1);
+        window.data.losses.splice(source_loss_i, 1);
         var new_loss= {'molecularFormula':
                        formulaDiff(target_name, source_name),
                        'source': new_source,
@@ -719,7 +732,7 @@ function moveNode(source, target, mode){
                        'scores' : {}};
         insertLoss(new_loss);
         update(true);
-        requestNewScores(data);
+        requestNewScores(window.data);
         drawNodeAnnots();
         break;
     default:
@@ -738,12 +751,12 @@ function collapseNode(node){
         parent = node.__data__.parent,
         parent_name = parent.data.fragmentData.molecularFormula,
         node_loss_i, node_descendant_losses_i = [];
-    for (var i = 0; i < data.losses.length; i++){
-        if (data.losses[i].target == id
-            || data.losses[i].target == name)
+    for (var i = 0; i < window.data.losses.length; i++){
+        if (window.data.losses[i].target == id
+            || window.data.losses[i].target == name)
             node_loss_i = i;
-        else if (data.losses[i].source == id
-                 || data.losses[i].source == name){
+        else if (window.data.losses[i].source == id
+                 || window.data.losses[i].source == name){
             node_descendant_losses_i.push(i);
         }
     }
@@ -753,18 +766,18 @@ function collapseNode(node){
         return;
     }
     node_descendant_losses_i.forEach(function(i){
-        data.losses[i].source = data.losses[node_loss_i].source;
-        data.losses[i].molecularFormula = formulaDiff(
-            parent_name, node_map[data.losses[i].target].name);
-        data.losses[i].score = 'nan';
-        data.losses[i].scores = {};
+        window.data.losses[i].source = window.data.losses[node_loss_i].source;
+        window.data.losses[i].molecularFormula = formulaDiff(
+            parent_name, node_map[window.data.losses[i].target].name);
+        window.data.losses[i].score = 'nan';
+        window.data.losses[i].scores = {};
     });
-    data.losses.splice(node_loss_i,1);
+    window.data.losses.splice(node_loss_i,1);
     var node_fragments_i;
-    for (var i = 0; i < data.fragments.length; i++)
-        if (data.fragments[i].id == id)
+    for (var i = 0; i < window.data.fragments.length; i++)
+        if (window.data.fragments[i].id == id)
             node_fragments_i = i;
-    data.fragments.splice(node_fragments_i, 1);
+    window.data.fragments.splice(node_fragments_i, 1);
 }
 
 // handles zoom/pan event
@@ -773,6 +786,7 @@ function zoomed() {
     popupClose();               // when panning, close popup
     var transform = d3.event.transform;
     currentZoom = transform; // storing for use by brush
+    transform = d3.zoomIdentity.translate(transform.x/tree_scale, transform.y/tree_scale).scale(transform.k);
     svg.selectAll('.node, .link')
         .attr('transform', transform.toString());
     // redrawing certain objects
@@ -810,7 +824,7 @@ function brushended() {
                  (width - margin_left) / selection_width) / tree_scale;
     x = -s[0][0] * k;
     y = -s[0][1] * k;
-    var transform = d3.zoomIdentity.translate(x, y).scale(k);
+    var transform = d3.zoomIdentity.translate(x*tree_scale, y*tree_scale).scale(k);
     var t = d3.transition().duration(1000);
     zoom_base.call(zoom.transform, transform).transition(t);
     zoom_base.node().__zoom = transform;
@@ -839,6 +853,8 @@ function colorCode(variant, scheme) {
         svg.select('#cb').remove();
         colorBar.remove();
     }
+    if (typeof(cb_label) != 'undefined')
+        cb_label.text('');
     if (typeof (scheme) == "string") {
         // Java, when executing this function, can not pass the function
         // objects, so it will have to use strings
@@ -861,6 +877,11 @@ function colorCode(variant, scheme) {
         }
     } else if (typeof (scheme) == 'function')
         scheme_fn = scheme;
+    var orig_scheme_fn = scheme_fn;
+    // adapt color grading to avoid colors too light/dark
+    scheme_fn = function(x){
+        return orig_scheme_fn(x*0.5 + 0.15);
+    };
     // select respective maximum
     switch (variant) {
     case 'none':
@@ -897,9 +918,20 @@ function colorCode(variant, scheme) {
                                                            max]);
     colorBar = svg.append('g')
         .attr('id', 'cb')
-        .call(colorbarH(colorScale, 200, 10))
-        .attr('transform', 'translate(' + parseInt(width - 220) + ',10)');
-    max *= 1.5;           // avoid extreme coloring, e.g., black on dark red
+        .call(colorbarH(colorScale, cb_width, 10))
+        .attr('transform', 'translate(' + parseInt(width - cb_width - cb_pad_right)
+              + ',' + parseInt(cb_pad_top + 6) + ')');
+    // label for the colorbar
+    cb_label
+        .attr('transform', 'translate(' + parseInt(width - cb_width - cb_pad_right)
+              + ',' + parseInt(cb_pad_top) + ')')
+        .style('font-size', '12')
+        .style('font-family', 'sans-serif')
+        .text({md_mz: 'mass deviation in m/z',
+               md_mz_abs: 'mass deviation in mz (absolute)',
+               md_ppm: 'mass deviation in ppm',
+               md_ppm_abs: 'mass deviation in ppm (absolute)',
+               rel_int: 'relative intensity'}[variant]);
     d3.selectAll('.node').selectAll('rect').
         transition(t).
         style('fill', function(d) {
@@ -927,6 +959,7 @@ function toggleEdgeLabels(state) {
 
 function toggleColorBar(state) {
     svg.select('#cb').style('opacity', state ? 100 : 0);
+    svg.select('#cb_label').style('opacity', state ? 100 : 0);
 }
 
 // generates d3 tree layout calculating node coordinates
@@ -934,8 +967,9 @@ function toggleColorBar(state) {
 function calcTreeLayout() {
     var root = d3.hierarchy(tree);  // generate hierarchy (necessary)
     var treeLayout = d3.tree();     // empty tree
-    treeLayout.size([width - margin_left, height - margin_top
+    treeLayout.size([width - margin_left - 10, height - margin_top
                      - 2]); // -2 as extra bottom margin
+    treeLayout.separation(function(a,b){return 1;});
     treeLayout(root);               // generates x/y coordinates
     root.descendants().forEach(function(d) {
         d.y += margin_top;
@@ -1053,7 +1087,7 @@ function addFragmentData(data) {
 function sortLosses(data_losses){
     // NOTE: !!!!!! as of now does not work !!!!!!!!!!!!!!!!!
     var new_losses = [], old_losses = data_losses,
-        root_name = data.root, root_id = 0, // NOTE: these *have* to be correct!
+        root_name = window.data.root, root_id = 0, // NOTE: these *have* to be correct!
         known = [root_name, root_id],
         loss, i = 0;
     while (old_losses.length != 0){
@@ -1077,22 +1111,22 @@ function sortLosses(data_losses){
 // inserts a new loss into the losses list. attempts to insert the
 // loss at the center position when the target has children
 function insertLoss(loss){
-    var targets = [data.root, 0], sources = [], indices_possible = [],
+    var targets = [window.data.root, 0], sources = [], indices_possible = [],
         indices_optimal = [];
-    for (var i = 0; i < data.losses.length; i++){
-        targets.push(data.losses[i].target);
-        sources.push(data.losses[i].source);
+    for (var i = 0; i < window.data.losses.length; i++){
+        targets.push(window.data.losses[i].target);
+        sources.push(window.data.losses[i].source);
         if (targets.contains(loss.source) &&
             !sources.contains(loss.target)){
             indices_possible.push(i);
-            if (data.losses[i].source == loss.source)
+            if (window.data.losses[i].source == loss.source)
                 indices_optimal.push(i);
         }
     }
     var indices = ((indices_optimal.length == 0)?
                    indices_possible:indices_optimal);
     if (indices.length != 0)
-        data.losses.splice(indices[Math.floor(indices.length/2)]+1, 0, loss);
+        window.data.losses.splice(indices[Math.floor(indices.length/2)]+1, 0, loss);
     else
         console.error('there is no place to insert this loss without '
                       + 'compromising the required order');
@@ -1318,18 +1352,21 @@ var tree, node_map;
 
 // layout
 // Parameters
-var boxheight = 60;             // adapts to content
-var boxwidth = 120;
-var margin_left = 0;
-var margin_top = boxheight + 3;
-var lineheight = 13;
-var width, height;
+var width, height,
+    boxheight = 60,             // adapts to content
+    boxwidth = 130,
+    margin_left = 0,
+    margin_top = boxheight + 3,
+    lineheight = 13,
+    cb_width = 200,
+    cb_pad_right = 40,
+    cb_pad_top = 10;
 
 function calcLayout() {
     var window_width = window_use_inner?window.innerWidth:window.outerWidth;
     var window_height = window_use_inner?window.innerHeight:window.outerHeight;
-    width = window_width - boxwidth / 2;
-    height = window_height - boxheight / 2;
+    width = window_width - 10; //- boxwidth / 2;
+    height = window_height - 20; //- boxheight / 2;
     margin_left = 0;
     margin_top = boxheight + 3;
 }
@@ -1337,7 +1374,7 @@ function calcLayout() {
 function calcBoxwidth(max_box_text, styles){
     // NOTE: maxtext only considers formulae, annotations could be
     // longer! (hard to calculate beforehand though)
-    var min_boxwidth = 120;
+    var min_boxwidth = 130;
     var adapt_to_maxtext = true;
     if (!adapt_to_maxtext)
         return min_boxwidth;
@@ -1355,33 +1392,64 @@ function calcBoxwidth(max_box_text, styles){
 }
 
 function scaleTree(x_mag, y_mag = undefined) {
-    root.descendants().forEach(function(node) {
-        node.x = node.x_def * x_mag;
-        if (typeof (y_mag) == 'undefined')
+    var center_x = 0, center_y = 0;
+    var tree_scale_min_2d = computeMinScale(true);
+    if (typeof (y_mag) == 'undefined'){
+        // only one scaling factor given, determine scaling for the axes
+        if (Math.max(tree_scale_min_2d[0], tree_scale_min_2d[1]) > 1){
+            if (tree_scale_min_2d[0] > tree_scale_min_2d[1])
+                y_mag = tree_scale_min_2d[1];
+            else{
+                y_mag = x_mag;
+                x_mag = tree_scale_min_2d[0];
+            }
+        }
+        else {
             y_mag = x_mag;
+        }
+    }
+    tree_scale = 1 / Math.max(x_mag, y_mag); // svg scaling factor
+    if (Math.max(x_mag, y_mag) > 1){
+        if (x_mag > y_mag){
+            // y needs to be centered
+            center_y = (height - (height * (y_mag / x_mag))) / 2;
+        } else if (y_mag > x_mag){
+            // x needs to be centered
+            center_x = (width - (width * (x_mag / y_mag))) / 2;
+        }
+    }
+    root.descendants().forEach(function(node) {
+        // scaling the original coordinate of each node by the factor
+        node.x = node.x_def * x_mag;
         node.y = node.y_def * y_mag;
-        node.y -= margin_top * (y_mag - 1);
+        // then applying offsets
+        node.x += center_x * (1/tree_scale) - margin_left * (x_mag - 1);
+        node.y += center_y * (1/tree_scale) - margin_top * (y_mag - 1);
     });
-    tree_scale = 1 / x_mag;
-    if (typeof (scale_base) !== 'undefined')
+    if (typeof (scale_base) !== 'undefined'){
         scale_base.attr('transform', 'scale(' + tree_scale + ')');
+    }
     drawNodes(root);
     drawNodeAnnots();
     drawLinks(root);
 }
 
 function scaleToFit() {
-    tree_scale_min = computeMinScale();
-    if (1 / tree_scale < tree_scale_min || typeof(tree_scale) == 'undefined')
-        scaleTree(tree_scale_min);
+    var tree_scale_min_2d = computeMinScale(true);
+    tree_scale_min = Math.max.apply(Math, tree_scale_min_2d);
+    if (typeof(tree_scale) == 'undefined' || 1 / tree_scale < tree_scale_min ||  tree_scale_min >= 1)
+        scaleTree(tree_scale_min_2d[0], tree_scale_min_2d[1]);
     else
-        scaleTree(Math.max(1, tree_scale_min));
+        scaleTree(1, 1);
 }
 
-function computeMinScale() {
-    if (root.descendants().length == 1)
+function computeMinScale(two_d=false) {
+    if (root.descendants().length == 1){
         // only one node
+        if (two_d)
+            return [boxwidth/width, boxheight/height];
         return Math.min(boxwidth/width, boxheight/height);
+    }
     var min_dx = width;
     // NOTE: it is assumed, that levels are equidistant in y
     var min_dy = root.descendants()[1].y_def - root.descendants()[0].y_def;
@@ -1398,8 +1466,10 @@ function computeMinScale() {
     }
 
     computeMinDx([root]);
-    var min_scale_y = (boxheight + 30) / min_dy;
-    var min_scale_x = (boxwidth + 20) / min_dx;
+    var min_scale_x = (boxwidth + 40) / min_dx;
+    var min_scale_y = (boxheight + 60) / min_dy;
+    if (two_d)
+        return [min_scale_x, min_scale_y];
     return Math.max(min_scale_x, min_scale_y);
 }
 
@@ -1410,14 +1480,21 @@ function applyWindowSize() {
     d3.select('.overlay')
         .attr('width', width)
         .attr('height', height);
-    d3.select('#cb').attr('transform', 'translate(' + parseInt(width - 220) + ',10)');
+    d3.select('#cb')
+        .attr('transform', 'translate(' + parseInt(width - cb_width - cb_pad_right)
+              + ',' + parseInt(cb_pad_top + 6) + ')');
+    d3.select('#cb_label')
+        .attr('transform', 'translate(' + parseInt(width - cb_width - cb_pad_right)
+              + ',' + parseInt(cb_pad_top) + ')');
 }
 
 // DOM elements
-var svg, zoom_base, scale_base, popup_div, collapse_button, colorBar,
+var svg, zoom_base, scale_base, popup_div, cb_label, collapse_button, colorBar,
     zoom, currentZoom, brush, brush_g, tree_scale, tree_scale_min;
 svg = d3.select('body').append('svg')
     .attr('width', width).attr('height', height)
+    .attr('top', 200)
+    .attr('left', 0)
     .attr('id', 'svg')
     .append('g');
 
@@ -1442,6 +1519,10 @@ popup_div = d3.select('body').append('div')
     .style('font-family', 'sans-serif')
     .style('padding', '2px')
     .style('border-radius', '8px');
+
+cb_label = svg.append('text')
+    .attr('id', 'cb_label')
+    .attr('width', cb_width);
 
 var collapse_button_width, collapse_button_line_coords;
 function adjustCollapseButton(){
@@ -1468,6 +1549,7 @@ collapse_button = svg.append('g')
     .attr('id', 'collapse_button')
     .style('opacity', 0);
 collapse_button.append('rect')
+    .attr('width', 0).attr('height', 0)
     .style('fill', 'white')
     .style('stroke', 'red');
 collapse_button
@@ -1479,19 +1561,19 @@ collapse_button
     .attr('id', 'collapse_line2')
     .style('stroke', 'red');
 
-svg.append("svg:defs").selectAll("marker")
-    .data(["end", "start"])
-    .enter().append("svg:marker")
-    .attr("id", String)
-    .attr("viewBox", "-10 -5 20 10")
-    .attr("refX", function (d, i) {return [10, -10][i];})
-    .attr("refY", -0)
-    .attr("markerWidth", 15)
-    .attr("markerHeight", 15)
-    .attr("orient", "auto")
-    .append("svg:path")
-    .attr("d", function(d, i){
-        return ["M0,-5L10,0L0,5", "M0,-5L-10,0L0,5"][i];
+svg.append('svg:defs').selectAll('marker')
+    .data(['end', 'start'])
+    .enter().append('svg:marker')
+    .attr('id', String)
+    .attr('viewBox', '-10 -5 20 10')
+    .attr('refX', function (d, i) {return [10, -10][i];})
+    .attr('refY', -0)
+    .attr('markerWidth', 15)
+    .attr('markerHeight', 15)
+    .attr('orient', 'auto')
+    .append('svg:path')
+    .attr('d', function(d, i){
+        return ['M0,-5L10,0L0,5', 'M0,-5L-10,0L0,5'][i];
     })
     .style('fill', 'blue');
 
@@ -1513,7 +1595,7 @@ function getSVGString() {
 }
 
 function getJSONTree() {
-    return JSON.stringify(data);
+    return JSON.stringify(window.data);
 }
 
 // calculates coordinates for all text elements under consideration of

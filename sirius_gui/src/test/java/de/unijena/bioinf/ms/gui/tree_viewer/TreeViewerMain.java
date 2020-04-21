@@ -10,6 +10,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.TreeVisualizationPan
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.slf4j.Logger;
@@ -50,8 +51,7 @@ public class TreeViewerMain {
 
         laod.addActionListener(e -> {
             try {
-                FTree tree = new FTJsonReader().treeFromJsonString(input.getText(), null);
-                tvp.showTree(tree);
+                tvp.showTree(input.getText());
             } catch (Exception ex) {
                 ex.printStackTrace();
             }

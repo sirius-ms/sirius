@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
@@ -9,6 +8,7 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -24,17 +24,19 @@ public class ToolChainWorkflow implements Workflow {
     protected final ParameterConfig parameters;
     private final PreprocessingJob<?> preprocessingJob;
     private final PostprocessingJob<?> postprocessingJob;
+    private final InstanceBufferFactory<?> bufferFactory;
 
     protected List<Object> toolchain;
 
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     private InstanceBuffer submitter = null;
 
-    public ToolChainWorkflow(@NotNull PreprocessingJob<?> preprocessingJob, @Nullable PostprocessingJob<?> postprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<Object> toolchain) {
+    public ToolChainWorkflow(@NotNull PreprocessingJob<?> preprocessingJob, @Nullable PostprocessingJob<?> postprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<Object> toolchain, InstanceBufferFactory<?> bufferFactory) {
         this.preprocessingJob = preprocessingJob;
         this.parameters = parameters;
         this.toolchain = toolchain;
         this.postprocessingJob = postprocessingJob;
+        this.bufferFactory = bufferFactory;
     }
 
     @Override
@@ -64,7 +66,7 @@ public class ToolChainWorkflow implements Workflow {
             // build toolchain
             final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
-            instanceJobChain.add(() -> new AddConfigsJob(parameters));
+            instanceJobChain.add((jj) -> new AddConfigsJob(parameters));
             // get buffer size
             final int bufferSize = PropertyManager.getInteger("de.unijena.bioinf.sirius.instanceBuffer", "de.unijena.bioinf.sirius.cpu.cores", 0);
 
@@ -74,10 +76,10 @@ public class ToolChainWorkflow implements Workflow {
                 if (o instanceof InstanceJob.Factory) {
                     instanceJobChain.add((InstanceJob.Factory<?>) o);
                 } else if (o instanceof DataSetJob.Factory) {
-                    final DataSetJob dataSetJob = ((DataSetJob.Factory<?>) o).makeJob();
-                    submitter = new SimpleInstanceBuffer(bufferSize, iteratorSource.iterator(), instanceJobChain, dataSetJob);
+                    final DataSetJob dataSetJob = ((DataSetJob.Factory<?>) o).makeJob(submitter);
+                    submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, dataSetJob);
                     submitter.start();
-                    iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(dataSetJob).awaitResult();
+                    iteratorSource = submitter.submitJob(dataSetJob).awaitResult();
 
                     checkForCancellation();
                     instanceJobChain.clear();
@@ -90,7 +92,7 @@ public class ToolChainWorkflow implements Workflow {
             // disk to not waste memory -> otherwise the whole buffer thing is useless.
             checkForCancellation();
             if (!instanceJobChain.isEmpty()) {
-                submitter = new SimpleInstanceBuffer(bufferSize, iteratorSource.iterator(), instanceJobChain, null);
+                submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, null);
                 submitter.start();
             }
             LOG.info("Workflow has been finished!");
@@ -98,13 +100,13 @@ public class ToolChainWorkflow implements Workflow {
             checkForCancellation();
             if (postprocessingJob != null){
                 LOG.info("Executing Postprocessing...");
-                SiriusJobs.getGlobalJobManager().submitJob(postprocessingJob).awaitResult();
+                submitter.submitJob(postprocessingJob).awaitResult();
             }
 
         } catch (ExecutionException e) {
             LOG.error("Error When Executing ToolChain", e);
         } catch (InterruptedException e) {
-            LOG.info("Workflow successfully canceled!", e);
+            LOG.info("Workflow successfully canceled!");
         }
     }
 }

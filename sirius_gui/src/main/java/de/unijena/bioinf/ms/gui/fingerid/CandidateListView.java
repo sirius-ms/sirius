@@ -21,13 +21,13 @@ import java.util.Set;
 /**
  * Created by fleisch on 16.05.17.
  */
-public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, Set<FormulaResultBean>, CandidateList> {
+public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, Set<FormulaResultBean>, StructureList> {
 
-    private FilterRangeSlider<CandidateList,FingerprintCandidateBean, Set<FormulaResultBean>> logPSlider;
-    private FilterRangeSlider<CandidateList,FingerprintCandidateBean, Set<FormulaResultBean>> tanimotoSlider;
+    private FilterRangeSlider<StructureList,FingerprintCandidateBean, Set<FormulaResultBean>> logPSlider;
+    private FilterRangeSlider<StructureList,FingerprintCandidateBean, Set<FormulaResultBean>> tanimotoSlider;
     private DBFilterPanel dbFilterPanel;
 
-    public CandidateListView(CandidateList source) {
+    public CandidateListView(StructureList source) {
         super(source);
     }
 

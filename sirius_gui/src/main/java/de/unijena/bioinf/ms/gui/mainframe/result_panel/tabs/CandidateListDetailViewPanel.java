@@ -18,24 +18,14 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.fingerid.CandidateList;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
-import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
-import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
-public class CandidateListDetailViewPanel extends JPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean>, PanelDescription {
+public class CandidateListDetailViewPanel extends JPanel implements /* ActiveElementChangedListener<FingerprintCandidateBean,Set<FormulaResultBean>>,*/ PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
@@ -48,27 +38,26 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
     }
 
     protected CandidateListDetailView list;
-    protected JButton searchCSIButton;
+//    protected JButton searchCSIButton;
 
     protected CardLayout layout;
 
 
-    public CandidateListDetailViewPanel(CandidateList sourceList) {
-        super();
+    public CandidateListDetailViewPanel(StructureList sourceList) {
+        super(new BorderLayout());
         list = new CandidateListDetailView(sourceList);
-        init();
+
+        add(list, BorderLayout.CENTER);
+//        sourceList.addActiveResultChangedListener(this);
+//        init();
     }
 
-    public void dispose() {
-        list.dispose();
-    } //todo isn't that done by adding the list to the panel???
-
-    private void init() {
+   /* private void init() {
         this.layout = new CardLayout();
         setLayout(layout);
 
         add(new JPanel(), "null");
-        add(new ComputeElement(), "computeButton");
+//        add(new ComputeElement(), "computeButton");
         add(new JLabel(Icons.FP_LOADER), "loader");
 
         TwoColumnPanel nothing = new TwoColumnPanel();
@@ -79,28 +68,32 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
 
         add(list, "list");
         setVisible(true);
-        resultsChanged(null, null, null, null);
+//        resultsChanged(null, null, null, null);
+        layout.show(this, "list");
+
     }
 
     @Override
-    public void resultsChanged(InstanceBean ec, FormulaResultBean resultElement, List<FormulaResultBean> sres, ListSelectionModel selection) {
-        if (resultElement == null)
+    public void resultsChanged(Set<FormulaResultBean> experiment, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
+        if (resultElements == null)
             layout.show(this, "null");
         else {
-            if (ec.isComputing()) {
-                layout.show(this, "loader");
-            }else if (resultElement.getFingerIDCandidates().isPresent()){
-                if (list.getSource().getElementList().isEmpty()) {
-                    layout.show(this, "empty");
-                } else {
-                    layout.show(this, "list");
-                }
-            }else {
-                layout.show(this, "computeButton");
+//            if (ec.isComputing()) {
+//                layout.show(this, "loader");
+            *//*}else *//*
+
+            if (resultElements.isEmpty()) {
+                layout.show(this, "empty");
+            } else {
+                layout.show(this, "list");
             }
+            *//*}else {
+//                layout.show(this, "computeButton");
+                layout.show(this, "null");
+            }*//*
         }
 
-        if (resultElement == null || !MainFrame.MF.isFingerid()) {
+        *//*if (resultElement == null || !MainFrame.MF.isFingerid()) {
 
             searchCSIButton.setEnabled(false);
             searchCSIButton.setToolTipText("");
@@ -110,11 +103,10 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
         } else {
             searchCSIButton.setEnabled(true);
             searchCSIButton.setToolTipText("Start CSI:FingerId online search to identify the molecular structure of the measured compound");
-        }
-        list.resultsChanged();
+        }*//*
     }
-
-    public class ComputeElement extends TwoColumnPanel {
+*/
+    /*public class ComputeElement extends TwoColumnPanel {
         public ComputeElement() {
             searchCSIButton = new ToolbarButton(SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
             add(searchCSIButton);
@@ -122,5 +114,5 @@ public class CandidateListDetailViewPanel extends JPanel implements ActiveElemen
             searchCSIButton.setEnabled((!(list.getSource().getElementList().isEmpty() || list.getSource().getResultListSelectionModel().isSelectionEmpty()) && MainFrame.MF.isFingerid()));
             setVisible(true);
         }
-    }
+    }*/
 }

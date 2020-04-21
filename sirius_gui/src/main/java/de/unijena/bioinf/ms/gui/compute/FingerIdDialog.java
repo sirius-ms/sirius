@@ -32,12 +32,12 @@ public class FingerIdDialog extends JDialog {
 
     protected boolean showComputeButton;
     protected int returnState = CANCELED;
-    protected FingerIDComputationPanel dbForm;
+    protected FingerIDConfigPanel dbForm;
     private String buttonSuffix = "compounds";
 
     public FingerIdDialog(Frame owner, boolean showComputeButton, boolean local) {
         super(owner, "Search with CSI:FingerID", true);
-        dbForm = new FingerIDComputationPanel(SearchableDatabases.getAvailableDatabases());
+        dbForm = new FingerIDConfigPanel(null, null);
         this.showComputeButton = showComputeButton;
         setLocationRelativeTo(owner);
         if (local)
@@ -99,7 +99,7 @@ public class FingerIdDialog extends JDialog {
         setVisible(true);
     }
 
-    public SearchableDatabase getSearchDb() {
-        return dbForm.dbSelectionOptions.getDb();
+    public java.util.List<SearchableDatabase> getSearchDb() {
+        return dbForm.getStructureSearchDBs();
     }
 }

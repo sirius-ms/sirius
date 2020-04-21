@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, FormulaResultBean> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
+public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaResultBean> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
     protected FingerprintVisualization[] visualizations;
     protected double[] fscores = null;
@@ -32,7 +32,7 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Fo
     }
 
     public FingerprintTable(final FormulaList source, WebAPI api, FingerprintVisualization[] visualizations) {
-        super(MolecularPropertyTableEntry.class, DataSelectionStrategy.FIRST_SELECTED);
+        super(FingerIdPropertyBean.class, DataSelectionStrategy.FIRST_SELECTED);
         this.csiApi = api;
         source.addActiveResultChangedListener(this);
         resultsChanged(null, null, source.getElementList(), source.getResultListSelectionModel());
@@ -63,9 +63,9 @@ public class FingerprintTable extends ActionList<MolecularPropertyTableEntry, Fo
             sre.getFingerprintResult().ifPresent(fpr -> {
                 try {
                     setFScores(sre.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE);
-                    List<MolecularPropertyTableEntry> tmp = new ArrayList<>();
+                    List<FingerIdPropertyBean> tmp = new ArrayList<>();
                     for (final FPIter iter : fpr.fingerprint) {
-                        tmp.add(new MolecularPropertyTableEntry(fpr.fingerprint, visualizations[iter.getIndex()], fscores[iter.getIndex()], iter.getIndex(), trainingExamples[iter.getIndex()]));
+                        tmp.add(new FingerIdPropertyBean(fpr.fingerprint, visualizations[iter.getIndex()], iter.getIndex(), fscores[iter.getIndex()], trainingExamples[iter.getIndex()]));
                     }
                     elementList.addAll(tmp);
                 } catch (IOException e) {

@@ -63,7 +63,6 @@ public class ComputeCSIAction extends AbstractAction {
 
         final FingerIdDialog dialog = new FingerIdDialog(MF, MF.isFingerid(), false);
         final int returnState = dialog.run();
-        final SearchableDatabase db = dialog.getSearchDb();
         if (returnState == FingerIdDialog.COMPUTE_ALL) {
             System.out.println("Compute ALL CSI not implemented yet!");
             //MF.getCsiFingerId().computeAll(MF.getCompounds(), db);

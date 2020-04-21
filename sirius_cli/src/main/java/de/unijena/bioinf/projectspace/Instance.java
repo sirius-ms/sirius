@@ -28,7 +28,7 @@ public class Instance {
     }
 
     public final Ms2Experiment getExperiment() {
-        return compoundCache.getAnnotationOrThrow(Ms2Experiment.class); //todo decide if it shlould be allowed to be dropped from cache -> currently NOT!
+        return loadCompoundContainer(Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
     }
 
     public final CompoundContainerId getID() {

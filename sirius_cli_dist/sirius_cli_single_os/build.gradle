@@ -13,10 +13,15 @@ dependencies {
 mainClassName = 'de.unijena.bioinf.ms.frontend.SiriusCLIApplication'
 project.ext.set("type", ['console'])
 
-
 jar {
+    zip64=true
+    enabled = true
     manifest {
         attributes 'Main-Class': mainClassName
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 
@@ -45,9 +50,7 @@ distributions {
             baseName = "${project.appName}-$n-headless"
             contents {
                 into('lib') {
-                    from("build/install/${project.name}/lib") {
-                        exclude libExclude
-                    }
+                    from('build/libs/')
                     from("${project.glpkPath}/l${ar}/") {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
@@ -85,11 +88,7 @@ distributions {
 
             baseName = "${project.appName}-$n-headless"
             contents {
-                into('lib') {
-                    from('build/launch4j/lib') {
-                        exclude libExclude
-                    }
-                }
+                from('build/libs/')
                 from { "${project.glpkPath}/w${ar}/" }
                 from("${project.clpPath}/w${ar}/")
                 from("${project.distPath}") {
@@ -120,9 +119,7 @@ distributions {
         baseName = "${project.appName}-$n-headless"
         contents {
             into('lib') {
-                from("build/install/${project.name}/lib") {
-                    exclude libExclude
-                }
+                from('build/libs/')
                 from("${project.glpkPath}/osx/")
                 from("${project.clpPath}/osx/")
                 exclude('*.zip')

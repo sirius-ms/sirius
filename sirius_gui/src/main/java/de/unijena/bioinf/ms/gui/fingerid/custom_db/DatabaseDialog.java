@@ -11,6 +11,7 @@ import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHaeder;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
@@ -116,30 +117,24 @@ public class DatabaseDialog extends JDialog {
 
         add(dbView, BorderLayout.EAST);
 
-        dbList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                final int i = dbList.getSelectedIndex();
-                if (i >= 0) {
-                    final String s = dbList.getModel().getElementAt(i);
-                    if (s.equalsIgnoreCase("pubchem"))
-                        dbView.update(s);
-                    else if (customDatabases.containsKey(s))
-                        dbView.updateContent(customDatabases.get(s));
-                }
+        dbList.addListSelectionListener(e -> {
+            final int i = dbList.getSelectedIndex();
+            if (i >= 0) {
+                final String s = dbList.getModel().getElementAt(i);
+                if (s.equalsIgnoreCase("pubchem"))
+                    dbView.update(s);
+                else if (customDatabases.containsKey(s))
+                    dbView.updateContent(customDatabases.get(s));
             }
         });
 
         dbList.setSelectedIndex(0);
 
-        addCustomDb.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                databases.add(nameField.getText());
-                dbList.setListData(databases.toArray(new String[databases.size()]));
-                final CustomDatabase newDb = new ImportDatabaseDialog(nameField.getText()).database;
-                whenCustomDbIsAdded(newDb);
-            }
+        addCustomDb.addActionListener(e -> {
+            databases.add(nameField.getText());
+            dbList.setListData(databases.toArray(String[]::new));
+            final CustomDatabase newDb = new ImportDatabaseDialog(nameField.getText()).database;
+            whenCustomDbIsAdded(newDb);
         });
 
         new ListAction(dbList, new AbstractAction() {
@@ -152,37 +147,31 @@ public class DatabaseDialog extends JDialog {
             }
         });
 
-        dbView.edit.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final int k = dbList.getSelectedIndex();
-                if (k > 0 && k < dbList.getModel().getSize()) {
-                    whenCustomDbIsAdded(new ImportDatabaseDialog(dbList.getModel().getElementAt(k)).database);
-                }
+        dbView.edit.addActionListener(e -> {
+            final int k = dbList.getSelectedIndex();
+            if (k > 0 && k < dbList.getModel().getSize()) {
+                whenCustomDbIsAdded(new ImportDatabaseDialog(dbList.getModel().getElementAt(k)).database);
             }
         });
 
-        dbView.deleteCache.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final int index = dbList.getSelectedIndex();
-                if (index < 0 || index >= dbList.getModel().getSize())
-                    return;
-                final String name = dbList.getModel().getElementAt(index);
-                final String msg = (index > 0) ?
-                        "Do you really want to delete the custom database '" + name + "'?" : "Do you really want to clear the cache of the PubChem database?";
+        dbView.deleteCache.addActionListener(e -> {
+            final int index = dbList.getSelectedIndex();
+            if (index < 0 || index >= dbList.getModel().getSize())
+                return;
+            final String name = dbList.getModel().getElementAt(index);
+            final String msg = (index > 0) ?
+                    "Do you really want to delete the custom database '" + name + "'?" : "Do you really want to clear the cache of the PubChem database?";
 
-                if (new QuestionDialog(getOwner(), msg).isSuccess()) {
-                    if (index > 0) {
-                        new CustomDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name)).deleteDatabase();
-                        customDatabases.remove(name);
-                        dbList.setListData(collectDatabases().toArray(new String[0]));
-                    } else {
-                        // TODO: implement
-                    }
+            if (new QuestionDialog(getOwner(), msg).isSuccess()) {
+                if (index > 0) {
+                    new CustomDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name)).deleteDatabase();
+                    customDatabases.remove(name);
+                    dbList.setListData(collectDatabases().toArray(new String[0]));
+                } else {
+                    // TODO: implement
                 }
-
             }
+
         });
 
         for (String name : databases) {
@@ -313,15 +302,8 @@ public class DatabaseDialog extends JDialog {
             cell.add(Box.createHorizontalStrut(32));
             cell.add(right);
 
-            Font tempFont = null;
-            try {
-                InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
-                tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(13f);
-                right.setFont(tempFont);
-                left.setFont(tempFont.deriveFont(Font.BOLD));
-            } catch (FontFormatException | IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            }
+            right.setFont(Fonts.FONT_BOLD);
+            left.setFont(Fonts.FONT_BOLD.deriveFont(Font.BOLD));
         }
 
         public void addCompound(final InChI inchi) {

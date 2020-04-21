@@ -12,8 +12,14 @@ project.ext.set("type", ['console'])
 
 /*################### Jar build Stuff ################### */
 jar {
+    zip64=true
+    enabled = true
     manifest {
         attributes 'Main-Class': mainClassName
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 
@@ -28,7 +34,7 @@ project.type.each{t ->
 
             jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
 
-            classpath.add('../../../All/Sirius/lib/*') //add
+            classpath.add("../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}") //add
             println(classpath)
 
             outfile = "${project.appName}-${t}-${a}.exe"
@@ -69,9 +75,7 @@ distributions {
         baseName = "${project.appName}-$n"
         contents {
             into('All/Sirius/lib') {
-                from("build/install/${project.name}/lib") {
-                    exclude libExclude
-                }
+                from('build/libs/')
             }
 
             project.arch.each { ar ->
@@ -85,7 +89,6 @@ distributions {
                 }
 
                 into("Linux/${ar}bit/Sirius") {
-//                    from project.openmsScript
                     from("build/install/${project.name}/bin") {
                         exclude("*.bat")
                     }
@@ -98,7 +101,6 @@ distributions {
                 into("Windows/${ar}bit/Sirius") {
                     from("${project.glpkPath}/w${ar}/")
                     from("${project.clpPath}/w${ar}/")
-
                     from("${project.distPath}") {
                         include('COPYING.txt')
                     }

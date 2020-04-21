@@ -38,12 +38,12 @@ public class DefaultParameterConfigLoader {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(config.getConfigKeys(), Spliterator.ORDERED), false)
                 .map((key) -> {
                     final String shortKey = key.replace(config.configRoot + ".", "");
-                    final String descr = config.getConfigDescription(key);
-            CommandLine.Model.OptionSpec.Builder pSpec = CommandLine.Model.OptionSpec
-                    .builder("--" + shortKey)
-                    .description((descr != null) ? descr.replaceAll(System.lineSeparator(), " ").replaceAll("#\\s*", "") : "")
-                    .paramLabel(PropertyManager.DEFAULTS.getConfigValue(shortKey))
-                    .hasInitialValue(false);
+                    final String[] descr = config.getConfigDescription(key).orElse(new String[]{});
+                    CommandLine.Model.OptionSpec.Builder pSpec = CommandLine.Model.OptionSpec
+                            .builder("--" + shortKey)
+                            .description(descr)
+                            .paramLabel(PropertyManager.DEFAULTS.getConfigValue(shortKey))
+                            .hasInitialValue(false);
 
                     pSpec.type(String.class)
                             .setter(new CommandLine.Model.ISetter() {

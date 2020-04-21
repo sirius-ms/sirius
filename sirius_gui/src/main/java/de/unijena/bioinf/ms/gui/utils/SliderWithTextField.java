@@ -48,7 +48,7 @@ public class SliderWithTextField extends JPanel {
             text1 = new JTextField(length+1);
             this.add(text1);
 
-            if (currentMin==max){
+            if (currentMin>=max){
                 text1.setText("inf");
             } else {
                 text1.setText(String.valueOf(currentMin));
@@ -79,7 +79,7 @@ public class SliderWithTextField extends JPanel {
 
         text2 = new JTextField(length+1);
 
-        if (currentMax==max){
+        if (currentMax>=max){
             text2.setText("inf");
         } else {
             text2.setText(String.valueOf(currentMax));
@@ -174,18 +174,18 @@ public class SliderWithTextField extends JPanel {
         if (isRangeSlider){
             int minValue = ((RangeSlider)slider).getLowerValue();
             int maxValue = minValue+ slider.getExtent();// ((RangeSlider)slider).getUpperValue();
-            if (minValue==max){
+            if (minValue>=max){
                 text1.setText("inf");
             } else {
                 text1.setText(String.valueOf(minValue));
             }
-            if (maxValue==max){
+            if (maxValue>=max){
                 text2.setText("inf");
             } else {
                 text2.setText(String.valueOf(maxValue));
             }
         } else {
-            if (slider.getValue()==max){
+            if (slider.getValue()>=max){
                 text2.setText("inf");
             } else {
                 text2.setText(String.valueOf(slider.getValue()));

@@ -12,14 +12,15 @@ import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.summaries.FormulaSummaryWriter;
-import de.unijena.bioinf.projectspace.summaries.StructureSummaryWriter;
-import de.unijena.bioinf.projectspace.summaries.mztab.MztabMExporter;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.projectspace.sirius.*;
+import de.unijena.bioinf.projectspace.summaries.CanopusSummaryWriter;
+import de.unijena.bioinf.projectspace.summaries.FormulaSummaryWriter;
+import de.unijena.bioinf.projectspace.summaries.StructureSummaryWriter;
+import de.unijena.bioinf.projectspace.summaries.mztab.MztabMExporter;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
@@ -141,6 +142,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         return new Summarizer[]{
                 new FormulaSummaryWriter(),
                 new StructureSummaryWriter(),
+                new CanopusSummaryWriter(),
                 new MztabMExporter()
         };
     }

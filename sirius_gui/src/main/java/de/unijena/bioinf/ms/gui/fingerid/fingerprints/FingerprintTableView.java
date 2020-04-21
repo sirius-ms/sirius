@@ -15,14 +15,14 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-public class FingerprintTableView extends ActionListDetailView<MolecularPropertyTableEntry, FormulaResultBean, FingerprintTable> {
+public class FingerprintTableView extends ActionListDetailView<FingerIdPropertyBean, FormulaResultBean, FingerprintTable> {
 
-    protected SortedList<MolecularPropertyTableEntry> sortedSource;
-    protected ActionTable<MolecularPropertyTableEntry> actionTable;
+    protected SortedList<FingerIdPropertyBean> sortedSource;
+    protected ActionTable<FingerIdPropertyBean> actionTable;
     protected FingerprintTableFormat format;
     protected int maxAtomSize;
 
-    protected FilterRangeSlider<FingerprintTable, MolecularPropertyTableEntry, FormulaResultBean> probabilitySlider, atomSizeSlider;
+    protected FilterRangeSlider<FingerprintTable, FingerIdPropertyBean, FormulaResultBean> probabilitySlider, atomSizeSlider;
 
     private DoubleListStats __atomsizestats__;
 
@@ -64,8 +64,6 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
         barRenderer.setTwoWayBar(true);
         actionTable.getColumnModel().getColumn(2).setCellRenderer(barRenderer);
         actionTable.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(-1,0,1,false));
-
-
     }
 
 
@@ -75,7 +73,7 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
     }
 
     @Override
-    protected FilterList<MolecularPropertyTableEntry> configureFiltering(EventList<MolecularPropertyTableEntry> source) {
+    protected FilterList<FingerIdPropertyBean> configureFiltering(EventList<FingerIdPropertyBean> source) {
         sortedSource = new SortedList<>(source);
         return super.configureFiltering(sortedSource);
     }
@@ -99,7 +97,7 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
     }
 
     @Override
-    protected EventList<MatcherEditor<MolecularPropertyTableEntry>> getSearchFieldMatchers() {
+    protected EventList<MatcherEditor<FingerIdPropertyBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
                 new TextMatcher(searchField.textField),
                 new MinMaxMatcherEditor<>(probabilitySlider, (baseList, element) -> baseList.add(element.getProbability())),
@@ -107,7 +105,7 @@ public class FingerprintTableView extends ActionListDetailView<MolecularProperty
         );
     }
 
-    protected static class TextMatcher extends TextComponentMatcherEditor<MolecularPropertyTableEntry> {
+    protected static class TextMatcher extends TextComponentMatcherEditor<FingerIdPropertyBean> {
 
         public TextMatcher(JTextComponent textComponent) {
             super(textComponent, (baseList, element) -> {

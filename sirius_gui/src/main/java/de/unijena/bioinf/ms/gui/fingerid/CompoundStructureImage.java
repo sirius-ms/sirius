@@ -66,13 +66,14 @@ class CompoundStructureImage extends JPanel {
     }
 
     @Override
-    public void paint(Graphics g) {
-        super.paint(g);
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
         if (molecule.hasAtomContainer())
             renderImage((Graphics2D) g);
     }
 
     private void renderImage(final Graphics2D gg) {
+        gg.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
         StructureDiagramGenerator sdg = new StructureDiagramGenerator();
         sdg.setMolecule(molecule.getMolecule(), false);
         try {

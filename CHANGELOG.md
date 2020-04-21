@@ -1,20 +1,40 @@
 #### 4.4
--   **Java 11 or higher is now mandatory**
--   **Project-Space:** A standardized persistence layer shared by CLI and GUI that makes both fully compatible.
--   Redesigned **Command line interface**: SIRIUS is now a toolbox containing many 
-subtools that may be combined to ToolChains based on the project-space
--   **New (and newly integrated) tools:**
-    - **ZODIAC:** Builds upon the SIRIUS molecular formula identifications and uses, say, its top 50 molecular formula 
+
+- **New (and newly integrated) tools:**
+  - [**CANOPUS:**](https://www.biorxiv.org/content/10.1101/2020.04.17.046672v1): A tool for the comprehensive annotation of compound classes from MS/MS data.
+  - [**ZODIAC:**](https://www.biorxiv.org/content/10.1101/842740v1) Builds upon the SIRIUS molecular formula identifications and uses, say, its top 50 molecular formula 
     annotations as candidates for one compound. It then re-ranks molecular formula candidates using Bayesian statistics.
-    - **PASSATUTTO:** Is now part of SIRIUS and allows you to generate dataset specific decoy databases from computed fragmentation trees. 
-    - **LCMS-align:** SIRIUS can now handle full LCMS-Runs given in mzML/mzXML format. The lcms-align preprocessing tool
-    performs feature detection and feature alignment based on the available the MS/MS spectra.
-    - Other handy standalone tools e.g. compound similarity calculation. 
- 
-- **Interactive fragmentation tree viewer** with vector graphics export.
-- New version of the CSI:FingerID PubChem copy that uses now **standardized structures**.    
-- New REST service with openAPI specification and Swagger-UI.
-- Many improvements and Bugfixes 
+  - [**PASSATUTTO:**](https://www.nature.com/articles/s41467-017-01318-5) Is now part of SIRIUS and allows you to generate dataset specific decoy databases from computed fragmentation trees. 
+  - Other handy standalone tools e.g. compound similarity calculation, mass decomposition, custom-db creation and project-space manipulation. 
+
+- [**Project-Space:**](https://link.springer.com/protocol/10.1007/978-1-0716-0239-3_11) A standardized persistence layer shared by CLI and GUI that makes both fully compatible.
+  - Save and reimport your projects with all previously calculated results.
+  - Review your results computed with the CLI in the GUI.
+  - Handy project-space summary CSV and mzTab-M files for downstream analysis.
+  - Preojects can be stored and modified as directory structure or as compressed archive. 
+    
+- **LCMS-Runs:** SIRIUS can now handle full LCMS-Runs given in mzML/mzXML format and performs automatic feature detection. 
+  - The **lcms-align** preprocessing tool performs feature detection and feature alignment for multiple LCMS-Runs based on the available the MS/MS spectra.
+    
+- Redesigned **Command line interface**: SIRIUS is now a toolbox containing many 
+subtools that may be combined to ToolChains based on the project-space.
+
+- **CSI:FingerID** had some massive updates, including more and larger molecular properties. 
+  - **Structure DBs** New version of the CSI:FingerID PubChem copy that now uses **PubChem standardized structures**.
+  - [**NORMAN**](https://www.norman-network.com/nds/common/) is now available as search DB
+  - All available database filters can now be combined to arbitrary subsets for searching (even with custom databases).      
+- **Interactive fragmentation tree viewer** with vector graphics export in the GUI.
+- New REST service with [openAPI](https://www.csi-fingerid.uni-jena.de/v1.4.2-SNAPSHOT/v2/api-docs) specification and [Swagger-UI](https://www.csi-fingerid.uni-jena.de/v1.4.2-SNAPSHOT/swagger-ui.html).
+- **Java 11** or higher is now mandatory
+  - **GUI** version ships with an **integrated JRE**
+- Many minor improvements and Bugfixes
+
+##### Coming soon...
+- Another Structure DB update due to major changes in PubChem standardization since the last one.
+- GUI: Custom-DB importer View
+- GUI: Progress information for running jobs
+- GUI: More detailed Visualisation of what has already been computed
+- more bugfixes ;-)
 
 #### 4.0.1
 

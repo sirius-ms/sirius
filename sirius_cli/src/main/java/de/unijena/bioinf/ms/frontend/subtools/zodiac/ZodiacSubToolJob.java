@@ -17,9 +17,11 @@ import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistr
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorerNoiseIntensityWeighted;
 import de.unijena.bioinf.GibbsSampling.properties.*;
-import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.quality_assessment.TreeQualityEvaluator;
@@ -36,8 +38,8 @@ public class ZodiacSubToolJob extends DataSetJob {
 
     protected final ZodiacOptions cliOptions;
 
-    public ZodiacSubToolJob(ZodiacOptions cliOptions) {
-        super(in -> !in.loadCompoundContainer().getResults().isEmpty()); //check whether the compound has formula results or not
+    public ZodiacSubToolJob(ZodiacOptions cliOptions, JobSubmitter jobSubmitter) {
+        super(in -> !in.loadCompoundContainer().getResults().isEmpty(), jobSubmitter); //check whether the compound has formula results or not
         this.cliOptions = cliOptions;
     }
 
@@ -73,7 +75,8 @@ public class ZodiacSubToolJob extends DataSetJob {
                         quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.PoorlyExplained);
                         experiment.removeAnnotation(CompoundQuality.class);
                     }
-                    experiment.addAnnotation(CompoundQuality.class, quality);
+                    //todo what do we want todo if annotation is present? override or not?
+                    experiment.setAnnotation(CompoundQuality.class, quality);
                 }
             }
 
@@ -204,5 +207,10 @@ public class ZodiacSubToolJob extends DataSetJob {
             return null;
         }
         return anchors;
+    }
+
+    @Override
+    public String getToolName() {
+        return PicoUtils.getCommand(ZodiacOptions.class).name();
     }
 }

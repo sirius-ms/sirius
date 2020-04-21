@@ -8,7 +8,7 @@ import de.unijena.bioinf.jjobs.BasicJJob;
  * These tools are intended to transform some non standard input into a list of Instances
  * The default here is to write the results to the project space that will be used for th rest of the workflow
  */
-public abstract class PreprocessingJob<P extends Iterable<? extends Instance>> extends BasicJJob<P> implements SubToolJob {
+public abstract class PreprocessingJob<P extends Iterable<? extends Instance>> extends BasicJJob<P> {
 //    protected InputFilesOptions input;
 //    protected ProjectSpaceManager space;
 

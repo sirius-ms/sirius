@@ -13,6 +13,8 @@ import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
 
+import java.util.function.Function;
+
 /**
  * Display issues in a tabular form.
  *
@@ -21,19 +23,13 @@ import de.unijena.bioinf.sirius.scores.TreeScore;
 public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
     private static final int COL_COUNT = 10;
 
-    protected SiriusResultTableFormat(ListStats stats) {
-        super(stats);
+    protected SiriusResultTableFormat(Function<FormulaResultBean,Boolean> isBest) {
+        super(isBest);
     }
-
 
     @Override
     public int highlightColumnIndex() {
         return COL_COUNT;
-    }
-
-    @Override
-    protected boolean isBest(FormulaResultBean element) {
-        return stats.getMax() <= element.getScoreValue(SiriusScore.class);
     }
 
     @Override
@@ -95,7 +91,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 9:
                 return result.getMedianMassDevPPM();
             case 10:
-                return isBest(result);
+                return isBest.apply(result);
             default:
                 throw new IllegalStateException();
         }

@@ -12,9 +12,9 @@ import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -30,7 +30,6 @@ import java.util.Map;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FormulaListDetailView extends ActionListDetailView<FormulaResultBean, InstanceBean, FormulaList> {
-    //    private static final int[] BAR_COLS = {2, 3, 4};
     private final ActionTable<FormulaResultBean> table;
     private final ConnectedSelection<FormulaResultBean> selectionConnection; //this object synchronizes selection models and is not obsolete
 
@@ -39,10 +38,9 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
 
     public FormulaListDetailView(final FormulaList source) {
         super(source);
-        //todo dirty hack until search fied bug is fixed
+        //todo dirty hack until search field bug is fixed
         getNorth().remove(searchField);
-
-        tableFormat = new SiriusResultTableFormat(source.siriusScoreStats);
+        tableFormat = new SiriusResultTableFormat(source.getBestFunc());
 
         table = new ActionTable<>(filteredSource, sortedSource, tableFormat);
 
@@ -55,12 +53,12 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
         //todo re-enable threshold marker
 //        table.getColumnModel().getColumn(3).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
-        table.getColumnModel().getColumn(3).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
+        table.getColumnModel().getColumn(3).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
 //        table.getColumnModel().getColumn(4).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
-        table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
-        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, false));
-        table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.treeScoreStats, false));
-        table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.explainedPeaks, false, true, new DecimalFormat("#0")));
+        table.getColumnModel().getColumn(4).setCellRenderer(new ScoreListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
+        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, false));
+        table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.treeScoreStats, false));
+        table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.explainedPeaks, false, true, new DecimalFormat("#0")));
         table.getColumnModel().getColumn(8).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), 0, 1, true));
 
         table.addMouseListener(new MouseListener() {
