@@ -79,6 +79,13 @@ public class CanopusSubToolJob extends InstanceJob {
     }
 
     @Override
+    public void invalidateResults(@NotNull Instance instance) {
+        super.invalidateResults(instance);
+        if (isRecompute(instance))
+            instance.deleteFromFormulaResults(CanopusResult.class);
+    }
+
+    @Override
     protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
         return new Class[]{CanopusResult.class};
     }

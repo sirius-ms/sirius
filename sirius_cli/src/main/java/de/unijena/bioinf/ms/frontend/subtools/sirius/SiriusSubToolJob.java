@@ -48,7 +48,7 @@ public class SiriusSubToolJob extends InstanceJob {
             // create WhiteSet from DB if necessary
             //todo do we really want to restrict to organic even if the db is user selected
             final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
-            if (searchDB.isPresent() && searchDB.get().containsDBs()){
+            if (searchDB.isPresent() && searchDB.get().containsDBs()) {
                 FormulaWhiteListJob wsJob = new FormulaWhiteListJob(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp, true, false);
                 wSet = SiriusJobs.getGlobalJobManager().submitJob(wsJob).awaitResult();
             }
@@ -94,11 +94,15 @@ public class SiriusSubToolJob extends InstanceJob {
     }
 
     @Override
-    public void invalidateResults(@NotNull Instance result) {
-        super.invalidateResults(result);
-        result.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
-        result.getID().setDetectedAdducts(result.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
-        result.updateCompoundID();
+    public void invalidateResults(@NotNull Instance instance) {
+        super.invalidateResults(instance);
+        if (isRecompute(instance)) {
+            instance.deleteFromFormulaResults(); //this step creates the resutl so we have to delete them before recompute
+            instance.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
+            instance.getID().setDetectedAdducts(instance.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
+            instance.updateCompoundID();
+        }
+
     }
 
     @Override

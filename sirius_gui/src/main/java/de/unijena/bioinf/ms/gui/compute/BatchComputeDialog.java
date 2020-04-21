@@ -29,10 +29,7 @@ import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
-import de.unijena.bioinf.ms.gui.dialogs.WorkerWarningDialog;
+import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
@@ -53,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -122,6 +120,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             compute.addActionListener(e -> startComputing());
             JButton abort = new JButton("Abort");
             abort.addActionListener(e -> dispose());
+            JButton showCommand = new JButton("Show Command");
+            showCommand.addActionListener(e ->
+                    new InfoDialog(owner, "Command", String.join(" ", makeCommand())));
+
+            rsouthPanel.add(showCommand);
             rsouthPanel.add(compute);
             rsouthPanel.add(abort);
 
@@ -224,43 +227,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 checkForInterruption();
 
                 try {
-                    // create computation parameters
-                    List<String> toolCommands = new ArrayList<>();
-                    List<String> configCommand = new ArrayList<>();
-
-                    configCommand.add("config");
-                    if (formulaIDConfigPanel.isToolSelected()) {
-                        toolCommands.add(formulaIDConfigPanel.content.toolCommand());
-                        configCommand.addAll(formulaIDConfigPanel.asParameterList());
-                    }
-
-                    if (zodiacConfigs.isToolSelected()) {
-                        toolCommands.add(zodiacConfigs.content.toolCommand());
-                        configCommand.addAll(zodiacConfigs.asParameterList());
-                    }
-
-                    if (csiConfigs.isToolSelected()) {
-                        toolCommands.add(csiConfigs.content.toolCommand());
-                        configCommand.addAll(csiConfigs.asParameterList());
-                    }
-
-                    if (canopusConfigPanel.isToolSelected()) {
-                        toolCommands.add(canopusConfigPanel.content.toolCommand());
-                        configCommand.addAll(canopusConfigPanel.asParameterList());
-                    }
-
-                    final List<String> command = new ArrayList<>();
-
-                    configCommand.add("--RecomputeResults");
-                    configCommand.add(String.valueOf(recompute.isSelected()));
-
-                    command.addAll(configCommand);
-                    command.addAll(toolCommands);
 
                     final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
                     final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), compoundsToProcess), configOptionLoader, new GuiInstanceBufferFactory());
                     final Run computation = new Run(wfBuilder);
-                    computation.parseArgs(command.toArray(String[]::new));
+                    computation.parseArgs(makeCommand().toArray(String[]::new));
 
                     if (computation.isWorkflowDefined())
                         Jobs.runWorkflow(computation.getFlow(), compoundsToProcess);//todo make som nice head job that does some organizing stuff
@@ -274,6 +245,45 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             }
         });
         dispose();
+    }
+
+    private List<String> makeCommand(){
+        // create computation parameters
+        List<String> toolCommands = new ArrayList<>();
+        List<String> configCommand = new ArrayList<>();
+
+        configCommand.add("config");
+        if (formulaIDConfigPanel.isToolSelected()) {
+            toolCommands.add(formulaIDConfigPanel.content.toolCommand());
+            configCommand.addAll(formulaIDConfigPanel.asParameterList());
+        }
+
+        if (zodiacConfigs.isToolSelected()) {
+            toolCommands.add(zodiacConfigs.content.toolCommand());
+            configCommand.addAll(zodiacConfigs.asParameterList());
+        }
+
+        if (csiConfigs.isToolSelected()) {
+            toolCommands.add(csiConfigs.content.toolCommand());
+            configCommand.addAll(csiConfigs.asParameterList());
+        }else {
+            //set ionization if CSI ist not enabled
+            configCommand.addAll(csiConfigs.content.getAdductsParameter());
+        }
+
+        if (canopusConfigPanel.isToolSelected()) {
+            toolCommands.add(canopusConfigPanel.content.toolCommand());
+            configCommand.addAll(canopusConfigPanel.asParameterList());
+        }
+
+        final List<String> command = new ArrayList<>();
+
+        configCommand.add("--RecomputeResults");
+        configCommand.add(String.valueOf(recompute.isSelected()));
+
+        command.addAll(configCommand);
+        command.addAll(toolCommands);
+        return command;
     }
 
     private void checkConnection() {
