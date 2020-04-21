@@ -113,7 +113,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
         smallParameters.addNamed("Candidates per Ion", candidatesPerIonSpinner);
 
-//        restrictToOrganics = new JCheckBox(); //todo implement parameter?? or has constraint?
+//        restrictToOrganics = new JCheckBox(); //todo implement parameter?? or as constraint?
 //        GuiUtils.assignParameterToolTip(restrictToOrganics, "RestrictToOrganics");
 //        parameterBindings.put("RestrictToOrganics", () -> String.valueOf(restrictToOrganics.isSelected()));
 //        smallParameters.addNamed("Restrict to organics", restrictToOrganics);

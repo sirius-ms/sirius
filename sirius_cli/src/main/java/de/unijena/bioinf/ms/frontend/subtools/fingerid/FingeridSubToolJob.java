@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
@@ -24,6 +25,7 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -133,6 +135,23 @@ public class FingeridSubToolJob extends InstanceJob {
             // write results
             inst.updateFormulaResult(formRes,
                     FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
+        }
+    }
+
+    @Override
+    public void invalidateResults(@NotNull Instance instance) {
+        super.invalidateResults(instance);
+        if (isRecompute(instance)) {
+            instance.deleteFromFormulaResults(FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
+            instance.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
+                    .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
+                        if (z.removeAnnotation(TopCSIScore.class) != null || z.removeAnnotation(ConfidenceScore.class) != null)
+                            instance.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
+                    }));
+            if (instance.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
+                instance.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class));
+                instance.updateCompoundID();
+            }
         }
     }
 

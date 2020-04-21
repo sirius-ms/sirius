@@ -205,6 +205,37 @@ public class Instance {
         }
     }
 
+    @SafeVarargs
+    public final synchronized void deleteFromFormulaResults(Class<? extends DataAnnotation>... components) {
+        compoundCache.getResults().forEach((k, v) -> {
+            try {
+                projectSpace().deleteFromFormulaResult(v, components);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
+            }
+        });
+
+        if (List.of(components).contains(FTree.class)) {
+            compoundCache.getResults().clear();
+            clearFormulaResultsCache();
+        } else {
+            formulaResultCache.forEach((k, v) -> List.of(components).forEach(v::removeAnnotation));
+        }
+    }
+
+    public final synchronized void deleteFormulaResults() {
+        compoundCache.getResults().forEach((k, v) -> {
+            try {
+                projectSpace().deleteFormulaResult(v);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
+            }
+        });
+
+        compoundCache.getResults().clear();
+        clearFormulaResultsCache();
+    }
+
     //remove from cache
     public synchronized void clearCompoundCache() {
         compoundCache.clearAnnotations();

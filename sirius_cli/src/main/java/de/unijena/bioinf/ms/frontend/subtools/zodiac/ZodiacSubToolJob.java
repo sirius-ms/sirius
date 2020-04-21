@@ -181,6 +181,7 @@ public class ZodiacSubToolJob extends DataSetJob {
 
             instances.forEach(this::invalidateResults);
 
+            //todo if this are non temporary fields, they have to be implemented as project-space entities
             try { //ensure that summary does not crash job
                 if (cliOptions.summaryFile != null)
                     ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
@@ -207,6 +208,22 @@ public class ZodiacSubToolJob extends DataSetJob {
             return null;
         }
         return anchors;
+    }
+
+    @Override
+    public void invalidateResults(@NotNull Instance instance) {
+        super.invalidateResults(instance);
+        if (isRecompute(instance)) {
+            instance.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
+                    .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
+                        if (z.removeAnnotation(ZodiacScore.class) != null)
+                            instance.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
+                    }));
+            if (instance.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
+                instance.getID().getRankingScoreTypes().remove(ZodiacScore.class);
+                instance.updateCompoundID();
+            }
+        }
     }
 
     @Override

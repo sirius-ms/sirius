@@ -58,7 +58,6 @@ public class TreeVisualizationPanel extends JPanel
     TreeViewerBridge jsBridge;
     JToolBar toolBar;
     public JComboBox<String> presetBox; // accessible from TreeViewerSettings
-    JLabel colorLegendText;
     JSlider scaleSlider;
     JButton saveTreeBtn;
     JButton advancedSettingsBtn;
@@ -168,8 +167,6 @@ public class TreeVisualizationPanel extends JPanel
                 backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
                     @Override
                     protected Boolean compute() throws Exception {
-
-
                         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
                         if (old != null && !old.isFinished()) {
                             old.cancel(false);
@@ -209,6 +206,12 @@ public class TreeVisualizationPanel extends JPanel
                         browser.clear(); //todo maybe not needed
                         SwingUtilities.invokeAndWait(() -> setToolbarEnabled(false));
                         return false;
+                    }
+
+                    @Override
+                    public void cancel(boolean mayInterruptIfRunning) {
+                        browser.cancel();
+                        super.cancel(mayInterruptIfRunning);
                     }
                 });
             } finally {
