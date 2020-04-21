@@ -311,6 +311,18 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
+    @SafeVarargs
+    public final void deleteFromFormulaResult(FormulaResultId resultId, Class<? extends DataAnnotation>... components) throws IOException {
+        final CompoundContainerId parentId = resultId.getParentId();
+        parentId.containerLock.lock();
+        try {
+            deleteFromContainer(FormulaResult.class, resultId, List.of(components));
+            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.DELETED, resultId, null, new HashSet<>(List.of(components))));
+        } finally {
+            parentId.containerLock.unlock();
+        }
+    }
+
     public final void deleteFormulaResult(FormulaResultId resultId) throws IOException {
         CompoundContainerId parentId = resultId.getParentId();
         parentId.containerLock.lock();
@@ -432,11 +444,16 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     final <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     void deleteContainer(Class<Container> klass, Id containerId) throws IOException {
-        configuration.getContainerSerializer(klass).deleteFromProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), (r, id) -> {
-            // write components
-            for (Class k : configuration.getAllComponentsForContainer(klass)) {
-                configuration.getComponentSerializer(klass, k).delete(r, id);
-            }
+        deleteFromContainer(klass, containerId, configuration.getAllComponentsForContainer(klass));
+    }
+
+    final <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
+    void deleteFromContainer(Class<Container> klass, Id containerId, List<Class> components) throws IOException {
+        //delete container components
+        configuration.getContainerSerializer(klass).deleteFromProjectSpace(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), (w, id) -> {
+            // delete components
+            for (Class k : components)
+                configuration.getComponentSerializer(klass, k).delete(w, id);
         }, containerId);
     }
 

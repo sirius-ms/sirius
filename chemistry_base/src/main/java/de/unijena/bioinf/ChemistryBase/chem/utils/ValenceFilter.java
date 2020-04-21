@@ -21,6 +21,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
@@ -79,11 +80,13 @@ public class ValenceFilter implements FormulaFilter {
     @Override
     public boolean isValid(MolecularFormula measuredNeutralFormula, Ionization ionization) {
         Set<PrecursorIonType> adducts = possibleAdducts.getAdducts(ionization);
-        if (adducts.size()==0) {
-            throw new RuntimeException("Ionization not known in ValenceFilter: "+ionization);
+        if (adducts.size() == 0) {
+            LoggerFactory.getLogger(getClass()).warn("Ionization not known in ValenceFilter: " + ionization);
+            return false;
         }
+
         for (PrecursorIonType ionType : adducts) {
-            if (isValid(measuredNeutralFormula, ionType)){
+            if (isValid(measuredNeutralFormula, ionType)) {
                 return true;
             }
         }
