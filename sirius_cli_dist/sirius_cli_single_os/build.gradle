@@ -21,7 +21,8 @@ jar {
     }
 
     from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.runtimeClasspath.filter {f ->!project.libExclude.stream().anyMatch{s -> f.name.startsWith(s)}}
+                .collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 

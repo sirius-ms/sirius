@@ -49,6 +49,7 @@ dependencies {
     compile group: 'org.apache.xmlgraphics', name: 'fop', version: '2.3'
 }
 
+
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.ms.middleware.SiriusGUIApplication"
 project.ext.set("arch", ['64'])
@@ -63,7 +64,8 @@ jar {
     }
 
     from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.runtimeClasspath.filter {f ->!project.libExclude.stream().anyMatch{s -> f.name.startsWith(s)}}
+                .collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 
