@@ -14,7 +14,6 @@ buildscript {
     }
     dependencies {
         classpath 'edu.sc.seis.gradle:launch4j:2.4.6'
-//        classpath 'org.apache.commons:commons-configuration2:2.4'
         classpath 'commons-configuration:commons-configuration:1.10'
     }
 }
@@ -37,16 +36,17 @@ ext {
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 
-    glpk_lib_version = '4.60'
-    clp_lib_version = '1.17.5'
     cdk_version = "2.3"
 
     jewelcli_version = '0.8.9'
     picocli_version = '4.1.4'//'3.9.5'
 
+    glpk_lib_version = '4.60'
+    clp_lib_version = '1.17.5'
+
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
-//    libExclude = ['gurobi-*.jar', 'cplex-*.jar']
+    libExclude = ['gurobi', 'cplex']
 
     jetbrains_version = "17.0.0"
 
@@ -78,6 +78,7 @@ ext {
     mztabm_version = System.properties.getProperty('de.unijena.bioinf.mztabm.version')
 }
 
+
 /*################### DISTRIBUTION STUFF ################### */
 project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")
@@ -92,6 +93,7 @@ allprojects {
     apply plugin: "com.jfrog.artifactory"
     apply plugin: 'java'
     apply plugin: 'maven-publish'
+    apply plugin: 'idea'
 
     sourceCompatibility = 11
     targetCompatibility = 11
@@ -125,9 +127,16 @@ allprojects {
         compile "org.jetbrains:annotations:$jetbrains_version"
         compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
 
-
-
         testCompile group: 'junit', name: 'junit', version: '4.12'
+    }
+
+    //there are some outdated incompatible trove dependencies in some libs.
+    // this is to exclude them and enforce the one we need.
+    configurations {
+        compile.exclude module: 'trove4j'
+        compileClasspath {
+            resolutionStrategy.force 'net.sf.trove4j:core:3.1.0'
+        }
     }
 
     sourceSets {
