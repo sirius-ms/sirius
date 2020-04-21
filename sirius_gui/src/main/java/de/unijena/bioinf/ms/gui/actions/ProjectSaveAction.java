@@ -43,7 +43,14 @@ public class ProjectSaveAction extends AbstractAction {
             final int state = jfc.showSaveDialog(MF);
             if (state == JFileChooser.CANCEL_OPTION || state == JFileChooser.ERROR_OPTION)
                 break;
-            final File selFile = jfc.getSelectedFile();
+            File selFile = jfc.getSelectedFile();
+
+            if (jfc.getFileFilter() instanceof ProjectArchivedFilter)
+                if (!selFile.getName().endsWith(".sirius"))
+                    selFile = new File(selFile.getParentFile(),selFile.getName() + ".sirius");
+
+
+
             if (!selFile.exists() || selFile.isDirectory() && Objects.requireNonNull(selFile.list()).length == 0) {
                 SiriusProperties.
                         setAndStoreInBackground(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selFile.getParentFile().getAbsolutePath());

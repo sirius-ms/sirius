@@ -15,11 +15,13 @@ import java.util.stream.Stream;
 
 public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
     public DBSelectionList() {
-        this(null);
+        this((String) null);
     }
 
     public DBSelectionList(@Nullable String descriptionKey) {
-        this(descriptionKey, SearchableDatabases.getAvailableDatabases());
+        this(descriptionKey, SearchableDatabases.getAvailableDatabases().stream().
+                filter(db -> !db.name().equals(DataSource.ADDITIONAL.realName) && !db.name().equals(DataSource.TRAIN.realName)).
+                collect(Collectors.toList()));
     }
 
     protected DBSelectionList(@Nullable String descKey, @NotNull DataSource... values) {
@@ -31,8 +33,12 @@ public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
                 collect(Collectors.toList()));
     }
 
+    public DBSelectionList(@NotNull List<SearchableDatabase> values) {
+        this(null, values);
+    }
+
     public DBSelectionList(@Nullable String descKey, @NotNull List<SearchableDatabase> values) {
-        super(values);
+        super(values, (a,b) -> a.name().equals(b.name()));
         if (descKey != null)
             GuiUtils.assignParameterToolTip(this, descKey);
     }

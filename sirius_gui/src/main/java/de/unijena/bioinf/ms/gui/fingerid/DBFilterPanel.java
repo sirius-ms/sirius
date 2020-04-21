@@ -1,30 +1,33 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FormulaResultBean>>, CustomDataSources.DataSourceChangeListener {
+    public final static Set<String> BLACK_LIST = Set.of(DataSource.ADDITIONAL.realName, DataSource.ALL.realName);
+
     private final List<FilterChangeListener> listeners = new LinkedList<>();
 
     protected long bitSet;
     protected List<JCheckBox> checkboxes;
     private final AtomicBoolean isRefreshing = new AtomicBoolean(false);
 
-    public DBFilterPanel(CandidateList sourceList) {
+
+    public DBFilterPanel(StructureList sourceList) {
         setLayout(new WrapLayout(FlowLayout.LEFT, 5, 1));
         this.checkboxes = new ArrayList<>(CustomDataSources.size());
         for (CustomDataSources.Source source : CustomDataSources.sources()) {
-            checkboxes.add(new JCheckBox(source.name()));
+            if (!BLACK_LIST.contains(source.name()))
+                checkboxes.add(new JCheckBox(source.name()));
         }
         addBoxes();
         CustomDataSources.addListener(this);
@@ -36,34 +39,24 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     }
 
     public void fireFilterChangeEvent() {
-        for (FilterChangeListener listener : listeners) {
-            listener.fireFilterChanged(bitSet);
-        }
+        listeners.forEach(l -> l.fireFilterChanged(bitSet));
     }
 
     protected void addBoxes() {
-        Collections.sort(checkboxes, new Comparator<JCheckBox>() {
-            @Override
-            public int compare(JCheckBox o1, JCheckBox o2) {
-                return o1.getText().toUpperCase().compareTo(o2.getText().toUpperCase());
-            }
-        });
+        checkboxes.sort(Comparator.comparing(o -> o.getText().toUpperCase()));
 
         this.bitSet = 0L;
         for (final JCheckBox box : checkboxes) {
             if (box.isSelected())
                 this.bitSet |= CustomDataSources.getSourceFromName(box.getText()).flag();
             add(box);
-            box.addChangeListener(new ChangeListener() {
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    if (!isRefreshing.get()) {
-                        if (box.isSelected())
-                            bitSet |= CustomDataSources.getSourceFromName(box.getText()).flag();
-                        else
-                            bitSet &= ~CustomDataSources.getSourceFromName(box.getText()).flag();
-                        fireFilterChangeEvent();
-                    }
+            box.addChangeListener(e -> {
+                if (!isRefreshing.get()) {
+                    if (box.isSelected())
+                        bitSet |= CustomDataSources.getSourceFromName(box.getText()).flag();
+                    else
+                        bitSet &= ~CustomDataSources.getSourceFromName(box.getText()).flag();
+                    fireFilterChangeEvent();
                 }
             });
         }

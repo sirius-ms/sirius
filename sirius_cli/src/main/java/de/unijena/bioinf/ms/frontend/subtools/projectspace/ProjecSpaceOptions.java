@@ -16,6 +16,11 @@ import java.util.regex.Pattern;
 public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> {
 
 
+
+    @CommandLine.Option(names = {"--repair-scores"},
+            description = "Remove CSI scores that have not Candidates anymore", hidden = true)
+    boolean repairScores;
+
     @CommandLine.Option(names = {"--delete-by-idx", "--di", "-d"}, split = ",",
             description = {"Delete all compounds that match the given indices from the given project-space."})
     private void makeDeleteIdxFilter(Set<Integer> idxs) {

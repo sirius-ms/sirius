@@ -7,7 +7,7 @@ import javax.swing.*;
 /**
  * Created by fleisch on 24.05.17.
  */
-public class FingerIDScoreBarRenderer extends ListStatBarTableCellRenderer {
+public class FingerIDScoreBarRenderer extends ListStatBarTableCellRenderer<FormulaScoreListStats> {
     public FingerIDScoreBarRenderer(FormulaScoreListStats stats) {
         super(stats);
     }
@@ -30,7 +30,7 @@ public class FingerIDScoreBarRenderer extends ListStatBarTableCellRenderer {
 
     @Override
     protected double getSum(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return ((FormulaScoreListStats) stats).getExpScoreSum();
+        return stats.getExpScoreSum();
     }
 
     @Override

@@ -4,8 +4,10 @@ import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -22,31 +25,38 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.inEDTAndWait;
 
 public class GuiProjectSpaceManager extends ProjectSpaceManager {
-    //    todo ringbuffer???
     protected static final Logger LOG = LoggerFactory.getLogger(GuiProjectSpaceManager.class);
-    public final BasicEventList<InstanceBean> COMPOUNT_LIST;
+    public final BasicEventList<InstanceBean> INSTANCE_LIST;
 
-    public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space) {
-        this(space, new BasicEventList<>());
+
+    protected final InstanceBuffer ringBuffer;
+
+    public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, int maxBufferSize) {
+        this(space, new BasicEventList<>(), maxBufferSize);
     }
 
-    public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList) {
-        this(space, compoundList, null);
+    public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, int maxBufferSize) {
+        this(space, compoundList, null, maxBufferSize);
     }
 
-    public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, @Nullable Function<Ms2Experiment, String> formatter) {
+    public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, @Nullable Function<Ms2Experiment, String> formatter, int maxBufferSize) {
         super(space, new InstanceBeanFactory(), formatter);
-        COMPOUNT_LIST = compoundList;
+        this.ringBuffer = new InstanceBuffer(maxBufferSize);
+        this.INSTANCE_LIST = compoundList;
+        final ArrayList<InstanceBean> buf = new ArrayList<>(size());
+        forEach(it -> buf.add((InstanceBean) it));
         inEDTAndWait(() -> {
-            COMPOUNT_LIST.clear();
-            forEach(ins -> COMPOUNT_LIST.add((InstanceBean) ins));
+            INSTANCE_LIST.clear();
+            INSTANCE_LIST.addAll(buf);
         });
 
-        ContainerListener.Defined createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
+        projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
             final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID(), Ms2Experiment.class);
-            inEDTAndWait(() -> COMPOUNT_LIST.add(inst));
+            inEDTAndWait(() -> INSTANCE_LIST.add(inst));
         })).register();
     }
+
+
 
     public void deleteCompounds(@Nullable final List<InstanceBean> insts) {
         if (insts == null || insts.isEmpty())
@@ -58,7 +68,8 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                 updateProgress(0, insts.size(), pro.get(), "Deleting...");
                 insts.iterator().forEachRemaining(inst -> {
                     try {
-                        inEDTAndWait(() -> COMPOUNT_LIST.remove(inst));
+                        ringBuffer.remove(inst);
+                        inEDTAndWait(() -> INSTANCE_LIST.remove(inst));
                         projectSpace().deleteCompound(inst.getID());
                     } catch (IOException e) {
                         LOG.error("Could not delete Compound: " + inst.getID(), e);
@@ -73,20 +84,42 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
     }
 
     public synchronized void deleteAll() {
-        deleteCompounds(COMPOUNT_LIST);
+        deleteCompounds(INSTANCE_LIST);
     }
 
-    public InputFilesOptions importOneExperimentPerLocation(@NotNull final List<File> rawFiles) {
-        final InputFilesOptions.MsInput inputFiles = Jobs.runInBackgroundAndLoad(MF, "Analyzing Files...", false, InstanceImporter.makeExpandFilesJJob(rawFiles)).getResult();
+
+    public void importOneExperimentPerLocation(@NotNull final List<File> inputFiles) {
         final InputFilesOptions inputF = new InputFilesOptions();
-        inputF.msInput = inputFiles;
+        inputF.msInput = Jobs.runInBackgroundAndLoad(MF, "Analyzing Files...", false,
+                InstanceImporter.makeExpandFilesJJob(inputFiles)).getResult();
         importOneExperimentPerLocation(inputF);
-        return inputF;
     }
 
     public void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
-        InstanceImporter importer = new InstanceImporter(this, x -> true, x -> true);
-        Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", true, importer.makeImportJJob(input));
+        boolean align = Jobs.runInBackgroundAndLoad(MF, "Checking for alignable input...", () ->
+                (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
+                .getResult();
+
+        // todo this is hacky we need some real view for that at some stage.
+        if (align)
+            align = new QuestionDialog(MF, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
+
+        if (align) {
+            Jobs.runInBackgroundAndLoad(MF, new LcmsAlignSubToolJob(input, this));
+        } else {
+            InstanceImporter importer = new InstanceImporter(this,
+                    x -> {
+                        if (x.getPrecursorIonType() != null) {
+                            return true;
+                        } else {
+                            LOG.warn("Skipping `" + x.getName() + "` because of Missing IonType! This is likely to be A empty Measurement.");
+                            return false;
+                        }
+                    },
+                    x -> true
+            );
+            Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", true, importer.makeImportJJob(input));
+        }
     }
 
     protected void copy(Path newlocation, boolean switchLocation) {

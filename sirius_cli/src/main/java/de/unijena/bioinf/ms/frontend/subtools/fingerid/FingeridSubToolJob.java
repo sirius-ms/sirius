@@ -15,12 +15,14 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.utils.NetUtils;
@@ -33,6 +35,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class FingeridSubToolJob extends InstanceJob {
+
+    public FingeridSubToolJob(JobSubmitter submitter) {
+        super(submitter);
+    }
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
@@ -65,7 +71,7 @@ public class FingeridSubToolJob extends InstanceJob {
                         .collect(Collectors.toList()));
 
         // do computation and await results
-        List<FingerIdResult> result = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+        List<FingerIdResult> result = submitJob(job).awaitResult();
 
         final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotationOrThrow(FTree.class), SScored::getCandidate));
 
@@ -106,7 +112,7 @@ public class FingeridSubToolJob extends InstanceJob {
             );
         });
 
-        SiriusJobs.getGlobalJobManager().submitJobsInBatches(tanimotoJobs).forEach(JJob::getResult);
+        submitJobsInBatchesByThreads(tanimotoJobs, SiriusJobs.getCPUThreads()).forEach(JJob::getResult);
 
         //annotate FingerIdResults to FormulaResult
         for (FingerIdResult structRes : result) {
@@ -133,5 +139,10 @@ public class FingeridSubToolJob extends InstanceJob {
     @Override
     protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
         return new Class[]{FTree.class, FBCandidates.class, FBCandidateFingerprints.class};
+    }
+
+    @Override
+    public String getToolName() {
+        return PicoUtils.getCommand(FingerIdOptions.class).name();
     }
 }

@@ -3,11 +3,10 @@ package de.unijena.bioinf.ms.gui.mainframe;
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
-import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
@@ -20,9 +19,8 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableExperimentLis
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.projectspace.ProjectSpaceEvent;
-import de.unijena.bioinf.projectspace.ProjectSpaceIO;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,9 +29,9 @@ import java.awt.dnd.*;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame implements DropTargetListener {
@@ -118,7 +116,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         super(ApplicationCore.VERSION_STRING());
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this); //todo do we want to have the left table as drop target?
+        new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
     }
 
     public void setTitlePath(String path) {
@@ -127,12 +125,19 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     public void openNewProjectSpace(Path selFile) {
-        final BasicEventList<InstanceBean> psList = this.ps.COMPOUNT_LIST;
+        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile));
+    }
+
+    public void createNewProjectSpace(Path selFile) {
+        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(selFile));
+    }
+
+    protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace){
+        final BasicEventList<InstanceBean> psList = this.ps.INSTANCE_LIST;
         this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
-            SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile);
-            //todo we need to cancel all running computations here.
-            System.out.println("todo we need to cancel all running computations here!");
-            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList);
+            final SiriusProjectSpace ps = makeSpace.get();
+            Jobs.cancelALL();
+            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY,9));
             inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
             gps.projectSpace().addProjectSpaceListener(event -> {
                 if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
@@ -185,12 +190,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     }
 
-    @Override
-    public void dispose() {
-        resultsPanel.dispose();
-        super.dispose();
-    }
-
 
     //////////////////////////////////////////////////
     ////////////////// drag and drop /////////////////
@@ -224,28 +223,30 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        final List<File> newFiles = resolveFileList(DragAndDrop.getFileListFromDrop(dtde));
         boolean openNewProject = false;
 
-        if (newFiles.size() > 0) {
-            if (newFiles.size() == 1 && (ProjectSpaceIO.isExistingProjectspaceDirectory(newFiles.get(0).toPath()) || ProjectSpaceIO.isZipProjectSpace(newFiles.get(0).toPath())))
+        final InputFilesOptions inputF = new InputFilesOptions();
+        inputF.msInput = Jobs.runInBackgroundAndLoad(MF, "Analyzing Dropped Files...", false,
+                InstanceImporter.makeExpandFilesJJob(DragAndDrop.getFileListFromDrop(dtde))).getResult();
+
+        if (!inputF.msInput.isEmpty()) {
+            if (inputF.msInput.isSingleProject())
                 openNewProject = new QuestionDialog(MF, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
             if (openNewProject)
-                MF.openNewProjectSpace(newFiles.get(0).toPath());
+                MF.openNewProjectSpace(inputF.msInput.projects.get(0));
             else
-                importDragAndDropFiles(newFiles);
-
+                importDragAndDropFiles(inputF);
         }
     }
 
 
-    private void importDragAndDropFiles(List<File> rawFiles) {
-        final InputFilesOptions input = ps.importOneExperimentPerLocation(rawFiles); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
+    private void importDragAndDropFiles(InputFilesOptions files) {
+        ps.importOneExperimentPerLocation(files); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
 
         // check if unknown files contain csv files with spectra
         final CSVFormatReader csvChecker = new CSVFormatReader();
-        List<File> csvFiles = input.msInput != null ? input.msInput.unknownFiles.stream().map(Path::toFile)
+        List<File> csvFiles = files.msInput != null ? files.msInput.unknownFiles.stream().map(Path::toFile)
                 .filter(f -> csvChecker.isCompatible(f) || f.getName().toLowerCase().endsWith(".txt"))
                 .collect(Collectors.toList()) : Collections.emptyList();
 
@@ -257,24 +258,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         LoadController lc = new LoadController(this);
         lc.addSpectra(csvFiles, msFiles, mgfFiles);
         lc.showDialog();
-    }
-
-    public static List<File> resolveFileList(List<File> files) {
-        final ArrayList<File> filelist = new ArrayList<>();
-        if (files != null) {
-            for (File f : files) {
-                if (f.isDirectory() && !ProjectSpaceIO.isExistingProjectspaceDirectory(f.toPath())) {
-                    final File[] fl = f.listFiles();
-                    if (fl != null) {
-                        for (File g : fl)
-                            if (!g.isDirectory()) filelist.add(g);
-                    }
-                } else {
-                    filelist.add(f);
-                }
-            }
-        }
-        return filelist;
     }
 
     public static void inEDTAndWait(@NotNull final Runnable run) {

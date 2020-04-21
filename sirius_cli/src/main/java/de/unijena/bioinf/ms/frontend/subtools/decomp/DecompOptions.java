@@ -8,7 +8,8 @@ import picocli.CommandLine;
 
 import java.nio.file.Path;
 
-@CommandLine.Command(name = "decomp", aliases = {}, description = "<STANDALONE> Small tool to decompose masses with given deviation, ionization, chemical alphabet and chemical filter",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "decomp", aliases = {}, description = {"<STANDALONE> Small tool to decompose masses with given deviation, ionization, chemical alphabet and chemical filter."},
+        versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class DecompOptions implements StandaloneTool<DecompWorkflow> {
 
     @CommandLine.Option(names = {"--ppm", "-p"}, defaultValue = "20", description = {"Relative mass error in ppm."})

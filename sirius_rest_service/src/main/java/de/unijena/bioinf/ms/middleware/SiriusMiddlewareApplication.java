@@ -2,6 +2,8 @@ package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -31,8 +33,8 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             });
 
             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-            rootOptions = new CLIRootOptions(configOptionLoader, new ProjectSpaceManagerFactory.Default());
-            run(args, () -> new MiddlewareWorkflowBuilder<>(rootOptions, configOptionLoader));
+            rootOptions = new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default());
+            run(args, () -> new MiddlewareWorkflowBuilder<>(rootOptions, configOptionLoader, new SimpleInstanceBuffer.Factory()));
         } catch (IOException e) {
             e.printStackTrace();
         } finally {

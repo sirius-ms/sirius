@@ -41,33 +41,33 @@ public class StructureSearcher implements Runnable {
         this.shutdown = true;
     }
 
-    public void reloadList(CandidateList candidateList) {
+    public void reloadList(StructureList structureList) {
         queue.clear();
         synchronized (this) {
-            updater.sourceList = candidateList;
-            queue = new ArrayBlockingQueue<>(candidateList.getElementList().size() + 10);
-            queue.addAll(candidateList.getElementList());
+            updater.sourceList = structureList;
+            queue = new ArrayBlockingQueue<>(structureList.getElementList().size() + 10);
+            queue.addAll(structureList.getElementList());
             notifyAll();
         }
     }
 
-    public void reloadList(CandidateList candidateList, int highlight, int activeCandidate) {
+    public void reloadList(StructureList structureList, int highlight, int activeCandidate) {
         queue.clear();
         synchronized (this) {
-            updater.sourceList = candidateList;
+            updater.sourceList = structureList;
             this.highlight = highlight;
             if (highlight < 0 || activeCandidate < 0) {
                 this.queue.clear();
             } else {
-                queue = new ArrayBlockingQueue<FingerprintCandidateBean>(candidateList.getElementList().size() + 10);
+                queue = new ArrayBlockingQueue<FingerprintCandidateBean>(structureList.getElementList().size() + 10);
 
-                int i = activeCandidate + 1, j = activeCandidate, n = candidateList.getElementList().size();
+                int i = activeCandidate + 1, j = activeCandidate, n = structureList.getElementList().size();
                 while ((j >= 0 && j < n) || (i >= 0 && i < n)) {
                     if (j >= 0) {
-                        queue.add(candidateList.getElementList().get(j--));
+                        queue.add(structureList.getElementList().get(j--));
                     }
                     if (i < n) {
-                        queue.add(candidateList.getElementList().get(i++));
+                        queue.add(structureList.getElementList().get(i++));
                     }
                 }
             }
@@ -105,7 +105,7 @@ public class StructureSearcher implements Runnable {
 
     private static class Update implements Runnable, Cloneable {
         private FingerprintCandidateBean c;
-        private CandidateList sourceList;
+        private StructureList sourceList;
 
         @Override
         public void run() {

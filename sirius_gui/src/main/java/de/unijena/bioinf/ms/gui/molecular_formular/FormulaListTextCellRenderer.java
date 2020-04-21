@@ -1,14 +1,14 @@
 package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
-import org.slf4j.LoggerFactory;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.InputStream;
+import java.util.Optional;
+import java.util.function.Function;
 
 public class FormulaListTextCellRenderer extends JLabel implements ListCellRenderer<FormulaResultBean> {
     public static final DummySiriusResult PROTOTYPE = new DummySiriusResult();
@@ -24,37 +24,26 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 
 //    private DecimalFormat numberFormat;
 
-    private final FormulaScoreListStats stats;
+    private final Function<FormulaResultBean, Double> scoreFunc;
+    private final Function<FormulaResultBean, Boolean> bestHitFunc;
 
-    public FormulaListTextCellRenderer(FormulaScoreListStats stats) {
+
+    public FormulaListTextCellRenderer(Function<FormulaResultBean, Double> scoreFunc, Function<FormulaResultBean,Boolean> bestHitFuction) {
         this.setPreferredSize(new Dimension(250, 45));
         initColorsAndFonts();
         sre = null;
 //        this.numberFormat = new DecimalFormat("#0.000000");
-        this.stats = stats;
+        this.scoreFunc = scoreFunc;
+        this.bestHitFunc = bestHitFuction;
     }
 
     public void initColorsAndFonts() {
         //todo replace font with them from utils class
-        try {
-            InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
-            Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-            mfFont = tempFont.deriveFont(13f);
-            propertyFont = tempFont.deriveFont(12f);
-            statusFont = tempFont.deriveFont(24f);
-            rankFont = tempFont.deriveFont(16f);
-        } catch (Exception e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-        }
-
-        try {
-            InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans.ttf");
-            Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-            valueFont = tempFont.deriveFont(12f);
-
-        } catch (Exception e) {
-            LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-        }
+        mfFont = Fonts.FONT_BOLD.deriveFont(13f);
+        propertyFont = Fonts.FONT_BOLD.deriveFont(12f);
+        statusFont = Fonts.FONT_BOLD.deriveFont(24f);
+        rankFont = Fonts.FONT_BOLD.deriveFont(16f);
+        valueFont = Fonts.FONT.deriveFont(12f);
 
         selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
         selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
@@ -63,7 +52,6 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         unevenBackground = new Color(213, 227, 238);
         activatedForeground = UIManager.getColor("List.foreground");
         deactivatedForeground = Color.GRAY;
-
     }
 
     @Override
@@ -73,14 +61,14 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         this.sre = value;
 
         if (isSelected) {
-            if (value.isBestHit()) {
+            if (bestHitFunc.apply(value)) {
                 this.backColor = Colors.LIST_SELECTED_GREEN;
             } else {
                 this.backColor = this.selectedBackground;
             }
             this.foreColor = this.selectedForeground;
         } else {
-            if (value.isBestHit()) {
+            if (bestHitFunc.apply(value)) {
                 this.backColor = Colors.LIST_LIGHT_GREEN;
             } else {
                 if (index % 2 == 0) this.backColor = this.evenBackground;
@@ -129,7 +117,8 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         g2.setFont(propertyFont);
         g2.drawString("Score:", 10, 35);
         g2.setFont(valueFont);
-        g2.drawString(String.format("%.2f", (Math.exp(sre.getScoreValue(SiriusScore.class)) / stats.getExpScoreSum() * 100d)) + "%", 15 + scoreLength, 35);
+
+        g2.drawString(String.format("%.3f", scoreFunc.apply(sre)) + "%", 15 + scoreLength, 35);
     }
 
     private static class DummySiriusResult extends FormulaResultBean {
@@ -153,6 +142,11 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         @Override
         public <T extends FormulaScore> double getScoreValue(Class<T> scoreType) {
             return 9000;
+        }
+
+        @Override
+        public <T extends FormulaScore> Optional<T> getScore(Class<T> scoreType) {
+            return Optional.of(FormulaScore.NA(scoreType));
         }
 
         public DummySiriusResult() {

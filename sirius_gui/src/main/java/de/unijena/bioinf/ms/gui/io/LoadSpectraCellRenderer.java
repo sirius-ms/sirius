@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.io;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.io.spectrum.SpectrumContainer;
 import org.slf4j.LoggerFactory;
 
@@ -39,19 +40,14 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 	
 	public void initColorsAndFonts(){
 		try{
-			InputStream font = LoadSpectraCellRenderer.class.getResourceAsStream("/ttf/DejaVuSans-Bold.ttf");
-			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, font);
-			msLevelFont = tempFont.deriveFont(12f);
-			
-			propertyFont = tempFont.deriveFont(12f);
+			msLevelFont = Fonts.FONT_BOLD.deriveFont(12f);
+			propertyFont = Fonts.FONT_BOLD.deriveFont(12f);
 		}catch(Exception e){
 			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
 		}
 		
 		try{
-			InputStream font = LoadSpectraCellRenderer.class.getResourceAsStream("/ttf/DejaVuSans.ttf");
-			Font tempFont = Font.createFont(Font.TRUETYPE_FONT, font);
-			valueFont = tempFont.deriveFont(12f);
+			valueFont = Fonts.FONT.deriveFont(12f);
 			
 		}catch(Exception e){
 			LoggerFactory.getLogger(this.getClass()).error(e.getMessage(),e);
@@ -90,17 +86,13 @@ public class LoadSpectraCellRenderer extends JLabel implements ListCellRenderer<
 	
 	@Override
 	public void paint(Graphics g){
-		
-		Graphics2D g2 = (Graphics2D) g; 
-		
+		Graphics2D g2 = (Graphics2D) g;
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-		
 		g2.setColor(this.backColor);
 		
 		g2.fillRect(0, 0, (int) this.getSize().getWidth(), (int) this.getSize().getWidth());
 		
 		FontMetrics msLevelFm = g2.getFontMetrics(this.msLevelFont);
-		FontMetrics propertyFm = g2.getFontMetrics(this.propertyFont);
 		FontMetrics valueFm = g2.getFontMetrics(this.valueFont);
 		
 		g2.setColor(this.foreColor);

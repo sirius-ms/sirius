@@ -15,6 +15,7 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
@@ -58,7 +59,7 @@ public class ComputeAllAction extends AbstractAction {
         if (isActive.get()) {
             Jobs.cancelALL();
         } else {
-            new BatchComputeDialog(MF, MF.getCompounds());
+            new BatchComputeDialog(MF, List.copyOf(MF.getCompounds()));
         }
     }
 

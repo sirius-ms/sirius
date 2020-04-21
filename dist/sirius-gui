@@ -19,4 +19,4 @@ else
     APP_HOME=$(dirname "$SELF_PATH")
 fi
 
-"$APP_HOME"/sirius --gui
+"$APP_HOME"/sirius gui

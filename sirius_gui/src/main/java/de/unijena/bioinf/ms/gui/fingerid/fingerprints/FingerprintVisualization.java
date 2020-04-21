@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
@@ -8,6 +7,7 @@ import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
+import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import gnu.trove.list.array.TIntArrayList;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
@@ -50,7 +50,8 @@ class FingerprintVisualization {
                 final String[] linetabs = aline.split("\t");
                 final String inchi = linetabs[2];
                 final String inchikey = linetabs[1];
-                final IAtomContainer molecule = igf.getInChIToStructure(inchi, SilentChemObjectBuilder.getInstance()).getAtomContainer();
+                final String smiles = linetabs[3];
+                final IAtomContainer molecule = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles);
                 final int[][] matrix = AdjacencyMatrix.getMatrix(molecule);
                 final IBitFingerprint fp = fingerprinter.getBitFingerprint(molecule);
                 final CircularFingerprinter.FP[] details = fingerprinter.getFingerprintDetails();
@@ -70,8 +71,8 @@ class FingerprintVisualization {
                             addAromaticRings(molecule, matrix, atomi, atom, ids, inds);
                         }
                         if (substructures[i]==null || !aroma) {
-                            final String smiles = SmilesGenerator.absolute().aromatic().create(AtomContainerManipulator.extractSubstructure(molecule, inds.toArray()));
-                            substructures[i] = smiles;
+                            final String asmiles = SmilesGenerator.absolute().aromatic().create(AtomContainerManipulator.extractSubstructure(molecule, inds.toArray()));
+                            substructures[i] = asmiles;
                             atomSizes[i+ECFP_OFFSET] = x.atoms.length;
                             addNeighbours(molecule, matrix, ids, inds);
                             final String smart = SmilesGenerator.absolute().aromatic().create(AtomContainerManipulator.extractSubstructure(molecule, inds.toArray()));
@@ -84,7 +85,7 @@ class FingerprintVisualization {
                 if (fingerprint==null) {
                     // compute it...
                     final Fingerprinter fingerprinter1 = Fingerprinter.getFor(CdkFingerprintVersion.getComplete());
-                    fingerprint = new BooleanFingerprint(CdkFingerprintVersion.getComplete(), fingerprinter1.fingerprintsToBooleans(fingerprinter1.computeFingerprints(molecule)));
+                    fingerprint = new FixedFingerprinter(CdkFingerprintVersion.getDefault()).computeFingerprintFromSMILES(smiles);
                 }
                 if (fingerprint != null) {
 
@@ -203,6 +204,7 @@ class FingerprintVisualization {
     }
 
     protected String[] exampleSmiles;
+    protected String smarts;
     protected int numberOfMatchesAtoms;
 
     protected static FingerprintVisualization[] read() throws IOException {
@@ -221,9 +223,10 @@ class FingerprintVisualization {
 
     private FingerprintVisualization(String... tabs) {
         final CdkFingerprintVersion cdk = CdkFingerprintVersion.getComplete();
-        exampleSmiles = new String[(tabs.length-2)];
+        exampleSmiles = new String[(tabs.length-3)];
         int k=0;
-        for (int i=2; i < tabs.length; ++i) {
+        smarts = tabs[2];
+        for (int i=3; i < tabs.length; ++i) {
             exampleSmiles[k++] = tabs[i];
         }
         numberOfMatchesAtoms = Integer.parseInt(tabs[1]);
@@ -235,6 +238,10 @@ class FingerprintVisualization {
 
     public String getExample(int num) {
         return exampleSmiles[num];
+    }
+
+    public String getSmarts() {
+        return smarts;
     }
 
     public int getMatchSize() {

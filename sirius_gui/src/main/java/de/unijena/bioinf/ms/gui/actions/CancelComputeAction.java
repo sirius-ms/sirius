@@ -54,7 +54,8 @@ public class CancelComputeAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Jobs.cancel(MF.getCompoundListSelectionModel().getSelected());
+        System.out.println("NOT Implemented");
+//        Jobs.cancel(MF.getCompoundListSelectionModel().getSelected());
     }
 
 

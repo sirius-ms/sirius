@@ -43,7 +43,7 @@ public class ProjectExportAction extends AbstractAction {
         File selectedFile = null;
 
         while (selectedFile == null) {
-            int returnval = jfc.showSaveDialog(MF);
+            int returnval = jfc.showDialog(MF,"SaveCopy");
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
 
@@ -55,7 +55,6 @@ public class ProjectExportAction extends AbstractAction {
                     );
                 }
 
-                String name = selFile.getName();
                 if (!selFile.getAbsolutePath().endsWith(".sirius")) {
                     selFile = new File(selFile.getAbsolutePath() + ".sirius");
                 }

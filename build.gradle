@@ -13,7 +13,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'edu.sc.seis.gradle:launch4j:2.4.4'
+        classpath 'edu.sc.seis.gradle:launch4j:2.4.6'
 //        classpath 'org.apache.commons:commons-configuration2:2.4'
         classpath 'commons-configuration:commons-configuration:1.10'
     }
@@ -25,9 +25,15 @@ plugins {
 
 //Global Properties
 ext {
+    // version for bundeled JRE
+    jre_version = '11.0.7'
+    zulu_jre_version = '11.39.15'
+    //jre path relative tu app home
+    jre_path = 'zulu'
+
     //version for external libraries
     slf4j_version = '1.7.25'
-    jjobs_version = '0.9.14-SNAPSHOT'
+    jjobs_version = '0.9.17-SNAPSHOT'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 
@@ -40,7 +46,7 @@ ext {
 
     //locations of runtime libraries
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
-    libExclude = ['gurobi-*.jar', 'cplex-*.jar']
+//    libExclude = ['gurobi-*.jar', 'cplex-*.jar']
 
     jetbrains_version = "17.0.0"
 
@@ -155,10 +161,12 @@ task downloadGLPK(type: Copy) {
             Files.createDirectories(dir)
 
             def glpkZipFile = Paths.get('glpk.zip')
+            getLogger().lifecycle("Downloading glpk...")
             def file = dir.resolve(glpkZipFile).newOutputStream()
             file << glpkURL.openStream()
             file.close()
 
+            getLogger().lifecycle("Unpacking glpk...")
             from zipTree(dir.resolve(glpkZipFile).toFile())
             into dir.toFile()
         }
@@ -177,16 +185,39 @@ task downloadCLP(type: Copy) {
             Files.createDirectories(dir)
 
             def zipFile = Paths.get('clp.zip')
+            getLogger().lifecycle("Downloading CLP...")
             def file = dir.resolve(zipFile).newOutputStream()
             file << url.openStream()
             file.close()
 
+            getLogger().lifecycle("Unpacking CLP...")
             from zipTree(dir.resolve(zipFile).toFile())
             into dir.toFile()
         }
     }
 }
 
+task downloadJRE(type: Copy) {
+    def zuluURL = new URL("https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/zulu${zulu_jre_version}-ca-fx-jre${jre_version}.zip")
+    project.ext.set("jreBuildPath", getBuildDir().toPath().resolve('tmp/zulu/').toFile())
+
+    java.nio.file.Path dir = project.jreBuildPath.toPath()
+    def zipFileToDownload = dir.getParent().resolve("zuluFX.zip")
+    if (!dir.toFile().exists()) {
+        copy {
+            Files.createDirectories(dir)
+            if (!Files.exists(zipFileToDownload)) {
+                getLogger().lifecycle("Downloading Zulu JREs")
+                def file = zipFileToDownload.newOutputStream()
+                file << zuluURL.openStream()
+                file.close()
+            }
+            getLogger().lifecycle("Unpacking Zulu JREs")
+            from zipTree(zipFileToDownload.toFile())
+            into dir.toFile()
+        }
+    }
+}
 
 /*################### Building the Documentation ################### */
 
@@ -345,7 +376,6 @@ subprojects {
 
     /*################### Windows release Stuff ################### */
     launch4j {
-
         icon = getRootProject().getRootDir().toPath().resolve('dist/sirius.ico').toFile()
         copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
         companyName = "Friedrich-Schiller-University Jena"
@@ -353,37 +383,51 @@ subprojects {
         textVersion = project.version
         supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
 
-        initialHeapPercent = 50
+        initialHeapSize = 1024 // initial heap not too big improves startup time on windows
+        maxHeapSize = 4096
         maxHeapPercent = 80
 
         dontWrapJar = true
-        jdkPreference = "preferJre"
-
-        classpath.add('./lib/*')
+        jdkPreference = 'preferJre'
+        classpath.add(project.jar.archiveFileName.get())
         classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
-        println(classpath)
+        println("================THE PATH: $classpath")
     }
 
     /*################### Linux release Stuff ################### */
     startScripts {
+        classpath = files(project.jar.archiveFileName)
         applicationName = "${project.appName}"
         def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib'
-
-//        defaultJvmOpts = ["-Djava.library.path=\\\"${siriusLibPath}\\\" -XX:+UseG1GC -XX:+UseStringDeduplication"]
         doLast {
-            def lines = unixScript.text.split(System.lineSeparator())
-            int insertIndex = -1
-            for (int i = 0; i < lines.length; i++) {
+            def lines = unixScript.text.split(System.lineSeparator()) as List
+            //classpath and opts
+            int insertOptsIndex = -1
+            for (int i = 0; i < lines.size(); i++) {
                 if (lines[i].startsWith('CLASSPATH=')) {
                     lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
                 }
                 if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
-                    insertIndex = i - 1
+                    insertOptsIndex = i - 1
                     lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\" -XX:+UseG1GC -XX:+UseStringDeduplication\"")
                 }
             }
-            lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
-            lines = (lines as List).plus(insertIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
+            lines = lines.plus(insertOptsIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
+            lines = lines.plus(insertOptsIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
+
+            //bundled JRE stuff
+            int insertJREIndex = -1
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines[i].startsWith('# Determine the Java command to use to start the JVM.'))
+                    if (lines[i + 1].startsWith('if [ -n "$JAVA_HOME" ] ; then')) {
+                        lines[i + 1] = 'elif [ -n "$JAVA_HOME" ] ; then'
+                        insertJREIndex = i + 1
+
+                    }
+            }
+            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
+            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/bin/java\"")
+
             unixScript.text = lines.join(System.lineSeparator())
         }
     }
@@ -393,13 +437,13 @@ subprojects {
 
 task sourceJar(type: Jar) {
     group = 'build'
-    classifier = 'sources'
+    archiveClassifier.set('sources')
     from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
     group = 'documentation'
-    classifier = 'javadoc'
+    archiveClassifier.set('javadoc')
     from javadoc.destinationDir
 }
 
@@ -472,13 +516,13 @@ task refreshDownloadLinks {
                 "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
                 "",
                 "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
-                "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32.zip) / " +
-                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
-                "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32.zip) / " +
-                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
+                "##### This versions have the JRE already included! Just download, unpack and execute.",
+                "- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
+                "- for Linux [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
                 "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
                 "",
                 "### SIRIUS+CSI:FingerID Commandline only - Version $version (${new Date().format('yyyy-MM-dd')})",
+                "##### [Java Runtime Environment 11 (JRE-11)](https://www.azul.com/downloads/zulu-community/?version=java-11-lts&architecture=x86-64-bit&package=jre) or higher required.",
                 "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32-headless.zip) / " +
                         "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
                 "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32-headless.zip) / " +

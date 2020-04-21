@@ -18,22 +18,17 @@
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
-import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 /**
  * This is for SIRIUS specific parameters.
@@ -184,7 +179,7 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
 
     @Override
     public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
-        return () -> new SiriusSubToolJob(this);
+        return (sub) -> new SiriusSubToolJob(this, sub);
     }
 
 

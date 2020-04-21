@@ -111,10 +111,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }
 
         @Override
-        public void paint(Graphics graphics) {
-            super.paint(graphics);
+        public void paintComponent(Graphics graphics) {
+            super.paintComponent(graphics);
             if (agreement == null || agreement.indizes.length == 0) return;
             final Graphics2D g = (Graphics2D) graphics;
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
             final int numberOfCols = Math.min(agreement.indizes.length, (getWidth() - 2) / CELL_SIZE);
             final int numberOfRows = ((agreement.indizes.length + numberOfCols - 1) / numberOfCols);
             agreement.setNumberOfCols(numberOfCols);
@@ -170,8 +172,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     private static final int DB_LABEL_PADDING = 4;
 
-    public class DatabasePanel extends JPanel {
-        private final Font dbPanelFont = getFont().deriveFont(Font.BOLD, 12);
+    public static class DatabasePanel extends JPanel {
+        private final Font dbPanelFont = Fonts.FONT_BOLD.deriveFont(12f);
 
         public DatabasePanel() {
             setOpaque(false);
@@ -204,8 +206,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             setFont(font);
             setOpaque(false);
             setPreferredSize(new Dimension(width, height));
-
-
         }
 
         private Color color() {
@@ -221,6 +221,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         public void paint(Graphics graphics) {
             super.paint(graphics);
             final Graphics2D g = (Graphics2D) graphics;
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
             final FontMetrics m = getFontMetrics(getFont());
             final int tw = m.stringWidth(label.name);
             final int th = m.getHeight();
@@ -239,7 +240,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             g.fillRoundRect(2, 2, w, h, 4, 4);
             g.setColor(Color.BLACK);
             g.drawRoundRect(2, 2, w, h, 4, 4);
-            g.setColor(Color.WHITE);
+            g.setColor(color.equals(Colors.DB_CUSTOM) ? Color.BLACK : Color.WHITE);
             g.drawString(label.name, 2 + (w - tw) / 2, h - (h - th) / 2);
         }
     }
@@ -260,7 +261,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }
 
         @Override
-        public void paint(Graphics g) {
+        public void paintComponent(Graphics g) {
             ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             if (Double.isNaN(logP)) return;
             g.setFont(font);
@@ -292,7 +293,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }
 
         @Override
-        public void paint(Graphics g) {
+        public void paintComponent(Graphics g) {
             ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             if (Double.isNaN(score)) return;
             g.setFont(nameFont);

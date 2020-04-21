@@ -33,7 +33,7 @@ public class ExperimentListView extends JScrollPane {
         compoundListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         compoundListView.setCellRenderer(new CompoundCellRenderer());
 
-        this.expPopMenu = new SiriusExperimentPopUpMenu();
+        this.expPopMenu = new CompoundContextMenu();
 
         compoundListView.addMouseListener(new MouseListener() {
             @Override

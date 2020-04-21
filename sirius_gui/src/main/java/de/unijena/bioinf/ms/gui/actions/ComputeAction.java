@@ -8,12 +8,13 @@ package de.unijena.bioinf.ms.gui.actions;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.ms.gui.configs.Icons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -27,7 +28,7 @@ public class ComputeAction extends AbstractAction {
         putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
         putValue(Action.SHORT_DESCRIPTION, "Compute selected compound(s)");
 
-        setEnabled(!MF.getCompoundListSelectionModel().isSelectionEmpty());
+        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundListSelectionModel()));
 
         MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -35,7 +36,7 @@ public class ComputeAction extends AbstractAction {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                setEnabled(!selection.isSelectionEmpty());
+                setEnabled(SiriusActions.notComputingOrEmpty(selection));
             }
         });
     }
@@ -43,7 +44,7 @@ public class ComputeAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!MF.getCompoundListSelectionModel().isSelectionEmpty()) {
-            new BatchComputeDialog(MF, MF.getCompoundListSelectionModel().getSelected());
+            new BatchComputeDialog(MF, List.copyOf(MF.getCompoundListSelectionModel().getSelected()));
         }
     }
 }

@@ -51,8 +51,6 @@ import java.util.Locale;
 import java.util.Map;
 
 public class CandidateListDetailView extends CandidateListView implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>, MouseListener, ActionListener {
-
-
     public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
     public static final Color INVERT_HIGHLIGHTED_COLOR2 = new Color(255, 197, 0, 192);
     public static final Color PRIMARY_HIGHLIGHTED_COLOR = new Color(0, 100, 255, 128);
@@ -73,12 +71,12 @@ public class CandidateListDetailView extends CandidateListView implements Active
     private JTextField smartFilterTextField;
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
-    public CandidateListDetailView(CandidateList sourceList) {
+    public CandidateListDetailView(StructureList sourceList) {
         super(sourceList);
         candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
-        candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.scoreStats, this));
+        candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.csiScoreStats, this));
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -301,9 +299,6 @@ public class CandidateListDetailView extends CandidateListView implements Active
     public void resultsChanged(InstanceBean experiment, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
         if (sre != null)
             this.structureSearcher.reloadList(source);
-    }
-
-    public void resultsChanged() {
         filterByMolecularPropertyButton.setSelected(false);
     }
 

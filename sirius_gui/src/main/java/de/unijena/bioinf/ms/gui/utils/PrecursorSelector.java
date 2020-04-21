@@ -9,15 +9,14 @@ import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.MsExperiments;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.io.spectrum.SpectrumContainer;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import org.jdesktop.swingx.autocomplete.ObjectToStringConverter;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -185,15 +184,7 @@ public class PrecursorSelector extends JPanel {
         private DecimalFormat numberFormatMass = new DecimalFormat("#0.0000");
 
         MyListCellRenderer() {
-            try {
-                InputStream fontFile = getClass().getResourceAsStream("/ttf/DejaVuSans.ttf");
-                Font tempFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-                final Font textfont = tempFont.deriveFont(12f);
-                if (textfont != null)
-                    defaultRenderer.setFont(textfont);
-            } catch (Exception e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            }
+            defaultRenderer.setFont(Fonts.FONT.deriveFont(12f));
         }
 
         @Override
