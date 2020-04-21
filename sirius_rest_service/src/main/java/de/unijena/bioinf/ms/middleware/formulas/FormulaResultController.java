@@ -1,6 +1,8 @@
 package de.unijena.bioinf.ms.middleware.formulas;
 
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
@@ -70,6 +72,14 @@ public class FormulaResultController extends BaseApiController {
         FTree fTree = fResult.map(fr -> fr.getAnnotation(FTree.class).orElse(null)).orElse(null);
         return fTree; //TODO: additional class for fragmentation tree whose objects can be displayed
         // The FTree object needs an extra class for JSON. It can't be displayed well. Nevertheless, it works with attributes of the FTree object.
+    }
+
+    @GetMapping(value = "formulas/{fid}/fingerprint", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public FingerprintId getFingerprint(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid, @RequestParam(required = false) boolean asDeterministic){
+        SiriusProjectSpace projectSpace = super.projectSpace(pid);
+        Optional<FormulaResult> fResult = this.getAnnotatedFormulaResult(projectSpace, cid, fid, FingerprintResult.class);
+        return fResult.map(fr -> fr.getAnnotation(FingerprintResult.class).
+                map(fpResult -> new FingerprintId(fpResult, asDeterministic)).orElse(null)).orElse(null);
     }
 
     private Optional<FormulaResult> getAnnotatedFormulaResult(SiriusProjectSpace projectSpace, String cid, String fid, Class<? extends DataAnnotation>... components){
