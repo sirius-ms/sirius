@@ -21,6 +21,25 @@ public class BitsetOps {
         else vec[word] &= ~(1L<<bit);
     }
 
+    public static double jaccard(long[] a, long[] b) {
+        int union = 0, intersection = 0;
+        for (int i=0, n=Math.min(a.length,b.length); i < n; ++i) {
+            intersection += Long.bitCount(a[i]&b[i]);
+            union += Long.bitCount(a[i]|b[i]);
+        }
+        if (a.length>b.length) {
+            for (int i=b.length; i < a.length; ++i) {
+                union += Long.bitCount(a[i]);
+            }
+        } else if (b.length > a.length) {
+            for (int i=a.length; i < b.length; ++i) {
+                union += Long.bitCount(b[i]);
+            }
+        }
+        if (union==0) return 0d;
+        return ((double)intersection)/((double)union);
+    }
+
     public static int numberOfCommonBits(long[] a, long[] b) {
         int count = 0;
         for (int i=0, n=Math.min(a.length,b.length); i < n; ++i) {
@@ -32,7 +51,7 @@ public class BitsetOps {
 
     public static int nextSetBit(final long[] bits, int fromIndex) {
         int u = fromIndex>>6;
-        if (u > bits.length)
+        if (u >= bits.length)
             return -1;
 
         long word = bits[u] & (0xffffffffffffffffL << fromIndex);
