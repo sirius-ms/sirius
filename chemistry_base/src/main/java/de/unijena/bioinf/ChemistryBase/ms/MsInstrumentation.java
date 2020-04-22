@@ -2,6 +2,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -20,6 +21,22 @@ public interface MsInstrumentation extends Ms2ExperimentAnnotation {
 
     enum Chromatrography {
         GC, LC
+    }
+
+    public static MsInstrumentation getBestFittingInstrument(String name) {
+        int fit = -1;
+        MsInstrumentation best = Unknown;
+        for (Instrument i : Instrument.values()) {
+            Matcher matcher = i.pattern.matcher(name);
+            while (matcher.find()) {
+                final int len = matcher.end()-matcher.start();
+                if (len > fit) {
+                    fit = len;
+                    best = i;
+                }
+            }
+        }
+        return best;
     }
 
     MsInstrumentation Unknown = new MsInstrumentation() {
@@ -55,16 +72,18 @@ public interface MsInstrumentation extends Ms2ExperimentAnnotation {
     };
 
     enum Instrument implements MsInstrumentation {
-        BRUKER_MAXIS("Bruker Q-ToF (LCMS)", "bruker_tof", new Deviation(10), true, "maxis|bruker"),
+        BRUKER_MAXIS("Bruker Q-ToF (LCMS)", "bruker_tof", new Deviation(10), true, "maxis|bruker|impact"),
         QTOF("Q-ToF (LCMS)", "qtof", new Deviation(10), false, "tof"),
-        ORBI("Orbitrap (LCMS)", "orbitrap", new Deviation(5), false, "orbi|exactive"),
-        FTICR("FTICR (LCMS)", "fticr", new Deviation(5), false, "ft-?icr"),
-        IONTRAP("Ion Trap (LCMS)", "default", new Deviation(20), false, "trap|lcq");
+        ORBI("Orbitrap (LCMS)", "orbitrap", new Deviation(5), false, "orbi|(?:q-)?exactive|velos|Lumos"),
+        FTICR("FTICR (LCMS)", "fticr", new Deviation(5), false, "ft-?icr|Hybrid FT|LTQ-FTICR|ft"),
+        IONTRAP("Ion Trap (LCMS)", "default", new Deviation(20), false, "ion\\s*trap|trap|lcq|QqIT|QqLIT"),
+        QQQ("Tripple-Quadrupole", "default", new Deviation(100,0.1), false, "QQQ|quadrupole|QQ|Q");
 
         protected boolean isotopes;
         protected String profile, description;
         protected Deviation ppm;
         protected Chromatrography chromatrography;
+        protected boolean highres;
         protected Pattern pattern;
 
         Instrument(String description, String profile, Deviation dev, boolean iso, String pattern) {
@@ -74,6 +93,11 @@ public interface MsInstrumentation extends Ms2ExperimentAnnotation {
             this.isotopes = iso;
             this.chromatrography = Chromatrography.LC;
             this.pattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+            this.highres = dev.getAbsolute() < 0.1;
+        }
+
+        public boolean isHighres() {
+            return highres;
         }
 
 
