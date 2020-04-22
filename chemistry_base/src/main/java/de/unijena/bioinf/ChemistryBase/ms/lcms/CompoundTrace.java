@@ -16,5 +16,13 @@ public class CompoundTrace extends IonTrace {
         this.inSourceFragments = inSourceFragments;
     }
 
+    @Nonnull
+    public IonTrace[] getAdducts() {
+        return adducts;
+    }
 
+    @Nonnull
+    public IonTrace[] getInSourceFragments() {
+        return inSourceFragments;
+    }
 }
