@@ -2,8 +2,10 @@ package de.unijena.bioinf.model.lcms;
 
 import com.google.common.collect.Range;
 
+import java.util.HashSet;
 import java.util.NavigableSet;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ChromatographicPeak {
 
@@ -78,6 +80,14 @@ public interface ChromatographicPeak {
             }
         }
         return new Segment(this, from,apx, toInclusive);
+    }
+
+    default Set<Integer> scanNumbers() {
+        final HashSet<Integer> set = new HashSet<>();
+        for (int k=0; k <  numberOfScans(); ++k) {
+            set.add(getScanNumberAt(k));
+        }
+        return set;
     }
 
     public static class Segment {

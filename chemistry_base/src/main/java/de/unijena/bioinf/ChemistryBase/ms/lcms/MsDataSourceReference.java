@@ -10,7 +10,7 @@ import java.util.Objects;
  * A reference to a certain LC/MS run in a mzml file.
  * The reference has two purposes:
  * 1. if two spectra stem from different LC/MS runs, we need some kind of ID to distuingish those runs.
- *    in this case, the ChromatographicSourceRef is only an ID object
+ *    in this case, the MsDataSourceReference is only an ID object
  * 2. we might have a registry that connects an source ref to a mzml file. Then this source ref acts
  *    like a pointer to the entry in the mzml file where we can find the raw data belonging to a compound
  *
