@@ -15,4 +15,9 @@ public class IonTrace {
     public IonTrace(@Nonnull Trace[] isotopes) {
         this.isotopes = isotopes;
     }
+
+    @Nonnull
+    public Trace[] getIsotopes() {
+        return isotopes;
+    }
 }
