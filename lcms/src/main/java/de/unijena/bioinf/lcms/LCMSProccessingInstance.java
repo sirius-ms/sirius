@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -62,6 +63,10 @@ public class LCMSProccessingInstance {
                 PrecursorIonType.fromString("[M+Br]-"),
                 PrecursorIonType.fromString("[M-H2O-H]-")
         ));
+    }
+
+    public CoelutingTraceSet getTraceset(ProcessedSample sample, FragmentedIon ion) {
+        return new TraceConverter(sample, ion).asLCMSSubtrace();
     }
 
     public Set<PrecursorIonType> getDetectableIonTypes() {
