@@ -19,10 +19,9 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -35,11 +34,14 @@ import java.util.stream.Stream;
  * In the Constructor it needs to be defined how the different Subtools depend on each other and
  * in which order they have to be executed.
  * <p>
- * This class is also intended to be used from the GUI but with a different {@RootOtion) class.
+ * This class is also intended to be used from the GUI but with a different {@link RootOptions) class.
  * <p>
  * Buy using this class we do not need to write new Workflows every time we add a new tool.
  * We just have to define its parameters in h
  */
+
+// todo In general a lot of the configuration here could be done on compile time.
+//  but on the other hand I do not think it is a performance critical thing.
 
 public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
@@ -66,50 +68,70 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
 
     //toolchain subtools
-    public final SiriusOptions siriusOptions;
-    public final ZodiacOptions zodiacOptions;
-    public final FingerIdOptions fingeridOptions;
-    public final CanopusOptions canopusOptions;
-    public final PassatuttoOptions passatuttoOptions;
-
+    protected final Map<Class<? extends ToolChainOptions<?, ?>>, ToolChainOptions<?, ?>> toolChainTools;
     public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
         this.bufferFactory = bufferFactory;
         this.rootOptions = rootOptions;
         this.configOptionLoader = configOptionLoader;
 
-        siriusOptions = new SiriusOptions(configOptionLoader);
-        zodiacOptions = new ZodiacOptions(configOptionLoader);
-        fingeridOptions = new FingerIdOptions(configOptionLoader);
-        canopusOptions = new CanopusOptions(configOptionLoader);
-        passatuttoOptions = new PassatuttoOptions(configOptionLoader);
+        toolChainTools = Map.of(
+                SiriusOptions.class, new SiriusOptions(configOptionLoader),
+                ZodiacOptions.class, new ZodiacOptions(configOptionLoader),
+                PassatuttoOptions.class, new PassatuttoOptions(configOptionLoader),
+                FingerIdOptions.class, new FingerIdOptions(configOptionLoader),
+                CanopusOptions.class, new CanopusOptions(configOptionLoader)
+        );
 
         customDBOptions = new CustomDBOptions();
         projectSpaceOptions = new ProjecSpaceOptions();
         similarityMatrixOptions = new SimilarityMatrixOptions();
-        decompOptions =  new DecompOptions();
+        decompOptions = new DecompOptions();
     }
 
     public void initRootSpec() {
         System.setProperty("picocli.color.commands", "bold,blue");
         if (rootSpec != null)
-            throw new  IllegalStateException("Root spec already initialized");
+            throw new IllegalStateException("Root spec already initialized");
 
         // define execution order and dependencies of different Subtools
-        CommandLine.Model.CommandSpec fingeridSpec = forAnnotatedObjectWithSubCommands(fingeridOptions, canopusOptions);
-        CommandLine.Model.CommandSpec passatuttoSpec = forAnnotatedObjectWithSubCommands(passatuttoOptions, fingeridSpec);
-        CommandLine.Model.CommandSpec zodiacSpec = forAnnotatedObjectWithSubCommands(zodiacOptions, passatuttoSpec, fingeridSpec);
-        CommandLine.Model.CommandSpec siriusSpec = forAnnotatedObjectWithSubCommands(siriusOptions, zodiacSpec, passatuttoSpec, fingeridSpec);
-        CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, siriusSpec);
+        final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> chainToolSpecs = configureChainTools();
 
-        CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions);
+        final CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, chainToolSpecs.get(SiriusOptions.class));
+
+        final CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(),
+                Stream.concat(Stream.of(customDBOptions, lcmsAlignSpec), chainToolSpecs.values().stream()).toArray());
+
         rootSpec = forAnnotatedObjectWithSubCommands(
                 this.rootOptions,
-                Streams.concat(Arrays.stream(standaloneTools()), Arrays.stream(new Object[]{configSpec, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions})).toArray()
+                Streams.concat(Stream.of(standaloneTools()), Stream.of(configSpec, lcmsAlignSpec), chainToolSpecs.values().stream())
+                        .toArray()
         );
     }
 
     protected Object[] standaloneTools() {
         return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions};
+    }
+
+    protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools() {
+        final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> specs = new LinkedHashMap<>();
+        //inti command specs
+        toolChainTools.values().forEach(t -> {
+            final CommandLine.Model.CommandSpec parentSpec = CommandLine.Model.CommandSpec.forAnnotatedObject(t);
+            new ArrayList<>(parentSpec.options()).stream().filter(it -> DefaultParameter.class.isAssignableFrom(it.type())).forEach(opt -> {
+                parentSpec.remove(opt);
+                String[] desc = Stream.concat(Stream.of(opt.description()), Stream.of("Default: " + configOptionLoader.config.getConfigValue(opt.descriptionKey()))).toArray(String[]::new);
+                parentSpec.addOption(opt.toBuilder().description(desc).descriptionKey("").build());
+            });
+            specs.put(t.getClass(), parentSpec);
+        });
+
+        //add possible subtools
+        toolChainTools.values().forEach(parent -> {
+            CommandLine.Model.CommandSpec parentSpec = specs.get(parent.getClass());
+            parent.getSubCommands().stream().map(specs::get).forEach(subSpec -> parentSpec.addSubcommand(subSpec.name(), subSpec));
+        });
+
+        return specs;
     }
 
     protected CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subsToolInExecutionOrder) {
@@ -133,7 +155,6 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         }
         return parentSpec;
     }
-
 
     public ParseResultHandler makeParseResultHandler() {
         return new ParseResultHandler();
@@ -191,7 +212,29 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
         private void execute(CommandLine parsed, List<Object> executionResult) {
             Object command = parsed.getCommand();
-            if (command instanceof Runnable) {
+            if (command instanceof ToolChainOptions) {
+                try {
+                    // create a JobFactory (Task) an configures it invalidation behavior based on its
+                    // possible SubTools.
+                    ToolChainOptions<?, ?> toolChainOptions = (ToolChainOptions<?, ?>) command;
+                    ToolChainJob.Factory<?> task = toolChainOptions.call();
+
+                    final Set<Class<? extends ToolChainOptions<?, ?>>> reachable = new LinkedHashSet<>();
+                    Set<Class<? extends ToolChainOptions<?, ?>>> tmp = Set.copyOf(toolChainOptions.getSubCommands());
+                    while (tmp != null && !tmp.isEmpty()) {
+                        reachable.addAll(tmp);
+                        tmp = tmp.stream().map(toolChainTools::get).map(ToolChainOptions::getSubCommands)
+                                .flatMap(Collection::stream).collect(Collectors.toSet());
+                    }
+                    reachable.stream().map(toolChainTools::get).forEach(sub -> task.addInvalidator(sub.getInvalidator()));
+
+                    executionResult.add(task);
+                } catch (CommandLine.ParameterException | CommandLine.ExecutionException ex) {
+                    throw ex;
+                } catch (Exception ex) {
+                    throw new CommandLine.ExecutionException(parsed, "Error while calling command (" + command + "): " + ex, ex);
+                }
+            } else if (command instanceof Runnable) {
                 try {
                     ((Runnable) command).run();
                 } catch (CommandLine.ParameterException | CommandLine.ExecutionException ex) {

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Supplier;
@@ -28,5 +29,11 @@ public class ParameterBinding extends HashMap<String, Supplier<String>> {
         });
 
         return out;
+    }
+
+    public List<String> getParameter(String key) {
+        if (!containsKey(key))
+            return Collections.emptyList();
+        return List.of(("--" + key), get(key).get());
     }
 }

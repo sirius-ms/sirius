@@ -54,6 +54,10 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
     }
 
 
+    public List<String> getAdductsParameter() {
+        return getParameterBinding().getParameter("AdductSettings.detectable");
+
+    }
     public PossibleAdducts getSelectedAdducts() {
         return adductOptions.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType)
                 .flatMap(Optional::stream).collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new));

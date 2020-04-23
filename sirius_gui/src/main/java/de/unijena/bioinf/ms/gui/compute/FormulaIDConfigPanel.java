@@ -113,7 +113,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
         smallParameters.addNamed("Candidates per Ion", candidatesPerIonSpinner);
 
-//        restrictToOrganics = new JCheckBox(); //todo implement parameter?? or has constraint?
+//        restrictToOrganics = new JCheckBox(); //todo implement parameter?? or as constraint?
 //        GuiUtils.assignParameterToolTip(restrictToOrganics, "RestrictToOrganics");
 //        parameterBindings.put("RestrictToOrganics", () -> String.valueOf(restrictToOrganics.isSelected()));
 //        smallParameters.addNamed("Restrict to organics", restrictToOrganics);
@@ -157,7 +157,6 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         java.util.List<String> ionizations = new ArrayList<>();
 
         if (!ionTypes.isEmpty()) {
-
             if (ionTypes.contains(PrecursorIonType.unknownPositive().getIonization().getName())) {
                 ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizationsAsString());
             }
@@ -204,8 +203,6 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
                 elementAutoDetect.setEnabled(source == null || source.isEmpty());
         });
         elementPanel.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-
-
     }
 
     protected void detectElements() {
@@ -263,6 +260,4 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
                 return DataSources.getSourceFromName(db.name()).map(DataSource::name).orElse(null);
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
-
-
 }

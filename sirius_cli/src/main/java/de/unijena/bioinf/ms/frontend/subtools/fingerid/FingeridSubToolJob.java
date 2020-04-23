@@ -41,6 +41,14 @@ public class FingeridSubToolJob extends InstanceJob {
     }
 
     @Override
+    public boolean isAlreadyComputed(@NotNull Instance inst) {
+        return inst.loadCompoundContainer().hasResult() && inst.loadFormulaResults(FingerprintResult.class, FBCandidates.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FBCandidates.class));/*{
+            logInfo("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist or result list is empty.");
+            return;
+        }*/
+    }
+
+    @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
                 inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FBCandidates.class);
@@ -50,16 +58,7 @@ public class FingeridSubToolJob extends InstanceJob {
             return;
         }
 
-        if (!isRecompute(inst) && formulaResults.stream().findFirst().map(SScored::getCandidate)
-                .map(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FBCandidates.class)).orElse(true)) {
-            logInfo("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist or result list is empty.");
-            return;
-        }
-
-        invalidateResults(inst);
-
         PredictorTypeAnnotation type = inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class);
-
 
         //todo currently there is only csi -> change if there are multiple methods
         // we need to run multiple structure elucidation jobs and need  different prediction results then.
