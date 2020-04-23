@@ -1,3 +1,4 @@
+//todo move me into the frontend
 dependencies {
     compile project(":rest_service:rest_client_oss")
     compile project(':chemical_db_oss:chemdb_rest_oss')
@@ -5,6 +6,6 @@ dependencies {
     compile project(':fingerprinter_oss')
     compile project(':fingerblast_oss')
     compile project(':chemical_db_oss:chemdb_file_oss')
-    compile project(':canopus:canopus_predict_oss')
+    compile ("de.unijena.bioinf.ms:canopus_predict_oss:$fingeridVersion")
     compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
 }
