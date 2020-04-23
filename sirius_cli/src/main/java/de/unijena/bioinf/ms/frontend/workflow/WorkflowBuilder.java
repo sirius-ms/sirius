@@ -21,6 +21,7 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -67,19 +68,18 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
 
     //toolchain subtools
-    protected final List<ToolChainOptions<?, ?>> toolChainTools;
-
+    protected final Map<Class<? extends ToolChainOptions<?, ?>>, ToolChainOptions<?, ?>> toolChainTools;
     public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
         this.bufferFactory = bufferFactory;
         this.rootOptions = rootOptions;
         this.configOptionLoader = configOptionLoader;
 
-        toolChainTools = List.of(
-                new SiriusOptions(configOptionLoader)
-                , new ZodiacOptions(configOptionLoader)
-                , new PassatuttoOptions(configOptionLoader)
-                , new FingerIdOptions(configOptionLoader)
-                , new CanopusOptions(configOptionLoader)
+        toolChainTools = Map.of(
+                SiriusOptions.class, new SiriusOptions(configOptionLoader),
+                ZodiacOptions.class, new ZodiacOptions(configOptionLoader),
+                PassatuttoOptions.class, new PassatuttoOptions(configOptionLoader),
+                FingerIdOptions.class, new FingerIdOptions(configOptionLoader),
+                CanopusOptions.class, new CanopusOptions(configOptionLoader)
         );
 
         customDBOptions = new CustomDBOptions();
@@ -94,7 +94,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
             throw new IllegalStateException("Root spec already initialized");
 
         // define execution order and dependencies of different Subtools
-        final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> chainToolSpecs = configureChainTools(toolChainTools);
+        final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> chainToolSpecs = configureChainTools();
 
         final CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, chainToolSpecs.get(SiriusOptions.class));
 
@@ -112,10 +112,10 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions};
     }
 
-    protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools(@NotNull final List<ToolChainOptions<?, ?>> toolChainTools) {
+    protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools() {
         final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> specs = new LinkedHashMap<>();
         //inti command specs
-        toolChainTools.forEach(t -> {
+        toolChainTools.values().forEach(t -> {
             final CommandLine.Model.CommandSpec parentSpec = CommandLine.Model.CommandSpec.forAnnotatedObject(t);
             new ArrayList<>(parentSpec.options()).stream().filter(it -> DefaultParameter.class.isAssignableFrom(it.type())).forEach(opt -> {
                 parentSpec.remove(opt);
@@ -126,7 +126,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         });
 
         //add possible subtools
-        toolChainTools.forEach(parent -> {
+        toolChainTools.values().forEach(parent -> {
             CommandLine.Model.CommandSpec parentSpec = specs.get(parent.getClass());
             parent.getSubCommands().stream().map(specs::get).forEach(subSpec -> parentSpec.addSubcommand(subSpec.name(), subSpec));
         });
@@ -218,8 +218,16 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
                     // possible SubTools.
                     ToolChainOptions<?, ?> toolChainOptions = (ToolChainOptions<?, ?>) command;
                     ToolChainJob.Factory<?> task = toolChainOptions.call();
-                    Set<Class<? extends ToolChainOptions<?, ?>>> subs = Set.copyOf(toolChainOptions.getSubCommands());
-                    toolChainTools.stream().filter(sub -> subs.contains(sub.getClass())).forEach(sub -> task.addInvalidator(sub.getInvalidator()));
+
+                    final Set<Class<? extends ToolChainOptions<?, ?>>> reachable = new LinkedHashSet<>();
+                    Set<Class<? extends ToolChainOptions<?, ?>>> tmp = Set.copyOf(toolChainOptions.getSubCommands());
+                    while (tmp != null && !tmp.isEmpty()) {
+                        reachable.addAll(tmp);
+                        tmp = tmp.stream().map(toolChainTools::get).map(ToolChainOptions::getSubCommands)
+                                .flatMap(Collection::stream).collect(Collectors.toSet());
+                    }
+                    reachable.stream().map(toolChainTools::get).forEach(sub -> task.addInvalidator(sub.getInvalidator()));
+
                     executionResult.add(task);
                 } catch (CommandLine.ParameterException | CommandLine.ExecutionException ex) {
                     throw ex;
