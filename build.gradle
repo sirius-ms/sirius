@@ -1,3 +1,4 @@
+import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
@@ -40,7 +41,8 @@ ext {
 
     jewelcli_version = '0.8.9'
     //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
-
+    glpk_lib_version = '4.60'
+    clp_lib_version = '1.17.5'
 
 }
 
@@ -136,6 +138,30 @@ allprojects {
         }
     }
     clean.dependsOn cleanConfig
+}
+
+task downloadGLPK(type: Copy) {
+    def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
+    project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
+
+    java.nio.file.Path dir = project.glpkPath.toPath().getParent()
+    if (!dir.resolve('glpk').toFile().exists()) {
+        copy {
+            println(dir.toString())
+            dir.resolve('glpk').toFile().deleteDir()
+            Files.createDirectories(dir)
+
+            def glpkZipFile = Paths.get('glpk.zip')
+            getLogger().lifecycle("Downloading glpk...")
+            def file = dir.resolve(glpkZipFile).newOutputStream()
+            file << glpkURL.openStream()
+            file.close()
+
+            getLogger().lifecycle("Unpacking glpk...")
+            from zipTree(dir.resolve(glpkZipFile).toFile())
+            into dir.toFile()
+        }
+    }
 }
 
 def javaProjects() {

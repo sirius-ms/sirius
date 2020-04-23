@@ -1,0 +1,53 @@
+apply plugin: "application"
+
+mainClassName = "de.unijena.bioinf.canopus.Learn"
+
+
+dependencies() {
+    compile project(":canopus:canopus_predict_oss")
+
+    compile group: "de.unijena.bioinf.ms", name: "fingerid", version: "$version"
+    compile group: "de.unijena.bioinf.ms", name: "fingerprinter_oss", version: "$version"
+    compile "org.tensorflow:tensorflow:1.13.1"
+}
+
+
+startScripts {
+    applicationName = "canopus"
+    doLast {
+        unixScript.text = unixScript.text.replace('CLASSPATH=', "CLASSPATH=${runtimeClasspath}:")
+        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', 'DEFAULT_JVM_OPTS=""' + "${System.lineSeparator()}" + 'export LD_LIBRARY_PATH=$GUROBI_HOME/lib:$APP_HOME/lib:$LD_LIBRARY_PATH')
+    }
+}
+
+distributions {
+    linux64 {
+        contents {
+            into('lib') {
+                from("build/install/${project.name}/lib")
+                from("${project.glpkPath}/l64/")
+            }
+
+            into('bin') {
+                from("build/install/${project.name}/bin") {
+                    exclude("*.bat")
+                }
+
+            }
+        }
+
+    }
+    linux64DistZip.dependsOn ':downloadGLPK'
+
+    getTasksByName("linux64DistTar", false).each {it.setEnabled(false)}
+    getTasksByName("linux64DistTar", false).each { it.setEnabled(false)}
+}
+
+linux64DistZip.dependsOn 'installDist'
+linux64DistTar.dependsOn 'installDist'
+installLinux64Dist.dependsOn 'installDist'
+
+task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
+    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve('bin/canopus').toFile()
+    commandLine([command.absolutePath])
+}
