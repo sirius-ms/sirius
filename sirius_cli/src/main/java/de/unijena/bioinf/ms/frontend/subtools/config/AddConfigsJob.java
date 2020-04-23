@@ -28,6 +28,11 @@ public class AddConfigsJob extends InstanceJob {
     }
 
     @Override
+    public boolean isAlreadyComputed(@NotNull Instance inst) {
+        return false;
+    }
+
+    @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         final Ms2Experiment exp = inst.getExperiment();
         final Optional<ProjectSpaceConfig> psConfig = inst.loadConfig();
@@ -49,7 +54,7 @@ public class AddConfigsJob extends InstanceJob {
         baseConfig = baseConfig.newIndependentInstance("RUNTIME_CONFIGS:" + inst.getID(),true); //runtime modification layer,  that does not effect the other configs
         //fill all annotations
         exp.setAnnotation(FinalConfig.class, new FinalConfig(baseConfig));
-        exp.addAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
+        exp.setAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
 
 
         final FormulaResultRankingScore it = exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO);

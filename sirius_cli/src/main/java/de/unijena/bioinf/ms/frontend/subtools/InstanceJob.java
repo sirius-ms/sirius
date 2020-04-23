@@ -6,6 +6,10 @@ import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * This is a job for Scheduling an workflow synchronization
@@ -17,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements ToolChainJob<Instance> {
     protected Instance input = null;
-
 
     public InstanceJob(JobSubmitter submitter) {
         super(submitter);
@@ -35,8 +38,20 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     @Override
     protected Instance compute() throws Exception {
         checkInput();
-        computeAndAnnotateResult(input);
-        updateProgress(0,100, 99, "DONE!");
+        final boolean hasResults = isAlreadyComputed(input);
+        if (!hasResults || isRecompute(input)) {
+            if (hasResults){
+                updateProgress(0, 100, 2, "Invalidate existing Results and Recompute!");
+                invalidateResults(input);
+            }
+            updateProgress(0, 100, 99, "Start computation...");
+            setRecompute(input,true); // enable recompute so that following tools will recompute if results exist.
+            computeAndAnnotateResult(input);
+            updateProgress(0, 100, 99, "DONE!");
+        } else {
+            updateProgress(0, 100, 99, "Skipping Job because results already Exist and recompute not requested.");
+        }
+
         return input;
     }
 
@@ -71,18 +86,21 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
 
     protected abstract void computeAndAnnotateResult(final @NotNull Instance expRes) throws Exception;
 
-    @FunctionalInterface
-    public interface Factory<T extends InstanceJob> {
-        default T createToolJob(@NotNull JJob<Instance> inputProvidingJob) {
+    public static class Factory<T extends InstanceJob> extends ToolChainJob.FactoryImpl<T> {
+
+        public Factory(@NotNull Function<JobSubmitter, T> jobCreator, @Nullable Consumer<Instance> baseInvalidator) {
+            super(jobCreator, baseInvalidator);
+        }
+
+        public T createToolJob(@NotNull JJob<Instance> inputProvidingJob) {
             return createToolJob(inputProvidingJob, SiriusJobs.getGlobalJobManager());
         }
 
-        default T createToolJob(@NotNull JJob<Instance> inputProvidingJob, @NotNull JobSubmitter submitter) {
+        public T createToolJob(@NotNull JJob<Instance> inputProvidingJob, @NotNull JobSubmitter submitter) {
             final T job = makeJob(submitter);
             job.addRequiredJob(inputProvidingJob);
             return job;
         }
 
-        T makeJob(JobSubmitter submitter);
     }
 }

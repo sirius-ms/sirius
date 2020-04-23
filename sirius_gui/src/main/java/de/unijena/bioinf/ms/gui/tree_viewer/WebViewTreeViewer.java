@@ -125,6 +125,16 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
         return array;
     }
 
+    @Override
+    public void cancel(){
+        //todo fill me wih code to candcel script execution.
+        // I thin k we have to work with some hooks that are evaluated by the script we execute
+        /*Platform.runLater(() -> {
+            webView.getEngine().getLoadWorker().cancel();
+            webView.getEngine().executeScript("window.stop()");
+        });*/
+    }
+
 
     private String getJSResourceInHTML(InputStream stream) throws IOException{
         // Resource files have to be read in manually

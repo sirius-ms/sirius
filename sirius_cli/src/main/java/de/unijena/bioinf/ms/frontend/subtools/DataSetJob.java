@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -31,7 +33,23 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
     @Override
     protected Iterable<Instance> compute() throws Exception {
         checkInputs();
-        computeAndAnnotateResult(inputInstances);
+        //todo maybe make decidable if any or all match
+        final boolean hasResults = inputInstances.stream().anyMatch(this::isAlreadyComputed);
+        final boolean recompute = inputInstances.stream().anyMatch(this::isRecompute);
+
+        if (!hasResults || recompute) {
+            if (hasResults) {
+                updateProgress(0, 100, 2, "Invalidate existing Results and Recompute!");
+                inputInstances.forEach(this::invalidateResults);
+            }
+            updateProgress(0, 100, 99, "Start computation...");
+            inputInstances.forEach(this::enableRecompute); // enable recompute so that following tools will recompute if results exist.
+            computeAndAnnotateResult(inputInstances);
+            updateProgress(0, 100, 99, "DONE!");
+        } else {
+            updateProgress(0, 100, 99, "Skipping Job because results already Exist and recompute not requested.");
+        }
+
         return inputInstances;
     }
 
@@ -84,19 +102,21 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
         return failedJobs != null && !failedJobs.isEmpty();
     }
 
-    @FunctionalInterface
-    public interface Factory<T extends DataSetJob> {
-        default T createToolJob(Iterable<JJob<Instance>> dataSet) {
+
+    public static class Factory<T extends DataSetJob> extends ToolChainJob.FactoryImpl<T> {
+        public Factory(@NotNull Function<JobSubmitter, T> jobCreator, @NotNull Consumer<Instance> baseInvalidator) {
+            super(jobCreator, baseInvalidator);
+        }
+
+        public T createToolJob(Iterable<JJob<Instance>> dataSet) {
             return createToolJob(dataSet, SiriusJobs.getGlobalJobManager());
         }
 
-        default T createToolJob(Iterable<JJob<Instance>> dataSet, @NotNull JobSubmitter jobSubmitter) {
+        public T createToolJob(Iterable<JJob<Instance>> dataSet, @NotNull JobSubmitter jobSubmitter) {
             final T job = makeJob(jobSubmitter);
             dataSet.forEach(job::addRequiredJob);
             return job;
         }
-
-        T makeJob(@NotNull JobSubmitter jobSubmitter);
     }
 
 
