@@ -434,8 +434,10 @@ subprojects {
 
                     }
             }
-            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
-            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/bin/java\"")
+            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/zulu-11.jre/Contents/Home/bin/java\" ] ; then")
+            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/zulu-11.jre/Contents/Home/bin/java\"")
+            lines = lines.plus(insertJREIndex + 2, "elif [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
+            lines = lines.plus(insertJREIndex + 3, "    JAVACMD=\"\$APP_HOME/${jre_path}/bin/java\"")
 
             unixScript.text = lines.join(System.lineSeparator())
         }
