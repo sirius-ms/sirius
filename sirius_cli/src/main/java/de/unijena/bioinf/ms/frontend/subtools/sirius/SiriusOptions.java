@@ -22,13 +22,17 @@ import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
+import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
+import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 
 /**
  * This is for SIRIUS specific parameters.
@@ -39,8 +43,8 @@ import java.util.concurrent.Callable;
  */
 
 //todo got descriprions from defaultConfigOptions
-@Command(name = "formula", aliases = {"tree","sirius", "F"}, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.",  versionProvider = Provide.Versions.class,  mixinStandardHelpOptions = true, sortOptions = false)
-public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubToolJob>> {
+@Command(name = "formula", aliases = {"tree", "sirius", "F"}, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
+public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, InstanceJob.Factory<SiriusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
     public SiriusOptions(DefaultParameterConfigLoader defaultConfigOptions) {
@@ -180,6 +184,16 @@ public class SiriusOptions implements Callable<InstanceJob.Factory<SiriusSubTool
     @Override
     public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
         return (sub) -> new SiriusSubToolJob(this, sub);
+    }
+
+    @Override
+    public ToolChainJob.Invalidator getInvalidator() {
+        return null;
+    }
+
+    @Override
+    public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
+        return List.of(PassatuttoOptions.class, ZodiacOptions.class, FingerIdOptions.class);
     }
 
 

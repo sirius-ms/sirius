@@ -207,7 +207,22 @@ public class Instance {
 
     @SafeVarargs
     public final synchronized void deleteFromFormulaResults(Class<? extends DataAnnotation>... components) {
-        compoundCache.getResults().forEach((k, v) -> {
+        if (components.length == 0)
+            return;
+        //update cache, load data from disc
+        List<FormulaResultId> rid = List.copyOf(loadCompoundContainer().getResults().values());
+
+        //remove stuff from memory copy before removing from disk to ensure that is done before property change is
+        //fired by the project space
+        if (List.of(components).contains(FTree.class)) {
+            compoundCache.getResults().clear();
+            clearFormulaResultsCache();
+        } else {
+            formulaResultCache.forEach((k, v) -> List.of(components).forEach(v::removeAnnotation));
+        }
+
+        //remove from disk
+        rid.forEach(v -> {
             try {
                 projectSpace().deleteFromFormulaResult(v, components);
             } catch (IOException e) {
@@ -215,25 +230,23 @@ public class Instance {
             }
         });
 
-        if (List.of(components).contains(FTree.class)) {
-            compoundCache.getResults().clear();
-            clearFormulaResultsCache();
-        } else {
-            formulaResultCache.forEach((k, v) -> List.of(components).forEach(v::removeAnnotation));
-        }
+
     }
 
-    public final synchronized void deleteFormulaResults() {
-        compoundCache.getResults().forEach((k, v) -> {
+    public synchronized void deleteFormulaResults() {
+        //load contain methods to ensure that it is available
+        List<FormulaResultId> rid = List.copyOf(loadCompoundContainer().getResults().values());
+
+        compoundCache.getResults().clear();
+        clearFormulaResultsCache();
+
+        rid.forEach(v -> {
             try {
                 projectSpace().deleteFormulaResult(v);
             } catch (IOException e) {
                 LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
             }
         });
-
-        compoundCache.getResults().clear();
-        clearFormulaResultsCache();
     }
 
     //remove from cache

@@ -3,12 +3,18 @@ package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
+import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
@@ -19,7 +25,7 @@ import java.util.concurrent.Callable;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "zodiac", aliases = {"Z"}, description = "<DATASET_TOOL> Identify Molecular formulas of all compounds in a dataset together using ZODIAC.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
-public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJob>> {
+public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSetJob.Factory<ZodiacSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
     public ZodiacOptions(DefaultParameterConfigLoader defaultConfigOptions) {
@@ -124,5 +130,15 @@ public class ZodiacOptions implements Callable<DataSetJob.Factory<ZodiacSubToolJ
     @Override
     public DataSetJob.Factory<ZodiacSubToolJob> call() throws Exception {
         return (sub) -> new ZodiacSubToolJob(this, sub);
+    }
+
+    @Override
+    public ToolChainJob.Invalidator getInvalidator() {
+        return null;
+    }
+
+    @Override
+    public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
+        return List.of(PassatuttoOptions.class, FingerIdOptions.class);
     }
 }

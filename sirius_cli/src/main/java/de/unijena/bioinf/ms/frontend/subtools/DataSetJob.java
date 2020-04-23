@@ -85,7 +85,7 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
     }
 
     @FunctionalInterface
-    public interface Factory<T extends DataSetJob> {
+    public interface Factory<T extends DataSetJob> extends ToolChainJob.Factory<T>{
         default T createToolJob(Iterable<JJob<Instance>> dataSet) {
             return createToolJob(dataSet, SiriusJobs.getGlobalJobManager());
         }
@@ -95,8 +95,6 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
             dataSet.forEach(job::addRequiredJob);
             return job;
         }
-
-        T makeJob(@NotNull JobSubmitter jobSubmitter);
     }
 
 

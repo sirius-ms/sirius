@@ -81,21 +81,37 @@ public class InstanceBean extends Instance implements SiriusPCS {
 
     }
 
-    protected void addToCache(){
+    protected void addToCache() {
         ((GuiProjectSpaceManager) getProjectSpaceManager()).ringBuffer.add(this);
     }
 
-    public void registerProjectSpaceListeners() {
-        if (listeners == null)
-            listeners = configureListeners();
-        listeners.forEach(ContainerListener.Defined::register);
 
+    @Override
+    public synchronized void deleteFormulaResults() {
+        List<ContainerListener.Defined> changed = List.of();
+        try {
+            changed = unregisterProjectSpaceListeners();
+            List<FormulaResultId> old = getResults().stream().map(FormulaResultBean::getID).collect(Collectors.toList());
+            List<FormulaResultId> nu = List.of();
+            super.deleteFormulaResults();
+            pcs.firePropertyChange("instance.clearFormulaResults", old.isEmpty() ? nu : old, nu);
+        } finally {
+            changed.forEach(ContainerListener.Defined::register);
+        }
     }
 
-    public void unregisterProjectSpaceListeners() {
+    public List<ContainerListener.Defined> registerProjectSpaceListeners() {
         if (listeners == null)
-            return;
-        listeners.forEach(ContainerListener.Defined::unregister);
+            listeners = configureListeners();
+        return listeners.stream().filter(ContainerListener.Defined::notRegistered).
+                map(ContainerListener.Defined::register).collect(Collectors.toList());
+    }
+
+    public List<ContainerListener.Defined> unregisterProjectSpaceListeners() {
+        if (listeners == null)
+            return List.of();
+        return listeners.stream().filter(ContainerListener.Defined::isRegistered).
+                map(ContainerListener.Defined::unregister).collect(Collectors.toList());
     }
 
     public String getName() {

@@ -20,8 +20,9 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
@@ -66,50 +67,71 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
 
     //toolchain subtools
-    public final SiriusOptions siriusOptions;
-    public final ZodiacOptions zodiacOptions;
-    public final FingerIdOptions fingeridOptions;
-    public final CanopusOptions canopusOptions;
-    public final PassatuttoOptions passatuttoOptions;
+    protected final List<ToolChainOptions<?, ?>> toolChainTools;
 
     public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
         this.bufferFactory = bufferFactory;
         this.rootOptions = rootOptions;
         this.configOptionLoader = configOptionLoader;
 
-        siriusOptions = new SiriusOptions(configOptionLoader);
-        zodiacOptions = new ZodiacOptions(configOptionLoader);
-        fingeridOptions = new FingerIdOptions(configOptionLoader);
-        canopusOptions = new CanopusOptions(configOptionLoader);
-        passatuttoOptions = new PassatuttoOptions(configOptionLoader);
+        toolChainTools = List.of(
+                new SiriusOptions(configOptionLoader)
+                , new ZodiacOptions(configOptionLoader)
+                , new PassatuttoOptions(configOptionLoader)
+                , new FingerIdOptions(configOptionLoader)
+                , new CanopusOptions(configOptionLoader)
+        );
 
         customDBOptions = new CustomDBOptions();
         projectSpaceOptions = new ProjecSpaceOptions();
         similarityMatrixOptions = new SimilarityMatrixOptions();
-        decompOptions =  new DecompOptions();
+        decompOptions = new DecompOptions();
     }
 
     public void initRootSpec() {
         System.setProperty("picocli.color.commands", "bold,blue");
         if (rootSpec != null)
-            throw new  IllegalStateException("Root spec already initialized");
+            throw new IllegalStateException("Root spec already initialized");
 
         // define execution order and dependencies of different Subtools
-        CommandLine.Model.CommandSpec fingeridSpec = forAnnotatedObjectWithSubCommands(fingeridOptions, canopusOptions);
-        CommandLine.Model.CommandSpec passatuttoSpec = forAnnotatedObjectWithSubCommands(passatuttoOptions, fingeridSpec);
-        CommandLine.Model.CommandSpec zodiacSpec = forAnnotatedObjectWithSubCommands(zodiacOptions, passatuttoSpec, fingeridSpec);
-        CommandLine.Model.CommandSpec siriusSpec = forAnnotatedObjectWithSubCommands(siriusOptions, zodiacSpec, passatuttoSpec, fingeridSpec);
-        CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, siriusSpec);
+        final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> chainToolSpecs = configureChainTools(toolChainTools);
 
-        CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(), customDBOptions, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions);
+        final CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, chainToolSpecs.get(SiriusOptions.class));
+
+        final CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(),
+                Stream.concat(Stream.of(customDBOptions, lcmsAlignSpec), chainToolSpecs.values().stream()).toArray());
+
         rootSpec = forAnnotatedObjectWithSubCommands(
                 this.rootOptions,
-                Streams.concat(Arrays.stream(standaloneTools()), Arrays.stream(new Object[]{configSpec, lcmsAlignSpec, siriusSpec, zodiacSpec, passatuttoSpec, fingeridSpec, canopusOptions})).toArray()
+                Streams.concat(Stream.of(standaloneTools()), Stream.of(configSpec, lcmsAlignSpec), chainToolSpecs.values().stream())
+                        .toArray()
         );
     }
 
     protected Object[] standaloneTools() {
         return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions};
+    }
+
+    protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools(@NotNull final List<ToolChainOptions<?, ?>> toolChainTools) {
+        final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> specs = new LinkedHashMap<>();
+        //inti command specs
+        toolChainTools.forEach(t -> {
+            final CommandLine.Model.CommandSpec parentSpec = CommandLine.Model.CommandSpec.forAnnotatedObject(t);
+            new ArrayList<>(parentSpec.options()).stream().filter(it -> DefaultParameter.class.isAssignableFrom(it.type())).forEach(opt -> {
+                parentSpec.remove(opt);
+                String[] desc = Stream.concat(Stream.of(opt.description()), Stream.of("Default: " + configOptionLoader.config.getConfigValue(opt.descriptionKey()))).toArray(String[]::new);
+                parentSpec.addOption(opt.toBuilder().description(desc).descriptionKey("").build());
+            });
+            specs.put(t.getClass(), parentSpec);
+        });
+
+        //add possible subtools
+        toolChainTools.forEach(parent -> {
+            CommandLine.Model.CommandSpec parentSpec = specs.get(parent.getClass());
+            parent.getSubCommands().stream().map(specs::get).forEach(subSpec -> parentSpec.addSubcommand(subSpec.name(), subSpec));
+        });
+
+        return specs;
     }
 
     protected CommandLine.Model.CommandSpec forAnnotatedObjectWithSubCommands(Object parent, Object... subsToolInExecutionOrder) {
@@ -133,7 +155,6 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         }
         return parentSpec;
     }
-
 
     public ParseResultHandler makeParseResultHandler() {
         return new ParseResultHandler();

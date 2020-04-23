@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements ToolChainJob<Instance> {
     protected Instance input = null;
 
-
     public InstanceJob(JobSubmitter submitter) {
         super(submitter);
     }
@@ -72,7 +71,7 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     protected abstract void computeAndAnnotateResult(final @NotNull Instance expRes) throws Exception;
 
     @FunctionalInterface
-    public interface Factory<T extends InstanceJob> {
+    public interface Factory<T extends InstanceJob> extends ToolChainJob.Factory<T> {
         default T createToolJob(@NotNull JJob<Instance> inputProvidingJob) {
             return createToolJob(inputProvidingJob, SiriusJobs.getGlobalJobManager());
         }
@@ -82,7 +81,5 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
             job.addRequiredJob(inputProvidingJob);
             return job;
         }
-
-        T makeJob(JobSubmitter submitter);
     }
 }
