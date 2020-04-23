@@ -139,20 +139,20 @@ public class FingeridSubToolJob extends InstanceJob {
     }
 
     @Override
-    public void invalidateResults(@NotNull Instance instance) {
-        super.invalidateResults(instance);
-        if (isRecompute(instance)) {
-            instance.deleteFromFormulaResults(FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
-            instance.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
+    public void invalidateResults(@NotNull Instance inst) {
+        if (isRecompute(inst)) {
+            inst.deleteFromFormulaResults(FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
+            inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
                     .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
                         if (z.removeAnnotation(TopCSIScore.class) != null || z.removeAnnotation(ConfidenceScore.class) != null)
-                            instance.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
+                            inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
                     }));
-            if (instance.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                instance.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class));
-                instance.updateCompoundID();
+            if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
+                inst.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class));
+                inst.updateCompoundID();
             }
         }
+        super.invalidateResults(inst);
     }
 
     @Override

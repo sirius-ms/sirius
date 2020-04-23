@@ -94,15 +94,14 @@ public class SiriusSubToolJob extends InstanceJob {
     }
 
     @Override
-    public void invalidateResults(@NotNull Instance instance) {
-        super.invalidateResults(instance);
-        if (isRecompute(instance)) {
-            instance.deleteFromFormulaResults(); //this step creates the resutl so we have to delete them before recompute
-            instance.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
-            instance.getID().setDetectedAdducts(instance.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
-            instance.updateCompoundID();
+    public void invalidateResults(@NotNull Instance inst) {
+        if (isRecompute(inst)) {
+            inst.deleteFormulaResults(); //this step creates the resutl so we have to delete them before recompute
+            inst.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
+            inst.getID().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
+            inst.updateCompoundID();
         }
-
+        super.invalidateResults(inst);
     }
 
     @Override

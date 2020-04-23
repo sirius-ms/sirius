@@ -79,10 +79,10 @@ public class CanopusSubToolJob extends InstanceJob {
     }
 
     @Override
-    public void invalidateResults(@NotNull Instance instance) {
-        super.invalidateResults(instance);
-        if (isRecompute(instance))
-            instance.deleteFromFormulaResults(CanopusResult.class);
+    public void invalidateResults(@NotNull Instance inst) {
+        if (isRecompute(inst))
+            inst.deleteFromFormulaResults(CanopusResult.class);
+        super.invalidateResults(inst);
     }
 
     @Override

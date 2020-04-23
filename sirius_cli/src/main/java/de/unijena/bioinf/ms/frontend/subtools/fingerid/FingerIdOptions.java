@@ -4,11 +4,16 @@ import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
+import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoSubToolJob;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
@@ -19,7 +24,7 @@ import java.util.concurrent.Callable;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "structure", aliases = {"fingerid", "S"}, description = "<COMPOUND_TOOL> Identify molecular structure for each compound Individually using CSI:FingerID.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
-public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSubToolJob>> {
+public class FingerIdOptions implements ToolChainOptions<FingeridSubToolJob, InstanceJob.Factory<FingeridSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
     public FingerIdOptions(DefaultParameterConfigLoader defaultConfigOptions) {
@@ -53,5 +58,15 @@ public class FingerIdOptions implements Callable<InstanceJob.Factory<FingeridSub
     @Override
     public InstanceJob.Factory<FingeridSubToolJob> call() throws Exception {
         return FingeridSubToolJob::new;
+    }
+
+    @Override
+    public ToolChainJob.Invalidator getInvalidator() {
+        return null;
+    }
+
+    @Override
+    public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
+        return List.of(CanopusOptions.class);
     }
 }
