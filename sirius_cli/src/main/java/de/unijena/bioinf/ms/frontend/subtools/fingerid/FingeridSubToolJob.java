@@ -6,7 +6,6 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
@@ -25,7 +24,6 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +41,14 @@ public class FingeridSubToolJob extends InstanceJob {
     }
 
     @Override
+    public boolean isAlreadyComputed(@NotNull Instance inst) {
+        return inst.loadCompoundContainer().hasResult() && inst.loadFormulaResults(FingerprintResult.class, FBCandidates.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FBCandidates.class));/*{
+            logInfo("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist or result list is empty.");
+            return;
+        }*/
+    }
+
+    @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
                 inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FBCandidates.class);
@@ -52,16 +58,7 @@ public class FingeridSubToolJob extends InstanceJob {
             return;
         }
 
-        if (!isRecompute(inst) && formulaResults.stream().findFirst().map(SScored::getCandidate)
-                .map(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FBCandidates.class)).orElse(true)) {
-            logInfo("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist or result list is empty.");
-            return;
-        }
-
-        invalidateResults(inst);
-
         PredictorTypeAnnotation type = inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class);
-
 
         //todo currently there is only csi -> change if there are multiple methods
         // we need to run multiple structure elucidation jobs and need  different prediction results then.
@@ -136,23 +133,6 @@ public class FingeridSubToolJob extends InstanceJob {
             inst.updateFormulaResult(formRes,
                     FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
         }
-    }
-
-    @Override
-    public void invalidateResults(@NotNull Instance inst) {
-        if (isRecompute(inst)) {
-            inst.deleteFromFormulaResults(FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
-            inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
-                    .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
-                        if (z.removeAnnotation(TopCSIScore.class) != null || z.removeAnnotation(ConfidenceScore.class) != null)
-                            inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
-                    }));
-            if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class));
-                inst.updateCompoundID();
-            }
-        }
-        super.invalidateResults(inst);
     }
 
     @Override

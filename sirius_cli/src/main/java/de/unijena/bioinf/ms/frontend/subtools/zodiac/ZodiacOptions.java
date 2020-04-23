@@ -1,21 +1,24 @@
 package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
+import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 /**
  * This is for Zodiac specific parameters.
@@ -129,12 +132,25 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
 
     @Override
     public DataSetJob.Factory<ZodiacSubToolJob> call() throws Exception {
-        return (sub) -> new ZodiacSubToolJob(this, sub);
+        return new DataSetJob.Factory<>(
+                sub -> new ZodiacSubToolJob(this, sub),
+                getInvalidator()
+        );
     }
 
     @Override
-    public ToolChainJob.Invalidator getInvalidator() {
-        return null;
+    public Consumer<Instance> getInvalidator() {
+        return inst -> {
+            inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
+                    .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
+                        if (z.removeAnnotation(ZodiacScore.class) != null)
+                            inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
+                    }));
+            if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
+                inst.getID().getRankingScoreTypes().remove(ZodiacScore.class);
+                inst.updateCompoundID();
+            }
+        };
     }
 
     @Override

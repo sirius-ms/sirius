@@ -1,19 +1,15 @@
 package de.unijena.bioinf.ms.frontend.subtools.canopus;
 
+import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusSubToolJob;
+import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
-import picocli.CommandLine.Option;
 
-
-import java.io.File;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 /**
  * This is for Canopus specific parameters.
@@ -32,12 +28,15 @@ public class CanopusOptions implements ToolChainOptions<CanopusSubToolJob, Insta
 
     @Override
     public InstanceJob.Factory<CanopusSubToolJob> call() throws Exception {
-        return CanopusSubToolJob::new;
+        return new InstanceJob.Factory<>(
+                CanopusSubToolJob::new,
+                getInvalidator()
+        );
     }
 
     @Override
-    public ToolChainJob.Invalidator getInvalidator() {
-        return null;
+    public Consumer<Instance> getInvalidator() {
+        return inst -> inst.deleteFromFormulaResults(CanopusResult.class);
     }
 
     @Override

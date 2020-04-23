@@ -66,7 +66,11 @@ public class ToolChainWorkflow implements Workflow {
             // build toolchain
             final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size());
             //job factory for job that add config annotations to an instance
-            instanceJobChain.add((jj) -> new AddConfigsJob(parameters));
+            instanceJobChain.add(new InstanceJob.Factory<>(
+                    (jj) -> new AddConfigsJob(parameters),
+                    (inst) -> {
+                    }
+            ));
             // get buffer size
             final int bufferSize = PropertyManager.getInteger("de.unijena.bioinf.sirius.instanceBuffer", "de.unijena.bioinf.sirius.cpu.cores", 0);
 
