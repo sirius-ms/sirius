@@ -8,10 +8,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public interface ContainerListener<ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>> extends EventListener {
 
-    public void containerChanged(ContainerEvent<ID, Container> event);
+    void containerChanged(ContainerEvent<ID, Container> event);
 
-    static class PartiallyListeningFluentBuilder<ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>> {
-        protected final ConcurrentLinkedQueue<ContainerListener<ID,Container>> queue;
+    class PartiallyListeningFluentBuilder<ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>> {
+        protected final ConcurrentLinkedQueue<ContainerListener<ID, Container>> queue;
         protected Class[] classes;
         protected EnumSet<ContainerEvent.EventType> types;
 
@@ -51,12 +51,12 @@ public interface ContainerListener<ID extends ProjectSpaceContainerId, Container
 
         public Defined thenDo(ContainerListener<ID,Container> listener) {
             EnumSet<ContainerEvent.EventType> types = this.types==null ? EnumSet.allOf(ContainerEvent.EventType.class) : this.types;
-            return new Defined(queue, new PartiallyListeningUpdateListener<ID,Container>(classes, types, listener));
+            return new Defined(queue, new PartiallyListeningUpdateListener<>(classes, types, listener));
         }
 
     }
 
-    public static class Defined {
+    class Defined {
         private final PartiallyListeningUpdateListener listener;
         private final ConcurrentLinkedQueue queue;
         protected boolean registered;
@@ -65,6 +65,14 @@ public interface ContainerListener<ID extends ProjectSpaceContainerId, Container
             this.listener = listener;
             this.queue = queue;
             this.registered = false;
+        }
+
+        public boolean isRegistered() {
+            return registered;
+        }
+
+        public boolean notRegistered() {
+            return !isRegistered();
         }
 
         public Defined register() {
@@ -87,14 +95,14 @@ public interface ContainerListener<ID extends ProjectSpaceContainerId, Container
     /**
      * A container listener, which is only called when a specific component is updated.
      */
-    public static class PartiallyListeningUpdateListener<ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>> implements ContainerListener<ID,Container> {
+    class PartiallyListeningUpdateListener<ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>> implements ContainerListener<ID, Container> {
 
         protected final Class[] listeningClasses;
         protected final EnumSet<ContainerEvent.EventType> listenToTypes;
 
-        protected final ContainerListener<ID,Container> listener;
+        protected final ContainerListener<ID, Container> listener;
 
-        PartiallyListeningUpdateListener(Class[] listeningClasses, EnumSet<ContainerEvent.EventType> listenToTypes,  ContainerListener<ID,Container> listener) {
+        PartiallyListeningUpdateListener(Class[] listeningClasses, EnumSet<ContainerEvent.EventType> listenToTypes, ContainerListener<ID, Container> listener) {
             this.listeningClasses = listeningClasses;
             this.listenToTypes = listenToTypes;
             this.listener = listener;

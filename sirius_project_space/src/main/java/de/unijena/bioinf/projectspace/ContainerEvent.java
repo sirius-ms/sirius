@@ -36,15 +36,19 @@ public class ContainerEvent<ID extends ProjectSpaceContainerId, Container extend
     }
 
     public boolean isUpdate() {
-        return type==EventType.UPDATED;
+        return type == EventType.UPDATED;
+    }
+
+    public boolean isUpdateRemove() {
+        return type == EventType.UPDATED && container == null;
     }
 
     public boolean isCreated() {
-        return type==EventType.CREATED;
+        return type == EventType.CREATED;
     }
 
     public boolean isDeleted() {
-        return type==EventType.DELETED;
+        return type == EventType.DELETED;
     }
 
     public boolean isComponentDeleted(Class<? extends DataAnnotation> komponent) {
@@ -60,6 +64,8 @@ public class ContainerEvent<ID extends ProjectSpaceContainerId, Container extend
      * @return
      */
     public <T extends DataAnnotation> Optional<T> getAffectedComponent(Class<T> komponent) {
+        if (container == null)
+            return Optional.empty();
         return container.getAnnotation(komponent);
     }
 
