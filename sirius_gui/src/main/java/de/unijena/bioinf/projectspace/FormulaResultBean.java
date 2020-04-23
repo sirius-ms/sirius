@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * this is the view for SiriusResultElement.class
@@ -96,17 +97,18 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return listeners;
     }
 
-    public void registerProjectSpaceListeners() {
+    public List<ContainerListener.Defined> registerProjectSpaceListeners() {
         if (listeners == null)
             listeners = configureListeners();
-        listeners.forEach(ContainerListener.Defined::register);
-
+        return listeners.stream().filter(ContainerListener.Defined::notRegistered).
+                map(ContainerListener.Defined::register).collect(Collectors.toList());
     }
 
-    public void unregisterProjectSpaceListeners() {
+    public List<ContainerListener.Defined> unregisterProjectSpaceListeners() {
         if (listeners == null)
-            return;
-        listeners.forEach(ContainerListener.Defined::unregister);
+            return List.of();
+        return listeners.stream().filter(ContainerListener.Defined::isRegistered).
+                map(ContainerListener.Defined::unregister).collect(Collectors.toList());
     }
 
 

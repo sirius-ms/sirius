@@ -14,7 +14,9 @@ import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,8 +42,6 @@ public class InstanceBean extends Instance implements SiriusPCS {
 
     //Project-space listener
     private List<ContainerListener.Defined> listeners;
-
-//    private volatile ComputingStatus fingerIdComputeState = ComputingStatus.UNCOMPUTED;
 
 
     //todo best hit property change is needed.
@@ -93,8 +93,23 @@ public class InstanceBean extends Instance implements SiriusPCS {
             changed = unregisterProjectSpaceListeners();
             List<FormulaResultId> old = getResults().stream().map(FormulaResultBean::getID).collect(Collectors.toList());
             List<FormulaResultId> nu = List.of();
-            super.deleteFormulaResults();
+
+            //load contain methods to ensure that it is available
+            final CompoundContainer ccache = loadCompoundContainer();
+            List<FormulaResultId> rid = List.copyOf(ccache.getResults().values());
+
+            ccache.getResults().clear();
+            clearFormulaResultsCache();
+
             pcs.firePropertyChange("instance.clearFormulaResults", old.isEmpty() ? nu : old, nu);
+
+            rid.forEach(v -> {
+                try {
+                    projectSpace().deleteFormulaResult(v);
+                } catch (IOException e) {
+                    LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
+                }
+            });
         } finally {
             changed.forEach(ContainerListener.Defined::register);
         }
