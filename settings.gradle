@@ -31,5 +31,8 @@ include ':utils'
 include ':lcms'
     include ':lcms:mzml-converter'
 include ':quality_assessment'
+include ':canopus'
+include ':canopus:canopus_learn'
+include ':canopus:canopus_predict_oss'
 //include ':retention_order_prediction'
 

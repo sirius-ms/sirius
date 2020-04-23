@@ -1,0 +1,25 @@
+allprojects {
+    version = '1.4.2-SNAPSHOT' //todo find solution for multi repo version storage
+}
+
+subprojects {
+    dependencies() {
+        //project
+        compile project(':chemistry_base')
+        compile project(':io')
+
+        //internal
+        compile group: "de.unijena.bioinf.ms", name: "chemdb_sql_oss", version: "$version" //todo move to opensource repo
+
+        // external
+        compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
+
+        compile group: 'org.ejml', name: 'ejml-fdense', version: '0.31'
+        compile group: 'org.ejml', name: 'ejml-simple', version: '0.31'
+
+        // CDK
+        for (module in ["fingerprint", "qsarmolecular", "data", "inchi", "interfaces", "smiles", "core"]) {
+            compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
+        }
+    }
+}
