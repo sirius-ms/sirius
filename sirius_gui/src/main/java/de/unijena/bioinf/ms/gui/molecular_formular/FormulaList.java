@@ -134,7 +134,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         selectionModel.clearSelection();
         elementList.clear();
 
-        List<FormulaResultBean> r = data.getResults();
+        final List<FormulaResultBean> r = data.getResults();
         if (r != null && !r.isEmpty()) {
             double[] zscores = new double[r.size()];
             double[] sscores = new double[r.size()];
@@ -144,13 +144,13 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             int i = 0;
             for (FormulaResultBean element : r) {
                 element.registerProjectSpaceListeners();
-                elementList.add(element);
                 zscores[i] = element.getScoreValue(ZodiacScore.class);
                 sscores[i] = element.getScoreValue(SiriusScore.class);
                 iScores[i] = element.getScoreValue(IsotopeScore.class);
                 tScores[i] = element.getScoreValue(TreeScore.class);
                 csiScores[i++] = element.getScoreValue(TopCSIScore.class);
             }
+            elementList.addAll(r);
 
             this.zodiacScoreStats.update(zscores);
             this.siriusScoreStats.update(sscores);

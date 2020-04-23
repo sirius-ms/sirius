@@ -17,7 +17,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Instance {
+    @NotNull
     protected final ProjectSpaceManager spaceManager;
+    @NotNull
     private CompoundContainer compoundCache;
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
@@ -69,9 +71,21 @@ public class Instance {
     }
 
     @SafeVarargs
+    public final synchronized void reloadCompoundCache(Class<? extends DataAnnotation>... components) {
+        try {
+            compoundCache = projectSpace().getCompound(getID(), components);
+        } catch (IOException e) {
+            LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.");
+            throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
+        }
+    }
+
+    @SafeVarargs
     public final synchronized FormulaResult loadFormulaResult(FormulaResultId fid, Class<? extends DataAnnotation>... components) {
         try {
             if (!formulaResultCache.containsKey(fid)) {
+                if (!compoundCache.contains(fid))
+                    throw new IllegalArgumentException("Unknown FormulaResultID, Either a wrong ID was inserted or the cached project-space was modified with bypassing the cache!");
                 final FormulaResult fr = projectSpace().getFormulaResult(fid, components);
                 formulaResultCache.put(fid, fr);
                 return fr;
@@ -88,15 +102,6 @@ public class Instance {
         }
     }
 
-    @SafeVarargs
-    public final synchronized void reloadCompoundCache(Class<? extends DataAnnotation>... components) {
-        try {
-            compoundCache = projectSpace().getCompound(getID(), components);
-        } catch (IOException e) {
-            LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.");
-            throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
-        }
-    }
 
     /**
      * @return Sorted List of FormulaResults scored by the currently defined RankingScore
@@ -209,26 +214,28 @@ public class Instance {
     public final synchronized void deleteFromFormulaResults(Class<? extends DataAnnotation>... components) {
         if (components.length == 0)
             return;
-        //update cache, load data from disc
-        List<FormulaResultId> rid = List.copyOf(loadCompoundContainer().getResults().values());
-
         //remove stuff from memory copy before removing from disk to ensure that is done before property change is
         //fired by the project space
         if (List.of(components).contains(FTree.class)) {
-            compoundCache.getResults().clear();
-            clearFormulaResultsCache();
+            deleteFormulaResults();
         } else {
+            //update cache, load data from disc
+            List<FormulaResultId> rid = List.copyOf(loadCompoundContainer().getResults().values());
+            //remove components from cached formula results
             formulaResultCache.forEach((k, v) -> List.of(components).forEach(v::removeAnnotation));
+            //remove components from ALL formula results on disc
+            rid.forEach(v -> {
+                try {
+                    projectSpace().deleteFromFormulaResult(v, components);
+                } catch (IOException e) {
+                    LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
+                }
+            });
         }
 
-        //remove from disk
-        rid.forEach(v -> {
-            try {
-                projectSpace().deleteFromFormulaResult(v, components);
-            } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
-            }
-        });
+
+
+
 
 
     }
@@ -295,9 +302,8 @@ public class Instance {
     }
 
 
-    // static helper methods
     @SafeVarargs
-    private static <T extends DataAnnotation> void updateAnnotations(final Annotated<T> toRefresh, final Annotated<T> refresher, final Class<? extends DataAnnotation>... components) {
+    private <T extends DataAnnotation> void updateAnnotations(final Annotated<T> toRefresh, final Annotated<T> refresher, final Class<? extends DataAnnotation>... components) {
         if (toRefresh != refresher) {
             Set<Class<? extends DataAnnotation>> comps = Arrays.stream(components).collect(Collectors.toSet());
             refresher.annotations().forEach((k, v) -> {
