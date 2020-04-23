@@ -23,18 +23,19 @@ public class PassatuttoSubToolJob extends InstanceJob {
     }
 
     @Override
+    public boolean isAlreadyComputed(@NotNull Instance inst) {
+        // We do not have to invalidate results because there is no method that builds on top of Passatutto
+        return inst.loadCompoundContainer().hasResult() && inst.loadFormulaResults(Decoy.class).stream().anyMatch(it -> it.getCandidate().hasAnnotation(Decoy.class));
+//            logInfo("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist.");
+    }
+
+    @Override
     protected void computeAndAnnotateResult(@NotNull Instance inst) {
         final FormulaResult best = inst.loadTopFormulaResult(List.of(ZodiacScore.class, SiriusScore.class), FormulaScoring.class, FTree.class)
                 .orElse(null);
 
         if (best == null || best.getAnnotation(FTree.class).isEmpty()) {
             logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are no trees computed. No fragmentation trees are computed yet. Run SIRIUS first and provide the correct molecular formula in the input files before calling Passatutto.");
-            return;
-        }
-
-        // We do not have to invalidate results because there is no method that builds on top of Passatutto
-        if (!isRecompute(inst) && best.hasAnnotation(Decoy.class)) {
-            logInfo("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist.");
             return;
         }
 

@@ -30,30 +30,26 @@ public class CanopusSubToolJob extends InstanceJob {
     }
 
     @Override
+    public boolean isAlreadyComputed(@NotNull Instance inst) {
+        return inst.loadCompoundContainer().hasResult() && inst.loadFormulaResults(CanopusResult.class).stream().anyMatch((it -> it.getCandidate().hasAnnotation(CanopusResult.class)));
+    }
+
+    @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
 //        System.out.println("I am Canopus on Experiment " + inst);
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(FormulaScoring.class, FingerprintResult.class, CanopusResult.class);
-
-        // check if we need to skip
-        if (!isRecompute(inst) && input.stream().anyMatch((it -> it.getCandidate().hasAnnotation(CanopusResult.class)))) {
-            logInfo("Skipping Canopus for Instance \"" + inst.getExperiment().getName() + "\" because results already exist.");
-            return;
-        }
-
-        //invalidate result for following computation
-        invalidateResults(inst);
 
         // create input
         List<FormulaResult> res = input.stream().map(SScored::getCandidate)
                 .filter(ir -> ir.hasAnnotation(FingerprintResult.class)).collect(Collectors.toList());
 
         // check for valid input
-        if (res.size() < 1)
-            return; // nothing to do
-        //throw new IllegalArgumentException("No FingerID Result available for compound class prediction");
+        if (res.isEmpty()) {
+            logInfo("Skipping because there are no formula results available");
+            return;
+        }
 
         // submit canopus jobs for Identification results that contain CSI:FingerID results
-//        Map<FormulaResult, CanopusJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmit));
         Map<FormulaResult, CanopusWebJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmitRemote));
 
         jobs.forEach((k, v) -> k.setAnnotation(CanopusResult.class, v.takeResult()));
@@ -76,13 +72,6 @@ public class CanopusSubToolJob extends InstanceJob {
         } catch (TimeoutException | InterruptedException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public void invalidateResults(@NotNull Instance inst) {
-        if (isRecompute(inst))
-            inst.deleteFromFormulaResults(CanopusResult.class);
-        super.invalidateResults(inst);
     }
 
     @Override

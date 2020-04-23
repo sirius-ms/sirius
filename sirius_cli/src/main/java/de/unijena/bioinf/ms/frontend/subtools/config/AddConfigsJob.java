@@ -28,6 +28,11 @@ public class AddConfigsJob extends InstanceJob {
     }
 
     @Override
+    public boolean isAlreadyComputed(@NotNull Instance inst) {
+        return false;
+    }
+
+    @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         final Ms2Experiment exp = inst.getExperiment();
         final Optional<ProjectSpaceConfig> psConfig = inst.loadConfig();

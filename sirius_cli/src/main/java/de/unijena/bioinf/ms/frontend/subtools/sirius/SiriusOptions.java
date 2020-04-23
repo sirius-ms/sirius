@@ -17,22 +17,24 @@
  */
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
+import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
+import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * This is for SIRIUS specific parameters.
@@ -183,18 +185,24 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
 
     @Override
     public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
-        return (sub) -> new SiriusSubToolJob(this, sub);
+        return new InstanceJob.Factory<>(
+                sub -> new SiriusSubToolJob(this, sub),
+                getInvalidator()
+        );
     }
 
     @Override
-    public ToolChainJob.Invalidator getInvalidator() {
-        return null;
+    public Consumer<Instance> getInvalidator() {
+        return inst -> {
+            inst.deleteFormulaResults(); //this step creates the resutl so we have to delete them before recompute
+            inst.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
+            inst.getID().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
+            inst.updateCompoundID();
+        };
     }
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
         return List.of(PassatuttoOptions.class, ZodiacOptions.class, FingerIdOptions.class);
     }
-
-
 }

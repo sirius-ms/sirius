@@ -44,6 +44,11 @@ public class ZodiacSubToolJob extends DataSetJob {
     }
 
     @Override
+    public boolean isAlreadyComputed(@NotNull Instance inst) {
+        return inst.loadCompoundContainer().hasResult() && inst.loadFormulaResults(FormulaScoring.class).stream().anyMatch(res -> res.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class));
+    }
+
+    @Override
     protected void computeAndAnnotateResult(@NotNull List<Instance> instances) throws Exception {
         final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream().distinct().collect(Collectors.toMap(
                 Instance::getExperiment,
@@ -55,150 +60,149 @@ public class ZodiacSubToolJob extends DataSetJob {
         input.keySet().retainAll(instances.stream().map(Instance::getExperiment).collect(Collectors.toList()));
 
 
-        if (instances.stream().anyMatch(it -> isRecompute(it) || (input.containsKey(it.getExperiment()) && !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class)))) {
+//        if (instances.stream().anyMatch(it -> isRecompute(it) || (input.containsKey(it.getExperiment()) && !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class)))) {
 //            System.out.println("I am ZODIAC and run " + instances.size() + " instances: ");
 
-            Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList())));
+        Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList())));
 
-            //annotate compound quality
-            TreeQualityEvaluator treeQualityEvaluator = new TreeQualityEvaluator(0.8, 5);
-            for (Map.Entry<Ms2Experiment, List<FTree>> ms2ExperimentListEntry : ms2ExperimentToTreeCandidates.entrySet()) {
-                Ms2Experiment experiment = ms2ExperimentListEntry.getKey();
-                List<FTree> treeCandidates = ms2ExperimentListEntry.getValue();
-                boolean isPoorlyExplained = SiriusJobs.getGlobalJobManager().submitJob(treeQualityEvaluator.makeIsAllCandidatesPoorlyExplainSpectrumJob(treeCandidates)).awaitResult();
-                if (isPoorlyExplained) {
-                    //update if poorly explained
-                    CompoundQuality quality = experiment.getAnnotationOrNull(CompoundQuality.class);
-                    if (quality ==  null) {
-                        quality = new CompoundQuality(CompoundQuality.CompoundQualityFlag.PoorlyExplained);
-                    } else if (quality.isNot(CompoundQuality.CompoundQualityFlag.PoorlyExplained)) {
-                        quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.PoorlyExplained);
-                        experiment.removeAnnotation(CompoundQuality.class);
-                    }
-                    //todo what do we want todo if annotation is present? override or not?
-                    experiment.setAnnotation(CompoundQuality.class, quality);
+        //annotate compound quality
+        TreeQualityEvaluator treeQualityEvaluator = new TreeQualityEvaluator(0.8, 5);
+        for (Map.Entry<Ms2Experiment, List<FTree>> ms2ExperimentListEntry : ms2ExperimentToTreeCandidates.entrySet()) {
+            Ms2Experiment experiment = ms2ExperimentListEntry.getKey();
+            List<FTree> treeCandidates = ms2ExperimentListEntry.getValue();
+            boolean isPoorlyExplained = SiriusJobs.getGlobalJobManager().submitJob(treeQualityEvaluator.makeIsAllCandidatesPoorlyExplainSpectrumJob(treeCandidates)).awaitResult();
+            if (isPoorlyExplained) {
+                //update if poorly explained
+                CompoundQuality quality = experiment.getAnnotationOrNull(CompoundQuality.class);
+                if (quality == null) {
+                    quality = new CompoundQuality(CompoundQuality.CompoundQualityFlag.PoorlyExplained);
+                } else if (quality.isNot(CompoundQuality.CompoundQualityFlag.PoorlyExplained)) {
+                    quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.PoorlyExplained);
+                    experiment.removeAnnotation(CompoundQuality.class);
                 }
-            }
-
-
-
-            if (instances.size()==0) return;
-
-            //properties
-            Ms2Experiment settings = instances.get(0).getExperiment();
-            int maxCandidates = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidates.class).value;
-            ZodiacEpochs zodiacEpochs = settings.getAnnotationOrThrow(ZodiacEpochs.class);
-            ZodiacEdgeFilterThresholds edgeFilterThresholds = settings.getAnnotationOrThrow(ZodiacEdgeFilterThresholds.class);
-            ZodiacRunInTwoSteps zodiacRunInTwoSteps = settings.getAnnotationOrThrow(ZodiacRunInTwoSteps.class);
-            ZodiacClusterCompounds clusterEnabled = settings.getAnnotationOrThrow(ZodiacClusterCompounds.class);
-
-            //node scoring
-            NodeScorer[] nodeScorers;
-            List<LibraryHit> anchors = null;
-            if (cliOptions.libraryHitsFile!=null) {
-                //todo implement option to set all anchors as good quality compounds
-                logInfo("use library hits as anchors.");
-                ZodiacLibraryScoring zodiacLibraryScoring = settings.getAnnotationOrThrow(ZodiacLibraryScoring.class);
-
-                anchors = parseAnchors(new ArrayList<>(input.keySet()));
-
-                Reaction[] reactions = ZodiacUtils.parseReactions(1);
-                Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
-                for (Reaction reaction : reactions) {
-                    netSingleReactionDiffs.add(reaction.netChange());
-                }
-                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(zodiacLibraryScoring.lambda, zodiacLibraryScoring.minCosine, netSingleReactionDiffs)};
-            } else {
-                nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
-            }
-
-
-            //edge scoring
-            EdgeFilter edgeFilter = null;
-            if (edgeFilterThresholds.thresholdFilter > 0.0D && (edgeFilterThresholds.minLocalCandidates > 0.0D || edgeFilterThresholds.minLocalConnections > 0d)) {
-                int numberOfCandidates = Math.max(edgeFilterThresholds.minLocalCandidates, 1);
-                int numberOfConnections = edgeFilterThresholds.minLocalConnections > 0 ? edgeFilterThresholds.minLocalConnections : 10;
-                edgeFilter = new EdgeThresholdMinConnectionsFilter(edgeFilterThresholds.thresholdFilter, numberOfCandidates, numberOfConnections);
-            } else if (edgeFilterThresholds.thresholdFilter > 0.0D) {
-                edgeFilter = new EdgeThresholdFilter(edgeFilterThresholds.thresholdFilter); //this one does not create the whole network
-            }
-
-            if (edgeFilter == null) {
-                edgeFilter = new EdgeThresholdFilter(0);
-            }
-
-            final boolean estimateByMedian = true;
-            ScoreProbabilityDistribution probabilityDistribution = new LogNormalDistribution(estimateByMedian);
-
-            CommonFragmentAndLossScorer c = new CommonFragmentAndLossScorerNoiseIntensityWeighted();
-            ScoreProbabilityDistributionEstimator<FragmentsCandidate> scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator<>(c, probabilityDistribution, edgeFilterThresholds.thresholdFilter);
-
-
-            Zodiac zodiac = new Zodiac(ms2ExperimentToTreeCandidates,
-                    anchors,
-                    nodeScorers,
-                    new EdgeScorer[]{scoreProbabilityDistributionEstimator},
-                    edgeFilter,
-                    maxCandidates, clusterEnabled.value, zodiacRunInTwoSteps.value, null
-            );
-
-            //todo clustering disabled. Evaluate if it might help at any point?
-            final ZodiacResultsWithClusters clusterResults = SiriusJobs.getGlobalJobManager().submitJob(
-                    zodiac.makeComputeJob(zodiacEpochs.iterations, zodiacEpochs.burnInPeriod, zodiacEpochs.numberOfMarkovChains))
-                    .awaitResult();
-            final Map<Ms2Experiment, Map<FTree, ZodiacScore>> scoreResults = zodiac.getZodiacScoredTrees();
-
-
-            //add score and set new Ranking score
-            instances.forEach(inst -> {
-                try {
-//                System.out.println(inst.getID().getDirectoryName());
-                    final Map<FTree, ZodiacScore> sTress = scoreResults.get(inst.getExperiment());
-                    final List<FormulaResult> formulaResults = input.get(inst.getExperiment());
-                    if (formulaResults == null || sTress == null) {
-                        //this instance was not processed by ZODIAC
-                        return;
-                    }
-                    formulaResults.forEach(fr -> {
-                        FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
-                        scoring.setAnnotation(ZodiacScore.class,
-                                sTress.getOrDefault(fr.getAnnotationOrThrow(FTree.class), FormulaScore.NA(ZodiacScore.class))
-                        );
-
-                        inst.updateFormulaResult(fr, FormulaScoring.class);
-//                    System.out.println(fr.getId().getFormula().toString() + sTress.get(fr.getAnnotationOrThrow(FTree.class)));
-                    });
-
-                    // set zodiac as ranking score
-                    if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                        inst.getID().setRankingScoreTypes(ZodiacScore.class, SiriusScore.class);
-                        inst.updateCompoundID();
-                    }
-                } catch (Throwable e) {
-                    logError("Error when retrieving Zodiac Results for instance: " + inst.getID().getDirectoryName(), e);
-                }
-            });
-
-            instances.forEach(this::invalidateResults);
-
-            //todo if this are non temporary fields, they have to be implemented as project-space entities
-            try { //ensure that summary does not crash job
-                if (cliOptions.summaryFile != null)
-                    ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
-            } catch (Exception e) {
-                logError("Error when writing Deprecated ZodiacSummary", e);
-            }
-
-            try { //ensure that summary does not crash job
-                if (cliOptions.bestMFSimilarityGraphFile != null)
-                    ZodiacUtils.writeSimilarityGraphOfBestMF(clusterResults, cliOptions.bestMFSimilarityGraphFile);
-            } catch (Exception e) {
-                logError("Error when writing ZODIAC graph", e);
+                //todo what do we want todo if annotation is present? override or not?
+                experiment.setAnnotation(CompoundQuality.class, quality);
             }
         }
+
+
+        if (instances.size() == 0) return;
+
+        //properties
+        Ms2Experiment settings = instances.get(0).getExperiment();
+        int maxCandidates = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidates.class).value;
+        ZodiacEpochs zodiacEpochs = settings.getAnnotationOrThrow(ZodiacEpochs.class);
+        ZodiacEdgeFilterThresholds edgeFilterThresholds = settings.getAnnotationOrThrow(ZodiacEdgeFilterThresholds.class);
+        ZodiacRunInTwoSteps zodiacRunInTwoSteps = settings.getAnnotationOrThrow(ZodiacRunInTwoSteps.class);
+        ZodiacClusterCompounds clusterEnabled = settings.getAnnotationOrThrow(ZodiacClusterCompounds.class);
+
+        //node scoring
+        NodeScorer[] nodeScorers;
+        List<LibraryHit> anchors = null;
+        if (cliOptions.libraryHitsFile != null) {
+            //todo implement option to set all anchors as good quality compounds
+            logInfo("use library hits as anchors.");
+            ZodiacLibraryScoring zodiacLibraryScoring = settings.getAnnotationOrThrow(ZodiacLibraryScoring.class);
+
+            anchors = parseAnchors(new ArrayList<>(input.keySet()));
+
+            Reaction[] reactions = ZodiacUtils.parseReactions(1);
+            Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
+            for (Reaction reaction : reactions) {
+                netSingleReactionDiffs.add(reaction.netChange());
+            }
+            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(zodiacLibraryScoring.lambda, zodiacLibraryScoring.minCosine, netSingleReactionDiffs)};
+        } else {
+            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
+        }
+
+
+        //edge scoring
+        EdgeFilter edgeFilter = null;
+        if (edgeFilterThresholds.thresholdFilter > 0.0D && (edgeFilterThresholds.minLocalCandidates > 0.0D || edgeFilterThresholds.minLocalConnections > 0d)) {
+            int numberOfCandidates = Math.max(edgeFilterThresholds.minLocalCandidates, 1);
+            int numberOfConnections = edgeFilterThresholds.minLocalConnections > 0 ? edgeFilterThresholds.minLocalConnections : 10;
+            edgeFilter = new EdgeThresholdMinConnectionsFilter(edgeFilterThresholds.thresholdFilter, numberOfCandidates, numberOfConnections);
+        } else if (edgeFilterThresholds.thresholdFilter > 0.0D) {
+            edgeFilter = new EdgeThresholdFilter(edgeFilterThresholds.thresholdFilter); //this one does not create the whole network
+        }
+
+        if (edgeFilter == null) {
+            edgeFilter = new EdgeThresholdFilter(0);
+        }
+
+        final boolean estimateByMedian = true;
+        ScoreProbabilityDistribution probabilityDistribution = new LogNormalDistribution(estimateByMedian);
+
+        CommonFragmentAndLossScorer c = new CommonFragmentAndLossScorerNoiseIntensityWeighted();
+        ScoreProbabilityDistributionEstimator<FragmentsCandidate> scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator<>(c, probabilityDistribution, edgeFilterThresholds.thresholdFilter);
+
+
+        Zodiac zodiac = new Zodiac(ms2ExperimentToTreeCandidates,
+                anchors,
+                nodeScorers,
+                new EdgeScorer[]{scoreProbabilityDistributionEstimator},
+                edgeFilter,
+                maxCandidates, clusterEnabled.value, zodiacRunInTwoSteps.value, null
+        );
+
+        //todo clustering disabled. Evaluate if it might help at any point?
+        final ZodiacResultsWithClusters clusterResults = SiriusJobs.getGlobalJobManager().submitJob(
+                zodiac.makeComputeJob(zodiacEpochs.iterations, zodiacEpochs.burnInPeriod, zodiacEpochs.numberOfMarkovChains))
+                .awaitResult();
+        final Map<Ms2Experiment, Map<FTree, ZodiacScore>> scoreResults = zodiac.getZodiacScoredTrees();
+
+
+        //add score and set new Ranking score
+        instances.forEach(inst -> {
+            try {
+//                System.out.println(inst.getID().getDirectoryName());
+                final Map<FTree, ZodiacScore> sTress = scoreResults.get(inst.getExperiment());
+                final List<FormulaResult> formulaResults = input.get(inst.getExperiment());
+                if (formulaResults == null || sTress == null) {
+                    //this instance was not processed by ZODIAC
+                    return;
+                }
+                formulaResults.forEach(fr -> {
+                    FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
+                    scoring.setAnnotation(ZodiacScore.class,
+                            sTress.getOrDefault(fr.getAnnotationOrThrow(FTree.class), FormulaScore.NA(ZodiacScore.class))
+                    );
+
+                    inst.updateFormulaResult(fr, FormulaScoring.class);
+//                    System.out.println(fr.getId().getFormula().toString() + sTress.get(fr.getAnnotationOrThrow(FTree.class)));
+                });
+
+                // set zodiac as ranking score
+                if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
+                    inst.getID().setRankingScoreTypes(ZodiacScore.class, SiriusScore.class);
+                    inst.updateCompoundID();
+                }
+            } catch (Throwable e) {
+                logError("Error when retrieving Zodiac Results for instance: " + inst.getID().getDirectoryName(), e);
+            }
+        });
+
+        instances.forEach(this::invalidateResults);
+
+        //todo if this are non temporary fields, they have to be implemented as project-space entities
+        try { //ensure that summary does not crash job
+            if (cliOptions.summaryFile != null)
+                ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
+        } catch (Exception e) {
+            logError("Error when writing Deprecated ZodiacSummary", e);
+        }
+
+        try { //ensure that summary does not crash job
+            if (cliOptions.bestMFSimilarityGraphFile != null)
+                ZodiacUtils.writeSimilarityGraphOfBestMF(clusterResults, cliOptions.bestMFSimilarityGraphFile);
+        } catch (Exception e) {
+            logError("Error when writing ZODIAC graph", e);
+        }
+//        }
     }
 
-    private List<LibraryHit> parseAnchors(List<Ms2Experiment> ms2Experiments){
+    private List<LibraryHit> parseAnchors(List<Ms2Experiment> ms2Experiments) {
         List<LibraryHit> anchors;
         Path libraryHitsFile = cliOptions.libraryHitsFile;
         try {
@@ -210,21 +214,6 @@ public class ZodiacSubToolJob extends DataSetJob {
         return anchors;
     }
 
-    @Override
-    public void invalidateResults(@NotNull Instance inst) {
-        if (isRecompute(inst)) {
-            inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
-                    .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
-                        if (z.removeAnnotation(ZodiacScore.class) != null)
-                            inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
-                    }));
-            if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getID().getRankingScoreTypes().remove(ZodiacScore.class);
-                inst.updateCompoundID();
-            }
-        }
-        super.invalidateResults(inst);
-    }
 
     @Override
     public String getToolName() {

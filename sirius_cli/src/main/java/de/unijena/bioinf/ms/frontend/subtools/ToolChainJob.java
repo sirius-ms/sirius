@@ -5,36 +5,68 @@ import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.ms.annotations.RecomputeResults;
 import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface ToolChainJob<T> extends ProgressJJob<T> {
-    default void invalidateResults(final @NotNull Instance inst) {
-        final Optional<RecomputeResults> recomp = inst.getExperiment().getAnnotation(RecomputeResults.class);
-        if (recomp.isEmpty() || !recomp.get().value)
-            inst.getExperiment().setAnnotation(RecomputeResults.class, RecomputeResults.TRUE);
 
-        getInvalidator().invalidate(inst);
+    default boolean isRecompute(final @NotNull Instance inst) {
+        return inst.getExperiment().getAnnotation(RecomputeResults.class, () -> RecomputeResults.FALSE).value;
     }
 
-    default boolean isRecompute(final @NotNull Instance expRes) {
-        return expRes.getExperiment().getAnnotation(RecomputeResults.class, () -> RecomputeResults.FALSE).value;
+    default boolean enableRecompute(final @NotNull Instance inst) {
+        return setRecompute(inst, true);
     }
+
+    default boolean disableRecompute(final @NotNull Instance inst) {
+        return setRecompute(inst, false);
+    }
+
+    default boolean setRecompute(final @NotNull Instance inst, boolean recompute) {
+        return inst.getExperiment().setAnnotation(RecomputeResults.class, RecomputeResults.newInstance(recompute));
+    }
+
+    boolean isAlreadyComputed(final @NotNull Instance inst);
 
     default String getToolName() {
         return getClass().getSimpleName();
     }
 
-    Invalidator getInvalidator();
-    void setInvalidator(Invalidator invalidator);
+    void setInvalidator(Consumer<Instance> invalidator);
 
-    @FunctionalInterface
-    interface Invalidator {
-        void invalidate(Instance inst);
-    }
+    void invalidateResults(final @NotNull Instance inst);
 
-    @FunctionalInterface
+
     interface Factory<J extends ToolChainJob<?>> {
         J makeJob(JobSubmitter submitter);
+
+        Factory<J> addInvalidator(Consumer<Instance> invalidator);
+    }
+
+    abstract class FactoryImpl<J extends ToolChainJob<?>> implements Factory<J> {
+        @NotNull
+        protected Function<JobSubmitter, J> jobCreator;
+        @NotNull
+        protected Consumer<Instance> invalidator;
+
+        public FactoryImpl(@NotNull Function<JobSubmitter, J> jobCreator, @Nullable Consumer<Instance> baseInvalidator) {
+            this.jobCreator = jobCreator;
+            invalidator = baseInvalidator != null ? baseInvalidator : (instance -> {});
+        }
+
+        @Override
+        public J makeJob(JobSubmitter submitter) {
+            J j = jobCreator.apply(submitter);
+            j.setInvalidator(invalidator);
+            return j;
+        }
+
+        @Override
+        public Factory<J> addInvalidator(Consumer<Instance> invalidator) {
+            this.invalidator = this.invalidator.andThen(invalidator);
+            return this;
+        }
     }
 }

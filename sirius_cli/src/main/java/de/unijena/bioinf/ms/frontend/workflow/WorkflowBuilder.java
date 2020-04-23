@@ -19,10 +19,7 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
@@ -36,11 +33,14 @@ import java.util.stream.Stream;
  * In the Constructor it needs to be defined how the different Subtools depend on each other and
  * in which order they have to be executed.
  * <p>
- * This class is also intended to be used from the GUI but with a different {@RootOtion) class.
+ * This class is also intended to be used from the GUI but with a different {@link RootOptions) class.
  * <p>
  * Buy using this class we do not need to write new Workflows every time we add a new tool.
  * We just have to define its parameters in h
  */
+
+// todo In general a lot of the configuration here could be done on compile time.
+//  but on the other hand I do not think it is a performance critical thing.
 
 public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
@@ -212,7 +212,21 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
         private void execute(CommandLine parsed, List<Object> executionResult) {
             Object command = parsed.getCommand();
-            if (command instanceof Runnable) {
+            if (command instanceof ToolChainOptions) {
+                try {
+                    // create a JobFactory (Task) an configures it invalidation behavior based on its
+                    // possible SubTools.
+                    ToolChainOptions<?, ?> toolChainOptions = (ToolChainOptions<?, ?>) command;
+                    ToolChainJob.Factory<?> task = toolChainOptions.call();
+                    Set<Class<? extends ToolChainOptions<?, ?>>> subs = Set.copyOf(toolChainOptions.getSubCommands());
+                    toolChainTools.stream().filter(sub -> subs.contains(sub.getClass())).forEach(sub -> task.addInvalidator(sub.getInvalidator()));
+                    executionResult.add(task);
+                } catch (CommandLine.ParameterException | CommandLine.ExecutionException ex) {
+                    throw ex;
+                } catch (Exception ex) {
+                    throw new CommandLine.ExecutionException(parsed, "Error while calling command (" + command + "): " + ex, ex);
+                }
+            } else if (command instanceof Runnable) {
                 try {
                     ((Runnable) command).run();
                 } catch (CommandLine.ParameterException | CommandLine.ExecutionException ex) {

@@ -1,20 +1,26 @@
 package de.unijena.bioinf.ms.frontend.subtools.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoSubToolJob;
+import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 /**
  * This is for CSI:FingerID specific parameters.
@@ -57,12 +63,26 @@ public class FingerIdOptions implements ToolChainOptions<FingeridSubToolJob, Ins
 
     @Override
     public InstanceJob.Factory<FingeridSubToolJob> call() throws Exception {
-        return FingeridSubToolJob::new;
+        return new InstanceJob.Factory<>(
+                FingeridSubToolJob::new,
+                getInvalidator()
+        );
     }
 
     @Override
-    public ToolChainJob.Invalidator getInvalidator() {
-        return null;
+    public Consumer<Instance> getInvalidator() {
+        return inst -> {
+            inst.deleteFromFormulaResults(FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
+            inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
+                    .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
+                        if (z.removeAnnotation(TopCSIScore.class) != null || z.removeAnnotation(ConfidenceScore.class) != null)
+                            inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
+                    }));
+            if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
+                inst.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class));
+                inst.updateCompoundID();
+            }
+        };
     }
 
     @Override
