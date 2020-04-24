@@ -58,12 +58,7 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         if (this.ec != ec || currentID != newID) {
             this.ec = ec;
 
-            if (result != null) {
-                this.currentResult = result;
-            } else {
-                this.currentResult = null;
-            }
-
+            this.currentResult = result;
             cbModel.removeAllElements();
             identifierToSpectrum = new HashMap<>();
 
