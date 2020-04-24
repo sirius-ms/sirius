@@ -1,3 +1,5 @@
+##### 4.4.15
+- feature: CLI Sub-Tool to export projects to mgf.
 ##### 4.4.14
 - fix: MacOS included JRE not found.
 - fix: ignored parameters.
