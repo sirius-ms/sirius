@@ -1,5 +1,11 @@
 ##### 4.4.15
 - feature: CLI Sub-Tool to export projects to mgf.
+- feature: multiple candidate number for Zodiac.
+- fix: zodiac score rendering.
+- fix: deadlock project-space import
+- fixes: tree rendering
+- improvement: import and deletion performance
+- improvement: import progress now shown
 ##### 4.4.14
 - fix: MacOS included JRE not found.
 - fix: ignored parameters.
