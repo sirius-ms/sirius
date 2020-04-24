@@ -2,7 +2,9 @@ package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -38,6 +40,10 @@ public class ZodiacSubToolJob extends DataSetJob {
 
     protected final ZodiacOptions cliOptions;
 
+    int maxCandidatesAt300;
+    int maxCandidatesAt800;
+    double forcedCandidatesPerIonizationRatio;
+
     public ZodiacSubToolJob(ZodiacOptions cliOptions, JobSubmitter jobSubmitter) {
         super(in -> !in.loadCompoundContainer().getResults().isEmpty(), jobSubmitter); //check whether the compound has formula results or not
         this.cliOptions = cliOptions;
@@ -64,8 +70,13 @@ public class ZodiacSubToolJob extends DataSetJob {
 //            System.out.println("I am ZODIAC and run " + instances.size() + " instances: ");
 
         Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList())));
+        Ms2Experiment settings = instances.get(0).getExperiment();
 
-        //annotate compound quality
+        maxCandidatesAt300 = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidatesAt300Mz.class).value;
+        maxCandidatesAt800 = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidatesAt800Mz.class).value;
+        forcedCandidatesPerIonizationRatio = settings.getAnnotationOrThrow(ZodiacRatioOfConsideredCandidatesPerIonization.class).value;
+
+        //annotate compound quality at limit number of candidates
         TreeQualityEvaluator treeQualityEvaluator = new TreeQualityEvaluator(0.8, 5);
         for (Map.Entry<Ms2Experiment, List<FTree>> ms2ExperimentListEntry : ms2ExperimentToTreeCandidates.entrySet()) {
             Ms2Experiment experiment = ms2ExperimentListEntry.getKey();
@@ -83,6 +94,9 @@ public class ZodiacSubToolJob extends DataSetJob {
                 //todo what do we want todo if annotation is present? override or not?
                 experiment.setAnnotation(CompoundQuality.class, quality);
             }
+            //limit number of candidates
+            treeCandidates = applyMaxCandidateThreshold(experiment, treeCandidates);
+            ms2ExperimentListEntry.setValue(treeCandidates);
         }
 
 
@@ -90,7 +104,7 @@ public class ZodiacSubToolJob extends DataSetJob {
 
         //properties
         Ms2Experiment settings = instances.get(0).getExperiment();
-        int maxCandidates = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidates.class).value;
+
         ZodiacEpochs zodiacEpochs = settings.getAnnotationOrThrow(ZodiacEpochs.class);
         ZodiacEdgeFilterThresholds edgeFilterThresholds = settings.getAnnotationOrThrow(ZodiacEdgeFilterThresholds.class);
         ZodiacRunInTwoSteps zodiacRunInTwoSteps = settings.getAnnotationOrThrow(ZodiacRunInTwoSteps.class);
@@ -143,7 +157,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                 nodeScorers,
                 new EdgeScorer[]{scoreProbabilityDistributionEstimator},
                 edgeFilter,
-                maxCandidates, clusterEnabled.value, zodiacRunInTwoSteps.value, null
+                -1, clusterEnabled.value, zodiacRunInTwoSteps.value, null
         );
 
         //todo clustering disabled. Evaluate if it might help at any point?
@@ -200,6 +214,72 @@ public class ZodiacSubToolJob extends DataSetJob {
             logError("Error when writing ZODIAC graph", e);
         }
 //        }
+    }
+
+    private List<FTree> applyMaxCandidateThreshold(Ms2Experiment experiment, List<FTree> trees) {
+        int numCandidates = numberOfCandidates(experiment.getIonMass());
+        if (numCandidates < 0 || numCandidates >= trees.size()) return trees;
+
+        int numCandidatesPerIonization = (int) Math.ceil(numCandidates * forcedCandidatesPerIonizationRatio);
+        return extractBestCandidates(trees, numCandidates, numCandidatesPerIonization);
+    }
+
+    private List<FTree> extractBestCandidates(List<FTree> candidates, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
+        List<FTree> sortedCandidates;
+        if (isSorted(candidates)) sortedCandidates = candidates;
+        else {
+            sortedCandidates = new ArrayList<>(candidates);
+            sortedCandidates.sort(FTree.orderByScoreDescending());
+        }
+        final List<FTree> returnList;
+        if (numberOfResultsToKeepPerIonization <= 0 || sortedCandidates.size() <= numberOfResultsToKeep) {
+            returnList = sortedCandidates.subList(0, Math.min(sortedCandidates.size(), numberOfResultsToKeep));
+        } else {
+            Map<Ionization, List<FTree>> ionToResults = new HashMap<>();
+            for (FTree result : sortedCandidates) {
+                final Ionization ion = result.getAnnotationOrThrow(PrecursorIonType.class).getIonization();
+                List<FTree> ionResults = ionToResults.get(ion);
+                if (ionResults == null) {
+                    ionResults = new ArrayList<>();
+                    ionResults.add(result);
+                    ionToResults.put(ion, ionResults);
+                } else if (ionResults.size() < numberOfResultsToKeepPerIonization) {
+                    ionResults.add(result);
+                }
+            }
+            Set<FTree> exractedResults = new HashSet<>();
+            exractedResults.addAll(sortedCandidates.subList(0, numberOfResultsToKeep));
+            for (List<FTree> ionResults : ionToResults.values()) {
+                exractedResults.addAll(ionResults);
+            }
+
+            returnList = new ArrayList<>(exractedResults);
+            returnList.sort(FTree.orderByScoreDescending());
+        }
+
+        return returnList;
+    }
+
+    private int numberOfCandidates(double mz) {
+        if (maxCandidatesAt300 < 0 || maxCandidatesAt800 < 0) return -1;
+        if (mz <= 300) return maxCandidatesAt300;
+        if (mz >= 800) return maxCandidatesAt800;
+
+        return (int) Math.ceil((mz - 300d) / 500d * (maxCandidatesAt800 - maxCandidatesAt300) + maxCandidatesAt300);
+    }
+
+    private boolean isSorted(List<FTree> trees) {
+        FTree previous = null;
+        for (FTree tree : trees) {
+            if (previous == null) {
+                previous = tree;
+            } else {
+                if (FTree.orderByScoreDescending().compare(previous, tree) > 0)
+                    return false; //is not sorted
+                previous = tree;
+            }
+        }
+        return true;
     }
 
     private List<LibraryHit> parseAnchors(List<Ms2Experiment> ms2Experiments) {
