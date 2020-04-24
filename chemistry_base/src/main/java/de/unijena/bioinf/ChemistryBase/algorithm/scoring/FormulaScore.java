@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceLoader;
+import java.util.function.Supplier;
 
 public abstract class FormulaScore extends Score.AbstDoubleScore<FormulaScore> {
     /**
@@ -58,6 +60,14 @@ public abstract class FormulaScore extends Score.AbstDoubleScore<FormulaScore> {
 
     public boolean isNa() {
         return Double.compare(MISSING_SCORE_VALUE, score()) == 0;
+    }
+
+    public double scoreIfNa(Supplier<Double> alternative) {
+        return isNa() ? alternative.get() : score();
+    }
+
+    public double scoreIfNa(double alternative) {
+        return isNa() ? alternative : score();
     }
 
     public synchronized static <T extends FormulaScore> T NA(@NotNull Class<T> scoreType) {
