@@ -36,11 +36,19 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
     }
 
 
-    @Option(names = "--considered-candidates", descriptionKey = "ZodiacNumberOfConsideredCandidates",
-            description = {"Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC."})
-    public void setNumberOfConsideredCandidates(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("ZodiacNumberOfConsideredCandidates", value);
+    @Option(names = "--considered-candidates-at-300", descriptionKey = "ZodiacNumberOfConsideredCandidatesAt300Mz",
+            description = {"Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds below 300 m/z."})
+    public void setNumberOfConsideredCandidatesBelow300(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacNumberOfConsideredCandidatesAt300Mz", value);
     }
+
+    @Option(names = "--considered-candidates-at-800", descriptionKey = "ZodiacNumberOfConsideredCandidatesAt800Mz",
+            description = {"Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds above 800 m/z."})
+    public void setNumberOfConsideredCandidatesAbove800(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacNumberOfConsideredCandidatesAt800Mz", value);
+    }
+
+    //ZodiacRatioOfConsideredCandidatesPerIonization only available via config
 
     ///////////////////////
     //library hits     ///
