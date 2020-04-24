@@ -126,7 +126,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                         },
                         x -> true
                 );
-                List<InstanceBean> imported = Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", true, importer.makeImportJJob(input))
+                List<InstanceBean> imported = Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...",  importer.makeImportJJob(input))
                         .getResult().stream().map(id -> (InstanceBean) newInstanceFromCompound(id, Ms2Experiment.class)).collect(Collectors.toList());
                 SwingUtilities.invokeLater(() -> INSTANCE_LIST.addAll(imported));
             }
