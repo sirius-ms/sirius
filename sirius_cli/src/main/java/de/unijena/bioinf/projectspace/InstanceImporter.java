@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.IntSummaryStatistics;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -55,7 +56,9 @@ public class InstanceImporter {
 
     public class ImportInstancesJJob extends BasicJJob<List<CompoundContainerId>> {
         private InputFilesOptions inputFiles;
-        private int max, current;
+
+
+        private JobProgress prog;
 
 
         public ImportInstancesJJob(InputFilesOptions inputFiles) {
@@ -65,10 +68,10 @@ public class InstanceImporter {
 
         @Override
         protected List<CompoundContainerId> compute() throws Exception {
-            max = (int) inputFiles.getAllFilesStream().count();
-            current = 0;
-
-            return importMultipleSources(inputFiles);
+            prog = new JobProgress();
+            List<CompoundContainerId> l = importMultipleSources(inputFiles);
+            updateProgress(0, 100, 99);
+            return l;
         }
 
 
@@ -92,13 +95,11 @@ public class InstanceImporter {
             final InstanceImportIteratorMS2Exp it = new CsvMS2ExpIterator(csvInputs, expFilter).asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
             final List<CompoundContainerId> ll = new ArrayList<>();
 
-            long count = 0;
             while (it.hasNext()) {
                 ll.add(it.next().getID());
-                if (count++ > csvInputs.size())
-                    max++;
-                updateProgress(0, max, ++current);
+                prog.accept();
             }
+            prog.updateStats();
             return ll;
         }
 
@@ -109,13 +110,11 @@ public class InstanceImporter {
             final InstanceImportIteratorMS2Exp it = new MS2ExpInputIterator(files, expFilter, inputFiles.msInput.ignoreFormula).asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
             final List<CompoundContainerId> ll = new ArrayList<>();
 
-            long count = 0;
             while (it.hasNext()) {
                 ll.add(it.next().getID());
-                if (count++ > files.size())
-                    max++;
-                updateProgress(0, max, ++current);
+                prog.accept();
             }
+            prog.updateStats();
             return ll;
         }
 
@@ -128,7 +127,6 @@ public class InstanceImporter {
             for (Path f : files) {
                 try {
                     ll.addAll(importProject(f));
-                    updateProgress(0, max, ++current);
                 } catch (IOException e) {
                     LOG.error("Could not Unpack archived Project `" + f.toString() + "'. Skipping this location!", e);
                 }
@@ -144,19 +142,67 @@ public class InstanceImporter {
 
             List<CompoundContainerId> l;
             try (final SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(file)) {
-                l = InstanceImporter.importProject(ps, importTarget, expFilter, cidFilter, move);
-                // rescale progress to have at least some weighting regarding through the compounds
-                current += ps.size();
-                max += ps.size();
+                l = InstanceImporter.importProject(ps, importTarget, expFilter, cidFilter, move, prog);
             }
             if (move)
                 FileUtils.deleteRecursively(file);
             return l;
         }
+
+        class JobProgress implements Progress {
+            private final int numOfFiles = (int) inputFiles.getAllFilesStream().count();
+            private int numberOfCompounds = 0;
+            private IntSummaryStatistics compoundStats = new IntSummaryStatistics();
+            private int currentCount = 0;
+
+
+            public void updateStats(int toAdd) {
+                currentCount = toAdd;
+                if (currentCount > 0)
+                    updateStats();
+            }
+
+            public void updateStats() {
+                compoundStats.accept(currentCount);
+                currentCount = 0;
+            }
+
+            public void accept(Integer inc) {
+                currentCount += inc;
+                numberOfCompounds += inc;
+
+                int max = (int) Math.ceil((currentCount * numOfFiles + 1) * 1.1d);
+                if (compoundStats.getCount() > 0) {
+                    max = Math.max((int) Math.ceil((compoundStats.getAverage() * numOfFiles + 1) * 1.1d), max);
+                }
+                updateProgress(0, max, numberOfCompounds);
+            }
+        }
+    }
+
+    @FunctionalInterface
+    interface Progress {
+        default void updateStats(int toAdd) {
+            updateStats();
+        }
+
+        default void updateStats() {
+        }
+
+        default void accept() {
+            accept(1);
+        }
+
+        void accept(Integer inc);
     }
 
 
     public static List<CompoundContainerId> importProject(@NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget, @NotNull Predicate<Ms2Experiment> expFilter, @NotNull Predicate<CompoundContainerId> cidFilter, boolean move) throws IOException {
+        return importProject(inputSpace, importTarget, expFilter, cidFilter, move, (i) -> {
+        });
+    }
+
+    public static List<CompoundContainerId> importProject(@NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget, @NotNull Predicate<Ms2Experiment> expFilter, @NotNull Predicate<CompoundContainerId> cidFilter, boolean move, @NotNull Progress prog) throws IOException {
         List<Path> globalFiles = FileUtils.listAndClose(inputSpace.getRootPath(), l -> l.filter(Files::isRegularFile).filter(p ->
                 !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME) &&
                         !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
@@ -175,8 +221,11 @@ public class InstanceImporter {
             }
         }
 
+
         final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);/*, expFilter*/
         final List<CompoundContainerId> imported = new ArrayList<>(inputSpace.size());
+        prog.updateStats(inputSpace.size());
+
         while (psIter.hasNext()) {
             final CompoundContainerId sourceId = psIter.next();
             // create compound
@@ -199,11 +248,13 @@ public class InstanceImporter {
                 }
             }
             imported.add(id);
+            prog.accept();
             importTarget.projectSpace().fireCompoundCreated(id);
 
             if (move)
                 inputSpace.deleteCompound(sourceId);
         }
+        prog.updateStats(0);
         return imported;
     }
 
