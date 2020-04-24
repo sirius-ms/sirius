@@ -29,7 +29,7 @@ public class TreeViewerBridge {
                                                      "rel_int" };
     static public final String[] COLOR_VARIANTS_3 = { "md_mz", "md_ppm" };
 
-    static public final String[] COLOR_SCHEMES_2 = {"blues", "greens", "reds" };
+    static public final String[] COLOR_SCHEMES_2 = {"blues", "greens", "reds", "viridis" };
     static public final String[] COLOR_SCHEMES_3 = { "red to blue", "brown to turquoise" };
 
     static public final String COLOR_SCHEME_2 = "blues";
@@ -62,7 +62,7 @@ public class TreeViewerBridge {
     }
 
     public void updateConfig(TreeConfig config){
-        JSObject win = (JSObject) browser.executeJS("window");
+        JSObject win = (JSObject) browser.getJSObject("window");
         win.setMember("config", config);
     }
 
@@ -77,12 +77,12 @@ public class TreeViewerBridge {
     public float getTreeScale() {
         // can be either Integer or Double
         // NOTE: this value is 1/tree_scale!
-        return ((Number) browser.executeJS("tree_scale")).floatValue();
+        return ((Number) browser.getJSObject("tree_scale")).floatValue();
     };
 
     public float getTreeScaleMin() {
         // can be either Integer or Double
-        return ((Number) browser.executeJS("tree_scale_min")).floatValue();
+        return ((Number) browser.getJSObject("tree_scale_min")).floatValue();
     }
 
     public void resetTree() {
@@ -98,13 +98,13 @@ public class TreeViewerBridge {
         // with this first function coordinates for all texts with this
         // style will be recalculated to the same effect as using the style
         browser.executeJS("realignAllText()");
-        String svg = (String) browser.executeJS("getSVGString()");
+        String svg = (String) browser.getJSObject("getSVGString()");
         browser.executeJS("drawTree()");
         return svg;
     }
 
     public String getJSONTree(){
-        return (String) browser.executeJS("getJSONTree()");
+        return (String) browser.getJSObject("getJSONTree()");
     }
 
     // capabilities below are handled by TreeConfig now
