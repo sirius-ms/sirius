@@ -10,7 +10,8 @@ public class ZodiacConfigPanel extends SubToolConfigPanel<ZodiacOptions> {
         super(ZodiacOptions.class);
         final TwoColumnPanel general = new TwoColumnPanel();
         add(new TextHeaderBoxPanel("General", general));
-        general.addNamed("Considered candidates", makeIntParameterSpinner("ZodiacNumberOfConsideredCandidates", -1, 10000, 1));
+        general.addNamed("Considered candidates 300m/z", makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt300Mz", -1, 10000, 1));
+        general.addNamed("Considered candidates 800m/z", makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt800Mz", -1, 10000, 1));
         general.addNamed("Use  2-step approach", makeParameterCheckBox("ZodiacRunInTwoSteps"));
 
         final TwoColumnPanel edgeFilter = new TwoColumnPanel();

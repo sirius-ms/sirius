@@ -31,36 +31,42 @@ public class DoubleListStats implements ListStats {
         return scoreSum;
     }
 
-    public void update(double[] values) {
+    public DoubleListStats update(double[] values) {
         reset();
         if (values != null) {
             for (double score : values) {
                 addValue(score);
             }
         }
+        return this;
     }
 
-    public void addValue(double score) {
+    public DoubleListStats addValue(double score) {
         scoreSum += score;
         minScoreValue = Math.min(minScoreValue, score);
         maxScoreValue = Math.max(maxScoreValue, score);
+        return this;
     }
 
-    public void reset() {
+    public DoubleListStats reset() {
         scoreSum = 0d;
         minScoreValue = Double.POSITIVE_INFINITY;
         maxScoreValue = Double.NEGATIVE_INFINITY;
+        return this;
     }
 
-    public void setMinScoreValue(double minScoreValue) {
+    public DoubleListStats setMinScoreValue(double minScoreValue) {
         this.minScoreValue = minScoreValue;
+        return this;
     }
 
-    public void setMaxScoreValue(double maxScoreValue) {
+    public DoubleListStats setMaxScoreValue(double maxScoreValue) {
         this.maxScoreValue = maxScoreValue;
+        return this;
     }
 
-    public void setScoreSum(double scoreSum) {
+    public DoubleListStats setScoreSum(double scoreSum) {
         this.scoreSum = scoreSum;
+        return this;
     }
 }
