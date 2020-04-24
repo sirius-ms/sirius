@@ -2,7 +2,6 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.jjobs.JJob;
@@ -99,9 +98,14 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                     } else {
                         checkForInterruption();
                         SwingUtilities.invokeAndWait(() -> {
-                            elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
-                            selectionModel.clearSelection();
-                            elementList.clear();
+                            if (!elementList.isEmpty()) {
+                                elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
+                                selectionModel.clearSelection();
+                                elementList.clear();
+                            } else {
+                                // to have notification even if the list is already empty
+                                notifyListeners(data, null, elementList, selectionModel);
+                            }
                             zodiacScoreStats.update(new double[0]);
                             siriusScoreStats.update(new double[0]);
                             isotopeScoreStats.update(new double[0]);
@@ -122,6 +126,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                         //set selection
                         if (index.get() < elementList.size())
                             SwingUtilities.invokeAndWait(() -> selectionModel.setSelectionInterval(index.get(), index.get()));
+                        else
+                            selectionModel.clearSelection();
                     }
                     return true;
                 }

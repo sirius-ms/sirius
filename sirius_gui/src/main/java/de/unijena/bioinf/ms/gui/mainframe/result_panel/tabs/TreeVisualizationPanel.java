@@ -160,7 +160,7 @@ public class TreeVisualizationPanel extends JPanel
                                ListSelectionModel selections) {
 
 
-        if (sre != null) {
+//        if (sre != null) {
             try {
                 backgroundLoaderLock.lock();
                 final JJob<Boolean> old = backgroundLoader;
@@ -172,34 +172,34 @@ public class TreeVisualizationPanel extends JPanel
                             old.cancel(false);
                             old.getResult(); //await cancellation so that nothing strange can happen.
                         }
-
-                        checkForInterruption();
                         SwingUtilities.invokeAndWait(() -> browser.clear());
                         checkForInterruption();
-                        // At som stage we can think about directly load the json representation vom the project space
-                        TreeVisualizationPanel.this.ftree = sre.getFragTree().orElse(null);
-                        checkForInterruption();
-                        if (ftree != null) {
-                            String jsonTree = new FTJsonWriter().treeToJsonString(TreeVisualizationPanel.this.ftree);
+                        if (sre != null) {
+                            // At som stage we can think about directly load the json representation vom the project space
+                            TreeVisualizationPanel.this.ftree = sre.getFragTree().orElse(null);
                             checkForInterruption();
-                            if (!jsonTree.isBlank()) {
-                                browser.loadTree(jsonTree);
-
+                            if (ftree != null) {
+                                String jsonTree = new FTJsonWriter().treeToJsonString(TreeVisualizationPanel.this.ftree);
                                 checkForInterruption();
-                                SwingUtilities.invokeAndWait(() -> setToolbarEnabled(true));
+                                if (!jsonTree.isBlank()) {
+                                    browser.loadTree(jsonTree);
 
-                                checkForInterruption();
-                                Platform.runLater(() -> {
-                                    // adapt scale slider to tree scales
-                                    scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin() * 100));
-                                    scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
-                                    scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
-                                });
+                                    checkForInterruption();
+                                    SwingUtilities.invokeAndWait(() -> setToolbarEnabled(true));
 
-                                checkForInterruption();
-                                if (settings == null)
-                                    SwingUtilities.invokeAndWait(() -> settings = new TreeViewerSettings(TreeVisualizationPanel.this));
-                                return true;
+                                    checkForInterruption();
+                                    Platform.runLater(() -> {
+                                        // adapt scale slider to tree scales
+                                        scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin() * 100));
+                                        scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
+                                        scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
+                                    });
+
+                                    checkForInterruption();
+                                    if (settings == null)
+                                        SwingUtilities.invokeAndWait(() -> settings = new TreeViewerSettings(TreeVisualizationPanel.this));
+                                    return true;
+                                }
                             }
                         }
                         ftree = null;
@@ -211,13 +211,14 @@ public class TreeVisualizationPanel extends JPanel
                     @Override
                     public void cancel(boolean mayInterruptIfRunning) {
                         browser.cancel();
+                        browser.clear(); //todo maybe not needed
                         super.cancel(mayInterruptIfRunning);
                     }
                 });
             } finally {
                 backgroundLoaderLock.unlock();
             }
-        }
+//        }
     }
 
 
@@ -481,13 +482,11 @@ public class TreeVisualizationPanel extends JPanel
             browser.executeJS("window.outerWidth = " + String.valueOf(width));
             if (ftree != null) {
                 browser.executeJS("update()");
-                Platform.runLater(() -> {
                     // adapt scale slider to tree scales
                     scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin()
                             * 100));
                     scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
                     scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
-                });
             }
         });
     }
