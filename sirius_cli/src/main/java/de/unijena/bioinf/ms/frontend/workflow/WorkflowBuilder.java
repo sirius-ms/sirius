@@ -7,6 +7,7 @@ import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.decomp.DecompOptions;
+import de.unijena.bioinf.ms.frontend.subtools.export.mgf.MgfExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
@@ -64,6 +65,9 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     public final SimilarityMatrixOptions similarityMatrixOptions;
     public final DecompOptions decompOptions;
 
+    //postprocessing exporting tools
+    public final MgfExporterOptions mgfExporterOptions;
+
     //preprocessing, project-space providing tool, preprojectspace tool
     public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
 
@@ -85,7 +89,8 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         customDBOptions = new CustomDBOptions();
         projectSpaceOptions = new ProjecSpaceOptions();
         similarityMatrixOptions = new SimilarityMatrixOptions();
-        decompOptions = new DecompOptions();
+        decompOptions =  new DecompOptions();
+        mgfExporterOptions = new MgfExporterOptions();
     }
 
     public void initRootSpec() {
@@ -109,7 +114,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     }
 
     protected Object[] standaloneTools() {
-        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions};
+        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions};
     }
 
     protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools() {
