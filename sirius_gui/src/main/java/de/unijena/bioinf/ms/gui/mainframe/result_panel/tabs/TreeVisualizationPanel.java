@@ -21,6 +21,7 @@ import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import org.slf4j.LoggerFactory;
 
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -159,8 +160,6 @@ public class TreeVisualizationPanel extends JPanel
                                List<FormulaResultBean> resultElements,
                                ListSelectionModel selections) {
 
-
-//        if (sre != null) {
             try {
                 backgroundLoaderLock.lock();
                 final JJob<Boolean> old = backgroundLoader;
@@ -171,6 +170,7 @@ public class TreeVisualizationPanel extends JPanel
                         if (old != null && !old.isFinished()) {
                             old.cancel(false);
                             old.getResult(); //await cancellation so that nothing strange can happen.
+                            browser.cancelTasks();
                         }
                         SwingUtilities.invokeAndWait(() -> browser.clear());
                         checkForInterruption();
@@ -207,18 +207,10 @@ public class TreeVisualizationPanel extends JPanel
                         SwingUtilities.invokeAndWait(() -> setToolbarEnabled(false));
                         return false;
                     }
-
-                    @Override
-                    public void cancel(boolean mayInterruptIfRunning) {
-                        browser.cancel();
-                        browser.clear(); //todo maybe not needed
-                        super.cancel(mayInterruptIfRunning);
-                    }
                 });
             } finally {
                 backgroundLoaderLock.unlock();
             }
-//        }
     }
 
 
@@ -298,9 +290,7 @@ public class TreeVisualizationPanel extends JPanel
     @Override
     public void stateChanged(ChangeEvent e) {
         if (e.getSource() == scaleSlider)
-            Platform.runLater(() -> {
-                jsBridge.scaleTree(1 / (((float) scaleSlider.getValue()) / 100));
-            });
+            jsBridge.scaleTree(1 / (((float) scaleSlider.getValue()) / 100));
     }
 
     public void saveTree() {
@@ -477,18 +467,18 @@ public class TreeVisualizationPanel extends JPanel
     public void componentResized(ComponentEvent componentEvent) {
         int height = ((JFXPanel) this.browser).getHeight();
         int width = ((JFXPanel) this.browser).getWidth();
-        Platform.runLater(() -> {
-            browser.executeJS("window.outerHeight = " + String.valueOf(height));
-            browser.executeJS("window.outerWidth = " + String.valueOf(width));
-            if (ftree != null) {
-                browser.executeJS("update()");
+        browser.executeJS("window.outerHeight = " + String.valueOf(height));
+        browser.executeJS("window.outerWidth = " + String.valueOf(width));
+        if (ftree != null) {
+            browser.executeJS("update()");
+            Platform.runLater(() -> {
                     // adapt scale slider to tree scales
                     scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin()
-                            * 100));
+                                                  * 100));
                     scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
                     scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
-            }
-        });
+                });
+        }
     }
 
     @Override

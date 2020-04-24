@@ -300,9 +300,7 @@ public class TreeViewerSettings extends JFrame implements ItemListener,
         } else if (source.equals(deviationColorCB)){
             localConfig.set("deviationColors", deviationColorCB.isSelected());
         }
-        Platform.runLater(() ->{
-                bridge.settingsChanged();
-            });
+        bridge.settingsChanged();
         // TODO: look at preset config to see whether this is already a preset
         // for (String setting : TreeConfig.SETTINGS){
         //     for (TreeVisualizationPanel.Preset preset
@@ -447,9 +445,7 @@ public class TreeViewerSettings extends JFrame implements ItemListener,
                 if (TreeViewerBridge.COLOR_VARIANTS_DESC[i].equals(variant))
                     localConfig.set("colorVariant",
                                     TreeViewerBridge.COLOR_VARIANTS_IDS[i]);
-            Platform.runLater(() -> {
-                    bridge.settingsChanged();
-                });
+            bridge.settingsChanged();
         }
     }
 

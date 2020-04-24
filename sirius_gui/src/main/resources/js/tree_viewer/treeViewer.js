@@ -868,6 +868,9 @@ function colorCode(variant, scheme) {
         case 'reds':
             scheme_fn = d3.interpolateReds;
             break;
+        case 'viridis':
+            scheme_fn = d3.interpolateViridis;
+            break;
         case 'red to blue':
             scheme_fn = d3.interpolateRdBu;
             break;
@@ -880,7 +883,9 @@ function colorCode(variant, scheme) {
     var orig_scheme_fn = scheme_fn;
     // adapt color grading to avoid colors too light/dark
     scheme_fn = function(x){
-        return orig_scheme_fn(x*0.5 + 0.15);
+        var scale = (orig_scheme_fn == d3.interpolateViridis) ? 0.6 : 0.5;
+        var offset = (orig_scheme_fn == d3.interpolateViridis) ? 0.4 : 0.15;
+        return orig_scheme_fn(x * scale + offset);
     };
     // select respective maximum
     switch (variant) {
