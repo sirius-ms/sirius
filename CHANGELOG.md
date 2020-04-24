@@ -1,5 +1,9 @@
-#### 4.4
-
+##### 4.4.14
+- fix: MacOS included JRE not found.
+- fix: ignored parameters
+- fix: recompute does not correctly invalidate and delete previous results 
+- fix: UI now correctly update when data will by deleted by the computations
+#### 4.4.(0-13)
 - **New (and newly integrated) tools:**
   - [**CANOPUS:**](https://www.biorxiv.org/content/10.1101/2020.04.17.046672v1): A tool for the comprehensive annotation of compound classes from MS/MS data.
   - [**ZODIAC:**](https://www.biorxiv.org/content/10.1101/842740v1) Builds upon the SIRIUS molecular formula identifications and uses, say, its top 50 molecular formula 
