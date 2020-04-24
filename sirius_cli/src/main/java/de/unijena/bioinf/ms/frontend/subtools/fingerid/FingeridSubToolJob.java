@@ -34,6 +34,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Subtooljob for CSI:FingerID
+ * good exaple for how to create such a job
+ */
 public class FingeridSubToolJob extends InstanceJob {
 
     public FingeridSubToolJob(JobSubmitter submitter) {
