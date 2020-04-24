@@ -21,6 +21,7 @@ import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import org.slf4j.LoggerFactory;
 
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -174,6 +175,7 @@ public class TreeVisualizationPanel extends JPanel
                         if (old != null && !old.isFinished()) {
                             old.cancel(false);
                             old.getResult(); //await cancellation so that nothing strange can happen.
+                            browser.cancelTasks();
                         }
 
                         checkForInterruption();
@@ -294,9 +296,7 @@ public class TreeVisualizationPanel extends JPanel
     @Override
     public void stateChanged(ChangeEvent e) {
         if (e.getSource() == scaleSlider)
-            Platform.runLater(() -> {
-                jsBridge.scaleTree(1 / (((float) scaleSlider.getValue()) / 100));
-            });
+            jsBridge.scaleTree(1 / (((float) scaleSlider.getValue()) / 100));
     }
 
     public void saveTree() {
@@ -473,20 +473,18 @@ public class TreeVisualizationPanel extends JPanel
     public void componentResized(ComponentEvent componentEvent) {
         int height = ((JFXPanel) this.browser).getHeight();
         int width = ((JFXPanel) this.browser).getWidth();
-        Platform.runLater(() -> {
-            browser.executeJS("window.outerHeight = " + String.valueOf(height));
-            browser.executeJS("window.outerWidth = " + String.valueOf(width));
-            if (ftree != null) {
-                browser.executeJS("update()");
-                Platform.runLater(() -> {
+        browser.executeJS("window.outerHeight = " + String.valueOf(height));
+        browser.executeJS("window.outerWidth = " + String.valueOf(width));
+        if (ftree != null) {
+            browser.executeJS("update()");
+            Platform.runLater(() -> {
                     // adapt scale slider to tree scales
                     scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin()
-                            * 100));
+                                                  * 100));
                     scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
                     scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
                 });
-            }
-        });
+        }
     }
 
     @Override
