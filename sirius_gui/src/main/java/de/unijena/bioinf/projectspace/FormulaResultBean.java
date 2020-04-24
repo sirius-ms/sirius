@@ -122,6 +122,10 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return parent.loadFormulaResult(getID(), components);
     }
 
+    public <T extends FormulaScore> double getScoreValueIfNa(Class<T> scoreType, double fallback) {
+        return getScore(scoreType).orElse(FormulaScore.NA(scoreType)).scoreIfNa(fallback);
+    }
+
     public <T extends FormulaScore> double getScoreValue(Class<T> scoreType) {
         return getScore(scoreType).orElse(FormulaScore.NA(scoreType)).score();
     }
@@ -130,7 +134,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return getResult(FormulaScoring.class).getAnnotation(FormulaScoring.class).flatMap(it -> it.getAnnotation(scoreType));
     }
 
-    public Optional<FTree> getFragTree(){
+    public Optional<FTree> getFragTree() {
         return getResult(FTree.class).getAnnotation(FTree.class);
     }
 

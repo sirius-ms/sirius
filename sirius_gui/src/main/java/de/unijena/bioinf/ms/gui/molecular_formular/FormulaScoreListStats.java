@@ -30,16 +30,18 @@ public class FormulaScoreListStats extends DoubleListStats {
     }
 
     @Override
-    public void update(double[] values) {
+    public FormulaScoreListStats update(double[] values) {
         super.update(values);
         if (values != null)
             for (double value : values)
                 expScoreSum += Math.exp(value - getMax());
+        return this;
     }
 
     @Override
-    public void reset() {
+    public FormulaScoreListStats reset() {
         super.reset();
         expScoreSum = 0;
+        return this;
     }
 }

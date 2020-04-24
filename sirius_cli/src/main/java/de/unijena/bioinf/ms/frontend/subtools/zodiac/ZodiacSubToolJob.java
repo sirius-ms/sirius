@@ -37,7 +37,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ZodiacSubToolJob extends DataSetJob {
-
+    //todo This job needs to be cleaned! ;-)
+    // The Subtooljobs are SCHEDULER jobs, which means, that they are intended to
+    // submit CPU intensive tasks and organize their dependencies
+    // these jobs are not bound on the cpu core limits because we do not want them to block something.
+    // long story short many of the work that is done here should be moved into background jobs or into
+    // the computation class.
     protected final ZodiacOptions cliOptions;
 
     int maxCandidatesAt300;
@@ -103,8 +108,6 @@ public class ZodiacSubToolJob extends DataSetJob {
         if (instances.size() == 0) return;
 
         //properties
-        Ms2Experiment settings = instances.get(0).getExperiment();
-
         ZodiacEpochs zodiacEpochs = settings.getAnnotationOrThrow(ZodiacEpochs.class);
         ZodiacEdgeFilterThresholds edgeFilterThresholds = settings.getAnnotationOrThrow(ZodiacEdgeFilterThresholds.class);
         ZodiacRunInTwoSteps zodiacRunInTwoSteps = settings.getAnnotationOrThrow(ZodiacRunInTwoSteps.class);
@@ -196,8 +199,6 @@ public class ZodiacSubToolJob extends DataSetJob {
                 logError("Error when retrieving Zodiac Results for instance: " + inst.getID().getDirectoryName(), e);
             }
         });
-
-        instances.forEach(this::invalidateResults);
 
         //todo if this are non temporary fields, they have to be implemented as project-space entities
         try { //ensure that summary does not crash job

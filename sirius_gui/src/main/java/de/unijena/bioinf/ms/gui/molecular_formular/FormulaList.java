@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.jjobs.JJob;
@@ -119,7 +120,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                             index.incrementAndGet();
                         }
                         //set selection
-                        SwingUtilities.invokeAndWait(() -> selectionModel.setSelectionInterval(index.get(), index.get()));
+                        if (index.get() < elementList.size())
+                            SwingUtilities.invokeAndWait(() -> selectionModel.setSelectionInterval(index.get(), index.get()));
                     }
                     return true;
                 }
@@ -142,9 +144,10 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             double[] tScores = new double[r.size()];
             double[] csiScores = new double[r.size()];
             int i = 0;
+
             for (FormulaResultBean element : r) {
                 element.registerProjectSpaceListeners();
-                zscores[i] = element.getScoreValue(ZodiacScore.class);
+                zscores[i] = element.getScoreValueIfNa(ZodiacScore.class,0d);
                 sscores[i] = element.getScoreValue(SiriusScore.class);
                 iScores[i] = element.getScoreValue(IsotopeScore.class);
                 tScores[i] = element.getScoreValue(TreeScore.class);
@@ -158,13 +161,11 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             this.treeScoreStats.update(tScores);
             this.csiScoreStats.update(csiScores);
 
-            this.explainedIntensity.setMinScoreValue(0);
-            this.explainedIntensity.setMaxScoreValue(1);
-            this.explainedIntensity.setScoreSum(this.explainedIntensity.getMax());
+            this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
+                    .setScoreSum(this.explainedIntensity.getMax());
 
-            this.explainedPeaks.setMinScoreValue(0);
-            this.explainedPeaks.setMaxScoreValue(r.get(0).getNumberOfExplainablePeaks());
-            this.explainedPeaks.setScoreSum(this.explainedPeaks.getMax());
+            this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(r.get(0).getNumberOfExplainablePeaks())
+                    .setScoreSum(this.explainedPeaks.getMax());
         }
 
     }
