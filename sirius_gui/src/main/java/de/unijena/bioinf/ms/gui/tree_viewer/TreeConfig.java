@@ -39,8 +39,6 @@ public class TreeConfig{
         if (value instanceof String[]){
             return String.join(",", (String[]) value);
         } else {
-            System.out.println(setting + " is not a String array but a "
-                               + value.getClass());
             return value.toString();
         }
     }
