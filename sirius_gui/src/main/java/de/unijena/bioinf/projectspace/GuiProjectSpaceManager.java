@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.inEDTAndWait;
@@ -30,6 +32,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
 
 
     protected final InstanceBuffer ringBuffer;
+    private final ContainerListener.Defined createListener;
 
     public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, int maxBufferSize) {
         this(space, new BasicEventList<>(), maxBufferSize);
@@ -50,15 +53,14 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
             INSTANCE_LIST.addAll(buf);
         });
 
-        projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
+        createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
             final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID(), Ms2Experiment.class);
-            inEDTAndWait(() -> INSTANCE_LIST.add(inst));
+            SwingUtilities.invokeLater(() -> INSTANCE_LIST.add(inst));
         })).register();
     }
 
 
-
-    public void deleteCompounds(@Nullable final List<InstanceBean> insts) {
+    public synchronized void deleteCompounds(@Nullable final List<InstanceBean> insts) {
         if (insts == null || insts.isEmpty())
             return;
         Jobs.runInBackgroundAndLoad(MF, "Deleting Compounds...", false, new TinyBackgroundJJob<Boolean>() {
@@ -66,10 +68,10 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
             protected Boolean compute() throws Exception {
                 final AtomicInteger pro = new AtomicInteger(0);
                 updateProgress(0, insts.size(), pro.get(), "Deleting...");
+                ringBuffer.removeAllLazy(insts);
+                inEDTAndWait(() -> INSTANCE_LIST.removeAll(insts));
                 insts.iterator().forEachRemaining(inst -> {
                     try {
-                        ringBuffer.remove(inst);
-                        inEDTAndWait(() -> INSTANCE_LIST.remove(inst));
                         projectSpace().deleteCompound(inst.getID());
                     } catch (IOException e) {
                         LOG.error("Could not delete Compound: " + inst.getID(), e);
@@ -88,14 +90,14 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
     }
 
 
-    public void importOneExperimentPerLocation(@NotNull final List<File> inputFiles) {
+    public synchronized void importOneExperimentPerLocation(@NotNull final List<File> inputFiles) {
         final InputFilesOptions inputF = new InputFilesOptions();
         inputF.msInput = Jobs.runInBackgroundAndLoad(MF, "Analyzing Files...", false,
                 InstanceImporter.makeExpandFilesJJob(inputFiles)).getResult();
         importOneExperimentPerLocation(inputF);
     }
 
-    public void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
+    public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
         boolean align = Jobs.runInBackgroundAndLoad(MF, "Checking for alignable input...", () ->
                 (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
                 .getResult();
@@ -103,26 +105,37 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         // todo this is hacky we need some real view for that at some stage.
         if (align)
             align = new QuestionDialog(MF, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
-
-        if (align) {
-            Jobs.runInBackgroundAndLoad(MF, new LcmsAlignSubToolJob(input, this));
-        } else {
-            InstanceImporter importer = new InstanceImporter(this,
-                    x -> {
-                        if (x.getPrecursorIonType() != null) {
-                            return true;
-                        } else {
-                            LOG.warn("Skipping `" + x.getName() + "` because of Missing IonType! This is likely to be A empty Measurement.");
-                            return false;
-                        }
-                    },
-                    x -> true
-            );
-            Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", true, importer.makeImportJJob(input));
+        try {
+            createListener.unregister();
+            if (align) {
+                //todo would be nice to update all at once!
+                final LcmsAlignSubToolJob j = new LcmsAlignSubToolJob(input, this);
+                Jobs.runInBackgroundAndLoad(MF, j);
+                INSTANCE_LIST.addAll(j.getImportedCompounds().stream()
+                        .map(id -> (InstanceBean) newInstanceFromCompound(id, Ms2Experiment.class))
+                        .collect(Collectors.toList()));
+            } else {
+                InstanceImporter importer = new InstanceImporter(this,
+                        x -> {
+                            if (x.getPrecursorIonType() != null) {
+                                return true;
+                            } else {
+                                LOG.warn("Skipping `" + x.getName() + "` because of Missing IonType! This is likely to be A empty Measurement.");
+                                return false;
+                            }
+                        },
+                        x -> true
+                );
+                List<InstanceBean> imported = Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...", true, importer.makeImportJJob(input))
+                        .getResult().stream().map(id -> (InstanceBean) newInstanceFromCompound(id, Ms2Experiment.class)).collect(Collectors.toList());
+                SwingUtilities.invokeLater(() -> INSTANCE_LIST.addAll(imported));
+            }
+        } finally {
+            createListener.register();
         }
     }
 
-    protected void copy(Path newlocation, boolean switchLocation) {
+    protected synchronized void copy(Path newlocation, boolean switchLocation) {
         String header = switchLocation ? "Saving Project to" : "Saving a Copy to";
         final IOException ex = Jobs.runInBackgroundAndLoad(MF, header + " '" + newlocation.toString() + "'...", () -> {
             try {

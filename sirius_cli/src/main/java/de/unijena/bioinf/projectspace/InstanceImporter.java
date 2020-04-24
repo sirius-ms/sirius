@@ -5,9 +5,9 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
+import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -52,7 +53,7 @@ public class InstanceImporter {
         SiriusJobs.getGlobalJobManager().submitJob(makeImportJJob(projectInput)).awaitResult();
     }
 
-    public class ImportInstancesJJob extends BasicJJob<Boolean> {
+    public class ImportInstancesJJob extends BasicJJob<List<CompoundContainerId>> {
         private InputFilesOptions inputFiles;
         private int max, current;
 
@@ -63,87 +64,99 @@ public class InstanceImporter {
         }
 
         @Override
-        protected Boolean compute() throws Exception {
+        protected List<CompoundContainerId> compute() throws Exception {
             max = (int) inputFiles.getAllFilesStream().count();
             current = 0;
 
-            importMultipleSources(inputFiles);
-            return true;
+            return importMultipleSources(inputFiles);
         }
 
 
-        public void importMultipleSources(@Nullable final InputFilesOptions input) {
-            if (input == null)
-                return;
-            if (input.msInput != null) {
-                importMsParserInput(input.msInput.msParserfiles);
-                importProjectsInput(input.msInput.projects);
+        public List<CompoundContainerId> importMultipleSources(@Nullable final InputFilesOptions input) {
+            List<CompoundContainerId> list = new ArrayList<>();
+            if (input != null) {
+                if (input.msInput != null) {
+                    list.addAll(importMsParserInput(input.msInput.msParserfiles));
+                    list.addAll(importProjectsInput(input.msInput.projects));
+                }
+                list.addAll(importCSVInput(input.csvInputs));
             }
-            importCSVInput(input.csvInputs);
+            return list;
+
         }
 
-        public void importCSVInput(List<InputFilesOptions.CsvInput> csvInputs) {
+        public List<CompoundContainerId> importCSVInput(List<InputFilesOptions.CsvInput> csvInputs) {
             if (csvInputs == null || csvInputs.isEmpty())
-                return;
+                return List.of();
+
             final InstanceImportIteratorMS2Exp it = new CsvMS2ExpIterator(csvInputs, expFilter).asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
+            final List<CompoundContainerId> ll = new ArrayList<>();
 
             long count = 0;
             while (it.hasNext()) {
-                it.next();
+                ll.add(it.next().getID());
                 if (count++ > csvInputs.size())
                     max++;
                 updateProgress(0, max, ++current);
             }
+            return ll;
         }
 
-        public void importMsParserInput(@Nullable List<Path> files) {
+        public List<CompoundContainerId> importMsParserInput(@Nullable List<Path> files) {
             if (files == null || files.isEmpty())
-                return;
+                return List.of();
 
             final InstanceImportIteratorMS2Exp it = new MS2ExpInputIterator(files, expFilter, inputFiles.msInput.ignoreFormula).asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
+            final List<CompoundContainerId> ll = new ArrayList<>();
 
             long count = 0;
             while (it.hasNext()) {
-                it.next();
+                ll.add(it.next().getID());
                 if (count++ > files.size())
                     max++;
                 updateProgress(0, max, ++current);
             }
+            return ll;
         }
 
 
-        public void importProjectsInput(@Nullable List<Path> files) {
+        public List<CompoundContainerId> importProjectsInput(@Nullable List<Path> files) {
             if (files == null || files.isEmpty())
-                return;
+                return List.of();
+
+            List<CompoundContainerId> ll = new ArrayList<>();
             for (Path f : files) {
                 try {
-                    importProject(f);
+                    ll.addAll(importProject(f));
                     updateProgress(0, max, ++current);
                 } catch (IOException e) {
                     LOG.error("Could not Unpack archived Project `" + f.toString() + "'. Skipping this location!", e);
                 }
             }
+            return ll;
         }
 
-        public void importProject(@NotNull Path file) throws IOException {
+        public List<CompoundContainerId> importProject(@NotNull Path file) throws IOException {
             if (file.toAbsolutePath().equals(importTarget.projectSpace().getLocation().toAbsolutePath())) {
                 LOG.warn("target location '" + importTarget.projectSpace().getLocation() + "' was also part of the INPUT and will be ignored!");
-                return;
+                return List.of();
             }
 
+            List<CompoundContainerId> l;
             try (final SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(file)) {
-                InstanceImporter.importProject(ps, importTarget, expFilter, cidFilter, move);
+                l = InstanceImporter.importProject(ps, importTarget, expFilter, cidFilter, move);
                 // rescale progress to have at least some weighting regarding through the compounds
                 current += ps.size();
                 max += ps.size();
             }
             if (move)
                 FileUtils.deleteRecursively(file);
+            return l;
         }
     }
 
 
-    public static void importProject(@NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget, @NotNull Predicate<Ms2Experiment> expFilter, @NotNull Predicate<CompoundContainerId> cidFilter, boolean move) throws IOException {
+    public static List<CompoundContainerId> importProject(@NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget, @NotNull Predicate<Ms2Experiment> expFilter, @NotNull Predicate<CompoundContainerId> cidFilter, boolean move) throws IOException {
         List<Path> globalFiles = FileUtils.listAndClose(inputSpace.getRootPath(), l -> l.filter(Files::isRegularFile).filter(p ->
                 !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME) &&
                         !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
@@ -163,6 +176,7 @@ public class InstanceImporter {
         }
 
         final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);/*, expFilter*/
+        final List<CompoundContainerId> imported = new ArrayList<>(inputSpace.size());
         while (psIter.hasNext()) {
             final CompoundContainerId sourceId = psIter.next();
             // create compound
@@ -184,11 +198,13 @@ public class InstanceImporter {
                     LOG.error("Could not Copy instance `" + id.getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
                 }
             }
+            imported.add(id);
             importTarget.projectSpace().fireCompoundCreated(id);
 
             if (move)
                 inputSpace.deleteCompound(sourceId);
         }
+        return imported;
     }
 
     //expanding input files

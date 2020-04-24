@@ -18,6 +18,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
 public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
     protected final InputFilesOptions input;
     protected final ProjectSpaceManager space;
-
+    protected final List<CompoundContainerId> importedCompounds = new ArrayList<>();
     public LcmsAlignSubToolJob(RootOptions<?, ?, ?> rootCLI) {
         this(rootCLI.getInput(), rootCLI.getProjectSpace());
     }
@@ -44,6 +45,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
 
     @Override
     protected ProjectSpaceManager compute() throws Exception {
+        importedCompounds.clear();
         final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         i.setDetectableIonTypes(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
@@ -97,10 +99,14 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
             // set name to common prefix
             // kaidu: this is super slow, so we just ignore the filename
             experiment.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(sourcelocation.value));
-            space.newCompoundWithUniqueId(experiment);
+            importedCompounds.add(space.newCompoundWithUniqueId(experiment).getID());
             updateProgress(0, consensusFeatures.length, ++progress, "Write project space.");
         }
         return space;
+    }
+
+    public List<CompoundContainerId> getImportedCompounds() {
+        return importedCompounds;
     }
 }
 

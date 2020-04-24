@@ -1,5 +1,6 @@
 package de.unijena.bioinf.projectspace;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -36,6 +37,15 @@ public class InstanceBuffer {
                 return true;
             }
             return false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void removeAllLazy(Collection<InstanceBean> insts) {
+        lock.lock();
+        try {
+            buffer.removeAll(insts);
         } finally {
             lock.unlock();
         }
