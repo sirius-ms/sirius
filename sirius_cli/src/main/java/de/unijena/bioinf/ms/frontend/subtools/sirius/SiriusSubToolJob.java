@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class SiriusSubToolJob extends InstanceJob {
+    //todo this is only a temprary solution. parameters should be annotated to the exp
+    // we do not want to have oure hol tool management to be dependent on a cli parsing library
     protected final SiriusOptions cliOptions;
 
     public SiriusSubToolJob(SiriusOptions cliOptions, JobSubmitter jobSubmitter) {

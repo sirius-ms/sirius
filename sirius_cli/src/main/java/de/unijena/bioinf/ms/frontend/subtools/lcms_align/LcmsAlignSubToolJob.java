@@ -44,8 +44,6 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
 
     @Override
     protected ProjectSpaceManager compute() throws Exception {
-
-
         final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         i.setDetectableIonTypes(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
