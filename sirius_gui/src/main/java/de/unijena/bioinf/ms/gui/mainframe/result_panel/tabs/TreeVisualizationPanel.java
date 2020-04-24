@@ -164,13 +164,13 @@ public class TreeVisualizationPanel extends JPanel
                 backgroundLoaderLock.lock();
                 final JJob<Boolean> old = backgroundLoader;
                 backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
+
                     @Override
                     protected Boolean compute() throws Exception {
                         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
                         if (old != null && !old.isFinished()) {
                             old.cancel(false);
                             old.getResult(); //await cancellation so that nothing strange can happen.
-                            browser.cancelTasks();
                         }
                         SwingUtilities.invokeAndWait(() -> browser.clear());
                         checkForInterruption();
@@ -206,6 +206,12 @@ public class TreeVisualizationPanel extends JPanel
                         browser.clear(); //todo maybe not needed
                         SwingUtilities.invokeAndWait(() -> setToolbarEnabled(false));
                         return false;
+                    }
+
+                    @Override
+                    public void cancel(boolean mayInterruptIfRunning) {
+                        super.cancel(mayInterruptIfRunning);
+                        browser.cancelTasks();
                     }
                 });
             } finally {
