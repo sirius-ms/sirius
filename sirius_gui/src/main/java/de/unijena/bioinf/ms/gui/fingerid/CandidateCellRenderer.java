@@ -4,7 +4,10 @@ import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -373,11 +376,19 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             databasePanel.setCompound(value);
             xlogP.setLogP(value.candidate.getXlogp());
             scoreL.setScore(value.getScore());
-            if (value.fp == null) {
-                ag.agreement = null;
-            } else {
-                ag.setAgreement(value.getSubstructures(value.getPlatts()));
+            ag.agreement = null;
+
+            if (value.fp == null)
+                return;
+
+            if (value.adduct.isNegative()) {
+                LoggerFactory.getLogger(getClass()).error("Negative data is currently not supported");
+                return;
             }
+
+            MainFrame.MF.ps().getProjectSpaceProperty(FingerIdData.class).ifPresent(f ->
+                    ag.setAgreement(value.getSubstructures(value.getPlatts(), f.getPerformances())));
+
         }
     }
 }

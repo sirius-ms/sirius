@@ -40,7 +40,7 @@ public class CandidateListDetailViewPanel extends JPanel implements /* ActiveEle
     protected CandidateListDetailView list;
 //    protected JButton searchCSIButton;
 
-    protected CardLayout layout;
+//    protected CardLayout layout;
 
 
     public CandidateListDetailViewPanel(StructureList sourceList) {
