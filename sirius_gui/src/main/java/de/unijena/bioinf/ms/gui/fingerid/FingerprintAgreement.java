@@ -23,8 +23,6 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 
 public class FingerprintAgreement {
 
@@ -66,13 +64,7 @@ public class FingerprintAgreement {
         final int[] indizes = new int[list.size()];
         final double[] weights = new double[list.size()];
         final double[] weights2 = new double[list.size()];
-        Collections.sort(list, new Comparator<Integer>() {
-
-            @Override
-            public int compare(Integer o1, Integer o2) {
-                return Double.compare(platts[o2], platts[o1]);
-            }
-        });
+        list.sort((o1, o2) -> Double.compare(platts[o2], platts[o1]));
         int k=0;
         for (int i : list) {
             indizes[k] = version.getAbsoluteIndexOf(i);
@@ -82,63 +74,6 @@ public class FingerprintAgreement {
         }
         return new FingerprintAgreement(indizes, weights, weights2);
     }
-
-    public static FingerprintAgreement getAgreement(FingerprintVersion version, final double[] platts, boolean[] reference, PredictionPerformance[] performances, double fthreshold, double occurenceThreshold) {
-        // only pick fingerprints where #occurences is smaller than 25%
-        final ArrayList<Integer> list = new ArrayList<>();
-        double T = performances[0].numberOfSamplesWithPseudocounts()*occurenceThreshold;
-        for (int k=0; k < reference.length; ++k) {
-            if (reference[k] && platts[k] >= fthreshold && (performances[k].getTp() + performances[k].getFn()) <= T) {
-                list.add(k);
-            }
-        }
-        final int[] indizes = new int[list.size()];
-        final double[] weights = new double[list.size()];
-        final double[] weights2 = new double[list.size()];
-        Collections.sort(list, new Comparator<Integer>() {
-
-            @Override
-            public int compare(Integer o1, Integer o2) {
-                return Double.compare(platts[o2], platts[o1]);
-            }
-        });
-        int k=0;
-        for (int i : list) {
-            indizes[k] = version.getAbsoluteIndexOf(i);
-            weights[k] = (platts[i]-fthreshold)/(1d-fthreshold);
-            weights2[k] = performances[i].getF();
-            ++k;
-        }
-        return new FingerprintAgreement(indizes, weights, weights2);
-    }
-
-    public static FingerprintAgreement getMissing(FingerprintVersion version, final double[] platts, boolean[] reference, PredictionPerformance[] performances, double fthreshold) {
-        final ArrayList<Integer> list = new ArrayList<>();
-        for (int k=0; k < reference.length; ++k) {
-            if (reference[k] && platts[k] <= fthreshold) {
-                list.add(k);
-            }
-        }
-        final int[] indizes = new int[list.size()];
-        final double[] weights = new double[list.size()];
-        final double[] weights2 = new double[list.size()];
-        Collections.sort(list, new Comparator<Integer>() {
-
-            @Override
-            public int compare(Integer o1, Integer o2) {
-                return Double.compare(platts[o1], platts[o2]);
-            }
-        });
-        int k=0;
-        for (int i : list) {
-            indizes[k] = version.getAbsoluteIndexOf(i);
-            weights[k] = (fthreshold-platts[i])/fthreshold;
-            weights2[k] = performances[i].getF();
-            ++k;
-        }
-        return new FingerprintAgreement(indizes, weights, weights2);
-    }
-
 
     public int indexAt(int row, int col) {
         try {

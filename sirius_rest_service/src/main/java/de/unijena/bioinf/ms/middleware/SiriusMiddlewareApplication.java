@@ -29,9 +29,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     public static void main(String[] args) {
         ApplicationCore.DEFAULT_LOGGER.info("Init AppCore");
         try {
-            configureShutDownHook(() -> {
-            });
-
+            configureShutDownHook(shutdownWebservice());
             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
             rootOptions = new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default());
             run(args, () -> new MiddlewareWorkflowBuilder<>(rootOptions, configOptionLoader, new SimpleInstanceBuffer.Factory()));

@@ -2,11 +2,10 @@ package de.unijena.bioinf.ms.gui.net;
 
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
-import de.unijena.bioinf.webapi.ProxyManager;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;

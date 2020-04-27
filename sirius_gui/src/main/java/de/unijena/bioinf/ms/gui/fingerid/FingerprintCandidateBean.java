@@ -28,10 +28,7 @@ import de.unijena.bioinf.chemdb.CompoundCandidateChargeLayer;
 import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -51,7 +48,6 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -140,10 +136,9 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
     }
 
-    protected CSIPredictor getCorrespondingCSIPredictor() throws IOException {
+   /* protected CSIPredictor getCorrespondingCSIPredictor() throws IOException {
         return (CSIPredictor) ApplicationCore.WEB_API.getStructurePredictor(adduct.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_POSITIVE);
-    }
-
+    }*/
 
     public void highlightInBackground() {
         CompoundMatchHighlighter h = new CompoundMatchHighlighter(this, getPlatts());
@@ -330,16 +325,12 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
     }
 
-    public FingerprintAgreement getSubstructures(ProbabilityFingerprint prediction) {
+    public FingerprintAgreement getSubstructures(ProbabilityFingerprint prediction, PredictionPerformance[] performances) {
         if (substructures == null) {
-            try {
-                substructures = FingerprintAgreement.getSubstructures(
-                        prediction.getFingerprintVersion(), prediction.toProbabilityArray(),
-                        candidate.getFingerprint().toBooleanArray(), getCorrespondingCSIPredictor().getPerformances(),
-                        0.25);
-            } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).warn("Could not reach WebAPI. Cause: " + e.getMessage());
-            }
+            substructures = FingerprintAgreement.getSubstructures(
+                    prediction.getFingerprintVersion(), prediction.toProbabilityArray(),
+                    candidate.getFingerprint().toBooleanArray(), performances,
+                    0.25);
         }
         return substructures;
     }

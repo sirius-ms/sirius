@@ -2,22 +2,29 @@ package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
-import de.unijena.bioinf.webapi.WebAPI;
-import de.unijena.bioinf.fingerid.CSIPredictor;
+import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaResultBean> implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
@@ -43,39 +50,69 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
         if (this.predictorType == predictorType && fscores != null) return;
         this.predictorType = predictorType;
 
-        final CSIPredictor csi = (CSIPredictor) csiApi.getStructurePredictor(predictorType);
-        final PredictionPerformance[] performances = csi.getPerformances();
-        this.fscores = new double[csi.getFingerprintVersion().getMaskedFingerprintVersion().size()];
+        //todo could it be that we missed negative data here
+        if (predictorType.isNegative())
+            throw new IOException("Negative data is currently not supported");
+        FingerIdData csiData = MainFrame.MF.ps().loadProjectSpaceProperty(FingerIdData.class).orElseThrow(() -> new IOException("Could not load FingerID data from Project-Space!"));
+
+        final PredictionPerformance[] performances = csiData.getPerformances();
+        this.fscores = new double[csiData.getFingerprintVersion().getMaskedFingerprintVersion().size()];
         this.trainingExamples = new int[fscores.length];
         int k = 0;
-        for (int index : csi.getFingerprintVersion().allowedIndizes()) {
+        for (int index : csiData.getFingerprintVersion().allowedIndizes()) {
             this.trainingExamples[index] = (int) (performances[k].withRelabelingAllowed(false).getCount());
             this.fscores[index] = performances[k++].getF();
         }
-
     }
+
+    private JJob<Boolean> backgroundLoader = null;
+    private final Lock backgroundLoaderLock = new ReentrantLock();
 
     @Override
     public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
         //no lock all in edt
-        elementList.clear();
-        if (sre != null) {
-            sre.getFingerprintResult().ifPresent(fpr -> {
-                try {
-                    setFScores(sre.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE);
-                    List<FingerIdPropertyBean> tmp = new ArrayList<>();
-                    for (final FPIter iter : fpr.fingerprint) {
-                        tmp.add(new FingerIdPropertyBean(fpr.fingerprint, visualizations[iter.getIndex()], iter.getIndex(), fscores[iter.getIndex()], trainingExamples[iter.getIndex()]));
+        try {
+            backgroundLoaderLock.lock();
+            final JJob<Boolean> old = backgroundLoader;
+            backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
+                @Override
+                protected Boolean compute() throws Exception {
+                    if (old != null && !old.isFinished()) {
+                        old.cancel(true);
+                        old.getResult(); //await cancellation so that nothing strange can happen.
                     }
-                    elementList.addAll(tmp);
-                } catch (IOException e) {
-                    new ExceptionDialog(MainFrame.MF, "Could not get Fingerprint information! Try again later...");
-                    LoggerFactory.getLogger(getClass()).warn("Could not get Fingerprint information! Try again later", e);
-                    elementList.clear();
-                }
-            });
-        }
+                    SwingUtilities.invokeAndWait(elementList::clear);
+                    checkForInterruption();
 
-        notifyListeners(sre, null, getElementList(), getResultListSelectionModel());
+                    if (sre != null) {
+                        final FingerprintResult fpr = sre.getFingerprintResult().orElse(null);
+                        checkForInterruption();
+                        if (fpr != null) {
+                            try {
+                                setFScores(sre.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE);
+                                List<FingerIdPropertyBean> tmp = new ArrayList<>();
+                                for (final FPIter iter : fpr.fingerprint) {
+                                    checkForInterruption();
+                                    tmp.add(new FingerIdPropertyBean(fpr.fingerprint, visualizations[iter.getIndex()], iter.getIndex(), fscores[iter.getIndex()], trainingExamples[iter.getIndex()]));
+                                }
+                                checkForInterruption();
+                                SwingUtilities.invokeAndWait(() -> elementList.addAll(tmp));
+                            } catch (IOException e) {
+                                checkForInterruption();
+                                new ExceptionDialog(MainFrame.MF, GuiUtils.formatToolTip("Could not get Fingerprint information for Fingerprint View! This project might be Corrupted!"));
+                                LoggerFactory.getLogger(getClass()).warn("Could not get Fingerprint information!", e);
+                            }
+                        }
+                    }
+                    checkForInterruption();
+                    SwingUtilities.invokeAndWait(() -> notifyListeners(sre, null, getElementList(), getResultListSelectionModel()));
+                    return true;
+                }
+
+            });
+        } finally {
+            backgroundLoaderLock.unlock();
+        }
     }
 }
+

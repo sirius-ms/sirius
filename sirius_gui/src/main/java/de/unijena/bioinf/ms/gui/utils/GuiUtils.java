@@ -8,10 +8,12 @@ package de.unijena.bioinf.ms.gui.utils;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
+import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,7 +31,7 @@ public class GuiUtils {
 
     public static void initUI() {
         //load nimbus look and feel, before mainframe is built
-        try {
+     /*   try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
                     UIManager.setLookAndFeel(info.getClassName());
@@ -38,9 +40,32 @@ public class GuiUtils {
             }
         } catch (Exception e) {
             // If Nimbus is not available, you can set the GUI to another look and feel.
+        }*/
+
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    try {
+                        Constructor c = Class.forName("SiriusStyleFactory").getConstructor(String.class);
+                        c.newInstance("mini"); // regular, mini, small or large
+                        UIManager.put("nimbusOrange", Colors.ICON_GREEN);
+                    } catch (ExceptionInInitializerError eiie){
+                        //
+                    } catch (LinkageError le){
+                        //
+                    } catch (ClassNotFoundException cnfe){
+                        //
+                    }
+
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            LoggerFactory.getLogger(GuiUtils.class).error("Error when configuring Nimbus look and feel!", e);
+            // If Nimbus is not available, you can set the GUI to another look and feel.
         }
 
-        UIManager.put("nimbusOrange", Colors.ICON_GREEN);
 
 //        ToolTipManager.sharedInstance().setInitialDelay(250);
 

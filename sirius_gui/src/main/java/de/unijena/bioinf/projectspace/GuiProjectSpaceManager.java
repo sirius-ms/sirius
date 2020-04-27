@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -57,6 +58,11 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
             final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID(), Ms2Experiment.class);
             SwingUtilities.invokeLater(() -> INSTANCE_LIST.add(inst));
         })).register();
+    }
+
+
+    public <E extends ProjectSpaceProperty> Optional<E> loadProjectSpaceProperty(Class<E> propertyKey) {
+        return projectSpace().getProjectSpaceProperty(propertyKey);
     }
 
 

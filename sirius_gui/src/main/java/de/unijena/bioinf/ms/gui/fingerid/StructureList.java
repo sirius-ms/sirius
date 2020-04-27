@@ -64,7 +64,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
 
 
                     if (old != null && !old.isFinished()) {
-                        old.cancel(false);
+                        old.cancel(true);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
 
