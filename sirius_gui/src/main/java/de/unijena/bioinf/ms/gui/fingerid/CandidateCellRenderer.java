@@ -7,6 +7,7 @@ import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -381,14 +382,9 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             if (value.fp == null)
                 return;
 
-            if (value.adduct.isNegative()) {
-                LoggerFactory.getLogger(getClass()).error("Negative data is currently not supported");
-                return;
-            }
-
-            MainFrame.MF.ps().getProjectSpaceProperty(FingerIdData.class).ifPresent(f ->
+            //todo is this down in background. i am not competley sure which methods run im background and which in EDT here.
+            MainFrame.MF.ps().getProjectSpaceProperty(FingerIdDataProperty.class).map(p -> p.getByIonType(value.adduct)).ifPresent(f ->
                     ag.setAgreement(value.getSubstructures(value.getPlatts(), f.getPerformances())));
-
         }
     }
 }

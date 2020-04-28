@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.fingerid.CanopusResult;
 import de.unijena.bioinf.fingerid.CanopusWebJJob;
 import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -14,6 +14,7 @@ import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +56,11 @@ public class CanopusSubToolJob extends InstanceJob {
         jobs.forEach((k, v) -> k.setAnnotation(CanopusResult.class, v.takeResult()));
 
         // write Canopus client data
-        if (inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusData.class).isEmpty())
-            inst.getProjectSpaceManager().setProjectSpaceProperty(CanopusData.class, ApplicationCore.WEB_API.getCanopusdData(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(inst.getID().getIonType().get().getCharge())));
+        if (inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusDataProperty.class).isEmpty()) {
+            final CanopusData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
+            final CanopusData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
+            inst.getProjectSpaceManager().setProjectSpaceProperty(CanopusDataProperty.class, new CanopusDataProperty(pos, neg));
+        }
 
         // write canopus results
         for (FormulaResult r : res)
