@@ -22,7 +22,9 @@ public class FingerprintSerializer implements ComponentSerializer<FormulaResultI
             return null;
 
         return reader.inDirectory(FINGERPRINTS.relDir(), () -> {
-            final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdData.class).orElseThrow();
+            final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdDataProperty.class)
+                    .map(p -> p.getByIonType(id.getIonType())).orElseThrow();
+
             final double[] probabilities = reader.doubleVector(FINGERPRINTS.fileName(id));
             return new FingerprintResult(new ProbabilityFingerprint(fingerIdData.getFingerprintVersion(), probabilities));
         });

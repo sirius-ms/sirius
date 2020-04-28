@@ -28,7 +28,9 @@ public class FBCandidateFingerprintSerializer implements ComponentSerializer<For
     public FBCandidateFingerprints read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         //read fingerprints from binary
         if (reader.exists(FINGERBLAST_FPs.relFilePath(id))) {
-            final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdData.class).orElseThrow();
+            final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdDataProperty.class)
+                    .map(p -> p.getByIonType(id.getIonType())).orElseThrow();
+
             return reader.binaryFile(FINGERBLAST_FPs.relFilePath(id), br -> {
                 List<Fingerprint> fps = new ArrayList<>();
                 try (DataInputStream dis = new DataInputStream(br)) {
