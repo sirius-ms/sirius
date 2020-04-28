@@ -17,7 +17,7 @@ import java.util.Arrays;
 /**
  * Has to be set by CLI when first running CSI via WebAPI call
  */
-public class FingerIdData implements ProjectSpaceProperty {
+public class FingerIdData {
 
     protected MaskedFingerprintVersion fingerprintVersion;
     protected CdkFingerprintVersion cdkFingerprintVersion;

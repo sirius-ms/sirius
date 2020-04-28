@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.fp.ClassyFireFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.projectspace.ProjectSpaceProperty;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -12,7 +11,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
 
-public class CanopusData implements ProjectSpaceProperty {
+public class CanopusData {
 
     protected final MaskedFingerprintVersion maskedFingerprintVersion;
     protected final ClassyFireFingerprintVersion classyFireFingerprintVersion;
