@@ -46,10 +46,11 @@ public class GuiUtils {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
                     UIManager.setLookAndFeel(info.getClassName());
+                    UIManager.put("nimbusOrange", Colors.ICON_GREEN);
+
                     try {
                         Constructor c = Class.forName("SiriusStyleFactory").getConstructor(String.class);
                         c.newInstance("mini"); // regular, mini, small or large
-                        UIManager.put("nimbusOrange", Colors.ICON_GREEN);
                     } catch (ExceptionInInitializerError eiie){
                         //
                     } catch (LinkageError le){

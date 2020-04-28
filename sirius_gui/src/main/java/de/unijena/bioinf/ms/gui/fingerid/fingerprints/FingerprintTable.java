@@ -16,6 +16,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.slf4j.LoggerFactory;
 
@@ -50,10 +51,8 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
         if (this.predictorType == predictorType && fscores != null) return;
         this.predictorType = predictorType;
 
-        //todo could it be that we missed negative data here
-        if (predictorType.isNegative())
-            throw new IOException("Negative data is currently not supported");
-        FingerIdData csiData = MainFrame.MF.ps().loadProjectSpaceProperty(FingerIdData.class).orElseThrow(() -> new IOException("Could not load FingerID data from Project-Space!"));
+        final FingerIdData csiData = MainFrame.MF.ps().loadProjectSpaceProperty(FingerIdDataProperty.class)
+                .map(p -> p.getByCharge(predictorType.toCharge())).orElseThrow(() -> new IOException("Could not load FingerID data from Project-Space!"));
 
         final PredictionPerformance[] performances = csiData.getPerformances();
         this.fscores = new double[csiData.getFingerprintVersion().getMaskedFingerprintVersion().size()];

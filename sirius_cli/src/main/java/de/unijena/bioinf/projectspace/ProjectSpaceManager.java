@@ -12,9 +12,10 @@ import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.passatutto.Decoy;
+import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
+import de.unijena.bioinf.projectspace.canopus.CanopusDataSerializer;
+import de.unijena.bioinf.projectspace.canopus.CanopusSerializer;
 import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.projectspace.sirius.*;
 import de.unijena.bioinf.projectspace.summaries.CanopusSummaryWriter;
@@ -173,12 +174,12 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         //pssatuto components
         config.registerComponent(FormulaResult.class, Decoy.class, new PassatuttoSerializer());
         //fingerid components
-        config.defineProjectSpaceProperty(FingerIdData.class, new CsiClientSerializer());
+        config.defineProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataSerializer());
         config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
         config.registerComponent(FormulaResult.class, FBCandidates.class, new FBCandidatesSerializer());
         config.registerComponent(FormulaResult.class, FBCandidateFingerprints.class, new FBCandidateFingerprintSerializer());
         //canopus
-        config.defineProjectSpaceProperty(CanopusData.class, new CanopusClientSerializer());
+        config.defineProjectSpaceProperty(CanopusDataProperty.class, new CanopusDataSerializer());
         config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
         return config;
     }

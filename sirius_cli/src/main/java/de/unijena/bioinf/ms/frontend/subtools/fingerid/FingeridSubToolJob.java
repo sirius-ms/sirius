@@ -20,9 +20,11 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.utils.NetUtils;
@@ -39,6 +41,8 @@ import java.util.stream.Collectors;
  * good exaple for how to create such a job
  */
 public class FingeridSubToolJob extends InstanceJob {
+
+    public static final boolean enableConfidence = PropertyManager.getBoolean("de.unijena.bioinf.fingerid.confidence", false);
 
     public FingeridSubToolJob(JobSubmitter submitter) {
         super(submitter);
@@ -71,7 +75,7 @@ public class FingeridSubToolJob extends InstanceJob {
 
         final FingerIDJJob<?> job = csi.makeFingerIDJJob(inst.getExperiment(),
                 formulaResults.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class), res.getScoreObject()))
-                        .collect(Collectors.toList()));
+                        .collect(Collectors.toList()), enableConfidence);
 
         // do computation and await results
         List<FingerIdResult> result = submitJob(job).awaitResult();
@@ -79,9 +83,11 @@ public class FingeridSubToolJob extends InstanceJob {
         final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotationOrThrow(FTree.class), SScored::getCandidate));
 
         // add CSIClientData to PS if it is not already there
-        if (inst.getProjectSpaceManager().getProjectSpaceProperty(FingerIdData.class).isEmpty())
-            inst.getProjectSpaceManager().setProjectSpaceProperty(FingerIdData.class, ApplicationCore.WEB_API.getFingerIdData(predictors.iterator().next()));
-
+        if (inst.getProjectSpaceManager().getProjectSpaceProperty(FingerIdDataProperty.class).isEmpty()) {
+            final FingerIdData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
+            final FingerIdData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
+            inst.getProjectSpaceManager().setProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataProperty(pos, neg));
+        }
 
         // add new id results to projectspace and mal.
         Map<? extends IdentificationResult<?>, ? extends IdentificationResult<?>> addedResults = job.getAddedIdentificationResults();
