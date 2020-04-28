@@ -14,10 +14,13 @@ public class CanopusDataSerializer implements ComponentSerializer<ProjectSpaceCo
 
     @Override
     public CanopusDataProperty read(ProjectReader reader, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container) throws IOException {
-        if (!reader.exists(CANOPUS_CLIENT_DATA) || !reader.exists(CANOPUS_CLIENT_DATA_NEG))
+        boolean p = reader.exists(CANOPUS_CLIENT_DATA);
+        boolean n = reader.exists(CANOPUS_CLIENT_DATA_NEG);
+        if (!p && !n)
             return null;
-        final CanopusData pos = reader.textFile(CANOPUS_CLIENT_DATA, CanopusData::read);
-        final CanopusData neg = reader.textFile(CANOPUS_CLIENT_DATA_NEG, CanopusData::read);
+
+        final CanopusData pos = p ? reader.textFile(CANOPUS_CLIENT_DATA, CanopusData::read) : null;
+        final CanopusData neg = n ? reader.textFile(CANOPUS_CLIENT_DATA_NEG, CanopusData::read) : null;
         return new CanopusDataProperty(pos, neg);
     }
 
