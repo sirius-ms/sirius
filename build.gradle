@@ -394,7 +394,7 @@ subprojects {
 
         initialHeapSize = 1024 // initial heap not too big improves startup time on windows
         maxHeapSize = 4096
-        maxHeapPercent = 80
+        maxHeapPercent = 60
 
         dontWrapJar = true
         jdkPreference = 'preferJre'

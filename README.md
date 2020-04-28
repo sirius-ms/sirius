@@ -23,26 +23,28 @@ also possible using the command line version of SIRIUS.)
 <span style="color: #339966;">This is the recommended way of using
 CSI:FingerID.</span>
 
+**Note: CANOPUS is currently NOT available for negative ion mode data and will still take some time until it will be there.**
+
 ## Download Links
 
 <!--begin download-->
 
 ### Documentation
 - [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.15-SNAPSHOT/sirius-4.4.15-SNAPSHOT-manual.pdf)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.16-SNAPSHOT/sirius-4.4.16-SNAPSHOT-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.4.15-SNAPSHOT (2020-04-24)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.4.16-SNAPSHOT (2020-04-28)
 ##### This versions have the JRE already included! Just download, unpack and execute.
-- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.15-SNAPSHOT/sirius-4.4.15-SNAPSHOT-win64.zip)
-- for Linux [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.15-SNAPSHOT/sirius-4.4.15-SNAPSHOT-linux64.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.15-SNAPSHOT/sirius-4.4.15-SNAPSHOT-osx64.zip)
+- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.16-SNAPSHOT/sirius-4.4.16-SNAPSHOT-win64.zip)
+- for Linux [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.16-SNAPSHOT/sirius-4.4.16-SNAPSHOT-linux64.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.16-SNAPSHOT/sirius-4.4.16-SNAPSHOT-osx64.zip)
 
-### SIRIUS+CSI:FingerID Commandline only - Version 4.4.15-SNAPSHOT (2020-04-24)
+### SIRIUS+CSI:FingerID Commandline only - Version 4.4.16-SNAPSHOT (2020-04-28)
 ##### [Java Runtime Environment 11 (JRE-11)](https://www.azul.com/downloads/zulu-community/?version=java-11-lts&architecture=x86-64-bit&package=jre) or higher required.
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.15-SNAPSHOT/sirius-4.4.15-SNAPSHOT-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.15-SNAPSHOT/sirius-4.4.15-SNAPSHOT-win64-headless.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.15-SNAPSHOT/sirius-4.4.15-SNAPSHOT-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.15-SNAPSHOT/sirius-4.4.15-SNAPSHOT-linux64-headless.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.15-SNAPSHOT/sirius-4.4.15-SNAPSHOT-osx64-headless.zip)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.16-SNAPSHOT/sirius-4.4.16-SNAPSHOT-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.16-SNAPSHOT/sirius-4.4.16-SNAPSHOT-win64-headless.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.16-SNAPSHOT/sirius-4.4.16-SNAPSHOT-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.16-SNAPSHOT/sirius-4.4.16-SNAPSHOT-linux64-headless.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.4.16-SNAPSHOT/sirius-4.4.16-SNAPSHOT-osx64-headless.zip)
 
 ### Sources on GitHub
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)

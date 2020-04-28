@@ -1,3 +1,8 @@
+##### 4.4.16
+- feature: **CSI:FingerID for negative ion mode is available**
+  - NOTE: CANOPUS for negative mode data is not ready yet and will still take some time.
+- fixed: Too small Heapsize on Windows
+- improvement: better GUI performance 
 ##### 4.4.15
 - feature: CLI Sub-Tool to export projects to mgf.
 - feature: multiple candidate number for Zodiac.
