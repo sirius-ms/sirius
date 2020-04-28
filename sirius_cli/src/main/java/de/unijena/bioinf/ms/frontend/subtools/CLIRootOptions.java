@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.annotations.WriteSummaries;
-import de.unijena.bioinf.ms.frontend.DefaultParameter;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
@@ -135,6 +135,8 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                     return false;
                 }
             });
+
+            InstanceImporter.checkAndFixNegativeDataFiles(space.projectSpace(), ApplicationCore.WEB_API);
             return space;
         } catch (IOException e) {
             throw new CommandLine.PicocliException("Could not initialize workspace!", e);

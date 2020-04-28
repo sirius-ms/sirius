@@ -124,10 +124,12 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                             index.incrementAndGet();
                         }
                         //set selection
-                        if (index.get() < elementList.size())
-                            SwingUtilities.invokeAndWait(() -> selectionModel.setSelectionInterval(index.get(), index.get()));
-                        else
-                            selectionModel.clearSelection();
+                        SwingUtilities.invokeAndWait(() -> {
+                            if (index.get() < elementList.size())
+                                selectionModel.setSelectionInterval(index.get(), index.get());
+                            else
+                                selectionModel.clearSelection();
+                        });
                     }
                     return true;
                 }
@@ -153,7 +155,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
 
             for (FormulaResultBean element : r) {
                 element.registerProjectSpaceListeners();
-                zscores[i] = element.getScoreValueIfNa(ZodiacScore.class,0d);
+                zscores[i] = element.getScoreValueIfNa(ZodiacScore.class, 0d);
                 sscores[i] = element.getScoreValue(SiriusScore.class);
                 iScores[i] = element.getScoreValue(IsotopeScore.class);
                 tScores[i] = element.getScoreValue(TreeScore.class);
