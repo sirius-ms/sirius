@@ -96,8 +96,9 @@ public class CSIPredictor extends AbstractStructurePredictor {
             final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(performances);
 
             return new CSICovarianceConfidenceScorer(confidenceSVMs, covarianceScoring, csiScoring, fingerblastScoring.getClass());
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error("Error when loading confidence SVMs", e);
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass()).error("Error when loading confidence SVMs. Confidence SCore will not be available!");
+            LoggerFactory.getLogger(getClass()).debug("Error when loading confidence SVMs.", e);
             return null;
         }
     }
@@ -107,11 +108,11 @@ public class CSIPredictor extends AbstractStructurePredictor {
         return new Fingerblast(fingerblastScoring, searchEngine);
     }
 
-    public FingerIDJJob makeFingerIDJJob(@Nullable Ms2Experiment experiment, @Nullable List<IdentificationResult<?>> formulaIDResults) {
-        return new FingerIDJJob(this, experiment, formulaIDResults);
+    public FingerIDJJob makeFingerIDJJob(@Nullable Ms2Experiment experiment, @Nullable List<IdentificationResult<?>> formulaIDResults, boolean computeConfidence) {
+        return new FingerIDJJob(this, experiment, formulaIDResults, computeConfidence);
     }
 
-    public FingerIDJJob makeFingerIDJJob() {
-        return new FingerIDJJob(this);
+    public FingerIDJJob makeFingerIDJJob(boolean computeConfidence) {
+        return new FingerIDJJob(this, computeConfidence);
     }
 }

@@ -7,7 +7,6 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
@@ -35,21 +34,26 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
     private Ms2Experiment experiment;
     private List<IdentificationResult<S>> idResult = null;
 
+
     protected Map<IdentificationResult<S>, IdentificationResult<S>> addedIdentificationResults = new HashMap<>();
 
-    public FingerIDJJob(@NotNull CSIPredictor predictor) {
-        this(predictor, null);
+    // temprorary parameter
+    private boolean computeConfidence = true;
+
+    public FingerIDJJob(@NotNull CSIPredictor predictor, boolean confidence) {
+        this(predictor, null, confidence);
     }
 
-    protected FingerIDJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment) {
-        this(predictor, experiment, null);
+    protected FingerIDJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, boolean confidence) {
+        this(predictor, experiment, null, confidence);
     }
 
-    protected FingerIDJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @Nullable List<IdentificationResult<S>> formulaIDResults) {
+    protected FingerIDJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @Nullable List<IdentificationResult<S>> formulaIDResults, boolean confidence) {
         super(JobType.SCHEDULER);
         this.predictor = predictor;
         this.experiment = experiment;
         this.idResult = formulaIDResults;
+        this.computeConfidence = confidence;
     }
 
     public void setInput(Ms2Experiment experiment, List<IdentificationResult<S>> formulaIDResults) {
@@ -226,7 +230,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
 
 
             //confidence job: calculate confidence of scored candidate list
-            if (predictor.getConfidenceScorer() != null) {
+            if (predictor.getConfidenceScorer() != null && computeConfidence) {
                 final ConfidenceJJob confidenceJJob = new ConfidenceJJob(predictor, experiment, fingeridInput);
                 confidenceJJob.addRequiredJob(blastJob);
                 annotationJJobs.put(submitSubJob(confidenceJJob), fres);
