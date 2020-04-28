@@ -1,5 +1,5 @@
 allprojects {
-    version = '1.4.2-SNAPSHOT' //todo find solution for multi repo version storage
+    version = '1.4.3-SNAPSHOT' //todo find solution for multi repo version storage
 }
 
 subprojects {

@@ -3,6 +3,8 @@ apply plugin: "application"
 mainClassName = "de.unijena.bioinf.canopus.Main"
 
 dependencies() {
+    compile project(':sirius_project_space')
+    compile group: "de.unijena.bioinf.ms", name: "web_api_oss", version: "$version"
     testCompile group: "de.unijena.bioinf.ms", name: "fingerid", version: "$version"
     testCompile group: "de.unijena.bioinf.ms", name: "fingerprinter_oss", version: "$version"
 }
