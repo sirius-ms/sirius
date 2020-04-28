@@ -12,10 +12,13 @@ import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.FINGERID
 public class FingerIdDataSerializer implements ComponentSerializer<ProjectSpaceContainerId, ProjectSpaceContainer<ProjectSpaceContainerId>, FingerIdDataProperty> {
     @Override
     public FingerIdDataProperty read(ProjectReader reader, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container) throws IOException {
-        if (!reader.exists(FINGERID_CLIENT_DATA) || reader.exists(FINGERID_CLIENT_DATA_NEG))
+        boolean p = reader.exists(FINGERID_CLIENT_DATA);
+        boolean n = reader.exists(FINGERID_CLIENT_DATA_NEG);
+        if (!p && !n)
             return null;
-        FingerIdData pos = reader.textFile(FINGERID_CLIENT_DATA, FingerIdData::read);
-        FingerIdData neg = reader.textFile(FINGERID_CLIENT_DATA_NEG, FingerIdData::read);
+
+        final FingerIdData pos = p ? reader.textFile(FINGERID_CLIENT_DATA, FingerIdData::read) : null;
+        final FingerIdData neg = n ? reader.textFile(FINGERID_CLIENT_DATA_NEG, FingerIdData::read) : null;
         return new FingerIdDataProperty(pos, neg);
     }
 
