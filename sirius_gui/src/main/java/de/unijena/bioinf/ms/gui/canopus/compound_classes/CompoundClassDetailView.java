@@ -2,6 +2,9 @@ package de.unijena.bioinf.ms.gui.canopus.compound_classes;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.fingerid.CanopusResult;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
@@ -21,6 +24,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class CompoundClassDetailView extends JPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean>  {
 
@@ -100,6 +105,8 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
                 }
             }
             container.add(alternativeClassPanels);
+
+            revalidate();
             repaint();
         }
     }
@@ -145,13 +152,35 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
     }
 
 
+    private JJob<Boolean> backgroundLoader = null;
+    private final Lock backgroundLoaderLock = new ReentrantLock();
 
     @Override
     public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
-        final Optional<CanopusResult> canopusResult = Optional.ofNullable(sre).flatMap(FormulaResultBean::getCanopusResult);
-        if (canopusResult.isPresent()) setPrediction(canopusResult.get().getCanopusFingerprint());
-        else clear();
-
+        try {
+            backgroundLoaderLock.lock();
+            final JJob<Boolean> old = backgroundLoader;
+            backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
+                @Override
+                protected Boolean compute() throws Exception {
+                    if (old != null && !old.isFinished()) {
+                        old.cancel(true);
+                        old.getResult(); //await cancellation so that nothing strange can happen.
+                    }
+                    SwingUtilities.invokeAndWait(() -> clear());
+                    checkForInterruption();
+                    if (sre != null) {
+                        final Optional<CanopusResult> cs = sre.getCanopusResult();
+                        checkForInterruption();
+                        if (cs.isPresent())
+                            SwingUtilities.invokeAndWait(() -> setPrediction(cs.get().getCanopusFingerprint()));
+                    }
+                    return true;
+                }
+            });
+        } finally {
+            backgroundLoaderLock.unlock();
+        }
     }
 
     protected static class ClassifClass extends JPanel implements MouseListener {

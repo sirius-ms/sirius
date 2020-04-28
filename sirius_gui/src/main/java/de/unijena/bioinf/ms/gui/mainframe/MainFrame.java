@@ -31,7 +31,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame implements DropTargetListener {
@@ -136,6 +135,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final BasicEventList<InstanceBean> psList = this.ps.INSTANCE_LIST;
         this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
             final SiriusProjectSpace ps = makeSpace.get();
+            InstanceImporter.checkAndFixNegativeDataFiles(ps, ApplicationCore.WEB_API);
             Jobs.cancelALL();
             final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY,9));
             inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));

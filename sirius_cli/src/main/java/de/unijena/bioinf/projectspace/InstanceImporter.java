@@ -4,10 +4,16 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
+import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -221,6 +227,9 @@ public class InstanceImporter {
             }
         }
 
+        //todo this should not cal static appcore. temporary
+        checkAndFixNegativeDataFiles(importTarget.projectSpace(), ApplicationCore.WEB_API);
+
 
         final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);/*, expFilter*/
         final List<CompoundContainerId> imported = new ArrayList<>(inputSpace.size());
@@ -286,10 +295,43 @@ public class InstanceImporter {
         return new InputExpanderJJob(files, expandTo);
     }
 
+    public static void checkAndFixNegativeDataFiles(SiriusProjectSpace toCheck, WebAPI webAPI){
+        toCheck.getProjectSpaceProperty(FingerIdDataProperty.class).ifPresent(it -> {
+            try {
+                if (it.getNegative() == null){
+                    LoggerFactory.getLogger(InstanceImporter.class).warn("Negative FingerIdData missing in project. Try to repair by reloading from webservice.");
+                    toCheck.setProjectSpaceProperty(FingerIdDataProperty.class,
+                            new FingerIdDataProperty(it.getPositive(), webAPI.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE)));
+                }else if (it.getPositive() == null){
+                    LoggerFactory.getLogger(InstanceImporter.class).warn("Positive FingerIdData missing in project. Try to repair by reloading from webservice.");
+                    toCheck.setProjectSpaceProperty(FingerIdDataProperty.class,
+                            new FingerIdDataProperty(webAPI.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), it.getNegative()));
+                }
+            } catch (IOException e) {
+                LoggerFactory.getLogger(InstanceImporter.class).error("Could not load FingerIdData from webService!", e);
+            }
+        });
+
+        toCheck.getProjectSpaceProperty(CanopusDataProperty.class).ifPresent(it -> {
+            try {
+                if (it.getNegative() == null){
+                    LoggerFactory.getLogger(InstanceImporter.class).warn("Negative CanopusData missing in project. Try to repair by reloading from webservice.");
+                    toCheck.setProjectSpaceProperty(CanopusDataProperty.class,
+                            new CanopusDataProperty(it.getPositive(), webAPI.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE)));
+                }else if (it.getPositive() == null){
+                    LoggerFactory.getLogger(InstanceImporter.class).warn("Positive CanopusData missing in project. Try to repair by reloading from webservice.");
+                    toCheck.setProjectSpaceProperty(CanopusDataProperty.class,
+                            new CanopusDataProperty(webAPI.getCanopusdData(PredictorType.CSI_FINGERID_POSITIVE), it.getNegative()));
+                }
+            } catch (IOException e) {
+                LoggerFactory.getLogger(InstanceImporter.class).error("Could not load CanopusData from webService!", e);
+            }
+        });
+    }
+
     public static class InputExpanderJJob extends BasicJJob<InputFilesOptions.MsInput> {
 
         private final List<Path> input;
-        //        private final AtomicInteger progress = new AtomicInteger(0);
         private final InputFilesOptions.MsInput expandedFiles;
 
         public InputExpanderJJob(List<Path> input, InputFilesOptions.MsInput expandTo) {
