@@ -37,7 +37,11 @@ public class CanopusSubToolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-//        System.out.println("I am Canopus on Experiment " + inst);
+        if (inst.getID().getIonType().orElseGet(() -> inst.getExperiment().getPrecursorIonType()).isNegative()){
+            logWarn("Skipping because NEGATIVE ion mode data is currently not supported by CANOPUS.");
+            return;
+        }
+
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(FormulaScoring.class, FingerprintResult.class, CanopusResult.class);
 
         // create input
@@ -49,6 +53,8 @@ public class CanopusSubToolJob extends InstanceJob {
             logInfo("Skipping because there are no formula results available");
             return;
         }
+
+        //skip negative data
 
         // submit canopus jobs for Identification results that contain CSI:FingerID results
         Map<FormulaResult, CanopusWebJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmitRemote));

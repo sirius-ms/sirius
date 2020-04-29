@@ -85,7 +85,7 @@ public class Instance {
         try {
             if (!formulaResultCache.containsKey(fid)) {
                 if (!compoundCache.contains(fid))
-                    throw new IllegalArgumentException("Unknown FormulaResultID, Either a wrong ID was inserted or the cached project-space was modified with bypassing the cache!");
+                    LoggerFactory.getLogger(getClass()).warn("Unknown FormulaResultID, Either a wrong ID was inserted or the cached project-space was modified with bypassing the cache!");
                 final FormulaResult fr = projectSpace().getFormulaResult(fid, components);
                 formulaResultCache.put(fid, fr);
                 return fr;

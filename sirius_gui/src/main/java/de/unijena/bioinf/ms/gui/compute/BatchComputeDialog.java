@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -34,6 +35,7 @@ import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
@@ -46,11 +48,8 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -73,15 +72,18 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
         super(owner, "compute", true);
-        {
-            this.compoundsToProcess = compoundsToProcess;
 
-            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-            setLayout(new BorderLayout());
+        this.compoundsToProcess = compoundsToProcess;
 
-            mainPanel = Box.createVerticalBox();
-            add(mainPanel, BorderLayout.CENTER);
-        }
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        mainPanel = Box.createVerticalBox();
+        final JScrollPane mainSP = new JScrollPane(mainPanel);
+        mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        mainSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        mainSP.getVerticalScrollBar().setUnitIncrement(16);
+        add(mainSP, BorderLayout.CENTER);
 
 
         {
@@ -135,9 +137,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         }
 
         //finalize panel build
+        setMaximumSize(Toolkit.getDefaultToolkit().getScreenSize());
+        if (getMaximumSize().width < getPreferredSize().width)
+            mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         configureActions();
         pack();
-        setResizable(false);
         setLocationRelativeTo(getParent());
         setVisible(true);
     }
@@ -198,7 +202,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         // todo hotfix to prevent gui from going crazy
         {
             int index = MF.getCompoundListSelectionModel().getMinSelectionIndex();
-            MF.getCompoundListSelectionModel().setSelectionInterval(index,index);
+            MF.getCompoundListSelectionModel().setSelectionInterval(index, index);
         }
 
         Jobs.runInBackgroundAndLoad(getOwner(), "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
@@ -247,7 +251,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         dispose();
     }
 
-    private List<String> makeCommand(){
+    private List<String> makeCommand() {
         // create computation parameters
         List<String> toolCommands = new ArrayList<>();
         List<String> configCommand = new ArrayList<>();
@@ -266,12 +270,13 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         if (csiConfigs.isToolSelected()) {
             toolCommands.add(csiConfigs.content.toolCommand());
             configCommand.addAll(csiConfigs.asParameterList());
-        }else {
+        } else {
             //set ionization if CSI ist not enabled
             configCommand.addAll(csiConfigs.content.getAdductsParameter());
         }
 
         if (canopusConfigPanel.isToolSelected()) {
+            noNegativeCanopusWarning();
             toolCommands.add(canopusConfigPanel.content.toolCommand());
             configCommand.addAll(canopusConfigPanel.asParameterList());
         }
@@ -286,13 +291,25 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         return command;
     }
 
+    private void noNegativeCanopusWarning() {
+        if (compoundsToProcess.stream().anyMatch(b -> b.getIonization().isNegative()))
+            new WarningDialog(MF, GuiUtils.formatToolTip(
+                    "Note that CANOPUS is currently NOT available for negative ion mode data.",
+                    "CANOPUS step will be skipped for negative ion mode instances."));
+    }
+
     private void checkConnection() {
         final @Nullable ConnectionMonitor.ConnetionCheck cc = CheckConnectionAction.checkConnectionAndLoad();
 
         if (cc != null) {
             if (cc.isConnected()) {
                 if (csiConfigs.isToolSelected() && cc.hasWorkerWarning()) {
-                    new WorkerWarningDialog(MF, cc.workerInfo == null);
+                    if (cc.workerInfo == null ||
+                            (!cc.workerInfo.supportsAllPredictorTypes(EnumSet.of(PredictorType.CSI_FINGERID_NEGATIVE))
+                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isNegative())) ||
+                            (!cc.workerInfo.supportsAllPredictorTypes(EnumSet.of(PredictorType.CSI_FINGERID_POSITIVE))
+                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isPositive()))
+                    ) new WorkerWarningDialog(MF, cc.workerInfo == null);
                 }
             } else {
                 if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
@@ -303,7 +320,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         } else {
             if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
                 new WarnFormulaSourceDialog(MF);
-//                formulaIDConfigPanel.formulaCombobox.setSelectedIndex(0); //todo set NONE
+                formulaIDConfigPanel.content.searchDBList.checkBoxList.uncheckAll();
             }
         }
     }
