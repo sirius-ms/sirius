@@ -9,6 +9,8 @@ import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jdesktop.swingx.WrapLayout;
@@ -32,6 +34,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
     protected static String[] typeNames = new String[]{
             "Kingdom", "Superclass", "Class", "Subclass"
     };
+    private final JScrollPane containerSP;
     protected ClassyfireProperty mainClass;
     protected ClassyfireProperty[] lineage;
     protected List<ClassyfireProperty> secondaryClasses;
@@ -42,7 +45,6 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
 
     public CompoundClassDetailView(FormulaList siriusResultElements) {
         super();
-        //setPreferredSize(new Dimension(Integer.MAX_VALUE, 256));
         setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
         setAlignmentX(0f);
         mainClassPanel = new JPanel();
@@ -50,21 +52,18 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
         mainClassPanel.setLayout(new WrapLayout(WrapLayout.LEFT));
 
         descriptionPanel = new JPanel();
-        descriptionPanel.setLayout(new WrapLayout(WrapLayout.LEFT));
+        descriptionPanel.setLayout(new BorderLayout());
         descriptionPanel.setAlignmentX(0f);
 
         alternativeClassPanels = new JPanel();
         alternativeClassPanels.setLayout(new WrapLayout(WrapLayout.LEFT));
         alternativeClassPanels.setAlignmentX(0f);
-        /*
-        container = new JPanel();
-        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-        */
 
-        container=new JPanel();
+        container = new JPanel();
         container.setAlignmentX(0);
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-        add(new JScrollPane(container, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
+        containerSP = new JScrollPane(container, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        add(containerSP);
 
         siriusResultElements.addActiveResultChangedListener(this);
 
@@ -76,35 +75,40 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             // add lineage
             mainClassPanel.removeAll();
             for (int k=0; k < lineage.length; ++k) {
-                int level = lineage.length-k;
-                String tpname = (level <= typeNames.length) ? typeNames[level-1] : ("Level " + level);
-                mainClassPanel.add(new ClassifClass(lineage[k],tpname, k==0));
-                if (k < lineage.length-1) {
+                int level = lineage.length - k;
+                String tpname = (level <= typeNames.length) ? typeNames[level - 1] : ("Level " + level);
+                mainClassPanel.add(new ClassifClass(lineage[k], tpname, k == 0));
+                if (k < lineage.length - 1) {
                     final JLabel comp = new JLabel("\u27be");
                     comp.setFont(Fonts.FONT_BOLD.deriveFont(18f));
                     mainClassPanel.add(comp);
                 }
             }
-            container.add(mainClassPanel);
-            {
-                descriptionPanel.removeAll();
-                final JTextPane comp = new JTextPane();
-                descriptionPanel.add(comp);
-                comp.setText(description());
-                comp.setBorder(BorderFactory.createLoweredBevelBorder());
-            }
-            container.add(descriptionPanel);
 
-            container.add(new JSeparator(JSeparator.HORIZONTAL));
 
             {
                 alternativeClassPanels.removeAll();
                 // alternative classes
-                for (int k=0; k < secondaryClasses.size(); ++k) {
-                    alternativeClassPanels.add(new ClassifClass(secondaryClasses.get(k),"alternative", false));
+                for (int k = 0; k < secondaryClasses.size(); ++k) {
+                    alternativeClassPanels.add(new ClassifClass(secondaryClasses.get(k), "alternative", false));
                 }
             }
-            container.add(alternativeClassPanels);
+
+            {
+                int width = Math.max(mainClassPanel.getPreferredSize().width, alternativeClassPanels.getPreferredSize().width);
+                descriptionPanel.removeAll();
+                final JLabel comp = new JLabel();
+                comp.setBorder(BorderFactory.createEmptyBorder(2,2,2,2));
+
+                descriptionPanel.add(comp);
+                comp.setText(GuiUtils.formatToolTip(width - 2, description()));
+                descriptionPanel.setMaximumSize(new Dimension(width, descriptionPanel.getMaximumSize().height));
+            }
+
+            container.add(new TextHeaderBoxPanel("Main Classes", mainClassPanel));
+            container.add(new TextHeaderBoxPanel("Description", descriptionPanel));
+            container.add(new TextHeaderBoxPanel("Alternative Classes", alternativeClassPanels));
+
 
             revalidate();
             repaint();
