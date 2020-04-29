@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.workfow;
 
+import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
@@ -22,6 +23,7 @@ public class GuiWorkflowBuilder<R extends RootOptions<?, PreprocessingJob<? exte
     protected Object[] standaloneTools() {
         ArrayList<Object> it = new ArrayList<>(Arrays.asList(super.standaloneTools()));
         it.add(new GuiAppOptions());
-        return it.toArray(Object[]::new);
+        //todo readd rest option if boot stuff works
+        return it.stream().filter(opt -> !opt.getClass().equals(MiddlewareAppOptions.class)).toArray(Object[]::new);
     }
 }
