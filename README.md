@@ -53,6 +53,8 @@ CSI:FingerID.</span>
 
 <!--end download-->
 
+For **SIRIUS 4.0.1** click [here](https://bio.informatik.uni-jena.de/software/sirius-4-0-1/).
+
 ### Integration of CSI:FingerID
 
 Fragmentation trees and spectra can be directly uploaded from SIRIUS to
