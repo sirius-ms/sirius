@@ -1,0 +1,5 @@
+
+dependencies {
+    compile project(':web_api_oss')
+    compile group: "de.unijena.bioinf.ms", name: "sirius_project_space", version: "$siriusVersion"
+}
