@@ -1,5 +1,5 @@
+version =  parent.fingeridVersion
 dependencies() {
-    //project
 	//internal
 	compile group: "de.unijena.bioinf", name: "GraphUtils", version: "$graphUtils_version"
 }

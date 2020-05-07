@@ -2,8 +2,6 @@ dependencies {
 
 	//project
     compile project(':chemical_db_oss')
-	//internal
-	compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
     // external
     compile group: "org.postgresql", name: "postgresql", version: "$psql_version"
 }	

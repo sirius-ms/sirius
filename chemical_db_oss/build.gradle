@@ -1,11 +1,12 @@
-dependencies {
+allprojects {
+    version =  parent.fingeridVersion
+}
 
+dependencies {
 	//project
     compile project(':fingerid_utils_oss')
-
-	//internal
-	compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
-	compile group: "de.unijena.bioinf.ms", name: "io", version: "$siriusVersion"
+    compile project(':chemistry_base')
+    compile project(':io')
 
     // REST
     compile "org.apache.httpcomponents:httpclient:4.5.1"

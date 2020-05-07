@@ -1,11 +1,12 @@
-//todo move me into the frontend
+version =  parent.fingeridVersion
+
 dependencies {
-    compile project(":rest_service:rest_client_oss")
+    compile project(":rest_service_oss:rest_client_oss")
     compile project(':chemical_db_oss:chemdb_rest_oss')
     compile project(':chemical_db_oss:chemdb_utils_oss')
     compile project(':fingerprinter_oss')
     compile project(':fingerblast_oss')
     compile project(':chemical_db_oss:chemdb_file_oss')
-    compile ("de.unijena.bioinf.ms:canopus_predict_oss:$fingeridVersion")
-    compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+    compile project(':canopus:canopus_predict_oss')
+    compile project (':sirius_api')
 }

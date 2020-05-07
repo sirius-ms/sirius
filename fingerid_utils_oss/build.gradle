@@ -1,5 +1,6 @@
 dependencies {
-    compile group: "de.unijena.bioinf.ms", name: "utils", version: "$siriusVersion"
-    compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
+    compile project(':utils')
+    compile project(':chemistry_base')
+
     compile group: "net.iharder", name: "base64", version: "2.3.8"
 }

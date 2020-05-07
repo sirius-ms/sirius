@@ -2,6 +2,7 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.webapi.WebJJob;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;

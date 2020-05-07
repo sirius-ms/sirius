@@ -1,16 +1,9 @@
 dependencies {
-
 	//project
-    compile project(':fingerid')
-    compile project(':fingerblast_oss')
-    compile project(':fingerprinter_oss')
-    compile project(':chemical_db_oss')
     compile project(':confidence_score:confidence_score_predict_oss')
+    compile project(':ml_utils')
+    //internal
+    compile group: "de.unijena.bioinf.ms", name: "fingerid", version: "$version"
 
-	//internal
-//	compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
 
-	// external
-//	compile group: "de.bwaldvogel", name: "liblinear", version: "$liblinear_version"
-//	compile group: "tw.edu.ntu.csie", name: "libsvm", version: "$libsvm_version"
 }	

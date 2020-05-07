@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.canopus.Canopus;
+import de.unijena.bioinf.canopus.CanopusResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

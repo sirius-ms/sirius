@@ -1,3 +1,10 @@
+allprojects {
+    version =  parent.siriusVersion
+    dependencies {
+        annotationProcessor project(':default_properties:processor')
+    }
+}
+
 subprojects {
     dependencies {
 //project
@@ -19,8 +26,4 @@ subprojects {
     }
 }
 
-allprojects {
-    dependencies {
-        annotationProcessor project(':default_properties:processor')
-    }
-}
+

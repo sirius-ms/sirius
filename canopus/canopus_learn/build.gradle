@@ -5,9 +5,10 @@ mainClassName = "de.unijena.bioinf.canopus.Learn"
 
 dependencies() {
     compile project(":canopus:canopus_predict_oss")
-
-    compile group: "de.unijena.bioinf.ms", name: "fingerid", version: "$version"
-    compile group: "de.unijena.bioinf.ms", name: "fingerprinter_oss", version: "$version"
+    compile project(":fingerprinter_oss")
+    //internal
+    compile group: "de.unijena.bioinf.ms", name: "fingerid", version: "$fingeridVersion" //todo we need to remove this dependency?
+    //external
     compile "org.tensorflow:tensorflow:1.13.1"
 }
 

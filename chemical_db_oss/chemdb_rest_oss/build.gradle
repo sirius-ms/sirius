@@ -1,0 +1,9 @@
+dependencies {
+
+	//project
+    compile project(':chemical_db_oss')
+    // REST
+    compile project(":rest_service_oss:rest_client_oss")
+
+//    compile "org.apache.httpcomponents:httpclient:4.5.1"
+}	

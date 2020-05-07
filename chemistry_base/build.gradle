@@ -1,7 +1,9 @@
+version =  parent.siriusVersion
 dependencies {
     annotationProcessor project(':default_properties:processor')
     compile project(':default_properties:annotations')
+    //internal
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
-
+    //external
     compile group: 'com.google.code.gson', name: 'gson', version: "$gson_version"
 }

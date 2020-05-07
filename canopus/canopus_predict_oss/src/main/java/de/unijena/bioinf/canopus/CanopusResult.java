@@ -1,4 +1,4 @@
-package de.unijena.bioinf.fingerid;
+package de.unijena.bioinf.canopus;
 
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
