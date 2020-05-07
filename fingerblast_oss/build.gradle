@@ -1,0 +1,12 @@
+dependencies() {
+    //project
+	compile project(':fingerprint_pvalues_oss')
+	compile project(':chemical_db_oss')
+
+	//internal
+	compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
+
+
+	// external
+	compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
+}
