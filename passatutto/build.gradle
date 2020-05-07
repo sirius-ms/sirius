@@ -1,3 +1,4 @@
+version =  parent.siriusVersion
 dependencies {
     compile project(':chemistry_base')
     compile project(':preprocessing')

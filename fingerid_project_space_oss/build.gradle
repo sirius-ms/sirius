@@ -1,5 +1,6 @@
 
+version =  parent.fingeridVersion
 dependencies {
-    compile project(':web_api_oss')
-    compile group: "de.unijena.bioinf.ms", name: "sirius_project_space", version: "$siriusVersion"
+    compile project(':sirius_web_client')
+    compile project(':sirius_project_space')
 }
