@@ -1,0 +1,5 @@
+dependencies {
+    compile group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
+    compile project(':fingerprinter_oss')
+    testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+}
