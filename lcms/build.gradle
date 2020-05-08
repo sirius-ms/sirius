@@ -1,9 +1,12 @@
+version =  parent.siriusVersion
+
 dependencies {
     compile project(':chemistry_base')
     compile project(':spectral_alignment')
-    compile "org.apache.commons:commons-math3:$math3_version"
+    //internal
     compile group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
-
+    // external
+    compile "org.apache.commons:commons-math3:$math3_version"
     compile ('uk.ac.ebi.jmzml:jmzml:1.7.11') {
         exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
         exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-xml-handling' //pom dependency that does not work

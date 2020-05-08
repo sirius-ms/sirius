@@ -1,0 +1,7 @@
+dependencies {
+	//project
+    compile project(':chemical_db_oss')
+    // CDK
+    for (module in ["inchi", "io", "data", "smiles", "ctab", 'formula', 'qsarmolecular', "bundle"])
+        compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
+}	

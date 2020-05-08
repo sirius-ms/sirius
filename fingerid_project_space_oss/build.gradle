@@ -1,0 +1,6 @@
+
+version =  parent.fingeridVersion
+dependencies {
+    compile project(':sirius_web_client')
+    compile project(':sirius_project_space')
+}
