@@ -85,7 +85,7 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
             final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(fr));
             String line;
             while ((line=br.readLine())!=null) {
-                String[] tbs = line.split("\t", 5);
+                String[] tbs = line.split("\t");
                 final int id = Integer.parseInt(tbs[1]);
                 properties.put(id, new ClassyfireProperty(id, tbs[0], tbs[3], Integer.parseInt(tbs[2]), Integer.parseInt(tbs[4])));
             }
