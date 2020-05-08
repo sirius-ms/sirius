@@ -1,9 +1,6 @@
 package de.unijena.bioinf.canopus;
 
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.Ionization;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.fingerid.KernelToNumpyConverter;
 import gnu.trove.list.array.TIntArrayList;
@@ -663,7 +660,7 @@ public class TrainingData {
                     final MolecularFormula formula = formulas.get(inchikey);
                     if (formula==null) continue;
                     Ionization neutralIonization = PeriodicTable.getInstance().neutralIonization();
-                    if (constraints.isViolated(formula, neutralIonization) || formula.getMass() > maximalAllowedMass)
+                    if (constraints.isViolated(new ChemicalAlphabet(formula.elementArray())) || formula.getMass() > maximalAllowedMass || formula.numberOfCarbons()<=0 || formula.numberOfHydrogens()<=0)
                         continue;
                     final ArrayFingerprint fp = fingerprints.get(inchikey);
                     if (fp == null) continue;

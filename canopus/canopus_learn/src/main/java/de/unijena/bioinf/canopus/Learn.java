@@ -11,6 +11,8 @@ import de.unijena.bioinf.fingerid.InputFeatures;
 import de.unijena.bioinf.fingerid.KernelToNumpyConverter;
 import de.unijena.bioinf.fingerid.Prediction;
 import de.unijena.bioinf.fingerid.SpectralPreprocessor;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -25,10 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.logging.LogManager;
 import java.util.regex.Pattern;
 
@@ -555,19 +554,36 @@ public class Learn {
             writePredictOutput(target, "independent", trainingData, trainingData.independent, indep);
             //
             {
-                // finally: sample one example for each class
+                // finally: sample 100 examples for each class
                 final Random r = new Random();
                 final List<EvaluationInstance> examples = new ArrayList<>();
                 List<CompoundClass> klasses = new ArrayList<>(trainingData.compoundClasses.valueCollection());
                 klasses.sort(Comparator.comparingInt(x->x.index));
+
+                final ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+                final ArrayList<Future<EvaluationInstance>> simulator = new ArrayList<>();
                 for (CompoundClass c : klasses) {
                     if (c.compounds.isEmpty()) {
                         System.err.println("No example for " + c.ontology.getName());
                         continue;
                     }
-                    LabeledCompound labeledCompound = c.compounds.get(r.nextInt(c.compounds.size()));
-                    examples.add(new EvaluationInstance(c.ontology.getName(), new ProbabilityFingerprint(trainingData.fingerprintVersion, trainingData.sampleFingerprintVector(labeledCompound, TrainingData.SamplingStrategy.DISTURBED_TEMPLATE)), labeledCompound));
+                    final ArrayList<LabeledCompound> cmps = new ArrayList<>(c.compounds);
+                    Collections.shuffle(cmps, r);
+                    for (int k=0; k < Math.min(cmps.size(),20); ++k) {
+                        LabeledCompound labeledCompound = cmps.get(k);
+
+                        simulator.add(service.submit(() -> new EvaluationInstance(c.ontology.getName(), new ProbabilityFingerprint(trainingData.fingerprintVersion, trainingData.sampleFingerprintVector(labeledCompound, TrainingData.SamplingStrategy.DISTURBED_TEMPLATE)), labeledCompound)));
+                    }
                 }
+                simulator.forEach(x-> {
+                    try {
+                        examples.add(x.get());
+                    } catch (InterruptedException | ExecutionException e) {
+                        e.printStackTrace();
+                        throw new RuntimeException(e);
+                    }
+                });
+                service.shutdown();
                 try (TrainingBatch batch = trainingData.generateBatch(examples);) {
                     float[][] exampleB = tf.predict(batch);
                     writePredictOutput(target, "simulated", trainingData, examples, exampleB);

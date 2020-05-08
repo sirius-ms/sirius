@@ -429,16 +429,16 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         for (int i=0; i < lowerbounds.length; ++i) {
             final Element e = chemicalAlphabet.get(i);
             final int amount = formula.numberOf(e);
-            if (amount < lowerbounds[i] || amount > upperbounds[i]) return false;
+            if (amount < lowerbounds[i] || amount > upperbounds[i]) return true;
             atomNumber += amount;
         }
         return (atomNumber != formula.atomCount());
     }
     public boolean isViolated(ChemicalAlphabet formula) {
         for (Element e : formula.getElements()) {
-            if (getUpperbound(e) <= 0) return false;
+            if (getUpperbound(e) <= 0) return true;
         }
-        return true;
+        return false;
     }
 
     public boolean isSatisfied(MolecularFormula formula, Ionization ionization) {

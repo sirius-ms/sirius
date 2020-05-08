@@ -2,6 +2,9 @@ apply plugin: "application"
 
 mainClassName = "de.unijena.bioinf.canopus.Learn"
 
+ext {
+    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
+}
 
 dependencies() {
     compile project(":canopus:canopus_predict_oss")

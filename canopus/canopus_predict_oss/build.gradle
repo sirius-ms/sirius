@@ -2,6 +2,10 @@ apply plugin: "application"
 
 mainClassName = "de.unijena.bioinf.canopus.Main"
 
+ext {
+    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
+}
+
 dependencies() {
     compile project(':sirius_project_space')
     compile group: "de.unijena.bioinf.ms", name: "web_api_oss", version: "$version"
