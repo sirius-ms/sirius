@@ -1,0 +1,10 @@
+allprojects {
+    version =  parent.fingeridVersion
+    dependencies {
+        //project
+        compile project(':fingerblast_oss')
+        compile project(':fingerprinter_oss')
+        compile project(':chemical_db_oss')
+    }
+}
+

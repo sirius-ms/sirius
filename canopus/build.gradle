@@ -1,5 +1,6 @@
 allprojects {
-    version = '1.4.3-SNAPSHOT' //todo find solution for multi repo version storage
+    version =  parent.fingeridVersion
+
 }
 
 subprojects {
@@ -7,9 +8,7 @@ subprojects {
         //project
         compile project(':chemistry_base')
         compile project(':io')
-
-        //internal
-        compile group: "de.unijena.bioinf.ms", name: "chemdb_sql_oss", version: "$version" //todo move to opensource repo
+        compile project(':chemical_db_oss:chemdb_sql_oss')
 
         // external
         compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"

@@ -1,0 +1,7 @@
+dependencies {
+
+	//project
+    compile project(':chemical_db_oss')
+    // external
+    compile group: "org.postgresql", name: "postgresql", version: "$psql_version"
+}	

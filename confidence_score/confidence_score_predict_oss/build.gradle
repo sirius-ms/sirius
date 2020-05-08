@@ -1,0 +1,16 @@
+dependencies {
+
+    testCompile group: "de.unijena.bioinf.ms", name: "fingerid", version: "$version"
+
+
+    //internal
+	compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+
+	// external
+	compile group: "de.bwaldvogel", name: "liblinear", version: "$liblinear_version"
+	compile group: "tw.edu.ntu.csie", name: "libsvm", version: "$libsvm_version"
+
+    // https://mvnrepository.com/artifact/ca.umontreal.iro.simul/ssj
+    compile group: 'ca.umontreal.iro.simul', name: 'ssj', version: '3.1.0'
+
+}	

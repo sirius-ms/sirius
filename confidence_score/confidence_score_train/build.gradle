@@ -1,0 +1,9 @@
+dependencies {
+	//project
+    compile project(':confidence_score:confidence_score_predict_oss')
+    compile project(':ml_utils')
+    //internal
+    compile group: "de.unijena.bioinf.ms", name: "fingerid", version: "$version"
+
+
+}	
