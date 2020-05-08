@@ -1,0 +1,17 @@
+allprojects {
+    version =  parent.fingeridVersion
+}
+
+dependencies {
+	//project
+    compile project(':fingerid_base_oss')
+    compile project(':chemistry_base')
+    compile project(':io')
+
+    // REST
+    compile "org.apache.httpcomponents:httpclient:4.5.1"
+
+	// external
+	compile group: 'javax.json', name: 'javax.json-api', version:"$json_version"
+    compile group: 'org.glassfish', name: 'javax.json', version:"$json_impl_version"
+}

@@ -1,0 +1,6 @@
+dependencies {
+    compile project(':utils')
+    compile project(':chemistry_base')
+
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
+}
