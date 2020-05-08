@@ -19,12 +19,10 @@ ext {
     System.properties.putAll(props)
     logger.lifecycle('reading build properties file...')
     props = new Properties()
-    File propertiesFileInSirius = new File("${projectDir}/fingerid_utils_oss/src/main/resources/csi_fingerid.build.properties")
-    File propertiesFileInFingerID = new File("${projectDir}/chemistry_base/src/main/resources/sirius.build.properties")
-    propertiesFileInSirius.withReader("UTF8", {
+    file("${projectDir}/chemistry_base/src/main/resources/sirius.build.properties").withReader("UTF8", {
         props.load(it)
     })
-    propertiesFileInFingerID.withReader("UTF8", {
+    file("${projectDir}/fingerid_base_oss/src/main/resources/csi_fingerid.build.properties").withReader("UTF8", {
         props.load(it)
     })
     System.properties.putAll(props)
