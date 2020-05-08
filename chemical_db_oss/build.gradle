@@ -4,7 +4,7 @@ allprojects {
 
 dependencies {
 	//project
-    compile project(':fingerid_utils_oss')
+    compile project(':fingerid_base_oss')
     compile project(':chemistry_base')
     compile project(':io')
 
