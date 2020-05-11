@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.middleware.formulas;
 
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -75,11 +74,22 @@ public class FormulaResultController extends BaseApiController {
     }
 
     @GetMapping(value = "formulas/{fid}/fingerprint", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public FingerprintId getFingerprint(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid, @RequestParam(required = false) boolean asDeterministic){
+    public double[] getFingerprint(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid, @RequestParam(required = false) boolean asDeterministic){
         SiriusProjectSpace projectSpace = super.projectSpace(pid);
         Optional<FormulaResult> fResult = this.getAnnotatedFormulaResult(projectSpace, cid, fid, FingerprintResult.class);
         return fResult.map(fr -> fr.getAnnotation(FingerprintResult.class).
-                map(fpResult -> new FingerprintId(fpResult, asDeterministic)).orElse(null)).orElse(null);
+                map(fpResult -> {
+                    if(asDeterministic){
+                        boolean[] boolFingerprint = fpResult.fingerprint.asDeterministic().toBooleanArray();
+                        double[] fingerprint = new double[boolFingerprint.length];
+                        for(int idx = 0; idx < fingerprint.length; idx++){
+                            fingerprint[idx] = boolFingerprint[idx] ? 1 : 0;
+                        }
+                        return fingerprint;
+                    }else{
+                        return fpResult.fingerprint.toProbabilityArray();
+                    }
+                }).orElse(null)).orElse(null);
     }
 
     private Optional<FormulaResult> getAnnotatedFormulaResult(SiriusProjectSpace projectSpace, String cid, String fid, Class<? extends DataAnnotation>... components){
