@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.gui.canopus.compound_classes;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.fingerid.CanopusResult;
+import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;

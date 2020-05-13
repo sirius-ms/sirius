@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.gui.canopus.compound_classes;
 
 import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.fingerid.CanopusResult;
+import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.MolecularPropertyBean;
 import org.jetbrains.annotations.NotNull;
 
