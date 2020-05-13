@@ -18,7 +18,7 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "chemical_db_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "confidence_score_predict_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "canopus_predict_oss", version: "$fingeridVersion"
-    compile group: "de.unijena.bioinf.ms", name: "web_api_oss", version: "$fingeridVersion"
+    compile group: "de.unijena.bioinf.ms", name: "sirius_web_client", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerid_project_space_oss", version: "$fingeridVersion"
 
     compile group: "de.unijena.bioinf.ms", name: "FTAlignmentTool", version: "$siriusVersion"
