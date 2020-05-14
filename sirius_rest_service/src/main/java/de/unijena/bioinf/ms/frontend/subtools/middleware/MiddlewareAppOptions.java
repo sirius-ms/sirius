@@ -13,7 +13,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "Starts SIRIUS as a background (REST) service that can be requested via a REST-API",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "EXPERIMENTAL/UNSTABLE: Starts SIRIUS as a background (REST) service that can be requested via a REST-API",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class MiddlewareAppOptions implements StandaloneTool<MiddlewareAppOptions.Flow> {
 
     @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: 8080).", defaultValue = "8080")

@@ -22,8 +22,6 @@ public class GuiWorkflowBuilder<R extends RootOptions<?, PreprocessingJob<? exte
     protected Object[] standaloneTools() {
         ArrayList<Object> it = new ArrayList<>(Arrays.asList(super.standaloneTools()));
         it.add(new GuiAppOptions());
-        //todo readd rest option if boot stuff works
-//        return it.stream().filter(opt -> !opt.getClass().equals(MiddlewareAppOptions.class)).toArray(Object[]::new);
         return it.toArray(Object[]::new);
     }
 }

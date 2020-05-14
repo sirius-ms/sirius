@@ -38,6 +38,11 @@ project.type.each{t ->
             classpath.add("../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}") //add
             println(classpath)
 
+            //this is to include JAVA_HOME variable
+            bundledJre64Bit = a.equals('64')
+            bundledJrePath = '%JAVA_HOME%'
+            jreMinVersion = targetCompatibility
+
             outfile = "${project.appName}-${t}-${a}.exe"
         }
     }

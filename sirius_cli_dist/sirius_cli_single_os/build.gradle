@@ -34,6 +34,12 @@ project.type.each { t ->
             mainClassName = project.mainClassName
             headerType = t
             jreRuntimeBits = a
+
+            //this is to include JAVA_HOME variable
+            bundledJre64Bit = a.equals('64')
+            bundledJrePath = '%JAVA_HOME%'
+            jreMinVersion = targetCompatibility
+
             outfile = "${project.appName}-${t}-${a}.exe"
         }
     }
