@@ -54,5 +54,6 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
         if (!(RUN.getFlow() instanceof ServiceWorkflow)) {
             System.exit(0);
         }
+
     }
 }

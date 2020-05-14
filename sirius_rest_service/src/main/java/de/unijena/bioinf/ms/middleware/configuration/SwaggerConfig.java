@@ -30,8 +30,8 @@ public class SwaggerConfig {
                 .description("Sirius Nightsky Middleware API")
                 .termsOfServiceUrl("https://bio.informatik.uni-jena.de/software/sirius/")
                 .license("GNU General Public License v3.0")
-                .licenseUrl("https://github.com/boecker-lab/sirius_frontend/blob/release/LICENSE.txt")
-                .version("1.0")
+                .licenseUrl("https://github.com/boecker-lab/sirius_frontend/blob/release-4.4/LICENSE.txt")
+                .version("0.9")
                 .build();
     }
 }

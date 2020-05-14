@@ -396,11 +396,13 @@ subprojects {
         maxHeapSize = 4096
         maxHeapPercent = 60
 
+        jar = project.jar.archiveFileName.get()
         dontWrapJar = true
         jdkPreference = 'preferJre'
-        classpath.add(project.jar.archiveFileName.get())
+
         classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
         println("================THE PATH: $classpath")
+
     }
 
     /*################### Linux release Stuff ################### */

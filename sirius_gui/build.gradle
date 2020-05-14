@@ -51,26 +51,16 @@ dependencies {
 
 
 /*################### Environment variables ################### */
-mainClassName = "de.unijena.bioinf.ms.middleware.SiriusGUIApplication"
+mainClassName = 'org.springframework.boot.loader.PropertiesLauncher'
 project.ext.set("arch", ['64'])
 project.ext.set("type", ['gui','console'])
 
 /*################### Jar build Stuff ################### */
-jar {
-    zip64=true
-    enabled = true
+bootJar {
     manifest {
         attributes 'Main-Class': mainClassName
+        attributes 'Start-Class': "de.unijena.bioinf.ms.middleware.SiriusGUIApplication"
     }
-
-    from {
-        configurations.runtimeClasspath.filter {f ->!project.libExclude.stream().anyMatch{s -> f.name.startsWith(s)}}
-                .collect { it.isDirectory() ? it : zipTree(it) }
-    }
-}
-
-bootJar {
-    classifier = 'boot'
 }
 
 /*################### Windows release Stuff ################### */
@@ -79,6 +69,7 @@ project.type.each{t ->
         tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
             group = 'launch4j'
             mainClassName = project.mainClassName
+            jar = project.bootJar.archiveFileName.get()
             bundledJre64Bit = true
             bundledJrePath = 'zulu'
             headerType = t
@@ -105,7 +96,7 @@ distributions {
             baseName = "${project.appName}-$n"
             contents {
                 into('lib') {
-                    from('build/libs/')
+                    from("build/install/sirius_gui-boot/lib")
                     from("${project.glpkPath}/l${ar}/") {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
@@ -119,9 +110,7 @@ distributions {
                 }
 
                 into('bin') {
-                    from("build/install/${project.name}/bin") {
-                        exclude("*.bat")
-                    }
+                    from("build/scripts/sirius")
                     from("${project.distPath}")
                     from("${getRootDir()}/LICENSE.txt")
                 }
@@ -147,7 +136,7 @@ distributions {
 
             baseName = "${project.appName}-$n"
             contents {
-                from('build/libs/')
+                from("build/install/sirius_gui-boot/lib")
                 from("${project.glpkPath}/w${ar}/")
                 from("${project.clpPath}/w${ar}/")
                 from("${project.distPath}") {
@@ -182,7 +171,7 @@ distributions {
         baseName = "${project.appName}-$n"
         contents {
             into('lib') {
-                from('build/libs/')
+                from("build/install/sirius_gui-boot/lib")
                 from("${project.glpkPath}/osx/")
                 from("${project.clpPath}/osx/")
                 exclude('*.zip')
@@ -193,9 +182,7 @@ distributions {
             }
 
             into('bin') {
-                from("build/install/${project.name}/bin") {
-                    exclude("*.bat")
-                }
+                from("build/scripts/sirius")
                 from("${project.distPath}")
                 from("${getRootDir()}/LICENSE.txt")
             }
@@ -207,21 +194,34 @@ distributions {
             }
         }
     })
+
     distribute.dependsOn "${n}DistZip"
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadJRE'
-    getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
 
+    getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
     project.getTasksByName("distTar", false).each { it.setEnabled(false) }
     project.getTasksByName("distZip", false).each { it.setEnabled(false) }
 
-    linux64DistZip.dependsOn 'installDist'
-    linux64DistTar.dependsOn 'installDist'
-    installLinux64Dist.dependsOn 'installDist'
+    //create libs
+    linux64DistZip.dependsOn 'installBootDist'
+    installLinux64Dist.dependsOn 'installBootDist'
+
+    osx64DistZip.dependsOn 'installBootDist'
+    installOsx64Dist.dependsOn 'installBootDist'
+
+    win64DistZip.dependsOn 'installBootDist'
+    installWin64Dist.dependsOn 'installBootDist'
+
+    //create starter
+    linux64DistZip.dependsOn 'startScripts'
+    installLinux64Dist.dependsOn 'startScripts'
+
+    osx64DistZip.dependsOn 'startScripts'
+    installOsx64Dist.dependsOn 'startScripts'
 
     win64DistZip.dependsOn 'createExe'
-    win64DistTar.dependsOn 'createExe'
     installWin64Dist.dependsOn 'createExe'
 }
 
