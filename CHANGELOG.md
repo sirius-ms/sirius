@@ -1,7 +1,12 @@
+##### 4.4.18
+- fix: GUI Deadlock on MacOS X  fixed. Mac version is now available.
+- improvement: Character separated files in project-space have now .tsv extension for better excel compatibility.
+- feature: Windows headless executable respects `%JAVA_HOME%` as JRE location.
+- improvement: Improved packaging and startup of the GUI version  
 ##### 4.4.16
 - feature: **CSI:FingerID for negative ion mode is available**
   - NOTE: CANOPUS for negative mode data is not ready yet and will still take some time.
-- fixed: Too small Heapsize on Windows
+- fix: Too small Heapsize on Windows
 - improvement: better GUI performance 
 ##### 4.4.15
 - feature: CLI Sub-Tool to export projects to mgf.
