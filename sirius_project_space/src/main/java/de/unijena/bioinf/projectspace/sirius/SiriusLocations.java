@@ -11,8 +11,8 @@ public interface SiriusLocations {
             COMPOUND_CONFIG = "compound.config";
 
     Location
-            SPECTRA = new Location("spectra/", "csv", FormulaResultId::fileName),
+            SPECTRA = new Location("spectra/", "tsv", FormulaResultId::fileName),
             TREES = new Location("trees/", "json", FormulaResultId::fileName),
             SCORES = new Location("scores/", "info", FormulaResultId::fileName),
-            DECOYS = new Location("decoys/", "csv", FormulaResultId::fileName);
+            DECOYS = new Location("decoys/", "tsv", FormulaResultId::fileName);
 }
