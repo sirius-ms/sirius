@@ -10,6 +10,6 @@ public interface CanopusLocations {
 
 
     String
-            CANOPUS_CLIENT_DATA = "canopus.csv",
-            CANOPUS_CLIENT_DATA_NEG = "canopus_neg.csv";
+            CANOPUS_CLIENT_DATA = "canopus.tsv",
+            CANOPUS_CLIENT_DATA_NEG = "canopus_neg.tsv";
 }

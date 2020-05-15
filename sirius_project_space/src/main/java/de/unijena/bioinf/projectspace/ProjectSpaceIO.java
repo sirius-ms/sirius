@@ -12,7 +12,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -31,11 +33,29 @@ public class ProjectSpaceIO {
         if (isZipProjectSpace(path)) {
             space = newZipProjectSpace(path, false);
         } else if (isExistingProjectspaceDirectory(path) || (Files.isDirectory(path) && FileUtils.listAndClose(path, Stream::count) == 0)) {
+            doTSVConversion(path);
             space = new SiriusProjectSpace(configuration, path);
         } else throw new IOException("Location '" + path + "' is not a valid Project Location");
 
         space.open();
         return space;
+    }
+
+    private static Path doTSVConversionZip(Path path) throws IOException {
+        final Path fs = asZipFS(path, false);
+        doTSVConversion(fs);
+        return fs;
+    }
+
+    private static void doTSVConversion(Path path) throws IOException {
+        if (FileUtils.listAndClose(path, s -> s.anyMatch(p -> p.getFileName().toString().toLowerCase().endsWith(".tsv")))) {
+            return;
+        } else {
+            LOG.warn("Project=Space seems to use outdated '.csv' file extension. Try to convert to new `.tsv` format if necessary.");
+            List<Path> list = FileUtils.walkAndClose(s -> s.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".csv")).collect(Collectors.toList()), path);
+            for (Path p : list)
+                Files.move(p, p.getParent().resolve(p.getFileName().toString().replace(".csv", ".tsv")));
+        }
     }
 
     public SiriusProjectSpace createNewProjectSpace(Path path) throws IOException {
@@ -60,7 +80,8 @@ public class ProjectSpaceIO {
     }
 
     protected SiriusProjectSpace newZipProjectSpace(Path path, boolean createNew) throws IOException {
-        return new SiriusProjectSpace(configuration, asZipFS(path, createNew));
+        final Path fs = createNew ? asZipFS(path, createNew): doTSVConversionZip(path);
+        return new SiriusProjectSpace(configuration, fs);
     }
 
     protected static Path asZipFS(Path zipFile, boolean createNew) throws IOException {
