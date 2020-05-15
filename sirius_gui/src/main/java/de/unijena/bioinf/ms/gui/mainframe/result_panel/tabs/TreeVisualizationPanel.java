@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -30,6 +31,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -186,10 +188,18 @@ public class TreeVisualizationPanel extends JPanel
                                     SwingUtilities.invokeAndWait(() -> setToolbarEnabled(true));
 
                                     checkForInterruption();
+
+                                    final AtomicDouble tScale = new AtomicDouble();
+                                    final AtomicDouble tScaleMin = new AtomicDouble();
+                                    Jobs.runJFXAndWait(() -> {
+                                        tScaleMin.set(jsBridge.getTreeScaleMin());
+                                        tScale.set(jsBridge.getTreeScale());
+                                    });
+
                                     Jobs.runEDTAndWait(() -> {
                                         // adapt scale slider to tree scales
-                                        scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin() * 100));
-                                        scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
+                                        scaleSlider.setMaximum((int) (1 / tScaleMin.floatValue() * 100));
+                                        scaleSlider.setValue((int) (1 / tScale.floatValue() * 100));
                                         scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
                                     });
 
@@ -218,14 +228,22 @@ public class TreeVisualizationPanel extends JPanel
     }
 
 
-    public void showTree(String jsonTree) {
+    public void showTree(String jsonTree) throws InvocationTargetException, InterruptedException {
         if (jsonTree != null && !jsonTree.isBlank()) {
             browser.loadTree(jsonTree);
             setToolbarEnabled(true);
-            Jobs.runEDTLater(() -> {
+
+            final AtomicDouble tScale = new AtomicDouble();
+            final AtomicDouble tScaleMin = new AtomicDouble();
+            Jobs.runJFXAndWait(() -> {
+                tScaleMin.set(jsBridge.getTreeScaleMin());
+                tScale.set(jsBridge.getTreeScale());
+            });
+
+            Jobs.runEDTAndWait(() -> {
                 // adapt scale slider to tree scales
-                scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin() * 100));
-                scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
+                scaleSlider.setMaximum((int) (1 / tScaleMin.floatValue() * 100));
+                scaleSlider.setValue((int) (1 / tScale.floatValue() * 100));
                 scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
             });
 
@@ -456,19 +474,32 @@ public class TreeVisualizationPanel extends JPanel
     public void componentResized(ComponentEvent componentEvent) {
         int height = ((JFXPanel) this.browser).getHeight();
         int width = ((JFXPanel) this.browser).getWidth();
-        browser.executeJS("window.outerHeight = " + String.valueOf(height));
-        browser.executeJS("window.outerWidth = " + String.valueOf(width));
+        browser.executeJS("window.outerHeight = " + height);
+        browser.executeJS("window.outerWidth = " + width);
         if (ftree != null) {
             browser.executeJS("update()");
-            SwingUtilities.invokeLater(() -> {
-                // adapt scale slider to tree scales
-                scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin()
-                        * 100));
-                scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
-                scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
-            });
+
+            final AtomicDouble tScale = new AtomicDouble();
+            final AtomicDouble tScaleMin = new AtomicDouble();
+
+            try {
+                Jobs.runJFXAndWait(() -> {
+                    tScaleMin.set(jsBridge.getTreeScaleMin());
+                    tScale.set(jsBridge.getTreeScale());
+                });
+
+                Jobs.runEDTAndWait(() -> {
+                    // adapt scale slider to tree scales
+                    scaleSlider.setMaximum((int) (1 / tScaleMin.floatValue() * 100));
+                    scaleSlider.setValue((int) (1 / tScale.floatValue() * 100));
+                    scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
+                });
+            } catch (InterruptedException | InvocationTargetException e) {
+                LoggerFactory.getLogger(getClass()).debug("EDT or JFX thread interrupted!",e);;
+            }
         }
     }
+
 
     @Override
     public void componentMoved(ComponentEvent componentEvent) {
