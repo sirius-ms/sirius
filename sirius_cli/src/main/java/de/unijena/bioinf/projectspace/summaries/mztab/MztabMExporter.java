@@ -22,13 +22,13 @@ import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.Summarizer;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdLocations;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
@@ -43,8 +43,9 @@ import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.SPECTRA;
+import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.TREES;
 import static de.unijena.bioinf.projectspace.summaries.mztab.JenaMSAdditionalKeys.*;
-import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.*;
 
 public class MztabMExporter implements Summarizer {
     private int smlID = 0;
@@ -217,7 +218,7 @@ public class MztabMExporter implements Summarizer {
 
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_ANNOTATED_SPECTRA_LOCATION, SPECTRA.relFilePath(bestHitSource.getId())));
         smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_TREE_LOCATION, TREES.relFilePath(bestHitSource.getId())));
-        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_SUMMARY_LOCATION, bestHitSource.getId().getParentId().getDirectoryName() + "/" + SIRIUS_SUMMARY));
+        smeItem.addOptItem(SiriusMZTabParameter.newOptColumn(SiriusMZTabParameter.SIRIUS_SUMMARY_LOCATION, bestHitSource.getId().getParentId().getDirectoryName() + "/" + SummaryLocations.FORMULA_CANDIDATES));
 
         return smeItem;
     }
