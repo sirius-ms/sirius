@@ -2,21 +2,21 @@ package de.unijena.bioinf.ms.gui.compute.jjobs;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
-import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
+import javafx.application.Platform;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Jobs {
@@ -111,6 +111,55 @@ public class Jobs {
         return LoadingBackroundTask.runInBackground(owner, title, indeterminateProgress, MANAGER, task);
     }
 
+    /**
+     * Runs the specified {@link Runnable} on the
+     * JavaFX application thread and waits for completion.
+     *
+     * @param action the {@link Runnable} to run
+     * @throws NullPointerException if {@code action} is {@code null}
+     */
+    public static void runJFXAndWait(Runnable action) throws InterruptedException {
+        if (action == null)
+            throw new NullPointerException("action");
+
+        // run synchronously on JavaFX thread
+        if (Platform.isFxApplicationThread()) {
+            action.run();
+            return;
+        }
+
+        // queue on JavaFX thread and wait for completion
+        final CountDownLatch doneLatch = new CountDownLatch(1);
+        Platform.runLater(() -> {
+            try {
+                action.run();
+            } finally {
+                doneLatch.countDown();
+            }
+        });
+
+        doneLatch.await();
+    }
+
+    public static void runJFXLater(Runnable action) {
+        Platform.runLater(action);
+    }
+
+    public static void runEDTLater(Runnable action) {
+        SwingUtilities.invokeLater(action);
+    }
+
+    public static void runEDTAndWait(Runnable action) throws InvocationTargetException, InterruptedException {
+        // run synchronously on JavaFX thread
+        if (SwingUtilities.isEventDispatchThread()) {
+            action.run();
+            return;
+        }
+
+        SwingUtilities.invokeAndWait(action);
+    }
+
+
     private static void checkProfile(String profile) {
         if (!siriusPerProfile.containsKey(profile))
             try {
@@ -150,6 +199,7 @@ public class Jobs {
         protected Boolean compute() throws Exception {
             //todo progress? maybe move to CLI to have progress there to?
             ACTIVE_COMPUTATIONS.add(this);
+            checkForInterruption();
             compoundsToProcess.forEach(i -> i.setComputing(true));
             checkForInterruption();
             computation.run();
@@ -165,9 +215,9 @@ public class Jobs {
 
         @Override
         protected void cleanup() {
-            super.cleanup();
             ACTIVE_COMPUTATIONS.remove(this);
             compoundsToProcess.forEach(i -> i.setComputing(false));
+            super.cleanup();
         }
     }
 }

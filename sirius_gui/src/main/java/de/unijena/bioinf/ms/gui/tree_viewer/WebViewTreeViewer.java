@@ -25,7 +25,7 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
 
     LinkedList<FutureTask<Void>> tasks = new LinkedList<>();
 
-    public void queueTask(Runnable runnable){
+    public void queueTaskInJFXThread(Runnable runnable){
         FutureTask<Void> task = new FutureTask<>(runnable, null);
         tasks.add(task);
         Platform.runLater(task);
@@ -43,7 +43,7 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
 
     public WebViewTreeViewer(){
         this.html_builder = new StringBuilder("<html><head></head><body>\n");
-        queueTask(() -> {
+        queueTaskInJFXThread(() -> {
                 this.webView = new WebView();
                 this.setScene(new Scene(this.webView));
     });
@@ -64,7 +64,7 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
 
     public void load(){
         this.html_builder.append("</body></html>");
-        queueTask(() -> {
+        queueTaskInJFXThread(() -> {
             this.webView.getEngine().setJavaScriptEnabled(true);
             this.webView.getEngine().loadContent(html_builder.toString(),
                                                  "text/html");
@@ -74,7 +74,7 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
 
     public void load(Map<String, Object> bridges){
         this.html_builder.append("</body></html>");
-        queueTask(() -> {
+        queueTaskInJFXThread(() -> {
                 this.webView.getEngine().setJavaScriptEnabled(true);
                 this.webView.getEngine().loadContent(html_builder.toString(),
                                                      "text/html");
@@ -108,7 +108,7 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
     }
 
     public void executeJS(String js_code) {
-        queueTask(() -> {
+        queueTaskInJFXThread(() -> {
             webView.getEngine().executeScript(js_code);});
     }
 
