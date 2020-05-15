@@ -112,9 +112,7 @@ public class TreeViewerSettings extends JFrame implements ItemListener,
             // popup annotations contain all that are not selected
             localConfig.set("popupAnnotations", getUnselectedNodeAnnotations().
                             toArray(new String[0]));
-            Platform.runLater(() ->{
-                    bridge.settingsChanged();
-                });
+            Platform.runLater(() -> bridge.settingsChanged());
         }
     }
 

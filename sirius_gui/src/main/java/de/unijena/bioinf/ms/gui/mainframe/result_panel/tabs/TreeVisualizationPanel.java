@@ -17,10 +17,8 @@ import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import org.slf4j.LoggerFactory;
-
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -172,7 +170,7 @@ public class TreeVisualizationPanel extends JPanel
                             old.cancel(true);
                             old.getResult(); //await cancellation so that nothing strange can happen.
                         }
-                        SwingUtilities.invokeAndWait(() -> browser.clear());
+                        Jobs.runEDTAndWait(() -> browser.clear());
                         checkForInterruption();
                         if (sre != null) {
                             // At som stage we can think about directly load the json representation vom the project space
@@ -188,7 +186,7 @@ public class TreeVisualizationPanel extends JPanel
                                     SwingUtilities.invokeAndWait(() -> setToolbarEnabled(true));
 
                                     checkForInterruption();
-                                    Platform.runLater(() -> {
+                                    Jobs.runEDTAndWait(() -> {
                                         // adapt scale slider to tree scales
                                         scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin() * 100));
                                         scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
@@ -197,14 +195,14 @@ public class TreeVisualizationPanel extends JPanel
 
                                     checkForInterruption();
                                     if (settings == null)
-                                        SwingUtilities.invokeAndWait(() -> settings = new TreeViewerSettings(TreeVisualizationPanel.this));
+                                        Jobs.runEDTAndWait(() -> settings = new TreeViewerSettings(TreeVisualizationPanel.this));
                                     return true;
                                 }
                             }
                         }
                         ftree = null;
                         browser.clear(); //todo maybe not needed
-                        SwingUtilities.invokeAndWait(() -> setToolbarEnabled(false));
+                        Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                         return false;
                     }
 
@@ -224,7 +222,7 @@ public class TreeVisualizationPanel extends JPanel
         if (jsonTree != null && !jsonTree.isBlank()) {
             browser.loadTree(jsonTree);
             setToolbarEnabled(true);
-            Platform.runLater(() -> {
+            Jobs.runEDTLater(() -> {
                 // adapt scale slider to tree scales
                 scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin() * 100));
                 scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
@@ -273,24 +271,15 @@ public class TreeVisualizationPanel extends JPanel
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Runnable r = null;
         if (e.getSource() == presetBox) {
             applyPreset((String) presetBox.getSelectedItem());
         } else if (e.getSource() == advancedSettingsBtn) {
-            r = () -> {
-                settings.toggleShow();
-            };
+            Jobs.runEDTLater(settings::toggleShow); //swing code
         } else if (e.getSource() == resetBtn) {
-            r = () -> {
-                resetTreeView();
-            };
+            Jobs.runJFXLater(this::resetTreeView); //browser code
         } else if (e.getSource() == saveTreeBtn) {
-            r = () -> {
-                saveTree();
-            };
+            saveTree(); //todo which thread do we need here? Swing EDT but with loader for the IO conversion!
         }
-        if (r != null)
-            Platform.runLater(r);
     }
 
     @Override
@@ -372,20 +361,6 @@ public class TreeVisualizationPanel extends JPanel
         jfc.addChoosableFileFilter(pdfFilter);
         jfc.addChoosableFileFilter(jsonFilter);
 
-        FileFormat defaultFF = FileFormat.valueOf(PropertyManager.getProperty(SiriusProperties.DEFAULT_TREE_FILE_FORMAT, null, FileFormat.png.name()));
-
-        /*if (defaultFF == FileFormat.dot) {
-            jfc.setFileFilter(dotFilter);
-        } else if (defaultFF == FileFormat.gif) {
-            jfc.setFileFilter(gifFilter);
-        } else if (defaultFF == FileFormat.jpg) {
-            jfc.setFileFilter(jpgFilter);
-        } else if (defaultFF == FileFormat.png) {
-            jfc.setFileFilter(pngFilter);
-        } else if (defaultFF == FileFormat.json) {
-            jfc.setFileFilter(jsonFilter);
-        }
-*/
         jfc.setFileFilter(svgFilter);
 
         File selectedFile = null;
@@ -434,7 +409,6 @@ public class TreeVisualizationPanel extends JPanel
                     if (rv == ReturnValue.Success) {
                         selectedFile = selFile;
                     }
-//						int rt = JOptionPane.showConfirmDialog(this, "The file \""+selFile.getName()+"\" is already present. Override it?");
                 } else {
                     selectedFile = selFile;
                 }
@@ -451,21 +425,30 @@ public class TreeVisualizationPanel extends JPanel
                 );
         }
 
+
         if (selectedFile != null && ff != FileFormat.none) {
-            try {
-                if (ff == FileFormat.dot) {
-                    new FTDotWriter().writeTreeToFile(selectedFile, ftree);
-                } else if (ff == FileFormat.svg) {
-                    TreeViewerIO.writeSVG(selectedFile, jsBridge.getSVG());
-                } else if (ff == FileFormat.pdf) {
-                    TreeViewerIO.writePDF(selectedFile, jsBridge.getSVG());
-                } else if (ff == FileFormat.json) {
-                    new FTJsonWriter().writeTreeToFile(selectedFile, ftree);
+            final FileFormat fff = ff;
+            final File fSelectedFile = selectedFile;
+            Jobs.runInBackgroundAndLoad(MF, "Exporting Tree...", () -> {
+                try {
+                    if (fff == FileFormat.dot) {
+                        new FTDotWriter().writeTreeToFile(fSelectedFile, ftree);
+                    } else if (fff == FileFormat.svg) {
+                        final StringBuilder svg = new StringBuilder();
+                        Jobs.runJFXAndWait(() -> svg.append(jsBridge.getSVG()));
+                        TreeViewerIO.writeSVG(fSelectedFile, svg.toString());
+                    } else if (fff == FileFormat.pdf) {
+                        final StringBuilder svg = new StringBuilder();
+                        Jobs.runJFXAndWait(() -> svg.append(jsBridge.getSVG()));
+                        TreeViewerIO.writePDF(fSelectedFile, svg.toString());
+                    } else if (fff == FileFormat.json) {
+                        new FTJsonWriter().writeTreeToFile(fSelectedFile, ftree);
+                    }
+                } catch (Exception e2) {
+                    new ErrorReportDialog(MF, e2.getMessage());
+                    LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);
                 }
-            } catch (Exception e2) {
-                ErrorReportDialog fed = new ErrorReportDialog(MF, e2.getMessage());
-                LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);
-            }
+            });
         }
     }
 
@@ -477,13 +460,13 @@ public class TreeVisualizationPanel extends JPanel
         browser.executeJS("window.outerWidth = " + String.valueOf(width));
         if (ftree != null) {
             browser.executeJS("update()");
-            Platform.runLater(() -> {
-                    // adapt scale slider to tree scales
-                    scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin()
-                                                  * 100));
-                    scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
-                    scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
-                });
+            SwingUtilities.invokeLater(() -> {
+                // adapt scale slider to tree scales
+                scaleSlider.setMaximum((int) (1 / jsBridge.getTreeScaleMin()
+                        * 100));
+                scaleSlider.setValue((int) (1 / jsBridge.getTreeScale() * 100));
+                scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
+            });
         }
     }
 

@@ -42,9 +42,7 @@ public class TreeVisualizationPanelTest{
             }
             br.close();
             String data_json = data_json_builder.toString();
-            Platform.runLater(() -> {
-                    browser.loadTree(data_json);
-                });
+            Platform.runLater(() -> browser.loadTree(data_json));
         } catch (IOException e){
             e.printStackTrace();
         }

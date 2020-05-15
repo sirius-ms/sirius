@@ -25,10 +25,12 @@ public class ShowJobsDialogAction extends AbstractAction {
 
         //Listen if there are active gui jobs
         Jobs.MANAGER.getJobs().addListEventListener(listChanges -> {
-            if (Jobs.MANAGER.hasActiveJobs()) {
-                putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_RUN_32);
+            if (getValue(Action.LARGE_ICON_KEY).equals(Icons.FB_LOADER_STOP_32)) {
+                if (!Jobs.MANAGER.getJobs().isEmpty() && Jobs.MANAGER.hasActiveJobs())
+                    putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_RUN_32);
             } else {
-                putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_STOP_32);
+                if (Jobs.MANAGER.getJobs().isEmpty() || !Jobs.MANAGER.hasActiveJobs())
+                    putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_STOP_32);
             }
         });
     }
