@@ -8,8 +8,7 @@ public interface SiriusLocations {
     String
             MS2_EXPERIMENT = "spectrum.ms",
             COMPOUND_INFO = "compound.info",
-            COMPOUND_CONFIG = "compound.config",
-            SIRIUS_SUMMARY = "sirius_summary.csv";
+            COMPOUND_CONFIG = "compound.config";
 
     Location
             SPECTRA = new Location("spectra/", "csv", FormulaResultId::fileName),
