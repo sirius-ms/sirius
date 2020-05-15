@@ -4,7 +4,6 @@ import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.Location;
 
 public interface FingerIdLocations {
-
     Location
             FINGERBLAST = new Location("fingerid/", "csv", FormulaResultId::fileName),
             FINGERBLAST_FPs = new Location("fingerid/", "fps", FormulaResultId::fileName),
