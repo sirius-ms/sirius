@@ -5,6 +5,9 @@ import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.retention.kernels.MoleculeKernel;
+import de.unijena.bioinf.retention.kernels.ShortestPathKernel;
+import de.unijena.bioinf.retention.kernels.SubstructureKernel;
 
 import java.util.ArrayList;
 import java.util.List;

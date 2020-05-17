@@ -197,6 +197,17 @@ public class MatrixUtils {
             }
         }
     }
+    public static void applySum(double[] vector, double[] otherVector) {
+        for (int i=0; i < vector.length; ++i) {
+            vector[i] += otherVector[i];
+        }
+    }
+    public static double[] sum(double[] vector, double[] other) {
+        final double[] vec = vector.clone();
+        applySum(vec,other);
+        return vec;
+
+    }
     public static void applyWeightedSum(double[][] kernel, double[][] other, double otherWeight) {
         for (int i=0; i < kernel.length; ++i) {
             kernel[i][i] += other[i][i]*otherWeight;

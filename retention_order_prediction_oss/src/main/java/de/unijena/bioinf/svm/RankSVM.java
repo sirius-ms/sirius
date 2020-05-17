@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class RankSVM {
 
-    private static final int MAX_ITERATIONS = 10000;
+    private static final int MAX_ITERATIONS = 2000;
 
     protected final double[][] kernel;
     protected final int[] pairs;
@@ -32,11 +32,11 @@ public class RankSVM {
         double l;
 
         // solve in java
-
-        for (int k=0; k < MAX_ITERATIONS; ++k) {
+        int k;
+        for (k=0; k < MAX_ITERATIONS; ++k) {
 
             // first calculate AKA'*alpha
-            // start with A'alpha
+            // start with A'alpha)
             Arrays.fill(d,0d);
 
             for (int p=0; p < pairs.length; p+=2) {
@@ -70,19 +70,20 @@ public class RankSVM {
                 final double newAlpha = alpha[pindex] + l*((dpindex>0 ? C : 0) - alpha[pindex]);
                 maxChange = Math.max(maxChange, Math.abs(newAlpha-alpha[pindex]));
                 alpha[pindex] = newAlpha;
+
             }
 
-            if (maxChange < 1e-4 && k > 5) {
+            if (maxChange < 5e-4 && k > 5) {
                 break;
             }
 
         }
-
+        System.out.println("Steps = " + k);
         final double[] supportVectors = new double[N];
-        for (int k=0; k < pairs.length; k+=2) {
-            final int pindex = k>>1;
-            final int from = pairs[k];
-            final int to = pairs[k+1];
+        for (int i=0; i < pairs.length; i+=2) {
+            final int pindex = i>>1;
+            final int from = pairs[i];
+            final int to = pairs[i+1];
             supportVectors[from] -= alpha[pindex];
             supportVectors[to] += alpha[pindex];
         }

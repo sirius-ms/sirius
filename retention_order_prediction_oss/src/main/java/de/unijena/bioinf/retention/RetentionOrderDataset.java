@@ -3,6 +3,7 @@ package de.unijena.bioinf.retention;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.retention.kernels.MoleculeKernel;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
 import java.util.ArrayList;
@@ -17,12 +18,17 @@ public class RetentionOrderDataset {
     private TObjectIntHashMap<PredictableCompound> compounds2index;
     private ArrayList<PredictableCompound> relations;
     private BitSet mask;
+    private int[] indizes;
 
     public RetentionOrderDataset() {
         this.compounds = new ArrayList<>();
         this.compounds2index = new TObjectIntHashMap<>();
         this.relations = new ArrayList<>();
         this.mask = new BitSet();
+    }
+
+    public int[] getPairs() {
+        return relations.stream().mapToInt(r->compounds2index.get(r)).toArray();
     }
 
     private RetentionOrderDataset(ArrayList<PredictableCompound> compounds, TObjectIntHashMap<PredictableCompound> compounds2index, ArrayList<PredictableCompound> relations, BitSet mask) {
@@ -179,30 +185,37 @@ public class RetentionOrderDataset {
     }
 
     public int[] getUsedIndizes() {
+        if (indizes!=null) return indizes;
         int[] indizes = new int[mask.cardinality()];
         int k=0;
-        for (int i=mask.nextSetBit(0); i < mask.size(); i = mask.nextSetBit(i+1)) {
+        for (int i=mask.nextSetBit(0); i >= 0; i = mask.nextSetBit(i+1)) {
             indizes[k++] = i;
         }
+        this.indizes = indizes;
         return indizes;
     }
 
     public void useAllCompounds() {
+        indizes=null;
         mask.set(0,compounds.size(), true);
     }
 
     public void useNoCompounds() {
+        indizes=null;
         mask.set(0,compounds.size(), true);
     }
 
     public void useCompound(int index, boolean allow) {
+        indizes=null;
         mask.set(index,allow);
     }
     public void useCompound(PredictableCompound compound, boolean allow) {
+        indizes=null;
         mask.set(compounds2index.get(compound),allow);
     }
 
     public void useEveryXCompound(int fold, boolean value) {
+        indizes=null;
         mask.set(0,compounds.size(),!value);
         for (int k=0; k < compounds.size(); k += fold) {
             mask.set(k,value);
