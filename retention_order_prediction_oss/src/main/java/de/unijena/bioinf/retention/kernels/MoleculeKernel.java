@@ -1,4 +1,6 @@
-package de.unijena.bioinf.retention;
+package de.unijena.bioinf.retention.kernels;
+
+import de.unijena.bioinf.retention.PredictableCompound;
 
 public interface MoleculeKernel<T> {
 

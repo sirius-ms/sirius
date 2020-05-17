@@ -1,6 +1,8 @@
-package de.unijena.bioinf.retention;
+package de.unijena.bioinf.retention.kernels;
 
 import de.unijena.bioinf.fingerid.fingerprints.ShortestPathFingerprinter;
+import de.unijena.bioinf.retention.PredictableCompound;
+import de.unijena.bioinf.retention.kernels.MoleculeKernel;
 
 import java.util.Set;
 
