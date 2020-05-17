@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -116,7 +117,7 @@ public class PropertyManager {
 
     public static PropertiesConfiguration loadConfigurationFromStream(@NotNull InputStream input) throws ConfigurationException {
         PropertiesConfiguration config = SiriusConfigUtils.newConfiguration();
-        new FileHandler(config).load(input);
+        new FileHandler(config).load(input, StandardCharsets.UTF_8.name());
         return config;
     }
 
