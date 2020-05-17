@@ -1,10 +1,11 @@
-package de.unijena.bioinf.retention;
+package de.unijena.bioinf.retention.kernels;
 
+import de.unijena.bioinf.retention.PredictableCompound;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
 
-public class SubstructureKernel implements MoleculeKernel<SubstructureKernel.Prepared> {
+public class SubstructureLinearKernel implements MoleculeKernel<SubstructureLinearKernel.Prepared> {
 
 
     @Override
@@ -20,14 +21,22 @@ public class SubstructureKernel implements MoleculeKernel<SubstructureKernel.Pre
 
     @Override
     public double compute(PredictableCompound left, PredictableCompound right, Prepared preparedLeft, Prepared preparedRight) {
-        int[] minMax = new int[]{0,0};
+        int[] dot = new int[]{0,0,0};
         preparedLeft.fps.forEachEntry((key,value)->{
             final int value2 = preparedRight.fps.get(key);
-            minMax[0] = Math.min(value,value2);
-            minMax[1] = Math.max(value,value2);
+            dot[0] += value*value2;
+            dot[1] += value*value;
+            dot[2] += value2*value2;
             return true;
         });
-        return ((double)minMax[0])/minMax[1];
+        preparedRight.fps.forEachEntry((key,value)->{
+            final int value2 = preparedLeft.fps.get(key);
+            if (value2 == 0) {
+                dot[2] += value*value;
+            }
+            return true;
+        });
+        return ((double)dot[0])/Math.sqrt((double)dot[1]*dot[2]);
     }
 
     public static class Prepared {
