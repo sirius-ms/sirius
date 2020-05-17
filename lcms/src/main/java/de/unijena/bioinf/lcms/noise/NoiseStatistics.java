@@ -28,7 +28,7 @@ public class NoiseStatistics {
         this.percentile = percentile;
     }
 
-    public LocalNoiseModel getLocalNoiseModel() {
+    public NoiseModel getLocalNoiseModel() {
         done();
         return new LocalNoiseModel(noiseLevels.toArray(), scanNumbers.toArray());
     }
@@ -41,7 +41,7 @@ public class NoiseStatistics {
         }
     }
 
-    public GlobalNoiseModel getGlobalNoiseModel() {
+    public NoiseModel getGlobalNoiseModel() {
         final double noiseLevel = Quickselect.quickselectInplace(noiseLevels.toArray(), 0, noiseLevels.size (),(int)Math.floor(noiseLevels.size()*0.5));
         return new GlobalNoiseModel(noiseLevel, noiseLevel*10);
     }
@@ -67,12 +67,21 @@ public class NoiseStatistics {
     // TODO: for MS/MS use decomposer
     private float calculateNoiseLevel(SimpleSpectrum spectrum) {
         final double[] array = Spectrums.copyIntensities(spectrum);
-        if (array.length>=60) {
+        float lowestRecordedIntensity = Float.POSITIVE_INFINITY;
+        int numberOnNonZeros = 0;
+        for (double i : array) {
+            if ((float)i>0) {
+                lowestRecordedIntensity = Math.min(lowestRecordedIntensity, (float)i);
+                ++numberOnNonZeros;
+            }
+        }
+        if (numberOnNonZeros>=100) {
             int k = (int)Math.floor(array.length*percentile);
-            return (float)Quickselect.quickselectInplace(array,0,array.length, k);
+            float fl = (float)Quickselect.quickselectInplace(array,0,array.length, k);
+            if (fl<=0) return lowestRecordedIntensity/5f;
+            else return fl;
         } else {
-            // there might be already a noise cutoff?
-            return (float)Arrays.stream(array).min().orElse(0);
+            return lowestRecordedIntensity/5f;
         }
 
     }
