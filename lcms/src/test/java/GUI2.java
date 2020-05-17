@@ -9,6 +9,8 @@ import de.unijena.bioinf.babelms.ms.MsFileConfig;
 import de.unijena.bioinf.io.lcms.LCMSParser;
 import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.io.lcms.MzXMLParser;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
@@ -307,7 +309,18 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
             i.getMs2Storage().backOnDisc();
             i.getMs2Storage().dropBuffer();
 
-            Cluster c = i.alignAndGapFilling();
+            Cluster c = i.alignAndGapFilling(new BasicJJob<Object>() {
+
+
+                public void updateProgress(int min, int max, int progress, String shortInfo) {
+                    System.out.println(shortInfo);
+                }
+
+                @Override
+                protected Object compute() throws Exception {
+                    return null;
+                }
+            });
             System.out.println("Gapfilling Done."); System.out.flush();
 
             final List<String> sampleNames = new ArrayList<>();
