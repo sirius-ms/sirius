@@ -5,10 +5,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
  * 28.09.16.
  */
 
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractSolver;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractTreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.IlpFactory;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
@@ -98,15 +95,11 @@ public final class TreeBuilderFactory {
 
     public <T extends AbstractSolver> IlpFactory<T> getTreeBuilderFromClass(String className) {
         try {
-            return getTreeBuilderFromClass((Class<T>)ClassLoader.getSystemClassLoader().loadClass(className));
-        } catch (Exception e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + "! " + ILP_VERSIONS_STRING, e);
-            return null;
+            return getTreeBuilderFromClass((Class<T>) getClass().getClassLoader().loadClass(className));
         } catch (Throwable e) {
             LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
-
     }
 
     public <T extends AbstractSolver> IlpFactory<T> getTreeBuilderFromClass(Class<T> builderClass) {
@@ -137,7 +130,7 @@ public final class TreeBuilderFactory {
                 factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver");
                 break;
             case CLP:
-                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CLPSolver");
+                factory = getTreeBuilderFromClass(CPLEXSolver.class); //we deliver the jar file so we can be sure that th class exists
                 break;
             default:
                 LoggerFactory.getLogger(this.getClass()).warn("TreeBuilder " + builder.toString() + " is Unknown, supported are: " + Arrays.toString(DefaultBuilder.values()), new IllegalArgumentException("Unknown BuilderType!"));
