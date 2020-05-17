@@ -18,6 +18,7 @@
 package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.babelms.cef.AgilentCefExperimentParser;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.babelms.mzml.MzMlExperimentParser;
@@ -76,6 +77,7 @@ public class MsExperimentParser {
         endings.put(".zip", ZippedSpectraParser.class);
         endings.put(".mzxml", MzXmlExperimentParser.class);
         endings.put(".mzml", MzMlExperimentParser.class);
+        endings.put(".cef", AgilentCefExperimentParser.class);
         return endings;
     }
 }
