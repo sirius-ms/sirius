@@ -3,6 +3,8 @@ package de.unijena.bioinf.ms.gui.compute.jjobs;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.gui.actions.ShowJobsDialogAction;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
@@ -199,6 +201,9 @@ public class Jobs {
         protected Boolean compute() throws Exception {
             //todo progress? maybe move to CLI to have progress there to?
             ACTIVE_COMPUTATIONS.add(this);
+            synchronized (ACTIVE_COMPUTATIONS) { //todo this is a bit hacky but much mor efficient than listening to the job states
+                ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
+            }
             checkForInterruption();
             compoundsToProcess.forEach(i -> i.setComputing(true));
             checkForInterruption();
@@ -216,6 +221,9 @@ public class Jobs {
         @Override
         protected void cleanup() {
             ACTIVE_COMPUTATIONS.remove(this);
+            synchronized (ACTIVE_COMPUTATIONS) {
+                ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
+            }
             compoundsToProcess.forEach(i -> i.setComputing(false));
             super.cleanup();
         }
