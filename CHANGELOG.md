@@ -2,7 +2,8 @@
 - fix: GUI Deadlock on MacOS X  fixed. Mac version is now available.
 - improvement: Character separated files in project-space have now .tsv extension for better excel compatibility.
 - feature: Windows headless executable respects `%JAVA_HOME%` as JRE location.
-- improvement: Improved packaging and startup of the GUI version  
+- improvement: Improved packaging and startup of the GUI version
+- fixes GitHub issues: [4](https://github.com/boecker-lab/sirius/issues/4) and [6](https://github.com/boecker-lab/sirius/issues/6)
 ##### 4.4.16
 - feature: **CSI:FingerID for negative ion mode is available**
   - NOTE: CANOPUS for negative mode data is not ready yet and will still take some time.
