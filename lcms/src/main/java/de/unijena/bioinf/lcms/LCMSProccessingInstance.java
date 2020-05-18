@@ -137,8 +137,11 @@ public class LCMSProccessingInstance {
                 LoggerFactory.getLogger(LCMSProccessingInstance.class).warn("Scan " + s + " is in PROFILED mode. SIRIUS does only support centroided spectra. Ignore this scan.");
                 continue;
             }
-            if (s.isMsMs()) noiseStatisticsMs2.add(s, storage.getScan(s));
-            else noiseStatisticsMs1.add(s,storage.getScan(s));
+            if (s.isMsMs()) {
+                noiseStatisticsMs2.add(s, storage.getScan(s));
+            } else {
+                noiseStatisticsMs1.add(s,storage.getScan(s));
+            }
         }
         final ProcessedSample sample = new ProcessedSample(
                 run, noiseStatisticsMs1.getLocalNoiseModel(), noiseStatisticsMs2.getGlobalNoiseModel(),
