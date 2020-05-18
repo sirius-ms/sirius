@@ -1,5 +1,5 @@
 ##### 4.4.18
-- fix: GUI Deadlock on MacOS X  fixed. Mac version is now available.
+- fix: GUI Deadlock on MacOS X fixed. **Mac version is now available**.
 - improvement: Character separated files in project-space have now .tsv extension for better excel compatibility.
 - feature: Windows headless executable respects `%JAVA_HOME%` as JRE location.
 - improvement: Improved packaging and startup of the GUI version
@@ -220,5 +220,4 @@ subtools that may be combined to ToolChains based on the project-space.
 -   SIRIUS ships now with the correct version of the GLPK binary
 
 #### 3.0.0
-
 -   release version
