@@ -42,6 +42,7 @@ public class NoiseStatistics {
     }
 
     public NoiseModel getGlobalNoiseModel() {
+        done();
         final double noiseLevel = Quickselect.quickselectInplace(noiseLevels.toArray(), 0, noiseLevels.size (),(int)Math.floor(noiseLevels.size()*0.5));
         return new GlobalNoiseModel(noiseLevel, noiseLevel*10);
     }
@@ -80,9 +81,9 @@ public class NoiseStatistics {
             float fl = (float)Quickselect.quickselectInplace(array,0,array.length, k);
             if (fl<=0) return lowestRecordedIntensity/5f;
             else return fl;
-        } else {
+        } else if (numberOnNonZeros > 0) {
             return lowestRecordedIntensity/5f;
-        }
+        } else return 0;
 
     }
 }
