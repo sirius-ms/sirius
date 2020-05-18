@@ -1,14 +1,23 @@
+##### Coming soon...
+- Another Structure DB update due to major changes in PubChem standardization since the last one.
+- GUI: Custom-DB importer View
+- GUI: Progress information for running jobs
+- GUI: More detailed Visualisation of what has already been computed
+- more bugfixes ;-)
+
 ##### 4.4.18
 - fix: GUI Deadlock on MacOS X fixed. **Mac version is now available**.
 - improvement: Character separated files in project-space have now .tsv extension for better excel compatibility.
 - feature: Windows headless executable respects `%JAVA_HOME%` as JRE location.
 - improvement: Improved packaging and startup of the GUI version
 - fixes GitHub issues: [4](https://github.com/boecker-lab/sirius/issues/4) and [6](https://github.com/boecker-lab/sirius/issues/6)
+
 ##### 4.4.16
 - feature: **CSI:FingerID for negative ion mode is available**
   - NOTE: CANOPUS for negative mode data is not ready yet and will still take some time.
 - fix: Too small Heapsize on Windows
 - improvement: better GUI performance 
+
 ##### 4.4.15
 - feature: CLI Sub-Tool to export projects to mgf.
 - feature: multiple candidate number for Zodiac.
@@ -17,11 +26,13 @@
 - fixes: tree rendering
 - improvement: import and deletion performance
 - improvement: import progress now shown
+
 ##### 4.4.14
 - fix: MacOS included JRE not found.
 - fix: ignored parameters.
 - fix: recompute does not correctly invalidate and delete previous results.
 - fix: UI now correctly update when data will by deleted by the computations.
+
 #### 4.4.(0-13)
 - **New (and newly integrated) tools:**
   - [**CANOPUS:**](https://www.biorxiv.org/content/10.1101/2020.04.17.046672v1): A tool for the comprehensive annotation of compound classes from MS/MS data.
@@ -52,33 +63,17 @@ subtools that may be combined to ToolChains based on the project-space.
   - **GUI** version ships with an **integrated JRE**
 - Many minor improvements and Bugfixes
 
-##### Coming soon...
-- Another Structure DB update due to major changes in PubChem standardization since the last one.
-- GUI: Custom-DB importer View
-- GUI: Progress information for running jobs
-- GUI: More detailed Visualisation of what has already been computed
-- more bugfixes ;-)
-
 #### 4.0.1
-
 -   **Java 9 and higher are now supported**
-
 -   **CSI:FingerID trainings structures available**
     - Trainings structures available via WebAPI.
     - Trainings structures are flagged in CSI:FingerID candidate list.
-
 -   **SMARTS filter for candidate list (GUI)**
-
 -   **Molecular Property filter for candidate list (GUI)**    
-
 -   **Available prediction workers of the CSI:FingerID webservice can be listed from SIRIUS**
-
 -   Improved connection handling and auto reconnect to Webservice
-
 -   Improved error messaged    
-
 -   Improved stability and load balancing of the CSI:FingerID webservice
-
 -   Several bug fixes
     
 #### 4.0
