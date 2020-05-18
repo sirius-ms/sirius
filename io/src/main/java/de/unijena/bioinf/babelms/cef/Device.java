@@ -4,6 +4,7 @@ package de.unijena.bioinf.babelms.cef;
 import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.CollapsedStringAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.math.BigInteger;
 
 
 /**
@@ -15,10 +16,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  * &lt;complexType>
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;sequence>
- *         &lt;element ref="{}CompoundList"/>
- *       &lt;/sequence>
- *       &lt;attribute name="version" use="required" type="{http://www.w3.org/2001/XMLSchema}NMTOKEN" />
+ *       &lt;attribute name="num" use="required" type="{http://www.w3.org/2001/XMLSchema}integer" />
+ *       &lt;attribute name="type" use="required" type="{http://www.w3.org/2001/XMLSchema}NCName" />
  *     &lt;/restriction>
  *   &lt;/complexContent>
  * &lt;/complexType>
@@ -27,65 +26,63 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "", propOrder = {
-    "compoundList"
-})
-@XmlRootElement(name = "CEF")
-public class CEF {
+@XmlType(name = "")
+@XmlRootElement(name = "Device")
+public class Device {
 
-    @XmlElement(name = "CompoundList", required = true)
-    protected CompoundList compoundList;
-    @XmlAttribute(name = "version", required = true)
+    @XmlAttribute(name = "num", required = true)
+    protected BigInteger num;
+    @XmlAttribute(name = "type", required = true)
     @XmlJavaTypeAdapter(CollapsedStringAdapter.class)
-    @XmlSchemaType(name = "NMTOKEN")
-    protected String version;
+    @XmlSchemaType(name = "NCName")
+    protected String type;
 
     /**
-     * Gets the value of the compoundList property.
+     * Gets the value of the num property.
      * 
      * @return
      *     possible object is
-     *     {@link CompoundList }
+     *     {@link BigInteger }
      *     
      */
-    public CompoundList getCompoundList() {
-        return compoundList;
+    public BigInteger getNum() {
+        return num;
     }
 
     /**
-     * Sets the value of the compoundList property.
+     * Sets the value of the num property.
      * 
      * @param value
      *     allowed object is
-     *     {@link CompoundList }
+     *     {@link BigInteger }
      *     
      */
-    public void setCompoundList(CompoundList value) {
-        this.compoundList = value;
+    public void setNum(BigInteger value) {
+        this.num = value;
     }
 
     /**
-     * Gets the value of the version property.
+     * Gets the value of the type property.
      * 
      * @return
      *     possible object is
      *     {@link String }
      *     
      */
-    public String getVersion() {
-        return version;
+    public String getType() {
+        return type;
     }
 
     /**
-     * Sets the value of the version property.
+     * Sets the value of the type property.
      * 
      * @param value
      *     allowed object is
      *     {@link String }
      *     
      */
-    public void setVersion(String value) {
-        this.version = value;
+    public void setType(String value) {
+        this.type = value;
     }
 
 }

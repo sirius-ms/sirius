@@ -1,7 +1,12 @@
 
 package de.unijena.bioinf.babelms.cef;
 
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.annotation.XmlElementDecl;
 import javax.xml.bind.annotation.XmlRegistry;
+import javax.xml.namespace.QName;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 
 /**
@@ -21,12 +26,159 @@ import javax.xml.bind.annotation.XmlRegistry;
 @XmlRegistry
 public class ObjectFactory {
 
+    private final static QName _C1_QNAME = new QName("", "C_1");
+    private final static QName _C0_QNAME = new QName("", "C_0");
+    private final static QName _C3_QNAME = new QName("", "C_3");
+    private final static QName _CoefficientUse_QNAME = new QName("", "CoefficientUse");
+    private final static QName _C2_QNAME = new QName("", "C_2");
+    private final static QName _C5_QNAME = new QName("", "C_5");
+    private final static QName _C4_QNAME = new QName("", "C_4");
+    private final static QName _C7_QNAME = new QName("", "C_7");
+    private final static QName _Count_QNAME = new QName("", "Count");
+    private final static QName _C6_QNAME = new QName("", "C_6");
+    private final static QName _Mz_QNAME = new QName("", "mz");
 
     /**
      * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: de.unijena.bioinf.babelms.cef
      * 
      */
     public ObjectFactory() {
+    }
+
+    /**
+     * Create an instance of {@link Chromatogram }
+     * 
+     */
+    public Chromatogram createChromatogram() {
+        return new Chromatogram();
+    }
+
+    /**
+     * Create an instance of {@link ChromPeaks }
+     * 
+     */
+    public ChromPeaks createChromPeaks() {
+        return new ChromPeaks();
+    }
+
+    /**
+     * Create an instance of {@link P }
+     * 
+     */
+    public P createP() {
+        return new P();
+    }
+
+    /**
+     * Create an instance of {@link Spectrum }
+     * 
+     */
+    public Spectrum createSpectrum() {
+        return new Spectrum();
+    }
+
+    /**
+     * Create an instance of {@link MSDetails }
+     * 
+     */
+    public MSDetails createMSDetails() {
+        return new MSDetails();
+    }
+
+    /**
+     * Create an instance of {@link RTRanges }
+     * 
+     */
+    public RTRanges createRTRanges() {
+        return new RTRanges();
+    }
+
+    /**
+     * Create an instance of {@link RTRange }
+     * 
+     */
+    public RTRange createRTRange() {
+        return new RTRange();
+    }
+
+    /**
+     * Create an instance of {@link Device }
+     * 
+     */
+    public Device createDevice() {
+        return new Device();
+    }
+
+    /**
+     * Create an instance of {@link MzOfInterest }
+     * 
+     */
+    public MzOfInterest createMzOfInterest() {
+        return new MzOfInterest();
+    }
+
+    /**
+     * Create an instance of {@link MassCalibration }
+     * 
+     */
+    public MassCalibration createMassCalibration() {
+        return new MassCalibration();
+    }
+
+    /**
+     * Create an instance of {@link CalStep }
+     * 
+     */
+    public CalStep createCalStep() {
+        return new CalStep();
+    }
+
+    /**
+     * Create an instance of {@link MSPeaks }
+     * 
+     */
+    public MSPeaks createMSPeaks() {
+        return new MSPeaks();
+    }
+
+    /**
+     * Create an instance of {@link CpdScore }
+     * 
+     */
+    public CpdScore createCpdScore() {
+        return new CpdScore();
+    }
+
+    /**
+     * Create an instance of {@link CompoundList }
+     * 
+     */
+    public CompoundList createCompoundList() {
+        return new CompoundList();
+    }
+
+    /**
+     * Create an instance of {@link Compound }
+     * 
+     */
+    public Compound createCompound() {
+        return new Compound();
+    }
+
+    /**
+     * Create an instance of {@link Location }
+     * 
+     */
+    public Location createLocation() {
+        return new Location();
+    }
+
+    /**
+     * Create an instance of {@link CompoundScores }
+     * 
+     */
+    public CompoundScores createCompoundScores() {
+        return new CompoundScores();
     }
 
     /**
@@ -38,115 +190,102 @@ public class ObjectFactory {
     }
 
     /**
-     * Create an instance of {@link CEF.CompoundList }
+     * Create an instance of {@link JAXBElement }{@code <}{@link BigDecimal }{@code >}}
      * 
      */
-    public CEF.CompoundList createCEFCompoundList() {
-        return new CEF.CompoundList();
+    @XmlElementDecl(namespace = "", name = "C_1")
+    public JAXBElement<BigDecimal> createC1(BigDecimal value) {
+        return new JAXBElement<BigDecimal>(_C1_QNAME, BigDecimal.class, null, value);
     }
 
     /**
-     * Create an instance of {@link CEF.CompoundList.Compound }
+     * Create an instance of {@link JAXBElement }{@code <}{@link BigDecimal }{@code >}}
      * 
      */
-    public CEF.CompoundList.Compound createCEFCompoundListCompound() {
-        return new CEF.CompoundList.Compound();
+    @XmlElementDecl(namespace = "", name = "C_0")
+    public JAXBElement<BigDecimal> createC0(BigDecimal value) {
+        return new JAXBElement<BigDecimal>(_C0_QNAME, BigDecimal.class, null, value);
     }
 
     /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Spectrum }
+     * Create an instance of {@link JAXBElement }{@code <}{@link Double }{@code >}}
      * 
      */
-    public CEF.CompoundList.Compound.Spectrum createCEFCompoundListCompoundSpectrum() {
-        return new CEF.CompoundList.Compound.Spectrum();
+    @XmlElementDecl(namespace = "", name = "C_3")
+    public JAXBElement<Double> createC3(Double value) {
+        return new JAXBElement<Double>(_C3_QNAME, Double.class, null, value);
     }
 
     /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Spectrum.MSPeaks }
+     * Create an instance of {@link JAXBElement }{@code <}{@link BigInteger }{@code >}}
      * 
      */
-    public CEF.CompoundList.Compound.Spectrum.MSPeaks createCEFCompoundListCompoundSpectrumMSPeaks() {
-        return new CEF.CompoundList.Compound.Spectrum.MSPeaks();
+    @XmlElementDecl(namespace = "", name = "CoefficientUse")
+    public JAXBElement<BigInteger> createCoefficientUse(BigInteger value) {
+        return new JAXBElement<BigInteger>(_CoefficientUse_QNAME, BigInteger.class, null, value);
     }
 
     /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Spectrum.MassCalibration }
+     * Create an instance of {@link JAXBElement }{@code <}{@link BigDecimal }{@code >}}
      * 
      */
-    public CEF.CompoundList.Compound.Spectrum.MassCalibration createCEFCompoundListCompoundSpectrumMassCalibration() {
-        return new CEF.CompoundList.Compound.Spectrum.MassCalibration();
+    @XmlElementDecl(namespace = "", name = "C_2")
+    public JAXBElement<BigDecimal> createC2(BigDecimal value) {
+        return new JAXBElement<BigDecimal>(_C2_QNAME, BigDecimal.class, null, value);
     }
 
     /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Spectrum.RTRanges }
+     * Create an instance of {@link JAXBElement }{@code <}{@link Double }{@code >}}
      * 
      */
-    public CEF.CompoundList.Compound.Spectrum.RTRanges createCEFCompoundListCompoundSpectrumRTRanges() {
-        return new CEF.CompoundList.Compound.Spectrum.RTRanges();
+    @XmlElementDecl(namespace = "", name = "C_5")
+    public JAXBElement<Double> createC5(Double value) {
+        return new JAXBElement<Double>(_C5_QNAME, Double.class, null, value);
     }
 
     /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Location }
+     * Create an instance of {@link JAXBElement }{@code <}{@link Double }{@code >}}
      * 
      */
-    public CEF.CompoundList.Compound.Location createCEFCompoundListCompoundLocation() {
-        return new CEF.CompoundList.Compound.Location();
+    @XmlElementDecl(namespace = "", name = "C_4")
+    public JAXBElement<Double> createC4(Double value) {
+        return new JAXBElement<Double>(_C4_QNAME, Double.class, null, value);
     }
 
     /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Chromatogram }
+     * Create an instance of {@link JAXBElement }{@code <}{@link BigInteger }{@code >}}
      * 
      */
-    public CEF.CompoundList.Compound.Chromatogram createCEFCompoundListCompoundChromatogram() {
-        return new CEF.CompoundList.Compound.Chromatogram();
+    @XmlElementDecl(namespace = "", name = "C_7")
+    public JAXBElement<BigInteger> createC7(BigInteger value) {
+        return new JAXBElement<BigInteger>(_C7_QNAME, BigInteger.class, null, value);
     }
 
     /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Spectrum.MSDetails }
+     * Create an instance of {@link JAXBElement }{@code <}{@link BigInteger }{@code >}}
      * 
      */
-    public CEF.CompoundList.Compound.Spectrum.MSDetails createCEFCompoundListCompoundSpectrumMSDetails() {
-        return new CEF.CompoundList.Compound.Spectrum.MSDetails();
+    @XmlElementDecl(namespace = "", name = "Count")
+    public JAXBElement<BigInteger> createCount(BigInteger value) {
+        return new JAXBElement<BigInteger>(_Count_QNAME, BigInteger.class, null, value);
     }
 
     /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Spectrum.Device }
+     * Create an instance of {@link JAXBElement }{@code <}{@link BigInteger }{@code >}}
      * 
      */
-    public CEF.CompoundList.Compound.Spectrum.Device createCEFCompoundListCompoundSpectrumDevice() {
-        return new CEF.CompoundList.Compound.Spectrum.Device();
+    @XmlElementDecl(namespace = "", name = "C_6")
+    public JAXBElement<BigInteger> createC6(BigInteger value) {
+        return new JAXBElement<BigInteger>(_C6_QNAME, BigInteger.class, null, value);
     }
 
     /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Spectrum.MzOfInterest }
+     * Create an instance of {@link JAXBElement }{@code <}{@link BigDecimal }{@code >}}
      * 
      */
-    public CEF.CompoundList.Compound.Spectrum.MzOfInterest createCEFCompoundListCompoundSpectrumMzOfInterest() {
-        return new CEF.CompoundList.Compound.Spectrum.MzOfInterest();
-    }
-
-    /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Spectrum.MSPeaks.P }
-     * 
-     */
-    public CEF.CompoundList.Compound.Spectrum.MSPeaks.P createCEFCompoundListCompoundSpectrumMSPeaksP() {
-        return new CEF.CompoundList.Compound.Spectrum.MSPeaks.P();
-    }
-
-    /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Spectrum.MassCalibration.CalStep }
-     * 
-     */
-    public CEF.CompoundList.Compound.Spectrum.MassCalibration.CalStep createCEFCompoundListCompoundSpectrumMassCalibrationCalStep() {
-        return new CEF.CompoundList.Compound.Spectrum.MassCalibration.CalStep();
-    }
-
-    /**
-     * Create an instance of {@link CEF.CompoundList.Compound.Spectrum.RTRanges.RTRange }
-     * 
-     */
-    public CEF.CompoundList.Compound.Spectrum.RTRanges.RTRange createCEFCompoundListCompoundSpectrumRTRangesRTRange() {
-        return new CEF.CompoundList.Compound.Spectrum.RTRanges.RTRange();
+    @XmlElementDecl(namespace = "", name = "mz")
+    public JAXBElement<BigDecimal> createMz(BigDecimal value) {
+        return new JAXBElement<BigDecimal>(_Mz_QNAME, BigDecimal.class, null, value);
     }
 
 }
