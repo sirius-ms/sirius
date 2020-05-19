@@ -27,6 +27,7 @@ import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.TreeVisualizationPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -112,7 +113,7 @@ public class TreeViewerSettings extends JFrame implements ItemListener,
             // popup annotations contain all that are not selected
             localConfig.set("popupAnnotations", getUnselectedNodeAnnotations().
                             toArray(new String[0]));
-            Platform.runLater(() -> bridge.settingsChanged());
+            Jobs.runJFXLater(() -> bridge.settingsChanged());
         }
     }
 

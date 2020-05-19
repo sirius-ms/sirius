@@ -265,7 +265,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             run.run();
         } else {
             try {
-                SwingUtilities.invokeAndWait(run);
+                Jobs.runEDTAndWait(run);
             } catch (InterruptedException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }

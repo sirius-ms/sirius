@@ -69,7 +69,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                     }
 
                     checkForInterruption();
-                    SwingUtilities.invokeAndWait(() -> {
+                    Jobs.runEDTAndWait(() -> {
                         elementList.clear();
                         csiScoreStats.reset();
                         logPStats.reset();
@@ -125,7 +125,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
 
                     if (!emChache.isEmpty()) {
                         loadMols = Jobs.MANAGER.submitJob(new LoadMoleculeJob(emChache));
-                        SwingUtilities.invokeAndWait(() -> {
+                        Jobs.runEDTAndWait(() -> {
                             elementList.clear(); //todo ugly workaround to prevent double entries because I cannot find out how they come in.
                             if (elementList.addAll(emChache))
                                 notifyListeners(data, null, elementList, getResultListSelectionModel());

@@ -171,13 +171,13 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
                         old.cancel(true);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
-                    SwingUtilities.invokeAndWait(() -> clear());
+                    Jobs.runEDTAndWait(() -> clear());
                     checkForInterruption();
                     if (sre != null) {
                         final Optional<CanopusResult> cs = sre.getCanopusResult();
                         checkForInterruption();
                         if (cs.isPresent())
-                            SwingUtilities.invokeAndWait(() -> setPrediction(cs.get().getCanopusFingerprint()));
+                            Jobs.runEDTAndWait(() -> setPrediction(cs.get().getCanopusFingerprint()));
                     }
                     return true;
                 }

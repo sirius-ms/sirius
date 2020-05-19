@@ -93,11 +93,11 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                         checkForInterruption();
                         if (!ec.getResults().equals(elementList)) {
                             checkForInterruption();
-                            SwingUtilities.invokeAndWait(FormulaList.this::intiResultList);
+                            Jobs.runEDTAndWait(FormulaList.this::intiResultList);
                         }
                     } else {
                         checkForInterruption();
-                        SwingUtilities.invokeAndWait(() -> {
+                        Jobs.runEDTAndWait(() -> {
                             if (!elementList.isEmpty()) {
                                 elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
                                 selectionModel.clearSelection();
@@ -124,7 +124,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                             index.incrementAndGet();
                         }
                         //set selection
-                        SwingUtilities.invokeAndWait(() -> {
+                        Jobs.runEDTAndWait(() -> {
                             if (index.get() < elementList.size())
                                 selectionModel.setSelectionInterval(index.get(), index.get());
                             else

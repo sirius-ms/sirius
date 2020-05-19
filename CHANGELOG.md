@@ -5,6 +5,8 @@
 - GUI: More detailed Visualisation of what has already been computed
 - more bugfixes ;-)
 
+##### 4.4.20
+- fix: some more fixes on MacOS GUI freezes 
 ##### 4.4.18
 - fix: GUI Deadlock on MacOS X fixed. **Mac version is now available**.
 - improvement: Character separated files in project-space have now .tsv extension for better excel compatibility.

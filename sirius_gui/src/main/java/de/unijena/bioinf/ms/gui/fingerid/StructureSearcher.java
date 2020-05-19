@@ -18,6 +18,7 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -96,7 +97,7 @@ public class StructureSearcher implements Runnable {
                 }
                 final Update u = updater.clone();
                 u.c = c;
-                SwingUtilities.invokeLater(u);
+                Jobs.runEDTLater(u);
             } catch (InterruptedException e) {
                 LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
             }
