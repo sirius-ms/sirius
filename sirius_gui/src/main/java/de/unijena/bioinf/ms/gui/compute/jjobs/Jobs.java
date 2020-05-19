@@ -207,8 +207,8 @@ public class Jobs {
         @Override
         protected Boolean compute() throws Exception {
             //todo progress? maybe move to CLI to have progress there to?
-            ACTIVE_COMPUTATIONS.add(this);
             synchronized (ACTIVE_COMPUTATIONS) { //todo this is a bit hacky but much mor efficient than listening to the job states
+                ACTIVE_COMPUTATIONS.add(this);
                 ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
             }
             checkForInterruption();
@@ -227,8 +227,8 @@ public class Jobs {
 
         @Override
         protected void cleanup() {
-            ACTIVE_COMPUTATIONS.remove(this);
             synchronized (ACTIVE_COMPUTATIONS) {
+                ACTIVE_COMPUTATIONS.remove(this);
                 ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
             }
             compoundsToProcess.forEach(i -> i.setComputing(false));
