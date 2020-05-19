@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     private final static QName qName = new QName("Compound");
@@ -89,13 +90,14 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         }
     }
 
+    private static final Pattern PEAK_MATCHER = Pattern.compile("^\\d+M.*|\\+\\d+$");
     private <S extends Ms2Experiment> List<S> experimentFromMFECompound(Compound compound) {
         final Spectrum mfe = compound.getSpectrum().stream().filter(s -> s.getType().equals("MFE"))
                 .findAny().orElseThrow(() -> new IllegalArgumentException("Compound must contain a MFE spectrum to be parsed as MFE spectrum!"));
 
         List<S> siriusCompounds = new ArrayList<>();
 
-        mfe.msPeaks.getP().stream().filter(p -> !p.getS().matches("^M.*\\+\\d+$")).forEach(p -> {
+        mfe.msPeaks.getP().stream().filter(p -> !PEAK_MATCHER.matcher(p.getS()).find()).forEach(p -> {
             MutableMs2Experiment exp = new MutableMs2Experiment();
             exp.setIonMass(p.getX().doubleValue());
             exp.setPrecursorIonType(PrecursorIonType.fromString("[" + p.getS() + "]" + mfe.getMSDetails().p));
