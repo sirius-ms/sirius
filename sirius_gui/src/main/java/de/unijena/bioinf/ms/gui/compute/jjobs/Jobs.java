@@ -121,6 +121,8 @@ public class Jobs {
      * @throws NullPointerException if {@code action} is {@code null}
      */
     public static void runJFXAndWait(Runnable action) throws InterruptedException {
+        if (SwingUtilities.isEventDispatchThread())
+            LoggerFactory.getLogger(Jobs.class).warn("Calling blocking JFX thread from SwingEDT Thread! DEADLOCK possible!");
         if (action == null)
             throw new NullPointerException("action");
 
@@ -144,15 +146,21 @@ public class Jobs {
     }
 
     public static void runJFXLater(Runnable action) {
+//        if (SwingUtilities.isEventDispatchThread())
+//            LoggerFactory.getLogger(Jobs.class).warn("Calling JFX thread from SwingEDT Thread!");
         Platform.runLater(action);
     }
 
     public static void runEDTLater(Runnable action) {
+//        if (Platform.isFxApplicationThread())
+//            LoggerFactory.getLogger(Jobs.class).warn("Calling SwingEDT thread from JFXAppl Thread!");
         SwingUtilities.invokeLater(action);
     }
 
     public static void runEDTAndWait(Runnable action) throws InvocationTargetException, InterruptedException {
-        // run synchronously on JavaFX thread
+        if (Platform.isFxApplicationThread())
+            LoggerFactory.getLogger(Jobs.class).warn("Calling blocking SwingEDT thread from JFXAppl Thread! DEADLOCK possible!");
+        // run synchronously on SwingEDT thread
         if (SwingUtilities.isEventDispatchThread()) {
             action.run();
             return;
@@ -171,7 +179,6 @@ public class Jobs {
                 throw new RuntimeException(e);
             }
     }
-
 
     public static void cancelALL() {
         //iterator needed to prevent current modification exception

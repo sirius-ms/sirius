@@ -80,7 +80,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
                         old.cancel(true);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
-                    SwingUtilities.invokeAndWait(elementList::clear);
+                    Jobs.runEDTAndWait(elementList::clear);
                     checkForInterruption();
 
                     if (sre != null) {
@@ -95,7 +95,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
                                     tmp.add(new FingerIdPropertyBean(fpr.fingerprint, visualizations[iter.getIndex()], iter.getIndex(), fscores[iter.getIndex()], trainingExamples[iter.getIndex()]));
                                 }
                                 checkForInterruption();
-                                SwingUtilities.invokeAndWait(() -> elementList.addAll(tmp));
+                                Jobs.runEDTAndWait(() -> elementList.addAll(tmp));
                             } catch (IOException e) {
                                 checkForInterruption();
                                 new ExceptionDialog(MainFrame.MF, GuiUtils.formatToolTip("Could not get Fingerprint information for Fingerprint View! This project might be Corrupted!"));
@@ -104,7 +104,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
                         }
                     }
                     checkForInterruption();
-                    SwingUtilities.invokeAndWait(() -> notifyListeners(sre, null, getElementList(), getResultListSelectionModel()));
+                    Jobs.runEDTAndWait(() -> notifyListeners(sre, null, getElementList(), getResultListSelectionModel()));
                     return true;
                 }
 

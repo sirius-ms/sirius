@@ -10,6 +10,7 @@ import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -309,12 +310,7 @@ public class DatabaseDialog extends JDialog {
         public void addCompound(final InChI inchi) {
             if (importedCompounds.add(inchi.key2D())) {
                 // I dont understand why this have to be run in swing thread
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        model.addElement(inchi);
-                    }
-                });
+                Jobs.runEDTLater(() -> model.addElement(inchi));
             }
         }
 

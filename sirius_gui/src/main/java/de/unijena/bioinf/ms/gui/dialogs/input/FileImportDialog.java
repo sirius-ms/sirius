@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.gui.dialogs.input;
 
 import de.unijena.bioinf.ms.frontend.io.DataFormat;
 import de.unijena.bioinf.ms.frontend.io.DataFormatIdentifier;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 
 import javax.swing.*;
@@ -129,21 +130,11 @@ class DataAnalyseThread implements Runnable {
 		
 		for(int i=0;i<rawFiles.size();i++){
 			if(stop){
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						diag.progressAborted();
-					}
-				});
+				Jobs.runEDTLater(() -> diag.progressAborted());
 				return;
 			}
 			final int progress = i;
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					diag.updateProgressBar(progress);
-				}
-			});
+			Jobs.runEDTLater(() -> diag.updateProgressBar(progress));
 			File file = rawFiles.get(i);
 			DataFormat df = ident.identifyFormat(file);
 			if(df==DataFormat.CSV){
@@ -157,12 +148,7 @@ class DataAnalyseThread implements Runnable {
 			}
 			
 		}
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				diag.progressFinished();
-			}
-		});
+		Jobs.runEDTLater(() -> diag.progressFinished());
 	}
 	
 	List<File> getMSFiles(){

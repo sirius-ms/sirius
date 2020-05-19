@@ -58,16 +58,6 @@ public class CompoundList {
 
     public void orderBy(@NotNull final Comparator<InstanceBean> comp) {
         sortedScource.setComparator(comp);
-        /* final Lock l = compoundList.getReadWriteLock().writeLock();
-        l.lock();
-        compountListSelectionModel.setValueIsAdjusting(true);
-        try {
-            SwingUtilities.invokeAndWait(() -> compoundList.sort(comp));
-        } catch (InterruptedException | InvocationTargetException ignored) {
-        } finally {
-            compountListSelectionModel.setValueIsAdjusting(false);
-            l.unlock();
-        }*/
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {

@@ -56,7 +56,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
 
         createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
             final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID(), Ms2Experiment.class);
-            SwingUtilities.invokeLater(() -> INSTANCE_LIST.add(inst));
+            Jobs.runEDTLater(() -> INSTANCE_LIST.add(inst));
         })).register();
     }
 
@@ -134,7 +134,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                 );
                 List<InstanceBean> imported = Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...",  importer.makeImportJJob(input))
                         .getResult().stream().map(id -> (InstanceBean) newInstanceFromCompound(id, Ms2Experiment.class)).collect(Collectors.toList());
-                SwingUtilities.invokeLater(() -> INSTANCE_LIST.addAll(imported));
+                Jobs.runEDTLater(() -> INSTANCE_LIST.addAll(imported));
             }
         } finally {
             createListener.register();

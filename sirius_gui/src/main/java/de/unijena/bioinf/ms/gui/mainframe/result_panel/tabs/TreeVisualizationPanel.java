@@ -172,7 +172,7 @@ public class TreeVisualizationPanel extends JPanel
                             old.cancel(true);
                             old.getResult(); //await cancellation so that nothing strange can happen.
                         }
-                        Jobs.runEDTAndWait(() -> browser.clear());
+                        browser.clear();
                         checkForInterruption();
                         if (sre != null) {
                             // At som stage we can think about directly load the json representation vom the project space
@@ -183,19 +183,18 @@ public class TreeVisualizationPanel extends JPanel
                                 checkForInterruption();
                                 if (!jsonTree.isBlank()) {
                                     browser.loadTree(jsonTree);
-
                                     checkForInterruption();
-                                    SwingUtilities.invokeAndWait(() -> setToolbarEnabled(true));
-
+                                    Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
                                     checkForInterruption();
 
                                     final AtomicDouble tScale = new AtomicDouble();
                                     final AtomicDouble tScaleMin = new AtomicDouble();
+                                    //waiting ok because from generic background thread
                                     Jobs.runJFXAndWait(() -> {
                                         tScaleMin.set(jsBridge.getTreeScaleMin());
                                         tScale.set(jsBridge.getTreeScale());
                                     });
-
+                                    //waiting ok because from generic background thread
                                     Jobs.runEDTAndWait(() -> {
                                         // adapt scale slider to tree scales
                                         scaleSlider.setMaximum((int) (1 / tScaleMin.floatValue() * 100));
@@ -235,16 +234,15 @@ public class TreeVisualizationPanel extends JPanel
 
             final AtomicDouble tScale = new AtomicDouble();
             final AtomicDouble tScaleMin = new AtomicDouble();
-            Jobs.runJFXAndWait(() -> {
+            Jobs.runJFXLater(() -> {
                 tScaleMin.set(jsBridge.getTreeScaleMin());
                 tScale.set(jsBridge.getTreeScale());
-            });
-
-            Jobs.runEDTAndWait(() -> {
-                // adapt scale slider to tree scales
-                scaleSlider.setMaximum((int) (1 / tScaleMin.floatValue() * 100));
-                scaleSlider.setValue((int) (1 / tScale.floatValue() * 100));
-                scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
+                Jobs.runEDTLater(() -> {
+                    // adapt scale slider to tree scales
+                    scaleSlider.setMaximum((int) (1 / tScaleMin.floatValue() * 100));
+                    scaleSlider.setValue((int) (1 / tScale.floatValue() * 100));
+                    scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
+                });
             });
 
             if (settings == null)
@@ -478,25 +476,19 @@ public class TreeVisualizationPanel extends JPanel
         browser.executeJS("window.outerWidth = " + width);
         if (ftree != null) {
             browser.executeJS("update()");
-
-            final AtomicDouble tScale = new AtomicDouble();
-            final AtomicDouble tScaleMin = new AtomicDouble();
-
-            try {
-                Jobs.runJFXAndWait(() -> {
-                    tScaleMin.set(jsBridge.getTreeScaleMin());
-                    tScale.set(jsBridge.getTreeScale());
-                });
-
-                Jobs.runEDTAndWait(() -> {
+            //this enusre the correct order without blocking
+            Jobs.runJFXLater(() -> {
+                final AtomicDouble tScale = new AtomicDouble();
+                final AtomicDouble tScaleMin = new AtomicDouble();
+                tScaleMin.set(jsBridge.getTreeScaleMin());
+                tScale.set(jsBridge.getTreeScale());
+                Jobs.runEDTLater(() -> {
                     // adapt scale slider to tree scales
                     scaleSlider.setMaximum((int) (1 / tScaleMin.floatValue() * 100));
                     scaleSlider.setValue((int) (1 / tScale.floatValue() * 100));
                     scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
                 });
-            } catch (InterruptedException | InvocationTargetException e) {
-                LoggerFactory.getLogger(getClass()).debug("EDT or JFX thread interrupted!",e);;
-            }
+            });
         }
     }
 

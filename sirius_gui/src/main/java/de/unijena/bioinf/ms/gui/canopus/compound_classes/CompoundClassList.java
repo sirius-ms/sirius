@@ -37,13 +37,13 @@ public class CompoundClassList extends ActionList<ClassyfirePropertyBean, Formul
                         old.cancel(true);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
-                    SwingUtilities.invokeAndWait(elementList::clear);
+                    Jobs.runEDTAndWait(elementList::clear);
                     checkForInterruption();
                     if (sre != null) {
                         final List<ClassyfirePropertyBean> tmp = sre.getCanopusResult().map(ClassyfirePropertyBean::fromCanopusResult).orElse(List.of());
                         checkForInterruption();
                         if (!tmp.isEmpty())
-                            SwingUtilities.invokeAndWait(() -> elementList.addAll(tmp));
+                            Jobs.runEDTAndWait(() -> elementList.addAll(tmp));
                     }
                     return true;
                 }

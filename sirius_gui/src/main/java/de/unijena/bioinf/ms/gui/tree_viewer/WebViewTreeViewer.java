@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.tree_viewer;
 
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -28,7 +29,7 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
     public void queueTaskInJFXThread(Runnable runnable){
         FutureTask<Void> task = new FutureTask<>(runnable, null);
         tasks.add(task);
-        Platform.runLater(task);
+        Jobs.runJFXLater(task);
     }
 
     public void cancelTasks(){

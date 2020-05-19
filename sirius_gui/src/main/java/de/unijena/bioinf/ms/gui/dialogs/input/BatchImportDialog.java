@@ -5,6 +5,7 @@ import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.ms.frontend.io.DataFormat;
 import de.unijena.bioinf.ms.frontend.io.DataFormatIdentifier;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 
 import javax.swing.*;
@@ -193,21 +194,11 @@ class AnalyseFileTypesThread implements Runnable {
         this.bid.fileAnalysisInit(files.length);
         for (File f : files) {
             if (this.stop) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        bid.fileAnalysisAborted();
-                    }
-                });
+                Jobs.runEDTLater(() -> bid.fileAnalysisAborted());
                 return;
             }
             final int currentCounter = counter;
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    bid.FileAnaysisUpdate(currentCounter);
-                }
-            });
+            Jobs.runEDTLater(() -> bid.FileAnaysisUpdate(currentCounter));
             DataFormat df = dfi.identifyFormat(f);
             if (df == DataFormat.JenaMS) {
                 msFiles.add(f);
@@ -219,13 +210,7 @@ class AnalyseFileTypesThread implements Runnable {
             counter++;
         }
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                bid.fileAnalysisFinished();
-            }
-        });
-
+        Jobs.runEDTLater(() -> bid.fileAnalysisFinished());
     }
 
 }
@@ -257,23 +242,13 @@ class ImportExperimentsThread implements Runnable {
 
         final int size = msFiles.size() + mgfFiles.size();
         this.results = new ArrayList<>(size);
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                bid.fileImportInit(size);
-            }
-        });
+        Jobs.runEDTLater(() -> bid.fileImportInit(size));
         int counter = 0;
 
 
         for (final File f : msFiles) {
             final int currentCounter = counter;
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    bid.fileImportUpdate(currentCounter, f.getName());
-                }
-            });
+            Jobs.runEDTLater(() -> bid.fileImportUpdate(currentCounter, f.getName()));
 
             try (final CloseableIterator<Ms2Experiment> experiments = parser.getParser(f).parseFromFileIterator(f)) {
                 addToResults(experiments);
@@ -286,12 +261,7 @@ class ImportExperimentsThread implements Runnable {
 
         for (final File f : mgfFiles) {
             final int currentCounter = counter;
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    bid.fileImportUpdate(currentCounter, f.getName());
-                }
-            });
+            Jobs.runEDTLater(() -> bid.fileImportUpdate(currentCounter, f.getName()));
 
             try (final CloseableIterator<Ms2Experiment> experiments = parser.getParser(f).parseFromFileIterator(f)) {
                 addToResults(experiments);
@@ -300,12 +270,7 @@ class ImportExperimentsThread implements Runnable {
             }
             counter++;
         }
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                bid.fileImportFinished();
-            }
-        });
+        Jobs.runEDTLater(() -> bid.fileImportFinished());
     }
 
     private void addToResults(final CloseableIterator<Ms2Experiment> experiments) {
@@ -314,12 +279,7 @@ class ImportExperimentsThread implements Runnable {
 //            final ExperimentContainer ec = new ExperimentContainer(exp);
             results.add(exp);
             if (stop) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        bid.fileImportAborted();
-                    }
-                });
+                Jobs.runEDTLater(() -> bid.fileImportAborted());
                 return;
             }
         }

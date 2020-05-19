@@ -5,6 +5,7 @@ package de.unijena.bioinf.ms.gui.actions;
  * 29.01.17.
  */
 
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 
 import javax.swing.*;
@@ -27,10 +28,10 @@ public class ShowJobsDialogAction extends AbstractAction {
     public void setComputing(boolean compute) {
         if (compute) {
             if (getValue(Action.LARGE_ICON_KEY).equals(Icons.FB_LOADER_STOP_32))
-                SwingUtilities.invokeLater(() -> putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_RUN_32));
+                Jobs.runEDTLater(() -> putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_RUN_32));
         } else {
             if (getValue(Action.LARGE_ICON_KEY).equals(Icons.FB_LOADER_RUN_32))
-                SwingUtilities.invokeLater(() -> putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_STOP_32));
+                Jobs.runEDTLater(() -> putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_STOP_32));
         }
     }
 
