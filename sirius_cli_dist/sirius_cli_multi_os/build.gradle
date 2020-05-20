@@ -13,7 +13,6 @@ project.ext.set("type", ['console'])
 /*################### Jar build Stuff ################### */
 jar {
     zip64=true
-    enabled = true
     manifest {
         attributes 'Main-Class': mainClassName
     }
@@ -33,9 +32,9 @@ project.type.each{t ->
             headerType = t
             jreRuntimeBits = a
 
-            jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
+            jar = "../../../All/Sirius/lib/${tasks.jar.archiveName}"
 
-            classpath.add("../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}") //add
+            classpath.add("../../../All/Sirius/lib/${tasks.jar.archiveName}") //add
             println(classpath)
 
             //this is to include JAVA_HOME variable
