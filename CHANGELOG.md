@@ -5,6 +5,12 @@
 - GUI: More detailed Visualisation of what has already been computed
 - more bugfixes ;-)
 
+##### 4.4.21
+- fix: incompatibilities with existing configs from previous versions (.sirius)
+- fix: CANOPUS detail view has size zero
+- fix: failing CSI:FingerID computation with Zodiac re-ranking and existing Adducts
+- improvement: errors that occur before GUI is started are now reported
+- improvement: minor GUI improvements
 ##### 4.4.20
 - fix: some more fixes on MacOS GUI freezes 
 ##### 4.4.18

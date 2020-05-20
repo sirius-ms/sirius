@@ -67,11 +67,14 @@ public abstract class ApplicationCore {
             System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
 
             final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
-
+            final String[] versionParts = version.split("[.]");
             //#################### start init workspace ################################
             measureTime("Start init Workspace");
             final String home = System.getProperty("user.home");
-            final String defaultFolderName = PropertyManager.getProperty("de.unijena.bioinf.sirius.ws.default.name", null, ".sirius");
+            String defaultFolderName = PropertyManager.getProperty("de.unijena.bioinf.sirius.ws.default.name", null, ".sirius");
+            if (versionParts != null && versionParts.length > 1)
+                defaultFolderName = defaultFolderName + "-" + versionParts[0] + "." + versionParts[1];
+
             final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(defaultFolderName);
             final Map<String, String> env = System.getenv();
             final String ws = env.get("SIRIUS_WORKSPACE");

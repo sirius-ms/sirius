@@ -22,28 +22,16 @@ public class CompoundClassPanel extends JPanel implements PanelDescription {
     }
 
     protected Logger logger = LoggerFactory.getLogger(CompoundClassPanel.class);
+
+    final JSplitPane sp;
+
     public CompoundClassPanel(CompoundClassList table, FormulaList siriusResultElements) {
         super(new BorderLayout());
 
         final CompoundClassTableView center = new CompoundClassTableView(table);
-//        JPanel south;
-//        final StructurePreview preview = new StructurePreview(table);
-
-        /*center.addSelectionListener(e -> {
-            ListSelectionModel m = (ListSelectionModel)e.getSource();
-            final int index = m.getAnchorSelectionIndex();
-            if (index>=0) {
-                preview.setMolecularProperty(center.getFilteredSource().get(index));
-            }
-        });*/
-//        south = new JPanel(new BorderLayout());
-//        south.setBorder(BorderFactory.createEmptyBorder(1,1,1,1));
-//        south.add(preview,BorderLayout.CENTER);
-
         final CompoundClassDetailView detail = new CompoundClassDetailView(siriusResultElements);
-        add(new JSplitPane(JSplitPane.VERTICAL_SPLIT, detail, center), BorderLayout.CENTER);
-//        add(south, BorderLayout.SOUTH);
+        sp = new JSplitPane(JSplitPane.VERTICAL_SPLIT, detail, center);
+        add(sp, BorderLayout.CENTER);
     }
-
 
 }

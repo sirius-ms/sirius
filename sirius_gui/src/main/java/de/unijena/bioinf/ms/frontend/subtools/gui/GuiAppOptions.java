@@ -12,9 +12,7 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.NewsDialog;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.UpdateDialog;
+import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -50,7 +48,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
         private final ParameterConfig config;
 
 
-        private Flow(RootOptions<?,?,?> rootOptions, ParameterConfig config) {
+        private Flow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
             this.preproJob = (PreprocessingJob<ProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob();
             this.config = config;
         }
@@ -60,14 +58,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
             //todo minor: cancellation handling
 
             // NOTE: we do not want to run ConfigJob here because we want to set
-            // final config for experient if something will be computed and that is not the case here
+            // final configs for experient if something will be computed and that is not the case here
             //todo maybe invalidate cache here!
-//            final List<AddConfigsJob> configsJobs = new ArrayList<>(projectSpace.size());
-//            ps.forEach(inst -> configsJobs.add(SiriusJobs.getGlobalJobManager().submitJob(new AddConfigsJob(config))));
-//            configsJobs.forEach(JJob::takeResult);
-//            configsJobs.clear();
-            ApplicationCore.DEFAULT_LOGGER.info("Initializing available DBs");
-            SearchableDatabases.getAvailableDatabases();
             //todo 3: init GUI with given project space.
             GuiUtils.initUI();
             ApplicationCore.DEFAULT_LOGGER.info("Swing parameters for GUI initialized");
@@ -104,34 +96,50 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                     }
                 }
             });
-            MainFrame.MF.setLocationRelativeTo(null); //init mainframe
 
-            ApplicationCore.DEFAULT_LOGGER.info("Initializing Startup Project-Space...");
-            // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
-            final ProjectSpaceManager projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
-            ApplicationCore.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
-            MainFrame.MF.decoradeMainFrameInstance((GuiProjectSpaceManager) projectSpace);
+            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Firing up SIRIUS...", new TinyBackgroundJJob<Boolean>() {
+                @Override
+                protected Boolean compute() throws Exception {
+                    try {
+                        int progress = 0;
+                        int max = 6;
+                        updateProgress(0,max,progress++);
+                        ApplicationCore.DEFAULT_LOGGER.info("Initializing available DBs...");
+                        updateProgress(0,max,progress++,"Initializing available DBs");
+                        SearchableDatabases.getAvailableDatabases();
+                        ApplicationCore.DEFAULT_LOGGER.info("Initializing Startup Project-Space...");
+                        updateProgress(0,max,progress++,"Initializing Project-Space...");
+                        // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
+                        final ProjectSpaceManager projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
+                        ApplicationCore.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
+                        updateProgress(0,max,progress++,"Painting GUI...");
+                        MainFrame.MF.decoradeMainFrameInstance((GuiProjectSpaceManager) projectSpace);
 
-            ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
-           /* Jobs.runInBackgroundAndLoad(MainFrame.MF, "Checking client version and webservice connection...", () ->*/ {
-                ConnectionMonitor.ConnetionCheck cc = MainFrame.CONNECTION_MONITOR.checkConnection();
-                if (cc.isConnected()) {
-                    @Nullable VersionsInfo versionsNumber = ApplicationCore.WEB_API.getVersionInfo();
-                    ApplicationCore.DEFAULT_LOGGER.debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
-                    if (versionsNumber != null) {
-                        if (versionsNumber.expired()) {
-                            new UpdateDialog(MainFrame.MF, versionsNumber);
+                        ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
+                        updateProgress(0,max,progress++,"Checking Webservice connection...");
+                        ConnectionMonitor.ConnetionCheck cc = MainFrame.CONNECTION_MONITOR.checkConnection();
+                        if (cc.isConnected()) {
+                            @Nullable VersionsInfo versionsNumber = ApplicationCore.WEB_API.getVersionInfo();
+                            ApplicationCore.DEFAULT_LOGGER.debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
+                            if (versionsNumber != null) {
+                                if (versionsNumber.expired()) {
+                                    new UpdateDialog(MainFrame.MF, versionsNumber);
+                                }
+                                if (!versionsNumber.outdated()) {
+                                    MainFrame.MF.setFingerIDEnabled(true);
+                                }
+                                if (versionsNumber.hasNews()) {
+                                    new NewsDialog(MainFrame.MF, versionsNumber.getNews());
+                                }
+                            }
                         }
-                        if (!versionsNumber.outdated()) {
-                            MainFrame.MF.setFingerIDEnabled(true);
-                        }
-                        if (versionsNumber.hasNews()) {
-                            new NewsDialog(MainFrame.MF, versionsNumber.getNews());
-                        }
+                        return true;
+                    } catch (Exception e) {
+                        new StacktraceDialog(MainFrame.MF, "Unexpected error!", e);
+                        throw e;
                     }
                 }
-            }
-//            );
+            });
         }
     }
 }
