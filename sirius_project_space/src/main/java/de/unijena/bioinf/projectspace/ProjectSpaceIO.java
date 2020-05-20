@@ -51,10 +51,12 @@ public class ProjectSpaceIO {
         if (FileUtils.listAndClose(path, s -> s.anyMatch(p -> p.getFileName().toString().toLowerCase().endsWith(".tsv")))) {
             return;
         } else {
-            LOG.warn("Project=Space seems to use outdated '.csv' file extension. Try to convert to new `.tsv` format if necessary.");
             List<Path> list = FileUtils.walkAndClose(s -> s.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".csv")).collect(Collectors.toList()), path);
-            for (Path p : list)
-                Files.move(p, p.getParent().resolve(p.getFileName().toString().replace(".csv", ".tsv")));
+            if (!list.isEmpty()) {
+                LOG.warn("Project=Space seems to use outdated '.csv' file extension. Try to convert to new `.tsv` format if necessary.");
+                for (Path p : list)
+                    Files.move(p, p.getParent().resolve(p.getFileName().toString().replace(".csv", ".tsv")));
+            }
         }
     }
 
