@@ -83,84 +83,36 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
 
     @Override
     protected List<FingerIdResult> compute() throws Exception {
-        logDebug("Instance '"  + experiment.getName() + "': Starting CSI:FingerID Computation.");
+        logDebug("Instance '" + experiment.getName() + "': Starting CSI:FingerID Computation.");
         if ((experiment.getPrecursorIonType().getCharge() > 0) != (predictor.predictorType.isPositive()))
             throw new IllegalArgumentException("Charges of predictor and instance are not equal");
 
-        if (idResult.isEmpty()) return null;
+        if (this.idResult.isEmpty()) return null;
 
         //sort input with descending score
+        final List<IdentificationResult<S>> idResult = new ArrayList<>(this.idResult);
         idResult.sort(Comparator.reverseOrder());
-
-        // WORKAROUND
-        boolean isLogarithmic = false;
-        for (IdentificationResult<S> ir : idResult) {
-            FormulaScore scoreObject = ir.getScoreObject();
-            if (scoreObject.getScoreType() == FormulaScore.ScoreType.Logarithmic) {
-                isLogarithmic = true;
-                break;
-            }
-        }
-
-        final boolean isAllNaN = idResult.stream().allMatch(x -> Double.isNaN(x.getScore()));
-        final ArrayList<IdentificationResult<S>> filteredResults = new ArrayList<>();
-        //filterIdentifications list if wanted
-        final FormulaResultThreshold thresholder = experiment.getAnnotationOrThrow(FormulaResultThreshold.class);
-        if (thresholder.useThreshold() && idResult.size() > 0 && !isAllNaN) {
-            logDebug("Filter Identification Results (soft threshold) for CSI:FingerID usage");
-
-            // first filterIdentifications identificationResult list by top scoring formulas
-            final IdentificationResult<S> top = idResult.get(0);
-            assert !Double.isNaN(top.getScore());
-            filteredResults.add(top);
-            final double threshold = isLogarithmic ? thresholder.calculateThreshold(top.getScore()) : 0.01;
-            for (int k = 1, n = idResult.size(); k < n; ++k) {
-                IdentificationResult<S> e = idResult.get(k);
-                if (Double.isNaN(e.getScore()) || e.getScore() < threshold) break;
-                if (e.getTree() == null || e.getTree().numberOfVertices() <= 1) {
-                    logDebug("Cannot estimate structure for " + e.getMolecularFormula() + ". Fragmentation Tree is empty.");
-                    continue;
-                }
-                filteredResults.add(e);
-            }
-        } else {
-            filteredResults.addAll(idResult);
-        }
-
-        {
-            final Iterator<IdentificationResult<S>> iter = filteredResults.iterator();
-            while (iter.hasNext()) {
-                final IdentificationResult<S> ir = iter.next();
-                if (ir.getTree().numberOfVertices() < 3) {
-                    logWarn("Ignore fragmentation tree for " + ir.getMolecularFormula() + " because it contains less than 3 vertices.");
-                    iter.remove();
-                }
-            }
-        }
-
-        if (filteredResults.isEmpty()) {
-            logWarn("No suitable fragmentation tree left.");
-            return Collections.emptyList();
-        }
-
-        final PossibleAdducts adducts;
-        if (experiment.getPrecursorIonType().isIonizationUnknown()) {
-            if (!experiment.hasAnnotation(DetectedAdducts.class))
-                new Ms1Preprocessor().preprocess(experiment);
-            adducts = experiment.getPossibleAdductsOrFallback();
-        } else {
-            adducts = new PossibleAdducts(experiment.getPrecursorIonType());
-        }
 
 
         // EXPAND LIST for different Adducts
+        // expand adduct trees before filtering scores.
+        // This is important because zodiac can create diffent scores for adducts that correspond to the same tree
         logDebug("Expanding Identification Results for different Adducts.");
         {
+            final PossibleAdducts adducts;
+            if (experiment.getPrecursorIonType().isIonizationUnknown()) {
+                if (!experiment.hasAnnotation(DetectedAdducts.class))
+                    new Ms1Preprocessor().preprocess(experiment);
+                adducts = experiment.getPossibleAdductsOrFallback();
+            } else {
+                adducts = new PossibleAdducts(experiment.getPrecursorIonType());
+            }
+
             final Map<IdentificationResult<S>, IdentificationResult<S>> ionTypes = new HashMap<>();
             final Set<MolecularFormula> neutralFormulas = new HashSet<>();
-            for (IdentificationResult<S> ir : filteredResults)
+            for (IdentificationResult<S> ir : idResult)
                 neutralFormulas.add(ir.getMolecularFormula());
-            for (IdentificationResult<S> ir : filteredResults) {
+            for (IdentificationResult<S> ir : idResult) {
                 if (ir.getPrecursorIonType().hasNeitherAdductNorInsource()) {
                     for (PrecursorIonType ionType : adducts) {
                         if (!ionType.equals(ir.getTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getTree(), ionType)) {
@@ -177,16 +129,70 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
                 }
             }
 
-            filteredResults.addAll(ionTypes.keySet());
+            idResult.addAll(ionTypes.keySet());
 
             // workaround: we have to remove the original results if they do not match the ion type
             if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
-                filteredResults.removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType()));
+                idResult.removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType()));
                 ionTypes.keySet().removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType())); //todo needed?
             }
 
-            filteredResults.sort(Collections.reverseOrder()); //descending
+            idResult.sort(Collections.reverseOrder()); //descending
             addedIdentificationResults = ionTypes;
+        }
+
+
+        final ArrayList<IdentificationResult<S>> filteredResults = new ArrayList<>();
+        {
+            // WORKAROUND
+            boolean isLogarithmic = false;
+            for (IdentificationResult<S> ir : idResult) {
+                FormulaScore scoreObject = ir.getScoreObject();
+                if (scoreObject.getScoreType() == FormulaScore.ScoreType.Logarithmic) {
+                    isLogarithmic = true;
+                    break;
+                }
+            }
+
+            final boolean isAllNaN = idResult.stream().allMatch(x -> Double.isNaN(x.getScore()));
+            //filterIdentifications list if wanted
+            final FormulaResultThreshold thresholder = experiment.getAnnotationOrThrow(FormulaResultThreshold.class);
+            if (thresholder.useThreshold() && idResult.size() > 0 && !isAllNaN) {
+                logDebug("Filter Identification Results (soft threshold) for CSI:FingerID usage");
+
+                // first filterIdentifications identificationResult list by top scoring formulas
+                final IdentificationResult<S> top = idResult.get(0);
+                assert !Double.isNaN(top.getScore());
+                filteredResults.add(top);
+                final double threshold = isLogarithmic ? thresholder.calculateThreshold(top.getScore()) : 0.01;
+                for (int k = 1, n = idResult.size(); k < n; ++k) {
+                    IdentificationResult<S> e = idResult.get(k);
+                    if (Double.isNaN(e.getScore()) || e.getScore() < threshold) break;
+                    if (e.getTree() == null || e.getTree().numberOfVertices() <= 1) {
+                        logDebug("Cannot estimate structure for " + e.getMolecularFormula() + ". Fragmentation Tree is empty.");
+                        continue;
+                    }
+                    filteredResults.add(e);
+                }
+            } else {
+                filteredResults.addAll(idResult);
+            }
+        }
+
+        {
+            final Iterator<IdentificationResult<S>> iter = filteredResults.iterator();
+            while (iter.hasNext()) {
+                final IdentificationResult<S> ir = iter.next();
+                if (ir.getTree().numberOfVertices() < 3) {
+                    logWarn("Ignore fragmentation tree for " + ir.getMolecularFormula() + " because it contains less than 3 vertices.");
+                    iter.remove();
+                }
+            }
+        }
+
+        if (filteredResults.isEmpty()) {
+            logWarn("No suitable fragmentation tree left.");
+            return Collections.emptyList();
         }
 
         final StructureSearchDB searchDB = experiment.getAnnotationOrThrow(StructureSearchDB.class);
