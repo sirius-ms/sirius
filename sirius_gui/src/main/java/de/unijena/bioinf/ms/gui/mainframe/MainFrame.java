@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.io.LoadController;
@@ -109,13 +110,23 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
 
-
     // methods for creating the mainframe
     private MainFrame() {
         super(ApplicationCore.VERSION_STRING());
+        setIconImage(Icons.SIRIUS_APP_IMAGE);
+        configureTaskbar();
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
+    }
+
+    //if we want to add taskbar stuff we can configure this here
+    private void configureTaskbar() {
+        /*if (Taskbar.isTaskbarSupported()){
+            LoggerFactory.getLogger(getClass()).info("Adding Taskbar support");
+            if (Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE))
+                Taskbar.getTaskbar().setIconImage(Icons.SIRIUS_APP_IMAGE);
+        }*/
     }
 
     public void setTitlePath(String path) {
@@ -185,7 +196,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         mainPanel.add(resultsPanel, BorderLayout.CENTER);
         add(toolbar, BorderLayout.NORTH);
 
-        setSize(new Dimension(1368, 1024));
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+        setSize(new Dimension((int) (screen.width * .7), (int) (screen.height * .7)));
+        MainFrame.MF.setLocationRelativeTo(null); //init mainframe
         setVisible(true);
 
     }

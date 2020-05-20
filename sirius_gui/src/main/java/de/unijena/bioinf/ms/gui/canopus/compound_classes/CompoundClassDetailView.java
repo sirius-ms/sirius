@@ -112,6 +112,8 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
 
             revalidate();
             repaint();
+            if (getParent() instanceof JSplitPane)
+                ((JSplitPane)getParent()).setDividerLocation(getPreferredSize().height);
         }
     }
 
