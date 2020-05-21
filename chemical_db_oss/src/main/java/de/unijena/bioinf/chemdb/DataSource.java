@@ -27,6 +27,7 @@ public enum DataSource {
     NORMAN("NORMAN", 262144,  null,null, null), //TODO implement importer
     ADDITIONAL("additional", 524288,  null,null,null, 0, false), //proably mostly training structures, but maybe more.
     SUPERNATURAL("SuperNatural", 1048576,  "id", "supernatural", "http://bioinf-applied.charite.de/supernatural_new/index.php?site=compound_search&start=0&supplier=all&tox=any&classification=all&compound_input=true&sn_id=%s"),
+    COCONUT("COCONUT", 2097152,  "id", "coconut", null),
     PUBCHEMANNOTATIONBIO("PubChem classifications: bio and metabolites", 16777216,  null,null,null, 0, false), //2**24; Pubchem Annotations now have a separate flag
     PUBCHEMANNOTATIONDRUG("PubChem classifications: drug", 33554432,  null,null,null, 0, false),
     PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem classifications: safety and toxic", 67108864,  null,null,null, 0, false),
