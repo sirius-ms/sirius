@@ -450,7 +450,7 @@ public class LCMSProccessingInstance {
         cluster = cluster.deleteRowsWithNoMsMs();
         cluster = cluster.deleteRowsWithNoIsotopes();
         double numberOfFeatures2 = cluster.getFeatures().length;
-        System.out.println("Remove " + (100d - 100d*numberOfFeatures2/numberOfFeatures ) +  " % of the data due to low quality. There are" + cluster.getFeatures().length + " features in total."); System.out.flush();
+        System.out.println("Remove " + (100d - 100d*numberOfFeatures2/numberOfFeatures ) +  " % of the data due to low quality. There are " + cluster.getFeatures().length + " features in total."); System.out.flush();
         if (samples.size()>=50) cluster = cluster.deleteRowsWithTooFewEntries(4);
         int after = cluster.getFeatures().length;
         System.out.println("Done."); System.out.flush();
