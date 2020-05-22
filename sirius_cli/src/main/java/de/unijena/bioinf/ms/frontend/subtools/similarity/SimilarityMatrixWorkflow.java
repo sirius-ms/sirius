@@ -41,6 +41,7 @@ import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -102,6 +103,12 @@ public class SimilarityMatrixWorkflow implements Workflow {
     private void tanimoto(List<Instance> xs) {
         final JobManager J = SiriusJobs.getGlobalJobManager();
         xs.removeIf(x -> x.loadTopFormulaResult(rankSores, FingerprintResult.class).filter(y -> y.hasAnnotation(FingerprintResult.class)).isEmpty());
+
+        if (xs.isEmpty()){
+            LoggerFactory.getLogger(getClass()).warn("No Compounds with predicted Fingerprints found! You might want to run CSI:FingerID first. Skipping tanimoto computation!");
+            return;
+        }
+
 
         final ProbabilityFingerprint[] fps = xs.stream().map(f ->
                 f.loadTopFormulaResult(rankSores, FingerprintResult.class)

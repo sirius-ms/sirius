@@ -1,13 +1,18 @@
 package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.Instance;
+import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -37,19 +42,18 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
         String[] masses = mass.split(":");
         final double gt = masses[0].strip().isBlank() ? 0d : Double.parseDouble(masses[0]);
         final double lt = masses.length < 2 || masses[1].strip().isBlank() ? Double.POSITIVE_INFINITY : Double.parseDouble(masses[1]);
-        deleteIdxFilter = (c) -> !(c.getIonMass().map(m -> gt <= m && m <= lt).orElse(false));
+        deleteMassFilter = (c) -> !(c.getIonMass().map(m -> gt <= m && m <= lt).orElse(false));
         deleteMassFilterExp = (c) -> !(gt <= c.getIonMass() && c.getIonMass() <= lt);
     }
 
     Predicate<CompoundContainerId> deleteMassFilter = (c) -> true;
     Predicate<Ms2Experiment> deleteMassFilterExp = (c) -> true;
 
-
     @CommandLine.Option(names = {"--delete-by-name", "--dn"},
             description = "Delete all compounds where the 'identifier' (dir name, ID) matches the given regex (JAVA).")
     private void makeDeleteIdxFilter(String regex) {
         final Pattern m = Pattern.compile(regex);
-        deleteIdxFilter = (c) -> !m.matcher(c.getDirectoryName()).find();
+        deleteNameFilter = (c) -> !m.matcher(c.getDirectoryName()).find();
     }
 
     Predicate<CompoundContainerId> deleteNameFilter = (c) -> true;
@@ -89,19 +93,38 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
     Predicate<CompoundContainerId> keepNameFilter = (c) -> true;
 
 
-    public Predicate<CompoundContainerId> getCombinedFilter() {
-        return (c) -> deleteIdxFilter.test(c)
-                && deleteMassFilter.test(c)
-                && deleteNameFilter.test(c)
-                && keepIdxFilter.test(c)
-                && keepMassFilter.test(c)
-                && keepNameFilter.test(c)
+    @CommandLine.Option(names = {"--keep-by-confidence", "--kc"},
+            description = {"Keep all compounds that have a valid confidence score greater or equal than the given minimum confidence."})
+    private void makeKeepConfidenceFilter(double minConfidence) {
+        keepConfidenceFilter = (inst) -> inst.loadTopFormulaResult(List.of(ConfidenceScore.class))
+                .flatMap(f -> f.getAnnotation(FormulaScoring.class)).flatMap(it -> it.getAnnotation(ConfidenceScore.class))
+                .map(s -> !s.isNa() && s.score() >= minConfidence).orElse(false);
+    }
+
+    Predicate<Instance> keepConfidenceFilter = null;
+
+    @Nullable
+    public Predicate<Instance> getCombinedInstanceilter() {
+        Predicate<Instance> it = keepConfidenceFilter;
+        // combine
+//        if (deleteConfidenceFilter != null)
+//            it = it.and(deleteConfidenceFilter);
+        return it;
+    }
+
+    public Predicate<CompoundContainerId> getCombinedCIDFilter() {
+        return (cid) -> deleteIdxFilter.test(cid)
+                && deleteMassFilter.test(cid)
+                && deleteNameFilter.test(cid)
+                && keepIdxFilter.test(cid)
+                && keepMassFilter.test(cid)
+                && keepNameFilter.test(cid)
                 ;
     }
 
     public Predicate<Ms2Experiment> getCombinedMS2ExpFilter() {
-        return (c) -> deleteMassFilterExp.test(c)
-                && keepMassFilterExp.test(c)
+        return (cc) -> deleteMassFilterExp.test(cc)
+                && keepMassFilterExp.test(cc)
                 ;
     }
 
