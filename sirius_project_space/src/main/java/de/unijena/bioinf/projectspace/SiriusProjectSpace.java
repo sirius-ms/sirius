@@ -379,9 +379,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public void deleteCompound(CompoundContainerId cid) throws IOException {
         cid.containerLock.lock();
         try {
-            deleteContainer(CompoundContainer.class, cid);
-            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, cid, null, Collections.emptySet()));
-            fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
+            if (ids.remove(cid.getDirectoryName()) != null) {
+                deleteContainer(CompoundContainer.class, cid);
+                fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, cid, null, Collections.emptySet()));
+                fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
+            }
         } finally {
             cid.containerLock.unlock();
         }
