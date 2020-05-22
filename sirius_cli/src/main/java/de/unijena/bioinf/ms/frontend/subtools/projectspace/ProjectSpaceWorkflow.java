@@ -12,6 +12,7 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.*;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -37,7 +38,7 @@ public class ProjectSpaceWorkflow implements Workflow {
 
     @Override
     public void run() {
-        final Predicate<CompoundContainerId> cidFilter = projecSpaceOptions.getCombinedFilter();
+        final Predicate<CompoundContainerId> cidFilter = projecSpaceOptions.getCombinedCIDFilter();
         final Predicate<Ms2Experiment> expFilter = projecSpaceOptions.getCombinedMS2ExpFilter();
         final ProjecSpaceOptions.SplitProject splitOpts = projecSpaceOptions.splitOptions;
         boolean move = projecSpaceOptions.move;
@@ -67,6 +68,14 @@ public class ProjectSpaceWorkflow implements Workflow {
 
                     List<CompoundContainerId> cids = new ArrayList<>(source.size());
                     source.projectSpace().filteredIterator(cidFilter).forEachRemaining(cids::add);
+
+                    // do io intense filtering
+                    @Nullable Predicate<Instance> instFilter = projecSpaceOptions.getCombinedInstanceilter();
+                    if (instFilter != null) {
+                        final ProjectSpaceManager finalSource = source;
+                        cids.removeIf(id -> instFilter.test(finalSource.newInstanceFromCompound(id)));
+                    }
+
                     switch (splitOpts.order) {
                         case SHUFFLE:
                             Collections.shuffle(cids);
@@ -159,19 +168,45 @@ public class ProjectSpaceWorkflow implements Workflow {
                             });
                         });
 
+                    // io intense filters are applied as last
+                    filterOnInstanceLevel(space, projecSpaceOptions);
+
 
                     if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
                         LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of '" + space.projectSpace().getLocation().toString());
                         space.updateSummaries(ProjectSpaceManager.defaultSummarizer());
                     }
                 } catch (ExecutionException e) {
-                    LoggerFactory.getLogger(getClass()).error("Error when filtering Project(s)!",e);
+                    LoggerFactory.getLogger(getClass()).error("Error when filtering Project(s)!", e);
                 } finally {
                     space.close();
                 }
             }
         } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error("Error when closing Project(s)!",e);
+            LoggerFactory.getLogger(getClass()).error("Error when closing Project(s)!", e);
+        }
+    }
+
+    private void filterOnInstanceLevel(ProjectSpaceManager outputProject, ProjecSpaceOptions projecSpaceOptions) {
+        final Predicate<Instance> pred = projecSpaceOptions.getCombinedInstanceilter();
+        if (pred == null)
+            return;
+
+        LoggerFactory.getLogger(getClass()).info("Filtering with IO intense instance filters... '" + outputProject.projectSpace().getLocation().toString());
+
+        List<CompoundContainerId> cidsToDelete = new ArrayList<>();
+        outputProject.iterator().forEachRemaining(inst -> {
+            if (!pred.test(inst))
+                cidsToDelete.add(inst.getID());
+        });
+
+        for (CompoundContainerId id : cidsToDelete) {
+            try {
+                outputProject.projectSpace().deleteCompound(id);
+                LoggerFactory.getLogger(getClass()).error("Deleting (InstanceFilter): " + id.getDirectoryName());
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).error("Could not delete Instance with ID: " + id.getDirectoryName());
+            }
         }
     }
 }
