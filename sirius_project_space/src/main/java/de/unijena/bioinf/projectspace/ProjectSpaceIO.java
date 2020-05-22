@@ -7,10 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,11 +48,11 @@ public class ProjectSpaceIO {
         if (FileUtils.listAndClose(path, s -> s.anyMatch(p -> p.getFileName().toString().toLowerCase().endsWith(".tsv")))) {
             return;
         } else {
-            List<Path> list = FileUtils.walkAndClose(s -> s.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".csv")).collect(Collectors.toList()), path);
+            List<Path> list = FileUtils.walkAndClose(s -> s.filter(p -> p.toString().endsWith(".csv")).collect(Collectors.toList()), path);
             if (!list.isEmpty()) {
                 LOG.warn("Project=Space seems to use outdated '.csv' file extension. Try to convert to new `.tsv` format if necessary.");
                 for (Path p : list)
-                    Files.move(p, p.getParent().resolve(p.getFileName().toString().replace(".csv", ".tsv")));
+                    Files.move(p, Paths.get(p.toString().replace("csv",".tsv")));
             }
         }
     }
