@@ -134,9 +134,6 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                                 if (versionsNumber.expired()) {
                                     new UpdateDialog(MainFrame.MF, versionsNumber);
                                 }
-                                if (!versionsNumber.outdated()) {
-                                    MainFrame.MF.setFingerIDEnabled(true);
-                                }
                                 if (versionsNumber.hasNews()) {
                                     new NewsDialog(MainFrame.MF, versionsNumber.getNews());
                                 }

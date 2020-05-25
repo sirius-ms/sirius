@@ -98,15 +98,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public static final ConnectionMonitor CONNECTION_MONITOR = new ConnectionMonitor();
 
 
-    // some global switch that should better be within the property manager
-    private boolean fingerid;
-
-    public void setFingerIDEnabled(boolean enableFingerID) {
-        fingerid = enableFingerID;
-    }
 
     public boolean isFingerid() {
-        return fingerid;
+        return CONNECTION_MONITOR.checkConnection().isConnected();
     }
 
 
