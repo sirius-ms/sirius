@@ -4,8 +4,14 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
+import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.boot.Banner;
+import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import picocli.CommandLine;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,6 +21,7 @@ public class MiddlewareWorkflowBuilder<R extends RootOptions<?, ?, ?>> extends W
     public MiddlewareWorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
         super(rootOptions, configOptionLoader, bufferFactory);
     }
+
 
     @Override
     protected Object[] standaloneTools() {

@@ -10,9 +10,14 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
-import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
+//import de.unijena.bioinf.ms.frontend.workfow.WebServiceWorkflow;
+import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
+import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.*;
+import de.unijena.bioinf.ms.gui.dialogs.NewsDialog;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.UpdateDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -22,6 +27,7 @@ import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.Nullable;
+import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import picocli.CommandLine;
 
 import java.awt.event.WindowAdapter;
@@ -43,7 +49,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 
     }
 
-    public class Flow implements ServiceWorkflow {
+    public static class Flow implements Workflow {
         private final PreprocessingJob<ProjectSpaceManager> preproJob;
         private final ParameterConfig config;
 
@@ -102,17 +108,20 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                 protected Boolean compute() throws Exception {
                     try {
                         int progress = 0;
-                        int max = 6;
-                        updateProgress(0,max,progress++);
+                        int max = 7;
+                        updateProgress(0, max, progress++);
+                        ApplicationCore.DEFAULT_LOGGER.info("Configuring CDK InChIGeneratorFactory...");
+                        updateProgress(0, max, progress++, "Configuring CDK InChIGeneratorFactory...");
+                        InChIGeneratorFactory.getInstance();
                         ApplicationCore.DEFAULT_LOGGER.info("Initializing available DBs...");
-                        updateProgress(0,max,progress++,"Initializing available DBs");
+                        updateProgress(0, max, progress++, "Initializing available DBs");
                         SearchableDatabases.getAvailableDatabases();
                         ApplicationCore.DEFAULT_LOGGER.info("Initializing Startup Project-Space...");
-                        updateProgress(0,max,progress++,"Initializing Project-Space...");
+                        updateProgress(0, max, progress++, "Initializing Project-Space...");
                         // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
                         final ProjectSpaceManager projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
                         ApplicationCore.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
-                        updateProgress(0,max,progress++,"Painting GUI...");
+                        updateProgress(0, max, progress++, "Painting GUI...");
                         MainFrame.MF.decoradeMainFrameInstance((GuiProjectSpaceManager) projectSpace);
 
                         ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");

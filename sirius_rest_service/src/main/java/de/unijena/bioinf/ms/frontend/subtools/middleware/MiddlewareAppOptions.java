@@ -1,16 +1,13 @@
 package de.unijena.bioinf.ms.frontend.subtools.middleware;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
-import de.unijena.bioinf.ms.frontend.workflow.ServiceWorkflow;
-import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
+import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ConfigurableApplicationContext;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "EXPERIMENTAL/UNSTABLE: Starts SIRIUS as a background (REST) service that can be requested via a REST-API",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
@@ -37,18 +34,15 @@ public class MiddlewareAppOptions implements StandaloneTool<MiddlewareAppOptions
 
     }
 
-
-
     @Override
     public int hashCode() {
         return super.hashCode();
     }
 
-    public class Flow implements ServiceWorkflow {
+    public static class Flow implements Workflow {
 
         private final PreprocessingJob<ProjectSpaceManager> preproJob;
         private final ParameterConfig config;
-        private ConfigurableApplicationContext appContext = null;
 
 
         private Flow(RootOptions<ProjectSpaceManager, PreprocessingJob<ProjectSpaceManager> ,?> opts, ParameterConfig config) {
@@ -58,17 +52,8 @@ public class MiddlewareAppOptions implements StandaloneTool<MiddlewareAppOptions
 
         @Override
         public void run() {
-            System.out.println(System.getProperty("management.endpoints.web.exposure.include"));
             //do the project importing from the commandline
-            final ProjectSpaceManager projectSapace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
-            SpringApplication app = new SpringApplication(SiriusMiddlewareApplication.class);
-            appContext = app.run();
-        }
-
-        @Override
-        public void cancel() {
-            if (appContext != null)
-                appContext.registerShutdownHook();
+            SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
         }
     }
 }

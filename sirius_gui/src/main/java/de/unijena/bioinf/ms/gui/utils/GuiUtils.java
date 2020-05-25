@@ -6,6 +6,7 @@ package de.unijena.bioinf.ms.gui.utils;
  */
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,9 @@ public class GuiUtils {
         }*/
 
         try {
+            //improve rendering?
+            Fonts.initFonts();
+            //todo stupid scaling is useless :/
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
                     UIManager.setLookAndFeel(info.getClassName());

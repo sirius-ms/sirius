@@ -47,7 +47,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 import java.util.List;
 import java.util.*;
 
@@ -240,8 +239,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                     if (computation.isWorkflowDefined())
                         Jobs.runWorkflow(computation.getFlow(), compoundsToProcess);//todo make som nice head job that does some organizing stuff
                     //todo else some error message with pico cli output
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    new ExceptionDialog(MF, e.getMessage());
                 }
 
                 updateProgress(0, 100, 100, "Computation Configured!");

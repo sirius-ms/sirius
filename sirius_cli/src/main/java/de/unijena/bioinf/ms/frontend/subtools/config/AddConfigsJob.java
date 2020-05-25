@@ -35,12 +35,8 @@ public class AddConfigsJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(PropertiesConfiguration.class.getClassLoader());
-
         final Ms2Experiment exp = inst.getExperiment();
         final Optional<ProjectSpaceConfig> psConfig = inst.loadConfig();
-
 
         ParameterConfig baseConfig;
 
@@ -73,8 +69,6 @@ public class AddConfigsJob extends InstanceJob {
 
         inst.updateExperiment(); //todo we should optize this, so that this is not needed anymore
         inst.updateConfig();
-
-        Thread.currentThread().setContextClassLoader(cl);
     }
 
     @Override
