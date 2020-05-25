@@ -7,6 +7,7 @@
 
 ##### 4.4.22
 - fix Classloader exceptions when using CLI from the GUI version
+- fix some minor GUI bugs
 ##### 4.4.21
 - fix: incompatibilities with existing configs from previous versions (.sirius)
 - fix: CANOPUS detail view has size zero
