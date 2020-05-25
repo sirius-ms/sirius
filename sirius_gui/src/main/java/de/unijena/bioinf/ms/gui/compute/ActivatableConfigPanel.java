@@ -40,7 +40,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
 
         if (needsCSIConnection) {
             MainFrame.CONNECTION_MONITOR.addConectionStateListener(evt -> setButtonEnabled(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck().isConnected()));
-            setButtonEnabled(MainFrame.MF.isFingerid());
+            setButtonEnabled(MainFrame.CONNECTION_MONITOR.checkConnection().isConnected());
         } else {
             setButtonEnabled(true);
         }
