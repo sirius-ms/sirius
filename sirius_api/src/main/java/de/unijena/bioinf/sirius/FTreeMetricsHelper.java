@@ -1,6 +1,7 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -88,11 +89,12 @@ public class FTreeMetricsHelper {
 
     public Deviation getMedianMassDeviation() {
         FragmentAnnotation<AnnotatedPeak> annoPeakAnno = tree.getFragmentAnnotationOrNull(AnnotatedPeak.class);
+        final boolean resolved = tree.getAnnotation(IonTreeUtils.Type.class).map(it -> it.equals(IonTreeUtils.Type.RESOLVED)).orElse(false);
         TDoubleArrayList ppms = new TDoubleArrayList(), mzs = new TDoubleArrayList();
         for (Fragment f : tree) {
             AnnotatedPeak p = annoPeakAnno.get(f);
             if (p != null && p.isMeasured()) {
-                final Deviation dev = p.getMassError();
+                final Deviation dev = resolved ? p.getMassErrorResolved(tree.getAnnotationOrThrow(PrecursorIonType.class)) : p.getMassError();
                 ppms.add(dev.getPpm());
                 mzs.add(dev.getAbsolute());
             }

@@ -20,6 +20,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
 /**
@@ -116,6 +117,22 @@ public final class AnnotatedPeak implements TreeAnnotation  {
         if (isMeasured())
             return Deviation.fromMeasurementAndReference(mass, ionization.addToMass(molecularFormula.getMass()));
         else return Deviation.NULL_DEVIATION;
+    }
+
+    /**
+     * returns the mass error of this fragment. Returns NULL_DEVIATION if the fragment does not corresponds to any peak.
+     */
+    public Deviation getMassErrorResolved(PrecursorIonType adduct) {
+        if (adduct.hasNeitherAdductNorInsource())
+            return getMassError();
+
+
+        if (isMeasured()) {
+            Deviation d1 = Deviation.fromMeasurementAndReference(mass, adduct.getIonization().addToMass(molecularFormula.getMass()));
+            Deviation d2 = Deviation.fromMeasurementAndReference(mass, adduct.getIonization().addToMass(molecularFormula.add(adduct.getModification()).getMass()));
+            return d2.getPpm() < d1.getPpm() ? d2 : d1;
+
+        } else return Deviation.NULL_DEVIATION;
     }
 
     public int[] getSpectrumIds() {
