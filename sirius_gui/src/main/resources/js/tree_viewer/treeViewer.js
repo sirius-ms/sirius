@@ -1181,11 +1181,14 @@ function drawNodes(root) {
         .data(root.descendants(), function(d) {
             return d.data.fragmentData.id;
         })
-        .attr('dx', function(d) { return d.x
-                                  + (centered_node_labels?0:
-                                     (-(boxwidth / 2) + 5));})
-        .attr('dy', function(d) { return d.y - boxheight + lineheight + 5; })
-        .attr('text-anchor', centered_node_labels?'middle':'start');
+        .attr('dx', function(d) {
+            return alignText(d.x + (centered_node_labels?0:
+                                    (-(boxwidth / 2) + 5)),
+                             null, d.data.name,
+                             (centered_node_labels?'middle':'start'),
+                             {'font-family': 'sans-serif', 'font-size':
+                              '12', 'font-weight': 'bold'})[0];})
+        .attr('dy', function(d) { return d.y - boxheight + lineheight + 5; });
 
     enter.append('g')
         .attr('class', 'node_annotations')
@@ -1593,9 +1596,12 @@ brush.filter(function() {
         return false;
 });
 
+// TODO: dirty fix for now: PDF export (calling getSVGString) cannot
+// deal with the text-anchor attribute: for now: string-replacing text-anchor setting
 function getSVGString() {
     var s = new XMLSerializer();
-    var svgData = s.serializeToString(document.getElementById('svg'));
+    var svgData = s.serializeToString(document.getElementById('svg'))
+        .replace(/text-anchor="[^"]+"/g, 'text-anchor="start"');
     return svgData;
 }
 
@@ -1607,6 +1613,8 @@ function getJSONTree() {
 // text-anchors. text-anchors will be reset to default.
 // this function is intended for environments where text-anchor is not supported
 function realignAllText(){
+    return;
+    // TODO: fix or remove
     var sel, coords;
     d3.selectAll('text').each(function (){
         sel = d3.select(this);
