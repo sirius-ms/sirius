@@ -29,6 +29,8 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.descriptor.Descriptor;
 import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -43,9 +45,13 @@ public class FTJsonWriter {
 
     private DescriptorRegistry registry = DescriptorRegistry.getInstance();
 
-    public String treeToJsonString(FTree tree) {
+    public String treeToJsonString(@NotNull FTree tree, @Nullable Double precursorMass) {
         final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        return gson.toJson(tree2json(tree));
+        return gson.toJson(tree2json(tree, precursorMass));
+    }
+
+    public String treeToJsonString(@NotNull FTree tree) {
+        return treeToJsonString(tree, null);
     }
 
     public void writeTree(Writer writer, FTree tree) throws IOException {
@@ -54,16 +60,16 @@ public class FTJsonWriter {
 
     public void writeTreeToFile(File f, FTree tree) throws IOException {
         try (BufferedWriter bw = Files.newBufferedWriter(f.toPath(), Charset.defaultCharset())) {
-            writeTree(bw,tree);
+            writeTree(bw, tree);
         }
     }
 
-    protected JsonObject tree2json(FTree tree){
+    protected JsonObject tree2json(@NotNull FTree tree, @Nullable Double precursorMass) {
         final JSONDocumentType JSON = new JSONDocumentType();
         final JsonObject j = new JsonObject();
         final PrecursorIonType generalIonType = tree.getAnnotationOrNull(PrecursorIonType.class);
         final FragmentAnnotation<PrecursorIonType> ionPerFragment = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
-        if (generalIonType!=null) {
+        if (generalIonType != null) {
             final MolecularFormula formula = tree.getRoot().getFormula();
             final PrecursorIonType fragmentIon = getFragmentIon(ionPerFragment, tree.getRoot(), generalIonType);
             final MolecularFormula neutral = fragmentIon.measuredNeutralMoleculeToNeutralMolecule(formula);
@@ -96,10 +102,21 @@ public class FTJsonWriter {
             fragmentList.add(fragment);
             fragment.addProperty("id", f.getVertexId());
             fragment.addProperty("molecularFormula", f.getFormula().toString());
-            fragment.addProperty("massDeviation", tree.getMassError(f).toString());
-            fragment.addProperty("recalibratedMassDeviation", tree.getRecalibratedMassError(f).toString());
+
+            Deviation dev = tree.getMassError(f);
+            if (f.isRoot() && precursorMass != null && dev.equals(Deviation.NULL_DEVIATION))
+                dev = tree.getMassErrorTo(f, precursorMass);
+
+            Deviation rdev = tree.getRecalibratedMassError(f);
+            if (f.isRoot() && precursorMass != null && dev.equals(Deviation.NULL_DEVIATION))
+                rdev = tree.getMassErrorTo(f, precursorMass);
+
+            fragment.addProperty("massDeviation", dev.toString());
+            fragment.addProperty("recalibratedMassDeviation", rdev.toString());
+
+
             for (FragmentAnnotation<DataAnnotation> fano : fragmentAnnotations) {
-                if (fano.get(f)!=null) {
+                if (fano.get(f) != null) {
                     Descriptor<DataAnnotation> d = registry.get(Fragment.class, fano.getAnnotationType());
                     if (d != null)
                         d.write(JSON, fragment, fano.get(f));
