@@ -113,7 +113,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                                                     e.getPrecursorIonType());
                                             emChache.add(c);
                                             csiScoreStats.addValue(c.getScore());
-                                            logPStats.addValue(c.getXlogp());
+                                            Optional.ofNullable(c.getXLogPOrNull()).ifPresent(logPStats::addValue);
                                             Double tm = c.getTanimotoScore();
                                             tanimotoStats.addValue(tm == null ? Double.NaN : tm);
                                         }
