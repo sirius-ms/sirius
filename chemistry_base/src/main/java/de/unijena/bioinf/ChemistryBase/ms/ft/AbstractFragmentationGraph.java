@@ -19,6 +19,8 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.list.array.TIntArrayList;
@@ -450,6 +452,35 @@ public abstract class AbstractFragmentationGraph implements Iterable<Fragment>, 
         for (Fragment f : fragments) {
             f.setVertexId(id++);
         }
+    }
+
+    /**
+     * returns the mass error of this fragment after recalibration.
+     * Returns NULL_DEVIATION if the fragment does not corresponds to any peak.
+     */
+    public Deviation getRecalibratedMassError(Fragment fragment) {
+        AnnotatedPeak p = getFragmentAnnotationOrNull(AnnotatedPeak.class) != null ? getFragmentAnnotationOrNull(AnnotatedPeak.class).get(fragment) : null;
+        ImplicitAdduct adduct = getFragmentAnnotationOrNull(ImplicitAdduct.class) != null ? getFragmentAnnotationOrNull(ImplicitAdduct.class).get(fragment) : null;
+        if (adduct == null)
+            adduct = ImplicitAdduct.none();
+
+        if (p != null && p.isMeasured()) {
+            return Deviation.fromMeasurementAndReference(p.getRecalibratedMass(), fragment.getIonization().addToMass(p.getMolecularFormula().add(adduct.getAdductFormula()).getMass()));
+        } else return Deviation.NULL_DEVIATION;
+    }
+
+    /**
+     * returns the mass error of this fragment. Returns NULL_DEVIATION if the fragment does not corresponds to any peak.
+     */
+    public Deviation getMassError(Fragment fragment) {
+        AnnotatedPeak p = getFragmentAnnotationOrNull(AnnotatedPeak.class) != null ? getFragmentAnnotationOrNull(AnnotatedPeak.class).get(fragment) : null;
+        ImplicitAdduct adduct = getFragmentAnnotationOrNull(ImplicitAdduct.class) != null ? getFragmentAnnotationOrNull(ImplicitAdduct.class).get(fragment) : null;
+        if (adduct == null)
+            adduct = ImplicitAdduct.none();
+
+        if (p != null && p.isMeasured()) {
+            return Deviation.fromMeasurementAndReference(p.getMass(), fragment.getIonization().addToMass(p.getMolecularFormula().add(adduct.getAdductFormula()).getMass()));
+        } else return Deviation.NULL_DEVIATION;
     }
 
 
