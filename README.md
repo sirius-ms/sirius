@@ -31,20 +31,20 @@ CSI:FingerID.</span>
 
 ### Documentation
 - [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.23/sirius-4.4.23-manual.pdf)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.24/sirius-4.4.24-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.4.23 (2020-05-26)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.4.24 (2020-05-26)
 ##### This versions have the JRE already included! Just download, unpack and execute.
-- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.23/sirius-4.4.23-win64.zip)
-- for Linux [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.23/sirius-4.4.23-linux64.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.23/sirius-4.4.23-osx64.zip)
+- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.24/sirius-4.4.24-win64.zip)
+- for Linux [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.24/sirius-4.4.24-linux64.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.24/sirius-4.4.24-osx64.zip)
 
-### SIRIUS+CSI:FingerID Commandline only - Version 4.4.23 (2020-05-26)
+### SIRIUS+CSI:FingerID Commandline only - Version 4.4.24 (2020-05-26)
 ##### [Java Runtime Environment 11 (JRE-11)](https://www.azul.com/downloads/zulu-community/?version=java-11-lts&architecture=x86-64-bit&package=jre) or higher required.
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.23/sirius-4.4.23-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.23/sirius-4.4.23-win64-headless.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.23/sirius-4.4.23-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.23/sirius-4.4.23-linux64-headless.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.23/sirius-4.4.23-osx64-headless.zip)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.24/sirius-4.4.24-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.24/sirius-4.4.24-win64-headless.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.24/sirius-4.4.24-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.24/sirius-4.4.24-linux64-headless.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.24/sirius-4.4.24-osx64-headless.zip)
 
 ### Sources on GitHub
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)

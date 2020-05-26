@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.EnumSet;
 import java.util.function.Function;
 
 public abstract class ConfigPanel extends JPanel implements ParameterProvider {
@@ -53,5 +54,17 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
         GuiUtils.assignParameterToolTip(cb, parameterKey);
         parameterBindings.put(parameterKey, () -> String.valueOf(cb.isSelected()));
         return cb;
+    }
+
+    public <T extends Enum<T>> JComboBox<T> makeParameterComboBox(@NotNull String parameterKey, Class<T> enumType) {
+        return makeParameterComboBox(parameterKey, java.util.List.copyOf(EnumSet.allOf(enumType)), Enum::name);
+    }
+
+    public <T> JComboBox<T> makeParameterComboBox(@NotNull String parameterKey, java.util.List<T> values, Function<T, String> result) {
+        JComboBox<T> box = new JComboBox<>();
+        values.forEach(box::addItem);
+        GuiUtils.assignParameterToolTip(box, parameterKey);
+        parameterBindings.put(parameterKey, () -> result.apply((T) box.getSelectedItem()));
+        return box;
     }
 }

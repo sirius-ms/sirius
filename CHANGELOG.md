@@ -5,6 +5,8 @@
 - GUI: More detailed Visualisation of what has already been computed
 - more bugfixes ;-)
 
+##### 4.4.24
+- feature: ms2 istotope scorer now available in cli and gui
 ##### 4.4.23
 - fix: wrong missing value handling in xlogp filter (some candidates were invisible)
 - improvement: less cores for computations if gui is running to have mor cpu time for GUI tasks
