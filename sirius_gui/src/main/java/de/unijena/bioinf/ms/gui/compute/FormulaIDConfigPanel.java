@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
@@ -71,7 +72,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected final JCheckboxListPanel<SearchableDatabase> searchDBList;
     protected final JComboBox<Instrument> profileSelector;
     protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner;
-//    protected final JCheckBox restrictToOrganics;
+    protected final JComboBox<IsotopeMs2Settings.Strategy> ms2IsotpeSetting;
+    //    protected final JCheckBox restrictToOrganics;
     protected ElementsPanel elementPanel;
 //    protected JButton elementAutoDetect;
 
@@ -95,12 +97,11 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         final TwoColumnPanel smallParameters = new TwoColumnPanel();
         center.add(new TextHeaderBoxPanel("General", smallParameters));
 
-        Vector<Instrument> instruments = new Vector<>();
-        Collections.addAll(instruments, Instrument.values());
-        profileSelector = new JComboBox<>(instruments);
-        GuiUtils.assignParameterToolTip(profileSelector, "AlgorithmProfile");
-        parameterBindings.put("AlgorithmProfile", () -> getInstrument().asProfile());
+        profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
         smallParameters.addNamed("Instrument", profileSelector);
+
+        ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", IsotopeMs2Settings.Strategy.class);
+        smallParameters.addNamed("MS/MS isotope scorer", ms2IsotpeSetting);
 
         ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
                 PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
