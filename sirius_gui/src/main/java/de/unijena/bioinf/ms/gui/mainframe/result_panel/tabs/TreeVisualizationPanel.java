@@ -179,7 +179,7 @@ public class TreeVisualizationPanel extends JPanel
                             TreeVisualizationPanel.this.ftree = sre.getFragTree().orElse(null);
                             checkForInterruption();
                             if (ftree != null) {
-                                String jsonTree = new FTJsonWriter().treeToJsonString(TreeVisualizationPanel.this.ftree);
+                                String jsonTree = new FTJsonWriter().treeToJsonString(TreeVisualizationPanel.this.ftree, experiment.getID().getIonMass().orElse(null));
                                 checkForInterruption();
                                 if (!jsonTree.isBlank()) {
                                     browser.loadTree(jsonTree);
