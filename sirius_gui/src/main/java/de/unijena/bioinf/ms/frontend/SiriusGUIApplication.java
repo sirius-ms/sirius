@@ -36,7 +36,7 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
 
         try {
             final int cpuThreads = Integer.valueOf(PropertyManager.getProperty("de.unijena.bioinf.sirius.cpu.cores", null, "1"));
-            SiriusJobs.setGlobalJobManager(new SwingJobManager(PropertyManager.getNumberOfThreads(), Math.min(cpuThreads, 1)));
+            SiriusJobs.setGlobalJobManager(new SwingJobManager(Math.min(defaultThreadNumber(), cpuThreads), 1));
             ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
 
             configureShutDownHook(() -> {
@@ -76,12 +76,17 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
                     System.exit(0);
                 }
                 measureTime("Workflow DONE!");
-            }else {
+            } else {
                 System.exit(0);
             }
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(0);
         }
+    }
+
+    public static int defaultThreadNumber(){
+        int threadsAv = PropertyManager.getNumberOfThreads();
+        return Math.max(1, threadsAv <= 8 ? threadsAv - 2 : threadsAv - threadsAv / 20);
     }
 }
