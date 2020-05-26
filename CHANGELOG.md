@@ -5,6 +5,10 @@
 - GUI: More detailed Visualisation of what has already been computed
 - more bugfixes ;-)
 
+##### 4.4.23
+- fix: wrong missing value handling in xlogp filter (some candidates were invisible)
+- improvement: less cores for computations if gui is running to have mor cpu time for GUI tasks
+- improvement:  show deviation to target ion in FragTree root if precursor is missing in MS/MS 
 ##### 4.4.22
 - fix: Classloader exceptions when using CLI from the GUI version
 - fix: Wrong mass deviation for trees with adducts
