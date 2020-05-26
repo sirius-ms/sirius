@@ -101,40 +101,6 @@ public final class AnnotatedPeak implements TreeAnnotation  {
         this.spectrumIds = spectrumIds;
     }
 
-    /**
-     * returns the mass error of this fragment after recalibration.
-     * Returns NULL_DEVIATION if the fragment does not corresponds to any peak.
-     */
-    public Deviation getRecalibratedMassError() {
-        if (isMeasured())
-            return Deviation.fromMeasurementAndReference(recalibratedMass, ionization.addToMass(molecularFormula.getMass()));
-        else return Deviation.NULL_DEVIATION;
-    }
-    /**
-     * returns the mass error of this fragment. Returns NULL_DEVIATION if the fragment does not corresponds to any peak.
-     */
-    public Deviation getMassError() {
-        if (isMeasured())
-            return Deviation.fromMeasurementAndReference(mass, ionization.addToMass(molecularFormula.getMass()));
-        else return Deviation.NULL_DEVIATION;
-    }
-
-    /**
-     * returns the mass error of this fragment. Returns NULL_DEVIATION if the fragment does not corresponds to any peak.
-     */
-    public Deviation getMassErrorResolved(PrecursorIonType adduct) {
-        if (adduct.hasNeitherAdductNorInsource())
-            return getMassError();
-
-
-        if (isMeasured()) {
-            Deviation d1 = Deviation.fromMeasurementAndReference(mass, adduct.getIonization().addToMass(molecularFormula.getMass()));
-            Deviation d2 = Deviation.fromMeasurementAndReference(mass, adduct.getIonization().addToMass(molecularFormula.add(adduct.getModification()).getMass()));
-            return d2.getPpm() < d1.getPpm() ? d2 : d1;
-
-        } else return Deviation.NULL_DEVIATION;
-    }
-
     public int[] getSpectrumIds() {
         return spectrumIds;
     }
@@ -201,7 +167,7 @@ public final class AnnotatedPeak implements TreeAnnotation  {
         }
         return m;
     }
-    public double getSumedIntensity() {
+    public double getSummedIntensity() {
         double m = 0d;
         for (Peak p : originalPeaks) {
             if (p!=null) m += p.getIntensity();

@@ -1,9 +1,7 @@
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
-import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
@@ -88,13 +86,10 @@ public class FTreeMetricsHelper {
     }
 
     public Deviation getMedianMassDeviation() {
-        FragmentAnnotation<AnnotatedPeak> annoPeakAnno = tree.getFragmentAnnotationOrNull(AnnotatedPeak.class);
-        final boolean resolved = tree.getAnnotation(IonTreeUtils.Type.class).map(it -> it.equals(IonTreeUtils.Type.RESOLVED)).orElse(false);
         TDoubleArrayList ppms = new TDoubleArrayList(), mzs = new TDoubleArrayList();
         for (Fragment f : tree) {
-            AnnotatedPeak p = annoPeakAnno.get(f);
-            if (p != null && p.isMeasured()) {
-                final Deviation dev = resolved ? p.getMassErrorResolved(tree.getAnnotationOrThrow(PrecursorIonType.class)) : p.getMassError();
+            final Deviation dev = tree.getMassError(f);
+            if (dev != Deviation.NULL_DEVIATION) {
                 ppms.add(dev.getPpm());
                 mzs.add(dev.getAbsolute());
             }
@@ -106,26 +101,6 @@ public class FTreeMetricsHelper {
         );
 
     }
-
-    /*private static void calculateDeviatonMassInPpm(Fragment treeNode, Ionization ionization, PeakAnnotation<Peak> peakAno, PeakAnnotation<AnnotatedPeak> annoPeakAnno, ArrayList<Double> massDeviations) {
-        final double relativToPpm = 1000 * 1000;
-
-        final double peakMass;
-        if (peakAno.get(treeNode) == null) {
-            peakMass = ionization.addToMass(treeNode.getFormula().getMass());
-        } else {
-            if (annoPeakAnno != null)
-                peakMass = annoPeakAnno.get(treeNode).getMass();
-            else
-                peakMass = peakAno.get(treeNode).getMass();
-        }
-
-
-        if (ionization != null && treeNode != null) {
-            Double massDeviation = ((treeNode.getFormula().getMass() - peakMass + ionization.getMass()) / treeNode.getFormula().getMass()) * relativToPpm;
-            massDeviations.add(massDeviation);
-        }
-    }*/
 
 
     // static helper methods

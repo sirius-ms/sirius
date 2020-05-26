@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.descriptor.Descriptor;
 import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
@@ -95,6 +96,8 @@ public class FTJsonWriter {
             fragmentList.add(fragment);
             fragment.addProperty("id", f.getVertexId());
             fragment.addProperty("molecularFormula", f.getFormula().toString());
+            fragment.addProperty("massDeviation", tree.getMassError(f).toString());
+            fragment.addProperty("recalibratedMassDeviation", tree.getRecalibratedMassError(f).toString());
             for (FragmentAnnotation<DataAnnotation> fano : fragmentAnnotations) {
                 if (fano.get(f)!=null) {
                     Descriptor<DataAnnotation> d = registry.get(Fragment.class, fano.getAnnotationType());
