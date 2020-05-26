@@ -460,12 +460,8 @@ public abstract class AbstractFragmentationGraph implements Iterable<Fragment>, 
      */
     public Deviation getRecalibratedMassError(Fragment fragment) {
         AnnotatedPeak p = getFragmentAnnotationOrNull(AnnotatedPeak.class) != null ? getFragmentAnnotationOrNull(AnnotatedPeak.class).get(fragment) : null;
-        ImplicitAdduct adduct = getFragmentAnnotationOrNull(ImplicitAdduct.class) != null ? getFragmentAnnotationOrNull(ImplicitAdduct.class).get(fragment) : null;
-        if (adduct == null)
-            adduct = ImplicitAdduct.none();
-
         if (p != null && p.isMeasured()) {
-            return Deviation.fromMeasurementAndReference(p.getRecalibratedMass(), fragment.getIonization().addToMass(p.getMolecularFormula().add(adduct.getAdductFormula()).getMass()));
+            return getMassErrorTo(fragment, p.getRecalibratedMass());
         } else return Deviation.NULL_DEVIATION;
     }
 
@@ -474,13 +470,16 @@ public abstract class AbstractFragmentationGraph implements Iterable<Fragment>, 
      */
     public Deviation getMassError(Fragment fragment) {
         AnnotatedPeak p = getFragmentAnnotationOrNull(AnnotatedPeak.class) != null ? getFragmentAnnotationOrNull(AnnotatedPeak.class).get(fragment) : null;
+        if (p != null && p.isMeasured()) {
+            return getMassErrorTo(fragment, p.getMass());
+        } else return Deviation.NULL_DEVIATION;
+    }
+
+    public Deviation getMassErrorTo(Fragment fragment, double referenceMass) {
         ImplicitAdduct adduct = getFragmentAnnotationOrNull(ImplicitAdduct.class) != null ? getFragmentAnnotationOrNull(ImplicitAdduct.class).get(fragment) : null;
         if (adduct == null)
             adduct = ImplicitAdduct.none();
-
-        if (p != null && p.isMeasured()) {
-            return Deviation.fromMeasurementAndReference(p.getMass(), fragment.getIonization().addToMass(p.getMolecularFormula().add(adduct.getAdductFormula()).getMass()));
-        } else return Deviation.NULL_DEVIATION;
+        return Deviation.fromMeasurementAndReference(referenceMass, fragment.getIonization().addToMass(fragment.formula.add(adduct.getAdductFormula()).getMass()));
     }
 
 
