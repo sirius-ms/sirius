@@ -41,7 +41,7 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
 
     @Override
     protected void afterPreprocessing(ProcessedInput input) {
-        if (input.getAnnotation(IsotopeMs2Settings.class,IsotopeMs2Settings::new).strategy== IsotopeMs2Settings.Strategy.SCORE)
+        if (input.getAnnotation(IsotopeMs2Settings.class,IsotopeMs2Settings::new).value == IsotopeMs2Settings.Strategy.SCORE)
             new Ms2IsotopeDetector().detectAndSetAnnotations(input,input.getExperimentInformation());
     }
 
@@ -52,7 +52,7 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
 
     @Override
     protected void afterGraphBuilding(ProcessedInput input, FGraph graph) {
-        if (graph.getFragmentAnnotationOrNull(Ms2IsotopePattern.class)!=null)
+        if (input.getPeakAnnotations().containsKey(ExtractedMs2IsotopePattern.class))
             new IntroduceIsotopeLosses(input, graph).introduceIsotopeLosses();
     }
 
