@@ -76,6 +76,8 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
                     System.exit(0);
                 }
                 measureTime("Workflow DONE!");
+            }else {
+                System.exit(0);
             }
         } catch (Exception e) {
             e.printStackTrace();
