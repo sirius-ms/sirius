@@ -86,7 +86,7 @@ class CompoundStructureImage extends JPanel {
             renderer.paint(molecule.getMolecule(), new AWTDrawVisitor(gg),
                     new Rectangle2D.Double(7, 14, 360, 185), true);
         }
-        if (molecule.candidate.getName() != null) {
+        if ((molecule.candidate.getName() != null) && (!molecule.candidate.getName().equalsIgnoreCase("null"))) {
             gg.setFont(nameFont);
             gg.drawString(molecule.candidate.getName(), 3, 16);
         }
