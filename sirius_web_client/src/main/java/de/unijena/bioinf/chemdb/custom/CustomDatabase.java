@@ -87,7 +87,7 @@ public class CustomDatabase implements SearchableDatabase {
                 return db;
             throw new OutdatedDBExeption("DB '" + db.name + "' is outdated (DB-Version: " + db.databaseVersion + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
         }
-        throw new IOException("Illegal DB location. DB location needs to be a directory.");
+        throw new IOException("Illegal DB location '" + dbDir.getAbsolutePath() + "'. DB location needs to be a directory.");
     }
 
     public CustomDatabase(String name, File path) {
