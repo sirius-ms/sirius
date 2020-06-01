@@ -5,54 +5,55 @@ import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
-import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workfow.GuiWorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.middleware.SiriusContext;
-import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManagerFactory;
-import org.springframework.boot.Banner;
-import org.springframework.boot.WebApplicationType;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 
-@SpringBootApplication
-public class SiriusGUIApplication extends SiriusMiddlewareApplication {
+public class SiriusGUIApplication extends SiriusCLIApplication {
 
-    public SiriusGUIApplication(SiriusContext context) {
-        super(context);
-    }
 
     public static void main(String[] args) {
-        ApplicationCore.DEFAULT_LOGGER.info("Init AppCore");
+        ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
 
-
+        if (TIME)
+            t1 = System.currentTimeMillis();
         try {
+            measureTime("Init Swing Job Manager");
             final int cpuThreads = Integer.valueOf(PropertyManager.getProperty("de.unijena.bioinf.sirius.cpu.cores", null, "1"));
             SiriusJobs.setGlobalJobManager(new SwingJobManager(Math.min(defaultThreadNumber(), cpuThreads), 1));
             ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
 
             configureShutDownHook(() -> {
                 Jobs.cancelALL();
-                if (appContext != null)//todo maybe not needed because spring is doing this already
-                    appContext.registerShutdownHook();
                 shutdownWebservice();
             });
 
-            final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-            rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
+            measureTime("Start Run method");
 
+            run(args, () -> {
+                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+                CLIRootOptions rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
+                return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, new GuiInstanceBufferFactory());
+
+            });
+        } catch (Exception e){
+            e.printStackTrace();
+            System.exit(0);
+        }
+
+
+/*
+        try {
             if (RUN != null)
                 throw new IllegalStateException("Application can only run Once!");
             measureTime("init Run");
-            RUN = new Run(new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, new GuiInstanceBufferFactory()));
+            RUN = new Run();
             measureTime("Start Parse args");
             boolean b = RUN.parseArgs(args);
             measureTime("Parse args Done!");
@@ -83,6 +84,7 @@ public class SiriusGUIApplication extends SiriusMiddlewareApplication {
             e.printStackTrace();
             System.exit(0);
         }
+*/
     }
 
     public static int defaultThreadNumber(){

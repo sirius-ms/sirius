@@ -1,31 +1,19 @@
-import java.nio.file.Files
-import java.nio.file.Paths
-
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
     }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE")
-    }
 }
-
-apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
 
 ext['jna.version'] = '5.4.0'
 
 dependencies {
 //project
-    compile project(':sirius_rest_service')
+    compile project(':sirius_cli')
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 
 //internal
     compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
 //external
-    compile group: 'javax.json', name: 'javax.json-api', version: "$json_version"
-    compile group: 'org.glassfish', name: 'javax.json', version: "$json_impl_version"
-
     compile "net.sf.opencsv:opencsv:2.3"
     compile "org.swinglabs.swingx:swingx-all:1.6.5-1"
     compile "org.openscience.cdk:cdk-render:$cdk_version"
@@ -51,16 +39,23 @@ dependencies {
 
 
 /*################### Environment variables ################### */
-mainClassName = 'org.springframework.boot.loader.JarLauncher'
+mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 project.ext.set("arch", ['64'])
 project.ext.set("type", ['gui','console'])
 
 /*################### Jar build Stuff ################### */
-bootJar {
+jar {
+    zip64 = true
+    enabled = true
     manifest {
         attributes 'Main-Class': mainClassName
-        attributes 'Start-Class': "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
     }
+
+    from {
+        configurations.runtimeClasspath.filter { f -> !project.libExclude.stream().anyMatch { s -> f.name.startsWith(s) } }
+                .collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
 }
 
 /*################### Windows release Stuff ################### */
@@ -69,7 +64,7 @@ project.type.each{t ->
         tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
             group = 'launch4j'
             mainClassName = project.mainClassName
-            jar = project.bootJar.archiveFileName.get()
+            jar = project.jar.archiveFileName.get()
             bundledJre64Bit = true
             bundledJrePath = 'zulu'
             headerType = t
@@ -96,7 +91,7 @@ distributions {
             baseName = "${project.appName}-$n"
             contents {
                 into('lib') {
-                    from("build/install/sirius_gui-boot/lib")
+                    from('build/libs/')
                     from("${project.glpkPath}/l${ar}/") {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
@@ -136,7 +131,8 @@ distributions {
 
             baseName = "${project.appName}-$n"
             contents {
-                from("build/install/sirius_gui-boot/lib")
+                from('build/libs/')
+
                 from("${project.glpkPath}/w${ar}/")
                 from("${project.clpPath}/w${ar}/")
                 from("${project.distPath}") {
@@ -171,7 +167,8 @@ distributions {
         baseName = "${project.appName}-$n"
         contents {
             into('lib') {
-                from("build/install/sirius_gui-boot/lib")
+                from('build/libs/')
+
                 from("${project.glpkPath}/osx/")
                 from("${project.clpPath}/osx/")
                 exclude('*.zip')
@@ -205,14 +202,14 @@ distributions {
     project.getTasksByName("distZip", false).each { it.setEnabled(false) }
 
     //create libs
-    linux64DistZip.dependsOn 'installBootDist'
-    installLinux64Dist.dependsOn 'installBootDist'
+    linux64DistZip.dependsOn 'installDist'
+    installLinux64Dist.dependsOn 'installDist'
 
-    osx64DistZip.dependsOn 'installBootDist'
-    installOsx64Dist.dependsOn 'installBootDist'
+    osx64DistZip.dependsOn 'installDist'
+    installOsx64Dist.dependsOn 'installDist'
 
-    win64DistZip.dependsOn 'installBootDist'
-    installWin64Dist.dependsOn 'installBootDist'
+    win64DistZip.dependsOn 'installDist'
+    installWin64Dist.dependsOn 'installDist'
 
     //create starter
     linux64DistZip.dependsOn 'startScripts'
