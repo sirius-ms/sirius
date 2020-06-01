@@ -49,10 +49,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -234,7 +231,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
     private void cosine(List<Instance> xs) {
         final JobManager J = SiriusJobs.getGlobalJobManager();
 
-        List<Pair<Instance, CosineQuerySpectrum>> pairs = J.submitJobsInBatches(xs.stream().map(this::getSpectrum).collect(Collectors.toList())).stream().map(JJob::takeResult).filter(c -> c.getRight().getSelfSimilarity() > 0 && c.getRight().getSelfSimilarityLosses() > 0).collect(Collectors.toList());
+        List<Pair<Instance, CosineQuerySpectrum>> pairs = J.submitJobsInBatches(xs.stream().map(this::getSpectrum).collect(Collectors.toList())).stream().map(JJob::getResult).filter(Objects::nonNull).filter(c -> c.getRight().getSelfSimilarity() > 0 && c.getRight().getSelfSimilarityLosses() > 0).collect(Collectors.toList());
         xs = pairs.stream().map(Pair::getLeft).collect(Collectors.toList());
         final CosineQuerySpectrum[] cosineQuerySpectrums = pairs.stream().map(Pair::getRight).toArray(CosineQuerySpectrum[]::new);
         final CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(config.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.multiply(2)));
