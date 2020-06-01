@@ -92,7 +92,11 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         int progress=0;
         for (ConsensusFeature feature : consensusFeatures) {
             final Ms2Experiment experiment = feature.toMs2Experiment();
-            ++totalFeatures;
+            if (isInvalidExp(experiment)){
+                LoggerFactory.getLogger(getClass()).warn("Skipping invalid experiment '" + experiment.getName() + "'.");
+                continue;
+            }
+                ++totalFeatures;
             if (experiment.getAnnotation(CompoundQuality.class, CompoundQuality::new).isNotBadQuality()) {
                 ++goodFeatures;
             }
@@ -107,6 +111,12 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
 
     public List<CompoundContainerId> getImportedCompounds() {
         return importedCompounds;
+    }
+
+    private static boolean isInvalidExp(Ms2Experiment exp) {
+        return exp.getMs2Spectra() == null || exp.getMs2Spectra().isEmpty() ||
+                exp.getPrecursorIonType() == null ||
+                exp.getIonMass() == 0d;
     }
 }
 
