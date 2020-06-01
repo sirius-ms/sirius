@@ -5,6 +5,7 @@ import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workfow.GuiWorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -40,11 +41,13 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
                 CLIRootOptions rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
                 return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, new GuiInstanceBufferFactory());
-
             });
         } catch (Exception e){
             e.printStackTrace();
             System.exit(0);
+        }finally {
+            if (! (RUN.getFlow() instanceof GuiAppOptions.Flow))
+                System.exit(0);
         }
 
 
