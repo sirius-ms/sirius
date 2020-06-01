@@ -43,7 +43,7 @@ public class MgfExporterWorkflow implements Workflow {
                     } catch (IOException e) {
                         throw e;
                     } catch (Exception e) {
-                        LoggerFactory.getLogger(getClass()).error("Invalid instance '" + inst.getID() + "'. Skipping this instance!", e);
+                        LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst.getID() + "'. Skipping this instance!", e);
                     } finally {
                         inst.clearCompoundCache();
                         inst.clearFormulaResultsCache();
