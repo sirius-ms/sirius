@@ -17,8 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 
 public class SiriusConfigUtils {
 
@@ -41,34 +39,28 @@ public class SiriusConfigUtils {
     }
 
     public static @NotNull PropertiesConfiguration newConfiguration(@Nullable File file) {
-        return runWithPropertyConfigLoader(() -> {
-            try {
-                return new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(makeConfigProps(file)).getConfiguration();
-            } catch (ConfigurationException e) {
-                System.err.println("WARNING: Error during PropertiesConfiguration initialization");
-                e.printStackTrace();
-                return new PropertiesConfiguration();
-            }
-        });
-
-
+        try {
+            return new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(makeConfigProps(file)).getConfiguration();
+        } catch (ConfigurationException e) {
+            System.err.println("WARNING: Error during PropertiesConfiguration initialization");
+            e.printStackTrace();
+            return new PropertiesConfiguration();
+        }
     }
 
     public static @NotNull PropertiesConfiguration newConfiguration(@NotNull PropertyFileWatcher watcher) {
-        return runWithPropertyConfigLoader(() -> {
-            try {
-                ReloadingFileBasedConfigurationBuilder<PropertiesConfiguration> builder =
-                        new ReloadingFileBasedConfigurationBuilder<>(PropertiesConfiguration.class)
-                                .configure(makeConfigProps(watcher.getFile().toFile()));
-                watcher.setController(builder.getReloadingController());
-                return builder.getConfiguration();
+        try {
+            ReloadingFileBasedConfigurationBuilder<PropertiesConfiguration> builder =
+                    new ReloadingFileBasedConfigurationBuilder<>(PropertiesConfiguration.class)
+                            .configure(makeConfigProps(watcher.getFile().toFile()));
+            watcher.setController(builder.getReloadingController());
+            return builder.getConfiguration();
 
-            } catch (ConfigurationException e) {
-                System.err.println("WARNING: Error during PropertiesConfiguration initialization with auto reloading");
-                e.printStackTrace();
-                return new PropertiesConfiguration();
-            }
-        });
+        } catch (ConfigurationException e) {
+            System.err.println("WARNING: Error during PropertiesConfiguration initialization with auto reloading");
+            e.printStackTrace();
+            return new PropertiesConfiguration();
+        }
     }
 
 
@@ -120,24 +112,5 @@ public class SiriusConfigUtils {
         final PropertiesConfiguration config = newConfiguration();
         new FileHandler(config).load(input);
         return config;
-    }
-
-
-    public static <R> R runWithPropertyConfigLoader(Supplier<R> doWith) {
-        try {
-            return callWithPropertyConfigLoader(doWith::get);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static <R> R callWithPropertyConfigLoader(Callable<R> doWith) throws Exception {
-        final ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(PropertiesConfiguration.class.getClassLoader());
-            return doWith.call();
-        } finally {
-            Thread.currentThread().setContextClassLoader(cl);
-        }
     }
 }
