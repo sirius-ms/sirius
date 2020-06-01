@@ -11,6 +11,9 @@
   - solve github issue [#7](https://github.com/boecker-lab/sirius/issues/7)
   - errors when importing and aligning mzml files. 
   - improve startup time
+- fix: cosine similarity tool ignores instances without spectra (failed before)
+- fix: mgf-export tool skips invalid instances if possible (failed before)
+- instance validation after lcms-align tool
 ##### 4.4.24
 - feature: ms2 istotope scorer now available in cli and gui
 ##### 4.4.23
