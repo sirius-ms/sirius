@@ -38,9 +38,16 @@ public class MgfExporterWorkflow implements Workflow {
             final ProjectSpaceManager ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
             try (final BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
                 for (Instance inst : ps){
-                    mgfWriter.write(writer, inst.getExperiment());
-                    inst.clearCompoundCache();
-                    inst.clearFormulaResultsCache();
+                    try {
+                        mgfWriter.write(writer, inst.getExperiment());
+                    } catch (IOException e) {
+                        throw e;
+                    } catch (Exception e) {
+                        LoggerFactory.getLogger(getClass()).error("Invalid instance '" + inst.getID() + "'. Skipping this instance!", e);
+                    } finally {
+                        inst.clearCompoundCache();
+                        inst.clearFormulaResultsCache();
+                    }
                 }
             }
         } catch (ExecutionException e) {
