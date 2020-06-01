@@ -5,6 +5,12 @@
 - GUI: More detailed Visualisation of what has already been computed
 - more bugfixes ;-)
 
+##### 4.4.25
+- fix: removed spring boot packaging to
+  - solve several class not found issues, 
+  - solve github issue [#7](https://github.com/boecker-lab/sirius/issues/7)
+  - errors when importing and aligning mzml files. 
+  - improve startup time
 ##### 4.4.24
 - feature: ms2 istotope scorer now available in cli and gui
 ##### 4.4.23

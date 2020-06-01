@@ -19,8 +19,8 @@ import java.util.stream.Stream;
 public class SiriusCLIApplication {
     protected static Run RUN = null;
 
-    private static final boolean TIME = false;
-    private static long t1;
+    protected static final boolean TIME = false;
+    protected static long t1;
 
     public static void main(String[] args) {
         if (TIME)
