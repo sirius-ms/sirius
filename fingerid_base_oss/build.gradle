@@ -1,3 +1,6 @@
+allprojects {
+    version =  parent.fingeridVersion
+}
 dependencies {
     compile project(':utils')
     compile project(':chemistry_base')
