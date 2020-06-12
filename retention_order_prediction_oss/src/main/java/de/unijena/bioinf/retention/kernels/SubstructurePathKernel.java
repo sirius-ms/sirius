@@ -1,20 +1,21 @@
 package de.unijena.bioinf.retention.kernels;
 
 import de.unijena.bioinf.retention.PredictableCompound;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.list.array.TShortArrayList;
+import gnu.trove.map.hash.TLongLongHashMap;
+import gnu.trove.procedure.TLongLongProcedure;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.AllPairsShortestPaths;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 
 public class SubstructurePathKernel implements MoleculeKernel<SubstructurePathKernel.Prepared> {
 
     protected int diameter;
-
-    protected final static boolean SMOOTH = false;
 
     public SubstructurePathKernel(int diameter) {
         this.diameter = diameter;
@@ -31,96 +32,84 @@ public class SubstructurePathKernel implements MoleculeKernel<SubstructurePathKe
 
     @Override
     public double compute(PredictableCompound left, PredictableCompound right, Prepared l, Prepared r) {
-        final int[] shared = sharedKeys(l, r);
-        final TShortArrayList distancesL = new TShortArrayList(), distancesR = new TShortArrayList();
-        double matches = 0d;
-        for (int i=0; i < shared.length; ++i) {
-            for (int j=i; j < shared.length; ++j) {
-                final int A = shared[i];
-                final int B = shared[j];
-                distancesL.clearQuick(); distancesR.clearQuick();
-                double m = scorePaths(getDistances(l, distancesL, A, B), getDistances(r, distancesR, A, B));
-                matches += m;
+        return compareLinear(l.explicitMap,r.explicitMap);
+    }
 
+    public double compareTanimoto(TLongLongHashMap left, TLongLongHashMap right) {
+        long[] count = new long[2];
+        left.forEachEntry(new TLongLongProcedure() {
+            @Override
+            public boolean execute(long a, long b) {
+                long s = right.get(a)&b;
+                count[0] += Long.bitCount(s);
+                count[1] += Long.bitCount(b);
+                return true;
+            }
+        });
+        right.forEachEntry(new TLongLongProcedure() {
+            @Override
+            public boolean execute(long a, long b) {
+                long s = left.get(a)&b;
+                count[0] += Long.bitCount(s);
+                count[1] += Long.bitCount(b);
+                return true;
+            }
+        });
+        count[0] /= 2;
+        double intersection = count[0];
+        double union = count[1]-count[0];
+        return intersection/union;
+    }
+
+    public double compareLinear(TLongLongHashMap left, TLongLongHashMap right) {
+        long[] count = new long[1];
+        left.forEachEntry(new TLongLongProcedure() {
+            @Override
+            public boolean execute(long a, long b) {
+                long s = right.get(a)&b;
+                count[0] += Long.bitCount(s);
+                return true;
+            }
+        });
+        right.forEachEntry(new TLongLongProcedure() {
+            @Override
+            public boolean execute(long a, long b) {
+                long s = left.get(a)&b;
+                count[0] += Long.bitCount(s);
+                return true;
+            }
+        });
+        return count[0];
+    }
+
+    static TLongLongHashMap makeExplicitMap(int[] identities, AllPairsShortestPaths paths) {
+        final TLongLongHashMap map = new TLongLongHashMap(32,0.75f,0,0);
+        final ByteBuffer buffer = ByteBuffer.allocate(8);
+        final LongBuffer aslong = buffer.asLongBuffer();
+        final IntBuffer asInt = buffer.asIntBuffer();
+        for (int i=0; i < identities.length; ++i) {
+            for (int j=0; j < identities.length; ++j) {
+                int a = identities[i];
+                int b = identities[j];
+                asInt.put(a);
+                asInt.put(b);
+                asInt.rewind();
+                long X = aslong.get(0);
+
+                long set = map.get(X);
+                int pathSize = Math.min(63, paths.from(i).distanceTo(j));
+                set |= (1L<<pathSize);
+                map.put(X, set);
             }
         }
-        return matches;
-    }
-
-
-    private double smoothPaths(TShortArrayList left, TShortArrayList right) {
-        double score=0d;
-        for (int i=0; i < left.size(); ++i) {
-            for (int j=0; j<right.size(); ++j) {
-                final int distance = Math.abs(left.get(i)-right.get(j));
-                if (distance<smoothDist.length) {
-                    score += smoothDist[distance];
-                }
-            }
-        }
-        return score;
-    }
-
-    private double scorePaths(TShortArrayList left, TShortArrayList right) {
-        if (SMOOTH) return smoothPaths(left,right);
-        else return countMatchingPaths(left,right);
-    }
-
-    private double countMatchingPaths(TShortArrayList left, TShortArrayList right) {
-        left.sort();
-        right.sort();
-        int i=0,j=0;
-        int matches = 0;
-        while (i < left.size() && j < right.size()) {
-            short a = left.get(i);
-            short b = right.get(j);
-            if (a==b) {
-                ++matches;
-                ++i;
-                ++j;
-            } else if (a<b) {
-                ++i;
-            } else {
-                ++j;
-            }
-        }
-        return matches;
-    }
-
-    private static double[] smoothDist = new double[20];
-    static {
-        for (int i=0; i < smoothDist.length; ++i) {
-            smoothDist[i] = Math.exp(-i/2d);
-        }
-    }
-
-    private TShortArrayList getDistances(Prepared l, TShortArrayList distances, int a, int b) {
-        final int[] ds = l.identity2atoms.get(a);
-        final int[] ds2 = l.identity2atoms.get(b);
-        for (int p=0; p < ds.length; ++p) {
-            for (int q=0; q < ds2.length; ++q) {
-                if (ds[p]!=ds2[q]) {
-                    distances.add((short) l.shortestPaths.from(ds[p]).distanceTo(ds2[q]));
-                }
-            }
-        }
-        return distances;
-    }
-
-    private int[] sharedKeys(Prepared l, Prepared r) {
-        final TIntArrayList sharedKeys = new TIntArrayList();
-        for (Integer key : l.identity2atoms.keySet()) {
-            if (r.identity2atoms.containsKey(key)) {
-                sharedKeys.add(key);
-            }
-        }
-        return sharedKeys.toArray();
+        return map;
     }
 
     public static class Prepared {
         protected final int[] identities;
         protected HashMap<Integer, int[]> identity2atoms;
         protected AllPairsShortestPaths shortestPaths;
+        protected TLongLongHashMap explicitMap;
         public Prepared(IAtomContainer molecule, int diameter) throws CDKException {
             int st;
             switch (diameter) {
@@ -131,6 +120,7 @@ public class SubstructurePathKernel implements MoleculeKernel<SubstructurePathKe
                 default: throw new IllegalArgumentException("Unsupported diameter");
             }
             CircularFingerprinter fp = new CircularFingerprinter(st);
+            fp.storeIdentitesPerIteration = false;
             fp.calculate(molecule);
             this.identities = fp.identity;
             this.identity2atoms = new HashMap<>();
@@ -142,6 +132,7 @@ public class SubstructurePathKernel implements MoleculeKernel<SubstructurePathKe
                 identity2atoms.put(identities[i],copy);
             }
             this.shortestPaths = new AllPairsShortestPaths(molecule);
+            this.explicitMap = makeExplicitMap(identities,shortestPaths);
         }
     }
 

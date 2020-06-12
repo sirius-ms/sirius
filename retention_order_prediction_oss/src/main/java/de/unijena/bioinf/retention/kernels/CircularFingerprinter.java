@@ -28,25 +28,17 @@
 
 package de.unijena.bioinf.retention.kernels;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.zip.CRC32;
-
-import javax.vecmath.Point2d;
-import javax.vecmath.Point3d;
-
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.*;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IStereoElement;
+
+import javax.vecmath.Point2d;
+import javax.vecmath.Point3d;
+import java.util.*;
+import java.util.zip.CRC32;
 
 
 /**
@@ -220,6 +212,9 @@ class CircularFingerprinter extends AbstractFingerprinter implements IFingerprin
         );
     }
 
+    public boolean storeIdentitesPerIteration = false; // kaidu
+    public ArrayList<int[]> identitiesPerIteration = new ArrayList<>(); // kaidu
+
     /**
      * Calculates the fingerprints for the given {@link IAtomContainer}, and stores them for subsequent retrieval.
      *
@@ -228,6 +223,7 @@ class CircularFingerprinter extends AbstractFingerprinter implements IFingerprin
     public void calculate(IAtomContainer mol) throws CDKException {
         this.mol = mol;
         fplist.clear();
+        identitiesPerIteration.clear(); // kaidu
         atomClass = classType <= CLASS_ECFP6 ? ATOMCLASS_ECFP : ATOMCLASS_FCFP;
 
         excavateMolecule();
@@ -238,7 +234,7 @@ class CircularFingerprinter extends AbstractFingerprinter implements IFingerprin
         resolvedChiral = new boolean[na];
         atomGroup = new int[na][];
 
-        for (int n = 0; n < na; n++)
+        for (int n = 0; n < na; n++) {
             if (amask[n]) {
                 if (atomClass == ATOMCLASS_ECFP)
                     identity[n] = initialIdentityECFP(n);
@@ -248,9 +244,12 @@ class CircularFingerprinter extends AbstractFingerprinter implements IFingerprin
                 atomGroup[n] = new int[]{n};
                 fplist.add(new FP(identity[n], 0, atomGroup[n]));
             }
-
+        }
         int niter = classType == CLASS_ECFP2 || classType == CLASS_FCFP2 ? 1 : classType == CLASS_ECFP4
                 || classType == CLASS_FCFP4 ? 2 : classType == CLASS_ECFP6 || classType == CLASS_FCFP6 ? 3 : 0;
+
+        identitiesPerIteration.add(identity.clone()); // kaidu
+
 
         // iterate outward
         for (int iter = 1; iter <= niter; iter++) {
@@ -258,6 +257,8 @@ class CircularFingerprinter extends AbstractFingerprinter implements IFingerprin
             for (int n = 0; n < na; n++)
                 if (amask[n]) newident[n] = circularIterate(iter, n);
             identity = newident;
+
+            identitiesPerIteration.add(identity.clone()); // kaidu
 
             for (int n = 0; n < na; n++)
                 if (amask[n]) {

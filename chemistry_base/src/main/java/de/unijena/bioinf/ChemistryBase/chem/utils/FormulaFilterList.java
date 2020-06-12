@@ -57,6 +57,13 @@ public class FormulaFilterList implements FormulaFilter, Parameterized {
 //    }
 
     @Override
+    public boolean isValid(MolecularFormula measuredNeutralFormula) {
+        for (FormulaFilter filter : filters)
+            if (!filter.isValid(measuredNeutralFormula)) return false;
+        return true;
+    }
+
+    @Override
     public boolean isValid(MolecularFormula measuredNeutralFormula, Ionization ionization) {
         for (FormulaFilter filter : filters)
             if (!filter.isValid(measuredNeutralFormula, ionization)) return false;

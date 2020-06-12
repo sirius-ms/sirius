@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.KernelCentering;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -11,22 +12,28 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.retention.kernels.*;
 import de.unijena.bioinf.svm.RankSVM;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TIntArrayList;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.logging.LogManager;
 import java.util.stream.Collectors;
+
+//import de.unijena.bioinf.fingerid.ALIGNF;
 
 public class Main {
 
     final static boolean USEALL = false;
 
+    protected final static int NPAIRS = 8;
 
-    private final static double EPSILON=100,
-    TRAIN_EPSILON=0.1;
+
+    private final static double EPSILON=1,
+    TRAIN_EPSILON=1;
 
     static {
         System.setProperty("org.apache.commons.logging.Log",
@@ -55,12 +62,10 @@ public class Main {
             for (SimpleCompound y : ys) test.add(new Pred(y));
         }
 
-
-
-
         train.sort(Comparator.comparingDouble(SimpleCompound::getRetentionTime));
         test.sort(Comparator.comparingDouble(x->x.compound.retentionTime));
         train.forEach(x->dataset.addCompound(x));
+
         // we cannot add all pairs, so let us just some of them
         if (USEALL) {
             for (int i=0; i < train.size(); ++i) {
@@ -69,20 +74,51 @@ public class Main {
                 }
             }
         } else {
-            int[] rls = new int[]{
-                    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,32,64,128
-            };
             for (int k=0; k < train.size(); ++k) {
-                for (int rl : rls) {
-                    int i = k+rl;
-                    if (i < train.size()) {
-                        if (train.get(i).retentionTime-train.get(k).retentionTime > TRAIN_EPSILON) {
-                            dataset.addRelation(train.get(k), train.get(i));
+                int npairs = 0;
+                int i;
+                foreachCompound:
+                for (i = k+1; i < train.size(); ++i) {
+                    if (train.get(i).retentionTime-train.get(k).retentionTime > TRAIN_EPSILON) {
+                        dataset.addRelation(train.get(k), train.get(i));
+                        ++npairs;
+                        if (npairs >= NPAIRS) {
+                            break foreachCompound;
                         }
                     }
                 }
+                // add exponentially
+                /*i *= 2;
+                while (i < train.size()) {
+                    dataset.addRelation(train.get(k), train.get(i));
+                    i *= 2;
+                }*/
+
+                for (int add = 0; add < 4; ++add) {
+                    i += 8;
+                    if (i < train.size()) {
+                        dataset.addRelation(train.get(k), train.get(i));
+                    }
+                }
+
+                for (int add = 0; add < 4; ++add) {
+                    i += 16;
+                    if (i < train.size()) {
+                        dataset.addRelation(train.get(k), train.get(i));
+                    }
+                }
+
+                for (int add = 0; add < 4; ++add) {
+                    i += 32;
+                    if (i < train.size()) {
+                        dataset.addRelation(train.get(k), train.get(i));
+                    }
+                }
+
             }
         }
+
+
 
         System.out.println("Compute train kernel");
         dataset.useAllCompounds();
@@ -97,9 +133,17 @@ public class Main {
         } else {
             kernels = new ArrayList<MoleculeKernel<?>>(Arrays.asList(
                     //new SubstructureKernel(), new SubstructurePathKernel(2), new SubstructurePathKernel(4),new SubstructureLinearKernel()
+
                     new SubstructureKernel(),
                     new SubstructureLinearKernel(),
-                    new SubstructurePathKernel(2)
+                    //new SubstructurePathKernel(4),
+                    new SubstructurePathKernel(2),
+                    new MACCSFingerprinter(),
+                    //new OutGroupKernel()//,
+                    //new LongestPathKernel(2)
+                    new QSARKernel()
+                    ,
+                    new ShapeKernel()
             ));
         }
         final double[][][] Ks = new double[kernels.size()][][];
@@ -114,11 +158,44 @@ public class Main {
             e.applyToTrainMatrix(kernel);
         }
 
-        final double[][] K = new double[train.size()][train.size()];
-        for (int i=0; i < Ks.length; ++i) {
-            MatrixUtils.applySum(K, Ks[i]);
+        // ALIGNF
+        final double[] WEIGHTS;
+        if (true){
+
+            final TDoubleArrayList retentionTimes = new TDoubleArrayList();
+            for (SimpleCompound c : train) retentionTimes.add(c.retentionTime);
+            final double[] vec = retentionTimes.toArray();
+            final double mean = Statistics.expectation(vec);
+            final double std = Math.sqrt(Statistics.variance(vec, mean));
+            for (int k=0; k < vec.length; ++k) {
+                vec[k] = (vec[k]-mean)/std;
+            }
+            final double[][] target = new double[train.size()][train.size()];
+            for (int i=0; i < vec.length; ++i) {
+                for (int j=0; j < vec.length; ++j) {
+                    target[i][j] = vec[i]*vec[j];
+                }
+            }
+            final ALIGNF alignf = new ALIGNF(Ks, target, true);
+            alignf.run();
+            final double[] weights = alignf.getWeights();
+            for (int k=0; k < kernels.size(); ++k) {
+                final String simpleName = kernels.get(k).getClass().getSimpleName();
+                System.out.println(simpleName + ":\t\t" + weights[k]);
+            }
+
+            WEIGHTS = weights.clone();
+
+
+        } else {
+            WEIGHTS = new double[kernels.size()];
+            Arrays.fill(WEIGHTS, 1d/kernels.size());
         }
 
+        final double[][] K = new double[train.size()][train.size()];
+        for (int i=0; i < Ks.length; ++i) {
+            MatrixUtils.applyWeightedSum(K, Ks[i], WEIGHTS[i]);
+        }
 
         System.out.println("compute test kernel");
         for (int j=0; j < test.size(); ++j) {
@@ -154,14 +231,40 @@ public class Main {
             }
 
             for (int j=0; j < test.size(); ++j) {
-                MatrixUtils.applySum(test.get(j).kernel, collect.get(j).takeResult());
+                MatrixUtils.applyWeightedSum(test.get(j).kernel, collect.get(j).takeResult(), WEIGHTS[i]);
             }
         }
 
         final ArrayList<Pred> trainPred = new ArrayList<>(train.stream().map(x->new Pred(x)).collect(Collectors.toList()));
         for (int k=0; k < trainPred.size(); ++k) trainPred.get(k).kernel = K[k];
+        final int NKERNELS=kernels.size();
+        /////////////
+        // REWEIGHT
+        /////////////
+        /*
+        for (Pred x : trainPred) {
+            for (int i=0; i < x.kernel.length; ++i)
+                x.kernel[i] /= NKERNELS;
+        }
+         */
+        double maxKernel = 0d;
+        for (Pred x : test) {
+            double mx = Double.NEGATIVE_INFINITY;
+            for (int i=0; i < x.kernel.length; ++i) {
+                //x.kernel[i] /= NKERNELS;
+                mx = Math.max(mx,x.kernel[i]);
+            }
+            maxKernel += mx;
+        }
+        maxKernel /= test.size();
+        System.out.println("Average MAX Kernel = " + maxKernel);
+        try {
+            FileUtils.writeDoubleMatrix(new File("kernel"), K);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        for (double c : new double[]{2d}) {
+        for (double c : new double[]{1d, 2d, 8d, 16d}) {
             final RankSVM rankSVM = new RankSVM(K, dataset.getPairs(), c);
             final double[] coefficients = rankSVM.fit();
             System.out.println(Arrays.toString(coefficients));
@@ -173,6 +276,30 @@ public class Main {
                     p.prediction += coefficients[i] * p.kernel[i];
                 }
             }
+
+            if (c==2 && false) {
+                final ArrayList<Example> examples = findExamples(train, test);
+                try (final PrintStream out = new PrintStream("examples.csv")) {
+                    try (final PrintStream smiles = new PrintStream("examples.smi")) {
+                        out.println(
+                                "missmatches\tcompound\tbestKernel\tbestKernel.ret\tbestKernel.smiles\tclosest.kernel\tclosest.ret\tclosest.smiles"
+                        );
+                        for (Example ex : examples) {
+                            out.println(
+                                    ex.missmatches + "\t" + ex.compound.compound.smiles + "\t" + ex.bestKernelValue + "\t" + Math.abs(ex.bestKernel.retentionTime-ex.compound.compound.retentionTime) + "\t" + ex.bestKernel.smiles +"\t" + ex.bestRetValue + "\t" + Math.abs(ex.bestRet.retentionTime-ex.compound.compound.retentionTime) + "\t" + ex.bestRet.smiles
+                            );
+                            smiles.println(ex.compound.compound.smiles);
+                            smiles.println(ex.bestKernel.smiles);
+                            smiles.println(ex.bestRet.smiles);
+                        }
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+
             final double acc = evaluate(test);
             for (Pred p : trainPred) {
                 p.prediction = 0d;
@@ -192,6 +319,101 @@ public class Main {
             e.printStackTrace();
         }
 
+    }
+
+    private static void test(List<SimpleCompound> xs) {
+        final TIntArrayList bins = new TIntArrayList();
+        for (SimpleCompound x : xs) {
+            ShapeKernel.Prepared P = new ShapeKernel.Prepared(x);
+            bins.add(P.getHistogram().length);
+        }
+        double mean = 0d;
+        double std  = 0d;
+        for (double x : bins.toArray()) {
+            mean += x;
+        }
+        mean /= bins.size();
+        System.out.println("Mean longest Path = " + mean);
+        for (double x : bins.toArray()) {
+            double u = x-mean;
+            std += u*u;
+        }
+        std /= bins.size();
+        System.out.println("std longest Path = " + Math.sqrt(std));
+
+    }
+
+    private static ArrayList<Example> findExamples(ArrayList<SimpleCompound> train, ArrayList<Pred> test) {
+        ArrayList<Example> examples = new ArrayList<>();
+        for (int i=0; i < test.size(); ++i) {
+            int missmatches = 0;
+            for (int j=0; j < i; ++j) {
+                if (test.get(j).compound.retentionTime > test.get(i).compound.retentionTime) {
+                    ++missmatches;
+                }
+            }
+            for (int j=i+1; j < test.size(); ++j) {
+                if (test.get(j).compound.retentionTime < test.get(i).compound.retentionTime) {
+                    ++missmatches;
+                }
+            }
+            final Example example = new Example();
+            example.index = i;
+            example.compound = test.get(i);
+            example.missmatches = missmatches;
+            examples.add(example);
+        }
+
+        examples.sort(Comparator.comparingInt(x->x.missmatches));
+        examples = new ArrayList<>(examples.subList((int)Math.floor(examples.size()*0.9), (int)Math.ceil(examples.size()*0.95)));
+
+        for (Example example : examples) {
+
+            // zeige den ähnlichsten compound nach retentionszeit
+            int bestRetIndex = 0;
+            double bestRetDiff = 999999;
+            double bestRetKernel = Double.NEGATIVE_INFINITY;
+            for (int k=0; k < train.size(); ++k) {
+                double diff = Math.abs(train.get(k).retentionTime - example.compound.compound.retentionTime);
+                if (diff+5 < bestRetDiff) {
+                    bestRetDiff = diff;
+                    bestRetKernel = example.compound.kernel[k];
+                    bestRetIndex = k;
+                } else if (Math.abs(diff-bestRetDiff) <= 5) {
+                    double kernel = example.compound.kernel[k];
+                    if (kernel > bestRetKernel) {
+                        bestRetDiff = diff;
+                        bestRetKernel = kernel;
+                        bestRetIndex = k;
+                    }
+                }
+            }
+
+
+            example.bestRet = train.get(bestRetIndex);
+            example.bestRetValue = bestRetKernel;
+            // zeige den ähnlichsten Compound nach Kernel
+            double bestKernel = Double.NEGATIVE_INFINITY;
+            int bestKernelIndex = 0;
+            for (int i=0; i < train.size(); ++i) {
+                double k = example.compound.kernel[i];
+                if (k > bestKernel) {
+                    bestKernel = k;
+                    bestKernelIndex = i;
+                }
+            }
+            example.bestKernel = train.get(bestKernelIndex);
+            example.bestKernelValue = bestKernel;
+        }
+        return examples;    }
+
+    private static class Example {
+        private int index;
+        private Pred compound;
+        private SimpleCompound bestRet, bestKernel;
+        private double bestRetValue;
+        private double bestKernelValue;
+        private int missmatches;
     }
 
     private static double evaluate(List<Pred> predictions) {
@@ -240,7 +462,7 @@ public class Main {
             String line;
             while ((line=br.readLine())!=null) {
                 String[] tb = line.split("\t");
-                xs.add(new SimpleCompound(new InChI(tb[0],null), FixedFingerprinter.parseStructureFromStandardizedSMILES(tb[1]), Double.parseDouble(tb[2])));
+                xs.add(new SimpleCompound(new InChI(tb[0],null), tb[1], FixedFingerprinter.parseStructureFromStandardizedSMILES(tb[1]), Double.parseDouble(tb[2])));
             }
         } catch (IOException e) {
             e.printStackTrace();
