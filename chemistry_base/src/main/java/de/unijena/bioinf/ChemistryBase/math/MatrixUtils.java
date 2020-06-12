@@ -218,6 +218,12 @@ public class MatrixUtils {
         }
     }
 
+    public static void applyWeightedSum(double[] kernel, double[] other, double otherWeight) {
+        for (int i=0; i < kernel.length; ++i) {
+            kernel[i] += other[i]*otherWeight;
+        }
+    }
+
     public static double[][] sum(double[][] kernel, double[][] other) {
         final double[][] matrix = new double[kernel.length][kernel.length];
         for (int i=0; i < kernel.length; ++i) {

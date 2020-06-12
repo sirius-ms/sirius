@@ -111,6 +111,6 @@ public class DataSources {
 
 
     public static long bioOrAll(boolean searchInBio) {
-        return searchInBio ? DataSource.BIO.flag() : DataSource.ALL.flag();
+        return searchInBio ? DataSource.BIO.flag() : DataSource.ALL_BUT_INSILICO.flag();
     }
 }

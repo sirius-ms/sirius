@@ -10,7 +10,6 @@ import de.unijena.bioinf.io.lcms.LCMSParser;
 import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.io.lcms.MzXMLParser;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
@@ -263,9 +262,9 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
 
     public static void main(String[] args) {
         final File mzxmlFile = new File(
-                "/home/kaidu/data/raw/debug"
+                //"/home/kaidu/data/raw/debug"
                 //"/home/kaidu/analysis/canopus/mice/raw/cecum"
-                //"/home/kaidu/analysis/example"
+                "/home/kaidu/analysis/example2"
                 //"/home/kaidu/data/raw/rosmarin"
                 //"/home/kaidu/analysis/canopus/arabidobsis"
                // "/home/kaidu/data/raw/euphorbiaceae/raw"
@@ -301,6 +300,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                     if (ion.getPeakShape().getPeakShapeQuality().betterThan(Quality.DECENT))
                         ++c3;
                 }
+
                 System.out.println(sample.ions.size() + " ions, with " + c1 +  " have a bad but defined peak shape and " +c2 + " even have a decent peak shape. " + c3 + " ions have a good peak shape."  );
 
                 storage.backOnDisc();
@@ -345,8 +345,10 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                     }
                 }
             }
-
             final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(c);
+
+
+
             for (ProcessedSample s : i.getSamples()) s.storage.close();
             i.getMs2Storage().close();
             System.out.println("Done.");

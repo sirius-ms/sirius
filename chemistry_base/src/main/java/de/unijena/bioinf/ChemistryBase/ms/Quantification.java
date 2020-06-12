@@ -4,7 +4,9 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -21,6 +23,10 @@ public class Quantification implements Ms2ExperimentAnnotation {
         this.quant = new TObjectDoubleHashMap<>();
         for (String k : quant.keySet())
             this.quant.put(k, quant.get(k));
+    }
+
+    public Set<String> getSamples() {
+        return Collections.unmodifiableSet(quant.keySet());
     }
 
     public double getQuantificationFor(String id) {

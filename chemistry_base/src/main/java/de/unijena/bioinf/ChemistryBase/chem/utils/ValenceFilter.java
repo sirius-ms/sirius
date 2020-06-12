@@ -77,8 +77,15 @@ public class ValenceFilter implements FormulaFilter {
         } else return false;
     }
 
+
+    @Override
+    public boolean isValid(MolecularFormula measuredNeutralFormula) {
+        return measuredNeutralFormula.doubledRDBE()>=MIN_VALENCE_DEFAULT;
+    }
+
     @Override
     public boolean isValid(MolecularFormula measuredNeutralFormula, Ionization ionization) {
+        if (ionization==PeriodicTable.getInstance().neutralIonization()) return isValid(measuredNeutralFormula);
         Set<PrecursorIonType> adducts = possibleAdducts.getAdducts(ionization);
         if (adducts.size() == 0) {
             LoggerFactory.getLogger(getClass()).warn("Ionization not known in ValenceFilter: " + ionization);

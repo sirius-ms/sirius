@@ -13,11 +13,11 @@ import java.nio.LongBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 
-public class SubstructurePathKernel implements MoleculeKernel<SubstructurePathKernel.Prepared> {
+public class SubstructurePathKernel2 implements MoleculeKernel<SubstructurePathKernel2.Prepared> {
 
     protected int diameter;
 
-    public SubstructurePathKernel(int diameter) {
+    public SubstructurePathKernel2(int diameter) {
         this.diameter = diameter;
     }
 
@@ -55,6 +55,7 @@ public class SubstructurePathKernel implements MoleculeKernel<SubstructurePathKe
                 return true;
             }
         });
+        assert count[0]%2==0;
         count[0] /= 2;
         double intersection = count[0];
         double union = count[1]-count[0];
@@ -82,31 +83,38 @@ public class SubstructurePathKernel implements MoleculeKernel<SubstructurePathKe
         return count[0];
     }
 
-    static TLongLongHashMap makeExplicitMap(int[] identities, AllPairsShortestPaths paths) {
+    static TLongLongHashMap makeExplicitMap(int[][] identities, AllPairsShortestPaths paths) {
         final TLongLongHashMap map = new TLongLongHashMap(32,0.75f,0,0);
         final ByteBuffer buffer = ByteBuffer.allocate(8);
         final LongBuffer aslong = buffer.asLongBuffer();
         final IntBuffer asInt = buffer.asIntBuffer();
-        for (int i=0; i < identities.length; ++i) {
-            for (int j=0; j < identities.length; ++j) {
-                int a = identities[i];
-                int b = identities[j];
-                asInt.put(a);
-                asInt.put(b);
-                asInt.rewind();
-                long X = aslong.get(0);
+        for (int i=0; i < identities[0].length; ++i) {
+            for (int j=0; j < identities[0].length; ++j) {
+                for (int m=0; m < identities.length; ++m) {
+                    for (int n=0; n < identities.length; ++n) {
+                        final int len = paths.from(i).distanceTo(j);
+                        if (len==0)
+                            continue;
+                        int a = identities[m][i];
+                        int b = identities[n][j];
+                        asInt.put(a);
+                        asInt.put(b);
+                        asInt.rewind();
+                        long X = aslong.get(0);
 
-                long set = map.get(X);
-                int pathSize = Math.min(63, paths.from(i).distanceTo(j));
-                set |= (1L<<pathSize);
-                map.put(X, set);
+                        long set = map.get(X);
+                        int pathSize = Math.min(63, len);
+                        set |= (1L<<pathSize);
+                        map.put(X, set);
+                    }
+                }
             }
         }
         return map;
     }
 
     public static class Prepared {
-        protected final int[] identities;
+        protected final int[][] identities;
         protected HashMap<Integer, int[]> identity2atoms;
         protected AllPairsShortestPaths shortestPaths;
         protected TLongLongHashMap explicitMap;
@@ -120,16 +128,18 @@ public class SubstructurePathKernel implements MoleculeKernel<SubstructurePathKe
                 default: throw new IllegalArgumentException("Unsupported diameter");
             }
             CircularFingerprinter fp = new CircularFingerprinter(st);
-            fp.storeIdentitesPerIteration = false;
+            fp.storeIdentitesPerIteration = true;
             fp.calculate(molecule);
-            this.identities = fp.identity;
+            this.identities = fp.identitiesPerIteration.toArray(int[][]::new);
             this.identity2atoms = new HashMap<>();
             final int[] empty = new int[0];
-            for (int i=0; i < identities.length; ++i) {
-                int[] ary = identity2atoms.getOrDefault(identities[i], empty);
-                int[] copy = Arrays.copyOf(ary, ary.length+1);
-                copy[copy.length-1] = i;
-                identity2atoms.put(identities[i],copy);
+            for (int j=0; j < identities.length; ++j) {
+                for (int i = 0; i < identities[j].length; ++i) {
+                    int[] ary = identity2atoms.getOrDefault(identities[j][i], empty);
+                    int[] copy = Arrays.copyOf(ary, ary.length + 1);
+                    copy[copy.length - 1] = i;
+                    identity2atoms.put(identities[j][i], copy);
+                }
             }
             this.shortestPaths = new AllPairsShortestPaths(molecule);
             this.explicitMap = makeExplicitMap(identities,shortestPaths);

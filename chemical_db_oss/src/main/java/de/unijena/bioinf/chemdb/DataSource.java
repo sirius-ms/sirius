@@ -5,6 +5,7 @@ import java.util.Locale;
 
 public enum DataSource {
     ALL("All included DBs", 0, null, null, null),
+    ALL_BUT_INSILICO("All DBs, except combinatorial DBs", 2|makeBIOFLAG(), null, null, null),
     PUBCHEM("PubChem", 2, "compound_id","pubchem", "https://pubchem.ncbi.nlm.nih.gov/compound/%s"),
     MESH("MeSH", 4, "compound_id", "hasmesh", "http://www.ncbi.nlm.nih.gov/mesh/%s"),
     HMDB("HMDB", 8, "hmdb_id", "hmdb", "http://www.hmdb.ca/metabolites/HMDB%07d"),
