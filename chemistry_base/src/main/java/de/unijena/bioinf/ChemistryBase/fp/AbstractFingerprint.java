@@ -29,6 +29,17 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
         }
     }
 
+    /**
+     * returns true if two fingerprints have the same set of indizes, or, Tanimoto of 1.
+     */
+    public boolean isSameSet(AbstractFingerprint other) {
+        for (FPIter2 x : foreachPair(other)) {
+            if (x.isLeftSet() != x.isRightSet())
+                return false;
+        }
+        return cardinality()==other.cardinality();
+    }
+
     public boolean isCompatible(AbstractFingerprint other) {
         return other.fingerprintVersion.compatible(fingerprintVersion);
     }
