@@ -2,7 +2,7 @@ package de.unijena.bioinf.canopus;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.fingerid.KernelToNumpyConverter;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -85,7 +85,7 @@ public class Sampler {
         ArrayList<ProbabilityFingerprint> probabilityFingerprints = new ArrayList<>();
         ArrayList<ArrayFingerprint> perfectFingerprints = new ArrayList<>();
         ArrayList<EvaluationInstance> instances = new ArrayList<>();
-        try (final BufferedReader br = KernelToNumpyConverter.getReader(file)) {
+        try (final BufferedReader br = FileUtils.getReader(file)) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] tbs = line.split("\t");

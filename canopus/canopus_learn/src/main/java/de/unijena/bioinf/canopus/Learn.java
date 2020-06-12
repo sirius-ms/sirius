@@ -2,19 +2,9 @@ package de.unijena.bioinf.canopus;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.babelms.ms.JenaMsWriter;
-import de.unijena.bioinf.fingerid.InputFeatures;
-import de.unijena.bioinf.fingerid.KernelToNumpyConverter;
-import de.unijena.bioinf.fingerid.Prediction;
-import de.unijena.bioinf.fingerid.SpectralPreprocessor;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
@@ -27,7 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.LogManager;
 import java.util.regex.Pattern;
 
@@ -66,6 +59,9 @@ public class Learn {
     }
 
     public static void main(String[] args) {
+        System.out.println("Use fingerprints from " + ChemicalDatabase.FINGERPRINT_TABLE + " with ID " + ChemicalDatabase.FINGERPRINT_ID);
+
+        System.out.println("Uptodate version 2");
         args = removeOpts(args);
         if (args[0].startsWith("play-around")) {
             try {
@@ -96,7 +92,17 @@ public class Learn {
         if (args[0].startsWith("continue")) {
             try {
                 final String indepSet = findArgWithValue(args, "--independent");
-                continueModel(new File(args[1]), new File(args[2]), indepSet);
+                continueModel(new File(args[1]), new File(args[2]), indepSet, false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.exit(0);
+            return;
+        }
+        if (args[0].startsWith("finalize")) {
+            try {
+                final String indepSet = findArgWithValue(args, "--independent");
+                continueModel(new File(args[1]), new File(args[2]), indepSet, true);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -106,62 +112,19 @@ public class Learn {
         if (args[0].startsWith("prepare")) {
             System.out.println("Prepare learning");
             final String pathName = args[1];
+
             try {
                 Prepare.prepare(new File(pathName));
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
+
             return;
         } else if (args[0].startsWith("fix")) {
             fix();
             return;
-        } else if (args[0].startsWith("decoy")) {
-
-            try {
-                final Prediction csi = Prediction.loadFromFile(new File("fingerid.data"));
-                final DecoySpectrumGenerator gen = new DecoySpectrumGenerator(csi);
-                for (int i=0; i < 50; ++i) {
-                    InputFeatures pre;
-                    final Ms2Experiment exp = gen.drawExperiment();
-                    final Sirius.SiriusIdentificationJob job = gen.sirius.makeIdentificationJob(exp);
-                    SiriusJobs.getGlobalJobManager().submitJob(job);
-                    final IdentificationResult ir = job.takeResult().get(0);
-                    if (ir!=null)
-                        pre = SpectralPreprocessor.preprocessFromSirius(gen.sirius,ir,exp);
-                    else {
-                        System.out.println("Empty spectrum");
-                        continue;
-                    }
-                    final ProbabilityFingerprint fp = csi.predictProbabilityFingerprint(pre);
-                    System.out.println("---------------------------");
-                    System.out.println("Tree: " + pre.tree.numberOfVertices());
-                    System.out.println("Spectrum: " + pre.spectrum.size());
-                    int c=0;
-                    for (FPIter iter : fp.presentFingerprints()) {
-                        ++c;
-                    }
-                    System.out.println("Fingerprint: " + c);
-                    System.out.println("..............");
-                    System.out.println(Arrays.toString(fp.toProbabilityArray()));
-                    try (final BufferedWriter bw = FileUtils.getWriter(new File(String.format(Locale.US, "decoys/%03d.ms", i)))) {
-                        new JenaMsWriter().write(bw, exp);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            try {
-                SiriusJobs.getGlobalJobManager().shutdown();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return;
-
-
         }
-
 
         final File modelFile = new File(args[0]);
         final int modelId = Integer.parseInt(args[1]);
@@ -214,6 +177,8 @@ public class Learn {
                 System.out.println("Probabilistic Tanimoto to truth: " + Tanimoto.probabilisticTanimoto(fp, i.compound.fingerprint).expectationValue());
                 System.exit(0);
             }
+
+            boolean saveOnce=true;
 
             if (false) {
                 System.out.println("MEAN VECTOR:");
@@ -294,7 +259,7 @@ public class Learn {
             System.out.println("Resample");System.out.flush();
             TrainingBatch resampledCrossval = trainingData.resampleMultithreaded(trainingData.crossvalidation, (a,b)-> TrainingData.SamplingStrategy.CONDITIONAL);
             System.out.println("Start."); System.out.flush();
-            double lastMCC = Double.NEGATIVE_INFINITY;
+            double lastScore = Double.NEGATIVE_INFINITY;
             int _step_=0;
             try {
                 for (int k = 0; k <= 30000; ++k) {
@@ -313,19 +278,26 @@ public class Learn {
                                     Arrays.asList("simulated", "crossval", "resampled", "indep", "indepNovel"), tf, k);
                         }
 
-                        if (k > 0 && k % 2000 == 0) {
+                        if (k >= 12000 && k % 200 == 0) {
                             Report evaluate = tf.evaluate(crossvalBatch);
-                            if (evaluate.mcc > lastMCC) {
+                            final double score = evaluate.score();
+                            if (score > lastScore) {
                                 System.out.println("############ SAVE MODEL ##############");
-                                tf.save(trainingData, modelId, true, true, k >= 30000);
-                                lastMCC = evaluate.mcc;
+                                if (k>=12000) {
+                                    float[][] crossval = tf.predict(crossvalBatch);
+                                    float[][] indep = tf.predict(independentBatch);
+                                    final File target = new File("canopus_final_model_"+modelId);
+                                    writePredictOutput(target, "crossvalidation", trainingData, trainingData.crossvalidation, crossval);
+                                    writePredictOutput(target, "independent", trainingData, trainingData.independent, indep);
+                                }
+                                tf.save(trainingData, modelId, true, true, k >= 12000);
+                                lastScore = score;
+                                evalBatch.close();
+                                if (k >= (12000 * TrainingData.GROW)) break;
+                                evalBatch = generator.poll(0);
+                                resampledCrossval.close();
+                                resampledCrossval = trainingData.resampleMultithreaded(trainingData.crossvalidation, (a,b)-> TrainingData.SamplingStrategy.CONDITIONAL);
                             }
-
-                            evalBatch.close();
-                            if (k >= (30000 * TrainingData.GROW)) break;
-                            evalBatch = generator.poll(0);
-                            resampledCrossval.close();
-                            resampledCrossval = trainingData.resampleMultithreaded(trainingData.crossvalidation, (a,b)-> TrainingData.SamplingStrategy.CONDITIONAL);
                         }
                     }
                 }
@@ -379,11 +351,11 @@ public class Learn {
             final float[][] fm = (float[][])exampleBatch.formulas.copyTo(new float[1][(int)exampleBatch.formulas.shape()[1]]);
             final float[][] pm = (float[][])exampleBatch.platts.copyTo(new float[1][(int)exampleBatch.platts.shape()[1]]);
             final float[][] lm = (float[][])exampleBatch.labels.copyTo(new float[1][(int)exampleBatch.labels.shape()[1]]);
-            new KernelToNumpyConverter().writeToFile(new File("example/formula.matrix"), fm);
-            new KernelToNumpyConverter().writeToFile(new File("example/platts.matrix"), pm);
-            new KernelToNumpyConverter().writeToFile(new File("example/labels.matrix"), lm);
-            new KernelToNumpyConverter().writeToFile(new File("example/prediction.matrix"), prediction);
-            try (final BufferedWriter bw = KernelToNumpyConverter.getWriter(new File("example/example.txt"))) {
+            FileUtils.writeFloatMatrix(new File("example/formula.matrix"), fm);
+            FileUtils.writeFloatMatrix(new File("example/platts.matrix"), pm);
+            FileUtils.writeFloatMatrix(new File("example/labels.matrix"), lm);
+            FileUtils.writeFloatMatrix(new File("example/prediction.matrix"), prediction);
+            try (final BufferedWriter bw = FileUtils.getWriter(new File("example/example.txt"))) {
                 bw.write(example.compound.inchiKey);
                 bw.write('\t');
                 bw.write(example.compound.formula.toString());
@@ -650,7 +622,7 @@ public class Learn {
         }
     }
 
-    public static void continueModel(File tfFile, File modelFile,String pattern) throws IOException {
+    public static void continueModel(File tfFile, File modelFile,String pattern, boolean finalize) throws IOException {
         final Canopus canopus = Canopus.loadFromFile(modelFile);
         final TrainingData trainingData = new TrainingData(new File("."), Pattern.compile(pattern));
         final BatchGenerator generator = new BatchGenerator(trainingData, 20);
@@ -671,8 +643,12 @@ public class Learn {
                         novels.add(i);
                         */
         }
-        final TrainingBatch crossvalBatch = trainingData.generateBatch(trainingData.crossvalidation);
-        final TrainingBatch indepBatch = trainingData.generateBatch(trainingData.independent);
+        final TrainingBatch batch;
+        {
+            final ArrayList<EvaluationInstance> instances = new ArrayList<>(trainingData.crossvalidation);
+            instances.addAll(trainingData.independent);
+            batch = trainingData.generateBatch(instances);
+        }
         int[] CSI_USED_INDIZES = null;
         final List<DummyMolecularProperty> dummyProps = new ArrayList<>();
 
@@ -682,55 +658,40 @@ public class Learn {
             final double[][] PLATT = tf.plattEstimate(trainingData);
             // does it still works?
             int k = 0;
-            reportStuff(Arrays.asList(evalBatch, crossvalBatch), Arrays.asList("simulated", "crossval", "indep"), tf, k);
+            reportStuff(Arrays.asList(batch), Arrays.asList("all"), tf, k);
             // we just want to "initialize" Adam
-            for (int i=0; i < 100; ++i){
-                if (i % 10 == 0) {
+            for (int i=0; i < 400; ++i){
+                try (final TrainingBatch b = generator.poll(30000 + i)) {
                     final long time1 = System.currentTimeMillis();
-                    final double[] losses = tf.train(crossvalBatch);
-                    tf.train(indepBatch);
+                    final double[] losses = tf.train(b);
                     final long time2 = System.currentTimeMillis();
                     System.out.println((k + i) + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
-                } else {
-                    try (final TrainingBatch batch = generator.poll(30000 + i)) {
-                        final long time1 = System.currentTimeMillis();
-                        final double[] losses = tf.train(batch);
-                        final long time2 = System.currentTimeMillis();
-                        System.out.println((k + i) + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
-                        tf.train(batch);
-                    }
                 }
-                if (i%25==0) {
+                if (i%50==0) {
+                    reportStuff(Arrays.asList(batch), Arrays.asList("all"), tf, k);
                     System.out.println("---> reset all weights.");
                     resetter.resetWeights();
-                    reportStuff(Arrays.asList(evalBatch, crossvalBatch), Arrays.asList("simulated", "crossval", "indep"), tf, k);                }
+                    reportStuff(Arrays.asList(batch), Arrays.asList("all"), tf, k);                }
             }
-            reportStuff(Arrays.asList(evalBatch, crossvalBatch), Arrays.asList("simulated", "crossval", "indep"), tf, k);
             resetter.resetWeights();
             System.out.println("---> reset all weights.");
-            reportStuff(Arrays.asList(evalBatch, crossvalBatch), Arrays.asList("simulated", "crossval", "indep"), tf, k);
             for (int i = 0; i < 1000; ++i) {
                 k = 30000 + i;
                 if (i % 10 == 0) {
                     final long time1 = System.currentTimeMillis();
-                    final double[] losses = tf.train(crossvalBatch);
-                    final long time2 = System.currentTimeMillis();
-                    System.out.println(k + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
-                } else if (i % 10 == 1) {
-                    final long time1 = System.currentTimeMillis();
-                    final double[] losses = tf.train(indepBatch);
+                    final double[] losses = tf.train(batch);
                     final long time2 = System.currentTimeMillis();
                     System.out.println(k + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
                 } else {
-                    try (final TrainingBatch batch = generator.poll(k)) {
+                    try (final TrainingBatch b = generator.poll(k)) {
                         final long time1 = System.currentTimeMillis();
-                        final double[] losses = tf.train(batch);
+                        final double[] losses = tf.train(b);
                         final long time2 = System.currentTimeMillis();
                         System.out.println(k + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
                     }
                 }
             }
-            reportStuff(Arrays.asList(evalBatch, crossvalBatch), Arrays.asList("simulated", "crossval", "indep"), tf, k);
+            reportStuff(Arrays.asList(batch), Arrays.asList("all"), tf, k);
             tf.saveWithoutPlattEstimate(trainingData, 100, true, true, false, PLATT[0], PLATT[1]);
         }
     }

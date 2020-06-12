@@ -2,7 +2,7 @@ package de.unijena.bioinf.canopus;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.fingerid.KernelToNumpyConverter;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
@@ -568,7 +568,7 @@ public class TrainingData {
 
         this.classyFireFingerprintVersion = ClassyFireFingerprintVersion.loadClassyfire(new File(env, "chemont.csv.gz"));
 
-        final double[][] formulaMatrix = new KernelToNumpyConverter().readFromFile(new File("formula_normalized.txt"));
+        final double[][] formulaMatrix = new FileUtils().readAsDoubleMatrix(new File("formula_normalized.txt"));
         if (SCALE_BY_MAX) {
             this.formulaNorm = formulaMatrix[0];
             this.formulaScale = formulaMatrix[1];
@@ -598,7 +598,7 @@ public class TrainingData {
             final HashMap<String, ArrayFingerprint> fingerprints = new HashMap<>();
             final HashMap<String, MolecularFormula> formulas = new HashMap<>();
             final HashMap<String, MolecularFormula> formulaCache = new HashMap<>();
-            try (final BufferedReader br = KernelToNumpyConverter.getReader(new File(env, "fingerprints.csv"))) {
+            try (final BufferedReader br = FileUtils.getReader(new File(env, "fingerprints.csv"))) {
                 String line;
                 while ((line=br.readLine())!=null) {
                     String[] tbs = line.split("\t");
@@ -648,11 +648,11 @@ public class TrainingData {
                 }
             }
 
-            final FormulaConstraints constraints = new FormulaConstraints("CHNOPSClBrIFBSe");
+            final FormulaConstraints constraints = new FormulaConstraints("CHNOPSClBrIFBSeAs");
             final double maximalAllowedMass = 1500d;
             this.fingerprintSampler = new Sampler(fingerprintVersion);
             // read all compounds!!!!
-            try (final BufferedReader br = KernelToNumpyConverter.getReader(new File(env, "compounds.csv"))) {
+            try (final BufferedReader br = FileUtils.getReader(new File(env, "compounds.csv"))) {
                 String line;
                 while ((line=br.readLine())!=null) {
                     String[] tbs = line.split("\t");

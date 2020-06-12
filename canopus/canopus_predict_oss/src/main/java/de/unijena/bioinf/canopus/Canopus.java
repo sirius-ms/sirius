@@ -267,10 +267,11 @@ public class Canopus {
                 t.getByName("F"),
                 t.getByName("I"),
                 t.getByName("B"),
-                t.getByName("Se")
+                t.getByName("Se"),
+                t.getByName("As")
         };
         final Element C = elements[0], H = elements[1], N = elements[2], O = elements[3];
-        final double[] values = new double[elements.length+12];
+        final double[] values = new double[elements.length+15];
         int K = 0;
         for (Element e : elements) {
             values[K++] = f.numberOf(e);
@@ -292,7 +293,11 @@ public class Canopus {
         // CHNOPS only
         values[K++] = f.isCHNOPS() ? 1d : -1d;
         values[K++] = f.isCHNO() ? 1d : -1d;
-
+        // CHO only?
+        values[K++] = f.isCHO() ? 1d : -1d;
+        // logarithm of C
+        values[K++] = Math.log(f.numberOfCarbons()+0.5f);
+        values[K++] = Math.log(f.numberOfHydrogens()+0.5f);
         return values;
     }
 

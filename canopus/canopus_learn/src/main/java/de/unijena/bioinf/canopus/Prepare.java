@@ -74,6 +74,9 @@ public class Prepare {
 
     public static void prepare(File csiPath) throws IOException {
         // get classes
+
+        System.out.println("Molecular formula feature vector length: " + Canopus.getFormulaFeatures(MolecularFormula.parseOrNull("C6H12AsClN3")).length);
+
         try {
             final TrainedCSIFingerId trainedCSIFingerId = TrainedCSIFingerId.load(new File(csiPath, "fingerid.data"));
 
@@ -181,19 +184,20 @@ public class Prepare {
     }
 
     private static void writeFormulaFeatures(HashSet<MolecularFormula> formulas) throws IOException {
-        final FormulaConstraints constraints = new FormulaConstraints("CHNOPSClBrBSeIF");
+        final FormulaConstraints constraints = new FormulaConstraints("CHNOPSClBrBSeIFAs");
         final Iterator<MolecularFormula> fiter = formulas.iterator();
         while (fiter.hasNext()) {
             final MolecularFormula f = fiter.next();
             if (f.getMass() > 2000)
                 fiter.remove();
-            else if (constraints.isViolated(f, PeriodicTable.getInstance().neutralIonization()))
+            else if (constraints.isViolated(f, PeriodicTable.getInstance().neutralIonization())) {
                 fiter.remove();
-            else if (f.numberOfCarbons() == 0 || f.numberOfHydrogens() == 0)
+            } else if (f.numberOfCarbons() == 0 || f.numberOfHydrogens() == 0)
                 fiter.remove();
             else if (f.rdbe() <= -1)
                 fiter.remove();
         }
+        System.out.println(formulas.size() + " formulas in total.");
         final ArrayList<double[]> values = new ArrayList<>();
         try (final BufferedWriter bw = KernelToNumpyConverter.getWriter(new File("formula_features.csv"))) {
             for (MolecularFormula f : formulas) {

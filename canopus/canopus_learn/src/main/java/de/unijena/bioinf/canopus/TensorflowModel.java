@@ -3,10 +3,10 @@ package de.unijena.bioinf.canopus;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.canopus.dnn.ActivationFunction;
 import de.unijena.bioinf.canopus.dnn.FullyConnectedLayer;
 import de.unijena.bioinf.canopus.dnn.PlattLayer;
-import de.unijena.bioinf.fingerid.KernelToNumpyConverter;
 import org.tensorflow.*;
 
 import java.io.*;
@@ -278,21 +278,11 @@ public class TensorflowModel implements AutoCloseable, Closeable {
             // train for 6 epochs, halve simulated, halve real
             int tick = 35000;
             try (final TrainingBatch real = data.generateBatch(allMissingCompounds)) {
-                for (int I = 0; I < 10; ++I) {
+                for (int I = 0; I < 100; ++I) {
                     train(real);
                     for (int k = 0; k < 5; ++k) {
                         try (final TrainingBatch sim = data.generateBatch(tick++, null, service)) {
                             train(sim);
-
-                        }
-                    }
-                    try (final TrainingBatch resam = data.resample(allMissingCompounds, tick++)) {
-                        train(resam);
-                    }
-                    for (int k = 0; k < 5; ++k) {
-                        try (final TrainingBatch sim = data.generateBatch(tick++, null, service)) {
-                            train(sim);
-
                         }
                     }
                 }
@@ -309,7 +299,7 @@ public class TensorflowModel implements AutoCloseable, Closeable {
                     final float[][] fmatrix = new float[(int) M.shape()[0]][(int) M.shape()[1]];
                     M.copyTo(fmatrix);
                     if (saveMatricesAsNumpy)
-                        new KernelToNumpyConverter().writeToFile(new File(fileName, String.valueOf(k) + ".matrix"), fmatrix);
+                        FileUtils.writeFloatMatrix(new File(fileName, String.valueOf(k) + ".matrix"), fmatrix);
                     if (saveModelForJava) {
                         weightMatrices.add(fmatrix);
                     }
@@ -317,7 +307,7 @@ public class TensorflowModel implements AutoCloseable, Closeable {
                     final float[] fmatrix = new float[(int) M.shape()[0]];
                     M.copyTo(fmatrix);
                     if (saveMatricesAsNumpy) {
-                        try (final BufferedWriter bw = KernelToNumpyConverter.getWriter(new File(fileName, String.valueOf(k) + ".matrix"))) {
+                        try (final BufferedWriter bw = FileUtils.getWriter(new File(fileName, String.valueOf(k) + ".matrix"));) {
                             for (float val : fmatrix) {
                                 bw.write(String.valueOf(val));
                                 bw.newLine();
