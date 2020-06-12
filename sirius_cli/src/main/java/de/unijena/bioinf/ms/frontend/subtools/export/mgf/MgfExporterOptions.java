@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import picocli.CommandLine;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -28,6 +29,9 @@ public class MgfExporterOptions implements StandaloneTool<MgfExporterWorkflow> {
 
     @CommandLine.Option(names = "--merge-ms2", description = "Merge all MS2 of a compound into one single spectrum.")
     public boolean mergeMs2;
+
+    @CommandLine.Option(names = "--quant-table", description = "Quantification table file name for Feature Based Molecular Networking.")
+    public File quantTable;
 
     @CommandLine.Option(names = "--merge-ppm", description = "Maximum allowed deviation (in ppm) for peaks of MS2 spectra to be merged.", defaultValue = "10")
     public void setMergePpm(DefaultParameter value) throws Exception {
