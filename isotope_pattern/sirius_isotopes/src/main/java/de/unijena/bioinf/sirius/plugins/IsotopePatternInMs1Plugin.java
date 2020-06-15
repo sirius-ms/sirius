@@ -79,13 +79,14 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
         for (IsotopePattern pat : pattern.getExplanations().values()) {
             maxScore = Math.max(pat.getScore(), maxScore);
             final int numberOfIsoPeaks = pat.getPattern().size() - 1;
-            if (pat.getScore() >= 2 * numberOfIsoPeaks) {
+            if (pat.getScore() >= (2 + 2 * numberOfIsoPeaks)) {
                 isoPeaks = Math.max(pat.getPattern().size()-1, isoPeaks);
                 scoreThresholdForFiltering = isoPeaks * 1d;
                 scoreThresholdForFiltering = Math.max(0, scoreThresholdForFiltering-1);
             }
         }
         final double SCORE_THRESHOLD = scoreThresholdForFiltering;
+        if (Double.isInfinite(SCORE_THRESHOLD)) return pattern.getExplanations().keySet().toArray(MolecularFormula[]::new);
         return pattern.getExplanations().entrySet().stream().filter(e -> e.getValue().getScore() >= SCORE_THRESHOLD).map(Map.Entry::getKey).toArray(MolecularFormula[]::new);
     }
 
