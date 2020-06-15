@@ -39,14 +39,20 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
     }
 
     public JSpinner makeParameterSpinner(@NotNull String parameterKey, double value, double minimum, double maximum, double stepSize, Function<SpinnerNumberModel, String> result) {
+        JSpinner spinner = makeBindedSpinner(parameterKey, value, minimum, maximum, stepSize, result);
+        GuiUtils.assignParameterToolTip(spinner, parameterKey);
+        return spinner;
+    }
+
+    public JSpinner makeBindedSpinner(@NotNull String parameterKey, double value, double minimum, double maximum, double stepSize, Function<SpinnerNumberModel, String> result) {
         SpinnerNumberModel model = new SpinnerNumberModel(value, minimum, maximum, stepSize);
         JSpinner spinner = new JSpinner(model);
         spinner.setMinimumSize(new Dimension(70, 26));
         spinner.setPreferredSize(new Dimension(70, 26));
-        GuiUtils.assignParameterToolTip(spinner, parameterKey);
         parameterBindings.put(parameterKey, () -> result.apply(model));
         return spinner;
     }
+
 
     public JCheckBox makeParameterCheckBox(@NotNull String parameterKey) {
         JCheckBox cb = new JCheckBox();

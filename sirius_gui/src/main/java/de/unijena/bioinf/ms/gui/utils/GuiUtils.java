@@ -162,6 +162,8 @@ public class GuiUtils {
         }
     }
 
+
+
     public static boolean assignParameterToolTip(@NotNull final JComponent comp, @NotNull String parameterKey) {
         final String parameterKeyShort = PropertyManager.DEFAULTS.shortKey(parameterKey);
         if (PropertyManager.DEFAULTS.getConfigValue(parameterKeyShort) != null) {

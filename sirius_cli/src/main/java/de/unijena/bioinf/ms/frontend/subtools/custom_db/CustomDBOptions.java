@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class CustomDBOptions implements StandaloneTool<Workflow> {
 
     @Option(names = "--name", required = true,
-            description = {"Name of the custom database. It will be stored at in ('$USER_HOME/.sirius/csi_fingerid_cache/custom') or the specified sirius workspace (--workspace)."})
+            description = {"Name of the custom database. It will be stored in '$SIRIUS_WORKSPACE/csi_fingerid_cache/custom'. The Location of the SIRIUS workspace can be set by (--workspace)."})
     public String dbName;
 
     @Option(names = "--output",
