@@ -180,7 +180,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 validatorWarning.warn("Specified precursor molecular formula does not fall into given m/z error window. "
                         +formula.formatByHill()+" for m/z "+parentPeak.getMass()+" and ionization "+ionType);
             }
-        } else if (whiteset != null && !whiteset.getFormulas().isEmpty()) {
+        } else if (whiteset != null && !whiteset.isEmpty()) {
             final Collection<PrecursorIonType> ionTypes;
             if (experiment.getPrecursorIonType().isIonizationUnknown())
                 ionTypes = input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
