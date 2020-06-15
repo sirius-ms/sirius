@@ -62,7 +62,7 @@ public class CheckConnectionAction extends AbstractAction {
 
 
     public static @Nullable ConnectionMonitor.ConnetionCheck checkConnectionAndLoad() {
-        TinyBackgroundJJob<ConnectionMonitor.ConnetionCheck> connectionChecker = new TinyBackgroundJJob<ConnectionMonitor.ConnetionCheck>() {
+        TinyBackgroundJJob<ConnectionMonitor.ConnetionCheck> connectionChecker = new TinyBackgroundJJob<>() {
             @Override
             protected ConnectionMonitor.ConnetionCheck compute() throws Exception {
                 return MainFrame.CONNECTION_MONITOR.checkConnection();

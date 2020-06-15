@@ -31,7 +31,7 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
             return;
         
         //calculate csi
-        final FingerIdDialog dialog = new FingerIdDialog(MF, MF.isFingerid(),  true);
+        final FingerIdDialog dialog = new FingerIdDialog(MF, CheckConnectionAction.isConnectedAndLoad(),  true);
         final int returnState = dialog.run();
 
         if (returnState != FingerIdDialog.CANCELED) {

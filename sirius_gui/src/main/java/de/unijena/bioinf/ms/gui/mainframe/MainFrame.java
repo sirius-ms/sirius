@@ -99,9 +99,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
 
-    public boolean isFingerid() {
+    /*public boolean isFingerid() {
         return CONNECTION_MONITOR.checkConnection().isConnected();
-    }
+    }*/
 
 
     // methods for creating the mainframe
