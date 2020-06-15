@@ -63,7 +63,7 @@ public class SiriusSubToolJob extends InstanceJob {
         // so that the cli parser dependency can be removed
         if (cliOptions.formulaWhiteSet != null) {
             if (wSet != null)
-                wSet = wSet.union(cliOptions.formulaWhiteSet);
+                wSet = wSet.add(cliOptions.formulaWhiteSet);
             else
                 wSet = cliOptions.formulaWhiteSet;
         }
