@@ -7,6 +7,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jdesktop.beans.AbstractBean;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -72,13 +73,15 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
 
-    protected synchronized void setResult(final ConnetionCheck checkResult) {
-        ConnetionCheck old = this.checkResult;
-        this.checkResult = checkResult;
+    protected void setResult(final ConnetionCheck checkResult) {
+        ConnetionCheck old;
+        synchronized (this) {
+            old = this.checkResult;
+            this.checkResult = checkResult;
+        }
 
         firePropertyChange(new ConnectionStateEvent(old, this.checkResult));
         firePropertyChange(new ErrorStateEvent(old, this.checkResult));
-
     }
 
 
@@ -145,11 +148,11 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
     public class ConnetionCheck {
-        public final ConnectionState state;
+        @NotNull public final ConnectionState state;
         public final int errorCode;
         public final WorkerList workerInfo;
 
-        public ConnetionCheck(ConnectionState state, int errorCode, WorkerList workerInfo) {
+        public ConnetionCheck(@NotNull ConnectionState state, int errorCode, WorkerList workerInfo) {
             this.state = state;
             this.errorCode = errorCode;
             this.workerInfo = workerInfo;
