@@ -70,7 +70,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     private FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
         this(analyzer, input);
         this.pinput = input;
-        this.pinput.setAnnotation(Whiteset.class, Whiteset.of(tree.getRoot().getFormula()));
+        this.pinput.setAnnotation(Whiteset.class, Whiteset.ofMeasuredFormulas(Collections.singleton(tree.getRoot().getFormula())));
         this.inputCopyForRecalibration = pinput;
         score();
     }
@@ -452,7 +452,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final ProcessedInput pin = this.inputCopyForRecalibration.clone();
         pin.setAnnotation(PossibleAdducts.class, new PossibleAdducts(PrecursorIonType.getPrecursorIonType(decomp.getIon())));
         pin.setAnnotation(SpectralRecalibration.class, rec);
-        pin.setAnnotation(Whiteset.class, Whiteset.of(input.getExperimentInformation().getPrecursorIonType().measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula()))); // TODO: check if this works for adducts
+        pin.setAnnotation(Whiteset.class, Whiteset.ofMeasuredFormulas(Collections.singleton(tree.getRoot().getFormula()))); // TODO: check if this works for adducts
         pin.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, pinput.getAnnotationOrNull(TreeSizeScorer.TreeSizeBonus.class));
         // we have to completely rescore the input...
         //final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));

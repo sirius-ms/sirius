@@ -19,6 +19,8 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -58,16 +60,11 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
         IsotopeSettings isotopeS = input.getAnnotationOrNull(IsotopeSettings.class);
         if (isotopeS != null && isotopeS.isFiltering()) {
             final ExtractedIsotopePattern extractedIsotopePattern = input.getAnnotationOrNull(ExtractedIsotopePattern.class);
-            if (extractedIsotopePattern != null) {
+            if (extractedIsotopePattern != null && input.getAnnotation(IsotopeSettings.class).map(IsotopeSettings::isFiltering).orElse(false)) {
                 // find all high-scoring isotope pattern
                 final MolecularFormula[] formulas = filterFormulasByIsotopeScore(extractedIsotopePattern);
-                final Whiteset whiteset = input.getAnnotationOrNull(Whiteset.class);
-                if (whiteset == null || whiteset.getFormulas().isEmpty()) {
-                    input.setAnnotation(Whiteset.class, Whiteset.of(formulas).withPrecursor(input.getExperimentInformation().getPrecursorIonType()));
-                } else if (whiteset.getFormulas().size() > 1) { // necessary, otherwise we remove formulas which are enforded
-                    input.setAnnotation(Whiteset.class, whiteset.intersection(Whiteset.of(formulas).withPrecursor(input.getExperimentInformation().getPrecursorIonType())));
-                }
-
+                final Whiteset whiteset = input.getAnnotation(Whiteset.class, Whiteset::empty);
+                input.setAnnotation(Whiteset.class, whiteset.addMeasured(new HashSet<>(Arrays.asList(formulas))));
             }
         }
     }
