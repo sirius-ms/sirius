@@ -2,27 +2,32 @@ package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import com.google.common.base.Predicate;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobStateEvent;
+import de.unijena.bioinf.ms.frontend.Run;
+import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
+import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.DialogHaeder;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.io.CsvFields;
 import de.unijena.bioinf.ms.gui.io.csv.GeneralCSVDialog;
 import de.unijena.bioinf.ms.gui.io.csv.SimpleCsvParser;
+import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.ms.gui.utils.ListAction;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.ReaderFactory;
 import org.slf4j.LoggerFactory;
@@ -30,20 +35,21 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 
-//import de.unijena.bioinf.fingerid.db.custom.CustomDatabase;
-//import de.unijena.bioinf.fingerid.db.custom.CustomDatabaseImporter;
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class DatabaseDialog extends JDialog {
 
@@ -55,15 +61,12 @@ public class DatabaseDialog extends JDialog {
     protected JButton addCustomDb;
     protected DatabaseView dbView;
     protected PlaceholderTextField nameField;
-    //    protected final Frame owner;
     private JDialog owner = this;
 
     public DatabaseDialog(final Frame owner) {
         super(owner, true);
         setTitle("Databases");
         setLayout(new BorderLayout());
-
-//        this.owner = owner;
 
         //============= NORTH (Header) =================
         JPanel header = new DialogHaeder(Icons.DB_64);
@@ -104,6 +107,7 @@ public class DatabaseDialog extends JDialog {
                 }
             }
         });
+
         this.addCustomDb = Buttons.getAddButton16("Add custom DB");
         addCustomDb.setEnabled(false);
         final Box but = Box.createHorizontalBox();
@@ -134,25 +138,23 @@ public class DatabaseDialog extends JDialog {
         addCustomDb.addActionListener(e -> {
             databases.add(nameField.getText());
             dbList.setListData(databases.toArray(String[]::new));
-            final CustomDatabase newDb = new ImportDatabaseDialog(nameField.getText()).database;
-            whenCustomDbIsAdded(newDb);
+            new ImportDatabaseDialog(nameField.getText());
         });
 
         new ListAction(dbList, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final int k = dbList.getSelectedIndex();
-                if (k > 0 && k < dbList.getModel().getSize()) {
-                    whenCustomDbIsAdded(new ImportDatabaseDialog(dbList.getModel().getElementAt(k)).database);
-                }
+                if (k > 0 && k < dbList.getModel().getSize())
+                    new ImportDatabaseDialog(dbList.getModel().getElementAt(k));
+
             }
         });
 
         dbView.edit.addActionListener(e -> {
             final int k = dbList.getSelectedIndex();
-            if (k > 0 && k < dbList.getModel().getSize()) {
-                whenCustomDbIsAdded(new ImportDatabaseDialog(dbList.getModel().getElementAt(k)).database);
-            }
+            if (k > 0 && k < dbList.getModel().getSize())
+                new ImportDatabaseDialog(dbList.getModel().getElementAt(k));
         });
 
         dbView.deleteCache.addActionListener(e -> {
@@ -169,7 +171,7 @@ public class DatabaseDialog extends JDialog {
                     customDatabases.remove(name);
                     dbList.setListData(collectDatabases().toArray(new String[0]));
                 } else {
-                    // TODO: implement
+                    new WarningDialog(getOwner(), "Cannot delete integrated PubChem copy");
                 }
             }
 
@@ -277,14 +279,13 @@ public class DatabaseDialog extends JDialog {
     protected class DatabaseList extends JList<String> {
 
         protected DatabaseList(List<String> databaseList) {
-            super(new Vector<String>(databaseList));
+            super(new Vector<>(databaseList));
             setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         }
 
     }
 
     protected static class ImportList extends JList<InChI> implements ListCellRenderer<InChI> {
-
         private final Box cell;
         private final JLabel left, right;
         protected HashSet<String> importedCompounds;
@@ -308,10 +309,8 @@ public class DatabaseDialog extends JDialog {
         }
 
         public void addCompound(final InChI inchi) {
-            if (importedCompounds.add(inchi.key2D())) {
-                // I dont understand why this have to be run in swing thread
+            if (importedCompounds.add(inchi.key2D()))
                 Jobs.runEDTLater(() -> model.addElement(inchi));
-            }
         }
 
 
@@ -359,12 +358,7 @@ public class DatabaseDialog extends JDialog {
             close = new JButton("close");
             inner.add(close, BorderLayout.SOUTH);
             close.setEnabled(false);
-            close.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    dispose();
-                }
-            });
+            close.addActionListener(e -> dispose());
 
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
             setLocationRelativeTo(getParent());
@@ -426,7 +420,7 @@ public class DatabaseDialog extends JDialog {
             final GeneralCSVDialog csvDialog = parser;
             final SimpleCsvParser csvParser = csvDialog != null ? csvDialog.getParser() : null;
             final int inchiColumn = csvDialog != null ? csvDialog.getFirstColumnFor(inchi) : 0, smilesColumn = csvDialog != null ? csvDialog.getFirstColumnFor(smiles) : 0, idColumn = csvDialog != null ? csvDialog.getFirstColumnFor(id) : 0;
-            worker = new SwingWorker<List<InChI>, ImportStatus>() {
+            worker = new SwingWorker<>() {
 
                 @Override
                 protected void done() {
@@ -439,8 +433,6 @@ public class DatabaseDialog extends JDialog {
                     super.process(chunks);
                     for (ImportStatus status : chunks) {
                         if (status.topMessage != null) statusText.setText(status.topMessage);
-                        if (status.inchi != null) {
-                        }
                         progressBar.setValue(status.current);
                         progressBar.setMaximum(status.max);
                         if (status.errorMessage != null) {
@@ -508,7 +500,7 @@ public class DatabaseDialog extends JDialog {
                                         publish(status);
                                         for (int i = 0; i < inchiOrSmiles.size(); ++i) {
                                             try {
-                                                importer.importFromString(inchiOrSmiles.get(i), ids.get(i),null);
+                                                importer.importFromString(inchiOrSmiles.get(i), ids.get(i), null);
                                             } catch (Exception e) {
                                                 final ImportStatus sc = status.clone();
                                                 sc.current = i;
@@ -582,7 +574,6 @@ public class DatabaseDialog extends JDialog {
     }
 
     protected static class ImportStatus implements Cloneable {
-        private InChI inchi;
         private String errorMessage, topMessage;
         private int max, current;
 
@@ -596,42 +587,34 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
-    private static final String NONE = "None", BIO = DataSource.BIO.realName, PUBCHEM = DataSource.PUBCHEM.realName;
+//    private static final String NONE = "None", BIO = DataSource.BIO.realName, PUBCHEM = DataSource.PUBCHEM.realName;
 
-    protected class ImportDatabaseDialog extends JDialog implements CustomDatabaseImporter.Listener {
+    protected class ImportDatabaseDialog extends JDialog {
 
-        protected ImportList ilist;
+        //        protected ImportList ilist;
         protected JButton importButton;
-        protected ImportCompoundsDialog importDialog;
-        protected CustomDatabaseImporter importer;
-        protected Collector collector;
-        protected CustomDatabase database;
-
+        //        protected ImportCompoundsDialog importDialog;
+//        protected CustomDatabaseImporter importer;
+//        protected CustomDatabase database;
+        protected DatabaseImportConfigPanel configPanel;
+        private String name;
 
         public ImportDatabaseDialog(String name) {
             super(owner, "Import " + name + " database", false);
 
-            try {
-                CdkFingerprintVersion version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
+            this.name = name;
+            setPreferredSize(new Dimension(640, 480));
+            setLayout(new BorderLayout());
 
-                database = CustomDatabase.createNewDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name), version);
-                importer = database.getImporter(ApplicationCore.WEB_API, 1000);
-                importer.init();
-                importer.addListener(this);
-                collector = new Collector(importer);
-                collector.execute();
-                setPreferredSize(new Dimension(640, 480));
-                setLayout(new BorderLayout());
+            final JLabel explain = new JLabel("<html>You can inherit compounds from PubChem or our biological database. If you do so, all compounds in these databases are implicitly added to your custom database.");
+            final Box hbox = Box.createHorizontalBox();
+            hbox.add(explain);
+            final Box vbox = Box.createVerticalBox();
+            vbox.add(hbox);
+            vbox.add(Box.createVerticalStrut(4));
 
-                final JLabel explain = new JLabel("<html>You can inherit compounds from PubChem or our biological database. If you do so, all compounds in these databases are implicitly added to your custom database.");
-                final Box hbox = Box.createHorizontalBox();
-                hbox.add(explain);
-                final Box vbox = Box.createVerticalBox();
-                vbox.add(hbox);
-                vbox.add(Box.createVerticalStrut(4));
-
-                //todo inheritance handling
-                System.out.println("Implement DB inheritance");
+            //todo inheritance handling
+            System.out.println("Implement DB inheritance");
                 /*final JXRadioGroup<String> inh = new JXRadioGroup<String>(new String[]{NONE, BIO, PUBCHEM});
                 inh.setLayoutAxis(BoxLayout.X_AXIS);
                 vbox.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Inherit compounds from"));
@@ -660,121 +643,101 @@ public class DatabaseDialog extends JDialog {
                     }
                 });*/
 
-                final Box box = Box.createVerticalBox();
-                box.setAlignmentX(Component.LEFT_ALIGNMENT);
-                final JLabel label = new JLabel("<html>Please insert the compounds of your custom database here (one compound per line). You can use SMILES and InChI to describe your compounds. It is also possible to drag and drop files with InChI, SMILES or in other molecule formats (e.g. MDL) into this text field.");
-                label.setAlignmentX(Component.LEFT_ALIGNMENT);
-                box.add(label);
-                final JTextArea textArea = new JTextArea();
-                textArea.setAlignmentX(Component.LEFT_ALIGNMENT);
-                final JScrollPane pane = new JScrollPane(textArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-                pane.setAlignmentX(Component.LEFT_ALIGNMENT);
-                box.add(pane);
-                importButton = new JButton("Import compounds");
-                importButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-                box.add(importButton);
+            final Box box = Box.createVerticalBox();
+            box.setAlignmentX(Component.LEFT_ALIGNMENT);
+            final JLabel label = new JLabel("<html>Please insert the compounds of your custom database here (one compound per line). You can use SMILES and InChI to describe your compounds. It is also possible to drag and drop files with InChI, SMILES or in other molecule formats (e.g. MDL) into this text field.");
+            label.setAlignmentX(Component.LEFT_ALIGNMENT);
+            box.add(label);
+            final JTextArea textArea = new JTextArea();
+            textArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+            final JScrollPane pane = new JScrollPane(textArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            pane.setAlignmentX(Component.LEFT_ALIGNMENT);
+            box.add(pane);
+            box.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Import compounds"));
 
+            importButton = new JButton("Import compounds");
+            importButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
-                box.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Import compounds"));
+            configPanel = new DatabaseImportConfigPanel(name);
 
-                add(box, BorderLayout.CENTER);
+            add(configPanel, BorderLayout.NORTH);
+            add(box, BorderLayout.CENTER);
+            add(importButton, BorderLayout.SOUTH);
 
-                final Box box2 = Box.createVerticalBox();
-                box2.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Recently imported"));
-
-                ilist = new ImportList();
-                box2.add(new JScrollPane(ilist, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
-
-                add(box2, BorderLayout.SOUTH);
-
-                importDialog = new ImportCompoundsDialog(importer);
-
-                importButton.addActionListener(e -> {
-                    if (!importDialog.isVisible()) {
-                        final String[] lines = textArea.getText().split("\n");
-                        importDialog.setCompounds(database, Arrays.asList(lines));
-                        textArea.setText("");
+//                importDialog = new ImportCompoundsDialog(importer);
+            importButton.addActionListener(e -> {
+                Jobs.runInBackgroundAndLoad(this, "Processing input Data...", () -> {
+                    Path f = FileUtils.newTempFile("custom-db-import", ".csv");
+                    try {
+                        Files.write(f, Arrays.asList(textArea.getText().split("\n")));
+                        runImportJob(List.of(f.toFile()));
+                        dispose();
+                    } catch (IOException ioException) {
+                        new ErrorReportDialog(this, "Could not write input data to '" + f.toString() + "'.");
                     }
                 });
+            });
 
-                final DropTarget dropTarget = new DropTarget() {
-                    @Override
-                    public synchronized void drop(DropTargetDropEvent evt) {
-                        final List<File> files = DragAndDrop.getFileListFromDrop(evt);
-                        if (!importDialog.isVisible()) {
-                            importDialog.setCompounds(database, files);
-                            textArea.setText("");
+            final DropTarget dropTarget = new DropTarget() {
+                @Override
+                public synchronized void drop(DropTargetDropEvent evt) {
+                    runImportJob(DragAndDrop.getFileListFromDrop(evt));
+                    dispose();
+                }
+            };
+
+            setDropTarget(dropTarget);
+            textArea.setDropTarget(dropTarget);
+            setLocationRelativeTo(getParent());
+            pack();
+            setVisible(true);
+
+        }
+
+        protected void runImportJob(@NotNull List<File> source) {
+            try {
+                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+                final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), null), configOptionLoader, new GuiInstanceBufferFactory());
+                final Run computation = new Run(wfBuilder);
+
+                List<String> command = new ArrayList<>();
+                command.add("--input");
+                command.add(source.stream().map(File::getAbsolutePath).collect(Collectors.joining(",")));
+                command.add(configPanel.toolCommand());
+                command.addAll(configPanel.asParameterList());
+
+                computation.parseArgs(command.toArray(String[]::new));
+
+                if (computation.isWorkflowDefined()){
+                    final TextAreaJJobContainer<Boolean> j = Jobs.runWorkflow(computation.getFlow(), List.of());//todo make som nice head job that does some organizing stuff
+                    j.getSourceJob().addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt -> {
+                        if (((JobStateEvent)evt).getNewValue().equals(JJob.JobState.DONE)){
+                            JJob<?> jj = ((JJob<?>) evt.getSource());
+//                            if (jj.isFinished())
+//                                whenCustomDbIsAdded(jj.result());
                         }
-                    }
-                };
-
-                setDropTarget(dropTarget);
-                textArea.setDropTarget(dropTarget);
-                setLocationRelativeTo(getParent());
-                pack();
-                setVisible(true);
-            } catch (IOException e) {
-                e.printStackTrace();
+                    });
+                }
+                //todo else some error message with pico cli output
+            } catch (Exception e) {
+                new ExceptionDialog(MF, e.getMessage());
             }
-        }
 
 
-        @Override
-        public void dispose() {
-            collector.cancel(true);
-            super.dispose();
-        }
+        /*    Jobs.submit(new BasicJJob<CustomDatabase>() {
+                @Override
+                protected CustomDatabase compute() throws Exception {
+                    CdkFingerprintVersion version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
 
-        @Override
-        public void newFingerprintBufferSize(int size) {
-
-        }
-
-        @Override
-        public void newMoleculeBufferSize(int size) {
-
-        }
-
-        @Override
-        public void newInChI(InChI inchi) {
-            ilist.addCompound(inchi);
+                    database = CustomDatabase.createNewDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name), version);
+                    importer = database.getImporter(ApplicationCore.WEB_API, 1000);
+                    importer.init();
+                    importer.addListener(this);
+                }
+            }, name, "Custom DB Import");*/
         }
     }
 
-    private static class Collector extends SwingWorker<InChI, InChI> implements CustomDatabaseImporter.Listener {
-        private CustomDatabaseImporter importer;
-
-        public Collector(CustomDatabaseImporter importer) {
-            this.importer = importer;
-        }
-
-        @Override
-        protected void process(List<InChI> chunks) {
-            for (InChI inchi : chunks) {
-            }
-        }
-
-        @Override
-        public void newFingerprintBufferSize(int size) {
-
-        }
-
-        @Override
-        public void newMoleculeBufferSize(int size) {
-
-        }
-
-        @Override
-        public void newInChI(InChI inchi) {
-            publish(inchi);
-        }
-
-        @Override
-        protected InChI doInBackground() throws Exception {
-            importer.collect(this);
-            return null;
-        }
-    }
 
     private class AskForFieldsToImportDialog extends JDialog {
         private final JTextField nameField = new JTextField("COMMON_NAME,SYSTEMATIC_NAME");
