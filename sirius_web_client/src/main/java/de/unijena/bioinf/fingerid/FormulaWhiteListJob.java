@@ -8,10 +8,11 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
-import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.chemdb.FormulaCandidate;
+import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
+import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,7 +59,7 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
                 .stream().map(FormulaCandidate::getFormula).filter(f -> !onlyOrganic || f.isCHNOPSBBrClFI())
                 .collect(Collectors.toSet());
 
-        final Whiteset whiteset = Whiteset.of(formulas);
+        final Whiteset whiteset = Whiteset.ofNeutralizedFormulas(formulas);
         if (annotate)
             experiment.setAnnotation(Whiteset.class, whiteset);
 

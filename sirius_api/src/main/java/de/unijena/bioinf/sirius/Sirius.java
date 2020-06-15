@@ -158,7 +158,8 @@ public class Sirius {
     public IdentificationResult compute(@NotNull Ms2Experiment experiment, MolecularFormula formula) {
         final MutableMs2Experiment copy = new MutableMs2Experiment(experiment);
         copy.setMolecularFormula(formula);
-        copy.setAnnotation(Whiteset.class, Whiteset.of(formula));
+        Set<MolecularFormula> wh = Collections.singleton(formula);
+        copy.setAnnotation(Whiteset.class, Whiteset.ofMeasuredOrNeutral(wh));
         final List<IdentificationResult<SiriusScore>> irs = identify(copy);
         if (irs.isEmpty()) return null;
         else return irs.get(0);
@@ -168,7 +169,7 @@ public class Sirius {
             formula) {
         final MutableMs2Experiment copy = new MutableMs2Experiment(experiment);
         copy.setMolecularFormula(formula);
-        copy.setAnnotation(Whiteset.class, Whiteset.of(formula));
+        copy.setAnnotation(Whiteset.class, Whiteset.ofMeasuredOrNeutral(Collections.singleton(formula)));
         return new SiriusIdentificationJob(copy).wrap(x->x.get(0));
 
     }
@@ -207,7 +208,7 @@ public class Sirius {
                                                     experiment, Iterable<MolecularFormula> formulas) {
         final HashSet<MolecularFormula> fs = new HashSet<MolecularFormula>();
         for (MolecularFormula f : formulas) fs.add(f);
-        final Whiteset whiteset = Whiteset.of(fs);
+        final Whiteset whiteset = Whiteset.ofMeasuredOrNeutral(fs);
         experiment.setAnnotation(Whiteset.class, whiteset);
     }
 
