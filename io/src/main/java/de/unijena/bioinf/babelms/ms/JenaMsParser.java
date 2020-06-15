@@ -271,11 +271,12 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 //override in source set in ms file
                 this.externalSource = new SpectrumFileSource(new URL(value));
             } else if (optionName.equals("formula") || optionName.equals("formulas")) {
-                if (formulas == null) {
-                    formulas = Whiteset.of(parseFormulas(value));
+                final List<String> valueList = Arrays.asList(value.split("(?:\\s+|,)"));
+                if (this.formulas == null) {
+                    this.formulas = Whiteset.of(valueList);
                 } else {
                     warn("Molecular formulas is set twice, Sirius will collect them as a Whitelist!");
-                    formulas.getFormulas().addAll(Arrays.asList(parseFormulas(value)));
+                    this.formulas.add(Whiteset.of(valueList));
                 }
             } else if (optionName.equals("parentmass")) {
                 if (parentMass != 0) warn("parent mass is set twice");
@@ -398,8 +399,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             //set fields
             exp.setIonMass(parentMass);
             if (formulas != null) {
-                if (formulas.getFormulas().size() == 1)
-                    exp.setMolecularFormula(formulas.getFormulas().iterator().next());
+                if (formulas.getNeutralFormulas().size() == 1)
+                    exp.setMolecularFormula(formulas.getNeutralFormulas().iterator().next());
                 else
                     exp.setAnnotation(Whiteset.class, formulas);
             }
