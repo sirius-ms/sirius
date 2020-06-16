@@ -14,6 +14,10 @@ public final class FormulaResult extends ProjectSpaceContainer<FormulaResultId> 
         this.formulaResultId = id;
     }
 
+    public String toString() {
+        return formulaResultId.toString();
+    }
+
     @Override
     public Annotations<DataAnnotation> annotations() {
         return annotations;
