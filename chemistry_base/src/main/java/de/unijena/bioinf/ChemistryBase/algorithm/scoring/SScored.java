@@ -24,7 +24,7 @@ public class SScored<T, S extends Score> implements Comparable<SScored<T, S>> {
 
     @Override
     public String toString() {
-        return String.format("%s (%.3f)", candidate.toString(), score);
+        return String.format("%s (%.3f)", candidate.toString(), score.score());
     }
 
     @Override
