@@ -52,7 +52,7 @@ public class ProjectSpaceIO {
             if (!list.isEmpty()) {
                 LOG.warn("Project=Space seems to use outdated '.csv' file extension. Try to convert to new `.tsv` format if necessary.");
                 for (Path p : list)
-                    Files.move(p, Paths.get(p.toString().replace("csv",".tsv")));
+                    Files.move(p, Paths.get(p.toString().replace(".csv",".tsv")));
             }
         }
     }
