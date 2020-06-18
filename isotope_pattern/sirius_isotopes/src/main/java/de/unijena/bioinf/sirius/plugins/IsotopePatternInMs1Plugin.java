@@ -64,7 +64,7 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
                 // find all high-scoring isotope pattern
                 final MolecularFormula[] formulas = filterFormulasByIsotopeScore(extractedIsotopePattern);
                 final Whiteset whiteset = input.getAnnotation(Whiteset.class, Whiteset::empty);
-                input.setAnnotation(Whiteset.class, whiteset.addMeasured(new HashSet<>(Arrays.asList(formulas))));
+                input.setAnnotation(Whiteset.class, whiteset.isEmpty() ? whiteset.addMeasured(new HashSet<>(Arrays.asList(formulas))) : whiteset); // quickfix: never filter when whiteset is given
             }
         }
     }
