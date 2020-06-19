@@ -96,7 +96,8 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
 
     @Provides(PossibleAdducts.class)
     public void adductDetection(ProcessedInput pinput) {
-        final MutableMs2Experiment exp = pinput.getExperimentInformation();
+        //todo we need to write to the original data here. to keep the predicted adducts. maybe this should be part of the IDResult instead????
+        final Ms2Experiment exp = pinput.getOriginalInput();
 
         // if input file contains an adduct annotation, disable adduct detection
         if (!exp.getPrecursorIonType().isIonizationUnknown()) {
