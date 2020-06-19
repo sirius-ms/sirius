@@ -13,7 +13,6 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.CONNECTION_MONITOR;
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
