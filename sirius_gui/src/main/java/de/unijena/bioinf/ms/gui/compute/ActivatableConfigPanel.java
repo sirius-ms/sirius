@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -17,6 +18,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     protected ToolbarToggleButton activationButton;
     protected final String toolName;
     protected final C content;
+
+    protected LinkedHashSet<EnableChangeListener<C>> listeners = new LinkedHashSet<>();
 
     public ActivatableConfigPanel(String toolname, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
         this(toolname, null, buttonIcon, needsCSIConnection, contentSuppl);
@@ -56,7 +59,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     }
 
     protected void setComponentsEnabled(final boolean enabled){
-        GuiUtils.setEnabled(content,enabled);
+        GuiUtils.setEnabled(content, enabled);
+        listeners.forEach(e -> e.onChange(content, enabled));
     }
 
 
@@ -87,6 +91,19 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         return content.asParameterList();
     }
 
+    public boolean removeEnableChangeListener(EnableChangeListener<C> listener) {
+        return listeners.remove(listener);
+    }
+
+    public void addEnableChangeListener(EnableChangeListener<C> listener) {
+        listeners.add(listener);
+    }
+
+
+    @FunctionalInterface
+    public interface EnableChangeListener<C extends ConfigPanel> {
+        void onChange(C content, boolean enabled);
+    }
 
 }
 
