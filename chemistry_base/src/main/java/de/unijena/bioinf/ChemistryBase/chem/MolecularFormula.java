@@ -894,7 +894,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     public int compareTo(MolecularFormula o) {
         if (equals(o)) return 0;
         if (getMass() < o.getMass()) return -1;
-        return 1;
+        if (getMass() > o.getMass()) return 1;
+        return Integer.compare(hashCode(),o.hashCode());
     }
 
     /**
