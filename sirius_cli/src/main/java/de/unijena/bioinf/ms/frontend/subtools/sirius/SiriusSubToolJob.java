@@ -42,7 +42,6 @@ public class SiriusSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         final Ms2Experiment exp = inst.getExperiment();
-//        final CompoundContainer ioC = inst.loadCompoundContainer();
         // set whiteSet or merge with whiteSet from db search if available
         Whiteset wSet = null;
 

@@ -38,8 +38,8 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
         parameterBindings.put("StructureSearchDB", () -> String.join(",", getStructureSearchDBStrings()));
         add(searchDBList);
 
-        adductOptions = new JCheckboxListPanel<>(new AdductSelectionList(sourceIonization), "Possible Adducts");
-        parameterBindings.put("AdductSettings.detectable", () -> getSelectedAdducts().toString());
+        adductOptions = new JCheckboxListPanel<>(new AdductSelectionList(sourceIonization), "Fallback Adducts");
+        GuiUtils.assignParameterToolTip(adductOptions, "AdductSettings.fallback");
         parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
         add(adductOptions);
 
@@ -53,12 +53,6 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
                 else
                     searchDBList.checkBoxList.checkAll(syncSource.getCheckedItems());
             });
-    }
-
-
-    public List<String> getAdductsParameter() {
-        return ListUtils.union(getParameterBinding().getParameter("AdductSettings.detectable"),
-                getParameterBinding().getParameter("AdductSettings.fallback"));
     }
 
     public PossibleAdducts getSelectedAdducts() {

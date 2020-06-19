@@ -97,13 +97,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     //internet connection monitor
     public static final ConnectionMonitor CONNECTION_MONITOR = new ConnectionMonitor();
 
-
-
-    /*public boolean isFingerid() {
-        return CONNECTION_MONITOR.checkConnection().isConnected();
-    }*/
-
-
     // methods for creating the mainframe
     private MainFrame() {
         super(ApplicationCore.VERSION_STRING());

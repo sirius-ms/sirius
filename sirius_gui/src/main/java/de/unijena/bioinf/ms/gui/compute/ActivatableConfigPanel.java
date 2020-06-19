@@ -43,7 +43,6 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
 
         if (needsCSIConnection) {
             MainFrame.CONNECTION_MONITOR.addConectionStateListener(evt -> setButtonEnabled(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck().isConnected()));
-            setButtonEnabled(MainFrame.CONNECTION_MONITOR.checkConnection().isConnected());
         } else {
             setButtonEnabled(true);
         }
@@ -74,11 +73,13 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
 //                (enabled ? "Enable " + toolName : toolName + " Not available!")
 //        );
 
-        if (enabled) {
-            activationButton.setEnabled(true);
-        } else {
-            activationButton.setEnabled(false);
-            activationButton.setSelected(false);
+        if (enabled != activationButton.isEnabled()) {
+            if (enabled) {
+                activationButton.setEnabled(true);
+            } else {
+                activationButton.setEnabled(false);
+                activationButton.setSelected(false);
+            }
         }
     }
 

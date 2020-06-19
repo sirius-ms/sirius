@@ -10,17 +10,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
+    public final static Set<String> BLACK_LIST = Set.of(DataSource.ADDITIONAL.realName, DataSource.TRAIN.realName,
+            DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
+            DataSource.SUPERNATURAL.realName
+    );
+
     public DBSelectionList() {
         this((String) null);
     }
 
     public DBSelectionList(@Nullable String descriptionKey) {
         this(descriptionKey, SearchableDatabases.getAvailableDatabases().stream().
-                filter(db -> !db.name().equals(DataSource.ADDITIONAL.realName) && !db.name().equals(DataSource.TRAIN.realName)).
+                filter(db -> !BLACK_LIST.contains(db.name())).
                 collect(Collectors.toList()));
     }
 
@@ -42,6 +48,4 @@ public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
         if (descKey != null)
             GuiUtils.assignParameterToolTip(this, descKey);
     }
-
-
 }

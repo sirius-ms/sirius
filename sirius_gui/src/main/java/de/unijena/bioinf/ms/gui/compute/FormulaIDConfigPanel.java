@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.chemdb.DataSource;
@@ -133,9 +134,11 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         parameterBindings.put("FormulaSearchDB", () -> String.join(",", getFormulaSearchDBStrings()));
 
         //configure ionization panels
-        ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations", "Set possible ionisation for data with unknown ionization");
+        ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations", GuiUtils.formatToolTip("Set possible ionisation for data with unknown ionization. SIRIUS will try to auto-detect adducts that can be derived from this ionizations"));
         ionizationList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
         center.add(ionizationList);
+        parameterBindings.put("AdductSettings.detectable", () -> getDerivedAdducts().toString());
+
 
         // configure Element panel
         makeElementPanel(ecs.size() > 1);
@@ -151,10 +154,10 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         }); //todo check if this makes scence
 
 
-        refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()));
+        refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()),true);
     }
 
-    public void refreshPossibleIonizations(Set<String> ionTypes) {
+    public void refreshPossibleIonizations(Set<String> ionTypes, boolean enabled) {
         java.util.List<String> ionizations = new ArrayList<>();
 
         if (!ionTypes.isEmpty()) {
@@ -173,7 +176,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             Collections.sort(ionizations);
             ionizationList.checkBoxList.replaceElements(ionizations);
             ionizationList.checkBoxList.checkAll();
-            ionizationList.setEnabled(true);
+            ionizationList.setEnabled(enabled);
         }
     }
 
@@ -260,5 +263,10 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             else
                 return DataSources.getSourceFromName(db.name()).map(DataSource::name).orElse(null);
         }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    public PossibleAdducts getDerivedAdducts() {
+        return ionizationList.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType)
+                .flatMap(Optional::stream).flatMap(i -> PeriodicTable.getInstance().adductsByIonisation(i).stream()).collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new));
     }
 }
