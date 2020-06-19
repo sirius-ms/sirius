@@ -1,19 +1,26 @@
 package de.unijena.bioinf.ms.gui.tree_viewer;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ftalign.CommonLossScoring;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 public class TreeViewerConnector{
 
     public String getRescoredTree(String json_tree){
         // TODO implement
-        FTree tree = (new FTJsonReader()).treeFromJsonString(json_tree, null);
-        // do stuff on tree
-        return (new FTJsonWriter()).treeToJsonString(tree);
+        try {
+            FTree tree = (new FTJsonReader()).treeFromJsonString(json_tree, null);
+            return (new FTJsonWriter()).treeToJsonString(tree);
+        } catch (IOException e) {
+            LoggerFactory.getLogger(TreeViewerConnector.class).error(e.getMessage(), e);
+        }
+        return json_tree;
     }
 
     public String formulaDiff(String f1, String f2) throws UnknownElementException{
