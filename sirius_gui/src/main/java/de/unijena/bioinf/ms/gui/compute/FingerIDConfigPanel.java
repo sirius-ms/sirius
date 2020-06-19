@@ -10,6 +10,7 @@ import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import org.apache.commons.collections.ListUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -39,6 +40,7 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
 
         adductOptions = new JCheckboxListPanel<>(new AdductSelectionList(sourceIonization), "Possible Adducts");
         parameterBindings.put("AdductSettings.detectable", () -> getSelectedAdducts().toString());
+        parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
         add(adductOptions);
 
         searchDBList.checkBoxList.check(SearchableDatabases.getBioDb());
@@ -55,9 +57,10 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
 
 
     public List<String> getAdductsParameter() {
-        return getParameterBinding().getParameter("AdductSettings.detectable");
-
+        return ListUtils.union(getParameterBinding().getParameter("AdductSettings.detectable"),
+                getParameterBinding().getParameter("AdductSettings.fallback"));
     }
+
     public PossibleAdducts getSelectedAdducts() {
         return adductOptions.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType)
                 .flatMap(Optional::stream).collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new));

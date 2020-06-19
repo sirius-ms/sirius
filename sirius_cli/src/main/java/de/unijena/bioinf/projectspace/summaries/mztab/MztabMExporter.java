@@ -34,6 +34,7 @@ import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 import uk.ac.ebi.pride.jmztab2.model.MZTabConstants;
 import uk.ac.ebi.pride.jmztab2.model.MZTabUtils;
 
@@ -110,9 +111,16 @@ public class MztabMExporter implements Summarizer {
                         .filter(s -> s.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(TopCSIScore.class))
                         .map(s -> new SScored<>(s.getCandidate(), s.getCandidate().getAnnotationOrThrow(FormulaScoring.class).getAnnotationOrThrow(TopCSIScore.class)))
                         .sorted().findFirst().map(SScored::getCandidate).orElseThrow();
-                bestHit = bestHitSource.getAnnotationOrThrow(FBCandidates.class).getResults().get(0);
 
-                //rerank
+                final FormulaResult finalBestHitSource = bestHitSource;
+                bestHit = finalBestHitSource.getAnnotation(FBCandidates.class).map(can -> can.getResults().get(0)).orElseGet(
+                        () -> {
+                            LoggerFactory.getLogger(getClass()).warn("Best CSI score found but no corresponding hit! " + finalBestHitSource.getId().toString());
+                            return null;
+                        }
+                );
+
+                //rerank by structure hit
                 results.stream().map(SScored::getCandidate).collect(Collectors.toList()).indexOf(bestHitSource);
             }
 
