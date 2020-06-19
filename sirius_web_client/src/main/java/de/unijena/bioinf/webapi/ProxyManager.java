@@ -110,8 +110,8 @@ public class ProxyManager {
     //2 no connection to uni jena
     //3 no connection to internet (google/microft/ubuntu????)
     public static int checkInternetConnection(final HttpClient client) {
-        if (!checkBioinf(client)) {
-            if (!checkJena(client)) {
+        if (!checkDomain(client)) {
+            if (!checkHoster(client)) {
                 if (!checkExternal(client)) {
                     return 1;
                 }
@@ -188,15 +188,15 @@ public class ProxyManager {
     }
 
     public static boolean checkExternal(HttpClient proxy) {
-        return checkConnectionToUrl(proxy, "http://www.google.de");
+        return checkConnectionToUrl(proxy, PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external",null,"http://www.google.de/"));
     }
 
-    public static boolean checkJena(HttpClient proxy) {
-        return checkConnectionToUrl(proxy, "http://www.uni-jena.de");
+    public static boolean checkHoster(HttpClient proxy) {
+        return checkConnectionToUrl(proxy,  PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.hoster",null,"https://www.uni-jena.de/"));
     }
 
-    public static boolean checkBioinf(HttpClient proxy) {
-        return checkConnectionToUrl(proxy, "https://bio.informatik.uni-jena.de");
+    public static boolean checkDomain(HttpClient proxy) {
+        return checkConnectionToUrl(proxy, PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.domain",null,"https://bio.informatik.uni-jena.de/"));
     }
 
     public static boolean checkConnectionToUrl(final HttpClient proxy, String url) {
