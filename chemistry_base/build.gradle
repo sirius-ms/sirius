@@ -6,4 +6,5 @@ dependencies {
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
     //external
     compile group: 'com.google.code.gson', name: 'gson', version: "$gson_version"
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"2.9.5"
 }
