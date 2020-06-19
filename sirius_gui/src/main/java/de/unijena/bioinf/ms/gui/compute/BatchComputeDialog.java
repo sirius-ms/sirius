@@ -269,9 +269,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         if (csiConfigs.isToolSelected()) {
             toolCommands.add(csiConfigs.content.toolCommand());
             configCommand.addAll(csiConfigs.asParameterList());
-        } else {
-            //set ionization if CSI ist not enabled
-            configCommand.addAll(csiConfigs.content.getAdductsParameter());
         }
 
         if (canopusConfigPanel.isToolSelected()) {
@@ -353,12 +350,13 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             }
         });
 
-        editPanel.ionizationCB.addActionListener(e -> {
-            PrecursorIonType ionType = editPanel.getSelectedIonization();
-            formulaIDConfigPanel.content.refreshPossibleIonizations(Collections.singleton(ionType.getIonization().getName()));
-        });
+        editPanel.ionizationCB.addActionListener(e ->
+                formulaIDConfigPanel.content.refreshPossibleIonizations(
+                        Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()),
+                        formulaIDConfigPanel.isToolSelected())
+        );
 
-        formulaIDConfigPanel.addEnableChangeListener((c, e) -> c.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName())));
+        formulaIDConfigPanel.addEnableChangeListener((c, e) -> c.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()), e));
 
         csiConfigs.content.adductOptions.checkBoxList.addPropertyChangeListener("refresh", evt -> {
             PrecursorIonType ionType = editPanel.getSelectedIonization();

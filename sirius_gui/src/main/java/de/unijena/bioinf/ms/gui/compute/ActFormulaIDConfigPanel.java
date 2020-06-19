@@ -14,7 +14,9 @@ public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDCon
 
     @Override
     protected void setComponentsEnabled(boolean enabled) {
-        super.setComponentsEnabled(enabled);
         content.elementPanel.enableElementSelection(enabled);
+        content.ionizationList.setEnabled(enabled);
+        super.setComponentsEnabled(enabled);
+
     }
 }
