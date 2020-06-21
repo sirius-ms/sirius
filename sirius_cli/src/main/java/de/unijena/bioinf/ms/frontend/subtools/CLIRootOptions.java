@@ -38,18 +38,24 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     // region Options: Basic
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    @Option(names = {"--processors", "--cores"}, description = "Number of cpu cores to use. If not specified Sirius uses all available cores.", order = 10)
+    @Option(names = {"--cores", "--processors"}, description = "Number of cpu cores to use. If not specified Sirius uses all available cores.", order = 10)
     public void setNumOfCores(int numOfCores) {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(numOfCores));
+        SiriusJobs.setGlobalJobManager(numOfCores);
+        if (instanceBuffer < 0)
+            setInitialInstanceBuffer(-1);
     }
 
-    @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 2 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
-    public void setInitialInstanceBuffer(Integer initialInstanceBuffer) {
-        if (initialInstanceBuffer == null)
-            initialInstanceBuffer = SiriusJobs.getGlobalJobManager().getCPUThreads();
+    @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, defaultValue = "-1", description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
+    public void setInitialInstanceBuffer(int initialInstanceBuffer) {
+        this.instanceBuffer = initialInstanceBuffer;
+        if (instanceBuffer < 0)
+            instanceBuffer = 3 * SiriusJobs.getGlobalJobManager().getCPUThreads();
 
-        PropertyManager.setProperty("de.unijena.bioinf.sirius.instanceBuffer", String.valueOf(initialInstanceBuffer));
+        PropertyManager.setProperty("de.unijena.bioinf.sirius.instanceBuffer", String.valueOf(instanceBuffer));
     }
+
+    private int instanceBuffer = -1;
 
     @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 30, hidden = true)
     public Files workspace; //todo change in application core
