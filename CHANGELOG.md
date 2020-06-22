@@ -5,6 +5,11 @@
 - GUI: More detailed Visualisation of what has already been computed
 - more bugfixes ;-)
 
+##### 4.4.26
+- fix: deadlock and waiting time due to webservice connections
+- fix/improvement: Adduct Settings and Adduct detection
+- fix: memory leak in third party json lib -> Zodiac memory consumption has been reduced dramatically 
+- fix: many minor bug fixes in the sirius libs
 ##### 4.4.25
 - fix: removed spring boot packaging to
   - solve several class not found issues, 
