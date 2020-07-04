@@ -29,7 +29,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         this.props = properties;
 
         add(new JXTitledSeparator("ILP solver"));
-        Vector<String> items = new Vector<>(Arrays.asList("cplex,gurobi,clp,glpk", "cplex,clp,glpk", "gurobi,clp,glpk", "clp,glpk","glpk,cpl", "gurobi", "cplex", "cpl", "glpk"));
+        Vector<String> items = new Vector<>(Arrays.asList("clp,cplex,gurobi,glpk", "cplex,gurobi,clp,glpk", "cplex,clp,glpk", "gurobi,clp,glpk", "clp,glpk","glpk,cpl", "gurobi", "cplex", "cpl", "glpk"));
         String selected = props.getProperty("de.unijena.bioinf.sirius.treebuilder.solvers");
         if (!items.contains(selected))
             items.add(selected);
