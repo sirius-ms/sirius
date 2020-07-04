@@ -325,6 +325,53 @@ public class MatrixUtils {
             }
         };
     }
+    // I >= J
+    public static BasicMasterJJob<Object> parallelizeSymmetricMatrixComputation(int size, GenericMatrixComputationFunction function) {
+        return new BasicMasterJJob<Object>(JJob.JobType.CPU) {
+            @Override
+            protected Object compute() throws Exception {
+
+                final int middle = size/2;
+                for (int row=0; row < middle; ++row) {
+                    final int ROW = row;
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int j=0; j <= ROW; ++j) {
+                                function.updateValue(ROW, j);
+                            }
+                            int row2 = size-ROW-1;
+                            for (int j=0; j <= row2; ++j) {
+                                function.updateValue(row2, j);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                if (size % 2 != 0) {
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int k=0; k <= middle; ++k) {
+                                function.updateValue(middle,k);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                awaitAllSubJobs();
+                return "";
+            }
+        };
+    }
+
+    public interface GenericMatrixComputationFunction {
+        /*
+        updates the value in the matrix for A[I][j] and A[J][I]
+         */
+        public void updateValue(int i, int j);
+    }
+
 
     /**
      * Functional interface for calculating the value for a matrix entry given the indizes i and j

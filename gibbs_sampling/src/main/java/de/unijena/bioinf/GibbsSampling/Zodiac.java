@@ -71,6 +71,7 @@ public class Zodiac {
         return new BasicMasterJJob<ZodiacResultsWithClusters>(JJob.JobType.CPU) {
             @Override
             protected ZodiacResultsWithClusters compute() throws Exception {
+                masterJJob = this;
                 init();
                 if (ids.length<=1) {
                     Log.error("Cannot run ZODIAC. SIRIUS input consists of " + ids.length + " instances. More are needed for running a network analysis.");
@@ -82,7 +83,7 @@ public class Zodiac {
                     TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions, FragmentsCandidate.class);
                     twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnIn);
                     if (masterJJob!=null) masterJJob.submitSubJob(twoPhaseGibbsSampling);
-                    else SiriusJobs.getGlobalJobManager().submitJob(twoPhaseGibbsSampling);
+                    else this.submitSubJob(twoPhaseGibbsSampling);
                     zodiacResult = twoPhaseGibbsSampling.awaitResult();
                 } else {
                     zodiacResult = runOneStepZodiacOnly(iterationSteps, burnIn, repetitions);

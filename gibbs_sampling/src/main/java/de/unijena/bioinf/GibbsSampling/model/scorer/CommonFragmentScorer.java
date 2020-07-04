@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 import de.unijena.bioinf.GibbsSampling.model.FragmentsCandidate;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
@@ -263,6 +264,17 @@ public class CommonFragmentScorer implements EdgeScorer<FragmentsCandidate> {
         }
 
         return norm;
+    }
+
+    @Override
+    public BasicJJob<Object> getPrepareJob(FragmentsCandidate[][] var1) {
+        return new BasicJJob<Object>() {
+            @Override
+            protected Object compute() throws Exception {
+                prepare(var1);
+                return true;
+            }
+        };
     }
 
     protected int sum(int[] array) {

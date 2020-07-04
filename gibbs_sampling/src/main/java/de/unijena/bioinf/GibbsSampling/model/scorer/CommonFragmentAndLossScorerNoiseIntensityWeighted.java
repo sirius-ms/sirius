@@ -1,6 +1,7 @@
 package de.unijena.bioinf.GibbsSampling.model.scorer;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.math.ByMedianEstimatable;
 import de.unijena.bioinf.ChemistryBase.math.ParetoDistribution;
@@ -25,7 +26,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
 
     public CommonFragmentAndLossScorerNoiseIntensityWeighted(double threshold) {
         super(threshold);
-        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 1d; //changed from 5
+        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 2d; //changed from 5
         beta = 0.00001;
         double xmin = 0.002;
 //        double medianNoise = 0.005;
@@ -101,7 +102,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
         maxIdx += 1;
 
 
-        Set<String>[] matchedFragments;
+        Set<MolecularFormula>[] matchedFragments;
         double[] maxScore;//todo use 0 as min?
         if (useFragments){
             matchedFragments = new Set[maxIdx*ions.size()];
@@ -118,7 +119,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
             if (useFragments){
                 fragments = c.getFragments();
                 for (int i = 0; i < fragments.length; i++) {
-                    final String formula = fragments[i].getFormula();
+                    final MolecularFormula formula = fragments[i].getFormula();
                     final double score = fragments[i].getScore();
                     final int idx = fragments[i].getIndex()+maxIdx*ionToIdx.get(fragments[i].getIonization());
                     if (matchedFragments[idx]==null){
@@ -132,7 +133,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
                 fragments = c.getLosses();
 
                 for (int i = 0; i < fragments.length; i++) {
-                    final String formula = fragments[i].getFormula();
+                    final MolecularFormula formula = fragments[i].getFormula();
                     final double score = fragments[i].getScore();
                     final short idx = fragments[i].getIndex();
                     if (matchedFragments[idx]==null){
@@ -148,7 +149,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
 
 
         int numOfRealPeaks = 0;
-        for (Set<String> matched : matchedFragments) {
+        for (Set<MolecularFormula> matched : matchedFragments) {
             if (matched!=null) ++numOfRealPeaks;
         }
 
@@ -157,7 +158,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
         pos = 0;
         for (int j = 0; j < matchedFragments.length; j++) {
             if (matchedFragments[j]!=null){
-                final String[] mfArray = matchedFragments[j].toArray(new String[0]);
+                final MolecularFormula[] mfArray = matchedFragments[j].toArray(new MolecularFormula[0]);
                 final double mass = meanMass(mfArray);
                 double bestScore = maxScore[pos];
                 peaksWithExplanations[pos] = new PeakWithExplanation(mfArray, mass, bestScore);
