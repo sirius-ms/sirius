@@ -10,9 +10,11 @@ import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.commons.collections.ListUtils;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,6 +30,7 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
 
     protected final JCheckboxListPanel<SearchableDatabase> searchDBList;
     public final JCheckboxListPanel<String> adductOptions;
+    protected final JToggleButton enforceAdducts;
 
     public FingerIDConfigPanel(final JCheckBoxList<String> sourceIonization, @Nullable final JCheckBoxList<SearchableDatabase> syncSource) {
         super(FingerIdOptions.class);
@@ -42,6 +45,10 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
         GuiUtils.assignParameterToolTip(adductOptions, "AdductSettings.fallback");
         parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
         add(adductOptions);
+        enforceAdducts =  new JToggleButton("enforce", false);
+        enforceAdducts.setToolTipText(GuiUtils.formatToolTip("Enforce the selected adducts instead of using them only as fallback."));
+        adductOptions.buttons.add(enforceAdducts);
+        parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString(): PropertyManager.DEFAULTS.getConfigValue("AdductSettings.enforced"));
 
         searchDBList.checkBoxList.check(SearchableDatabases.getBioDb());
 

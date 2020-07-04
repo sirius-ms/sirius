@@ -71,8 +71,9 @@ public class GuiUtils {
             // If Nimbus is not available, you can set the GUI to another look and feel.
         }
 
-
-//        ToolTipManager.sharedInstance().setInitialDelay(250);
+        //nicer times for tooltips
+        ToolTipManager.sharedInstance().setInitialDelay(250);
+        ToolTipManager.sharedInstance().setDismissDelay(60000);
 
 
     }

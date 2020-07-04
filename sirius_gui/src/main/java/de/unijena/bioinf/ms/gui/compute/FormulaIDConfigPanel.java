@@ -72,7 +72,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected final JCheckboxListPanel<String> ionizationList;
     protected final JCheckboxListPanel<SearchableDatabase> searchDBList;
     protected final JComboBox<Instrument> profileSelector;
-    protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner;
+    protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout;
     protected final JComboBox<IsotopeMs2Settings.Strategy> ms2IsotpeSetting;
     //    protected final JCheckBox restrictToOrganics;
     protected ElementsPanel elementPanel;
@@ -153,6 +153,16 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
                     elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
         }); //todo check if this makes scence
 
+
+        // ilp timeouts
+        final TwoColumnPanel ilpTimeouts = new TwoColumnPanel();
+        center.add(new TextHeaderBoxPanel("ILP timeouts", ilpTimeouts));
+
+        treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
+        ilpTimeouts.addNamed("Tree timeout", treeTimeout);
+
+        comoundTimeout = makeIntParameterSpinner("Timeout.secondsPerInstance", 0, Integer.MAX_VALUE, 1);
+        ilpTimeouts.addNamed("Compound timeout", comoundTimeout);
 
         refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()),true);
     }
