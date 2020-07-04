@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.canopus.compound_classes;
 
 import ca.odell.glazedlists.gui.TableFormat;
+import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 
 public class CompoundClassTableFormat implements TableFormat<ClassyfirePropertyBean> {
     protected static String[] columns = new String[]{
@@ -32,7 +33,8 @@ public class CompoundClassTableFormat implements TableFormat<ClassyfirePropertyB
         if (column == col++) return prop.getProbability();
         if (column == col++) return prop.getMolecularProperty().getDescription();
         if (column == col++) return prop.getMolecularProperty().getChemontIdentifier();
-        if (column == col++) return prop.getMolecularProperty().getParent().getName();
+        final ClassyfireProperty parent = prop.getMolecularProperty().getParent();
+        if (column == col++) return parent!=null ? parent.getName() : "";
 //        if (column == col++) return prop.getNumberOfTrainingExamples();
 //        if (column == col) return prop.getFScore();
         return null;
