@@ -5,6 +5,8 @@
 
 package de.unijena.bioinf.GibbsSampling.model;
 
+import de.unijena.bioinf.jjobs.BasicJJob;
+
 public interface EdgeScorer<C extends Candidate<?>> {
     void setThreshold(double threshold);
 
@@ -19,4 +21,6 @@ public interface EdgeScorer<C extends Candidate<?>> {
     void clean();
 
     double[] normalization(C[][] var1, double minimum_number_matched_peaks_losses);
+
+    public BasicJJob<Object> getPrepareJob(C[][] var1);
 }

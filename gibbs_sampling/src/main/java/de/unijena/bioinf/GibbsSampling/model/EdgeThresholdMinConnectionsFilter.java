@@ -33,7 +33,77 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
         }
     }
 
+
     public void filterEdgesAndSetThreshold(Graph graph, int candidateIdx, double[] logEdgeScores) {
+        //select edges for on MF candidate to all other MF candidates of other compounds
+        // all edges better than (lower) basicThreshold are taken and at least so many edges that the candidate is connected to minimumConnectionCount other compounds
+        int peakIdx = graph.getPeakIdx(candidateIdx);
+        double currentThreshold;
+        if (minimumConnectionCount < logEdgeScores.length) {
+            double[] minThresholdPerPeak = new double[graph.numberOfCompounds()];
+            for (int i = 0; i < logEdgeScores.length; ++i) {
+                int peakIdxOther = graph.getPeakIdx(i);
+                if (peakIdx != peakIdxOther) {
+                    double score = logEdgeScores[i];
+                    if (score >= 0) continue;
+                    minThresholdPerPeak[peakIdxOther] = Math.min(minThresholdPerPeak[peakIdxOther], score);
+                }
+            }
+            double[] minValues = new double[minimumConnectionCount + 1];
+            int K = 0, j = 0;
+            for (; K < minThresholdPerPeak.length; ++K) {
+                if (minThresholdPerPeak[K] < 0) {
+                    minValues[j++] = minThresholdPerPeak[K];
+                    if (j >= minValues.length)
+                        break;
+                }
+            }
+            insertionSort(minValues);
+            currentThreshold = minValues[minValues.length - 1];
+            if (currentThreshold > this.basicThreshold) {
+                for (int k = K; k < minThresholdPerPeak.length; ++k) {
+                    if (minThresholdPerPeak[k] <= currentThreshold) {
+                        minValues[minValues.length - 1] = minThresholdPerPeak[k];
+                        insertionSort(minValues);
+                        currentThreshold = minValues[minValues.length - 1];
+                        if (currentThreshold <= this.basicThreshold)
+                            break;
+                    }
+                }
+            }
+
+
+            if (currentThreshold < this.basicThreshold) {
+                currentThreshold = this.basicThreshold;
+            }
+        } else currentThreshold = 0d;
+
+
+        for(int i = 0; i < logEdgeScores.length; ++i) {
+            int peakIdxOther = graph.getPeakIdx(i);
+            if(peakIdx != peakIdxOther) {
+                double score = logEdgeScores[i];
+                if (score>=currentThreshold) continue;
+
+                graph.setLogWeight(candidateIdx, i, currentThreshold - score);
+            }
+        }
+
+
+        graph.setEdgeThreshold(candidateIdx, currentThreshold);
+    }
+
+    private static void insertionSort(double[] xs) {
+        for (int i=0; i<xs.length; i++) {
+            for (int j=i; j>0 && xs[j-1]>xs[j]; j--) {
+                double swap = xs[j];
+                xs[j] = xs[j-1];
+                xs[j-1] = swap;
+            }
+        }
+    }
+
+    public void filterEdgesAndSetThreshold2(Graph graph, int candidateIdx, double[] logEdgeScores) {
         //select edges for on MF candidate to all other MF candidates of other compounds
         // all edges better than (lower) basicThreshold are taken and at least so many edges that the candidate is connected to minimumConnectionCount other compounds
         int peakIdx = graph.getPeakIdx(candidateIdx);
@@ -94,6 +164,57 @@ public class EdgeThresholdMinConnectionsFilter extends LocalEdgeFilter {
 
 
         graph.setEdgeThreshold(candidateIdx, currentThreshold);
+    }
+
+    public double getThreshold(Graph graph, int candidateIdx, double[] logEdgeScores) {
+        //select edges for on MF candidate to all other MF candidates of other compounds
+        // all edges better than (lower) basicThreshold are taken and at least so many edges that the candidate is connected to minimumConnectionCount other compounds
+        int peakIdx = graph.getPeakIdx(candidateIdx);
+
+        double[] minThresholdPerPeak = new double[graph.numberOfCompounds()];
+        for(int i = 0; i < logEdgeScores.length; ++i) {
+            int peakIdxOther = graph.getPeakIdx(i);
+            if(peakIdx != peakIdxOther) {
+                double score = logEdgeScores[i];
+                //CHANGED just add edge if <0 (at least some matching fragments)
+                if (score>=0) continue;
+
+                minThresholdPerPeak[peakIdxOther] = Math.min(minThresholdPerPeak[peakIdxOther], score);
+//                //edges assigned in this 'reverse direction' (candidateIdx->i) to retrieve all of them later on
+//                //after that the graph is made symmetric anyways.
+//                weightedEdges.add(new WeightedEdge(candidateIdx, i, score));
+            }
+        }
+
+        //negative weights are good (p-values)
+        //take at least the top x edges. maybe even more if several are better than basic thres.
+        Arrays.sort(minThresholdPerPeak);
+        double currentThreshold;
+        if(this.minimumConnectionCount >= minThresholdPerPeak.length) {
+            currentThreshold = 0;//todo add pseudo???
+        } else {
+            //get next best weight, so that minimumConnectionCount-1 edge gets positive weight
+            //if no bigger weight exists it is set to weight 0
+            //using 0 might make the score to 'strong'??
+            double thresholdScore = minThresholdPerPeak[minimumConnectionCount-1];
+            currentThreshold = thresholdScore;
+            for (int i = minimumConnectionCount; i < minThresholdPerPeak.length; i++) {
+                double weight = minThresholdPerPeak[i];
+                if (weight>currentThreshold){
+                    currentThreshold = weight;
+                    break;
+                }
+
+            }
+            if (currentThreshold==thresholdScore) currentThreshold = 0;
+        }
+
+
+        if(currentThreshold < this.basicThreshold) {
+            currentThreshold = this.basicThreshold;
+        }
+
+        return currentThreshold;
     }
 
     public void setThreshold(double threshold) {
