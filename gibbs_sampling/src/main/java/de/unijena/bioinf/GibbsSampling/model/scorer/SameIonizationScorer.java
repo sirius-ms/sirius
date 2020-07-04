@@ -2,6 +2,7 @@ package de.unijena.bioinf.GibbsSampling.model.scorer;
 
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 import de.unijena.bioinf.GibbsSampling.model.FragmentsCandidate;
+import de.unijena.bioinf.jjobs.BasicJJob;
 
 import java.util.Arrays;
 
@@ -58,5 +59,16 @@ public class SameIonizationScorer implements EdgeScorer<FragmentsCandidate> {
         double[] norm = new double[var1.length];
         Arrays.fill(norm, 1d);
         return norm;
+    }
+
+    @Override
+    public BasicJJob<Object> getPrepareJob(FragmentsCandidate[][] var1) {
+        return new BasicJJob<Object>() {
+            @Override
+            protected Object compute() throws Exception {
+                prepare(var1);
+                return true;
+            }
+        };
     }
 }

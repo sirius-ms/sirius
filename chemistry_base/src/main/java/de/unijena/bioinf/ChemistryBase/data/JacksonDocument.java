@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ChemistryBase.data;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -14,11 +15,13 @@ public class JacksonDocument extends DataDocument<JsonNode, JsonNode, JsonNode> 
 
     public JsonNode fromReader(Reader r) throws IOException {
         JsonFactory factory = new JsonFactory();
+        factory.enable(JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS);
         ObjectMapper mapper = new ObjectMapper(factory);
         return mapper.readTree(r);
     }
     public JsonNode fromString(String r) throws IOException {
         JsonFactory factory = new JsonFactory();
+        factory.enable(JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS);
         ObjectMapper mapper = new ObjectMapper(factory);
         return mapper.readTree(r);
     }

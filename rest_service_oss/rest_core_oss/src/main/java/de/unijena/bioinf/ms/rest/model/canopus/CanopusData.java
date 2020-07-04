@@ -56,7 +56,7 @@ public class CanopusData {
             row[1] = String.valueOf(absoluteIndex);
             row[2] = property.getChemontIdentifier();
             row[3] = property.getName();
-            row[4] = property.getParent().getChemontIdentifier();
+            row[4] = property.getParent()!=null ? property.getParent().getChemontIdentifier() : "";
             row[5] = property.getDescription();
             return row;
         })::iterator);

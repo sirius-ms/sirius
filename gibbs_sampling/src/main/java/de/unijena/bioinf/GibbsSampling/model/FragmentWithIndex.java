@@ -1,17 +1,18 @@
 package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 
 /**
  * Created by ge28quv on 16/05/17.
  */
 public class FragmentWithIndex implements Comparable<FragmentWithIndex> {
-    public final String mf;
+    public final MolecularFormula mf;
     public final short idx;
     public final double score;
     private final Ionization ionization;
 
-    public FragmentWithIndex(String mf, Ionization ion, short idx, double score) {
+    public FragmentWithIndex(MolecularFormula mf, Ionization ion, short idx, double score) {
         this.mf = mf;
         this.idx = idx;
         this.score = score;
@@ -23,7 +24,7 @@ public class FragmentWithIndex implements Comparable<FragmentWithIndex> {
         return mf.compareTo(o.mf);
     }
 
-    public String getFormula() {
+    public MolecularFormula getFormula() {
         return mf;
     }
 

@@ -7,7 +7,6 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
@@ -546,7 +545,19 @@ public class Graph<C extends Candidate<?>> {
             numberOfBadlyConnected += maxCompoundConnectionsStats.get(connectionCount);
         }
 
-//        System.out.println("numberOfPeaks "+numberOfPeaks);
+
+        System.out.println("number of badly connected compounds "+ numberOfBadlyConnected);
+
+        {
+            int below5 = 0;
+            int above15 = 0;
+            for (int connectionCount : connectionCounts) {
+                if (connectionCount < 5) ++below5;
+                if (connectionCount >= 15) ++above15;
+            }
+            System.out.println("number of compounds with more than 15 neighbours "+ above15);
+        }
+
 //        for (int connectionCount : connectionCounts) {
 //            System.out.println(connectionCount+": "+maxCompoundConnectionsStats.get(connectionCount));
 //        }

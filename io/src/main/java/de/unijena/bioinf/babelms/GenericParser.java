@@ -78,6 +78,11 @@ public class GenericParser<T> implements Parser<T> {
             public S next() {
                 S mem = elem;
                 try {
+                    if (parser.isClosingAfterParsing()) {
+                        reader=null;
+                        elem = null;
+                        return mem;
+                    }
                     elem = parse(reader, source);
                 } catch (IOException e) {
                     tryclose();
@@ -123,9 +128,13 @@ public class GenericParser<T> implements Parser<T> {
             reader = FileUtils.ensureBuffering(new FileReader(file));
             final ArrayList<S> list = new ArrayList<S>();
             S elem = parse(reader,source);
-            while (elem!=null) {
+            if (parser.isClosingAfterParsing()) {
                 list.add(elem);
-                elem = parse(reader,source);
+            } else {
+                while (elem != null) {
+                    list.add(elem);
+                    elem = parse(reader, source);
+                }
             }
             return list;
         } catch (IOException e) {

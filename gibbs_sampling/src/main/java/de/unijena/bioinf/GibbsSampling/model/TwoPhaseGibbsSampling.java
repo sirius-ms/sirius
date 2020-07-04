@@ -9,7 +9,6 @@ import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -77,6 +76,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
                 firstRoundIds[i] = ids[firstRoundCompoundsIdx.get(i)];
             }
         }
+        logInfo("Start first round with " + firstRoundCompoundsIdx.size() + " of " + possibleFormulas.length + " compounds.");
 
 
 

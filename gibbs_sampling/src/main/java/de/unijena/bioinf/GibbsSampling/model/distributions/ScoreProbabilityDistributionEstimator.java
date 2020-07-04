@@ -4,6 +4,9 @@ import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
 import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 import de.unijena.bioinf.GibbsSampling.model.GibbsMFCorrectionNetwork;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import gnu.trove.list.array.TDoubleArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,8 +60,10 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
     }
 
     protected double[] sampleScores(C[][] candidates){
+        long milli = System.currentTimeMillis();
         edgeScorer.prepare(candidates);
-
+        long milli2 = System.currentTimeMillis();
+        System.out.println("PREPARING INNER EDGE SCORER TOOK " + (milli2-milli) + " milliseconds");
         double[] sampledScores;
         if (GibbsMFCorrectionNetwork.DEBUG){
             System.out.println("use all scores");
@@ -102,6 +107,8 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
             }
             if (pos<NUMBER_OF_SAMPLES) sampledScores = Arrays.copyOf(sampledScores, pos);
         }
+        long milli3 = System.currentTimeMillis();
+        System.out.println("Sampling TOOK " + (milli3-milli2) + " milliseconds");
         return sampledScores;
     }
 
@@ -202,5 +209,57 @@ public class ScoreProbabilityDistributionEstimator<C extends Candidate<?>> imple
 
     public double[] normalization(C[][] candidates, double minimum_number_matched_peaks_losses) {
         return new double[0];
+    }
+
+
+
+    ////////////// kaidu ////////////////
+
+    @Override
+    public BasicJJob<Object> getPrepareJob(C[][] candidates) {
+        return new BasicMasterJJob<Object>(JJob.JobType.CPU) {
+            @Override
+            protected Object compute() throws Exception {
+                long milli = System.currentTimeMillis();
+                submitSubJob(edgeScorer.getPrepareJob(candidates)).takeResult();
+                long milli2 = System.currentTimeMillis();
+                System.out.println("PREPARING INNER EDGE SCORER TOOK " + (milli2-milli) + " milliseconds");
+                double[] sampledScores;
+                int numberOfTrails = NUMBER_OF_SAMPLES*20;
+                HighQualityRandom random = new HighQualityRandom();
+                sampledScores = new double[NUMBER_OF_SAMPLES];
+                int pos = 0;
+                int trialCount = 0;
+                while (pos<NUMBER_OF_SAMPLES){
+                    ++trialCount;
+                    if (trialCount>numberOfTrails) break;;
+                    int color1 = random.nextInt(candidates.length);
+                    int color2 = random.nextInt(candidates.length - 1);
+                    if(color2 >= color1) {
+                        ++color2;
+                    }
+
+                    int mf1 = random.nextInt(candidates[color1].length);
+                    int mf2 = random.nextInt(candidates[color2].length);
+                    double score = edgeScorer.scoreWithoutThreshold(candidates[color1][mf1], candidates[color2][mf2]);
+                    if (percentageWithoutZeroScores && score<=0) continue;
+                    sampledScores[pos++] = score;
+                }
+                if (pos<NUMBER_OF_SAMPLES) sampledScores = Arrays.copyOf(sampledScores, pos);
+                long milli3 = System.currentTimeMillis();
+                System.out.println("Sampling TOOK " + (milli3-milli2) + " milliseconds");
+
+                estimateDistribution(sampledScores);
+                Arrays.sort(sampledScores);
+                int idx = (int)(percentageOfEdgesBelowThreshold *sampledScores.length);
+                if (idx>=sampledScores.length){
+                    threshold = scoreProbabilityDistribution.toLogPvalue(0);
+                } else {
+                    threshold = scoreProbabilityDistribution.toLogPvalue(sampledScores[idx]);
+                }
+
+                return "";
+            }
+        };
     }
 }
