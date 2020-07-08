@@ -3,14 +3,22 @@ package de.unijena.bioinf.retention.kernels;
 import de.unijena.bioinf.retention.PredictableCompound;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.fingerprint.CircularFingerprinter;
 
 public class SubstructureLinearKernel implements MoleculeKernel<SubstructureLinearKernel.Prepared> {
 
+    private final int diameter;
+
+    public SubstructureLinearKernel(int diameter) {
+        this.diameter = diameter;
+    }
+
+    public SubstructureLinearKernel() {
+        this.diameter = CircularFingerprinter.CLASS_ECFP6;
+    }
 
     @Override
     public Prepared prepare(PredictableCompound compound) {
-        final CircularFingerprinter fp = new CircularFingerprinter(CircularFingerprinter.CLASS_ECFP6);
+        final CircularFingerprinter fp = new CircularFingerprinter(diameter);
         try {
             fp.calculate(compound.getMolecule());
             return new Prepared(fp);

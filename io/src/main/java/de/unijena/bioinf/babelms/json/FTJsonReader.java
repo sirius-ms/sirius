@@ -75,6 +75,11 @@ public class FTJsonReader implements Parser<FTree> {
         return treeFromJson(new StringReader(reader), source);
     }
 
+    @Override
+    public boolean isClosingAfterParsing() {
+        return true;
+    }
+
     public FTree treeFromJson(Reader reader, URL source) throws IOException {
         final DescriptorRegistry registry = DescriptorRegistry.getInstance();
         final JacksonDocument json = new JacksonDocument();
