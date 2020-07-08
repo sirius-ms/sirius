@@ -40,4 +40,8 @@ public interface Parser<T> {
      */
     <S extends T> S parse(BufferedReader reader, URL source) throws IOException;
 
+    default public boolean isClosingAfterParsing() {
+        return false;
+    }
+
 }
