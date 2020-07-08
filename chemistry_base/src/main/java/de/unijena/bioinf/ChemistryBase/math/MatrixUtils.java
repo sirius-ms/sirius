@@ -288,7 +288,7 @@ public class MatrixUtils {
      * the function is symmetric. A single subjob will always compute 2 rows and n entries (with n is the number of rows/columns).
      */
     public static BasicMasterJJob<double[][]> parallelizeSymmetricMatrixComputation(double[][] matrix, MatrixComputationFunction function) {
-        return new BasicMasterJJob<double[][]>(JJob.JobType.SCHEDULER) {
+        return new BasicMasterJJob<double[][]>(JJob.JobType.CPU) {
             @Override
             protected double[][] compute() throws Exception {
 
