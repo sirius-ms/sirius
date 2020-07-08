@@ -30,6 +30,16 @@ public class Canopus {
     protected CdkFingerprintVersion cdkFingerprintVersion;
     protected MaskedFingerprintVersion cdkMask;
 
+    public static void main(String[] args) {
+        try {
+            final Canopus c = Canopus.loadFromFile(new File("/home/kaidu/temp/canopus_100.data.gz"));
+            System.out.println(c.classyFireMask.allowedIndizes().length);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     public String toString() {
         StringBuilder buf = new StringBuilder();
         buf.append("CANOPUS\nFormula Layers: {");
