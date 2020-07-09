@@ -130,7 +130,7 @@ public final class TreeBuilderFactory {
                 factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver");
                 break;
             case CLP:
-                factory = getTreeBuilderFromClass(CPLEXSolver.class); //we deliver the jar file so we can be sure that th class exists
+                factory = getTreeBuilderFromClass(CLPSolver.class); //we deliver the jar file so we can be sure that th class exists
                 break;
             default:
                 LoggerFactory.getLogger(this.getClass()).warn("TreeBuilder " + builder.toString() + " is Unknown, supported are: " + Arrays.toString(DefaultBuilder.values()), new IllegalArgumentException("Unknown BuilderType!"));
