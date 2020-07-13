@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
@@ -157,7 +158,10 @@ public class TestSirius {
         final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
         JobManager jobs = SiriusJobs.getGlobalJobManager();
         FasterTreeComputationInstance.FinalResult finalResult = null;
-        analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder("clp"));
+        TreeBuilder builder = TreeBuilderFactory.getInstance().getTreeBuilder("clp");
+        analysis.setTreeBuilder(builder);
+
+
         for (int i = 0; i < 20; ++i){
             FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
             jobs.submitJob(instance);
@@ -169,7 +173,7 @@ public class TestSirius {
 
 
     @Test
-    public void testTreeSerialization() {
+    public void testTreeSerialization() throws IOException {
         final Ms2Experiment experiment = getStandardExperiment();
 
         final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
