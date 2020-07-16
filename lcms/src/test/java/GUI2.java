@@ -5,7 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
-import de.unijena.bioinf.babelms.ms.MsFileConfig;
+import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.io.lcms.LCMSParser;
 import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.io.lcms.MzXMLParser;
@@ -184,8 +184,8 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                         if (!ionTypes.isEmpty()) {
                             ParameterConfig parameterConfig = PropertyManager.DEFAULTS.newIndependentInstance("LCMS-" + experiment.getName());
                             parameterConfig.changeConfig("AdductSettings.enforced", Joiner.on(',').join(ionTypes));
-                            final MsFileConfig config = new MsFileConfig(parameterConfig);
-                            experiment.setAnnotation(MsFileConfig.class, config);
+                            final InputFileConfig config = new InputFileConfig(parameterConfig);
+                            experiment.setAnnotation(InputFileConfig.class, config);
                         }
 
                         writer.write(bw, experiment);
