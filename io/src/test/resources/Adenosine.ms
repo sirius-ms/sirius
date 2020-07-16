@@ -2,7 +2,7 @@
 >formula C10H13N5O4
 >parentmass 268.1000061035156
 >charge 1
-
+>IsotopeMs2Settings SCORE
 
 >retention 91.4615
 >collision 35.0

@@ -18,6 +18,7 @@
 package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.URL;
@@ -25,13 +26,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class GenericParser<T> implements Parser<T> {
 
-    private final Parser<T> parser;
+    @NotNull private final Parser<T> parser;
+    @NotNull private final Consumer<T> postProcessor;
 
     public GenericParser(Parser<T> parser) {
+        this(parser, t -> {}); //default not postprocessing
+    }
+
+    public GenericParser(Parser<T> parser, @NotNull Consumer<T> postProcessor) {
         this.parser = parser;
+        this.postProcessor = postProcessor;
     }
 
 
@@ -57,7 +65,7 @@ public class GenericParser<T> implements Parser<T> {
 
     public <S extends T> CloseableIterator<S> parseIterator(InputStream input, URL source) throws IOException {
         final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(input));
-        return parseIterator(reader);
+        return parseIterator(reader, source);
     }
 
     public <S extends T> CloseableIterator<S> parseIterator(final BufferedReader r, final URL source) throws IOException {
@@ -162,6 +170,9 @@ public class GenericParser<T> implements Parser<T> {
 
     @Override
     public <S extends T> S parse(BufferedReader reader, URL source) throws IOException {
-        return parser.parse(reader, source);
+        S it = parser.parse(reader, source);
+        if (it != null)
+            postProcessor.accept(it);
+        return it;
     }
 }

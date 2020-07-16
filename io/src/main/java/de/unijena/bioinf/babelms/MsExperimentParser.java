@@ -20,9 +20,12 @@ package de.unijena.bioinf.babelms;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.cef.AgilentCefExperimentParser;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
+import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.babelms.mzml.MzMlExperimentParser;
 import de.unijena.bioinf.babelms.mzml.MzXmlExperimentParser;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -30,10 +33,22 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public class MsExperimentParser {
 
-    private static final Map<String, Class<? extends Parser<Ms2Experiment>>> knownEndings = addKnownEndings();
+    private static final Map<String, Class<? extends Parser<Ms2Experiment>>> KNOWN_ENDINGS = addKnownEndings();
+    /**
+     * This postprocessor annotates Parameter configs to the {@link Ms2Experiment}. If {@link InputFileConfig} is given
+     * this is preferred over the {@link PropertyManager#DEFAULTS} config.
+     * <p>
+     * If an input file type supports SIRIUS parameters (e.g. JenaMSParser) then it has to set this Parameters to it
+     * own {@link de.unijena.bioinf.ms.properties.ParameterConfig} and annotate this config wrapped as {@link InputFileConfig}
+     * to the experiment. This allow to keep track of where parameters come from.
+     */
+    private static final Consumer<Ms2Experiment> DEFAULTS_ANNOTATOR = exp -> exp.addAnnotationsFrom(
+            exp.getAnnotation(InputFileConfig.class).map(c -> c.config).orElse(PropertyManager.DEFAULTS), Ms2ExperimentAnnotation.class);
+
 
     public GenericParser<Ms2Experiment> getParser(Path file) {
         return getParser(file.getFileName().toString());
@@ -47,13 +62,13 @@ public class MsExperimentParser {
         final int i = fileName.lastIndexOf('.');
         if (i < 0) return null; // no parser found
         final String extName = fileName.substring(i).toLowerCase();
-        final Class<? extends Parser<Ms2Experiment>> pc = knownEndings.get(extName);
+        final Class<? extends Parser<Ms2Experiment>> pc = KNOWN_ENDINGS.get(extName);
         if (pc==null) return null;
         try {
             if (pc.equals(ZippedSpectraParser.class))
                 return (GenericParser<Ms2Experiment>) pc.getConstructor().newInstance();
 
-            return new GenericParser<>(pc.getConstructor().newInstance());
+            return new GenericParser<>(pc.getConstructor().newInstance(), DEFAULTS_ANNOTATOR);
         } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
@@ -67,7 +82,7 @@ public class MsExperimentParser {
     }
 
     public static boolean isSupportedEnding(final @NotNull String fileEnding) {
-        return knownEndings.containsKey(fileEnding.toLowerCase());
+        return KNOWN_ENDINGS.containsKey(fileEnding.toLowerCase());
     }
 
     private static Map<String, Class<? extends Parser<Ms2Experiment>>> addKnownEndings() {

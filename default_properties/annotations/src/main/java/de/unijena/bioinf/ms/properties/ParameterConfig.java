@@ -1,10 +1,7 @@
 package de.unijena.bioinf.ms.properties;
 
-import com.google.gson.internal.Primitives;
-import org.apache.commons.configuration2.CombinedConfiguration;
-import org.apache.commons.configuration2.ImmutableConfiguration;
-import org.apache.commons.configuration2.PropertiesConfiguration;
-import org.apache.commons.configuration2.PropertiesConfigurationLayout;
+import com.google.common.primitives.Primitives;
+import org.apache.commons.configuration2.*;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
@@ -92,8 +89,12 @@ public final class ParameterConfig {
             throw new IllegalArgumentException("Empty name is not Allowed here");
 
         final CombinedConfiguration nuConfig = SiriusConfigUtils.newCombinedConfiguration();
-        nuConfig.addConfiguration(modifiableLayer, name);
-        this.config.getConfigurationNames().stream().filter(n -> !overrideExisting || !n.equals(name)).forEach(n -> nuConfig.addConfiguration(config.getConfiguration(n), n));
+        Configuration add = this.config.getConfiguration(name);
+        if (add == null || overrideExisting)
+            add = modifiableLayer;
+
+        nuConfig.addConfiguration(add, name);
+        this.config.getConfigurationNameList().stream().filter(Objects::nonNull).filter(n -> !n.equals(name)).forEach(n -> nuConfig.addConfiguration(this.config.getConfiguration(n), n));
 
         return new ParameterConfig(nuConfig, classesConfig, layout, name, configRoot, classRoot);
     }
