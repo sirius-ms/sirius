@@ -171,16 +171,19 @@ public class CustomDatabaseImporter {
             try (final BufferedReader br = new BufferedReader(new FileReader(file))) {
                 String line;
                 while ((line = br.readLine()) != null) {
-                    String[] parts = line.split("\t");
-                    final String structure = parts[0].trim();
+                    //skip empty lines
+                    if (!line.isBlank()) {
+                        String[] parts = line.split("\t");
+                        final String structure = parts[0].trim();
 
-                    final String id = parts.length > 1 ? parts[1] : null;
-                    final String name = parts.length > 2 ? parts[2] : null;
+                        final String id = parts.length > 1 ? parts[1] : null;
+                        final String name = parts.length > 2 ? parts[2] : null;
 
-                    try {
-                        importFromString(structure, id, name);
-                    } catch (CDKException e) {
-                        CustomDatabase.logger.error(e.getMessage(), e);
+                        try {
+                            importFromString(structure, id, name);
+                        } catch (CDKException e) {
+                            CustomDatabase.logger.error(e.getMessage(), e);
+                        }
                     }
                 }
             }
