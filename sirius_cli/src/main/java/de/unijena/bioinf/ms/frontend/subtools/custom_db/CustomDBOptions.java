@@ -60,7 +60,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                         input.msInput.unknownFiles.stream().map(Path::toFile).collect(Collectors.toList()),
                         parentDBs,
                         ApplicationCore.WEB_API, writeBuffer);
-                LoggerFactory.getLogger(CustomDatabaseImporter.class).info("Database imported. Use 'structure --db=\"" + loc.toString() + "\"' to search in this database.");
+                LoggerFactory.getLogger(CustomDatabaseImporter.class).info("Database imported. Use 'structure --db=\"" + loc.resolve(dbName).toString() + "\"' to search in this database.");
             } catch (IOException e) {
                 LoggerFactory.getLogger(CustomDatabaseImporter.class).error("error when storing custom db");
             }
