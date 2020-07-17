@@ -3,8 +3,11 @@ package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 import com.google.common.base.Predicate;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.babelms.chemdb.Databases;
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
 import de.unijena.bioinf.jjobs.JJob;
@@ -61,7 +64,7 @@ public class DatabaseDialog extends JDialog {
     protected JButton addCustomDb;
     protected DatabaseView dbView;
     protected PlaceholderTextField nameField;
-    private JDialog owner = this;
+    private final JDialog owner = this;
 
     public DatabaseDialog(final Frame owner) {
         super(owner, true);
@@ -179,7 +182,7 @@ public class DatabaseDialog extends JDialog {
 
         for (String name : databases) {
             if (!name.equalsIgnoreCase("pubchem"))
-                whenCustomDbIsAdded(new CustomDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name)));
+                whenCustomDbIsAdded(name);
         }
 
 
@@ -190,28 +193,30 @@ public class DatabaseDialog extends JDialog {
         setVisible(true);
     }
 
-    protected void whenCustomDbIsAdded(final CustomDatabase db) {
-        this.customDatabases.put(db.name(), db);
-        new SwingWorker<String, String>() {
+    protected void whenCustomDbIsAdded(final String dbName) {
+        SearchableDatabases.getCustomDatabaseByName(dbName).ifPresent(db ->{
+            this.customDatabases.put(db.name(), db);
+            new SwingWorker<String, String>() {
 
-            @Override
-            protected String doInBackground() throws Exception {
-                db.readSettings();
-                LoggerFactory.getLogger(this.getClass()).debug("SETTINGS OF " + db.name() + " IS READ");
-                publish(db.name());
-                return db.name();
-            }
+                @Override
+                protected String doInBackground() throws Exception {
+                    db.readSettings();
+                    LoggerFactory.getLogger(this.getClass()).debug("SETTINGS OF " + db.name() + " IS READ");
+                    publish(db.name());
+                    return db.name();
+                }
 
-            @Override
-            protected void process(List<String> chunks) {
-                for (String c : chunks) {
-                    final CustomDatabase cd = customDatabases.get(c);
-                    if (c != null && cd != null && c.equals(dbList.getSelectedValue())) {
-                        dbView.updateContent(cd);
+                @Override
+                protected void process(List<String> chunks) {
+                    for (String c : chunks) {
+                        final CustomDatabase cd = customDatabases.get(c);
+                        if (c != null && cd != null && c.equals(dbList.getSelectedValue())) {
+                            dbView.updateContent(cd);
+                        }
                     }
                 }
-            }
-        }.execute();
+            }.execute();
+        });
     }
 
     protected static class DatabaseView extends JPanel {
@@ -587,15 +592,9 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
-//    private static final String NONE = "None", BIO = DataSource.BIO.realName, PUBCHEM = DataSource.PUBCHEM.realName;
-
     protected class ImportDatabaseDialog extends JDialog {
-
-        //        protected ImportList ilist;
         protected JButton importButton;
-        //        protected ImportCompoundsDialog importDialog;
-//        protected CustomDatabaseImporter importer;
-//        protected CustomDatabase database;
+
         protected DatabaseImportConfigPanel configPanel;
         private String name;
 
@@ -612,36 +611,6 @@ public class DatabaseDialog extends JDialog {
             final Box vbox = Box.createVerticalBox();
             vbox.add(hbox);
             vbox.add(Box.createVerticalStrut(4));
-
-            //todo inheritance handling
-            System.out.println("Implement DB inheritance");
-                /*final JXRadioGroup<String> inh = new JXRadioGroup<String>(new String[]{NONE, BIO, PUBCHEM});
-                inh.setLayoutAxis(BoxLayout.X_AXIS);
-                vbox.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Inherit compounds from"));
-                final Box hbox2 = Box.createHorizontalBox();
-                hbox2.add(inh);
-                hbox2.add(Box.createHorizontalGlue());
-                vbox.add(hbox2);
-                add(vbox, BorderLayout.NORTH);
-                if (database.isDeriveFromBioDb()) inh.setSelectedValue(BIO);
-                else if (database.isDeriveFromPubchem()) inh.setSelectedValue(PUBCHEM);
-                else inh.setSelectedValue(NONE);
-
-                inh.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        final String value = inh.getSelectedValue();
-                        database.setDeriveFromBioDb(false);
-                        database.setDeriveFromPubchem(false);
-                        if (value.equals(BIO)) database.setDeriveFromBioDb(true);
-                        else if (value.equals(PUBCHEM)) database.setDeriveFromPubchem(true);
-                        try {
-                            importer.writeSettings();
-                        } catch (IOException e1) {
-                            LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
-                        }
-                    }
-                });*/
 
             final Box box = Box.createVerticalBox();
             box.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -664,13 +633,12 @@ public class DatabaseDialog extends JDialog {
             add(box, BorderLayout.CENTER);
             add(importButton, BorderLayout.SOUTH);
 
-//                importDialog = new ImportCompoundsDialog(importer);
             importButton.addActionListener(e -> {
                 Jobs.runInBackgroundAndLoad(this, "Processing input Data...", () -> {
                     Path f = FileUtils.newTempFile("custom-db-import", ".csv");
                     try {
                         Files.write(f, Arrays.asList(textArea.getText().split("\n")));
-                        runImportJob(List.of(f.toFile()));
+                        runImportJob(List.of(f));
                         dispose();
                     } catch (IOException ioException) {
                         new ErrorReportDialog(this, "Could not write input data to '" + f.toString() + "'.");
@@ -681,7 +649,7 @@ public class DatabaseDialog extends JDialog {
             final DropTarget dropTarget = new DropTarget() {
                 @Override
                 public synchronized void drop(DropTargetDropEvent evt) {
-                    runImportJob(DragAndDrop.getFileListFromDrop(evt));
+                    runImportJob(DragAndDrop.getFileListFromDrop(evt).stream().map(File::toPath).collect(Collectors.toList()));
                     dispose();
                 }
             };
@@ -694,15 +662,14 @@ public class DatabaseDialog extends JDialog {
 
         }
 
-        protected void runImportJob(@NotNull List<File> source) {
+        protected void runImportJob(@NotNull List<Path> source) {
             try {
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
                 final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), null), configOptionLoader, new GuiInstanceBufferFactory());
+                wfBuilder.rootOptions.setNonCompoundInput(source);
                 final Run computation = new Run(wfBuilder);
 
                 List<String> command = new ArrayList<>();
-                command.add("--input");
-                command.add(source.stream().map(File::getAbsolutePath).collect(Collectors.joining(",")));
                 command.add(configPanel.toolCommand());
                 command.addAll(configPanel.asParameterList());
 
@@ -710,31 +677,14 @@ public class DatabaseDialog extends JDialog {
 
                 if (computation.isWorkflowDefined()){
                     final TextAreaJJobContainer<Boolean> j = Jobs.runWorkflow(computation.getFlow(), List.of());//todo make som nice head job that does some organizing stuff
-                    j.getSourceJob().addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt -> {
-                        if (((JobStateEvent)evt).getNewValue().equals(JJob.JobState.DONE)){
-                            JJob<?> jj = ((JJob<?>) evt.getSource());
-//                            if (jj.isFinished())
-//                                whenCustomDbIsAdded(jj.result());
-                        }
-                    });
+                    Jobs.runInBackgroundAndLoad(this,"Importing structures to " + name + "...", () -> j.getSourceJob().takeResult());
+                    whenCustomDbIsAdded(name);
+                    //todo report progress
                 }
                 //todo else some error message with pico cli output
             } catch (Exception e) {
                 new ExceptionDialog(MF, e.getMessage());
             }
-
-
-        /*    Jobs.submit(new BasicJJob<CustomDatabase>() {
-                @Override
-                protected CustomDatabase compute() throws Exception {
-                    CdkFingerprintVersion version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
-
-                    database = CustomDatabase.createNewDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name), version);
-                    importer = database.getImporter(ApplicationCore.WEB_API, 1000);
-                    importer.init();
-                    importer.addListener(this);
-                }
-            }, name, "Custom DB Import");*/
         }
     }
 
