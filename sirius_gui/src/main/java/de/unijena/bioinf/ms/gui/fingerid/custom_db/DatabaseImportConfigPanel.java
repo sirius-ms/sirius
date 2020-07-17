@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
-import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
@@ -52,6 +51,6 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         parentDBList = new JCheckboxListPanel<>(new DBSelectionList(false), "Derive DB from:");
         getOptionDescriptionByName("derive-from").ifPresent(it -> parentDBList.setToolTipText(GuiUtils.formatToolTip(it)));
         add(parentDBList);
-        parameterBindings.put("derive-from", () -> String.join(",", ((DBSelectionList) parentDBList.checkBoxList).getSelectedFormulaSearchDBStrings()));
+        parameterBindings.put("derive-from", () -> parentDBList.checkBoxList.getCheckedItems().isEmpty() ? null : String.join(",", ((DBSelectionList) parentDBList.checkBoxList).getSelectedFormulaSearchDBStrings()));
     }
 }
