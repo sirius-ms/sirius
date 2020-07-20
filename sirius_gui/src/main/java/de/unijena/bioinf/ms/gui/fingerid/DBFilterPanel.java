@@ -13,7 +13,10 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FormulaResultBean>>, CustomDataSources.DataSourceChangeListener {
-    public final static Set<String> BLACK_LIST = Set.of(DataSource.ADDITIONAL.realName, DataSource.ALL.realName);
+    public final static Set<String> BLACK_LIST = Set.of(DataSource.ADDITIONAL.realName, DataSource.ALL.realName, DataSource.ALL_BUT_INSILICO.realName,
+            DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
+            DataSource.SUPERNATURAL.realName
+    );
 
     private final List<FilterChangeListener> listeners = new LinkedList<>();
 

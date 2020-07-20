@@ -35,8 +35,8 @@ public class ProjectSaveAction extends AbstractAction {
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_DIR_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(new ProjectArchivedFilter());
         jfc.addChoosableFileFilter(new ProjectDirectoryFilter());
+        jfc.addChoosableFileFilter(new ProjectArchivedFilter());
 
 
         while (true) {

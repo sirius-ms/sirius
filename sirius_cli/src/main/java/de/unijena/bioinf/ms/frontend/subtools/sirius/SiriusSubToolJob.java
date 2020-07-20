@@ -42,12 +42,6 @@ public class SiriusSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         final Ms2Experiment exp = inst.getExperiment();
-        final CompoundContainer ioC = inst.loadCompoundContainer();
-//        System.out.println(new Date() + "\t-> I am Sirius, start computing Experiment " + inst.getID());
-
-
-//        if () {
-
         // set whiteSet or merge with whiteSet from db search if available
         Whiteset wSet = null;
 
@@ -81,22 +75,9 @@ public class SiriusSubToolJob extends InstanceJob {
         if (exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto())
             inst.getID().setRankingScoreTypes(new ArrayList<>(List.of(SiriusScore.class)));
 
-        //set make possible adduct persistent
-        inst.getID().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
+        //make possible adducts persistent without rewriting whole experiment
+        inst.getID().setDetectedAdducts(exp.getAnnotationOrNull(DetectedAdducts.class));
         inst.updateCompoundID();
-
-
-            /*String out = "#####################################\n"
-                    + new Date() + "\t-> I am Sirius, finish with Experiment " + inst.getID() + "\n"
-                    + results.stream().map(id -> id.getMolecularFormula().toString() + " : " + id.getScore()).collect(Collectors.joining("\n"))
-                    + "\n#####################################";
-
-            System.out.println(out);*/
-
-       /* } else {
-            logInfo("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
-//            System.out.println("Skipping formula Identification for Instance \"" + exp.getName() + "\" because results already exist.");
-        }*/
     }
 
     @Override

@@ -136,6 +136,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     @Option(names = {"-i", "--ions-considered"}, descriptionKey = "AdductSettings.detectable" , description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
     public void setIonsConsidered(DefaultParameter adductList) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.detectable", adductList);
+        defaultConfigOptions.changeOption("AdductSettings.fallback", adductList);
     }
 
     @Option(names = {"-I", "--ions-enforced"}, descriptionKey = "AdductSettings.enforced", description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
