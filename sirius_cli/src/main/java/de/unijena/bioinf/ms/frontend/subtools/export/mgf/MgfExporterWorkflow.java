@@ -117,7 +117,7 @@ public class MgfExporterWorkflow implements Workflow {
             bw.newLine();
             for (String compoundId : compoundNames) {
                 final double[] vector = compounds.get(compoundId);
-                escaper.translate(compoundId);
+                bw.write(escaper.translate(compoundId));
                 bw.write(",");
                 bw.write(String.valueOf(vector[0]));
                 bw.write(",");

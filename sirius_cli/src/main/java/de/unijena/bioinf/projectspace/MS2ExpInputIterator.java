@@ -1,5 +1,6 @@
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.babelms.GenericParser;
@@ -9,10 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
@@ -73,6 +76,19 @@ public class MS2ExpInputIterator implements InstIterProvider {
                 try {
                     MutableMs2Experiment experiment = Sirius.makeMutable(currentExperimentIterator.next());
 
+                    if (experiment.getPrecursorIonType() == null){
+                        LOG.warn("No ion or charge given for: " + experiment.getName() + " Try guessing charge from name.");
+                        final String name = (Optional.ofNullable(experiment.getName()).orElse("") +
+                                "_" +  Optional.ofNullable(experiment.getSource()).map(URL::getPath).orElse("")).toLowerCase();
+
+                        if ((name.contains("negative") || name.contains("neg")) && (!name.contains("positive") && !name.contains("pos"))){
+                            LOG.info(experiment.getName() + ": Negative charge keyword found!");
+                            experiment.setPrecursorIonType(PrecursorIonType.unknownNegative());
+                        }else {
+                            LOG.info(experiment.getName() + ": Falling back to positive");
+                            experiment.setPrecursorIonType(PrecursorIonType.unknownPositive());
+                        }
+                    }
                     if (!filter.test(experiment)) {
                         LOG.info("Skipping instance " + experiment.getName() + " because it did not pass the filter setting.");
                     } else if (experiment.getMolecularFormula() != null && experiment.getMolecularFormula().numberOf("D") > 0) {
