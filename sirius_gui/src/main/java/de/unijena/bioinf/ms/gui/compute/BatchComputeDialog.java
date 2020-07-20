@@ -269,9 +269,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         if (csiConfigs.isToolSelected()) {
             toolCommands.add(csiConfigs.content.toolCommand());
             configCommand.addAll(csiConfigs.asParameterList());
-        } else {
-            //set ionization if CSI ist not enabled
-            configCommand.addAll(csiConfigs.content.getAdductsParameter());
         }
 
         if (canopusConfigPanel.isToolSelected()) {
@@ -353,25 +350,25 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             }
         });
 
-        editPanel.ionizationCB.addActionListener(e -> {
-            PrecursorIonType ionType = editPanel.getSelectedIonization();
-            formulaIDConfigPanel.content.refreshPossibleIonizations(Collections.singleton(ionType.getIonization().getName()));
-            pack();
-        });
+        editPanel.ionizationCB.addActionListener(e ->
+                formulaIDConfigPanel.content.refreshPossibleIonizations(
+                        Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()),
+                        formulaIDConfigPanel.isToolSelected())
+        );
 
+        formulaIDConfigPanel.addEnableChangeListener((c, e) -> c.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()), e));
 
         csiConfigs.content.adductOptions.checkBoxList.addPropertyChangeListener("refresh", evt -> {
             PrecursorIonType ionType = editPanel.getSelectedIonization();
-            if (!ionType.getAdduct().isEmpty()) {
-                csiConfigs.content.adductOptions.checkBoxList.uncheckAll();
-                csiConfigs.content.adductOptions.checkBoxList.check(ionType.toString());
-                csiConfigs.content.adductOptions.setEnabled(false);
-            } else {
+            if (ionType.hasNeitherAdductNorInsource() && !ionType.isIntrinsicalCharged()) {
                 csiConfigs.content.adductOptions.setEnabled(csiConfigs.isToolSelected());
+            } else {
+                csiConfigs.content.adductOptions.checkBoxList.replaceElements(List.of(ionType.toString()));
+                csiConfigs.content.adductOptions.checkBoxList.checkAll();
+                csiConfigs.content.adductOptions.setEnabled(false);
             }
         });
 
-//        searchProfilePanel.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()));
         editPanel.setData(ec);
         /////// todo ugly hack end
         add(north, BorderLayout.NORTH);

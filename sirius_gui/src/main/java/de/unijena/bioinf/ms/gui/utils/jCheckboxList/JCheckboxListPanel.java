@@ -10,6 +10,7 @@ public class JCheckboxListPanel<E> extends TextHeaderBoxPanel {
     public final JCheckBoxList<E> checkBoxList;
     private final JButton all = new JButton("all");
     private final JButton none = new JButton("none");
+    public final JPanel buttons;
 
     public JCheckboxListPanel(JCheckBoxList<E> sourceList, String headline, String tooltip) {
         this(sourceList, headline);
@@ -30,7 +31,7 @@ public class JCheckboxListPanel<E> extends TextHeaderBoxPanel {
         none.addActionListener(e -> checkBoxList.uncheckAll());
         RelativeLayout l = new RelativeLayout(RelativeLayout.X_AXIS, 1);
         l.setAlignment(RelativeLayout.CENTER);
-        JPanel buttons = new JPanel();
+        buttons = new JPanel(new FlowLayout());
         buttons.add(all);
         buttons.add(none);
         add(buttons, BorderLayout.SOUTH);
@@ -39,8 +40,7 @@ public class JCheckboxListPanel<E> extends TextHeaderBoxPanel {
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        all.setEnabled(enabled);
-        none.setEnabled(enabled);
         checkBoxList.setEnabled(enabled);
+
     }
 }

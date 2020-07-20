@@ -1,9 +1,9 @@
 package de.unijena.bioinf.ms.gui.net;
 
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +39,8 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
 
     final BooleanJlabel internet = new BooleanJlabel();
-    final BooleanJlabel jena = new BooleanJlabel();
-    final BooleanJlabel bioinf = new BooleanJlabel();
+    final BooleanJlabel hoster = new BooleanJlabel();
+    final BooleanJlabel domain = new BooleanJlabel();
     final BooleanJlabel fingerID = new BooleanJlabel();
     final BooleanJlabel fingerID_WebAPI = new BooleanJlabel();
     final BooleanJlabel fingerID_Worker = new BooleanJlabel();
@@ -51,10 +51,10 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         super(GridBagConstraints.WEST, GridBagConstraints.EAST);
 
         add(new JXTitledSeparator("Connection check:"), 15, false);
-        add(new JLabel("Connection to the internet (google.com)"), internet, 5, false);
-        add(new JLabel("Connection to uni-jena.de"), jena, 5, false);
-        add(new JLabel("Connection to bio.informatics.uni-jena.de"), bioinf, 5, false);
-        add(new JLabel("Connection to www.csi-fingerid.uni-jena.de"), fingerID, 5, false);
+        add(new JLabel("Connection to the internet (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external") + ")"), internet, 5, false);
+        add(new JLabel("Connection to domain provider"), hoster, 5, false);
+        add(new JLabel("Connection to domain (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.domain") + ")"), domain, 5, false);
+        add(new JLabel("Connection to CSI:FingerID Server"), fingerID, 5, false);
         add(new JLabel("Check CSI:FingerID REST API"), fingerID_WebAPI, 5, false);
         add(new JLabel("All necessary workers available?"), fingerID_Worker, 5, false);
 
@@ -73,8 +73,8 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
     public void refreshPanel(final int state, final EnumSet<PredictorType> availableTypes, final int pendingJobs) {
         internet.setState(state > 1 || state == 0);
-        jena.setState(state > 2 || state == 0);
-        bioinf.setState(state > 3 || state == 0);
+        hoster.setState(state > 2 || state == 0);
+        domain.setState(state > 3 || state == 0);
         fingerID.setState(state > 4 || state == 0);
         fingerID_WebAPI.setState(state == 0);
 
@@ -88,9 +88,14 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
         add(resultPanel, 15, true);
 
+        add(new JXTitledSeparator("Webservice registration"), 15, false);
+        add(new JLabel("<html>Registered to: <b> " + PropertyManager.getProperty("de.unijena.bioinf.sirius.registration",null,"Community Edition (Non commercial use only!)") + " </b></html>"), 5, false);
+        //todo registration info has to be load from server.
+
         revalidate();
         repaint();
     }
+
 
     private JPanel createResultPanel(final int state, final EnumSet<PredictorType> neededTypes, final EnumSet<PredictorType> availableTypes, final int pendingJobs) {
         TwoColumnPanel resultPanel = new TwoColumnPanel();
@@ -161,15 +166,15 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                 break;
             case 3:
                 resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
-                        " Could not reach https://bio.informatik.uni-jena.de. <br>" +
+                        " Could not reach "+ PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.domain") +". <br>" +
                         "Either our web server is temporary not available<br>" +
                         " or it cannot be reached because of your network configuration.<br>" +
                         "</html>"));
                 break;
             case 2:
                 resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
-                        " Could not reach uni-jena.de. <br>" +
-                        "Either the whole uni-jena.de domain is temporary not available<br>" +
+                        " Could not reach domain provider. <br>" +
+                        "Either the whole domain provider is temporary not available<br>" +
                         " or it cannot be reached because of your network configuration. <br>" +
                         "</html>"));
                 break;

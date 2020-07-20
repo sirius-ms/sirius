@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class Instance {
     @NotNull
     protected final ProjectSpaceManager spaceManager;
-    @NotNull
+
     private CompoundContainer compoundCache;
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();

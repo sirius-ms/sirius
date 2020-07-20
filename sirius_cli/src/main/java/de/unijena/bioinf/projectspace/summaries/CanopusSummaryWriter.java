@@ -53,7 +53,7 @@ public class CanopusSummaryWriter implements Summarizer, Iterable<String[]> {
 
     @Override
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
-        writer.table("canopus_summary.csv", HEADER, this);
+        writer.table(SummaryLocations.CANOPUS_SUMMARY, HEADER, this);
     }
 
     private final static String[] HEADER = new String[]{ "name","molecularFormula", "adduct", "most specific class", "level 5", "subclass", "class",
@@ -62,8 +62,8 @@ public class CanopusSummaryWriter implements Summarizer, Iterable<String[]> {
     @NotNull
     @Override
     public Iterator<String[]> iterator() {
-        return new Iterator<String[]>() {
-            int k=0;
+        return new Iterator<>() {
+            int k = 0;
             String[] row = new String[HEADER.length];
 
             @Override
@@ -77,8 +77,9 @@ public class CanopusSummaryWriter implements Summarizer, Iterable<String[]> {
                     final ArrayFingerprint canopusFingerprint = classifications.get(k);
 
                     final ClassyFireFingerprintVersion cf;
-                    if (canopusFingerprint.getFingerprintVersion() instanceof MaskedFingerprintVersion) cf = (ClassyFireFingerprintVersion)(((MaskedFingerprintVersion) canopusFingerprint.getFingerprintVersion()).getMaskedFingerprintVersion());
-                    else cf = (ClassyFireFingerprintVersion)canopusFingerprint.getFingerprintVersion();
+                    if (canopusFingerprint.getFingerprintVersion() instanceof MaskedFingerprintVersion)
+                        cf = (ClassyFireFingerprintVersion) (((MaskedFingerprintVersion) canopusFingerprint.getFingerprintVersion()).getMaskedFingerprintVersion());
+                    else cf = (ClassyFireFingerprintVersion) canopusFingerprint.getFingerprintVersion();
                     final ClassyfireProperty primaryClass = cf.getPrimaryClass(canopusFingerprint);
                     final ClassyfireProperty[] lineage = primaryClass.getLineage();
 
@@ -87,10 +88,10 @@ public class CanopusSummaryWriter implements Summarizer, Iterable<String[]> {
                     row[2] = ionTypes.get(k).toString();
                     row[3] = primaryClass.getName();
 
-                    row[7] = lineage.length>2 ? lineage[2].getName() : "";
-                    row[6] = lineage.length>3 ? lineage[3].getName() : "";
-                    row[5] = lineage.length>4 ? lineage[4].getName() : "";
-                    row[4] = lineage.length>5 ? lineage[5].getName() : "";
+                    row[7] = lineage.length > 2 ? lineage[2].getName() : "";
+                    row[6] = lineage.length > 3 ? lineage[3].getName() : "";
+                    row[5] = lineage.length > 4 ? lineage[4].getName() : "";
+                    row[4] = lineage.length > 5 ? lineage[5].getName() : "";
 
                     row[8] = Joiner.on("; ").join(canopusFingerprint.presentFingerprints().asMolecularPropertyIterator());
 
