@@ -280,6 +280,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
                 exact[K] = beautify[K].takeResult();
             }
         }
+
         revertTreeSizeIncrease(exact, originalTreeSize);
 
         return exact;

@@ -5,21 +5,23 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
 
 public class SiriusJobs {
 
+    private static volatile JobManagerFactory<?> instanceCreator = (cores) -> new JobManager(cores, Math.min(cores, 3));
     private static volatile JobManager globalJobManager = null;
 
     private SiriusJobs() {/*prevent instantiation*/}
 
     public static void setGlobalJobManager(int cpuThreads) {
-        replace(new JobManager(cpuThreads, Math.min(cpuThreads, 3)));
+        replace(instanceCreator.createJobManager(cpuThreads));
     }
 
-    private static void replace(JobManager jobManager) {
+    private synchronized static void replace(JobManager jobManager) {
         final JobManager oldManager = globalJobManager;
         globalJobManager = jobManager;
         if (oldManager != null) {
@@ -30,6 +32,13 @@ public class SiriusJobs {
             }
         }
 
+    }
+
+    public synchronized static void setJobManagerFactory(@NotNull JobManagerFactory<?> factory) {
+        if (factory == null)
+            throw new IllegalArgumentException("Job factory must not be null!");
+
+        instanceCreator = factory;
     }
 
     public static int getCPUThreads() {

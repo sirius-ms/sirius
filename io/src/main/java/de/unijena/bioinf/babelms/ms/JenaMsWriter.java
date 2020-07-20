@@ -74,8 +74,8 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         writeIfAvailable(writer, ">quantification", data.getAnnotationOrNull(Quantification.class));
 
         //write original config to file
-        if (data.hasAnnotation(MsFileConfig.class)) {
-            ParameterConfig config = data.getAnnotationOrThrow(MsFileConfig.class).config;
+        if (data.hasAnnotation(InputFileConfig.class)) {
+            ParameterConfig config = data.getAnnotationOrThrow(InputFileConfig.class).config;
             Iterator<String> it = config.getModifiedConfigKeys();
             while (it.hasNext()) {
                 final String key = it.next();

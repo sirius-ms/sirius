@@ -5,13 +5,16 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
@@ -22,11 +25,13 @@ import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -56,8 +61,12 @@ public class TestSirius {
     }
 
     public MutableMs2Experiment getStandardExample() throws IOException {
+        return getStandardExample("/Bicuculline.ms");
+    }
+
+    public MutableMs2Experiment getStandardExample(String resourcePath) throws IOException {
         JenaMsParser p = new JenaMsParser();
-        URL str = getClass().getResource("/Bicuculline.ms");
+        URL str = getClass().getResource(resourcePath);
         BufferedReader buf = new BufferedReader(new InputStreamReader(str.openStream()));
         Ms2Experiment exp = p.parse(buf, str);
         return (MutableMs2Experiment) exp;
@@ -155,21 +164,63 @@ public class TestSirius {
         final ProcessedInput processedInput = preprocessor.preprocess(experiment);
         sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
         final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
-        JobManager jobs = SiriusJobs.getGlobalJobManager();
-        FasterTreeComputationInstance.FinalResult finalResult = null;
-        analysis.setTreeBuilder(TreeBuilderFactory.getInstance().getTreeBuilder("clp"));
-        for (int i = 0; i < 20; ++i){
+        JobManager jobsManager = SiriusJobs.getGlobalJobManager();
+        TreeBuilder builder = TreeBuilderFactory.getInstance().getTreeBuilder("clp");
+        analysis.setTreeBuilder(builder);
+
+
+        List<FasterTreeComputationInstance> jobs = new ArrayList<>();
+        for (int i = 0; i < 20; ++i) {
             FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
-            jobs.submitJob(instance);
-            finalResult = instance.takeResult();
+            jobs.add(jobsManager.submitJob(instance));
         }
-        final FTree top = finalResult.getResults().get(0);
+
+        jobs.forEach(JJob::takeResult);
+
+        final FTree top = jobs.get(jobs.size() - 1).getResult().getResults().get(0);
         assertEquals(MolecularFormula.parseOrThrow("C20H17NO6"), top.getRoot().getFormula());
     }
 
 
+    /*@Test
+    public void testILPSolvers() throws IOException, ExecutionException, URISyntaxException {
+        JobManager jobsManager = SiriusJobs.getGlobalJobManager();
+        String[] solvers = {"clp", "glpk"*//*, "cplex"*//*};
+        Path path = Path.of(getClass().getResource("/dendroids-good").toURI());
+        List<Path> files = FileUtils.listAndClose(path, pathStream -> pathStream.filter(p -> Files.isRegularFile(p)).collect(Collectors.toList()));
+        for (Path file : files) {
+            LinkedHashMap<String, FasterTreeComputationInstance.FinalResult> results = new LinkedHashMap<>();
+            for (String solver : solvers) {
+                System.out.println("Testing: " + file.toAbsolutePath().toString() + " with " + solver);
+                long t =  System.currentTimeMillis();
+                final Ms2Experiment experiment = getStandardExample("/dendroids-good/" + file.getFileName().toString());
+                final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
+                final ProcessedInput processedInput = preprocessor.preprocess(experiment);
+                sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
+                final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
+                TreeBuilder builder = TreeBuilderFactory.getInstance().getTreeBuilder(solver);
+                analysis.setTreeBuilder(builder);
+
+                FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+                FasterTreeComputationInstance.FinalResult result = jobsManager.submitJob(instance).awaitResult();
+                results.put(solver,result);
+                System.out.println("Testing: " + file.toAbsolutePath().toString() + " with " + solver + "DONE in " + (System.currentTimeMillis() - t)/1000d + "s");
+            }
+            for (Map.Entry<String, FasterTreeComputationInstance.FinalResult> e1 : results.entrySet()) {
+//                assertEquals(MolecularFormula.parseOrThrow("C20H17NO6"), e1.getValue().getResults().get(0).getRoot().getFormula());
+                for (Map.Entry<String, FasterTreeComputationInstance.FinalResult> e2 : results.entrySet()) {
+                    for (int i = 0; i < e1.getValue().getResults().size(); i++) {
+                        assertEquals(e1.getValue().getResults().get(i).getRootScore(),e2.getValue().getResults().get(i).getRootScore(), 0.000001);
+                        assertEquals(e1.getValue().getResults().get(i).getTreeWeight(),e2.getValue().getResults().get(i).getTreeWeight(), 0.000001);
+                    }
+                }
+            }
+        }
+    }
+*/
+
     @Test
-    public void testTreeSerialization() {
+    public void testTreeSerialization() throws IOException {
         final Ms2Experiment experiment = getStandardExperiment();
 
         final Ms2Preprocessor preprocessor = new Ms2Preprocessor();

@@ -4,8 +4,8 @@ import de.unijena.bioinf.ChemistryBase.ms.properties.ConfigAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 
-public class MsFileConfig extends ConfigAnnotation implements Ms2ExperimentAnnotation {
-    public MsFileConfig(ParameterConfig config) {
+public class InputFileConfig extends ConfigAnnotation implements Ms2ExperimentAnnotation {
+    public InputFileConfig(ParameterConfig config) {
         super(config);
     }
 }

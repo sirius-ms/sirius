@@ -96,7 +96,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         }
     }
 
-    private static enum SPECTRUM_TYPE {MERGED_MS1, MS1, MS2, UNKNOWN}
+    private enum SPECTRUM_TYPE {MERGED_MS1, MS1, MS2, UNKNOWN}
 
     private static class ParserInstance {
 
@@ -308,6 +308,29 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 splash = value;
             } else if (optionName.equalsIgnoreCase("quality")) {
                 spectrumQualityString = value;
+            } else if (optionName.equalsIgnoreCase("rt") || optionName.equalsIgnoreCase("retention")) {
+                retentionTime = parseRetentionTimeMiddle(value);
+            } else if (optionName.equalsIgnoreCase("rt_start")) {
+                retentionTimeStart = parseRetentionTime(value);
+            } else if (optionName.equalsIgnoreCase("rt_end")) {
+                retentionTimeEnd = parseRetentionTime(value);
+            } else if (optionName.equals("elements")) {
+                changeConfig("FormulaSettings.detectable", value);
+                changeConfig("FormulaSettings.fallback", value);
+            } else if (optionName.equals("ppm-max")) {
+                changeConfig("MS1MassDeviation.allowedMassDeviation", value);
+            } else if (optionName.equals("ppm-max-ms2")) {
+                changeConfig("MS2MassDeviation.allowedMassDeviation", value);
+            } else if (optionName.equals("noise")) {
+                changeConfig("MedianNoiseIntensity", value);
+            } else if (optionName.equals("compound-timeout")) {
+                changeConfig("Timeout.secondsPerInstance", String.valueOf(parseTime(value)));
+            } else if (optionName.equals("tree-timeout")) {
+                changeConfig("Timeout.secondsPerTree", String.valueOf(parseTime(value)));
+            } else if (optionName.equals("no-recalibration")) {
+                changeConfig("ForbidRecalibration", ForbidRecalibration.FORBIDDEN.name());
+            } else if (config.containsConfigKey(options[0])) {
+                changeConfig(options[0], value);
             } else if (optionName.contains("collision") || optionName.contains("energy") || optionName.contains("ms2")) {
                 if (currentSpectrum.size() > 0) newSpectrum();
                 this.spectrumType = SPECTRUM_TYPE.MS2;
@@ -343,31 +366,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else if (optionName.contains("ms1")) {
                 if (currentSpectrum.size() > 0) newSpectrum();
                 this.spectrumType = SPECTRUM_TYPE.MS1;
-            } else if (optionName.equalsIgnoreCase("rt") || optionName.equalsIgnoreCase("retention")) {
-                retentionTime = parseRetentionTimeMiddle(value);
-            } else if (optionName.equalsIgnoreCase("rt_start")) {
-                retentionTimeStart = parseRetentionTime(value);
-            } else if (optionName.equalsIgnoreCase("rt_end")) {
-                retentionTimeEnd = parseRetentionTime(value);
-            } else if (optionName.contains("ion") || optionName.equalsIgnoreCase("adduct")) {
+            } else if (optionName.contains("ion") || optionName.equals("adduct")) {
                 parseIonizations(value);
-            } else if (optionName.equals("elements")) {
-                changeConfig("FormulaSettings.detectable", value);
-                changeConfig("FormulaSettings.fallback", value);
-            } else if (optionName.equals("ppm-max")) {
-                changeConfig("MS1MassDeviation.allowedMassDeviation", value);
-            } else if (optionName.equals("ppm-max-ms2")) {
-                changeConfig("MS2MassDeviation.allowedMassDeviation", value);
-            } else if (optionName.equals("noise")) {
-                changeConfig("MedianNoiseIntensity", value);
-            } else if (optionName.equals("compound-timeout")) {
-                changeConfig("Timeout.secondsPerInstance", String.valueOf(parseTime(value)));
-            } else if (optionName.equals("tree-timeout")) {
-                changeConfig("Timeout.secondsPerTree", String.valueOf(parseTime(value)));
-            } else if (optionName.equals("no-recalibration")) {
-                changeConfig("ForbidRecalibration", ForbidRecalibration.FORBIDDEN.name());
-            } else if (config.containsConfigKey(options[0])) {
-                changeConfig(options[0], value);
             } else {
                 warn("Unknown option " + "'>" + optionName + "'" + " in .ms file. Option will be ignored");
                 if (fields == null) fields = new AdditionalFields();
@@ -433,7 +433,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 exp.setAnnotation(RetentionTime.class, new RetentionTime(retentionTimeStart, retentionTimeEnd, retentionTime));
 
             //add config annotations that have been set within the file
-            exp.setAnnotation(MsFileConfig.class, new MsFileConfig(config)); //set map for reconstructability
+            exp.setAnnotation(InputFileConfig.class, new InputFileConfig(config)); //set map for reconstructability
             exp.setAnnotationsFrom(config.createInstancesWithModifiedDefaults(Ms2ExperimentAnnotation.class, true));
 
             if (quant!=null) exp.setAnnotation(Quantification.class, quant);
