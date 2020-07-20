@@ -10,114 +10,114 @@ extern "C" {
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_ctor
- * Signature: (II)I
+ * Signature: (II)J
  */
-JNIEXPORT jint JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1ctor
+JNIEXPORT jlong JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1ctor
   (JNIEnv *, jobject, jint, jint);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_dispose
- * Signature: (I)V
+ * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1dispose
-  (JNIEnv *, jobject, jint);
+  (JNIEnv *, jobject, jlong);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_getInfinity
- * Signature: (I)D
+ * Signature: (J)D
  */
 JNIEXPORT jdouble JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1getInfinity
-  (JNIEnv *, jobject, jint);
+  (JNIEnv *, jobject, jlong);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_setObjective
- * Signature: (I[D)V
+ * Signature: (J[D)V
  */
 JNIEXPORT void JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1setObjective
-  (JNIEnv *, jobject, jint, jdoubleArray);
+  (JNIEnv *, jobject, jlong, jdoubleArray);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_setTimeLimit
- * Signature: (ID)V
+ * Signature: (JD)V
  */
 JNIEXPORT void JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1setTimeLimit
-  (JNIEnv *, jobject, jint, jdouble);
+  (JNIEnv *, jobject, jlong, jdouble);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_setColBounds
- * Signature: (I[D[D)V
+ * Signature: (J[D[D)V
  */
 JNIEXPORT void JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1setColBounds
-  (JNIEnv *, jobject, jint, jdoubleArray, jdoubleArray);
+  (JNIEnv *, jobject, jlong, jdoubleArray, jdoubleArray);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_setColStart
- * Signature: (I[D)V
+ * Signature: (J[D)V
  */
 JNIEXPORT void JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1setColStart
-  (JNIEnv *, jobject, jint, jdoubleArray);
+  (JNIEnv *, jobject, jlong, jdoubleArray);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_addFullRow
- * Signature: (I[DDD)V
+ * Signature: (J[DDD)V
  */
 JNIEXPORT void JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1addFullRow
-  (JNIEnv *, jobject, jint, jdoubleArray, jdouble, jdouble);
+  (JNIEnv *, jobject, jlong, jdoubleArray, jdouble, jdouble);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_addSparseRow
- * Signature: (I[D[IDD)V
+ * Signature: (J[D[IDD)V
  */
 JNIEXPORT void JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1addSparseRow
-  (JNIEnv *, jobject, jint, jdoubleArray, jintArray, jdouble, jdouble);
+  (JNIEnv *, jobject, jlong, jdoubleArray, jintArray, jdouble, jdouble);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_addSparseRowCached
- * Signature: (I[D[IDD)V
+ * Signature: (J[D[IDD)V
  */
 JNIEXPORT void JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1addSparseRowCached
-  (JNIEnv *, jobject, jint, jdoubleArray, jintArray, jdouble, jdouble);
+  (JNIEnv *, jobject, jlong, jdoubleArray, jintArray, jdouble, jdouble);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_addSparseRows
- * Signature: (II[I[D[I[D[D)V
+ * Signature: (JI[I[D[I[D[D)V
  */
 JNIEXPORT void JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1addSparseRows
-  (JNIEnv *, jobject, jint, jint, jintArray, jdoubleArray, jintArray, jdoubleArray, jdoubleArray);
+  (JNIEnv *, jobject, jlong, jint, jintArray, jdoubleArray, jintArray, jdoubleArray, jdoubleArray);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_solve
- * Signature: (I)I
+ * Signature: (J)I
  */
 JNIEXPORT jint JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1solve
-  (JNIEnv *, jobject, jint);
+  (JNIEnv *, jobject, jlong);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_getColSolution
- * Signature: (I)[D
+ * Signature: (J)[D
  */
 JNIEXPORT jdoubleArray JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1getColSolution
-  (JNIEnv *, jobject, jint);
+  (JNIEnv *, jobject, jlong);
 
 /*
  * Class:     de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_JNI
  * Method:    n_getScore
- * Signature: (I)D
+ * Signature: (J)D
  */
 JNIEXPORT jdouble JNICALL Java_de_unijena_bioinf_FragmentationTreeConstruction_computation_tree_ilp_CLPModel_1JNI_n_1getScore
-  (JNIEnv *, jobject, jint);
+  (JNIEnv *, jobject, jlong);
 
 #ifdef __cplusplus
 }

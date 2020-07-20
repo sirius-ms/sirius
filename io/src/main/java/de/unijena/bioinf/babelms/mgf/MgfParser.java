@@ -55,7 +55,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         public MgfSpec(MgfSpec s) {
             this.spectrum = new MutableMs2Spectrum(s.spectrum);
             this.ionType = s.ionType;
-            this.fields = new HashMap<String, String>(s.fields);
+            this.fields = new HashMap<>(s.fields);
             this.inchi = s.inchi;
             this.smiles = s.smiles;
             this.name = s.name;
@@ -67,7 +67,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
 
         public MgfSpec() {
             this.spectrum = new MutableMs2Spectrum();
-            this.fields = new HashMap<String, String>();
+            this.fields = new HashMap<>();
             this.type = SpecType.UNKNOWN;
         }
     }
@@ -317,8 +317,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         if (!inst.hasNext()) return null;
         ++inst.specIndex;
         final MutableMs2Experiment exp = new MutableMs2Experiment();
-        exp.setMs2Spectra(new ArrayList<MutableMs2Spectrum>());
-        exp.setMs1Spectra(new ArrayList<SimpleSpectrum>());
+        exp.setMs2Spectra(new ArrayList<>());
+        exp.setMs1Spectra(new ArrayList<>());
         exp.setIonMass(inst.peekNext().spectrum.getPrecursorMz());
         exp.setName(inst.peekNext().name);
         if (exp.getName() == null) exp.setName(inst.peekNext().featureId);

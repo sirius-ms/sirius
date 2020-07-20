@@ -26,89 +26,89 @@ public class CLPModel_JNI {
 
     // needed, because JNI libraries are loaded as static, multiple
     // instances are managed in the Wrapper class and accessed by index
-    private int wrapper_index = 0;
+    private long wrapper_ptr;
 
     public CLPModel_JNI(int ncols, int obj_sense){
-        wrapper_index = n_ctor(ncols, obj_sense);
+        wrapper_ptr = n_ctor(ncols, obj_sense);
     }
 
-    native int n_ctor(int ncols, int obj_sense); // obj_sense: ObjectiveSense
+    native long n_ctor(int ncols, int obj_sense); // obj_sense: ObjectiveSense
 
-    native void n_dispose(int self);
+    native void n_dispose(long self);
 
-    native double n_getInfinity(int self);
+    native double n_getInfinity(long self);
 
-    native void n_setObjective(int self, double[] objective);
+    native void n_setObjective(long self, double[] objective);
 
-    native void n_setTimeLimit(int self, double seconds);
+    native void n_setTimeLimit(long self, double seconds);
 
-    native void n_setColBounds(int self, double[] col_lb, double[] col_ub);
+    native void n_setColBounds(long self, double[] col_lb, double[] col_ub);
 
-    native void n_setColStart(int self, double start[]);
+    native void n_setColStart(long self, double start[]);
 
-    native void n_addFullRow(int self, double row[], double lb, double ub);
+    native void n_addFullRow(long self, double row[], double lb, double ub);
 
-    native void n_addSparseRow(int self, double[] elems, int[] indices, double lb, double ub);
+    native void n_addSparseRow(long self, double[] elems, int[] indices, double lb, double ub);
 
-    native void n_addSparseRowCached(int self, double[] elems, int[] indices, double lb, double ub);
+    native void n_addSparseRowCached(long self, double[] elems, int[] indices, double lb, double ub);
 
-    native void n_addSparseRows(int self, int numrows, int rowstarts[], double elems[], int indices[], double lb[], double ub[]);
+    native void n_addSparseRows(long self, int numrows, int rowstarts[], double elems[], int indices[], double lb[], double ub[]);
 
-    native int n_solve(int self); // returns ReturnStatus
+    native int n_solve(long self); // returns ReturnStatus
 
-    native double[] n_getColSolution(int self);
+    native double[] n_getColSolution(long self);
 
-    native double n_getScore(int self);
+    native double n_getScore(long self);
 
     void dispose(){
-        n_dispose(wrapper_index);
+        n_dispose(wrapper_ptr);
     }
 
     double getInfinity(){
-        return n_getInfinity(wrapper_index);
+        return n_getInfinity(wrapper_ptr);
     }
 
     void setObjective(double[] objective){
-        n_setObjective(wrapper_index, objective);
+        n_setObjective(wrapper_ptr, objective);
     }
 
 void setTimeLimit(double seconds){
-        n_setTimeLimit(wrapper_index, seconds);
+        n_setTimeLimit(wrapper_ptr, seconds);
     }
 
 void setColBounds(double[] col_lb, double[] col_ub){
-        n_setColBounds(wrapper_index, col_lb, col_ub);
+        n_setColBounds(wrapper_ptr, col_lb, col_ub);
     }
 
 void setColStart(double start[]){
-        n_setColStart(wrapper_index, start);
+        n_setColStart(wrapper_ptr, start);
     }
 
 void addFullRow(double row[], double lb, double ub){
-        n_addFullRow(wrapper_index, row, lb, ub);
+        n_addFullRow(wrapper_ptr, row, lb, ub);
     }
 
 void addSparseRow(double[] elems, int[] indices, double lb, double ub){
-        n_addSparseRow(wrapper_index, elems, indices, lb, ub);
+        n_addSparseRow(wrapper_ptr, elems, indices, lb, ub);
     }
 
 void addSparseRowCached(double[] elems, int[] indices, double lb, double ub){
-        n_addSparseRowCached(wrapper_index, elems, indices, lb, ub);
+        n_addSparseRowCached(wrapper_ptr, elems, indices, lb, ub);
     }
 
 void addSparseRows(int numrows, int rowstarts[], double elems[], int indices[], double lb[], double ub[]){
-        n_addSparseRows(wrapper_index, numrows, rowstarts, elems, indices, lb, ub);
+        n_addSparseRows(wrapper_ptr, numrows, rowstarts, elems, indices, lb, ub);
     }
 
     int solve(){ // returns ReturnStatus
-        return n_solve(wrapper_index);
+        return n_solve(wrapper_ptr);
     }
 
     double[] getColSolution(){
-        return n_getColSolution(wrapper_index);
+        return n_getColSolution(wrapper_ptr);
     }
 
     double getScore(){
-        return n_getScore(wrapper_index);
+        return n_getScore(wrapper_ptr);
     }
 }
