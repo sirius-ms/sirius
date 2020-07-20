@@ -3,19 +3,14 @@ package de.unijena.bioinf.ms.frontend.subtools.config;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
-import de.unijena.bioinf.babelms.ms.MsFileConfig;
-import de.unijena.bioinf.jjobs.JobSubmitter;
-import de.unijena.bioinf.jjobs.SubjobSubmitter;
+import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
-import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
-import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
-import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -45,8 +40,8 @@ public class AddConfigsJob extends InstanceJob {
                 .map(projectSpaceConfig -> projectSpaceConfig.config.newIndependentInstance(cliConfig,true))
                 .orElse(cliConfig);
 
-        if (exp.hasAnnotation(MsFileConfig.class)){
-            @NotNull MsFileConfig msConf = exp.getAnnotationOrThrow(MsFileConfig.class);
+        if (exp.hasAnnotation(InputFileConfig.class)){
+            @NotNull InputFileConfig msConf = exp.getAnnotationOrThrow(InputFileConfig.class);
             if (!baseConfig.containsConfiguration(msConf.config.getLocalConfigName()))
                 baseConfig = baseConfig.newIndependentInstance(msConf.config, false);
         }
