@@ -145,7 +145,7 @@ public class MzMLParser implements LCMSParser {
                     mzArray = new double[0];
                     intArray = new double[0];
                 }
-                final SimpleSpectrum spec = new SimpleSpectrum(mzArray, intArray);
+                final SimpleSpectrum spec = Spectrums.getBaselined(Spectrums.wrap(mzArray, intArray), 0);
 
                 final Scan scan = new Scan(
                         spectrum.getIndex(),
