@@ -210,7 +210,7 @@ public class ChromatogramBuilder {
         if (start < 0) return false;
         int end;
         for (end=start; end < spec.size(); ++end) {
-            if (!dev.inErrorWindow(mz, spec.getMzAt(end)) || spec.getIntensityAt(end) < noiseLevel)
+            if (!dev.inErrorWindow(mz, spec.getMzAt(end)) /*|| spec.getIntensityAt(end) < noiseLevel*/)
                 break;
         }
         if (end-start == 1) {

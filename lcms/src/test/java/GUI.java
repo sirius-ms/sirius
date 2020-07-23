@@ -106,7 +106,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
     public static void main(String[] args) {
 
-        final File mzxmlFile = new File("/home/kaidu/data/raw/Stachybotrys/OE_myzel_04517_konz_2.mzXML");
+        final File mzxmlFile = new File("/home/kaidu/Downloads/180912_109.mzML");
         InMemoryStorage storage= new InMemoryStorage();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         try {
