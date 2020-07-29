@@ -44,7 +44,7 @@ public class ComputeCSIAction extends AbstractAction {
             }
         });
 
-        MainFrame.CONNECTION_MONITOR.addConectionStateListener(evt -> {
+        MF.CONNECTION_MONITOR().addConectionStateListener(evt -> {
             ConnectionMonitor.ConnectionState value = (ConnectionMonitor.ConnectionState) evt.getNewValue();
             proofCSI(value);
         });
