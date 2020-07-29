@@ -20,7 +20,10 @@ package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -30,16 +33,22 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class AboutDialog extends JDialog{
+public class AboutDialog extends JDialog {
+    public static final String PROPERTY_KEY = "de.unijena.bioinf.sirius.ui.cite";
 
     private final JButton close, bibtex, clipboard;
+    private final boolean doNotShowAgain;
+    private JCheckBox dontAsk;
 
-    public AboutDialog(Frame owner) {
+    public AboutDialog(Frame owner, boolean doNotShowAgain) {
         super(owner, true);
+        this.doNotShowAgain = doNotShowAgain;
         setTitle(ApplicationCore.VERSION_STRING());
         setLayout(new BorderLayout());
 
@@ -49,13 +58,15 @@ public class AboutDialog extends JDialog{
         try {
             final String htmlText;
             {
-                final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(AboutDialog.class.getResourceAsStream("/sirius/about.html")));
                 final StringBuilder buf = new StringBuilder();
-                String line;
-                while ((line=br.readLine())!=null) buf.append(line).append('\n');
-                br.close();
+                try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(AboutDialog.class.getResourceAsStream("/sirius/about.html")))) {
+                    String line;
+                    while ((line = br.readLine()) != null) buf.append(line).append('\n');
+                }
+                buf.append(ApplicationCore.BIBTEX.getCitationsHTML());
                 htmlText = buf.toString();
             }
+
             final JTextPane textPane = new JTextPane();
             final JScrollPane scroll = new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             textPane.setContentType("text/html");
@@ -80,17 +91,33 @@ public class AboutDialog extends JDialog{
         }
 
 
-        final JPanel buttons = new JPanel(new GridLayout(0, 3));
+//        final JPanel buttons = new JPanel(new GridLayout(0, 3));
+        JPanel south = new JPanel();
+        south.setLayout(new BoxLayout(south, BoxLayout.X_AXIS));
+        south.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        if (doNotShowAgain) {
+            dontAsk = new JCheckBox();
+            dontAsk.setText("Do not show dialog again.");
+            dontAsk.setSelected(PropertyManager.getBoolean(PROPERTY_KEY, false));
+            south.add(dontAsk);
+        }
+        south.add(Box.createHorizontalGlue());
+
         close = new JButton();
         bibtex = new JButton();
         clipboard = new JButton();
-        buttons.add(close);
-        buttons.add(bibtex);
-        buttons.add(clipboard);
-        add(buttons, BorderLayout.SOUTH);
+        south.add(bibtex);
+        south.add(clipboard);
+        south.add(Box.createHorizontalGlue());
+        south.add(close);
+
+
+        this.add(south, BorderLayout.SOUTH);
+
         defineActions();
 
-        setMinimumSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), Icons.SIRIUS_SPLASH.getIconHeight() + buttons.getPreferredSize().height + 100));
+        setMinimumSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), Icons.SIRIUS_SPLASH.getIconHeight() + south.getPreferredSize().height + 100));
         setPreferredSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), getPreferredSize().height));
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -133,67 +160,27 @@ public class AboutDialog extends JDialog{
         close.setAction(closeA);
         bibtex.setAction(copyBibTexA);
         clipboard.setAction(copyPlainA);
-    }
-    //todo we should load that from property file
-    private static String FINGERID_CITATION = "Kai Dührkop, Huibin Shen, Marvin Meusel, Juho Rousu and Sebastian Böcker\nSearching molecular structure databases with tandem mass spectra using CSI:FingerID. \nProc Natl Acad Sci U S A, 112(41):12580-12585, 2015." +
-            "Huibin Shen, Kai Dührkop, Sebastian Böcker and Juho Rousu\nMetabolite Identification through Multiple Kernel Learning on Fragmentation Trees.\nBioinformatics, 30(12):i157-i164, 2014. Proc. of Intelligent Systems for Molecular Biology (ISMB 2014)." +
-            "Markus Heinonen, Huibin Shen, Nicola Zamboni and Juho Rousu\nMetabolite identification and molecular fingerprint prediction through machine learning\nBioinformatics (2012) 28 (18): 2333-2341.Proc. of European Conference on Computational Biology (ECCB 2012).";
 
-    private static String FINGERID_BIBTEX = "@Article{duehrkop15searching,\n" +
-            "  Title                    = {Searching molecular structure databases with tandem mass spectra using {CSI:FingerID}},\n" +
-            "  Author                   = {Kai D\\\"uhrkop and Huibin Shen and Marvin Meusel and Juho Rousu and Sebastian B\\\"ocker},\n" +
-            "  Journal                  = PNAS,\n" +
-            "  Year                     = {2015},\n" +
-            "  Note                     = {Accepted for publication},\n" +
-            "\n" +
-            "  Owner                    = {Sebastian},\n" +
-            "  Timestamp                = {2015.08.12}\n" +
-            "}\n" +
-            "@Article{shen14metabolite,\n" +
-            "  Title                    = {Metabolite Identification through Multiple Kernel Learning on Fragmentation Trees},\n" +
-            "  Author                   = {Huibin Shen and Kai D\\\"uhrkop and Sebastian B\\\"ocker and Juho Rousu},\n" +
-            "  Journal                  = {Bioinformatics},\n" +
-            "  Year                     = {2014},\n" +
-            "  Note                     = {Proc.\\ of \\emph{Intelligent Systems for Molecular Biology} (ISMB 2014)},\n" +
-            "  Number                   = {12},\n" +
-            "  Pages                    = {i157-i164},\n" +
-            "  Volume                   = {30},\n" +
-            "\n" +
-            "  Abstract                 = {Metabolite identification from tandem mass spectrometric data is a key task in metabolomics. Various computational methods has been proposed for the identification of metabolites from tandem mass spectra. Fragmentation tree methods explore the space of possible ways the metabolite can fragment, and base the metabolite identification on scoring of these fragmentation trees. Machine learning methods has been used to map mass spectra to molecular fingerprints; predicted fingerprints, in turn, can be used to score candidate molecular structures. Here, we combine fragmentation tree computations with kernel-based machine learning to predict molecular fingerprints and identify molecular structures. We introduce a family of kernels capturing the similarity of fragmentation trees, and combine these kernels using recently proposed multiple kernel learning approaches. Experiments on two large reference datasets show that the new methods significantly improve molecular fingerprint prediction accuracy. These improvements result in better metabolite identification, doubling the number of metabolites ranked at the top position of the candidates list.},\n" +
-            "  Doi                      = {10.1093/bioinformatics/btu275},\n" +
-            "  File                     = {ShenEtAl_MetaboliteIdentificationMultipleKernel_ISMB_2014.pdf:2014/ShenEtAl_MetaboliteIdentificationMultipleKernel_ISMB_2014.pdf:PDF},\n" +
-            "  Keywords                 = {jena; IDUN; MS; tandem MS;},\n" +
-            "  Owner                    = {fhufsky},\n" +
-            "  Pmid                     = {24931979},\n" +
-            "  Timestamp                = {2014.02.11},\n" +
-            "  Url                      = {http://bioinformatics.oxfordjournals.org/content/30/12/i157.full}\n" +
-            "}\n" +
-            "@Article{shen14metabolite,\n" +
-            "  Title                    = {Metabolite Identification through Multiple Kernel Learning on Fragmentation Trees},\n" +
-            "  Author                   = {Huibin Shen and Kai D\\\"uhrkop and Sebastian B\\\"ocker and Juho Rousu},\n" +
-            "  Journal                  = {Bioinformatics},\n" +
-            "  Year                     = {2014},\n" +
-            "  Note                     = {Proc.\\ of \\emph{Intelligent Systems for Molecular Biology} (ISMB 2014)},\n" +
-            "  Number                   = {12},\n" +
-            "  Pages                    = {i157-i164},\n" +
-            "  Volume                   = {30},\n" +
-            "\n" +
-            "  Abstract                 = {Metabolite identification from tandem mass spectrometric data is a key task in metabolomics. Various computational methods has been proposed for the identification of metabolites from tandem mass spectra. Fragmentation tree methods explore the space of possible ways the metabolite can fragment, and base the metabolite identification on scoring of these fragmentation trees. Machine learning methods has been used to map mass spectra to molecular fingerprints; predicted fingerprints, in turn, can be used to score candidate molecular structures. Here, we combine fragmentation tree computations with kernel-based machine learning to predict molecular fingerprints and identify molecular structures. We introduce a family of kernels capturing the similarity of fragmentation trees, and combine these kernels using recently proposed multiple kernel learning approaches. Experiments on two large reference datasets show that the new methods significantly improve molecular fingerprint prediction accuracy. These improvements result in better metabolite identification, doubling the number of metabolites ranked at the top position of the candidates list.},\n" +
-            "  Doi                      = {10.1093/bioinformatics/btu275},\n" +
-            "  File                     = {ShenEtAl_MetaboliteIdentificationMultipleKernel_ISMB_2014.pdf:2014/ShenEtAl_MetaboliteIdentificationMultipleKernel_ISMB_2014.pdf:PDF},\n" +
-            "  Keywords                 = {jena; IDUN; MS; tandem MS;},\n" +
-            "  Owner                    = {fhufsky},\n" +
-            "  Pmid                     = {24931979},\n" +
-            "  Timestamp                = {2014.02.11},\n" +
-            "  Url                      = {http://bioinformatics.oxfordjournals.org/content/30/12/i157.full}\n" +
-            "}";
+        addWindowListener(new WindowAdapter() {
+            public void windowClosed(WindowEvent e) {
+            }
+
+            public void windowClosing(WindowEvent e) {
+                if (dontAsk != null)
+                    Jobs.runInBackground(() -> SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(PROPERTY_KEY, String.valueOf(dontAsk.isSelected())));
+            }
+        });
+
+    }
 
     private void copyBibTex() {
-        copyPlainText(ApplicationCore.CITATION_BIBTEX + "\n" + FINGERID_BIBTEX);
+
+
+        copyPlainText(ApplicationCore.BIBTEX.getCitationsBibTex());
     }
 
     private void copyPlainText() {
-        copyPlainText(ApplicationCore.CITATION + "\n" + FINGERID_CITATION);
+        copyPlainText(ApplicationCore.BIBTEX.getCitationsText());
     }
 
     private void copyPlainText(String text) {

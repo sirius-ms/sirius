@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.frontend;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
@@ -8,14 +7,12 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.webapi.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.stream.Stream;
 
 
@@ -62,7 +59,7 @@ public class SiriusCLIApplication {
                 e.printStackTrace();
             } finally {
                 ProxyManager.disconnect();
-                ApplicationCore.cite();
+                ApplicationCore.BIBTEX.citeToSystemErr();
             }
         }));
     }

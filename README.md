@@ -96,9 +96,23 @@ command-line tool.
 
 <!--begin cite-->
 ## Main citations
-Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
+**Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
 [Sirius 4: turning tandem mass spectra into metabolite structure information](https://doi.org/10.1038/s41592-019-0344-8), 
-*Nat methods*, 16, 2019.
+*Nat methods*, 16, 2019.**
+---
+Kai Dührkop, Louis-Félix Nothias, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffmann, Juho Rousu, Pieter C. Dorrestein,  Sebastian Böcker
+[Classes for the masses: Systematic classification of unknowns using fragmentation spectra](https://doi.org/10.1101/2020.04.17.046672)
+bioRxiv, 2020.
+(Cite if you are using *CANOPUS*)
+
+Marcus Ludwig, Louis-Félix Nothias, Kai Dührkop, Irina Koester, Markus Fleischauer, Martin A. Hoffmann, Daniel Petras, Fernando Vargas, Mustafa Morsy, Lihini Aluwihare, Pieter C. Dorrestein, Sebastian Böcker
+[ZODIAC: database-independent molecular formula annotation using Gibbs sampling reveals unknown small molecules](https://doi.org/10.1101/842740)
+bioRxiv, 2019.
+(Cite if you are using *ZODIAC*)
+
+Yannick Djoumbou Feunang, Roman Eisner, Craig Knox, Leonid Chepelev, Janna Hastings, Gareth Owen, Eoin Fahy, Christoph Steinbeck, Shankar Subramanian, Evan Bolton, Russell Greiner, David S. Wishart
+[ClassyFire: automated chemical classification with a comprehensive, computable taxonomy](https://doi.org/10.1186/s13321-016-0174-y)
+J Cheminf, 8, 2016. (Cite if you are using *CANOPUS*)
 
 Kai Dührkop and Sebastian Böcker. [Fragmentation trees
 reloaded.](http://dx.doi.org/10.1007/978-3-319-16706-0_10)  *J
@@ -119,6 +133,9 @@ identification.](http://bioinformatics.oxfordjournals.org/content/25/2/218.full)
 (2009) 25 (2): 218-224. (Cite this for *isotope pattern analysis*)
 
 ### Additional citations
+Marcus Ludwig, Kai Dührkop and Sebastian and Böcker.
+[Bayesian networks for mass spectrometric metabolite identification via molecular fingerprints.](http://doi.org/10.1093/bioinformatics/bty245) 
+*Bioinformatics*, 34(13): i333-i340. 2018. Proc. of Intelligent Systems for Molecular Biology (ISMB 2018). (Cite for CSI:FingerID Scoring) 
 
 W. Timothy J. White, Stephan Beyer, Kai Dührkop, Markus Chimani and
 Sebastian Böcker. [Speedy Colorful
@@ -165,7 +182,6 @@ mention fragmentation trees* as used by SIRIUS)
 
 Starting with version 3.4, SIRIUS is licensed under the [GNU General
 Public License (GPL)](https://www.gnu.org/licenses/gpl.html). If you integrate SIRIUS into other software, we
-strongly encourage you to make the usage of SIRIUS as well as the
-literature to cite transparent to the user.
+strongly encourage you to make the usage of SIRIUS as well as the literature to cite transparent to the user.
 
 

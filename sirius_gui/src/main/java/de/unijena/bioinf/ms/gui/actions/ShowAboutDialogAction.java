@@ -24,6 +24,6 @@ public class ShowAboutDialogAction extends AbstractAction {
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        new AboutDialog(MF);
+        new AboutDialog(MF,false);
     }
 }

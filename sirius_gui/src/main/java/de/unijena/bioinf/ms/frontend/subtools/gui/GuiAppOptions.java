@@ -10,14 +10,9 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
-//import de.unijena.bioinf.ms.frontend.workfow.WebServiceWorkflow;
-import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.NewsDialog;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.gui.dialogs.UpdateDialog;
+import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -97,7 +92,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         });
                         Jobs.runInBackgroundAndLoad(MainFrame.MF, "Disconnecting from webservice...", SiriusCLIApplication::shutdownWebservice);
                     } finally {
-                        MainFrame.CONNECTION_MONITOR.close();
+                        MainFrame.MF.CONNECTION_MONITOR().close();
                         System.exit(0);
                     }
                 }
@@ -126,7 +121,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 
                         ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
                         updateProgress(0,max,progress++,"Checking Webservice connection...");
-                        ConnectionMonitor.ConnetionCheck cc = MainFrame.CONNECTION_MONITOR.checkConnection();
+                        ConnectionMonitor.ConnetionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
                         if (cc.isConnected()) {
                             @Nullable VersionsInfo versionsNumber = ApplicationCore.WEB_API.getVersionInfo();
                             ApplicationCore.DEFAULT_LOGGER.debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
@@ -146,6 +141,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                     }
                 }
             });
+            if (!PropertyManager.getBoolean(AboutDialog.PROPERTY_KEY, false))
+                new AboutDialog(MainFrame.MF, true);
         }
     }
 }

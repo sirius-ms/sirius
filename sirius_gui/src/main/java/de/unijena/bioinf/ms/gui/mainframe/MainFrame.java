@@ -94,8 +94,14 @@ public class MainFrame extends JFrame implements DropTargetListener {
     private DropTarget dropTarget;
 
 
+    public ConnectionMonitor CONNECTION_MONITOR() {
+        if (CONNECTION_MONITOR == null)
+            CONNECTION_MONITOR = new ConnectionMonitor();
+        return CONNECTION_MONITOR;
+    }
+
     //internet connection monitor
-    public static final ConnectionMonitor CONNECTION_MONITOR = new ConnectionMonitor();
+    private ConnectionMonitor CONNECTION_MONITOR;
 
     // methods for creating the mainframe
     private MainFrame() {
@@ -187,7 +193,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setSize(new Dimension((int) (screen.width * .7), (int) (screen.height * .7)));
         MainFrame.MF.setLocationRelativeTo(null); //init mainframe
         setVisible(true);
-
     }
 
 
