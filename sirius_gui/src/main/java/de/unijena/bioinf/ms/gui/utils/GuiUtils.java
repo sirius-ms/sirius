@@ -55,11 +55,11 @@ public class GuiUtils {
                     try {
                         Constructor c = Class.forName("SiriusStyleFactory").getConstructor(String.class);
                         c.newInstance("mini"); // regular, mini, small or large
-                    } catch (ExceptionInInitializerError eiie){
+                    } catch (ExceptionInInitializerError eiie) {
                         //
-                    } catch (LinkageError le){
+                    } catch (LinkageError le) {
                         //
-                    } catch (ClassNotFoundException cnfe){
+                    } catch (ClassNotFoundException cnfe) {
                         //
                     }
 
@@ -74,15 +74,13 @@ public class GuiUtils {
         //nicer times for tooltips
         ToolTipManager.sharedInstance().setInitialDelay(250);
         ToolTipManager.sharedInstance().setDismissDelay(60000);
-
-
     }
 
     public static void drawListStatusElement(boolean isComputing, Graphics2D g2, Component c) {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         final Color prevCol = g2.getColor();
-        String icon = isComputing ? "\u2699" :"";
+        String icon = isComputing ? "\u2699" : "";
 
 
         /*switch (state) {
@@ -124,7 +122,7 @@ public class GuiUtils {
         @Override
         protected void doPaint(Graphics2D g, JComponent c, int width,
                                int height, Object[] extendedCacheKeys) {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g.setColor(fillColor);
             g.fillRect(0, 0, width, height);
         }

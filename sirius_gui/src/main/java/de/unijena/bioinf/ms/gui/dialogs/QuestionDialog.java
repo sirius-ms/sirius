@@ -4,6 +4,7 @@ import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
 public class QuestionDialog extends DoNotShowAgainDialog {
 
@@ -19,7 +20,28 @@ public class QuestionDialog extends DoNotShowAgainDialog {
      * @param propertyKey name of the property with which the 'don't ask' flag is saved persistently
      */
     public QuestionDialog(Window owner, String question, String propertyKey) {
-        super(owner, question, propertyKey);
+        this(owner, "", () -> question, propertyKey);
+    }
+
+    /**
+     * @param owner       see JDialog
+     * @param question    Question that is asked with this dialog
+     * @param propertyKey name of the property with which the 'don't ask' flag is saved persistently
+     * @param title       Title of the dialog
+     */
+    public QuestionDialog(Window owner, String title, String question, String propertyKey) {
+        this(owner, title, () -> question, propertyKey);
+    }
+
+
+    /**
+     * @param owner            see JDialog
+     * @param questionSupplier Supplier for Question that is asked with this dialog
+     * @param propertyKey      name of the property with which the 'don't ask' flag is saved persistently
+     * @param title            Title of the dialog
+     */
+    public QuestionDialog(Window owner, String title, Supplier<String> questionSupplier, String propertyKey) {
+        super(owner, title, questionSupplier, propertyKey);
         rv = ReturnValue.Abort;
         this.setVisible(true);
     }
