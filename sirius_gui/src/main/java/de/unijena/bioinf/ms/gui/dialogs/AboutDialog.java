@@ -43,12 +43,10 @@ public class AboutDialog extends JDialog {
     public static final String PROPERTY_KEY = "de.unijena.bioinf.sirius.ui.cite";
 
     private final JButton close, bibtex, clipboard;
-    private final boolean doNotShowAgain;
     private JCheckBox dontAsk;
 
     public AboutDialog(Frame owner, boolean doNotShowAgain) {
         super(owner, true);
-        this.doNotShowAgain = doNotShowAgain;
         setTitle(ApplicationCore.VERSION_STRING());
         setLayout(new BorderLayout());
 
@@ -63,7 +61,7 @@ public class AboutDialog extends JDialog {
                     String line;
                     while ((line = br.readLine()) != null) buf.append(line).append('\n');
                 }
-                buf.append(ApplicationCore.BIBTEX.getCitationsHTML());
+                buf.append(ApplicationCore.BIBTEX.getCitationsHTML(true));
                 htmlText = buf.toString();
             }
 
@@ -90,8 +88,6 @@ public class AboutDialog extends JDialog {
             e.printStackTrace();
         }
 
-
-//        final JPanel buttons = new JPanel(new GridLayout(0, 3));
         JPanel south = new JPanel();
         south.setLayout(new BoxLayout(south, BoxLayout.X_AXIS));
         south.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -102,6 +98,7 @@ public class AboutDialog extends JDialog {
             dontAsk.setSelected(PropertyManager.getBoolean(PROPERTY_KEY, false));
             south.add(dontAsk);
         }
+
         south.add(Box.createHorizontalGlue());
 
         close = new JButton();
@@ -122,7 +119,7 @@ public class AboutDialog extends JDialog {
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
-        setLocationRelativeTo(getParent());
+        setLocationRelativeTo(getOwner());
         setVisible(true);
 
     }
@@ -131,6 +128,8 @@ public class AboutDialog extends JDialog {
         final Action closeA = new AbstractAction("close") {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (dontAsk != null)
+                    Jobs.runInBackground(() -> SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(PROPERTY_KEY, String.valueOf(dontAsk.isSelected())));
                 AboutDialog.this.dispose();
             }
         };
@@ -160,17 +159,6 @@ public class AboutDialog extends JDialog {
         close.setAction(closeA);
         bibtex.setAction(copyBibTexA);
         clipboard.setAction(copyPlainA);
-
-        addWindowListener(new WindowAdapter() {
-            public void windowClosed(WindowEvent e) {
-            }
-
-            public void windowClosing(WindowEvent e) {
-                if (dontAsk != null)
-                    Jobs.runInBackground(() -> SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(PROPERTY_KEY, String.valueOf(dontAsk.isSelected())));
-            }
-        });
-
     }
 
     private void copyBibTex() {

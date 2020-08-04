@@ -771,7 +771,7 @@ public class DatabaseDialog extends JDialog {
 
         @Override
         protected InChI doInBackground() throws Exception {
-            importer.collect(this);
+//            importer.collect(this);
             return null;
         }
     }

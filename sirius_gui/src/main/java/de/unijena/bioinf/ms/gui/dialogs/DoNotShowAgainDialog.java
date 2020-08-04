@@ -7,6 +7,7 @@ import java.awt.*;
 
 public abstract class DoNotShowAgainDialog extends JDialog {
 
+    protected final JLabel textLabel;
     protected JCheckBox dontAsk;
     protected String property;
 
@@ -27,7 +28,8 @@ public abstract class DoNotShowAgainDialog extends JDialog {
         this.setLayout(new BorderLayout());
         JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         northPanel.add(new JLabel(makeDialogIcon()));
-        northPanel.add(new JLabel(text));
+        textLabel = new JLabel(text);
+        northPanel.add(textLabel);
         this.add(northPanel, BorderLayout.CENTER);
         JPanel south = new JPanel();
         south.setLayout(new BoxLayout(south, BoxLayout.X_AXIS));
