@@ -28,16 +28,12 @@ import org.openscience.cdk.smiles.SmilesParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.json.Json;
-import javax.json.JsonArray;
 import javax.json.JsonException;
-import javax.json.JsonReader;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
 
 public class CustomDatabaseImporter {
     final CustomDatabase database;
@@ -85,25 +81,6 @@ public class CustomDatabaseImporter {
 
     public void removeListener(Listener listener) {
         listeners.remove(listener);
-    }
-
-    @Deprecated
-    public void collect(Listener listener) {
-        for (File f : currentPath.listFiles()) {
-            if (!f.getName().endsWith("json.gz")) continue;
-            synchronized (this) {
-                try {
-                    try (final JsonReader parser = Json.createReader(new GZIPInputStream(new FileInputStream(f)))) {
-                        final JsonArray ary = parser.readObject().getJsonArray("compounds");
-                        for (int k = 0; k < ary.size(); ++k) {
-                            listener.newInChI(CompoundCandidate.fromJSON(ary.getJsonObject(k)).getInchi());
-                        }
-                    }
-                } catch (IOException e) {
-                    LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-                }
-            }
-        }
     }
 
     public void init() {
@@ -194,16 +171,19 @@ public class CustomDatabaseImporter {
             try (final BufferedReader br = new BufferedReader(new FileReader(file))) {
                 String line;
                 while ((line = br.readLine()) != null) {
-                    String[] parts = line.split("\t");
-                    final String structure = parts[0].trim();
+                    //skip empty lines
+                    if (!line.isBlank()) {
+                        String[] parts = line.split("\t");
+                        final String structure = parts[0].trim();
 
-                    final String id = parts.length > 1 ? parts[1] : null;
-                    final String name = parts.length > 2 ? parts[2] : null;
+                        final String id = parts.length > 1 ? parts[1] : null;
+                        final String name = parts.length > 2 ? parts[2] : null;
 
-                    try {
-                        importFromString(structure, id, name);
-                    } catch (CDKException e) {
-                        CustomDatabase.logger.error(e.getMessage(), e);
+                        try {
+                            importFromString(structure, id, name);
+                        } catch (CDKException e) {
+                            CustomDatabase.logger.error(e.getMessage(), e);
+                        }
                     }
                 }
             }
