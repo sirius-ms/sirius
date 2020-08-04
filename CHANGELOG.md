@@ -4,12 +4,21 @@
 - GUI: Progress information for running jobs
 - GUI: More detailed Visualisation of what has already been computed
 - more bugfixes ;-)
+##### 4.4.27
+- feature: coin-or ilp solver (CLP) is now included. This allows parallel computation of FragTrees without the need for a commercial solver.
+- improvement: Compounds without given charge are can now be imported. SIRIUS tries to guess the charge from the name (keyword: pos/neg) or falls back to positive.
+- improvement: additional parameters in compute dialog
+- fix: error when writing/reading fragmentation trees with new Jackson parser
+- fix: mgf exporter (CLI) now outputs feature name properly
+- fix: deadlock during connection check without internet connection
+- upgrade (GUI): included JRE to `zulu11.41.23-ca-fx-jre11.0.8`
 
 ##### 4.4.26
 - fix: deadlock and waiting time due to webservice connections
 - fix/improvement: Adduct Settings and Adduct detection
 - fix: memory leak in third party json lib -> Zodiac memory consumption has been reduced dramatically 
 - fix: several minor bug fixes in the sirius libs
+
 ##### 4.4.25
 - fix: removed spring boot packaging to
   - solve several class not found issues, 
@@ -21,15 +30,18 @@
 - instance validation after lcms-align tool
 ##### 4.4.24
 - feature: ms2 istotope scorer now available in cli and gui
+
 ##### 4.4.23
 - fix: wrong missing value handling in xlogp filter (some candidates were invisible)
 - improvement: less cores for computations if gui is running to have mor cpu time for GUI tasks
 - improvement:  show deviation to target ion in FragTree root if precursor is missing in MS/MS 
+
 ##### 4.4.22
 - fix: Classloader exceptions when using CLI from the GUI version
 - fix: Wrong mass deviation for trees with adducts
 - fix: misplaced labels when exporting svg/pdf fragtrees
 - fix: some minor GUI bugs
+
 ##### 4.4.21
 - fix: incompatibilities with existing configs from previous versions (.sirius)
 - fix: CANOPUS detail view has size zero
@@ -38,6 +50,7 @@
 - improvement: minor GUI improvements
 ##### 4.4.20
 - fix: some more fixes on MacOS GUI freezes 
+
 ##### 4.4.18
 - fix: GUI Deadlock on MacOS X fixed. **Mac version is now available**.
 - improvement: Character separated files in project-space have now .tsv extension for better excel compatibility.
@@ -90,6 +103,7 @@ subtools that may be combined to ToolChains based on the project-space.
   - **Structure DBs** New version of the CSI:FingerID PubChem copy that now uses **PubChem standardized structures**.
   - [**NORMAN**](https://www.norman-network.com/nds/common/) is now available as search DB
   - All available database filters can now be combined to arbitrary subsets for searching (even with custom databases).      
+
 - **Interactive fragmentation tree viewer** with vector graphics export in the GUI.
 - New REST service with [openAPI](https://www.csi-fingerid.uni-jena.de/v1.4.2-SNAPSHOT/v2/api-docs) specification and [Swagger-UI](https://www.csi-fingerid.uni-jena.de/v1.4.2-SNAPSHOT/swagger-ui.html).
 - **Java 11** or higher is now mandatory
@@ -108,13 +122,10 @@ subtools that may be combined to ToolChains based on the project-space.
 -   Improved error messaged    
 -   Improved stability and load balancing of the CSI:FingerID webservice
 -   Several bug fixes
-    
+
 #### 4.0
-
 -   **Fragmentation tree heuristics**
-
 -   **Negative ion mode data is now supported**
-
 -   **Polished and more informative GUI**
     - **Sirius Overview:** Explained intensity, number of explained peaks, median mass deviation  
     - **Fragmentation trees:** Color coding of nodes by intensity/mass deviation,
@@ -123,128 +134,82 @@ subtools that may be combined to ToolChains based on the project-space.
       Visualization of CSI:FingerID score.
     - **Predicted Fingerprints:** Visualisation of prediction (posterior probability), predictor quality (F1)
       and number of training examples.    
-    - Several small improvements            
-    
+    - Several small improvements                
 -   **CPLEX** ILP solver support
-
 -   Consider a specific list of **ionizations for Sirius**
-
 -   Consider a specific list of **adducts for CSI:FingerID**
-
 -   Custom ionizations/adducts can be specified (CLI and GUI)
-
 -   **Full-featured** standalone **command line version** (headless
     version)
-
 -   Improved **parallelization** and task management
-
 -   Improved stability of the CSI:FingerID webservice
-
 -   Time limit for fragmentation tree computations
-
 -   Specify fields to import name and ID from .sdf into a custom
     database (GUI).
-
 -   CSI:FingerID results can be **filtered by Custom databases** (GUI).
-
 -   Better filtering performance (GUI)
-
 -   Bug fix in Database filtering view (GUI)
-
 -   Error Reporter bug fixed (GUI)
-
 -   Logging bugs fixed
-
 -   Many minor bug fixes
 
 #### 3.5
-
 -   **Custom databases** can be imported by hand or via csv file. You
     can manage multiple databases within Sirius.
-
 -   New **Bayesian Network scoring** for CSI:FingerID which takes
     dependencies between molecular properties into account.
-
 -   **CSI:FingerID Overview** which lists results for all molecular
     formulas.
-
 -   **Visualization of the predicted fingerprints**.
-
 -   **ECFP fingerprints** are now also in the CSI:FingerID database and
     do no longer have to be computed on the users side.
-
 -   Connection error detection and refresh feature. No restart required
     to apply Sirius internal proxy settings anymore.
-
 -   **System wide proxy** settings are now supported.
-
 -   Many minor bug fixes and small improvements of the GUI
-
 #### 3.4
-
 -   **element prediction** using isotope pattern
-
 -   CSI:FingerID now predicts **more molecular properties** which
     improves structure identification
-
 -   improved structure of the result output generated by the command
     line tool **to its final version**
-
 #### 3.3
-
 -   fix missing MS2 data error
-
 -   MacOSX compatible start script
-
 -   add proxy settings, bug reporter, feature request
-
 -   new GUI look
 
 #### 3.2
-
 -   integration of CSI:FingerID and structure identification into SIRIUS
-
 -   it is now possible to search formulas or structures in molecular
     databases
-
 -   isotope pattern analysis is now rewritten and hopefully more stable
     than before
 
 #### 3.1.3
-
 -   fix bug with penalizing molecular formulas on intrinsically charged
     mode
-
 -   fix critical bug in CSV reader
 
 #### 3.1.0
-
 -   Sirius User Interface
-
 -   new output type *-O sirius*. The .sirius format can be imported into
     the User Interface.
-
 -   Experimental support for in-source fragmentations and adducts
 
 #### 3.0.3
-
 -   fix crash when using GLPK solver
 
 #### 3.0.2
-
 -   fix bug: SIRIUS uses the old scoring system by default when *-p*
     parameter is not given
-
 -   fix some minor bugs
 
 #### 3.0.1
-
 -   if MS1 data is available, SIRIUS will now always use the parent peak
     from MS1 to decompose the parent ion, instead of using the peak from
     an MS/MS spectrum
-
 -   fix bugs in isotope pattern selection
-
 -   SIRIUS ships now with the correct version of the GLPK binary
 
 #### 3.0.0
