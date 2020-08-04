@@ -1,5 +1,6 @@
 ##### Coming soon...
 - Another Structure DB update due to major changes in PubChem standardization since the last one.
+- CANOPUS for negative ion mode data
 - GUI: Custom-DB importer View
 - GUI: Progress information for running jobs
 - GUI: More detailed Visualisation of what has already been computed
