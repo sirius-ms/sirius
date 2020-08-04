@@ -123,7 +123,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             abort.addActionListener(e -> dispose());
             JButton showCommand = new JButton("Show Command");
             showCommand.addActionListener(e ->
-                    new InfoDialog(owner, "Command", String.join(" ", makeCommand())));
+                    new InfoDialog(owner, "Command:",GuiUtils.formatToolTip(String.join(" ", makeCommand()))));
 
             rsouthPanel.add(showCommand);
             rsouthPanel.add(compute);
@@ -192,7 +192,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         if (recompute.isSelected()) {
             boolean recompute = false;
             if (!PropertyManager.getBoolean(DONT_ASK_RECOMPUTE_KEY, false) && this.compoundsToProcess.size() > 1) {
-                QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
+                QuestionDialog questionDialog = new QuestionDialog(this, "Recompute?","<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
                 recompute = questionDialog.isSuccess();
             }
             //todo implement compute state handling
