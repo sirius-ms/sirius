@@ -42,14 +42,15 @@ include ':chemical_db_oss:chemdb_file_oss'
 include ':chemical_db_oss:chemdb_utils_oss'
 include ':error_reporter_oss'
 include 'ml_utils'
+include ':rest_service_oss:rest_core_oss'
 
 
-// 1. remove them for first sirius build.
-// 2.  build csi fingerid project
+// 1. remove them for first sirius build (build reduced).
+// 2. build reduced csi fingerid project
 // 3. include again an rebuild sirius project again
+// 4. build csi fingerid (full)
 include ':chemical_db_oss:chemdb_rest_oss'
 include ':rest_service_oss:rest_client_oss'
-include ':rest_service_oss:rest_core_oss'
 include ':fingerid_project_space_oss'
 include ':sirius_web_client'
 include ':canopus'
