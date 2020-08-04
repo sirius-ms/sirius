@@ -85,7 +85,7 @@ public class BibtexManager {
         });
     }
 
-    public Optional<String> getEntryAsHTML(String bibtexKey, boolean keywords) {
+    public Optional<String> getEntryAsHTML(String bibtexKey, boolean keywords, boolean doiLink) {
         return getEntry(bibtexKey).map(e -> {
             final StringBuilder text = new StringBuilder();
             getField(e, BibTeXEntry.KEY_AUTHOR).ifPresent(str -> text.append(str).append("<br>"));
@@ -95,12 +95,25 @@ public class BibtexManager {
             getField(e, BibTeXEntry.KEY_VOLUME).ifPresent(str -> text.append(str).append(", "));
             getField(e, BibTeXEntry.KEY_YEAR).ifPresent(str -> text.append(str).append("."));
             text.append("</i>");
-            getField(e, BibTeXEntry.KEY_DOI).ifPresent(doi -> text.append(" <a href=https://doi.org/").append(doi).append(">[doi]</a>"));
+            getField(e, BibTeXEntry.KEY_DOI).ifPresent(doi -> {
+                if (doiLink)
+                    text.append(" <a href=https://doi.org/").append(doi).append(">[doi]</a>");
+                else
+                    text.append(" doi:").append(doi);
+            });
             if (keywords)
                 getField(e, KEY_KEYWORDS).ifPresent(str -> text.append("<p style=\"margin-top:5px;\">(Cite if you are using: <b>").append(str.replaceAll("\\s*;\\s*", ", ")).append("</b>)</p>"));
 
             return text.toString();
         });
+    }
+
+    public Optional<String> getEntryAsBibTex(String bibtexKey) {
+        return getEntry(bibtexKey).map(e -> {
+            BibTeXDatabase db = new BibTeXDatabase();
+            db.addObject(e);
+            return db;
+        }).map(this::getCitationsBibTex);
     }
 
 
@@ -110,11 +123,11 @@ public class BibtexManager {
     }
 
 
-    public String getCitationsHTML() {
+    public String getCitationsHTML(final boolean doilinks) {
         StringBuilder buf = new StringBuilder();
         buf.append("<p>");
         buf.append("<h3>When using the SIRIUS Software please cite the following paper:</h3>");
-        getEntryAsHTML("duehrkop19sirius4", false).ifPresent(it -> buf.append("<p>").append(it).append("</p>"));
+        getEntryAsHTML("duehrkop19sirius4", false, doilinks).ifPresent(it -> buf.append("<p>").append(it).append("</p>"));
         buf.append("</p>");
 
         buf.append("<p>");
@@ -122,7 +135,7 @@ public class BibtexManager {
         db.getEntries().keySet().stream().filter(k -> !k.toString().equalsIgnoreCase("duehrkop19sirius4")).map(db.getEntries()::get).sorted((e1, e2) -> {
             Key k = new Key("keywords");
             return e1.getField(k).toUserString().compareToIgnoreCase(e2.getField(k).toUserString());
-        }).forEach(e -> getEntryAsHTML(e.getKey().toString(), true).ifPresent(it -> buf.append("<p>").append(it).append("</p>")));
+        }).forEach(e -> getEntryAsHTML(e.getKey().toString(), true, doilinks).ifPresent(it -> buf.append("<p>").append(it).append("</p>")));
         buf.append("</p>");
 
         return buf.toString();
@@ -147,6 +160,10 @@ public class BibtexManager {
 
 
     public String getCitationsBibTex() {
+        return getCitationsBibTex(db);
+    }
+
+    public String getCitationsBibTex(BibTeXDatabase db) {
         StringWriter sw = new StringWriter();
         try {
             new BibTeXFormatter().format(db, sw);

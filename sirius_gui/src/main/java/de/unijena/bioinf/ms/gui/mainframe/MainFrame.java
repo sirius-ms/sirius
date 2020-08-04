@@ -94,7 +94,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     private DropTarget dropTarget;
 
 
-    public ConnectionMonitor CONNECTION_MONITOR() {
+    public synchronized ConnectionMonitor CONNECTION_MONITOR() {
         if (CONNECTION_MONITOR == null)
             CONNECTION_MONITOR = new ConnectionMonitor();
         return CONNECTION_MONITOR;
