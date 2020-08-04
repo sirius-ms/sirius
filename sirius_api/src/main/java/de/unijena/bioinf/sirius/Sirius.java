@@ -44,6 +44,7 @@ import de.unijena.bioinf.sirius.plugins.*;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.treemotifs.model.TreeMotifPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -645,7 +646,7 @@ public class Sirius {
                 ProcessedInput pinput = computationInstance.getProcessedInput();
                 PossibleAdducts pa = pinput.getAnnotationOrThrow(PossibleAdducts.class);
                 irs = irs.stream()
-                        .map(idr->new IdentificationResult<SiriusScore>(resolveAdductIfPossible(idr.getTree(), pa, pinput), idr.getScoreObject()))
+                        .map(idr-> new IdentificationResult<>(resolveAdductIfPossible(idr.getTree(), pa, pinput), idr.getScoreObject()))
                         .collect(Collectors.toList());
             }
             return irs;
@@ -660,55 +661,61 @@ public class Sirius {
          * @return
          */
         private FTree resolveAdductIfPossible(FTree tree, PossibleAdducts possibleAdducts, ProcessedInput pinput) {
-            PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElseThrow();
-            final MolecularFormula mf = tree.getRoot().getFormula();
-            final FormulaConstraints constraints = pinput.getAnnotationOrThrow(FormulaConstraints.class);
+            //todo this is a hotfix. we have to do this right at some point.
+            try {
+                PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElseThrow();
+                final MolecularFormula mf = tree.getRoot().getFormula();
+                final FormulaConstraints constraints = pinput.getAnnotationOrThrow(FormulaConstraints.class);
 
-            //todo if an ion source fragment is set. is it then always already set for all possible adducts?
-            final MolecularFormula inSourceFragmentation = pinput.getExperimentInformation().getPrecursorIonType().getInSourceFragmentation();
+                //todo if an ion source fragment is set. is it then always already set for all possible adducts?
+                final MolecularFormula inSourceFragmentation = pinput.getExperimentInformation().getPrecursorIonType().getInSourceFragmentation();
 
-            Set<PrecursorIonType> usedIonTypes;
-            final AdductSettings adductSettings = pinput.getAnnotationOrNull(AdductSettings.class);
-            if (adductSettings != null && possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
-                //todo check if it makes sense to use the detectables
-                usedIonTypes = adductSettings.getDetectable(possibleAdducts.getIonModes());
-            } else {
-                //there seem to be some information from the preprocessing
-                usedIonTypes = possibleAdducts.getAdducts();
-            }
-
-            Set<PrecursorIonType> adducts = new PossibleAdducts(usedIonTypes).getAdducts(ionType.getIonization());
-            if (adducts.size()==0) {
-                throw new RuntimeException("Ionization not known in FasterTreeComputationInstance: "+ionType.getIonization());
-            }
-
-            PrecursorIonType validIontype = null;
-            for (PrecursorIonType precursorIonType : adducts) {
-                boolean isValid = true;
-                for (FormulaFilter filter : constraints.getFilters()) {
-                    if (!filter.isValid(mf, precursorIonType)){
-                        isValid = false;
-                        break;
-                    }
-                }
-                if (isValid) {
-                    if (validIontype != null){
-                        //at least 2 valid iontypes, cannot decide for one
-                        //return input
-                        return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
-                    } else {
-                        validIontype = precursorIonType;
-                    }
-                }
-            }
-            if (validIontype.hasNeitherAdductNorInsource()) {
-                return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
-            } else {
-                if (!inSourceFragmentation.isEmpty()){
-                    return new IonTreeUtils().treeToNeutralTree(tree, validIontype.substituteInsource(inSourceFragmentation));
+                Set<PrecursorIonType> usedIonTypes;
+                final AdductSettings adductSettings = pinput.getAnnotationOrNull(AdductSettings.class);
+                if (adductSettings != null && possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
+                    //todo check if it makes sense to use the detectables
+                    usedIonTypes = adductSettings.getDetectable(possibleAdducts.getIonModes());
                 } else {
-                    return new IonTreeUtils().treeToNeutralTree(tree, validIontype);
+                    //there seem to be some information from the preprocessing
+                    usedIonTypes = possibleAdducts.getAdducts();
                 }
+
+                Set<PrecursorIonType> adducts = new PossibleAdducts(usedIonTypes).getAdducts(ionType.getIonization());
+                if (adducts.size()==0) {
+                    throw new RuntimeException("Ionization not known in FasterTreeComputationInstance: "+ionType.getIonization());
+                }
+
+                PrecursorIonType validIontype = null;
+                for (PrecursorIonType precursorIonType : adducts) {
+                    boolean isValid = true;
+                    for (FormulaFilter filter : constraints.getFilters()) {
+                        if (!filter.isValid(mf, precursorIonType)){
+                            isValid = false;
+                            break;
+                        }
+                    }
+                    if (isValid) {
+                        if (validIontype != null){
+                            //at least 2 valid iontypes, cannot decide for one
+                            //return input
+                            return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
+                        } else {
+                            validIontype = precursorIonType;
+                        }
+                    }
+                }
+                if (validIontype.hasNeitherAdductNorInsource()) {
+                    return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
+                } else {
+                    if (!inSourceFragmentation.isEmpty()){
+                        return new IonTreeUtils().treeToNeutralTree(tree, validIontype.substituteInsource(inSourceFragmentation));
+                    } else {
+                        return new IonTreeUtils().treeToNeutralTree(tree, validIontype);
+                    }
+                }
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).error("Exception in Unstable 'resolveAdducts' Code. PLease report this problem. Using unmodified Tree!", e);
+                return tree;
             }
         }
 
