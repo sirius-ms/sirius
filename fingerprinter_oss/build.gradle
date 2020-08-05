@@ -1,15 +1,9 @@
-apply plugin: "application"
 version =  parent.fingeridVersion
-
-mainClassName = "de.unijena.bioinf.fingerid.FingerprinterCLI"
 
 dependencies() {
     //project
     compile project(':chemical_db_oss')
     compile project(':chemical_db_oss:chemdb_sql_oss')
-
-	// external
-	compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
 
 	// CDK
 	for (module in ["fingerprint", "qsarmolecular", "qsaratomic", "data", "inchi", "interfaces", "smiles", "core", "silent", "isomorphism", "legacy"]) {
