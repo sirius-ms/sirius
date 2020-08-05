@@ -31,6 +31,7 @@ include ':passatutto'
     include ':passatutto:passatutto_project_space'
 include ':utils'
 include ':lcms'
+    include 'lcms:lcms_gui'
     include ':lcms:mzml-converter'
 include ':quality_assessment'
 include ':retention_order_prediction_oss'
@@ -63,3 +64,5 @@ include ':canopus:canopus_predict_oss'
 include ':confidence_score'
 include ':confidence_score:confidence_score_train'
 include ':confidence_score:confidence_score_predict_oss'
+
+
