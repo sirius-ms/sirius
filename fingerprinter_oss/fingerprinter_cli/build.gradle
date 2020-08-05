@@ -1,0 +1,9 @@
+apply plugin: "application"
+version =  parent.fingeridVersion
+
+mainClassName = "de.unijena.bioinf.fingerid.FingerprinterCLI"
+dependencies {
+    compile project(':fingerprinter_oss')
+    compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
+
+}

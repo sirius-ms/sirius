@@ -13,6 +13,9 @@ include ':fragmentation_tree'
         include ":fragmentation_tree:FastFragmentationTreeAlign:FTBlast"
         include ":fragmentation_tree:FastFragmentationTreeAlign:ClassicTreeAlign"
         include ":fragmentation_tree:FastFragmentationTreeAlign:AlignmentViewer"
+    include 'fragmentation_tree:ft_glpk'
+    include 'fragmentation_tree:ft_cplex'
+    include 'fragmentation_tree:ft_gurobi'
 include ':isotope_pattern'
 	include ':isotope_pattern:isotope_pattern_analysis'
     include ':isotope_pattern:isogen_cli'
@@ -33,6 +36,7 @@ include ':quality_assessment'
 include ':retention_order_prediction_oss'
     include ':retention_order_prediction_oss:retention_cli'
 include ':fingerprinter_oss'
+    include 'fingerprinter_oss:fingerprinter_cli'
 include ':fingerprint_pvalues_oss'
 include ':fingerblast_oss'
 include ':fingerid_base_oss'
@@ -59,5 +63,3 @@ include ':canopus:canopus_predict_oss'
 include ':confidence_score'
 include ':confidence_score:confidence_score_train'
 include ':confidence_score:confidence_score_predict_oss'
-
-
