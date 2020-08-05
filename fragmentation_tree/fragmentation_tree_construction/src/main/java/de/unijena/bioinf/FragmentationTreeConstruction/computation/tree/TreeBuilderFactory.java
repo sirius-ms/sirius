@@ -124,7 +124,7 @@ public final class TreeBuilderFactory {
                 factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver"); //we have to use classloader, to prevent class not found exception. because it could be possible that gurobi.jar doe not exist -> runtime dependency
                 break;
             case GLPK:
-                factory = getTreeBuilderFromClass(GLPKSolver.class); //we deliver the jar file so we can be sure that th class exists
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver");
                 break;
             case CPLEX:
                 factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver");
