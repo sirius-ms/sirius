@@ -1,7 +1,6 @@
 package de.unijena.bioinf.confidence_score.features;
 
-import Tools.ExpectationMaximization1D;
-import Tools.KMeans;
+
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
@@ -301,6 +300,8 @@ return null;
         return ((biosize/candidates.length)*pvalue);
         //return -Math.expm1(biosize* Math.log1p(-pvalue));
     }
+
+
 
     public LogNormalDistribution estimate_lognormal_parameters(ArrayList<Double> scores){
 
