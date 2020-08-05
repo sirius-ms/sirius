@@ -13,6 +13,8 @@ dependencies() {
     compile group: "de.unijena.bioinf.ms", name: "fingerid", version: "$fingeridVersion" //todo we need to remove this dependency?
     //external
     compile "org.tensorflow:tensorflow:1.13.1"
+    compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
+
 }
 
 

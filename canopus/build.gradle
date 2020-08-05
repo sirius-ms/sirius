@@ -1,6 +1,5 @@
 allprojects {
     version =  parent.fingeridVersion
-
 }
 
 subprojects {
@@ -11,8 +10,6 @@ subprojects {
         compile project(':chemical_db_oss:chemdb_sql_oss')
 
         // external
-        compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
-
         compile group: 'org.ejml', name: 'ejml-fdense', version: '0.31'
         compile group: 'org.ejml', name: 'ejml-simple', version: '0.31'
 

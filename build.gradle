@@ -48,7 +48,7 @@ ext {
     clp_lib_version = '1.17.5'
 
     commons_email_version = '1.4'
-    oshi_version = '4.1.1'
+    oshi_version = '5.2.2'
     json_version = '1.0'
     json_impl_version = "1.0.4"
     psql_version = "42.2.1"
@@ -85,6 +85,9 @@ allprojects {
         }
         maven {
             url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
+        }
+        maven{
+            url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl
         }
     }
 

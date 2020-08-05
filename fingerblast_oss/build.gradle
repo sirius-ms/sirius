@@ -3,7 +3,4 @@ dependencies() {
     //project
 	compile project(':fingerprint_pvalues_oss')
 	compile project(':chemical_db_oss')
-
-	// external
-	compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
 }
