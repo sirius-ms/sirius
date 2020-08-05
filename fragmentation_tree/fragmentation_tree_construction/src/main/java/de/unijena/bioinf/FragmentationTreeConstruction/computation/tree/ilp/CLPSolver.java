@@ -154,7 +154,7 @@ public class CLPSolver extends AbstractSolver {
         // already done
     }
 
-    protected static final Logger logger = LoggerFactory.getLogger(GrbSolver.class);
+    protected static final Logger logger = LoggerFactory.getLogger(CLPSolver.class);
 
     @Override
     protected TreeBuilder.AbortReason solveMIP() throws Exception {
