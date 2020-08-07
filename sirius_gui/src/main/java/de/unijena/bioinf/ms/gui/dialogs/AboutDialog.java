@@ -1,19 +1,22 @@
+
+
 /*
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
  *
- *  This library is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
 package de.unijena.bioinf.ms.gui.dialogs;
@@ -23,21 +26,24 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.webView.WebViewJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import javafx.scene.web.WebView;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Objects;
 
 public class AboutDialog extends JDialog {
     public static final String PROPERTY_KEY = "de.unijena.bioinf.sirius.ui.cite";
@@ -52,9 +58,10 @@ public class AboutDialog extends JDialog {
 
         // SIRIUS logo
         add(new JLabel(Icons.SIRIUS_SPLASH), BorderLayout.NORTH);
-
+        String htmlText =  "<html><head></head><body>Data missing!</html>\n";
+        WebViewJPanel htmlPanel =  new WebViewJPanel();
         try {
-            final String htmlText;
+
             {
                 final StringBuilder buf = new StringBuilder();
                 try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(AboutDialog.class.getResourceAsStream("/sirius/about.html")))) {
@@ -62,28 +69,11 @@ public class AboutDialog extends JDialog {
                     while ((line = br.readLine()) != null) buf.append(line).append('\n');
                 }
                 buf.append(ApplicationCore.BIBTEX.getCitationsHTML(true));
-                htmlText = buf.toString();
+                htmlText = buf.append("</body></html>").toString().replace("#IMAGE#",this.getClass().getResource("/sirius/agplv3-with-text-162x68.png").toString());
             }
 
-            final JTextPane textPane = new JTextPane();
-            final JScrollPane scroll = new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            textPane.setContentType("text/html");
-            textPane.setText(htmlText);
-            textPane.setEditable(false);
-            textPane.addHyperlinkListener(new HyperlinkListener() {
-                @Override
-                public void hyperlinkUpdate(HyperlinkEvent e) {
-                    if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                        try {
-                            Desktop.getDesktop().browse(e.getURL().toURI());
-                        } catch (Exception error) {
-                            LoggerFactory.getLogger(this.getClass()).error(error.getMessage(),error);
-                        }
-                    }
-                }
-            });
-            textPane.setCaretPosition(0);
-            add(scroll, BorderLayout.CENTER);
+            add(htmlPanel, BorderLayout.CENTER);
+            htmlPanel.load(htmlText);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -115,13 +105,12 @@ public class AboutDialog extends JDialog {
         defineActions();
 
         setMinimumSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), Icons.SIRIUS_SPLASH.getIconHeight() + south.getPreferredSize().height + 100));
-        setPreferredSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), getPreferredSize().height));
+        setPreferredSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), MainFrame.MF.getHeight()));
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
         setLocationRelativeTo(getOwner());
         setVisible(true);
-
     }
 
     private void defineActions() {

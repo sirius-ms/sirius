@@ -180,8 +180,8 @@ mention fragmentation trees* as used by SIRIUS)
 
 ## License
 
-Starting with version 3.4, SIRIUS is licensed under the [GNU General
-Public License (GPL)](https://www.gnu.org/licenses/gpl.html). If you integrate SIRIUS into other software, we
+Starting with version 4.4.27, SIRIUS is licensed under the [GNU Affero General
+Public License (GPL)](https://www.gnu.org/licenses/agpl-3.0.txt). If you integrate SIRIUS into other software, we
 strongly encourage you to make the usage of SIRIUS as well as the literature to cite transparent to the user.
 
 
