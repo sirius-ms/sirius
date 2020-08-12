@@ -3,26 +3,19 @@ import org.apache.commons.configuration.PropertiesConfigurationLayout
 
 import java.util.stream.Collectors
 
-
-
 dependencies {
     compile project(':sirius_cli')
+    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
 mainClassName = 'de.unijena.bioinf.ms.frontend.SiriusCLIApplication'
 project.ext.set("type", ['console'])
 
+
 jar {
-    zip64=true
-    enabled = true
     manifest {
         attributes 'Main-Class': mainClassName
-    }
-
-    from {
-        configurations.runtimeClasspath.filter {f ->!project.libExclude.stream().anyMatch{s -> f.name.startsWith(s)}}
-                .collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 
@@ -57,7 +50,9 @@ distributions {
             baseName = "${project.appName}-$n-headless"
             contents {
                 into('lib') {
-                    from('build/libs/')
+                    from("build/install/${project.name}/lib") {
+                        exclude libExclude
+                    }
                     from("${project.glpkPath}/l${ar}/") {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
@@ -71,8 +66,8 @@ distributions {
                     }
                     from("${project.distPath}") {
                         exclude('sirius-gui')
+                        exclude('COPYING_OpenMS.txt')
                     }
-                    from("${getRootDir()}/LICENSE.txt")
                 }
                 into('doc') {
                     from(project.pdfManualPath)
@@ -95,13 +90,17 @@ distributions {
 
             baseName = "${project.appName}-$n-headless"
             contents {
-                from('build/libs/')
+                into('lib') {
+                    from('build/launch4j/lib') {
+                        exclude libExclude
+                    }
+                }
                 from { "${project.glpkPath}/w${ar}/" }
                 from("${project.clpPath}/w${ar}/")
                 from("${project.distPath}") {
                     exclude('sirius-gui')
+                    exclude('COPYING_OpenMS.txt')
                 }
-                from { "${getRootDir()}/LICENSE.txt" }
                 from('build/launch4j') {
                     include("*-${ar}.exe")
                 }
@@ -126,7 +125,9 @@ distributions {
         baseName = "${project.appName}-$n-headless"
         contents {
             into('lib') {
-                from('build/libs/')
+                from("build/install/${project.name}/lib") {
+                    exclude libExclude
+                }
                 from("${project.glpkPath}/osx/")
                 from("${project.clpPath}/osx/")
                 exclude('*.zip')
@@ -138,8 +139,8 @@ distributions {
                 }
                 from("${project.distPath}") {
                     exclude('sirius-gui')
+                    exclude('COPYING_OpenMS.txt')
                 }
-                from("${getRootDir()}/LICENSE.txt")
             }
             into('doc') {
                 from(project.pdfManualPath)

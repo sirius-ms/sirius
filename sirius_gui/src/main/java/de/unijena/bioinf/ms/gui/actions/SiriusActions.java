@@ -62,6 +62,7 @@ public enum SiriusActions {
     SHOW_ABOUT(ShowAboutDialogAction.class),
     SHOW_JOBS(ShowJobsDialogAction.class),
     SHOW_DB(ShowDBDialogAction.class),
+    SHOW_LOG(OpenLogAction.class),
 
     CHECK_CONNECTION(CheckConnectionAction.class);
 

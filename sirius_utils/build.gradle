@@ -6,7 +6,7 @@ dependencies {
 //    compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
 
 
-    compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: "$jewelcli_version"
+    compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: '0.8.9'
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 

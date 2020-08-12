@@ -24,17 +24,26 @@ package de.unijena.bioinf.ms.gui.mainframe;
  * 27.01.17.
  */
 
+import de.unijena.bioinf.ms.gui.actions.OpenLogAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
+import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 class SiriusToolbar extends JToolBar {
+    private final ToolbarToggleButton logs;
     private ToolbarButton imCompB, createB, openB, saveB,exportB, imB, computeAllB, configFingerID, jobs, db, connect, settings, bug, about;
 
     SiriusToolbar() {
@@ -76,12 +85,14 @@ class SiriusToolbar extends JToolBar {
 //        add(db);
 //        addSeparator(new Dimension(20,20));
 
-
         jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance());
         add(jobs);
+
         addSeparator(new Dimension(20, 20));
         add(Box.createGlue());
         addSeparator(new Dimension(20, 20));
+        logs = createLogToggleButton((OpenLogAction) SiriusActions.SHOW_LOG.getInstance());
+        add(logs);
 
         settings = new ToolbarButton(SiriusActions.SHOW_SETTINGS.getInstance());
         add(settings);
@@ -97,5 +108,42 @@ class SiriusToolbar extends JToolBar {
 
         setRollover(true);
         setFloatable(false);
+    }
+
+    private ToolbarToggleButton createLogToggleButton(OpenLogAction action) {
+        final ToolbarToggleButton tb = new ToolbarToggleButton((Icon) action.getValue(Action.LARGE_ICON_KEY));
+        tb.setText((String) action.getValue(Action.NAME));
+        tb.setToolTipText(GuiUtils.formatToolTip((String) action.getValue(Action.SHORT_DESCRIPTION)));
+        tb.addActionListener(action);
+        // add a window listener
+        action.addWindowListener(new WindowAdapter() {
+            public void windowClosed(WindowEvent e) {
+                if (tb.isSelected())
+                    Jobs.runEDTLater(() -> tb.setSelected(false));
+            }
+
+            public void windowClosing(WindowEvent e) {
+                if (tb.isSelected())
+                    Jobs.runEDTLater(() -> tb.setSelected(false));
+            }
+        });
+
+        // add a component listener
+        action.addComponentListener(new ComponentListener() {
+            public void componentHidden(ComponentEvent e) {
+            }
+
+            public void componentMoved(ComponentEvent e) {
+            }
+
+            public void componentResized(ComponentEvent e) {
+            }
+
+            public void componentShown(ComponentEvent e) {
+                if (!tb.isSelected())
+                    Jobs.runEDTLater(() -> tb.setSelected(true));
+            }
+        });
+        return tb;
     }
 }
