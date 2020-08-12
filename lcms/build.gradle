@@ -20,7 +20,9 @@ dependencies {
         exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'
 
     } //jmzml dep. from excluded pom dep
-    compile ('it.unimi.dsi:fastutil:6.5.1'){
+
+    //todo do we need this
+    compile ('it.unimi.dsi:fastutil:8.4.0'){
         exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
         exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'
     } //jmzml dep. from excluded pom dep
