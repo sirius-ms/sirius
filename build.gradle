@@ -38,15 +38,15 @@ ext {
 
     cdk_version = "2.3"
 
-    jewelcli_version = '0.8.9'
     picocli_version = '4.1.4'//'3.9.5'
 
     glpk_lib_version = '4.60'
     clp_lib_version = '1.17.5'
 
     //locations of runtime libraries
-    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
-    libExclude = ['gurobi', 'cplex']
+    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar:${APP_HOME}/lib/*'
+    libExclude = ['gurobi-*.jar', 'cplex-*.jar']
+
 
     jetbrains_version = "17.0.0"
 
@@ -114,8 +114,12 @@ allprojects {
         maven {
             url "https://www.xypron.de/repository" //glpk repo
         }
+
         maven {
             url "https://repo1.maven.org/maven2/" //glazed lists
+        }
+        maven{
+            url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl
         }
 
     }
@@ -123,7 +127,6 @@ allprojects {
     dependencies {
         annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
         compile 'net.sf.trove4j:core:3.1.0' //switched from 'net.sf.trove4j:trove4j:3.0.3' which seems to be buggy and no longer supported
-        compile group: 'com.google.guava', name: 'guava', version: '28.1-jre'
         compile "org.jetbrains:annotations:$jetbrains_version"
         compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
 
@@ -156,6 +159,9 @@ allprojects {
         }
     }
     clean.dependsOn cleanConfig
+
+
+
 }
 
 task downloadGLPK(type: Copy) {
@@ -407,7 +413,7 @@ subprojects {
 
     /*################### Linux release Stuff ################### */
     startScripts {
-        classpath = files(project.jar.archiveFileName)
+        classpath = files() //files(project.jar.archiveFileName)
         applicationName = "${project.appName}"
         def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib'
         doLast {
@@ -442,6 +448,14 @@ subprojects {
             lines = lines.plus(insertJREIndex + 3, "    JAVACMD=\"\$APP_HOME/${jre_path}/bin/java\"")
 
             unixScript.text = lines.join(System.lineSeparator())
+        }
+    }
+
+    task listDependecies {
+        group = 'reporting'
+        doLast {
+            project.configurations.compile.resolvedConfiguration.resolvedArtifacts.stream().map({i -> i.getModuleVersion()..toString()})
+                    .sorted().forEach({i -> println(i)})
         }
     }
 }

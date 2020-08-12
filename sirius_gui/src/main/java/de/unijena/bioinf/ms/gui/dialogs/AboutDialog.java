@@ -69,7 +69,7 @@ public class AboutDialog extends JDialog {
                     while ((line = br.readLine()) != null) buf.append(line).append('\n');
                 }
                 buf.append(ApplicationCore.BIBTEX.getCitationsHTML(true));
-                htmlText = buf.append("</body></html>").toString().replace("#IMAGE#",this.getClass().getResource("/sirius/agplv3-with-text-162x68.png").toString());
+                htmlText = buf.append("</div></body></html>").toString().replace("#IMAGE#",this.getClass().getResource("/sirius/agplv3-with-text-162x68.png").toString());
             }
 
             add(htmlPanel, BorderLayout.CENTER);

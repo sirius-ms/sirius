@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVFormatReader;
+import de.unijena.bioinf.ms.gui.logging.LogDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableExperimentListPanel;
@@ -51,11 +52,19 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame implements DropTargetListener {
 
     public static final MainFrame MF = new MainFrame();
+
+    //Logging Panel
+    private final LogDialog log;
+
+    public LogDialog getLogConsole() {
+        return log;
+    }
 
     // Project Space
     private GuiProjectSpaceManager ps;
@@ -130,6 +139,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
+
+        log = new LogDialog(null,false, Level.ALL);
     }
 
     //if we want to add taskbar stuff we can configure this here
