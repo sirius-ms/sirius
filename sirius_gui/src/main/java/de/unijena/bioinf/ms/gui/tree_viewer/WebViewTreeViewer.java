@@ -28,6 +28,7 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -69,7 +70,18 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
     });
     }
 
-    public void addJS(String resource_name){
+    public boolean addJSCode(String scriptTag) {
+        scriptTag = scriptTag.strip();
+        if (scriptTag != null && scriptTag.startsWith("<script")) {
+            this.html_builder.append(scriptTag);
+            return true;
+        } else {
+            LoggerFactory.getLogger(getClass()).error("Not a valid script tag: " + scriptTag);
+            return false;
+        }
+    }
+
+    public void addJS(String resource_name) {
         String res_html;
         try{
             res_html = getJSResourceInHTML(WebViewTreeViewer.class.
@@ -99,29 +111,21 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
                 this.webView.getEngine().loadContent(html_builder.toString(),
                                                      "text/html");
                 // wait for the engine to finish loading
-                webView.getEngine().getLoadWorker().stateProperty().addListener(
-                    new ChangeListener<Worker.State>() {
-                        public void changed(ObservableValue ov,
-                                            Worker.State oldState,
-                                            Worker.State newState) {
+                webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
                             if (newState == Worker.State.SUCCEEDED) {
                                 JSObject win = (JSObject) getJSObject("window");
-                                for (Map.Entry<String, Object> entry :
-                                        bridges.entrySet())
-                                    win.setMember(entry.getKey(),
-                                            entry.getValue());
+                                for (Map.Entry<String, Object> entry : bridges.entrySet())
+                                    win.setMember(entry.getKey(), entry.getValue());
                                 executeJS("applySettings()");
                             }
-                        }
-                    });
+                        });
         });
     }
 
 
 
     public void executeJS(String js_code) {
-        queueTaskInJFXThread(() -> {
-            webView.getEngine().executeScript(js_code);});
+        queueTaskInJFXThread(() -> webView.getEngine().executeScript(js_code));
     }
 
 
@@ -166,7 +170,7 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
 
     public void loadTree(String json_tree) {
         cancelTasks();
-        executeJS("loadJSONTree('" + json_tree.replace("\n", " ")
+        executeJS("loadJSONTree('" + json_tree.replaceAll("(\\r\\n|\\r|\\n)", " ")
                 + "')");
     }
 
