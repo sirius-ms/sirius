@@ -5,6 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
+import java.util.stream.Stream
 
 buildscript {
     repositories {
@@ -405,11 +406,12 @@ subprojects {
         maxHeapSize = 4096
         maxHeapPercent = 60
 
-        jar = project.jar.archiveFileName.get()
+//        jar = project.jar.archiveFileName.get()
         dontWrapJar = true
         jdkPreference = 'preferJre'
 
-        classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
+        classpath.add('./lib/*')
+        classpath.addAll(Stream.of(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':')).filter({s  -> !s.contains('APP_HOME')}).toArray())
         println("================THE PATH: $classpath")
 
     }
