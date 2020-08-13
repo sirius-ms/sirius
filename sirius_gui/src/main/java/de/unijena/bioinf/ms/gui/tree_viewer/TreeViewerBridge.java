@@ -95,22 +95,16 @@ public class TreeViewerBridge {
     }
 
     public float getTreeScale() {
-        // can be either Integer or Double
         // NOTE: this value is 1/tree_scale!
-//        return ((Number) browser.getJSObject("tree_scale")).floatValue();
         return tryCastNumber(browser.getJSObject("tree_scale"),1);
     };
 
     public float getTreeScaleMin() {
-        // can be either Integer or Double
-//        return ((Number) browser.getJSObject("tree_scale_min")).floatValue();
         return tryCastNumber(browser.getJSObject("tree_scale_min"),.5f);
     }
 
     private float tryCastNumber(Object number, float defValue){
         try {
-//            System.out.println("==> Number value: " + number.toString());
-//            System.out.println("==> NUmber value class: " + number.getClass().getName());
             if (number instanceof Number){
                 return ((Number) number).floatValue();
             }

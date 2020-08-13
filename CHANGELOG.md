@@ -12,6 +12,7 @@
 - fix: error when writing/reading fragmentation trees with new Jackson parser
 - fix: mgf exporter (CLI) now outputs feature name properly
 - fix: deadlock during connection check without internet connection
+- fix: tree rendering bug on non linux systems
 - upgrade (GUI): included JRE to `zulu11.41.23-ca-fx-jre11.0.8`
 
 ##### 4.4.26
