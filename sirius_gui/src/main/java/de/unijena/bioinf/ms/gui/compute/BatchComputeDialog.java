@@ -61,7 +61,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     // main parts
     private ExperimentEditPanel editPanel;
     private final Box mainPanel;
-    private final JCheckBox recompute;
+    private final JCheckBox recomputeBox;
 
     // tool configurations
     private final ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
@@ -112,12 +112,12 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
 
             JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-            recompute = new JCheckBox("Recompute already computed tasks?", false);
-            recompute.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
-            lsouthPanel.add(recompute);
+            recomputeBox = new JCheckBox("Recompute already computed tasks?", false);
+            recomputeBox.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
+            lsouthPanel.add(recomputeBox);
 
             //checkConnectionToUrl by default when just one experiment is selected
-            if (compoundsToProcess.size() == 1) recompute.setSelected(true);
+            if (compoundsToProcess.size() == 1) recomputeBox.setSelected(true);
 
             JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
             JButton compute = new JButton("Compute");
@@ -192,13 +192,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         if (editPanel != null && compoundsToProcess.size() == 1)
             saveEdits(compoundsToProcess.get(0));
 
-        if (recompute.isSelected()) {
-            boolean recompute = false;
+        if (this.recomputeBox.isSelected()) {
             if (!PropertyManager.getBoolean(DONT_ASK_RECOMPUTE_KEY, false) && this.compoundsToProcess.size() > 1) {
-                QuestionDialog questionDialog = new QuestionDialog(this, "Recompute?","<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
-                recompute = questionDialog.isSuccess();
+                QuestionDialog questionDialog = new QuestionDialog(this, "Recompute?", "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
+                this.recomputeBox.setSelected(questionDialog.isSuccess());
             }
-            //todo implement compute state handling
         }
 
         // todo hotfix to prevent gui from going crazy
@@ -281,9 +279,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         }
 
         final List<String> command = new ArrayList<>();
-
         configCommand.add("--RecomputeResults");
-        configCommand.add(String.valueOf(recompute.isSelected()));
+        configCommand.add(String.valueOf(recomputeBox.isSelected()));
 
         command.addAll(configCommand);
         command.addAll(toolCommands);
