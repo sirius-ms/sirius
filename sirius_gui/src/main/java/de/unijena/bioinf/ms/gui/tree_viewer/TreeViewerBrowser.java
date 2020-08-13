@@ -19,6 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.tree_viewer;
 
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import javafx.scene.web.WebEngine;
+
 import java.util.Map;
 
 /*
@@ -26,6 +29,9 @@ Interface for classes displaying the TreeViewer Javascript file (WebView impleme
 Allows communication with JavaScript.
  */
 public interface TreeViewerBrowser  {
+    boolean DEBUG = PropertyManager.getBoolean("de.unijena.bioinf.webview.DEBUG",false);
+
+    boolean addJSCode(String scriptTag);
     void addJS(String resource_url);
     void load();
     void load(Map<String, Object> bridges);
