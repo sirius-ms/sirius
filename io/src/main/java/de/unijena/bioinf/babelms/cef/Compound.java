@@ -34,19 +34,19 @@ import java.util.List;
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType>
- *   &lt;complexContent>
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;sequence>
- *         &lt;element ref="{}Location"/>
- *         &lt;element ref="{}CompoundScores"/>
- *         &lt;element ref="{}Chromatogram" minOccurs="0"/>
- *         &lt;element ref="{}Spectrum" maxOccurs="unbounded"/>
- *       &lt;/sequence>
- *       &lt;attribute name="algo" use="required" type="{http://www.w3.org/2001/XMLSchema}NCName" />
- *     &lt;/restriction>
- *   &lt;/complexContent>
- * &lt;/complexType>
+ * &lt;complexType&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;sequence&gt;
+ *         &lt;element ref="{}Location"/&gt;
+ *         &lt;element ref="{}CompoundScores"/&gt;
+ *         &lt;element ref="{}Chromatogram" minOccurs="0"/&gt;
+ *         &lt;element ref="{}Spectrum" maxOccurs="unbounded"/&gt;
+ *       &lt;/sequence&gt;
+ *       &lt;attribute name="algo" use="required" type="{http://www.w3.org/2001/XMLSchema}NCName" /&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
  * </pre>
  * 
  * 

@@ -39,7 +39,7 @@ public interface Annotated<A extends DataAnnotation> {
     Annotations<A> annotations();
 
     /**
-     * @return an iterator over all map
+     * An iterator over all map
      */
     default void forEachAnnotation(BiConsumer<? super Class<A>, ? super A> action) {
         annotations().forEach(action);
@@ -209,7 +209,7 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     /**
-     * Add all annotations of type Class<A> from the given config. Overrides existing.
+     * Add all annotations of type  {@literal Class<A>} from the given config. Overrides existing.
      * Missing keys will be skipped with warning.
      *
      * @param config from which the annotations will be add
@@ -220,7 +220,7 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     /**
-     * Add all annotations of type Class<A> from the given config. Overrides existing.
+     * Add all annotations of type {@literal Class<A>} from the given config. Overrides existing.
      *
      * @param config from which the annotations will be add
      * @param clz type of the annotations that will be parsed
@@ -253,7 +253,7 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     /**
-     * Add all annotations of type Class<A> from the given config if they do  NOT already exist.
+     * Add all annotations of type {@literal Class<A>} from the given config if they do  NOT already exist.
      * Missing keys will be skipped with warning.
      *
      * @param config from which the annotations will be add
@@ -264,7 +264,7 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     /**
-     * Add all annotations of type Class<A> from the given config if they do  NOT already exist.
+     * Add all annotations of type {@literal Class<A>} from the given config if they do  NOT already exist.
      *
      * @param config from which the annotations will be add
      * @param clz type of the annotations that will be parsed

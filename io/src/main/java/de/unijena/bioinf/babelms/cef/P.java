@@ -32,21 +32,21 @@ import java.math.BigInteger;
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType>
- *   &lt;complexContent>
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;attribute name="rt" type="{http://www.w3.org/2001/XMLSchema}decimal" />
- *       &lt;attribute name="rte" type="{http://www.w3.org/2001/XMLSchema}decimal" />
- *       &lt;attribute name="rts" type="{http://www.w3.org/2001/XMLSchema}decimal" />
- *       &lt;attribute name="rtw" type="{http://www.w3.org/2001/XMLSchema}integer" />
- *       &lt;attribute name="s" type="{http://www.w3.org/2001/XMLSchema}anySimpleType" />
- *       &lt;attribute name="v" type="{http://www.w3.org/2001/XMLSchema}integer" />
- *       &lt;attribute name="x" type="{http://www.w3.org/2001/XMLSchema}decimal" />
- *       &lt;attribute name="y" type="{http://www.w3.org/2001/XMLSchema}decimal" />
- *       &lt;attribute name="z" type="{http://www.w3.org/2001/XMLSchema}integer" />
- *     &lt;/restriction>
- *   &lt;/complexContent>
- * &lt;/complexType>
+ * &lt;complexType&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;attribute name="rt" type="{http://www.w3.org/2001/XMLSchema}decimal" /&gt;
+ *       &lt;attribute name="rte" type="{http://www.w3.org/2001/XMLSchema}decimal" /&gt;
+ *       &lt;attribute name="rts" type="{http://www.w3.org/2001/XMLSchema}decimal" /&gt;
+ *       &lt;attribute name="rtw" type="{http://www.w3.org/2001/XMLSchema}integer" /&gt;
+ *       &lt;attribute name="s" type="{http://www.w3.org/2001/XMLSchema}anySimpleType" /&gt;
+ *       &lt;attribute name="v" type="{http://www.w3.org/2001/XMLSchema}integer" /&gt;
+ *       &lt;attribute name="x" type="{http://www.w3.org/2001/XMLSchema}decimal" /&gt;
+ *       &lt;attribute name="y" type="{http://www.w3.org/2001/XMLSchema}decimal" /&gt;
+ *       &lt;attribute name="z" type="{http://www.w3.org/2001/XMLSchema}integer" /&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
  * </pre>
  * 
  * 
