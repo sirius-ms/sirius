@@ -126,7 +126,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             abort.addActionListener(e -> dispose());
             JButton showCommand = new JButton("Show Command");
             showCommand.addActionListener(e ->
-                    new InfoDialog(owner, "Command:",GuiUtils.formatToolTip(String.join(" ", makeCommand()))));
+                    new InfoDialog(owner, "Command:" + GuiUtils.formatToolTip(String.join(" ", makeCommand()))));
 
             rsouthPanel.add(showCommand);
             rsouthPanel.add(compute);
@@ -139,7 +139,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         }
 
         //finalize panel build
-        setMaximumSize(Toolkit.getDefaultToolkit().getScreenSize());
+        setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
         if (getMaximumSize().width < getPreferredSize().width)
             mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         configureActions();
