@@ -32,16 +32,16 @@ import java.math.BigInteger;
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType>
- *   &lt;complexContent>
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;sequence>
- *         &lt;element ref="{}mz"/>
- *       &lt;/sequence>
- *       &lt;attribute name="z" type="{http://www.w3.org/2001/XMLSchema}integer" />
- *     &lt;/restriction>
- *   &lt;/complexContent>
- * &lt;/complexType>
+ * &lt;complexType&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;sequence&gt;
+ *         &lt;element ref="{}mz"/&gt;
+ *       &lt;/sequence&gt;
+ *       &lt;attribute name="z" type="{http://www.w3.org/2001/XMLSchema}integer" /&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
  * </pre>
  * 
  * 
