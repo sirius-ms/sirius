@@ -30,6 +30,7 @@ CSI:FingerID.</span>
 <!--begin download-->
 
 ### Documentation
+
 - [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
 - [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.27/sirius-4.4.27-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
@@ -96,6 +97,7 @@ command-line tool.
 
 <!--begin cite-->
 ## Main citations
+
 **Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
 [Sirius 4: turning tandem mass spectra into metabolite structure information](https://doi.org/10.1038/s41592-019-0344-8), 
 *Nat methods*, 16, 2019.**
@@ -133,6 +135,7 @@ identification.](http://bioinformatics.oxfordjournals.org/content/25/2/218.full)
 (2009) 25 (2): 218-224. (Cite this for *isotope pattern analysis*)
 
 ### Additional citations
+
 Marcus Ludwig, Kai Dührkop and Sebastian and Böcker.
 [Bayesian networks for mass spectrometric metabolite identification via molecular fingerprints.](http://doi.org/10.1093/bioinformatics/bty245) 
 *Bioinformatics*, 34(13): i333-i340. 2018. Proc. of Intelligent Systems for Molecular Biology (ISMB 2018). (Cite for CSI:FingerID Scoring) 
