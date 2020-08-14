@@ -189,7 +189,6 @@ distributions {
                 into("${jre_path}"){
                     from("${project.jreBuildPath}/zulu${zulu_jre_version}-ca-fx-jre${jre_version}-win_x${ar}/")
                 }
-                from { "${getRootDir()}/LICENSE.txt" }
                 from('build/launch4j') {
                     include("*-${ar}.exe")
                 }

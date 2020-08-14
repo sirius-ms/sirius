@@ -222,4 +222,16 @@ public class GuiUtils {
                 + lines.stream().map(it -> it.replace("\n", "<br>")).collect(Collectors.joining("<br>"))
                 + "</p></html>";
     }
+
+    public static Dimension getEffectiveScreenSize(@NotNull GraphicsConfiguration c) {
+        Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+        Insets in = getScreenInsets(c);
+        return new Dimension(d.width - in.left - in.right, d.height - in.bottom - in.top);
+    }
+    public static Insets getScreenInsets(@NotNull GraphicsConfiguration c) {
+        //height of the task bar
+        return Toolkit.getDefaultToolkit().getScreenInsets(c);
+    }
+
+
 }
