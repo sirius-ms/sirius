@@ -32,7 +32,7 @@ import java.util.*;
  * An adduct switch is a switch of the ionization mode within a spectrum, e.g. an ion replaces an sodium adduct
  * with a protonation during fragmentation. Such adduct switches heavily increase the complexity of the
  * analysis, but for certain adducts they might happen regularly. Adduct switches are written in the
- * form "a -> b, a -> c, d -> c" where a, b, c, and d are adducts and a -> b denotes an allowed switch from
+ * form  {@literal a -> b, a -> c, d -> c} where a, b, c, and d are adducts and  {@literal a -> b} denotes an allowed switch from
  * a to b within the MS/MS spectrum.
  */
 @DefaultProperty
