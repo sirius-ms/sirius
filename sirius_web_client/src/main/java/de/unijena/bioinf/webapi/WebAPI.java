@@ -303,7 +303,7 @@ public final class WebAPI {
     }
 
     /**
-     * @return The Fingerprint version used by the rest Database ->  not really needed but for sanity checks
+     * @return The Fingerprint version used by the rest Database --  not really needed but for sanity checks
      * @throws IOException if connection error happens
      */
     public CdkFingerprintVersion getCDKChemDBFingerprintVersion() throws IOException {

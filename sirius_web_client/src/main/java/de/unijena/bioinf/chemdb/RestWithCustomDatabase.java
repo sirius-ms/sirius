@@ -191,7 +191,7 @@ public class RestWithCustomDatabase {
 
 
     /**
-     * merge formulas with same Formula and IonType ->  Merge the filterBits
+     * merge formulas with same Formula and IonType {@literal ->}  Merge the filterBits
      */
     public static Set<FormulaCandidate> mergeFormulas(Collection<FormulaCandidate> formulas) {
         HashMap<FormulaKey, AtomicLong> map = new HashMap<>();

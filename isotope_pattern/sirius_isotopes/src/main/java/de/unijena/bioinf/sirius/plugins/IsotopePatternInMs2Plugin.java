@@ -324,9 +324,9 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
         /**
          * Achtung: superhacky!
          * Isotopes are implemented via two annotations:
-         *  -> Ms2IsotopePattern (in fragment node):
+         *  - Ms2IsotopePattern (in fragment node):
          *      - contains the full pattern with score 0
-         *  -> IsotopicScore (in losses between isotopic peaks)
+         *  - IsotopicScore (in losses between isotopic peaks)
          *      - contains score bonus for elongation of the pattern
          *
          *  we only create synthetic isotope peak nodes for peaks which are part of the graph. If a peak is NOT part of the graph

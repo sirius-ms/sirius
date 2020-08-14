@@ -4,7 +4,8 @@ import java.awt.*;
 
 /**
  *Taken from https://github.com/matthewbeckler/HeatMap/blob/master/Gradient.java
- * <p>There are a number of defined gradient types (look at the static fields),
+ * <p>
+ * There are a number of defined gradient types (look at the static fields),
  * but you can create any gradient you like by using either of the following functions:
  * <ul>
  *   <li>public static Color[] createMultiGradient(Color[] colors, int numSteps)</li>
@@ -12,10 +13,9 @@ import java.awt.*;
  * </ul>
  * You can then assign an arbitrary Color[] object to the HeatMap as follows:
  * <pre>myHeatMap.updateGradient(Gradient.createMultiGradient(new Color[] {Color.red, Color.white, Color.blue}, 256));</pre>
- * </p>
  *
- * <hr />
- * <p><strong>Copyright:</strong> Copyright (c) 2007, 2008</p>
+ *
+ * <p><strong>Copyright:</strong> Copyright (c) 2007, 2008
  *
  * <p>HeatMap is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
