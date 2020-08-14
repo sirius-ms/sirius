@@ -74,7 +74,7 @@ public class IntPairFloatHashMap implements IntPairFloatMap {
     final float loadFactor;
 
     /**
-     * Constructs an empty <tt>HashMap</tt> with the specified initial
+     * Constructs an empty HashMap with the specified initial
      * capacity and load factor.
      *
      * @param  initialCapacity the initial capacity
@@ -142,9 +142,9 @@ public class IntPairFloatHashMap implements IntPairFloatMap {
     }
 
     /**
-     * Returns <tt>true</tt> if this map contains no key-value mappings.
+     * Returns true if this map contains no key-value mappings.
      *
-     * @return <tt>true</tt> if this map contains no key-value mappings
+     * @return true if this map contains no key-value mappings
      */
     public boolean isEmpty() {
         return size == 0;
