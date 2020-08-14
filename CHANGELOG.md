@@ -9,10 +9,12 @@
 - feature: coin-or ilp solver (CLP) is now included. This allows parallel computation of FragTrees without the need for a commercial solver.
 - improvement: Compounds without given charge are can now be imported. SIRIUS tries to guess the charge from the name (keyword: pos/neg) or falls back to positive.
 - improvement: additional parameters in compute dialog
+- improvement: commands of the 'show command' dialog can now be copied
 - fix: error when writing/reading fragmentation trees with new Jackson parser
 - fix: mgf exporter (CLI) now outputs feature name properly
 - fix: deadlock during connection check without internet connection
 - fix: tree rendering bug on non linux systems
+- fix: crash when aborting recompute dialog
 - upgrade (GUI): included JRE to `zulu11.41.23-ca-fx-jre11.0.8`
 
 ##### 4.4.26
