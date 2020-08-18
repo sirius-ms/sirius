@@ -41,9 +41,8 @@ public class UpdateDialog extends JDialog implements ActionListener {
         this.setLocationRelativeTo(owner);
         setLayout(new BorderLayout());
         StringBuilder message = new StringBuilder();
-        message.append("<html>There is a new version of SIRIUS available.<br> Update to <b>SIRIUS ")
-                .append(version.siriusGuiVersion)
-                .append("</b> to receive the newest upgrades.<br> Your current version is ")
+        message.append("<html>There is a new version of SIRIUS available.<br> Download the latest <b>SIRIUS</b>")
+                .append(" to receive the newest upgrades.<br> Your current version is ")
                 .append(FingerIDProperties.sirius_guiVersion())
                 .append("<br>");
         if (version.finishJobs()) {
@@ -64,7 +63,7 @@ public class UpdateDialog extends JDialog implements ActionListener {
         add(label, BorderLayout.CENTER);
         final JPanel subpanel = new JPanel(new FlowLayout());
         ignore = new JButton("Ignore update");
-        download = new JButton("Download SIRIUS " + version.siriusGuiVersion);
+        download = new JButton("Download latest SIRIUS");
         subpanel.add(download);
         subpanel.add(ignore);
         subpanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
