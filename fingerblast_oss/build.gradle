@@ -3,7 +3,9 @@ dependencies() {
     //project
 	compile project(':fingerprint_pvalues_oss')
 	compile project(':chemical_db_oss')
+	compile project(':chemical_db_oss:chemdb_sql_oss')
 
 	// external
 	compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
+	compile group: "org.jgrapht", name: "jgrapht-core", version: "1.0.1"
 }

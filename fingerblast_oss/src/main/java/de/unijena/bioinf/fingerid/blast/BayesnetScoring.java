@@ -6,95 +6,107 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.hash.TIntHashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BayesnetScoring {
+public class BayesnetScoring implements FingerblastScoringMethod {
+
+    private static final Logger Log = LoggerFactory.getLogger(BayesnetScoring.class);
 
     protected final TIntObjectHashMap<AbstractCorrelationTreeNode> nodes;
     protected final AbstractCorrelationTreeNode[] nodeList;
     protected final AbstractCorrelationTreeNode[] forests;
     protected final double alpha;
     protected final FingerprintVersion fpVersion;
+    protected final PredictionPerformance[] performances;
 
     protected File file;
 
-    /**
-     *
-     * @param covTreeEdges array of edges int[k][0] -- int[k][1] or int[l][0] -- int[l][2], int[l][1] -- int[l][2] using absolute indices
-     * @param covariances covariances per edge. Use correct ordering for each kind of nodes (one or two parent node)
-     * @param fpVersion corresponding {@link FingerprintVersion}
-     * @param alpha alpha used for laplace smoothing
-     */
-    public BayesnetScoring(int[][] covTreeEdges, double[][] covariances, FingerprintVersion fpVersion, double alpha){
-        this.fpVersion = fpVersion;
-        this.nodes = parseTree(covTreeEdges, fpVersion);
-        List<AbstractCorrelationTreeNode> fs = new ArrayList<>(10);
-        this.nodeList = new CorrelationTreeNode[nodes.size()];
-        int k=0;
-        for (AbstractCorrelationTreeNode n : nodes.valueCollection()) {
-            if (n.numberOfParents()==0) fs.add(n);
-            nodeList[k++] = n;
-        }
-        this.forests = fs.toArray(new CorrelationTreeNode[fs.size()]);
-        for (int i = 0; i < covTreeEdges.length; i++) {
-            int child = covTreeEdges[i][1];
-            double[] cov = covariances[i];
-            AbstractCorrelationTreeNode node =  nodes.get(fpVersion.getRelativeIndexOf(child));
-            node.setCovariance(cov);
-        }
+    protected boolean allowOnlyNegativeScores;
+
+
+    public String fileString;
+    public void setFileString(String file){
+        fileString = file;
+    }
+
+    BayesnetScoring() {
+        //constructor for testing
+        this.nodes = new TIntObjectHashMap<>();
+        this.nodeList = new AbstractCorrelationTreeNode[0];
+        this.forests = new AbstractCorrelationTreeNode[0];
+        this.alpha = Double.NaN;
+        this.fpVersion = null;
+        //todo remove performances?
+        this.performances = new PredictionPerformance[0];
+        this.allowOnlyNegativeScores = false;
+    }
+
+    protected BayesnetScoring(TIntObjectHashMap<AbstractCorrelationTreeNode> nodes, AbstractCorrelationTreeNode[] nodeList, AbstractCorrelationTreeNode[] forests, double alpha, FingerprintVersion fpVersion, PredictionPerformance[] performances, boolean allowOnlyNegativeScores) {
+        this.nodes = nodes;
+        this.nodeList = nodeList;
+        this.forests = forests;
         this.alpha = alpha;
+        this.fpVersion = fpVersion;
+        this.performances = performances;
+        this.allowOnlyNegativeScores = allowOnlyNegativeScores;
     }
 
-    public BayesnetScoring(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, File dotFile) throws IOException {
-        this(performances, predicted, correct, dotFile.toPath());
-    }
 
-    public BayesnetScoring(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, Path dotFilePath) throws IOException {
-        this.fpVersion = predicted[0].getFingerprintVersion();
-        this.nodes = parseTreeFile(dotFilePath, predicted[0].getFingerprintVersion());
-        List<AbstractCorrelationTreeNode> fs = new ArrayList<>(10);
-        this.nodeList = new AbstractCorrelationTreeNode[nodes.size()];
-        int k=0;
-        for (AbstractCorrelationTreeNode n : nodes.valueCollection()) {
-            if (n.numberOfParents()==0) fs.add(n);
-            nodeList[k++] = n;
-        }
-        this.forests = fs.toArray(new CorrelationTreeNode[fs.size()]);
-        makeStatistics(predicted, correct);
+//    /**
+//     *
+//     * @param covTreeEdges array of edges int[k][0] -- int[k][1] or int[l][0] -- int[l][2], int[l][1] -- int[l][2] using absolute indices
+//     * @param covariances covariances per edge. Use correct ordering for each kind of nodes (one or two parent node)
+//     * @param fpVersion corresponding {@link FingerprintVersion}
+//     * @param alpha alpha used for laplace smoothing
+//     */
+//    public BayesnetScoring(int[][] covTreeEdges, double[][] covariances, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores){
+//        if (covTreeEdges.length!=covariances.length) throw new RuntimeException("size of edge and covariances array differ");
+//        this.performances = null;
+//        this.fpVersion = fpVersion;
+//        this.nodes = parseTree(covTreeEdges, fpVersion);
+//        List<AbstractCorrelationTreeNode> fs = new ArrayList<>(10);
+//        this.nodeList = new AbstractCorrelationTreeNode[nodes.size()];
+//        int k=0;
+//        int numberOfChildren = 0;
+//        for (AbstractCorrelationTreeNode n : nodes.valueCollection()) {
+//            if (n.numberOfParents()==0) fs.add(n);
+//            nodeList[k++] = n;
+//            numberOfChildren += n.getChildren().size();
+//        }
+////        System.out.println("number of children "+numberOfChildren);
+//        this.forests = fs.toArray(new AbstractCorrelationTreeNode[fs.size()]);
+//        for (int i = 0; i < covTreeEdges.length; i++) {
+//            int child = covTreeEdges[i][covTreeEdges[i].length-1];
+//            double[] cov = covariances[i];
+//            AbstractCorrelationTreeNode node =  nodes.get(fpVersion.getRelativeIndexOf(child));
+//            node.setCovariance(cov);
+//        }
+//        this.alpha = alpha;
+//        this.allowOnlyNegativeScores = allowOnlyNegativeScores;
+//
+//        if (hasCycles(forests, fpVersion)){
+//            throw new RuntimeException("bayes net contains cycles");
+//        }
+//    }
 
-        this.alpha = 1d/performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts();
-    }
 
-    public BayesnetScoring(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, int[][] covTreeEdges) {
-        this.fpVersion = predicted[0].getFingerprintVersion();
 
-        this.nodes = parseTree(covTreeEdges, fpVersion);
-        List<AbstractCorrelationTreeNode> fs = new ArrayList<>(10);
-        this.nodeList = new CorrelationTreeNode[nodes.size()];
-        int k=0;
-        for (AbstractCorrelationTreeNode n : nodes.valueCollection()) {
-            if (n.numberOfParents()==0) fs.add(n);
-            nodeList[k++] = n;
-        }
-        this.forests = fs.toArray(new CorrelationTreeNode[fs.size()]);
-        makeStatistics(predicted, correct);
-        this.alpha = 1d/performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts();
-    }
 
-    private static final String SEP = "\t";
+    protected static final String SEP = "\t";
 
-    public void  writeTreeWithCovToFile(Path outputFile) throws IOException{
+    public void  writeTreeWithCovToFile(Path outputFile) throws IOException {
         try(BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset())) {
             for (AbstractCorrelationTreeNode node : nodeList) {
                 if (node.numberOfParents()==0) continue;
@@ -103,7 +115,7 @@ public class BayesnetScoring {
                 StringBuilder builder = new StringBuilder();
                 builder.append(String.valueOf(node.numberOfParents())); builder.append(SEP);
                 for (AbstractCorrelationTreeNode p : node.getParents()) {
-                    builder.append(String.valueOf(p)); builder.append(SEP);
+                    builder.append(String.valueOf(fpVersion.getAbsoluteIndexOf(p.getFingerprintIndex()))); builder.append(SEP);
                 }
                 builder.append(String.valueOf(child)); builder.append(SEP);
                 double[] covariances = node.getCovarianceArray();
@@ -111,7 +123,6 @@ public class BayesnetScoring {
                     builder.append(String.valueOf(covariances[i]));
                     if (i<covariances.length-1) builder.append(SEP);
                 }
-                builder.append(String.valueOf(child)); builder.append(SEP);
 
                 builder.append("\n");
                 writer.write(builder.toString());
@@ -119,174 +130,71 @@ public class BayesnetScoring {
         }
     }
 
-    public static CovarianceScoringMethod readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, double alpha) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset));
+//    public static BayesnetScoring readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
+//        BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset));
+//
+//        final List<String> lines = new ArrayList<>();
+//        String l;
+//        while ((l=reader.readLine())!=null) lines.add(l);
+//
+//        List<int[]> edges = new ArrayList<>();
+//        final double[][] covariances = new double[lines.size()][];
+//        int pos = 0;
+//        for (String line : lines) {
+//            if (line.length()==0) continue;
+//            String[] row = line.split(SEP);
+//            if (row.length==6){
+//                throw new RuntimeException("seems like the input file is still using old input format.");
+////                //old format for tree as input
+////                edges.add(new int[]{Integer.parseInt(row[0]), Integer.parseInt(row[1])});
+////                covariances[pos] = new double[]{Double.parseDouble(row[2]), Double.parseDouble(row[3]), Double.parseDouble(row[4]), Double.parseDouble(row[5])};
+//            } else {
+//                int numberOfParents = Integer.parseInt(row[0]);
+////                int child = Integer.parseInt(row[numberOfParents+1]);
+////                for (int i = 1; i <= numberOfParents; i++) {
+////                    edges.add(new int[]{Integer.parseInt(row[i]), child});
+////                }
+//                int[] current_edges = new int[numberOfParents+1];
+//                for (int i = 1; i <= numberOfParents+1; i++) {
+//                    current_edges[i-1] = Integer.parseInt(row[i]);
+//                }
+//                edges.add(current_edges);
+//                double[] covs = new double[row.length-(numberOfParents+2)];
+//                for (int i = numberOfParents+2; i < row.length; i++) {
+//                    covs[i-(numberOfParents+2)] = Double.parseDouble(row[i]);
+//                }
+//                covariances[pos] = covs;
+//            }
+//            pos++;
+//        }
+//        return new BayesnetScoring(edges.toArray(new int[0][]), covariances, fpVersion, alpha, allowOnlyNegativeScores);
+//    }
 
-        final List<String> lines = new ArrayList<>();
-        String l;
-        while ((l=reader.readLine())!=null) lines.add(l);
+//    public static BayesnetScoring readScoringFromFile(Path treeFile, FingerprintVersion fpVersion, double alpha) throws IOException {
+//        return readScoringFromFile(treeFile, fpVersion, alpha, false);
+//    }
+//
+//    public static BayesnetScoring readScoringFromFile(Path treeFile, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
+//        InputStream inputStream = Files.newInputStream(treeFile);
+//        BayesnetScoring scoring =  readScoring(inputStream, Charset.forName("UTF-8"), fpVersion, alpha, allowOnlyNegativeScores);
+//        inputStream.close();
+//        return scoring;
+//    }
 
-        final int[][] edges = new int[lines.size()][];
-        final double[][] covariances = new double[lines.size()][];
-        int pos = 0;
-        for (String line : lines) {
-            if (line.length()==0) continue;
-            String[] col = line.split(SEP);
-            edges[pos] = new int[]{Integer.parseInt(col[0]), Integer.parseInt(col[1])};
-            covariances[pos] = new double[]{Double.parseDouble(col[2]), Double.parseDouble(col[3]), Double.parseDouble(col[4]), Double.parseDouble(col[5])};
-            pos++;
-        }
-        return new CovarianceScoringMethod(edges, covariances, fpVersion, alpha);
-    }
 
-    public static CovarianceScoringMethod readScoringFromFile(Path treeFile, FingerprintVersion fpVersion, double alpha) throws IOException {
-        return readScoring(Files.newInputStream(treeFile), Charset.forName("UTF-8"), fpVersion, alpha);
-    }
-
-    protected void makeStatistics(ProbabilityFingerprint[] predicted, Fingerprint[] correct) {
-        for (int i = 0; i < predicted.length; i++) {
-            double[] probFp = predicted[i].toProbabilityArray();
-            boolean[] reality = correct[i].toBooleanArray();
-
-            for (AbstractCorrelationTreeNode node : nodeList) {
-                final boolean isRoot = node.numberOfParents()==0;
-                if (isRoot) continue;
-
-                AbstractCorrelationTreeNode[] parents = node.getParents();
-
-                double[] parentsPredictions = getParentPredictions(parents, probFp);
-                boolean[] parentsTruth = getParentTruth(parents, reality);
-                final boolean truth = reality[node.getFingerprintIndex()];
-                final double prediction = laplaceSmoothing(probFp[node.getFingerprintIndex()], alpha);
-
-                node.addPlattThis(prediction, truth, parentsTruth);
-                for (int j = 0; j < parentsTruth.length; j++) {
-                    node.addPlattOfParent(parentsPredictions[j], j, truth, parentsTruth);
-                }
-            }
-
-        }
-
-        for (AbstractCorrelationTreeNode node : nodeList) {
-            node.computeCovariance();
-        }
-
-    }
-
-    private double[] getParentPredictions(AbstractCorrelationTreeNode[] parents, double[] predictedFP){
-        double[] parentPlatt = new double[parents.length];
-        for (int i = 0; i < parents.length; i++) {
-            final AbstractCorrelationTreeNode parent = parents[i];
-            final double platt = laplaceSmoothing(predictedFP[parent.getFingerprintIndex()], alpha);
-            parentPlatt[i] = platt;
-        }
-        return parentPlatt;
-    }
-
-    private boolean[] getParentTruth(AbstractCorrelationTreeNode[] parents, boolean[] trueFP){
-        boolean[] parentTruth = new boolean[parents.length];
-        for (int i = 0; i < parents.length; i++) {
-            final AbstractCorrelationTreeNode parent = parents[i];
-            parentTruth[i] = trueFP[parent.getFingerprintIndex()];
-        }
-        return parentTruth;
-    }
 
     public int getNumberOfRoots(){
         return forests.length;
     }
 
-    private static Pattern EdgePattern = Pattern.compile("(\\d+)\\s*->\\s*(\\d+)\\s*");
 
 
-    /*
-    parse the molecular property tree from a dot-like file
-     */
-    private TIntObjectHashMap<AbstractCorrelationTreeNode> parseTreeFile(Path dotFile, FingerprintVersion fpVersion) throws IOException {
-        return parseTree(parseTreeFromDotFile(dotFile), fpVersion);
-    }
-
-    public static int[][] parseTreeFromDotFile(Path dotFile) throws IOException {
-        List<int[]> edges = new ArrayList<>();
-        try (final BufferedReader br = Files.newBufferedReader(dotFile, Charset.forName("UTF-8"))) {
-            String line;
-            while ((line=br.readLine())!=null) {
-                final Matcher m = EdgePattern.matcher(line);
-                if (m.find()) {
-                    final int u = Integer.parseInt(m.group(1));
-                    final int v = Integer.parseInt(m.group(2));
-                    edges.add(new int[]{u,v});
-                }
-            }
-        }
-        return edges.toArray(new int[0][]);
-    }
-
-    /*
-    parse molecular property net from a array of edges.
-    [[a,b],...,[x,y,z]] contains edges a->b, ..., x->y,x->z
-    absolute indices!
-    try to correct for missing and unused properties
-    important: all parents or a node must be contained in one such int[], last elements always represent the child node.
-    Each node (index) can be last element only once.
-     */
-    private TIntObjectHashMap<AbstractCorrelationTreeNode> parseTree(int[][] absIndices, FingerprintVersion fpVersion){
-        TIntObjectHashMap<AbstractCorrelationTreeNode> nodes = new TIntObjectHashMap<>();
-        for (int[] absIndex : absIndices) {
-            final int u = absIndex[0];
-
-            AbstractCorrelationTreeNode[] parentNodes = new AbstractCorrelationTreeNode[absIndex.length-1];
-            for (int i = 0; i < absIndex.length-1; i++) {
-                parentNodes[i] = nodes.get(i);
-            }
-            AbstractCorrelationTreeNode currentNode = createTreeNode(u, parentNodes);
-            nodes.put(u, currentNode);
-            for (AbstractCorrelationTreeNode parentNode : parentNodes) {
-                parentNode.getChildren().add(currentNode);
-            }
-        }
-
-        for (int i : nodes.keys()) {
-            if (!fpVersion.hasProperty(i)) throw new RuntimeException("tree contains properties which are not used for fingerprints");
-        }
-
-
-        // convert to relative indices
-        TIntObjectHashMap<AbstractCorrelationTreeNode> nodesRelativeIdx = new TIntObjectHashMap<>();
-        for (int i : nodes.keys()) {
-            int relIdx = fpVersion.getRelativeIndexOf(i);
-            AbstractCorrelationTreeNode node = nodes.get(i);
-            node.setFingerprintIndex(relIdx);
-            nodesRelativeIdx.put(relIdx, node);
-        }
-
-        //add properties not contained in tree
-        for (int i = 0; i < fpVersion.size(); i++) {
-            if (!nodesRelativeIdx.contains(i)){
-                throw new RuntimeException("Property " + fpVersion.getAbsoluteIndexOf(i) + " is not contained in tree");
-//                nodesRelativeIdx.put(i, createTreeNode(i));
-            }
-        }
-
-        return nodesRelativeIdx;
-    }
-
-    protected AbstractCorrelationTreeNode createTreeNode(int fingerprintIndex, AbstractCorrelationTreeNode... parentNodes){
-        if (parentNodes.length==1){
-            return new CorrelationTreeNode(fingerprintIndex, parentNodes[0]);
-        } else if (parentNodes.length==2) {
-            return new TwoParentsCorrelationTreeNode(fingerprintIndex, parentNodes);
-        } else {
-            throw new RuntimeException("don't support nodes with no or more than 2 parents");
-        }
-    }
-
-    private static int RootT=0,RootF=1,ChildT=0,ChildF=1;
+    protected final static int RootT=0,RootF=1,ChildT=0,ChildF=1;
 
     /**
      * important: order of parent and child changed!!!!!!
      */
-    protected abstract class AbstractCorrelationTreeNode{
+    protected static abstract class AbstractCorrelationTreeNode{
 
         abstract protected void initPlattByRef();
 
@@ -309,7 +217,7 @@ public class BayesnetScoring {
         }
 
         void addPlattOfParent(double platt, int parentIdx, boolean thisTrue, boolean... parentsTrue) {
-            addPlatt(getIdxRootPlatt(true, parentIdx, parentsTrue), platt);
+            addPlatt(getIdxRootPlatt(thisTrue, parentIdx, parentsTrue), platt);
         }
 
         abstract protected void  addPlatt(int bin, double platt);
@@ -323,21 +231,25 @@ public class BayesnetScoring {
 
         abstract protected double[] getCovarianceArray();
 
-        abstract AbstractCorrelationTreeNode[] getParents();
+        abstract public AbstractCorrelationTreeNode[] getParents();
 
-        abstract int numberOfParents();
+        abstract public int numberOfParents();
+
+        abstract void replaceParent(AbstractCorrelationTreeNode oldParent, AbstractCorrelationTreeNode newParent);
 
         abstract List<AbstractCorrelationTreeNode> getChildren();
 
-        abstract int getFingerprintIndex();
+        abstract boolean removeChild(AbstractCorrelationTreeNode child);
+
+        abstract public int getFingerprintIndex();
 
         abstract void setFingerprintIndex(int newIdx);
 
-        abstract int getArrayIdxForGivenAssignment(boolean thisTrue, boolean... parentsTrue);
+        abstract public int getArrayIdxForGivenAssignment(boolean thisTrue, boolean... parentsTrue);
 
     }
 
-    protected class TwoParentsCorrelationTreeNode extends AbstractCorrelationTreeNode{
+    protected static class TwoParentsCorrelationTreeNode extends AbstractCorrelationTreeNode{
         protected AbstractCorrelationTreeNode[] parents;
         protected List<AbstractCorrelationTreeNode> children;
         protected int fingerprintIndex;
@@ -352,8 +264,9 @@ public class BayesnetScoring {
             this.fingerprintIndex = fingerprintIndex;
             this.parents = parents;
             //number of combinations of child,parent_i,... being 0/1 times number of necessary correlations (pairwise and more)
-            this.numberOfCombinations = (int)Math.pow(2,parents.length+1);
-            this.covariances = new double[numberOfCombinations][numberOfCombinations-1-(parents.length-1)];
+            this.numberOfCombinations = (int) Math.pow(2,parents.length+1);
+//            this.covariances = new double[numberOfCombinations][numberOfCombinations-1-(parents.length+1)];
+            this.covariances = new double[numberOfCombinations][numberOfCombinations]; //just use it with some 'holes' in between
             this.children = new ArrayList<>();
             initPlattByRef();
         }
@@ -424,7 +337,7 @@ public class BayesnetScoring {
 
 
         @Override
-        int getArrayIdxForGivenAssignment(boolean thisTrue, boolean... parentsTrue){
+        public int getArrayIdxForGivenAssignment(boolean thisTrue, boolean... parentsTrue){
             assert parentsTrue.length==2;
             return ((thisTrue ? 1 : 0))+(parentsTrue[0] ? 2 : 0)+(parentsTrue[1] ? 4 : 0);
         }
@@ -432,8 +345,8 @@ public class BayesnetScoring {
         /*
         get idx of the covariance you like to have: e.g. c_ij -> (thisTrue, parent0True, parent1False) or c_ijk -> (thisTrue, parent0True, parent1True)
          */
-        int getCovIdx(boolean thisContained, boolean... parentsContained){
-            int idx = 8-getArrayIdxForGivenAssignment(thisContained, parentsContained); //reverse as their is no set of single elements or empty set
+        public int getCovIdx(boolean thisContained, boolean... parentsContained){
+            final int idx = getArrayIdxForGivenAssignment(thisContained, parentsContained); //this actually introduces some 'holes' in the array (e.g their is no covariance of one variable or the empty set)
             return idx;
         }
 
@@ -459,7 +372,7 @@ public class BayesnetScoring {
                                 Statistics.covariance(
                                         plattByRef[getIdxThisPlatt(thisTrue, parent0True, parent1True)].toArray(),
                                         plattByRef[getIdxRootPlatt(thisTrue, 0, parent0True, parent1True)].toArray()
-                                        );
+                                );
 
                         covariances[getArrayIdxForGivenAssignment(thisTrue, parent0True, parent1True)][covIndex_ik] =
                                 Statistics.covariance(
@@ -485,14 +398,25 @@ public class BayesnetScoring {
         }
 
         private double covariance(double[] a, double[] b, double[] c){
-            throw new NoSuchMethodError("not implemented");
+            if (a.length!=b.length || b.length!=c.length) throw new RuntimeException("array sizes differ");
+            double meanA = Statistics.expectation(a);
+            double meanB = Statistics.expectation(b);
+            double meanC = Statistics.expectation(c);
+
+            double sum = 0;
+            for (int i = 0; i < a.length; i++) {
+                sum += (a[i]-meanA)*(b[1]-meanB)*(c[i]-meanC);
+            }
+            return sum/a.length; //todo n or n-1?
         }
+
 
         @Override
         void setCovariance(double[] covariances) {
             //convert to 2D
-            int secondDimSize = numberOfCombinations-1-(parents.length-1);
-
+            int secondDimSize = numberOfCombinations;//numberOfCombinations-1-(parents.length-1);
+            if (covariances.length!=(numberOfCombinations*secondDimSize))
+                throw new RuntimeException(String.format("incorrect covariance array length: %d vs %d%n",covariances.length, numberOfCombinations*secondDimSize));
             int i=0, j=0;
             for (double covariance : covariances) {
                 this.covariances[i][j] = covariance;
@@ -506,15 +430,17 @@ public class BayesnetScoring {
             initPlattByRef();
         }
 
+        //todo make some stuff protected again
         @Override
-        protected double getCovariance(int whichCovariance, boolean real, boolean... realParents) {
+        public double getCovariance(int whichCovariance, boolean real, boolean... realParents) {
             return covariances[getCovIdx(real, realParents)][whichCovariance];
         }
 
         @Override
         protected double[] getCovarianceArray() {
             //convert
-            double[] covariances1D = new double[numberOfCombinations*numberOfCombinations-1-(parents.length-1)];
+//            double[] covariances1D = new double[numberOfCombinations*numberOfCombinations-1-(parents.length-1)];
+            double[] covariances1D = new double[numberOfCombinations*numberOfCombinations];
             int i = 0;
             for (int j = 0; j < covariances.length; j++) {
                 double[] cov = covariances[j];
@@ -526,13 +452,24 @@ public class BayesnetScoring {
         }
 
         @Override
-        AbstractCorrelationTreeNode[] getParents() {
+        public AbstractCorrelationTreeNode[] getParents() {
             return parents;
         }
 
         @Override
-        int numberOfParents() {
+        public int numberOfParents() {
             return parents.length;
+        }
+
+        @Override
+        void replaceParent(AbstractCorrelationTreeNode oldParent, AbstractCorrelationTreeNode newParent) {
+            for (int i = 0; i < parents.length; i++) {
+                if (oldParent.equals(parents[i])){
+                    parents[i] = newParent;
+                    return;
+                }
+            }
+            throw new RuntimeException("old parent not found");
         }
 
         @Override
@@ -541,7 +478,12 @@ public class BayesnetScoring {
         }
 
         @Override
-        int getFingerprintIndex() {
+        boolean removeChild(AbstractCorrelationTreeNode child) {
+            return children.remove(child);
+        }
+
+        @Override
+        public int getFingerprintIndex() {
             return fingerprintIndex;
         }
 
@@ -552,13 +494,21 @@ public class BayesnetScoring {
 
     }
 
-    protected class CorrelationTreeNode extends AbstractCorrelationTreeNode{
+    protected static class CorrelationTreeNode extends AbstractCorrelationTreeNode{
         protected AbstractCorrelationTreeNode parent;
         protected List<AbstractCorrelationTreeNode> children;
         protected int fingerprintIndex;
 
         protected double[] covariances;
         TDoubleArrayList[] plattByRef;
+
+        /**
+         * constructor for root
+         * @param fingerprintIndex
+         */
+        public CorrelationTreeNode(int fingerprintIndex) {
+            this(fingerprintIndex,  null);
+        }
 
         public CorrelationTreeNode(int fingerprintIndex, AbstractCorrelationTreeNode parent){
             this.fingerprintIndex = fingerprintIndex;
@@ -626,7 +576,7 @@ public class BayesnetScoring {
         }
 
         @Override
-        protected double getCovariance(int whichCovariance, boolean real, boolean... realParent){
+        public double getCovariance(int whichCovariance, boolean real, boolean... realParent){
             assert realParent.length==1;
             return this.covariances[getArrayIdxForGivenAssignment(real, realParent)];
         }
@@ -637,13 +587,19 @@ public class BayesnetScoring {
         }
 
         @Override
-        AbstractCorrelationTreeNode[] getParents() {
+        public AbstractCorrelationTreeNode[] getParents() {
             return new AbstractCorrelationTreeNode[]{parent};
         }
 
         @Override
-        int numberOfParents() {
+        public int numberOfParents() {
             return (parent==null?0:1);
+        }
+
+        @Override
+        void replaceParent(AbstractCorrelationTreeNode oldParent, AbstractCorrelationTreeNode newParent) {
+            if (!oldParent.equals(parent)) throw new RuntimeException("old parent not found");
+            parent = newParent;
         }
 
         @Override
@@ -652,7 +608,12 @@ public class BayesnetScoring {
         }
 
         @Override
-        int getFingerprintIndex() {
+        boolean removeChild(AbstractCorrelationTreeNode child) {
+            return children.remove(child);
+        }
+
+        @Override
+        public int getFingerprintIndex() {
             return fingerprintIndex;
         }
 
@@ -662,7 +623,7 @@ public class BayesnetScoring {
         }
 
         @Override
-        int getArrayIdxForGivenAssignment(boolean thisTrue, boolean... parentsTrue) {
+        public int getArrayIdxForGivenAssignment(boolean thisTrue, boolean... parentsTrue) {
             assert parentsTrue.length==1;
             return ((thisTrue ? 1 : 0))+(parentsTrue[0] ? 2 : 0);
         }
@@ -681,16 +642,12 @@ public class BayesnetScoring {
 
     public class Scorer  implements FingerblastScoring {
         protected double[][] abcdMatrixByNodeIdxAndCandidateProperties;
-
-
-//        protected int getIndex(boolean thisTrue, boolean rootTrue){
-//            return (rootTrue ? 1 : 0)+((thisTrue ? 2 : 0));
-//        }
-
+        protected ProbabilityFingerprint preparedProbabilityFingerprint;
+        protected double[] smoothedPlatt;
         /*
         returns the one interesting field of the computed contingency table
          */
-        double getABCDMatrixEntry(AbstractCorrelationTreeNode v, boolean thisTrue, boolean... parentsTrue){
+        protected double getABCDMatrixEntry(AbstractCorrelationTreeNode v, boolean thisTrue, boolean... parentsTrue){
             return abcdMatrixByNodeIdxAndCandidateProperties[v.getFingerprintIndex()][v.getArrayIdxForGivenAssignment(thisTrue, parentsTrue)];
         }
 
@@ -723,29 +680,78 @@ public class BayesnetScoring {
         }
 
 
-        @Override
-        public void prepare(ProbabilityFingerprint fingerprint) {
-            abcdMatrixByNodeIdxAndCandidateProperties = new double[nodeList.length][];
-
-            double[] fp = fingerprint.toProbabilityArray();
-
-            for (AbstractCorrelationTreeNode root : forests) {
-
-                // process conditional probabilities
-                for (AbstractCorrelationTreeNode child : root.getChildren()) {
-                    prepare(child, fp);
-                }
-            }
+        protected double getProbability(int idx, boolean candidateTrue){
+            return smoothedPlatt[idx];
         }
 
-        void prepare(AbstractCorrelationTreeNode x, double[] fingerprint){
+
+        int numberOfComputedContingencyTables;
+        int numberOfComputedSimpleContingencyTables;
+        TIntHashSet preparedProperties;
+        @Override
+        public void prepare(ProbabilityFingerprint fingerprint) {
+            numberOfComputedContingencyTables = 0;
+            numberOfComputedSimpleContingencyTables =0;
+            preparedProperties = new TIntHashSet();
+            preparedProbabilityFingerprint = fingerprint;
+            smoothedPlatt = getSmoothedPlatt(preparedProbabilityFingerprint);
+//            System.out.println("prepare "+this.toString());
+//            long start = System.currentTimeMillis();
+            abcdMatrixByNodeIdxAndCandidateProperties = new double[nodeList.length][];
+
+
+            for (AbstractCorrelationTreeNode node : nodeList) {
+                prepare(node);
+            }
+//            for (AbstractCorrelationTreeNode root : forests) {
+//
+//                // process conditional probabilities
+//                for (AbstractCorrelationTreeNode child : root.getChildren()) {
+//                    prepare(child);
+//                }
+//            }
+
+//            int hash = 0;
+//            for (AbstractCorrelationTreeNode root : forests) {
+//                hash += hash(root, hash);
+//            }
+//            System.out.println("bayes hash is "+hash);
+//            System.out.println("preparing "+this.toString()+" took "+(System.currentTimeMillis()-start));
+//            System.out.printf("number of computed tables one_parent %d and two_parents %d%n",numberOfComputedSimpleContingencyTables,numberOfComputedContingencyTables);
+//            System.out.printf("number of prepared properties %d, roots %d, number of properties %d%n",preparedProperties.size(), forests.length, preparedProbabilityFingerprint.getFingerprintVersion().size());
+        }
+
+        protected double[] getSmoothedPlatt(ProbabilityFingerprint predicted){
+            double[] fp = predicted.toProbabilityArray();
+            for (int i = 0; i < fp.length; i++) {
+                fp[i] = laplaceSmoothing(fp[i], alpha);
+            }
+            return fp;
+        }
+
+//        public int hash(AbstractCorrelationTreeNode node, int hash){
+//            if (node.numberOfParents()==0){
+//                //root
+//                hash += node.getFingerprintIndex();
+//            } else {
+//                for (AbstractCorrelationTreeNode abstractCorrelationTreeNode : node.getParents()) {
+//                    hash += abstractCorrelationTreeNode.getFingerprintIndex()*node.getFingerprintIndex();
+//                }
+//            }
+//            for (AbstractCorrelationTreeNode child : node.getChildren()) {
+//                return hash(child, hash);
+//            }
+//            return hash;
+//        }
+
+        void prepare(AbstractCorrelationTreeNode x){
+            if (x.numberOfParents()==0) return;
+            preparedProperties.add(x.getFingerprintIndex());
             if (x instanceof CorrelationTreeNode){
                 CorrelationTreeNode v = (CorrelationTreeNode)x;
                 final AbstractCorrelationTreeNode u = v.parent;
                 final int i = u.getFingerprintIndex();
                 final int j = v.getFingerprintIndex();
-                final double p_i = laplaceSmoothing(fingerprint[i], alpha);
-                final double p_j = laplaceSmoothing(fingerprint[j], alpha);
 
 
                 double[] necessaryABCDs = new double[4];
@@ -754,31 +760,30 @@ public class BayesnetScoring {
                     boolean parentTrue = (k==0);
                     for (int l = 0; l < 2; l++) {
                         boolean childTrue = (l==0);
+                        final double p_i = getProbability(i, parentTrue);
+                        final double p_j = getProbability(j, childTrue);
+
 
                         final double covariance = v.getCovariance(0, childTrue, parentTrue);
+//                        System.out.println("bayes covariance "+j+": "+covariance);
                         double[] abcd = computeABCD(covariance, p_i, p_j);
-                        necessaryABCDs[v.getArrayIdxForGivenAssignment(childTrue, parentTrue)] = abcd[(parentTrue ? 1 : 0)+((childTrue ? 2 : 0))];
-
+                        necessaryABCDs[v.getArrayIdxForGivenAssignment(childTrue, parentTrue)] = abcd[(parentTrue ? 0 : 1)+((childTrue ? 0 : 2))];
+                        ++numberOfComputedSimpleContingencyTables;
                     }
 
                 }
 
                 abcdMatrixByNodeIdxAndCandidateProperties[j] = necessaryABCDs;
 
-                for (AbstractCorrelationTreeNode child : v.children) {
-                    prepare(child, fingerprint);
-                }
+//                for (AbstractCorrelationTreeNode child : v.children) {
+//                    prepare(child);
+//                }
             } else {
                 TwoParentsCorrelationTreeNode v = (TwoParentsCorrelationTreeNode)x;
                 final AbstractCorrelationTreeNode[] parents = v.getParents();
                 final int i = v.getFingerprintIndex();
                 final int j = parents[0].getFingerprintIndex();
                 final int k = parents[1].getFingerprintIndex();
-                final double p_i = laplaceSmoothing(fingerprint[i], alpha);
-                final double p_j = laplaceSmoothing(fingerprint[j], alpha);
-                final double p_k = laplaceSmoothing(fingerprint[k], alpha);
-
-                double[] necessaryABCDs = new double[4];
 
                 //indices of the specific cov in array
                 int covIndex_ij = v.getCovIdx(true, true, false);
@@ -795,79 +800,133 @@ public class BayesnetScoring {
                         for (int n = 0; n < 2; n++) {
                             boolean parent1True = (n==1);
 
+                            final double p_i = getProbability(i, thisTrue);
+                            final double p_j = getProbability(j, parent0True);
+                            final double p_k = getProbability(k, parent1True);
+
+
                             double cov_ij = v.getCovariance(covIndex_ij, thisTrue, parent0True, parent1True);
                             double cov_ik = v.getCovariance(covIndex_ik, thisTrue, parent0True, parent1True);
                             double cov_jk = v.getCovariance(covIndex_jk, thisTrue, parent0True, parent1True);
                             double cov_ijk = v.getCovariance(covIndex_ijk, thisTrue, parent0True, parent1True);
 
-                            double[][][] q = computeContingencyTable(p_i, p_j, p_k, cov_ij, cov_ik, cov_jk, cov_ijk);
+                            double[][][] q = computeContingencyTable(p_i, p_j, p_k, cov_ij, cov_ik, cov_jk, cov_ijk, alpha);
 
                             necessaryContingencyEntries[v.getArrayIdxForGivenAssignment(thisTrue, parent0True, parent1True)] = q[l][m][n];
+                            ++numberOfComputedContingencyTables;
                         }
                     }
                 }
 
-                abcdMatrixByNodeIdxAndCandidateProperties[j] = necessaryABCDs;
+                abcdMatrixByNodeIdxAndCandidateProperties[i] = necessaryContingencyEntries;
 
-                for (AbstractCorrelationTreeNode child : v.children) {
-                    prepare(child, fingerprint);
-                }
+//                for (AbstractCorrelationTreeNode child : v.children) {
+//                    prepare(child);
+//                }
             }
 
         }
 
+
+        ProbabilityFingerprint lastFP = null;
+        boolean output = false;
+        protected int numberOfScoredNodes;
         @Override
         public double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry) {
+            if (!preparedProbabilityFingerprint.equals(fingerprint)){
+                throw new RuntimeException("the prepared fingerprint differs from the currently used one.");
+            }
+            numberOfScoredNodes = 0;
+            if (fingerprint!=lastFP) output = true;
+
             double logProbability = 0d;
 
-            double[] fp = fingerprint.toProbabilityArray();
             boolean[] bool = databaseEntry.toBooleanArray();
-            for (AbstractCorrelationTreeNode root : forests) {
-                final int i = root.getFingerprintIndex();
-                final double prediction = laplaceSmoothing(fp[i],alpha);
-                final double oneMinusPrediction = 1d-prediction;
-                final boolean real = bool[i];
 
-                if (real){
-                    logProbability += Math.log(prediction);
-                } else {
-                    logProbability += Math.log(oneMinusPrediction);
-                }
-
-                // process conditional probabilities
-                for (AbstractCorrelationTreeNode child : root.getChildren()) {
-                    logProbability += conditional(fp, bool, child);
-                }
+            for (AbstractCorrelationTreeNode node : nodeList) {
+                logProbability += conditional(bool, node);
             }
 
+
+//            for (AbstractCorrelationTreeNode root : forests) {
+//                final int i = root.getFingerprintIndex();
+//                final double prediction = smoothedPlatt[i];
+//                final double oneMinusPrediction = 1d-prediction;
+//                final boolean real = bool[i];
+//
+//                if (real){
+//                    logProbability += Math.log(prediction);
+//                } else {
+//                    logProbability += Math.log(oneMinusPrediction);
+//                }
+//
+//                // process conditional probabilities
+//                for (AbstractCorrelationTreeNode child : root.getChildren()) {
+//                    logProbability += conditional(bool, child);
+//                }
+//
+//                numberOfScoredNodes++;
+//            }
+
+//            if (fingerprint!=lastFP){
+//                lastFP = fingerprint;
+//                output = false;
+//                System.out.println("score for "+(lastFP)+" is "+logProbability+", with "+numberOfScoredNodes+" scored nodes");
+//
+//            }
             return logProbability;
         }
 
 
-        protected double conditional(double[] fingerprint, boolean[] databaseEntry, AbstractCorrelationTreeNode x) {
+        protected double conditional(boolean[] databaseEntry, AbstractCorrelationTreeNode x) {
+            if (x.numberOfParents()==0){
+                final int i = x.getFingerprintIndex();
+                final boolean real = databaseEntry[i];
+                numberOfScoredNodes++;
+                if (real){
+//                    return Math.log(smoothedPlatt[i]);
+                    return Math.log(getProbability(i, true));
+                } else {
+//                    return Math.log(1d-smoothedPlatt[i]);
+                    return Math.log(1d-getProbability(i,false));
+                }
+            }
+
             double score;
             if (x instanceof CorrelationTreeNode){
                 CorrelationTreeNode v = (CorrelationTreeNode)x;
                 final AbstractCorrelationTreeNode u = v.parent;
                 final int i = u.getFingerprintIndex();
                 final int j = v.getFingerprintIndex();
-                final double p_i = laplaceSmoothing(fingerprint[i], alpha);
                 final boolean real = databaseEntry[j];
                 final boolean realParent = databaseEntry[i];
+                final double p_i = getProbability(i, realParent);
 
                 double correspondingEntry = getABCDMatrixEntry(v, real, realParent);
 
 
-                if (realParent){
-                    score = Math.log(correspondingEntry/p_i);
-                } else {
-                    score = Math.log(correspondingEntry/(1-p_i));
-                }
+                //changed already normalized
+                score = Math.log(correspondingEntry);
 
+////                if (output) System.out.println("bidx "+j+ ": "+correspondingEntry);
+//
+//                if (realParent){
+//                    score = Math.log(correspondingEntry/p_i);
+//                } else {
+//                    score = Math.log(correspondingEntry/(1-p_i));
+//                }
+
+                //changed
+                if (allowOnlyNegativeScores && score>0){
+                    System.out.printf("overestimated: %f for parent: %d and child: %d with predictions %f and %f and cov %f%n", Math.exp(score), (realParent?1:0), (real?1:0), p_i, getProbability(j, real), v.getCovariance(0, real, realParent));
+                    score = 0;
+                } else if (score>0) {
+                    System.out.printf("strange: overestimated: %f for parent: %d and child: %d with predictions %f and %f and cov %f%n", Math.exp(score), (realParent?1:0), (real?1:0), p_i, getProbability(j, real), v.getCovariance(0, real, realParent));
+                }
 
                 if (Double.isNaN(score) || Double.isInfinite(score)){
                     System.err.println("NaN score for the following fingerprints:");
-                    System.err.println(Arrays.toString(fingerprint));
+                    System.err.println(Arrays.toString(smoothedPlatt));
                     System.err.println(Arrays.toString(databaseEntry));
                     System.err.println("for tree node u (" + u.getFingerprintIndex() + ") -> v (" + v.getFingerprintIndex() + ")");
                     System.err.println("with covariance:");
@@ -878,34 +937,56 @@ public class BayesnetScoring {
                     throw new RuntimeException("bad score: "+score);
                 }
 
-                for (AbstractCorrelationTreeNode child : v.children) {
-                    score += conditional(fingerprint,databaseEntry, child);
-                }
+//                for (AbstractCorrelationTreeNode child : v.children) {
+//                    score += conditional(databaseEntry, child);
+//                }
             } else {
                 TwoParentsCorrelationTreeNode v = (TwoParentsCorrelationTreeNode)x;
                 final AbstractCorrelationTreeNode[] parents = v.getParents();
                 final int i = v.getFingerprintIndex();
                 final int j = parents[0].getFingerprintIndex();
                 final int k = parents[1].getFingerprintIndex();
-                final double p_i = laplaceSmoothing(fingerprint[i], alpha);
-                final double p_j = laplaceSmoothing(fingerprint[j], alpha);
-                final double p_k = laplaceSmoothing(fingerprint[k], alpha);
 
                 final boolean real = databaseEntry[i];
                 final boolean realParent0 = databaseEntry[j];
                 final boolean realParent1 = databaseEntry[k];
 
+                final double p_i = getProbability(i, real);
+                final double p_j = getProbability(j, realParent0);
+                final double p_k = getProbability(k, realParent1);
 
-                double correspondingEntry = getABCDMatrixEntry(v, real, realParent0, realParent1);
 
-                double parentScores = Math.log((realParent0 ? p_j : 1-p_j))+Math.log((realParent1 ? p_k : 1-p_k));
 
-                score = correspondingEntry-parentScores;
+                double correspondingEntry = Math.log(getABCDMatrixEntry(v, real, realParent0, realParent1));
 
+//                double parentScores = Math.log((realParent0 ? p_j : 1-p_j))+Math.log((realParent1 ? p_k : 1-p_k));
+
+
+                //changed already normalized
+                score = correspondingEntry;
+
+
+//                double parentScores = Math.min(0, Math.log((realParent0 ? p_j : 1-p_j)*(realParent1 ? p_k : 1-p_k)+v.getCovariance(v.getCovIdx(false, true, true), real, realParent0, realParent1)));
+//                if (Double.isNaN(parentScores)) parentScores = Math.log((realParent0 ? p_j : 1-p_j))+Math.log((realParent1 ? p_k : 1-p_k)); //todo what to do if negative/nan log????? probably only use positive cov???
+
+//                double parentScores;
+//                if (v.getCovariance(v.getCovIdx(false, true, true), real, realParent0, realParent1)>0){
+//                    parentScores = Math.log((realParent0 ? p_j : 1-p_j)*(realParent1 ? p_k : 1-p_k)+v.getCovariance(v.getCovIdx(false, true, true), real, realParent0, realParent1));
+//                } else {
+//                    parentScores = Math.log((realParent0 ? p_j : 1-p_j))+Math.log((realParent1 ? p_k : 1-p_k));
+//                }
+
+//                score = correspondingEntry-parentScores;
+
+                //changed
+                if (allowOnlyNegativeScores && score>0.01){
+                    System.out.printf("overestimated2: %f for parent1: %d parent2: %d and child: %d with predictions %f and %f and %f and parent_cov %f%n", Math.exp(score), (realParent1?1:0), (realParent1?1:0), (real?1:0), p_j, p_k, p_i, v.getCovariance(v.getCovIdx(false, true, true), real, realParent0, realParent1));
+                    score = 0;
+                }
 
                 if (Double.isNaN(score) || Double.isInfinite(score)){
                     System.err.println("NaN score for the following fingerprints:");
-                    System.err.println(Arrays.toString(fingerprint));
+                    System.err.println(Arrays.toString(smoothedPlatt));
                     System.err.println(Arrays.toString(databaseEntry));
                     System.err.println("for tree node u (" + parents[0].getFingerprintIndex() + ", " + parents[1].getFingerprintIndex() + ") -> v (" + v.getFingerprintIndex() + ")");
                     System.err.println("with covariances: ");
@@ -918,13 +999,13 @@ public class BayesnetScoring {
                     throw new RuntimeException("bad score: "+score);
                 }
 
-                for (AbstractCorrelationTreeNode child : v.children) {
-                    score += conditional(fingerprint,databaseEntry, child);
-                }
+//                for (AbstractCorrelationTreeNode child : v.children) {
+//                    score += conditional(databaseEntry, child);
+//                }
 
             }
 
-
+            ++numberOfScoredNodes;
             return score;
         }
 
@@ -978,60 +1059,293 @@ public class BayesnetScoring {
             a+=pseudoCount; b+=pseudoCount; c+=pseudoCount; d+=pseudoCount;
             double norm = 1d+4*pseudoCount;
             a/=norm; b/=norm; c/=norm; d/=norm;
-            return new double[]{a,b,c,d};
+//            return new double[]{a,b,c,d};
+            //changed already normalize against parent
+            double sum1 = a+c;
+            double sum2 = b+d;
+            return new double[]{a/sum1,b/sum2,c/sum1,d/sum2};
         }
 
-        protected double[][][] computeContingencyTable(double p_i, double p_j, double p_k, double cov_ij, double cov_ik, double cov_jk, double cov_ijk) {
-            final double pipj = p_i*p_j;
-            final double pipk = p_i*p_k;
-            final double pjpk = p_j*p_k;
-            final double pipjpk = pipj*p_k;
 
 
-            double q111_soft = Math.max(cov_ij+pipj+cov_ik+pipk+cov_jk+pjpk-p_i-p_j-p_k,
-                    Math.min(1+cov_ij+pipj+cov_ik+pipk+cov_jk+pjpk-p_i-p_j-p_k,
-                            cov_ijk+p_k*cov_ij+p_j*cov_ik+p_i*cov_jk+pipjpk
-                    )
-            );
-
-            double q111 = Math.max(0, Math.min(p_i, Math.min(p_j, Math.min(p_k,q111_soft))));
-
-            double x_soft = cov_ij + pipj + cov_ik + pipk - 2*q111;
-            double y_soft = cov_ij + pipj + cov_jk + pipk - 2*q111;
-            double z_soft = cov_ik + pipk + cov_jk + pjpk - 2*q111;
-
-            //now iterate and find good multiplier to fullfill constraints
-            double[] xyz = new double[]{x_soft,y_soft,z_soft};
-            boolean[] leaveOut_xyz = new boolean[]{false, false, false};
-            if (!satisfyConstraints(xyz, leaveOut_xyz, p_i, p_j, p_k, q111, true)){
-                new RuntimeException("we got a problem. constraints not satisfiable");
-            }
-
-            double[][][] q = new double[2][2][2];
-            q[1][1][1] = q111;
-            
-            
-            q[1][1][0] = (cov_ij+pipj-q111) / x_soft * xyz[0] + (cov_ij+pipj-q111) / y_soft * xyz[1];
-            q[1][0][1] = (cov_ik+pipk-q111) / x_soft * xyz[0] + (cov_ik+pipk-q111) / z_soft * xyz[2];
-            q[0][1][1] = (cov_jk+pjpk-q111) / y_soft * xyz[1] + (cov_jk+pjpk-q111) / z_soft * xyz[2];
-
-            q[1][0][0] = p_i - (q[1][1][1]+q[1][1][0]+q[1][0][1]);
-            q[0][1][0] = p_j - (q[1][1][1]+q[1][1][0]+q[0][1][1]);
-            q[0][0][1] = p_k - (q[1][1][1]+q[1][0][1]+q[0][1][1]);
-            q[0][0][0] = 1 - (q[1][1][1]+q[1][1][0]+q[1][0][1]+q[1][0][0]+q[0][1][1]+q[0][1][0]+q[0][0][1]);
-
-
-            addPseudoAndRenormalize(q);
-            return q;
-        }
-   
-   
     }
 
+    protected double[][][] computeContingencyTable(double p_i, double p_j, double p_k, double cov_ij, double cov_ik, double cov_jk, double cov_ijk, double pseudoCount) {
+        final double pipj = p_i*p_j;
+        final double pipk = p_i*p_k;
+        final double pjpk = p_j*p_k;
+        final double pipjpk = pipj*p_k;
 
-    private void addPseudoAndRenormalize(double[][][] q){
+
+        double q111_soft = Math.max(cov_ij+pipj+cov_ik+pipk+cov_jk+pjpk-p_i-p_j-p_k,
+                Math.min(1+cov_ij+pipj+cov_ik+pipk+cov_jk+pjpk-p_i-p_j-p_k,
+                        cov_ijk+p_k*cov_ij+p_j*cov_ik+p_i*cov_jk+pipjpk
+                )
+        );
+
+        double q111 = Math.max(0, Math.min(p_i, Math.min(p_j, Math.min(p_k,q111_soft))));
+
+        if (q111<p_i+p_j-1-p_i*p_j*(1-p_k)){
+            final double newV = p_i+p_j-1-p_i*p_j*(1-p_k);
+//            System.out.printf("thresholding %f to %f%n", q111, newV);
+            q111=newV;
+
+        }
+        if (q111<p_i+p_k-1-p_i*p_k*(1-p_j)){
+            final double newV = p_i+p_k-1-p_i*p_k*(1-p_j);
+//            System.out.printf("thresholding2 %f to %f%n", q111, newV);
+            q111=newV;
+        }
+        if (q111<p_j+p_k-1-p_j*p_k*(1-p_i)){
+            final double newV = p_j+p_k-1-p_j*p_k*(1-p_i);
+//            System.out.printf("thresholding3 %f to %f%n", q111, newV);
+            q111=newV;
+        }
+        if (q111>(p_i+p_j+p_k)/3){
+            final double newV = (p_i+p_j+p_k)/3;
+            System.out.printf("thresholding4 %f to %f%n", q111, newV);
+            q111=newV;
+        }
+
+
+        if (q111<p_i+p_j-p_i*p_j-1){
+            final double newV = p_i+p_j-p_i*p_j-1;
+            System.out.printf("thresholding1.2 %f to %f%n",q111, newV);
+            q111 = newV;
+        }
+        if (q111<p_i+p_k-p_i*p_k-1){
+            final double newV = p_i+p_k-p_i*p_k-1;
+            System.out.printf("thresholding2.2 %f to %f%n",q111, newV);
+            q111 = newV;
+        }
+        if (q111<p_j+p_k-p_j*p_k-1){
+            final double newV = p_j+p_k-p_j*p_k-1;
+            System.out.printf("thresholding3.2 %f to %f%n",q111, newV);
+            q111 = newV;
+        }
+
+
+
+//        double x_soft = Math.min(p_i-q111,Math.max(0.000, cov_ij + pipj + cov_ik + pipk - 2*q111)); //changed >=0
+//        double y_soft = Math.min(p_j-q111,Math.max(0.000, cov_ij + pipj + cov_jk + pjpk - 2*q111));
+//        double z_soft = Math.min(p_k-q111,Math.max(0.000, cov_ik + pipk + cov_jk + pjpk - 2*q111));
+
+        double x_soft = Math.max(0.000, cov_ij + pipj + cov_ik + pipk - 2*q111); //changed >=0
+        double y_soft = Math.max(0.000, cov_ij + pipj + cov_jk + pjpk - 2*q111);
+        double z_soft = Math.max(0.000, cov_ik + pipk + cov_jk + pjpk - 2*q111);
+
+        //now iterate and find good multiplier to fullfill constraints
+        double[] xyz = new double[]{x_soft,y_soft,z_soft};
+        boolean[] leaveOut_xyz = new boolean[]{false, false, false};
+//        boolean[] leaveOut_xyz = new boolean[]{x_soft==p_i-q111, y_soft==p_j-q111, z_soft==p_k-q111}; //changed
+//        if (!satisfyConstraints(xyz, leaveOut_xyz, p_i, p_j, p_k, q111, true)){
+        if (!satisfyConstraints2(xyz, leaveOut_xyz, p_i, p_j, p_k, q111)){
+            new RuntimeException("we got a problem. constraints not satisfiable");
+        }
+
+        double[][][] q = new double[2][2][2];
+        q[1][1][1] = q111;
+
+
+//        q[1][1][0] = (cov_ij+pipj-q111) / x_soft * xyz[0] / 2 + (cov_ij+pipj-q111) / y_soft * xyz[1] / 2;
+//        q[1][0][1] = (cov_ik+pipk-q111) / x_soft * xyz[0] / 2 + (cov_ik+pipk-q111) / z_soft * xyz[2] / 2;
+//        q[0][1][1] = (cov_jk+pjpk-q111) / y_soft * xyz[1] / 2 + (cov_jk+pjpk-q111) / z_soft * xyz[2] / 2;
+
+        //changed to test if 0
+        q[1][1][0] = Math.min(p_i-q111, Math.min(p_j-q111,(x_soft==0?0:(cov_ij+pipj-q111) / x_soft * xyz[0] / 2) + (y_soft==0?0:(cov_ij+pipj-q111) / y_soft * xyz[1] / 2)));
+        q[1][0][1] = Math.min(p_i-q111, Math.min(p_k-q111,(x_soft==0?0:(cov_ik+pipk-q111) / x_soft * xyz[0] / 2) + (z_soft==0?0:(cov_ik+pipk-q111) / z_soft * xyz[2] / 2)));
+        q[0][1][1] = Math.min(p_j-q111, Math.min(p_k-q111,(y_soft==0?0:(cov_jk+pjpk-q111) / y_soft * xyz[1] / 2) + (z_soft==0?0:(cov_jk+pjpk-q111) / z_soft * xyz[2] / 2)));
+
+//        q[1][1][0] = (x_soft==0?0:(cov_ij+pipj-q111) / x_soft * xyz[0] / 2) + (y_soft==0?0:(cov_ij+pipj-q111) / y_soft * xyz[1] / 2);
+//        q[1][0][1] = (x_soft==0?0:(cov_ik+pipk-q111) / x_soft * xyz[0] / 2) + (z_soft==0?0:(cov_ik+pipk-q111) / z_soft * xyz[2] / 2);
+//        q[0][1][1] = (y_soft==0?0:(cov_jk+pjpk-q111) / y_soft * xyz[1] / 2) + (z_soft==0?0:(cov_jk+pjpk-q111) / z_soft * xyz[2] / 2);
+
+
+//        q[1][1][0] = Math.max(0, (x_soft==0?0:(cov_ij+pipj-q111) / x_soft * xyz[0] / 2)) + Math.max(0, (y_soft==0?0:(cov_ij+pipj-q111) / y_soft * xyz[1] / 2));
+//        q[1][0][1] = Math.max(0, (x_soft==0?0:(cov_ik+pipk-q111) / x_soft * xyz[0] / 2)) + Math.max(0, (z_soft==0?0:(cov_ik+pipk-q111) / z_soft * xyz[2] / 2));
+//        q[0][1][1] = Math.max(0, (y_soft==0?0:(cov_jk+pjpk-q111) / y_soft * xyz[1] / 2)) + Math.max(0, (z_soft==0?0:(cov_jk+pjpk-q111) / z_soft * xyz[2] / 2));
+
+        if (q[1][1][1]+q[1][1][0]+q[1][0][1]>1.5){
+
+            System.out.printf("too big1: %f %f %f with xyz %f vs %f | %f vs %f | %f vs %f%n", q[1][1][1], q[1][1][0], q[1][0][1], x_soft, xyz[0], y_soft, xyz[1], z_soft, xyz[2]);
+        }
+        if (q[1][1][1]+q[1][1][0]+q[0][1][1]>1.5){
+            System.out.printf("too big2: %f %f %f with xyz %f vs %f | %f vs %f | %f vs %f%n", q[1][1][1], q[1][1][0], q[0][1][1], x_soft, xyz[0], y_soft, xyz[1], z_soft, xyz[2]);
+        }
+        if (q[1][1][1]+q[1][0][1]+q[0][1][1]>1.5){
+            System.out.printf("too big3: %f %f %f with xyz %f vs %f | %f vs %f | %f vs %f%n", q[1][1][1], q[1][0][1], q[0][1][1], x_soft, xyz[0], y_soft, xyz[1], z_soft, xyz[2]);
+        }
+
+
+//        q[1][1][0] = Math.min(1,Math.max(0.000, cov_ij + pipj - q111));
+//        q[1][0][1] = Math.min(1,Math.max(0.000, cov_ik + pipk - q111));
+//        q[0][1][1] = Math.min(1,Math.max(0.000, cov_jk + pjpk - q111));
+
+        //changed
+//        q[1][1][0] = Math.min(1-q111,Math.max(0.000, cov_ij + pipj - q111));
+//        q[1][0][1] = Math.min(1-q111,Math.max(0.000, cov_ik + pipk - q111));
+//        q[0][1][1] = Math.min(1-q111,Math.max(0.000, cov_jk + pjpk - q111));
+
+
+        if (anyNAN(q)) {
+            System.out.println("stop");
+            for (int i = 0; i < q.length; i++) {
+                final double[][] level2 = q[i];
+                for (int j = 0; j < level2.length; j++) {
+                    final double[] level3 = level2[j];
+                    for (int k = 0; k < level3.length; k++) {
+                        System.out.printf("q%d%d%d = %f%n",i,j,k,q[i][j][k]);
+                    }
+
+                }
+            }
+            System.out.printf("xyz %f %f %f%n",xyz[0],xyz[1],xyz[2]);
+            System.out.printf("xyz_soft %f %f %f%n",x_soft,y_soft,z_soft);
+            System.out.printf("q110 estimate %f%n", cov_ij+pipj-q111);
+            System.out.printf("q101 estimate %f%n", cov_ik+pipk-q111);
+            System.out.printf("q011 estimate %f%n", cov_jk+pjpk-q111);
+
+        }
+
+        //todo is there a better way??
+        if (q[1][1][0]<0){
+            q[1][1][0] = 0;
+//            System.out.println("lowerbound1"); //todo bis ca. -0.12..
+        }
+        if (q[1][0][1]<0){
+            q[1][0][1] = 0;
+//            System.out.println("lowerbound1");
+        }
+        if (q[0][1][1]<0){
+            q[0][1][1] = 0;
+//            System.out.println("lowerbound1");
+        }
+        //todo improve bound!!!!!!
+        if (q[1][1][0]>1-q111){
+//            System.out.println("upperbound1"+q[1][1][0]); //todo bis ca 1.12
+            q[1][1][0] = 1-q111;
+        }
+        if (q[1][0][1]>1-q111){
+//            System.out.println("upperbound1"+q[1][0][1]);
+            q[1][0][1] = 1-q111;
+        }
+        if (q[0][1][1]>1-q111){
+//            System.out.println("upperbound1"+q[0][1][1]);
+            q[0][1][1] = 1-q111;
+        }
+
+
+        if(anyNAN(q)){
+            System.out.println("stop2");
+        }
+
+        q[1][0][0] = p_i - (q[1][1][1] + q[1][1][0] + q[1][0][1]);
+        q[0][1][0] = p_j - (q[1][1][1] + q[1][1][0] + q[0][1][1]);
+        q[0][0][1] = p_k - (q[1][1][1] + q[1][0][1] + q[0][1][1]);
+
+
+        if(anyNAN(q)){
+            System.out.println("stop2.1");
+            System.out.println(fileString);
+            System.out.printf("probs %f %f %f%n", p_i, p_j, p_k);
+
+            for (int i = 0; i < q.length; i++) {
+                final double[][] level2 = q[i];
+                for (int j = 0; j < level2.length; j++) {
+                    final double[] level3 = level2[j];
+                    for (int k = 0; k < level3.length; k++) {
+                        System.out.printf("q%d%d%d = %f%n",i,j,k,q[i][j][k]);
+                    }
+
+                }
+            }
+
+        }
+
+        if (q[1][0][0]<0){
+//            System.out.println("lowerbound2 "+q[1][0][0]);
+            q[1][0][0] = 0;
+        }
+        if (q[0][1][0]<0){
+//            System.out.println("lowerbound2 "+q[0][1][0]);
+            q[0][1][0] = 0;
+        }
+        if (q[0][0][1]<0){
+//            System.out.println("lowerbound2 "+q[0][0][1]);
+            q[0][0][1] = 0;
+        }
+
+        if(anyNAN(q)){
+            System.out.println("stop2.2");
+        }
+
+        //todo to changed
+//        if (q[1][0][0]>1-q111-q[1][1][0]-q[1][0][1]-q[0][1][1]){
+        if (q[1][0][0]>1){
+            q[1][0][0] = 1;
+            System.out.println("upperbound2");
+        }
+        if (q[0][1][0]>1){
+            q[0][1][0] = 1;
+            System.out.println("upperbound2");
+        }
+        if (q[0][0][1]>1){
+            q[0][0][1] = 1;
+            System.out.println("upperbound2");
+        }
+
+        if(anyNAN(q)){
+            System.out.println("stop3");
+        }
+
+
+        q[0][0][0] = 1 - (q[1][1][1]+q[1][1][0]+q[1][0][1]+q[1][0][0]+q[0][1][1]+q[0][1][0]+q[0][0][1]);
+
+        if (q[0][0][0]<0) {
+            q[0][0][0] = 0;
+        }
+
+        if(!allPositive(q)){
+            throw new RuntimeException("estimation produced negative probability");
+        }
+        if(!allBelow1(q)){
+            throw new RuntimeException("estimation produced probability greater 1");
+        }
+        if(anyNAN(q)){
+            for (int i = 0; i < q.length; i++) {
+                final double[][] level2 = q[i];
+                for (int j = 0; j < level2.length; j++) {
+                    final double[] level3 = level2[j];
+                    for (int k = 0; k < level3.length; k++) {
+                        System.out.printf("q%d%d%d = %f%n",i,j,k,q[i][j][k]);
+                    }
+
+                }
+            }
+
+            throw new RuntimeException("estimation produced NaN");
+        }
+
+        addPseudoAndRenormalize(q, pseudoCount);
+
+        //changed already normalize against parent
+        return normalizeOverFirstDim(q);
+    }
+
+    private static double[][][] normalizeOverFirstDim(double[][][] q){
+        double[][][] new_q = new double[2][2][2];
+        for (int j = 0; j < 2; j++) {
+            for (int k = 0; k < 2; k++) {
+                double sum = q[0][j][k]+q[1][j][k];
+                new_q[0][j][k] = q[0][j][k]/sum;
+                new_q[1][j][k] = q[1][j][k]/sum;
+            }
+        }
+        return new_q;
+    }
+
+    private static void addPseudoAndRenormalize(double[][][] q, double pseudoCount){
         //todo this only works if already sum 1; rather normalize completely?
-        double pseudoCount = alpha;
         int numOfEntries = q.length*q[0].length*q[0][0].length;
         double norm = 1d+numOfEntries*pseudoCount;
         for (int i = 0; i < q.length; i++) {
@@ -1042,12 +1356,188 @@ public class BayesnetScoring {
                     level3[k] = (level3[k]+pseudoCount)/norm;
                 }
             }
-
         }
     }
-    
-        
-    private boolean satisfyConstraints(double[] xyz, boolean[] leaveOut_xyz, double p_i, double p_j, double p_k, double q111, boolean firstRound){
+
+    private static boolean allPositive(double[][][] array){
+        for (int i = 0; i < array.length; i++) {
+            final double[][] level2 = array[i];
+            for (int j = 0; j < level2.length; j++) {
+                final double[] level3 = level2[j];
+                if  (!allPositive(level3)) return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean allPositive(double[] array){
+        for (int k = 0; k < array.length; k++) {
+            if (array[k]<0) return false;
+        }
+        return true;
+    }
+
+    private static boolean allBelow1(double[][][] array){
+        for (int i = 0; i < array.length; i++) {
+            final double[][] level2 = array[i];
+            for (int j = 0; j < level2.length; j++) {
+                final double[] level3 = level2[j];
+                if (!allBelow1(level3)) return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean allBelow1(double[] array){
+        for (int k = 0; k < array.length; k++) {
+            if (array[k]>1d) return false;
+        }
+        return true;
+    }
+
+    private static boolean anyNAN(double[][][] array){
+        for (int i = 0; i < array.length; i++) {
+            final double[][] level2 = array[i];
+            for (int j = 0; j < level2.length; j++) {
+                final double[] level3 = level2[j];
+                if (anyNAN(level3)) return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean anyNAN(double[] array){
+        for (int k = 0; k < array.length; k++) {
+            if (Double.isNaN(array[k])) return true;
+        }
+        return false;
+    }
+
+    private static boolean satisfyConstraints2(double[] xyz, boolean[] leaveOut_xyz, double p_i, double p_j, double p_k, double q111){
+        double[] initial_xyz = Arrays.copyOf(xyz, xyz.length);
+        if (anyNAN(xyz)){
+            System.out.println("input NaN");
+            System.out.printf("%f %f %f%n",xyz[0],xyz[1],xyz[2]);
+        }
+
+        double[] new_value;
+        double twice_pi_pj_pk_2q111;
+        double xyz_sum = -1d;
+        int round = 0;
+        boolean allViolated = false;
+        do {
+            ++round;
+
+
+            boolean x_violated_lb = false, y_violated_lb = false, z_violated_lb = false;
+            boolean x_violated_ub = false, y_violated_ub = false, z_violated_ub = false;
+            //hard constraints
+            new_value = new double[1];
+            if (!satisfiesHardConstraint(xyz[0], p_i, q111, new_value)) {
+                if (new_value[0]<xyz[0]) x_violated_ub = true;
+                else x_violated_lb = true;
+                if (xyz[0]==new_value[0]) throw new RuntimeException("error, nothing changed");
+                xyz[0] = new_value[0];
+            }
+            if (!satisfiesHardConstraint(xyz[1], p_j, q111, new_value)) {
+                if (new_value[0]<xyz[1]) y_violated_ub = true;
+                else y_violated_lb = true;
+                if (xyz[1]==new_value[0]) throw new RuntimeException("error, nothing changed");
+                xyz[1] = new_value[0];
+            }
+            if (!satisfiesHardConstraint(xyz[2], p_k, q111, new_value)) {
+                if (new_value[0]<xyz[2]) z_violated_ub = true;
+                else y_violated_lb = true;
+                if (xyz[2]==new_value[0]) throw new RuntimeException("error, nothing changed");
+                xyz[2] = new_value[0];
+            }
+
+
+            if(round==10) return false;
+
+            double sum_lb = 0; double fix_lb = 0;
+            double sum_ub = 0; double fix_ub = 0;
+
+            if (x_violated_lb) fix_lb += xyz[0];
+            else sum_lb += xyz[0];
+            if (y_violated_lb) fix_lb += xyz[1];
+            else sum_lb += xyz[1];
+            if (z_violated_lb) fix_lb += xyz[2];
+            else sum_lb += xyz[2];
+
+            if (x_violated_ub) fix_ub += xyz[0];
+            else sum_ub += xyz[0];
+            if (y_violated_ub) fix_ub += xyz[1];
+            else sum_ub += xyz[1];
+            if (z_violated_ub) fix_ub += xyz[2];
+            else sum_ub += xyz[2];
+
+
+            twice_pi_pj_pk_2q111 = 2*(p_i+p_j+p_k+2*q111);
+            if (sum_lb + fix_lb < twice_pi_pj_pk_2q111-2){
+                if (sum_lb==0d){
+//                    System.out.println("all violated");
+//                    sum_lb = fix_lb;
+//                    fix_lb = 0;
+//                    allViolated = true;
+                    if (allZero(xyz)) return false;
+                    continue;
+                }
+                double multiplier = (twice_pi_pj_pk_2q111-2-fix_lb)/sum_lb;
+                if (!x_violated_lb) xyz[0] *= multiplier;
+                if (!y_violated_lb) xyz[1] *= multiplier;
+                if (!z_violated_lb) xyz[2] *= multiplier;
+            } else if (sum_ub + fix_ub > twice_pi_pj_pk_2q111) {
+                if (sum_ub==0d){
+//                    System.out.println("all violated2");
+                    sum_ub = fix_ub;
+                    fix_ub = 0;
+//                    allViolated = true;
+                    if (allZero(xyz)) return false;
+                    continue;
+                }
+                double multiplier = (twice_pi_pj_pk_2q111 - fix_ub) / sum_ub;
+                if (!x_violated_ub) xyz[0] *= multiplier;
+                if (!y_violated_ub) xyz[1] *= multiplier;
+                if (!z_violated_ub) xyz[2] *= multiplier;
+            }
+
+            xyz_sum = sum(xyz);
+        } while (!(satisfiesHardConstraint(xyz[0],p_i, q111, new_value) &&
+                satisfiesHardConstraint(xyz[1],p_j, q111, new_value) &&
+                satisfiesHardConstraint(xyz[2],p_k, q111, new_value) &&
+                xyz_sum >= (twice_pi_pj_pk_2q111-2) &&
+                xyz_sum <= (twice_pi_pj_pk_2q111) ));
+
+        if (allViolated){
+            System.out.println("all violated still worked out");
+        }
+
+        if (anyNAN(xyz)){
+            System.out.println("produced NaN");
+            System.out.printf("%f %f %f%n",xyz[0],xyz[1],xyz[2]);
+        }
+        if (!allBelow1(xyz)){
+            System.out.println("too big");
+            System.out.printf("%f %f %f%n",xyz[0],xyz[1],xyz[2]);
+        }
+        if (!allPositive(xyz)){
+            System.out.println("negative");
+            System.out.printf("%f %f %f%n",xyz[0],xyz[1],xyz[2]);
+        }
+//        System.out.println("round "+round);
+        return true;
+    }
+
+
+    private static boolean allZero(double[] array){
+        for (double d : array) {
+            if (d!=0d) return false;
+        }
+        return true;
+    }
+
+    private static boolean satisfyConstraints(double[] xyz, boolean[] leaveOut_xyz, double p_i, double p_j, double p_k, double q111, boolean firstRound){
         boolean x_violated = false, y_violated = false, z_violated = false;
         //hard constraints
         double[] new_value = new double[1];
@@ -1070,11 +1560,11 @@ public class BayesnetScoring {
             }
         }
 
-       if (!firstRound){
-           leaveOut_xyz[0] = leaveOut_xyz[0] || x_violated;
-           leaveOut_xyz[1] = leaveOut_xyz[1] || y_violated;
-           leaveOut_xyz[2] = leaveOut_xyz[2] || z_violated;
-       }
+        if (!firstRound){
+            leaveOut_xyz[0] = leaveOut_xyz[0] || x_violated;
+            leaveOut_xyz[1] = leaveOut_xyz[1] || y_violated;
+            leaveOut_xyz[2] = leaveOut_xyz[2] || z_violated;
+        }
 
         double sum_xyz = sum(xyz);
         double twice_pi_pj_pk_2q111 = 2*(p_i+p_j+p_k+2*q111);
@@ -1099,7 +1589,7 @@ public class BayesnetScoring {
         }
     }
 
-    private double findMultiplier(double[] xyz, boolean[] leaveOut_xyz, double bound, double sum_xyz) {
+    private static double findMultiplier(double[] xyz, boolean[] leaveOut_xyz, double bound, double sum_xyz) {
         double fixedValue = 0;
         for (int i = 0; i < xyz.length; i++) {
             if (leaveOut_xyz[i]) fixedValue += xyz[i];
@@ -1107,7 +1597,7 @@ public class BayesnetScoring {
         return  (bound-fixedValue)/(sum_xyz-fixedValue);
     }
 
-    private  double sum(double[] arr){
+    private static  double sum(double[] arr){
         double s = 0;
         for (double v : arr) {
             s += v;
@@ -1115,14 +1605,14 @@ public class BayesnetScoring {
         return s;
     }
 
-    private boolean any(boolean[] arr){
+    private static boolean any(boolean[] arr){
         for (boolean b : arr) {
             if (b) return true;
         }
         return false;
     }
 
-    private boolean satisfiesHardConstraint(double w, double p, double q, double[] new_w) {
+    private static boolean satisfiesHardConstraint(double w, double p, double q, double[] new_w) {
         if (w > p - q){
             new_w[0] = p - q;
             return false;

@@ -39,6 +39,10 @@ public class ScoringMethodFactory {
         return new CovarianceScoringMethod(covTreeEdges, covariances, fpVersion, alpha);
     }
 
+    public static BayesnetScoringWithDynamicComputationScoringMethod getBayesnetScoringWIthDynamicComputation(BayesianNetworkScoringProvider scoringProvider) {
+        return new BayesnetScoringWithDynamicComputationScoringMethod(scoringProvider);
+    }
+
 
     public static class CSIFingerIdScoringMethod implements FingerblastScoringMethod {
         private final PredictionPerformance[] performances;
@@ -91,6 +95,17 @@ public class ScoringMethodFactory {
         }
     }
 
+    public static class BayesnetScoringWithDynamicComputationScoringMethod implements FingerblastScoringMethod {
+        private final BayesianNetworkScoringProvider scoringProvider;
+        public BayesnetScoringWithDynamicComputationScoringMethod(BayesianNetworkScoringProvider scoringProvider) {
+            this.scoringProvider = scoringProvider;
+        }
+
+        @Override
+        public BayesnetScoringWithDynamicComputation getScoring() {
+            return new BayesnetScoringWithDynamicComputation(scoringProvider);
+        }
+    }
 
     // Legacy scorers
 
