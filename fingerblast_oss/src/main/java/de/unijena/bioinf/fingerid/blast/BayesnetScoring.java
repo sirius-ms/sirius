@@ -26,19 +26,21 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 public class BayesnetScoring implements FingerblastScoringMethod {
 
@@ -84,46 +86,6 @@ public class BayesnetScoring implements FingerblastScoringMethod {
     }
 
 
-//    /**
-//     *
-//     * @param covTreeEdges array of edges int[k][0] -- int[k][1] or int[l][0] -- int[l][2], int[l][1] -- int[l][2] using absolute indices
-//     * @param covariances covariances per edge. Use correct ordering for each kind of nodes (one or two parent node)
-//     * @param fpVersion corresponding {@link FingerprintVersion}
-//     * @param alpha alpha used for laplace smoothing
-//     */
-//    public BayesnetScoring(int[][] covTreeEdges, double[][] covariances, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores){
-//        if (covTreeEdges.length!=covariances.length) throw new RuntimeException("size of edge and covariances array differ");
-//        this.performances = null;
-//        this.fpVersion = fpVersion;
-//        this.nodes = parseTree(covTreeEdges, fpVersion);
-//        List<AbstractCorrelationTreeNode> fs = new ArrayList<>(10);
-//        this.nodeList = new AbstractCorrelationTreeNode[nodes.size()];
-//        int k=0;
-//        int numberOfChildren = 0;
-//        for (AbstractCorrelationTreeNode n : nodes.valueCollection()) {
-//            if (n.numberOfParents()==0) fs.add(n);
-//            nodeList[k++] = n;
-//            numberOfChildren += n.getChildren().size();
-//        }
-////        System.out.println("number of children "+numberOfChildren);
-//        this.forests = fs.toArray(new AbstractCorrelationTreeNode[fs.size()]);
-//        for (int i = 0; i < covTreeEdges.length; i++) {
-//            int child = covTreeEdges[i][covTreeEdges[i].length-1];
-//            double[] cov = covariances[i];
-//            AbstractCorrelationTreeNode node =  nodes.get(fpVersion.getRelativeIndexOf(child));
-//            node.setCovariance(cov);
-//        }
-//        this.alpha = alpha;
-//        this.allowOnlyNegativeScores = allowOnlyNegativeScores;
-//
-//        if (hasCycles(forests, fpVersion)){
-//            throw new RuntimeException("bayes net contains cycles");
-//        }
-//    }
-
-
-
-
     protected static final String SEP = "\t";
 
     public void  writeTreeWithCovToFile(Path outputFile) throws IOException {
@@ -149,58 +111,6 @@ public class BayesnetScoring implements FingerblastScoringMethod {
             }
         }
     }
-
-//    public static BayesnetScoring readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset));
-//
-//        final List<String> lines = new ArrayList<>();
-//        String l;
-//        while ((l=reader.readLine())!=null) lines.add(l);
-//
-//        List<int[]> edges = new ArrayList<>();
-//        final double[][] covariances = new double[lines.size()][];
-//        int pos = 0;
-//        for (String line : lines) {
-//            if (line.length()==0) continue;
-//            String[] row = line.split(SEP);
-//            if (row.length==6){
-//                throw new RuntimeException("seems like the input file is still using old input format.");
-////                //old format for tree as input
-////                edges.add(new int[]{Integer.parseInt(row[0]), Integer.parseInt(row[1])});
-////                covariances[pos] = new double[]{Double.parseDouble(row[2]), Double.parseDouble(row[3]), Double.parseDouble(row[4]), Double.parseDouble(row[5])};
-//            } else {
-//                int numberOfParents = Integer.parseInt(row[0]);
-////                int child = Integer.parseInt(row[numberOfParents+1]);
-////                for (int i = 1; i <= numberOfParents; i++) {
-////                    edges.add(new int[]{Integer.parseInt(row[i]), child});
-////                }
-//                int[] current_edges = new int[numberOfParents+1];
-//                for (int i = 1; i <= numberOfParents+1; i++) {
-//                    current_edges[i-1] = Integer.parseInt(row[i]);
-//                }
-//                edges.add(current_edges);
-//                double[] covs = new double[row.length-(numberOfParents+2)];
-//                for (int i = numberOfParents+2; i < row.length; i++) {
-//                    covs[i-(numberOfParents+2)] = Double.parseDouble(row[i]);
-//                }
-//                covariances[pos] = covs;
-//            }
-//            pos++;
-//        }
-//        return new BayesnetScoring(edges.toArray(new int[0][]), covariances, fpVersion, alpha, allowOnlyNegativeScores);
-//    }
-
-//    public static BayesnetScoring readScoringFromFile(Path treeFile, FingerprintVersion fpVersion, double alpha) throws IOException {
-//        return readScoringFromFile(treeFile, fpVersion, alpha, false);
-//    }
-//
-//    public static BayesnetScoring readScoringFromFile(Path treeFile, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
-//        InputStream inputStream = Files.newInputStream(treeFile);
-//        BayesnetScoring scoring =  readScoring(inputStream, Charset.forName("UTF-8"), fpVersion, alpha, allowOnlyNegativeScores);
-//        inputStream.close();
-//        return scoring;
-//    }
-
 
 
     public int getNumberOfRoots(){
