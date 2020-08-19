@@ -30,12 +30,13 @@ import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.Summarizer;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
@@ -116,7 +117,7 @@ public class FormulaSummaryWriter implements Summarizer {
         final StringBuilder headerBuilder = new StringBuilder("molecularFormula\tadduct\tprecursorFormula");/*	rankingScore*/
         if (scorings != null && !scorings.isEmpty())
             headerBuilder.append("\t").append(scorings);
-        headerBuilder.append("\texplainedPeaks\texplainedIntensity");
+        headerBuilder.append("\texplainedPeaks\texplainedIntensity\tmedianMassError(ppm)\tmassError(ppm)");
         return headerBuilder.toString();
     }
 
@@ -168,7 +169,11 @@ public class FormulaSummaryWriter implements Summarizer {
             w.write(tree != null ? String.valueOf(tree.numberOfVertices()) : "");
             w.write('\t');
             w.write(tree != null ? String.valueOf(tree.getAnnotationOrThrow(TreeStatistics.class).getExplainedIntensity()) : "");
-            if (prefix != null){
+            w.write('\t');
+            w.write(tree != null ? String.valueOf(new FTreeMetricsHelper(tree).getMedianMassDeviation().getPpm()) : "");
+            w.write('\t');
+            w.write(tree != null ? r.getId().getParentId().getIonMass().map(e -> tree.getMassErrorTo(tree.getRoot(), e).getPpm()).map(String::valueOf).orElse("N/A") : "");
+            if (prefix != null) {
                 w.write('\t');
                 w.write(prefix.get(r));
             }
