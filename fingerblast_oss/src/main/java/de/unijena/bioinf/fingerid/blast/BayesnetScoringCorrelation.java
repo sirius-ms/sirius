@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
@@ -18,69 +38,6 @@ public class BayesnetScoringCorrelation extends BayesnetScoring {
     protected BayesnetScoringCorrelation(TIntObjectHashMap<AbstractCorrelationTreeNode> nodes, AbstractCorrelationTreeNode[] nodeList, AbstractCorrelationTreeNode[] forests, double alpha, FingerprintVersion fpVersion, PredictionPerformance[] performances, boolean allowOnlyNegativeScores) {
         super(nodes, nodeList, forests, alpha, fpVersion, performances, allowOnlyNegativeScores);
     }
-
-//    protected static BayesnetScoring getBayesnetScoring(TIntObjectHashMap<AbstractCorrelationTreeNode> nodes, AbstractCorrelationTreeNode[] nodeList, AbstractCorrelationTreeNode[] forests, double alpha, FingerprintVersion fpVersion, PredictionPerformance[] performances, boolean allowOnlyNegativeScores) {
-//        return new BayesnetScoring(nodes, nodeList, forests, alpha, fpVersion, performances, false);
-//    }
-
-//    /**
-//     *
-//     * @param covTreeEdges array of edges int[k][0] -- int[k][1] or int[l][0] -- int[l][2], int[l][1] -- int[l][2] using absolute indices
-//     * @param covariances covariances per edge. Use correct ordering for each kind of nodes (one or two parent node)
-//     * @param fpVersion corresponding {@link FingerprintVersion}
-//     * @param alpha alpha used for laplace smoothing
-//     */
-//    public BayesnetScoringCorrelation(int[][] covTreeEdges, double[][] covariances, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores){
-//        super(covTreeEdges, covariances, fpVersion, allowOnlyNegativeScores, allowOnlyNegativeScores);
-//    }
-
-
-
-//    protected static class BayesnetScoringCorrelationBuilder extends BayesnetScoringBuilder {
-//
-//        public BayesnetScoringCorrelationBuilder(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, int[][] covTreeEdges, boolean allowOnlyNegativeScores){
-//            super(performances, predicted, correct, covTreeEdges, allowOnlyNegativeScores);
-//        }
-//
-//
-//        protected BayesnetScoringCorrelation getNewInstance(TIntObjectHashMap<AbstractCorrelationTreeNode> nodes, AbstractCorrelationTreeNode[] nodeList, AbstractCorrelationTreeNode[] forests, double alpha, FingerprintVersion fpVersion, PredictionPerformance[] performances, boolean allowOnlyNegativeScores){
-//            return new BayesnetScoringCorrelation(nodes, nodeList, forests, alpha, fpVersion, performances, allowOnlyNegativeScores);
-//        }
-//
-//
-//        //todo properly implement
-//        public BayesnetScoringCorrelation buildScoring(){
-//            FingerprintVersion fpVersion = predicted[0].getFingerprintVersion();
-//
-//            TIntObjectHashMap<AbstractCorrelationTreeNode> nodes = parseTree(covTreeEdges, fpVersion);
-//            List<AbstractCorrelationTreeNode> fs = new ArrayList<>(10);
-//            AbstractCorrelationTreeNode[] nodeList = new AbstractCorrelationTreeNode[nodes.size()];
-//            int k=0;
-//            for (AbstractCorrelationTreeNode n : nodes.valueCollection()) {
-//                if (n.numberOfParents()==0) fs.add(n);
-//                nodeList[k++] = n;
-//            }
-//            AbstractCorrelationTreeNode[] forests = fs.toArray(new CorrelationTreeNode[fs.size()]);
-//            double alpha = 1d/performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts();
-//            makeStatistics(nodeList, alpha);
-//
-////        boolean allowOnlyNegativeScores = allowOnlyNegativeScores;
-//
-//            if (hasCycles(forests, fpVersion)){
-//                throw new RuntimeException("bayes net contains cycles");
-//            }
-//
-//            return getNewInstanceCorrelation(nodes, nodeList, forests, alpha, fpVersion, performances, allowOnlyNegativeScores);
-//
-//        }
-//
-//
-//        protected BayesnetScoringCorrelation getNewInstanceCorrelation(TIntObjectHashMap<AbstractCorrelationTreeNode> nodes, AbstractCorrelationTreeNode[] nodeList, AbstractCorrelationTreeNode[] forests, double alpha, FingerprintVersion fpVersion, PredictionPerformance[] performances, boolean allowOnlyNegativeScores){
-//            return new BayesnetScoringCorrelation(nodes, nodeList, forests, alpha, fpVersion, performances, allowOnlyNegativeScores);
-//        }
-//
-//
-//    }
 
 
 
