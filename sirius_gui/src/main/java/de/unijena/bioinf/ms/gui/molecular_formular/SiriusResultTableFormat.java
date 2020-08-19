@@ -78,7 +78,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 8:
                 return "Total Explained Intensity";
             case 9:
-                return "Median Mass Deviation in ppm";
+                return "Median Mass Error (ppm)";
             case 10:
                 return "Best";
             default:

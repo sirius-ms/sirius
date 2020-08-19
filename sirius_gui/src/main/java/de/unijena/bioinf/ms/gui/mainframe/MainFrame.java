@@ -208,14 +208,15 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         //build left sidepane
         FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(compoundList));
+        experimentListPanel.setPreferredSize(new Dimension(228, (int) experimentListPanel.getPreferredSize().getHeight()));
 
         //BUILD the MainFrame (GUI)
-        final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
-        tabbedPane.addTab("Compounds", experimentListPanel);
-        tabbedPane.addTab("Identifications", new JPanel());
-        tabbedPane.setEnabledAt(1, false);
-        tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
-        mainPanel.add(tabbedPane, BorderLayout.WEST);
+//        final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
+//        tabbedPane.addTab("Compounds", experimentListPanel);
+//        tabbedPane.addTab("Identifications", new JPanel());
+//        tabbedPane.setEnabledAt(1, false);
+//        tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
+        mainPanel.add(experimentListPanel, BorderLayout.WEST);
         mainPanel.add(resultsPanel, BorderLayout.CENTER);
         add(toolbar, BorderLayout.NORTH);
 

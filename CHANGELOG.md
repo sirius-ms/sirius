@@ -5,6 +5,14 @@
 - GUI: Progress information for running jobs
 - GUI: More detailed Visualisation of what has already been computed
 - more bugfixes ;-)
+
+##### 4.4.28
+- feature: Retention time will now be imported by SIRIUS 
+  - RT is shown in the Compound list in the SIRUS GUI and the list can be sorted by RT
+  - RT is part of the compound.info file in the project-space 
+- feature: Loglevel can now be changed from CLI
+- fix: Agilent CEF files without CE can now be imported
+
 ##### 4.4.27
 - feature: coin-or ilp solver (CLP) is now included. This allows parallel computation of FragTrees without the need for a commercial solver.
 - improvement: Compounds without given charge are can now be imported. SIRIUS tries to guess the charge from the name (keyword: pos/neg) or falls back to positive.
