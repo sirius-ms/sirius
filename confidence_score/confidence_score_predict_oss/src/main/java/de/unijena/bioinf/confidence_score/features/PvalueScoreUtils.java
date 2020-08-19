@@ -320,8 +320,6 @@ return null;
         //return -Math.expm1(biosize* Math.log1p(-pvalue));
     }
 
-
-
     public LogNormalDistribution estimate_lognormal_parameters(ArrayList<Double> scores){
 
 
