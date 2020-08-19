@@ -185,7 +185,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     }
 
 
-    protected class ParseResultHandler extends CommandLine.AbstractParseResultHandler<Workflow> {
+    public class ParseResultHandler extends CommandLine.AbstractParseResultHandler<Workflow> {
         @Override
         protected Workflow handle(CommandLine.ParseResult parseResult) throws CommandLine.ExecutionException {
             //here we create the workflow that we will execute later

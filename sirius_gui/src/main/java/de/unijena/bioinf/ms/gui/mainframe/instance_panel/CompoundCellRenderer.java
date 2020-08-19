@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -26,6 +27,7 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import javax.swing.*;
 import java.awt.*;
 import java.text.DecimalFormat;
+import java.util.stream.Stream;
 
 public class CompoundCellRenderer extends JLabel implements ListCellRenderer<InstanceBean>{
 	
@@ -42,7 +44,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 	private ImageIcon loadingGif;
 
 	public CompoundCellRenderer(){
-		this.setPreferredSize(new Dimension(200,86));
+		this.setPreferredSize(new Dimension(210,86));
 		initColorsAndFonts();
 		this.numberFormat = new DecimalFormat("#0.00");
 	}
@@ -99,67 +101,69 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 		FontMetrics valueFm = g2.getFontMetrics(this.valueFont);
 		
 		g2.setColor(this.foreColor);
-		
-		int compoundLength = compoundFm.stringWidth(ec.getGUIName())+4;
-		
+
+		int compoundLength = compoundFm.stringWidth(ec.getGUIName()) + 4;
+
 		boolean trigger = compoundLength + 2 > 198;
-		
+
 		Paint p = g2.getPaint();
-		
-		if(trigger){
-			g2.setPaint(new GradientPaint(180, 0, foreColor,199, 0, backColor));
-		}
-		
-		g2.drawLine(2, 17, Math.min(197,2+compoundLength), 17);
-		
-		g2.setFont(compoundFont);
-		g2.drawString(ec.getGUIName(), 4, 13);
-		
-		if(trigger) g2.setPaint(p);
-		
-		int ms1No = ec.getMs1Spectra().size();
-		int ms2No = ec.getMs2Spectra().size();
-		
-		String ionizationProp = "ionization";
-		String focMassProp = "parent mass";
-		int ionLength = propertyFm.stringWidth(ionizationProp);
-		int focLength = propertyFm.stringWidth(focMassProp);
-		
-		g2.setFont(propertyFont);
-		g2.drawString(ionizationProp,4,32);
-		g2.drawString(focMassProp,4,48);
-		
-		int xPos = Math.max(ionLength,focLength)+15;
-		
-		String ionValue = ec.getIonization().toString();
-		double focD = ec.getIonMass();
-		String focMass = focD>0 ? numberFormat.format(focD)+" Da" : "unknown";
-		
-		g2.setFont(valueFont);
-		g2.drawString(ionValue,xPos,32);
-		g2.drawString(focMass,xPos,48);
-		
-		int yPos = 64;
-		
-		g2.setFont(valueFont);
-		
-		if(ms1No>0){
-			String ms1String = ms1No==1 ? "spectrum " : "spectra";
-			ms1String = ms1No+" ms1 "+ms1String;
-			g2.drawString(ms1String, 4, yPos);
-			yPos+=16;
-		}
-		
-		if(ms2No>0){
-			String ms2String = ms2No==1 ? "spectrum " : "spectra";
-			ms2String = ms2No+" ms2 "+ms2String;
-			g2.drawString(ms2String, 4, yPos);
+
+		if (trigger) {
+			g2.setPaint(new GradientPaint(180, 0, foreColor, 199, 0, backColor));
 		}
 
+		g2.drawLine(2, 17, Math.min(197, 2 + compoundLength), 17);
+
+		g2.setFont(compoundFont);
+		g2.drawString(ec.getGUIName(), 4, 13);
+
+		if (trigger) g2.setPaint(p);
+
+		int ms1No = ec.getMs1Spectra().size();
+		int ms2No = ec.getMs2Spectra().size();
+
+		String ionizationProp = "Ionization";
+		String focMassProp = "Precursor";
+		String rtProp = "RT";
+		String specProp = "Spectra";
+
+		g2.setFont(propertyFont);
+		g2.drawString(ionizationProp, 4, 32);
+		g2.drawString(focMassProp, 4, 48);
+		g2.drawString(rtProp, 4, 64);
+
+		int xPos = Stream.of(propertyFm.stringWidth(ionizationProp), propertyFm.stringWidth(focMassProp), propertyFm.stringWidth(rtProp), propertyFm.stringWidth(specProp))
+				.max(Integer::compareTo).get() + 15;
+
+		String ionValue = ec.getIonization().toString();
+		double focD = ec.getIonMass();
+		String focMass = focD > 0 ? numberFormat.format(focD) + " Da" : "unknown";
+		String rtValue = ec.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60)
+				.map(numberFormat::format).map(i -> i + " min").orElse("N/A");
+
+		g2.setFont(valueFont);
+		g2.drawString(ionValue, xPos, 32);
+		g2.drawString(focMass, xPos, 48);
+		g2.drawString(rtValue, xPos, 64);
+
+//		int yPos = 64;
+		int yPos = 80;
+
+		g2.setFont(valueFont);
+
+		g2.drawString(specProp, 4, yPos);
+		String msValues = ms1No + " MS   " + ms2No + " MS/MS";
+		g2.drawString(msValues, xPos, yPos);
+
+//			yPos+=16;
+
+//			String ms2String = ms2No==1 ? "spectrum " : "spectra";
+//			ms2String = ms2No+" MS2 "+ms2String;
+//			g2.drawString(ms2String, 4, yPos);
 
 
 		g2.setFont(statusFont);
-		GuiUtils.drawListStatusElement(ec.isComputing(),g2,this);
+		GuiUtils.drawListStatusElement(ec.isComputing(), g2, this);
 	}
 
 }

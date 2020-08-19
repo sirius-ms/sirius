@@ -39,6 +39,7 @@ public enum SiriusActions {
     COMPUTE_ALL(ComputeAllAction.class),
 //    CANCEL_ALL(CancelComputeAllAction.class),
     ORDER_BY_INDEX(OrderCompoundByIndex.class),
+    ORDER_BY_RT(OrderCompoundByRT.class),
     ORDER_BY_MASS(OrderCompoundByMass.class),
     ORDER_BY_NAME(OrderCompoundByName.class),
 
