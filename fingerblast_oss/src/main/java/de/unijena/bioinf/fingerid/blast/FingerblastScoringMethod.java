@@ -20,8 +20,8 @@
 
 package de.unijena.bioinf.fingerid.blast;
 
-public interface FingerblastScoringMethod {
+public interface FingerblastScoringMethod<P> {
 
-    FingerblastScoring getScoring();
+    FingerblastScoring<P> getScoring();
 
 }

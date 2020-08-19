@@ -129,7 +129,7 @@ public class ScoringMethodFactory {
 
     // Legacy scorers
 
-    protected abstract static class LegacyScorer implements FingerblastScoring {
+    protected abstract static class LegacyScorer implements FingerblastScoring<Object> {
 
         double threshold = 0.25;
         double minSamples = 25;
@@ -140,7 +140,7 @@ public class ScoringMethodFactory {
         }
 
         @Override
-        public void prepare(ProbabilityFingerprint fingerprint) {
+        public void prepare(ProbabilityFingerprint fingerprint, Object notUsed) {
 
         }
 

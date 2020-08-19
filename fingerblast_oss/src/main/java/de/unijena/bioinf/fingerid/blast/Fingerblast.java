@@ -84,7 +84,7 @@ public class Fingerblast {
         MaskedFingerprintVersion mask = null;
         if (fingerprint.getFingerprintVersion() instanceof MaskedFingerprintVersion) mask = (MaskedFingerprintVersion)fingerprint.getFingerprintVersion();
         final FingerblastScoring scorer = scoringMethod.getScoring();
-        scorer.prepare(fingerprint);
+        scorer.prepare(fingerprint);//todo das rausziehen aus dem CPU job
         for (FingerprintCandidate fp : candidates) {
             final Fingerprint fpm = (mask==null || fp.getFingerprint().getFingerprintVersion().equals(mask)) ? fp.getFingerprint() : mask.mask(fp.getFingerprint());
             results.add(new Scored<>(new FingerprintCandidate(fp, fpm), scorer.score(fingerprint, fpm)));
