@@ -23,13 +23,12 @@ package de.unijena.bioinf.fingerid.blast;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 
-public interface FingerblastScoring {
+public interface FingerblastScoring<P> {
 
-    void prepare(ProbabilityFingerprint fingerprint);
+    //todo implement this new method in whole project
+    void prepare(ProbabilityFingerprint fingerprint, P inputParameter);
 
     double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry);
-
-    // TODO: abstract class?
 
     double getThreshold();
 

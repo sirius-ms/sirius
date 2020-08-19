@@ -22,7 +22,7 @@ package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
 
-public class CSIFingerIdScoring implements FingerblastScoring {
+public class CSIFingerIdScoring implements FingerblastScoring<Object> {
 
     private PredictionPerformance[] performances;
     private double[] tp,fp,tn,fn;
@@ -68,7 +68,7 @@ public class CSIFingerIdScoring implements FingerblastScoring {
     }
 
     @Override
-    public void prepare(ProbabilityFingerprint fingerprint) {
+    public void prepare(ProbabilityFingerprint fingerprint, Object notUsed) {
         int k=0;
         for (FPIter iter : fingerprint) {
             final double platt = laplaceSmoothing(iter.getProbability());

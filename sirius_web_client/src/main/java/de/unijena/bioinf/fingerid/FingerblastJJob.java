@@ -89,6 +89,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
         //we want to score all available candidates and may create subsets later.
         final Set<FingerprintCandidate> combinedCandidates = candidates.getCombCandidates();
 
+        //todo implement 1. prepare job, 2. give this prepared FingerblastScoring into the scoring job.
         List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(scoring, combinedCandidates, fp);
         scoreJobs.forEach(this::submitSubJob);
 

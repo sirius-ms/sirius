@@ -26,7 +26,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 
 import java.io.IOException;
 
-public class BayesnetScoringWithDynamicComputation implements FingerblastScoringMFSpecific {
+public class BayesnetScoringWithDynamicComputation implements FingerblastScoring<MolecularFormula> {
 
     BayesianNetworkScoringProvider scoringProvider;
 
@@ -50,17 +50,11 @@ public class BayesnetScoringWithDynamicComputation implements FingerblastScoring
         try {
             BayesnetScoring bayesnetScoring = scoringProvider.getScoringOrDefault(formula);
             currentScoring = bayesnetScoring.getScoring();
-            currentScoring.prepare(currentEstimatedFingerprint);
+            currentScoring.prepare(currentEstimatedFingerprint, null);
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public void prepare(ProbabilityFingerprint fingerprint) {
-        //todo change for all scoring?
-        throw new RuntimeException("need to provide molecular formula");
     }
 
     @Override

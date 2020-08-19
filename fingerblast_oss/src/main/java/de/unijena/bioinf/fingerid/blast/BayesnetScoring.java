@@ -570,7 +570,7 @@ public class BayesnetScoring implements FingerblastScoringMethod {
     }
 
 
-    public class Scorer  implements FingerblastScoring {
+    public class Scorer  implements FingerblastScoring<Object> {
         protected double[][] abcdMatrixByNodeIdxAndCandidateProperties;
         protected ProbabilityFingerprint preparedProbabilityFingerprint;
         protected double[] smoothedPlatt;
@@ -619,7 +619,7 @@ public class BayesnetScoring implements FingerblastScoringMethod {
         int numberOfComputedSimpleContingencyTables;
         TIntHashSet preparedProperties;
         @Override
-        public void prepare(ProbabilityFingerprint fingerprint) {
+        public void prepare(ProbabilityFingerprint fingerprint, Object notUsed) {
             numberOfComputedContingencyTables = 0;
             numberOfComputedSimpleContingencyTables =0;
             preparedProperties = new TIntHashSet();
