@@ -3,7 +3,6 @@ package de.unijena.bioinf.ms.frontend.splash;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.ProgressJJob;
-import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 
 import javax.swing.*;
@@ -17,7 +16,7 @@ public class Splash extends JWindow implements JobProgressEventListener {
 
     public Splash() {
         progressBar.setString("Starting SIRIUS...");
-        progressBar.setForeground(Colors.DB_LINKED);
+        progressBar.setForeground(new Color(155, 166, 219));
         progressBar.setStringPainted(true);
 
 
