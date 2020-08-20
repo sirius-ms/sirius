@@ -44,7 +44,7 @@ import java.awt.event.WindowEvent;
  */
 class SiriusToolbar extends JToolBar {
     private final ToolbarToggleButton logs;
-    private ToolbarButton imCompB, createB, openB, saveB,exportB, imB, computeAllB, configFingerID, jobs, db, connect, settings, bug, about;
+    private ToolbarButton imCompB, createB, openB, saveB,exportB, summB, imB, computeAllB, configFingerID, jobs, db, connect, settings, bug, about;
 
     SiriusToolbar() {
 
@@ -69,6 +69,10 @@ class SiriusToolbar extends JToolBar {
         imB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance());
         add(imB);
 
+        //summarize
+        addSeparator(new Dimension(20, 20));
+        summB = new ToolbarButton(SiriusActions.SUMMARY_WS.getInstance());
+        add(summB);
 
         addSeparator(new Dimension(20, 20));
         add(Box.createGlue());

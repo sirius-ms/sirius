@@ -19,45 +19,26 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.logging.LogDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.WindowListener;
-import java.awt.event.WindowStateListener;
 
-public class OpenLogAction extends AbstractAction {
+public class ProjectSummaryAction extends AbstractAction {
 
-    private final LogDialog source;
-
-    public OpenLogAction() {
-        super("Log"); //todo add log icon
-        putValue(Action.LARGE_ICON_KEY, Icons.CLIP_BOARD_32);
-        putValue(Action.SHORT_DESCRIPTION, "Show SIRIUS logs in Popup Dialog.");
-        source = MainFrame.MF.getLogConsole();
+    public ProjectSummaryAction() {
+        super("Summaries");
+        putValue(Action.LARGE_ICON_KEY, Icons.EXPORT_32);
+        putValue(Action.SHORT_DESCRIPTION, "Write Summary .tsv files to project.");
+        setEnabled(true);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() instanceof JToggleButton) {
-            source.setVisible(((JToggleButton) e.getSource()).isSelected());
-        } else {
-            source.setVisible(!source.isVisible());
-        }
-    }
-
-    public void addComponentListener(ComponentListener l) {
-        source.addComponentListener(l);
-    }
-
-    public void addWindowListener(WindowListener l) {
-        source.addWindowListener(l);
-    }
-
-    public void addWindowStateListener(WindowStateListener l) {
-        source.addWindowStateListener(l);
+        Jobs.runInBackgroundAndLoad(MainFrame.MF, "Writing Summaries to Project-Space",
+                MainFrame.MF.ps().projectSpace().makeSummarizerJob(ProjectSpaceManager.defaultSummarizer()));
     }
 }
