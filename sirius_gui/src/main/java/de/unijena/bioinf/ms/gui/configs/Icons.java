@@ -63,6 +63,7 @@ public abstract class Icons {
 
     public static final Icon FOLDER_OPEN_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-open@0.5x.png"));
     public static final Icon FOLDER_CLOSE_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-close@0.5x.png"));
+    public static final Icon FOLDER_FILE_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-file@0.5x.png"));
 
     public static final Icon DB_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db@0.5x.png"));
     public static final Icon DB_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db.png"));
@@ -72,6 +73,8 @@ public abstract class Icons {
 
     public static final Icon LOG_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-log@0.5x.png"));
     public static final Icon LOG_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-log.png"));
+
+    public static final Icon CLIP_BOARD_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-clipboard@0.5x.png"));
 
     public static final Icon BUG_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-bug@0.5x.png"));
     public static final Icon BUG_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-bug.png"));

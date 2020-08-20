@@ -11,6 +11,8 @@
   - RT is shown in the Compound list in the SIRUS GUI and the list can be sorted by RT
   - RT is part of the compound.info file in the project-space 
 - feature: Loglevel can now be changed from CLI
+- feature: Summaries can not be written without closing SIRIUS GUI
+  - Improvement: Better progress reporting when Summary writing summaries (GUI)  
 - fix: Agilent CEF files without CE can now be imported
 
 ##### 4.4.27

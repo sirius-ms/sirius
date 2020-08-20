@@ -35,7 +35,7 @@ public class OpenLogAction extends AbstractAction {
 
     public OpenLogAction() {
         super("Log"); //todo add log icon
-        putValue(Action.LARGE_ICON_KEY, Icons.LOG_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.CLIP_BOARD_32);
         putValue(Action.SHORT_DESCRIPTION, "Show SIRIUS logs in Popup Dialog.");
         source = MainFrame.MF.getLogConsole();
     }

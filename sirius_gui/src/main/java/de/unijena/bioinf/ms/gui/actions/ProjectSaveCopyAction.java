@@ -37,11 +37,11 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProjectExportAction extends AbstractAction {
+public class ProjectSaveCopyAction extends AbstractAction {
 
-    public ProjectExportAction() {
+    public ProjectSaveCopyAction() {
         super("SaveCopy");
-        putValue(Action.LARGE_ICON_KEY, Icons.EXPORT_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_FILE_32);
         putValue(Action.SHORT_DESCRIPTION, "Save a copy of the current project. (current location stays active)");
         setEnabled(true);
 

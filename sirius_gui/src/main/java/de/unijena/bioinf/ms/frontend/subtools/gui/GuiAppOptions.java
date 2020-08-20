@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
@@ -50,7 +51,7 @@ import java.awt.event.WindowEvent;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
-    public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.writeSummaries.dontAskAgain";
+    public static final String DONT_ASK_SUM_KEY = "de.unijena.bioinf.sirius.computeDialog.writeSummaries.dontAskAgain";
     public static final String COMPOUND_BUFFER_KEY = "de.unijena.bioinf.sirius.gui.instanceBuffer";
     private final Splash splash;
 
@@ -97,15 +98,9 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
                         Jobs.runInBackgroundAndLoad(MainFrame.MF, "Cancelling running jobs...", Jobs::cancelALL);
                         if (new QuestionDialog(MainFrame.MF,
-                                "<html>Do you want to write summary files to the project-space before closing this project?<br>This may take some time for large projects. </html>").isSuccess()) {
+                                "<html>Do you want to write summary files to the project-space before closing this project?<br>This may take some time for large projects. </html>", DONT_ASK_SUM_KEY).isSuccess()) {
                             ApplicationCore.DEFAULT_LOGGER.info("Writing Summaries to Project-Space before termination.");
-                            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Writing Summaries to Project-Space", true, new TinyBackgroundJJob<Boolean>() {
-                                @Override //todo summary job with real loading screen
-                                protected Boolean compute() throws Exception {
-                                    MainFrame.MF.ps().updateSummaries(ProjectSpaceManager.defaultSummarizer());
-                                    return true;
-                                }
-                            });
+                            SiriusActions.SUMMARY_WS.getInstance().actionPerformed(null);
                         }
                         ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space");
                         Jobs.runInBackgroundAndLoad(MainFrame.MF, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
