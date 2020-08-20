@@ -1,5 +1,5 @@
 *<span style="color: #808080;">SIRIUS and CSI:FingerID are offered to
-the public as freely available resources. Use and re-distribution of the
+the public as freely available resources. (Re-)distribution of the
 methods, in whole or in part, for commercial purposes requires explicit
 permission of the authors and explicit acknowledgment of the source
 material and the original publications. We ask that users who use SIRIUS
