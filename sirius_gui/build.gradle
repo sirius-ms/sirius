@@ -111,7 +111,8 @@ project.type.each{t ->
             outfile = "${project.appName}-${t}-${a}.exe"
             if(t.equals('gui')){
                 cmdLine = 'gui'
-                splashFileName = "${project.distPath}/sirius-splash.bmp"
+                //splash is now inside java
+//                splashFileName = "${project.distPath}/sirius-splash.bmp"
             }
 
         }

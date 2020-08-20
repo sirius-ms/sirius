@@ -33,6 +33,9 @@ import java.awt.*;
 public abstract class Colors {
 
 
+//    public final static Color SCREENER_LOADER = new Color(71, 178, 90);
+    public final static Color SCREENER_LOADER = new Color(209, 121, 54);
+
     public final static Color ICON_BLUE = new Color(17, 145, 187);
     public final static Color ICON_GREEN = new Color(0, 191, 48);
     public final static Color ICON_RED = new Color(204, 71, 41);

@@ -25,6 +25,7 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.splash.Splash;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
@@ -51,6 +52,11 @@ import java.awt.event.WindowEvent;
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
     public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.writeSummaries.dontAskAgain";
     public static final String COMPOUND_BUFFER_KEY = "de.unijena.bioinf.sirius.gui.instanceBuffer";
+    private final Splash splash;
+
+    public GuiAppOptions(@Nullable Splash splash) {
+        this.splash = splash;
+    }
 
     @CommandLine.Option(names = {"--compound-buffer"}, description = "Number of compounds that will be cached in Memory by the GUI. A larger buffer may improve loading times of views that display many results. A smaller buffer reduces the memory maximal consumption of the GUI.", defaultValue = "10")
     public void setInitialInstanceBuffer(int instanceBuffer) {
@@ -63,7 +69,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 
     }
 
-    public static class Flow implements Workflow {
+    public class Flow implements Workflow {
         private final PreprocessingJob<ProjectSpaceManager> preproJob;
         private final ParameterConfig config;
 
@@ -117,7 +123,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                 }
             });
 
-            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Firing up SIRIUS...", new TinyBackgroundJJob<Boolean>() {
+            // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
+            TinyBackgroundJJob<Boolean> j = new TinyBackgroundJJob<>() {
                 @Override
                 protected Boolean compute() throws Exception {
                     try {
@@ -139,7 +146,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         MainFrame.MF.decoradeMainFrameInstance((GuiProjectSpaceManager) projectSpace);
 
                         ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
-                        updateProgress(0,max,progress++,"Checking Webservice connection...");
+                        updateProgress(0, max, progress++, "Checking Webservice connection...");
                         ConnectionMonitor.ConnetionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
                         if (cc.isConnected()) {
                             @Nullable VersionsInfo versionsNumber = ApplicationCore.WEB_API.getVersionInfo();
@@ -159,7 +166,18 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         throw e;
                     }
                 }
-            });
+            };
+
+            if (splash != null)
+                j.addPropertyChangeListener(splash);
+
+            Jobs.runInBackground(j).takeResult();
+
+            if (splash != null) {
+                splash.setVisible(false);
+                splash.dispose();
+            }
+
             if (!PropertyManager.getBoolean(AboutDialog.PROPERTY_KEY, false))
                 new AboutDialog(MainFrame.MF, true);
         }

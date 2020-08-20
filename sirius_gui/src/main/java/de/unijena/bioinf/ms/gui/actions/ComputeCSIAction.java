@@ -44,7 +44,7 @@ public class ComputeCSIAction extends AbstractAction {
         putValue(Action.SMALL_ICON, Icons.FINGER_32);
         putValue(Action.SHORT_DESCRIPTION, "Search computed compounds with CSI:FingerID");
 
-        Jobs.runInBackground(() -> proofCSI(CheckConnectionAction.checkConnectionAndLoad().state));
+        Jobs.runInBackground(() -> proofCSI(MF.CONNECTION_MONITOR().checkConnection().state));
 
         MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
