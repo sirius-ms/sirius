@@ -24,10 +24,12 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
@@ -116,11 +118,12 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 final String name = keyValues.getOrDefault("name", "");
                 final String dirName = dir.getFileName().toString();
                 final Double ionMass = Optional.ofNullable(keyValues.get("ionMass")).map(Double::parseDouble).orElse(null);
+                final RetentionTime rt = Optional.ofNullable(keyValues.get("rt")).map(RetentionTime::fromStringValue).orElse(null);
 
                 final PrecursorIonType ionType = Optional.ofNullable(keyValues.get("ionType"))
                         .flatMap(PrecursorIonType::parsePrecursorIonType).orElse(null);
 
-                final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType);
+                final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType, rt);
 
                 cid.setDetectedAdducts(
                         Optional.ofNullable(keyValues.get("detectedAdducts")).map(DetectedAdducts::fromString).orElse(null));
@@ -162,9 +165,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     public Optional<CompoundContainer> newCompoundWithUniqueId(@NotNull String compoundName, @NotNull IntFunction<String> index2dirName, @Nullable Ms2Experiment exp) {
         double ionMass = exp != null ? exp.getIonMass() : Double.NaN;
+        RetentionTime rt = exp != null ? exp.getAnnotation(RetentionTime.class).orElse(null) : null;
         PrecursorIonType iontype = exp != null ? exp.getPrecursorIonType() : null;
 
-        return newUniqueCompoundId(compoundName, index2dirName, ionMass, iontype)
+        return newUniqueCompoundId(compoundName, index2dirName, ionMass, iontype, rt)
                 .map(idd -> {
                     try {
                         idd.containerLock.lock();
@@ -186,15 +190,15 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
 
     public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName) {
-        return newUniqueCompoundId(compoundName, index2dirName, Double.NaN, null);
+        return newUniqueCompoundId(compoundName, index2dirName, Double.NaN, null, null);
     }
 
 
-    public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName, double ioMass, PrecursorIonType ionType) {
+    public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName, double ioMass, PrecursorIonType ionType, RetentionTime rt) {
         int index = compoundCounter.getAndIncrement();
         String dirName = index2dirName.apply(index);
 
-        Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, ioMass, ionType);
+        Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, ioMass, ionType, rt);
         cidOpt.ifPresent(cid ->
                 fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_CREATED, cid, null, Collections.emptySet())));
         return cidOpt;
@@ -250,12 +254,12 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType) {
+    protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType, RetentionTime rt) {
         if (containsCompound(directoryName)) return Optional.empty();
         synchronized (ids) {
             if (Files.exists(root.resolve(directoryName)))
                 return Optional.empty();
-            CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex, ionMass, ionType);
+            CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex, ionMass, ionType, rt);
             if (ids.put(directoryName, id) != null)
                 return Optional.empty();
             try {
@@ -574,25 +578,16 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return containsCompound(id.getDirectoryName());
     }
 
-    public void updateSummaries(Summarizer... summarizers) throws IOException {
-        withAllLockedDo(() -> {
-            Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
-            for (CompoundContainerId cid : ids.values()) {
-                final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
-                final List<SScored<FormulaResult, ? extends FormulaScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), annotations);
-                for (Summarizer sim : summarizers)
-                    sim.addWriteCompoundSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), c, results);
-            }
-
-            //write summaries to project space
-            for (Summarizer summarizer : summarizers)
-                summarizer.writeProjectSpaceSummary(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty));
-            return true;
-        });
+    protected synchronized boolean withAllLockedDo(IOCallable<Boolean> code) throws IOException {
+        try {
+            return withAllLockedDoRaw(code);
+        } catch (InterruptedException e) {
+            throw new IOException(e); //ugly but will not happen anyways
+        }
     }
 
-    protected synchronized boolean withAllLockedDo(IOCallable<Boolean> code) throws IOException {
-        //todo do we need mor locks to move the space?
+    protected synchronized boolean withAllLockedDoRaw(IOCallable<Boolean> code) throws IOException, InterruptedException {
+        //todo do we need more locks to move the space?
         try {
             ids.values().forEach(cid -> cid.containerLock.lock());
             return code.call();
@@ -616,7 +611,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     @FunctionalInterface
     protected interface IOCallable<V> extends Callable<V> {
         @Override
-        V call() throws IOException;
+        V call() throws IOException, InterruptedException;
     }
 
     public Class[] getRegisteredFormulaResultComponents() {
@@ -625,5 +620,57 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     public Class[] getRegisteredCompoundComponents() {
         return configuration.getAllComponentsForContainer(CompoundContainer.class).toArray(Class[]::new);
+    }
+
+    public void updateSummaries(Summarizer... summarizers) throws IOException {
+        try {
+            makeSummarizerJob(summarizers).compute();
+        } catch (InterruptedException e) {
+            throw new IOException(e); //bit ugly but will not happen anyways
+        }
+    }
+
+    public SummarizerJob makeSummarizerJob(Summarizer... summarizers) {
+        return new SummarizerJob(summarizers);
+    }
+
+
+    public class SummarizerJob extends TinyBackgroundJJob<Boolean> {
+
+        private final Summarizer[] summarizers;
+
+        protected SummarizerJob(Summarizer... summarizers) {
+            this.summarizers = summarizers;
+        }
+
+        @Override
+        protected Boolean compute() throws IOException, InterruptedException {
+            int max = ids.size() + summarizers.length + 1;
+            AtomicInteger p = new AtomicInteger(0);
+            updateProgress(0, max, p.get(), "Collection Summary data...");
+            checkForInterruption();
+            return withAllLockedDoRaw(() -> {
+                Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
+                for (CompoundContainerId cid : ids.values()) {
+                    updateProgress(0, max, p.incrementAndGet(), "Collection '" + cid.getCompoundName() + "'...");
+                    checkForInterruption();
+                    final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
+                    final List<SScored<FormulaResult, ? extends FormulaScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), annotations);
+                    for (Summarizer sim : summarizers)
+                        sim.addWriteCompoundSummary(new FileBasedProjectSpaceWriter(root, SiriusProjectSpace.this::getProjectSpaceProperty), c, results);
+                    checkForInterruption();
+                }
+                checkForInterruption();
+                //write summaries to project space
+                for (Summarizer summarizer : summarizers) {
+                    checkForInterruption();
+                    updateProgress(0, max, p.incrementAndGet(), "Writing Summary '" + summarizer.getClass().getSimpleName() + "'...");
+                    summarizer.writeProjectSpaceSummary(new FileBasedProjectSpaceWriter(root, SiriusProjectSpace.this::getProjectSpaceProperty));
+                }
+                updateProgress(0, max, max, "DONE!");
+                return true;
+            });
+        }
+
     }
 }
