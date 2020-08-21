@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.projectspace.sirius;
 
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
@@ -41,8 +42,10 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
             return null;
 
         final Ms2Experiment exp = reader.textFile(SiriusLocations.MS2_EXPERIMENT, (b) -> new JenaMsParser().parse(b, Path.of(id.getDirectoryName(), SiriusLocations.MS2_EXPERIMENT).toUri().toURL()));
+
         if (exp != null)
             id.getDetectedAdducts().ifPresent(pa -> exp.setAnnotation(DetectedAdducts.class, pa));
+
         return exp;
     }
 
@@ -54,6 +57,7 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
         // actualize optional values in ID
         id.setIonMass(experiment.getIonMass());
         id.setIonType(experiment.getPrecursorIonType());
+        id.setRt(experiment.getAnnotationOrNull(RetentionTime.class));
         id.setDetectedAdducts(experiment.getAnnotationOrNull(DetectedAdducts.class));
 
         writer.keyValues(SiriusLocations.COMPOUND_INFO, id.asKeyValuePairs());

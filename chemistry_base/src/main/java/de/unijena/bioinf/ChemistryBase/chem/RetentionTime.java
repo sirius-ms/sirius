@@ -21,13 +21,14 @@
 package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import org.jetbrains.annotations.NotNull;
 
-public final class RetentionTime implements Ms2ExperimentAnnotation {
+public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<RetentionTime> {
 
     private final double start, middle, end;
 
     public RetentionTime(double start, double end) {
-        this(start, end, start + (end-start)/2d);
+        this(start, end, start + (end - start) / 2d);
     }
 
     public RetentionTime(double start, double end, double maximum) {
@@ -75,8 +76,28 @@ public final class RetentionTime implements Ms2ExperimentAnnotation {
     public double getMiddleTime() {
         return middle;
     }
+
     @Override
     public String toString() {
         return middle + " in [" + start + ", " + end + "]";
+    }
+
+    public String asStringValue() {
+        return asStringValue(this);
+    }
+
+    public static String asStringValue(RetentionTime rt) {
+        return rt.middle + ":" + rt.start + "," + rt.end;
+    }
+
+    public static RetentionTime fromStringValue(String rt) {
+        String[] one = rt.split(":");
+        String[] two = one[1].split(",");
+        return new RetentionTime(Double.parseDouble(two[0].strip()), Double.parseDouble(two[1].strip()), Double.parseDouble(one[0].strip()));
+    }
+
+    @Override
+    public int compareTo(@NotNull RetentionTime o) {
+        return Double.compare(middle, o.middle);
     }
 }
