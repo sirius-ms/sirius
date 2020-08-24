@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.middleware.formulas;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
@@ -65,12 +66,12 @@ public class FormulaResultController extends BaseApiController {
     }
 
     @GetMapping(value = "formulas/{fid}/tree", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public FTree getFragmentationTree(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
+    public String getFragmentationTree(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
         SiriusProjectSpace projectSpace = super.projectSpace(pid);
         Optional<FormulaResult> fResult = this.getAnnotatedFormulaResult(projectSpace, cid, fid, FTree.class);
         FTree fTree = fResult.map(fr -> fr.getAnnotation(FTree.class).orElse(null)).orElse(null);
-        return fTree; //TODO: additional class for fragmentation tree whose objects can be displayed
-        // The FTree object needs an extra class for JSON. It can't be displayed well. Nevertheless, it works with attributes of the FTree object.
+        FTJsonWriter ftWriter = new FTJsonWriter();
+        return ftWriter.treeToJsonString(fTree);
     }
 
     @GetMapping(value = "formulas/{fid}/fingerprint", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
