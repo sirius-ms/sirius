@@ -3,22 +3,41 @@ package de.unijena.bioinf.ms.frontend.splash;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.ProgressJJob;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Optional;
 
 public class Splash extends JWindow implements JobProgressEventListener {
+    static {
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private int min = 0, max = 1;
-    final JProgressBar progressBar = new JProgressBar(min, max);
-    ProgressJJob<?> source;
+    private final JProgressBar progressBar;
+    protected ProgressJJob<?> source;
 
     public Splash() {
-        progressBar.setString("Starting SIRIUS...");
-        progressBar.setForeground(new Color(155, 166, 219));
-        progressBar.setStringPainted(true);
+        UIDefaults overrides = new UIDefaults();
+        overrides.put("ProgressBar[Enabled].foregroundPainter", new MyPainter(new Color(155, 166, 219)));
 
+        progressBar = new JProgressBar(min, max);
+        progressBar.putClientProperty("Nimbus.Overrides", overrides);
+        progressBar.putClientProperty("Nimbus.Overrides.InheritDefaults", false);
+        progressBar.setStringPainted(true);
+        progressBar.setString("Starting SIRIUS...");
 
         JPanel contentPane = new JPanel();
         this.setContentPane(contentPane);
@@ -57,5 +76,19 @@ public class Splash extends JWindow implements JobProgressEventListener {
         if (progressEvent.hasMessage())
             progressBar.setString(progressEvent.getMessage());
 
+    }
+
+    class MyPainter implements Painter<JProgressBar> {
+
+        private final Color color;
+
+        public MyPainter(Color c1) {
+            this.color = c1;
+        }
+        @Override
+        public void paint(Graphics2D gd, JProgressBar t, int width, int height) {
+            gd.setColor(color);
+            gd.fillRect(0, 0, width, height);
+        }
     }
 }
