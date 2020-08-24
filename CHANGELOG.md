@@ -7,6 +7,10 @@
 - more bugfixes ;-)
 
 ##### 4.4.28
+fix: Error when parsing FragTree json with non numeric double values
+fix: layout of screener progress bar on Mac  
+
+##### 4.4.28
 - feature: Retention time will now be imported by SIRIUS 
   - RT is shown in the Compound list in the SIRUS GUI and the list can be sorted by RT
   - RT is part of the compound.info file in the project-space 
