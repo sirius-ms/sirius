@@ -7,8 +7,8 @@
 - more bugfixes ;-)
 
 ##### 4.4.28
-fix: Error when parsing FragTree json with non numeric double values
-fix: layout of screener progress bar on Mac  
+- fix: Error when parsing FragTree json with non numeric double values
+- fix: layout of screener progress bar on Mac  
 
 ##### 4.4.28
 - feature: Retention time will now be imported by SIRIUS 
