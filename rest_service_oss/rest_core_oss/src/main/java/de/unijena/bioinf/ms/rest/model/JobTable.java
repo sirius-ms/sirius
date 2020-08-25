@@ -25,6 +25,9 @@ package de.unijena.bioinf.ms.rest.model;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJob;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
+import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJob;
+import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
+import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.SiriusPredictionJob;
@@ -35,7 +38,8 @@ import de.unijena.bioinf.ms.rest.model.fingerid.SiriusPredictionJob;
  */
 public enum JobTable {
     JOBS_FINGERID(SiriusPredictionJob.class, FingerprintJobInput.class, FingerprintJobOutput.class),
-    JOBS_CANOPUS(CanopusJob.class, CanopusJobInput.class, CanopusJobOutput.class);
+    JOBS_CANOPUS(CanopusJob.class, CanopusJobInput.class, CanopusJobOutput.class),
+    JOBS_COVTREE(CovtreeJob.class, CovtreeJobInput.class, CovtreeJobOutput.class);
 
 
     public final Class<? extends Job<?>> jobType;

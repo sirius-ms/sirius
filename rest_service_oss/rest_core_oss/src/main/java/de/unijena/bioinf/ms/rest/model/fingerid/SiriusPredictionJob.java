@@ -22,13 +22,11 @@
 
 package de.unijena.bioinf.ms.rest.model.fingerid;
 
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.ms.rest.model.Job;
 import de.unijena.bioinf.ms.rest.model.JobState;
 import de.unijena.bioinf.ms.rest.model.JobTable;
+import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
 
-public class SiriusPredictionJob extends Job<FingerprintJobOutput> {
-    protected Long predictors;
+public class SiriusPredictionJob extends JobWithPredictor<FingerprintJobOutput> {
     protected String ms, jsonTree;
     protected byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
     protected byte[] iokrVector; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
@@ -78,19 +76,6 @@ public class SiriusPredictionJob extends Job<FingerprintJobOutput> {
 
     public void setJsonTree(String jsonTree) {
         this.jsonTree = jsonTree;
-    }
-
-    public boolean containsPredictor(PredictorType predictor) {
-        //proof if coresponding bit is set
-        return predictor.isBitSet(predictors);
-    }
-
-    public Long getPredictors() {
-        return predictors;
-    }
-
-    public void setPredictors(Long predictors) {
-        this.predictors = predictors;
     }
 
     @Override

@@ -25,6 +25,7 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 /**
  * Class containing the input for Canopus Jobs
  * Will be (De-)Marshaled to/from json
+ * see {@link de.unijena.bioinf.ms.rest.model.JobTable}
  */
 public class CanopusJobInput {
     public final String formula;
