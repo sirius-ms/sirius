@@ -36,10 +36,7 @@ import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
-import de.unijena.bioinf.fingerid.CSIPredictor;
-import de.unijena.bioinf.fingerid.CanopusWebJJob;
-import de.unijena.bioinf.fingerid.FingerprintPredictionJJob;
-import de.unijena.bioinf.fingerid.StructurePredictor;
+import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoringMethod;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
@@ -56,6 +53,8 @@ import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
+import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
+import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
@@ -237,7 +236,7 @@ public final class WebAPI {
         return jobWatcher.watchJob(new FingerprintPredictionJJob(input, jobUpdate, version, System.currentTimeMillis(), input.experiment.getName()));
     }
 
-    //caches predicors so that we do not have to download the statistics and fingerprint infos every
+    //caches predicors so that we do not have to download the statistics and fingerprint info every time
     private final EnumMap<PredictorType, StructurePredictor> fingerIdPredictors = new EnumMap<>(PredictorType.class);
 
     public @NotNull StructurePredictor getStructurePredictor(int charge) throws IOException {
@@ -264,6 +263,12 @@ public final class WebAPI {
                 fingerIdData.put(predictorType, ProxyManager.applyClient(client -> fingerprintClient.getFingerIdData(predictorType, client)));
         }
         return fingerIdData.get(predictorType);
+    }
+
+    // use via predictor/scoring method
+    public CovtreeWebJJob submitCovtreeJob(@NotNull MolecularFormula formula) throws IOException {
+        final JobUpdate<CovtreeJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postCovtreeJobs(new CovtreeJobInput(formula.toString()), client));
+        return jobWatcher.watchJob(new CovtreeWebJJob(formula, jobUpdate, System.currentTimeMillis()));
     }
 
     //uncached -> access via predictor

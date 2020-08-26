@@ -20,17 +20,33 @@
 
 package de.unijena.bioinf.ms.rest.model.covtree;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
+
 /**
  * Output data of a Covtree Job, see {@link de.unijena.bioinf.ms.rest.model.JobTable}
  */
 public class CovtreeJobOutput {
-    public final String covtree;
+    // can be regularly null if there was not enough data to compute the tree
+    @Nullable private final String covtree;
 
-    public CovtreeJobOutput(String covtree) {
+    public CovtreeJobOutput(@Nullable String covtree) {
         this.covtree = covtree;
     }
 
     private CovtreeJobOutput() {
         this(null);
+    }
+
+    @Nullable
+    public String getCovtree() {
+        return covtree;
+    }
+
+    @NotNull
+    public Optional<String> getCovtreeOpt() {
+        return Optional.ofNullable(getCovtree());
     }
 }
