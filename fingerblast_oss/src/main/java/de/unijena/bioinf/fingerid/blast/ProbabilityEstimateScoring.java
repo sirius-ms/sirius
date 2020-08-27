@@ -24,8 +24,10 @@ import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ProbabilityEstimateScoring implements FingerblastScoring {
+public class ProbabilityEstimateScoring implements FingerblastScoring<Object> {
 
     private PredictionPerformance performances[];
 
@@ -40,7 +42,7 @@ public class ProbabilityEstimateScoring implements FingerblastScoring {
     }
 
     @Override
-    public void prepare(ProbabilityFingerprint fingerprint) {
+    public void prepare(@NotNull ProbabilityFingerprint fingerprint, @Nullable Object ignored) {
         int k=0;
         for (FPIter fp : fingerprint) {
             if (performances[k].getSmallerClassSize() < minSamples || performances[k].getF() < threshold) {

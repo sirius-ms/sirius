@@ -26,7 +26,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 /**
  * Created by ge28quv on 10/07/17.
  */
-public class IOKRScoring implements FingerblastScoring {
+public class IOKRScoring implements FingerblastScoring<Object> {
 
     public IOKRScoring(double[][] matrix){
 
@@ -34,7 +34,7 @@ public class IOKRScoring implements FingerblastScoring {
 
 
     @Override
-    public void prepare(ProbabilityFingerprint fingerprint) {
+    public void prepare(ProbabilityFingerprint fingerprint, Object ignored) {
 
     }
 

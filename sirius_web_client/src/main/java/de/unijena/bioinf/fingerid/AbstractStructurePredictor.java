@@ -30,7 +30,7 @@ public abstract class AbstractStructurePredictor implements StructurePredictor {
     protected final PredictorType predictorType;
     protected final WebAPI csiWebAPI;
     protected RestWithCustomDatabase database;
-    protected FingerblastScoringMethod fingerblastScoring;
+    protected FingerblastScoringMethod<?> fingerblastScoring;
     protected ConfidenceScorer confidenceScorer;
     protected TrainingStructuresSet trainingStructures;
 
@@ -47,7 +47,7 @@ public abstract class AbstractStructurePredictor implements StructurePredictor {
         return database;
     }
 
-    public FingerblastScoringMethod getFingerblastScoring() {
+    public FingerblastScoringMethod<?> getFingerblastScoring() {
         return fingerblastScoring;
     }
 

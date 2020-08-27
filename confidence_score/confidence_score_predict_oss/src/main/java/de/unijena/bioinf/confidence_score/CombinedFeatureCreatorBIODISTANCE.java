@@ -27,7 +27,7 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.features.*;
-import de.unijena.bioinf.fingerid.blast.CovarianceScoringMethod;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
@@ -47,7 +47,7 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
 
     //all confidence means the pubchem confidence score for this input. Has to be always computet
     // same is the tophit in pubchem the same as in the reduced db.
-    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, CovarianceScoringMethod.Scoring covscore){
+    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, BayesnetScoring.Scorer covscore){
 
 
         //CombinedFeatureCreatorALL conf_score_all = new CombinedFeatureCreatorALL(scored_array,scored_array_covscore,performance,covscore);

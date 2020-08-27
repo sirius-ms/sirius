@@ -27,7 +27,7 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.features.*;
-import de.unijena.bioinf.fingerid.blast.CovarianceScoringMethod;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
@@ -45,7 +45,7 @@ public class CombinedFeatureCreatorALL extends CombinedFeatureCreator{
     private double[] computed_features;
 
     //Scorer for pubchem list (unfiltered)
-    public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, CovarianceScoringMethod.Scoring covscore){
+    public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, BayesnetScoring.Scorer covscore){
 
         long all =0;
         ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(//new PlattFeatures(),

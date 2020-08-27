@@ -55,16 +55,11 @@ public class ScoringMethodFactory {
         return new ProbabilisticTanimotoScoringMethod(performances);
     }
 
-    public static CovarianceScoringMethod getCovarianceScoring(int[][] covTreeEdges, double[][] covariances, FingerprintVersion fpVersion, double alpha) {
-        return new CovarianceScoringMethod(covTreeEdges, covariances, fpVersion, alpha);
+    public static BayesnetScoringWithDynamicComputationScoringMethod getBayesnetScoringWIthDynamicComputation() {
+        return new BayesnetScoringWithDynamicComputationScoringMethod();
     }
 
-    public static BayesnetScoringWithDynamicComputationScoringMethod getBayesnetScoringWIthDynamicComputation(BayesianNetworkScoringProvider scoringProvider) {
-        return new BayesnetScoringWithDynamicComputationScoringMethod(scoringProvider);
-    }
-
-
-    public static class CSIFingerIdScoringMethod implements FingerblastScoringMethod {
+    public static class CSIFingerIdScoringMethod implements FingerblastScoringMethod<CSIFingerIdScoring> {
         private final PredictionPerformance[] performances;
 
         public CSIFingerIdScoringMethod(PredictionPerformance[] performances) {
@@ -81,7 +76,7 @@ public class ScoringMethodFactory {
         }
     }
 
-    public static class ProbabilityEstimateScoringMethod implements FingerblastScoringMethod {
+    public static class ProbabilityEstimateScoringMethod implements FingerblastScoringMethod<ProbabilityEstimateScoring> {
         private final PredictionPerformance[] performances;
 
         public ProbabilityEstimateScoringMethod(PredictionPerformance[] performances) {
@@ -98,7 +93,7 @@ public class ScoringMethodFactory {
         }
     }
 
-    public static class SimpleMaximumLikelihoodScoringMethod implements FingerblastScoringMethod {
+    public static class SimpleMaximumLikelihoodScoringMethod implements FingerblastScoringMethod<SimpleMaximumLikelihoodScoring> {
         private final PredictionPerformance[] performances;
 
         public SimpleMaximumLikelihoodScoringMethod(PredictionPerformance[] performances) {
@@ -115,15 +110,10 @@ public class ScoringMethodFactory {
         }
     }
 
-    public static class BayesnetScoringWithDynamicComputationScoringMethod implements FingerblastScoringMethod {
-        private final BayesianNetworkScoringProvider scoringProvider;
-        public BayesnetScoringWithDynamicComputationScoringMethod(BayesianNetworkScoringProvider scoringProvider) {
-            this.scoringProvider = scoringProvider;
-        }
-
+    public static class BayesnetScoringWithDynamicComputationScoringMethod implements FingerblastScoringMethod<BayesnetScoringWithDynamicComputation> {
         @Override
         public BayesnetScoringWithDynamicComputation getScoring() {
-            return new BayesnetScoringWithDynamicComputation(scoringProvider);
+            return new BayesnetScoringWithDynamicComputation();
         }
     }
 

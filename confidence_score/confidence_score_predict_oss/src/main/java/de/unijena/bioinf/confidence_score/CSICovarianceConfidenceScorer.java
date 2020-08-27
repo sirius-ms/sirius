@@ -28,13 +28,12 @@ import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.svm.SVMPredict;
 import de.unijena.bioinf.confidence_score.svm.SVMUtils;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
-import de.unijena.bioinf.fingerid.blast.CovarianceScoringMethod;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -66,12 +65,12 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
 
 
     private final Map<String, TrainedSVM> trainedSVMs;
-    private final CovarianceScoringMethod covarianceScoringMethod;
+    private final BayesnetScoring covarianceScoringMethod;
     private final ScoringMethodFactory.CSIFingerIdScoringMethod csiFingerIdScoringMethod;
-    private Class<? extends FingerblastScoringMethod> scoringOfInput;
+    private Class<? extends FingerblastScoringMethod<?>> scoringOfInput;
 
 
-    public CSICovarianceConfidenceScorer(@NotNull Map<String, TrainedSVM> trainedsvms, @NotNull CovarianceScoringMethod covarianceScoringMethod, @NotNull ScoringMethodFactory.CSIFingerIdScoringMethod csiFingerIDScoringMethod, Class<? extends FingerblastScoringMethod> scoringOfInput) {
+    public CSICovarianceConfidenceScorer(@NotNull Map<String, TrainedSVM> trainedsvms, @NotNull BayesnetScoring covarianceScoringMethod, @NotNull ScoringMethodFactory.CSIFingerIdScoringMethod csiFingerIDScoringMethod, Class<? extends FingerblastScoringMethod<?>> scoringOfInput) {
         this.trainedSVMs = trainedsvms;
         this.covarianceScoringMethod = covarianceScoringMethod;
         this.csiFingerIdScoringMethod = csiFingerIDScoringMethod;
@@ -82,7 +81,7 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         return scoringOfInput;
     }
 
-    public void setScoringOfInput(Class<? extends FingerblastScoringMethod> scoringOfInput) {
+    public void setScoringOfInput(Class<? extends FingerblastScoringMethod<?>> scoringOfInput) {
         this.scoringOfInput = scoringOfInput;
     }
 
@@ -101,7 +100,9 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         return computeConfidence(exp, idResult, allDbCandidates, searchDBCandidates, scoringOfInput, query);
     }
 
-    public double computeConfidence(@NotNull final Ms2Experiment exp, @NotNull final IdentificationResult<?> idResult, @NotNull List<Scored<FingerprintCandidate>> pubchemCandidates, @NotNull List<Scored<FingerprintCandidate>> searchDBCandidates, @NotNull Class<? extends FingerblastScoringMethod> scoringMethod, @NotNull ProbabilityFingerprint query) {
+    public double computeConfidence(@NotNull final Ms2Experiment exp, @NotNull final IdentificationResult<?> idResult,
+                                    @NotNull List<Scored<FingerprintCandidate>> pubchemCandidates, @NotNull List<Scored<FingerprintCandidate>> searchDBCandidates,
+                                    @NotNull Class<? extends FingerblastScoringMethod<?>> scoringMethod, @NotNull ProbabilityFingerprint query) {
         //re-scoring the candidates?
         final List<Scored<FingerprintCandidate>> rankedPubchemCandidatesCSIscore;
         final List<Scored<FingerprintCandidate>> rankedSearchDBCandidatesCSIscore;
@@ -116,9 +117,9 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
 
         final List<Scored<FingerprintCandidate>> rankedPubchemCandidatesCovscore;
         final List<Scored<FingerprintCandidate>> rankedSearchDBCandidatesCovscore;
-        final CovarianceScoringMethod.Scoring covarianceScoring = covarianceScoringMethod.getScoring();
-        covarianceScoring.prepare(query);
-        if (scoringMethod == CovarianceScoringMethod.class) { // set as covariance scoring
+        final BayesnetScoring.Scorer covarianceScoring = covarianceScoringMethod.getScoring();
+        covarianceScoring.prepare(query, null);
+        if (scoringMethod == BayesnetScoring.class) { // set as covariance scoring //todo @martin ugly, instanceof?
             rankedPubchemCandidatesCovscore = pubchemCandidates;
             rankedSearchDBCandidatesCovscore = searchDBCandidates;
         } else { //no scoring given that is useful for the confidence computation, recalculate all.
@@ -135,7 +136,10 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
 
     }
 
-    public double computeConfidence(final Ms2Experiment exp, final IdentificationResult<?> idResult, List<Scored<FingerprintCandidate>> pubchemCandidates, Class<? extends FingerblastScoringMethod> scoringMethod, ProbabilityFingerprint query, @Nullable final Predicate<FingerprintCandidate> filter) {
+    public double computeConfidence(final Ms2Experiment exp, final IdentificationResult<?> idResult,
+                                    List<Scored<FingerprintCandidate>> pubchemCandidates,
+                                    Class<? extends FingerblastScoringMethod<?>> scoringMethod,
+                                    ProbabilityFingerprint query, @Nullable final Predicate<FingerprintCandidate> filter) {
         //re-scoring the candidates?
         final List<Scored<FingerprintCandidate>> rankedCandidatesCSIscore;
         if (scoringMethod == ScoringMethodFactory.CSIFingerIdScoringMethod.class) { //set as csi covariance scoring
@@ -146,9 +150,9 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         }
 
         final List<Scored<FingerprintCandidate>> rankedCandidatesCovscore;
-        final CovarianceScoringMethod.Scoring covarianceScoring = covarianceScoringMethod.getScoring();
-        covarianceScoring.prepare(query);
-        if (scoringMethod == CovarianceScoringMethod.class) { // set as covariance scoring
+        final BayesnetScoring.Scorer covarianceScoring = covarianceScoringMethod.getScoring();
+        covarianceScoring.prepare(query, null);
+        if (scoringMethod == BayesnetScoring.class) { // set as covariance scoring
             rankedCandidatesCovscore = pubchemCandidates;
         } else { //no scoring given that is useful for the confidence computation, recalculate all.
             rankedCandidatesCovscore = calculateCovarianceScores(pubchemCandidates, covarianceScoring, query);
@@ -166,7 +170,7 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
     public double computeConfidence(final Ms2Experiment exp, final IdentificationResult<?> idResult,
                                     Scored<FingerprintCandidate>[] rankedPubchemCandidatesCov, Scored<FingerprintCandidate>[] rankedPubchemCandidatesCSI,
                                     @Nullable Scored<FingerprintCandidate>[] rankedSearchDBCandidatesCov, @Nullable Scored<FingerprintCandidate>[] rankedSearchDBCandidatesCSI,
-                                    ProbabilityFingerprint query, CovarianceScoringMethod.Scoring covarianceScoring, PredictionPerformance[] csiPerformances) {
+                                    ProbabilityFingerprint query, BayesnetScoring.Scorer covarianceScoring, PredictionPerformance[] csiPerformances) {
 
         if (rankedPubchemCandidatesCov.length != rankedPubchemCandidatesCSI.length)
             throw new IllegalArgumentException("Covariance scored candidate list has different length from fingerid scored candidates list!");
@@ -228,12 +232,12 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
 
 
     private static List<Scored<FingerprintCandidate>> calculateCSIScores(List<Scored<FingerprintCandidate>> candidates, CSIFingerIdScoring csiFingerIdScoring, ProbabilityFingerprint query) {
-        csiFingerIdScoring.prepare(query);
+        csiFingerIdScoring.prepare(query, null);
         return candidates.stream().map(SScored::getCandidate).map(c -> new Scored<>(c, csiFingerIdScoring.score(query, c.getFingerprint())))
                 .sorted(Comparator.reverseOrder()).collect(Collectors.toList());
     }
 
-    private static List<Scored<FingerprintCandidate>> calculateCovarianceScores(List<Scored<FingerprintCandidate>> candidates, CovarianceScoringMethod.Scoring covarianceScoring, ProbabilityFingerprint query) {
+    private static List<Scored<FingerprintCandidate>> calculateCovarianceScores(List<Scored<FingerprintCandidate>> candidates, BayesnetScoring.Scorer covarianceScoring, ProbabilityFingerprint query) {
         return candidates.stream().map(SScored::getCandidate).map(c -> new Scored<>(c, covarianceScoring.score(query, c.getFingerprint())))
                 .sorted(Comparator.reverseOrder()).collect(Collectors.toList());
     }

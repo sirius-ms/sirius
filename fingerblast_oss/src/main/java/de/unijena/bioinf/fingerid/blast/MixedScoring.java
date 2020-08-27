@@ -21,8 +21,10 @@
 package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class MixedScoring implements FingerblastScoring {
+public class MixedScoring implements FingerblastScoring<Object> {
 
     private PredictionPerformance performances[];
     private double[] tp,fp,tn,fn;
@@ -68,7 +70,7 @@ public class MixedScoring implements FingerblastScoring {
     }
 
     @Override
-    public void prepare(ProbabilityFingerprint fingerprint) {
+    public void prepare(@NotNull ProbabilityFingerprint fingerprint, @Nullable Object ignored) {
         int k=0;
         for (FPIter iter : fingerprint) {
             final double platt = laplaceSmoothing(iter.getProbability());

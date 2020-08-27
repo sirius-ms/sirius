@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 
 public interface FingerblastScoring<P> {
 
-    //todo implement this new method in whole project
     void prepare(ProbabilityFingerprint fingerprint, P inputParameter);
 
     double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry);

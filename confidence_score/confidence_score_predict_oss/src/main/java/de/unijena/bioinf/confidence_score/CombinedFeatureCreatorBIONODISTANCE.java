@@ -27,7 +27,7 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.features.*;
-import de.unijena.bioinf.fingerid.blast.CovarianceScoringMethod;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
@@ -45,7 +45,7 @@ public class CombinedFeatureCreatorBIONODISTANCE extends CombinedFeatureCreator 
     private int featureCount;
     private double[] computed_features;
 
-    public CombinedFeatureCreatorBIONODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered , PredictionPerformance[] performance, CovarianceScoringMethod.Scoring covscore){
+    public CombinedFeatureCreatorBIONODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered , PredictionPerformance[] performance, BayesnetScoring.Scorer covscore){
 
         ArrayList<FeatureCreator> creators = new ArrayList<>(Arrays.asList(
                 //new PlattFeatures(),

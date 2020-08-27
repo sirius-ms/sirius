@@ -41,17 +41,17 @@ import java.util.stream.Collectors;
 
 public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult> implements AnnotationJJob<FingerblastResult, FingerIdResult> {
 
-    private final FingerblastScoringMethod scoring;
+    private final FingerblastScoringMethod<?> scoring;
     private final TrainingStructuresSet trainingStructuresSet;
 
     private RestWithCustomDatabase.CandidateResult candidates = null;
     private List<Scored<FingerprintCandidate>> scoredCandidates = null;
 
-    public FingerblastJJob(FingerblastScoringMethod scoring, TrainingStructuresSet trainingStructuresSet) {
+    public FingerblastJJob(FingerblastScoringMethod<?> scoring, TrainingStructuresSet trainingStructuresSet) {
         this(scoring, null, null, null, trainingStructuresSet);
     }
 
-    public FingerblastJJob(FingerblastScoringMethod scoring, FTree tree, ProbabilityFingerprint fp, MolecularFormula formula, TrainingStructuresSet trainingStructuresSet) {
+    public FingerblastJJob(FingerblastScoringMethod<?> scoring, FTree tree, ProbabilityFingerprint fp, MolecularFormula formula, TrainingStructuresSet trainingStructuresSet) {
         super(JobType.CPU, fp, formula, tree);
         this.scoring = scoring;
         this.trainingStructuresSet = trainingStructuresSet;

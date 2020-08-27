@@ -148,6 +148,7 @@ public class FingerIdClient extends AbstractClient {
     public CovarianceScoringMethod getCovarianceScoring(@NotNull PredictorType predictorType, @NotNull FingerprintVersion fpVersion, @Nullable MolecularFormula formula, @NotNull PredictionPerformance[] performances, @NotNull CloseableHttpClient client) throws IOException {
         return execute(client,
                 () -> {
+            fdgdg
                     final URIBuilder u = buildVersionSpecificWebapiURI("/fingerid/covariancetree.json")
                             .setParameter("predictor", predictorType.toBitsAsString());
                     if (formula != null)
