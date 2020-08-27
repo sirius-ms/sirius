@@ -173,8 +173,14 @@ public abstract class DataDocument<General, Dictionary, List> {
     public double getDoubleFromDictionary(Dictionary dict, String key) {
         final General value = getFromDictionary(dict, key);
         if (isInteger(value)) return getInt(value);
-        if (!isDouble(value)) throw new TypeError("Can't convert '" + value + "' to double");
-        return getDouble(value);
+        if (isDouble(value)) return getDouble(value);
+        try { // Compatibility layer: Sometimes non numeric values (e.g. Infinity, NaN) are saved as text. Nevertheless, try to parse it.
+            if (isString(value))
+                return Double.parseDouble(getString(value));
+        } catch (NumberFormatException e) {
+            throw new TypeError("Tried to convert Text to Double but couldn't convert '" + value + "'.", e);
+        }
+        throw new TypeError("Can't convert '" + value + "' to double");
     }
     public boolean getBooleanFromDictionary(Dictionary dict, String key) {
         final General value = getFromDictionary(dict, key);
