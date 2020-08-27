@@ -42,7 +42,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-public class BayesnetScoring implements FingerblastScoringMethod {
+/**
+ * Scoring from {@see <a href=https://academic.oup.com/bioinformatics/article/34/13/i333/5045719</a>}
+ * <p>
+ * In the paper this is named Bayesian (fixed tree).
+ */
+public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring.Scorer> {
 
     private static final Logger Log = LoggerFactory.getLogger(BayesnetScoring.class);
 
@@ -51,29 +56,12 @@ public class BayesnetScoring implements FingerblastScoringMethod {
     protected final AbstractCorrelationTreeNode[] forests;
     protected final double alpha;
     protected final FingerprintVersion fpVersion;
-    protected final PredictionPerformance[] performances;
 
     protected File file;
 
+    protected final PredictionPerformance[] performances;
+
     protected boolean allowOnlyNegativeScores;
-
-
-    public String fileString;
-    public void setFileString(String file){
-        fileString = file;
-    }
-
-    BayesnetScoring() {
-        //constructor for testing
-        this.nodes = new TIntObjectHashMap<>();
-        this.nodeList = new AbstractCorrelationTreeNode[0];
-        this.forests = new AbstractCorrelationTreeNode[0];
-        this.alpha = Double.NaN;
-        this.fpVersion = null;
-        //todo remove performances?
-        this.performances = new PredictionPerformance[0];
-        this.allowOnlyNegativeScores = false;
-    }
 
     protected BayesnetScoring(TIntObjectHashMap<AbstractCorrelationTreeNode> nodes, AbstractCorrelationTreeNode[] nodeList, AbstractCorrelationTreeNode[] forests, double alpha, FingerprintVersion fpVersion, PredictionPerformance[] performances, boolean allowOnlyNegativeScores) {
         this.nodes = nodes;
@@ -561,16 +549,16 @@ public class BayesnetScoring implements FingerblastScoringMethod {
 
 
 
-    public FingerblastScoring getScoring() {
+    public Scorer getScoring() {
         return new Scorer();
     }
 
-    public FingerblastScoring getScoring(PredictionPerformance[] performances) {
+    public Scorer getScoring(PredictionPerformance[] performances) {
         return new Scorer();
     }
 
 
-    public class Scorer  implements FingerblastScoring<Object> {
+    public class Scorer implements FingerblastScoring<Object> {
         protected double[][] abcdMatrixByNodeIdxAndCandidateProperties;
         protected ProbabilityFingerprint preparedProbabilityFingerprint;
         protected double[] smoothedPlatt;
@@ -1176,7 +1164,7 @@ public class BayesnetScoring implements FingerblastScoringMethod {
 
         if(anyNAN(q)){
             System.out.println("stop2.1");
-            System.out.println(fileString);
+//            System.out.println(fileString);
             System.out.printf("probs %f %f %f%n", p_i, p_j, p_k);
 
             for (int i = 0; i < q.length; i++) {

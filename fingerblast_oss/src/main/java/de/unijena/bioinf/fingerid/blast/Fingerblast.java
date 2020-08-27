@@ -21,7 +21,6 @@
 package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
@@ -33,6 +32,7 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,12 +40,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Fingerblast {
+public class Fingerblast<P> {
 
     private SearchStructureByFormula searchEngine;
-    private FingerblastScoringMethod scoringMethod;
+    private FingerblastScoringMethod<? extends FingerblastScoring<P>> scoringMethod;
 
-    public Fingerblast(FingerblastScoringMethod method, SearchStructureByFormula searchEngine) {
+    public Fingerblast(FingerblastScoringMethod<? extends FingerblastScoring<P>> method, SearchStructureByFormula searchEngine) {
         this.searchEngine = searchEngine;
         this.scoringMethod = method;
     }
@@ -58,35 +58,38 @@ public class Fingerblast {
         this.searchEngine = searchEngine;
     }
 
-    public FingerblastScoringMethod getScoringMethod() {
+    public FingerblastScoringMethod<? extends FingerblastScoring<P>> getScoringMethod() {
         return scoringMethod;
     }
 
-    public void setScoringMethod(FingerblastScoringMethod scoringMethod) {
+    public void setScoringMethod(FingerblastScoringMethod<? extends FingerblastScoring<P>> scoringMethod) {
         this.scoringMethod = scoringMethod;
     }
 
-    public List<Scored<FingerprintCandidate>> search(@NotNull MolecularFormula formula, @NotNull ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
-        return search(searchEngine, scoringMethod, formula, fingerprint);
+    /* public List<Scored<FingerprintCandidate>> search(@NotNull MolecularFormula formula, @NotNull ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
+         return search(searchEngine, scoringMethod, formula, fingerprint);
+     }
+ */
+    public List<Scored<FingerprintCandidate>> score(@NotNull List<FingerprintCandidate> candidates, @NotNull ProbabilityFingerprint fingerprint, @Nullable P parameter) throws ChemicalDatabaseException {
+        return score(scoringMethod, parameter, candidates, fingerprint);
     }
 
-    public List<Scored<FingerprintCandidate>> score(@NotNull List<FingerprintCandidate> candidates, @NotNull ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
-        return score(scoringMethod, candidates, fingerprint);
-    }
 
-    public static List<Scored<FingerprintCandidate>> search(@NotNull final SearchStructureByFormula searchEngine, @NotNull final FingerblastScoringMethod scoringMethod, @NotNull final MolecularFormula formula, @NotNull final ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
+    /*public static <P> List<Scored<FingerprintCandidate>> search(@NotNull final SearchStructureByFormula searchEngine, @NotNull final FingerblastScoringMethod<? extends FingerblastScoring<P>> scoringMethod, @NotNull final MolecularFormula formula, @NotNull final ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
+        P para = null;         //todo create formula specific covtree if needed
         final List<FingerprintCandidate> candidates = searchEngine.lookupStructuresAndFingerprintsByFormula(formula);
-        return score(scoringMethod, candidates, fingerprint);
-    }
+        return score(scoringMethod, para, candidates, fingerprint);
+    }*/
 
-    public static List<Scored<FingerprintCandidate>> score(@NotNull final FingerblastScoringMethod scoringMethod, @NotNull final List<FingerprintCandidate> candidates, @NotNull final ProbabilityFingerprint fingerprint) {
+    public static <P> List<Scored<FingerprintCandidate>> score(@NotNull final FingerblastScoringMethod<? extends FingerblastScoring<P>> scoringMethod, @Nullable P scorerParameters, @NotNull final List<FingerprintCandidate> candidates, @NotNull final ProbabilityFingerprint fingerprint) {
         final ArrayList<Scored<FingerprintCandidate>> results = new ArrayList<>();
         MaskedFingerprintVersion mask = null;
-        if (fingerprint.getFingerprintVersion() instanceof MaskedFingerprintVersion) mask = (MaskedFingerprintVersion)fingerprint.getFingerprintVersion();
-        final FingerblastScoring scorer = scoringMethod.getScoring();
-        scorer.prepare(fingerprint);//todo das rausziehen aus dem CPU job
+        if (fingerprint.getFingerprintVersion() instanceof MaskedFingerprintVersion)
+            mask = (MaskedFingerprintVersion) fingerprint.getFingerprintVersion();
+        final FingerblastScoring<P> scorer = scoringMethod.getScoring();
+        scorer.prepare(fingerprint, scorerParameters);//todo das rausziehen aus dem CPU job weil das wenn es ne webabfrage macht blocken kann
         for (FingerprintCandidate fp : candidates) {
-            final Fingerprint fpm = (mask==null || fp.getFingerprint().getFingerprintVersion().equals(mask)) ? fp.getFingerprint() : mask.mask(fp.getFingerprint());
+            final Fingerprint fpm = (mask == null || fp.getFingerprint().getFingerprintVersion().equals(mask)) ? fp.getFingerprint() : mask.mask(fp.getFingerprint());
             results.add(new Scored<>(new FingerprintCandidate(fp, fpm), scorer.score(fingerprint, fpm)));
         }
         results.sort(Comparator.reverseOrder());
@@ -94,14 +97,14 @@ public class Fingerblast {
     }
 
 
-    public static List<JJob<List<Scored<FingerprintCandidate>>>> makeScoringJobs(@NotNull final FingerblastScoringMethod scoringMethod, @NotNull final Collection<FingerprintCandidate> candidates, @NotNull final ProbabilityFingerprint fingerprint) {
+    public static <P> List<JJob<List<Scored<FingerprintCandidate>>>> makeScoringJobs(@NotNull final FingerblastScoringMethod<? extends FingerblastScoring<P>> scoringMethod, @Nullable P scorerParameters, @NotNull final Collection<FingerprintCandidate> candidates, @NotNull final ProbabilityFingerprint fingerprint) {
         final List<List<FingerprintCandidate>> inputs = Partition.ofNumber(candidates, PropertyManager.getNumberOfThreads());
 
         return inputs.stream().map(can ->
                 new BasicJJob<List<Scored<FingerprintCandidate>>>(JJob.JobType.CPU) {
                     @Override
                     protected List<Scored<FingerprintCandidate>> compute() {
-                        return score(scoringMethod, can, fingerprint);
+                        return score(scoringMethod, scorerParameters, can, fingerprint);
                     }
                 }
         ).collect(Collectors.toList());

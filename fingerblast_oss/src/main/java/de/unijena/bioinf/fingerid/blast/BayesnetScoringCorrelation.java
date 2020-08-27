@@ -69,12 +69,12 @@ public class BayesnetScoringCorrelation extends BayesnetScoring {
 
 
     @Override
-    public FingerblastScoring getScoring() {
+    public CorrelationScorer getScoring() {
         return new CorrelationScorer();
     }
 
     @Override
-    public FingerblastScoring getScoring(PredictionPerformance[] performances) {
+    public CorrelationScorer getScoring(PredictionPerformance[] performances) {
         return new CorrelationScorer();
     }
 
