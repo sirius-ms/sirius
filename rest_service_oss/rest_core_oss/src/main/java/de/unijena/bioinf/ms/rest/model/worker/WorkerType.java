@@ -33,7 +33,8 @@ public enum WorkerType {
     FORMULA_ID(EnumSet.noneOf(JobTable.class)), //todo has to be implemented.
     FINGER_ID(EnumSet.of(JobTable.JOBS_FINGERID)),
     IOKR(EnumSet.noneOf(JobTable.class)), //todo has to be implemented.
-    CANOPUS(EnumSet.of(JobTable.JOBS_CANOPUS));
+    CANOPUS(EnumSet.of(JobTable.JOBS_CANOPUS)),
+    COVTREE(EnumSet.of(JobTable.JOBS_COVTREE));
 
     private final EnumSet<JobTable> jobTables;
 

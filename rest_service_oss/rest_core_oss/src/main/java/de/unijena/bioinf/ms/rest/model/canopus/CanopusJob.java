@@ -21,17 +21,16 @@
 package de.unijena.bioinf.ms.rest.model.canopus;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ms.rest.model.Job;
 import de.unijena.bioinf.ms.rest.model.JobState;
 import de.unijena.bioinf.ms.rest.model.JobTable;
+import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CanopusJob extends Job<CanopusJobOutput> {
+public class CanopusJob extends JobWithPredictor<CanopusJobOutput> {
     protected String formula;
     protected byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
     protected byte[] compoundClasses; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
-    protected Long predictors;
 
     public CanopusJob() {
         this(null, null, null);
@@ -93,29 +92,5 @@ public class CanopusJob extends Job<CanopusJobOutput> {
     public CanopusJobOutput extractOutput() {
         return compoundClasses != null ? new CanopusJobOutput(compoundClasses) : null;
     }
-
-    public Long getPredictors() {
-        return predictors;
-    }
-
-    public void setPredictors(Long predictors) {
-        this.predictors = predictors;
-    }
-
-    /*
-    @Override
-    public void setOutput(CanopusJobOutput output) {
-        setCompoundClasses(output.compoundClasses);
-    }
-
-    @Override
-    public CanopusJobInput asInput() {
-        return new CanopusJobInput(fingerprint);
-    }
-
-    @Override
-    public void setIntput(CanopusJobInput input) {
-        setFingerprint(input.fingerprint);
-    }*/
 }
 
