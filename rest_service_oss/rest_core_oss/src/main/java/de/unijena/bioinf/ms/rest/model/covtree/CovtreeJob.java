@@ -28,14 +28,20 @@ import org.jetbrains.annotations.Nullable;
 
 public class CovtreeJob extends JobWithPredictor<CovtreeJobOutput> {
 
-    protected String covTree;
+    protected String covtree;
     protected String formula;
+
+
+    public CovtreeJob() {
+        this(null, null, null);
+    }
 
     public CovtreeJob(String workerPrefix, String ip, String cid, @NotNull CovtreeJobInput input) {
         this(workerPrefix, JobState.SUBMITTED);
         setIp(ip);
         setCid(cid);
         setFormula(input.formula);
+        setPredictors(input.predictor.toBits());
     }
 
     public CovtreeJob(String workerPrefix, long lockedByWorker) {
@@ -48,7 +54,7 @@ public class CovtreeJob extends JobWithPredictor<CovtreeJobOutput> {
     }
 
     public CovtreeJob(String workerPrefix, Long jobId, JobState state) {
-        super(workerPrefix, jobId, state, JobTable.JOBS_CANOPUS);
+        super(workerPrefix, jobId, state, JobTable.JOBS_COVTREE);
     }
 
 
@@ -60,17 +66,17 @@ public class CovtreeJob extends JobWithPredictor<CovtreeJobOutput> {
         this.formula = formula;
     }
 
-    public String getCovTree() {
-        return covTree;
+    public String getCovtree() {
+        return covtree;
     }
 
-    public void setCovTree(String covTree) {
-        this.covTree = covTree;
+    public void setCovtree(String covtree) {
+        this.covtree = covtree;
     }
 
     @Nullable
     @Override
     public CovtreeJobOutput extractOutput() {
-        return new CovtreeJobOutput(covTree);
+        return new CovtreeJobOutput(covtree);
     }
 }

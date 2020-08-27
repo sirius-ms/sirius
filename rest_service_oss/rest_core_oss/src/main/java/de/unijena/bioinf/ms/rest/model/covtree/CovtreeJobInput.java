@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.rest.model.covtree;
 
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+
 /**
  * Class containing the input for Covtree Jobs
  * Will be (De-)Marshaled to/from json
@@ -27,12 +29,14 @@ package de.unijena.bioinf.ms.rest.model.covtree;
  */
 public class CovtreeJobInput {
     public final String formula;
+    public final PredictorType predictor;
 
-    public CovtreeJobInput(String formula) {
+    public CovtreeJobInput(String formula, PredictorType predictor) {
         this.formula = formula;
+        this.predictor = predictor;
     }
 
     private CovtreeJobInput() {
-        this(null);
+        this(null, null);
     }
 }

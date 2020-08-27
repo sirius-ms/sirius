@@ -33,7 +33,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.*;
@@ -71,7 +70,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Frontend WebAPI class, that represents the client to our backend rest api
@@ -266,8 +264,8 @@ public final class WebAPI {
     }
 
     // use via predictor/scoring method
-    public CovtreeWebJJob submitCovtreeJob(@NotNull MolecularFormula formula) throws IOException {
-        final JobUpdate<CovtreeJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postCovtreeJobs(new CovtreeJobInput(formula.toString()), client));
+    public CovtreeWebJJob submitCovtreeJob(@NotNull MolecularFormula formula, @NotNull PredictorType predictorType) throws IOException {
+        final JobUpdate<CovtreeJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postCovtreeJobs(new CovtreeJobInput(formula.toString(), predictorType), client));
         return jobWatcher.watchJob(new CovtreeWebJJob(formula, jobUpdate, System.currentTimeMillis()));
     }
 

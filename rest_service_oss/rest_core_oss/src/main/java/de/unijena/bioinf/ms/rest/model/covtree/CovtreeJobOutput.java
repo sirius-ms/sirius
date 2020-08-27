@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.rest.model.covtree;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ public class CovtreeJobOutput {
         return covtree;
     }
 
+    @JsonIgnore
     @NotNull
     public Optional<String> getCovtreeOpt() {
         return Optional.ofNullable(getCovtree());
