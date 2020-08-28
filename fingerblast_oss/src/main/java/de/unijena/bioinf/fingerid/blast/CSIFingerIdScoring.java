@@ -20,7 +20,7 @@ public class CSIFingerIdScoring implements FingerblastScoring {
         this.logOneMinusRecall = new double[performances.length];
         this.logOneminusSpecificity = new double[performances.length];
         for (int k=0; k < performances.length; ++k) {
-            this.performances[k] = performances[k].withPseudoCount(0.25d).withRelabelingAllowed(false);
+            this.performances[k] = performances[k].withPseudoCount(0.25d);
             logOneMinusRecall[k] = Math.log(1d - this.performances[k].getRecall());
             logOneminusSpecificity[k] = Math.log(1d - this.performances[k].getSpecitivity());
         }
