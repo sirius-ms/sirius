@@ -134,8 +134,8 @@ class CovarianceTree {
         PredictionPerformance positive, negative;
 
         protected Edge(Node source, Node target, double[] predictionsA, double[] predictionsB, boolean[] truthB) {
-            PredictionPerformance.Modify negative = new PredictionPerformance(0,0,0,0,0d,false).modify();
-            PredictionPerformance.Modify positive = new PredictionPerformance(0,0,0,0,0d, false).modify();
+            PredictionPerformance.Modify negative = new PredictionPerformance(0,0,0,0,0d).modify();
+            PredictionPerformance.Modify positive = new PredictionPerformance(0,0,0,0,0d).modify();
             for (int k=0; k < predictionsA.length; ++k) {
                 positive.update(truthB[k], true, predictionsA[k]*predictionsB[k]);
                 positive.update(truthB[k], false, predictionsA[k]*(1d-predictionsB[k]));

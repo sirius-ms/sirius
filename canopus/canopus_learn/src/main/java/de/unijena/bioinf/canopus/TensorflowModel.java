@@ -198,7 +198,7 @@ public class TensorflowModel implements AutoCloseable, Closeable {
 
         // compute report
         final PredictionPerformance.Modify[] performance = new PredictionPerformance.Modify[matrix[0].length];
-        for (int i = 0; i < performance.length; ++i) performance[i] = new PredictionPerformance(0, 0, 0, 0, 0, false).modify();
+        for (int i = 0; i < performance.length; ++i) performance[i] = new PredictionPerformance(0, 0, 0, 0, 0).modify();
 
 
         for (int row = 0; row < matrix.length; ++row) {
@@ -255,7 +255,12 @@ public class TensorflowModel implements AutoCloseable, Closeable {
     }
 
     public void saveWithoutPlattEstimate(TrainingData data, int id, boolean saveMatricesAsNumpy, boolean saveModelForJava, boolean trainMissingCompounds, double[] As, double[] Bs) throws IOException {
-        final File fileName = new File("saved_model_" + (trainMissingCompounds ? "final_" : "") + id);
+        String descr = trainMissingCompounds ? "final" : "notrained";
+        saveWithoutPlattEstimate(descr,data,id,saveMatricesAsNumpy,saveModelForJava,trainMissingCompounds,As,Bs);
+    }
+
+    public void saveWithoutPlattEstimate(String descr, TrainingData data, int id, boolean saveMatricesAsNumpy, boolean saveModelForJava, boolean trainMissingCompounds, double[] As, double[] Bs) throws IOException {
+        final File fileName = new File("saved_model_" + descr + "_" + id);
         if (!fileName.exists()) fileName.mkdirs();
         final IntBuffer scalar = IntBuffer.allocate(1);
         scalar.put(id);
@@ -394,12 +399,16 @@ public class TensorflowModel implements AutoCloseable, Closeable {
 
 
     }
+    public double[][] plattEstimate(TrainingData d) {
+        return plattEstimate(d,true);
+    }
 
-    public double[][] plattEstimate(TrainingData data) {
+
+    public double[][] plattEstimate(TrainingData data, boolean includeIndep) {
         double[] As = null, Bs = null;
         final ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         // learn platt decision function
-        try (final TrainingBatch batch = data.fillUpWithTrainData()) {
+        try (final TrainingBatch batch = data.fillUpWithTrainData(includeIndep)) {
             final float[][] ys = predict(batch);
             final float[][] labels = new float[ys.length][ys[0].length];
             batch.labels.copyTo(labels);
@@ -434,6 +443,17 @@ public class TensorflowModel implements AutoCloseable, Closeable {
         }
         service.shutdown();
         return new double[][]{As,Bs};
+    }
+
+    public void saveWithPlattOnCrossval(TrainingData data, int id, boolean saveMatricesAsNumpy, boolean saveModelForJava) throws IOException {
+        // platt estimate
+        double[] As = null, Bs = null;
+        if (saveModelForJava) {
+            double[][] plattestimate = plattEstimate(data, false);
+            As = plattestimate[0];
+            Bs = plattestimate[1];
+        }
+        saveWithoutPlattEstimate("plattcrossval",data,id,saveMatricesAsNumpy,saveModelForJava,false,As,Bs);
     }
 
     public void save(TrainingData data, int id, boolean saveMatricesAsNumpy, boolean saveModelForJava, boolean trainMissingCompounds) throws IOException {

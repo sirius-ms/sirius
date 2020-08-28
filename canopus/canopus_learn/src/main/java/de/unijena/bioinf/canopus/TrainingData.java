@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class TrainingData {
 
@@ -31,6 +32,8 @@ public class TrainingData {
     public static boolean VECNORM_SCALING = false;
     public static boolean PLATT_CENTERING = true;
     public static boolean SCALE_BY_STD = false;
+
+    public static boolean CLIPPING = false;
 
     public static final boolean INCLUDE_FINGERPRINT = false;
 
@@ -45,6 +48,7 @@ public class TrainingData {
     protected final TIntObjectHashMap<CompoundClass> compoundClasses;
     protected final HashMap<String, CompoundClass> name2class;
     protected final List<LabeledCompound> compounds;
+    protected final List<LabeledCompound> prioritizedCompounds;
     protected final HashSet<String> blacklist;
 
     protected CustomFingerprintVersion dummyFingerprintVersion;
@@ -67,6 +71,7 @@ public class TrainingData {
         this.compounds = new ArrayList<>(1200000);
         this.blacklist = new HashSet<>(12000);
         this.name2class = new HashMap<>(4000);
+        this.prioritizedCompounds = new ArrayList<>();
         setupEnv(env);
     }
 
@@ -81,11 +86,16 @@ public class TrainingData {
         compound.formulaFeaturesF = fv;
     }
 
-    public TrainingBatch fillUpWithTrainData() {
+    public TrainingBatch fillUpWithTrainData(boolean includeIndep) {
         final Random r = new Random();
         final List<EvaluationInstance> instances = new ArrayList<>();
         instances.addAll(crossvalidation);
-        instances.addAll(independent);
+        if (includeIndep){
+            instances.addAll(independent);
+        } else {
+            final Set<String> independentCompound = independent.stream().map(x->x.compound.inchiKey).collect(Collectors.toSet());
+            instances.removeIf(x->independentCompound.contains(x.compound.inchiKey));
+        }
         //instances.addAll(independent);
         final TIntIntHashMap counter = new TIntIntHashMap();
         for (EvaluationInstance i : instances) {
@@ -125,7 +135,7 @@ public class TrainingData {
             for (int i=0; i < nplatts; ++i)  {
                 buffer.put((float)(array[i]/vecnorm));
             }
-        } else {
+        } else if (!CLIPPING) {
             if (PLATT_CENTERING||SCALE_BY_STD) {
                 for (int i=0; i < array.length; ++i) {
                     buffer.put((float) ((array[i] - plattNorm[i])/plattScale[i]));
@@ -135,7 +145,19 @@ public class TrainingData {
                     buffer.put((float) val);
                 }
             }
+        } else {
+            for (double val : array) {
+                // clipping
+                buffer.put((float)rescale(val));
+            }
         }
+    }
+
+    private double rescale(double input){
+        double x = Math.min(0.8, Math.max(input,0.2));
+        x -= 0.2;
+        x /= 0.6;
+        return x;
     }
 
     public TrainingBatch generateBatch(List<EvaluationInstance> instances) {
@@ -154,7 +176,7 @@ public class TrainingData {
     }
 
     static enum SamplingStrategy {
-        PERFECT, INDEPENDENT, INDEPENDENT_DISTURBED, TEMPLATE, DISTURBED_TEMPLATE, CONDITIONAL;
+        PERFECT, INDEPENDENT, INDEPENDENT_DISTURBED, TEMPLATE, DISTURBED_TEMPLATE, CONDITIONAL,STATISTICAL, STATISTICAL_DISTURBED;
     }
 
     public static interface SamplingStrategyFunction {
@@ -175,6 +197,8 @@ public class TrainingData {
                 case TEMPLATE: addNormalizedPlatts(platts, fingerprintSampler.sample(i.compound.fingerprint, false).toProbabilityArray()); break;
                 case DISTURBED_TEMPLATE: addNormalizedPlatts(platts, fingerprintSampler.sample(i.compound.fingerprint, true).toProbabilityArray()); break;
                 case CONDITIONAL: addNormalizedPlatts(platts, fingerprintSampler.sampleFromCovariance(i.compound.fingerprint).toProbabilityArray()); break;
+                case STATISTICAL: addNormalizedPlatts(platts, fingerprintSampler.sampleByErrorStats(i.compound.fingerprint, 1)); break;
+                case STATISTICAL_DISTURBED: addNormalizedPlatts(platts, fingerprintSampler.sampleByErrorStats(i.compound.fingerprint, 5));
             }
             formulas.put(i.compound.formulaFeaturesF);
             labels.put(getLabelVector(i.compound));
@@ -230,6 +254,20 @@ public class TrainingData {
         return resample(instances, samplingStrategies);
     }
 
+    public double[] sampleBy(EvaluationInstance i, SamplingStrategy strategy) {
+        switch (strategy) {
+            case PERFECT: return i.compound.fingerprint.toProbabilityArray();
+            case INDEPENDENT: return fingerprintSampler.sampleIndependently(i.compound.fingerprint, false).toProbabilityArray();
+            case INDEPENDENT_DISTURBED: return fingerprintSampler.sampleIndependently(i.compound.fingerprint, true).toProbabilityArray();
+            case TEMPLATE: return fingerprintSampler.sample(i.compound.fingerprint, false).toProbabilityArray();
+            case DISTURBED_TEMPLATE: return fingerprintSampler.sample(i.compound.fingerprint, true).toProbabilityArray();
+            case CONDITIONAL: return fingerprintSampler.sampleFromCovariance(i.compound.fingerprint).toProbabilityArray();
+            case STATISTICAL: return fingerprintSampler.sampleByErrorStats(i.compound.fingerprint, 1);
+            case STATISTICAL_DISTURBED: return fingerprintSampler.sampleByErrorStats(i.compound.fingerprint, 5);
+            default:throw new IllegalArgumentException("Unknown strategy '" + String.valueOf(strategy) + "'");
+        }
+    }
+
     public TrainingBatch resample(List<EvaluationInstance> instances, List<SamplingStrategy> samplingStrategies) {
         final FloatBuffer platts = FloatBuffer.allocate(instances.size() * nplatts);
         final FloatBuffer formulas = FloatBuffer.allocate(instances.size() * nformulas);
@@ -244,6 +282,8 @@ public class TrainingData {
                 case TEMPLATE: addNormalizedPlatts(platts, fingerprintSampler.sample(i.compound.fingerprint, false).toProbabilityArray()); break;
                 case DISTURBED_TEMPLATE: addNormalizedPlatts(platts, fingerprintSampler.sample(i.compound.fingerprint, true).toProbabilityArray()); break;
                 case CONDITIONAL: addNormalizedPlatts(platts, fingerprintSampler.sampleFromCovariance(i.compound.fingerprint).toProbabilityArray()); break;
+                case STATISTICAL: addNormalizedPlatts(platts, fingerprintSampler.sampleByErrorStats(i.compound.fingerprint, 1)); break;
+                case STATISTICAL_DISTURBED: addNormalizedPlatts(platts, fingerprintSampler.sampleByErrorStats(i.compound.fingerprint, 5));
             }
             formulas.put(i.compound.formulaFeaturesF);
             labels.put(getLabelVector(i.compound));
@@ -294,12 +334,11 @@ public class TrainingData {
         final ArrayList<LabeledCompound> compounds = new ArrayList<>();
         final SamplingStrategy[] strategies = getSamplingStrategies(iterationNum).toArray(new SamplingStrategy[0]);
         final ArrayList<Future<double[]>> futures = new ArrayList<>();
-        balancedSample(iterationNum, 5, 500, new Function<LabeledCompound, LabeledCompound>(){
+        balancedSample(iterationNum, 6, 1000, 1000, new Function<LabeledCompound, LabeledCompound>(){
             protected int counter=0;
             @Override
             public LabeledCompound apply(final LabeledCompound input) {
                 final int n = counter++;
-                final boolean samplePerfect = n % 311 == 0;
                 compounds.add(input);
                 futures.add(service.submit(new Callable<double[]>() {
                     @Override
@@ -367,11 +406,8 @@ public class TrainingData {
                     strategies[k] = SamplingStrategy.TEMPLATE;
                 strategies[19] = SamplingStrategy.PERFECT;
                 */
-                for (int k=0; k < 33; ++k) {
-                    strategies[k] = SamplingStrategy.INDEPENDENT;
-                }
-                for (int k=33; k < 66; ++k) {
-                    strategies[k] = SamplingStrategy.CONDITIONAL;
+                for (int k=0; k < 66; ++k) {
+                    strategies[k] = SamplingStrategy.STATISTICAL;
                 }
                 for (int k=66; k < 90; ++k) {
                     strategies[k] = SamplingStrategy.TEMPLATE;
@@ -382,19 +418,16 @@ public class TrainingData {
 
             } else {
                 strategies = new SamplingStrategy[200];
-                for (int k=0; k < 20; ++k) {
-                    strategies[k] = SamplingStrategy.INDEPENDENT;
+                for (int k=0; k < 70; ++k) {
+                    strategies[k] = SamplingStrategy.STATISTICAL;
                 }
-                for (int k=20; k < 50; ++k) {
-                    strategies[k] = SamplingStrategy.INDEPENDENT_DISTURBED;
+                for (int k=70; k < 80; ++k) {
+                    strategies[k] = SamplingStrategy.STATISTICAL_DISTURBED;
                 }
-                for (int k=50; k < 66; ++k) {
-                    strategies[k] = SamplingStrategy.CONDITIONAL;
-                }
-                for (int k=66; k < 160; ++k) {
+                for (int k=80; k < 180; ++k) {
                     strategies[k] = SamplingStrategy.TEMPLATE;
                 }
-                for (int k=160; k < 199; ++k) {
+                for (int k=180; k < 199; ++k) {
                     strategies[k] = SamplingStrategy.DISTURBED_TEMPLATE;
                 }
                 for (int k=199; k < 200; ++k) {
@@ -408,7 +441,7 @@ public class TrainingData {
         }
     }
 
-    private void balancedSample(final int iterationNum, final int numberPerClass, final int numberTotal, Function<LabeledCompound, LabeledCompound> function) {
+    private void balancedSample(final int iterationNum, final int numberPerClass,  final int numberOfPriorized, final int numberTotal,Function<LabeledCompound, LabeledCompound> function) {
         final Random r = new Random();
         final TIntHashSet chosen = new TIntHashSet();
         final HashSet<String> chosenCompounds = new HashSet<>();
@@ -451,6 +484,15 @@ public class TrainingData {
                 chosenCompounds.add(compounds.get(j).inchiKey);
             }
         }
+        if (prioritizedCompounds.size() > numberOfPriorized) {
+            for (int i = 0; i < numberOfPriorized; ++i) {
+                final LabeledCompound selected = prioritizedCompounds.get(r.nextInt(prioritizedCompounds.size()));
+                if (!chosenCompounds.contains(selected.inchiKey) && !blacklist.contains(selected.inchiKey)) {
+                    function.apply(selected);
+                    chosenCompounds.add(selected.inchiKey);
+                }
+            }
+        }
     }
 
     private double[] sampleFingerprintVectorPerfectly(LabeledCompound input) {
@@ -470,6 +512,8 @@ public class TrainingData {
             case TEMPLATE:
                 return fingerprintSampler.sample(c.fingerprint, false);
             case CONDITIONAL: return fingerprintSampler.sampleFromCovariance(c.fingerprint);
+            case STATISTICAL: return new ProbabilityFingerprint(fingerprintSampler.version, fingerprintSampler.sampleByErrorStats(c.fingerprint, 1));
+            case STATISTICAL_DISTURBED:  return new ProbabilityFingerprint(fingerprintSampler.version, fingerprintSampler.sampleByErrorStats(c.fingerprint, 5));
             default: throw new RuntimeException("Unknown strategy: " + String.valueOf(strategy));
         }
     }
@@ -632,7 +676,7 @@ public class TrainingData {
                     int index = Integer.parseInt(tab[0]);
                     mapping.put(index, relIndex);
                     double tp = Double.parseDouble(tab[6]), fp = Double.parseDouble(tab[7]), tn = Double.parseDouble(tab[8]), fn = Double.parseDouble(tab[9]);
-                    dummyProperties.add(new DummyMolecularProperty(index, relIndex, new PredictionPerformance(tp,fp,tn,fn, 0, false)));
+                    dummyProperties.add(new DummyMolecularProperty(index, relIndex, new PredictionPerformance(tp,fp,tn,fn, 0)));
                     ++relIndex;
                 }
                 dummyFingerprintVersion = new CustomFingerprintVersion("DUMMY", dummyProperties);
@@ -755,9 +799,27 @@ public class TrainingData {
                 if (!PLATT_CENTERING) Arrays.fill(plattNorm, 0d);
                 if (!SCALE_BY_STD) Arrays.fill(plattScale, 1d);
             } else {
-                this.plattScale = null;
-                this.plattNorm = null;
+                this.plattNorm = new double[nplatts];
+                this.plattScale = new double[nplatts];
+                Arrays.fill(plattNorm, 0d);
+                Arrays.fill(plattScale, 1d);
+
             }
+
+
+            if (new File("biokeys.txt").exists()) {
+                System.out.println("Load biological compounds");
+                for (String line : FileUtils.readLines(new File("biokeys.txt"))) {
+                    if (compoundHashMap.containsKey(line)) {
+                        prioritizedCompounds.add(compoundHashMap.get(line));
+                    } else {
+                        System.err.println("Do not find bio compound " + line);
+                    }
+                }
+                System.out.println(prioritizedCompounds.size() + " compounds loaded.");
+            }
+
+
         }
 
         // check if we have train data for all compound classes
@@ -778,7 +840,6 @@ public class TrainingData {
             System.out.println("Build tree with covariance");
             this.fingerprintSampler.buildCovarianceTree(new File("treeWithCovariance.tree"));
         }
-
     }
 
     private ArrayFingerprint addFingerprintsAsLabels(ArrayFingerprint fpIters) {

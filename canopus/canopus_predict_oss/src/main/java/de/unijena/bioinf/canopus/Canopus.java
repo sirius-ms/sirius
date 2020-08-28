@@ -17,6 +17,9 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 public class Canopus {
+
+    public static final boolean BINARIZE = false, CLIPPING = false;
+
     protected FullyConnectedLayer[] formulaLayers;
     protected FullyConnectedLayer[] fingerprintLayers;
     protected FullyConnectedLayer[] innerLayers;
@@ -158,14 +161,6 @@ public class Canopus {
         this.cdkFingerprintVersion = cdkMask==null ? null : (CdkFingerprintVersion) cdkMask.getMaskedFingerprintVersion();
     }
 
-
-    public void bla(ProbabilityFingerprint fingerprint) {
-        for (FPIter iter : fingerprint) {
-            final ClassyfireProperty property = (ClassyfireProperty) iter.getMolecularProperty();
-            final double probability = iter.getProbability();
-        }
-    }
-
     public boolean isPredictingFingerprints() {
         return cdkFingerprintVersion!=null;
     }
@@ -231,6 +226,11 @@ public class Canopus {
         for (int i=0; i < fp.length; ++i) {
             fp[i] -= plattCentering[i];
             fp[i] /= plattScaling[i];
+            if (BINARIZE) {
+                fp[i] = Math.round(fp[i]);
+            } else if (CLIPPING) {
+                fp[i] = (Math.min(Math.max(fp[i],0.2d),1.0d)-0.2d)/0.6d;
+            }
         }
         // for the DNN we have to convert our vectors into float
         final float[] formulaInput = new float[ff.length];
@@ -262,6 +262,56 @@ public class Canopus {
         for (int i=0; i < outputArray.length; ++i) outputArray[i] = outputVector.data[i];
         return outputArray;
     }
+
+
+    /**
+     * Outputs the last layer before the output layer
+     */
+    public double[] predictLatentVector(MolecularFormula formula, ProbabilityFingerprint fingerprint) {
+        final double[] ff = getFormulaFeatures(formula);
+        // normalize/center
+        for (int i=0; i < ff.length; ++i) {
+            ff[i] -= formulaCentering[i];
+            ff[i] /= formulaScaling[i];
+        }
+        final double[] fp = fingerprint.toProbabilityArray();
+        for (int i=0; i < fp.length; ++i) {
+            fp[i] -= plattCentering[i];
+            fp[i] /= plattScaling[i];
+            if (BINARIZE) {
+                fp[i] = Math.round(fp[i]);
+            } else if (CLIPPING) {
+                fp[i] = (Math.min(Math.max(fp[i],0.2d),1.0d)-0.2d)/0.6d;
+            }
+        }
+        // for the DNN we have to convert our vectors into float
+        final float[] formulaInput = new float[ff.length];
+        for (int i=0; i < ff.length; ++i) formulaInput[i] = (float)ff[i];
+        final float[] plattInput = new float[fp.length];
+        for (int i=0; i < fp.length; ++i) plattInput[i] = (float)fp[i];
+        // wrap into matrix
+        FMatrixRMaj formulaInputVector = FMatrixRMaj.wrap(1, formulaInput.length, formulaInput);
+        for (FullyConnectedLayer l : formulaLayers)
+            formulaInputVector = l.eval(formulaInputVector);
+
+        FMatrixRMaj fpInputVector = FMatrixRMaj.wrap(1, plattInput.length, plattInput);
+        for (FullyConnectedLayer l : fingerprintLayers)
+            fpInputVector = l.eval(fpInputVector);
+
+        final float[] combined = new float[fpInputVector.numCols+formulaInputVector.numCols];
+        System.arraycopy(formulaInputVector.data, 0, combined, 0, formulaInputVector.numCols);
+        System.arraycopy(fpInputVector.data, 0, combined, formulaInputVector.numCols, fpInputVector.numCols);
+
+        FMatrixRMaj combinedVector = FMatrixRMaj.wrap(1, combined.length, combined);
+
+        for (FullyConnectedLayer l : innerLayers)
+            combinedVector = l.eval(combinedVector);
+
+        final double[] outputArray = new double[combinedVector.numCols];
+        for (int i=0; i < outputArray.length; ++i) outputArray[i] = combinedVector.data[i];
+        return outputArray;
+    }
+
 
     public static double[] getFormulaFeatures(MolecularFormula f) {
         final PeriodicTable t = PeriodicTable.getInstance();
@@ -499,5 +549,8 @@ public class Canopus {
 
 
 
+    public void setPlattCalibration(double[] As, double[] Bs) {
+        this.plattLayer = new PlattLayer(As, Bs);
+    }
 
 }

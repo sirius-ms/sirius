@@ -30,7 +30,7 @@ public class Prepare {
 
             final HashMap<Integer, PredictionPerformance.Modify> performances = new HashMap<>();
             final int[] indizes = CDK_MASK.allowedIndizes();
-            for (int index : indizes) performances.put(index, new PredictionPerformance(0,0,0,0,0,false).modify());
+            for (int index : indizes) performances.put(index, new PredictionPerformance(0,0,0,0,0).modify());
 
             final MaskedFingerprintVersion masked = fingerid.getMaskedFingerprintVersion();
 

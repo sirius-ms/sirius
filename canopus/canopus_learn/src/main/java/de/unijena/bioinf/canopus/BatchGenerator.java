@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class BatchGenerator implements Runnable {
 
+    protected boolean USE_RING_BUFFER = false;
+
     protected final ArrayBlockingQueue<TrainingBatch> batches;
     protected final TrainingData trainingData;
     protected final AtomicInteger iterationNum;
@@ -22,13 +24,13 @@ public class BatchGenerator implements Runnable {
         this.stop = false;
         this.iterationNum = new AtomicInteger(0);
         this.service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        this.ringBuffer = new BufferedTrainData(trainingData, capacity, 16000);
+        this.ringBuffer = USE_RING_BUFFER ? new BufferedTrainData(trainingData, capacity, 16000) : null;
     }
 
     public TrainingBatch poll(int k) {
         if (stop) return null;
         else try {
-            if (k % 2 == 1) {
+            if (USE_RING_BUFFER && k % 2 == 1) {
                 if (!ringBuffer.done.isEmpty()) {
                     synchronized (ringBuffer) {
                         BufferedTrainData.Buffer b = ringBuffer.getDone();
