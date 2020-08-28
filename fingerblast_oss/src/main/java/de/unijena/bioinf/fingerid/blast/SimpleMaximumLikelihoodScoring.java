@@ -18,7 +18,7 @@ public class SimpleMaximumLikelihoodScoring implements FingerblastScoring {
         fp = tp.clone();
         tn = tp.clone();
         for (int k=0; k < perf.length; ++k) {
-            this.performances[k] = perf[k].withPseudoCount(0.25d).withRelabelingAllowed(false);
+            this.performances[k] = perf[k].withPseudoCount(0.25d);
             tp[k] = Math.log(performances[k].getRecall());
             fn[k] = Math.log(1d-performances[k].getRecall());
             fp[k] = Math.log(1d - performances[k].getSpecitivity());
