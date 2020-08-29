@@ -30,7 +30,7 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
-import de.unijena.bioinf.fingerid.blast.CovarianceScoringMethod;
+import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
@@ -141,20 +141,15 @@ public class FingerIdClient extends AbstractClient {
     }
 
 
-    public CovarianceScoringMethod getCovarianceScoring(@NotNull PredictorType predictorType, @NotNull FingerprintVersion fpVersion, @NotNull PredictionPerformance[] performances, @NotNull CloseableHttpClient client) throws IOException {
-        return getCovarianceScoring(predictorType, fpVersion, null, performances, client);
-    }
-
-    public CovarianceScoringMethod getCovarianceScoring(@NotNull PredictorType predictorType, @NotNull FingerprintVersion fpVersion, @Nullable MolecularFormula formula, @NotNull PredictionPerformance[] performances, @NotNull CloseableHttpClient client) throws IOException {
+    public BayesnetScoring getCovarianceScoring(@NotNull PredictorType predictorType, @NotNull FingerprintVersion fpVersion, @Nullable MolecularFormula formula, @NotNull PredictionPerformance[] performances, @NotNull CloseableHttpClient client) throws IOException {
         return execute(client,
                 () -> {
-            fdgdg
                     final URIBuilder u = buildVersionSpecificWebapiURI("/fingerid/covariancetree.json")
                             .setParameter("predictor", predictorType.toBitsAsString());
                     if (formula != null)
                         u.setParameter("formula", formula.toString());
                     return new HttpGet(u.build());
-                }, br -> CovarianceScoringMethod.readScoring(br, fpVersion, performances)
+                }, br -> BayesnetScoringBuilder.readScoring(br, fpVersion, BayesianScoringUtils.calculatePseudoCount(performances), BayesianScoringUtils.allowOnlyNegativeScores)
         );
     }
 

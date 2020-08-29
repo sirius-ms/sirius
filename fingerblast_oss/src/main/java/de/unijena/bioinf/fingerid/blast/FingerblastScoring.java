@@ -23,9 +23,12 @@ package de.unijena.bioinf.fingerid.blast;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 
-public interface FingerblastScoring<P> {
+public interface FingerblastScoring<Parameters> {
 
-    void prepare(ProbabilityFingerprint fingerprint, P inputParameter);
+    /*
+     * DO NOT RENAME -> Reflection calls
+     */
+    default void prepare(Parameters genericInputParameter){}
 
     double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry);
 

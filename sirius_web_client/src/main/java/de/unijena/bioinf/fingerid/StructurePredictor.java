@@ -31,7 +31,7 @@ import java.io.IOException;
 public interface StructurePredictor {
     PredictorType getPredictorType();
 
-    FingerblastScoringMethod getFingerblastScoring();
+    FingerblastScoringMethod<?> getFingerblastScoring();
 
     WebAPI getWebAPI();
 

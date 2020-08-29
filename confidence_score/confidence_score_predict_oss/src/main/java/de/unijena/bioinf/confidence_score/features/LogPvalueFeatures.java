@@ -25,24 +25,19 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 20.06.18.
  */
-public class LogPvalueFeatures implements FeatureCreator {
+public class LogPvalueFeatures implements FeatureCreator<Parameters> {
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     public int weight_direction=-1;
-
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-
-    }
 
     @Override
     public int weight_direction() {
@@ -54,34 +49,15 @@ public class LogPvalueFeatures implements FeatureCreator {
         this.rankedCandidates_filtered=rankedCandidates_filtered;
     }
 
-
-
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
+    public double[] computeFeatures(@Nullable Parameters ignored) {
         assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
 
-        double[] return_value =  new double[1];
-
-
         PvalueScoreUtils utils= new PvalueScoreUtils();
-
-
-
-
-
         double pvalue= utils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
 
-
+        double[] return_value =  new double[1];
         return_value[0]  = Math.log(pvalue);
-
-      //  if(pvalue_kde==0){
-         //   return_value[1]=-20;
-
-
-
-
-
-
 
         return return_value;
     }

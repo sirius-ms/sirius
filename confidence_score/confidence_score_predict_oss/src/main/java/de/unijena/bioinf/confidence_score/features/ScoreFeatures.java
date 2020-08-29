@@ -25,37 +25,29 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.FpNestedScorerParameters;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 /**
  * Created by Marcus Ludwig on 07.03.16.
  */
-public class ScoreFeatures implements FeatureCreator {
+public class ScoreFeatures<P> implements FeatureCreator<FpNestedScorerParameters<P>> {
     private final String[] names;
-    private FingerblastScoring scoring;
-    private PredictionPerformance[] statistics;
+    private final FingerblastScoring<P> scoring;
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     public int weight_direction=1;
 
 
-    public ScoreFeatures(FingerblastScoring scoring, Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
+    public ScoreFeatures(FingerblastScoring<P> scoring, Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
         this.rankedCandidates=rankedCandidates;
         names = new String[]{scoring.toString()};
         this.scoring=scoring;
         this.rankedCandidates_filtered=rankedCandidates_filtered;
-    }
-
-
-
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-        this.statistics = statistics;
     }
 
     @Override
@@ -64,18 +56,14 @@ public class ScoreFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
-
+    public double[] computeFeatures(FpNestedScorerParameters<P> para) {
         assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
-
-
-
 
         final FingerprintCandidate topHit = rankedCandidates_filtered[0].getCandidate();
         final double[] scores = new double[1];
 
-        scoring.prepare(query);
-        scores[0] = scoring.score(query, topHit.getFingerprint());
+        scoring.prepare(para.getNested());
+        scores[0] = scoring.score(para.getFP(), topHit.getFingerprint());
 
         return scores;
     }

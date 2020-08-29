@@ -25,11 +25,11 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 20.06.18.
@@ -45,22 +45,11 @@ import de.unijena.bioinf.sirius.IdentificationResult;
  */
 
 
-public class CandlistSizeFeatures implements FeatureCreator {
-    private PredictionPerformance[] statistics;
+public class CandlistSizeFeatures implements FeatureCreator<Parameters> {
     Scored<FingerprintCandidate>[] rankedCandidates;
 
-
-
     public CandlistSizeFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
-
         this.rankedCandidates=rankedCandidates;
-
-    }
-
-
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {this.statistics=statistics;
-
     }
 
     @Override
@@ -69,7 +58,7 @@ public class CandlistSizeFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+    public double[] computeFeatures(@Nullable Parameters ignored) {
 
 
         double[] scores =  new double[1];

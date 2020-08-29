@@ -29,7 +29,8 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 20.06.18.
@@ -45,10 +46,9 @@ import de.unijena.bioinf.sirius.IdentificationResult;
  */
 
 
-public class PvalueDistanceFeatures implements FeatureCreator {
+public class PvalueDistanceFeatures implements FeatureCreator<Parameters> {
     private int[] distances;
     private int feature_size;
-    private PredictionPerformance[] statistics;
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
@@ -59,16 +59,8 @@ public class PvalueDistanceFeatures implements FeatureCreator {
         feature_size=distances.length;
         this.rankedCandidates=rankedCandidates;
         this.rankedCandidates=rankedCandidates_filtered;
-
     }
 
-
-
-
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {this.statistics=statistics;
-
-    }
 
     @Override
     public int weight_direction() {
@@ -76,29 +68,19 @@ public class PvalueDistanceFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
-
-
-
+    public double[] computeFeatures(@Nullable Parameters ignored) {
         PvalueScoreUtils putils = new PvalueScoreUtils();
-
 
         double[] scores =  new double[feature_size];
 
-
         int pos = 0;
 
-
         for (int j = 0; j < distances.length; j++) {
-
             scores[pos++] = putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered, rankedCandidates_filtered[0]) - putils.computePvalueScore(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[distances[j]]);
         }
 
         assert pos == scores.length;
         return scores;
-
-
-
     }
 
     @Override

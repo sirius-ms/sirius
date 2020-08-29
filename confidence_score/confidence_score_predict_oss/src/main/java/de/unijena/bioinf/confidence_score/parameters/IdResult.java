@@ -2,7 +2,7 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
@@ -15,18 +15,15 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.confidence_score.features;
+package de.unijena.bioinf.confidence_score.parameters;
 
-/**
- * Created by martin on 16.08.18.
- */
-public class TrainingDataDistanceFeatures {
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.sirius.IdentificationResult;
 
-
-
-
-
+@FunctionalInterface
+public interface IdResult<F extends IdentificationResult<?>> extends Parameters {
+    F getIdResult();
 }

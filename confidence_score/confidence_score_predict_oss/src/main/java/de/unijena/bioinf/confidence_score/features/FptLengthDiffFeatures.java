@@ -25,29 +25,20 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 /**
  * Created by martin on 16.07.18.
  */
-public class FptLengthDiffFeatures implements FeatureCreator {
+public class FptLengthDiffFeatures implements FeatureCreator<Parameters.FP> {
 
     Scored<FingerprintCandidate>[] ranked_candidates;
 
-    public FptLengthDiffFeatures(Scored<FingerprintCandidate>[] candidates){
-
-        ranked_candidates=candidates;
-
-    }
-
-
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-
+    public FptLengthDiffFeatures(Scored<FingerprintCandidate>[] candidates) {
+        ranked_candidates = candidates;
     }
 
     @Override
@@ -56,13 +47,10 @@ public class FptLengthDiffFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
-        assert ranked_candidates[0].getScore()>=ranked_candidates[ranked_candidates.length-1].getScore();
-
+    public double[] computeFeatures(Parameters.FP query) {
+        assert ranked_candidates[0].getScore() >= ranked_candidates[ranked_candidates.length - 1].getScore();
         double[] diff = new double[1];
-
-        diff[0]=Math.abs(ranked_candidates[0].getCandidate().getFingerprint().cardinality() - query.asDeterministic().cardinality());
-
+        diff[0] = Math.abs(ranked_candidates[0].getCandidate().getFingerprint().cardinality() - query.getFP().asDeterministic().cardinality());
         return diff;
     }
 

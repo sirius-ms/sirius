@@ -24,22 +24,14 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 /**
  * Created by martin on 16.07.18.
  */
-public class FptLengthFeature implements FeatureCreator {
-
-
-
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-
-    }
+public class FptLengthFeature implements FeatureCreator<Parameters.FP> {
 
     @Override
     public int weight_direction() {
@@ -47,11 +39,11 @@ public class FptLengthFeature implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+    public double[] computeFeatures(Parameters.FP query) {
 
         double[] length =  new double[1];
 
-        length[0]= query.asDeterministic().cardinality();
+        length[0]= query.getFP().asDeterministic().cardinality();
 
         return length;
     }

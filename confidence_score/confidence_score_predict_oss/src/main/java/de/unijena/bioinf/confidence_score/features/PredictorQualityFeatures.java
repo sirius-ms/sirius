@@ -27,20 +27,13 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 27.06.18.
  */
-public class PredictorQualityFeatures implements FeatureCreator{
-
-
-    PredictionPerformance[] statistics;
-
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-        this.statistics=statistics;
-    }
+public class PredictorQualityFeatures implements FeatureCreator<Parameters.Stats> {
 
     @Override
     public int weight_direction() {
@@ -48,18 +41,18 @@ public class PredictorQualityFeatures implements FeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+    public double[] computeFeatures(@Nullable Parameters.Stats statsPara) {
+        final PredictionPerformance[] statistics = statsPara.getStatistics();
+        PredictionPerformance.averageF1(statistics);
+        int f1Below33 = 0;
+        int f1Below66 = 0;
+        int f1Below80 = 0;
 
-    PredictionPerformance.averageF1(statistics);
-    int f1Below33=0;
-    int f1Below66=0;
-    int f1Below80=0;
+        for (int i = 0; i < statistics.length; i++) {
+            if (statistics[i].getF() > 0 && statistics[i].getF() <= 0.33) {
+                f1Below33 += 1;
 
-    for (int i=0;i<statistics.length;i++){
-        if(statistics[i].getF()>0 && statistics[i].getF()<=0.33){
-            f1Below33+=1;
-
-        }
+            }
         if(statistics[i].getF()>0.33 && statistics[i].getF()<=0.66){
 
             f1Below66+=1;

@@ -24,15 +24,17 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
+import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
@@ -41,20 +43,18 @@ import java.util.stream.Collectors;
 
 public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult> implements AnnotationJJob<FingerblastResult, FingerIdResult> {
 
-    private final FingerblastScoringMethod<?> scoring;
-    private final TrainingStructuresSet trainingStructuresSet;
+    private final CSIPredictor predictor;
 
     private RestWithCustomDatabase.CandidateResult candidates = null;
     private List<Scored<FingerprintCandidate>> scoredCandidates = null;
 
-    public FingerblastJJob(FingerblastScoringMethod<?> scoring, TrainingStructuresSet trainingStructuresSet) {
-        this(scoring, null, null, null, trainingStructuresSet);
+    public FingerblastJJob(@NotNull CSIPredictor predictor) {
+        this(predictor, null, null, null);
     }
 
-    public FingerblastJJob(FingerblastScoringMethod<?> scoring, FTree tree, ProbabilityFingerprint fp, MolecularFormula formula, TrainingStructuresSet trainingStructuresSet) {
+    public FingerblastJJob(@NotNull CSIPredictor predictor, FTree tree, ProbabilityFingerprint fp, MolecularFormula formula) {
         super(JobType.CPU, fp, formula, tree);
-        this.scoring = scoring;
-        this.trainingStructuresSet = trainingStructuresSet;
+        this.predictor = predictor;
     }
 
 
@@ -85,12 +85,10 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
     @Override
     protected FingerblastResult compute() {
         checkInput();
-
         //we want to score all available candidates and may create subsets later.
         final Set<FingerprintCandidate> combinedCandidates = candidates.getCombCandidates();
 
-        //todo implement 1. prepare job, 2. give this prepared FingerblastScoring into the scoring job.
-        List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(scoring, combinedCandidates, fp);
+        List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(predictor.getPreparedFingerblastScorer(() -> fp), combinedCandidates, fp);
         scoreJobs.forEach(this::submitSubJob);
 
         scoredCandidates = scoreJobs.stream().flatMap(r -> r.takeResult().stream()).sorted(Comparator.reverseOrder()).map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
@@ -106,7 +104,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
 
     protected void postprocessCandidate(CompoundCandidate candidate) {
         //annotate training compounds;
-        if (trainingStructuresSet.isInTrainingData(candidate.getInchi())){
+        if (predictor.getTrainingStructures().isInTrainingData(candidate.getInchi())){
             long flags = candidate.getBitset();
             candidate.setBitset(flags | DataSource.TRAIN.flag);
         }

@@ -25,44 +25,33 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.FpNestedScorerParameters;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 /**
  * Created by martin on 16.07.18.
  */
-public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
+public class PvalueScoreDiffScorerFeatures<P> implements FeatureCreator<FpNestedScorerParameters<P>> {
 
     Scored<FingerprintCandidate>[] rankedCands;
     Scored<FingerprintCandidate>[] rankedCands_filtered;
     Scored<FingerprintCandidate> best_hit_scorer;
 
-    FingerblastScoring scoring;
-
+    FingerblastScoring<P> scoring;
 
 
     /**
      * rescores the best hit of a scorer with a different scorer, than calculates pvalue and compares it to the best hit of the 2nd scorer
      */
-    public PvalueScoreDiffScorerFeatures(Scored<FingerprintCandidate>[] rankedCands, Scored<FingerprintCandidate>[] rankedCands_filtered,Scored<FingerprintCandidate> hit, FingerblastScoring scoring){
-        this.rankedCands=rankedCands;
-        this.best_hit_scorer=hit;
-        this.rankedCands_filtered=rankedCands_filtered;
-
-        this.scoring=scoring;
-
-
-    }
-
-
-
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-
+    public PvalueScoreDiffScorerFeatures(Scored<FingerprintCandidate>[] rankedCands, Scored<FingerprintCandidate>[] rankedCands_filtered, Scored<FingerprintCandidate> hit, FingerblastScoring<P> scoring) {
+        this.rankedCands = rankedCands;
+        this.best_hit_scorer = hit;
+        this.rankedCands_filtered = rankedCands_filtered;
+        this.scoring = scoring;
     }
 
     @Override
@@ -71,27 +60,18 @@ public class PvalueScoreDiffScorerFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+    public double[] computeFeatures(FpNestedScorerParameters<P> para) {
+
         double[] pvalueScore = new double[1];
+        scoring.prepare(para.getNested());
 
+        double score = scoring.score(para.getFP(), best_hit_scorer.getCandidate().getFingerprint());
 
-
-        scoring.prepare(query);
-
-        double score = scoring.score(query,best_hit_scorer.getCandidate().getFingerprint());
-
-        Scored<FingerprintCandidate> current = new Scored<FingerprintCandidate>(best_hit_scorer.getCandidate(),score);
+        Scored<FingerprintCandidate> current = new Scored<FingerprintCandidate>(best_hit_scorer.getCandidate(), score);
 
         PvalueScoreUtils utils = new PvalueScoreUtils();
 
         pvalueScore[0] = Math.log(utils.computePvalueScore(rankedCands,rankedCands_filtered,current));
-
-    //    pvalueScore[1] = Math.log(pvalueScore[0]);
-
-
-
-
-
 
         return pvalueScore;
     }

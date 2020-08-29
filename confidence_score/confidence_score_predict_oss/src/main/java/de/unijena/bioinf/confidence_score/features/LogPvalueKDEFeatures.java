@@ -25,24 +25,19 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 20.06.18.
  */
-public class LogPvalueKDEFeatures implements FeatureCreator {
+public class LogPvalueKDEFeatures implements FeatureCreator<Parameters> {
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
-    public int weight_direction=-1;
-
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-
-    }
+    public int weight_direction = -1;
 
     @Override
     public int weight_direction() {
@@ -55,33 +50,21 @@ public class LogPvalueKDEFeatures implements FeatureCreator {
     }
 
 
-
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
-        assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
+    public double[] computeFeatures(@Nullable Parameters ignored) {
+        assert rankedCandidates[0].getScore() >= rankedCandidates[rankedCandidates.length - 1].getScore();
 
-        double[] return_value =  new double[1];
+        double[] return_value = new double[1];
 
-
-        PvalueScoreUtils utils= new PvalueScoreUtils();
-
-
-
+        PvalueScoreUtils utils = new PvalueScoreUtils();
         double pvalue_kde;
-        pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates,rankedCandidates_filtered,rankedCandidates_filtered[0]);
+        pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates, rankedCandidates_filtered, rankedCandidates_filtered[0]);
 
-
-
-
-          if(pvalue_kde==0) {
-              return_value[0] = -20;
-          }
-          else
-            return_value[0]= Math.log(pvalue_kde);
-
-
-
-
+        if (pvalue_kde == 0) {
+            return_value[0] = -20;
+        } else {
+            return_value[0] = Math.log(pvalue_kde);
+        }
         return return_value;
     }
 

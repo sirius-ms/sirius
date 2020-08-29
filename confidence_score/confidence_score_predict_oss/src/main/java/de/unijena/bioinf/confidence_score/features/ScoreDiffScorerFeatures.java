@@ -25,40 +25,32 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.FpNestedScorerParameters;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 /**
  * Created by martin on 16.07.18.
  */
-public class ScoreDiffScorerFeatures implements FeatureCreator {
+public class ScoreDiffScorerFeatures<P> implements FeatureCreator<FpNestedScorerParameters<P>> {
 
     Scored<FingerprintCandidate> best_hit_scorer1;
 
     Scored<FingerprintCandidate> best_hit_scorer2;
 
-    FingerblastScoring scoring;
+    private final FingerblastScoring<P> scoring;
 
 
     /**
      *
      */
-    public ScoreDiffScorerFeatures(Scored<FingerprintCandidate> hit1, Scored<FingerprintCandidate> hit2, FingerblastScoring scoring){
-        this.best_hit_scorer1=hit1;
-        this.best_hit_scorer2=hit2;
-
-        this.scoring=scoring;
-
-
-    }
-
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-
+    public ScoreDiffScorerFeatures(Scored<FingerprintCandidate> hit1, Scored<FingerprintCandidate> hit2, FingerblastScoring<P> scoring) {
+        this.best_hit_scorer1 = hit1;
+        this.best_hit_scorer2 = hit2;
+        this.scoring = scoring;
     }
 
     @Override
@@ -67,14 +59,11 @@ public class ScoreDiffScorerFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+    public double[] computeFeatures(FpNestedScorerParameters<P> para) {
+        final ProbabilityFingerprint query = para.getFP();
         double[] distance = new double[1];
-
-        scoring.prepare(query);
-
-        distance[0]=Math.abs(scoring.score(query,best_hit_scorer1.getCandidate().getFingerprint())-scoring.score(query,best_hit_scorer2.getCandidate().getFingerprint()));
-
-
+        scoring.prepare(para.getNested());
+        distance[0] = Math.abs(scoring.score(query, best_hit_scorer1.getCandidate().getFingerprint()) - scoring.score(query, best_hit_scorer2.getCandidate().getFingerprint()));
 
 
         return distance;

@@ -24,23 +24,15 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 /**
  * Created by martin on 27.06.18.
  */
-public class PredictionQualityFeatures implements FeatureCreator{
-
-
+public class PredictionQualityFeatures implements FeatureCreator<Parameters.FP>{
     public int weight_direction=1;
-    PredictionPerformance[] statistics;
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-        this.statistics=statistics;
-    }
 
     @Override
     public int weight_direction() {
@@ -48,7 +40,8 @@ public class PredictionQualityFeatures implements FeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+    public double[] computeFeatures(Parameters.FP queryPara) {
+        final ProbabilityFingerprint query = queryPara.getFP();
 
         double[] qualityReturn = new double[1];
 
@@ -57,9 +50,6 @@ public class PredictionQualityFeatures implements FeatureCreator{
 
         for(int i=0;i<prob_fpt.length;i++){
             quality+=(Math.max(1-prob_fpt[i],prob_fpt[i]));
-
-
-
         }
 
         qualityReturn[0]=quality/query.cardinality();

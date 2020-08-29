@@ -24,40 +24,29 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.confidence_score.parameters.SuperParameters;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Marcus Ludwig on 09.03.16.
  */
-public class CombinedFeatureCreator implements FeatureCreator{
+public class CombinedFeatureCreator<P extends SuperParameters> implements FeatureCreator<P>{
     public FeatureCreator[] featureCreators;
-    private int featureCount;
-    private double[] computed_features;
+    protected int featureCount;
+    protected double[] computed_features;
 
-    public CombinedFeatureCreator(){}
+
+    public CombinedFeatureCreator(Collection<FeatureCreator> featureCreators){
+        this(featureCreators.stream().toArray(FeatureCreator[]::new));
+    }
 
     public CombinedFeatureCreator(FeatureCreator... featureCreators){
         this.featureCreators = featureCreators;
-        int count = 0;
-        for (FeatureCreator featureCreator : featureCreators) {
-            count += featureCreator.getFeatureSize();
-        }
-        this.featureCount = count;
+        this.featureCount = Arrays.stream(featureCreators).mapToInt(FeatureCreator::getFeatureSize).sum();
     }
 
-
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-        for (FeatureCreator featureCreator : featureCreators) {
-            featureCreator.prepare(statistics);
-        }
-    }
 
     @Override
     public int weight_direction() {
@@ -65,13 +54,12 @@ public class CombinedFeatureCreator implements FeatureCreator{
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
-
+    public double[] computeFeatures(P combinedParapeters) {
         computed_features= new double[getFeatureSize()];
         int pos = 0;
         for (FeatureCreator featureCreator : featureCreators) {
-            final double[] currentScores = featureCreator.computeFeatures(query,idresult);
-            for (int i = 0; i < currentScores.length; i++) computed_features[pos++] = currentScores[i];
+            final double[] currentScores = featureCreator.computeFeatures(combinedParapeters);
+            for (double currentScore : currentScores) computed_features[pos++] = currentScore;
         }
         return computed_features;
     }
@@ -83,7 +71,7 @@ public class CombinedFeatureCreator implements FeatureCreator{
 
     @Override
     public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
-        for (FeatureCreator featureCreator : featureCreators) {
+        for (FeatureCreator<?> featureCreator : featureCreators) {
             if (!featureCreator.isCompatible(query, rankedCandidates)) return false;
         }
         return true;
@@ -92,7 +80,7 @@ public class CombinedFeatureCreator implements FeatureCreator{
     @Override
     public int getRequiredCandidateSize() {
         int max = -1;
-        for (FeatureCreator featureCreator : featureCreators) max = Math.max(max, featureCreator.getRequiredCandidateSize());
+        for (FeatureCreator<?> featureCreator : featureCreators) max = Math.max(max, featureCreator.getRequiredCandidateSize());
         return max;
     }
 
@@ -100,7 +88,7 @@ public class CombinedFeatureCreator implements FeatureCreator{
     public String[] getFeatureNames() {
         String[] names = new String[getFeatureSize()];
         int pos = 0;
-        for (FeatureCreator featureCreator : featureCreators) {
+        for (FeatureCreator<?> featureCreator : featureCreators) {
             final String[] currentNames = featureCreator.getFeatureNames();
             for (int i = 0; i < currentNames.length; i++) names[pos++] = currentNames[i];
         }
@@ -109,15 +97,10 @@ public class CombinedFeatureCreator implements FeatureCreator{
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        List<FeatureCreator> featureCreatorList = new ArrayList<>();
+        List<FeatureCreator<?>> featureCreatorList = new ArrayList<>();
         fillList(featureCreatorList, helper, document, dictionary, "featureCreators");
         this.featureCreators = featureCreatorList.toArray(new FeatureCreator[0]);
-        int count = 0;
-        for (FeatureCreator featureCreator : featureCreators) {
-            count += featureCreator.getFeatureSize();
-        }
-        this.featureCount = count;
-
+        this.featureCount = Arrays.stream(featureCreators).mapToInt(FeatureCreator::getFeatureSize).sum();
     }
 
     private <T, G, D, L> void fillList(List<T> list, ParameterHelper helper, DataDocument<G, D, L> document, D dictionary, String keyName) {
@@ -131,7 +114,7 @@ public class CombinedFeatureCreator implements FeatureCreator{
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         L list = document.newList();
-        for (FeatureCreator featureCreator : featureCreators) document.addToList(list, helper.wrap(document, featureCreator));
+        for (FeatureCreator<?> featureCreator : featureCreators) document.addToList(list, helper.wrap(document, featureCreator));
         document.addListToDictionary(dictionary, "featureCreators", list);
     }
 

@@ -25,11 +25,11 @@ import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonLossEdgeScorer;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
+import de.unijena.bioinf.confidence_score.parameters.IdResult;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -39,18 +39,14 @@ import java.util.List;
 /**
  * Created by martin on 05.06.19.
  */
-public class SIRIUSTreeScoreFeatures implements FeatureCreator {
+public class SIRIUSTreeScoreFeatures implements FeatureCreator<IdResult<?>> {
 
     List<IdentificationResult<SiriusScore>> idlist;
     Ms2Experiment exp;
 
-    public SIRIUSTreeScoreFeatures(List<IdentificationResult<SiriusScore>> idlist, Ms2Experiment exp){
-        this.idlist=idlist;
-        this.exp=exp;
-    }
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-
+    public SIRIUSTreeScoreFeatures(List<IdentificationResult<SiriusScore>> idlist, Ms2Experiment exp) {
+        this.idlist = idlist;
+        this.exp = exp;
     }
 
     @Override
@@ -59,7 +55,8 @@ public class SIRIUSTreeScoreFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+    public double[] computeFeatures(IdResult<?> idResultPara) {
+        final IdentificationResult<?> idresult = idResultPara.getIdResult();
         FTreeMetricsHelper metricsIdRes = new FTreeMetricsHelper(idresult.getTree());
         FTreeMetricsHelper metrics0 = new FTreeMetricsHelper(idlist.get(0).getTree());
         FTreeMetricsHelper metrics1 = new FTreeMetricsHelper(idlist.get(1).getTree());

@@ -21,31 +21,23 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by Marcus Ludwig on 07.03.16.
  */
-public class AllConfidenceScoreDiffHitFeatures implements FeatureCreator {
+public class AllConfidenceScoreDiffHitFeatures implements FeatureCreator<Parameters> {
     private final String[] names;
-    private FingerblastScoring scoring;
-    private PredictionPerformance[] statistics;
-    Scored<FingerprintCandidate>[] rankedCandidates;
     double conf;
     boolean same;
     public AllConfidenceScoreDiffHitFeatures(double conf, boolean same){
-        this.rankedCandidates=rankedCandidates;
         names = new String[]{"AllConfScoreDiffHit"};
-        this.scoring=scoring;
         this.conf=conf;
         this.same=same;
     }
@@ -54,19 +46,12 @@ public class AllConfidenceScoreDiffHitFeatures implements FeatureCreator {
     //TODO: Also code in that this is different for same pubchem hit - different pubchem hit
 
     @Override
-    public void prepare(PredictionPerformance[] statistics) {
-        this.statistics = statistics;
-    }
-
-    @Override
     public int weight_direction() {
         return -1;
     }
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
-
-
+    public double[] computeFeatures(@Nullable Parameters ignored) {
         final double[] scores = new double[1];
         if(!same)
             scores[0] = conf;
@@ -93,8 +78,6 @@ public class AllConfidenceScoreDiffHitFeatures implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
-
-
         return names;
     }
 

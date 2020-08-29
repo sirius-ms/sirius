@@ -24,17 +24,16 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 import java.util.Arrays;
 
 /**
  * Created by Marcus Ludwig on 07.03.16.
  */
-public class PlattFeatures implements FeatureCreator {
+public class PlattFeatures implements FeatureCreator<Parameters.FP> {
     private double[] quantiles = new double[]{0.50, 0.75, 0.90};
     //private double[] quantilesAbs = new double[]{0.5, 0.10, 0.25, 0.45};
     private int featureSize;
@@ -47,18 +46,14 @@ public class PlattFeatures implements FeatureCreator {
     }
 
     @Override
-    public void prepare(PredictionPerformance[] statistics) {
-
-    }
-
-    @Override
     public int weight_direction() {
         return 0;
     }
 
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query, IdentificationResult idresult) {
+    public double[] computeFeatures(Parameters.FP queryPara) {
+        final ProbabilityFingerprint query = queryPara.getFP();
         final double[] scores = new double[featureSize];
         final double[] platt = query.toProbabilityArray();
         Arrays.sort(platt);

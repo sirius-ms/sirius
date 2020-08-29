@@ -22,23 +22,22 @@ package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
-import java.io.IOException;
-
-public class BayesnetScoringWithDynamicComputation implements FingerblastScoring<BayesnetScoring> {
+public class BayesnetScoringWithDynamicComputation implements FingerblastScoring<Parameters.UnpreparedScoring<BayesnetScoring, Parameters.FP>> {
 
     BayesnetScoring.Scorer innerScorer = null;
     ProbabilityFingerprint currentEstimatedFingerprint = null;
 
     //todo used??!?!
-    private double threshold = 0.25, minSamples=25;
+    private double threshold = 0.25, minSamples = 25;
 
 
     @Override
-    public void prepare(ProbabilityFingerprint fingerprint, BayesnetScoring formulaSpecificInnerScoring) {
-        currentEstimatedFingerprint = fingerprint;
-        innerScorer = formulaSpecificInnerScoring.getScoring();
-        innerScorer.prepare(currentEstimatedFingerprint, null);
+    public void prepare(Parameters.UnpreparedScoring<BayesnetScoring, Parameters.FP> scoringPara) {
+        currentEstimatedFingerprint = scoringPara.getFP();
+        innerScorer = scoringPara.getScoring().getScoring();
+        innerScorer.prepare(scoringPara.getScorerParameter());
     }
 
     @Override

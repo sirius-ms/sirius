@@ -249,7 +249,9 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
             annotationJJobs.put(predictionJob, fres);
 
             // fingerblast job: score candidate fingerprints against predicted fingerprint
-            final FingerblastJJob blastJob = new FingerblastJJob(predictor.getFingerblastScoring(), predictor.getTrainingStructures());
+            //todo @Nils implement 1. prepare job that gets the tree for the given molecular formula,
+            // 2. use this prepared BayesnetScoring, as parameter for the FingerblastJJob
+            final FingerblastJJob blastJob = new FingerblastJJob(predictor);
             blastJob.addRequiredJob(formulaJobs.get(i++));
             blastJob.addRequiredJob(predictionJob);
             annotationJJobs.put(submitSubJob(blastJob), fres);

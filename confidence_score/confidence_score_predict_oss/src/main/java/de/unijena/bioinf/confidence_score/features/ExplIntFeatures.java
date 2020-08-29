@@ -24,21 +24,15 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.confidence_score.parameters.IdResult;
 
 /**
  * Created by martin on 20.06.18.
  */
-public class ExplIntFeatures implements FeatureCreator {
-    @Override
-    public void prepare(PredictionPerformance[] statistics) {
-
-    }
-
+public class ExplIntFeatures implements FeatureCreator<IdResult<?>> {
     @Override
     public int weight_direction() {
         return weight_direction;
@@ -47,15 +41,15 @@ public class ExplIntFeatures implements FeatureCreator {
     public int weight_direction=1;
 
     @Override
-    public double[] computeFeatures(ProbabilityFingerprint query,  IdentificationResult idresult) {
+    public double[] computeFeatures(IdResult<?> idresult) {
         // double[] scores= new double[4];
-        double[] scores= new double[1];
-        TreeStatistics current_tree_scores =  idresult.getRawTree().getAnnotationOrThrow(TreeStatistics.class);
+        double[] scores = new double[1];
+        TreeStatistics current_tree_scores = idresult.getIdResult().getRawTree().getAnnotationOrThrow(TreeStatistics.class);
         // scores[0]=current_tree_scores.getExplainedIntensityOfExplainablePeaks();
         //scores[1]= current_tree_scores.getExplainedIntensity();
         //scores[2]=current_tree_scores.getRatioOfExplainedPeaks();
         //scores[3]= idresult.getRawTree().getTreeWeight();
-        scores[0]=current_tree_scores.getExplainedIntensity();
+        scores[0] = current_tree_scores.getExplainedIntensity();
 
 
 

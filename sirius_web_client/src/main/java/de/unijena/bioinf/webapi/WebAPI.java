@@ -36,7 +36,7 @@ import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.*;
-import de.unijena.bioinf.fingerid.blast.CovarianceScoringMethod;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
@@ -269,12 +269,31 @@ public final class WebAPI {
         return jobWatcher.watchJob(new CovtreeWebJJob(formula, jobUpdate, System.currentTimeMillis()));
     }
 
+
+    /**
+     * @param predictorType pos or neg
+     * @return Default (non formula specific) {@link BayesnetScoring} for the given {@link PredictorType}
+     * @throws IOException if something went wrong with the web query
+     */
     //uncached -> access via predictor
-    public CovarianceScoringMethod getCovarianceScoring(@NotNull PredictorType predictorType) throws IOException {
+    public BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType) throws IOException {
+        return getBayesnetScoring(predictorType,null);
+
+    }
+
+    /**
+     * @param predictorType pos or neg
+     * @param formula Molecular formula for which the tree is requested (Default tree will be used if formula is null)
+     * @return {@link BayesnetScoring} for the given {@link PredictorType} and {@link MolecularFormula}
+     * @throws IOException if something went wrong with the web query
+     */
+    //uncached -> access via predictor
+    public BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType, @Nullable MolecularFormula formula) throws IOException {
         final MaskedFingerprintVersion fpVersion = getFingerIdData(predictorType).getFingerprintVersion();
         final PredictionPerformance[] performances = getFingerIdData(predictorType).getPerformances();
-        return ProxyManager.applyClient(client -> fingerprintClient.getCovarianceScoring(predictorType, fpVersion, performances, client));
+        return ProxyManager.applyClient(client -> fingerprintClient.getCovarianceScoring(predictorType, fpVersion, formula, performances, client));
     }
+
 
     //uncached -> access via predictor
     public Map<String, TrainedSVM> getTrainedConfidence(@NotNull PredictorType predictorType) throws IOException {
@@ -312,5 +331,6 @@ public final class WebAPI {
     public CdkFingerprintVersion getCDKChemDBFingerprintVersion() throws IOException {
         return ProxyManager.applyClient(chemDBClient::getCDKFingerprintVersion);
     }
+
     //endregion
 }
