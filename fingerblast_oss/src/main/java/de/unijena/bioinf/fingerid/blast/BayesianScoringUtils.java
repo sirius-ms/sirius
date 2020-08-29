@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
 import de.unijena.bioinf.ChemistryBase.fp.BooleanFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
@@ -57,8 +58,8 @@ public class BayesianScoringUtils {
     //TODO optimize transformations? Allow directions?
 //    private static final String[] allTransformations = new String[]{"C10H11N5O3", "C10H11N5O4", "C10H12N2O4", "C10H12N5O6P", "C10H12N5O7P", "C10H13N2O7P", "C10H13N5O10P2", "C10H13N5O9P2", "C10H14N2O10P2", "C10H14N2O2S", "C10H15N2O3S", "C10H15N3O5S", "C10H15N3O6S", "C11H10N2O", "C12H20O10", "C12H20O11", "C16H30O", "C18H30O15", "C21H33N7O15P3S", "C21H34N7O16P3S", "C2H2", "C2H2O", "C2H3NO", "C2H3O2", "C2H4", "C2H5NO2S", "C2O2", "C3H2O3", "C3H5NO", "C3H5NO2", "C3H5NO2S", "C3H5NOS", "C3H5O", "C4H2N2O", "C4H3N2O2", "C4H3N3", "C4H4N3O", "C4H4O2", "C4H5NO3", "C4H6N2O2", "C4H7NO2", "C5H3N5", "C5H4N2O", "C5H4N5", "C5H4N5O", "C5H5N2O2", "C5H7", "C5H7NO", "C5H7NO3", "C5H7NO3S", "C5H8N2O2", "C5H8O4", "C5H9NO", "C5H9NOS", "C6H10N2O3S2", "C6H10O5", "C6H10O6", "C6H11NO", "C6H11O8P", "C6H12N2O", "C6H12N4O", "C6H7N3O", "C6H8O6", "C7H13NO2", "C8H8NO5P", "C9H10N2O5", "C9H11N2O8P", "C9H11N3O4", "C9H12N2O11P2", "C9H12N3O7P", "C9H13N3O10P2", "C9H9NO", "C9H9NO2", "CH2", "CH2ON", "CH3N2O", "CHO2", "CO", "CO2", "H2", "H2O", "H3O6P2", "HPO3", "N", "NH", "NH2", "NH3", "O", "P", "PP", "SO3"};
 //        private static final String[] bioTransformations = new String[]{"H2", "O", "H2O", "CO", "CO2", "CH2", "C2O2", "H2O"}; //"C2H4",
-    private static final String[] bioTransformationsBelow100 = new String[]{"C2H2", "C2H2O", "C2H3NO", "C2H3O2", "C2H4", "C2O2", "C3H2O3", "C3H5NO", "C3H5NO2", "C3H5O", "C4H2N2O", "C4H3N3", "C4H4O2", "C5H7", "C5H7NO", "C5H9NO", "CH2", "CH2ON", "CH3N2O", "CHO2", "CO", "CO2", "H2", "H2O", "N", "NH", "NH2", "NH3", "O"};
-    private static boolean allowOnlyNegativeScores = false;
+    public static final String[] bioTransformationsBelow100 = new String[]{"C2H2", "C2H2O", "C2H3NO", "C2H3O2", "C2H4", "C2O2", "C3H2O3", "C3H5NO", "C3H5NO2", "C3H5O", "C4H2N2O", "C4H3N3", "C4H4O2", "C5H7", "C5H7NO", "C5H9NO", "CH2", "CH2ON", "CH3N2O", "CHO2", "CO", "CO2", "H2", "H2O", "N", "NH", "NH2", "NH3", "O"};
+    public static final boolean allowOnlyNegativeScores = false;
     //pseudo count for Bayesian network scoring
     private final double pseudoCount;
 
@@ -126,8 +127,7 @@ public class BayesianScoringUtils {
         this.minNumStructuresTopologyIncludingBiotransformations = minNumStructuresTopologyIncludingBiotransformations;
         this.minNumInformativePropertiesMfSpecificScoring = minNumInformativePropertiesMfSpecificScoring;
 
-        this.pseudoCount = 1d/trainingData.predictionPerformances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts();
-
+        this.pseudoCount = calculatePseudoCount(trainingData.predictionPerformances);
         this.useCorrelationScoring = useCorrelationScoring;
     }
 
@@ -139,6 +139,10 @@ public class BayesianScoringUtils {
     public static BayesianScoringUtils getInstance(ChemicalDatabase chemicalDatabase, MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, int minNumStructuresTopologyMfSpecificScoring, int minNumStructuresTopologySameMf, int minNumStructuresTopologyWithBiotransformations, int minNumInformativePropertiesMfSpecificScoring, boolean useCorrelationScoring) {
         return new BayesianScoringUtils(chemicalDatabase, maskedFingerprintVersion, trainingData, Arrays.stream(bioTransformationsBelow100).map(MolecularFormula::parseOrThrow).collect(Collectors.toSet()),
                 minNumStructuresTopologyMfSpecificScoring, minNumStructuresTopologySameMf, minNumStructuresTopologyWithBiotransformations, minNumInformativePropertiesMfSpecificScoring, useCorrelationScoring);
+    }
+
+    public static double calculatePseudoCount(PredictionPerformance[] performances) {
+        return 1d / performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts();
     }
 
 

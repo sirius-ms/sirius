@@ -21,6 +21,7 @@
 package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 /**
  * Created by Marcus Ludwig on 28.02.17.
@@ -119,7 +120,7 @@ public class ScoringMethodFactory {
 
     // Legacy scorers
 
-    protected abstract static class LegacyScorer implements FingerblastScoring<Object> {
+    protected abstract static class LegacyScorer implements FingerblastScoring<Parameters> {
 
         double threshold = 0.25;
         double minSamples = 25;
@@ -129,10 +130,6 @@ public class ScoringMethodFactory {
             this.performances = performances;
         }
 
-        @Override
-        public void prepare(ProbabilityFingerprint fingerprint, Object notUsed) {
-
-        }
 
         protected boolean isValid(int index) {
             return performances[index].getSmallerClassSize() >= minSamples && performances[index].getF() >= threshold;
@@ -163,7 +160,7 @@ public class ScoringMethodFactory {
         }
     }
 
-    public static class UnitScoringMethod implements FingerblastScoringMethod {
+    public static class UnitScoringMethod implements FingerblastScoringMethod<LegacyScorer> {
         private final PredictionPerformance[] performances;
 
         public UnitScoringMethod(PredictionPerformance[] performances) {
@@ -171,7 +168,7 @@ public class ScoringMethodFactory {
         }
 
         @Override
-        public FingerblastScoring getScoring() {
+        public LegacyScorer getScoring() {
             return new LegacyScorer(performances) {
                 @Override
                 public double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry) {
@@ -193,7 +190,7 @@ public class ScoringMethodFactory {
         }
     }
 
-    public static class AccuracyScoringMethod implements FingerblastScoringMethod {
+    public static class AccuracyScoringMethod implements FingerblastScoringMethod<LegacyScorer> {
         private final PredictionPerformance[] performances;
 
         public AccuracyScoringMethod(PredictionPerformance[] performances) {
@@ -201,7 +198,7 @@ public class ScoringMethodFactory {
         }
 
         @Override
-        public FingerblastScoring getScoring() {
+        public LegacyScorer getScoring() {
             return new LegacyScorer(performances) {
                 @Override
                 public double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry) {
@@ -227,7 +224,7 @@ public class ScoringMethodFactory {
         }
     }
 
-    public static class TanimotoScoringMethod implements FingerblastScoringMethod {
+    public static class TanimotoScoringMethod implements FingerblastScoringMethod<LegacyScorer> {
         private final PredictionPerformance[] performances;
 
         public TanimotoScoringMethod(PredictionPerformance[] performances) {
@@ -235,7 +232,7 @@ public class ScoringMethodFactory {
         }
 
         @Override
-        public FingerblastScoring getScoring() {
+        public LegacyScorer getScoring() {
             return new LegacyScorer(performances) {
                 @Override
                 public double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry) {
@@ -249,7 +246,7 @@ public class ScoringMethodFactory {
         }
     }
 
-    public static class ProbabilisticTanimotoScoringMethod implements FingerblastScoringMethod {
+    public static class ProbabilisticTanimotoScoringMethod implements FingerblastScoringMethod<LegacyScorer> {
         private final PredictionPerformance[] performances;
 
         public ProbabilisticTanimotoScoringMethod(PredictionPerformance[] performances) {
@@ -257,7 +254,7 @@ public class ScoringMethodFactory {
         }
 
         @Override
-        public FingerblastScoring getScoring() {
+        public LegacyScorer getScoring() {
             return new LegacyScorer(performances) {
                 @Override
                 public double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry) {

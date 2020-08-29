@@ -24,10 +24,11 @@ import de.unijena.bioinf.ChemistryBase.fp.FPIter2;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SimpleMaximumLikelihoodScoring implements FingerblastScoring<Object> {
+public class SimpleMaximumLikelihoodScoring implements FingerblastScoring<Parameters> {
 
     protected final PredictionPerformance[] performances;
     protected final double[] tp, fn, fp, tn;
@@ -49,9 +50,10 @@ public class SimpleMaximumLikelihoodScoring implements FingerblastScoring<Object
     }
 
     @Override
-    public void prepare(ProbabilityFingerprint fingerprint, @Nullable Object ignored) {
+    public void prepare(@Nullable Parameters ignored) {
 
     }
+
 
     @Override
     public double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry) {

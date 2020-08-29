@@ -21,10 +21,9 @@
 package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
-public class MixedScoring implements FingerblastScoring<Object> {
+public class MixedScoring implements FingerblastScoring<Parameters.FP> {
 
     private PredictionPerformance performances[];
     private double[] tp,fp,tn,fn;
@@ -70,16 +69,17 @@ public class MixedScoring implements FingerblastScoring<Object> {
     }
 
     @Override
-    public void prepare(@NotNull ProbabilityFingerprint fingerprint, @Nullable Object ignored) {
-        int k=0;
+    public void prepare(Parameters.FP fpPara) {
+        ProbabilityFingerprint fingerprint = fpPara.getFP();
+        int k = 0;
         for (FPIter iter : fingerprint) {
             final double platt = laplaceSmoothing(iter.getProbability());
             final double logplatt = Math.log(platt);
-            final double lognotplatt = Math.log(1d-platt);
+            final double lognotplatt = Math.log(1d - platt);
             tp[k] = (2d / 4d) * logplatt + (2d / 4d) * logRecall[k];
             fp[k] = (2d / 4d) * lognotplatt + (2d / 4d) * logOneminusSpecificity[k];
             tn[k] = (2d / 4d) * lognotplatt + (2d / 4d) * logSpecificity[k];
-            fn[k] = (2d / 4d) * logplatt + (2d/4d) * logOneMinusRecall[k];
+            fn[k] = (2d / 4d) * logplatt + (2d / 4d) * logOneMinusRecall[k];
 
             ++k;
         }
