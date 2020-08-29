@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -558,7 +559,7 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
     }
 
 
-    public class Scorer implements FingerblastScoring<Object> {
+    public class Scorer implements FingerblastScoring<Parameters.FP> {
         protected double[][] abcdMatrixByNodeIdxAndCandidateProperties;
         protected ProbabilityFingerprint preparedProbabilityFingerprint;
         protected double[] smoothedPlatt;
@@ -607,11 +608,11 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
         int numberOfComputedSimpleContingencyTables;
         TIntHashSet preparedProperties;
         @Override
-        public void prepare(ProbabilityFingerprint fingerprint, Object notUsed) {
+        public void prepare(Parameters.FP fpPara) {
             numberOfComputedContingencyTables = 0;
             numberOfComputedSimpleContingencyTables =0;
             preparedProperties = new TIntHashSet();
-            preparedProbabilityFingerprint = fingerprint;
+            preparedProbabilityFingerprint = fpPara.getFP();
             smoothedPlatt = getSmoothedPlatt(preparedProbabilityFingerprint);
 //            System.out.println("prepare "+this.toString());
 //            long start = System.currentTimeMillis();

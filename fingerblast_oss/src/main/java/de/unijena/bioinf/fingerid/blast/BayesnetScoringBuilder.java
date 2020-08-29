@@ -77,7 +77,10 @@ public class BayesnetScoringBuilder {
 
 
     public static BayesnetScoring readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset));
+        return readScoring(new BufferedReader(new InputStreamReader(stream, charset)),fpVersion,alpha,allowOnlyNegativeScores) ;
+    }
+
+    public static BayesnetScoring readScoring(BufferedReader reader, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
 
         final List<String> lines = new ArrayList<>();
         String l;
@@ -229,11 +232,11 @@ public class BayesnetScoringBuilder {
         return false;
     }
 
-    protected static int[][] parseTreeFromDotFile(Path dotFile) throws IOException {
+    public static int[][] parseTreeFromDotFile(Path dotFile) throws IOException {
         return parseTreeFromFile(dotFile, EdgePatternDot);
     }
 
-    protected static int[][] parseTreeFromFile(Path dotFile) throws IOException {
+    public static int[][] parseTreeFromFile(Path dotFile) throws IOException {
         return parseTreeFromFile(dotFile, EdgePattern);
     }
 
