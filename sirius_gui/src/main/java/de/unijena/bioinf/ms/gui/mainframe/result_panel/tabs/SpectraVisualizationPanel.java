@@ -17,236 +17,174 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
+
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
-import de.unijena.bioinf.ms.gui.ms_viewer.MSViewerPanel;
-import de.unijena.bioinf.ms.gui.ms_viewer.MSViewerPanelListener;
+import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.ExperimentContainerDataModel;
+import de.unijena.bioinf.ms.gui.ms_viewer.data.MSViewerDataModel;
+import de.unijena.bioinf.ms.gui.ms_viewer.data.PeakInformation;
+import de.unijena.bioinf.ms.gui.ms_viewer.data.SiriusIsotopePattern;
+import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 
 import javax.swing.*;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
+import java.util.HashMap;
 
-public class SpectraVisualizationPanel extends JPanel implements ActionListener, MSViewerPanelListener, MouseListener, PanelDescription, ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
-    @Override
-    public String getDescription() {
-        return "Spectra visualisation. Peaks that are explained by the Fragmentation tree of the selected molecular formula are highlighted in red";
-    }
+public class SpectraVisualizationPanel extends JPanel implements ActionListener, PanelDescription, ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
+	@Override
+	public String getDescription() {
+		return "Spectra visualisation. Peaks that are explained by the Fragmentation tree of the selected molecular formula are highlighted in red";
+	}
 
-    private JComboBox<String> spectraSelection;
+	private WebViewSpectraViewer browser;
 
-    private MSViewerPanel msviewer;
-    private ExperimentContainerDataModel model;
-
-    public ExperimentContainerDataModel getModel() {
-        return model;
-    }
-
-    private JButton zoomIn, zoomOut;
-
-    JPopupMenu zoomPopMenu;
-    JMenuItem zoomInMI, zoomOutMI;
-
-    public SpectraVisualizationPanel() {
-        model = new ExperimentContainerDataModel();
-
-        zoomIn = Buttons.getZoomInButton24();
-        zoomOut = Buttons.getZoomOutButton24();
-        zoomIn.addActionListener(this);
-        zoomOut.addActionListener(this);
-        zoomIn.setEnabled(false);
-        zoomOut.setEnabled(false);
-
-        constructZoomPopupMenu();
+	public SpectraVisualizationPanel() {
+		this.setLayout(new BorderLayout());
 
 
-        this.setLayout(new BorderLayout());
+		JToolBar northPanel = new JToolBar();
+		northPanel.setFloatable(false);
+
+		JLabel l = new JLabel("Spectrum:");
+		l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
+		northPanel.add(l);
+
+		northPanel.addSeparator(new Dimension(10, 10));
+
+		this.add(northPanel, BorderLayout.NORTH);
 
 
-        JToolBar northPanel = new JToolBar();
-        northPanel.setFloatable(false);
+		/////////////
+		// Browser //
+		/////////////
+		this.browser = new WebViewSpectraViewer();
 
-        spectraSelection = new JComboBox<String>(model.getComboBoxModel());
-        spectraSelection.setToolTipText("select spectrum");
+		browser.addJS("d3.min.js");
+		browser.addJS("spectra_viewer/spectra_viewer.js");
+		this.add((JFXPanel) this.browser, BorderLayout.CENTER);
+		this.setVisible(true);
+		HashMap<String, Object> bridges = new HashMap<String, Object>() {{}};
+		browser.load(bridges);
+	}
 
-        updateLogic();
+	@Override
+	public void actionPerformed(ActionEvent e) {
 
-        JLabel l = new JLabel("Spectrum:");
-        l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
-        northPanel.add(l);
-        northPanel.add(spectraSelection);
+	}
 
-        northPanel.addSeparator(new Dimension(10, 10));
-        northPanel.add(zoomIn);
-        northPanel.add(zoomOut);
+	@Override
+	public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
+		System.out.println("Results changed ...");
+		if (sre != null) {
+			System.out.println("Results are non-null ...");
+			List<SimpleSpectrum> spectra1 = experiment.getMs1Spectra();
+			List<MutableMs2Spectrum> spectra2 = experiment.getMs2Spectra();
+			FTree ftree = sre.getFragTree().orElse(null);
+			if (ftree != null){
+				System.out.println("FTree exists ...");
+				if (spectra1.size() > 0) {
+					System.out.println("MS1 spectra exist ...");
+					SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
+					IsotopePattern ip = ftree.getAnnotationOrNull(IsotopePattern.class);
+					String jsonstring = spectraWriter.spectraJSONString(spectra1.get(0 // are there cases with more than one?
+					), ip.getPattern(), ftree);
+					try {
+						BufferedWriter bw = new BufferedWriter(new FileWriter("/tmp/test_spectra.json"));
+						bw.write(jsonstring);
+						bw.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					browser.loadSpectra(jsonstring);
+				}
+				if (false && spectra2.size() > 0){
+					System.out.println("MS2 spectra exist ...");
+					// MS1 + IsotopePattern
+					SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
+					browser.loadSpectra(spectraWriter.spectrumJSONString(spectra2.get(
+																			 spectra2.size() - 1 // should me merged MS/MS
+																			 ), ftree));
+				}
+			}
+		}
+	}
 
-        this.add(northPanel, BorderLayout.NORTH);
 
-        msviewer = new MSViewerPanel();
-        msviewer.showPeakInfoOnlyForImportantPeaks(true);
-        msviewer.setData(model);
-        this.add(msviewer);
-        msviewer.addMSViewerPanelListener(this);
-        msviewer.addMouseListener(this);
-    }
+	private void printAllSpectra(List<SimpleSpectrum> spectra1, List<MutableMs2Spectrum> spectra2, FTree ftree){
+		// MS1
+		IsotopePattern ip = ftree.getAnnotationOrNull(IsotopePattern.class);
+		SiriusIsotopePattern ip_annotated = new SiriusIsotopePattern(ftree, spectra1.get(0));
+		if (ip != null){
+			MolecularFormula form = ip.getCandidate();
+			SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
+			System.out.println(spectraWriter.spectraJSONString(spectra1.get(0), ip.getPattern(), ftree));
+		}
+		else
+			System.out.println("isotope pattern is null");
+		// MS2
+		if (spectra2.size() > 0){
+			SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
+			for (int i = 0; i < spectra2.size(); ++i){
+				System.out.println("=== SpectraWriter: MS2 Spectrum " + spectra2.get(i).getCollisionEnergy()
+								   + ", " + spectra2.get(i).getIonization() + ", " + spectra2.get(i).getScanNumber());
+				String jsonstring = spectraWriter.spectrumJSONString(spectra2.get(i), ftree);
+				try{
+					BufferedWriter bw = new BufferedWriter(
+						new FileWriter(
+							"ms2spectrum" + i + ".json"));
+					bw.write(jsonstring);
+					bw.close();
+				} catch (IOException e){
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 
-    public void constructZoomPopupMenu() {
-        zoomPopMenu = new JPopupMenu();
-        zoomInMI = new JMenuItem("Zoom in", Icons.Zoom_In_16);
-        zoomOutMI = new JMenuItem("Zoom out", Icons.Zoom_Out_16);
 
-        zoomInMI.addActionListener(this);
-        zoomOutMI.addActionListener(this);
+	public void printSpectrum(SimpleSpectrum s) {
+		 double scale = Spectrums.getMaximalIntensity(s);
+		System.out.println("Spectrum: ");
+		for (int i = 0; i < s.size(); ++i){
+			System.out.println(i + " intensity: " + s.getIntensityAt(i) / scale
+							   + ", mz: " + s.getMzAt(i));
+		}
+	}
 
-        zoomInMI.setEnabled(false);
-        zoomOutMI.setEnabled(false);
-
-        zoomPopMenu.add(zoomInMI);
-        zoomPopMenu.add(zoomOutMI);
-    }
-
-
-    private void updateLogic() {
-        this.zoomIn.setEnabled(false);
-        this.zoomOut.setEnabled(false);
-        this.zoomInMI.setEnabled(false);
-        this.zoomOutMI.setEnabled(false);
-        spectraSelection.setEnabled(model.getComboBoxModel().getSize() > 0);
-    }
-
-    private void spectraSelectionAction() {
-        model.selectSpectrum((String) spectraSelection.getSelectedItem());
-        msviewer.setData(model);
-        showMolecularFormulaMarkings();
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == spectraSelection) {
-            if (this.spectraSelection.getSelectedIndex() < 0) return;
-            spectraSelectionAction();
-        } else if (e.getSource() == zoomIn || e.getSource() == zoomInMI) {
-            zoomIn.setEnabled(false);
-            zoomInMI.setEnabled(false);
-            int start = model.getFirstMarkedIndex();
-            int end = model.getLastMarkedIndex();
-            this.model.removeMarkings();
-            if (start < 0 || end < 0 || start == end) {
-                return;
-            }
-            this.msviewer.showZoomedView(start, end);
-            zoomOut.setEnabled(true);
-            zoomOutMI.setEnabled(true);
-        } else if (e.getSource() == zoomOut || e.getSource() == zoomOutMI) {
-            zoomOut.setEnabled(false);
-            zoomOutMI.setEnabled(false);
-            this.model.removeMarkings();
-            this.msviewer.showOverview();
-            zoomIn.setEnabled(true);
-            zoomInMI.setEnabled(true);
-        }
-
-    }
-
-    private void showMolecularFormulaMarkings() {
-        msviewer.showOverview();
-        this.zoomIn.setEnabled(false);
-        this.zoomOut.setEnabled(false);
-        this.zoomInMI.setEnabled(false);
-        this.zoomOutMI.setEnabled(false);
-        msviewer.repaint();
-    }
-
-    @Override
-    public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
-        final String selected = (String) spectraSelection.getSelectedItem();
-        if (model.changeData(experiment, sre)) {
-            spectraSelection.removeActionListener(this);
-
-            updateLogic();
-
-            if (spectraSelection.getItemCount() > 0) {
-                spectraSelection.setSelectedItem(selected);
-                if (spectraSelection.getSelectedItem() == null) {
-                    spectraSelection.setSelectedItem(ExperimentContainerDataModel.MSMS_MERGED_DISPLAY);
-                    if (spectraSelection.getSelectedItem() == null)
-                        spectraSelection.setSelectedIndex(0);
-                }
-            } else {
-                spectraSelection.setSelectedItem(null); //clear selection
-            }
-
-            spectraSelectionAction();
-            spectraSelection.addActionListener(this);
-        }
-    }
-
-    @Override
-    public void markingsRemoved() {
-        this.model.removeMarkings();
-        this.zoomIn.setEnabled(false);
-        this.zoomInMI.setEnabled(false);
-    }
-
-    @Override
-    public void peaksMarked(List<Integer> indices) {
-        this.model.removeMarkings();
-        for (int i : indices) this.model.setMarked(i, true);
-        if (indices.size() > 0) {
-            this.zoomIn.setEnabled(true);
-            this.zoomInMI.setEnabled(true);
-        }
-    }
-
-    @Override
-    public void peaksMarkedPerDrag(List<Integer> indices) {
-        this.model.removeMarkings();
-        for (int i : indices) this.model.setMarked(i, true);
-        if (indices.size() > 0) {
-            this.zoomIn.setEnabled(true);
-            this.zoomInMI.setEnabled(true);
-        }
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-        if (e.isPopupTrigger()) {
-            this.zoomPopMenu.show(e.getComponent(), e.getX(), e.getY());
-        }
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-        if (e.isPopupTrigger()) {
-            this.zoomPopMenu.show(e.getComponent(), e.getX(), e.getY());
-        }
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-        // TODO Auto-generated method stub
-
-    }
+	public void printSpectrum(MSViewerDataModel s) {
+		System.out.println("Spectrum " + s.toString() + ":");
+		for (int i = 0; i < s.getSize(); ++i){
+			System.out.println(i + " intensity: " + s.getRelativeIntensity(i)
+							   + ", mz: " + s.getMass(i) + " isIsotope? -> " + s.isIsotope(i)
+							   + ", formula: " + s.getMolecularFormula(i));
+		}
+	}
 }
