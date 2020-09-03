@@ -8,7 +8,7 @@ col = {annotation: "lightcoral", spec1: "royalblue",  spec2: "mediumseagreen", h
 view = {mirror: "normal"}; // alternativ: "simple"
 
 
-var svg = d3.select("#plotArea")
+var svg = d3.select("body")
     .append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
