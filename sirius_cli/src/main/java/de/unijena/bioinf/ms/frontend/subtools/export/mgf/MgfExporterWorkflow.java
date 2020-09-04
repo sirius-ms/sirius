@@ -56,7 +56,7 @@ public class MgfExporterWorkflow implements Workflow {
     public MgfExporterWorkflow(PreprocessingJob<ProjectSpaceManager> ppj, MgfExporterOptions options, ParameterConfig config) {
         outputPath = options.output;
         Deviation mergeMs2Deviation = new Deviation(options.ppmDev);
-        mgfWriter = new MgfWriter(options.writeMs1, options.mergeMs2, mergeMs2Deviation);
+        mgfWriter = new MgfWriter(options.writeMs1, options.mergeMs2, mergeMs2Deviation,true);
         this.ppj = ppj;
         this.quantPath = Optional.ofNullable(options.quantTable).map(File::toPath);
     }
