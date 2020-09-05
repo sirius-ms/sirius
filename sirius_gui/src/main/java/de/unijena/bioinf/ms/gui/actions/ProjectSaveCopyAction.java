@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
@@ -18,11 +37,11 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProjectExportAction extends AbstractAction {
+public class ProjectSaveCopyAction extends AbstractAction {
 
-    public ProjectExportAction() {
+    public ProjectSaveCopyAction() {
         super("SaveCopy");
-        putValue(Action.LARGE_ICON_KEY, Icons.EXPORT_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_FILE_32);
         putValue(Action.SHORT_DESCRIPTION, "Save a copy of the current project. (current location stays active)");
         setEnabled(true);
 

@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.gui.mainframe;
 
 import ca.odell.glazedlists.BasicEventList;
@@ -14,6 +33,7 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVFormatReader;
+import de.unijena.bioinf.ms.gui.logging.LogDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableExperimentListPanel;
@@ -32,11 +52,19 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame implements DropTargetListener {
 
     public static final MainFrame MF = new MainFrame();
+
+    //Logging Panel
+    private final LogDialog log;
+
+    public LogDialog getLogConsole() {
+        return log;
+    }
 
     // Project Space
     private GuiProjectSpaceManager ps;
@@ -94,8 +122,14 @@ public class MainFrame extends JFrame implements DropTargetListener {
     private DropTarget dropTarget;
 
 
+    public synchronized ConnectionMonitor CONNECTION_MONITOR() {
+        if (CONNECTION_MONITOR == null)
+            CONNECTION_MONITOR = new ConnectionMonitor();
+        return CONNECTION_MONITOR;
+    }
+
     //internet connection monitor
-    public static final ConnectionMonitor CONNECTION_MONITOR = new ConnectionMonitor();
+    private ConnectionMonitor CONNECTION_MONITOR;
 
     // methods for creating the mainframe
     private MainFrame() {
@@ -105,6 +139,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
+
+        log = new LogDialog(null,false, Level.ALL);
     }
 
     //if we want to add taskbar stuff we can configure this here
@@ -172,14 +208,15 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         //build left sidepane
         FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(compoundList));
+        experimentListPanel.setPreferredSize(new Dimension(228, (int) experimentListPanel.getPreferredSize().getHeight()));
 
         //BUILD the MainFrame (GUI)
-        final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
-        tabbedPane.addTab("Compounds", experimentListPanel);
-        tabbedPane.addTab("Identifications", new JPanel());
-        tabbedPane.setEnabledAt(1, false);
-        tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
-        mainPanel.add(tabbedPane, BorderLayout.WEST);
+//        final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
+//        tabbedPane.addTab("Compounds", experimentListPanel);
+//        tabbedPane.addTab("Identifications", new JPanel());
+//        tabbedPane.setEnabledAt(1, false);
+//        tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
+        mainPanel.add(experimentListPanel, BorderLayout.WEST);
         mainPanel.add(resultsPanel, BorderLayout.CENTER);
         add(toolbar, BorderLayout.NORTH);
 
@@ -187,7 +224,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setSize(new Dimension((int) (screen.width * .7), (int) (screen.height * .7)));
         MainFrame.MF.setLocationRelativeTo(null); //init mainframe
         setVisible(true);
-
     }
 
 

@@ -1,7 +1,52 @@
+
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
     }
+}
+plugins{
+    id "com.github.kkdad.dependency-license-report" version "1.14.2"
+}
+
+apply plugin: 'ManifestClasspath' //this is to keep classpath away from commandline because it may get too long for windows
+
+
+licenseReport {
+    // Set output directory for the report data.
+    // Defaults to ${project.buildDir}/reports/dependency-license.
+//    outputDir = "$projectDir/build/licenses"
+
+    // Select projects to examine for dependencies.
+    // Defaults to current project and all its subprojects
+//    projects = [project] + project.subprojects
+
+    // Adjust the configurations to fetch dependencies, e.g. for Android projects. Default is 'runtimeClasspath'
+    configurations = ['compile']
+    // Use 'ALL' to dynamically resolve all configurations:
+    // configurations = ALL
+
+    // List the groups ids to exclude from dependency report. Supports regular expressions.
+    // For finer granularity, see: excludes.
+    excludeGroups = ['cplex','gurobi']
+
+    // List the ids (in module:name format) to exclude from dependency report. Supports regular expressions.
+    // By default excludes is empty.
+//    excludes = ['moduleGroup:moduleName']
+
+    // Don't include artifacts of project's own group into the report
+    excludeOwnGroup = false
+
+    // Set custom report renderer, implementing ReportRenderer.
+    // Yes, you can write your own to support any format necessary.
+//    renderers = [new XmlReportRenderer('third-party-libs.xml', 'Back-End Libraries')]
+
+    // Set importers to import any external dependency information, i.e. from npm.
+    // Custom importer should implement DependencyDataImporter interface.
+//    importers = [new XmlReportImporter('Frontend dependencies', file(frontend_libs.xml))]
+
+    // This is for the allowed-licenses-file in checkLicense Task
+    // Accepts File, URL or String path to local or remote file
+//    allowedLicensesFile = new File("$projectDir/config/allowed-licenses.json")
 }
 
 ext['jna.version'] = '5.4.0'
@@ -9,10 +54,12 @@ ext['jna.version'] = '5.4.0'
 dependencies {
 //project
     compile project(':sirius_cli')
+    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 
 //internal
     compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
+
 //external
     compile "net.sf.opencsv:opencsv:2.3"
     compile "org.swinglabs.swingx:swingx-all:1.6.5-1"
@@ -45,17 +92,10 @@ project.ext.set("type", ['gui','console'])
 
 /*################### Jar build Stuff ################### */
 jar {
-    zip64 = true
     enabled = true
     manifest {
         attributes 'Main-Class': mainClassName
     }
-
-    from {
-        configurations.runtimeClasspath.filter { f -> !project.libExclude.stream().anyMatch { s -> f.name.startsWith(s) } }
-                .collect { it.isDirectory() ? it : zipTree(it) }
-    }
-
 }
 
 /*################### Windows release Stuff ################### */
@@ -64,7 +104,6 @@ project.type.each{t ->
         tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
             group = 'launch4j'
             mainClassName = project.mainClassName
-            jar = project.jar.archiveFileName.get()
             bundledJre64Bit = true
             bundledJrePath = 'zulu'
             headerType = t
@@ -72,7 +111,8 @@ project.type.each{t ->
             outfile = "${project.appName}-${t}-${a}.exe"
             if(t.equals('gui')){
                 cmdLine = 'gui'
-                splashFileName = "${project.distPath}/sirius-splash.bmp"
+                //splash is now inside java
+//                splashFileName = "${project.distPath}/sirius-splash.bmp"
             }
 
         }
@@ -91,7 +131,9 @@ distributions {
             baseName = "${project.appName}-$n"
             contents {
                 into('lib') {
-                    from('build/libs/')
+                    from("build/install/${project.name}/lib") {
+                        exclude libExclude
+                    }
                     from("${project.glpkPath}/l${ar}/") {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
@@ -105,9 +147,12 @@ distributions {
                 }
 
                 into('bin') {
-                    from("build/scripts/sirius")
-                    from("${project.distPath}")
-                    from("${getRootDir()}/LICENSE.txt")
+                    from("build/install/${project.name}/bin") {
+                        exclude("*.bat")
+                    }
+                    from("${project.distPath}"){
+                        exclude('COPYING_OpenMS.txt')
+                    }
                 }
                 into('doc') {
                     from(project.pdfManualPath)
@@ -131,17 +176,20 @@ distributions {
 
             baseName = "${project.appName}-$n"
             contents {
-                from('build/libs/')
-
+                into('lib') {
+                    from('build/launch4j/lib') {
+                        exclude libExclude
+                    }
+                }
                 from("${project.glpkPath}/w${ar}/")
                 from("${project.clpPath}/w${ar}/")
                 from("${project.distPath}") {
                     exclude('sirius-gui')
+                    exclude('COPYING_OpenMS.txt')
                 }
                 into("${jre_path}"){
                     from("${project.jreBuildPath}/zulu${zulu_jre_version}-ca-fx-jre${jre_version}-win_x${ar}/")
                 }
-                from { "${getRootDir()}/LICENSE.txt" }
                 from('build/launch4j') {
                     include("*-${ar}.exe")
                 }
@@ -167,8 +215,9 @@ distributions {
         baseName = "${project.appName}-$n"
         contents {
             into('lib') {
-                from('build/libs/')
-
+                from("build/install/${project.name}/lib") {
+                    exclude libExclude
+                }
                 from("${project.glpkPath}/osx/")
                 from("${project.clpPath}/osx/")
                 exclude('*.zip')
@@ -179,9 +228,12 @@ distributions {
             }
 
             into('bin') {
-                from("build/scripts/sirius")
-                from("${project.distPath}")
-                from("${getRootDir()}/LICENSE.txt")
+                from("build/install/${project.name}/bin") {
+                    exclude("*.bat")
+                }
+                from("${project.distPath}"){
+                    exclude('COPYING_OpenMS.txt')
+                }
             }
             into('doc') {
                 from(project.pdfManualPath)
