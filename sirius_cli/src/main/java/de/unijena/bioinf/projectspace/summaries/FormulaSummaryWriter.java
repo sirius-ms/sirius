@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.projectspace.summaries;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
@@ -11,12 +30,13 @@ import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.Summarizer;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
@@ -97,7 +117,7 @@ public class FormulaSummaryWriter implements Summarizer {
         final StringBuilder headerBuilder = new StringBuilder("molecularFormula\tadduct\tprecursorFormula");/*	rankingScore*/
         if (scorings != null && !scorings.isEmpty())
             headerBuilder.append("\t").append(scorings);
-        headerBuilder.append("\texplainedPeaks\texplainedIntensity");
+        headerBuilder.append("\texplainedPeaks\texplainedIntensity\tmedianMassError(ppm)\tmassError(ppm)");
         return headerBuilder.toString();
     }
 
@@ -149,7 +169,11 @@ public class FormulaSummaryWriter implements Summarizer {
             w.write(tree != null ? String.valueOf(tree.numberOfVertices()) : "");
             w.write('\t');
             w.write(tree != null ? String.valueOf(tree.getAnnotationOrThrow(TreeStatistics.class).getExplainedIntensity()) : "");
-            if (prefix != null){
+            w.write('\t');
+            w.write(tree != null ? String.valueOf(new FTreeMetricsHelper(tree).getMedianMassDeviation().getPpm()) : "");
+            w.write('\t');
+            w.write(tree != null ? r.getId().getParentId().getIonMass().map(e -> tree.getMassErrorTo(tree.getRoot(), e).getPpm()).map(String::valueOf).orElse("N/A") : "");
+            if (prefix != null) {
                 w.write('\t');
                 w.write(prefix.get(r));
             }

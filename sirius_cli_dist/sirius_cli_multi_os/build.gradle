@@ -1,5 +1,3 @@
-import java.nio.file.Files
-
 dependencies {
 //project
     compile project(':sirius_cli')
@@ -12,14 +10,8 @@ project.ext.set("type", ['console'])
 
 /*################### Jar build Stuff ################### */
 jar {
-    zip64=true
     manifest {
         attributes 'Main-Class': mainClassName
-    }
-
-    from {
-        configurations.runtimeClasspath.filter {f ->!project.libExclude.stream().anyMatch{s -> f.name.startsWith(s)}}
-                .collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 
@@ -32,15 +24,10 @@ project.type.each{t ->
             headerType = t
             jreRuntimeBits = a
 
-            jar = "../../../All/Sirius/lib/${tasks.jar.archiveName}"
+            jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
 
-            classpath.add("../../../All/Sirius/lib/${tasks.jar.archiveName}") //add
+            classpath.add('../../../All/Sirius/lib/*') //add
             println(classpath)
-
-            //this is to include JAVA_HOME variable
-            bundledJre64Bit = a.equals('64')
-            bundledJrePath = '%JAVA_HOME%'
-            jreMinVersion = targetCompatibility
 
             outfile = "${project.appName}-${t}-${a}.exe"
         }
@@ -80,15 +67,13 @@ distributions {
         baseName = "${project.appName}-$n"
         contents {
             into('All/Sirius/lib') {
-                from('build/libs/')
+                from("build/install/${project.name}/lib") {
+                    exclude libExclude
+                }
             }
 
             project.arch.each { ar ->
                 into("Linux/${ar}bit/Sirius/lib") {
-                    from("${project.glpkPath}/l${ar}/") {
-                        include('libglpk.so.40')
-                        include('libglpk_java.so')
-                    }
                     from("${project.clpPath}/l${ar}/")
                     exclude('*.zip')
                 }
@@ -98,18 +83,19 @@ distributions {
                         exclude("*.bat")
                     }
                     from("${project.distPath}") {
-                        include('COPYING.txt')
+                        include('COPYING_OpenMS.txt')
+                        include('LICENSE.txt')
                     }
-                    from("${getRootDir()}/LICENSE.txt")
+                    rename{String name -> name.replace('COPYING_OpenMS.txt','COPYING.txt')}
                 }
 
                 into("Windows/${ar}bit/Sirius") {
-                    from("${project.glpkPath}/w${ar}/")
                     from("${project.clpPath}/w${ar}/")
                     from("${project.distPath}") {
-                        include('COPYING.txt')
+                        include('COPYING_OpenMS.txt')
+                        include('LICENSE.txt')
                     }
-                    from { "${getRootDir()}/LICENSE.txt" }
+                    rename{String name -> name.replace('COPYING_OpenMS.txt','COPYING.txt')}
                     from('build/launch4j') {
                         include("sirius-console-${ar}.exe")
                     }
@@ -117,7 +103,6 @@ distributions {
 
             }
             into('MacOS/64bit/Sirius/lib') {
-                from("${project.glpkPath}/osx/")
                 from("${project.clpPath}/osx/")
                 exclude('*.zip')
             }
@@ -128,9 +113,10 @@ distributions {
                     exclude("*.bat")
                 }
                 from("${project.distPath}") {
-                    include('COPYING.txt')
+                    include('COPYING_OpenMS.txt')
+                    include('LICENSE.txt')
                 }
-                from("${getRootDir()}/LICENSE.txt")
+                rename{String name -> name.replace('COPYING_OpenMS.txt','COPYING.txt')}
             }
         }
     })

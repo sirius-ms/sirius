@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -14,6 +33,7 @@ import picocli.CommandLine.Option;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.logging.LogManager;
 
 /**
  * This is for not algorithm related parameters.
@@ -36,8 +56,26 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         this.spaceManagerFactory = spaceManagerFactory;
     }
 
-    // region Options: Basic
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public enum LogLevel {OFF, SEVERE, WARNING, INFO, CONFIG, FINE, FINER, FINEST, ALL}
+
+    @Option(names = {"--log", "--loglevel"}, description = "Set logging level of the Jobs SIRIUS will execute. Valid values: ${COMPLETION-CANDIDATES}", order = 5)
+    public void setLogLevel(LogLevel loglevel) {
+        try {
+            LogManager.getLogManager().updateConfiguration(key -> {
+                if (key.equals("de.unijena.bioinf.jjobs.JJob.level"))
+                    return (k, v) -> {
+                        return loglevel.name();
+                    };
+                else
+                    return (k, v) -> {
+                        return k;
+                    };
+            });
+        } catch (IOException e) {
+            throw new CommandLine.PicocliException(e.getMessage());
+        }
+    }
+
     @Option(names = {"--cores", "--processors"}, description = "Number of cpu cores to use. If not specified Sirius uses all available cores.", order = 10)
     public void setNumOfCores(int numOfCores) {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(numOfCores));
@@ -48,9 +86,10 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     @Option(names = {"--compound-buffer", "--initial-compound-buffer"}, defaultValue = "-1", description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to 0. Default: 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
     public void setInitialInstanceBuffer(int initialInstanceBuffer) {
-        this.instanceBuffer = initialInstanceBuffer;
-        if (instanceBuffer < 0)
+        this.instanceBuffer = /*initialInstanceBuffer == null ? -1 :*/ initialInstanceBuffer;
+        if (instanceBuffer == 0) {
             instanceBuffer = 3 * SiriusJobs.getGlobalJobManager().getCPUThreads();
+        }
 
         PropertyManager.setProperty("de.unijena.bioinf.sirius.instanceBuffer", String.valueOf(instanceBuffer));
     }

@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -22,9 +41,8 @@ public class UpdateDialog extends JDialog implements ActionListener {
         this.setLocationRelativeTo(owner);
         setLayout(new BorderLayout());
         StringBuilder message = new StringBuilder();
-        message.append("<html>There is a new version of SIRIUS available.<br> Update to <b>SIRIUS ")
-                .append(version.siriusGuiVersion)
-                .append("</b> to receive the newest upgrades.<br> Your current version is ")
+        message.append("<html>There is a new version of SIRIUS available.<br> Download the latest <b>SIRIUS</b>")
+                .append(" to receive the newest upgrades.<br> Your current version is ")
                 .append(FingerIDProperties.sirius_guiVersion())
                 .append("<br>");
         if (version.finishJobs()) {
@@ -45,7 +63,7 @@ public class UpdateDialog extends JDialog implements ActionListener {
         add(label, BorderLayout.CENTER);
         final JPanel subpanel = new JPanel(new FlowLayout());
         ignore = new JButton("Ignore update");
-        download = new JButton("Download SIRIUS " + version.siriusGuiVersion);
+        download = new JButton("Download latest SIRIUS");
         subpanel.add(download);
         subpanel.add(ignore);
         subpanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));

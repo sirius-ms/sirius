@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.gui.utils;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -55,11 +74,11 @@ public class GuiUtils {
                     try {
                         Constructor c = Class.forName("SiriusStyleFactory").getConstructor(String.class);
                         c.newInstance("mini"); // regular, mini, small or large
-                    } catch (ExceptionInInitializerError eiie){
+                    } catch (ExceptionInInitializerError eiie) {
                         //
-                    } catch (LinkageError le){
+                    } catch (LinkageError le) {
                         //
-                    } catch (ClassNotFoundException cnfe){
+                    } catch (ClassNotFoundException cnfe) {
                         //
                     }
 
@@ -74,15 +93,13 @@ public class GuiUtils {
         //nicer times for tooltips
         ToolTipManager.sharedInstance().setInitialDelay(250);
         ToolTipManager.sharedInstance().setDismissDelay(60000);
-
-
     }
 
     public static void drawListStatusElement(boolean isComputing, Graphics2D g2, Component c) {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         final Color prevCol = g2.getColor();
-        String icon = isComputing ? "\u2699" :"";
+        String icon = isComputing ? "\u2699" : "";
 
 
         /*switch (state) {
@@ -124,7 +141,7 @@ public class GuiUtils {
         @Override
         protected void doPaint(Graphics2D g, JComponent c, int width,
                                int height, Object[] extendedCacheKeys) {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g.setColor(fillColor);
             g.fillRect(0, 0, width, height);
         }
@@ -205,4 +222,16 @@ public class GuiUtils {
                 + lines.stream().map(it -> it.replace("\n", "<br>")).collect(Collectors.joining("<br>"))
                 + "</p></html>";
     }
+
+    public static Dimension getEffectiveScreenSize(@NotNull GraphicsConfiguration c) {
+        Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+        Insets in = getScreenInsets(c);
+        return new Dimension(d.width - in.left - in.right, d.height - in.bottom - in.top);
+    }
+    public static Insets getScreenInsets(@NotNull GraphicsConfiguration c) {
+        //height of the task bar
+        return Toolkit.getDefaultToolkit().getScreenInsets(c);
+    }
+
+
 }

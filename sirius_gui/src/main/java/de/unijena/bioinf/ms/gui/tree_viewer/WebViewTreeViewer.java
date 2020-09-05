@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.gui.tree_viewer;
 
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -9,6 +28,7 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -50,7 +70,18 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
     });
     }
 
-    public void addJS(String resource_name){
+    public boolean addJSCode(String scriptTag) {
+        scriptTag = scriptTag.strip();
+        if (scriptTag != null && scriptTag.startsWith("<script")) {
+            this.html_builder.append(scriptTag);
+            return true;
+        } else {
+            LoggerFactory.getLogger(getClass()).error("Not a valid script tag: " + scriptTag);
+            return false;
+        }
+    }
+
+    public void addJS(String resource_name) {
         String res_html;
         try{
             res_html = getJSResourceInHTML(WebViewTreeViewer.class.
@@ -80,37 +111,21 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
                 this.webView.getEngine().loadContent(html_builder.toString(),
                                                      "text/html");
                 // wait for the engine to finish loading
-                webView.getEngine().getLoadWorker().stateProperty().addListener(
-                    new ChangeListener<Worker.State>() {
-                        public void changed(ObservableValue ov,
-                                            Worker.State oldState,
-                                            Worker.State newState) {
+                webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
                             if (newState == Worker.State.SUCCEEDED) {
                                 JSObject win = (JSObject) getJSObject("window");
-                                for (Map.Entry<String, Object> entry :
-                                        bridges.entrySet())
-                                    win.setMember(entry.getKey(),
-                                            entry.getValue());
+                                for (Map.Entry<String, Object> entry : bridges.entrySet())
+                                    win.setMember(entry.getKey(), entry.getValue());
                                 executeJS("applySettings()");
                             }
-                        }
-                    });
+                        });
         });
     }
 
-    public void loadTree(String json_tree) {
-        cancelTasks();
-            executeJS("loadJSONTree('" + json_tree.replace("\n", " ")
-                      + "')");
-    }
 
-    public void clear(){
-        executeJS("clearSVG();");
-    }
 
     public void executeJS(String js_code) {
-        queueTaskInJFXThread(() -> {
-            webView.getEngine().executeScript(js_code);});
+        queueTaskInJFXThread(() -> webView.getEngine().executeScript(js_code));
     }
 
 
@@ -151,5 +166,15 @@ public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
         br.close();
         raw_script.append("</script>");
         return raw_script.toString();
+    }
+
+    public void loadTree(String json_tree) {
+        cancelTasks();
+        executeJS("loadJSONTree('" + json_tree.replaceAll("(\\r\\n|\\r|\\n)", " ")
+                + "')");
+    }
+
+    public void clear(){
+        executeJS("clearSVG();");
     }
 }

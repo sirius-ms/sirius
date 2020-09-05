@@ -1,6 +1,9 @@
 package de.unijena.bioinf.ms.gui.tree_viewer;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 
@@ -14,14 +17,17 @@ import java.util.HashMap;
 
 public class TreeVisualizationPanelTest{
     public static void main(String[] args) throws InterruptedException {
+        SiriusJobs.setGlobalJobManager(new SwingJobManager(PropertyManager.getNumberOfThreads(), 1));
+
         JFrame frame = new JFrame("TreeViewer Test");
         WebViewTreeViewer browser = new WebViewTreeViewer();
+//        System.out.println("FIREBUG: " + browser.addJSCode("<script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/firebug-lite/1.4.0/firebug-lite.js'></script>"));
         browser.addJS("d3.min.js");
         browser.addJS("d3-colorbar.js");
         browser.addJS("tree_viewer/treeViewer.js");
         // browser.addJS("tree_viewer/treeViewerSettings.js");
         browser.addJS("tree_viewer/treeViewerConnector.js");
-        frame.add((JFXPanel) browser);
+        frame.add(browser);
         HashMap<String, Object> bridges = new HashMap<String, Object>() {{
                 put("config", new TreeConfig());
                 put("connector", new TreeViewerConnector());

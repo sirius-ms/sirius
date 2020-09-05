@@ -1,3 +1,7 @@
+/*
+ * code taken from https://codereview.stackexchange.com/questions/64407/align-strings-for-output
+ */
+
 package de.unijena.bioinf.ms.frontend.utils;
 
 import java.util.ArrayList;
