@@ -84,6 +84,15 @@ public class FormulaResultController extends BaseApiController {
         }).orElse(null);
     }
 
+    @GetMapping(value = "/formulas/{fid}/scores", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public FormulaResultScores getFormulaResultScores(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
+        SiriusProjectSpace projectSpace = projectSpace(pid);
+        return this.getAnnotatedFormulaResult(projectSpace,cid,fid,FormulaScoring.class).map(fr -> {
+            FormulaScoring formulaScoring = fr.getAnnotation(FormulaScoring.class).orElse(null);
+            return new FormulaResultScores(formulaScoring);
+        }).orElse(null);
+    }
+
     @GetMapping(value = "formulas/{fid}/tree", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public String getFragmentationTree(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
         SiriusProjectSpace projectSpace = super.projectSpace(pid);
