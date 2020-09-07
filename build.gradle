@@ -1,10 +1,7 @@
 import org.gradle.api.internal.file.copy.CopyAction
 import org.gradle.api.internal.file.copy.FileCopyAction
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
+import java.nio.file.*
 import java.util.stream.Stream
 
 buildscript {
@@ -22,6 +19,7 @@ buildscript {
 
 plugins {
     id "com.jfrog.artifactory" version "4.9.3"
+    id "de.undercouch.download" version "4.1.1"
 }
 
 //Global Properties
@@ -78,6 +76,25 @@ ext {
     siriusVersion = System.properties.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = System.properties.getProperty('de.unijena.bioinf.fingerid.version')
     mztabm_version = System.properties.getProperty('de.unijena.bioinf.mztabm.version')
+}
+
+class CopyWithSymlink extends Copy {
+    public CopyWithSymlink() {
+        super();
+        eachFile { details ->
+            Path sourcePath = FileSystems.getDefault().getPath(details.file.path)
+            if (Files.isSymbolicLink(sourcePath)) {
+                details.exclude()
+                Path destinationPath = Paths.get("${destinationDir}/${details.relativePath}")
+                if (Files.notExists(destinationPath.parent)) {
+                    project.mkdir destinationPath.parent
+                }
+                project.exec {
+                    commandLine 'ln', '-sf', Files.readSymbolicLink(sourcePath), destinationPath
+                }
+            }
+        }
+    }
 }
 
 
@@ -214,28 +231,21 @@ task downloadCLP(type: Copy) {
     }
 }
 
-task downloadJRE(type: Copy) {
-    def zuluURL = new URL("https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/zulu${zulu_jre_version}-ca-fx-jre${jre_version}.zip")
+task downloadJRE(type: Download) {
     project.ext.set("jreBuildPath", getBuildDir().toPath().resolve('tmp/zulu/').toFile())
 
-    java.nio.file.Path dir = project.jreBuildPath.toPath()
-    def zipFileToDownload = dir.getParent().resolve("zuluFX.zip")
-    if (!dir.toFile().exists()) {
-        copy {
-            Files.createDirectories(dir)
-            if (!Files.exists(zipFileToDownload)) {
-                getLogger().lifecycle("Downloading Zulu JREs")
-                def file = zipFileToDownload.newOutputStream()
-                file << zuluURL.openStream()
-                file.close()
-            }
-            getLogger().lifecycle("Unpacking Zulu JREs")
-            from zipTree(zipFileToDownload.toFile())
-            into dir.toFile()
-        }
-    }
+    src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/zulu${zulu_jre_version}-ca-fx-jre${jre_version}.zip"
+    dest  getBuildDir().toPath().resolve('tmp/zuluFX.zip').toFile()
+    onlyIfModified true
 }
 
+task extractJRE(type: Exec, dependsOn: downloadJRE) {
+//    group = 'documentation'
+    inputs.file(downloadJRE.outputs.files.singleFile)
+    outputs.file(project.jreBuildPath)
+    enabled = !outputs.files.singleFile.exists()
+    commandLine(["unzip", "${inputs.files.singleFile}", "-d", "${outputs.files.singleFile}"])
+}
 /*################### Building the Documentation ################### */
 
 
@@ -446,10 +456,10 @@ subprojects {
 
                     }
             }
-            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/zulu-11.jre/Contents/Home/bin/java\" ] ; then")
-            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/zulu-11.jre/Contents/Home/bin/java\"")
-            lines = lines.plus(insertJREIndex + 2, "elif [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
-            lines = lines.plus(insertJREIndex + 3, "    JAVACMD=\"\$APP_HOME/${jre_path}/bin/java\"")
+//            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/zulu-11.jre/Contents/Home/bin/java\" ] ; then")
+//            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/zulu-11.jre/Contents/Home/bin/java\"")
+            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
+            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/bin/java\"")
 
             unixScript.text = lines.join(System.lineSeparator())
 
