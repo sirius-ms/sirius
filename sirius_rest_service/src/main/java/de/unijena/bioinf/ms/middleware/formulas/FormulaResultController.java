@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping(value = "/api/projects/{pid}/compounds/{cid}")
@@ -55,14 +56,7 @@ public class FormulaResultController extends BaseApiController {
     @GetMapping(value = "/formulas", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<FormulaId> getFormulaIds(@PathVariable String pid, @PathVariable String cid, @RequestParam(required = false) boolean includeFormulaScores) {
         SiriusProjectSpace space = projectSpace(pid);
-        return space.findCompound(cid).map(ccId -> {
-            try {
-                return space.getCompound(ccId);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }).map(con -> con.getResults().values().stream().map(frId -> {
+        return getCompound(space ,cid).map(con -> con.getResults().values().stream().map(frId -> {
             try{
                 return space.getFormulaResult(frId, FormulaScoring.class);
             } catch (IOException e) {
@@ -110,8 +104,27 @@ public class FormulaResultController extends BaseApiController {
     }
 
     @GetMapping(value = "/formulas/topHitCandidate")
-    public CompoundCandidate getTopHitCandidate(@PathVariable String pid, @PathVariable String cid){
-        return null;
+    public String getTopHitCandidate(@PathVariable String pid, @PathVariable String cid){
+        SiriusProjectSpace projectSpace = projectSpace(pid);
+        Stream<FormulaResult> annotatedFResults = this.getCompound(projectSpace,cid).map(cc ->
+                cc.getResults().values().stream().map(frId -> {
+                    try {
+                        return projectSpace.getFormulaResult(frId, FBCandidates.class);
+                    } catch (IOException e) {
+                        return null;
+                    }
+                })).orElse(Stream.empty());
+        List<Scored<CompoundCandidate>> topHits = annotatedFResults.map(fr ->
+                fr.getAnnotation(FBCandidates.class).map(fbcandidates ->
+                        fbcandidates.getResults().get(0)).orElse(null)).collect(Collectors.toList());
+
+        Scored<CompoundCandidate> bestCandidate = topHits.get(0);
+        for(int idx = 1; idx < topHits.size(); idx++){
+            if(topHits.get(idx).getScore() > bestCandidate.getScore()){
+                bestCandidate = topHits.get(idx);
+            }
+        }
+        return bestCandidate.getCandidate().toJSON();
     }
 
     @GetMapping(value = "formulas/{fid}/tree", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
