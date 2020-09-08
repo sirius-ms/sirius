@@ -19,9 +19,12 @@
 
 package de.unijena.bioinf.ms.middleware.formulas;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
@@ -93,6 +96,13 @@ public class FormulaResultController extends BaseApiController {
         }).orElse(null);
     }
 
+    @GetMapping(value = "/formulas/{fid}/candidates", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public List<Scored<CompoundCandidate>> getStructureCandidates(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
+        SiriusProjectSpace projectSpace = projectSpace(pid);
+        return this.getAnnotatedFormulaResult(projectSpace, cid, fid, FBCandidates.class).map(fr ->
+                fr.getAnnotation(FBCandidates.class).map(FBCandidates::getResults).orElse(null)).orElse(null);
+    }
+
     @GetMapping(value = "formulas/{fid}/tree", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public String getFragmentationTree(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
         SiriusProjectSpace projectSpace = super.projectSpace(pid);
@@ -121,6 +131,7 @@ public class FormulaResultController extends BaseApiController {
                 }).orElse(null)).orElse(null);
     }
 
+    @SafeVarargs
     private Optional<FormulaResult> getAnnotatedFormulaResult(SiriusProjectSpace projectSpace, String cid, String fid, Class<? extends DataAnnotation>... components){
         Optional<FormulaResult> fResult = this.getCompound(projectSpace, cid).map(cc -> cc.findResult(fid).map(frId -> {
             try {
