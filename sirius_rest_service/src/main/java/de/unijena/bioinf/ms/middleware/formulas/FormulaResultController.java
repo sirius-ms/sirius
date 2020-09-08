@@ -36,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import javax.print.DocFlavor;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -97,10 +98,20 @@ public class FormulaResultController extends BaseApiController {
     }
 
     @GetMapping(value = "/formulas/{fid}/candidates", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public List<Scored<CompoundCandidate>> getStructureCandidates(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
+    public String getStructureCandidates(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
         SiriusProjectSpace projectSpace = projectSpace(pid);
-        return this.getAnnotatedFormulaResult(projectSpace, cid, fid, FBCandidates.class).map(fr ->
-                fr.getAnnotation(FBCandidates.class).map(FBCandidates::getResults).orElse(null)).orElse(null);
+        return this.getAnnotatedFormulaResult(projectSpace, cid, fid, FBCandidates.class).map(fr -> {
+            List<String> jsons = fr.getAnnotation(FBCandidates.class).map(candidates ->
+                    candidates.getResults().stream().map(sc ->
+                            sc.getCandidate().toJSON()).collect(Collectors.toList()))
+                    .orElse(Collections.emptyList());
+            return this.JSONListToOneJSON(jsons);
+        }).orElse(null);
+    }
+
+    @GetMapping(value = "/formulas/topHitCandidate")
+    public CompoundCandidate getTopHitCandidate(@PathVariable String pid, @PathVariable String cid){
+        return null;
     }
 
     @GetMapping(value = "formulas/{fid}/tree", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -155,6 +166,17 @@ public class FormulaResultController extends BaseApiController {
         });
     }
 
+    private String JSONListToOneJSON(List<String> jsons){
+        StringBuilder builder = new StringBuilder("[");
+        if(!jsons.isEmpty()) builder.append(jsons.get(0));
+
+        for(int idx = 1; idx < jsons.size(); idx++){
+            builder.append(",");
+            builder.append(jsons.get(idx));
+        }
+        builder.append("]");
+        return builder.toString();
+    }
 
 }
 
