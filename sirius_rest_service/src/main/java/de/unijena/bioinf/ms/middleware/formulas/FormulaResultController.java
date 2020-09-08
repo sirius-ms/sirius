@@ -103,7 +103,7 @@ public class FormulaResultController extends BaseApiController {
         }).orElse(null);
     }
 
-    @GetMapping(value = "/formulas/topHitCandidate")
+    @GetMapping(value = "/formulas/topHitCandidate", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public String getTopHitCandidate(@PathVariable String pid, @PathVariable String cid){
         SiriusProjectSpace projectSpace = projectSpace(pid);
         Stream<FormulaResult> annotatedFResults = this.getCompound(projectSpace,cid).map(cc ->
@@ -114,10 +114,11 @@ public class FormulaResultController extends BaseApiController {
                         return null;
                     }
                 })).orElse(Stream.empty());
-        List<Scored<CompoundCandidate>> topHits = annotatedFResults.map(fr ->
+        List<Optional<Scored<CompoundCandidate>>> topHits = annotatedFResults.map(fr ->
                 fr.getAnnotation(FBCandidates.class).map(fbcandidates ->
-                        fbcandidates.getResults().get(0)).orElse(null)).collect(Collectors.toList());
+                        fbcandidates.getResults().get(0))).collect(Collectors.toList());
 
+        // Todo: handling of null-objects
         Scored<CompoundCandidate> bestCandidate = topHits.get(0);
         for(int idx = 1; idx < topHits.size(); idx++){
             if(topHits.get(idx).getScore() > bestCandidate.getScore()){
