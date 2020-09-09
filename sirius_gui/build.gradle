@@ -1,3 +1,4 @@
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 buildscript {
     repositories {
@@ -6,6 +7,7 @@ buildscript {
 }
 plugins{
     id "com.github.kkdad.dependency-license-report" version "1.14.2"
+    id 'org.beryx.runtime' version '1.11.4'
 }
 
 apply plugin: 'ManifestClasspath' //this is to keep classpath away from commandline because it may get too long for windows
@@ -130,10 +132,13 @@ distributions {
         create(n, {
             baseName = "${project.appName}-$n"
             contents {
-                into('lib') {
+                into("${lib_path}") {
                     from("build/install/${project.name}/lib") {
                         exclude libExclude
                     }
+                }
+
+                into("${native_path}") {
                     from("${project.glpkPath}/l${ar}/") {
                         include('libglpk.so.40')
                         include('libglpk_java.so')
@@ -142,7 +147,7 @@ distributions {
                     exclude('*.zip')
                 }
 
-                into("${jre_path}"){
+                into("${jre_path}") {
                     from("${project.jreBuildPath}/zulu${zulu_jre_version}-ca-fx-jre${jre_version}-linux_x${ar}/")
                 }
 
@@ -176,7 +181,7 @@ distributions {
 
             baseName = "${project.appName}-$n"
             contents {
-                into('lib') {
+                into("${lib_path}") {
                     from('build/launch4j/lib') {
                         exclude libExclude
                     }
@@ -214,24 +219,28 @@ distributions {
     create(n, {
         baseName = "${project.appName}-$n"
         contents {
-            into('lib') {
+            into("${lib_path}") {
                 from("build/install/${project.name}/lib") {
                     exclude libExclude
                 }
+
+            }
+
+            into("${native_path}") {
                 from("${project.glpkPath}/osx/")
                 from("${project.clpPath}/osx/")
                 exclude('*.zip')
             }
 
-            into("${jre_path}"){
-                from("${project.jreBuildPath}/zulu${zulu_jre_version}-ca-fx-jre${jre_version}-macosx_x64/")
+            into("${jre_path}") {
+                from("${project.jreBuildPath}/zulu${zulu_jre_version}-ca-fx-jre${jre_version}-macosx_x64/zulu-${zulu_jre_version.split('[.]')[0]}.jre")
             }
 
             into('bin') {
                 from("build/install/${project.name}/bin") {
                     exclude("*.bat")
                 }
-                from("${project.distPath}"){
+                from("${project.distPath}") {
                     exclude('COPYING_OpenMS.txt')
                 }
             }
@@ -290,6 +299,93 @@ publishing {
 }
 
 artifactoryPublish.dependsOn 'distribute'
+def OS = DefaultNativePlatform.currentOperatingSystem
+runtime {
+    if (OS.isLinux()) {
+        targetPlatform("linux64") {
+            jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64.tar.gz")
+
+        }
+    } else if (OS.isWindows()) {
+        targetPlatform("win64",) {
+            jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-win_x64.zip")
+        }
+
+    } else if (OS.isMacOsX) {
+        targetPlatform("osx64") {
+            jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64.tar.gz") {
+                pathToHome = "zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64/zulu-14.jdk/Contents/Home"
+                overwrite = true
+            }
+        }
+    }else {
+        throw new RuntimeException("Could not detect OS for packaging!")
+    }
+
+
+    jpackage {
+        outputDir = "distribution"
+        installerOptions = [
+                '--verbose',
+                '--vendor', 'FSU Jena',
+                '--app-version', "${project.version}",
+                '--license-file', "${project.getRootProject().projectDir}/LICENSE.txt",
+                '--description', 'SIRIUS is a java-based software framework for discovering a landscape of de-novo identification of metabolites using tandem mass spectrometry.',
+//                    '--add-launcher',"SIRIUS=${project.getRootProject().projectDir}/dist/gui-launcher.properties",
+
+        ]
+        if (OS.isLinux()) {
+            //todo rpm check
+            targetPlatformName = "linux64"
+            installerType = 'deb'
+            installerOptions += ['--linux-menu-group', 'Science;',
+                                 '--linux-shortcut',
+//                               '--file-associations', "${projectDir}/buildres/linux/bibtexAssociations.properties"
+            ]
+            imageOptions = [
+                    '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.png",
+            ]
+        } else if (OS.isWindows()) {
+            targetPlatformName = "win64"
+            installerType = 'msi'
+            imageOptions = [
+                    '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.ico",
+            ]
+        } else if (OS.isMacOsX) {
+            targetPlatformName = "osx64"
+            installerType = 'dmg'
+            imageOptions = [
+                    '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.icns",
+            ]
+        }
+    }
+}
+
+
+task copyResources(type: Copy, dependsOn: jpackageImage) {
+    String os;
+    if (OS.isLinux()) {
+        os = 'l64'
+    } else if (OS.isWindows()) {
+        os = 'w64'
+    } else if (OS.isMacOsX) {
+        os = 'osx'
+    } else {
+        throw new RuntimeException("Could not detect OS for packaging!")
+    }
+    from("${project.glpkPath}/$os/") {
+        include('libglpk.so.40')
+        include('libglpk_java.so')
+    }
+    from("${project.clpPath}/$os/")
+    into(jpackageImage.outputs.files.singleFile.toPath().resolve('sirius_gui/lib/app').toFile())
+}
+
+tasks.copyResources.dependsOn ':downloadGLPK'
+tasks.copyResources.dependsOn ':downloadCLP'
+tasks.copyResources.mustRunAfter("jpackageImage")
+tasks.jpackage.dependsOn("copyResources")
+
 
 task runGUI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
     doFirst {

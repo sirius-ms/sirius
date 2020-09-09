@@ -18,7 +18,7 @@ buildscript {
 }
 
 plugins {
-    id "com.jfrog.artifactory" version "4.9.3"
+    id "com.jfrog.artifactory" version "4.17.2"
     id "de.undercouch.download" version "4.1.1"
 }
 
@@ -27,8 +27,6 @@ ext {
     // version for bundeled JRE
     jre_version = '11.0.8'
     zulu_jre_version = '11.41.23'
-    //jre path relative tu app home
-    jre_path = 'zulu'
 
     //version for external libraries
     slf4j_version = '1.7.25'
@@ -44,7 +42,12 @@ ext {
     clp_lib_version = '1.17.5'
 
     //locations of runtime libraries
-    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar:${APP_HOME}/lib/*'
+    //jre path relative tu app home
+    jre_path = 'zulu'
+    lib_path = 'lib'
+    native_path = 'native'
+
+    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar:${APP_HOME}/' + "${lib_path}/*"
     libExclude = ['gurobi-*.jar', 'cplex-*.jar']
 
 
@@ -139,6 +142,7 @@ allprojects {
         }
         maven {
             url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl
+            metadataSources { artifact() }
         }
 
     }
@@ -429,25 +433,52 @@ subprojects {
     startScripts {
         classpath = files() //files(project.jar.archiveFileName)
         applicationName = "${project.appName}"
-        def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib'
+        /*def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib/app' //+ "${native_path}"
         doLast {
             def lines = unixScript.text.split("\n") as List
             //classpath and opts
             int insertOptsIndex = -1
+            int insertCPIndex = -1
             for (int i = 0; i < lines.size(); i++) {
-                if (lines[i].startsWith('CLASSPATH=')) {
-                    lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
-                }
+//                if (lines[i].startsWith('#!/usr/bin/env sh'))
+//                    lines[i]='#!/bin/bash'
+//                if (lines[i].startsWith('CLASSPATH=')) {
+//                    insertCPIndex = i - 1
+//                    lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
+//                }
                 if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
                     insertOptsIndex = i - 1
                     lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\" -XX:+UseG1GC -XX:+UseStringDeduplication\"")
                 }
             }
+//            lines = lines.plus(insertCPIndex++, "")
+//            lines = lines.plus(insertCPIndex++, "gtkFilesGlob=\"\$APP_HOME/${native_path}/*\"")
+//            lines = lines.plus(insertCPIndex++, "gtkFiles=(\$gtkFilesGlob)")
+//            lines = lines.plus(insertCPIndex++, "if [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
+//            lines = lines.plus(insertCPIndex++, "    gtkFiles+=(\"\$APP_HOME/${jre_path}/bin/java\")")
+//            lines = lines.plus(insertCPIndex++, "fi")
+//            lines = lines.plus(insertCPIndex++, "if [ -x \"\$APP_HOME/${jre_path}/Contents/Home/bin/java\" ] ; then")
+//            lines = lines.plus(insertCPIndex++, "    gtkFiles+=(\"\$APP_HOME/${jre_path}/Contents/Home/bin/java\")")
+//            lines = lines.plus(insertCPIndex++, "fi")
+//            lines = lines.plus(insertCPIndex++, "echo \${gtkFiles[@]}")
+//            lines = lines.plus(insertCPIndex++, "")
+//
+//            lines = lines.plus(insertCPIndex++, "if \$darwin; then")
+//            lines = lines.plus(insertCPIndex++, "    gtkRules=\$(spctl --list)")
+//            lines = lines.plus(insertCPIndex++, "    echo \"\$gtkRules\"")
+//            lines = lines.plus(insertCPIndex++, "    for file in \"\${gtkFiles[@]}\"; do")
+//            lines = lines.plus(insertCPIndex++, "        if [[ \$gtkRules != *\"\$file\"* ]]; then")
+//            lines = lines.plus(insertCPIndex++, "            spctl --add \"\$file\"")
+//            lines = lines.plus(insertCPIndex++, "        fi")
+//            lines = lines.plus(insertCPIndex++, "    done")
+//            lines = lines.plus(insertCPIndex++, "fi")
+//            lines = lines.plus(insertCPIndex, "")
+
             lines = lines.plus(insertOptsIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
             lines = lines.plus(insertOptsIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
 
             //bundled JRE stuff
-            int insertJREIndex = -1
+            *//*int insertJREIndex = -1
             for (int i = 0; i < lines.size(); i++) {
                 if (lines[i].startsWith('# Determine the Java command to use to start the JVM.'))
                     if (lines[i + 1].startsWith('if [ -n "$JAVA_HOME" ] ; then')) {
@@ -456,14 +487,14 @@ subprojects {
 
                     }
             }
-//            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/zulu-11.jre/Contents/Home/bin/java\" ] ; then")
-//            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/zulu-11.jre/Contents/Home/bin/java\"")
-            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
-            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/bin/java\"")
-
+            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/Contents/Home/bin/java\" ] ; then")
+            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/Contents/Home/bin/java\"")
+            lines = lines.plus(insertJREIndex + 2, "elif [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
+            lines = lines.plus(insertJREIndex + 3, "    JAVACMD=\"\$APP_HOME/${jre_path}/bin/java\"")
+*//*
             unixScript.text = lines.join(System.lineSeparator())
 
-        }
+        }*/
     }
 
     task listDependecies {
