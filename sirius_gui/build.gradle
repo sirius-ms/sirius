@@ -301,6 +301,7 @@ publishing {
 artifactoryPublish.dependsOn 'distribute'
 def OS = DefaultNativePlatform.currentOperatingSystem
 runtime {
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
     if (OS.isLinux()) {
         targetPlatform("linux64") {
             jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64.tar.gz")
@@ -310,7 +311,6 @@ runtime {
         targetPlatform("win64",) {
             jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-win_x64.zip")
         }
-
     } else if (OS.isMacOsX()) {
         targetPlatform("osx64") {
             jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64.tar.gz") {
@@ -325,13 +325,20 @@ runtime {
 
     jpackage {
         outputDir = "distribution"
+        imageName = 'sirius-gui'
+
+
         args = ['gui']
+        imageOptions = [
+                '--add-launcher',"sirius-console=${project.getRootProject().projectDir}/dist/cli-launcher.properties",
+        ]
+
+
         installerOptions = [
                 '--verbose',
                 '--vendor', 'FSU Jena',
-                '--license-file', "${project.getRootProject().projectDir}/LICENSE.txt",
+                '--license-file', "${project.getRootProject().projectDir}/dist/LICENSE-Full.txt",
                 '--description', 'SIRIUS is a java-based software framework for discovering a landscape of de-novo identification of metabolites using tandem mass spectrometry.',
-//                    '--add-launcher',"SIRIUS=${project.getRootProject().projectDir}/dist/gui-launcher.properties",
 
         ]
         if (OS.isLinux()) {
@@ -344,7 +351,7 @@ runtime {
                     '--linux-shortcut',
 //                               '--file-associations', "${projectDir}/buildres/linux/bibtexAssociations.properties"
             ]
-            imageOptions = [
+            imageOptions += [
                     '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.png",
             ]
         } else if (OS.isWindows()) {
@@ -352,9 +359,13 @@ runtime {
             installerType = 'msi'
             installerOptions += [
                     '--app-version', "${project.version.replace('-SNAPSHOT', '')}",
-
+                    '--win-dir-chooser',
+                    '--win-menu',
+//                    '--win-shortcut',
+                    '--win-menu-group', 'SIRIUS'
+//                    '--win-per-user-install',
             ]
-            imageOptions = [
+            imageOptions += [
                     '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.ico",
             ]
         } else if (OS.isMacOsX()) {
@@ -363,7 +374,7 @@ runtime {
             installerOptions += [
                     '--app-version', "${project.version}",
             ]
-            imageOptions = [
+            imageOptions += [
                     '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.icns",
             ]
         }
@@ -378,7 +389,7 @@ task copyResources(type: Copy, dependsOn: jpackageImage) {
         intoFile = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}/lib/app").toFile()
     } else if (OS.isWindows()) {
         os = 'w64'
-        intoFile = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}/lib/app").toFile()
+        intoFile = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}").toFile()
     } else if (OS.isMacOsX()) {
         os = 'osx'
         intoFile = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}.app/Contents/app").toFile()
