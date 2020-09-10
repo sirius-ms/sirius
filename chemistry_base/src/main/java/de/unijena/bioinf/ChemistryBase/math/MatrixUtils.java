@@ -7,6 +7,16 @@ import gnu.trove.list.array.TIntArrayList;
 
 public class MatrixUtils {
 
+    public static double frobeniusNorm(double[][] M) {
+        double norm = 0d;
+        for (int i=0; i < M.length; ++i) {
+            for (int j=0; j < M.length; ++j) {
+                norm += M[i][j]*M[i][j];
+            }
+        }
+        return norm;
+    }
+
     public static double[] encodeBoolean(boolean[] vector, double falses, double trues) {
         final double[] v = new double[vector.length];
         for (int i=0; i < vector.length; ++i) v[i] = vector[i] ? trues : falses;
