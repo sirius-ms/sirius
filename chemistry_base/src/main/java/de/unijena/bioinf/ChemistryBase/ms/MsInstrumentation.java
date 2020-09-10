@@ -76,7 +76,7 @@ public interface MsInstrumentation extends Ms2ExperimentAnnotation {
         QTOF("Q-ToF (LCMS)", "qtof", new Deviation(10), false, "tof"),
         ORBI("Orbitrap (LCMS)", "orbitrap", new Deviation(5), false, "orbi|(?:q-)?exactive|velos|Lumos"),
         FTICR("FTICR (LCMS)", "fticr", new Deviation(5), false, "ft-?icr|Hybrid FT|LTQ-FTICR|ft"),
-        IONTRAP("Ion Trap (LCMS)", "default", new Deviation(20), false, "ion\\s*trap|trap|lcq|QqIT|QqLIT"),
+        IONTRAP("Ion Trap (LCMS)", "default", new Deviation(20), false, "ion\\s*trap|trap|lcq|QqIT|QqLIT|IT|LIT"),
         QQQ("Tripple-Quadrupole", "default", new Deviation(100,0.1), false, "QQQ|quadrupole|QQ|Q");
 
         protected boolean isotopes;
