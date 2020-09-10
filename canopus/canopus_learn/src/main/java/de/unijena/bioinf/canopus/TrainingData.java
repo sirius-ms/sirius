@@ -49,6 +49,9 @@ public class TrainingData {
     protected final HashMap<String, CompoundClass> name2class;
     protected final List<LabeledCompound> compounds;
     protected final List<LabeledCompound> prioritizedCompounds;
+
+    protected List<LabeledCompound> npcList;
+
     protected final HashSet<String> blacklist;
 
     protected CustomFingerprintVersion dummyFingerprintVersion;
@@ -60,6 +63,10 @@ public class TrainingData {
     protected Sampler fingerprintSampler;
     protected Pattern independentPattern;
     protected int nplatts, nformulas, nlabels;
+
+    protected NPCFingerprintVersion NPCVersion;
+
+
 
     public TrainingData(File env) throws IOException {
         this(env,null);
@@ -86,7 +93,67 @@ public class TrainingData {
         compound.formulaFeaturesF = fv;
     }
 
+
+    public TrainingBatch fillUpWithTrainDataNPC(boolean includeIndep) {
+        final Random r = new Random();
+        final List<EvaluationInstance> instances = new ArrayList<>();
+        instances.addAll(crossvalidation);
+        if (includeIndep){
+            instances.addAll(independent);
+        } else {
+            final Set<String> independentCompound = independent.stream().map(x->x.compound.inchiKey).collect(Collectors.toSet());
+            instances.removeIf(x->independentCompound.contains(x.compound.inchiKey));
+        }
+        instances.removeIf(x->x.compound.npcLabel==null);
+        //instances.addAll(independent);
+        final TIntIntHashMap counter = new TIntIntHashMap();
+        for (EvaluationInstance i : instances) {
+            for (short index : i.compound.npcLabel.toIndizesArray())
+                counter.adjustOrPutValue(index, 1, 1);
+        }
+        final List<LabeledCompound> xs = new ArrayList<>(npcList);
+        Collections.shuffle(xs);
+        final ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        xs.removeIf(x->blacklist.contains(x.inchiKey));
+        final List<Future<EvaluationInstance>> futures = new ArrayList<>();
+        for (LabeledCompound c : xs) {
+            boolean use = false;
+            for (FPIter x : c.npcLabel) {
+                if (counter.get(x.getIndex())<10) {
+                    use = true;
+                    break;
+                }
+            }
+            if (use) {
+                for (FPIter x : c.npcLabel) {
+                    counter.adjustOrPutValue(x.getIndex(),1,1);
+                }
+                futures.add(service.submit(new Callable<EvaluationInstance>() {
+                    @Override
+                    public EvaluationInstance call() throws Exception {
+                        return new EvaluationInstance("",fingerprintSampler.sample(c.fingerprint,false), c);
+                    }
+                }));
+            }
+        }
+        for (Future<EvaluationInstance> x : futures) {
+            try {
+                instances.add(x.get());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+        service.shutdown();
+        Collections.shuffle(instances);
+
+        return generateNPCBatch(instances);
+    }
+
     public TrainingBatch fillUpWithTrainData(boolean includeIndep) {
+        ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        final List<Future<EvaluationInstance>> futures = new ArrayList<>();
         final Random r = new Random();
         final List<EvaluationInstance> instances = new ArrayList<>();
         instances.addAll(crossvalidation);
@@ -110,15 +177,30 @@ public class TrainingData {
                     final List<LabeledCompound> compounds = compoundClasses.get(klass).drawExamples(20-count, r);
                     // sample fingerprints
                     for (LabeledCompound c : compounds) {
-                        final ProbabilityFingerprint fingerprint = TrainingData.SAMPLE_FROM_TEMPLATE_FINGERPRINTS ? fingerprintSampler.sample(c.fingerprint,false) : fingerprintSampler.sampleIndependently(c.fingerprint, false);
-                        instances.add(new EvaluationInstance("", fingerprint, c));
                         for (short index : c.label.toIndizesArray())
                             counter.adjustOrPutValue(index, 1,1);
+                        futures.add(service.submit(new Callable<EvaluationInstance>() {
+                            @Override
+                            public EvaluationInstance call() throws Exception {
+                                final ProbabilityFingerprint fingerprint = TrainingData.SAMPLE_FROM_TEMPLATE_FINGERPRINTS ? fingerprintSampler.sample(c.fingerprint,false) : fingerprintSampler.sampleIndependently(c.fingerprint, false);
+                                return new EvaluationInstance("", fingerprint, c);
+                            }
+                        }));
                     }
                 }
                 return true;
             }
         });
+        futures.forEach(x-> {
+            try {
+                instances.add(x.get());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        });
+        service.shutdown();
         return generateBatch(instances);
     }
 
@@ -160,6 +242,25 @@ public class TrainingData {
         return x;
     }
 
+    public TrainingBatch generateNPCBatch(List<EvaluationInstance> instances) {
+        if (NPCVersion==null) return generateBatch(instances);
+        final FloatBuffer platts = FloatBuffer.allocate(instances.size() * nplatts);
+        final FloatBuffer formulas = FloatBuffer.allocate(instances.size() * nformulas);
+        final FloatBuffer labels = FloatBuffer.allocate(instances.size() * nlabels);
+        final FloatBuffer npcLabels = FloatBuffer.allocate(instances.size()*NPCVersion.size());
+        for (EvaluationInstance i : instances) {
+            addNormalizedPlatts(platts, i.fingerprint.toProbabilityArray());
+            formulas.put(i.compound.formulaFeaturesF);
+            labels.put(getLabelVector(i.compound));
+            npcLabels.put(getNPCLabelVector(i.compound));
+
+        }
+        platts.rewind();
+        formulas.rewind();
+        labels.rewind();
+        npcLabels.rewind();
+        return new TrainingBatch(Tensor.create(new long[]{instances.size(), nplatts}, platts), Tensor.create(new long[]{instances.size(), nformulas}, formulas), Tensor.create(new long[]{instances.size(), nlabels}, labels), Tensor.create(new long[]{instances.size(), NPCVersion.size()}, npcLabels));
+    }
     public TrainingBatch generateBatch(List<EvaluationInstance> instances) {
         final FloatBuffer platts = FloatBuffer.allocate(instances.size() * nplatts);
         final FloatBuffer formulas = FloatBuffer.allocate(instances.size() * nformulas);
@@ -168,12 +269,14 @@ public class TrainingData {
             addNormalizedPlatts(platts, i.fingerprint.toProbabilityArray());
             formulas.put(i.compound.formulaFeaturesF);
             labels.put(getLabelVector(i.compound));
+
         }
         platts.rewind();
         formulas.rewind();
         labels.rewind();
         return new TrainingBatch(Tensor.create(new long[]{instances.size(), nplatts}, platts), Tensor.create(new long[]{instances.size(), nformulas}, formulas), Tensor.create(new long[]{instances.size(), nlabels}, labels));
     }
+
 
     static enum SamplingStrategy {
         PERFECT, INDEPENDENT, INDEPENDENT_DISTURBED, TEMPLATE, DISTURBED_TEMPLATE, CONDITIONAL,STATISTICAL, STATISTICAL_DISTURBED;
@@ -394,6 +497,65 @@ public class TrainingData {
                 Tensor.create(new long[]{compounds.size(), nformulas}, formulas), Tensor.create(new long[]{compounds.size(), nlabels}, labels));
     }
 
+    public TrainingBatch generateNPCBatch(int iterationNum, final ExecutorService service) {
+        //final long time1 = System.currentTimeMillis();
+        final int GROW = TrainingData.GROW;
+        final ArrayList<LabeledCompound> compounds = new ArrayList<>();
+        final SamplingStrategy[] strategies = getSamplingStrategies(iterationNum).toArray(new SamplingStrategy[0]);
+        final ArrayList<Future<double[]>> futures = new ArrayList<>();
+        {
+            List<Integer> indizes = new ArrayList<>();
+            int ix = 0;
+            for (LabeledCompound c : npcList) indizes.add(ix++);
+            Collections.shuffle(indizes);
+            indizes = indizes.subList(0,10000);
+            ix = 0;
+            for (Integer i : indizes) {
+                final LabeledCompound c = npcList.get(i);
+                compounds.add(c);
+                final int n = ix;
+                futures.add(service.submit(() -> sampleFingerprintVector(c, strategies[n % strategies.length])));
+                ++ix;
+            }
+        }
+
+        final FloatBuffer platts = FloatBuffer.allocate(compounds.size()*nplatts);
+        final FloatBuffer formulas = FloatBuffer.allocate(compounds.size()*nformulas);
+        final FloatBuffer labels = FloatBuffer.allocate(compounds.size()*nlabels);
+        final FloatBuffer npcLabels = FloatBuffer.allocate(compounds.size()*NPCVersion.size());
+
+        final TIntArrayList indizes = new TIntArrayList(compounds.size());
+        for (int i=0; i < compounds.size(); ++i) indizes.add(i);
+        indizes.shuffle(new Random());
+        int k=0;
+        for (int index : indizes.toArray()) {
+            final LabeledCompound c = compounds.get(index);
+            try {
+                final double[] fp = futures.get(index).get();
+                addNormalizedPlatts(platts, fp);
+                formulas.put(c.formulaFeaturesF);
+                final float[] lbs = getLabelVector(c);
+                final float[] npcL = getNPCLabelVector(c);
+                labels.put(lbs);
+                npcLabels.put(npcL);
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        platts.rewind();
+        formulas.rewind();
+        labels.rewind();
+        npcLabels.rewind();
+
+        //final long time2 = System.currentTimeMillis();
+        //System.out.println(((time2-time1)/1000) + " s for sampling the data");
+
+
+        return new TrainingBatch(Tensor.create(new long[]{compounds.size(), nplatts}, platts),
+                Tensor.create(new long[]{compounds.size(), nformulas}, formulas), Tensor.create(new long[]{compounds.size(), nlabels}, labels), Tensor.create(new long[]{compounds.size(), NPCVersion.size()}, npcLabels));
+    }
+
     private List<SamplingStrategy> getSamplingStrategies(int iterationNum) {
         {
             final SamplingStrategy[] strategies;
@@ -537,6 +699,13 @@ public class TrainingData {
                 vec[OFFSET + i.getIndex()] = 1;
             }
         }
+        return vec;
+    }
+
+    public static float[] getNPCLabelVector(LabeledCompound c) {
+        final float[] vec = new float[c.npcLabel.getFingerprintVersion().size()];
+        Arrays.fill(vec, -1);
+        for (FPIter x : c.npcLabel.presentFingerprints()) vec[x.getIndex()] = 1;
         return vec;
     }
 
@@ -820,6 +989,32 @@ public class TrainingData {
             }
 
 
+            ///////////////////////
+            // NPC
+            ///////////////////////
+            this.npcList = new ArrayList<>();
+            if (new File("npc").exists()) {
+                System.out.println("Load NPC data.");
+                NPCVersion = NPCFingerprintVersion.readFromDirectory(new File("npc"));
+                FileUtils.eachRow(new File("npc/compounds.csv"), (row)->{
+                    final LabeledCompound labeledCompound = compoundHashMap.get(row[0]);
+                    if (labeledCompound==null) {
+                        System.err.println("Do not find compound " + row[0]);
+                        return true;
+                    }
+                    ArrayFingerprint fp = Fingerprint.fromOneZeroString(NPCVersion, row[2]+row[3]+row[4]).asArray();
+                    labeledCompound.npcLabel = fp;
+
+                    if (!blacklist.contains(row[0])) {
+                        npcList.add(labeledCompound);
+                    }
+
+                    return true;
+                });
+                System.out.println(npcList.size() + " NPC compounds for training");
+            }
+
+
         }
 
         // check if we have train data for all compound classes
@@ -840,6 +1035,7 @@ public class TrainingData {
             System.out.println("Build tree with covariance");
             this.fingerprintSampler.buildCovarianceTree(new File("treeWithCovariance.tree"));
         }
+
     }
 
     private ArrayFingerprint addFingerprintsAsLabels(ArrayFingerprint fpIters) {

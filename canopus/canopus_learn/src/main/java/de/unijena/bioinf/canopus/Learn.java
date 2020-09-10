@@ -154,7 +154,7 @@ public class Learn {
 
             final TrainingData trainingData = new TrainingData(new File("."),indepSet==null ? null : Pattern.compile(indepSet));
             final BatchGenerator generator = new BatchGenerator(trainingData, 20);
-            System.out.println("Loss function: " + tf.loss.substring(0, tf.loss.indexOf('/')));
+            System.out.println("Loss function: " + tf.loss);//.substring(0, tf.loss.indexOf('/')));
             System.out.println("PLATT CENTERING: " + String.valueOf(TrainingData.PLATT_CENTERING));
             System.out.println("PLATT SCALING: " + String.valueOf(TrainingData.SCALE_BY_STD));
             System.out.println("VECTOR NORM: " + String.valueOf(TrainingData.VECNORM_SCALING));
@@ -267,6 +267,18 @@ public class Learn {
             }
             for (Thread t : generatorThreads) t.start();
 
+            final Thread npcThread;
+            final BatchGenerator npcGenerator;
+            if (trainingData.npcList!=null && trainingData.npcList.size()>0) {
+                npcGenerator = new BatchGenerator(trainingData, 4);
+                npcGenerator.npc = true;
+                npcThread = new Thread(npcGenerator);
+                npcThread.start();
+            } else {
+                npcThread = null;
+                npcGenerator = null;
+            }
+
             TrainingBatch evalBatch = generator.poll(0);
             final List<EvaluationInstance> novels = new ArrayList<>();
             if (trainingData.independent!=null){
@@ -279,9 +291,9 @@ public class Learn {
                         novels.add(i);
 
             }
-            final TrainingBatch crossvalBatch = trainingData.generateBatch(trainingData.crossvalidation);
-            final TrainingBatch independentBatch = trainingData.independent==null?null:trainingData.generateBatch(trainingData.independent);
-            final TrainingBatch independentNovelBatch = trainingData.independent==null?null:trainingData.generateBatch(novels);
+            final TrainingBatch crossvalBatch = trainingData.generateNPCBatch(trainingData.crossvalidation);
+            final TrainingBatch independentBatch = trainingData.independent==null?null:trainingData.generateNPCBatch(trainingData.independent);
+            final TrainingBatch independentNovelBatch = trainingData.independent==null?null:trainingData.generateNPCBatch(novels);
             final boolean IS_INDEP = independentBatch!=null;
             int[] CSI_USED_INDIZES = null;
             final List<DummyMolecularProperty> dummyProps = new ArrayList<>();
@@ -309,6 +321,7 @@ public class Learn {
             TrainingBatch resampledCrossval = trainingData.resampleMultithreaded(trainingData.crossvalidation, (a,b)-> TrainingData.SamplingStrategy.CONDITIONAL);
             System.out.println("Start."); System.out.flush();
             double lastScore = Double.NEGATIVE_INFINITY;
+            int NPC_FREQ = 1;
             int _step_=0;
 
                 for (int k = 0; k <= 40000; ++k) {
@@ -320,29 +333,48 @@ public class Learn {
                         final double[] losses = tf.train(batch);
                         final long time2 = System.currentTimeMillis();
                         System.out.println(k + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
-                        if (k % 200 == 0) {
+
+
+                        if (npcGenerator!=null && k % NPC_FREQ == 0) {
+                            // NPC classyfire
+                            final long xtime1 = System.currentTimeMillis();
+                            final TrainingBatch npcBatch = npcGenerator.poll(k);
+                            final double[] xlosses = tf.train_npc(npcBatch.platts, npcBatch.formulas,npcBatch.labels, npcBatch.npcLabels);
+                            final long xtime2 = System.currentTimeMillis();
+                            System.out.println(k + ".)\tnpcloss = " + xlosses[0] + "\tloss = " + xlosses[1] + "\tl2 norm = " + xlosses[2] + "\t (" + ((xtime2 - xtime1) / 1000d) + " s)");
+                            if (k > 2000) NPC_FREQ=4;
+                            else if (k > 500) NPC_FREQ = 2;
+                        }
+
+                        if (k % 400 == 0) {
                             //writeExample(tf,trainingData);
                             //reportStuff(evalBatch, crossvalBatch, independentBatch,independentNovelBatch,CSI_USED_INDIZES, dummyProps, csiReport,novelReport, tf, k);
                             Report[] reps = reportStuff(Arrays.asList(evalBatch, crossvalBatch, resampledCrossval, independentBatch, independentNovelBatch),
                                     Arrays.asList("simulated", "crossval", "resampled", "indep", "indepNovel"), tf, k);
-                            {
-                                evalFl(trainingData, reps);
 
-
-                            }
+                            // eval npc
+                            evalNPC(crossvalBatch, independentBatch, tf);
 
                         }
 
-                        if (k >= 15000 && k % 200 == 0) {
+                        if (k >= 12000) {
                             Report evaluate = tf.evaluate(crossvalBatch);
                             final double score = evaluate.score();
                             if (score > lastScore) {
                                 System.out.println("############ SAVE MODEL ##############");
-                                float[][] crossval = tf.predict(crossvalBatch);
-                                float[][] indep = tf.predict(independentBatch);
-                                final File target = new File("canopus_final_model_"+modelId);
-                                writePredictOutput(target, "crossvalidation", trainingData, trainingData.crossvalidation, crossval);
-                                writePredictOutput(target, "independent", trainingData, trainingData.independent, indep);
+                                final File target = new File("canopus_final_model_" + modelId);
+                                {
+                                    float[][] crossval = tf.predict(crossvalBatch);
+                                    float[][] indep = tf.predict(independentBatch);
+                                    writePredictOutput(target, "crossvalidation", trainingData, trainingData.crossvalidation, crossval);
+                                    writePredictOutput(target, "independent", trainingData, trainingData.independent, indep);
+                                }
+                                {
+                                    float[][] crossval = tf.predictNPC(crossvalBatch);
+                                    float[][] indep = tf.predictNPC(independentBatch);
+                                    writeNPCPredictOutput(target, "crossvalidation", trainingData, trainingData.crossvalidation, crossval);
+                                    writeNPCPredictOutput(target, "independent", trainingData, trainingData.independent, indep);
+                                }
                                 tf.saveWithPlattOnCrossval(trainingData, -modelId, true, true);
                                 tf.save(trainingData, modelId, true, true, true);
                                 lastScore = score;
@@ -357,9 +389,11 @@ public class Learn {
                 }
 
             generator.stop();
+            npcGenerator.stop();
             crossvalBatch.close();
             for (Thread t : generatorThreads)
                 t.interrupt();
+            npcThread.interrupt();
             System.out.println("SHUTDOWN");
             resampledCrossval.close();
             //independentBatch.close();
@@ -603,14 +637,13 @@ public class Learn {
         final Canopus canopus = Canopus.loadFromFile(modelFile);
         try (final TensorflowModel tf = new TensorflowModel(tfFile)) {
             tf.feedWeightMatrices(canopus).resetWeights();
-
-
             final double[][] doubles = tf.plattEstimate(trainingData, false);
             canopus.setPlattCalibration(doubles[0],doubles[1]);
             float[][] crossval = tf.predict(crossvalBatch);
             float[][] indep = tf.predict(indepBatch);
             writePredictOutput(target, "crossvalidation", trainingData, trainingData.crossvalidation, crossval);
             writePredictOutput(target, "independent", trainingData, trainingData.independent, indep);
+
         }
         indepBatch.close();
         crossvalBatch.close();
@@ -650,7 +683,7 @@ public class Learn {
             e.printStackTrace();
         }
         try (final BufferedWriter bw = FileUtils.getWriter(new File(dir, prefix + "_stats.csv"))) {
-            bw.write("name\tid\tparent\tparentId\t" + PredictionPerformance.csvHeader());
+            bw.write("index\tname\tid\tparent\tparentId\t" + PredictionPerformance.csvHeader());
             for(int i=0; i < props.length; ++i) {
                 ClassyfireProperty p = props[i];
                 bw.write(String.valueOf(i));
@@ -662,6 +695,57 @@ public class Learn {
                 bw.write(p.getParent()==null ? "" : p.getParent().getName());
                 bw.write('\t');
                 bw.write(p.getParent()==null ? "" : p.getParent().getChemontIdentifier());
+                bw.write('\t');
+                bw.write(byIndex[i].done().toCsvRow());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private static void writeNPCPredictOutput(File dir, String prefix, TrainingData data, List<EvaluationInstance> crossvalidation, float[][] crossval) {
+        dir.mkdirs();
+        // write class statistics
+        final NPCFingerprintVersion.NPCProperty[] props = new NPCFingerprintVersion.NPCProperty[data.NPCVersion.size()];
+        final PredictionPerformance.Modify[] byIndex = new PredictionPerformance.Modify[data.NPCVersion.size()];
+        int K=0;
+        for (int index=0; index < data.NPCVersion.size(); ++index) {
+            PredictionPerformance.Modify modify = new PredictionPerformance(0, 0, 0, 0, 0).modify();
+            props[K] = (NPCFingerprintVersion.NPCProperty) data.NPCVersion.getMolecularProperty(index);
+            byIndex[K] = modify;
+            ++K;
+        }
+        // write output
+        try (final BufferedWriter bw = FileUtils.getWriter(new File(dir, prefix + "npc_prediction.csv"))) {
+            for (int k=0; k < crossvalidation.size(); ++k) {
+                EvaluationInstance i = crossvalidation.get(k);
+                bw.write(i.name);
+                bw.write('\t');
+                bw.write(i.compound.inchiKey);
+                bw.write('\t');
+                bw.write(i.compound.npcLabel.toOneZeroString());
+                final boolean[] is = i.compound.npcLabel.toBooleanArray();
+                float[] pred = crossval[k];
+                for (int j=0; j < pred.length; ++j) {
+                    bw.write('\t');
+                    bw.write(String.valueOf(pred[j]));
+                    byIndex[j].update(is[j], pred[j]>=0);
+                }
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try (final BufferedWriter bw = FileUtils.getWriter(new File(dir, prefix + "npc_stats.csv"))) {
+            bw.write("index\tname\tid\ttype\t" + PredictionPerformance.csvHeader());
+            for(int i=0; i < props.length; ++i) {
+                NPCFingerprintVersion.NPCProperty p = props[i];
+                bw.write(String.valueOf(i));
+                bw.write('\t');
+                bw.write(p.name);
+                bw.write('\t');
+                bw.write(String.valueOf(p.npcIndex));
+                bw.write('\t');
+                bw.write(p.level.name);
                 bw.write('\t');
                 bw.write(byIndex[i].done().toCsvRow());
             }
@@ -855,6 +939,7 @@ public class Learn {
             final TensorflowModel.Resetter resetter = tf.feedWeightMatrices(canopus);
             resetter.resetWeights();
             final double[][] PLATT = tf.plattEstimate(trainingData);
+            final double[][] PLATT_NPC = tf.plattEstimateForNPC(trainingData,true);
             // does it still works?
             int k = 0;
             reportStuff(Arrays.asList(batch), Arrays.asList("all"), tf, k);
@@ -891,7 +976,7 @@ public class Learn {
                 }
             }
             reportStuff(Arrays.asList(batch), Arrays.asList("all"), tf, k);
-            tf.saveWithoutPlattEstimate(trainingData, 100, true, true, false, PLATT[0], PLATT[1]);
+            tf.saveWithoutPlattEstimate(trainingData, 100, true, true, false, PLATT[0], PLATT[1],PLATT_NPC[0],PLATT_NPC[1]);
         }
     }
 
@@ -941,6 +1026,15 @@ public class Learn {
                 System.out.println("Indep. Novel " + k + ".) " + indepNovel);
             }
         }
+    }
+
+    private static void evalNPC(TrainingBatch crossval, TrainingBatch indep, TensorflowModel tf) {
+        final Report report = tf.evaluateNPC(crossval);
+        System.out.print("NPC Crossvalidation:\t");
+        System.out.println(report);
+        System.out.print("NPC Independent:\t");
+        final Report report2 = tf.evaluateNPC(indep);
+        System.out.println(report2);
     }
 
 

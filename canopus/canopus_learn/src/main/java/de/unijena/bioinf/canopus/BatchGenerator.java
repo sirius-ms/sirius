@@ -18,6 +18,8 @@ public class BatchGenerator implements Runnable {
     protected final ExecutorService service;
     protected volatile boolean stop;
 
+    protected boolean npc;
+
     public BatchGenerator(TrainingData trainingData, int capacity) {
         this.trainingData = trainingData;
         this.batches = new ArrayBlockingQueue<TrainingBatch>(capacity);
@@ -25,6 +27,7 @@ public class BatchGenerator implements Runnable {
         this.iterationNum = new AtomicInteger(0);
         this.service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         this.ringBuffer = USE_RING_BUFFER ? new BufferedTrainData(trainingData, capacity, 16000) : null;
+        this.npc = false;
     }
 
     public TrainingBatch poll(int k) {
@@ -58,7 +61,11 @@ public class BatchGenerator implements Runnable {
     public void run() {
         while (!stop) {
             try {
-                batches.put(trainingData.generateBatch(iterationNum.incrementAndGet(), ringBuffer, service));
+                if (npc) {
+                    batches.put(trainingData.generateNPCBatch(iterationNum.incrementAndGet(), service));
+                } else {
+                    batches.put(trainingData.generateBatch(iterationNum.incrementAndGet(), ringBuffer, service));
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

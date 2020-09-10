@@ -24,7 +24,8 @@ public class Canopus {
     protected FullyConnectedLayer[] fingerprintLayers;
     protected FullyConnectedLayer[] innerLayers;
     protected FullyConnectedLayer outputLayer;
-    protected PlattLayer plattLayer;
+    protected PlattLayer plattLayer, npcPlattLayer;
+    protected FullyConnectedLayer npcLayer;
 
     protected double[] formulaScaling, formulaCentering, plattScaling, plattCentering;
     protected ClassyFireFingerprintVersion classyFireFingerprintVersion;
@@ -145,7 +146,7 @@ public class Canopus {
         return outputArray;
     }
 
-    protected Canopus(FullyConnectedLayer[] formulaLayers, FullyConnectedLayer[] fingerprintLayers, FullyConnectedLayer[] innerLayers, FullyConnectedLayer outputLayer, PlattLayer plattLayer, double[] formulaCentering, double[] formulaScaling, double[] plattCentering, double[] plattScaling, MaskedFingerprintVersion classyFireMask, MaskedFingerprintVersion cdkMask) {
+    protected Canopus(FullyConnectedLayer[] formulaLayers, FullyConnectedLayer[] fingerprintLayers, FullyConnectedLayer[] innerLayers, FullyConnectedLayer outputLayer, PlattLayer plattLayer, double[] formulaCentering, double[] formulaScaling, double[] plattCentering, double[] plattScaling, MaskedFingerprintVersion classyFireMask, MaskedFingerprintVersion cdkMask, FullyConnectedLayer npcLayer, PlattLayer npcPlatt) {
         this.formulaLayers = formulaLayers;
         this.fingerprintLayers = fingerprintLayers;
         this.innerLayers = innerLayers;
@@ -159,6 +160,8 @@ public class Canopus {
         this.plattScaling = plattScaling;
         this.cdkMask = cdkMask;
         this.cdkFingerprintVersion = cdkMask==null ? null : (CdkFingerprintVersion) cdkMask.getMaskedFingerprintVersion();
+        this.npcLayer = npcLayer;
+        this.npcPlattLayer = npcPlatt;
     }
 
     public boolean isPredictingFingerprints() {
@@ -381,7 +384,12 @@ public class Canopus {
 
         outputLayer.dump(bstream);
 
-        bstream.writeInt(4887);
+        // CHECK FOR npc Layer
+        if (npcLayer != null) {
+            bstream.writeInt(2887);
+        } else {
+            bstream.writeInt(4887);
+        }
 
         plattLayer.dump(bstream);
 
@@ -426,6 +434,12 @@ public class Canopus {
             }
 
         }
+
+        if (npcLayer!=null) {
+            npcLayer.dump(bstream);
+            npcPlattLayer.dump(bstream);
+        }
+
         bstream.flush();
     }
 
@@ -476,7 +490,14 @@ public class Canopus {
 
             final FullyConnectedLayer outputLayer = FullyConnectedLayer.load(b);
 //            System.out.println(outputLayer);
-            if (b.readInt() != 4887) {
+
+            final boolean hasNPCLayer;
+            final int anotherMagicNumber = b.readInt();
+            if (anotherMagicNumber == 4887) {
+                hasNPCLayer = false;
+            } else if (anotherMagicNumber == 2887) {
+                hasNPCLayer = true;
+            } else {
                 throw new IOException("Missalignment happened between output and platt layer");
             }
             final PlattLayer plattLayer = PlattLayer.load(b);
@@ -530,8 +551,15 @@ public class Canopus {
                 cdkMask = builder2.toMask();
             }
 
+            FullyConnectedLayer npcLayer = null;
+            PlattLayer npcPlatt = null;
+            if (hasNPCLayer) {
+                npcLayer = FullyConnectedLayer.load(b);
+                npcPlatt = PlattLayer.load(b);
+            }
 
-            return new Canopus(formulaLayers, fingerprintLayers, innerLayers, outputLayer, plattLayer, formulaCentering, formulaScaling, plattCentering, plattScaling, v, cdkMask);
+
+            return new Canopus(formulaLayers, fingerprintLayers, innerLayers, outputLayer, plattLayer, formulaCentering, formulaScaling, plattCentering, plattScaling, v, cdkMask, npcLayer, npcPlatt);
         }
     }
 

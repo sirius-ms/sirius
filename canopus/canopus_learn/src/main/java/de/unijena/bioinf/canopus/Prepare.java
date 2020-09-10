@@ -12,12 +12,16 @@ import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -155,8 +159,71 @@ public class Prepare {
                         e.printStackTrace();
                     }
                 } else {
-                    for (String[] col : FileUtils.readTable(new File("fingerprints.csv")))
+                    // search for missing fingerprints
+                    final HashSet<String> missingOnes = new HashSet<>(allInchiKeys);
+                    for (String[] col : FileUtils.readTable(new File("fingerprints.csv"))) {
                         MolecularFormula.parseAndExecute(col[1], formulas::add);
+                        missingOnes.remove(col[0]);
+                    }
+                    if (missingOnes.size()>0) {
+                        System.out.println(missingOnes + " compounds are missing. Update fingerprints table.");
+                        try (final ChemicalDatabase database = new ChemicalDatabase("fingerid1.bioinf.uni-jena.de:5432", "fingerid", "tV9QRQHn2THjq5HR")) {
+                                try (final BufferedWriter bw = new BufferedWriter(new FileWriter(new File("fingerprints.csv"), true))) {
+                                    for (FingerprintCandidate fpc : database.lookupFingerprintsByInchis(missingOnes)) {
+                                        bw.write(fpc.getInchiKey2D());
+                                        bw.write('\t');
+                                        final MolecularFormula formula = fpc.getInchi().extractFormulaOrThrow();
+                                        formulas.add(formula);
+                                        bw.write(formula.toString());
+                                        bw.write('\t');
+                                        bw.write(trainedCSIFingerId.getMaskedFingerprintVersion().mask(fpc.getFingerprint().asArray()).asArray().toTabSeparatedString());
+                                        bw.newLine();
+                                        missingOnes.remove(fpc.getInchiKey2D());
+                                    }
+                                    if (missingOnes.size()>0) {
+                                        System.out.println(missingOnes.size() + " compounds are missing. Those compounds are computed if a table with smiles, called smiles.csv, is provided.");
+                                        if (new File("smiles.csv").exists()) {
+                                            for (String[] col : FileUtils.readTable(new File("smiles.csv"))) {
+                                             if (missingOnes.contains(col[0])) {
+                                                 final MolecularFormula formula;
+                                                 try {
+
+                                                     // hotfix for non-standardized smiles.
+                                                     if (col[1].matches("[\\\\/@]")) {
+                                                         final IAtomContainer c = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(col[1]);
+                                                         c.setStereoElements(new ArrayList<>());
+                                                         for (IBond b : c.bonds()) b.setStereo(IBond.Stereo.NONE);
+                                                         col[1] = SmilesGenerator.unique().create(c);
+                                                     }
+
+                                                     formula = MolecularFormula.parseOrThrow(MolecularFormulaManipulator.getString(MolecularFormulaManipulator.getMolecularFormula(new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(col[1]))));
+                                                     final ArrayFingerprint fp = new FixedFingerprinter(CdkFingerprintVersion.getDefault()).computeFingerprintFromSMILES(col[1]);
+                                                     bw.write(col[0]);
+                                                     bw.write('\t');
+                                                     formulas.add(formula);
+                                                     bw.write(formula.toString());
+                                                     bw.write('\t');
+                                                     bw.write(trainedCSIFingerId.getMaskedFingerprintVersion().mask(fp).asArray().toTabSeparatedString());
+                                                     bw.newLine();
+                                                     missingOnes.remove(col[0]);
+                                                 } catch (Throwable e) {
+                                                     e.printStackTrace();
+                                                 }
+                                             }
+                                            }
+                                            System.out.println(missingOnes.size() + " are still missing.");
+                                        }
+                                        try (final BufferedWriter bwx = FileUtils.getWriter(new File("missing_smiles"))) {
+                                            for (String k : missingOnes) {
+                                                bwx.write(k); bwx.newLine();
+                                            }
+                                        }
+                                    }
+                                }
+                        } catch (ChemicalDatabaseException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
 
                 writeFormulaFeatures(formulas);
