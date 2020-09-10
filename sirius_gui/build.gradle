@@ -5,7 +5,7 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
     }
 }
-plugins{
+plugins {
     id "com.github.kkdad.dependency-license-report" version "1.14.2"
     id 'org.beryx.runtime' version '1.11.4'
 }
@@ -29,7 +29,7 @@ licenseReport {
 
     // List the groups ids to exclude from dependency report. Supports regular expressions.
     // For finer granularity, see: excludes.
-    excludeGroups = ['cplex','gurobi']
+    excludeGroups = ['cplex', 'gurobi']
 
     // List the ids (in module:name format) to exclude from dependency report. Supports regular expressions.
     // By default excludes is empty.
@@ -90,7 +90,7 @@ dependencies {
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 project.ext.set("arch", ['64'])
-project.ext.set("type", ['gui','console'])
+project.ext.set("type", ['gui', 'console'])
 
 /*################### Jar build Stuff ################### */
 jar {
@@ -101,7 +101,7 @@ jar {
 }
 
 /*################### Windows release Stuff ################### */
-project.type.each{t ->
+project.type.each { t ->
     project.arch.each { a ->
         tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
             group = 'launch4j'
@@ -111,7 +111,7 @@ project.type.each{t ->
             headerType = t
             jreRuntimeBits = a
             outfile = "${project.appName}-${t}-${a}.exe"
-            if(t.equals('gui')){
+            if (t.equals('gui')) {
                 cmdLine = 'gui'
                 //splash is now inside java
 //                splashFileName = "${project.distPath}/sirius-splash.bmp"
@@ -155,7 +155,7 @@ distributions {
                     from("build/install/${project.name}/bin") {
                         exclude("*.bat")
                     }
-                    from("${project.distPath}"){
+                    from("${project.distPath}") {
                         exclude('COPYING_OpenMS.txt')
                     }
                 }
@@ -192,7 +192,7 @@ distributions {
                     exclude('sirius-gui')
                     exclude('COPYING_OpenMS.txt')
                 }
-                into("${jre_path}"){
+                into("${jre_path}") {
                     from("${project.jreBuildPath}/zulu${zulu_jre_version}-ca-fx-jre${jre_version}-win_x${ar}/")
                 }
                 from('build/launch4j') {
@@ -318,7 +318,7 @@ runtime {
                 overwrite = true
             }
         }
-    }else {
+    } else {
         throw new RuntimeException("Could not detect OS for packaging!")
     }
 
@@ -329,7 +329,6 @@ runtime {
         installerOptions = [
                 '--verbose',
                 '--vendor', 'FSU Jena',
-                '--app-version', "${project.version}",
                 '--license-file', "${project.getRootProject().projectDir}/LICENSE.txt",
                 '--description', 'SIRIUS is a java-based software framework for discovering a landscape of de-novo identification of metabolites using tandem mass spectrometry.',
 //                    '--add-launcher',"SIRIUS=${project.getRootProject().projectDir}/dist/gui-launcher.properties",
@@ -339,8 +338,10 @@ runtime {
             //todo rpm check
             targetPlatformName = "linux64"
             installerType = 'deb'
-            installerOptions += ['--linux-menu-group', 'Science;',
-                                 '--linux-shortcut',
+            installerOptions += [
+                    '--app-version', "${project.version}",
+                    '--linux-menu-group', 'Science;',
+                    '--linux-shortcut',
 //                               '--file-associations', "${projectDir}/buildres/linux/bibtexAssociations.properties"
             ]
             imageOptions = [
@@ -349,12 +350,22 @@ runtime {
         } else if (OS.isWindows()) {
             targetPlatformName = "win64"
             installerType = 'msi'
+            installerOptions += [
+                    '--app-version', "${project.version.replace('-SNAPSHOT', '')}",
+
+            ]
             imageOptions = [
                     '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.ico",
             ]
         } else if (OS.isMacOsX()) {
             targetPlatformName = "osx64"
             installerType = 'dmg'
+            installerOptions += [
+                    '--app-version', "${project.version}",
+                    '--linux-menu-group', 'Science;',
+                    '--linux-shortcut',
+//                               '--file-associations', "${projectDir}/buildres/linux/bibtexAssociations.properties"
+            ]
             imageOptions = [
                     '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.icns",
             ]
