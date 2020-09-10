@@ -2,10 +2,9 @@ import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.babelms.ms.InputFileConfig;
+import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.io.lcms.LCMSParser;
 import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.io.lcms.MzXMLParser;
@@ -13,7 +12,6 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
-import de.unijena.bioinf.lcms.align.AlignedFeatures;
 import de.unijena.bioinf.lcms.align.Cluster;
 import de.unijena.bioinf.lcms.debuggui.Gradient;
 import de.unijena.bioinf.lcms.peakshape.GaussianShape;
@@ -264,7 +262,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
         final File mzxmlFile = new File(
                 //"/home/kaidu/data/raw/debug"
                 //"/home/kaidu/analysis/canopus/mice/raw/cecum"
-                "/home/kaidu/analysis/example2"
+                "/home/kaidu/Downloads/test2"
                 //"/home/kaidu/data/raw/rosmarin"
                 //"/home/kaidu/analysis/canopus/arabidobsis"
                // "/home/kaidu/data/raw/euphorbiaceae/raw"
@@ -309,43 +307,34 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
             i.getMs2Storage().backOnDisc();
             i.getMs2Storage().dropBuffer();
 
-            Cluster c = i.alignAndGapFilling(new BasicJJob<Object>() {
-
-
-                public void updateProgress(int min, int max, int progress, String shortInfo) {
-                    System.out.println(shortInfo);
-                }
-
-                @Override
-                protected Object compute() throws Exception {
-                    return null;
-                }
-            });
-            System.out.println("Gapfilling Done."); System.out.flush();
-
+            final ConsensusFeature[] consensusFeatures;
             final List<String> sampleNames = new ArrayList<>();
-            addOrderedSampleNames(c, sampleNames);
+            if (i.getSamples().size()>1) {
 
-            // write correlation network
-            i.detectAdductsWithGibbsSampling(c).writeToFile(i,new File("ion_network.js"));
+                Cluster c = i.alignAndGapFilling(new BasicJJob<Object>() {
 
-            {
-                for (AlignedFeatures s : c.getFeatures()) {
-                    if (Math.abs(s.getMass()-453.336)<0.02) {
-                        final ProcessedSample sample = s.getRepresentativeSample();
-                        long rt = s.getFeatures().get(sample).getMsMsScan().getRetentionTime();
-                        final ChromatographicPeak.Segment segment = s.getFeatures().get(sample).getSegment();
-                        List<Scan> scans = new ArrayList<>();
-                        final List<SimpleSpectrum> specs = new ArrayList<>();
-                        for (int j=segment.getFwhmStartIndex(); j <= segment.getFwhmEndIndex(); ++j) {
-                            scans.add(sample.run.getScanByNumber(segment.getPeak().getScanPointAt(j).getScanNumber()).get());
-                            specs.add(sample.storage.getScan(scans.get(scans.size()-1)));
-                        }
-                        System.out.println("-----");
+
+                    public void updateProgress(int min, int max, int progress, String shortInfo) {
+                        System.out.println(shortInfo);
                     }
-                }
+
+                    @Override
+                    protected Object compute() throws Exception {
+                        return null;
+                    }
+                });
+                System.out.println("Gapfilling Done.");
+                System.out.flush();
+
+                addOrderedSampleNames(c, sampleNames);
+
+                // write correlation network
+                i.detectAdductsWithGibbsSampling(c).writeToFile(i, new File("ion_network.js"));
+                consensusFeatures = i.makeConsensusFeatures(c);
+            } else {
+                sampleNames.add(i.getSamples().get(0).run.getIdentifier());
+                consensusFeatures = i.makeConsensusFeatures(new Cluster(i.getSamples().get(0), true));
             }
-            final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(c);
 
 
 
