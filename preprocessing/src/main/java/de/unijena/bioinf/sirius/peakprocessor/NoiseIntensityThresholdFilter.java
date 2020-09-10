@@ -1,9 +1,12 @@
 package de.unijena.bioinf.sirius.peakprocessor;
 
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.annotations.NoiseThresholdSettings;
 import gnu.trove.list.array.TDoubleArrayList;
+
+import java.util.ListIterator;
 
 /**
  * Keeps only the K most intensive peaks and delete all peaks with intensity below given threshold
@@ -19,30 +22,54 @@ public class NoiseIntensityThresholdFilter implements MergedSpectrumProcessor {
         switch (settings.basePeak) {
             case LARGEST:
                 for (ProcessedPeak p : input.getMergedPeaks())
-                    base = Math.max(p.getRelativeIntensity(),base);
+                    base = Math.max(p.maxIntensity(),base);
                 break;
             case NOT_PRECURSOR:
-                final double pm = (parent.getMass()-0.5d);
+                final double pm = (parent.getMass()-20d);
                 for (ProcessedPeak p : input.getMergedPeaks())
                     if (p.getMass() < pm)
-                        base = Math.max(p.getRelativeIntensity(),base);
+                        base = Math.max(p.maxIntensity(),base);
                 break;
             case SECOND_LARGEST:
                 double a = Double.NEGATIVE_INFINITY; double b = Double.NEGATIVE_INFINITY;
                 for (ProcessedPeak p : input.getMergedPeaks()) {
-                    if (p.getRelativeIntensity()>a) {
+                    final double mx = p.maxIntensity();
+                    if (mx>a) {
                         b = a;
-                        a = p.getRelativeIntensity();
-                    } else if (p.getRelativeIntensity() > b) {
-                        b = p.getRelativeIntensity();
+                        a = mx;
+                    } else if (mx > b) {
+                        b = mx;
                     }
                 }
                 base = b;
                 break;
             default: base = 1d;
         }
+        // Kai: it seems that for compounds with MANY spectra of different CE, removing peaks which occur only in
+        // a few of them might be too harsh, in particular if each spectrum itself has high quality as in NIST.
+        // So we now remove peaks per spectrum. In preprocessing we do smarter noise removal anyways.
+
         final double scale = base;
+        final double deleteInt = Math.max(settings.absoluteThreshold, base*settings.intensityThreshold);
+        ListIterator<ProcessedPeak> iter = input.getMergedPeaks().listIterator();
+        while (iter.hasNext()) {
+            final ProcessedPeak peak = iter.next();
+            boolean allBelow = true;
+            for (Peak p : peak.getOriginalPeaks()) {
+                if (p.getIntensity()>=deleteInt) {
+                    allBelow = false;
+                    break;
+                }
+            }
+            if (!peak.isSynthetic() && allBelow) {
+                iter.remove();
+            }
+        }
+
         input.getMergedPeaks().removeIf(peak -> peak!=parent && ((peak.getSumIntensity() < settings.absoluteThreshold) || (peak.getRelativeIntensity()/scale) < settings.intensityThreshold));
+
+
+
         if (input.getMergedPeaks().size()>settings.maximalNumberOfPeaks) {
             final TDoubleArrayList intensities = new TDoubleArrayList(input.getMergedPeaks().size());
             for (ProcessedPeak p : input.getMergedPeaks()) intensities.add(p.getRelativeIntensity());
