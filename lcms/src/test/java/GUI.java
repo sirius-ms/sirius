@@ -9,6 +9,8 @@ import de.unijena.bioinf.lcms.peakshape.*;
 import de.unijena.bioinf.model.lcms.*;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
@@ -71,7 +73,23 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
         getContentPane().add(left,BorderLayout.WEST);
         getContentPane().add(right,BorderLayout.EAST);
-        getContentPane().add(info,BorderLayout.SOUTH);
+
+        JSlider slider = new JSlider(0, GUI.this.sample.ions.size());
+        slider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                final int value = slider.getValue();
+                if (value >= 0 && value < GUI.this.sample.ions.size()) {
+                    GUI.this.jumpTo(value);
+                }
+            }
+        });
+
+        final Box verticalBox = Box.createVerticalBox();
+        verticalBox.add(slider);
+        verticalBox.add(info);
+
+        getContentPane().add(verticalBox,BorderLayout.SOUTH);
 
         getContentPane().add(specViewer,BorderLayout.CENTER);
         addKeyListener(this);
@@ -106,7 +124,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
     public static void main(String[] args) {
 
-        final File mzxmlFile = new File("/home/kaidu/data/raw/Stachybotrys/OE_myzel_04517_konz_2.mzXML");
+        final File mzxmlFile = new File("/home/kaidu/Downloads/test2/").listFiles()[0];
         InMemoryStorage storage= new InMemoryStorage();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         try {
@@ -142,6 +160,12 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
     }
     private void nextIon() {
         ++offset;
+        if (offset >= sample.ions.size()) offset = 0;
+        specViewer.ion = sample.ions.get(offset);
+        specViewer.repaint();
+    }
+    private void jumpTo(int offset) {
+        this.offset = offset;
         if (offset >= sample.ions.size()) offset = 0;
         specViewer.ion = sample.ions.get(offset);
         specViewer.repaint();
@@ -313,21 +337,24 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
             }
 
             // draw MS/MS
-            /*
-            for (Scan s : ion.getMsMs().getScans())  {
-                final long retentionTime = s.getRetentionTime();
-                double prec = s.getPrecursor().getIntensity();
-                if (prec == 0d) {
-                    prec = 1000d;
+            int scanStart = ion.getPeak().getScanNumberAt(0);
+            int scanEnd = ion.getPeak().getScanNumberAt(ion.getPeak().numberOfScans()-1);
+            for (Scan s : GUI.this.sample.run.getScans(scanStart,scanEnd).values()) {
+                if (s.isMsMs() && Math.abs(s.getPrecursor().getMass() - ion.getMass()) < 0.01) {
+                    final long retentionTime = s.getRetentionTime();
+                    double prec = s.getPrecursor().getIntensity();
+                    if (prec == 0d) {
+                        prec = 1000d;
+                    }
+
+                    int posX = (int) Math.round((retentionTime - start) / deltaRT);
+                    int posY = (int) Math.round(prec / deltaInt);
+                    g.setColor(Color.BLUE);
+                    g.fillOval((int) posX - 5, 700 - ((int) posY - 5), 10, 10);
+
                 }
-
-                int posX = (int)Math.round((retentionTime-start)/deltaRT);
-                int posY = (int)Math.round(prec/deltaInt);
-                g.setColor(Color.BLUE);
-                g.fillOval((int)posX-5, 700 - ((int)posY-5), 10, 10);
-
             }
-            */
+
             g.setColor(Color.BLACK);
             g.setFont(medium);
             g.drawString(ion.getSegment().toString(), 50,800);
