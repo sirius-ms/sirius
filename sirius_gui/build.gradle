@@ -362,9 +362,6 @@ runtime {
             installerType = 'dmg'
             installerOptions += [
                     '--app-version', "${project.version}",
-                    '--linux-menu-group', 'Science;',
-                    '--linux-shortcut',
-//                               '--file-associations', "${projectDir}/buildres/linux/bibtexAssociations.properties"
             ]
             imageOptions = [
                     '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.icns",
