@@ -56,6 +56,13 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
             new IntroduceIsotopeLosses(input, graph).introduceIsotopeLosses();
     }
 
+    private boolean hasIsotopicPeaks(ProcessedInput input) {
+        if(!input.getPeakAnnotations().containsKey(ExtractedMs2IsotopePattern.class))
+            return false;
+        final PeakAnnotation<ExtractedMs2IsotopePattern> pat = input.getPeakAnnotationOrThrow(ExtractedMs2IsotopePattern.class);
+        return input.getMergedPeaks().stream().anyMatch(x->pat.get(x)!=null);
+    }
+
     @Override
     protected void transferAnotationsFromGraphToTree(ProcessedInput input, FGraph graph, FTree tree, IntergraphMapping graph2treeFragments) {
 
@@ -484,7 +491,14 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
                 }
             }
             // there should be no peak with no isotope pattern which is more intensive than peaks with isotope pattern
-            return atLeastOne && highestIsotopicIntensity> highestNonIsotopicIntensity;
+            final boolean found = atLeastOne && highestIsotopicIntensity> highestNonIsotopicIntensity;
+
+            // delete annotation if we haven't found isotope peaks
+            if (!found) {
+                input.getMergedPeaks().forEach(x->ano.set(x,null));
+            }
+            return found;
+
         }
 
         public SimpleSpectrum findPatternInMostIntensiveScan(ProcessedInput input, ProcessedPeak peak) {
