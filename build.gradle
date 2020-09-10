@@ -39,7 +39,7 @@ ext {
     picocli_version = '4.3.2'//'3.9.5'
 
     glpk_lib_version = '4.60'
-    clp_lib_version = '1.17.5'
+    clp_lib_version = '1.17.5b'
 
     //locations of runtime libraries
     //jre path relative tu app home

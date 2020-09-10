@@ -311,7 +311,7 @@ runtime {
             jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-win_x64.zip")
         }
 
-    } else if (OS.isMacOsX) {
+    } else if (OS.isMacOsX()) {
         targetPlatform("osx64") {
             jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64.tar.gz") {
                 pathToHome = "zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64/zulu-14.jdk/Contents/Home"
@@ -325,6 +325,7 @@ runtime {
 
     jpackage {
         outputDir = "distribution"
+        args = ['gui']
         installerOptions = [
                 '--verbose',
                 '--vendor', 'FSU Jena',
@@ -351,7 +352,7 @@ runtime {
             imageOptions = [
                     '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.ico",
             ]
-        } else if (OS.isMacOsX) {
+        } else if (OS.isMacOsX()) {
             targetPlatformName = "osx64"
             installerType = 'dmg'
             imageOptions = [
@@ -361,15 +362,18 @@ runtime {
     }
 }
 
-
 task copyResources(type: Copy, dependsOn: jpackageImage) {
     String os;
+    File intoFile;
     if (OS.isLinux()) {
         os = 'l64'
+        intoFile = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}/lib/app").toFile()
     } else if (OS.isWindows()) {
         os = 'w64'
-    } else if (OS.isMacOsX) {
+        intoFile = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}/lib/app").toFile()
+    } else if (OS.isMacOsX()) {
         os = 'osx'
+        intoFile = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}.app/Contents/app").toFile()
     } else {
         throw new RuntimeException("Could not detect OS for packaging!")
     }
@@ -378,7 +382,7 @@ task copyResources(type: Copy, dependsOn: jpackageImage) {
         include('libglpk_java.so')
     }
     from("${project.clpPath}/$os/")
-    into(jpackageImage.outputs.files.singleFile.toPath().resolve('sirius_gui/lib/app').toFile())
+    into(intoFile)
 }
 
 tasks.copyResources.dependsOn ':downloadGLPK'
