@@ -54,4 +54,11 @@ public class PossibleAdductSwitches implements Ms2ExperimentAnnotation {
     public static PossibleAdductSwitches disabled() {
         return DISABLED;
     }
+
+    @Override
+    public String toString() {
+        if (precursorIonizationToFragmentIonizations.isEmpty())
+            return "AdductSwitch:disabled";
+        else return "AdductSwitch" + precursorIonizationToFragmentIonizations.toString();
+    }
 }
