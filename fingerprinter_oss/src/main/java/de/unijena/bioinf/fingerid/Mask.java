@@ -20,6 +20,7 @@ package de.unijena.bioinf.fingerid;
 import gnu.trove.map.hash.TIntIntHashMap;
 
 import java.util.Arrays;
+import java.util.HashSet;
 
 public class Mask {
 
@@ -42,12 +43,21 @@ public class Mask {
         return compute(fingerprints, 1);
     }
 
+    public static Mask compute(boolean[][] fingerprints, String[] inchikeys, int minNumber, int maxNumber) {
+        final int N = fingerprints[0].length;
+        final int[] bits = new int[N];
+        Arrays.fill(bits, USED_INDEX);
+        final Mask m = new Mask(bits);
+        m.removeDuplicates(fingerprints, minNumber, maxNumber, inchikeys);
+        return m;
+    }
+
     public static Mask compute(boolean[][] fingerprints, int minNumber, int maxNumber) {
         final int N = fingerprints[0].length;
         final int[] bits = new int[N];
         Arrays.fill(bits, USED_INDEX);
         final Mask m = new Mask(bits);
-        m.removeDuplicates(fingerprints, minNumber, maxNumber);
+        m.removeDuplicates(fingerprints, minNumber, maxNumber, null);
         return m;
     }
     public static Mask compute(boolean[][] fingerprints, int threshold) {
@@ -55,11 +65,11 @@ public class Mask {
     }
 
     public void removeDuplicates(boolean[][] fingerprints) {
-        removeDuplicates(fingerprints, 1, fingerprints.length-1);
+        removeDuplicates(fingerprints, 1, fingerprints.length-1, null);
     }
 
     public void removeDuplicates(boolean[][] fingerprints, int threshold) {
-        removeDuplicates(fingerprints, threshold, fingerprints.length-threshold);
+        removeDuplicates(fingerprints, threshold, fingerprints.length-threshold, null);
     }
 
     /**
@@ -75,9 +85,10 @@ public class Mask {
         return map;
     }
 
-    public void removeDuplicates(boolean[][] fingerprints, int minNumber, int maxNumber) {
+    public void removeDuplicates(boolean[][] fingerprints, int minNumber, int maxNumber, String[] inchikeys) {
         final int N = fingerprints[0].length;
         usedIndizes=null;
+        HashSet<String> usedKeys = new HashSet<String>();
         // STEP 1: Search for empty COLUMNS
         if (minNumber==1 && maxNumber==fingerprints.length-1) {
             eachCol:
@@ -91,13 +102,23 @@ public class Mask {
         } else {
             final int[] counts = new int[fingerprints[0].length];
             for (int k = 0; k < N; ++k) {
+                usedKeys.clear();
                 for (int i = 0; i < fingerprints.length; ++i) {
-                    if (fingerprints[i][k]) ++counts[k];
+                    if (inchikeys!=null && !usedKeys.add(inchikeys[i])) {
+                        continue;
+                    }
+                    if (fingerprints[i][k]) {
+                        ++counts[k];
+                    }
                 }
             }
             for (int i=0; i < counts.length; ++i) {
                 if (counts[i] < minNumber) bits[i] = ALWAYS_FALSE;
                 else if (counts[i] > maxNumber) bits[i] = ALWAYS_TRUE;
+            }
+            System.out.println("Counts:");
+            for (int k = 0; k < N; ++k) {
+                System.out.println(k + "\t" + counts[k]);
             }
         }
         // STEP 2: Search for identical columns
