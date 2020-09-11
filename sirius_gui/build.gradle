@@ -370,9 +370,12 @@ runtime {
             ]
         } else if (OS.isMacOsX()) {
             targetPlatformName = "osx64"
-            installerType = 'dmg'
+            //pkg is preferred because of more intuitive install of multi launcher apps like ours
+            //pkg the user has only to accept the security exception on time during the installation
+            installerType = 'pkg'
             installerOptions += [
                     '--app-version', "${project.version}",
+                    '--mac-package-name', 'SIRIUS',
             ]
             imageOptions += [
                     '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.icns",
