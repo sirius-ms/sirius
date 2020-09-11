@@ -31,6 +31,9 @@ class LabeledCompound {
     protected final MolecularFormula formula;
     protected final ArrayFingerprint fingerprint;
     protected final ArrayFingerprint label;
+
+    protected ArrayFingerprint npcLabel;
+
     protected final double[] formulaFeatures;
 
     protected final ArrayFingerprint learnableFp;

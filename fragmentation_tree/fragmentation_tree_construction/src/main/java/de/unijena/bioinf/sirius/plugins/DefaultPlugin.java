@@ -38,6 +38,6 @@ public class DefaultPlugin extends SiriusPlugin {
 
         initializer.addRootScorer(new CarbohydrogenScorer.CarbohydrogenRootScorer());
         initializer.addFragmentScorer(new CarbohydrogenScorer.CarbohydrogenFragmentScorer());
-        initializer.addLossScorer(new CarbohydrogenScorer.CarbohydrogenLossScorer());
+        //initializer.addLossScorer(new CarbohydrogenScorer.CarbohydrogenLossScorer());
     }
 }
