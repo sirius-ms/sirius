@@ -114,11 +114,11 @@ public class FormulaResultController extends BaseApiController {
                         return null;
                     }
                 })).orElse(Stream.empty());
-        List<Optional<Scored<CompoundCandidate>>> topHits = annotatedFResults.map(fr ->
+        List<Scored<CompoundCandidate>> topHits = annotatedFResults.map(fr ->
                 fr.getAnnotation(FBCandidates.class).map(fbcandidates ->
-                        fbcandidates.getResults().get(0))).collect(Collectors.toList());
+                        fbcandidates.getResults().get(0))).
+                filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
-        // Todo: handling of null-objects
         Scored<CompoundCandidate> bestCandidate = topHits.get(0);
         for(int idx = 1; idx < topHits.size(); idx++){
             if(topHits.get(idx).getScore() > bestCandidate.getScore()){
