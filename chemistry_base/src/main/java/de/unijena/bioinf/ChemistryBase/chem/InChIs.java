@@ -164,7 +164,7 @@ public class InChIs {
 
         public InChIFormulaExtractor(String inChI) {
             formulaStrings = extractFormulaLayer(inChI).split("[.]");
-            chargeString = extractQLayer(inChI).split(";");
+            chargeString = extractPLayer(inChI).split(";");
         }
 
         int index = 0;
@@ -225,9 +225,9 @@ public class InChIs {
 
         if (q == 0) return formula;
         else if (q < 0) {
-            return formula.add(MolecularFormula.parse(Math.abs(q) + "H"));
+            return formula.subtract(MolecularFormula.parse(Math.abs(q) + "H"));
         } else {
-            return formula.subtract(MolecularFormula.parse(q + "H"));
+            return formula.add(MolecularFormula.parse(q + "H"));
         }
     }
 

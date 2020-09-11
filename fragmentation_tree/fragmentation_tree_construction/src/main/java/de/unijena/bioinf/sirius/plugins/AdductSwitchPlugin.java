@@ -81,6 +81,7 @@ public final class AdductSwitchPlugin extends SiriusPlugin {
             Set<Ionization> allowed = transitions.get(a.getIonization());
             if (allowed==null) return true;
             if (allowed.contains(b.getIonization())) {
+                if (a.getIonization().getCharge()<0) return false; // for negative we do not know the mechanism
                 final MolecularFormula difference = a.getFormula().subtract(b.getFormula());
                 if ((difference.numberOfOxygens()>0) || (difference.numberOf(N)>0) || difference.numberOf(P)>0) return false;
                 return true;

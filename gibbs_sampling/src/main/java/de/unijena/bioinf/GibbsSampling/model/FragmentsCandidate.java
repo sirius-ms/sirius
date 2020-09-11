@@ -223,7 +223,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 final Score ls = f.getInDegree()==0?null:lscore.get(f.getIncomingEdge());
                 final double score = (fs==null?0d:fs.sum())+(ls==null?0d:ls.sum());
                 //changed
-                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, mergedSpectrum.getMergedPeaks().get(f.getPeakId()).getRelativeIntensity()/maxIntensity);
+                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()), f.getIonization(), (short)idx, mergedSpectrum.getMergedPeaks().get(f.getPeakId()).getRelativeIntensity()/maxIntensity);
 //                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, peak.getIntensity());
 //                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, score);
 
@@ -244,9 +244,9 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             final double score = (fs==null?0d:fs.sum())+(ls==null?0d:ls.sum());
             //changed
             if (f.getFormula().equals(root)){
-                fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, 1d);
+                fragWithIdx[i++] = new FragmentWithIndex(f.getFormula(), f.getIonization(), (short)idx, 1d);
             } else {
-                fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, mergedSpectrum.getMergedPeaks().get(f.getPeakId()).getRelativeIntensity()/maxIntensity);
+                fragWithIdx[i++] = new FragmentWithIndex(f.getFormula(), f.getIonization(), (short)idx, mergedSpectrum.getMergedPeaks().get(f.getPeakId()).getRelativeIntensity()/maxIntensity);
             }
 //            if (f.getFormula().equals(root)){
 //                fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, maxIntensity);
@@ -261,7 +261,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
         Arrays.sort(lossWithIdx);
         Arrays.sort(fragWithIdx);
 
-        String[] lStrings = new String[lossWithIdx.length];
+        MolecularFormula[] lStrings = new MolecularFormula[lossWithIdx.length];
         short[] lIdx = new short[lossWithIdx.length];
 
         for (int j = 0; j < lossWithIdx.length; j++) {
@@ -269,7 +269,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             lIdx[j] = lossWithIdx[j].idx;
         }
 
-        String[] fStrings = new String[fragWithIdx.length];
+        MolecularFormula[] fStrings = new MolecularFormula[fragWithIdx.length];
         short[] fIdx = new short[fragWithIdx.length];
 
         for (int j = 0; j < fragWithIdx.length; j++) {
@@ -344,7 +344,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                     throw new RuntimeException("index < 0");
                 }
                 else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
-                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()).formatByHill(), f.getIonization(), (short)idx, f.getIncomingEdge().getWeight());
+                lossWithIdx[i++] = new FragmentWithIndex(root.subtract(f.getFormula()), f.getIonization(), (short)idx, f.getIncomingEdge().getWeight());
 
             }
         }
@@ -371,7 +371,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
                 throw new RuntimeException("index < 0");
             }
             else if (idx>Short.MAX_VALUE) throw new RuntimeException("index too big");
-            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula().formatByHill(), f.getIonization(), (short)idx, f.getIncomingEdge().getWeight());
+            fragWithIdx[i++] = new FragmentWithIndex(f.getFormula(), f.getIonization(), (short)idx, f.getIncomingEdge().getWeight());
 
 //            fStrings[i++] = f.getFormula().formatByHill();
 //            fIdx[i] = (short)f.getColor();
@@ -380,7 +380,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
         Arrays.sort(lossWithIdx);
         Arrays.sort(fragWithIdx);
 
-        String[] lStrings = new String[lossWithIdx.length];
+        MolecularFormula[] lStrings = new MolecularFormula[lossWithIdx.length];
         short[] lIdx = new short[lossWithIdx.length];
 
         for (int j = 0; j < lossWithIdx.length; j++) {
@@ -388,7 +388,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             lIdx[j] = lossWithIdx[j].idx;
         }
 
-        String[] fStrings = new String[fragWithIdx.length];
+        MolecularFormula[] fStrings = new MolecularFormula[fragWithIdx.length];
         short[] fIdx = new short[fragWithIdx.length];
 
         for (int j = 0; j < fragWithIdx.length; j++) {
