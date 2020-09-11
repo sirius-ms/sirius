@@ -27,6 +27,16 @@ import gnu.trove.list.array.TIntArrayList;
 
 public class MatrixUtils {
 
+    public static double frobeniusNorm(double[][] M) {
+        double norm = 0d;
+        for (int i=0; i < M.length; ++i) {
+            for (int j=0; j < M.length; ++j) {
+                norm += M[i][j]*M[i][j];
+            }
+        }
+        return norm;
+    }
+
     public static double[] encodeBoolean(boolean[] vector, double falses, double trues) {
         final double[] v = new double[vector.length];
         for (int i=0; i < vector.length; ++i) v[i] = vector[i] ? trues : falses;
@@ -308,7 +318,7 @@ public class MatrixUtils {
      * the function is symmetric. A single subjob will always compute 2 rows and n entries (with n is the number of rows/columns).
      */
     public static BasicMasterJJob<double[][]> parallelizeSymmetricMatrixComputation(double[][] matrix, MatrixComputationFunction function) {
-        return new BasicMasterJJob<double[][]>(JJob.JobType.SCHEDULER) {
+        return new BasicMasterJJob<double[][]>(JJob.JobType.CPU) {
             @Override
             protected double[][] compute() throws Exception {
 
@@ -345,6 +355,53 @@ public class MatrixUtils {
             }
         };
     }
+    // I >= J
+    public static BasicMasterJJob<Object> parallelizeSymmetricMatrixComputation(int size, GenericMatrixComputationFunction function) {
+        return new BasicMasterJJob<Object>(JJob.JobType.CPU) {
+            @Override
+            protected Object compute() throws Exception {
+
+                final int middle = size/2;
+                for (int row=0; row < middle; ++row) {
+                    final int ROW = row;
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int j=0; j <= ROW; ++j) {
+                                function.updateValue(ROW, j);
+                            }
+                            int row2 = size-ROW-1;
+                            for (int j=0; j <= row2; ++j) {
+                                function.updateValue(row2, j);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                if (size % 2 != 0) {
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int k=0; k <= middle; ++k) {
+                                function.updateValue(middle,k);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                awaitAllSubJobs();
+                return "";
+            }
+        };
+    }
+
+    public interface GenericMatrixComputationFunction {
+        /*
+        updates the value in the matrix for A[I][j] and A[J][I]
+         */
+        public void updateValue(int i, int j);
+    }
+
 
     /**
      * Functional interface for calculating the value for a matrix entry given the indizes i and j

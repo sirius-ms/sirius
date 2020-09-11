@@ -151,7 +151,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
             }
         }
 
-
+        logInfo("Prepare Scorers");
 
         double minV = 0.0D;
         //todo this is a big hack!!!!
@@ -160,14 +160,14 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
                 if (edgeFilter instanceof EdgeThresholdFilter){
                     ((ScoreProbabilityDistributionFix)edgeScorer).setThresholdAndPrepare(allCandidates);
                 } else {
-                    ((ScoreProbabilityDistributionFix)edgeScorer).prepare(allCandidates);
+                    submitSubJob(((ScoreProbabilityDistributionFix)edgeScorer).getPrepareJob(allCandidates)).takeResult();
                 }
 
             } else if (edgeScorer instanceof ScoreProbabilityDistributionEstimator){
                 if (edgeFilter instanceof EdgeThresholdFilter){
                     ((ScoreProbabilityDistributionEstimator)edgeScorer).setThresholdAndPrepare(allCandidates);
                 } else {
-                    ((ScoreProbabilityDistributionEstimator)edgeScorer).prepare(allCandidates);
+                    submitSubJob(((ScoreProbabilityDistributionEstimator)edgeScorer).getPrepareJob(allCandidates)).takeResult();
                 }
             } else {
                 edgeScorer.prepare(allCandidates);
@@ -195,10 +195,12 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
             allIndices.add(i);
         }
         ConcurrentLinkedQueue<Integer> candidatesQueue = new ConcurrentLinkedQueue<>(allIndices);
-
+        logInfo("Number of candidates to compute: " + allIndices.size());
         List<BasicJJob> jobs = new ArrayList<>();
-        for (int i = 0; i < super.jobManager.getCPUThreads(); i++) {
-            BasicJJob job = new EdgeCalculationWorker(candidatesQueue, graph);
+        final int cpuThreads = super.jobManager.getCPUThreads();
+        for (int i = 0; i < cpuThreads; i++) {
+            EdgeCalculationWorker job = new EdgeCalculationWorker(candidatesQueue, graph);
+            job.totalEdges = allIndices.size()/cpuThreads;
             jobs.add(job);
             submitSubJob(job);
         }
@@ -294,12 +296,15 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
         private ConcurrentLinkedQueue<Integer> remainingCandidates;
         private Graph<C> graph;
 
+        protected int computedEdges, totalEdges;
+
         private EdgeCalculationWorker(ConcurrentLinkedQueue<Integer> remainingCandidates, Graph<C> graph) {
             this.remainingCandidates = remainingCandidates;
             this.graph = graph;
         }
         @Override
         protected Object compute() throws Exception {
+            final int edgesPerPercentagePoint = (int)Math.max(1, Math.floor(totalEdges/100d));
             while (!remainingCandidates.isEmpty()){
                 Integer idx = remainingCandidates.poll();
                 if (idx==null) continue;
@@ -325,6 +330,10 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
                 edgeFilter.filterEdgesAndSetThreshold(graph, idx, scores.toArray());
 
+                ++computedEdges;
+                if (computedEdges%edgesPerPercentagePoint==0) {
+                    logInfo(String.format("%d / %d (%d %%)", computedEdges, totalEdges, (computedEdges*100)/totalEdges));
+                }
                 //progess is always fired if job done
 //                checkForInterruption();
 
