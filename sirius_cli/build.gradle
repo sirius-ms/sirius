@@ -38,7 +38,6 @@ dependencies {
 //    compile group: 'cplex', name: 'cplex', version: "12.7.1"
 }
 
-//artifactoryPublish.skip = true
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
     publish {
