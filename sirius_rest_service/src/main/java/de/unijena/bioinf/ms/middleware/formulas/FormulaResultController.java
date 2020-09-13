@@ -32,6 +32,7 @@ import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import org.checkerframework.checker.nullness.Opt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -106,18 +107,27 @@ public class FormulaResultController extends BaseApiController {
     @GetMapping(value = "/formulas/topHitCandidate", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public String getTopHitCandidate(@PathVariable String pid, @PathVariable String cid){
         SiriusProjectSpace projectSpace = projectSpace(pid);
-        Stream<FormulaResult> annotatedFResults = this.getCompound(projectSpace,cid).map(cc ->
+        Stream<Optional<FormulaResult>> annotatedFResults = this.getCompound(projectSpace,cid).map(cc ->
                 cc.getResults().values().stream().map(frId -> {
                     try {
-                        return projectSpace.getFormulaResult(frId, FBCandidates.class);
+                        return Optional.of(projectSpace.getFormulaResult(frId, FBCandidates.class));
                     } catch (IOException e) {
-                        return null;
+                        return Optional.<FormulaResult>empty();
                     }
                 })).orElse(Stream.empty());
-        List<Scored<CompoundCandidate>> topHits = annotatedFResults.map(fr ->
-                fr.getAnnotation(FBCandidates.class).map(fbcandidates ->
-                        fbcandidates.getResults().get(0))).
+        /*
+         * two cases: there is no CompoundContainer in the projectspace with the specified identifier 'cid'
+         * or: the CompoundContainer does not contain FormulaResults --> cc.getResults().values() is an empty collection
+         *
+         * If the stream is not empty, the elements are Optional<FormulaResult> objects.
+         */
+        List<Scored<CompoundCandidate>> topHits = annotatedFResults.map(optfr ->
+                optfr.map(fr -> fr.getAnnotation(FBCandidates.class).map(fbCandidates ->
+                        fbCandidates.getResults().get(0)).orElse(null))).
                 filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+
+        // topHits can be an empty list
+        if(topHits.isEmpty()) return null;
 
         Scored<CompoundCandidate> bestCandidate = topHits.get(0);
         for(int idx = 1; idx < topHits.size(); idx++){
