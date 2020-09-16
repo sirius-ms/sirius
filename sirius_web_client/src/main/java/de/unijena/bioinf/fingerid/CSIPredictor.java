@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.confidence_score.CSICovarianceConfidenceScorer;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoringWithDynamicComputation;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
@@ -42,7 +43,7 @@ import java.util.Map;
  * We init a separate predictor object for positive and negative ionization
  */
 //todo @Nils: cahnge parameter so that it contains all field we need for all possible scoring (CSI, Bayesnet, bayesnetDynamic)
-public class CSIPredictor extends AbstractStructurePredictor<Parameters.FP> {
+public class CSIPredictor extends AbstractStructurePredictor<Parameters.UnpreparedScoring<BayesnetScoring,Parameters.FP>> {
     protected MaskedFingerprintVersion fpVersion;
     protected PredictionPerformance[] performances;
     protected volatile boolean initialized;
@@ -54,11 +55,14 @@ public class CSIPredictor extends AbstractStructurePredictor<Parameters.FP> {
     }
 
     @Override
-    public FingerblastScoring<?> getPreparedFingerblastScorer(Parameters.FP parameters) {
+    public FingerblastScoring<?> getPreparedFingerblastScorer(Parameters.UnpreparedScoring<BayesnetScoring,Parameters.FP> parameters) {
         //todo @Nils check which parameters the scoring needs and add them
-        FingerblastScoring<Parameters.FP> s = (FingerblastScoring<Parameters.FP>) fingerblastScoring.getScoring();
-        s.prepare(parameters);
-        return s;
+        /*if(!initialized) {
+            initialize();
+        }*/
+        BayesnetScoringWithDynamicComputation scorer = (BayesnetScoringWithDynamicComputation) fingerblastScoring.getScoring();
+        scorer.prepare(parameters);
+        return scorer;
     }
 
     public MaskedFingerprintVersion getFingerprintVersion() {
@@ -88,26 +92,15 @@ public class CSIPredictor extends AbstractStructurePredictor<Parameters.FP> {
         performances = fingeridData.getPerformances();
         fpVersion = fingeridData.getFingerprintVersion();
 
-        //todo @Kai, @Martin & @Marcus: Negative covariance/confidence score?
-        final BayesnetScoring cvs = csiWebAPI.getBayesnetScoring(predictorType);
-        if (cvs != null) {
-            fingerblastScoring = cvs;
-            confidenceScorer = makeConfidenceScorer();
-        } else {
-            //fallback if covariance scoring does not work -> no confidence without covariance score
-            fingerblastScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(performances);
-            confidenceScorer = null;
-        }
+        fingerblastScoring = new ScoringMethodFactory.BayesnetScoringWithDynamicComputationScoringMethod();
+        confidenceScorer = makeConfidenceScorer();
 
         trainingStructures = TrainingStructuresPerPredictor.getInstance().getTrainingStructuresSet(predictorType, csiWebAPI);
         refreshCacheDir();
         initialized = true;
     }
 
-
-
-
-
+    // todo von Nils: Frage an euch: Der CSIConfidenceScorer muss doch wahrscheinlich auch etwas überarbeitet werden, oder?
     private CSICovarianceConfidenceScorer makeConfidenceScorer() {
         try {
             final Map<String, TrainedSVM> confidenceSVMs = csiWebAPI.getTrainedConfidence(predictorType);
