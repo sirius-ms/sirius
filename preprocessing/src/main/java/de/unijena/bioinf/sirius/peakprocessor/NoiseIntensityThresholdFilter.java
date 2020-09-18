@@ -81,7 +81,7 @@ public class NoiseIntensityThresholdFilter implements MergedSpectrumProcessor {
                     break;
                 }
             }
-            if (!peak.isSynthetic() && allBelow) {
+            if (!peak.isSynthetic() && peak != input.getParentPeak() && allBelow) {
                 iter.remove();
             }
         }
