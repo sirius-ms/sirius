@@ -1,24 +1,3 @@
- /*
-  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
-  *
-  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
-  *  Chair of Bioinformatics, Friedrich-Schilller University.
-  *
-  *  This library is free software; you can redistribute it and/or
-  *  modify it under the terms of the GNU General Public
-  *  License as published by the Free Software Foundation; either
-  *  version 3 of the License, or (at your option) any later version.
-  *
-  *  This library is distributed in the hope that it will be useful,
-  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  *  Lesser General Public License for more details.
-  *
-  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/gpl-3.0.txt>
-  */
-
-package de.unijena.bioinf.lcms.debuggui;
-
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -34,6 +13,7 @@ import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.align.Cluster;
+import de.unijena.bioinf.lcms.debuggui.Gradient;
 import de.unijena.bioinf.lcms.peakshape.GaussianShape;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
@@ -282,7 +262,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
         final File mzxmlFile = new File(
                 //"/home/kaidu/data/raw/debug"
                 //"/home/kaidu/analysis/canopus/mice/raw/cecum"
-                "/home/kaidu/Downloads/mzml"
+                "/home/kaidu/Downloads/test2"
                 //"/home/kaidu/data/raw/rosmarin"
                 //"/home/kaidu/analysis/canopus/arabidobsis"
                // "/home/kaidu/data/raw/euphorbiaceae/raw"

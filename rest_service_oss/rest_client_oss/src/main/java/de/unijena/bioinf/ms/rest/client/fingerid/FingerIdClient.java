@@ -119,7 +119,7 @@ public class FingerIdClient extends AbstractClient {
      */
     public FingerIdData getFingerIdData(PredictorType predictorType, CloseableHttpClient client) throws IOException {
         return execute(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/data.csv")
+                () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/data")
                         .setParameter("predictor", predictorType.toBitsAsString())
                         .build()),
                 FingerIdData::read
@@ -148,7 +148,7 @@ public class FingerIdClient extends AbstractClient {
     public CovarianceScoringMethod getCovarianceScoring(@NotNull PredictorType predictorType, @NotNull FingerprintVersion fpVersion, @Nullable MolecularFormula formula, @NotNull PredictionPerformance[] performances, @NotNull CloseableHttpClient client) throws IOException {
         return execute(client,
                 () -> {
-                    final URIBuilder u = buildVersionSpecificWebapiURI("/fingerid/covariancetree.json")
+                    final URIBuilder u = buildVersionSpecificWebapiURI("/fingerid/covariancetree")
                             .setParameter("predictor", predictorType.toBitsAsString());
                     if (formula != null)
                         u.setParameter("formula", formula.toString());
@@ -160,7 +160,7 @@ public class FingerIdClient extends AbstractClient {
     // todo change json unmarshalling to jackson
     public Map<String, TrainedSVM> getTrainedConfidence(@NotNull final PredictorType predictorType, CloseableHttpClient client) throws IOException {
         return execute(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/confidence.json")
+                () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/confidence")
                         .setParameter("predictor", predictorType.toBitsAsString())
                         .build()),
                 br -> {
@@ -177,7 +177,7 @@ public class FingerIdClient extends AbstractClient {
 
     public InChI[] getTrainingStructures(PredictorType predictorType, CloseableHttpClient client) throws IOException {
         return execute(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/trainingstructures.csv").setParameter("predictor", predictorType.toBitsAsString()).build()),
+                () -> new HttpGet(buildVersionSpecificWebapiURI("/fingerid/trainingstructures").setParameter("predictor", predictorType.toBitsAsString()).build()),
                 br -> {
                     ArrayList<InChI> inchis = new ArrayList<>();
                     String line;
