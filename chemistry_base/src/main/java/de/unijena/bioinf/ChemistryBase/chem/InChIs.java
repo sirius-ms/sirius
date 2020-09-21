@@ -174,7 +174,7 @@ public class InChIs {
         MolecularFormulaNeutralizationMethod neutralizationMethod;
 
         public InChIFormulaExtractor(String inChI) {
-            this(inChI, MolecularFormulaNeutralizationMethod.InChI_DEFAULT);
+            this(inChI, MolecularFormulaNeutralizationMethod.ION_MF);
         }
 
         /**
@@ -355,7 +355,8 @@ public class InChIs {
     }
 
     public static void main(String... args) throws UnknownElementException {
-        String inchi = "InChI=1S/C16H33NO4/c1-2-3-4-5-6-7-8-9-10-11-16(20)21-17(12-14-18)13-15-19/h18-19H,2-15H2,1H3/q+1";
+//        String inchi = "InChI=1S/C16H33NO4/c1-2-3-4-5-6-7-8-9-10-11-16(20)21-17(12-14-18)13-15-19/h18-19H,2-15H2,1H3/q+1";
+        String inchi = "InChI=1S/C16H33NO4/c1-2-3-4-5-6-7-8-9-10-11-16(20)21-17(12-14-18)13-15-19/h18-19H,2-15H2,1H3/p+1";
 
         PrecursorIonType prot = PrecursorIonType.fromString("[M+H]+");
         PrecursorIonType intrinsic = PrecursorIonType.fromString("[M]+");
@@ -369,5 +370,73 @@ public class InChIs {
         System.out.println();
 
 
+        System.out.println(InChIs.extractFormula(inchi));
+        System.out.println(InChIs.extractFormula2(inchi));
+
+
+
     }
+
+
+    protected static class InChIFormulaExtractor2 implements Iterator<MolecularFormula> {
+        final String[] formulaStrings;
+        final String[] chargeString;
+
+        public InChIFormulaExtractor2(String inChI) {
+            formulaStrings = extractFormulaLayer(inChI).split("[.]");
+            chargeString = extractPLayer(inChI).split(";");
+        }
+
+        int index = 0;
+        int multiplier = 0;
+        MolecularFormula cache = null;
+
+        @Override
+        public boolean hasNext() {
+            return index < formulaStrings.length;
+        }
+
+        @Override
+        public MolecularFormula next() {
+            try {
+                return nextFormula();
+            } catch (UnknownElementException e) {
+                throw new RuntimeException("Cannot extract molecular formula from InChi: " + toString(), e);
+            }
+        }
+
+        public MolecularFormula nextFormula() throws UnknownElementException {
+            if (multiplier < 1) {
+                String[] fc = splitOnNumericPrefix(formulaStrings[index]);
+                multiplier = fc[0].isBlank() ? 1 : Integer.parseInt(fc[0]);
+                cache = extractFormula2(fc[1], chargeString[index]);
+                index++;
+            }
+
+            multiplier--;
+            return cache;
+        }
+    }
+
+    public static MolecularFormula extractFormula2(String inChI) throws UnknownElementException {
+        return extractFormulas2(inChI).nextFormula();
+    }
+
+    public static InChIFormulaExtractor2 extractFormulas2(String inChI) {
+        return new InChIFormulaExtractor2(inChI);
+    }
+
+    protected static MolecularFormula extractFormula2(String formulaString, String chargeString) throws UnknownElementException {
+        final MolecularFormula formula = MolecularFormula.parse(formulaString);
+        final int q = parseCharge(chargeString);
+
+        if (q == 0) return formula;
+        else if (q < 0) {
+            return formula.subtract(MolecularFormula.parse(Math.abs(q) + "H"));
+        } else {
+            return formula.add(MolecularFormula.parse(q + "H"));
+        }
+    }
+
+
 }
