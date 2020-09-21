@@ -575,7 +575,7 @@ public class ZodiacUtils {
         final String[] keys = candidateMap.keySet().toArray(String[]::new);
         Arrays.sort(keys, Comparator.comparingInt(u->candidateMap.get(u).get(0).getFragments().length).reversed());
         Deviation deviation = candidateMap.get(keys[0]).get(0).getExperiment().getAnnotation(MS1MassDeviation.class).map(x -> x.allowedMassDeviation).orElse(new Deviation(20, 0.01)).divide(2);
-        final HashSet<String> formulaSet = new HashSet<>();
+        final HashSet<MolecularFormula> formulaSet = new HashSet<>();
         final HashSet<String> alreadyClustered = new HashSet<>();
         final ArrayList<String> cluster = new ArrayList<>();
         System.out.println("START CLUSTERING");

@@ -37,15 +37,17 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
     private final boolean writeMs1;
     private final boolean mergedMs2;
     private final Deviation mergeMs2Deviation;
+    private final boolean expNameAsScans;
 
-    public MgfWriter(boolean writeMs1, boolean mergedMs2) {
-        this(writeMs1, mergedMs2, new Deviation(10, 0.01));
+    public MgfWriter(boolean writeMs1, boolean mergedMs2, boolean expNameAsScans) {
+        this(writeMs1, mergedMs2, new Deviation(10, 0.01), expNameAsScans);
     }
 
-    public MgfWriter(boolean writeMs1, boolean mergedMs2, Deviation mergeMs2Deviation) {
+    public MgfWriter(boolean writeMs1, boolean mergedMs2, Deviation mergeMs2Deviation, boolean expNameAsScans) {
         this.writeMs1 = writeMs1;
         this.mergedMs2 = mergedMs2;
         this.mergeMs2Deviation = mergeMs2Deviation;
+        this.expNameAsScans = expNameAsScans;
     }
 
 
@@ -89,6 +91,9 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
 
     private List<String> createAdditionalInfo(Ms2Experiment experiment) {
         List<String> info = new ArrayList<>();
+
+        if (expNameAsScans)
+            info.add("SCANS=" + experiment.getName());
 
         experiment.getAnnotation(InChI.class).ifPresent(i -> {
             if (i.in2D != null) info.add("INCHI=" + i.in2D);
