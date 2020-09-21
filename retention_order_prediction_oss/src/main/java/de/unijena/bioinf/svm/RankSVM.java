@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 public class RankSVM {
 
-    private static final int MAX_ITERATIONS = 2000;
+    private static final int MAX_ITERATIONS = 4000;
 
     protected final double[][] kernel;
     protected final int[] pairs;
@@ -93,7 +93,7 @@ public class RankSVM {
 
             }
 
-            if (maxChange < 5e-4 && k > 5) {
+            if (maxChange < 1e-4 && k > 5) {
                 break;
             }
 
