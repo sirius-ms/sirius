@@ -139,7 +139,6 @@ mergeTemplateWithDefaultProfile.dependsOn('mergeClassMaps')
 
 task checkDefaultProfile() {
     group = 'other'
-
     doLast {
         Properties defaultProfile = new Properties()
         tasks.collectDefaultProfile.outputs.files.singleFile.listFiles().first()
@@ -172,6 +171,30 @@ task checkDefaultProfile() {
 checkDefaultProfile.dependsOn('collectDefaultProfile')
 checkDefaultProfile.dependsOn('mergeTemplateWithDefaultProfile')
 //distribute.dependsOn('checkDefaultProfile')
+
+runtime{
+    jpackage {
+        imageName = 'sirius'
+        installerName = 'sirius'
+        if (OS.isWindows()) {
+            installerOptions += ['--win-console']
+        }
+    }
+}
+
+publishing {
+    publications {
+        sirius(org.gradle.api.publish.maven.MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+            artifact source: jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}-${project.version}-${osName}.zip").toFile(), classifier: "$osName-headless", extension: 'zip'
+            artifact source: jpackage.getJpackageData().installerOutputDir.toPath().resolve(jpackage.getJpackageData().installerName + installerAppendix).toFile(), classifier: "$osName-headless", extension: installerNameType
+        }
+    }
+}
+
+
+
 
 /*
 task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {

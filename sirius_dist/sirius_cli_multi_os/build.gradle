@@ -1,3 +1,5 @@
+import java.util.stream.Stream
+
 dependencies {
 //project
     compile project(':sirius_cli')
@@ -16,6 +18,28 @@ jar {
 }
 
 /*################### Windows release Stuff ################### */
+launch4j {
+    icon = getRootProject().getRootDir().toPath().resolve('dist/sirius.ico').toFile()
+    copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
+    companyName = "Friedrich-Schiller-University Jena"
+    version = project.version
+    textVersion = project.version
+    supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
+
+    initialHeapSize = 1024 // initial heap not too big improves startup time on windows
+    maxHeapSize = 4096
+    maxHeapPercent = 60
+
+    dontWrapJar = true
+    jdkPreference = 'preferJre'
+
+    classpath.add('./lib/*')
+    classpath.addAll(Stream.of(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':')).filter({ s -> !s.contains('APP_HOME') }).toArray())
+    println("================THE PATH: $classpath")
+
+}
+
+
 project.type.each{t ->
     project.arch.each { a ->
         tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
@@ -120,7 +144,7 @@ distributions {
             }
         }
     })
-//    distribute.dependsOn 'downloadOpenmsScript'
+
     distribute.dependsOn "${n}DistZip"
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
