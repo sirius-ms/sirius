@@ -75,6 +75,9 @@ dependencies {
     compile group: 'org.apache.xmlgraphics', name: 'fop', version: '2.3'
 }
 
+
+
+
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
     publish {

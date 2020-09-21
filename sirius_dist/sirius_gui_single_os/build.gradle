@@ -1,5 +1,3 @@
-import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-
 dependencies {
     compile project(':sirius_gui')
     compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
@@ -240,10 +238,31 @@ runtime {
 
     jpackage {
         imageName = 'sirius-gui'
+        installerName = imageName
         args = ['gui']
-        imageOptions = [
-                '--add-launcher', "sirius=${project.getRootProject().projectDir}/dist/cli-launcher.properties",
+
+        imageOptions += [
+                '--add-launcher', "sirius=${project.getRootProject().projectDir}/jpackage/cli-launcher.properties",
         ]
+
+        if (OS.isLinux()) {
+            installerOptions += [
+                    '--resource-dir', jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}/lib/").toString(),
+                    '--linux-shortcut',
+            ]
+        }
+    }
+}
+
+publishing {
+    publications {
+        sirius(org.gradle.api.publish.maven.MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+            jpackage
+            artifact source: jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}-${project.version}-${osName}.zip").toFile(), classifier: osName, extension: 'zip'
+            artifact source: jpackage.getJpackageData().installerOutputDir.toPath().resolve(jpackage.getJpackageData().installerName + installerAppendix).toFile(), classifier: osName, extension: installerNameType
+        }
     }
 }
 

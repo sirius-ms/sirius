@@ -2,7 +2,6 @@ import org.gradle.api.internal.file.copy.CopyAction
 import org.gradle.api.internal.file.copy.FileCopyAction
 
 import java.nio.file.*
-import java.util.stream.Stream
 
 buildscript {
     repositories {
@@ -79,25 +78,6 @@ ext {
     siriusVersion = System.properties.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = System.properties.getProperty('de.unijena.bioinf.fingerid.version')
     mztabm_version = System.properties.getProperty('de.unijena.bioinf.mztabm.version')
-}
-
-class CopyWithSymlink extends Copy {
-    public CopyWithSymlink() {
-        super();
-        eachFile { details ->
-            Path sourcePath = FileSystems.getDefault().getPath(details.file.path)
-            if (Files.isSymbolicLink(sourcePath)) {
-                details.exclude()
-                Path destinationPath = Paths.get("${destinationDir}/${details.relativePath}")
-                if (Files.notExists(destinationPath.parent)) {
-                    project.mkdir destinationPath.parent
-                }
-                project.exec {
-                    commandLine 'ln', '-sf', Files.readSymbolicLink(sourcePath), destinationPath
-                }
-            }
-        }
-    }
 }
 
 
@@ -394,7 +374,6 @@ pdfDokuArtifact.dependsOn pdfDoku
 task buildDoku {
     group = 'documentation'
     outputs.files(pdfDokuArtifact.outputs.files)
-//    outputs.files(singleFile,htmlDoku.outputs.files)
 }
 
 buildDoku.mustRunAfter cleanDoku
@@ -405,97 +384,6 @@ subprojects {
     apply plugin: 'application'
     apply plugin: 'edu.sc.seis.launch4j'
 
-
-    /*################### Windows release Stuff ################### */
-    launch4j {
-        icon = getRootProject().getRootDir().toPath().resolve('dist/sirius.ico').toFile()
-        copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
-        companyName = "Friedrich-Schiller-University Jena"
-        version = project.version
-        textVersion = project.version
-        supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
-
-        initialHeapSize = 1024 // initial heap not too big improves startup time on windows
-        maxHeapSize = 4096
-        maxHeapPercent = 60
-
-//        jar = project.jar.archiveFileName.get()
-        dontWrapJar = true
-        jdkPreference = 'preferJre'
-
-        classpath.add('./lib/*')
-        classpath.addAll(Stream.of(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':')).filter({ s -> !s.contains('APP_HOME') }).toArray())
-        println("================THE PATH: $classpath")
-
-    }
-
-    /*################### Linux release Stuff ################### */
-    /*startScripts {
-        classpath = files(project.jar.archiveFileName)
-        applicationName = "${project.appName}"
-        def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib/app' //+ "${native_path}"
-        doLast {
-            def lines = unixScript.text.split("\n") as List
-            //classpath and opts
-            int insertOptsIndex = -1
-            int insertCPIndex = -1
-            for (int i = 0; i < lines.size(); i++) {
-                if (lines[i].startsWith('#!/usr/bin/env sh'))
-                    lines[i]='#!/bin/bash'
-                if (lines[i].startsWith('CLASSPATH=')) {
-                    insertCPIndex = i - 1
-                    lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
-                }
-                if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
-                    insertOptsIndex = i - 1
-                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\" -XX:+UseG1GC -XX:+UseStringDeduplication\"")
-                }
-            }
-            lines = lines.plus(insertCPIndex++, "")
-            lines = lines.plus(insertCPIndex++, "gtkFilesGlob=\"\$APP_HOME/${native_path}/*\"")
-            lines = lines.plus(insertCPIndex++, "gtkFiles=(\$gtkFilesGlob)")
-            lines = lines.plus(insertCPIndex++, "if [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
-            lines = lines.plus(insertCPIndex++, "    gtkFiles+=(\"\$APP_HOME/${jre_path}/bin/java\")")
-            lines = lines.plus(insertCPIndex++, "fi")
-            lines = lines.plus(insertCPIndex++, "if [ -x \"\$APP_HOME/${jre_path}/Contents/Home/bin/java\" ] ; then")
-            lines = lines.plus(insertCPIndex++, "    gtkFiles+=(\"\$APP_HOME/${jre_path}/Contents/Home/bin/java\")")
-            lines = lines.plus(insertCPIndex++, "fi")
-            lines = lines.plus(insertCPIndex++, "echo \${gtkFiles[@]}")
-            lines = lines.plus(insertCPIndex++, "")
-
-            lines = lines.plus(insertCPIndex++, "if \$darwin; then")
-            lines = lines.plus(insertCPIndex++, "    gtkRules=\$(spctl --list)")
-            lines = lines.plus(insertCPIndex++, "    echo \"\$gtkRules\"")
-            lines = lines.plus(insertCPIndex++, "    for file in \"\${gtkFiles[@]}\"; do")
-            lines = lines.plus(insertCPIndex++, "        if [[ \$gtkRules != *\"\$file\"* ]]; then")
-            lines = lines.plus(insertCPIndex++, "            spctl --add \"\$file\"")
-            lines = lines.plus(insertCPIndex++, "        fi")
-            lines = lines.plus(insertCPIndex++, "    done")
-            lines = lines.plus(insertCPIndex++, "fi")
-            lines = lines.plus(insertCPIndex, "")
-
-            lines = lines.plus(insertOptsIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
-            lines = lines.plus(insertOptsIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
-
-            //bundled JRE stuff
-            int insertJREIndex = -1
-            for (int i = 0; i < lines.size(); i++) {
-                if (lines[i].startsWith('# Determine the Java command to use to start the JVM.'))
-                    if (lines[i + 1].startsWith('if [ -n "$JAVA_HOME" ] ; then')) {
-                        lines[i + 1] = 'elif [ -n "$JAVA_HOME" ] ; then'
-                        insertJREIndex = i + 1
-
-                    }
-            }
-            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/Contents/Home/bin/java\" ] ; then")
-            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/Contents/Home/bin/java\"")
-            lines = lines.plus(insertJREIndex + 2, "elif [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
-            lines = lines.plus(insertJREIndex + 3, "    JAVACMD=\"\$APP_HOME/${jre_path}/bin/java\"")
-
-            unixScript.text = lines.join(System.lineSeparator())
-
-        }
-    }*/
 
     task listDependecies {
         group = 'reporting'

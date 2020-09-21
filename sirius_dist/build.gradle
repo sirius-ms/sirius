@@ -3,29 +3,32 @@ import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 plugins {
     id 'org.beryx.runtime' version '1.11.4'
 }
+
+ext {
+    OS = DefaultNativePlatform.currentOperatingSystem
+
+    if (OS.isLinux()) {
+        nativeLibs = 'l64'
+        osName = 'linux64'
+        installerNameType = 'deb'
+        installerAppendix = "_${version}-1_amd64.$installerNameType"
+    } else if (OS.isWindows()) {
+        nativeLibs = 'w64'
+        osName = 'win64'
+        installerNameType = 'msi'
+        installerAppendix = "_${version.replace('-SNAPSHOT', '')}.$installerNameType"
+    } else if (OS.isMacOsX()) {
+        nativeLibs = 'osx'
+        osName = 'osx64'
+        installerNameType = 'pkg'
+        installerAppendix = "_${version}.$installerNameType"
+    }
+}
 subprojects {
     apply plugin: 'ManifestClasspath'
     //this is to keep classpath away from commandline because it may get too long for windows
     apply plugin: 'org.beryx.runtime'
 
-    def OS = DefaultNativePlatform.currentOperatingSystem
-    String nativeLibs
-    String osName
-    String installerName
-
-    if (OS.isLinux()) {
-        nativeLibs = 'l64'
-        osName = 'linux64'
-        installerName = 'deb'
-    } else if (OS.isWindows()) {
-        nativeLibs = 'w64'
-        osName = 'win64'
-        installerName = 'msi'
-    } else if (OS.isMacOsX()) {
-        nativeLibs = 'osx'
-        osName = 'osx64'
-        installerName = 'pkg'
-    }
 
     runtime {
         options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
@@ -49,9 +52,9 @@ subprojects {
         targetPlatform(osName) {
             if (OS.isLinux()) {
                 jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64.tar.gz")
-            } else if (OS.isWindows()) {
+            } else if (project.OS.isWindows()) {
                 jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-win_x64.zip")
-            } else if (OS.isMacOsX()) {
+            } else if (project.OS.isMacOsX()) {
                 jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64.tar.gz") {
                     pathToHome = "zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64/zulu-14.jdk/Contents/Home"
                 }
@@ -62,16 +65,14 @@ subprojects {
 
         jpackage {
             targetPlatformName = osName
-            installerType = installerName
-            imageName = 'sirius'
-
+            installerType = installerNameType
 
             outputDir = "distributions"
 
             installerOptions = [
                     '--verbose',
                     '--vendor', 'FSU Jena',
-                    '--license-file', "${project.getRootProject().projectDir}/dist/LICENSE-Full.txt",
+                    '--license-file', "${project.getRootProject().projectDir}/jpackage/LICENSE-Full.txt",
                     '--description', 'SIRIUS is a java-based software framework for discovering a landscape of de-novo identification of metabolites using tandem mass spectrometry.',
 
             ]
@@ -79,11 +80,11 @@ subprojects {
                 //todo rpm check
                 installerOptions += [
                         '--app-version', "${project.version}",
-                        '--linux-package-name', 'sirius',
-                        '--linux-menu-group', 'Science',
+//                        '--linux-package-name', 'sirius',
+                        '--linux-menu-group', 'Applications;Science',
                         '--linux-deb-maintainer', 'sirius@uni-jena.de',
-                        '--linux-shortcut',
                 ]
+                println("########### ${project.getRootProject().projectDir}/icons/sirius-icon.png")
                 imageOptions += [
                         '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.png",
                 ]
@@ -110,14 +111,19 @@ subprojects {
         }
     }
 
+
     jpackageImage.doLast {
-        File intoFile;
+        File nativeLibsTarget
+        File appRootTarget
         if (OS.isLinux()) {
-            intoFile = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}/lib/app").toFile()
+            appRootTarget = jpackageImage.outputs.files.singleFile.toPath().resolve(jpackageImage.getJpackageData().imageName).toFile()
+            nativeLibsTarget = appRootTarget.toPath().resolve("lib/app").toFile()
         } else if (OS.isWindows()) {
-            intoFile = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}").toFile()
+            appRootTarget = jpackageImage.outputs.files.singleFile.toPath().resolve(jpackageImage.getJpackageData().imageName).toFile()
+            nativeLibsTarget = appRootTarget
         } else if (OS.isMacOsX()) {
-            intoFile = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}.app/Contents/app").toFile()
+            appRootTarget = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}.app/Contents").toFile()
+            nativeLibsTarget = appRootTarget.toPath().resolve("app").toFile()
         } else {
             throw new RuntimeException("Could not detect OS for packaging!")
         }
@@ -127,15 +133,30 @@ subprojects {
                 include('libglpk_java.so')
             }
             from("${project.clpPath}/$nativeLibs/")
-            into(intoFile)
+            into(nativeLibsTarget)
+        }
+        copy {
+            from("${project.distPath}") {
+                include('COPYING.txt')
+                include('LICENSE.txt')
+            }
+            from(project.pdfManualPath)
+            into(appRootTarget)
         }
     }
+
+    jpackageImage.doFirst {
+        println("===================>>>>>>>>>>" + runtime.jreDir.file("$project.name-$osName").get())
+        runtime.jreDir.file("$project.name-$osName").get().asFile
+                .renameTo(runtime.jreDir.file("${jpackageImage.getJpackageData().installerName}-$osName").get().asFile)
+    }
+
+
     jpackageImage.dependsOn ':downloadGLPK'
     jpackageImage.dependsOn ':downloadCLP'
 
     task jpackageImageZip(dependsOn: jpackageImage) {
         group = 'build'
-
         doFirst {
             def imageDir = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}").toFile()
             def parentPath = imageDir.parentFile.toPath()
@@ -155,4 +176,26 @@ subprojects {
 
     distribution.dependsOn 'jpackage'
     distribution.dependsOn 'jpackageImageZip'
+
+//    artifactoryPublish.dependsOn 'jpackageImageZip'
+//    artifactoryPublish.dependsOn 'jpackage'
+    artifactoryPublish.dependsOn 'distribution'
+
+    /*task packageArtifact(type: JpackageDist, dependsOn: jpackage) {
+        group = 'distribution'
+        archiveBaseName = project.appName
+        archiveClassifier = 'installer'
+        archiveExtension= installerNameType
+
+        File input = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}").toFile()
+
+        outputs.upToDateWhen {
+            File out = outputs.files.singleFile
+            return Files.isRegularFile(out.toPath()) && out.lastModified() > input.lastModified()
+        }
+
+        source input
+
+//    project.ext.set("pdfManualPath", outputs.files.singleFile)
+    }*/
 }
