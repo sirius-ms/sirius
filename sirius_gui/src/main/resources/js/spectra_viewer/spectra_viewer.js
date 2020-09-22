@@ -1,38 +1,56 @@
 // General Settings
-var margin = {top: 30, right: 30, bottom: 50, left:60},
-width = 900 - margin.left - margin.right,
-height = 500 - margin.top - margin.bottom,
+var originalW = 900,
+originalH = 556,
+margin = {top: 30, right: 30, bottom: 50, left:60},
+width = originalW - margin.left - margin.right,
+height = originalH - margin.top - margin.bottom,
 peakWidth = 2,
 font = {family: "sans-serif", size: {hover: "12px", label: "14px", legend: "14px"}},
 col = {annotation: "lightcoral", spec1: "royalblue",  spec2: "mediumseagreen", hoverbg: "white"},
 view = {mirror: "normal"}; // alternativ: "simple"
 
-
 var svg = d3.select("body")
-    .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-// X label
+    .style("vertical-align", "top")
+    .style("height", "100%")
+    .style("width", "100%")
+    .style("position", "relative")
+    .style("display", "inline-block")
+    .style("padding", 0)
+    .style("margin", 0)
+    .append('svg')
+        .classed("svg-content-responsive", true)
+        //.style("background-color", "yellow")
+        .style("top", 0)
+        .style("left", 0)
+        .style("position", "absolute")
+        .style("display", "block")
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", [0, 0, originalW, originalH].join(" "))
+        .append("g")
+            .attr("id", "context")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
 svg.append("text")
     .attr("class", "label")
     .attr("x", width/2)
     .attr("y", height + margin.top + 5)
-    .text("m/z");
+    .text("m/z")
+    .attr("opacity", 0);
+
 // Y label
 svg.append("text")
     .attr("class", "label")
     .attr("transform", "rotate(-90)")
     .attr("y", -40)
     .attr("x", -height/2)
-    .text("Relative intensity");
+    .text("Relative intensity")
+    .attr("opacity", 0);
 
 svg.selectAll(".label")
     .attr("font-family", font.family)
     .attr("text-anchor", "middle")
     .attr("font-size", font.size.label);
-// Tooltip
+// TO Do: rescale
 var tooltip = d3.select("body")
     .append("div")
     .attr("class", "tooltip")
@@ -50,7 +68,7 @@ var mouseover = function() {
     tooltip.style("opacity", 1);
     d3.select(this).attr("fill", col.annotation);
 };
-
+// TO DO: Rescal the distance and size
 var mousemove1 = function(d) {
     tooltip.html("m/z: " + d.mz + "<br>Intensity: " + d.intensity)
         .style("left", (d3.mouse(this)[0]+75 + "px"))
@@ -105,6 +123,7 @@ function spectrumPlot(spectrum) {
         .domain([0, 1])
         .range([height, 0]);
     svg.append("g").call(d3.axisLeft(y));
+    svg.selectAll(".label").attr("opacity", 1);
     // brushing
     function updateChart() {
         extent = d3.event.selection
@@ -159,7 +178,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("transform", "translate(0," + height/2 + ")")
             .call(d3.axisBottom(x).tickValues([]));
     } else if (view === "simple") {
-        xAxis = svg.append("g")
+        xAxis = peaks.append("g")
             .attr("transform", "translate(0," + height/2 + ")")
             .call(d3.axisBottom(x));
     }
@@ -175,6 +194,9 @@ function mirrorPlot(spectrum1, spectrum2, view) {
     svg.append("g")
         .attr("transform", "translate(0," + height/2 + ")")
         .call(d3.axisLeft(y2));
+
+    svg.selectAll(".label").attr("opacity", 1);
+
     // legends: 2 spectrum names 
     svg.append("text")
         .attr("class", "legend")
@@ -245,8 +267,8 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("fill", col.spec2)
             .on("mousemove", function(d) {
                 tooltip.html("m/z: " + d.mz + "<br>Intensity: " + d.intensity)
-                .style("left", (d3.mouse(this)[0]+75 + "px"))
-                .style("top", (d3.mouse(this)[1]+135 + "px")); })
+                .style("left", (d3.mouse(this)[0]+75 + "px")) // TO DO: rescale
+                .style("top", (d3.mouse(this)[1]+135 + "px")); }) // TO DO: rescale
             .on("mouseleave", function() {
                 tooltip.style("opacity", 0);
                 d3.select(this).attr("fill", col.spec2); });
@@ -256,14 +278,29 @@ function mirrorPlot(spectrum1, spectrum2, view) {
         .on("mouseover", mouseover)
 }
 
+function rescale() {
+    let h = window.innerHeight;
+    let actuH = document.getElementsByClassName("svg-content-responsive")[0].clientHeight;
+    var scale = h/actuH;
+    if (actuH > h) {
+        d3.select(".svg-content-responsive").transition().duration(500).style("width", (scale*100-8).toString()+"%");
+    } else {
+        d3.select(".svg-content-responsive").style("width", "100%");
+    }
+}
+
+window.addEventListener("resize", rescale);
+// TO DO: function for reset the svg
 function spectraViewer(json){
 	if (json.spectrum2 == null) { //null==null und undefined
 		// 1. mode
 	    spectrumPlot(json.spectrum1);
+	    rescale();
 	    debug.text('made spectrum plot');
 	} else {
 		// 2. mode
 	    mirrorPlot(json.spectrum1, json.spectrum2, view.mirror);
+	    rescale();
 	    debug.text('made mirror plot');
 	}
 }
