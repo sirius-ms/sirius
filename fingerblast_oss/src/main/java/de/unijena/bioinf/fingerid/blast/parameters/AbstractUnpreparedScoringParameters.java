@@ -24,11 +24,11 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
 
-public abstract class AbtractUnpreparedScoringParameters<S extends FingerblastScoringMethod<? extends FingerblastScoring<Parameters.FP>>> extends FpParameters implements Parameters.UnpreparedScoring<S, Parameters.FP> {
+public abstract class AbstractUnpreparedScoringParameters<S extends FingerblastScoringMethod<? extends FingerblastScoring<Parameters.FP>>> extends FpParameters implements Parameters.UnpreparedScoring<S, Parameters.FP> {
 
     private final S scoring;
 
-    public AbtractUnpreparedScoringParameters(ProbabilityFingerprint query, S scoring) {
+    public AbstractUnpreparedScoringParameters(ProbabilityFingerprint query, S scoring) {
         super(query);
         this.scoring = scoring;
     }
