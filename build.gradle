@@ -133,7 +133,7 @@ allprojects {
                         }
                     }
                 }
-                setArtifacts([])
+//                artifacts = []
             }
         }
     }
@@ -191,9 +191,9 @@ configure(javaProjects()) {
             mavenJava(MavenPublication) {
 //                from project.components.java
                 if (version.toString().endsWith('-SNAPSHOT'))
-                    setArtifacts([jar, sourceJar])
+                    artifacts =  [jar, sourceJar]
                 else
-                    setArtifacts([jar, sourceJar, javadocJar])
+                    artifacts = [jar, sourceJar, javadocJar]
             }
         }
     }
