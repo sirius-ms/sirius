@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
@@ -249,9 +250,26 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
             annotationJJobs.put(predictionJob, fres);
 
             // fingerblast job: score candidate fingerprints against predicted fingerprint
-            //todo @Nils 1. implement a prepare job that gets the tree for the given molecular formula (initialisation for CSIPredictor object),
+            //todo @Nils 1. implement a prepare job that gets the tree for the given molecular formula,
             // 2. use this prepared BayesnetScoring, as parameter for the FingerblastJJob
-            final FingerblastJJob blastJob = new FingerblastJJob(predictor);
+
+            final BayesnetScoring bayesnetScoring = NetUtils.tryAndWait(() ->
+                    predictor.csiWebAPI.getBayesnetScoring(predictor.predictorType,fingeridInput.getMolecularFormula()),
+                    this::checkForInterruption);
+
+            final FingerblastJJob blastJob;
+            if(bayesnetScoring != null) {
+                blastJob = new FingerblastJJob(predictor,bayesnetScoring);
+            }else{
+                // bayesnetScoring is null --> make a prepare job which computes the bayessian network (covTree) for the
+                // given molecular formula
+                blastJob = new FingerblastJJob(predictor);
+                final CovtreeWebJJob covTreeJob = NetUtils.tryAndWait(() ->
+                        predictor.csiWebAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(),predictor.predictorType),
+                        this::checkForInterruption);
+                blastJob.addRequiredJob(covTreeJob);
+            }
+
             blastJob.addRequiredJob(formulaJobs.get(i++));
             blastJob.addRequiredJob(predictionJob);
             annotationJJobs.put(submitSubJob(blastJob), fres);

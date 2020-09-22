@@ -28,9 +28,11 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
+import de.unijena.bioinf.fingerid.blast.parameters.BayesnetDynamicParameters;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import org.jetbrains.annotations.NotNull;
@@ -45,11 +47,17 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
 
     private final CSIPredictor predictor;
 
+    private BayesnetScoring bayesnetScoring = null;
     private RestWithCustomDatabase.CandidateResult candidates = null;
     private List<Scored<FingerprintCandidate>> scoredCandidates = null;
 
     public FingerblastJJob(@NotNull CSIPredictor predictor) {
         this(predictor, null, null, null);
+    }
+
+    public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull BayesnetScoring bayesnetScoring){
+        this(predictor);
+        this.bayesnetScoring = bayesnetScoring;
     }
 
     public FingerblastJJob(@NotNull CSIPredictor predictor, FTree tree, ProbabilityFingerprint fp, MolecularFormula formula) {
@@ -73,6 +81,12 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
                 candidates = job.result();
             }
         }
+        if(bayesnetScoring == null){
+            if(required instanceof CovtreeWebJJob){
+                CovtreeWebJJob job = (CovtreeWebJJob) required;
+                bayesnetScoring = job.result();
+            }
+        }
     }
 
     public List<Scored<FingerprintCandidate>> getAllScoredCandidates() {
@@ -89,7 +103,9 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
         //we want to score all available candidates and may create subsets later.
         final Set<FingerprintCandidate> combinedCandidates = candidates.getCombCandidates();
 
-        List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(predictor.getPreparedFingerblastScorer(() -> fp), combinedCandidates, fp);
+        // to get a prepared FingerblastScorer, an object of BayesnetScoring that is specific to the molecular formula has to be initialized
+        List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(
+                predictor.getPreparedFingerblastScorer(new BayesnetDynamicParameters(fp, bayesnetScoring)), combinedCandidates, fp);
         scoreJobs.forEach(this::submitSubJob);
 
         scoredCandidates = scoreJobs.stream().flatMap(r -> r.takeResult().stream()).sorted(Comparator.reverseOrder()).map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());

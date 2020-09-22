@@ -21,15 +21,16 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.webapi.WebJJob;
 import org.jetbrains.annotations.NotNull;
 
-public class CovtreeWebJJob extends WebJJob<CovtreeWebJJob, String, CovtreeJobOutput> {
+public class CovtreeWebJJob extends WebJJob<CovtreeWebJJob, BayesnetScoring, CovtreeJobOutput> {
 
     protected final MolecularFormula inputFormula;
-    protected String covtree;
+    protected BayesnetScoring covtree;
 
     public CovtreeWebJJob(MolecularFormula formula, JobUpdate<CovtreeJobOutput> jobUpdate, long currentTimeMillis) {
         super(jobUpdate.getGlobalId(), jobUpdate.getStateEnum(), currentTimeMillis);
@@ -37,7 +38,7 @@ public class CovtreeWebJJob extends WebJJob<CovtreeWebJJob, String, CovtreeJobOu
     }
 
     @Override
-    protected String makeResult() {
+    protected BayesnetScoring makeResult() {
         return covtree; //todo @Nils create useful output for scoring method here
     }
 
