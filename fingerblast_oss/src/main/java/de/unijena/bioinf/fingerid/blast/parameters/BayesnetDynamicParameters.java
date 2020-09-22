@@ -23,7 +23,7 @@ package de.unijena.bioinf.fingerid.blast.parameters;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 
-public class BayesnetDynamicParameters extends AbtractUnpreparedScoringParameters<BayesnetScoring> {
+public class BayesnetDynamicParameters extends AbstractUnpreparedScoringParameters<BayesnetScoring> {
     public BayesnetDynamicParameters(ProbabilityFingerprint query, BayesnetScoring scoring) {
         super(query, scoring);
     }
