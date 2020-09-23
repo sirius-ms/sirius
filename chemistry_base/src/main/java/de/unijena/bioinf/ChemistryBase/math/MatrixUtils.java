@@ -25,6 +25,8 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import gnu.trove.list.array.TIntArrayList;
 
+import java.util.Arrays;
+
 public class MatrixUtils {
 
     public static double frobeniusNorm(double[][] M) {
@@ -57,6 +59,28 @@ public class MatrixUtils {
         final double[] v = new double[vec.length];
         for (int k=0; k < vec.length; ++k)
             v[k] = vec[k];
+        return v;
+    }
+    public static double[][] float2double(float[][] matrix) {
+        final double[][] v = new double[matrix.length][];
+        for (int k=0; k < matrix.length; ++k) {
+            v[k] = new double[matrix[k].length];
+            for (int i=0; i < matrix[k].length; ++i) v[k][i] = matrix[k][i];
+        }
+        return v;
+    }
+    public static float[] double2float(double[] vec) {
+        final float[] v = new float[vec.length];
+        for (int k=0; k < vec.length; ++k)
+            v[k] = (float)vec[k];
+        return v;
+    }
+    public static float[][] double2float(double[][] matrix) {
+        final float[][] v = new float[matrix.length][];
+        for (int k=0; k < matrix.length; ++k) {
+            v[k] = new float[matrix[k].length];
+            for (int i=0; i < matrix[k].length; ++i) v[k][i] = (float)matrix[k][i];
+        }
         return v;
     }
 
@@ -292,6 +316,17 @@ public class MatrixUtils {
         for (int i=0; i < indizes.length; ++i)
             vector[i] = kernel[indizes[i]][indizes[i]];
         return vector;
+    }
+
+    public static double[] concat(double[] A, double[] B) {
+        final double[] C = Arrays.copyOf(A, A.length+B.length);
+        System.arraycopy(B, 0,C,A.length,B.length);
+        return C;
+    }
+    public static float[] concat(float[] A, float[] B) {
+        final float[] C = Arrays.copyOf(A, A.length+B.length);
+        System.arraycopy(B, 0,C,A.length,B.length);
+        return C;
     }
 
     public static double[][] concatColumns(double[][] A, double[][] B) {
