@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
+import de.unijena.bioinf.ChemistryBase.ms.utils.PeakComment;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.GenericParser;
@@ -123,6 +124,11 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private Whiteset formulas;
         private List<String> tags;
 
+        private List<List<String>> ms1Comments, ms2Comments;
+        private boolean hasPeakComment;
+        private List<String> mergedComments;
+        private List<String> currentComments;
+
         private int charge = 0;
         private SPECTRUM_TYPE spectrumType = SPECTRUM_TYPE.UNKNOWN;
         private PrecursorIonType ionization;
@@ -163,6 +169,11 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             formulas = null;
             compoundName = name;
             this.tags = new ArrayList<>();
+            ms1Comments = new ArrayList<>();
+            ms2Comments = new ArrayList<>();
+            mergedComments = new ArrayList<>();
+            currentComments = new ArrayList<>();
+            hasPeakComment = false;
             instrumentation = MsInstrumentation.Unknown;
 //            annotations = new HashMap<>();
 //            treeTimeout = 0d;
@@ -186,7 +197,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                         } else if (firstCharacter == '#') {
                             parseComment(line);
                         } else if (Character.isDigit(firstCharacter)) {
-                            parsePeak(line);
+                            parsePeak(line, currentComments);
                         } else {
                             final Matcher m = LINE_PATTERN.matcher(line);
                             if (m.find()) {
@@ -199,7 +210,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                                         parseComment(line.trim());
                                         break;
                                     default:
-                                        parsePeak(line.trim());
+                                        parsePeak(line.trim(),currentComments);
                                 }
                             } else if (line.trim().isEmpty()) {
                                 parseEmptyLine();
@@ -240,7 +251,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private static final Pattern RETENTION_PATTER = Pattern.compile("(?:PT)?(" + decimalPattern + ")S?");
 
-        private static final Pattern PEAK_PATTERN = Pattern.compile("^(" + decimalPattern + ")\\s+(" + decimalPattern + ")");
+        private static final Pattern PEAK_PATTERN = Pattern.compile("^(" + decimalPattern + ")\\s+(" + decimalPattern + ")(?:\\s+#(.+)$)?");
 
         private static final Pattern TIME_PATTERN = Pattern.compile("(" + decimalPattern + ")\\s*[sS]?");
 
@@ -445,10 +456,26 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             //add additional fields
             if (fields != null) exp.setAnnotation(AdditionalFields.class, fields);
 
+
+            if (hasPeakComment){
+                String[][] ms1CommentArray = strings2arrays(ms1Comments);
+                String[][] ms2CommentArray = strings2arrays(ms2Comments);
+                String[] mergedComment = mergedComments.toArray(String[]::new);
+                exp.setAnnotation(PeakComment.class, new PeakComment(mergedComment,ms1CommentArray,ms2CommentArray));
+            }
+
             experiment = exp;
             fields = null;
             config = null;
             compoundName = null;
+        }
+
+        private String[][] strings2arrays(List<List<String>> ms1Comments) {
+            String[][] buf = new String[ms1Comments.size()][];
+            for (int k=0; k < ms1Comments.size(); ++k) {
+                buf[k] = ms1Comments.get(k).toArray(String[]::new);
+            }
+            return buf;
         }
 
         private void error(String s) throws IOException {
@@ -504,10 +531,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             }
         }
 
-        private void parsePeak(String line) throws IOException {
+        private void parsePeak(String line, List<String> comments) throws IOException {
             final Matcher m = PEAK_PATTERN.matcher(line);
             if (m.find()) {
                 currentSpectrum.addPeak(new SimplePeak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2))));
+                if (m.group(3)!=null && m.group(3).length()>0) {
+                    hasPeakComment = true;
+                    comments.add(m.group(3).strip());
+                } else comments.add(null);
             } else {
                 error("Cannot parse peak '" + line + "'");
             }
@@ -518,19 +549,23 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             final AnnotatedSpectrum<Peak> spec;
             if (spectrumType == SPECTRUM_TYPE.MS1) {
                 spec = new SimpleSpectrum(currentSpectrum);
+                ms1Comments.add(currentComments);
                 ms1spectra.add((SimpleSpectrum) spec);
             } else if (spectrumType == SPECTRUM_TYPE.MS2) {
                 spec = new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2);
                 ms2spectra.add((MutableMs2Spectrum) spec);
+                ms2Comments.add(currentComments);
             } else if (currentSpectrum.size() > 0) {
                 if (spectrumType == SPECTRUM_TYPE.MERGED_MS1) {
                     mergedMs1 = new SimpleSpectrum(currentSpectrum);
                     spec = mergedMs1;
+                    mergedComments=currentComments;
                 } else {
                     warn("Unknown spectrum type. Description must contain one of the following keywords '>[ms1|mergedms1|ms2|collision|energy]'. " +
                             "Spectrum will be processed as MS2 spectrum.");
                     spec = new MutableMs2Spectrum(currentSpectrum, parentMass, currentEnergy, 2);
                     ms2spectra.add((MutableMs2Spectrum) spec);
+                    ms2Comments.add(currentComments);
                 }
             } else return;
 
@@ -544,6 +579,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             this.tic = 0;
             this.currentEnergy = null;
             this.currentSpectrum = new SimpleMutableSpectrum();
+            currentComments = new ArrayList<>();
         }
 
         private void parseEmptyLine() {
