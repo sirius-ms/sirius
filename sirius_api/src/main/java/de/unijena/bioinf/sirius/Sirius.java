@@ -617,16 +617,21 @@ public class Sirius {
 
         @Override
         protected List<IdentificationResult<SiriusScore>> compute() throws Exception {
-            final ProcessedInput input = preprocessForMs2Analysis(experiment);
-            if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
-                profile.isotopePatternAnalysis.computeAndScoreIsotopePattern(input);
-            final FasterTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
-            instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105, (int) evt.getNewValue()));
-            submitSubJob(instance);
-            FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
+            try {
+                final ProcessedInput input = preprocessForMs2Analysis(experiment);
+                if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
+                    profile.isotopePatternAnalysis.computeAndScoreIsotopePattern(input);
+                final FasterTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
+                instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105, (int) evt.getNewValue()));
+                submitSubJob(instance);
+                FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
-            List<IdentificationResult<SiriusScore>> r = createIdentificationResults(fr, instance);//postprocess results
-            return r;
+                List<IdentificationResult<SiriusScore>> r = createIdentificationResults(fr, instance);//postprocess results
+                return r;
+            } catch (RuntimeException e) {
+                LoggerFactory.getLogger(Sirius.class).error("Error in instance " + String.valueOf(experiment.getSource()) + ": " + e.getMessage());
+                throw e;
+            }
         }
 
         private List<IdentificationResult<SiriusScore>> createIdentificationResults(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
