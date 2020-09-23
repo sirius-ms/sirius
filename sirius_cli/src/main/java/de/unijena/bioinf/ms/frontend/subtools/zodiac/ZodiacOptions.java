@@ -152,7 +152,7 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
 
     public Path bestMFSimilarityGraphFile;
     @Option(names = "--graph", hidden = true,
-            description = {"Writes the similarity graph for based on the top molecular formula annotations of each compound."})
+            description = {"Writes the similarity graph based on the top molecular formula annotations of each compound."})
     public void setSimilarityGraphFile(String filePath) throws Exception {
         bestMFSimilarityGraphFile = Paths.get(filePath);
     }
