@@ -985,6 +985,10 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
             return PROTONATION_PRECURSOR;
         else if (charge < 0 && Math.abs(mass - DEPROTONATION.getMass()) < absError)
             return DEPROTONATION_PRECURSOR;
+        if (Math.abs(mass) < absError) {
+            if (charge>0) return INTRINSICALLY_CHARGED_POSITIVE;
+            else return INTRINSICALLY_CHARGED_NEGATIVE;
+        }
         PrecursorIonType minIon = null;
         double minDistance = Double.MAX_VALUE;
         for (PrecursorIonType iontype : knownIonTypes.values()) {
