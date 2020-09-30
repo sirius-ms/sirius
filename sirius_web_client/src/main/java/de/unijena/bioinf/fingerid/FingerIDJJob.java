@@ -274,7 +274,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
             blastJob.addRequiredJob(predictionJob);
             annotationJJobs.put(submitSubJob(blastJob), fres);
 
-
+            //todo @Nils: the confidence scorer has to be adjusted to the specific scoring with a bayesian network
             //confidence job: calculate confidence of scored candidate list
             if (predictor.getConfidenceScorer() != null && computeConfidence) {
                 final ConfidenceJJob confidenceJJob = new ConfidenceJJob(predictor, experiment, fingeridInput);

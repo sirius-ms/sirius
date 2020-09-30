@@ -21,20 +21,31 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.fingerid.blast.BayesianScoringUtils;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoringBuilder;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.webapi.WebJJob;
 import org.jetbrains.annotations.NotNull;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 
 public class CovtreeWebJJob extends WebJJob<CovtreeWebJJob, BayesnetScoring, CovtreeJobOutput> {
 
+    protected final PredictionPerformance[] performances;
+    protected final FingerprintVersion fpVersion;
     protected final MolecularFormula inputFormula;
     protected BayesnetScoring covtree;
 
-    public CovtreeWebJJob(MolecularFormula formula, JobUpdate<CovtreeJobOutput> jobUpdate, long currentTimeMillis) {
+    public CovtreeWebJJob(MolecularFormula formula, FingerprintVersion fpVersion, PredictionPerformance[] performances, JobUpdate<CovtreeJobOutput> jobUpdate, long currentTimeMillis) {
         super(jobUpdate.getGlobalId(), jobUpdate.getStateEnum(), currentTimeMillis);
         this.inputFormula = formula;
+        this.fpVersion = fpVersion;
+        this.performances = performances;
     }
 
     @Override
@@ -46,7 +57,14 @@ public class CovtreeWebJJob extends WebJJob<CovtreeWebJJob, BayesnetScoring, Cov
     protected synchronized CovtreeWebJJob updateTyped(@NotNull JobUpdate<CovtreeJobOutput> update) {
         if (updateState(update)) {
             if (update.data != null)  //todo @Nils create the output here and save it in valuable way to create the scoring method from it.
-                update.data.getCovtreeOpt().ifPresent(covtree -> this.covtree = covtree);
+                update.data.getCovtreeOpt().ifPresent(ctJSON -> { //assumption: covtree will be a JSON string
+                    try{
+                        BufferedReader bf = new BufferedReader(new StringReader(ctJSON));
+                        covtree =  BayesnetScoringBuilder.readScoring(bf, fpVersion, BayesianScoringUtils.calculatePseudoCount(performances),BayesianScoringUtils.allowOnlyNegativeScores);
+                    } catch (IOException e) {
+                        covtree = null;
+                    }
+                });
         }
 
         checkForTimeout();

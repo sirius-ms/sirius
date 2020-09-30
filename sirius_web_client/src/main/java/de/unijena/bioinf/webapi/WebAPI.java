@@ -266,7 +266,9 @@ public final class WebAPI {
     // use via predictor/scoring method
     public CovtreeWebJJob submitCovtreeJob(@NotNull MolecularFormula formula, @NotNull PredictorType predictorType) throws IOException {
         final JobUpdate<CovtreeJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postCovtreeJobs(new CovtreeJobInput(formula.toString(), predictorType), client));
-        return jobWatcher.watchJob(new CovtreeWebJJob(formula, jobUpdate, System.currentTimeMillis()));
+        final MaskedFingerprintVersion fpVersion = getFingerIdData(predictorType).getFingerprintVersion();
+        final PredictionPerformance[] performances = getFingerIdData(predictorType).getPerformances();
+        return jobWatcher.watchJob(new CovtreeWebJJob(formula,fpVersion,performances,jobUpdate, System.currentTimeMillis()));
     }
 
 
