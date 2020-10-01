@@ -55,9 +55,9 @@ subprojects {
             } else if (project.OS.isWindows()) {
                 jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-win_x64.zip")
             } else if (project.OS.isMacOsX()) {
-                jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64.tar.gz") {
+                jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64.tar.gz") /*{
                     pathToHome = "zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64/zulu-14.jdk/Contents/Home"
-                }
+                }*/
             } else {
                 throw new RuntimeException("Could not detect OS for packaging!")
             }
@@ -158,7 +158,7 @@ subprojects {
     task jpackageImageZip(dependsOn: jpackageImage) {
         group = 'build'
         doFirst {
-            def imageDir = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}").toFile()
+            def imageDir = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}${OS.isMacOsX()?'.app':''}").toFile()
             def parentPath = imageDir.parentFile.toPath()
             def zipFile = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}-${project.version}-${osName}.zip").toFile()
             project.ant.zip(destfile: zipFile, duplicate: 'fail') {
