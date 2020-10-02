@@ -1,6 +1,3 @@
-import org.gradle.api.internal.file.copy.CopyAction
-import org.gradle.api.internal.file.copy.FileCopyAction
-
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -94,7 +91,6 @@ project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")
 project.ext.set("macSuffix", "osx")
 project.ext.set("arch", ['64', '32'])
-project.ext.set("manualPath", file('manual').absolutePath)
 project.ext.set("distPath", file('dist').absolutePath)
 
 
@@ -238,154 +234,13 @@ task extractJRE(type: Exec, dependsOn: downloadJRE) {
     enabled = !outputs.files.singleFile.exists()
     commandLine(["unzip", "${inputs.files.singleFile}", "-d", "${outputs.files.singleFile}"])
 }
-/*################### Building the Documentation ################### */
 
-
-task cleanDoku {
-    group = 'documentation'
-    doLast {
-        def f = file("${project.manualPath}/build")
-        if (f.exists())
-            f.deleteDir()
-    }
+task downloadManual(type: Download, group: 'documentation') {
+    String manualName = "manual-$version-manual.pdf"
+    src "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/manual/$version/$manualName"
+    dest  getBuildDir().toPath().resolve("tmp/manual/$manualName").toFile()
+    onlyIfModified true
 }
-clean.dependsOn cleanDoku
-
-task htmlDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}/source")
-    outputs.file("${project.manualPath}/build/html")
-    outputs.upToDateWhen { return false }
-    commandLine(['latex2html', '-rootdir', '../build/html', '-mkdir', 'SIRIUS'])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-}
-htmlDoku.mustRunAfter cleanDoku
-
-//colleact files for docu and readme
-task createVersion {
-    doFirst {
-        Path out = Paths.get("${project.manualPath}", "/source/version.txt")
-        if (Files.isReadable(out)) {
-            if (project.version.toString().equals(Files.readAllLines(out).first().toString())) {
-                getLogger().lifecycle("Version file already up to date")
-                return
-            }
-        }
-        getLogger().lifecycle("Updating version file")
-        Files.deleteIfExists(out)
-        Files.write(out, Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
-    }
-}
-
-task createChangelogTex(type: Exec) {
-    group = 'documentation'
-    inputs.file("${project.rootDir}/CHANGELOG.md")
-    outputs.file("${project.manualPath}/build/changelog.tex")
-    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-}
-
-task createFAQTex(type: Exec) {
-    group = 'documentation'
-    inputs.file("${project.rootDir}/FAQ.md")
-    outputs.file("${project.manualPath}/build/faq.tex")
-    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-}
-
-
-task pdfDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}/source")
-    outputs.file(file("${project.manualPath}/build/SIRIUS.pdf"))
-
-    outputs.upToDateWhen {
-        File out = outputs.files.singleFile
-        if (Files.notExists(out.toPath()))
-            return false;
-        long time = out.lastModified()
-
-        boolean uptodate = true;
-        workingDir.eachFileRecurse { file ->
-            if (file.lastModified() >= time) {
-                getLogger().lifecycle("${file.getName()} - ${file.lastModified()} is newer than the pdf -> rebuild needed")
-                println()
-                uptodate = false
-            }
-        }
-        return uptodate
-    }
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-
-    commandLine 'bash', '-e', '-c', """
-        pdflatex -output-directory ../build ./SIRIUS
-        biber -output-directory ../build SIRIUS
-        pdflatex -output-directory ../build ./SIRIUS
-        pdflatex -output-directory ../build ./SIRIUS
-    """
-}
-pdfDoku.dependsOn createVersion
-pdfDoku.dependsOn createChangelogTex
-pdfDoku.dependsOn createFAQTex
-pdfDoku.mustRunAfter cleanDoku
-
-class Pdf extends AbstractArchiveTask {
-    public static final String PDF_EXTENSION = "pdf";
-
-    Pdf() {
-        setExtension(PDF_EXTENSION);
-    }
-
-    void source(File sourceFile) {
-        from(sourceFile.toPath().getParent().toFile())
-        include(sourceFile.getName())
-        rename(sourceFile.getName(), getArchiveName())
-    }
-
-    @Override
-    protected CopyAction createCopyAction() {
-        return new FileCopyAction(getFileLookup().getFileResolver(getArchivePath().toPath().getParent().toFile()))
-    }
-}
-
-task pdfDokuArtifact(type: Pdf) {
-    group = 'documentation'
-    baseName = project.appName
-    classifier = 'manual'
-
-    File input = pdfDoku.outputs.files.singleFile;
-
-    outputs.upToDateWhen {
-        File out = outputs.files.singleFile
-        return Files.isRegularFile(out.toPath()) && out.lastModified() > input.lastModified()
-    }
-
-    source input
-
-    project.ext.set("pdfManualPath", outputs.files.singleFile)
-}
-
-pdfDokuArtifact.dependsOn pdfDoku
-
-task buildDoku {
-    group = 'documentation'
-    outputs.files(pdfDokuArtifact.outputs.files)
-}
-
-buildDoku.mustRunAfter cleanDoku
-buildDoku.dependsOn /*htmlDoku,*/ pdfDokuArtifact //todo solve problem and re enable
 
 
 subprojects {
@@ -448,21 +303,21 @@ allprojects {
                 }
                 setArtifacts([])
             }
-            sirius(MavenPublication) {
+            /*sirius(MavenPublication) {
                 artifactId = "$name"
                 groupId = "$group"
 
                 pom.withXml {}
                 artifact source: pdfDokuArtifact
-            }
-            manual(MavenPublication) {
+            }*/
+            /*manual(MavenPublication) {
                 artifactId = "manual"
                 groupId = "${group}.${project.appName}"
                 version = 'current'
 
                 pom.withXml {}
                 artifact source: pdfDokuArtifact, classifier: 'sirius'
-            }
+            }*/
         }
     }
 }

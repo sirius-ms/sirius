@@ -19,7 +19,7 @@ jar {
 
 /*################### Windows release Stuff ################### */
 launch4j {
-    icon = getRootProject().getRootDir().toPath().resolve('dist/sirius.ico').toFile()
+    icon = getRootProject().getRootDir().toPath().resolve('icons/sirius-icon.ico').toFile()
     copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
     companyName = "Friedrich-Schiller-University Jena"
     version = project.version

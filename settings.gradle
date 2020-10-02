@@ -8,4 +8,5 @@ include ':sirius_dist'
 include ':sirius_gui'
 include ':sirius_rest_service'
 include ':sirius_utils'
+include 'sirius_doc'
 
