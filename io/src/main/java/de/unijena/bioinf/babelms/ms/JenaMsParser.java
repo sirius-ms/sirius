@@ -48,6 +48,10 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Parser for the .ms file format. This parser does not set all default parameters to the {@link Ms2Experiment}. It only annotates parameters directly set in the file.
+ * {@link MsExperimentParser} also annotates default parameters to an experiment (what is generally desired).
+ */
 public class JenaMsParser implements Parser<Ms2Experiment> {
 
     public static void main(String... args) throws IOException {
