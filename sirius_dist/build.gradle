@@ -1,4 +1,10 @@
+import org.gradle.api.internal.file.copy.CopyAction
+import org.gradle.api.internal.file.copy.FileCopyAction
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 
 plugins {
     id 'org.beryx.runtime' version '1.11.4'
@@ -111,7 +117,6 @@ subprojects {
         }
     }
 
-
     jpackageImage.doLast {
         File nativeLibsTarget
         File appRootTarget
@@ -140,7 +145,7 @@ subprojects {
                 include('COPYING.txt')
                 include('LICENSE.txt')
             }
-            from(project.pdfManualPath)
+            from(rootProject.downloadManual.outputs.files.singleFile)
             into(appRootTarget)
         }
     }
@@ -151,9 +156,9 @@ subprojects {
                 .renameTo(runtime.jreDir.file("${jpackageImage.getJpackageData().installerName}-$osName").get().asFile)
     }
 
-
     jpackageImage.dependsOn ':downloadGLPK'
     jpackageImage.dependsOn ':downloadCLP'
+    jpackageImage.dependsOn ':downloadManual'
 
     task jpackageImageZip(dependsOn: jpackageImage) {
         group = 'build'
@@ -172,30 +177,9 @@ subprojects {
     }
 
     task distribution { group = 'distribution' }
-    distribution.dependsOn ':buildDoku'
 
     distribution.dependsOn 'jpackage'
     distribution.dependsOn 'jpackageImageZip'
-
-//    artifactoryPublish.dependsOn 'jpackageImageZip'
-//    artifactoryPublish.dependsOn 'jpackage'
     artifactoryPublish.dependsOn 'distribution'
 
-    /*task packageArtifact(type: JpackageDist, dependsOn: jpackage) {
-        group = 'distribution'
-        archiveBaseName = project.appName
-        archiveClassifier = 'installer'
-        archiveExtension= installerNameType
-
-        File input = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}").toFile()
-
-        outputs.upToDateWhen {
-            File out = outputs.files.singleFile
-            return Files.isRegularFile(out.toPath()) && out.lastModified() > input.lastModified()
-        }
-
-        source input
-
-//    project.ext.set("pdfManualPath", outputs.files.singleFile)
-    }*/
 }
