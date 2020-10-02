@@ -12,7 +12,7 @@ stages:
   - prepare
   - build
   - test
-  - deploy
+  - publish
 
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
@@ -40,6 +40,31 @@ doc:
     - artifactory
     - gradle
     - biber-latex
+#todo artifactory publish
+
+distCliLinux64:
+  stage: build
+  script:
+    - cd sirius_dist/sirius_cli_single_os
+    - gradle ditribute
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - gradle
+    - linux64
+
+distGuiLinux64:
+  stage: build
+  script:
+    - cd sirius_dist/sirius_gui_single_os
+    - gradle ditribute
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - gradle
+    - linux64
 #build:
 #  stage: build
 #  script: gradle --build-cache assemble
