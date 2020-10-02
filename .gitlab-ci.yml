@@ -14,21 +14,20 @@ stages:
   - test
   - publish
 
-variables:
-  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
-
 before_script:
   - export GRADLE_USER_HOME=`pwd`.gradle
 
-clean:
-  stage: clean
-  script: gradle clean
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  tags:
-    - gradle
+#clean:
+#  stage: clean
+#  script: gradle clean
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  tags:
+#    - gradle
 doc:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
   stage: prepare
   script:
     - cd sirius_doc
@@ -43,46 +42,61 @@ doc:
 #todo artifactory publish
 
 distCliLinux64:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
   stage: build
   script:
     - cd sirius_dist/sirius_cli_single_os
     - gradle artifactoryPublish
-#    - gradle distribution
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   tags:
+    - artifactory
     - gradle
     - linux64
 
 distGuiLinux64:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
   stage: build
   script:
     - cd sirius_dist/sirius_gui_single_os
     - gradle artifactoryPublish
-    #    - gradle distribution
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   tags:
+    - artifactory
     - gradle
     - linux64
-#build:
-#  stage: build
-#  script: gradle --build-cache assemble
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: push
-#    paths:
-#      - build
-#      - .gradle
-#
-#test:
-#  stage: test
-#  script: gradle check
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: pull
-#    paths:
-#      - build
-#      - .gradle
+
+distCliMacOSX:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64"
+  stage: build
+  script:
+    - cd sirius_dist/sirius_cli_single_os
+      - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - macosx
+
+distGuiMacOX:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64"
+  stage: build
+  script:
+    - cd sirius_dist/sirius_gui_single_os
+    - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - macosx
