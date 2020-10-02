@@ -27,7 +27,7 @@ ext {
         nativeLibs = 'osx'
         osName = 'osx64'
         installerNameType = 'pkg'
-        installerAppendix = "_${version}.$installerNameType"
+        installerAppendix = "-${version}.$installerNameType"
     }
 }
 subprojects {
