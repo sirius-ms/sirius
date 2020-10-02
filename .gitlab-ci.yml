@@ -32,7 +32,7 @@ doc:
   stage: prepare
   script:
     - cd sirius_doc
-    - gradle buildDoku
+    - gradle artifactoryPublish
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
