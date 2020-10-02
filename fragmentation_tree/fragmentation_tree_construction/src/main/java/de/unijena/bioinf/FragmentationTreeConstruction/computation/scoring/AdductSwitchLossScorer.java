@@ -28,49 +28,79 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.sirius.ProcessedInput;
+import org.jetbrains.annotations.NotNull;
 
 //todo do we also adjust this for M+K ?
+
+/**
+ * This LossScorer scores adduct switches, that is parent and child fragment have a different ionization mode.
+ * It is strongly related to the {@link de.unijena.bioinf.sirius.plugins.AdductSwitchPlugin} which defines which losses
+ * or fragment pairs are forbidden.
+ * Furthermore, the {@link AdductSwitchLossScorer} implicitly assumes the also the {@link LossSizeScorer} is used,
+ * because it corrects its scores based on the different ionization modes of fragments.
+ */
 public class AdductSwitchLossScorer implements LossScorer<Object> {
 
+    /**
+     * default penalty for adduct switch between fragments
+     */
     private static final double DEFAULT_NA_H_SWITCH_SCORE = -3.6109179126442243;
+
+    /**
+     * default penalty for child fragments of a fragment produced by adduct switch
+     */
+    private static final double DEFAULT_NA_H_SWITCH_CHILD_FRAG_SCORE = 0.0;
+
+
     private double naHSwitchScore;
+    private double naHSwitchChildrenScore;
     private LossSizeScorer lossSizeScorer;
 
-    public AdductSwitchLossScorer(LossSizeScorer lossSizeScorer) {
-        this(DEFAULT_NA_H_SWITCH_SCORE, lossSizeScorer);
+    public AdductSwitchLossScorer(@NotNull LossSizeScorer lossSizeScorer) {
+        this(DEFAULT_NA_H_SWITCH_SCORE, DEFAULT_NA_H_SWITCH_CHILD_FRAG_SCORE, lossSizeScorer);
     }
 
-    public AdductSwitchLossScorer(double naHSwitchScore, LossSizeScorer lossSizeScorer) {
+    public AdductSwitchLossScorer(double naHSwitchScore, double naHSwitchChildrenScore, @NotNull LossSizeScorer lossSizeScorer) {
         this.naHSwitchScore = naHSwitchScore;
+        this.naHSwitchChildrenScore = naHSwitchChildrenScore;
         this.lossSizeScorer = lossSizeScorer;
         PeriodicTable T = PeriodicTable.getInstance();
     }
 
     @Override
     public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
-        return null;
+        //extract precursor ionization
+        return graph.getRoot().getIonization();
     }
 
 //    private HashSet<MolecularFormula> allowedLosses = new HashSet<>(Arrays.asList(MolecularFormula.parse("C2H2O"), MolecularFormula.parse("CO"), MolecularFormula.parse("C2H4O2"), MolecularFormula.parse("CO2")));
 
     @Override
-    public double score(Loss loss, ProcessedInput input, Object precomputed) {
+    public double score(Loss loss, ProcessedInput input, Object rootIonizationObj) {
+        final Ionization rootIon = (Ionization)rootIonizationObj;
         final Ionization sourceIon = loss.getSource().getIonization();
         final Ionization targetIon = loss.getTarget().getIonization();
 
-        if (sourceIon.equals(targetIon)) return 0;
+        if (rootIon.equals(targetIon)) return 0; //no adduct switch has happened.
         {
+            //here, we have some kind of adduct switch or a child fragment of an adduct switch fragment
             MolecularFormula F = loss.getFormula();
             if (F.isEmpty()) return Double.NEGATIVE_INFINITY;
 
-            // first: correct loss size error
-            final double wrongLossSize = lossSizeScorer.scoring(input.getMergedPeaks().get(loss.getSource().getPeakId()).getMass() - input.getMergedPeaks().get(loss.getTarget().getPeakId()).getMass());
+            if (sourceIon.equals(targetIon)){
+                //this is a child fragment of a adduct switch fragment
+                return naHSwitchChildrenScore;
+            } else {
+                //adduct switch is occurring for this specific targetIon
 
-            final double correctLossSize = lossSizeScorer.score(F);
+                // first: correct loss size error, because we have different ionizations and this score is based on peak m/z and not formula m/z
+                final double wrongLossSize = lossSizeScorer.scoring(input.getMergedPeaks().get(loss.getSource().getPeakId()).getMass() - input.getMergedPeaks().get(loss.getTarget().getPeakId()).getMass());
+                final double correctLossSize = lossSizeScorer.score(F);
 
-            final double lossScore = DEFAULT_NA_H_SWITCH_SCORE;
+                final double lossScore = naHSwitchScore;
 
-            return lossScore - wrongLossSize + correctLossSize;
+                return lossScore - wrongLossSize + correctLossSize;
+            }
         }
     }
 
