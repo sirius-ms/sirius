@@ -7,6 +7,13 @@ image: gradle:alpine
 # is usually a priority over speed in CI environments. Using a fresh
 # runtime for each build is more reliable since the runtime is completely
 # isolated from any previous builds.
+stages:
+  - clean
+  - prepare
+  - build
+  - test
+  - deploy
+
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
@@ -14,13 +21,25 @@ before_script:
   - export GRADLE_USER_HOME=`pwd`.gradle
 
 clean:
-  stage: build
+  stage: clean
   script: gradle clean
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   tags:
     - gradle
+doc:
+  stage: prepare
+  script:
+    - cd sirius_doc
+    - gradle buildDoku
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - biber-latex
 #build:
 #  stage: build
 #  script: gradle --build-cache assemble
