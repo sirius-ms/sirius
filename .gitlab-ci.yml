@@ -15,7 +15,7 @@ stages:
   - publish
 
 variables:
-  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
 
 before_script:
   - export GRADLE_USER_HOME=`pwd`.gradle
@@ -46,7 +46,8 @@ distCliLinux64:
   stage: build
   script:
     - cd sirius_dist/sirius_cli_single_os
-    - gradle distribution
+    - gradle artifactoryPublish
+#    - gradle distribution
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -58,7 +59,8 @@ distGuiLinux64:
   stage: build
   script:
     - cd sirius_dist/sirius_gui_single_os
-    - gradle distribution
+    - gradle artifactoryPublish
+    #    - gradle distribution
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
