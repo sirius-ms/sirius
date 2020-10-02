@@ -46,7 +46,7 @@ distCliLinux64:
   stage: build
   script:
     - cd sirius_dist/sirius_cli_single_os
-    - gradle ditribute
+    - gradle ditribution
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -58,7 +58,7 @@ distGuiLinux64:
   stage: build
   script:
     - cd sirius_dist/sirius_gui_single_os
-    - gradle ditribute
+    - gradle ditribution
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
