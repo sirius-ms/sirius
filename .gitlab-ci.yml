@@ -77,7 +77,7 @@ distCliMacOSX:
   stage: build
   script:
     - cd sirius_dist/sirius_cli_single_os
-      - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish
+    - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
