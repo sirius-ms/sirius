@@ -14,8 +14,7 @@ stages:
   - test
   - publish
 
-before_script:
-  - export GRADLE_USER_HOME=`pwd`.gradle
+#before_script:
 
 #clean:
 #  stage: clean
