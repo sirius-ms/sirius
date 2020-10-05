@@ -33,6 +33,8 @@ import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.checkerframework.checker.nullness.Opt;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -57,6 +59,7 @@ public class FormulaResultController extends BaseApiController {
     @GetMapping(value = "/formulas", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<FormulaId> getFormulaIds(@PathVariable String pid, @PathVariable String cid, @RequestParam(required = false) boolean includeFormulaScores) {
         SiriusProjectSpace space = projectSpace(pid);
+        LoggerFactory.getLogger(FormulaResultController.class).info("Started collecting formulas...");
         return getCompound(space ,cid).map(con -> con.getResults().values().stream().map(frId -> {
             try{
                 return space.getFormulaResult(frId, FormulaScoring.class);
