@@ -90,12 +90,13 @@ public class SiriusConfigUtils {
 
     public static LinkedHashSet<String> parseResourcesLocation(@Nullable final String locations, @Nullable final String defaultLocation) {
         LinkedHashSet<String> resources = new LinkedHashSet<>();
-        if (defaultLocation != null && !defaultLocation.isEmpty())
+        if (defaultLocation != null && !defaultLocation.isBlank())
             resources.add(defaultLocation);
 
-        if (locations != null && !locations.isEmpty())
+        if (locations != null && !locations.isBlank())
             resources.addAll(Arrays.asList(locations.trim().split("\\s*,\\s*")));
 
+        resources.removeIf(String::isBlank);
         return resources;
     }
 
