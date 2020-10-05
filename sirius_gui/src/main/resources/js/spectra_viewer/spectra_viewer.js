@@ -1,111 +1,133 @@
 // General Settings
-var originalW = 900,
-originalH = 556,
-margin = {top: 30, right: 30, bottom: 50, left:60},
-width = originalW - margin.left - margin.right,
-height = originalH - margin.top - margin.bottom,
+var svg, brush, idleTimeout, data, w, h,
+current = {w, h},
+margin = {top: 30, right: 30, bottom: 50, left:60}, // TODO
 peakWidth = 2,
-font = {family: "sans-serif", size: {hover: "12px", label: "14px", legend: "14px"}},
+font = {family: "sans-serif", size: {hover: "12px", label: "13px", legend: "13px"}},
 col = {annotation: "lightcoral", spec1: "royalblue",  spec2: "mediumseagreen", hoverbg: "white"},
 view = {mirror: "normal"}; // alternativ: "simple"
 
-var svg = d3.select("body")
-    .style("vertical-align", "top")
-    .style("height", "100%")
-    .style("width", "100%")
-    .style("position", "relative")
-    .style("display", "inline-block")
-    .style("padding", 0)
-    .style("margin", 0)
-    .append('svg')
-        .classed("svg-content-responsive", true)
-        //.style("background-color", "yellow")
-        .style("top", 0)
-        .style("left", 0)
-        .style("position", "absolute")
-        .style("display", "block")
-        .attr("preserveAspectRatio", "xMinYMin meet")
-        .attr("viewBox", [0, 0, originalW, originalH].join(" "))
-        .append("g")
-            .attr("id", "context")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-svg.append("text")
-    .attr("class", "label")
-    .attr("x", width/2)
-    .attr("y", height + margin.top + 5)
-    .text("m/z")
-    .attr("opacity", 0);
-
-// Y label
-svg.append("text")
-    .attr("class", "label")
-    .attr("transform", "rotate(-90)")
-    .attr("y", -40)
-    .attr("x", -height/2)
-    .text("Relative intensity")
-    .attr("opacity", 0);
-
-svg.selectAll(".label")
-    .attr("font-family", font.family)
-    .attr("text-anchor", "middle")
-    .attr("font-size", font.size.label);
-// TO Do: rescale
-var tooltip = d3.select("body")
+d3.select("body")
     .append("div")
-    .attr("class", "tooltip")
-    .style("font-family", font.family)
-    .style("font-size", font.size.hover)
-    .style("position", "absolute")
-    .style("opacity", 0)
-    .style("background-color", col.hoverbg)
-    .style("border", "solid")
-    .style("border-width", "1px")
-    .style("border-radius", "5px")
-    .style("padding", "5px");
+        .attr("id", "container")
+        .style("vertical-align", "top")
+        .style("width", "100%")
+        .style("position", "relative")
+        .style("display", "inline-block")
+        .style("margin", 0)
+
+window.addEventListener("resize", reset);
 
 var mouseover = function() {
-    tooltip.style("opacity", 1);
+    d3.select("#tooltip").style("opacity", 1);
     d3.select(this).attr("fill", col.annotation);
 };
-// TO DO: Rescal the distance and size
+
 var mousemove1 = function(d) {
-    tooltip.html("m/z: " + d.mz + "<br>Intensity: " + d.intensity)
-        .style("left", (d3.mouse(this)[0]+75 + "px"))
+    d3.select("#tooltip").html("m/z: " + d.mz + "<br>Intensity: " + d.intensity)
+        .style("left", (d3.mouse(this)[0]+70 + "px"))
         .style("top", (d3.mouse(this)[1]+60 + "px"));
 };
 
 var mouseleave1 = function() {
-    tooltip.style("opacity", 0);
+    d3.select("#tooltip").style("opacity", 0);
     d3.select(this).attr("fill", col.spec1);
 };
 
+// TODO: resize
 function firstNChar(str, num) {
     if (str.length > num) {
         return str.slice(0, num);
     } else {
         return str;
     }
-}
-//clipPath & brushing
-svg.append("defs").append("svg:clipPath")
-    .attr("id", "clip")
-    .append("svg:rect")
-    .attr("width", width )
-    .attr("height", height )
-    .attr("x", 0)
-    .attr("y", 0)
+};
 
-var peaks = svg.append("g")
-    .attr("clip-path", "url(#clip)")
+function idled() { idleTimeout = null; };
 
-var idleTimeout
-function idled() { idleTimeout = null; }
+function resize() {
+    current = {w: window.innerWidth, h: window.innerHeight};
+    w = current.w - margin.left - margin.right;
+    h = current.h - margin.top - margin.bottom;
+};
 
-var brush = d3.brushX().extent( [ [0,0], [width, height] ])
+function reset() { // TODO: if data is changed...
+    d3.select("#container").remove();
+    spectraViewer(data);
+};
 
-var brushArea = peaks.append("g").attr("class", "brush")
+function init() {
+    resize();
+    d3.select("body")
+        .append("div")
+            .attr("id", "container")
+            .style("vertical-align", "top")
+            .style("width", "100%")
+            .style("position", "relative")
+            .style("display", "inline-block")
+            .style("margin", 0);
 
+    svg = d3.select("#container")
+        .append('svg')
+        .attr("id", "svg-responsive")
+        .style("top", 0)
+        .style("left", 0)
+        .attr("height", current.h)
+        .attr("width", current.w)
+        .style("position", "absolute")
+        .append("g")
+            .attr("id", "content")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    // X label
+    svg.append("text")
+        .attr("class", "label")
+        .attr("x", w/2)
+        .attr("y", h + margin.top + 5)
+        .text("m/z")
+        .attr("opacity", 0);
+    // Y label
+    svg.append("text")
+        .attr("class", "label")
+        .attr("transform", "rotate(-90)")
+        .attr("y", -40)
+        .attr("x", -h/2)
+        .text("Relative intensity")
+        .attr("opacity", 0);
+
+    svg.selectAll(".label")
+        .attr("font-family", font.family)
+        .attr("text-anchor", "middle")
+        .attr("font-size", font.size.label);
+    //tooltip
+    d3.select("#container")
+        .append("div")
+        .attr("id", "tooltip")
+        .style("font-family", font.family)
+        .style("font-size", font.size.hover)
+        .style("position", "absolute")
+        .style("opacity", 0)
+        .style("background-color", col.hoverbg)
+        .style("border", "solid")
+        .style("border-width", "1px")
+        .style("border-radius", "5px")
+        .style("padding", "5px");
+    //clipPath & brushing
+    svg.append("defs").append("svg:clipPath")
+        .attr("id", "clip")
+        .append("svg:rect")
+        .attr("width", w )
+        .attr("height", h )
+        .attr("x", 0)
+        .attr("y", 0);
+
+    svg.append("g")
+        .attr("id", "peaks")
+        .attr("clip-path", "url(#clip)")
+        .append("g")
+            .attr("id", "brushArea");
+
+    brush = d3.brushX().extent( [ [0,0], [w, h] ])
+};
 
 function spectrumPlot(spectrum) {
     let mzs = spectrum.peaks.map(d => d.mz);
@@ -113,15 +135,15 @@ function spectrumPlot(spectrum) {
     let max = d3.max(mzs)+0.5;
     // X axis
     var x = d3.scaleLinear()
-        .range([0, width])
+        .range([0, w])
         .domain([min, max]);
     var xAxis = svg.append("g")
-        .attr("transform", "translate(0," + height + ")")
+        .attr("transform", "translate(0," + h + ")")
         .call(d3.axisBottom(x));
     // Y axis
     var y = d3.scaleLinear()
         .domain([0, 1])
-        .range([height, 0]);
+        .range([h, 0]);
     svg.append("g").call(d3.axisLeft(y));
     svg.selectAll(".label").attr("opacity", 1);
     // brushing
@@ -132,20 +154,20 @@ function spectrumPlot(spectrum) {
             x.domain([min, max])
         } else {
             x.domain([ x.invert(extent[0]), x.invert(extent[1]) ])
-            peaks.select(".brush").call(brush.move, null)
+            svg.select("#brushArea").call(brush.move, null)
         }
         xAxis.transition().duration(1000).call(d3.axisBottom(x))
-        peaks.selectAll(".peak")
+        svg.selectAll(".peak")
             .transition().duration(1000)
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", function(d) { return y(d.intensity); })
-            .attr("height", function(d) { return height - y(d.intensity); })
+            .attr("height", function(d) { return h - y(d.intensity); })
     }
 
     brush.on("end", updateChart);
-    brushArea.call(brush);
+    svg.select("#brushArea").call(brush);
     // add Peaks
-    peaks.selectAll()
+    svg.selectAll()
         .data(spectrum.peaks)
         .enter()
         .append("rect")
@@ -153,12 +175,12 @@ function spectrumPlot(spectrum) {
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", function(d) { return y(d.intensity); })
             .attr("width", peakWidth)
-            .attr("height", function(d) { return height - y(d.intensity); })
+            .attr("height", function(d) { return h - y(d.intensity); })
             .attr("fill", col.spec1)
             .on("mouseover", mouseover)
             .on("mousemove", mousemove1)
             .on("mouseleave", mouseleave1);
-}
+};
 
 function mirrorPlot(spectrum1, spectrum2, view) {
     let mzs1 = spectrum1.peaks.map(d => d.mz);
@@ -167,49 +189,48 @@ function mirrorPlot(spectrum1, spectrum2, view) {
     let max = d3.max([d3.max(mzs1), d3.max(mzs2)])+0.5;
     // X axis
     var x = d3.scaleLinear()
-        .range([0, width])
+        .range([0, w])
         .domain([min, max]);
     var xAxis;
     if (view === "normal") {
         xAxis = svg.append("g")
-            .attr("transform", "translate(0," + height + ")")
+            .attr("transform", "translate(0," + h + ")")
             .call(d3.axisBottom(x));
         svg.append("g")
-            .attr("transform", "translate(0," + height/2 + ")")
+            .attr("transform", "translate(0," + h/2 + ")")
             .call(d3.axisBottom(x).tickValues([]));
     } else if (view === "simple") {
-        xAxis = peaks.append("g")
-            .attr("transform", "translate(0," + height/2 + ")")
+        xAxis = svg.select("#peaks").append("g")
+            .attr("transform", "translate(0," + h/2 + ")")
             .call(d3.axisBottom(x));
     }
     // Y axis 1
     var y1 = d3.scaleLinear()
         .domain([0, 1])
-        .range([height/2, 0]);
+        .range([h/2, 0]);
     svg.append("g").call(d3.axisLeft(y1));
     // Y axis 2
     var y2 = d3.scaleLinear()
         .domain([1, 0])
-        .range([height/2, 0]);
+        .range([h/2, 0]);
     svg.append("g")
-        .attr("transform", "translate(0," + height/2 + ")")
+        .attr("transform", "translate(0," + h/2 + ")")
         .call(d3.axisLeft(y2));
 
     svg.selectAll(".label").attr("opacity", 1);
-
-    // legends: 2 spectrum names 
+    // legends: 2 spectrum names
     svg.append("text")
         .attr("class", "legend")
-        .attr("x", -height/4)
+        .attr("x", -h/4)
         .text(firstNChar(spectrum1["name"], 20));
 
     svg.append("text")
         .attr("class", "legend")
-        .attr("x", -height*3/4)
+        .attr("x", -h*3/4)
         .text(firstNChar(spectrum2["name"], 20));
 
     svg.selectAll(".legend")
-        .attr("y", width)
+        .attr("y", w)
         .attr("text-anchor", "middle")
         .attr("transform", "rotate(-90)")
         .attr("font-family", font.family)
@@ -224,25 +245,25 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             x.domain([min, max])
         } else {
             x.domain([ x.invert(extent[0]), x.invert(extent[1]) ])
-            peaks.select(".brush").call(brush.move, null)
+            svg.select("#brushArea").call(brush.move, null)
         }
         xAxis.transition().duration(1000).call(d3.axisBottom(x))
-        peaks.selectAll("#peak1")
+        svg.selectAll("#peak1")
             .transition().duration(1000)
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", function(d) { return y1(d.intensity); })
-            .attr("height", function(d) { return height/2 - y1(d.intensity); })
-        peaks.selectAll("#peak2")
+            .attr("height", function(d) { return h/2 - y1(d.intensity); })
+        svg.selectAll("#peak2")
             .transition().duration(1000)
             .attr("x", function(d) { return x(d.mz); })
-            .attr("y", height/2)
+            .attr("y", h/2)
             .attr("height", function(d) { return y2(d.intensity); })
     }
 
     brush.on("end", updateChart);
-    brushArea.call(brush);
+    svg.select("#brushArea").call(brush);
     // Peaks 1
-    peaks.selectAll()
+    svg.selectAll()
         .data(spectrum1.peaks)
         .enter()
         .append("rect")
@@ -250,60 +271,45 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("id", "peak1")
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", function(d) { return y1(d.intensity); })
-            .attr("height", function(d) { return height/2 - y1(d.intensity); })
+            .attr("height", function(d) { return h/2 - y1(d.intensity); })
             .attr("fill", col.spec1)
             .on("mousemove", mousemove1)
             .on("mouseleave", mouseleave1);
     // Peaks 2
-    peaks.selectAll()
+    svg.selectAll()
         .data(spectrum2.peaks)
         .enter()
         .append("rect")
             .attr("class", "peak")
             .attr("id", "peak2")
             .attr("x", function(d) { return x(d.mz); })
-            .attr("y", height/2)
+            .attr("y", h/2)
             .attr("height", function(d) { return y2(d.intensity); })
             .attr("fill", col.spec2)
             .on("mousemove", function(d) {
-                tooltip.html("m/z: " + d.mz + "<br>Intensity: " + d.intensity)
-                .style("left", (d3.mouse(this)[0]+75 + "px")) // TO DO: rescale
-                .style("top", (d3.mouse(this)[1]+135 + "px")); }) // TO DO: rescale
+                d3.select("#tooltip").html("m/z: " + d.mz + "<br>Intensity: " + d.intensity)
+                .style("left", (d3.mouse(this)[0]+70 + "px"))
+                .style("top", (d3.mouse(this)[1]+60 + "px")); })
             .on("mouseleave", function() {
-                tooltip.style("opacity", 0);
+                d3.select("#tooltip").style("opacity", 0);
                 d3.select(this).attr("fill", col.spec2); });
 
     svg.selectAll(".peak")
         .attr("width", peakWidth)
-        .on("mouseover", mouseover)
-}
+        .on("mouseover", mouseover);
+};
 
-function rescale() {
-    let h = window.innerHeight;
-    let actuH = document.getElementsByClassName("svg-content-responsive")[0].clientHeight;
-    var scale = h/actuH;
-    if (actuH > h) {
-        d3.select(".svg-content-responsive").transition().duration(500).style("width", (scale*100-8).toString()+"%");
-    } else {
-        d3.select(".svg-content-responsive").style("width", "100%");
-    }
-}
-
-window.addEventListener("resize", rescale);
-// TO DO: function for reset the svg
 function spectraViewer(json){
-	if (json.spectrum2 == null) { //null==null und undefined
+    data = json;
+    init();
+    if (json.spectrum2 == null) { //null==null und undefined
 		// 1. mode
-	    spectrumPlot(json.spectrum1);
-	    rescale();
-	    debug.text('made spectrum plot');
+		spectrumPlot(json.spectrum1);
 	} else {
 		// 2. mode
-	    mirrorPlot(json.spectrum1, json.spectrum2, view.mirror);
-	    rescale();
-	    debug.text('made mirror plot');
+		mirrorPlot(json.spectrum1, json.spectrum2, view.mirror);
 	}
-}
+};
 
 var debug = d3.select("body")
     .append("div").html("DEBUG");
