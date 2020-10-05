@@ -71,6 +71,36 @@ distGuiLinux64:
     - gradle
     - linux64
 
+distCliWin64:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: build
+  script:
+    - cd sirius_dist/sirius_cli_single_os
+    - gradle artifactoryPublish
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - windows64
+
+distGuiWin64:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: build
+  script:
+    - cd sirius_dist/sirius_gui_single_os
+    - gradle artifactoryPublish
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - windows64
+
 distCliMacOSX:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64"
