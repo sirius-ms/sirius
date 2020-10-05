@@ -100,20 +100,22 @@ public class CSIPredictor extends AbstractStructurePredictor<Parameters.Unprepar
         initialized = true;
     }
 
-    // todo von Nils: Frage an euch: Der CSIConfidenceScorer muss doch wahrscheinlich auch etwas überarbeitet werden, oder?
     private CSICovarianceConfidenceScorer makeConfidenceScorer() {
         try {
             final Map<String, TrainedSVM> confidenceSVMs = csiWebAPI.getTrainedConfidence(predictorType);
-
             if (confidenceSVMs == null || confidenceSVMs.isEmpty())
                 throw new IOException("WebAPI returned empty confidence SVMs");
 
+            final BayesnetScoring cvs = csiWebAPI.getBayesnetScoring(predictorType);
+            if(cvs == null)
+                throw new IOException(("WebAPI returned no default bayesian network."));
+
             final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(performances);
 
-            return new CSICovarianceConfidenceScorer(confidenceSVMs, (BayesnetScoring) fingerblastScoring, csiScoring, fingerblastScoring.getClass());
+            return new CSICovarianceConfidenceScorer(confidenceSVMs, cvs, csiScoring, fingerblastScoring.getClass());
         } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).error("Error when loading confidence SVMs. Confidence SCore will not be available!");
-            LoggerFactory.getLogger(getClass()).debug("Error when loading confidence SVMs.", e);
+            LoggerFactory.getLogger(getClass()).error("Error when loading confidence SVMs or the bayesian network. Confidence SCore will not be available!");
+            LoggerFactory.getLogger(getClass()).debug("Error when loading confidence SVMs or the bayesian network.", e);
             return null;
         }
     }
