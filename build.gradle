@@ -77,6 +77,24 @@ allprojects {
         maven {
             url "https://bio.informatik.uni-jena.de/repository/libs-oss"
         }
+
+        maven {
+            url "https://bio.informatik.uni-jena.de/repository/libs-release-local-private/"
+            credentials {               // Optional resolver credentials (leave out to use anonymous resolution)
+                username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
+                password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+            }
+        }
+
+        maven {
+            url "https://bio.informatik.uni-jena.de/repository/libs-snapshot-local-private/"
+            credentials {               // Optional resolver credentials (leave out to use anonymous resolution)
+                username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
+                password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+            }
+        }
+
+
         maven {
             url "https://www.xypron.de/repository" //glpk repo
         }
