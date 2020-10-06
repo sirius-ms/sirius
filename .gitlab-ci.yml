@@ -77,7 +77,7 @@ distCliWin64:
   script:
     - cd sirius_dist/sirius_cli_single_os
 #    - gradle artifactoryPublish
-    - & 'C:\\Program Files\\Gradle\\gradle-6.6.1\\bin\\gradle.bat' artifactoryPublish
+    - \& 'C:\\Program Files\\Gradle\\gradle-6.6.1\\bin\\gradle.bat' artifactoryPublish
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -92,7 +92,7 @@ distGuiWin64:
   stage: build
   script:
     - cd sirius_dist/sirius_gui_single_os
-    - & 'C:\\Program Files\\Gradle\\gradle-6.6.1\\bin\\gradle.bat' artifactoryPublish
+    - \& 'C:\\Program Files\\Gradle\\gradle-6.6.1\\bin\\gradle.bat' artifactoryPublish
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
