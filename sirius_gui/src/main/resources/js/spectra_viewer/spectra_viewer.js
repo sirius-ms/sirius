@@ -1,7 +1,7 @@
 // General Settings
 var svg, brush, idleTimeout, data, w, h,
 current = {w, h},
-margin = {top: 30, right: 30, bottom: 50, left:60}, // TODO
+margin = {top: 25, right: 30, bottom: 65, left:60},
 peakWidth = 2,
 font = {family: "sans-serif", size: {hover: "12px", label: "13px", legend: "13px"}},
 col = {annotation: "lightcoral", spec1: "royalblue",  spec2: "mediumseagreen", hoverbg: "white"},
@@ -14,7 +14,7 @@ d3.select("body")
         .style("width", "100%")
         .style("position", "relative")
         .style("display", "inline-block")
-        .style("margin", 0)
+        .style("margin", 0);
 
 window.addEventListener("resize", reset);
 
@@ -26,7 +26,7 @@ var mouseover = function() {
 var mousemove1 = function(d) {
     d3.select("#tooltip").html("m/z: " + d.mz + "<br>Intensity: " + d.intensity)
         .style("left", (d3.mouse(this)[0]+70 + "px"))
-        .style("top", (d3.mouse(this)[1]+60 + "px"));
+        .style("top", (d3.mouse(this)[1]+50 + "px"));
 };
 
 var mouseleave1 = function() {
@@ -52,21 +52,12 @@ function resize() {
 };
 
 function reset() { // TODO: if data is changed...
-    d3.select("#container").remove();
+    d3.select("#container").html("");
     spectraViewer(data);
 };
 
 function init() {
     resize();
-    d3.select("body")
-        .append("div")
-            .attr("id", "container")
-            .style("vertical-align", "top")
-            .style("width", "100%")
-            .style("position", "relative")
-            .style("display", "inline-block")
-            .style("margin", 0);
-
     svg = d3.select("#container")
         .append('svg')
         .attr("id", "svg-responsive")
@@ -82,21 +73,20 @@ function init() {
     svg.append("text")
         .attr("class", "label")
         .attr("x", w/2)
-        .attr("y", h + margin.top + 5)
-        .text("m/z")
-        .attr("opacity", 0);
+        .attr("y", h + margin.top + 10)
+        .text("m/z");
     // Y label
     svg.append("text")
         .attr("class", "label")
         .attr("transform", "rotate(-90)")
         .attr("y", -40)
         .attr("x", -h/2)
-        .text("Relative intensity")
-        .attr("opacity", 0);
+        .text("Relative intensity");
 
     svg.selectAll(".label")
         .attr("font-family", font.family)
         .attr("text-anchor", "middle")
+        .attr("opacity", 0)
         .attr("font-size", font.size.label);
     //tooltip
     d3.select("#container")
@@ -289,7 +279,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .on("mousemove", function(d) {
                 d3.select("#tooltip").html("m/z: " + d.mz + "<br>Intensity: " + d.intensity)
                 .style("left", (d3.mouse(this)[0]+70 + "px"))
-                .style("top", (d3.mouse(this)[1]+60 + "px")); })
+                .style("top", (d3.mouse(this)[1]+50 + "px")); })
             .on("mouseleave", function() {
                 d3.select("#tooltip").style("opacity", 0);
                 d3.select(this).attr("fill", col.spec2); });
@@ -300,7 +290,6 @@ function mirrorPlot(spectrum1, spectrum2, view) {
 };
 
 function spectraViewer(json){
-    data = json;
     init();
     if (json.spectrum2 == null) { //null==null und undefined
 		// 1. mode
@@ -309,13 +298,14 @@ function spectraViewer(json){
 		// 2. mode
 		mirrorPlot(json.spectrum1, json.spectrum2, view.mirror);
 	}
+	data = json;
 };
 
-var debug = d3.select("body")
-    .append("div").html("DEBUG");
+//var debug = d3.select("body")
+//    .append("div").html("DEBUG");
 
 function loadJSONSpectra(input) {
-    debug.text("got json input");
+//    debug.text("got json input");
     spectraViewer(JSON.parse(input));
 }
 
