@@ -104,13 +104,19 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
         }
     }
 
+    public AdductSwitchLossScorer replaceScores(double naHSwitchScore, double naHSwitchChildrenScore){
+        return new AdductSwitchLossScorer(naHSwitchScore, naHSwitchChildrenScore, lossSizeScorer);
+    }
+
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         this.naHSwitchScore = document.getDoubleFromDictionary(dictionary, "na-h-switch-score");
+        this.naHSwitchChildrenScore = document.getDoubleFromDictionary(dictionary, "na-h-switch-child-score");
     }
 
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         document.addToDictionary(dictionary, "na-h-switch-score", naHSwitchScore);
+        document.addToDictionary(dictionary, "na-h-switch-child-score", naHSwitchChildrenScore);
     }
 }
