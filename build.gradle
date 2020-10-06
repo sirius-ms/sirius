@@ -45,7 +45,7 @@ ext {
     jewelcli_version = '0.8.9'
     //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
     glpk_lib_version = '4.60'
-    clp_lib_version = '1.17.5'
+    clp_lib_version = '1.17.5b'
 
     commons_email_version = '1.4'
     oshi_version = '5.2.2'
