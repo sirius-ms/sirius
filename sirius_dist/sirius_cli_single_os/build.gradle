@@ -176,9 +176,9 @@ runtime{
     jpackage {
         imageName = 'sirius'
         installerName = 'sirius'
-        if (OS.isWindows()) {
+        /*if (OS.isWindows()) {
             installerOptions += ['--win-console']
-        }
+        }*/
     }
 }
 
