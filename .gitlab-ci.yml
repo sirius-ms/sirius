@@ -56,6 +56,7 @@ distCliLinux64:
     - linux64
 
 distGuiLinux64:
+  needs: ["distCliLinux64"]
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu15.27.17-ca-fx-jdk15.0.0-linux_x64"
   stage: build
@@ -87,6 +88,7 @@ distCliWin64:
     - windows64
 
 distGuiWin64:
+  needs: ["distCliWin64"]
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: build
@@ -118,6 +120,7 @@ distCliMacOSX:
     - macosx
 
 distGuiMacOX:
+  needs: ["distCliMacOSX"]
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu15.27.17-ca-fx-jdk15.0.0-macosx_x64"
   stage: build
