@@ -75,9 +75,10 @@ distCliWin64:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: build
   script:
+    - set PATH=%PATH%;C:\Program Files\Gradle\gradle-6.6.1\bin;C:\Program Files\Zulu\zulu15.27.17-ca-fx-jdk15.0.0-win_x64\bin
     - cd sirius_dist/sirius_cli_single_os
-#    - gradle artifactoryPublish
-    - \& 'C:\\Program Files\\Gradle\\gradle-6.6.1\\bin\\gradle.bat' artifactoryPublish
+    - gradle artifactoryPublish
+#    - \& 'C:\\Program Files\\Gradle\\gradle-6.6.1\\bin\\gradle.bat' artifactoryPublish
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -86,20 +87,21 @@ distCliWin64:
     - gradle
     - windows64
 
-distGuiWin64:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: build
-  script:
-    - cd sirius_dist/sirius_gui_single_os
-    - \& 'C:\\Program Files\\Gradle\\gradle-6.6.1\\bin\\gradle.bat' artifactoryPublish
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  tags:
-    - artifactory
-    - gradle
-    - windows64
+#distGuiWin64:
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#  stage: build
+#  script:
+#    - set PATH=%PATH%;C:\Program Files\Gradle\gradle-6.6.1\bin;C:\Program Files\Zulu\zulu15.27.17-ca-fx-jdk15.0.0-win_x64\bin
+#    - cd sirius_dist/sirius_gui_single_os
+#    - \& 'C:\\Program Files\\Gradle\\gradle-6.6.1\\bin\\gradle.bat' artifactoryPublish
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  tags:
+#    - artifactory
+#    - gradle
+#    - windows64
 
 distCliMacOSX:
   variables:
