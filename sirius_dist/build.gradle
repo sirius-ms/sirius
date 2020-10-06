@@ -57,9 +57,9 @@ subprojects {
 
         targetPlatform(osName) {
             if (OS.isLinux()) {
-                jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64.tar.gz")
+                jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu15.27.17-ca-fx-jdk15.0.0-linux_x64.tar.gz")
             } else if (project.OS.isWindows()) {
-                jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-win_x64.zip")
+                jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu15.27.17-ca-fx-jdk15.0.0-win_x64.zip")
             } else if (project.OS.isMacOsX()) {
                 jdkHome = jdkDownload("https://cdn.azul.com/zulu/bin/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64.tar.gz") /*{
                     pathToHome = "zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64/zulu-14.jdk/Contents/Home"
