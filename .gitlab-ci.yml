@@ -92,7 +92,7 @@ distGuiWin64:
   stage: build
   script:
     - $env:path
-    - cd sirius_dist/sirius_cli_single_os
+    - cd sirius_dist/sirius_gui_single_os
     - gradle.bat artifactoryPublish
   cache:
     key: "$CI_COMMIT_REF_NAME"
