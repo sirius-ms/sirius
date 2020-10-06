@@ -27,7 +27,7 @@ ext {
         nativeLibs = 'osx'
         osName = 'osx64'
         installerNameType = 'pkg'
-        installerAppendix = "-${version}.$installerNameType"
+        installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType"
     }
 }
 subprojects {
@@ -106,6 +106,7 @@ subprojects {
                         '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.ico",
                 ]
             } else if (OS.isMacOsX()) {
+                appVersion = project.version.replace('-SNAPSHOT', '')
                 imageOptions += [
                         '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.icns",
                 ]
