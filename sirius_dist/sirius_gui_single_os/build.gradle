@@ -49,6 +49,9 @@ runtime {
                     '--resource-dir', jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}/lib/").toString(),
                     '--linux-shortcut',
             ]
+        } else if (OS.isWindows()) {
+            installerOptions += [
+                    '--app-version', "${project.version.replace('-SNAPSHOT', '')}"]
         }
     }
 }

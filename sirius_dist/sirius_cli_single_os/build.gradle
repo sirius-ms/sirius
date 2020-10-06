@@ -177,7 +177,7 @@ runtime{
         imageName = 'sirius'
         installerName = 'sirius'
         if (OS.isWindows()) {
-            installerOptions += ['--win-console']
+            installerOptions += ['--win-console', '--app-version', "${project.version.replace('-SNAPSHOT', '')}"]
         }
     }
 }
