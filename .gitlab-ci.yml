@@ -44,6 +44,7 @@ distCliLinux64:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu15.27.17-ca-fx-jdk15.0.0-linux_x64"
   stage: build-cli
+  needs: ["doc"]
   script:
     - cd sirius_dist/sirius_cli_single_os
     - gradle artifactoryPublish
@@ -59,7 +60,7 @@ distGuiLinux64:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu15.27.17-ca-fx-jdk15.0.0-linux_x64"
   stage: build-gui
-  needs: ["distCliLinux64"]
+  needs: ["distCliLinux64","doc"]
   script:
     - cd sirius_dist/sirius_gui_single_os
     - gradle artifactoryPublish
@@ -75,6 +76,7 @@ distCliWin64:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: build-cli
+  needs: ["doc"]
   script:
     - $env:path
     - cd sirius_dist/sirius_cli_single_os
@@ -88,10 +90,10 @@ distCliWin64:
     - windows64
 
 distGuiWin64:
-  needs: ["distCliWin64"]
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: build-gui
+  needs: ["distCliWin64","doc"]
   script:
     - $env:path
     - cd sirius_dist/sirius_gui_single_os
@@ -108,6 +110,7 @@ distCliMacOSX:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu15.27.17-ca-fx-jdk15.0.0-macosx_x64"
   stage: build-cli
+  needs: ["doc"]
   script:
     - cd sirius_dist/sirius_cli_single_os
     - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish
@@ -120,10 +123,10 @@ distCliMacOSX:
     - macosx
 
 distGuiMacOX:
-  needs: ["distCliMacOSX"]
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu15.27.17-ca-fx-jdk15.0.0-macosx_x64"
   stage: build-gui
+  needs: ["distCliMacOSX","doc"]
   script:
     - cd sirius_dist/sirius_gui_single_os
     - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish

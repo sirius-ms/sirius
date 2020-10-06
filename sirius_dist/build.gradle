@@ -22,7 +22,7 @@ ext {
         nativeLibs = 'w64'
         osName = 'win64'
         installerNameType = 'msi'
-        installerAppendix = "_${version.replace('-SNAPSHOT', '')}.$installerNameType"
+        installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType"
     } else if (OS.isMacOsX()) {
         nativeLibs = 'osx'
         osName = 'osx64'
