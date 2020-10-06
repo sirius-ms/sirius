@@ -85,7 +85,6 @@ subprojects {
             if (OS.isLinux()) {
                 //todo rpm check
                 installerOptions += [
-                        '--app-version', "${project.version}",
 //                        '--linux-package-name', 'sirius',
                         '--linux-menu-group', 'Applications;Science',
                         '--linux-deb-maintainer', 'sirius@uni-jena.de',
@@ -95,8 +94,8 @@ subprojects {
                         '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.png",
                 ]
             } else if (OS.isWindows()) {
+                appVersion = project.version.replace('-SNAPSHOT', '')
                 installerOptions += [
-                        '--app-version', "${project.version.replace('-SNAPSHOT', '')}",
                         '--win-dir-chooser',
                         '--win-menu',
 //                    '--win-shortcut',
@@ -107,9 +106,6 @@ subprojects {
                         '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.ico",
                 ]
             } else if (OS.isMacOsX()) {
-                installerOptions += [
-                        '--app-version', "${project.version}",
-                ]
                 imageOptions += [
                         '--icon', "${project.getRootProject().projectDir}/icons/sirius-icon.icns",
                 ]
