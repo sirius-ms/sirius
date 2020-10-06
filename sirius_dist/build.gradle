@@ -96,7 +96,7 @@ subprojects {
                 ]
             } else if (OS.isWindows()) {
                 installerOptions += [
-                        '--app-version', "${project.version.replace('-SNAPSHOT', '')}",
+                        //'--app-version', "${project.version.replace('-SNAPSHOT', '')}",
                         '--win-dir-chooser',
                         '--win-menu',
 //                    '--win-shortcut',
