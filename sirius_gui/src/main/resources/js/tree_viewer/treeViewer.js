@@ -930,8 +930,6 @@ function colorCode(variant, scheme) {
     cb_label
         .attr('transform', 'translate(' + parseInt(width - cb_width - cb_pad_right)
               + ',' + parseInt(cb_pad_top) + ')')
-        .style('font-size', '12')
-        .style('font-family', 'sans-serif')
         .text({md_mz: 'mass deviation in m/z',
                md_mz_abs: 'mass deviation in mz (absolute)',
                md_ppm: 'mass deviation in ppm',
@@ -1037,7 +1035,7 @@ function generateTree(data) {
     });
     addFragmentData(data);
     boxwidth = calcBoxwidth(max_box_text,
-                            {'font-weight': 'bold', 'font-size': '12'});
+                            {'font-weight': 'bold'});
 }
 
 // additionally to adding fragment data to tree nodes, also stores
@@ -1172,10 +1170,8 @@ function drawNodes(root) {
     enter.append('text')
         .attr('class', 'node_label')
         .text(function(d) { return d.data.name; })
-        .style('font-weight', 'bold')
+        .style('font-weight', 'bold');
         // .style('text-decoration', 'underline')
-        .style('font-family', 'sans-serif')
-        .style('font-size', '12');
 
     node.selectAll('.node_label')
         .data(root.descendants(), function(d) {
@@ -1186,8 +1182,7 @@ function drawNodes(root) {
                                     (-(boxwidth / 2) + 5)),
                              null, d.data.name,
                              (centered_node_labels?'middle':'start'),
-                             {'font-family': 'sans-serif', 'font-size':
-                              '12', 'font-weight': 'bold'})[0];})
+                             {'font-weight': 'bold'})[0];})
         .attr('dy', function(d) { return d.y - boxheight + lineheight + 5; });
 
     enter.append('g')
@@ -1214,9 +1209,7 @@ function drawNodeAnnots() {
                 formatAnnot(d, this.parentNode.parentNode.__data__.data.
                     fragmentData[d]));
         })
-        .attr('class', 'annot_text')
-        .style('font-size', '12')
-        .style('font-family', 'sans-serif');
+        .attr('class', 'annot_text');
 
     // for new AND existing elements
     enter.merge(annot)
@@ -1284,9 +1277,7 @@ function drawLinks(root) {
             loss = d.target.data.parentEdge.molecularFormula;
             if (!losses.contains(loss))
                 losses.push(loss);
-            return loss; })
-        .style('font-size', '12')
-        .style('font-family', 'sans-serif');
+            return loss; });
 
     link.selectAll('.link_text')
         .data(root.links(), function(d) {
@@ -1521,12 +1512,7 @@ popup_div = d3.select('body').append('div')
     .attr('class', 'popup')
     .style('opacity', 0)
     .style('position', 'absolute')
-    .style('pointer-events', 'none')
-    .style('background', 'lightsteelblue')
-    .style('font-size', '12')
-    .style('font-family', 'sans-serif')
-    .style('padding', '2px')
-    .style('border-radius', '8px');
+    .style('pointer-events', 'none');
 
 cb_label = svg.append('text')
     .attr('id', 'cb_label')

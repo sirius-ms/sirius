@@ -1,0 +1,18 @@
+body {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-family: sans-serif;
+    font-size: 12px;
+}
+
+.label, .legend {
+    font-size: 13px;
+}
+
+#tooltip, .popup {
+    background-color: white;
+    border:  solid;
+    border-width:  1px;
+    border-radius:  5px;
+    padding:  5px;
+}

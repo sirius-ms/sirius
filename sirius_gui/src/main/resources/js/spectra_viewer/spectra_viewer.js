@@ -3,8 +3,7 @@ var svg, brush, idleTimeout, data, w, h,
 current = {w, h},
 margin = {top: 25, right: 30, bottom: 65, left:60},
 peakWidth = 2,
-font = {family: "sans-serif", size: {hover: "12px", label: "13px", legend: "13px"}},
-col = {annotation: "lightcoral", spec1: "royalblue",  spec2: "mediumseagreen", hoverbg: "white"},
+col = {annotation: "lightcoral", spec1: "royalblue",  spec2: "mediumseagreen"},
 view = {mirror: "normal"}; // alternativ: "simple"
 
 d3.select("body")
@@ -84,23 +83,14 @@ function init() {
         .text("Relative intensity");
 
     svg.selectAll(".label")
-        .attr("font-family", font.family)
         .attr("text-anchor", "middle")
-        .attr("opacity", 0)
-        .attr("font-size", font.size.label);
+        .attr("opacity", 0);
     //tooltip
     d3.select("#container")
         .append("div")
         .attr("id", "tooltip")
-        .style("font-family", font.family)
-        .style("font-size", font.size.hover)
         .style("position", "absolute")
-        .style("opacity", 0)
-        .style("background-color", col.hoverbg)
-        .style("border", "solid")
-        .style("border-width", "1px")
-        .style("border-radius", "5px")
-        .style("padding", "5px");
+        .style("opacity", 0);
     //clipPath & brushing
     svg.append("defs").append("svg:clipPath")
         .attr("id", "clip")
@@ -223,8 +213,6 @@ function mirrorPlot(spectrum1, spectrum2, view) {
         .attr("y", w)
         .attr("text-anchor", "middle")
         .attr("transform", "rotate(-90)")
-        .attr("font-family", font.family)
-        .attr("font-size", font.size.legend)
         .style("fill", "gray");
 
     // brushing
