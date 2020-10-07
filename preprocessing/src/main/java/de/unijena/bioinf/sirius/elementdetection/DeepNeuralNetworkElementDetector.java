@@ -50,7 +50,7 @@ public class DeepNeuralNetworkElementDetector implements ElementDetection {
         SimpleSpectrum ms1 = processedInput.getAnnotationOrThrow(Ms1IsotopePattern.class).getSpectrum();
         if (ms1.size()<=2) return settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet());
         final FormulaConstraints constraints = dnnRegressionPredictor.predictConstraints(ms1);
-        return settings.getEnforcedAlphabet().getExtendedConstraints(settings.getAutoDetectionElements().toArray(new Element[0])).intersection(constraints);
+        return constraints.getExtendedConstraints(settings.getEnforcedAlphabet());
     }
 
     @Override
