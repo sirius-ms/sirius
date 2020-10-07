@@ -66,6 +66,8 @@ public abstract class WebViewPanel extends JFXPanel{
         this.html_builder = new StringBuilder("<html><head></head><body>\n");
         queueTaskInJFXThread(() -> {
                 this.webView = new WebView();
+				this.webView.getEngine().setUserStyleSheetLocation(
+					getClass().getResource("/js/" + "styles.css").toExternalForm());
                 this.setScene(new Scene(this.webView));
 			});
     }
