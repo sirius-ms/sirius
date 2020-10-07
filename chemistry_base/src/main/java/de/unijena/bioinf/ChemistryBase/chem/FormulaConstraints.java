@@ -29,6 +29,7 @@ import gnu.trove.list.array.TIntArrayList;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * FormulaConstraints contain all constraints which reduce the size of all possible decompositions of a mass.
@@ -533,6 +534,19 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         for (Element e : elements) {
             intersection.setBound(e, Math.max(getLowerbound(e), formulaConstraints.getLowerbound(e)), Math.min(getUpperbound(e), formulaConstraints.getUpperbound(e)));
         }
+        return intersection;
+    }
+
+    /**
+     * limits the {@link FormulaConstraints} to an array of elements.
+     * @param elements
+     * @return
+     */
+    public FormulaConstraints intersection(Element... elements) {
+        final List<Element> newElements = Arrays.stream(elements).collect(Collectors.toList());
+        newElements.removeIf(e -> !hasElement(e));
+        final ChemicalAlphabet alphabet = new ChemicalAlphabet(newElements.toArray(Element[]::new));
+        final FormulaConstraints intersection = new FormulaConstraints(alphabet, filters);
         return intersection;
     }
 
