@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.sirius.elementdetection;
 
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
@@ -30,6 +31,7 @@ import de.unijena.bioinf.ms.annotations.Requires;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.elementdetection.prediction.DNNRegressionPredictor;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
@@ -47,11 +49,22 @@ public class DeepNeuralNetworkElementDetector implements ElementDetection {
     @Nullable
     public FormulaConstraints detect(ProcessedInput processedInput) {
         final FormulaSettings settings = processedInput.getAnnotationOrDefault(FormulaSettings.class);
+        checkDetectableElements(settings);
         SimpleSpectrum ms1 = processedInput.getAnnotationOrThrow(Ms1IsotopePattern.class).getSpectrum();
         if (ms1.size()<=2) return settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet());
         final FormulaConstraints constraints = dnnRegressionPredictor.predictConstraints(ms1);
         //limit detection to detectable elements and add enforced alphabet
         return constraints.intersection(settings.getAutoDetectionElements().toArray(new Element[0])).getExtendedConstraints(settings.getEnforcedAlphabet());
+    }
+
+    private void checkDetectableElements(FormulaSettings settings){
+        //todo this check is performed for each compound. Rather do it once.
+        final ChemicalAlphabet detectable = settings.getAutoDetectionAlphabet();
+        for (Element element : detectable) {
+            if (!dnnRegressionPredictor.isPredictable(element)) {
+                LoggerFactory.getLogger(DeepNeuralNetworkElementDetector.class).warn(element.getSymbol()+" was specified but is not detectable.");
+            }
+        }
     }
 
     @Override
