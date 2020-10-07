@@ -520,7 +520,8 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
 
     public FormulaConstraints intersection(FormulaConstraints formulaConstraints) {
         final List<Element> elements = new ArrayList<>(this.chemicalAlphabet.getElements());
-        elements.removeIf(e -> !formulaConstraints.hasElement(e));
+        //remove elements if bounds do not intersect
+        elements.removeIf(e -> !formulaConstraints.hasElement(e) || (Math.max(getLowerbound(e), formulaConstraints.getLowerbound(e)) > Math.min(getUpperbound(e), formulaConstraints.getUpperbound(e))));
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(elements.toArray(Element[]::new));
         final FormulaConstraints intersection = new FormulaConstraints(alphabet);
         final HashMap<Class<? extends FormulaFilter>, FormulaFilter> ifils = new HashMap<>();
