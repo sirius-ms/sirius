@@ -77,7 +77,7 @@ distributions {
                     from("${getRootDir()}/LICENSE.txt")
                 }
                 into('doc') {
-                    from(rootProject.downloadManual.outputs.files.singleFile)
+                    from(getParent().downloadManual.outputs.files.singleFile)
                 }
             }
         })
@@ -105,7 +105,7 @@ distributions {
                     include("*-${ar}.exe")
                 }
                 into('doc') {
-                    from(rootProject.downloadManual.outputs.files.singleFile)
+                    from(getParent().downloadManual.outputs.files.singleFile)
                 }
             }
         })
@@ -136,7 +136,7 @@ distributions {
                 from("${getRootDir()}/LICENSE.txt")
             }
             into('doc') {
-                from(rootProject.downloadManual.outputs.files.singleFile)
+                from(getParent().downloadManual.outputs.files.singleFile)
             }
         }
     })
