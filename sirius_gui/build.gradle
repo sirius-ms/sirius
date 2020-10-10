@@ -8,7 +8,7 @@ plugins{
     id "com.github.kkdad.dependency-license-report" version "1.14.2"
 }
 
-apply plugin: 'ManifestClasspath' //this is to keep classpath away from commandline because it may get too long for windows
+//apply plugin: 'ManifestClasspath' //this is to keep classpath away from commandline because it may get too long for windows
 
 
 licenseReport {
