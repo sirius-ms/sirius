@@ -1,5 +1,5 @@
 // General Settings
-var svg, brush, idleTimeout, data, w, h,
+var svg, peakArea, brush, idleTimeout, data, w, h,
 current = {w, h},
 margin = {top: 25, right: 30, bottom: 65, left:60},
 peakWidth = 2,
@@ -33,7 +33,6 @@ var mouseleave1 = function() {
     d3.select(this).attr("fill", col.spec1);
 };
 
-// TODO: resize
 function firstNChar(str, num) {
     if (str.length > num) {
         return str.slice(0, num);
@@ -100,11 +99,12 @@ function init() {
         .attr("x", 0)
         .attr("y", 0);
 
-    svg.append("g")
+    peakArea = svg.append("g")
         .attr("id", "peaks")
         .attr("clip-path", "url(#clip)")
-        .append("g")
-            .attr("id", "brushArea");
+
+    peakArea.append("g")
+        .attr("id", "brushArea");
 
     brush = d3.brushX().extent( [ [0,0], [w, h] ])
 };
@@ -134,20 +134,20 @@ function spectrumPlot(spectrum) {
             x.domain([min, max])
         } else {
             x.domain([ x.invert(extent[0]), x.invert(extent[1]) ])
-            svg.select("#brushArea").call(brush.move, null)
+            peakArea.select("#brushArea").call(brush.move, null)
         }
         xAxis.transition().duration(1000).call(d3.axisBottom(x))
-        svg.selectAll(".peak")
+        peakArea.selectAll(".peak")
             .transition().duration(1000)
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", function(d) { return y(d.intensity); })
             .attr("height", function(d) { return h - y(d.intensity); })
-    }
+    };
 
     brush.on("end", updateChart);
-    svg.select("#brushArea").call(brush);
+    peakArea.select("#brushArea").call(brush);
     // add Peaks
-    svg.selectAll()
+    peakArea.selectAll()
         .data(spectrum.peaks)
         .enter()
         .append("rect")
@@ -223,15 +223,15 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             x.domain([min, max])
         } else {
             x.domain([ x.invert(extent[0]), x.invert(extent[1]) ])
-            svg.select("#brushArea").call(brush.move, null)
+            peakArea.select("#brushArea").call(brush.move, null)
         }
         xAxis.transition().duration(1000).call(d3.axisBottom(x))
-        svg.selectAll("#peak1")
+        peakArea.selectAll("#peak1")
             .transition().duration(1000)
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", function(d) { return y1(d.intensity); })
             .attr("height", function(d) { return h/2 - y1(d.intensity); })
-        svg.selectAll("#peak2")
+        peakArea.selectAll("#peak2")
             .transition().duration(1000)
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", h/2)
@@ -239,9 +239,9 @@ function mirrorPlot(spectrum1, spectrum2, view) {
     }
 
     brush.on("end", updateChart);
-    svg.select("#brushArea").call(brush);
+    peakArea.select("#brushArea").call(brush);
     // Peaks 1
-    svg.selectAll()
+    peakArea.selectAll()
         .data(spectrum1.peaks)
         .enter()
         .append("rect")
@@ -254,7 +254,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .on("mousemove", mousemove1)
             .on("mouseleave", mouseleave1);
     // Peaks 2
-    svg.selectAll()
+    peakArea.selectAll()
         .data(spectrum2.peaks)
         .enter()
         .append("rect")
@@ -272,7 +272,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
                 d3.select("#tooltip").style("opacity", 0);
                 d3.select(this).attr("fill", col.spec2); });
 
-    svg.selectAll(".peak")
+    peakArea.selectAll(".peak")
         .attr("width", peakWidth)
         .on("mouseover", mouseover);
 };
@@ -280,10 +280,8 @@ function mirrorPlot(spectrum1, spectrum2, view) {
 function spectraViewer(json){
     init();
     if (json.spectrum2 == null) { //null==null und undefined
-		// 1. mode
 		spectrumPlot(json.spectrum1);
 	} else {
-		// 2. mode
 		mirrorPlot(json.spectrum1, json.spectrum2, view.mirror);
 	}
 	data = json;
@@ -292,9 +290,9 @@ function spectraViewer(json){
 //var debug = d3.select("body")
 //    .append("div").html("DEBUG");
 
-function loadJSONSpectra(input) {
+function loadJSONSpectra(data_spectra) {
 //    debug.text("got json input");
-    spectraViewer(JSON.parse(input));
+    spectraViewer(JSON.parse(data_spectra));
 }
 
 // d3.json("bicuculline.json").then(spectraViewer);
