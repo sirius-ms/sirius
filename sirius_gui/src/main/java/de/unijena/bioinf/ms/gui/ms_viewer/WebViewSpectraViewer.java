@@ -29,4 +29,8 @@ public class WebViewSpectraViewer extends WebViewPanel {
                 + "')");
 		System.out.println("executed JS function");
     }
+
+	public void clear(){
+		executeJS("clear()");
+	}
 }

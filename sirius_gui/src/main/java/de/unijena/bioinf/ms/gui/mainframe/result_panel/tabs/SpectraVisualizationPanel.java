@@ -134,6 +134,9 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 																			 ), ftree));
 				}
 			}
+		} else {
+			System.out.println("Results are null ...");
+			browser.clear();
 		}
 	}
 
