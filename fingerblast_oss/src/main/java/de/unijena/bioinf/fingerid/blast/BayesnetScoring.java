@@ -77,6 +77,7 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
 
     protected static final String SEP = "\t";
 
+    @Override
     public String toString(){
         StringBuilder stringBuilder = new StringBuilder();
 
