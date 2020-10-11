@@ -77,27 +77,34 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
 
     protected static final String SEP = "\t";
 
+    public String toString(){
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (AbstractCorrelationTreeNode node : nodeList) {
+            if (node.numberOfParents()==0) continue;
+            int child = fpVersion.getAbsoluteIndexOf(node.getFingerprintIndex());
+
+            stringBuilder.append(String.valueOf(node.numberOfParents()));
+            stringBuilder.append(SEP);
+            for (AbstractCorrelationTreeNode p : node.getParents()) {
+                stringBuilder.append(String.valueOf(fpVersion.getAbsoluteIndexOf(p.getFingerprintIndex())));
+                stringBuilder.append(SEP);
+            }
+            stringBuilder.append(String.valueOf(child)); stringBuilder.append(SEP);
+            double[] covariances = node.getCovarianceArray();
+            for (int i = 0; i < covariances.length; i++) {
+                stringBuilder.append(String.valueOf(covariances[i]));
+                if (i<covariances.length-1) stringBuilder.append(SEP);
+            }
+
+            stringBuilder.append("\n");
+        }
+        return stringBuilder.toString();
+    }
+
     public void  writeTreeWithCovToFile(Path outputFile) throws IOException {
         try(BufferedWriter writer = Files.newBufferedWriter(outputFile, Charset.defaultCharset())) {
-            for (AbstractCorrelationTreeNode node : nodeList) {
-                if (node.numberOfParents()==0) continue;
-                int child = fpVersion.getAbsoluteIndexOf(node.getFingerprintIndex());
-
-                StringBuilder builder = new StringBuilder();
-                builder.append(String.valueOf(node.numberOfParents())); builder.append(SEP);
-                for (AbstractCorrelationTreeNode p : node.getParents()) {
-                    builder.append(String.valueOf(fpVersion.getAbsoluteIndexOf(p.getFingerprintIndex()))); builder.append(SEP);
-                }
-                builder.append(String.valueOf(child)); builder.append(SEP);
-                double[] covariances = node.getCovarianceArray();
-                for (int i = 0; i < covariances.length; i++) {
-                    builder.append(String.valueOf(covariances[i]));
-                    if (i<covariances.length-1) builder.append(SEP);
-                }
-
-                builder.append("\n");
-                writer.write(builder.toString());
-            }
+            writer.write(this.toString());
         }
     }
 
