@@ -15,7 +15,9 @@ d3.select("body")
         .style("display", "inline-block")
         .style("margin", 0);
 
-window.addEventListener("resize", reset);
+window.addEventListener("resize", function(){
+    spectraViewer(data);
+});
 
 var mouseover = function() {
     d3.select("#tooltip").style("opacity", 1);
@@ -49,12 +51,14 @@ function resize() {
     h = current.h - margin.top - margin.bottom;
 };
 
-function reset() { // TODO: if data is changed...
+// For functions outside the js script to clear SVG (e.g. when the input is deleted)
+function clear() {
     d3.select("#container").html("");
-    spectraViewer(data);
+    data = null;
 };
 
 function init() {
+    d3.select("#container").html("");
     resize();
     svg = d3.select("#container")
         .append('svg')
