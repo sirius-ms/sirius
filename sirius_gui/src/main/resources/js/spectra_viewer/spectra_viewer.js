@@ -1,5 +1,5 @@
 // General Settings
-var svg, peakArea, brush, idleTimeout, data, w, h,
+var svg, peakArea, brush, idleTimeout, data, w, h, xmin_tmp, xmax_tmp,
 current = {w, h},
 margin = {top: 25, right: 30, bottom: 65, left:60},
 peakWidth = 2,
@@ -16,6 +16,7 @@ d3.select("body")
         .style("margin", 0);
 
 window.addEventListener("resize", function(){
+    d3.select("#container").html("");
     spectraViewer(data);
 });
 
@@ -55,10 +56,11 @@ function resize() {
 function clear() {
     d3.select("#container").html("");
     data = null;
+    xmin_tmp = null;
+    xmax_tmp = null;
 };
 
 function init() {
-    d3.select("#container").html("");
     resize();
     svg = d3.select("#container")
         .append('svg')
@@ -117,10 +119,14 @@ function spectrumPlot(spectrum) {
     let mzs = spectrum.peaks.map(d => d.mz);
     let min = d3.min(mzs)-0.5;
     let max = d3.max(mzs)+0.5;
+    if (xmin_tmp === undefined || xmin_tmp === null) {
+        xmin_tmp = min;
+        xmax_tmp = max;
+    }
     // X axis
     var x = d3.scaleLinear()
         .range([0, w])
-        .domain([min, max]);
+        .domain([xmin_tmp, xmax_tmp]);
     var xAxis = svg.append("g")
         .attr("transform", "translate(0," + h + ")")
         .call(d3.axisBottom(x));
@@ -136,8 +142,12 @@ function spectrumPlot(spectrum) {
         if(!extent){
             if (!idleTimeout) return idleTimeout = setTimeout(idled, 350);
             x.domain([min, max])
+            xmin_tmp = min;
+            xmax_tmp = max;
         } else {
-            x.domain([ x.invert(extent[0]), x.invert(extent[1]) ])
+            xmin_tmp = x.invert(extent[0]);
+            xmax_tmp = x.invert(extent[1]);
+            x.domain([ xmin_tmp, xmax_tmp ])
             peakArea.select("#brushArea").call(brush.move, null)
         }
         xAxis.transition().duration(1000).call(d3.axisBottom(x))
@@ -171,10 +181,14 @@ function mirrorPlot(spectrum1, spectrum2, view) {
     let mzs2 = spectrum2.peaks.map(d => d.mz);
     let min = d3.min([d3.min(mzs1), d3.min(mzs2)])-0.5;
     let max = d3.max([d3.max(mzs1), d3.max(mzs2)])+0.5;
+    if (xmin_tmp === undefined || xmin_tmp === null) {
+        xmin_tmp = min;
+        xmax_tmp = max;
+    }
     // X axis
     var x = d3.scaleLinear()
         .range([0, w])
-        .domain([min, max]);
+        .domain([xmin_tmp, xmax_tmp]);
     var xAxis;
     if (view === "normal") {
         xAxis = svg.append("g")
@@ -225,8 +239,12 @@ function mirrorPlot(spectrum1, spectrum2, view) {
         if(!extent){
             if (!idleTimeout) return idleTimeout = setTimeout(idled, 350);
             x.domain([min, max])
+            xmin_tmp = min;
+            xmax_tmp = max;
         } else {
-            x.domain([ x.invert(extent[0]), x.invert(extent[1]) ])
+            xmin_tmp = x.invert(extent[0]);
+            xmax_tmp = x.invert(extent[1]);
+            x.domain([ xmin_tmp, xmax_tmp ])
             peakArea.select("#brushArea").call(brush.move, null)
         }
         xAxis.transition().duration(1000).call(d3.axisBottom(x))
@@ -240,7 +258,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", h/2)
             .attr("height", function(d) { return y2(d.intensity); })
-    }
+    };
 
     brush.on("end", updateChart);
     peakArea.select("#brushArea").call(brush);
@@ -296,6 +314,11 @@ function spectraViewer(json){
 
 function loadJSONSpectra(data_spectra) {
 //    debug.text("got json input");
+    if (data !== undefined) {
+        d3.select("#container").html("");
+        xmin_tmp = null;
+        xmax_tmp = null;
+    }
     spectraViewer(JSON.parse(data_spectra));
 }
 
