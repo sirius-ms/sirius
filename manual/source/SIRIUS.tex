@@ -1965,33 +1965,21 @@ for compounds with m/z greater equal to 800
  \code{--minLocalConnections} other compounds. This introduces an individual 
  edge score threshold for each compound.
  However, when using \code{--minLocalConnections}, 
- ZODIAC first has to create the complete network and filter the edges 
- afterwards. Thus, ZODIAC may consume a large amount of system memory. 
+ ZODIAC first has to create the complete network and filter edges
+ afterwards. Thus, ZODIAC may consume a large amount of system memory.
 
-%The Network ZODIAC creates may consume a huge amount of system memory but 
-%many of the edges in this network does not contribute much information.
-%Zero weight edges are automatically ignored. Which amount of low weight 
-%edges are omitted from the analysis can be specified by the 
-%\code{--edge-threshold} parameter (default: 0.95). A higher value will speed 
-%up computation but will also increase the risk to lose information.
-
-%Zodiac ensures that at least one candidate per compound is connected to a 
-%minimum number (\code{--minLocalConnections}) of other compounds. For that 
-%ZODIAC has to create the complete network first and filters the edges 
-%afterwards. 
-For very large datasets the ZODIAC network may not fit in 1TB system memory 
-and more. Please perform feature alignment between your LC-MS/MS runs to 
+For very large datasets, the ZODIAC network may not fit in 1TB system memory
+and more. Please, perform a feature alignment between your LC-MS/MS runs to
 reduce the number of compounds and thus reduce the size of the ZODIAC network.
-If this is still not sufficient, memory consumption can be dramatically 
-decreased by setting  \code{--minLocalConnections=0}. This will allow ZODIAC 
-to filter low weight edges on the fly when creating the network. \textbf{Use 
-this setting with care, since it can result in a badly connected network that 
-may decrease performance:} 
+If this is still not sufficient, memory consumption can be dramatically
+decreased by setting  \code{--minLocalConnections=0}. This will allow ZODIAC
+to filter low weight edges on the fly when creating the network. \textbf{Use
+this setting with care, since it can result in a badly connected network that
+may decrease performance:}
 
 \begin{Verbatim}[commandchars=\\\{\}]
 sirius  -i <input> -o <output>  formula -c 50  zodiac --minLocalConnections 0 --edge-threshold 0.99
 \end{Verbatim}
-
 
 
 \section{CSI:FingerID: Identifying Molecular Structures}
