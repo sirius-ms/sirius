@@ -22,10 +22,7 @@ package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
-import de.unijena.bioinf.ChemistryBase.fp.BooleanFingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
@@ -319,7 +316,7 @@ public class BayesianScoringUtils {
 
 
     private BayesnetScoring estimateScoring(MolecularFormula formula, List<int[]> treeStructure) {
-        BooleanFingerprint[] specificRefFPs;
+        ArrayFingerprint[] specificRefFPs;
         ProbabilityFingerprint[] specificPredFPs;
         if (useBiotransformations()){
             Set<MolecularFormula> biotransF = applyBioTransformations(formula, true);
@@ -347,7 +344,7 @@ public class BayesianScoringUtils {
         return scoringFormulaSpecific;
     }
 
-    private BooleanFingerprint[] getTrueReferenceFingerprintsByFormula(Set<MolecularFormula> formulas) {
+    private ArrayFingerprint[] getTrueReferenceFingerprintsByFormula(Set<MolecularFormula> formulas) {
         return extractByMF(trainingData.trueFingerprintsReferenceData, trainingData.formulasReferenceData, formulas);
     }
 
