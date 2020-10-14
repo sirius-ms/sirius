@@ -26,7 +26,7 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.data.Tagging;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ChemistryBase.ms.utils.PeakComment;
 import de.unijena.bioinf.babelms.DataWriter;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 
@@ -34,6 +34,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class JenaMsWriter implements DataWriter<Ms2Experiment> {
@@ -93,30 +94,53 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             writer.newLine();
         }
         writer.newLine();
-        writeMs1(writer, data.getMergedMs1Spectrum(), true);
 
-        for (Spectrum spec : data.getMs1Spectra()) {
-            writeMs1(writer, spec, false);
+        PeakComment peakComment = data.getAnnotationOrNull(PeakComment.class);
+
+        int spectrumIndex = 0;
+        if (data.getMergedMs1Spectrum()!=null) {
+            writeMs1(writer, data.getMergedMs1Spectrum(), true, peakComment, spectrumIndex++);
         }
+
+        spectrumIndex = 0;
+        for (Spectrum spec : data.getMs1Spectra()) {
+            writeMs1(writer, spec, false, peakComment, spectrumIndex++);
+        }
+
+        spectrumIndex = 0;
         for (Ms2Spectrum spec : data.getMs2Spectra()) {
-            writeMs2(writer, spec);
+            writeMs2(writer, spec, peakComment, spectrumIndex++);
         }
 
        // writer.close();
     }
 
-    private void writeMs1(BufferedWriter writer, Spectrum spec, boolean isMergedSpectrum) throws IOException {
+    private void writeMs1(BufferedWriter writer, Spectrum spec, boolean isMergedSpectrum, PeakComment comments, int spectrumIndex) throws IOException {
         if (spec != null) { // && spec.size() > 0 : don't remove empty ones. this creates problems with MS1/MS2 mapping.
             if (isMergedSpectrum) writer.write(">ms1merged");
             else writer.write(">ms1peaks");
             writer.newLine();
             writeSpectraLevelComments(writer, spec);
-            Spectrums.writePeaks(writer, spec);
+            for (int k=0; k < spec.size(); ++k) {
+                writer.write(String.valueOf(spec.getMzAt(k)));
+                writer.write(' ');
+                writer.write(String.valueOf(spec.getIntensityAt(k)));
+                if (comments!=null) {
+                    final Optional<String> commentFor = isMergedSpectrum ? comments.getMergedMs1CommentFor(k) : comments.getMs1CommentFor(spectrumIndex, k);
+                    if (commentFor.isPresent()) {
+                        writer.write(' ');
+                        writer.write('#');
+                        writer.write(' ');
+                        writer.write(commentFor.get());
+                    }
+                }
+                writer.newLine();
+            }
             writer.newLine();
         }
     }
 
-    private void writeMs2(BufferedWriter writer, Ms2Spectrum spec) throws IOException {
+    private void writeMs2(BufferedWriter writer, Ms2Spectrum spec,PeakComment comments, int spectrumIndex) throws IOException {
         if (spec != null) { // && spec.size() > 0 : don't remove empty ones. this creates problems with MS1/MS2 mapping.
             if (spec.getCollisionEnergy() == null || spec.getCollisionEnergy().equals(CollisionEnergy.none())) {
                 writer.write(">ms2peaks");
@@ -126,7 +150,21 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             }
             writer.newLine();
             writeSpectraLevelComments(writer, spec);
-            Spectrums.writePeaks(writer, spec);
+            for (int k=0; k < spec.size(); ++k) {
+                writer.write(String.valueOf(spec.getMzAt(k)));
+                writer.write(' ');
+                writer.write(String.valueOf(spec.getIntensityAt(k)));
+                if (comments!=null) {
+                    final Optional<String> commentFor = comments.getMs2CommentFor(spectrumIndex, k);
+                    if (commentFor.isPresent()) {
+                        writer.write(' ');
+                        writer.write('#');
+                        writer.write(' ');
+                        writer.write(commentFor.get());
+                    }
+                }
+                writer.newLine();
+            }
             writer.newLine();
         }
     }

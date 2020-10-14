@@ -1,24 +1,3 @@
- /*
-  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
-  *
-  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
-  *  Chair of Bioinformatics, Friedrich-Schilller University.
-  *
-  *  This library is free software; you can redistribute it and/or
-  *  modify it under the terms of the GNU General Public
-  *  License as published by the Free Software Foundation; either
-  *  version 3 of the License, or (at your option) any later version.
-  *
-  *  This library is distributed in the hope that it will be useful,
-  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  *  Lesser General Public License for more details.
-  *
-  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/gpl-3.0.txt>
-  */
-
-package de.unijena.bioinf.lcms.debuggui;
-
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.io.lcms.MzMLParser;
@@ -30,6 +9,8 @@ import de.unijena.bioinf.lcms.peakshape.*;
 import de.unijena.bioinf.model.lcms.*;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
@@ -92,7 +73,23 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
         getContentPane().add(left,BorderLayout.WEST);
         getContentPane().add(right,BorderLayout.EAST);
-        getContentPane().add(info,BorderLayout.SOUTH);
+
+        JSlider slider = new JSlider(0, GUI.this.sample.ions.size());
+        slider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                final int value = slider.getValue();
+                if (value >= 0 && value < GUI.this.sample.ions.size()) {
+                    GUI.this.jumpTo(value);
+                }
+            }
+        });
+
+        final Box verticalBox = Box.createVerticalBox();
+        verticalBox.add(slider);
+        verticalBox.add(info);
+
+        getContentPane().add(verticalBox,BorderLayout.SOUTH);
 
         getContentPane().add(specViewer,BorderLayout.CENTER);
         addKeyListener(this);
@@ -127,7 +124,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
     public static void main(String[] args) {
 
-        final File mzxmlFile = new File("/home/kaidu/Downloads/180912_109.mzML");
+        final File mzxmlFile = new File("/home/kaidu/Downloads/test2/").listFiles()[0];
         InMemoryStorage storage= new InMemoryStorage();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         try {
@@ -163,6 +160,12 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
     }
     private void nextIon() {
         ++offset;
+        if (offset >= sample.ions.size()) offset = 0;
+        specViewer.ion = sample.ions.get(offset);
+        specViewer.repaint();
+    }
+    private void jumpTo(int offset) {
+        this.offset = offset;
         if (offset >= sample.ions.size()) offset = 0;
         specViewer.ion = sample.ions.get(offset);
         specViewer.repaint();
@@ -334,21 +337,24 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
             }
 
             // draw MS/MS
-            /*
-            for (Scan s : ion.getMsMs().getScans())  {
-                final long retentionTime = s.getRetentionTime();
-                double prec = s.getPrecursor().getIntensity();
-                if (prec == 0d) {
-                    prec = 1000d;
+            int scanStart = ion.getPeak().getScanNumberAt(0);
+            int scanEnd = ion.getPeak().getScanNumberAt(ion.getPeak().numberOfScans()-1);
+            for (Scan s : GUI.this.sample.run.getScans(scanStart,scanEnd).values()) {
+                if (s.isMsMs() && Math.abs(s.getPrecursor().getMass() - ion.getMass()) < 0.01) {
+                    final long retentionTime = s.getRetentionTime();
+                    double prec = s.getPrecursor().getIntensity();
+                    if (prec == 0d) {
+                        prec = 1000d;
+                    }
+
+                    int posX = (int) Math.round((retentionTime - start) / deltaRT);
+                    int posY = (int) Math.round(prec / deltaInt);
+                    g.setColor(Color.BLUE);
+                    g.fillOval((int) posX - 5, 700 - ((int) posY - 5), 10, 10);
+
                 }
-
-                int posX = (int)Math.round((retentionTime-start)/deltaRT);
-                int posY = (int)Math.round(prec/deltaInt);
-                g.setColor(Color.BLUE);
-                g.fillOval((int)posX-5, 700 - ((int)posY-5), 10, 10);
-
             }
-            */
+
             g.setColor(Color.BLACK);
             g.setFont(medium);
             g.drawString(ion.getSegment().toString(), 50,800);
