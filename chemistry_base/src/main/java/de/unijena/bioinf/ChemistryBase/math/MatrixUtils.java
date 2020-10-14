@@ -25,7 +25,19 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import gnu.trove.list.array.TIntArrayList;
 
+import java.util.Arrays;
+
 public class MatrixUtils {
+
+    public static double frobeniusNorm(double[][] M) {
+        double norm = 0d;
+        for (int i=0; i < M.length; ++i) {
+            for (int j=0; j < M.length; ++j) {
+                norm += M[i][j]*M[i][j];
+            }
+        }
+        return norm;
+    }
 
     public static double[] encodeBoolean(boolean[] vector, double falses, double trues) {
         final double[] v = new double[vector.length];
@@ -47,6 +59,28 @@ public class MatrixUtils {
         final double[] v = new double[vec.length];
         for (int k=0; k < vec.length; ++k)
             v[k] = vec[k];
+        return v;
+    }
+    public static double[][] float2double(float[][] matrix) {
+        final double[][] v = new double[matrix.length][];
+        for (int k=0; k < matrix.length; ++k) {
+            v[k] = new double[matrix[k].length];
+            for (int i=0; i < matrix[k].length; ++i) v[k][i] = matrix[k][i];
+        }
+        return v;
+    }
+    public static float[] double2float(double[] vec) {
+        final float[] v = new float[vec.length];
+        for (int k=0; k < vec.length; ++k)
+            v[k] = (float)vec[k];
+        return v;
+    }
+    public static float[][] double2float(double[][] matrix) {
+        final float[][] v = new float[matrix.length][];
+        for (int k=0; k < matrix.length; ++k) {
+            v[k] = new float[matrix[k].length];
+            for (int i=0; i < matrix[k].length; ++i) v[k][i] = (float)matrix[k][i];
+        }
         return v;
     }
 
@@ -284,6 +318,17 @@ public class MatrixUtils {
         return vector;
     }
 
+    public static double[] concat(double[] A, double[] B) {
+        final double[] C = Arrays.copyOf(A, A.length+B.length);
+        System.arraycopy(B, 0,C,A.length,B.length);
+        return C;
+    }
+    public static float[] concat(float[] A, float[] B) {
+        final float[] C = Arrays.copyOf(A, A.length+B.length);
+        System.arraycopy(B, 0,C,A.length,B.length);
+        return C;
+    }
+
     public static double[][] concatColumns(double[][] A, double[][] B) {
         if (A.length!=B.length) throw new IndexOutOfBoundsException("Incompatible shape: " + A.length + "rows vs " + B.length + " rows.");
         final double[][] C = new double[A.length][A[0].length+B[0].length];
@@ -308,7 +353,7 @@ public class MatrixUtils {
      * the function is symmetric. A single subjob will always compute 2 rows and n entries (with n is the number of rows/columns).
      */
     public static BasicMasterJJob<double[][]> parallelizeSymmetricMatrixComputation(double[][] matrix, MatrixComputationFunction function) {
-        return new BasicMasterJJob<double[][]>(JJob.JobType.SCHEDULER) {
+        return new BasicMasterJJob<double[][]>(JJob.JobType.CPU) {
             @Override
             protected double[][] compute() throws Exception {
 
@@ -345,6 +390,53 @@ public class MatrixUtils {
             }
         };
     }
+    // I >= J
+    public static BasicMasterJJob<Object> parallelizeSymmetricMatrixComputation(int size, GenericMatrixComputationFunction function) {
+        return new BasicMasterJJob<Object>(JJob.JobType.CPU) {
+            @Override
+            protected Object compute() throws Exception {
+
+                final int middle = size/2;
+                for (int row=0; row < middle; ++row) {
+                    final int ROW = row;
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int j=0; j <= ROW; ++j) {
+                                function.updateValue(ROW, j);
+                            }
+                            int row2 = size-ROW-1;
+                            for (int j=0; j <= row2; ++j) {
+                                function.updateValue(row2, j);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                if (size % 2 != 0) {
+                    submitSubJob(new BasicJJob<Object>() {
+                        @Override
+                        protected Object compute() throws Exception {
+                            for (int k=0; k <= middle; ++k) {
+                                function.updateValue(middle,k);
+                            }
+                            return true;
+                        }
+                    });
+                }
+                awaitAllSubJobs();
+                return "";
+            }
+        };
+    }
+
+    public interface GenericMatrixComputationFunction {
+        /*
+        updates the value in the matrix for A[I][j] and A[J][I]
+         */
+        public void updateValue(int i, int j);
+    }
+
 
     /**
      * Functional interface for calculating the value for a matrix entry given the indizes i and j

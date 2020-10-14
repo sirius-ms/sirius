@@ -81,7 +81,9 @@ public class MemoryFileStorage implements SpectrumStorage {
     }
 
     public void dropBuffer() {
-        buffer.force();
+        if (buffer!=null) {
+            buffer.force();
+        }
         this.buffer = null;
     }
 

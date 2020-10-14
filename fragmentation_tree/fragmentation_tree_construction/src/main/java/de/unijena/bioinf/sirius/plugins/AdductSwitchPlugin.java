@@ -38,6 +38,10 @@ import de.unijena.bioinf.sirius.ProcessedInput;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Allows the annotation of fragments with an {@link Ionization} that is different from the precursor compound's {@link Ionization}.
+ * It is enabled by setting the {@link PossibleAdductSwitches} {@link de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation}.
+ */
 public final class AdductSwitchPlugin extends SiriusPlugin {
 
     @Override
@@ -81,6 +85,7 @@ public final class AdductSwitchPlugin extends SiriusPlugin {
             Set<Ionization> allowed = transitions.get(a.getIonization());
             if (allowed==null) return true;
             if (allowed.contains(b.getIonization())) {
+                if (a.getIonization().getCharge()<0) return false; // for negative we do not know the mechanism
                 final MolecularFormula difference = a.getFormula().subtract(b.getFormula());
                 if ((difference.numberOfOxygens()>0) || (difference.numberOf(N)>0) || difference.numberOf(P)>0) return false;
                 return true;
