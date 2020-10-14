@@ -60,6 +60,12 @@ public class ProcessedPeak implements Peak {
         return best;
     }
 
+    public double maxIntensity() {
+        double mx = 0d;
+        for (Peak p : originalPeaks) mx = Math.max(mx, p.getIntensity());
+        return mx;
+    }
+
     public ProcessedPeak clone() {
         return new ProcessedPeak(this);
     }

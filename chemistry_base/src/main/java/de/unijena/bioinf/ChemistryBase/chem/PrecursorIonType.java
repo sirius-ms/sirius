@@ -248,8 +248,11 @@ public class PrecursorIonType implements TreeAnnotation {
 
     //////// ????????????????
     public MolecularFormula neutralMoleculeToMeasuredNeutralMolecule(MolecularFormula neutral) {
+        /*
         if (isIntrinsicalCharged())
             neutral = getCharge() > 0 ? neutral.subtract(MolecularFormula.getHydrogen()) : neutral.add(MolecularFormula.getHydrogen());
+
+         */
         return neutral.subtract(inSourceFragmentation).add(adduct);
     }
 

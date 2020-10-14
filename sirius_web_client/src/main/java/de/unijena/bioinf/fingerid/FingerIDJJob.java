@@ -138,7 +138,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
                         if (!ionType.equals(ir.getTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getTree(), ionType)) {
                             try {
                                 IdentificationResult<S> newIr = IdentificationResult.withPrecursorIonType(ir, ionType);
-                                if (newIr.getTree().numberOfVertices() >= 3 && neutralFormulas.add(newIr.getMolecularFormula()))
+                                if (newIr.getTree().numberOfVertices() >= 3 && (neutralFormulas.add(newIr.getMolecularFormula())))
                                     ionTypes.put(newIr, ir);
                             } catch (IllegalArgumentException e) {
                                 logError("Error with instance " + getExperiment().getName() + " and formula " + ir.getMolecularFormula() + " and ion type " + ionType);
@@ -153,8 +153,15 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
 
             // workaround: we have to remove the original results if they do not match the ion type
             if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
-                idResult.removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType()));
-                ionTypes.keySet().removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType())); //todo needed?
+                if (experiment.getPrecursorIonType().isIntrinsicalCharged()) {
+                    // for this special case we do not want to duplicate all the trees
+                    // but we also have to ensure not to delete all trees just because they look
+                    // identical to the original one
+                    //idResult.replaceAll(x->IdentificationResult.withPrecursorIonType(x, experiment.getPrecursorIonType()));
+                } else {
+                    idResult.removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType()));
+                    ionTypes.keySet().removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType())); //todo needed?
+                }
             }
 
             idResult.sort(Collections.reverseOrder()); //descending
