@@ -38,7 +38,7 @@ task downloadGLPK(type: Download) {
     onlyIfModified true
     overwrite false
     doLast {
-        if (state.executed) {
+        if (!state.getUpToDate()) {
             copy {
                 getLogger().lifecycle("Unpacking GLPK...")
                 from zipTree(downloadGLPK.outputs.files.singleFile)
@@ -59,7 +59,7 @@ task downloadCLP(type: Download) {
     onlyIfModified true
     overwrite false
     doLast {
-        if (state.executed) {
+        if (!state.getUpToDate()) {
             copy {
                 getLogger().lifecycle("Unpacking CPL...")
                 from zipTree(downloadCLP.outputs.files.singleFile)
@@ -84,8 +84,8 @@ task downloadJDK(type: Download) {
     overwrite false
 
 
-    doLast {
-        if (state.executed) {
+    /*doLast {
+        if (!state.getUpToDate()) {
             getLogger().lifecycle("Unpacking Zulu...")
             jdkPath.deleteDir()
             copy {
@@ -100,10 +100,23 @@ task downloadJDK(type: Download) {
         } else {
             getLogger().lifecycle("Unpacking JDK SKIPPED")
         }
-    }
+    }*/
 }
 
-task downloadJpackager(type: Download, dependsOn: downloadJDK) {
+task extractJDK(type: Copy, dependsOn: downloadJDK) {
+    def s = downloadJDK.outputs.files.singleFile
+    println(s)
+    if (s.getName().endsWith('.zip')) {
+        outputs.file(s.absolutePath.replace('.zip', ''))
+        from zipTree(s)
+    } else {
+        outputs.file(s.absolutePath.replace('.tar.gzip', ''))
+        from tarTree(resources.gzip(s))
+    }
+    into buildDir
+}
+
+task downloadJpackager(type: Download, dependsOn: extractJDK) {
     String fname = "jdk.packager-${zosName}"
     String ext = ".zip"
 
@@ -119,7 +132,7 @@ task downloadJpackager(type: Download, dependsOn: downloadJDK) {
     onlyIfModified true
     overwrite false
     doLast {
-        if (state.executed) {
+        if (!state.getUpToDate()) {
             getLogger().lifecycle("Unpacking Jpackager...")
             delete(jpPath)
             mkdir(jpPath)
@@ -163,6 +176,7 @@ class AppImage extends DefaultTask {
     File outputDir
     String imageName
     String[] jvmArgs
+    String[] args
     String version
     String mainClass
     String mainJarName
@@ -173,30 +187,36 @@ class AppImage extends DefaultTask {
         version = project.version
     }
 
-    File getImageDir(){
+    File getImageDir() {
         return outputDir.toPath().resolve(imageName).toFile()
     }
 
     @TaskAction
     def execute() {
-        if (project.OS.isWindows()) {
-            exec {
-                commandLine(jpackagerBin.absolutePath, createParameters().join(' '))
-            }
-        } else {
-            println("${jpackagerBin.absolutePath} ${createParameters().join(' ')}")
-            project.exec {
-                commandLine 'bash', '-e', '-c', """
-                export JAVA_HOME=${jdkHome.absolutePath}
-                ${jpackagerBin.absolutePath} ${createParameters().join(' ')}
-                """
-            }
+        String[] p = createSubcommand().plus(createParameters())
+        project.exec {
+            commandLine(buildCommand(p))
         }
     }
 
+    def buildCommand(String[] parameters) {
+        if (project.OS.isWindows()) {
+            return [jpackagerBin.absolutePath, parameters.join(' ')]
+        } else {
+            getLogger().lifecycle("${jpackagerBin.absolutePath} ${parameters.join(' ')}")
+            return ['bash', '-e', '-c', """
+                export JAVA_HOME=${jdkHome.absolutePath}
+                ${jpackagerBin.absolutePath} ${parameters.join(' ')}
+                """]
+        }
+    }
+
+    String [] createSubcommand() {
+        return ['create-image']
+    }
+
     String[] createParameters() {
-        return [
-                'create-image',
+        def paras = [
                 '--add-modules', String.join(',', modules),
                 '-i', project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toString(),
                 '-o', outputDir.toString(),
@@ -206,23 +226,62 @@ class AppImage extends DefaultTask {
                 '--jvm-args', "\"${jvmArgs.join(' ')}\"",
                 '--main-jar', mainJarName
         ]
+        if (args != null)
+            paras += ['--arguments', "\"${args.join(' ')}\""]
 
-
-        /*      if (OS.isWindows()) {
-
-              } else if (OS.isMacOsX()) {
-
-              } else if (OS.isLinux()) {
-                  return [
-
-                  ]
-              } else {
-                  throw new IllegalArgumentException("Could not determine the OS to build on")
-              }*/
+        def iconDir = project.getRootProject().rootDir.toPath().resolve('icons')
+        if (project.OS.isWindows()) {
+            paras += ["--icon", "${iconDir.resolve('sirius-icon.ico').toString()}"]
+        } else if (project.OS.isMacOsX()) {
+            paras += ["--icon", "${iconDir.resolve('sirius-icon.icns').toString()}"]
+        } else if (project.OS.isLinux()) {
+            paras += ["--icon", "${iconDir.resolve('sirius-icon.png').toString()}"]
+        } else {
+            throw new IllegalArgumentException("Could not determine the OS to build on")
+        }
+        return paras
     }
 
 }
 
+abstract class AppInstaller extends DefaultTask {
+    AppImage image;
+
+    @TaskAction
+    def execute() {
+        project.exec {
+            commandLine(image.buildCommand(createParameters()))
+        }
+    }
+
+
+    String[] createParameters() {
+        def paras = [
+                '--name', image.imageName,
+                '--app-image', image.getImageDir().absolutePath,
+//                '-o', image.outputDir.absolutePath,
+//                '--version', image.version,
+//                "--icon", "${project.getRootProject().rootDir.toPath().resolve('icons').resolve('sirius-icon.png').toString()}"
+        ]
+        return paras
+    }
+
+
+}
+
+class LinuxInstaller extends AppInstaller {
+
+}
+
+class WindowsInstaller extends AppInstaller {
+
+
+}
+
+class MacInstaller extends AppInstaller {
+
+
+}
 
 subprojects {
     apply plugin: 'ManifestClasspath'
@@ -233,7 +292,7 @@ subprojects {
         enabled = false
     }
 
-    task createDistImage(type: AppImage, group: 'distribution') {
+    task distImage(type: AppImage, group: 'distribution') {
         dependsOn downloadJpackager, installDist, downloadManual, downloadCLP, downloadGLPK
         jpackagerBin = jpBin
         jdkHome = jdkPath
@@ -293,9 +352,9 @@ subprojects {
         }
     }
 
-    task distImageZip(dependsOn: createDistImage, group: 'distribution') {
+    task distImageZip(dependsOn: distImage, group: 'distribution') {
         doFirst {
-            def imageDir = createDistImage.getImageDir()
+            def imageDir = distImage.getImageDir()
             def parentPath = imageDir.parentFile.toPath()
             def zipFile = parentPath.resolve("${imageDir.getName()}.zip")
             project.ant.zip(destfile: zipFile, duplicate: 'fail') {
@@ -308,9 +367,14 @@ subprojects {
         }
     }
 
+    task distImageLinuxInstaller(dependsOn: distImage, type: LinuxInstaller, group: 'distribution') {
+        image = distImage
+    }
+
     task distribution { group = 'distribution' }
 
-//    distribution.dependsOn 'distInstaller'
+//    if (OS.isLinux())
+//        distribution.dependsOn 'distImageLinuxInstaller'
     distribution.dependsOn 'distImageZip'
     artifactoryPublish.dependsOn 'distribution'
 }

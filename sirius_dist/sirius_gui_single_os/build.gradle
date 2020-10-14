@@ -8,9 +8,10 @@ dependencies {
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 
-createDistImage {
+distImage {
     imageName = 'sirius-gui'
     mainClass = mainClassName
+    args = ['gui']
     mainJarName = getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
     modules += [
             'javafx.base',
@@ -27,7 +28,7 @@ publishing {
         sirius(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
-            artifact source: "${createDistImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
 //            artifact source: jpackage.getJpackageData().installerOutputDir.toPath().resolve(jpackage.getJpackageData().installerName + installerAppendix).toFile(), classifier: osName, extension: installerNameType
         }
     }
