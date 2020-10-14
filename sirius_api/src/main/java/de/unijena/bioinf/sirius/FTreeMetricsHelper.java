@@ -105,13 +105,18 @@ public class FTreeMetricsHelper {
         return fragmentScoring.get(measuredIonRoot).get(Recalibrated.PENALTY_KEY);
     }
 
-    public Deviation getMedianMassDeviation() {
+    /**
+     *
+     * @param useAbsoluteValues absolute values (Betrag)
+     * @return
+     */
+    private Deviation getMedianMassDeviation(boolean useAbsoluteValues) {
         TDoubleArrayList ppms = new TDoubleArrayList(), mzs = new TDoubleArrayList();
         for (Fragment f : tree) {
             final Deviation dev = tree.getMassError(f);
             if (dev != Deviation.NULL_DEVIATION) {
-                ppms.add(dev.getPpm());
-                mzs.add(dev.getAbsolute());
+                ppms.add(useAbsoluteValues ? Math.abs(dev.getPpm()) : dev.getPpm());
+                mzs.add(useAbsoluteValues ? Math.abs(dev.getAbsolute()) : dev.getAbsolute());
             }
         }
 
@@ -120,6 +125,14 @@ public class FTreeMetricsHelper {
                 mzs.isEmpty() ? Double.NaN : Statistics.median(mzs)
         );
 
+    }
+
+    public Deviation getMedianMassDeviation() {
+        return getMedianMassDeviation(false);
+    }
+
+    public Deviation getMedianAbsoluteMassDeviation() {
+        return getMedianMassDeviation(true);
     }
 
 
