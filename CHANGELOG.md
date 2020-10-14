@@ -9,7 +9,7 @@
 - **update: Structure DB update due to major changes in PubChem standardization since the last one.**
 - **breaking:**  additional columns (`ionMass`, `retentionTimeInSeconds`) have been added to project wide summary files
 such as `formula_identifications.tsv`, `compound_identifications.tsv` and `compound_identifications_adducts.tsv`
-- **breaking:** column name of `<INSERT>` has changed from `<INSERT>` to `<INSERT>`  
+- **breaking:** column name in `formula_candidates.tsv` has changed from `massError(ppm)` to `massErrorPrecursor(ppm)`  
 
 **NOTE: SIRIUS versions will now follow semantic versioning (all upcoming releases)**
 
