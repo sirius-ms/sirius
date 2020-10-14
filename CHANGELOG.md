@@ -7,7 +7,7 @@
 - more bugfixes ;-)
 
 ##### 4.4.30
-- fix/improvement: Renamed column 'massError(ppm)' to 'massErrorPrecursor(ppm)' in formula_candidates.tsv in projectspace
+- breaking change: Renamed column 'massError(ppm)' to 'massErrorPrecursor(ppm)' in formula_candidates.tsv in projectspace
 
 ##### 4.4.28
 - fix: Error when parsing FragTree json with non numeric double values
