@@ -20,13 +20,29 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-
-import javax.swing.*;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPanel> {
+    public static final String DO_NOT_SHOW_AGAIN_KEY = "de.unijena.bioinf.sirius.computeDialog.zodiac.dontAskAgain";
 
     public ActZodiacConfigPanel() {
         super("ZODIAC", Icons.NET_32, false, ZodiacConfigPanel::new);
+    }
+
+    @Override
+    protected void setComponentsEnabled(boolean enabled) {
+        if (enabled && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY, false)) {
+            if (new QuestionDialog(MainFrame.MF, "Low number of Compounds",
+                    GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
+                    DO_NOT_SHOW_AGAIN_KEY).isAbort()) {
+                activationButton.setSelected(false);
+                return;
+            }
+        }
+
+        super.setComponentsEnabled(enabled);
     }
 }
