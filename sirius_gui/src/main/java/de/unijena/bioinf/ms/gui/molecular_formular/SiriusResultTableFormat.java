@@ -40,7 +40,7 @@ import java.util.function.Function;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
-    private static final int COL_COUNT = 10;
+    private static final int COL_COUNT = 11;
 
     protected SiriusResultTableFormat(Function<FormulaResultBean,Boolean> isBest) {
         super(isBest);
@@ -80,6 +80,8 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 9:
                 return "Median Mass Error (ppm)";
             case 10:
+                return "Median Absolute Mass Error (ppm)";
+            case 11:
                 return "Best";
             default:
                 throw new IllegalStateException();
@@ -110,6 +112,8 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 9:
                 return result.getMedianMassDevPPM();
             case 10:
+                return result.getMedianAbsoluteMassDevPPM();
+            case 11:
                 return isBest.apply(result);
             default:
                 throw new IllegalStateException();
