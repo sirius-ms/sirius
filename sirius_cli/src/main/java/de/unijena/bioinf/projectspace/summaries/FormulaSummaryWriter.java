@@ -117,7 +117,7 @@ public class FormulaSummaryWriter implements Summarizer {
         final StringBuilder headerBuilder = new StringBuilder("molecularFormula\tadduct\tprecursorFormula");/*	rankingScore*/
         if (scorings != null && !scorings.isEmpty())
             headerBuilder.append("\t").append(scorings);
-        headerBuilder.append("\texplainedPeaks\texplainedIntensity\tmedianMassError(ppm)\tmassError(ppm)");
+        headerBuilder.append("\texplainedPeaks\texplainedIntensity\tmedianMassError(ppm)\tmedianAbsoluteMassError(ppm)\tmassErrorPrecursor(ppm)");
         return headerBuilder.toString();
     }
 
@@ -171,6 +171,8 @@ public class FormulaSummaryWriter implements Summarizer {
             w.write(tree != null ? String.valueOf(tree.getAnnotationOrThrow(TreeStatistics.class).getExplainedIntensity()) : "");
             w.write('\t');
             w.write(tree != null ? String.valueOf(new FTreeMetricsHelper(tree).getMedianMassDeviation().getPpm()) : "");
+            w.write('\t');
+            w.write(tree != null ? String.valueOf(new FTreeMetricsHelper(tree).getMedianAbsoluteMassDeviation().getPpm()) : "");
             w.write('\t');
             w.write(tree != null ? r.getId().getParentId().getIonMass().map(e -> tree.getMassErrorTo(tree.getRoot(), e).getPpm()).map(String::valueOf).orElse("N/A") : "");
             if (prefix != null) {
