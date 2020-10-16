@@ -33,7 +33,7 @@ ext {
 task downloadJDK(type: Download) {
     String fname = "zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64"
     String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}";
-    project.ext.set("jdkPath", getBuildDir().toPath().resolve('fname').toFile())
+    project.ext.set("jdkPath", getBuildDir().toPath().resolve(fname).toFile())
 
 
     src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/fx-jdk/${zulu_jre_version}/${fname + ext}"
@@ -54,6 +54,33 @@ task extractJDK(type: Copy, dependsOn: downloadJDK) {
     }
     into buildDir
 }
+
+task createRuntimeImgs(dependsOn: extractJDK) {
+    String[] baseModules = ['java.sql', 'java.logging', 'jdk.jsobject', 'java.xml', 'jdk.xml.dom', 'java.datatransfer',
+                            'java.naming', 'java.prefs', 'java.instrument']
+    String[] fxModules = baseModules +
+            ['java.desktop', 'javafx.base', 'javafx.web', 'javafx.graphics', 'javafx.swing', 'javafx.controls']
+
+    File jlink = jdkPath.toPath().resolve('bin').resolve(OS.isWindows()?'jlink.exe':'jlink').toFile()
+    File outFX = buildDir.toPath().resolve('runtime').resolve("sirius-${jlink.toPath().getParent().getParent().getFileName().toString()}").toFile()
+    File outheadl = Paths.get(outFX.absolutePath.replace('-fx-','-headless-')).toFile()
+    outputs.files(outFX,outheadl)
+
+    String[] args =  ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+
+    doLast{
+        exec{
+            String[] c = [jlink.absolutePath,'--add-modules', "${baseModules.join(',')}", '--output', outheadl.absolutePath]
+            commandLine(c + args)
+        }
+        exec{
+            String[] c = [jlink.absolutePath,'--add-modules', "${fxModules.join(',')}", '--output', outFX.absolutePath]
+            commandLine(c + args)
+        }
+    }
+}
+
+
 
 
 task downloadGLPK(type: Download) {
@@ -144,50 +171,6 @@ task downloadRuntimeImageHeadless(type: Download) {
     }
 }
 
-/*task downloadJpackager(type: Download, dependsOn: extractJDK) {
-    String fname = "jdk.packager-${zosName}"
-    String ext = ".zip"
-
-    project.ext.set("jpPath", getBuildDir().toPath().resolve(fname).toFile())
-
-    if (OS.isWindows())
-        project.ext.set("jpBin", jdkPath.toPath().resolve('bin').resolve('jpackager.exe').toFile())
-    else
-        project.ext.set("jpBin", jpPath.toPath().resolve('jpackager').toFile())
-
-    src "https://bio.informatik.uni-jena.de/repository/ext-release-local/jpackager/$fname$ext"
-    dest getBuildDir().toPath().resolve('tmp').resolve(fname + ext).toFile()
-    onlyIfModified true
-    overwrite false
-    doLast {
-        if (!state.getUpToDate()) {
-            getLogger().lifecycle("Unpacking Jpackager...")
-            delete(jpPath)
-            mkdir(jpPath)
-            copy {
-                from zipTree(downloadJpackager.outputs.files.singleFile)
-                into jpPath
-            }
-            if (OS.isWindows()) {
-                getLogger().lifecycle("Moving Jpackager into JDK because of Windows -,-")
-                copy {
-                    from(jpPath) {
-                        into(jdkPath.toPath().resolve('bin').toFile()) {
-                            include 'jpackager.exe'
-                        }
-                        into(jdkPath.toPath().resolve('jmods').toFile()) {
-                            include 'jpackager.jar'
-                        }
-                    }
-                }
-
-            }
-        } else {
-            getLogger().lifecycle("Unpacking JPackager SKIPPED")
-        }
-    }
-}*/
-
 task downloadManual(type: Download, group: 'documentation') {
     String manualName = "manual-$version-manual.pdf"
     src "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/manual/$version/$manualName"
@@ -199,8 +182,6 @@ task downloadManual(type: Download, group: 'documentation') {
 class AppImage extends DefaultTask {
 
     File jpackagerBin
-    File jdkHome
-//    String[] modules
     File outputDir
     String imageName
     String[] jvmArgs
@@ -327,9 +308,8 @@ class MacInstaller extends AppInstaller {
 }
 
 subprojects {
-    apply plugin: 'ManifestClasspath'
     //this is to keep classpath away from commandline because it may get too long for windows
-//    apply plugin: 'org.beryx.runtime'
+    apply plugin: 'ManifestClasspath'
 
     jar {
         enabled = false
@@ -338,31 +318,14 @@ subprojects {
     task distImage(type: AppImage, group: 'distribution') {
         dependsOn installDist, downloadManual, downloadCLP, downloadGLPK
         jpackagerBin = Paths.get(System.getProperty("java.home")).resolve('bin').resolve('jpackage').toFile()
-        jdkHome = jdkPath
         mainClass = mainClassName
         outputDir = buildDir.toPath().resolve('distributions').toFile()
 
-        /*modules = [
-                'java.sql',
-                'java.desktop',
-                'java.logging',
-                'jdk.jsobject',
-                'java.xml',
-                'jdk.xml.dom',
-                'java.datatransfer',
-                'java.naming',
-                'java.prefs',
-                'java.instrument'
-        ]
-        println modules.join(',')*/
         jvmArgs = [
                 '--illegal-access=permit',
-//                '--add-opens java.base/java.util.concurrent=ALL-UNNAMED',
-//                '--add-opens java.base/java.util=ALL-UNNAMED',
                 '--add-opens java.base/java.lang=ALL-UNNAMED',
                 '--add-opens java.base/java.net=ALL-UNNAMED',
                 '-Djava.library.path=\\$APPDIR/../native',
-//                '-javaagent:/home/fleisch/workspace/sirius/agents/build/libs/agents-4.4.6-SNAPSHOT.jar',
                 '-javaagent:\\$APPDIR/agents-4.4.6-SNAPSHOT.jar',
         ]
 

@@ -49,5 +49,3 @@ task runGUI(type: Exec, dependsOn: jpackageImage , group: 'application') {
     commandLine([command.absolutePath])
 }*/
 
-//jlink --add-modules java.sql,java.logging,jdk.jsobject,java.xml,jdk.xml.dom,java.datatransfer,java.naming,java.prefs,java.instrument --strip-debug --compress 2 --no-header-files --no-man-pages --output /home/fleisch/work/jre-imgs/sirius-jre-11-headless
-//jlink --add-modules java.sql,java.desktop,java.logging,jdk.jsobject,java.xml,jdk.xml.dom,java.datatransfer,java.naming,java.prefs,java.instrument,javafx.base,javafx.web,javafx.graphics,javafx.swing,javafx.controls --strip-debug --compress 2 --no-header-files --no-man-pages --output /home/fleisch/work/jre-imgs/sirius-jre-11-fx
