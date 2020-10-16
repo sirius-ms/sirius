@@ -70,6 +70,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.jar.JarFile;
 
 /**
@@ -104,12 +105,15 @@ public class ILPAgent {
                 m.setAccessible(true);
                 m.invoke(cl, f.toURI().toURL());
             }
+
         } catch (Throwable e) {
             LoggerFactory.getLogger(ILPAgent.class).warn("Error adding jar to classpath at runtime: " + f.toString(), e);
         }
     }
 
-    public static void addLibraryPath(String pathToAdd) throws Exception {
+    /*public static void addLibraryPath(String pathToAdd) throws Exception {
+        System.out.println("add LD: " + pathToAdd);
+
         if (pathToAdd == null || pathToAdd.isBlank())
             return;
         String nu = System.getProperty("java.library.path") + ":" + pathToAdd;
@@ -118,14 +122,49 @@ public class ILPAgent {
         //This code only works up to JDK-11. All later versions will fail here
         //JDK-11 (LTS) end of life September 2023
         //Hopefully jpackage of JDK-17 (LTS) supports env variables so that this code becomes obsolete
-        Field fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
+        System.out.println("---> : " + pathToAdd);
+        *//*Field fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
         fieldSysPath.setAccessible(true);
-        fieldSysPath.set(null, null);
+        fieldSysPath.set(null, null);*//*
+        MethodHandles.Lookup cl = MethodHandles.privateLookupIn(ClassLoader.class, MethodHandles.lookup());
+        VarHandle sys_paths = cl.findStaticVarHandle(ClassLoader.class, "sys_paths", String[].class);
+        sys_paths.set(null);
+
+        System.out.println("end LD: " + pathToAdd);
+
+    }*/
+
+    /**
+     * Adds the specified path to the java library path
+     *
+     * @param pathToAdd the path to add
+     * @throws Exception
+     */
+    public static void addLibraryPath(String pathToAdd) throws Exception{
+        final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
+        usrPathsField.setAccessible(true);
+
+        //get array of paths
+        final String[] paths = (String[])usrPathsField.get(null);
+
+        //check if the path to add is already present
+        for(String path : paths) {
+            if(path.equals(pathToAdd)) {
+                return;
+            }
+        }
+
+        //add the new path
+        final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
+        newPaths[newPaths.length-1] = pathToAdd;
+        usrPathsField.set(null, newPaths);
     }
+
 
     private static void loadGurobiLibs() {
         try {
             String env = System.getenv("GUROBI_HOME");
+
             if (env != null && !env.isBlank()) {
                 Path p = Path.of(env).resolve("lib");
                 if (Files.isDirectory(p)) {
@@ -145,6 +184,7 @@ public class ILPAgent {
     private static void loadCplexLibs() {
         try {
             String env = System.getenv("CPLEX_HOME");
+
             if (env != null && !env.isBlank()) {
                 Path p = Path.of(env);
                 if (p != null && Files.isDirectory(p)) {
