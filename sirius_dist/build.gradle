@@ -1,5 +1,6 @@
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
+import java.lang.reflect.Array
 import java.nio.file.Paths
 
 plugins {
@@ -195,7 +196,7 @@ class AppImage extends DefaultTask {
     AppImage() {
         imageName = project.name
         jvmArgs = []
-        version = project.version
+        version = project.OS.isWindows()? project.version.replace('-SNAPSHOT','') :project.version
     }
 
     File getImageDir() {
@@ -206,13 +207,18 @@ class AppImage extends DefaultTask {
     def execute() {
         String[] p = createSubcommand().plus(createParameters())
         project.exec {
-            commandLine(buildCommand(p))
+            def c = buildCommand(p)
+            println c
+            commandLine(c)
         }
     }
 
     def buildCommand(String[] parameters) {
         if (project.OS.isWindows()) {
-            return [jpackagerBin.absolutePath, parameters.join(' ')]
+            //todo windows command line sucks!
+            List<String> c =  parameters as List
+            c.add(0, "\"${jpackagerBin.absolutePath}\"")
+            return c.toArray()
         } else {
             getLogger().lifecycle("${jpackagerBin.absolutePath} ${parameters.join(' ')}")
             return ['bash', '-e', '-c', """
@@ -317,7 +323,7 @@ subprojects {
 
     task distImage(type: AppImage, group: 'distribution') {
         dependsOn installDist, downloadManual, downloadCLP, downloadGLPK
-        jpackagerBin = Paths.get(System.getProperty("java.home")).resolve('bin').resolve('jpackage').toFile()
+        jpackagerBin = Paths.get(System.getProperty("java.home")).resolve('bin').resolve(OS.isWindows()?'jpackage.exe':'jpackage').toFile()
         mainClass = mainClassName
         outputDir = buildDir.toPath().resolve('distributions').toFile()
 
@@ -330,22 +336,21 @@ subprojects {
         ]
 
         doLast {
-//            File nativeLibsTarget
-//            File appRootTarget
-            /*if (OS.isLinux()) {
-                appRootTarget = jpackageImage.outputs.files.singleFile.toPath().resolve(jpackageImage.getJpackageData().imageName).toFile()
+            File nativeLibsTarget
+            File appRootTarget
+            if (OS.isLinux()) {
+                appRootTarget = outputDir.toPath().resolve(imageName).toFile()
                 nativeLibsTarget = appRootTarget.toPath().resolve("lib/native").toFile()
             } else if (OS.isWindows()) {
-                appRootTarget = jpackageImage.outputs.files.singleFile.toPath().resolve(jpackageImage.getJpackageData().imageName).toFile()
+                appRootTarget = outputDir.toPath().resolve(imageName).toFile()
                 nativeLibsTarget = appRootTarget.toPath().resolve("native").toFile()
             } else if (OS.isMacOsX()) {
-                appRootTarget = jpackageImage.outputs.files.singleFile.toPath().resolve("${jpackageImage.getJpackageData().imageName}.app/Contents").toFile()
+                appRootTarget = outputDir.toPath().resolve("${imageName}.app/Contents").toFile()
                 nativeLibsTarget = appRootTarget.toPath().resolve("native").toFile()
             } else {
                 throw new RuntimeException("Could not detect OS for packaging!")
-            }*/
+            }
 
-            def nativeLibsTarget = outputDir.toPath().resolve(imageName).resolve('lib').resolve('native').toFile()
             copy {
                 from("${glpkPath}/$nativeLibs/") {
                     include('libglpk.so.40')
