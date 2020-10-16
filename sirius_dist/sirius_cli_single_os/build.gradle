@@ -165,9 +165,12 @@ checkDefaultProfile.dependsOn('collectDefaultProfile')
 checkDefaultProfile.dependsOn('mergeTemplateWithDefaultProfile')
 
 distImage {
+    dependsOn getParent().tasks.getByName('downloadRuntimeImageHeadless')
+    runtimeImageDirectory = file(getParent().tasks.getByName('downloadRuntimeImageHeadless').outputs.files.singleFile.absolutePath.replace('.zip',''))
     imageName = 'sirius'
     mainClass = mainClassName
     mainJarName = getRootProject().getChildProjects().get('sirius_cli').tasks.getByName('jar').outputs.files.singleFile.getName()
+//    runtimeImageDirectory = file(getParent().tasks.getByName('downloadRuntimeImageHeadless').outputs.files.singleFile.absolutePath.replace('.zip',''))
 }
 
 publishing {

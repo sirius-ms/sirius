@@ -1,5 +1,7 @@
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
+import java.nio.file.Paths
+
 plugins {
     id 'org.beryx.runtime' version '1.11.4'
 }
@@ -28,6 +30,31 @@ ext {
     }
 }
 
+task downloadJDK(type: Download) {
+    String fname = "zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64"
+    String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}";
+    project.ext.set("jdkPath", getBuildDir().toPath().resolve('fname').toFile())
+
+
+    src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/fx-jdk/${zulu_jre_version}/${fname + ext}"
+    dest getBuildDir().toPath().resolve('tmp').resolve(fname + ext).toFile()
+    onlyIfModified true
+    overwrite false
+}
+
+task extractJDK(type: Copy, dependsOn: downloadJDK) {
+    def s = downloadJDK.outputs.files.singleFile
+    println(s)
+    if (s.getName().endsWith('.zip')) {
+        outputs.file(s.absolutePath.replace('.zip', ''))
+        from zipTree(s)
+    } else {
+        outputs.file(s.absolutePath.replace('.tar.gzip', ''))
+        from tarTree(resources.gzip(s))
+    }
+    into buildDir
+}
+
 
 task downloadGLPK(type: Download) {
     project.ext.set("glpkPath", getBuildDir().toPath().resolve('glpk').toFile())
@@ -41,7 +68,7 @@ task downloadGLPK(type: Download) {
         if (!state.getUpToDate()) {
             copy {
                 getLogger().lifecycle("Unpacking GLPK...")
-                from zipTree(downloadGLPK.outputs.files.singleFile)
+                from zipTree(outputs.files.singleFile)
                 into buildDir
             }
         } else {
@@ -62,7 +89,7 @@ task downloadCLP(type: Download) {
         if (!state.getUpToDate()) {
             copy {
                 getLogger().lifecycle("Unpacking CPL...")
-                from zipTree(downloadCLP.outputs.files.singleFile)
+                from zipTree(outputs.files.singleFile)
                 into buildDir
 
             }
@@ -72,51 +99,52 @@ task downloadCLP(type: Download) {
     }
 }
 
-task downloadJDK(type: Download) {
-    String fname = "zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64"
-    String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}";
-    project.ext.set("jdkPath", getBuildDir().toPath().resolve('fname').toFile())
 
+task downloadRuntimeImageFX(type: Download) {
+    String fname = "sirius-zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64.zip"
 
-    src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/fx-jdk/${zulu_jre_version}/${fname + ext}"
-    dest getBuildDir().toPath().resolve('tmp').resolve(fname + ext).toFile()
+    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
+    dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
     onlyIfModified true
     overwrite false
 
-
-    /*doLast {
+    doLast {
         if (!state.getUpToDate()) {
-            getLogger().lifecycle("Unpacking Zulu...")
-            jdkPath.deleteDir()
             copy {
-                def s = outputs.files.singleFile
-                println(s)
-                if (s.getName().endsWith('.zip'))
-                    from zipTree(s)
-                else
-                    from tarTree(resources.gzip(s))
-                into buildDir
+                getLogger().lifecycle("Unpacking runtime image fx...")
+                from zipTree(outputs.files.singleFile)
+                into getBuildDir().toPath().resolve('runtime').toFile()
+
             }
         } else {
-            getLogger().lifecycle("Unpacking JDK SKIPPED")
+            getLogger().lifecycle("Unpacking runtime image fx SKIPPED")
         }
-    }*/
-}
-
-task extractJDK(type: Copy, dependsOn: downloadJDK) {
-    def s = downloadJDK.outputs.files.singleFile
-    println(s)
-    if (s.getName().endsWith('.zip')) {
-        outputs.file(s.absolutePath.replace('.zip', ''))
-        from zipTree(s)
-    } else {
-        outputs.file(s.absolutePath.replace('.tar.gzip', ''))
-        from tarTree(resources.gzip(s))
     }
-    into buildDir
 }
 
-task downloadJpackager(type: Download, dependsOn: extractJDK) {
+task downloadRuntimeImageHeadless(type: Download) {
+    String fname = "sirius-zulu${zulu_jre_version}-ca-headless-jdk${jre_version}-${zosName}_x64.zip"
+
+    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
+    dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
+    onlyIfModified true
+    overwrite false
+
+    doLast {
+        if (!state.getUpToDate()) {
+            copy {
+                getLogger().lifecycle("Unpacking runtime image headless...")
+                from zipTree(outputs.files.singleFile)
+                into getBuildDir().toPath().resolve('runtime').toFile()
+
+            }
+        } else {
+            getLogger().lifecycle("Unpacking runtime image headless SKIPPED")
+        }
+    }
+}
+
+/*task downloadJpackager(type: Download, dependsOn: extractJDK) {
     String fname = "jdk.packager-${zosName}"
     String ext = ".zip"
 
@@ -158,7 +186,7 @@ task downloadJpackager(type: Download, dependsOn: extractJDK) {
             getLogger().lifecycle("Unpacking JPackager SKIPPED")
         }
     }
-}
+}*/
 
 task downloadManual(type: Download, group: 'documentation') {
     String manualName = "manual-$version-manual.pdf"
@@ -172,7 +200,7 @@ class AppImage extends DefaultTask {
 
     File jpackagerBin
     File jdkHome
-    String[] modules
+//    String[] modules
     File outputDir
     String imageName
     String[] jvmArgs
@@ -180,6 +208,8 @@ class AppImage extends DefaultTask {
     String version
     String mainClass
     String mainJarName
+    File runtimeImageDirectory
+    Map<String,File> launchers
 
     AppImage() {
         imageName = project.name
@@ -205,29 +235,42 @@ class AppImage extends DefaultTask {
         } else {
             getLogger().lifecycle("${jpackagerBin.absolutePath} ${parameters.join(' ')}")
             return ['bash', '-e', '-c', """
-                export JAVA_HOME=${jdkHome.absolutePath}
                 ${jpackagerBin.absolutePath} ${parameters.join(' ')}
                 """]
         }
     }
+//                export JAVA_HOME=${jdkHome.absolutePath}
 
     String [] createSubcommand() {
-        return ['create-image']
+        return ['--type','app-image']
     }
 
     String[] createParameters() {
         def paras = [
-                '--add-modules', String.join(',', modules),
+                '--runtime-image', runtimeImageDirectory.absolutePath,
                 '-i', project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toString(),
-                '-o', outputDir.toString(),
+                '--dest', outputDir.toString(),
                 '--name', imageName,
-                '--version', version,
-                '--class', mainClass,
-                '--jvm-args', "\"${jvmArgs.join(' ')}\"",
+                '--app-version', version,
+                '--main-class', mainClass,
                 '--main-jar', mainJarName
         ]
-        if (args != null)
-            paras += ['--arguments', "\"${args.join(' ')}\""]
+
+        if (jvmArgs !=  null)
+            for (String arg : jvmArgs)
+//                paras +=['--java-options', arg,]
+                paras +=['--java-options', "\"$arg\"",]
+
+        if (args !=  null)
+            for (String arg : args)
+                paras += ['--arguments', "\"$arg\""]
+
+        if (launchers != null)
+            for (String name : launchers.keySet())
+                paras += ["--add-launcher", "\"$name=${launchers.get(name)}\""]
+
+//        if (args != null)
+//            paras += ['--arguments', "\"${args.join(' ')}\""]
 
         def iconDir = project.getRootProject().rootDir.toPath().resolve('icons')
         if (project.OS.isWindows()) {
@@ -293,13 +336,13 @@ subprojects {
     }
 
     task distImage(type: AppImage, group: 'distribution') {
-        dependsOn downloadJpackager, installDist, downloadManual, downloadCLP, downloadGLPK
-        jpackagerBin = jpBin
+        dependsOn installDist, downloadManual, downloadCLP, downloadGLPK
+        jpackagerBin = Paths.get(System.getProperty("java.home")).resolve('bin').resolve('jpackage').toFile()
         jdkHome = jdkPath
         mainClass = mainClassName
         outputDir = buildDir.toPath().resolve('distributions').toFile()
 
-        modules = [
+        /*modules = [
                 'java.sql',
                 'java.desktop',
                 'java.logging',
@@ -311,9 +354,16 @@ subprojects {
                 'java.prefs',
                 'java.instrument'
         ]
+        println modules.join(',')*/
         jvmArgs = [
-                '-javaagent:\\$APPDIR/app/agents-4.4.6-SNAPSHOT.jar',
-                '-Djava.library.path=\\$APPDIR/native'
+                '--illegal-access=permit',
+//                '--add-opens java.base/java.util.concurrent=ALL-UNNAMED',
+//                '--add-opens java.base/java.util=ALL-UNNAMED',
+                '--add-opens java.base/java.lang=ALL-UNNAMED',
+                '--add-opens java.base/java.net=ALL-UNNAMED',
+                '-Djava.library.path=\\$APPDIR/../native',
+//                '-javaagent:/home/fleisch/workspace/sirius/agents/build/libs/agents-4.4.6-SNAPSHOT.jar',
+                '-javaagent:\\$APPDIR/agents-4.4.6-SNAPSHOT.jar',
         ]
 
         doLast {
@@ -332,7 +382,7 @@ subprojects {
                 throw new RuntimeException("Could not detect OS for packaging!")
             }*/
 
-            def nativeLibsTarget = outputDir.toPath().resolve(imageName).resolve("native").toFile()
+            def nativeLibsTarget = outputDir.toPath().resolve(imageName).resolve('lib').resolve('native').toFile()
             copy {
                 from("${glpkPath}/$nativeLibs/") {
                     include('libglpk.so.40')
