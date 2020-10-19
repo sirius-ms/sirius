@@ -53,7 +53,7 @@ public class CLPModel_JNI {
 					"libquadmath-0", "libgfortran-5");
 			else
 				dependencies = Arrays.asList(
-					"libwinpthread-1", "libgmp-10", "zlib1", "libbz2-1", "libgfortran-5");
+					"libstdc++-6, libwinpthread-1", "libgmp-10", "zlib1", "libbz2-1", "libgfortran-5");
 		} else if (os.contains("mac") || os.contains("darwin")){
 			// fake pre-loading to circumvent lazy unpacking of resources
 			dependencies = Arrays.asList(
