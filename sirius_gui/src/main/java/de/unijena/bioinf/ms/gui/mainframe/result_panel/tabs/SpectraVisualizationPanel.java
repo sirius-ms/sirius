@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
+import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
@@ -110,28 +111,29 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			FTree ftree = sre.getFragTree().orElse(null);
 			if (ftree != null){
 				System.out.println("FTree exists ...");
+				String jsonTree = new FTJsonWriter().treeToJsonString(ftree, experiment.getID().getIonMass().orElse(null));
 				if (spectra1.size() > 0) {
 					System.out.println("MS1 spectra exist ...");
 					SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
 					IsotopePattern ip = ftree.getAnnotationOrNull(IsotopePattern.class);
-					String jsonstring = spectraWriter.spectraJSONString(spectra1.get(0 // are there cases with more than one?
+					String jsonSpectra = spectraWriter.spectraJSONString(spectra1.get(0 // are there cases with more than one?
 					), ip.getPattern(), ftree);
 					try {
 						BufferedWriter bw = new BufferedWriter(new FileWriter("/tmp/test_spectra.json"));
-						bw.write(jsonstring);
+						bw.write(jsonSpectra);
 						bw.close();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-					browser.loadSpectra(jsonstring);
+					browser.loadData(jsonSpectra, jsonTree);
 				}
 				if (false && spectra2.size() > 0){
 					System.out.println("MS2 spectra exist ...");
 					// MS1 + IsotopePattern
 					SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
-					browser.loadSpectra(spectraWriter.spectrumJSONString(spectra2.get(
+					browser.loadData(spectraWriter.spectrumJSONString(spectra2.get(
 																			 spectra2.size() - 1 // should me merged MS/MS
-																			 ), ftree));
+																			 ), ftree), jsonTree);
 				}
 			}
 		} else {
