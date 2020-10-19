@@ -309,10 +309,10 @@ function spectraViewer(json){
 	data = json;
 };
 
-//var debug = d3.select("body")
-//    .append("div").html("DEBUG");
+var debug = d3.select("body")
+    .append("div").html("DEBUG");
 
-function loadJSONSpectra(data_spectra) {
+function loadJSONData(data_spectra, data_tree) {
 //    debug.text("got json input");
     if (data !== undefined) {
         d3.select("#container").html("");
