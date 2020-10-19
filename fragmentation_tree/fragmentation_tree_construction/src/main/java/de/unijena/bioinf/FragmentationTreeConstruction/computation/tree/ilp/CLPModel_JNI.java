@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -65,21 +67,20 @@ public class CLPModel_JNI {
 		}
 		for (String dep : dependencies) {
 			try {
-                System.out.println("===> loading: " + dep);
+                LoggerFactory.getLogger(CLPModel_JNI.class).debug("Loading: " + dep);
 				System.loadLibrary(dep);
 			} catch (UnsatisfiedLinkError e) {
-			    e.printStackTrace();
+                LoggerFactory.getLogger(CLPModel_JNI.class).debug("Error when loading: " + dep, e);
 				// does not matter
 			}
 		}
 
 		// load the wrapper library
         try {
-            System.out.println("===> loading: CLPModelWrapper_JNI");
             System.loadLibrary("CLPModelWrapper_JNI");
         } catch (Exception e) {
 			// this should not happen
-            e.printStackTrace();
+            LoggerFactory.getLogger(CLPModel_JNI.class).debug("Error when loading: 'CLPModelWrapper_JNI'", e);
             throw e;
         }
     }
