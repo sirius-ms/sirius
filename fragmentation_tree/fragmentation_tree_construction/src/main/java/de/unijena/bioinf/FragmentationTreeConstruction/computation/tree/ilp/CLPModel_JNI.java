@@ -47,7 +47,7 @@ public class CLPModel_JNI {
 			// NOTE: has to be in correct order for windows
 			if (arch.contains("64"))
 				dependencies = Arrays.asList(
-					"libwinpthread-1", "libgmp-10", "zlib1", "libbz2-1", "libgcc_s_seh-1",
+					"libstdc++-6", "libwinpthread-1", "libgmp-10", "zlib1", "libbz2-1", "libgcc_s_seh-1",
 					"libquadmath-0", "libgfortran-5");
 			else
 				dependencies = Arrays.asList(
@@ -65,14 +65,17 @@ public class CLPModel_JNI {
 		}
 		for (String dep : dependencies) {
 			try {
+                System.out.println("===> loading: " + dep);
 				System.loadLibrary(dep);
 			} catch (UnsatisfiedLinkError e) {
+			    e.printStackTrace();
 				// does not matter
 			}
 		}
 
 		// load the wrapper library
         try {
+            System.out.println("===> loading: CLPModelWrapper_JNI");
             System.loadLibrary("CLPModelWrapper_JNI");
         } catch (Exception e) {
 			// this should not happen
