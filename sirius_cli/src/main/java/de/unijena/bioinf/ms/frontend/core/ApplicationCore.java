@@ -83,7 +83,7 @@ public abstract class ApplicationCore {
             t1 = System.currentTimeMillis();
         measureTime("Start AppCore");
         try {
-//            System.out.println(System.getProperty("java.library.path"));
+//            System.out.println("LD ==> " + System.getProperty("java.library.path"));
             System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
             org.apache.log4j.Logger.getLogger("net.sf.jnati").setLevel(Level.WARN);
 

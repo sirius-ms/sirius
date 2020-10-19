@@ -16,6 +16,7 @@ distImage {
     runtimeImageDirectory = file(getParent().tasks.getByName('downloadRuntimeImageFX').outputs.files.singleFile.absolutePath.replace('.zip',''))
     mainJarName = getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
     launchers = ['sirius':getRootProject().rootDir.toPath().resolve('jpackage').resolve('cli-launcher.properties').toFile()]
+    winConsole = false
 }
 
 
