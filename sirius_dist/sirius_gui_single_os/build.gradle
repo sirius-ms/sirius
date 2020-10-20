@@ -21,7 +21,7 @@ distImage {
 
 distInstaller{
     linuxShortcut = true
-
+    macPackageName = 'SIRIUS'
 }
 
 publishing {
