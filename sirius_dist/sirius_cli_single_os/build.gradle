@@ -180,7 +180,8 @@ publishing {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-headless", extension: 'zip'
-//            artifact source: jpackage.getJpackageData().installerOutputDir.toPath().resolve(jpackage.getJpackageData().installerName + installerAppendix).toFile(), classifier: "$osName-headless", extension: installerNameType
+            artifact source: distImage.getImageDir().absolutePath + installerAppendix, classifier: "$osName-headless", extension: installerNameType
+
         }
     }
 }

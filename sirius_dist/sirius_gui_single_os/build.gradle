@@ -19,7 +19,10 @@ distImage {
     winConsole = false
 }
 
+distInstaller{
+    linuxShortcut = true
 
+}
 
 publishing {
     publications {
@@ -27,7 +30,7 @@ publishing {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
-//            artifact source: jpackage.getJpackageData().installerOutputDir.toPath().resolve(jpackage.getJpackageData().installerName + installerAppendix).toFile(), classifier: osName, extension: installerNameType
+            artifact source: distImage.getImageDir().absolutePath + installerAppendix, classifier: osName, extension: installerNameType
         }
     }
 }

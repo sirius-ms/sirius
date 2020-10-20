@@ -1,6 +1,5 @@
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
-import java.lang.reflect.Array
 import java.nio.file.Paths
 
 plugins {
@@ -158,6 +157,11 @@ task downloadRuntimeImageHeadless(type: Download) {
 
     doLast {
         if (!state.getUpToDate()) {
+            //stupid hack to delete write protected files on nix
+            if (OS.isWindows())
+                file(fname.replace('.zip','')).deleteDir()
+            else
+                exec{commandLine(['rm','-rf', fname.replace('.zip','')])}
             copy {
                 getLogger().lifecycle("Unpacking runtime image headless...")
                 from zipTree(outputs.files.singleFile)
@@ -263,6 +267,11 @@ subprojects {
         types = [installerNameType]
         licenseFile = getRootProject().rootDir.toPath().resolve('jpackage').resolve('LICENSE-Full.txt').toFile()
 
+        //linux
+        linuxMenuGroup = ['Applications', 'Science']
+        debPackageMaintaner = 'sirius@uni-jena.de'
+
+
     }
 
     task distribution { group = 'distribution' }
@@ -271,6 +280,10 @@ subprojects {
     distribution.dependsOn 'distInstaller'
     artifactoryPublish.dependsOn 'distribution'
 }
+
+
+//////////////////////////////////////////////////////////////////////////////////
+
 
 class AppImage extends DefaultTask {
 
@@ -335,7 +348,6 @@ class AppImage extends DefaultTask {
 
         if (jvmArgs != null)
             for (String arg : jvmArgs)
-//                paras +=['--java-options', arg,]
                 paras += ['--java-options', "\"$arg\"",]
 
         if (args != null)
@@ -375,6 +387,57 @@ abstract class AppInstaller extends DefaultTask {
     boolean winShortcut
     boolean winPerUserInstall = false
 
+
+    /*--linux-menu-group <menu-group-name>
+          Menu group this application is placed in*/
+    String[] linuxMenuGroup = null
+    /* --linux-package-deps
+          Required packages or capabilities for the application*/
+    String[] packageDeps = null
+    /*--linux-shortcut
+          Creates a shortcut for the application*/
+    boolean linuxShortcut = false
+    /*--linux-deb-maintainer <email address>
+          Maintainer for .deb package*/
+    String debPackageMaintaner = null
+
+
+    /*--mac-package-name name string
+    Name of the application as it appears in the Menu Bar.
+    This can be different from the application name.
+    This name must be less than 16 characters long and be suitable for displaying in the menu bar and the application Info window. Defaults to the application name.*/
+    String macPackageName = null
+
+    /*
+   --linux-package-name <package name>
+          Name for Linux package, defaults to the application name
+  --linux-rpm-license-type <type string>
+          Type of the license ("License: <value>" of the RPM .spec)
+  --linux-app-release <release value>
+          Release value of the RPM <name>.spec file or
+          Debian revision value of the DEB control file.
+  --linux-app-category <category value>
+          Group value of the RPM <name>.spec file or
+          Section value of DEB control file.
+    * */
+    /*
+--mac-package-identifier ID string
+An identifier that uniquely identifies the application for macOSX.
+Defaults to the the main class name.
+May only use alphanumeric (A-Z,a-z,0-9), hyphen (-), and period (.) characters.
+
+--mac-bundle-signing-prefix prefix string
+When signing the application bundle, this value is prefixed to all components that need to be signed that don't have an existing bundle identifier.
+--mac-sign
+Request that the bundle be signed.
+--mac-signing-keychain file path
+Path of the keychain to search for the signing identity (absolute path or relative to the current directory).
+If not specified, the standard keychains are used.
+--mac-signing-key-user-name team name
+Team name portion in Apple signing identities' names.
+For example "Developer ID Application: "
+**/
+
     @TaskAction
     def execute() {
         String[] p = ['--type', types.join(',')]
@@ -386,15 +449,19 @@ abstract class AppInstaller extends DefaultTask {
         }
     }
 
+    String getAppName() {
+        return (appName != null && !appName.isBlank()) ? appName : distImg.imageName
+    }
+
     String[] createParameters() {
         String[] paras = []//distImg.createParameters()
 
         paras += [
                 '--name', distImg.imageName,
-            '--app-image', distImg.getImageDir().absolutePath,
-            '--license-file', licenseFile.absolutePath,
-//                '-o', image.outputDir.absolutePath,
-//                '--version', image.version,
+                '--app-image', distImg.getImageDir().absolutePath,
+                '--license-file', licenseFile.absolutePath,
+                '--dest', distImg.outputDir.absolutePath,
+                '--app-version', distImg.version,
 //                "--icon", "${project.getRootProject().rootDir.toPath().resolve('icons').resolve('sirius-icon.png').toString()}"
 //                '--install-dirr'
         ]
@@ -412,14 +479,20 @@ abstract class AppInstaller extends DefaultTask {
             if (winPerUserInstall)
                 paras += ['--win-per-user-install']
         } else if (project.OS.isMacOsX()) {
-            //todo fill me
+            if (macPackageName != null && !macPackageName.isBlank())
+                paras += ['--mac-package-name', "\"$macPackageName\""]
         } else if (project.OS.isLinux()) {
-            //todo fill me
+            if (linuxShortcut)
+                paras += ['--linux-shortcut']
+            if (debPackageMaintaner != null && !debPackageMaintaner.isBlank())
+                paras += ['--linux-deb-maintainer', "\"$debPackageMaintaner\""]
+            if (linuxMenuGroup != null && linuxMenuGroup.length > 0)
+                paras += ['--linux-menu-group', "\"${linuxMenuGroup.join(';')}\""]
+            if (packageDeps != null && packageDeps.length > 0)
+                paras += ['--linux-deb-maintainer', "\"${packageDeps.join(',')}\""]
         } else {
             throw new IllegalArgumentException("Could not determine the OS to build on")
         }
         return paras
     }
-
-
 }
