@@ -33,7 +33,7 @@ ext {
 task downloadJDK(type: Download) {
     String fname = "zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64"
     String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}";
-    project.ext.set("jdkPath", getBuildDir().toPath().resolve(fname).toFile())
+    project.ext.set("jdkPath", getBuildDir().toPath().resolve('tmp').resolve(fname).toFile())
 
 
     src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/fx-jdk/${zulu_jre_version}/${fname + ext}"
@@ -42,17 +42,20 @@ task downloadJDK(type: Download) {
     overwrite false
 }
 
-task extractJDK(type: Copy, dependsOn: downloadJDK) {
+task extractJDK(/*type: Copy,*/ dependsOn: downloadJDK) {
     def s = downloadJDK.outputs.files.singleFile
-    println(s)
-    if (s.getName().endsWith('.zip')) {
-        outputs.file(s.absolutePath.replace('.zip', ''))
-        from zipTree(s)
-    } else {
-        outputs.file(s.absolutePath.replace('.tar.gzip', ''))
-        from tarTree(resources.gzip(s))
+    outputs.file(jdkPath)
+    doLast{
+        if (OS.isWindows()) {
+            copy{
+                from zipTree(s)
+                into buildDir.toPath().resolve('tmp').toFile()
+            }
+        } else {
+            exec{commandLine(['tar', 'zxf', s.absolutePath, '-C', buildDir.toPath().resolve('tmp').toString()])}
+        }
     }
-    into buildDir
+
 }
 
 task createRuntimeImgs(dependsOn: extractJDK) {
@@ -135,11 +138,15 @@ task downloadRuntimeImageFX(type: Download) {
 
     doLast {
         if (!state.getUpToDate()) {
-            copy {
-                getLogger().lifecycle("Unpacking runtime image fx...")
+            //stupid hack to delete write protected files on nix
+            getLogger().lifecycle("Unpacking runtime image fx...")
+            if (OS.isWindows()) {
+                getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).deleteDir()
                 from zipTree(outputs.files.singleFile)
                 into getBuildDir().toPath().resolve('runtime').toFile()
-
+            }else{
+                exec{commandLine(['rm','-rf', getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).toString()])}
+                exec{commandLine(['unzip', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
             }
         } else {
             getLogger().lifecycle("Unpacking runtime image fx SKIPPED")
@@ -158,15 +165,14 @@ task downloadRuntimeImageHeadless(type: Download) {
     doLast {
         if (!state.getUpToDate()) {
             //stupid hack to delete write protected files on nix
-            if (OS.isWindows())
-                file(fname.replace('.zip','')).deleteDir()
-            else
-                exec{commandLine(['rm','-rf', fname.replace('.zip','')])}
-            copy {
-                getLogger().lifecycle("Unpacking runtime image headless...")
+            getLogger().lifecycle("Unpacking runtime image headless...")
+            if (OS.isWindows()) {
+                getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).deleteDir()
                 from zipTree(outputs.files.singleFile)
                 into getBuildDir().toPath().resolve('runtime').toFile()
-
+            } else{
+                exec{commandLine(['rm','-rf', getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).toString()])}
+                exec{commandLine(['unzip', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
             }
         } else {
             getLogger().lifecycle("Unpacking runtime image headless SKIPPED")
@@ -242,7 +248,7 @@ subprojects {
                     include('LICENSE.txt')
                 }
                 from(downloadManual.outputs.files.singleFile)
-                into(outputDir.toPath().resolve(imageName).toFile())
+                into(appRootTarget)
             }
         }
     }
@@ -270,8 +276,6 @@ subprojects {
         //linux
         linuxMenuGroup = ['Applications', 'Science']
         debPackageMaintaner = 'sirius@uni-jena.de'
-
-
     }
 
     task distribution { group = 'distribution' }
