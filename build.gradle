@@ -1,8 +1,6 @@
-import org.gradle.api.internal.file.copy.CopyAction
-import org.gradle.api.internal.file.copy.FileCopyAction
-
-import java.nio.file.*
-import java.util.stream.Stream
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 
 buildscript {
     repositories {
@@ -18,7 +16,7 @@ buildscript {
 }
 
 plugins {
-    id "com.jfrog.artifactory" version "4.9.3"
+    id "com.jfrog.artifactory" version "4.17.2"
     id "de.undercouch.download" version "4.1.1"
 }
 
@@ -27,8 +25,6 @@ ext {
     // version for bundeled JRE
     jre_version = '11.0.8'
     zulu_jre_version = '11.41.23'
-    //jre path relative tu app home
-    jre_path = 'zulu'
 
     //version for external libraries
     slf4j_version = '1.7.25'
@@ -41,10 +37,15 @@ ext {
     picocli_version = '4.3.2'//'3.9.5'
 
     glpk_lib_version = '4.60'
-    clp_lib_version = '1.17.5'
+    clp_lib_version = '1.17.5b'
 
     //locations of runtime libraries
-    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar:${APP_HOME}/lib/*'
+    //jre path relative tu app home
+    jre_path = 'zulu'
+    lib_path = 'lib'
+    native_path = 'native'
+
+    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar:${APP_HOME}/' + "${lib_path}/*"
     libExclude = ['gurobi-*.jar', 'cplex-*.jar']
 
 
@@ -52,13 +53,18 @@ ext {
 
     logger.lifecycle('reading gradle properties file...')
     File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
-    getLogger().lifecycle("Loading properties from ${propertiesFile.absolutePath}")
-    Properties props = new Properties()
+    if (propertiesFile.exists()) {
+        getLogger().lifecycle("Loading properties from ${propertiesFile.absolutePath}")
+        Properties props = new Properties()
 
-    propertiesFile.withReader("UTF8", {
-        props.load(it)
-    })
-    System.properties.putAll(props)
+        propertiesFile.withReader("UTF8", {
+            props.load(it)
+        })
+        System.properties.putAll(props)
+    }else {
+        getLogger().lifecycle("No properties file found at '${propertiesFile.absolutePath}'. Some tasks might not work without this information.")
+
+    }
 
     logger.lifecycle('reading build properties file...')
     props = new Properties()
@@ -78,32 +84,12 @@ ext {
     mztabm_version = System.properties.getProperty('de.unijena.bioinf.mztabm.version')
 }
 
-class CopyWithSymlink extends Copy {
-    public CopyWithSymlink() {
-        super();
-        eachFile { details ->
-            Path sourcePath = FileSystems.getDefault().getPath(details.file.path)
-            if (Files.isSymbolicLink(sourcePath)) {
-                details.exclude()
-                Path destinationPath = Paths.get("${destinationDir}/${details.relativePath}")
-                if (Files.notExists(destinationPath.parent)) {
-                    project.mkdir destinationPath.parent
-                }
-                project.exec {
-                    commandLine 'ln', '-sf', Files.readSymbolicLink(sourcePath), destinationPath
-                }
-            }
-        }
-    }
-}
-
 
 /*################### DISTRIBUTION STUFF ################### */
 project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")
 project.ext.set("macSuffix", "osx")
 project.ext.set("arch", ['64', '32'])
-project.ext.set("manualPath", file('manual').absolutePath)
 project.ext.set("distPath", file('dist').absolutePath)
 
 
@@ -139,6 +125,7 @@ allprojects {
         }
         maven {
             url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl
+            metadataSources { artifact() }
         }
 
     }
@@ -161,310 +148,13 @@ allprojects {
             resolutionStrategy.force 'net.sf.trove4j:core:3.1.0'
         }
     }
-
-    sourceSets {
-        main {
-            resources {
-                srcDirs "src/main/resources", "configs"
-            }
-        }
-    }
-
-    task cleanConfig {
-        group = 'build'
-        doLast {
-            def f = file("${projectDir}/configs")
-            if (f.exists())
-                f.deleteDir()
-        }
-    }
-    clean.dependsOn cleanConfig
-
-
 }
-
-task downloadGLPK(type: Copy) {
-    def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
-    project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
-
-    Path dir = project.glpkPath.toPath().getParent()
-    if (!dir.resolve('glpk').toFile().exists()) {
-        copy {
-            println(dir.toString())
-            dir.resolve('glpk').toFile().deleteDir()
-            Files.createDirectories(dir)
-
-            def glpkZipFile = Paths.get('glpk.zip')
-            getLogger().lifecycle("Downloading glpk...")
-            def file = dir.resolve(glpkZipFile).newOutputStream()
-            file << glpkURL.openStream()
-            file.close()
-
-            getLogger().lifecycle("Unpacking glpk...")
-            from zipTree(dir.resolve(glpkZipFile).toFile())
-            into dir.toFile()
-        }
-    }
-}
-
-task downloadCLP(type: Copy) {
-    def url = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/clp/clp-${project.clp_lib_version}.zip")
-    project.ext.set("clpPath", getBuildDir().toPath().resolve('tmp/clp/').toFile())
-
-    Path dir = project.clpPath.toPath().getParent()
-    if (!dir.resolve('clp').toFile().exists()) {
-        copy {
-            println(dir.toString())
-            dir.resolve('clp').toFile().deleteDir()
-            Files.createDirectories(dir)
-
-            def zipFile = Paths.get('clp.zip')
-            getLogger().lifecycle("Downloading CLP...")
-            def file = dir.resolve(zipFile).newOutputStream()
-            file << url.openStream()
-            file.close()
-
-            getLogger().lifecycle("Unpacking CLP...")
-            from zipTree(dir.resolve(zipFile).toFile())
-            into dir.toFile()
-        }
-    }
-}
-
-task downloadJRE(type: Download) {
-    project.ext.set("jreBuildPath", getBuildDir().toPath().resolve('tmp/zulu/').toFile())
-
-    src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/zulu${zulu_jre_version}-ca-fx-jre${jre_version}.zip"
-    dest  getBuildDir().toPath().resolve('tmp/zuluFX.zip').toFile()
-    onlyIfModified true
-}
-
-task extractJRE(type: Exec, dependsOn: downloadJRE) {
-//    group = 'documentation'
-    inputs.file(downloadJRE.outputs.files.singleFile)
-    outputs.file(project.jreBuildPath)
-    enabled = !outputs.files.singleFile.exists()
-    commandLine(["unzip", "${inputs.files.singleFile}", "-d", "${outputs.files.singleFile}"])
-}
-/*################### Building the Documentation ################### */
-
-
-task cleanDoku {
-    group = 'documentation'
-    doLast {
-        def f = file("${project.manualPath}/build")
-        if (f.exists())
-            f.deleteDir()
-    }
-}
-clean.dependsOn cleanDoku
-
-task htmlDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}/source")
-    outputs.file("${project.manualPath}/build/html")
-    outputs.upToDateWhen { return false }
-    commandLine(['latex2html', '-rootdir', '../build/html', '-mkdir', 'SIRIUS'])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-}
-htmlDoku.mustRunAfter cleanDoku
-
-//colleact files for docu and readme
-task createVersion {
-    doFirst {
-        Path out = Paths.get("${project.manualPath}", "/source/version.txt")
-        if (Files.isReadable(out)) {
-            if (project.version.toString().equals(Files.readAllLines(out).first().toString())) {
-                getLogger().lifecycle("Version file already up to date")
-                return
-            }
-        }
-        getLogger().lifecycle("Updating version file")
-        Files.deleteIfExists(out)
-        Files.write(out, Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
-    }
-}
-
-task createChangelogTex(type: Exec) {
-    group = 'documentation'
-    inputs.file("${project.rootDir}/CHANGELOG.md")
-    outputs.file("${project.manualPath}/build/changelog.tex")
-    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-}
-
-task createFAQTex(type: Exec) {
-    group = 'documentation'
-    inputs.file("${project.rootDir}/FAQ.md")
-    outputs.file("${project.manualPath}/build/faq.tex")
-    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-}
-
-
-task pdfDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}/source")
-    outputs.file(file("${project.manualPath}/build/SIRIUS.pdf"))
-
-    outputs.upToDateWhen {
-        File out = outputs.files.singleFile
-        if (Files.notExists(out.toPath()))
-            return false;
-        long time = out.lastModified()
-
-        boolean uptodate = true;
-        workingDir.eachFileRecurse { file ->
-            if (file.lastModified() >= time) {
-                getLogger().lifecycle("${file.getName()} - ${file.lastModified()} is newer than the pdf -> rebuild needed")
-                println()
-                uptodate = false
-            }
-        }
-        return uptodate
-    }
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-
-    commandLine 'bash', '-e', '-c', """
-        pdflatex -output-directory ../build ./SIRIUS
-        biber -output-directory ../build SIRIUS
-        pdflatex -output-directory ../build ./SIRIUS
-        pdflatex -output-directory ../build ./SIRIUS
-    """
-}
-pdfDoku.dependsOn createVersion
-pdfDoku.dependsOn createChangelogTex
-pdfDoku.dependsOn createFAQTex
-pdfDoku.mustRunAfter cleanDoku
-
-class Pdf extends AbstractArchiveTask {
-    public static final String PDF_EXTENSION = "pdf";
-
-    Pdf() {
-        setExtension(PDF_EXTENSION);
-    }
-
-    void source(File sourceFile) {
-        from(sourceFile.toPath().getParent().toFile())
-        include(sourceFile.getName())
-        rename(sourceFile.getName(), getArchiveName())
-    }
-
-    @Override
-    protected CopyAction createCopyAction() {
-        return new FileCopyAction(getFileLookup().getFileResolver(getArchivePath().toPath().getParent().toFile()))
-    }
-}
-
-task pdfDokuArtifact(type: Pdf) {
-    group = 'documentation'
-    baseName = project.appName
-    classifier = 'manual'
-
-    File input = pdfDoku.outputs.files.singleFile;
-
-    outputs.upToDateWhen {
-        File out = outputs.files.singleFile
-        return Files.isRegularFile(out.toPath()) && out.lastModified() > input.lastModified()
-    }
-
-    source input
-
-    project.ext.set("pdfManualPath", outputs.files.singleFile)
-}
-
-pdfDokuArtifact.dependsOn pdfDoku
-
-task buildDoku {
-    group = 'documentation'
-    outputs.files(pdfDokuArtifact.outputs.files)
-//    outputs.files(singleFile,htmlDoku.outputs.files)
-}
-
-buildDoku.mustRunAfter cleanDoku
-buildDoku.dependsOn /*htmlDoku,*/ pdfDokuArtifact //todo solve problem and re enable
 
 
 subprojects {
     apply plugin: 'application'
     apply plugin: 'edu.sc.seis.launch4j'
 
-
-    /*################### Windows release Stuff ################### */
-    launch4j {
-        icon = getRootProject().getRootDir().toPath().resolve('dist/sirius.ico').toFile()
-        copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
-        companyName = "Friedrich-Schiller-University Jena"
-        version = project.version
-        textVersion = project.version
-        supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
-
-        initialHeapSize = 1024 // initial heap not too big improves startup time on windows
-        maxHeapSize = 4096
-        maxHeapPercent = 60
-
-//        jar = project.jar.archiveFileName.get()
-        dontWrapJar = true
-        jdkPreference = 'preferJre'
-
-        classpath.add('./lib/*')
-        classpath.addAll(Stream.of(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':')).filter({ s -> !s.contains('APP_HOME') }).toArray())
-        println("================THE PATH: $classpath")
-
-    }
-
-    /*################### Linux release Stuff ################### */
-    startScripts {
-        classpath = files() //files(project.jar.archiveFileName)
-        applicationName = "${project.appName}"
-        def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib'
-        doLast {
-            def lines = unixScript.text.split("\n") as List
-            //classpath and opts
-            int insertOptsIndex = -1
-            for (int i = 0; i < lines.size(); i++) {
-                if (lines[i].startsWith('CLASSPATH=')) {
-                    lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
-                }
-                if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
-                    insertOptsIndex = i - 1
-                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\" -XX:+UseG1GC -XX:+UseStringDeduplication\"")
-                }
-            }
-            lines = lines.plus(insertOptsIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
-            lines = lines.plus(insertOptsIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
-
-            //bundled JRE stuff
-            int insertJREIndex = -1
-            for (int i = 0; i < lines.size(); i++) {
-                if (lines[i].startsWith('# Determine the Java command to use to start the JVM.'))
-                    if (lines[i + 1].startsWith('if [ -n "$JAVA_HOME" ] ; then')) {
-                        lines[i + 1] = 'elif [ -n "$JAVA_HOME" ] ; then'
-                        insertJREIndex = i + 1
-
-                    }
-            }
-//            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/zulu-11.jre/Contents/Home/bin/java\" ] ; then")
-//            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/zulu-11.jre/Contents/Home/bin/java\"")
-            lines = lines.plus(insertJREIndex, "if [ -x \"\$APP_HOME/${jre_path}/bin/java\" ] ; then")
-            lines = lines.plus(insertJREIndex + 1, "    JAVACMD=\"\$APP_HOME/${jre_path}/bin/java\"")
-
-            unixScript.text = lines.join(System.lineSeparator())
-
-        }
-    }
 
     task listDependecies {
         group = 'reporting'
@@ -520,21 +210,6 @@ allprojects {
                     }
                 }
                 setArtifacts([])
-            }
-            sirius(MavenPublication) {
-                artifactId = "$name"
-                groupId = "$group"
-
-                pom.withXml {}
-                artifact source: pdfDokuArtifact
-            }
-            manual(MavenPublication) {
-                artifactId = "manual"
-                groupId = "${group}.${project.appName}"
-                version = 'current'
-
-                pom.withXml {}
-                artifact source: pdfDokuArtifact, classifier: 'sirius'
             }
         }
     }

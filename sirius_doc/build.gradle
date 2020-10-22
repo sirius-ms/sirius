@@ -1,0 +1,168 @@
+import org.gradle.api.internal.file.copy.CopyAction
+import org.gradle.api.internal.file.copy.FileCopyAction
+
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
+
+String manualPath = getProjectDir().toPath().resolve("manual").toFile().absolutePath
+String manualBuildPath = getBuildDir().toPath().resolve('manual').toFile().absolutePath
+
+task cleanDoku {
+    group = 'documentation'
+    doLast {
+        def f = file("${manualBuildPath}")
+        if (f.exists())
+            f.deleteDir()
+    }
+}
+clean.dependsOn cleanDoku
+
+/*task htmlDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${manualPath}/source")
+    outputs.file("${manualBuildPath}/html")
+    outputs.upToDateWhen { return false }
+    commandLine(['latex2html', '-rootdir', "${manualBuildPath}/html", '-mkdir', 'SIRIUS'])
+
+    doFirst {
+        Files.createDirectories(Paths.get("${manualBuildPath}"))
+    }
+}
+htmlDoku.mustRunAfter cleanDoku*/
+
+//colleact files for docu and readme
+task createVersion {
+    doFirst {
+        java.nio.file.Path out = Paths.get("${manualPath}", "/source/version.txt")
+        if (Files.isReadable(out)) {
+            if (project.version.toString().equals(Files.readAllLines(out).first().toString())) {
+                getLogger().lifecycle("Version file already up to date")
+                return
+            }
+        }
+        getLogger().lifecycle("Updating version file")
+        Files.deleteIfExists(out)
+        Files.write(out, Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
+    }
+}
+
+task createChangelogTex(type: Exec) {
+    group = 'documentation'
+    inputs.file("${project.getRootProject().rootDir}/CHANGELOG.md")
+    outputs.file("${manualBuildPath}/changelog.tex")
+    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
+
+    doFirst {
+        Files.createDirectories(Paths.get("${manualBuildPath}"))
+    }
+}
+
+task createFAQTex(type: Exec) {
+    group = 'documentation'
+    inputs.file("${project.getRootProject().rootDir}/FAQ.md")
+    outputs.file("${manualBuildPath}/faq.tex")
+    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
+
+    doFirst {
+        Files.createDirectories(Paths.get("${manualBuildPath}"))
+    }
+}
+
+
+task pdfDoku(type: Exec) {
+    group = 'documentation'
+    workingDir = file("${manualPath}/source")
+    outputs.file(file("${manualBuildPath}/SIRIUS.pdf"))
+
+    outputs.upToDateWhen {
+        File out = outputs.files.singleFile
+        if (Files.notExists(out.toPath()))
+            return false;
+        long time = out.lastModified()
+
+        boolean uptodate = true;
+        workingDir.eachFileRecurse { file ->
+            if (file.lastModified() >= time) {
+                getLogger().lifecycle("${file.getName()} - ${file.lastModified()} is newer than the pdf -> rebuild needed")
+                println()
+                uptodate = false
+            }
+        }
+        return uptodate
+    }
+
+    doFirst {
+        Files.createDirectories(Paths.get("${manualBuildPath}"))
+    }
+
+    commandLine 'bash', '-e', '-c', """
+        pdflatex -output-directory ${manualBuildPath} ./SIRIUS
+        biber -output-directory ${manualBuildPath} SIRIUS
+        pdflatex -output-directory ${manualBuildPath} ./SIRIUS
+        pdflatex -output-directory ${manualBuildPath} ./SIRIUS
+    """
+}
+pdfDoku.dependsOn createVersion
+pdfDoku.dependsOn createChangelogTex
+pdfDoku.dependsOn createFAQTex
+pdfDoku.mustRunAfter cleanDoku
+
+class Pdf extends AbstractArchiveTask {
+    public static final String PDF_EXTENSION = "pdf";
+
+    Pdf() {
+        setExtension(PDF_EXTENSION);
+    }
+
+    void source(File sourceFile) {
+        from(sourceFile.toPath().getParent().toFile())
+        include(sourceFile.getName())
+        rename(sourceFile.getName(), getArchiveName())
+    }
+
+    @Override
+    protected CopyAction createCopyAction() {
+        return new FileCopyAction(getFileLookup().getFileResolver(getArchivePath().toPath().getParent().toFile()))
+    }
+}
+
+task pdfDokuArtifact(type: Pdf) {
+    group = 'documentation'
+    baseName = project.appName
+    classifier = 'manual'
+
+    File input = pdfDoku.outputs.files.singleFile;
+
+    outputs.upToDateWhen {
+        File out = outputs.files.singleFile
+        return Files.isRegularFile(out.toPath()) && out.lastModified() > input.lastModified()
+    }
+
+    source input
+}
+
+pdfDokuArtifact.dependsOn pdfDoku
+
+task buildDoku {
+    group = 'documentation'
+    outputs.files(pdfDokuArtifact.outputs.files)
+}
+
+buildDoku.mustRunAfter cleanDoku
+buildDoku.dependsOn /*htmlDoku,*/ pdfDokuArtifact
+artifactoryPublish.dependsOn buildDoku
+
+publishing {
+    publications {
+        manual(MavenPublication) {
+
+            artifactId = "$name"
+            groupId = "$group"
+
+            pom.withXml {}
+            artifact source: pdfDokuArtifact
+
+        }
+    }
+}

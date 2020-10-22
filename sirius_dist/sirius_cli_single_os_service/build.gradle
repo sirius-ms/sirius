@@ -53,7 +53,6 @@ project.type.each { t ->
 
 /*################### Build distributions ################### */
 task distribute { group = 'distribution' }
-distribute.dependsOn ':buildDoku'
 
 distributions {
     project.arch.each { ar ->
@@ -78,10 +77,7 @@ distributions {
                     from("${getRootDir()}/LICENSE.txt")
                 }
                 into('doc') {
-                    from(project.pdfManualPath)
-                }
-                into('doc/html') {
-                    from("${project.manualPath}/build/html")
+                    from(getParent().downloadManual.outputs.files.singleFile)
                 }
             }
         })
@@ -109,10 +105,7 @@ distributions {
                     include("*-${ar}.exe")
                 }
                 into('doc') {
-                    from(project.pdfManualPath)
-                }
-                into('doc/html') {
-                    from("${project.manualPath}/build/html")
+                    from(getParent().downloadManual.outputs.files.singleFile)
                 }
             }
         })
@@ -143,10 +136,7 @@ distributions {
                 from("${getRootDir()}/LICENSE.txt")
             }
             into('doc') {
-                from(project.pdfManualPath)
-            }
-            into('doc/html') {
-                from("${project.manualPath}/build/html")
+                from(getParent().downloadManual.outputs.files.singleFile)
             }
         }
     })
