@@ -28,6 +28,8 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.io.FileHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.reflections8.Reflections;
+import org.reflections8.scanners.ResourcesScanner;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -38,9 +40,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Properties;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Created as part of the SIRIUS
@@ -54,8 +55,8 @@ public class PropertyManager {
     private static final String PROPERTY_LOCATIONS_KEY = MS_PROPERTY_BASE + ".propertyLocations";
 
     public static final String DEFAULT_PROPERTY_SOURCE = "sirius.build.properties";
-    public static final String DEFAULT_CONFIG_SOURCE = "default.config";
-    public static final String DEFAULT_CONFIG_CLASSES_SOURCE = "default_config_class.map";
+//    public static final String DEFAULT_CONFIG_SOURCE = "default.config";
+//    public static final String DEFAULT_CONFIG_CLASSES_SOURCE = "default_config_class.map";
 
     public static final String MS_CONFIGS_BASE = PropertyManager.MS_PROPERTY_BASE + ".configs";
     public static final String MS_CONFIG_CLASSES_BASE = PropertyManager.MS_PROPERTY_BASE + ".configClasses";
@@ -78,16 +79,24 @@ public class PropertyManager {
             PERSISTENT_PROPERTIES.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
             CHANGED_PROPERTIES = loadDefaultProperties();
 
+            final Reflections reflections = new Reflections("de.unijena.bioinf.ms.defaults", new ResourcesScanner());
+
+            LinkedHashSet<String> classResources =  new LinkedHashSet<>(reflections.getResources(Pattern.compile(".*\\.map")));
+            classResources.addAll(SiriusConfigUtils.parseResourcesLocation(PROPERTIES.getString(CONFIG_CLASSES_LOCATIONS_KEY)));
+            CombinedConfiguration classConfig = addPropertiesFromResources(classResources, MS_CONFIG_CLASSES_BASE, "CONFIG_CLASSES");
+
+            LinkedHashSet<String> configResources =  new LinkedHashSet<>(reflections.getResources(Pattern.compile(".*\\.config")));
+            configResources.addAll(SiriusConfigUtils.parseResourcesLocation(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY)));
+            CombinedConfiguration globalConfig = addPropertiesFromResources(configResources, MS_CONFIGS_BASE, "GLOBAL_CONFIG");
+
             DEFAULTS = new ParameterConfig(
-                    loadDefaultConfigs(),//config class for configs
-                    loadDefaultConfigClasses(),//configs an properties need to have disjoint keys
-                    DEFAULT_CONFIG_SOURCE,
+                    globalConfig,//config class for configs
+                    classConfig,//configs an properties need to have disjoint keys
+                    new LinkedList<>(configResources).getLast(),
                     null,
                     MS_CONFIGS_BASE,
                     MS_CONFIG_CLASSES_BASE
             ).newIndependentInstance("CHANGED_DEFAULT_CONFIGS");
-
-
         } catch (Throwable e) {
             System.err.println("Property Manager STATIC Block Error!");
             e.printStackTrace(System.err);
@@ -125,14 +134,6 @@ public class PropertyManager {
         SiriusConfigUtils.makeConfigFromResources(configToAdd, SiriusConfigUtils.parseResourcesLocation(System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), DEFAULT_PROPERTY_SOURCE));
         addConfiguration(configToAdd, null, "PROPERTIES");
         return changeable;
-    }
-
-    private static CombinedConfiguration loadDefaultConfigClasses() {
-        return addPropertiesFromResources(PROPERTIES.getString(CONFIG_CLASSES_LOCATIONS_KEY), DEFAULT_CONFIG_CLASSES_SOURCE, MS_CONFIG_CLASSES_BASE, "CONFIG_CLASSES");
-    }
-
-    private static CombinedConfiguration loadDefaultConfigs() {
-        return addPropertiesFromResources(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY), DEFAULT_CONFIG_SOURCE, MS_CONFIGS_BASE, "GLOBAL_CONFIG");
     }
 
     public static PropertiesConfiguration loadConfigurationFromStream(@NotNull InputStream input) throws ConfigurationException {
