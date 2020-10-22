@@ -302,10 +302,10 @@ function mirrorPlot(spectrum1, spectrum2, view) {
 
 function spectraViewer(json){
     init();
-    if (json.spectrum2 == null) { //null==null und undefined
-	    spectrumPlot(json.spectrum1);
+    if (json.spectra[1] == null) { //null==null und undefined
+	    spectrumPlot(json.spectra[0]);
 	} else {
-	    mirrorPlot(json.spectrum1, json.spectrum2, view.mirror);
+	    mirrorPlot(json.spectra[0], json.spectra[1], view.mirror);
 	}
 	data = json;
 };
