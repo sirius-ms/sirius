@@ -1,0 +1,509 @@
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
+import java.nio.file.Paths
+
+plugins {
+    id 'org.beryx.runtime' version '1.11.4'
+}
+
+ext {
+    OS = DefaultNativePlatform.currentOperatingSystem
+
+    if (OS.isLinux()) {
+        nativeLibs = 'l64'
+        osName = 'linux64'
+        zosName = 'linux'
+        installerNameType = 'deb'
+        installerAppendix = "_${version}-1_amd64.$installerNameType"
+    } else if (OS.isWindows()) {
+        nativeLibs = 'w64'
+        osName = 'win64'
+        zosName = 'win'
+        installerNameType = 'msi'
+        installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType"
+    } else if (OS.isMacOsX()) {
+        nativeLibs = 'osx'
+        osName = 'osx64'
+        zosName = 'macosx'
+        installerNameType = 'pkg'
+        installerAppendix = "-${version}.$installerNameType"
+    }
+}
+
+task downloadJDK(type: Download) {
+    String fname = "zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64"
+    String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}";
+    project.ext.set("jdkPath", getBuildDir().toPath().resolve('tmp').resolve(fname).toFile())
+
+
+    src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/fx-jdk/${zulu_jre_version}/${fname + ext}"
+    dest getBuildDir().toPath().resolve('tmp').resolve(fname + ext).toFile()
+    onlyIfModified true
+    overwrite false
+}
+
+task extractJDK(/*type: Copy,*/ dependsOn: downloadJDK) {
+    def s = downloadJDK.outputs.files.singleFile
+    outputs.file(jdkPath)
+    doLast{
+        if (OS.isWindows()) {
+            copy{
+                from zipTree(s)
+                into buildDir.toPath().resolve('tmp').toFile()
+            }
+        } else {
+            exec{commandLine(['tar', 'zxf', s.absolutePath, '-C', buildDir.toPath().resolve('tmp').toString()])}
+        }
+    }
+
+}
+
+task createRuntimeImgs(dependsOn: extractJDK) {
+    String[] baseModules = ['java.sql', 'java.logging', 'jdk.jsobject', 'java.xml', 'jdk.xml.dom', 'java.datatransfer',
+                            'java.naming', 'java.prefs', 'java.instrument']
+    String[] fxModules = baseModules +
+            ['java.desktop', 'javafx.base', 'javafx.web', 'javafx.graphics', 'javafx.swing', 'javafx.controls']
+
+    File jlink = jdkPath.toPath().resolve('bin').resolve(OS.isWindows() ? 'jlink.exe' : 'jlink').toFile()
+    File outFX = buildDir.toPath().resolve('runtime').resolve("sirius-${jlink.toPath().getParent().getParent().getFileName().toString()}").toFile()
+    File outheadl = Paths.get(outFX.absolutePath.replace('-fx-', '-headless-')).toFile()
+    outputs.files(outFX, outheadl)
+
+    String[] args = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+
+    doLast {
+        exec {
+            String[] c = [jlink.absolutePath, '--add-modules', "${baseModules.join(',')}", '--output', outheadl.absolutePath]
+            commandLine(c + args)
+        }
+        exec {
+            String[] c = [jlink.absolutePath, '--add-modules', "${fxModules.join(',')}", '--output', outFX.absolutePath]
+            commandLine(c + args)
+        }
+    }
+}
+
+
+task downloadGLPK(type: Download) {
+    project.ext.set("glpkPath", getBuildDir().toPath().resolve('glpk').toFile())
+    String fname = "glpk-${project.glpk_lib_version}.zip"
+
+    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/$fname"
+    dest getBuildDir().toPath().resolve('tmp').resolve(fname).toFile()
+    onlyIfModified true
+    overwrite false
+    doLast {
+        if (!state.getUpToDate()) {
+            copy {
+                getLogger().lifecycle("Unpacking GLPK...")
+                from zipTree(outputs.files.singleFile)
+                into buildDir
+            }
+        } else {
+            getLogger().lifecycle("Unpacking GLPK SKIPPED")
+        }
+    }
+}
+
+task downloadCLP(type: Download) {
+    project.ext.set("clpPath", getBuildDir().toPath().resolve('clp').toFile())
+    String fname = "clp-${project.clp_lib_version}.zip"
+
+    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/clp/$fname"
+    dest getBuildDir().toPath().resolve('tmp').resolve(fname).toFile()
+    onlyIfModified true
+    overwrite false
+    doLast {
+        if (!state.getUpToDate()) {
+            copy {
+                getLogger().lifecycle("Unpacking CPL...")
+                from zipTree(outputs.files.singleFile)
+                into buildDir
+
+            }
+        } else {
+            getLogger().lifecycle("Unpacking CPL SKIPPED")
+        }
+    }
+}
+
+
+task downloadRuntimeImageFX(type: Download) {
+    String fname = "sirius-zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64.zip"
+
+    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
+    dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
+    onlyIfModified true
+    overwrite false
+
+    doLast {
+        if (!state.getUpToDate()) {
+            //stupid hack to delete write protected files on nix
+            getLogger().lifecycle("Unpacking runtime image fx...")
+            if (OS.isWindows()) {
+                getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).deleteDir()
+                copy{
+                    from zipTree(outputs.files.singleFile)
+                    into getBuildDir().toPath().resolve('runtime').toFile()
+                }
+            }else{
+                exec{commandLine(['rm','-rf', getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).toString()])}
+                exec{commandLine(['unzip', '-q', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
+            }
+        } else {
+            getLogger().lifecycle("Unpacking runtime image fx SKIPPED")
+        }
+    }
+}
+
+task downloadRuntimeImageHeadless(type: Download) {
+    String fname = "sirius-zulu${zulu_jre_version}-ca-headless-jdk${jre_version}-${zosName}_x64.zip"
+
+    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
+    dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
+    onlyIfModified true
+    overwrite false
+
+    doLast {
+        if (!state.getUpToDate()) {
+            //stupid hack to delete write protected files on nix
+            getLogger().lifecycle("Unpacking runtime image headless...")
+            if (OS.isWindows()) {
+                getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).deleteDir()
+                copy{
+                    from zipTree(outputs.files.singleFile)
+                    into getBuildDir().toPath().resolve('runtime').toFile()
+                }
+            } else{
+                exec{commandLine(['rm','-rf', getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).toString()])}
+                exec{commandLine(['unzip', '-q', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
+            }
+        } else {
+            getLogger().lifecycle("Unpacking runtime image headless SKIPPED")
+        }
+    }
+}
+
+task downloadManual(type: Download, group: 'documentation') {
+    String manualName = "manual-$version-manual.pdf"
+    src "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/manual/$version/$manualName"
+    dest buildDir.toPath().resolve("manual/$manualName").toFile()
+    onlyIfModified true
+    overwrite false
+}
+
+
+subprojects {
+    //this is to keep classpath away from commandline because it may get too long for windows
+    apply plugin: 'ManifestClasspath'
+
+    jar {
+        enabled = false
+    }
+
+    task distImage(type: AppImage, group: 'distribution') {
+        dependsOn installDist, downloadManual, downloadCLP, downloadGLPK
+        jpackagerBin = Paths.get(System.getProperty("java.home")).resolve('bin').resolve(OS.isWindows() ? 'jpackage.exe' : 'jpackage').toFile()
+        mainClass = mainClassName
+        outputDir = buildDir.toPath().resolve('distributions').toFile()
+        winConsole = true
+
+        jvmArgs = [
+                '--illegal-access=permit',
+                '--add-opens java.base/java.lang=ALL-UNNAMED',
+                '--add-opens java.base/java.net=ALL-UNNAMED',
+                '-javaagent:\\$APPDIR/agents-4.4.6-SNAPSHOT.jar',
+        ]
+
+
+        if (OS.isWindows()) {
+            jvmArgs += ['-Djava.library.path=\\$APPDIR/..']
+        } else {
+            jvmArgs += ['-Djava.library.path=\\$APPDIR/../native']
+        }
+
+        doLast {
+            File nativeLibsTarget
+            File appRootTarget
+            if (OS.isLinux()) {
+                appRootTarget = outputDir.toPath().resolve(imageName).toFile()
+                nativeLibsTarget = appRootTarget.toPath().resolve("lib/native").toFile()
+            } else if (OS.isWindows()) {
+                appRootTarget = outputDir.toPath().resolve(imageName).toFile()
+                nativeLibsTarget = appRootTarget
+            } else if (OS.isMacOsX()) {
+                appRootTarget = outputDir.toPath().resolve("${imageName}.app/Contents").toFile()
+                nativeLibsTarget = appRootTarget.toPath().resolve("native").toFile()
+            } else {
+                throw new RuntimeException("Could not detect OS for packaging!")
+            }
+
+            copy {
+                from("${glpkPath}/$nativeLibs/") {
+                    include('libglpk.so.40')
+                    include('libglpk_java.so')
+                }
+                from("${clpPath}/$nativeLibs/")
+                into(nativeLibsTarget)
+            }
+            copy {
+                from("${distPath}") {
+                    include('COPYING.txt')
+                    include('LICENSE.txt')
+                }
+                from(downloadManual.outputs.files.singleFile)
+                into(appRootTarget)
+            }
+        }
+    }
+
+    task distImageZip(dependsOn: distImage, group: 'distribution') {
+        doFirst {
+            def imageDir = distImage.getImageDir()
+            def parentPath = imageDir.parentFile.toPath()
+            def zipFile = parentPath.resolve("${imageDir.getName()}.zip")
+            project.ant.zip(destfile: zipFile, duplicate: 'fail') {
+                imageDir.eachFileRecurse { f ->
+                    int mode = f.canExecute() ? 755 : 644
+                    def relPath = parentPath.relativize(f.toPath()).toString()
+                    zipfileset(dir: parentPath, includes: relPath, filemode: mode)
+                }
+            }
+        }
+    }
+
+    task distInstaller(type: AppInstaller, dependsOn: distImage, group: 'distribution') {
+        distImg = distImage
+        types = [installerNameType]
+        licenseFile = getRootProject().rootDir.toPath().resolve('jpackage').resolve('LICENSE-Full.txt').toFile()
+
+        //linux
+        linuxMenuGroup = ['Applications', 'Science']
+        debPackageMaintaner = 'sirius@uni-jena.de'
+    }
+
+    task distribution { group = 'distribution' }
+
+    distribution.dependsOn 'distImageZip'
+    distribution.dependsOn 'distInstaller'
+    artifactoryPublish.dependsOn 'distribution'
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+
+
+class AppImage extends DefaultTask {
+
+    File jpackagerBin
+    File outputDir
+    String imageName
+    String[] jvmArgs
+    String[] args
+    String version
+    String mainClass
+    String mainJarName
+    File runtimeImageDirectory
+    boolean winConsole
+    Map<String, File> launchers
+
+    /*--mac-package-name name string
+    Name of the application as it appears in the Menu Bar.
+    This can be different from the application name.
+    This name must be less than 16 characters long and be suitable for displaying in the menu bar and the application Info window. Defaults to the application name.*/
+    String macPackageName = null
+
+    AppImage() {
+        imageName = project.name
+        jvmArgs = []
+        version = project.OS.isWindows() ? project.version.replace('-SNAPSHOT', '') : project.version
+        winConsole = false
+    }
+
+    File getImageDir() {
+        return outputDir.toPath().resolve(project.OS.isMacOsX()?"${imageName}.app":imageName).toFile()
+    }
+
+    @TaskAction
+    def execute() {
+        String[] p = ['--type', 'app-image']
+        p += createParameters()
+        project.exec {
+            def c = buildCommand(p)
+            println c
+            commandLine(c)
+        }
+    }
+
+    def buildCommand(String[] parameters) {
+        if (project.OS.isWindows()) {
+            //todo windows command line sucks!
+            List<String> c = parameters as List
+            c.add(0, "\"${jpackagerBin.absolutePath}\"")
+            return c.toArray()
+        } else {
+            getLogger().lifecycle("${jpackagerBin.absolutePath} ${parameters.join(' ')}")
+            return ['bash', '-e', '-c', """
+                ${jpackagerBin.absolutePath} ${parameters.join(' ')}
+                """]
+        }
+    }
+
+    String[] createParameters() {
+        def paras = [
+                '--runtime-image', runtimeImageDirectory.absolutePath,
+                '-i', project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toString(),
+                '--dest', outputDir.toString(),
+                '--name', imageName,
+                '--app-version', version,
+                '--main-class', mainClass,
+                '--main-jar', mainJarName
+        ]
+
+        if (jvmArgs != null)
+            for (String arg : jvmArgs)
+                paras += ['--java-options', "\"$arg\"",]
+
+        if (args != null)
+            for (String arg : args)
+                paras += ['--arguments', "\"$arg\""]
+
+        if (launchers != null)
+            for (String name : launchers.keySet())
+                paras += ["--add-launcher", "\"$name=${launchers.get(name)}\""]
+
+
+        def iconDir = project.getRootProject().rootDir.toPath().resolve('icons')
+        if (project.OS.isWindows()) {
+            paras += ["--icon", "${iconDir.resolve('sirius-icon.ico').toString()}"]
+            if (winConsole)
+                paras += ['--win-console']
+        } else if (project.OS.isMacOsX()) {
+            paras += ["--icon", "${iconDir.resolve('sirius-icon.icns').toString()}"]
+            if (macPackageName != null && !macPackageName.isBlank())
+                paras += ['--mac-package-name', "\"$macPackageName\""]
+        } else if (project.OS.isLinux()) {
+            paras += ["--icon", "${iconDir.resolve('sirius-icon.png').toString()}"]
+        } else {
+            throw new IllegalArgumentException("Could not determine the OS to build on")
+        }
+        return paras
+    }
+}
+
+abstract class AppInstaller extends DefaultTask {
+    AppImage distImg
+    String[] types
+    File licenseFile
+
+
+    boolean winDirChooser = true
+    boolean winMenu = true
+    String winMenuGroup = null
+    boolean winShortcut
+    boolean winPerUserInstall = false
+
+
+    /*--linux-menu-group <menu-group-name>
+          Menu group this application is placed in*/
+    String[] linuxMenuGroup = null
+    /* --linux-package-deps
+          Required packages or capabilities for the application*/
+    String[] packageDeps = null
+    /*--linux-shortcut
+          Creates a shortcut for the application*/
+    boolean linuxShortcut = false
+    /*--linux-deb-maintainer <email address>
+          Maintainer for .deb package*/
+    String debPackageMaintaner = null
+
+
+
+
+    /*
+   --linux-package-name <package name>
+          Name for Linux package, defaults to the application name
+  --linux-rpm-license-type <type string>
+          Type of the license ("License: <value>" of the RPM .spec)
+  --linux-app-release <release value>
+          Release value of the RPM <name>.spec file or
+          Debian revision value of the DEB control file.
+  --linux-app-category <category value>
+          Group value of the RPM <name>.spec file or
+          Section value of DEB control file.
+    * */
+    /*
+--mac-package-identifier ID string
+An identifier that uniquely identifies the application for macOSX.
+Defaults to the the main class name.
+May only use alphanumeric (A-Z,a-z,0-9), hyphen (-), and period (.) characters.
+
+--mac-bundle-signing-prefix prefix string
+When signing the application bundle, this value is prefixed to all components that need to be signed that don't have an existing bundle identifier.
+--mac-sign
+Request that the bundle be signed.
+--mac-signing-keychain file path
+Path of the keychain to search for the signing identity (absolute path or relative to the current directory).
+If not specified, the standard keychains are used.
+--mac-signing-key-user-name team name
+Team name portion in Apple signing identities' names.
+For example "Developer ID Application: "
+**/
+
+    @TaskAction
+    def execute() {
+        String[] p = ['--type', types.join(',')]
+        p += createParameters()
+        project.exec {
+            def c = distImg.buildCommand(p)
+            println c
+            commandLine(c)
+        }
+    }
+
+    String getAppName() {
+        return (appName != null && !appName.isBlank()) ? appName : distImg.imageName
+    }
+
+    String[] createParameters() {
+        String[] paras = []//distImg.createParameters()
+
+        paras += [
+                '--name', distImg.imageName,
+                '--app-image', distImg.getImageDir().absolutePath,
+                '--license-file', licenseFile.absolutePath,
+                '--dest', distImg.outputDir.absolutePath,
+                '--app-version', distImg.version,
+//                "--icon", "${project.getRootProject().rootDir.toPath().resolve('icons').resolve('sirius-icon.png').toString()}"
+//                '--install-dirr'
+        ]
+
+
+        if (project.OS.isWindows()) {
+            if (winDirChooser)
+                paras += ['--win-dir-chooser'/*, winDirChooser ? '1' : '0'*/]
+            if (winMenu)
+                paras += ['--win-menu'/*, winMenu ? '1' : '0'*/]
+            if (winMenuGroup != null && !winMenuGroup.isBlank())
+                paras += ['--win-menu-group', "\"$winMenuGroup\""]
+            if (winShortcut)
+                paras += ['--win-shortcut']
+            if (winPerUserInstall)
+                paras += ['--win-per-user-install']
+        } else if (project.OS.isMacOsX()) {
+
+        } else if (project.OS.isLinux()) {
+            if (linuxShortcut)
+                paras += ['--linux-shortcut']
+            if (debPackageMaintaner != null && !debPackageMaintaner.isBlank())
+                paras += ['--linux-deb-maintainer', "\"$debPackageMaintaner\""]
+            if (linuxMenuGroup != null && linuxMenuGroup.length > 0)
+                paras += ['--linux-menu-group', "\"${linuxMenuGroup.join(';')}\""]
+            if (packageDeps != null && packageDeps.length > 0)
+                paras += ['--linux-deb-maintainer', "\"${packageDeps.join(',')}\""]
+        } else {
+            throw new IllegalArgumentException("Could not determine the OS to build on")
+        }
+        return paras
+    }
+}
