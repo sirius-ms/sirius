@@ -26,7 +26,7 @@ ext {
         osName = 'osx64'
         zosName = 'macosx'
         installerNameType = 'pkg'
-        installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType"
+        installerAppendix = "-${version}.$installerNameType"
     }
 }
 
@@ -146,7 +146,7 @@ task downloadRuntimeImageFX(type: Download) {
                 into getBuildDir().toPath().resolve('runtime').toFile()
             }else{
                 exec{commandLine(['rm','-rf', getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).toString()])}
-                exec{commandLine(['unzip', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
+                exec{commandLine(['unzip', '-q', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
             }
         } else {
             getLogger().lifecycle("Unpacking runtime image fx SKIPPED")
@@ -172,7 +172,7 @@ task downloadRuntimeImageHeadless(type: Download) {
                 into getBuildDir().toPath().resolve('runtime').toFile()
             } else{
                 exec{commandLine(['rm','-rf', getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).toString()])}
-                exec{commandLine(['unzip', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
+                exec{commandLine(['unzip', '-q', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
             }
         } else {
             getLogger().lifecycle("Unpacking runtime image headless SKIPPED")
@@ -303,6 +303,12 @@ class AppImage extends DefaultTask {
     boolean winConsole
     Map<String, File> launchers
 
+    /*--mac-package-name name string
+    Name of the application as it appears in the Menu Bar.
+    This can be different from the application name.
+    This name must be less than 16 characters long and be suitable for displaying in the menu bar and the application Info window. Defaults to the application name.*/
+    String macPackageName = null
+
     AppImage() {
         imageName = project.name
         jvmArgs = []
@@ -311,7 +317,7 @@ class AppImage extends DefaultTask {
     }
 
     File getImageDir() {
-        return outputDir.toPath().resolve(imageName).toFile()
+        return outputDir.toPath().resolve(project.OS.isMacOsX()?"${imageName}.app":imageName).toFile()
     }
 
     @TaskAction
@@ -370,6 +376,8 @@ class AppImage extends DefaultTask {
                 paras += ['--win-console']
         } else if (project.OS.isMacOsX()) {
             paras += ["--icon", "${iconDir.resolve('sirius-icon.icns').toString()}"]
+            if (macPackageName != null && !macPackageName.isBlank())
+                paras += ['--mac-package-name', "\"$macPackageName\""]
         } else if (project.OS.isLinux()) {
             paras += ["--icon", "${iconDir.resolve('sirius-icon.png').toString()}"]
         } else {
@@ -406,11 +414,7 @@ abstract class AppInstaller extends DefaultTask {
     String debPackageMaintaner = null
 
 
-    /*--mac-package-name name string
-    Name of the application as it appears in the Menu Bar.
-    This can be different from the application name.
-    This name must be less than 16 characters long and be suitable for displaying in the menu bar and the application Info window. Defaults to the application name.*/
-    String macPackageName = null
+
 
     /*
    --linux-package-name <package name>
@@ -483,8 +487,7 @@ For example "Developer ID Application: "
             if (winPerUserInstall)
                 paras += ['--win-per-user-install']
         } else if (project.OS.isMacOsX()) {
-            if (macPackageName != null && !macPackageName.isBlank())
-                paras += ['--mac-package-name', "\"$macPackageName\""]
+
         } else if (project.OS.isLinux()) {
             if (linuxShortcut)
                 paras += ['--linux-shortcut']
