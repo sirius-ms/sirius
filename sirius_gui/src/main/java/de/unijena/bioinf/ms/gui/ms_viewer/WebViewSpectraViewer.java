@@ -23,10 +23,10 @@ import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
 
 public class WebViewSpectraViewer extends WebViewPanel {
 	
-	public void loadSpectra(String json_spectra) {
+	public void loadData(String json_spectra, String json_tree) {
         cancelTasks();
-		executeJS("loadJSONSpectra('" + json_spectra.replaceAll("(\\r\\n|\\r|\\n)", " ")
-                + "')");
+		executeJS("loadJSONData('" + json_spectra.replaceAll("(\\r\\n|\\r|\\n)", " ")
+				+ "', '" + json_tree.replaceAll("(\\r\\n|\\r|\\n)", " ") + "')");
 		System.out.println("executed JS function");
     }
 
