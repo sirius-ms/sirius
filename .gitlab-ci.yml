@@ -26,7 +26,7 @@ stages:
 #    - gradle
 doc:
   variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu15.27.17-ca-fx-jdk15.0.0-linux_x64"
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
   stage: prepare
   script:
     - cd sirius_doc
@@ -42,7 +42,7 @@ doc:
 
 distCliLinux64:
   variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu15.27.17-ca-fx-jdk15.0.0-linux_x64"
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
   stage: build-cli
   needs: ["doc"]
   script:
@@ -58,7 +58,7 @@ distCliLinux64:
 
 distGuiLinux64:
   variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu15.27.17-ca-fx-jdk15.0.0-linux_x64"
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
   stage: build-gui
   needs: ["distCliLinux64","doc"]
   script:
@@ -108,7 +108,7 @@ distGuiWin64:
 
 distCliMacOSX:
   variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu15.27.17-ca-fx-jdk15.0.0-macosx_x64"
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64"
   stage: build-cli
   needs: ["doc"]
   script:
@@ -124,7 +124,7 @@ distCliMacOSX:
 
 distGuiMacOX:
   variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu15.27.17-ca-fx-jdk15.0.0-macosx_x64"
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64"
   stage: build-gui
   needs: ["distCliMacOSX","doc"]
   script:
