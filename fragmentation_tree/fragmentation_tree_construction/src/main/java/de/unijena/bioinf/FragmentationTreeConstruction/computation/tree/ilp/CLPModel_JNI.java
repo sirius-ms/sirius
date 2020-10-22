@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,11 +49,11 @@ public class CLPModel_JNI {
 			// NOTE: has to be in correct order for windows
 			if (arch.contains("64"))
 				dependencies = Arrays.asList(
-					"libwinpthread-1", "libgmp-10", "zlib1", "libbz2-1", "libgcc_s_seh-1",
+					"libstdc++-6", "libwinpthread-1", "libgmp-10", "zlib1", "libbz2-1", "libgcc_s_seh-1",
 					"libquadmath-0", "libgfortran-5");
 			else
 				dependencies = Arrays.asList(
-					"libwinpthread-1", "libgmp-10", "zlib1", "libbz2-1", "libgfortran-5");
+					"libstdc++-6", "libgcc_s_dw2-1", "libwinpthread-1", "libgmp-10", "zlib1", "libbz2-1", "libgfortran-5");
 		} else if (os.contains("mac") || os.contains("darwin")){
 			// fake pre-loading to circumvent lazy unpacking of resources
 			dependencies = Arrays.asList(
@@ -65,8 +67,10 @@ public class CLPModel_JNI {
 		}
 		for (String dep : dependencies) {
 			try {
+                LoggerFactory.getLogger(CLPModel_JNI.class).debug("Loading: " + dep);
 				System.loadLibrary(dep);
 			} catch (UnsatisfiedLinkError e) {
+                LoggerFactory.getLogger(CLPModel_JNI.class).debug("Error when loading: " + dep, e);
 				// does not matter
 			}
 		}
@@ -76,7 +80,7 @@ public class CLPModel_JNI {
             System.loadLibrary("CLPModelWrapper_JNI");
         } catch (Exception e) {
 			// this should not happen
-            e.printStackTrace();
+            LoggerFactory.getLogger(CLPModel_JNI.class).debug("Error when loading: 'CLPModelWrapper_JNI'", e);
             throw e;
         }
     }
