@@ -3,6 +3,7 @@ var svg, peakArea, brush, idleTimeout, data, w, h, xmin_tmp, xmax_tmp,
 current = {w, h},
 margin = {top: 25, right: 30, bottom: 65, left:60},
 peakWidth = 2,
+decimal_place = 4,
 col = {annotation: "lightcoral", spec1: "royalblue",  spec2: "mediumseagreen"},
 view = {mirror: "normal"}; // alternativ: "simple"
 
@@ -26,7 +27,7 @@ var mouseover = function() {
 };
 
 var mousemove1 = function(d) {
-    d3.select("#tooltip").html("m/z: " + d.mz + "<br>Intensity: " + d.intensity)
+    d3.select("#tooltip").html("m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place))
         .style("left", (d3.mouse(this)[0]+70 + "px"))
         .style("top", (d3.mouse(this)[1]+50 + "px"));
 };
@@ -287,7 +288,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("height", function(d) { return y2(d.intensity); })
             .attr("fill", col.spec2)
             .on("mousemove", function(d) {
-                d3.select("#tooltip").html("m/z: " + d.mz + "<br>Intensity: " + d.intensity)
+                d3.select("#tooltip").html("m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place))
                 .style("left", (d3.mouse(this)[0]+70 + "px"))
                 .style("top", (d3.mouse(this)[1]+50 + "px")); })
             .on("mouseleave", function() {
@@ -302,9 +303,9 @@ function mirrorPlot(spectrum1, spectrum2, view) {
 function spectraViewer(json){
     init();
     if (json.spectrum2 == null) { //null==null und undefined
-		spectrumPlot(json.spectrum1);
+	    spectrumPlot(json.spectrum1);
 	} else {
-		mirrorPlot(json.spectrum1, json.spectrum2, view.mirror);
+	    mirrorPlot(json.spectrum1, json.spectrum2, view.mirror);
 	}
 	data = json;
 };
@@ -312,7 +313,7 @@ function spectraViewer(json){
 //var debug = d3.select("body")
 //    .append("div").html("DEBUG");
 
-function loadJSONSpectra(data_spectra) {
+function loadJSONData(data_spectra, data_tree) {
 //    debug.text("got json input");
     if (data !== undefined) {
         d3.select("#container").html("");

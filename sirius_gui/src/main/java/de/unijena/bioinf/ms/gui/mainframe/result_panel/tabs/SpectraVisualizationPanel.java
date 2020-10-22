@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
+import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
@@ -123,13 +124,16 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	}
 
 	private void drawSpectra(InstanceBean experiment, FormulaResultBean sre, String mode){
-		String jsonstring;
+		String jsonSpectra;
 		SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
 		FTree ftree = sre.getFragTree().orElse(null);
 		if (ftree == null){
 			System.err.println("Cannot draw spectra: FragTree cannot be retrieved!");
 			return;
 		}
+		String jsonTree = new FTJsonWriter().treeToJsonString(ftree, experiment.getID().getIonMass().orElse(null)); // FIXME:
+																												// for
+																												// debugging?
 		switch (mode){
 		case "MS1 mirror-plot":
 			List<SimpleSpectrum> spectra1 = experiment.getMs1Spectra();
@@ -138,7 +142,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 				return;
 			}
 			IsotopePattern ip = ftree.getAnnotationOrNull(IsotopePattern.class);
-			jsonstring = spectraWriter.spectraJSONString(
+			jsonSpectra = spectraWriter.spectraJSONString(
 				spectra1.get(0 // TODO: are there cases with more than one?
 					), ip.getPattern(), ftree);
 			break;
@@ -148,7 +152,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 				System.err.println("Cannot draw MS1 mirror-plot: Spectra cannot be retrieved!");
 				return;
 			}
-			jsonstring = spectraWriter.spectrumJSONString(spectra2.get(
+			jsonSpectra = spectraWriter.spectrumJSONString(spectra2.get(
 							spectra2.size() - 1 // should me merged MS/MS, TODO: verify
 					), ftree);
 			break;
@@ -157,8 +161,8 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			System.err.println("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
 			return;
 		}
-		debugWriteSpectra(jsonstring); // FIXME: DEBUG
-		browser.loadSpectra(jsonstring);
+		debugWriteSpectra(jsonSpectra); // FIXME: DEBUG
+		browser.loadData(jsonSpectra, jsonTree);
 	}	
 
 	@Override
