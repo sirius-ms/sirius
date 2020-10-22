@@ -114,13 +114,16 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	}
 
 	private void debugWriteSpectra(String jsonstring){
+		String filename = "/tmp/test_spectra.json";
 		try {
-			BufferedWriter bw = new BufferedWriter(new FileWriter("/tmp/test_spectra.json"));
+			BufferedWriter bw = new BufferedWriter(new FileWriter(filename));
 			bw.write(jsonstring);
 			bw.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		System.out.println("[DEBUG] dumped JSON to " + filename);
+
 	}
 
 	private void drawSpectra(InstanceBean experiment, FormulaResultBean sre, String mode){

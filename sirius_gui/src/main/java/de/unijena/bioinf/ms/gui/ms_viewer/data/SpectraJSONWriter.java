@@ -70,7 +70,7 @@ public class SpectraJSONWriter{
 	public String spectraJSONString(SimpleSpectrum pattern1, SimpleSpectrum pattern2, FTree ftree){		
 		JsonObject spectra = ms1MirrorIsotope(pattern1, pattern2);
 		if (ftree != null)
-			annotatePeakMatches(spectra, matchPeaks(ftree, pattern1));
+			annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(ftree, pattern1));
 		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		return gson.toJson(spectra);
 	}
@@ -88,19 +88,26 @@ public class SpectraJSONWriter{
 		Fragment[] fragments = annotate(spectrum, tree);
 		JsonObject jSpectrum = ms2Annotated(spectrum, fragments);
 		annotatePeakPairs(jSpectrum, tree, fragments);
+		final JsonObject j = new JsonObject();
+		j.addProperty("massDeviation", 0);					   // TODO:
+		JsonArray spectra = new JsonArray();
+		spectra.add(jSpectrum);
+		j.add("spectra", spectra);
 		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		return gson.toJson(jSpectrum);
+		return gson.toJson(j);
 	}
 
 	protected JsonObject ms1MirrorIsotope(SimpleSpectrum pattern1, SimpleSpectrum pattern2) {
 		final JsonObject j = new JsonObject();
-		j.addProperty("massDeviation", 0);					   // TODO
+		j.addProperty("massDeviation", 0);					   // TODO:
 		JsonObject spectrum1 = spectrum2json(pattern1);
 		JsonObject spectrum2 = spectrum2json(pattern2);
 		spectrum1.addProperty("name", "MS1");
 		spectrum2.addProperty("name", "MS1_simulated_isotope_pattern");
-		j.add("spectrum1", spectrum1);
-		j.add("spectrum2", spectrum2);
+		JsonArray spectra = new JsonArray();
+		spectra.add(spectrum1);
+		spectra.add(spectrum2);
+		j.add("spectra", spectra);
 		return j;
 	}
 
@@ -240,10 +247,10 @@ public class SpectraJSONWriter{
 	}
 
 	// Peak matches *between* spectra
-	protected void annotatePeakMatches(JsonObject spectra, List<PeakMatch> matches){
-		JsonArray pattern1Peaks = spectra.get("spectrum1").getAsJsonObject()
+	protected void annotatePeakMatches(JsonArray spectra, List<PeakMatch> matches) {
+		JsonArray pattern1Peaks = spectra.get(0).getAsJsonObject()
 			.get("peaks").getAsJsonArray();			
-		JsonArray pattern2Peaks = spectra.get("spectrum2").getAsJsonObject()
+		JsonArray pattern2Peaks = spectra.get(1).getAsJsonObject()
 			.get("peaks").getAsJsonArray();
 		for (PeakMatch m : matches) {
 			JsonObject p1Matches = pattern1Peaks.get(m.index1).getAsJsonObject()
