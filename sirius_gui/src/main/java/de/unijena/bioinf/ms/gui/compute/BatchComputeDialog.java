@@ -275,7 +275,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         }
 
         if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
-            noNegativeCanopusWarning();
+//            noNegativeCanopusWarning();
             toolCommands.add(canopusConfigPanel.content.toolCommand());
             configCommand.addAll(canopusConfigPanel.asParameterList());
         }
