@@ -1,4 +1,5 @@
 dependencies {
     compile project(':fragmentation_tree:fragmentation_tree_construction')
-    compile group: 'cplex', name: 'cplex', version: "$cplex_version"
+    compile project(':agents')
+    compileOnly group: 'cplex', name: 'cplex', version: "$cplex_version"
 }
