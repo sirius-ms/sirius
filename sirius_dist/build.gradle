@@ -212,7 +212,7 @@ subprojects {
                 '--illegal-access=permit',
                 '--add-opens java.base/java.lang=ALL-UNNAMED',
                 '--add-opens java.base/java.net=ALL-UNNAMED',
-                '-javaagent:\\$APPDIR/agents-4.4.6-SNAPSHOT.jar',
+                '-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar',
         ]
 
 
