@@ -142,8 +142,10 @@ task downloadRuntimeImageFX(type: Download) {
             getLogger().lifecycle("Unpacking runtime image fx...")
             if (OS.isWindows()) {
                 getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).deleteDir()
-                from zipTree(outputs.files.singleFile)
-                into getBuildDir().toPath().resolve('runtime').toFile()
+                copy{
+                    from zipTree(outputs.files.singleFile)
+                    into getBuildDir().toPath().resolve('runtime').toFile()
+                }
             }else{
                 exec{commandLine(['rm','-rf', getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).toString()])}
                 exec{commandLine(['unzip', '-q', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
@@ -168,8 +170,10 @@ task downloadRuntimeImageHeadless(type: Download) {
             getLogger().lifecycle("Unpacking runtime image headless...")
             if (OS.isWindows()) {
                 getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).deleteDir()
-                from zipTree(outputs.files.singleFile)
-                into getBuildDir().toPath().resolve('runtime').toFile()
+                copy{
+                    from zipTree(outputs.files.singleFile)
+                    into getBuildDir().toPath().resolve('runtime').toFile()
+                }
             } else{
                 exec{commandLine(['rm','-rf', getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).toString()])}
                 exec{commandLine(['unzip', '-q', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
