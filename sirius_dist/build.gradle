@@ -212,14 +212,19 @@ subprojects {
                 '--illegal-access=permit',
                 '--add-opens java.base/java.lang=ALL-UNNAMED',
                 '--add-opens java.base/java.net=ALL-UNNAMED',
-                '-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar',
         ]
 
 
         if (OS.isWindows()) {
-            jvmArgs += ['-Djava.library.path=\\$APPDIR/..']
+            jvmArgs += ['-Djava.library.path=$APPDIR\\..',
+                        '-javaagent:$APPDIR\\agents-' + siriusVersion + '.jar',
+            ]
         } else {
-            jvmArgs += ['-Djava.library.path=\\$APPDIR/../native']
+            jvmArgs += ['-Djava.library.path=\\$APPDIR/../native',
+                        '-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar',
+
+            ]
+
         }
 
         doLast {
