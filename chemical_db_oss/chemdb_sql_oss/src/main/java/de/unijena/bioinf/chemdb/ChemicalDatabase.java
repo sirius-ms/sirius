@@ -38,6 +38,7 @@ import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -198,14 +199,48 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     }
 
 
-    /**
-     * Search for molecular formulas in the database
-     *
-     * @param mass      exact mass of the ion
-     * @param deviation allowed mass deviation
-     * @param ionTypes  allowed adducts of the ion
-     * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
-     */
+    private boolean containsFormula(@Nullable MolecularFormula formula, @NotNull final String sql) throws ChemicalDatabaseException {
+        if (formula == null)
+            return false;
+
+        try (final PooledConnection<Connection> c = connection.orderConnection()) {
+            final PreparedStatement statement = c.connection.prepareStatement(sql);
+            statement.setString(1,formula.toString());
+
+            final ResultSet r = statement.executeQuery();
+            if (r.next())
+                return r.getBoolean(1);
+            return false;
+
+        } catch (InterruptedException e) {
+            log.error(e.getMessage(), e);
+            Thread.currentThread().interrupt();
+            return false;
+        } catch (IOException | SQLException e) {
+            log.error(e.getMessage(), e);
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    private static final String CONTAINS_FORMULA = "SELECT EXISTS(SELECT * FROM formulas WHERE formula = ?)";
+    public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
+        return containsFormula(formula,CONTAINS_FORMULA);
+    }
+
+    private static final String CONTAINS_FORMULA_FILTERED = "SELECT EXISTS(SELECT * FROM formulas WHERE formula = ? AND (flags & %s) != 0)";
+    public boolean containsFormula(MolecularFormula formula, long filter) throws ChemicalDatabaseException {
+        return containsFormula(formula,String.format(CONTAINS_FORMULA_FILTERED, filter));
+    }
+
+
+        /**
+         * Search for molecular formulas in the database
+         *
+         * @param mass      exact mass of the ion
+         * @param deviation allowed mass deviation
+         * @param ionTypes  allowed adducts of the ion
+         * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
+         */
     public List<List<FormulaCandidate>> lookupMolecularFormulas(long filter, double mass, Deviation deviation, PrecursorIonType[] ionTypes) throws ChemicalDatabaseException {
         final ArrayList<List<FormulaCandidate>> xs = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
