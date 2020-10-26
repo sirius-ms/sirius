@@ -20,10 +20,7 @@
 
 package de.unijena.bioinf.ms.properties;
 
-import org.apache.commons.configuration2.CombinedConfiguration;
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.ImmutableConfiguration;
-import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.*;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.io.FileHandler;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +37,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Properties;
 import java.util.regex.Pattern;
 
 /**
@@ -61,13 +60,14 @@ public class PropertyManager {
     public static final String MS_CONFIGS_BASE = PropertyManager.MS_PROPERTY_BASE + ".configs";
     public static final String MS_CONFIG_CLASSES_BASE = PropertyManager.MS_PROPERTY_BASE + ".configClasses";
 
+    // this key is used to specify additions config files.
     public static final String CONFIGS_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configLocations";
-    public static final String CONFIG_CLASSES_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configClassesLocations";
 
     protected static final CombinedConfiguration PERSISTENT_PROPERTIES;
     protected static final PropertiesConfiguration CHANGED_PROPERTIES;
     protected static final CombinedConfiguration PROPERTIES;
     public static final ParameterConfig DEFAULTS;
+    public static final PropertiesConfigurationLayout DEFAULTS_LAYOUT;
 
 
     static {
@@ -79,20 +79,23 @@ public class PropertyManager {
             PERSISTENT_PROPERTIES.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
             CHANGED_PROPERTIES = loadDefaultProperties();
 
+
             final Reflections reflections = new Reflections("de.unijena.bioinf.ms.defaults", new ResourcesScanner());
+            DEFAULTS_LAYOUT = new PropertiesConfigurationLayout();
 
             LinkedHashSet<String> classResources =  new LinkedHashSet<>(reflections.getResources(Pattern.compile(".*\\.map")));
-            classResources.addAll(SiriusConfigUtils.parseResourcesLocation(PROPERTIES.getString(CONFIG_CLASSES_LOCATIONS_KEY)));
             CombinedConfiguration classConfig = addPropertiesFromResources(classResources, MS_CONFIG_CLASSES_BASE, "CONFIG_CLASSES");
 
             LinkedHashSet<String> configResources =  new LinkedHashSet<>(reflections.getResources(Pattern.compile(".*\\.config")));
+            // this addes changed defaults from some locations specified by this key
             configResources.addAll(SiriusConfigUtils.parseResourcesLocation(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY)));
             CombinedConfiguration globalConfig = addPropertiesFromResources(configResources, MS_CONFIGS_BASE, "GLOBAL_CONFIG");
+
 
             DEFAULTS = new ParameterConfig(
                     globalConfig,//config class for configs
                     classConfig,//configs an properties need to have disjoint keys
-                    new LinkedList<>(configResources).getLast(),
+                    DEFAULTS_LAYOUT,
                     null,
                     MS_CONFIGS_BASE,
                     MS_CONFIG_CLASSES_BASE
@@ -131,7 +134,7 @@ public class PropertyManager {
         CombinedConfiguration configToAdd = SiriusConfigUtils.newCombinedConfiguration();
         PropertiesConfiguration changeable = SiriusConfigUtils.newConfiguration();
         configToAdd.addConfiguration(changeable, "CHANGED_DEFAULT_PROPERTIES");
-        SiriusConfigUtils.makeConfigFromResources(configToAdd, SiriusConfigUtils.parseResourcesLocation(System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), DEFAULT_PROPERTY_SOURCE));
+        SiriusConfigUtils.makeConfigFromResources(configToAdd, SiriusConfigUtils.parseResourcesLocation(System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), DEFAULT_PROPERTY_SOURCE), null);
         addConfiguration(configToAdd, null, "PROPERTIES");
         return changeable;
     }
@@ -189,9 +192,8 @@ public class PropertyManager {
 
         name = (name == null || name.isEmpty()) ? String.join("_", resources) : name;
 
-
         return addConfiguration(
-                SiriusConfigUtils.makeConfigFromResources(resources),
+                SiriusConfigUtils.makeConfigFromResources(resources, DEFAULTS_LAYOUT),
                 prefixToAdd, name
         );
     }
@@ -199,16 +201,16 @@ public class PropertyManager {
     public static <C extends Configuration> C addConfiguration(@NotNull final C configToAdd, @Nullable String prefixToAdd, @NotNull String name) {
         PROPERTIES.addConfiguration(configToAdd, name, prefixToAdd);
         if (configToAdd instanceof CombinedConfiguration)
-            listenCombinedConfiguration((CombinedConfiguration) configToAdd, prefixToAdd, name);
+            listenCombinedConfiguration((CombinedConfiguration) configToAdd);
         return configToAdd;
     }
 
-    private static void listenCombinedConfiguration(@NotNull final CombinedConfiguration configToAdd, @Nullable String prefixToAdd, @NotNull String name) {
+    private static void listenCombinedConfiguration(@NotNull final CombinedConfiguration configToAdd) {
         configToAdd.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
     }
 
     public static PropertiesConfiguration addPropertiesFromResource(@NotNull final String resource, @Nullable String prefixToAdd, @Nullable String name) {
-        PropertiesConfiguration configToAdd = SiriusConfigUtils.makeConfigFromStream(resource);
+        PropertiesConfiguration configToAdd = SiriusConfigUtils.makeConfigFromStream(resource,null);
         PROPERTIES.addConfiguration(configToAdd, name, prefixToAdd);
         return configToAdd;
     }
