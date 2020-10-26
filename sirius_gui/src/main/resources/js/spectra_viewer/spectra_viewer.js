@@ -1,7 +1,7 @@
 // General Settings
-var svg, peakArea, brush, idleTimeout, data, w, h, xmin_tmp, xmax_tmp,
+var svg, tooltip, peakArea, brush, idleTimeout, data, w, h, xmin_tmp, xmax_tmp,
 current = {w, h},
-margin = {top: 25, right: 30, bottom: 65, left:60},
+margin = {top: 25, right: 30, bottom: 80, left:60},
 peakWidth = 2,
 decimal_place = 4,
 col = {annotation: "lightcoral", spec1: "royalblue",  spec2: "mediumseagreen"},
@@ -22,18 +22,23 @@ window.addEventListener("resize", function(){
 });
 
 var mouseover = function() {
-    d3.select("#tooltip").style("opacity", 1);
+    tooltip.style("opacity", 1);
     d3.select(this).attr("fill", col.annotation);
 };
 
-var mousemove1 = function(d) {
-    d3.select("#tooltip").html("m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place))
-        .style("left", (d3.mouse(this)[0]+70 + "px"))
-        .style("top", (d3.mouse(this)[1]+50 + "px"));
+var mousemove = function(d) {
+    tooltip.html("m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place));
+    if (d3.mouse(this)[0]+70+115 > current.w) { // this distance need to be changed, when the font size ist changed.
+        tooltip.style("left", (d3.mouse(this)[0]-70 + "px"));
+    } else {
+        tooltip.style("left", (d3.mouse(this)[0]+70 + "px"));
+    }
+    tooltip.style("top", (d3.mouse(this)[1]+50 + "px"));
 };
 
+
 var mouseleave1 = function() {
-    d3.select("#tooltip").style("opacity", 0);
+    tooltip.style("opacity", 0);
     d3.select(this).attr("fill", col.spec1);
 };
 
@@ -92,7 +97,7 @@ function init() {
         .attr("text-anchor", "middle")
         .attr("opacity", 0);
     //tooltip
-    d3.select("#container")
+    tooltip = d3.select("#container")
         .append("div")
         .attr("id", "tooltip")
         .style("position", "absolute")
@@ -173,7 +178,7 @@ function spectrumPlot(spectrum) {
             .attr("height", function(d) { return h - y(d.intensity); })
             .attr("fill", col.spec1)
             .on("mouseover", mouseover)
-            .on("mousemove", mousemove1)
+            .on("mousemove", mousemove)
             .on("mouseleave", mouseleave1);
 };
 
@@ -274,7 +279,6 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("y", function(d) { return y1(d.intensity); })
             .attr("height", function(d) { return h/2 - y1(d.intensity); })
             .attr("fill", col.spec1)
-            .on("mousemove", mousemove1)
             .on("mouseleave", mouseleave1);
     // Peaks 2
     peakArea.selectAll()
@@ -287,16 +291,13 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("y", h/2)
             .attr("height", function(d) { return y2(d.intensity); })
             .attr("fill", col.spec2)
-            .on("mousemove", function(d) {
-                d3.select("#tooltip").html("m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place))
-                .style("left", (d3.mouse(this)[0]+70 + "px"))
-                .style("top", (d3.mouse(this)[1]+50 + "px")); })
             .on("mouseleave", function() {
-                d3.select("#tooltip").style("opacity", 0);
+                tooltip.style("opacity", 0);
                 d3.select(this).attr("fill", col.spec2); });
 
     peakArea.selectAll(".peak")
         .attr("width", peakWidth)
+        .on("mousemove", mousemove)
         .on("mouseover", mouseover);
 };
 
