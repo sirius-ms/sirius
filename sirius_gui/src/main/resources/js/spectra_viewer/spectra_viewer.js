@@ -27,8 +27,12 @@ var mouseover = function() {
 };
 
 var mousemove = function(d) {
-    tooltip.html("m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place));
-    if (d3.mouse(this)[0]+70+115 > current.w) { // this distance need to be changed, when the font size ist changed.
+    if ("formula" in d) {
+        tooltip.html("Formula: " + d.formula + "<br>m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place));
+    } else {
+        tooltip.html("m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place));
+    }
+    if (d3.mouse(this)[0]+70+130 > current.w) { // this distance might need to be changed, when the font size ist changed.
         tooltip.style("left", (d3.mouse(this)[0]-70 + "px"));
     } else {
         tooltip.style("left", (d3.mouse(this)[0]+70 + "px"));
@@ -314,7 +318,7 @@ function spectraViewer(json){
 //var debug = d3.select("body")
 //    .append("div").html("DEBUG");
 
-function loadJSONData(data_spectra, data_tree) {
+function loadJSONData(data_spectra) {
 //    debug.text("got json input");
     if (data !== undefined) {
         d3.select("#container").html("");

@@ -134,9 +134,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			System.err.println("Cannot draw spectra: FragTree cannot be retrieved!");
 			return;
 		}
-		String jsonTree = new FTJsonWriter().treeToJsonString(ftree, experiment.getID().getIonMass().orElse(null)); // FIXME:
-																												// for
-																												// debugging?
+
 		switch (mode){
 		case "MS1 mirror-plot":
 			List<SimpleSpectrum> spectra1 = experiment.getMs1Spectra();
@@ -165,7 +163,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			return;
 		}
 		debugWriteSpectra(jsonSpectra); // FIXME: DEBUG
-		browser.loadData(jsonSpectra, jsonTree);
+		browser.loadData(jsonSpectra);
 	}	
 
 	@Override
