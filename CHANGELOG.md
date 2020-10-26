@@ -1,12 +1,21 @@
 ##### Coming soon...
-- Another Structure DB update due to major changes in PubChem standardization since the last one.
-- CANOPUS for negative ion mode data
-- GUI: Custom-DB importer View
 - GUI: Progress information for running jobs
 - GUI: More detailed Visualisation of what has already been computed
 - more bugfixes ;-)
 
-##### 4.4.28
+##### 4.5.0
+- **feature: CANOPUS for negative ion mode data**
+- feature: Custom-DB importer View (GUI)
+- **update: Structure DB update due to major changes in PubChem standardization since the last one.**
+
+**NOTE: SIRIUS versions will now follow semantic versioning**
+
+##### 4.4.30
+- fix: damaged JRE MacOS (see installation instructions)
+- fix: missing SCANS annotation in mgf-export subtool - creates now a valid input for FBMN
+- fix: un-parsed retention times in CEF format.   
+
+##### 4.4.29
 - fix: Error when parsing FragTree json with non numeric double values
 - fix: layout of screener progress bar on Mac  
 
