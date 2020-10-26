@@ -38,6 +38,9 @@ doc:
     - artifactory
     - gradle
     - biber-latex
+  only:
+    refs:
+      - master
 #todo artifactory publish
 
 distCliLinux64:
@@ -55,6 +58,9 @@ distCliLinux64:
     - artifactory
     - gradle
     - linux64
+  only:
+    refs:
+      - master
 
 distGuiLinux64:
   variables:
@@ -71,6 +77,9 @@ distGuiLinux64:
     - artifactory
     - gradle
     - linux64
+  only:
+    refs:
+      - master
 
 distCliWin64:
   variables:
@@ -88,6 +97,9 @@ distCliWin64:
     - artifactory
     - gradle
     - windows64
+  only:
+    refs:
+      - master
 
 distGuiWin64:
   variables:
@@ -105,6 +117,9 @@ distGuiWin64:
     - artifactory
     - gradle
     - windows64
+  only:
+    refs:
+      - master
 
 distCliMacOSX:
   variables:
@@ -121,6 +136,9 @@ distCliMacOSX:
     - artifactory
     - gradle
     - macosx
+  only:
+    refs:
+      - master
 
 distGuiMacOX:
   variables:
@@ -137,3 +155,6 @@ distGuiMacOX:
     - artifactory
     - gradle
     - macosx
+  only:
+    refs:
+      - master
