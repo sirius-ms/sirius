@@ -20,6 +20,11 @@
 
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.List;
+
 public class CLPModel_JNI {
 
     public static interface ObjectiveSense {
@@ -36,10 +41,46 @@ public class CLPModel_JNI {
     }
 
     static {
+		List<String> dependencies;
+		String os = System.getProperty("os.name").toLowerCase();
+		String arch = System.getProperty("os.arch").toLowerCase();
+		System.out.println("os: " + os + ", arch: " + arch);
+		if (os.contains("win")){
+			// NOTE: has to be in correct order for windows
+			if (arch.contains("64"))
+				dependencies = Arrays.asList(
+					"libstdc++-6", "libwinpthread-1", "libgmp-10", "zlib1", "libbz2-1", "libgcc_s_seh-1",
+					"libquadmath-0", "libgfortran-5");
+			else
+				dependencies = Arrays.asList(
+					"libstdc++-6", "libgcc_s_dw2-1", "libwinpthread-1", "libgmp-10", "zlib1", "libbz2-1", "libgfortran-5");
+		} else if (os.contains("mac") || os.contains("darwin")){
+			// fake pre-loading to circumvent lazy unpacking of resources
+			dependencies = Arrays.asList(
+				"Clp", "CoinUtils", "Osi", "OsiClp", "coinblas", "coinglpk", "coinlapack", "coinmetis",
+				"coinmumps", "gcc_s", "gfortran", "quadmath", "stdc++");
+		} else{
+			// fake pre-loading to circumvent lazy unpacking of resources
+			dependencies = Arrays.asList(
+				"Clp.1", "CoinUtils.3", "Osi.1", "OsiClp.1", "coinasl.1", "coinblas.1", "coinglpk.1", "coinlapack.1", "coinmetis.1",
+				"coinmumps.1", "gcc_s.1", "gfortran.5", "gmp.10", "quadmath.0", "stdc++.6");
+		}
+		for (String dep : dependencies) {
+			try {
+                LoggerFactory.getLogger(CLPModel_JNI.class).debug("Loading: " + dep);
+				System.loadLibrary(dep);
+			} catch (UnsatisfiedLinkError e) {
+                LoggerFactory.getLogger(CLPModel_JNI.class).debug("Error when loading: " + dep, e);
+				// does not matter
+			}
+		}
+
+		// load the wrapper library
         try {
             System.loadLibrary("CLPModelWrapper_JNI");
         } catch (Exception e) {
-            e.printStackTrace();
+			// this should not happen
+            LoggerFactory.getLogger(CLPModel_JNI.class).debug("Error when loading: 'CLPModelWrapper_JNI'", e);
             throw e;
         }
     }
@@ -92,31 +133,31 @@ public class CLPModel_JNI {
         n_setObjective(wrapper_ptr, objective);
     }
 
-void setTimeLimit(double seconds){
+	void setTimeLimit(double seconds){
         n_setTimeLimit(wrapper_ptr, seconds);
     }
 
-void setColBounds(double[] col_lb, double[] col_ub){
+	void setColBounds(double[] col_lb, double[] col_ub){
         n_setColBounds(wrapper_ptr, col_lb, col_ub);
     }
 
-void setColStart(double start[]){
+	void setColStart(double start[]){
         n_setColStart(wrapper_ptr, start);
     }
 
-void addFullRow(double row[], double lb, double ub){
+	void addFullRow(double row[], double lb, double ub){
         n_addFullRow(wrapper_ptr, row, lb, ub);
     }
 
-void addSparseRow(double[] elems, int[] indices, double lb, double ub){
+	void addSparseRow(double[] elems, int[] indices, double lb, double ub){
         n_addSparseRow(wrapper_ptr, elems, indices, lb, ub);
     }
 
-void addSparseRowCached(double[] elems, int[] indices, double lb, double ub){
+	void addSparseRowCached(double[] elems, int[] indices, double lb, double ub){
         n_addSparseRowCached(wrapper_ptr, elems, indices, lb, ub);
     }
 
-void addSparseRows(int numrows, int rowstarts[], double elems[], int indices[], double lb[], double ub[]){
+	void addSparseRows(int numrows, int rowstarts[], double elems[], int indices[], double lb[], double ub[]){
         n_addSparseRows(wrapper_ptr, numrows, rowstarts, elems, indices, lb, ub);
     }
 

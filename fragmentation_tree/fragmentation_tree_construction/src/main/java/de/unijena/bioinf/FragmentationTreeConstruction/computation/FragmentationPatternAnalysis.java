@@ -122,6 +122,19 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     }
 
     /**
+     * this removes the plugin but not any scorers the plugin added to the {@link FragmentationPatternAnalysis}.
+     * @param pluginClass
+     * @return true if a plugin of this class existed
+     */
+    public boolean unregisterPlugin(Class<? extends SiriusPlugin> pluginClass) {
+        return siriusPlugins.remove(pluginClass) != null;
+    }
+
+    public boolean hasPlugin(Class<? extends SiriusPlugin> pluginClass) {
+        return siriusPlugins.containsKey(pluginClass);
+    }
+
+    /**
      * Adds all annotations to ProcessedInput which are necessary for graph building
      */
     @Provides(DecompositionList.class)

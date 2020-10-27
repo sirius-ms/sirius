@@ -2,7 +2,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-    id "com.jfrog.artifactory" version "4.9.3"
+    id "com.jfrog.artifactory" version "4.17.2"
 }
 
 
@@ -106,6 +106,7 @@ allprojects {
         }
         maven{
             url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl
+            metadataSources { artifact() }
         }
     }
 
@@ -150,7 +151,7 @@ allprojects {
                         }
                     }
                 }
-                setArtifacts([])
+//                artifacts = []
             }
         }
     }
@@ -208,9 +209,9 @@ configure(javaProjects()) {
             mavenJava(MavenPublication) {
 //                from project.components.java
                 if (version.toString().endsWith('-SNAPSHOT'))
-                    setArtifacts([jar, sourceJar])
+                    artifacts =  [jar, sourceJar]
                 else
-                    setArtifacts([jar, sourceJar, javadocJar])
+                    artifacts = [jar, sourceJar, javadocJar]
             }
         }
     }

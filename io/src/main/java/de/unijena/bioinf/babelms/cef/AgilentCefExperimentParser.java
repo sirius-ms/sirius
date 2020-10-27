@@ -152,7 +152,6 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         exp.setName("rt=" + compound.location.rt + "-p=" + NUMBER_FORMAT.format(exp.getIonMass()));
         exp.setSource(new SpectrumFileSource(currentUrl));
 
-
         List<SimpleSpectrum> ms1Spectra = new ArrayList<>();
         List<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
         for (Spectrum spec : compound.getSpectrum()) {
@@ -172,6 +171,8 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
             }
         }
 
+        if (!exp.hasAnnotation(RetentionTime.class))
+            parseRT(compound).ifPresent(rt -> exp.addAnnotation(RetentionTime.class, rt));
         exp.setMs1Spectra(ms1Spectra);
         exp.setMs2Spectra(ms2Spectra);
         return (S) exp;
@@ -181,15 +182,20 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         try {
             return CollisionEnergy.fromString(spec.msDetails.getCe().replace("V", "ev"));
         } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).warn("Could not parse collision energy!", e);
+            LoggerFactory.getLogger(getClass()).warn("Could not parse collision energy! Cause: " + e.getMessage());
+            LoggerFactory.getLogger(getClass()).debug("Could not parse collision energy!" , e);
             return CollisionEnergy.none();
         }
     }
 
-    private Optional<RetentionTime> parseRT(Compound c, Spectrum ms1) {
+    private Optional<RetentionTime> parseRT(@NotNull Compound c) {
+        return parseRT(c, null);
+    }
+
+    private Optional<RetentionTime> parseRT(@NotNull Compound c, @Nullable Spectrum ms1) {
         try {
             double middle = c.getLocation().getRt().doubleValue();
-            return Optional.of(Optional.ofNullable(ms1.getRTRanges()).map(RTRanges::getRTRange)
+            return Optional.of(Optional.ofNullable(ms1).map(Spectrum::getRTRanges).map(RTRanges::getRTRange)
                     .map(range -> new RetentionTime(range.min.doubleValue() * 60, range.max.doubleValue() * 60, middle * 60))
                     .orElse(new RetentionTime(middle * 60)));
         } catch (Exception e) {

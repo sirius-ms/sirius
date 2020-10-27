@@ -51,13 +51,6 @@ public final class ParameterConfig {
 
     private final String localConfigName;
 
-    ParameterConfig(CombinedConfiguration config, CombinedConfiguration classesConfig, String layoutConfigName, String localConfigName, String configRoot, String classRoot) {
-        this(config, classesConfig,
-                ((PropertiesConfiguration) config.getConfiguration(layoutConfigName)).getLayout(),
-                localConfigName, configRoot, classRoot
-        );
-    }
-
     ParameterConfig(CombinedConfiguration config, CombinedConfiguration classesConfig, PropertiesConfigurationLayout layout, String localConfigName, String configRoot, String classRoot) {
         this.config = config;
         this.classesConfig = classesConfig;
