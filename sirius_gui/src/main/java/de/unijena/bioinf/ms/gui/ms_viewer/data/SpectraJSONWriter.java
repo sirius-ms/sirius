@@ -65,16 +65,7 @@ public class SpectraJSONWriter{
 			this(index1, index2, new JsonObject());
 		}
 	}
-
-	// MS1 vs. simulated MS1 isotope pattern
-	public String spectraJSONString(SimpleSpectrum pattern1, SimpleSpectrum pattern2, FTree ftree){		
-		JsonObject spectra = ms1MirrorIsotope(pattern1, pattern2);
-		if (ftree != null)
-			annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(ftree, pattern1));
-		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		return gson.toJson(spectra);
-	}
-
+   
 	// DEBUG: for testing, MSViewerDataModel class should probably be removed
 	@Deprecated	
 	public String spectrumJSONString(MSViewerDataModel dmodel){
@@ -83,8 +74,24 @@ public class SpectraJSONWriter{
 		return gson.toJson(spectrum);
 	}
 
-	// MS2 Spectrum with FragmentationTree
-	public String spectrumJSONString(MutableMs2Spectrum spectrum, FTree tree) {
+	// MS1 vs. simulated MS1 isotope pattern (mirror)
+	public String ms1MirrorJSON(SimpleSpectrum pattern1, SimpleSpectrum pattern2, FTree ftree){
+		JsonObject spectra = ms1MirrorIsotope(pattern1, pattern2);
+		if (ftree != null)
+			annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(ftree, pattern1));
+		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		return gson.toJson(spectra);
+	}
+
+	// MS1 spectrum (single)
+	public String ms1JSON(SimpleSpectrum pattern1){
+		JsonObject spectra = ms1Spectrum(pattern1);
+		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		return gson.toJson(spectra);
+	}
+	
+	// MS2 Spectrum with FragmentationTree (single)
+	public String ms2JSON(MutableMs2Spectrum spectrum, FTree tree) {
 		Fragment[] fragments = annotate(spectrum, tree);
 		JsonObject jSpectrum = ms2Annotated(spectrum, fragments);
 		annotatePeakPairs(jSpectrum, tree, fragments);
@@ -103,10 +110,21 @@ public class SpectraJSONWriter{
 		JsonObject spectrum1 = spectrum2json(pattern1);
 		JsonObject spectrum2 = spectrum2json(pattern2);
 		spectrum1.addProperty("name", "MS1");
-		spectrum2.addProperty("name", "MS1_simulated_isotope_pattern");
+		spectrum2.addProperty("name", "MS1 simulated isotope pattern");
 		JsonArray spectra = new JsonArray();
 		spectra.add(spectrum1);
 		spectra.add(spectrum2);
+		j.add("spectra", spectra);
+		return j;
+	}
+
+	protected JsonObject ms1Spectrum(SimpleSpectrum pattern1){
+		final JsonObject j = new JsonObject();
+		j.addProperty("massDeviation", 0);					   // TODO:
+		JsonObject spectrum1 = spectrum2json(pattern1);
+		spectrum1.addProperty("name", "MS1");
+		JsonArray spectra = new JsonArray();
+		spectra.add(spectrum1);
 		j.add("spectra", spectra);
 		return j;
 	}
