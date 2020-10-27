@@ -48,6 +48,7 @@ include ':chemical_db_oss:chemdb_utils_oss'
 include ':error_reporter_oss'
 include 'ml_utils'
 include ':rest_service_oss:rest_core_oss'
+include 'agents'
 
 
 // 1. remove them for first sirius build (build reduced).
@@ -64,5 +65,4 @@ include ':canopus:canopus_predict_oss'
 include ':confidence_score'
 include ':confidence_score:confidence_score_train'
 include ':confidence_score:confidence_score_predict_oss'
-
 

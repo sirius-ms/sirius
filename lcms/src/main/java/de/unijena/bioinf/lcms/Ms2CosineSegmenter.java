@@ -269,7 +269,7 @@ public class Ms2CosineSegmenter {
                 } else if (cosine.similarity < 0.75) {
                     if (queryLeft.spectrum.size() <= 3 || queryRight.spectrum.size() <= 3) {
                         //System.out.println("Low quality MSMS");
-                    } else if (cosine.shardPeaks < Math.min(queryLeft.spectrum.size(),queryRight.spectrum.size())*0.33) {
+                    } else {
                         //System.out.println("Split segments");
                         final ChromatographicPeak.Segment left = mutableChromatographicPeak.getSegmentForScanId(segmentIds[j]).get();
                         ions.add(instance.createMs2Ion(sample, merged, entry.getKey(), left));

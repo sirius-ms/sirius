@@ -21,6 +21,7 @@
 version =  parent.fingeridVersion
 
 dependencies {
+    annotationProcessor project(':default_properties:processor')
     compile project(":rest_service_oss:rest_client_oss")
     compile project(':chemical_db_oss:chemdb_rest_oss')
     compile project(':chemical_db_oss:chemdb_utils_oss')

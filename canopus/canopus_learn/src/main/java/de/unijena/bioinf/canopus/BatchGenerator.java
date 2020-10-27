@@ -27,6 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class BatchGenerator implements Runnable {
 
+    protected boolean USE_RING_BUFFER = false;
+
     protected final ArrayBlockingQueue<TrainingBatch> batches;
     protected final TrainingData trainingData;
     protected final AtomicInteger iterationNum;
@@ -36,19 +38,22 @@ public class BatchGenerator implements Runnable {
     protected final ExecutorService service;
     protected volatile boolean stop;
 
+    protected boolean npc;
+
     public BatchGenerator(TrainingData trainingData, int capacity) {
         this.trainingData = trainingData;
         this.batches = new ArrayBlockingQueue<TrainingBatch>(capacity);
         this.stop = false;
         this.iterationNum = new AtomicInteger(0);
         this.service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        this.ringBuffer = new BufferedTrainData(trainingData, capacity, 16000);
+        this.ringBuffer = USE_RING_BUFFER ? new BufferedTrainData(trainingData, capacity, 16000) : null;
+        this.npc = false;
     }
 
     public TrainingBatch poll(int k) {
         if (stop) return null;
         else try {
-            if (k % 2 == 1) {
+            if (USE_RING_BUFFER && k % 2 == 1) {
                 if (!ringBuffer.done.isEmpty()) {
                     synchronized (ringBuffer) {
                         BufferedTrainData.Buffer b = ringBuffer.getDone();
@@ -76,7 +81,11 @@ public class BatchGenerator implements Runnable {
     public void run() {
         while (!stop) {
             try {
-                batches.put(trainingData.generateBatch(iterationNum.incrementAndGet(), ringBuffer, service));
+                if (npc) {
+                    batches.put(trainingData.generateNPCBatch(iterationNum.incrementAndGet(), service));
+                } else {
+                    batches.put(trainingData.generateBatch(iterationNum.incrementAndGet(), ringBuffer, service));
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

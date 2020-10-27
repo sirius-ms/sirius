@@ -25,6 +25,7 @@ import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 import de.unijena.bioinf.GibbsSampling.model.Reaction;
 import de.unijena.bioinf.GibbsSampling.model.ReactionStepSizeScorer;
+import de.unijena.bioinf.jjobs.BasicJJob;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -108,6 +109,17 @@ public class ReactionScorer implements EdgeScorer {
     }
 
     public void clean() {
+    }
+
+    @Override
+    public BasicJJob<Object> getPrepareJob(Candidate[][] var1) {
+        return new BasicJJob<Object>() {
+            @Override
+            protected Object compute() throws Exception {
+                prepare(var1);
+                return true;
+            }
+        };
     }
 
     public double[] normalization(Candidate[][] candidates, double minimum_number_matched_peaks_losses) {

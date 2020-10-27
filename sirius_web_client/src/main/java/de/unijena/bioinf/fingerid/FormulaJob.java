@@ -22,9 +22,8 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
-import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.utils.NetUtils;
@@ -56,7 +55,7 @@ public class FormulaJob extends BasicJJob<RestWithCustomDatabase.CandidateResult
     protected RestWithCustomDatabase.CandidateResult compute() throws Exception {
         return NetUtils.tryAndWait(() -> {
             final RestWithCustomDatabase.CandidateResult result = searchDatabase.loadCompoundsByFormula(formula, dbs, includeRestAllDb);
-
+            /* we no longer store protonated compounds as protonated compounds
             final CompoundCandidateChargeState chargeState = CompoundCandidateChargeState.getFromPrecursorIonType(ionType);
             if (chargeState != CompoundCandidateChargeState.NEUTRAL_CHARGE) {
                 final MolecularFormula hydrogen = MolecularFormula.parseOrThrow("H");
@@ -66,6 +65,7 @@ public class FormulaJob extends BasicJJob<RestWithCustomDatabase.CandidateResult
 
                 result.merge(protonated);
             }
+             */
 
             return result;
         }, this::checkForInterruption);
