@@ -92,9 +92,9 @@ public class FingeridSubToolJob extends InstanceJob {
         EnumSet<PredictorType> predictors = type.toPredictors(inst.getExperiment().getPrecursorIonType().getCharge());
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API.getStructurePredictor(predictors.iterator().next()), this::checkForInterruption);
 
-        final FingerIDJJob<?> job = csi.makeFingerIDJJob(inst.getExperiment(),
-                formulaResults.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class), res.getScoreObject()))
-                        .collect(Collectors.toList()), enableConfidence);
+        final FingerIDJJob<?> job = new FingerIDJJob<>(csi, inst.getExperiment(),
+                formulaResults.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class), res.getScoreObject())).collect(Collectors.toList()),
+                enableConfidence);
 
         // do computation and await results
         List<FingerIdResult> result = submitJob(job).awaitResult();
