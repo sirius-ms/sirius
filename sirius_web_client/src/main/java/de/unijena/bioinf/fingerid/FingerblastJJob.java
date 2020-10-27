@@ -71,7 +71,6 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
             throw new IllegalArgumentException("No Input Data found.");
     }
 
-    //todo @Nils --> for adding the Bayes-Net-Construction job and handle it, maybe make a new field with prepared scoringMethod etc.
     @Override
     public synchronized void handleFinishedRequiredJob(JJob required) {
         super.handleFinishedRequiredJob(required);

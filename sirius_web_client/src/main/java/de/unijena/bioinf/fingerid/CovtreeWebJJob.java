@@ -50,18 +50,19 @@ public class CovtreeWebJJob extends WebJJob<CovtreeWebJJob, BayesnetScoring, Cov
 
     @Override
     protected BayesnetScoring makeResult() {
-        return covtree; //todo @Nils create useful output for scoring method here
+        return covtree;
     }
 
     @Override
     protected synchronized CovtreeWebJJob updateTyped(@NotNull JobUpdate<CovtreeJobOutput> update) {
         if (updateState(update)) {
-            if (update.data != null)  //todo @Nils create the output here and save it in valuable way to create the scoring method from it.
+            if (update.data != null)
                 update.data.getCovtreeOpt().ifPresent(ct -> {
                     try{
                         BufferedReader bf = new BufferedReader(new StringReader(ct));
                         covtree =  BayesnetScoringBuilder.readScoring(bf, fpVersion, BayesianScoringUtils.calculatePseudoCount(performances),BayesianScoringUtils.allowOnlyNegativeScores);
                     } catch (IOException e) {
+                        // todo @Markus: log this exception and handle it
                         covtree = null; // Is there a better error handling?
                     }
                 });

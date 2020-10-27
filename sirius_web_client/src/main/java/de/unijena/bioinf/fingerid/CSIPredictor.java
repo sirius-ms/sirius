@@ -42,7 +42,6 @@ import java.util.Map;
  * This is the API class for CSI:FingerID and Fingerblast.
  * We init a separate predictor object for positive and negative ionization
  */
-//todo @Nils: cahnge parameter so that it contains all field we need for all possible scoring (CSI, Bayesnet, bayesnetDynamic)
 public class CSIPredictor extends AbstractStructurePredictor<Parameters.UnpreparedScoring<BayesnetScoring,Parameters.FP>> {
     protected MaskedFingerprintVersion fpVersion;
     protected PredictionPerformance[] performances;
@@ -56,7 +55,6 @@ public class CSIPredictor extends AbstractStructurePredictor<Parameters.Unprepar
 
     @Override
     public FingerblastScoring<?> getPreparedFingerblastScorer(Parameters.UnpreparedScoring<BayesnetScoring,Parameters.FP> parameters) {
-        //todo @Nils check which parameters the scoring needs and add them
         /*if(!initialized) {
             initialize();
         }*/

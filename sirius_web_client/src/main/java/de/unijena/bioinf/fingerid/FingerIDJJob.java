@@ -257,12 +257,11 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
             annotationJJobs.put(predictionJob, fres);
 
             // fingerblast job: score candidate fingerprints against predicted fingerprint
-            //todo @Nils 1. implement a prepare job that gets the tree for the given molecular formula,
-            // 2. use this prepared BayesnetScoring, as parameter for the FingerblastJJob
-
             final BayesnetScoring bayesnetScoring = NetUtils.tryAndWait(() ->
                     predictor.csiWebAPI.getBayesnetScoring(predictor.predictorType,fingeridInput.getMolecularFormula()),
                     this::checkForInterruption);
+
+
 
             final FingerblastJJob blastJob;
             if(bayesnetScoring != null) {
@@ -281,7 +280,6 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
             blastJob.addRequiredJob(predictionJob);
             annotationJJobs.put(submitSubJob(blastJob), fres);
 
-            //todo @Nils: the confidence scorer has to be adjusted to the specific scoring with a bayesian network
             //confidence job: calculate confidence of scored candidate list
             if (predictor.getConfidenceScorer() != null && computeConfidence) {
                 final ConfidenceJJob confidenceJJob = new ConfidenceJJob(predictor, experiment, fingeridInput);
