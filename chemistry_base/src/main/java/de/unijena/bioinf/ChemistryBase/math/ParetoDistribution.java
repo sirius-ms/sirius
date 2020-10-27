@@ -24,6 +24,8 @@ package de.unijena.bioinf.ChemistryBase.math;
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 
+import java.util.Objects;
+
 import static java.lang.Math.*;
 
 @HasParameters
@@ -111,6 +113,15 @@ public final class ParetoDistribution extends RealDistribution {
         }
         return new ParetoDistribution(values.length / m, xmin);
     }
+    public static ParetoDistribution learnFromData(float xmin, float[] values) {
+        if (xmin <= 0) throw new IllegalArgumentException("xmin have to be greater than zero, but " + xmin + " is given!");
+        double m = 0d;
+        for (float v : values) {
+            if (v <= 0) throw new IllegalArgumentException("Negative values are not allowed, as they should have probability of zero!");
+            m += Math.log(v/xmin);
+        }
+        return new ParetoDistribution(values.length / m, xmin);
+    }
 
     public double getQuantile(double quantile) {
         return xmin / Math.pow(1d-quantile, 1d/k);
@@ -119,6 +130,20 @@ public final class ParetoDistribution extends RealDistribution {
     @Override
     public String toString() {
         return "ParetoDistribution(xmin=" + xmin + ", k=" + k + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ParetoDistribution that = (ParetoDistribution) o;
+        return Double.compare(that.k, k) == 0 &&
+                Double.compare(that.xmin, xmin) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(k, xmin);
     }
 
     @HasParameters

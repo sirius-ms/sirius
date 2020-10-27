@@ -114,6 +114,8 @@ public class ChromatogramBuilder {
             }
         }
         MutableChromatographicPeak concat = MutableChromatographicPeak.concat(leftTrace, rightTrace);
+        if (concat.numberOfScans()<=2)
+            return Optional.empty();
 
         // make statistics about deviations within
 
@@ -147,19 +149,27 @@ public class ChromatogramBuilder {
         return Optional.of(concat);
     }
 
+
+    /*
+    - first split a chromatogram into maxima and minima
+    - calculate a "noise level" which is mainly the 33% quantile of the slopes in the chromatogram
+    - obviously, if a chromatogram is very noise, it is very zick-zack, and the maxima and minima do not mean anything
+    - smoothing removes those extrema again.  It is done iteratively: in each round
+      we only remove as many extrema, such that still K many extrema remain
+      - also, in each round we increase the requirement for smoothing: if we want to remove
+      more extrema we have to see larger slopes
+      - all this stuff could also be solved without iteration by first sorting all extrema by their slope and then search for the "bend" (ellbow).
+     */
     private Extrema detectExtrema(MutableChromatographicPeak peak) {
         // if a chromatographic peak is very long, a single noise level might be problematic. We split it in
-        // smaller subgroups. I would say 25 scans are enough to estimate a noise level. For each consecutive 25
-        // scans we define a separate noise lel
+        // smaller subgroups. I would say 25 scans are enough to estimate a noise level. For each consecutive 25 scans we define a separate noise level
 
         float[] noiseLevels = new float[peak.numberOfScans()];
+        final TDoubleArrayList medianSlope = new TDoubleArrayList(peak.numberOfScans());
         if (peak.numberOfScans()>=10){
-            final TDoubleArrayList medianSlope = new TDoubleArrayList(peak.numberOfScans());
-            final TDoubleArrayList intensityQuantile = new TDoubleArrayList();
             int k = 0;
             while (k < peak.numberOfScans()) {
                 medianSlope.clearQuick();
-                intensityQuantile.clearQuick();
                 int start = k;
                 int end = k + 10;
                 if (end + 10 > peak.numberOfScans()) end = peak.numberOfScans();
@@ -167,20 +177,28 @@ public class ChromatogramBuilder {
                 double noiseLevel = 2*sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(middle), peak.getMzAt(middle));
                 for (int i=start; i < end; ++i) {
                     if (i>0) medianSlope.add(Math.abs(peak.getIntensityAt(i) - peak.getIntensityAt(i - 1)));
-                    intensityQuantile.add(peak.getIntensityAt(i));
                 }
                 medianSlope.sort();
-                intensityQuantile.sort();
-                noiseLevel = Math.max(noiseLevel, medianSlope.getQuick((int)(medianSlope.size()*0.33)));
-                noiseLevel = Math.max(noiseLevel, intensityQuantile.getQuick((int)(intensityQuantile.size()*0.1))/2d);
+                noiseLevel = Math.max(noiseLevel, medianSlope.getQuick((int)(medianSlope.size()*0.5)));
+                //noiseLevel = Math.max(noiseLevel, intensityQuantile.getQuick((int)(intensityQuantile.size()*0.1))/2d);
                 for (int i=start; i < end; ++i) noiseLevels[i] = (float)noiseLevel;
                 k=end;
             }
         } else {
             for (int i=0; i < peak.numberOfScans(); ++i) {
                 noiseLevels[i] = 2*(float)sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(i), peak.getMzAt(i));
+                if (i>0) medianSlope.add(peak.getIntensityAt(i)-peak.getIntensityAt(i-1));
+            }
+            medianSlope.sort();
+            if (medianSlope.size()>0) {
+                for (int i = 0; i < peak.numberOfScans(); ++i) {
+                    noiseLevels[i] = Math.max(noiseLevels[i], (float)medianSlope.getQuick((int)(medianSlope.size()*0.5)));
+                }
             }
         }
+
+        double mxm = 0d;
+        for (int i=0; i < peak.numberOfScans(); ++i) mxm = Math.max(mxm, peak.getIntensityAt(i));
 
         final Extrema extrema = new Extrema();
         boolean minimum = true;
@@ -188,20 +206,20 @@ public class ChromatogramBuilder {
             final double a = (k==0) ? 0 : peak.getIntensityAt(k-1);
             final double b = peak.getIntensityAt(k);
             final double c = peak.getIntensityAt(k+1);
-
+            final double slope = Math.min(Math.abs(b-a),Math.abs(b-c));
             if ((b-a) < 0 && (b - c) < 0) {
                 // minimum
                 if (minimum) {
                     if (extrema.lastExtremumIntensity() > b)
                         extrema.replaceLastExtremum(k, b);
-                } else if (extrema.lastExtremumIntensity() - b > noiseLevels[k]) {
+                } else if (extrema.lastExtremumIntensity() - b > noiseLevels[k] || slope/extrema.lastExtremum() >= 0.25) {
                     extrema.addExtremum(k, b);
                     minimum = true;
                 }
             } else if ((b-a)>0 && (b-c)>0) {
                 // maximum
                 if (minimum) {
-                    if (b - extrema.lastExtremumIntensity() > noiseLevels[k]) {
+                    if (b - extrema.lastExtremumIntensity() > noiseLevels[k] || slope/b>=0.25) {
                         extrema.addExtremum(k, b);
                         minimum = false;
                     }
@@ -213,7 +231,6 @@ public class ChromatogramBuilder {
             }
 
         }
-
         return extrema;
 
     }

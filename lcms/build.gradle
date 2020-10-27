@@ -5,6 +5,7 @@ allprojects {
 dependencies {
     compile project(':chemistry_base')
     compile project(':spectral_alignment')
+    compile project(':mass_decomposition:mass_decomposer')
     //internal
     compile group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
     // external

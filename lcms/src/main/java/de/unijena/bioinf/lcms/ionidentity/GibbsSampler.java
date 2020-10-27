@@ -113,7 +113,7 @@ class GibbsSampler {
         stack.add(initial);
         while (!stack.isEmpty()) {
             IonNode node = stack.remove(stack.size()-1);
-            assert node.assignment==null;
+            if (node.assignment!=null) continue; // was already visited
             Set<PrecursorIonType> set = node.possibleIonTypes();
             // we always add the "unknown" ion type
             set.add(PrecursorIonType.unknown(node.getFeature().getRepresentativeIon().getPolarity()));

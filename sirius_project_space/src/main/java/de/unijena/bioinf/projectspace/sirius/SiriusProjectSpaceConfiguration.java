@@ -22,8 +22,10 @@ package de.unijena.bioinf.projectspace.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfiguration;
 
+@Deprecated
 public class SiriusProjectSpaceConfiguration {
 
     public static void configure(ProjectSpaceConfiguration configuration) {
@@ -36,6 +38,7 @@ public class SiriusProjectSpaceConfiguration {
         configuration.registerComponent(FormulaResult.class, FTree.class, new TreeSerializer());
 
 
+        configuration.registerComponent(CompoundContainer.class, LCMSPeakInformation.class, new  LCMSPeakSerializer());
 
     }
 

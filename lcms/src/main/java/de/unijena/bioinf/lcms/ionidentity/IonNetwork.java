@@ -27,10 +27,7 @@ import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.align.AlignedFeatures;
 import de.unijena.bioinf.lcms.quality.Quality;
-import de.unijena.bioinf.model.lcms.CorrelatedIon;
-import de.unijena.bioinf.model.lcms.FragmentedIon;
-import de.unijena.bioinf.model.lcms.IonGroup;
-import de.unijena.bioinf.model.lcms.Polarity;
+import de.unijena.bioinf.model.lcms.*;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
@@ -312,9 +309,13 @@ public class IonNetwork {
         private Edge.Type type;
 
         public CorAlignedIon(CorrelatedIon ion, FragmentedIon orig, Edge.Type type) {
-            super(Polarity.of(orig.getPolarity()), null, null, Quality.UNUSABLE, ion.ion.getPeak(), ion.ion.getSegment());
+            super(Polarity.of(orig.getPolarity()), null, null, Quality.UNUSABLE, ion.ion.getPeak(), ion.ion.getSegment(),new Scan[0]);
             this.type = type;
             this.ion = ion;
+        }
+
+        public boolean isCompound() {
+            return false;
         }
     }
 
