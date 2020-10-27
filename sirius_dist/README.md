@@ -1,6 +1,5 @@
-This package is **not** intended to contain any source code. It just holds
-different gradle configurations to build different packages/installer/distribution of 
-SIRIUS.
+This package is **not** intended to contain any source code. 
+It just holds different gradle configurations to build different packages/installer/distribution of SIRIUS.
 
 ##### Run Main class with CLP ILP-Solver support
 * Run gradle task to download CLP libs (`downloadCLP`)
