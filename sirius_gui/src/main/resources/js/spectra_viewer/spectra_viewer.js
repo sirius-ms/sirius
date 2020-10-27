@@ -1,7 +1,7 @@
 // General Settings
-var svg, tooltip, peakArea, brush, idleTimeout, data, w, h, xmin_tmp, xmax_tmp, annotated,
+var svg, tooltip, peakArea, brush, idleTimeout, data, w, h, xmin_tmp, xmax_tmp,
 current = {w, h},
-margin = {top: 25, right: 30, bottom: 75, left:60},
+margin = {top: 25, right: 30, bottom: 70, left:60},
 peakWidth = 2,
 decimal_place = 4,
 col = {annotation: "lightcoral", spec1: "royalblue",  spec2: "limegreen"},
@@ -27,23 +27,26 @@ var mouseover = function() {
 };
 
 var mousemove = function(d) {
+    // NOTE: These distances might need to be changed, when the font size and content of hover are changed.
     if ("formula" in d) {
-        annotated = true;
         tooltip.html("Formula: " + d.formula + "<br>m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place));
+        if (d3.mouse(this)[1]+45+60 > current.h) {
+            tooltip.style("top", (d3.mouse(this)[1]-30 + "px"));
+        } else {
+            tooltip.style("top", (d3.mouse(this)[1]+45 + "px"));
+        }
     } else {
-        annotated = false;
         tooltip.html("m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place));
+        if (d3.mouse(this)[1]+45+40 > current.h) {
+            tooltip.style("top", (d3.mouse(this)[1]-30 + "px"));
+        } else {
+            tooltip.style("top", (d3.mouse(this)[1]+45 + "px"));
+        }
     }
-    // These distances might need to be changed, when the font size ist changed.
     if (d3.mouse(this)[0]+70+130 > current.w) {
         tooltip.style("left", (d3.mouse(this)[0]-70 + "px"));
     } else {
         tooltip.style("left", (d3.mouse(this)[0]+70 + "px"));
-    }
-    if (d3.mouse(this)[1]+45+60 > current.h) {
-        tooltip.style("top", (d3.mouse(this)[1]-30 + "px"));
-    } else {
-        tooltip.style("top", (d3.mouse(this)[1]+45 + "px"));
     }
 };
 
@@ -122,14 +125,12 @@ function init() {
 
     peakArea.append("g")
         .attr("id", "brushArea");
-
-    brush = d3.brushX().extent( [ [0,0], [w, h] ])
 };
 
 function spectrumPlot(spectrum) {
     let mzs = spectrum.peaks.map(d => d.mz);
-    let min = d3.min(mzs)-0.5;
-    let max = d3.max(mzs)+0.5;
+    let min = d3.min(mzs)-5;
+    let max = d3.max(mzs)+5;
     if (xmin_tmp === undefined || xmin_tmp === null) {
         xmin_tmp = min;
         xmax_tmp = max;
@@ -168,7 +169,7 @@ function spectrumPlot(spectrum) {
             .attr("y", function(d) { return y(d.intensity); })
             .attr("height", function(d) { return h - y(d.intensity); })
     };
-
+    brush = d3.brushX().extent( [ [0,0], [w, h] ])
     brush.on("end", updateChart);
     peakArea.select("#brushArea").call(brush);
     // add Peaks
@@ -190,7 +191,7 @@ function spectrumPlot(spectrum) {
             .on("mousemove", mousemove)
             .on("mouseleave", function(d) {
                 tooltip.style("opacity", 0);
-                if (annotated) {
+                if ("formula" in d) {
                     d3.select(this).attr("fill", col.spec2);
                 } else {
                     d3.select(this).attr("fill", col.spec1);
@@ -200,15 +201,15 @@ function spectrumPlot(spectrum) {
 function mirrorPlot(spectrum1, spectrum2, view) {
     let mzs1 = spectrum1.peaks.map(d => d.mz);
     let mzs2 = spectrum2.peaks.map(d => d.mz);
-    let min = d3.min([d3.min(mzs1), d3.min(mzs2)])-0.5;
-    let max = d3.max([d3.max(mzs1), d3.max(mzs2)])+0.5;
+    let min = d3.min([d3.min(mzs1), d3.min(mzs2)])-5;
+    let max = d3.max([d3.max(mzs1), d3.max(mzs2)])+5;
     if (xmin_tmp === undefined || xmin_tmp === null) {
         xmin_tmp = min;
         xmax_tmp = max;
     }
     // X axis
     var x = d3.scaleLinear()
-        .range([0, w])
+        .range([0, w-20])
         .domain([xmin_tmp, xmax_tmp]);
     var xAxis;
     if (view === "normal") {
@@ -280,7 +281,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("y", h/2)
             .attr("height", function(d) { return y2(d.intensity); })
     };
-
+    brush = d3.brushX().extent( [ [0,0], [w-20, h] ])
     brush.on("end", updateChart);
     peakArea.select("#brushArea").call(brush);
     // Peaks 1
