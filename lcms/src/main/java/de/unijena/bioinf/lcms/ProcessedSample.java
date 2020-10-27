@@ -22,6 +22,8 @@ package de.unijena.bioinf.lcms;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
+import de.unijena.bioinf.ChemistryBase.ms.NoiseInformation;
+import de.unijena.bioinf.lcms.noise.Ms2NoiseStatistics;
 import de.unijena.bioinf.lcms.noise.NoiseModel;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.lcms.quality.QualityAnnotation;
@@ -43,6 +45,10 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
 
     public final LCMSRun run;
     public final NoiseModel ms1NoiseModel, ms2NoiseModel;
+
+    // ms2 noise model
+    public final NoiseInformation ms2NoiseInformation;
+
     public final ChromatogramCache chromatogramCache;
     public final SpectrumStorage storage;
     public final ChromatogramBuilder builder;
@@ -60,10 +66,11 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
     // can be used for multiple charge detection
     protected RealDistribution intensityAfterPrecursorDistribution;
 
-    ProcessedSample(LCMSRun run, NoiseModel ms1NoiseModel, NoiseModel ms2NoiseModel, ChromatogramCache chromatogramCache, SpectrumStorage storage) {
+    ProcessedSample(LCMSRun run, NoiseModel ms1NoiseModel, Ms2NoiseStatistics ms2NoiseModel, ChromatogramCache chromatogramCache, SpectrumStorage storage) {
         this.run = run;
         this.ms1NoiseModel = ms1NoiseModel;
-        this.ms2NoiseModel = ms2NoiseModel;
+        this.ms2NoiseInformation = ms2NoiseModel.done();
+        this.ms2NoiseModel = ms2NoiseModel.getGlobalNoiseModel();
         this.chromatogramCache = chromatogramCache;
         this.storage = storage;
         this.builder = new ChromatogramBuilder(this);

@@ -21,10 +21,7 @@
 package de.unijena.bioinf.lcms;
 
 import com.google.common.collect.Range;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.CompoundTrace;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.IonTrace;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.Trace;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.*;
 import de.unijena.bioinf.model.lcms.*;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
@@ -75,6 +72,7 @@ class TraceConverter {
         // determine the background and trace
         Range<Integer> range = getCommonRange(segments);
         Range<Integer> background = extendRangeForBackground(mainIon, range);
+        System.out.println(background);
 
         {
             final TIntArrayList scanids = new TIntArrayList();
@@ -92,8 +90,6 @@ class TraceConverter {
             noiseLevels = levels.toArray();
         }
 
-
-
         final ArrayList<IonTrace> adducts = new ArrayList<>(), insources = new ArrayList<>();
         // create Ion traces for each adduct and in-source fragment
         for (CorrelatedIon ion : mainIon.getAdducts()) {
@@ -106,7 +102,10 @@ class TraceConverter {
         this.traceSet = new CoelutingTraceSet(sample.run.getIdentifier(),
                 sample.run.getReference(),
                 new CompoundTrace(isotopeTraces(mainIon), adducts.toArray(IonTrace[]::new),
-                        insources.toArray(IonTrace[]::new)), retentionTime, scanIds, noiseLevels
+                        insources.toArray(IonTrace[]::new)), retentionTime, scanIds, noiseLevels,
+                Arrays.stream(mainIon.getMergedScans()).mapToInt(Scan::getIndex).toArray(), Arrays.stream(mainIon.getMergedScans()).mapToLong(Scan::getRetentionTime).toArray(),
+                mainIon.getAdditionalInfos().toArray(CompoundReport[]::new)
+
         );
 
     }
@@ -121,13 +120,13 @@ class TraceConverter {
     }
 
     private Trace toTrace(ChromatographicPeak.Segment segment) {
-        final int indexOffset = Arrays.binarySearch(this.scanIds, segment.getStartIndex());
+        final int indexOffset = Arrays.binarySearch(this.scanIds, segment.getStartScanNumber());
         if (indexOffset < 0) {
             throw new RuntimeException("ScanPoint " + segment.getPeak().getScanNumberAt(0) + " is not contained in trace " + Arrays.toString(this.scanIds));
         }
 
-        final int lastIndex = Arrays.binarySearch(this.scanIds, segment.getEndIndex());
-        if (indexOffset < 0) {
+        final int lastIndex = Arrays.binarySearch(this.scanIds, segment.getEndScanNumber());
+        if (lastIndex < 0) {
             throw new RuntimeException("ScanPoint " + segment.getPeak().getScanNumberAt(segment.getEndIndex()) + " is not contained in trace " + Arrays.toString(this.scanIds));
         }
 
@@ -136,15 +135,18 @@ class TraceConverter {
         int backgroundRight = lastIndex;
         {
             final int left = background.getLeftEdge().getScanNumber();
-            final int right = background.getLeftEdge().getScanNumber();
+            final int right = background.getRightEdge().getScanNumber();
             for (; backgroundLeft>=0 && this.scanIds[backgroundLeft] >= left; --backgroundLeft) {
 
             }
-            ++backgroundLeft;
+            if (backgroundLeft< indexOffset) ++backgroundLeft;
             for (; backgroundRight<scanIds.length && this.scanIds[backgroundRight] <= right; ++backgroundRight) {
 
             }
-            --backgroundRight;
+            if (backgroundRight>lastIndex) --backgroundRight;
+            if (scanIds[backgroundRight] > segment.getPeak().getRightEdge().getScanNumber()) {
+                System.err.println("WTF is going on?");
+            }
         }
         int length = lastIndex-indexOffset+1;
         int completeLength = backgroundRight-backgroundLeft+1;
@@ -201,7 +203,7 @@ class TraceConverter {
         return Range.closed(
             mainIon.getPeak().getScanNumberAt(Math.max(mainIon.getSegment().getStartIndex()-extension, 0)),
                 mainIon.getPeak().getScanNumberAt(Math.min(mainIon.getSegment().getEndIndex()+extension, mainIon.getPeak().numberOfScans()-1))
-        );
+        ).span(range);
     }
 
     private Range<Integer> getCommonRange(ArrayList<ChromatographicPeak.Segment> segments) {

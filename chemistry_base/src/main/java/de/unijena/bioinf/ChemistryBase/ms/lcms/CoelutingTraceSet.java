@@ -37,13 +37,38 @@ public class CoelutingTraceSet {
     @Nonnull  protected final int[] scanIds; // the INDEX of the spectrum
     @Nonnull protected final float[] noiseLevels;
 
-    public CoelutingTraceSet(@Nonnull String sampleName, @Nonnull MsDataSourceReference sampleRef, @Nonnull CompoundTrace trace, @Nonnull long[] retentionTimes, @Nonnull int[] scanIds, @Nonnull float[] noiselevels) {
+    /**
+     * the IDs of scans that are part of the merged MS/MS spectrum
+     */
+    @Nonnull protected final int[] ms2ScanIds;
+    @Nonnull protected final long[] ms2RetentionTimes;
+
+    @Nonnull protected final CompoundReport[] reports;
+
+
+    public CoelutingTraceSet(@Nonnull String sampleName, @Nonnull MsDataSourceReference sampleRef, @Nonnull CompoundTrace trace, @Nonnull long[] retentionTimes, @Nonnull int[] scanIds, @Nonnull float[] noiselevels, int[] ms2Scans, long[] ms2RetentionTimes, CompoundReport[] reports) {
         this.sampleName = sampleName;
         this.sampleRef = sampleRef;
         this.ionTrace = trace;
         this.retentionTimes = retentionTimes;
         this.scanIds = scanIds;
         this.noiseLevels = noiselevels;
+        this.ms2ScanIds = ms2Scans;
+        this.ms2RetentionTimes = ms2RetentionTimes;
+        this.reports = reports;
+        if (getMs2RetentionTimes().length!=getMs2ScanIds().length || retentionTimes.length!=scanIds.length) {
+            throw new IllegalArgumentException("different number of scan ids and retention times");
+        }
+    }
+
+    @Nonnull
+    public long[] getMs2RetentionTimes() {
+        return ms2RetentionTimes;
+    }
+
+    @Nonnull
+    public int[] getMs2ScanIds() {
+        return ms2ScanIds;
     }
 
     @Nonnull
@@ -74,5 +99,10 @@ public class CoelutingTraceSet {
     @Nonnull
     public float[] getNoiseLevels() {
         return noiseLevels;
+    }
+
+    @Nonnull
+    public CompoundReport[] getReports() {
+        return reports;
     }
 }

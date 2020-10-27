@@ -23,6 +23,8 @@ package de.unijena.bioinf.model.lcms;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.Trace;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
@@ -40,7 +42,6 @@ public class Feature implements Annotated<DataAnnotation> {
 
     protected final LCMSRun origin;
     protected final double mz, intensity;
-    protected final ScanPoint[] trace;
     protected final SimpleSpectrum[] correlatedFeatures; // isotopes of ion and all correlated ions
     protected final SimpleSpectrum isotopes; // isotopes of ion itself
     protected final SimpleSpectrum[] ms2Spectra;
@@ -53,14 +54,15 @@ public class Feature implements Annotated<DataAnnotation> {
     protected final Quality peakShapeQuality, ms1Quality, ms2Quality;
     protected double chimericPollution;
 
-    // debug
-    public ScanPoint[] completeTraceDebug;
+    protected final CoelutingTraceSet traceset;
+    protected final NoiseInformation ms2NoiseModel;
 
-    public Feature(LCMSRun origin, double mz, double intensity, ScanPoint[] trace, SimpleSpectrum[] correlatedFeatures, int isotope, SimpleSpectrum[] ms2Spectra, CollisionEnergy collisionEnergy,PrecursorIonType ionType, Set<PrecursorIonType> alternativeIonTypes, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality, double chimericPollution) {
+    public Feature(LCMSRun origin, double mz, double intensity, CoelutingTraceSet traceset, SimpleSpectrum[] correlatedFeatures, int isotope, SimpleSpectrum[] ms2Spectra, NoiseInformation noiseInformation, CollisionEnergy collisionEnergy,PrecursorIonType ionType, Set<PrecursorIonType> alternativeIonTypes, UnivariateFunction rtRecalibration,Quality peakShapeQuality, Quality ms1Quality, Quality ms2Quality, double chimericPollution) {
         this.origin = origin;
         this.mz = mz;
         this.intensity = intensity;
-        this.trace = trace;
+        this.ms2NoiseModel = noiseInformation;
+        this.traceset = traceset;
         this.correlatedFeatures = correlatedFeatures;
         this.isotopes = this.correlatedFeatures[isotope];
         this.ms2Spectra = ms2Spectra;
@@ -72,6 +74,10 @@ public class Feature implements Annotated<DataAnnotation> {
         this.alternativeIonTypes = alternativeIonTypes;
         this.chimericPollution = chimericPollution;
         this.collisionEnergy=collisionEnergy;
+    }
+
+    public CoelutingTraceSet getTraceset() {
+        return traceset;
     }
 
     public Set<PrecursorIonType> getPossibleAdductTypes() {
@@ -107,7 +113,18 @@ public class Feature implements Annotated<DataAnnotation> {
     }
 
     public ScanPoint[] getTrace() {
-        return trace;
+        final Trace trace = traceset.getIonTrace().getMonoisotopicPeak();
+        ScanPoint[] scans = new ScanPoint[trace.getDetectedFeatureLength()];
+        for (int k=0; k < scans.length; ++k) {
+            final int absoluteIndex = trace.getIndexOffset()+trace.getDetectedFeatureOffset();
+            scans[k] = new ScanPoint(
+                    traceset.getScanIds()[absoluteIndex],
+                    traceset.getRetentionTimes()[absoluteIndex],
+                    trace.getMasses()[k+trace.getDetectedFeatureOffset()],
+                    trace.getIntensities()[k+trace.getDetectedFeatureOffset()]
+            );
+        }
+        return scans;
     }
 
     public SimpleSpectrum[] getCorrelatedFeatures() {
@@ -135,12 +152,9 @@ public class Feature implements Annotated<DataAnnotation> {
 
     public Ms2Experiment toMsExperiment() {
         final MutableMs2Experiment exp = new MutableMs2Experiment();
-        int apex = 0;
-        for (int k=0; k < trace.length; ++k) {
-            if (trace[k].getIntensity()>trace[apex].getIntensity())
-                apex = k;
-        }
-        exp.setName(String.valueOf(trace[apex].getScanNumber()));
+        final Trace peak = traceset.getIonTrace().getMonoisotopicPeak();
+        int apex = traceset.getScanIds()[peak.getAbsoluteIndexApex()];
+        exp.setName(String.valueOf(apex));
         exp.setPrecursorIonType(ionType);
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(getCorrelatedFeatures()));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
@@ -149,7 +163,7 @@ public class Feature implements Annotated<DataAnnotation> {
         }
         exp.setMs2Spectra(ms2Spectra);
         exp.setIonMass(mz);
-        exp.setAnnotation(RetentionTime.class, new RetentionTime(trace[0].getRetentionTime()/1000d, trace[trace.length-1].getRetentionTime()/1000d, trace[apex].getRetentionTime()/1000d));
+        exp.setAnnotation(RetentionTime.class, new RetentionTime(traceset.getRetentionTimes()[peak.absoluteIndexLeft()]/1000d, traceset.getRetentionTimes()[peak.absoluteIndexRight()]/1000d, traceset.getRetentionTimes()[peak.getAbsoluteIndexApex()]/1000d));
 
         boolean chimeric = chimericPollution>=0.33;
 

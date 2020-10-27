@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
+@Deprecated
 public class SampleLibrary {
 
     protected final ArrayList<String> names;
