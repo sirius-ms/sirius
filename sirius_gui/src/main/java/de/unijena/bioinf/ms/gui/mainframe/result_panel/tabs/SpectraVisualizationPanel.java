@@ -79,11 +79,9 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 		northPanel.setFloatable(false);
 
 		JLabel l = new JLabel("Mode");
-		l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
-		String modes[] = {"MS1", "MS1 mirror-plot", "MS2"};
-		modesBox = new JComboBox<>(modes);
+		l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));		
+		modesBox = new JComboBox<>();
 		modesBox.addActionListener(this);
-		modesBox.setSelectedItem("MS1 mirror-plot");
 		northPanel.add(l);
 		northPanel.add(modesBox);
 
@@ -108,11 +106,13 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == modesBox){
-			if (sre != null && experiment != null)
-				drawSpectra(experiment, sre, (String) modesBox.getSelectedItem());
+			Object sel = modesBox.getSelectedItem();
+			if (sel != null && !(experiment == null && sre == null))
+				drawSpectra(experiment, sre, (String) sel);
 		}
 	}
 
+	@Deprecated
 	private void debugWriteSpectra(String jsonstring){
 		String filename = "/tmp/test_spectra.json";
 		try {
@@ -129,55 +129,63 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 	private void drawSpectra(InstanceBean experiment, FormulaResultBean sre, String mode){
 		String jsonSpectra;
 		SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
-		FTree ftree = sre.getFragTree().orElse(null);
-		if (ftree == null){
-			System.err.println("Cannot draw spectra: FragTree cannot be retrieved!");
-			return;
-		}
-
-		switch (mode){
-		case "MS1 mirror-plot":
+		
+		if (mode.contains("MS1")){
 			List<SimpleSpectrum> spectra1 = experiment.getMs1Spectra();
 			if (spectra1.size() == 0){
 				System.err.println("Cannot draw MS1 mirror-plot: Spectra cannot be retrieved!");
 				return;
 			}
-			IsotopePattern ip = ftree.getAnnotationOrNull(IsotopePattern.class);
-			jsonSpectra = spectraWriter.spectraJSONString(
-				spectra1.get(0 // TODO: are there cases with more than one?
-					), ip.getPattern(), ftree);
-			break;
-		case "MS2":
+			if (mode.equals("MS1")){
+				jsonSpectra = spectraWriter.ms1JSON(spectra1.get(0));
+			} else if (mode.equals("MS1 mirror-plot")){
+				FTree ftree = sre.getFragTree().orElse(null);
+				IsotopePattern ip = ftree.getAnnotationOrNull(IsotopePattern.class);
+				jsonSpectra = spectraWriter.ms1MirrorJSON(
+					spectra1.get(0 // TODO: are there cases with more than one?
+						), ip.getPattern(), ftree);
+			} else {
+				System.err.println("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
+				return;
+			}			
+		} else if (mode.equals("MS2")) {
 			List<MutableMs2Spectrum> spectra2 = experiment.getMs2Spectra();
-			if (spectra2.size() == 0){
-				System.err.println("Cannot draw MS1 mirror-plot: Spectra cannot be retrieved!");
+			if (spectra2.size() == 0) {
+				System.err.println("Cannot draw MS2 plot: Spectra cannot be retrieved!");
 				return;
 			}
-			jsonSpectra = spectraWriter.spectrumJSONString(spectra2.get(
-							spectra2.size() - 1 // should me merged MS/MS, TODO: verify
-					), ftree);
-			break;
-		case "MS1": // TODO: implement: same JSON or remove second spectrum?
-		default:
+			jsonSpectra = spectraWriter.ms2JSON(spectra2.get(
+													spectra2.size() - 1 // should me merged MS/MS, TODO: verify
+													), sre.getFragTree().orElse(null));
+		} else {
 			System.err.println("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
 			return;
 		}
 		debugWriteSpectra(jsonSpectra); // FIXME: DEBUG
 		browser.loadData(jsonSpectra);
-	}	
+	}
 
 	@Override
 	public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
-		if (sre != null) {
-			// store data to switch between modes without having to switch to other results
-			this.experiment = experiment;
-			this.sre = sre;
-			drawSpectra(experiment, sre, (String) modesBox.getSelectedItem());
-		} else {
-			this.experiment = null;
-			this.sre = null;
-			browser.clear();
+		// System.out.printf("results Changed; sre: %s, experiment: %s%n", sre, experiment);
+		if ((this.experiment == null ^ experiment == null) || (this.sre == null ^ sre == null)){
+			// update modeBox elements
+			modesBox.removeAllItems();
+			if (experiment != null) {
+				modesBox.addItem("MS1");
+				if (sre != null) {
+					modesBox.addItem("MS1 mirror-plot");
+					modesBox.addItem("MS2");
+				}
+			}
 		}
+		if (experiment != null)
+			drawSpectra(experiment, sre, (String) modesBox.getSelectedItem());
+		 else
+			browser.clear();
+		// store data to switch between modes without having to switch to other results
+		this.experiment = experiment;
+		this.sre = sre;		
 	}
 
 
@@ -188,7 +196,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 		if (ip != null){
 			MolecularFormula form = ip.getCandidate();
 			SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
-			System.out.println(spectraWriter.spectraJSONString(spectra1.get(0), ip.getPattern(), ftree));
+			System.out.println(spectraWriter.ms1MirrorJSON(spectra1.get(0), ip.getPattern(), ftree));
 		}
 		else
 			System.out.println("isotope pattern is null");
@@ -198,7 +206,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 			for (int i = 0; i < spectra2.size(); ++i){
 				System.out.println("=== SpectraWriter: MS2 Spectrum " + spectra2.get(i).getCollisionEnergy()
 								   + ", " + spectra2.get(i).getIonization() + ", " + spectra2.get(i).getScanNumber());
-				String jsonstring = spectraWriter.spectrumJSONString(spectra2.get(i), ftree);
+				String jsonstring = spectraWriter.ms2JSON(spectra2.get(i), ftree);
 				try{
 					BufferedWriter bw = new BufferedWriter(
 						new FileWriter(
