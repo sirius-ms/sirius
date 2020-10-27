@@ -1,15 +1,6 @@
-
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-}
-plugins{
+/*plugins {
     id "com.github.kkdad.dependency-license-report" version "1.14.2"
 }
-
-//apply plugin: 'ManifestClasspath' //this is to keep classpath away from commandline because it may get too long for windows
-
 
 licenseReport {
     // Set output directory for the report data.
@@ -27,7 +18,7 @@ licenseReport {
 
     // List the groups ids to exclude from dependency report. Supports regular expressions.
     // For finer granularity, see: excludes.
-    excludeGroups = ['cplex','gurobi']
+    excludeGroups = ['cplex', 'gurobi']
 
     // List the ids (in module:name format) to exclude from dependency report. Supports regular expressions.
     // By default excludes is empty.
@@ -47,15 +38,15 @@ licenseReport {
     // This is for the allowed-licenses-file in checkLicense Task
     // Accepts File, URL or String path to local or remote file
 //    allowedLicensesFile = new File("$projectDir/config/allowed-licenses.json")
-}
+}*/
 
 ext['jna.version'] = '5.4.0'
 
 dependencies {
 //project
     compile project(':sirius_cli')
-    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
-    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+//    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
+//    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 
 //internal
     compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
@@ -85,216 +76,22 @@ dependencies {
 }
 
 
-/*################### Environment variables ################### */
-mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
-project.ext.set("arch", ['64'])
-project.ext.set("type", ['gui','console'])
 
-/*################### Jar build Stuff ################### */
-jar {
-    enabled = true
-    manifest {
-        attributes 'Main-Class': mainClassName
-    }
-}
 
-/*################### Windows release Stuff ################### */
-project.type.each{t ->
-    project.arch.each { a ->
-        tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
-            group = 'launch4j'
-            mainClassName = project.mainClassName
-            bundledJre64Bit = true
-            bundledJrePath = 'zulu'
-            headerType = t
-            jreRuntimeBits = a
-            outfile = "${project.appName}-${t}-${a}.exe"
-            if(t.equals('gui')){
-                cmdLine = 'gui'
-                //splash is now inside java
-//                splashFileName = "${project.distPath}/sirius-splash.bmp"
-            }
+artifactory {
+    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+    publish {
+        repository {
+            if (version.toString().endsWith('-SNAPSHOT'))
+                repoKey = 'libs-snapshot-local'
+            else
+                repoKey = 'libs-release-local'
 
+            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
+            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+        }
+        defaults {
+            publications('mavenJava')
         }
     }
-}
-
-/*################### Build distributions ################### */
-task distribute { group = 'distribution' }
-distribute.dependsOn ':buildDoku'
-
-distributions {
-    project.arch.each { ar ->
-        def n = "${project.linSuffix}${ar}"
-
-        create(n, {
-            baseName = "${project.appName}-$n"
-            contents {
-                into('lib') {
-                    from("build/install/${project.name}/lib") {
-                        exclude libExclude
-                    }
-                    from("${project.glpkPath}/l${ar}/") {
-                        include('libglpk.so.40')
-                        include('libglpk_java.so')
-                    }
-                    from("${project.clpPath}/l${ar}/")
-                    exclude('*.zip')
-                }
-
-                into("${jre_path}"){
-                    from("${project.jreBuildPath}/zulu${zulu_jre_version}-ca-fx-jre${jre_version}-linux_x${ar}/")
-                }
-
-                into('bin') {
-                    from("build/install/${project.name}/bin") {
-                        exclude("*.bat")
-                    }
-                    from("${project.distPath}"){
-                        exclude('COPYING_OpenMS.txt')
-                    }
-                }
-                into('doc') {
-                    from(project.pdfManualPath)
-                }
-                into('doc/html') {
-                    from("${project.manualPath}/build/html")
-                }
-            }
-        })
-        distribute.dependsOn "${n}DistZip"
-        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
-        getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
-        getTasks().findByPath("${n}DistZip").dependsOn ':downloadJRE'
-        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
-    }
-
-    //crete win32And64 zip tasks
-    project.arch.each { ar ->
-        def n = "${project.winSuffix}${ar}"
-        create(n, {
-
-            baseName = "${project.appName}-$n"
-            contents {
-                into('lib') {
-                    from('build/launch4j/lib') {
-                        exclude libExclude
-                    }
-                }
-                from("${project.glpkPath}/w${ar}/")
-                from("${project.clpPath}/w${ar}/")
-                from("${project.distPath}") {
-                    exclude('sirius-gui')
-                    exclude('COPYING_OpenMS.txt')
-                }
-                into("${jre_path}"){
-                    from("${project.jreBuildPath}/zulu${zulu_jre_version}-ca-fx-jre${jre_version}-win_x${ar}/")
-                }
-                from('build/launch4j') {
-                    include("*-${ar}.exe")
-                }
-                into('doc') {
-                    from(project.pdfManualPath)
-                }
-                into('doc/html') {
-                    from("${project.manualPath}/build/html")
-                }
-            }
-        })
-        distribute.dependsOn "${n}DistZip"
-        getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
-        getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
-        getTasks().findByPath("${n}DistZip").dependsOn ':downloadJRE'
-        getTasks().findByPath("${n}DistZip").dependsOn 'createAllExecutables'
-        getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
-    }
-
-    //create osx zip
-    def n = "${project.macSuffix}64"
-    create(n, {
-        baseName = "${project.appName}-$n"
-        contents {
-            into('lib') {
-                from("build/install/${project.name}/lib") {
-                    exclude libExclude
-                }
-                from("${project.glpkPath}/osx/")
-                from("${project.clpPath}/osx/")
-                exclude('*.zip')
-            }
-
-            into("${jre_path}"){
-                from("${project.jreBuildPath}/zulu${zulu_jre_version}-ca-fx-jre${jre_version}-macosx_x64/")
-            }
-
-            into('bin') {
-                from("build/install/${project.name}/bin") {
-                    exclude("*.bat")
-                }
-                from("${project.distPath}"){
-                    exclude('COPYING_OpenMS.txt')
-                }
-            }
-            into('doc') {
-                from(project.pdfManualPath)
-            }
-            into('doc/html') {
-                from("${project.manualPath}/build/html")
-            }
-        }
-    })
-
-    distribute.dependsOn "${n}DistZip"
-    getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
-    getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
-    getTasks().findByPath("${n}DistZip").dependsOn ':downloadJRE'
-
-    getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
-    project.getTasksByName("distTar", false).each { it.setEnabled(false) }
-    project.getTasksByName("distZip", false).each { it.setEnabled(false) }
-
-    //create libs
-    linux64DistZip.dependsOn 'installDist'
-    installLinux64Dist.dependsOn 'installDist'
-
-    osx64DistZip.dependsOn 'installDist'
-    installOsx64Dist.dependsOn 'installDist'
-
-    win64DistZip.dependsOn 'installDist'
-    installWin64Dist.dependsOn 'installDist'
-
-    //create starter
-    linux64DistZip.dependsOn 'startScripts'
-    installLinux64Dist.dependsOn 'startScripts'
-
-    osx64DistZip.dependsOn 'startScripts'
-    installOsx64Dist.dependsOn 'startScripts'
-
-    win64DistZip.dependsOn 'createExe'
-    installWin64Dist.dependsOn 'createExe'
-}
-
-// what should be published
-publishing {
-    publications {
-        sirius(MavenPublication) {
-            artifactId = "${project.appName}"
-            groupId = "$group"
-
-            pom.withXml {}
-            artifact source: win64DistZip, classifier: 'win64', extension: 'zip'
-            artifact source: linux64DistZip, classifier: 'linux64', extension: 'zip'
-            artifact source: osx64DistZip, classifier: 'osx64', extension: 'zip'
-        }
-    }
-}
-
-artifactoryPublish.dependsOn 'distribute'
-
-task runGUI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
-    doFirst {
-        getLogger().lifecycle("====> Note: This uses the Systen JRE!")
-    }
-    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}-gui").toFile()
-    commandLine([command.absolutePath])
 }
