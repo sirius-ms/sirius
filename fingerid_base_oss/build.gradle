@@ -22,6 +22,7 @@ allprojects {
     version =  parent.fingeridVersion
 }
 dependencies {
+    annotationProcessor project(':default_properties:processor')
     compile project(':utils')
     compile project(':chemistry_base')
 
