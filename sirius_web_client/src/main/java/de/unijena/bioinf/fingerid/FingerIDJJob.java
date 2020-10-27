@@ -65,11 +65,11 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
         this(predictor, null, confidence);
     }
 
-    protected FingerIDJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, boolean confidence) {
+    public FingerIDJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, boolean confidence) {
         this(predictor, experiment, null, confidence);
     }
 
-    protected FingerIDJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @Nullable List<IdentificationResult<S>> formulaIDResults, boolean confidence) {
+    public FingerIDJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @Nullable List<IdentificationResult<S>> formulaIDResults, boolean confidence) {
         super(JobType.SCHEDULER);
         this.predictor = predictor;
         this.experiment = experiment;

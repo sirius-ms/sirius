@@ -117,17 +117,4 @@ public class CSIPredictor extends AbstractStructurePredictor<Parameters.Unprepar
             return null;
         }
     }
-
-    /*public Fingerblast<> newFingerblast(SearchableDatabase searchDB) {
-        final FingerblastSearchEngine searchEngine = database.makeSearchEngine(searchDB);
-        return new Fingerblast<>(fingerblastScoring, searchEngine);
-    }
-
-    public FingerIDJJob makeFingerIDJJob(@Nullable Ms2Experiment experiment, @Nullable List<IdentificationResult<?>> formulaIDResults, boolean computeConfidence) {
-        return new FingerIDJJob(this, experiment, formulaIDResults, computeConfidence);
-    }
-
-    public FingerIDJJob<?> makeFingerIDJJob(boolean computeConfidence) {
-        return new FingerIDJJob<>(this, computeConfidence);
-    }*/
 }
