@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
 import java.net.URI;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A reference to a certain LC/MS run in a mzml file.
@@ -69,22 +70,22 @@ public final class MsDataSourceReference {
         return hashcode;
     }
 
-    public String getFileName() {
-        return fileName;
+    public Optional<String> getFileName() {
+        return Optional.ofNullable(fileName);
     }
-    public String getRunId() {
-        return runId;
-    }
-
-    public String getMzmlId() {
-        return mzmlId;
+    public Optional<String> getRunId() {
+        return Optional.ofNullable(runId);
     }
 
-    public URI getSourceLocation() {
-        return sourceLocation;
+    public Optional<String> getMzmlId() {
+        return Optional.ofNullable(mzmlId);
     }
 
-    public URI getSource() {
-        return sourceLocation.resolve("./" + fileName);
+    public Optional<URI> getSourceLocation() {
+        return Optional.ofNullable(sourceLocation);
+    }
+
+    public Optional<URI> getSource() {
+        return (sourceLocation!=null && fileName!=null) ? Optional.of(sourceLocation.resolve("./" + fileName)) : Optional.empty();
     }
 }
