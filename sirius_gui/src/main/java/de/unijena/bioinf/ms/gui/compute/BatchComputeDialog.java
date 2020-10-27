@@ -94,7 +94,9 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
             zodiacConfigs = new ActZodiacConfigPanel();
-            addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
+            if (compoundsToProcess.size() > 1)
+                addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
+
 
             csiConfigs = new ActFingerIDConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList, formulaIDConfigPanel.content.searchDBList.checkBoxList);
             addConfigPanel("CSI:FingerID - Structure Elucidation", csiConfigs);
@@ -257,23 +259,23 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         List<String> configCommand = new ArrayList<>();
 
         configCommand.add("config");
-        if (formulaIDConfigPanel.isToolSelected()) {
+        if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
             toolCommands.add(formulaIDConfigPanel.content.toolCommand());
             configCommand.addAll(formulaIDConfigPanel.asParameterList());
         }
 
-        if (zodiacConfigs.isToolSelected()) {
+        if (zodiacConfigs != null && zodiacConfigs.isToolSelected()) {
             toolCommands.add(zodiacConfigs.content.toolCommand());
             configCommand.addAll(zodiacConfigs.asParameterList());
         }
 
-        if (csiConfigs.isToolSelected()) {
+        if (csiConfigs != null && csiConfigs.isToolSelected()) {
             toolCommands.add(csiConfigs.content.toolCommand());
             configCommand.addAll(csiConfigs.asParameterList());
         }
 
-        if (canopusConfigPanel.isToolSelected()) {
-            noNegativeCanopusWarning();
+        if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
+//            noNegativeCanopusWarning();
             toolCommands.add(canopusConfigPanel.content.toolCommand());
             configCommand.addAll(canopusConfigPanel.asParameterList());
         }

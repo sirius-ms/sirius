@@ -83,6 +83,7 @@ public abstract class ApplicationCore {
             t1 = System.currentTimeMillis();
         measureTime("Start AppCore");
         try {
+//            System.out.println("LD ==> " + System.getProperty("java.library.path"));
             System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
             org.apache.log4j.Logger.getLogger("net.sf.jnati").setLevel(Level.WARN);
 
@@ -213,11 +214,14 @@ public abstract class ApplicationCore {
 
             //create custom properties if it not exists -> everything is commented out
             if (Files.notExists(customProfileFile)) {
-                try (InputStream stream = ApplicationCore.class.getResourceAsStream("/custom.config")) {
-                    List<String> lines =
-                            FileUtils.ensureBuffering(new InputStreamReader(stream,
-                                    StandardCharsets.UTF_8)).lines().map(line -> line.startsWith("#") ? line : "#" + line).collect(Collectors.toList());
-                    Files.write(customProfileFile, lines);
+                final StringWriter buff = new StringWriter();
+                PropertyManager.DEFAULTS.write(buff);
+                String[] lines = buff.toString().split(System.lineSeparator());
+                try (BufferedWriter w = Files.newBufferedWriter(customProfileFile,StandardCharsets.UTF_8)) {
+                    for(String line : lines){
+                        w.write(line.startsWith("#") ? line : "#" + line);
+                        w.newLine();
+                    }
                 } catch (IOException e) {
                     System.err.println("Could NOT create sirius properties file");
                     e.printStackTrace();

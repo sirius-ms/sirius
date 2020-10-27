@@ -1,0 +1,160 @@
+# This is the Gradle build system for JVM applications
+# https://gradle.org/
+# https://github.com/gradle/gradle
+image: gradle:alpine
+
+# Disable the Gradle daemon for Continuous Integration servers as correctness
+# is usually a priority over speed in CI environments. Using a fresh
+# runtime for each build is more reliable since the runtime is completely
+# isolated from any previous builds.
+stages:
+  - clean
+  - prepare
+  - build-cli
+  - build-gui
+  - publish
+
+#before_script:
+
+#clean:
+#  stage: clean
+#  script: gradle clean
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  tags:
+#    - gradle
+doc:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
+  stage: prepare
+  script:
+    - cd sirius_doc
+    - gradle artifactoryPublish
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - biber-latex
+  only:
+    refs:
+      - master
+#todo artifactory publish
+
+distCliLinux64:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
+  stage: build-cli
+  needs: ["doc"]
+  script:
+    - cd sirius_dist/sirius_cli_single_os
+    - gradle artifactoryPublish
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - linux64
+  only:
+    refs:
+      - master
+
+distGuiLinux64:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
+  stage: build-gui
+  needs: ["distCliLinux64","doc"]
+  script:
+    - cd sirius_dist/sirius_gui_single_os
+    - gradle artifactoryPublish
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - linux64
+  only:
+    refs:
+      - master
+
+distCliWin64:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: build-cli
+  needs: ["doc"]
+  script:
+    - $env:path
+    - cd sirius_dist/sirius_cli_single_os
+    - gradle.bat artifactoryPublish
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - windows64
+  only:
+    refs:
+      - master
+
+distGuiWin64:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: build-gui
+  needs: ["distCliWin64","doc"]
+  script:
+    - $env:path
+    - cd sirius_dist/sirius_gui_single_os
+    - gradle.bat artifactoryPublish
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - windows64
+  only:
+    refs:
+      - master
+
+distCliMacOSX:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64"
+  stage: build-cli
+  needs: ["doc"]
+  script:
+    - cd sirius_dist/sirius_cli_single_os
+    - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - macosx
+  only:
+    refs:
+      - master
+
+distGuiMacOX:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64"
+  stage: build-gui
+  needs: ["distCliMacOSX","doc"]
+  script:
+    - cd sirius_dist/sirius_gui_single_os
+    - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  tags:
+    - artifactory
+    - gradle
+    - macosx
+  only:
+    refs:
+      - master
