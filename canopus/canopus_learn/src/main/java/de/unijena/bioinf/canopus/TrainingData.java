@@ -69,6 +69,7 @@ public class TrainingData {
     protected final HashMap<String, CompoundClass> name2class;
     protected final List<LabeledCompound> compounds;
     protected final List<LabeledCompound> prioritizedCompounds;
+    protected final List<EvaluationInstance> npcInstances;
 
     protected List<LabeledCompound> npcList;
 
@@ -86,7 +87,9 @@ public class TrainingData {
 
     protected NPCFingerprintVersion NPCVersion;
 
-
+    public boolean isNPC() {
+        return !npcList.isEmpty();
+    }
 
     public TrainingData(File env) throws IOException {
         this(env,null);
@@ -98,6 +101,7 @@ public class TrainingData {
         this.compounds = new ArrayList<>(1200000);
         this.blacklist = new HashSet<>(12000);
         this.name2class = new HashMap<>(4000);
+        this.npcInstances = new ArrayList<>();
         this.prioritizedCompounds = new ArrayList<>();
         setupEnv(env);
     }
@@ -1032,9 +1036,21 @@ public class TrainingData {
                     return true;
                 });
                 System.out.println(npcList.size() + " NPC compounds for training");
+
+                for (EvaluationInstance i : crossvalidation) {
+                    if (i.compound.npcLabel!=null) {
+                        npcInstances.add(i);
+                    }
+                }
+                if (independent!=null) {
+                    for (EvaluationInstance i : independent) {
+                        if (i.compound.npcLabel != null) {
+                            npcInstances.add(i);
+                        }
+                    }
+                }
+
             }
-
-
         }
 
         // check if we have train data for all compound classes

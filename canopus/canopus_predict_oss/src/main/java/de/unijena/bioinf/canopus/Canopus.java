@@ -238,13 +238,17 @@ public class Canopus {
         return predictDecisionValues(formula, fingerprint, true);
     }
 
-    public double[] predictDecisionValues(MolecularFormula formula, ProbabilityFingerprint fingerprint, boolean plattTransform) {
+    public double[] getNormalizedFormulaVector(MolecularFormula formula) {
         final double[] ff = getFormulaFeatures(formula);
         // normalize/center
         for (int i=0; i < ff.length; ++i) {
             ff[i] -= formulaCentering[i];
             ff[i] /= formulaScaling[i];
         }
+        return ff;
+    }
+
+    public double[] getNormalizedFingerprintVector(ProbabilityFingerprint fingerprint) {
         final double[] fp = fingerprint.toProbabilityArray();
         for (int i=0; i < fp.length; ++i) {
             fp[i] -= plattCentering[i];
@@ -255,6 +259,12 @@ public class Canopus {
                 fp[i] = (Math.min(Math.max(fp[i],0.2d),1.0d)-0.2d)/0.6d;
             }
         }
+        return fp;
+    }
+
+    public double[] predictDecisionValues(MolecularFormula formula, ProbabilityFingerprint fingerprint, boolean plattTransform) {
+        final double[] ff = getNormalizedFormulaVector(formula);
+        final double[] fp = getNormalizedFingerprintVector(fingerprint);
         // for the DNN we have to convert our vectors into float
         final float[] formulaInput = new float[ff.length];
         for (int i=0; i < ff.length; ++i) formulaInput[i] = (float)ff[i];
@@ -595,10 +605,110 @@ public class Canopus {
         }
     }
 
-
-
     public void setPlattCalibration(double[] As, double[] Bs) {
         this.plattLayer = new PlattLayer(As, Bs);
+    }
+
+    /*
+    public InputGradient getInputGradientForClassyFireProperty(ProbabilityFingerprint fingerprint, MolecularFormula formula, ClassyfireProperty property) {
+        final int indexOfMolecularProperty = classyFireFingerprintVersion.getIndexOfMolecularProperty(property);
+        return getInputGradientForClassyFireProperty(fingerprint,formula,indexOfMolecularProperty);
+
+    }
+
+
+    public InputGradient getInputGradientForClassyFireProperty(ProbabilityFingerprint fingerprint, MolecularFormula formula, int absoluteIndex) {
+        final int relativeIndex = classyFireMask.getRelativeIndexOf(absoluteIndex);
+        final ArrayList<FMatrixRMaj> intermediatesFormula = new ArrayList<>(),
+                intermediatesFP = new ArrayList<>(), intermediates = new ArrayList<>();
+
+        final double[] normalizedFormulaVector = getNormalizedFormulaVector(formula);
+        final double[] normalizedFingerprintVector = getNormalizedFingerprintVector(fingerprint);
+        final double[] formulaCoefficients = new double[normalizedFormulaVector.length];
+        final double[] fingerprintCoefficients = new double[normalizedFingerprintVector.length];
+
+        // start with formula layer
+        FMatrixRMaj formulaInput = FMatrixRMaj.wrap(1, normalizedFingerprintVector.length, MatrixUtils.double2float(normalizedFormulaVector));
+        FMatrixRMaj lastFormula = formulaInput;
+        for (FullyConnectedLayer l : formulaLayers) {
+            lastFormula = l.eval(lastFormula);
+            intermediatesFormula.add(lastFormula);
+        }
+        // now fingerprint layers
+        FMatrixRMaj fpInput = FMatrixRMaj.wrap(1, normalizedFingerprintVector.length, MatrixUtils.double2float(normalizedFingerprintVector));
+        FMatrixRMaj lastFp = fpInput;
+        for (FullyConnectedLayer l : fingerprintLayers) {
+            lastFp = l.eval(lastFp);
+            intermediatesFP.add(lastFp);
+        }
+
+
+        // combine both
+        final FMatrixRMaj concatenated = FMatrixRMaj.wrap(1, lastFormula.numCols+lastFp.numCols, MatrixUtils.concat(lastFp.data,lastFormula.data));
+
+        // now combined layers
+        FMatrixRMaj lastCombined = concatenated;
+        for (FullyConnectedLayer l : innerLayers) {
+            lastCombined = l.eval(lastCombined);
+            intermediates.add(lastCombined);
+        }
+
+        final double output = lastCombined.get(0, relativeIndex);
+
+        // now we remove all zero elements from our weight matrices
+        // those are the points where relu'(x) is zero.
+        // we can ignore the other points as relu'(x) is just one for them.
+        final TIntArrayList zeros = new TIntArrayList();
+
+        // formulas
+        FMatrixRMaj m = intermediatesFormula.get(0);
+        FMatrixRMaj gradientFormula = formulaLayers[0].weightMatrix().copy();
+
+        for (int k=1; k < formulaLayers.length; ++k) {
+            zeros.clearQuick();
+            // search for zero elements in M
+            for (int i=0; i < m.data.length; ++i) {
+                if (m.data[i]<=0) {
+                    zeros.add(i);
+                }
+            }
+            // replace with weight matrix
+            m = intermediatesFormula.get(k);
+            final FMatrixRMaj W = formulaLayers[k].weightMatrix().copy();
+            intermediatesFormula.set(k, W);
+            // set weight to zero
+            for (int i=0; i < zeros.size(); ++i) {
+                final int zero = zeros.getQuick(i);
+                // delete the i-th row
+                for (int j=0; j < W.numCols; ++j) {
+                    W.unsafe_set(i, j, 0);
+                }
+            }
+            CommonOps_FDRM.multInner(gradientFormula, W);
+        }
+
+        FMatrixRMaj conc = innerLayers[0].weightMatrix().copy();
+        {
+            zeros.clearQuick();
+            for (int i=0; i < m.data.length; ++i) {
+                if (m.data[i]<=0) {
+                    zeros.add(i);
+                }
+            }
+            m = concatenated;
+            for ()
+        }
+    }
+     */
+
+    public static final class InputGradient {
+
+        public final double[] fingerprintGradient, formulaGradient;
+
+        private InputGradient(double[] fingerprintGradient, double[] formulaGradient) {
+            this.fingerprintGradient = fingerprintGradient;
+            this.formulaGradient = formulaGradient;
+        }
     }
 
 }
