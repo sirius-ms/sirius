@@ -73,7 +73,6 @@ public class Fingerblast<P> {
     }
 
     public List<Scored<FingerprintCandidate>> score(@NotNull List<FingerprintCandidate> candidates, @NotNull ProbabilityFingerprint fingerprint, @Nullable P parameter) throws ChemicalDatabaseException {
-        //todo @Nils We could create formula specific covtree here if needed but NOT in the score methods because they are used in the job system
         //this would make the P parameter obsolete
         final FingerblastScoring<P> scorer = scoringMethod.getScoring();
         scorer.prepare(parameter);
