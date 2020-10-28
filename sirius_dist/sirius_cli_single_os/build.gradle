@@ -7,15 +7,13 @@ dependencies {
 mainClassName = 'de.unijena.bioinf.ms.frontend.SiriusCLIApplication'
 
 distImage {
-    dependsOn getParent().tasks.getByName('downloadRuntimeImageHeadless')
-    runtimeImageDirectory = file(getParent().tasks.getByName('downloadRuntimeImageHeadless').outputs.files.singleFile.absolutePath.replace('.zip',''))
+    dependsOn getParent().tasks.getByName('extractRuntimeImageHeadless')
+    runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageHeadless').outputs.files.singleFile
     imageName = 'sirius'
     mainClass = mainClassName
     mainJarName = getRootProject().getChildProjects().get('sirius_cli').tasks.getByName('jar').outputs.files.singleFile.getName()
     winConsole = true
     macPackageName = 'SIRIUS-headless'
-
-//    runtimeImageDirectory = file(getParent().tasks.getByName('downloadRuntimeImageHeadless').outputs.files.singleFile.absolutePath.replace('.zip',''))
 }
 
 publishing {
@@ -29,12 +27,3 @@ publishing {
         }
     }
 }
-
-
-
-
-/*
-task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
-    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}").toFile()
-    commandLine([command.absolutePath])
-}*/
