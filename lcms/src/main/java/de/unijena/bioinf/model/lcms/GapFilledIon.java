@@ -27,7 +27,11 @@ public class GapFilledIon extends FragmentedIon {
     FragmentedIon original;
 
     public GapFilledIon(Polarity polarity, ChromatographicPeak chromatographicPeak, ChromatographicPeak.Segment segment, FragmentedIon original) {
-        super(polarity, null,null, Quality.UNUSABLE, chromatographicPeak, segment);
+        super(polarity, null,null, Quality.UNUSABLE, chromatographicPeak, segment,new Scan[0]);
         this.original = original;
+    }
+
+    public boolean isCompound() {
+        return false;
     }
 }
