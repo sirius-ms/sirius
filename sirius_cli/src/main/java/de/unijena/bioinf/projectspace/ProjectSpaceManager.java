@@ -22,6 +22,7 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
 import de.unijena.bioinf.canopus.CanopusResult;
@@ -200,6 +201,9 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         //canopus
         config.defineProjectSpaceProperty(CanopusDataProperty.class, new CanopusDataSerializer());
         config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
+
+        config.registerComponent(CompoundContainer.class, LCMSPeakInformation.class, new LCMSPeakSerializer());
+
         return config;
     }
 
