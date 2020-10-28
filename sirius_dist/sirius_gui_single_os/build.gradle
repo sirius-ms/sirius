@@ -9,11 +9,11 @@ dependencies {
 mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 
 distImage {
-    dependsOn getParent().tasks.getByName('downloadRuntimeImageFX')
+    dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
     mainClass = mainClassName
     imageName = 'sirius-gui'
     args = ['gui']
-    runtimeImageDirectory = file(getParent().tasks.getByName('downloadRuntimeImageFX').outputs.files.singleFile.absolutePath.replace('.zip',''))
+    runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageFX').outputs.files.singleFile
     mainJarName = getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
     launchers = ['sirius':getRootProject().rootDir.toPath().resolve('jpackage').resolve('cli-launcher.properties').toFile()]
     winConsole = false
