@@ -64,11 +64,14 @@ task createRuntimeImgs(dependsOn: extractJDK) {
                             'java.naming', 'java.prefs', 'java.instrument']
     String[] fxModules = baseModules +
             ['java.desktop', 'javafx.base', 'javafx.web', 'javafx.graphics', 'javafx.swing', 'javafx.controls']
+    String[] bootModules = baseModules +
+            ['java.management']
 
     File jlink = jdkPath.toPath().resolve('bin').resolve(OS.isWindows() ? 'jlink.exe' : 'jlink').toFile()
     File outFX = buildDir.toPath().resolve('runtime').resolve("sirius-${jlink.toPath().getParent().getParent().getFileName().toString()}").toFile()
     File outheadl = Paths.get(outFX.absolutePath.replace('-fx-', '-headless-')).toFile()
-    outputs.files(outFX, outheadl)
+    File outboot = Paths.get(outheadl.absolutePath.replace('-headless-', '-headless-boot-')).toFile()
+    outputs.files(outFX, outheadl,outboot)
 
     String[] args = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
 
@@ -79,6 +82,10 @@ task createRuntimeImgs(dependsOn: extractJDK) {
         }
         exec {
             String[] c = [jlink.absolutePath, '--add-modules', "${fxModules.join(',')}", '--output', outFX.absolutePath]
+            commandLine(c + args)
+        }
+        exec {
+            String[] c = [jlink.absolutePath, '--add-modules', "${bootModules.join(',')}", '--output', outboot.absolutePath]
             commandLine(c + args)
         }
     }
@@ -137,25 +144,10 @@ task downloadRuntimeImageFX(type: Download) {
     dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
     onlyIfModified true
     overwrite false
+}
 
-    doLast {
-        if (!state.getUpToDate()) {
-            //stupid hack to delete write protected files on nix
-            getLogger().lifecycle("Unpacking runtime image fx...")
-            if (OS.isWindows()) {
-                getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).deleteDir()
-                copy{
-                    from zipTree(outputs.files.singleFile)
-                    into getBuildDir().toPath().resolve('runtime').toFile()
-                }
-            }else{
-                exec{commandLine(['rm','-rf', getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).toString()])}
-                exec{commandLine(['unzip', '-q', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
-            }
-        } else {
-            getLogger().lifecycle("Unpacking runtime image fx SKIPPED")
-        }
-    }
+task extractRuntimeImageFX(type: ExtractRuntime, dependsOn: downloadRuntimeImageFX) {
+    inputArchive = downloadRuntimeImageFX.dest
 }
 
 task downloadRuntimeImageHeadless(type: Download) {
@@ -165,26 +157,25 @@ task downloadRuntimeImageHeadless(type: Download) {
     dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
     onlyIfModified true
     overwrite false
-
-    doLast {
-        if (!state.getUpToDate()) {
-            //stupid hack to delete write protected files on nix
-            getLogger().lifecycle("Unpacking runtime image headless...")
-            if (OS.isWindows()) {
-                getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).deleteDir()
-                copy{
-                    from zipTree(outputs.files.singleFile)
-                    into getBuildDir().toPath().resolve('runtime').toFile()
-                }
-            } else{
-                exec{commandLine(['rm','-rf', getBuildDir().toPath().resolve('runtime').resolve(fname.replace('.zip', '')).toString()])}
-                exec{commandLine(['unzip', '-q', outputs.files.singleFile.absolutePath, '-d', getBuildDir().toPath().resolve('runtime').toString()])}
-            }
-        } else {
-            getLogger().lifecycle("Unpacking runtime image headless SKIPPED")
-        }
-    }
 }
+
+task extractRuntimeImageHeadless(type: ExtractRuntime, dependsOn: downloadRuntimeImageHeadless) {
+    inputArchive = downloadRuntimeImageHeadless.dest
+}
+
+task downloadRuntimeImageHeadlessBoot(type: Download) {
+    String fname = "sirius-zulu${zulu_jre_version}-ca-headless-boot-jdk${jre_version}-${zosName}_x64.zip"
+
+    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
+    dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
+    onlyIfModified true
+    overwrite false
+}
+
+task extractRuntimeImageHeadlessBoot(type: ExtractRuntime, dependsOn: downloadRuntimeImageHeadlessBoot) {
+    inputArchive = downloadRuntimeImageHeadlessBoot.dest
+}
+
 
 task downloadManual(type: Download, group: 'documentation') {
     String manualName = "manual-$version-manual.pdf"
@@ -276,7 +267,7 @@ subprojects {
 
 
     task distImage(type: AppImage, group: 'distribution') {
-        dependsOn installDist, downloadManual, downloadCLP, downloadGLPK, checkDefaultProfile
+        dependsOn installDist, downloadManual, downloadCLP, downloadGLPK/*, checkDefaultProfile*/
         jpackagerBin = Paths.get(System.getProperty("java.home")).resolve('bin').resolve(OS.isWindows() ? 'jpackage.exe' : 'jpackage').toFile()
         mainClass = mainClassName
         outputDir = buildDir.toPath().resolve('distributions').toFile()
@@ -295,7 +286,7 @@ subprojects {
             ]
         } else {
             jvmArgs += ['-Djava.library.path=\\$APPDIR/../native',
-                        '-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar',
+//                        '-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar',
 
             ]
 
@@ -370,10 +361,35 @@ subprojects {
 
 
 //////////////////////////////////////////////////////////////////////////////////
+abstract class ExtractRuntime extends DefaultTask {
+    @InputFile
+    File inputArchive
 
+    @OutputDirectory
+    def getOutputDir() {
+        return new File(inputArchive.absolutePath.replace('.zip', ''))
+    }
 
-class AppImage extends DefaultTask {
+    @TaskAction
+    def execute() {
+        //stupid hack to delete write protected files on nix
+        getLogger().lifecycle("Unpacking runtime image $inputArchive...")
+        if (project.OS.isWindows()) {
+            getOutputDir().deleteDir()
+            copy {
+                from zipTree(inputArchive)
+                into getOutputDir().getParentFile()
+            }
+        } else {
+            project.exec { commandLine(['rm', '-rf', getOutputDir().absolutePath]) }
+            project.exec { commandLine(['unzip', '-q', inputArchive.absolutePath, '-d', getOutputDir().getParentFile().absolutePath]) }
+        }
+    }
+}
 
+abstract class AppImage extends DefaultTask {
+
+    File inputDir
     File jpackagerBin
     File outputDir
     String imageName
@@ -397,6 +413,7 @@ class AppImage extends DefaultTask {
         jvmArgs = []
         version = project.OS.isWindows() ? project.version.replace('-SNAPSHOT', '') : project.version
         winConsole = false
+        inputDir = project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
     }
 
     File getImageDir() {
@@ -432,7 +449,7 @@ class AppImage extends DefaultTask {
     String[] createParameters() {
         def paras = [
                 '--runtime-image', runtimeImageDirectory.absolutePath,
-                '-i', project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toString(),
+                '-i', inputDir.absolutePath,
                 '--dest', outputDir.toString(),
                 '--name', imageName,
                 '--app-version', version,
