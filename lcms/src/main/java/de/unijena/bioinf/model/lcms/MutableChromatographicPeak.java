@@ -208,18 +208,25 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         }
     }
 
-    public boolean joinAllSegmentsWithinScanIds(int a, int b) {
+    public Optional<Segment> joinAllSegmentsWithinScanIds(int a, int b) {
+        if (a>b){
+            int z = a;
+            a = b;
+            b = z;
+        }
         final List<Segment> segmentsToDelete = new ArrayList<>();
         for (Segment s : segments) {
-            if (s.getStartScanNumber() >= a && s.getEndScanNumber() <= b)
+            if ((a >= s.getStartScanNumber() && a <= s.getEndScanNumber()) || (b >= s.getStartScanNumber() && b <= s.getEndScanNumber()) ) {
                 segmentsToDelete.add(s);
+            }
         }
-        if (segmentsToDelete.isEmpty()) return false;
+        if (segmentsToDelete.isEmpty()) return Optional.empty();
         final int minA = segmentsToDelete.stream().mapToInt(s->s.getStartIndex()).min().getAsInt();
         final int maxB = segmentsToDelete.stream().mapToInt(s->s.getEndIndex()).max().getAsInt();
         segments.removeAll(segmentsToDelete);
         final int apex = segmentsToDelete.stream().max(Comparator.comparingDouble(u -> getIntensityAt(u.apex))).get().apex;
-        segments.add(new Segment(this, minA, apex, maxB));
-        return true;
+        final Segment s = new Segment(this, minA, apex, maxB);
+        segments.add(s);
+        return Optional.of(s);
     }
 }

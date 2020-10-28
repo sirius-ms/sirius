@@ -86,7 +86,10 @@ public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
         return scans.headMap(to,false).descendingMap();
     }
     public NavigableMap<Integer,Scan> getScans(int from, int to) {
-        return scans.subMap(from, true, to, false);
+        return scans.subMap(from, true, to, true);
+    }
+    public NavigableMap<Integer,Scan> getScans(int from, int to, boolean toInclusive) {
+        return scans.subMap(from, true, to, toInclusive );
     }
 
     @Override

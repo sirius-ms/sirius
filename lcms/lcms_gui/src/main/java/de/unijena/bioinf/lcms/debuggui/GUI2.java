@@ -1,3 +1,5 @@
+package de.unijena.bioinf.lcms.debuggui;
+
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -13,7 +15,6 @@ import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.MemoryFileStorage;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.align.Cluster;
-import de.unijena.bioinf.lcms.debuggui.Gradient;
 import de.unijena.bioinf.lcms.peakshape.GaussianShape;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
@@ -544,7 +545,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                 int yyP = (int)Math.round(f.getTrace()[0].getIntensity()/deltaInt);
                 g.fillOval((int)xxP-5, 700 - ((int)yyP+5), 10, 10);
 
-                final ScanPoint[] trace = f.completeTraceDebug;
+                final ScanPoint[] trace = f.getTrace();
 
                 for (int k=1; k < trace.length; ++k) {
 
