@@ -22,11 +22,16 @@ package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
 import javax.annotation.Nonnull;
 
-public class Trace {
+public final class Trace {
     /**
      * The offset between the first array element and the first index of the trace set
      */
     private final int indexOffset;
+
+    /**
+     * the apex for fast access
+     */
+    private final int apex;
 
     /**
      * the index of the array element which is the first peak in the detected feature
@@ -49,6 +54,36 @@ public class Trace {
         this.detectedFeatureLength = detectedLength;
         this.masses = masses;
         this.intensities = intensities;
+        // find apex
+        {
+            int apexIndex=0;
+            double maxI = Double.NEGATIVE_INFINITY;
+            for (int i=detectedFeatureOffset, n= detectorOffset+detectedLength; i<n; ++i) {
+                if (intensities[i] > maxI) {
+                    maxI = intensities[i];
+                    apexIndex =i;
+                }
+            }
+            this.apex = apexIndex;
+        }
+
+    }
+
+    public double getApexMass() {
+        return masses[apex];
+    }
+    public float getApexIntensity() {
+        return intensities[apex];
+    }
+    public int getAbsoluteIndexApex() {
+        return apex + indexOffset;
+    }
+
+    public float getLeftEdgeIntensity() {
+        return intensities[detectedFeatureOffset];
+    }
+    public float getRightEdgeIntensity() {
+        return intensities[detectedFeatureOffset+detectedFeatureLength-1];
     }
 
     public int getIndexOffset() {
@@ -57,6 +92,14 @@ public class Trace {
 
     public int getDetectedFeatureOffset() {
         return detectedFeatureOffset;
+    }
+
+    public int absoluteIndexLeft() {
+        return indexOffset+detectedFeatureOffset;
+    }
+
+    public int absoluteIndexRight() {
+        return absoluteIndexLeft()+detectedFeatureLength-1;
     }
 
     public int getDetectedFeatureLength() {

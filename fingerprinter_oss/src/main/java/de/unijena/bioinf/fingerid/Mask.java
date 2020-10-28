@@ -231,6 +231,10 @@ public class Mask {
         return truncated;
     }
 
+    public boolean has(int index) {
+        return bits[index]==USED_INDEX;
+    }
+
     public int numberOfFingerprints() {
         return bits.length;
     }

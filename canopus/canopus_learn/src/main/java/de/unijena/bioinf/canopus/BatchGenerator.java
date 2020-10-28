@@ -72,8 +72,10 @@ public class BatchGenerator implements Runnable {
 
     public void stop() {
         this.stop = true;
-        // we have to clear the queue, such that the stop operation is notified
-        batches.clear();
+        while (!batches.isEmpty()) {
+            final TrainingBatch poll = batches.poll();
+            if (poll!=null) poll.close();
+        }
         service.shutdown();
     }
 

@@ -128,6 +128,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private Whiteset formulas;
         private List<String> tags;
 
+        private NoiseInformation noiseInformation;
+
         private List<List<String>> ms1Comments, ms2Comments;
         private boolean hasPeakComment;
         private List<String> mergedComments;
@@ -155,6 +157,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
 
         private void newCompound(String name) {
+            noiseInformation = null;
             inchi = null;
             inchikey = null;
             smiles = null;
@@ -325,6 +328,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 smiles = value;
             } else if (optionName.equalsIgnoreCase("splash")) {
                 splash = value;
+            } else if (optionName.equalsIgnoreCase("noise")) {
+                noiseInformation = NoiseInformation.fromString(value);
             } else if (optionName.equalsIgnoreCase("quality")) {
                 spectrumQualityString = value;
             } else if (optionName.equalsIgnoreCase("rt") || optionName.equalsIgnoreCase("retention")) {
@@ -435,6 +440,9 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             exp.setMs2Spectra(ms2spectra);
 
             exp.setAnnotation(Tagging.class, new Tagging(tags.toArray(new String[0])));
+
+            if (noiseInformation!=null)
+                exp.setAnnotation(NoiseInformation.class, noiseInformation);
 
             if (mergedMs1 != null) exp.setMergedMs1Spectrum(mergedMs1);
             exp.setAnnotation(MsFileSource.class, source);

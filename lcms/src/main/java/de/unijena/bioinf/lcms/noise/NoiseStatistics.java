@@ -32,13 +32,13 @@ import java.util.Arrays;
 public class NoiseStatistics {
 
     private float[] noise;
-    private int offset, len;
+    private int offset, len, k;
     private TIntArrayList scanNumbers;
     private TFloatArrayList noiseLevels;
     private float avgNoise;
     private double percentile;
 
-    public NoiseStatistics(int bandWidth, double percentile) {
+    public NoiseStatistics(int bandWidth, double percentile, int k) {
         this.noise = new float[bandWidth];
         this.offset = 0;
         this.len = 0;
@@ -46,6 +46,7 @@ public class NoiseStatistics {
         this.noiseLevels = new TFloatArrayList();
         this.avgNoise = 0;
         this.percentile = percentile;
+        this.k = k;
     }
 
     public NoiseModel getLocalNoiseModel() {
@@ -85,6 +86,7 @@ public class NoiseStatistics {
             noiseLevels.add(avgNoise/len);
         }
     }
+
     // TODO: for MS/MS use decomposer
     private float calculateNoiseLevel(SimpleSpectrum spectrum) {
         final double[] array = Spectrums.copyIntensities(spectrum);
@@ -96,8 +98,8 @@ public class NoiseStatistics {
                 ++numberOnNonZeros;
             }
         }
-        if (numberOnNonZeros>=100) {
-            int k = (int)Math.floor(array.length*percentile);
+        if (numberOnNonZeros>=50) {
+            int k = Math.max(array.length-this.k, (int)Math.floor(array.length*percentile));
             float fl = (float)Quickselect.quickselectInplace(array,0,array.length, k);
             if (fl<=0) return lowestRecordedIntensity/5f;
             else return fl;

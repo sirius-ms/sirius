@@ -36,6 +36,10 @@ public class IonTrace {
         this.isotopes = isotopes;
     }
 
+    public Trace getMonoisotopicPeak() {
+        return this.isotopes[0];
+    }
+
     @Nonnull
     public Trace[] getIsotopes() {
         return isotopes;

@@ -28,7 +28,8 @@ public interface SiriusLocations {
     String
             MS2_EXPERIMENT = "spectrum.ms",
             COMPOUND_INFO = "compound.info",
-            COMPOUND_CONFIG = "compound.config";
+            COMPOUND_CONFIG = "compound.config",
+            LCMS_TRACES = "lcms.binary";
 
     Location
             SPECTRA = new Location("spectra/", "tsv", FormulaResultId::fileName),

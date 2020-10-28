@@ -47,8 +47,13 @@ public class FullyConnectedLayer {
     public float[] getWeightMatrixCopy() {
         return W.data;
     }
+
     public float[] getBiasVectorCopy() {
         return B;
+    }
+
+    public FMatrixRMaj weightMatrix() {
+        return W;
     }
 
     public int getInputSize() {
