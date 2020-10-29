@@ -1,4 +1,4 @@
-rootProject.name = 'sirius'
+rootProject.name = 'sirius-libs'
 include ':default_properties'
 	include ':default_properties:annotations'
 	include ':default_properties:processor'
