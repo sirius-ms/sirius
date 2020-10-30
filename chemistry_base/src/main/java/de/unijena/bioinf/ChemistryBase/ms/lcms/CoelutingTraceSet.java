@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Each compound is assigned to an CoelutingTraceset PER SAMPLE. The CoelutingTraceset is
@@ -29,24 +29,24 @@ import javax.annotation.Nonnull;
  */
 public class CoelutingTraceSet {
 
-    @Nonnull protected final String sampleName;
-    @Nonnull protected final MsDataSourceReference sampleRef;
-    @Nonnull protected final CompoundTrace ionTrace;
+    @NotNull protected final String sampleName;
+    @NotNull protected final MsDataSourceReference sampleRef;
+    @NotNull protected final CompoundTrace ionTrace;
 
-    @Nonnull  protected final long[] retentionTimes;
-    @Nonnull  protected final int[] scanIds; // the INDEX of the spectrum
-    @Nonnull protected final float[] noiseLevels;
+    @NotNull protected final long[] retentionTimes;
+    @NotNull protected final int[] scanIds; // the INDEX of the spectrum
+    @NotNull protected final float[] noiseLevels;
 
     /**
      * the IDs of scans that are part of the merged MS/MS spectrum
      */
-    @Nonnull protected final int[] ms2ScanIds;
-    @Nonnull protected final long[] ms2RetentionTimes;
+    @NotNull protected final int[] ms2ScanIds;
+    @NotNull protected final long[] ms2RetentionTimes;
 
-    @Nonnull protected final CompoundReport[] reports;
+    @NotNull protected final CompoundReport[] reports;
 
 
-    public CoelutingTraceSet(@Nonnull String sampleName, @Nonnull MsDataSourceReference sampleRef, @Nonnull CompoundTrace trace, @Nonnull long[] retentionTimes, @Nonnull int[] scanIds, @Nonnull float[] noiselevels, int[] ms2Scans, long[] ms2RetentionTimes, CompoundReport[] reports) {
+    public CoelutingTraceSet(@NotNull String sampleName, @NotNull MsDataSourceReference sampleRef, @NotNull CompoundTrace trace, @NotNull long[] retentionTimes, @NotNull int[] scanIds, @NotNull float[] noiselevels, int[] ms2Scans, long[] ms2RetentionTimes, CompoundReport[] reports) {
         this.sampleName = sampleName;
         this.sampleRef = sampleRef;
         this.ionTrace = trace;
@@ -61,47 +61,47 @@ public class CoelutingTraceSet {
         }
     }
 
-    @Nonnull
+    @NotNull
     public long[] getMs2RetentionTimes() {
         return ms2RetentionTimes;
     }
 
-    @Nonnull
+    @NotNull
     public int[] getMs2ScanIds() {
         return ms2ScanIds;
     }
 
-    @Nonnull
+    @NotNull
     public String getSampleName() {
         return sampleName;
     }
 
-    @Nonnull
+    @NotNull
     public MsDataSourceReference getSampleRef() {
         return sampleRef;
     }
 
-    @Nonnull
+    @NotNull
     public CompoundTrace getIonTrace() {
         return ionTrace;
     }
 
-    @Nonnull
+    @NotNull
     public long[] getRetentionTimes() {
         return retentionTimes;
     }
 
-    @Nonnull
+    @NotNull
     public int[] getScanIds() {
         return scanIds;
     }
 
-    @Nonnull
+    @NotNull
     public float[] getNoiseLevels() {
         return noiseLevels;
     }
 
-    @Nonnull
+    @NotNull
     public CompoundReport[] getReports() {
         return reports;
     }
