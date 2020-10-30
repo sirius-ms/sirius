@@ -151,7 +151,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
 
             idResult.addAll(ionTypes.keySet());
 
-            // workaround: we have to remove the original results if they do not match the ion type
+            // WORKAROUND: we have to remove the original results if they do not match the ion type
             if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
                 if (experiment.getPrecursorIonType().isIntrinsicalCharged()) {
                     // for this special case we do not want to duplicate all the trees
