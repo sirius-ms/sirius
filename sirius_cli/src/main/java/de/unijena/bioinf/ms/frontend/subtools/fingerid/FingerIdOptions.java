@@ -80,6 +80,12 @@ public class FingerIdOptions implements ToolChainOptions<FingeridSubToolJob, Ins
         defaultConfigOptions.changeOption("StructurePredictors", predictors);
     }
 
+    @Option(names = {"--no-threshold"},
+            description = "Disable score threshold for formula candidates. CSI:FingerID will be computed for all formula candidates")
+    public void setNoThreshold(boolean noThreshold) throws Exception {
+        defaultConfigOptions.changeOption("FormulaResultThreshold", !noThreshold);
+    }
+
     @Override
     public InstanceJob.Factory<FingeridSubToolJob> call() throws Exception {
         return new InstanceJob.Factory<>(
