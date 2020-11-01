@@ -188,7 +188,9 @@ task downloadManual(type: Download, group: 'documentation') {
 
 subprojects {
     //this is to keep classpath away from commandline because it may get too long for windows
-    apply plugin: 'ManifestClasspath'
+    // --> this plugin causes error in windows that the main class could not be found or loaded
+    // --> please use the option "Shorten command line" in IntelliJ
+    //apply plugin: 'ManifestClasspath'
 
     jar {
         enabled = false
