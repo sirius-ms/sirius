@@ -276,12 +276,11 @@ subprojects {
 
         if (OS.isWindows()) {
             jvmArgs += ['-Djava.library.path=$APPDIR\\..',
-                        '-javaagent:$APPDIR\\agents-' + siriusVersion + '.jar',
+                        '-javaagent:$APPDIR\\\\agents-' + siriusVersion + '.jar',
             ]
         } else {
             jvmArgs += ['-Djava.library.path=\\$APPDIR/../native',
-//                        '-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar',
-
+                        '-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar',
             ]
 
         }
@@ -370,8 +369,8 @@ abstract class ExtractRuntime extends DefaultTask {
         getLogger().lifecycle("Unpacking runtime image $inputArchive...")
         if (project.OS.isWindows()) {
             getOutputDir().deleteDir()
-            copy {
-                from zipTree(inputArchive)
+            project.copy {
+                from project.zipTree(inputArchive)
                 into getOutputDir().getParentFile()
             }
         } else {

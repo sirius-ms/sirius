@@ -27,6 +27,8 @@ import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -68,6 +70,11 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
         enforceAdducts.setToolTipText(GuiUtils.formatToolTip("Enforce the selected adducts instead of using them only as fallback."));
         adductOptions.buttons.add(enforceAdducts);
         parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString(): PropertyManager.DEFAULTS.getConfigValue("AdductSettings.enforced"));
+
+        final TwoColumnPanel additionalOptions = new TwoColumnPanel();
+        additionalOptions.addNamed("Formula score threshold", makeParameterCheckBox("FormulaResultThreshold"));
+
+        add(new TextHeaderBoxPanel("Additional Options", additionalOptions));
 
         searchDBList.checkBoxList.check(SearchableDatabases.getBioDb());
 

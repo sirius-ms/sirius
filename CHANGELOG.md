@@ -7,8 +7,11 @@
 - **feature: CANOPUS for negative ion mode data**
 - feature: Custom-DB importer View (GUI)
 - **update: Structure DB update due to major changes in PubChem standardization since the last one.**
+- **breaking:**  additional columns (`ionMass`, `retentionTimeInSeconds`) have been added to project wide summary files
+such as `formula_identifications.tsv`, `compound_identifications.tsv` and `compound_identifications_adducts.tsv`
+- **breaking:** column name of `<INSERT>` has changed from `<INSERT>` to `<INSERT>`  
 
-**NOTE: SIRIUS versions will now follow semantic versioning**
+**NOTE: SIRIUS versions will now follow semantic versioning (all upcoming releases)**
 
 ##### 4.4.30
 - fix: damaged JRE MacOS (see installation instructions)
