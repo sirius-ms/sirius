@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
@@ -83,7 +84,7 @@ public class FormulaSummaryWriter implements Summarizer {
                         .ifPresent(s -> {
                             if (first.getAndSet(false)) {
                                 this.globalResults.put(r.getCandidate(), r.getScoreObject().getClass());
-                                this.prefix.put(r.getCandidate(), exp.getId().getDirectoryName() + "\t");
+                                this.prefix.put(r.getCandidate(), exp.getId().getIonMass().orElse(Double.NaN) + "\t" + exp.getId().getRt().orElse(RetentionTime.NA()).getRetentionTimeInSeconds() + "\t" + exp.getId().getDirectoryName());
                             }
                             s.annotations().forEach((key, value) -> {
                                 if (value != null && !value.isNa()) {
@@ -132,7 +133,7 @@ public class FormulaSummaryWriter implements Summarizer {
 
         String header = makeHeader(scoreOrder.stream().map(types::get).collect(Collectors.joining("\t")));
         if (prefix != null)
-            header = header + "\tid";
+            header = header + "\tionMass" + "\tretentionTimeInSeconds" + "\tid";
 
         w.write("rank\t" + header + "\n");
 
