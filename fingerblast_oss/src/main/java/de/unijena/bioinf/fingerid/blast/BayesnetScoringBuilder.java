@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,22 +78,28 @@ public class BayesnetScoringBuilder {
 
 
     public static BayesnetScoring readScoring(InputStream stream, Charset charset, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
-        return readScoring(new BufferedReader(new InputStreamReader(stream, charset)),fpVersion,alpha,allowOnlyNegativeScores) ;
+        return readScoring(new BufferedReader(new InputStreamReader(stream, charset)), fpVersion, alpha, allowOnlyNegativeScores);
     }
 
-    public static BayesnetScoring readScoring(BufferedReader reader, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
+    @Nullable
+    public static BayesnetScoring readScoring(@Nullable BufferedReader reader, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
+        if (reader == null)
+            return null;
 
         final List<String> lines = new ArrayList<>();
         String l;
-        while ((l=reader.readLine())!=null) lines.add(l);
+        while ((l = reader.readLine()) != null) lines.add(l);
+
+        if (lines.isEmpty())
+            return null;
 
         List<int[]> edges = new ArrayList<>();
         final double[][] covariances = new double[lines.size()][];
         int pos = 0;
         for (String line : lines) {
-            if (line.length()==0) continue;
+            if (line.length() == 0) continue;
             String[] row = line.split(SEP);
-            if (row.length==6){
+            if (row.length == 6) {
                 throw new RuntimeException("seems like the input file is still using old input format.");
 //                //old format for tree as input
 //                edges.add(new int[]{Integer.parseInt(row[0]), Integer.parseInt(row[1])});
