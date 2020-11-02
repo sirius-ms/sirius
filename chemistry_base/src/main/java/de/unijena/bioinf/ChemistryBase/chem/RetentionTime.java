@@ -103,7 +103,11 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
     }
 
     public static <T extends RetentionTime> T NA(@NotNull Class<T> retentionTime) {
-        return  (T) MISSING_RT_VALUE;
+        return (T) NA();
+    }
+
+    public static RetentionTime NA() {
+        return  MISSING_RT_VALUE;
     }
 
 }
