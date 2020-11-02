@@ -21,6 +21,8 @@ window.addEventListener("resize", function(){
     spectraViewer(data);
 });
 
+window.addEventListener('contextmenu', event => event.preventDefault());
+
 var mouseover = function() {
     tooltip.style("opacity", 1);
     d3.select(this).attr("fill", col.annotation);
@@ -129,8 +131,8 @@ function init() {
 
 function spectrumPlot(spectrum) {
     let mzs = spectrum.peaks.map(d => d.mz);
-    let min = d3.min(mzs)-5;
-    let max = d3.max(mzs)+5;
+    let min = d3.min(mzs)-1;
+    let max = d3.max(mzs)+1;
     if (xmin_tmp === undefined || xmin_tmp === null) {
         xmin_tmp = min;
         xmax_tmp = max;
@@ -201,8 +203,8 @@ function spectrumPlot(spectrum) {
 function mirrorPlot(spectrum1, spectrum2, view) {
     let mzs1 = spectrum1.peaks.map(d => d.mz);
     let mzs2 = spectrum2.peaks.map(d => d.mz);
-    let min = d3.min([d3.min(mzs1), d3.min(mzs2)])-5;
-    let max = d3.max([d3.max(mzs1), d3.max(mzs2)])+5;
+    let min = d3.min([d3.min(mzs1), d3.min(mzs2)])-1;
+    let max = d3.max([d3.max(mzs1), d3.max(mzs2)])+1;
     if (xmin_tmp === undefined || xmin_tmp === null) {
         xmin_tmp = min;
         xmax_tmp = max;
