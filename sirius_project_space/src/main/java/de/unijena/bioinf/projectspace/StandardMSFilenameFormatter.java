@@ -171,7 +171,7 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
             return null;
         if (name.length() > 64)
             name = name.substring(0, 48);
-        return name.replaceAll("[^A-Za-z0-9,\\-]+", "");
+        return name.replaceAll("[:/?#\\[\\]@!$&'()*+,;=<>%{}|\\\\^\"`]+", "");
     }
 
     public static String simplifyURL(String filename) {
