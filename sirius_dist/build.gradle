@@ -3,10 +3,6 @@ import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import java.nio.file.Paths
 import java.util.stream.Collectors
 
-plugins {
-    id 'org.beryx.runtime' version '1.11.4'
-}
-
 ext {
     OS = DefaultNativePlatform.currentOperatingSystem
 
@@ -187,10 +183,6 @@ task downloadManual(type: Download, group: 'documentation') {
 
 
 subprojects {
-    //this is to keep classpath away from commandline because it may get too long for windows
-    // --> this plugin causes error in windows that the main class could not be found or loaded
-    // --> please use the option "Shorten command line" in IntelliJ
-    //apply plugin: 'ManifestClasspath'
 
     jar {
         enabled = false
