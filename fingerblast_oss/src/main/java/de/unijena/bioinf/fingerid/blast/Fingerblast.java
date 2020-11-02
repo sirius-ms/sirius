@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.SearchStructureByFormula;
+import de.unijena.bioinf.fingerid.blast.parameters.FpParameters;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.Partition;
@@ -67,10 +68,20 @@ public class Fingerblast<P> {
         this.scoringMethod = scoringMethod;
     }
 
+    @Deprecated // this ist just a legacy method for the fingerid_cli that should be replaced
+    public List<Scored<FingerprintCandidate>> search(@NotNull MolecularFormula formula, @NotNull ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
+        return search(formula,fingerprint, (P) new FpParameters(fingerprint));
+    }
     public List<Scored<FingerprintCandidate>> search(@NotNull MolecularFormula formula, @NotNull ProbabilityFingerprint fingerprint, @Nullable P parameter) throws ChemicalDatabaseException {
         final List<FingerprintCandidate> candidates = searchEngine.lookupStructuresAndFingerprintsByFormula(formula);
         return score(candidates, fingerprint, parameter);
     }
+
+    @Deprecated // this ist just a legacy method for the fingerid_cli that should be replaced
+    public List<Scored<FingerprintCandidate>> score(@NotNull List<FingerprintCandidate> candidates, @NotNull ProbabilityFingerprint fingerprint) throws ChemicalDatabaseException {
+        return score(candidates,fingerprint, (P) new FpParameters(fingerprint));
+    }
+
 
     public List<Scored<FingerprintCandidate>> score(@NotNull List<FingerprintCandidate> candidates, @NotNull ProbabilityFingerprint fingerprint, @Nullable P parameter) throws ChemicalDatabaseException {
         //this would make the P parameter obsolete
