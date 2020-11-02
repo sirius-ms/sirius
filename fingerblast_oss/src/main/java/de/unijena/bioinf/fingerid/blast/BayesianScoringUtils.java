@@ -316,7 +316,7 @@ public class BayesianScoringUtils {
 
 
     private BayesnetScoring estimateScoring(MolecularFormula formula, List<int[]> treeStructure) {
-        ArrayFingerprint[] specificRefFPs;
+        Fingerprint[] specificRefFPs;
         ProbabilityFingerprint[] specificPredFPs;
         if (useBiotransformations()){
             Set<MolecularFormula> biotransF = applyBioTransformations(formula, true);
@@ -344,7 +344,7 @@ public class BayesianScoringUtils {
         return scoringFormulaSpecific;
     }
 
-    private ArrayFingerprint[] getTrueReferenceFingerprintsByFormula(Set<MolecularFormula> formulas) {
+    private Fingerprint[] getTrueReferenceFingerprintsByFormula(Set<MolecularFormula> formulas) {
         return extractByMF(trainingData.trueFingerprintsReferenceData, trainingData.formulasReferenceData, formulas);
     }
 
