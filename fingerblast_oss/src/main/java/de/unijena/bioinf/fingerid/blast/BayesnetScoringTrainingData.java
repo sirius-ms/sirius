@@ -21,19 +21,16 @@
 package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.BooleanFingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 
 public class BayesnetScoringTrainingData {
     public final MolecularFormula[] formulasReferenceData;
-    public final ArrayFingerprint[] trueFingerprintsReferenceData;
+    public final Fingerprint[] trueFingerprintsReferenceData;
     public final ProbabilityFingerprint[] estimatedFingerprintsReferenceData;
 
     public final PredictionPerformance[] predictionPerformances;
 
-    public BayesnetScoringTrainingData(MolecularFormula[] formulasReferenceData, ArrayFingerprint[] trueFingerprintsReferenceData, ProbabilityFingerprint[] estimatedFingerprintsReferenceData, PredictionPerformance[] predictionPerformances) {
+    public BayesnetScoringTrainingData(MolecularFormula[] formulasReferenceData, Fingerprint[] trueFingerprintsReferenceData, ProbabilityFingerprint[] estimatedFingerprintsReferenceData, PredictionPerformance[] predictionPerformances) {
         this.formulasReferenceData = formulasReferenceData;
         this.trueFingerprintsReferenceData = trueFingerprintsReferenceData;
         this.estimatedFingerprintsReferenceData = estimatedFingerprintsReferenceData;
