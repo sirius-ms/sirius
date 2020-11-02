@@ -50,7 +50,7 @@ distCliLinux64:
   needs: ["doc"]
   script:
     - cd sirius_dist/sirius_cli_single_os
-    - gradle artifactoryPublish
+    - gradle artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -69,7 +69,7 @@ distGuiLinux64:
   needs: ["distCliLinux64","doc"]
   script:
     - cd sirius_dist/sirius_gui_single_os
-    - gradle artifactoryPublish
+    - gradle artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -89,7 +89,7 @@ distCliWin64:
   script:
     - $env:path
     - cd sirius_dist/sirius_cli_single_os
-    - gradle.bat artifactoryPublish
+    - gradle.bat artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -109,7 +109,7 @@ distGuiWin64:
   script:
     - $env:path
     - cd sirius_dist/sirius_gui_single_os
-    - gradle.bat artifactoryPublish
+    - gradle.bat artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -128,7 +128,7 @@ distCliMacOSX:
   needs: ["doc"]
   script:
     - cd sirius_dist/sirius_cli_single_os
-    - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish
+    - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -147,7 +147,7 @@ distGuiMacOX:
   needs: ["distCliMacOSX","doc"]
   script:
     - cd sirius_dist/sirius_gui_single_os
-    - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish
+    - /Users/ladmin/gitlab/gradle-6.6.1/bin/gradle artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
