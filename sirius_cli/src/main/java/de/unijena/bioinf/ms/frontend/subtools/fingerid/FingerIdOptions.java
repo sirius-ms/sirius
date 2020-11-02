@@ -62,7 +62,7 @@ public class FingerIdOptions implements ToolChainOptions<FingeridSubToolJob, Ins
     public boolean fingeridInfo;
 
     @Option(names = {"-d", "--database", "--db"}, descriptionKey = "StructureSearchDB", paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
-            description = {"Search structure in the union og the given databases. If no database is given 'ALL' internal databases are used.", DataSourceCandidates.VALID_DATA_STRING})
+            description = {"Search structure in the union of the given databases. If no database is given 'ALL' internal databases are used.", DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
         defaultConfigOptions.changeOption("StructureSearchDB", dbList);
     }
@@ -78,6 +78,12 @@ public class FingerIdOptions implements ToolChainOptions<FingeridSubToolJob, Ins
             description = "Predictors used to search structures. Currently only CSI:FingerID is working.")
     public void setPredictors(List<String> predictors) throws Exception {
         defaultConfigOptions.changeOption("StructurePredictors", predictors);
+    }
+
+    @Option(names = {"--no-threshold"},
+            description = "Disable score threshold for formula candidates. CSI:FingerID will be computed for all formula candidates")
+    public void setNoThreshold(boolean noThreshold) throws Exception {
+        defaultConfigOptions.changeOption("FormulaResultThreshold", !noThreshold);
     }
 
     @Override

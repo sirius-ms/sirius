@@ -42,6 +42,28 @@ distImage {
     mainJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
     winConsole = true
     macPackageName = 'SIRIUS-headless'
+
+    doLast {
+        File libsTarget
+        File appRootTarget
+        if (OS.isLinux()) {
+            appRootTarget = outputDir.toPath().resolve(imageName).toFile()
+            libsTarget = appRootTarget.toPath().resolve("lib/app").toFile()
+        } else if (OS.isWindows()) {
+            appRootTarget = outputDir.toPath().resolve(imageName).toFile()
+            libsTarget = appRootTarget.toPath().resolve('app').toFile()
+        } else if (OS.isMacOsX()) {
+            appRootTarget = outputDir.toPath().resolve("${imageName}.app/Contents").toFile()
+            libsTarget = appRootTarget.toPath().resolve("app").toFile() //todo check path
+        } else {
+            throw new RuntimeException("Could not detect OS for packaging!")
+        }
+
+        copy {
+            from(installDist.outputs.files.singleFile.toPath().resolve('lib').resolve("agents-${siriusVersion}.jar"))
+            into(libsTarget)
+        }
+    }
 }
 
 
