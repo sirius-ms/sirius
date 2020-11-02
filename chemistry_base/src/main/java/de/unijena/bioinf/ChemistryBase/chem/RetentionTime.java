@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<RetentionTime> {
 
     private final double start, middle, end;
+    protected static final RetentionTime MISSING_RT_VALUE = new RetentionTime(Double.NaN);
 
     public RetentionTime(double start, double end) {
         this(start, end, start + (end - start) / 2d);
@@ -100,4 +101,9 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
     public int compareTo(@NotNull RetentionTime o) {
         return Double.compare(middle, o.middle);
     }
+
+    public static <T extends RetentionTime> T NA(@NotNull Class<T> retentionTime) {
+        return  (T) MISSING_RT_VALUE;
+    }
+
 }
