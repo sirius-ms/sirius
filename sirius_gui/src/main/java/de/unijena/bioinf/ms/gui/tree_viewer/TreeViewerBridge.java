@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.gui.tree_viewer;
 
 import java.util.Arrays;
@@ -6,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import netscape.javascript.JSObject;
+import org.slf4j.LoggerFactory;
 
 public class TreeViewerBridge {
 
@@ -75,14 +95,23 @@ public class TreeViewerBridge {
     }
 
     public float getTreeScale() {
-        // can be either Integer or Double
         // NOTE: this value is 1/tree_scale!
-        return ((Number) browser.getJSObject("tree_scale")).floatValue();
+        return tryCastNumber(browser.getJSObject("tree_scale"),1);
     };
 
     public float getTreeScaleMin() {
-        // can be either Integer or Double
-        return ((Number) browser.getJSObject("tree_scale_min")).floatValue();
+        return tryCastNumber(browser.getJSObject("tree_scale_min"),.5f);
+    }
+
+    private float tryCastNumber(Object number, float defValue){
+        try {
+            if (number instanceof Number){
+                return ((Number) number).floatValue();
+            }
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass()).error("Error when casting to Number. Returning default: " + defValue, e);
+        }
+        return defValue;
     }
 
     public void resetTree() {

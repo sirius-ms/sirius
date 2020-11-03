@@ -30,12 +30,14 @@ dependencies {
     compile group: 'de.isas.mztab', name: 'jmztabm-api', version: "$mztabm_version"
     compile group: 'de.isas.mztab', name: 'jmztabm-io', version: "$mztabm_version"
 
+    compile group: 'org.jbibtex', name: 'jbibtex', version: '1.0.17'
 
+    compile "de.unijena.bioinf.ms:ft_cplex:$siriusVersion"
+    compile "de.unijena.bioinf.ms:ft_gurobi:$siriusVersion"
 //    compile group: 'gurobi', name: 'gurobi-linux64', version: "8.1.0"
 //    compile group: 'cplex', name: 'cplex', version: "12.7.1"
 }
 
-//artifactoryPublish.skip = true
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
     publish {

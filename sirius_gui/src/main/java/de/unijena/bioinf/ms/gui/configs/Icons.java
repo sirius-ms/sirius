@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.gui.configs;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -17,6 +36,8 @@ import java.awt.*;
 public abstract class Icons {
     //ICONS
 
+
+    public static final ImageIcon SPLASH = new ImageIcon(MainFrame.class.getResource("/icons/sirius_splash.gif"));
 
     public static final Icon FP_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/fp-binary-sirius.gif"));
 
@@ -42,12 +63,18 @@ public abstract class Icons {
 
     public static final Icon FOLDER_OPEN_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-open@0.5x.png"));
     public static final Icon FOLDER_CLOSE_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-close@0.5x.png"));
+    public static final Icon FOLDER_FILE_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-file@0.5x.png"));
 
     public static final Icon DB_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db@0.5x.png"));
     public static final Icon DB_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db.png"));
 
     public static final Icon GEAR_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear@0.5x.png"));
     public static final Icon GEAR_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear.png"));
+
+    public static final Icon LOG_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-log@0.5x.png"));
+    public static final Icon LOG_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-log.png"));
+
+    public static final Icon CLIP_BOARD_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-clipboard@0.5x.png"));
 
     public static final Icon BUG_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-bug@0.5x.png"));
     public static final Icon BUG_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-bug.png"));

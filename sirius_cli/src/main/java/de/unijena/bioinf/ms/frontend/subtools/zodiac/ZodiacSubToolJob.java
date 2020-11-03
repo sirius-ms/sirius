@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
@@ -9,6 +28,8 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
 import de.unijena.bioinf.GibbsSampling.Zodiac;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
@@ -61,6 +82,7 @@ public class ZodiacSubToolJob extends DataSetJob {
 
     @Override
     protected void computeAndAnnotateResult(@NotNull List<Instance> instances) throws Exception {
+        LoggerFactory.getLogger(ZodiacSubToolJob.class).info("START ZODIAC JOB");
         final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream().distinct().collect(Collectors.toMap(
                 Instance::getExperiment,
                 in -> in.loadFormulaResults(List.of(SiriusScore.class), FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList())
@@ -77,11 +99,31 @@ public class ZodiacSubToolJob extends DataSetJob {
         Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList())));
         Ms2Experiment settings = instances.get(0).getExperiment();
 
+        // TODO: we might want to do that for SIRIUS
+        logInfo("Use caching of formulas.");
+        {
+            HashMap<MolecularFormula,MolecularFormula> formulaMap = new HashMap<>();
+            for (List<FTree> trees : ms2ExperimentToTreeCandidates.values()) {
+                for (FTree tree : trees) {
+                    for (Fragment f : tree) {
+                        formulaMap.putIfAbsent(f.getFormula(),f.getFormula());
+                        f.setFormula(formulaMap.get(f.getFormula()),f.getIonization());
+                    }
+                    for (Loss l : tree.losses()) {
+                        formulaMap.putIfAbsent(l.getFormula(),l.getFormula());
+                        l.setFormula(formulaMap.get(l.getFormula()));
+                    }
+                }
+            }
+        }
+        logInfo("Caching done.");
+
         maxCandidatesAt300 = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidatesAt300Mz.class).value;
         maxCandidatesAt800 = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidatesAt800Mz.class).value;
         forcedCandidatesPerIonizationRatio = settings.getAnnotationOrThrow(ZodiacRatioOfConsideredCandidatesPerIonization.class).value;
 
         //annotate compound quality at limit number of candidates
+        LoggerFactory.getLogger(ZodiacSubToolJob.class).info("TREES LOADED.");
         TreeQualityEvaluator treeQualityEvaluator = new TreeQualityEvaluator(0.8, 5);
         for (Map.Entry<Ms2Experiment, List<FTree>> ms2ExperimentListEntry : ms2ExperimentToTreeCandidates.entrySet()) {
             Ms2Experiment experiment = ms2ExperimentListEntry.getKey();
@@ -112,7 +154,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         ZodiacEdgeFilterThresholds edgeFilterThresholds = settings.getAnnotationOrThrow(ZodiacEdgeFilterThresholds.class);
         ZodiacRunInTwoSteps zodiacRunInTwoSteps = settings.getAnnotationOrThrow(ZodiacRunInTwoSteps.class);
         ZodiacClusterCompounds clusterEnabled = settings.getAnnotationOrThrow(ZodiacClusterCompounds.class);
-
+        LoggerFactory.getLogger(ZodiacSubToolJob.class).info("Cluster enabled? " + clusterEnabled.value);
         //node scoring
         NodeScorer[] nodeScorers;
         List<LibraryHit> anchors = null;
@@ -164,6 +206,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         );
 
         //todo clustering disabled. Evaluate if it might help at any point?
+        LoggerFactory.getLogger(ZodiacSubToolJob.class).info("RUN ZODIAC");
         final ZodiacResultsWithClusters clusterResults = SiriusJobs.getGlobalJobManager().submitJob(
                 zodiac.makeComputeJob(zodiacEpochs.iterations, zodiacEpochs.burnInPeriod, zodiacEpochs.numberOfMarkovChains))
                 .awaitResult();

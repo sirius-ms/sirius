@@ -1,15 +1,39 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.projectspace.summaries;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.Summarizer;
@@ -17,6 +41,7 @@ import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import gnu.trove.map.hash.TIntIntHashMap;
+import org.apache.commons.lang3.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
@@ -110,7 +135,7 @@ public class StructureSummaryWriter implements Summarizer {
                                     final ZodiacScore zodiacScore = result.getCandidate().getAnnotation(FormulaScoring.class).
                                             map(s -> s.getAnnotationOr(ZodiacScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ZodiacScore.class));
 
-                                    topHits.add(new Hit(/*formulaRank + "\t" + */confidence + "\t" + lines.get(0).get(0) + "\t" + zodiacScore + "\t" + siriusScore + "\t" + String.join("\t", lines.get(0).subList(1, lines.get(0).size())) + "\t" + exp.getId().getDirectoryName() + "\n", confidence, csiScore, formulaRank));
+                                    topHits.add(new Hit(confidence + "\t" + lines.get(0).get(0) + "\t" + zodiacScore + "\t" + siriusScore + "\t" + String.join("\t", lines.get(0).subList(1, lines.get(0).size())) + "\t" + exp.getId().getIonMass().orElse(Double.NaN) + "\t" + exp.getId().getRt().orElse(RetentionTime.NA()).getRetentionTimeInSeconds() + "\t" + exp.getId().getDirectoryName() + "\n", confidence, csiScore, formulaRank));
                                 }
                             }
                         }
@@ -120,8 +145,6 @@ public class StructureSummaryWriter implements Summarizer {
                     topHits.sort(Hit.compareByFingerIdScore().reversed());
                 });
 
-
-//                writer.textFile(SummaryLocations.STRUCTURE_CANDIDATES_TOP, fileWriter -> write(fileWriter, topHits));
                 return true;
             });
 
@@ -153,7 +176,7 @@ public class StructureSummaryWriter implements Summarizer {
     }
 
     static void write(BufferedWriter w, List<Hit> data) throws IOException {
-        w.write("rank\t" + "#adducts\t" + "#predictedFPs\t" + new ConfidenceScore(0).name() + "\t" + StructureCSVExporter.HEADER_LIST.get(0) + "\t" + new ZodiacScore(0).name() + "\t" + new SiriusScore(0).name() + "\t" + String.join("\t", StructureCSVExporter.HEADER_LIST.subList(1, StructureCSVExporter.HEADER_LIST.size())) + "\tid" + "\n");
+        w.write("rank\t" + "#adducts\t" + "#predictedFPs\t" + new ConfidenceScore(0).name() + "\t" + StructureCSVExporter.HEADER_LIST.get(0) + "\t" + new ZodiacScore(0).name() + "\t" + new SiriusScore(0).name() + "\t" + String.join("\t", StructureCSVExporter.HEADER_LIST.subList(1, StructureCSVExporter.HEADER_LIST.size())) + "\t" + "ionMass\t" + "retentionTimeInSeconds\t" + "id" + "\n");
         int rank = 0;
         for (Hit s : data) {
             w.write(String.valueOf(++rank));

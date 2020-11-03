@@ -1,7 +1,27 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.frontend.core;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
+import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
@@ -11,6 +31,9 @@ import de.unijena.bioinf.webapi.WebAPI;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.log4j.Level;
+import org.jbibtex.BibTeXDatabase;
+import org.jbibtex.BibTeXParser;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
@@ -37,15 +60,14 @@ import java.util.stream.Collectors;
 public abstract class ApplicationCore {
     public static final Logger DEFAULT_LOGGER;
 
-    public static final String CITATION;
-    public static final String CITATION_BIBTEX;
-
     public static final Path WORKSPACE;
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
     public static final WebAPI WEB_API;
+    @NotNull public static final BibtexManager BIBTEX;
 
     private static final boolean TIME = false;
     private static long t1;
+
     public static void measureTime(String message) {
         if (TIME) {
             long t2 = System.currentTimeMillis();
@@ -54,12 +76,14 @@ public abstract class ApplicationCore {
         }
     }
 
+
     //creating
     static {
         if (TIME)
             t1 = System.currentTimeMillis();
         measureTime("Start AppCore");
         try {
+//            System.out.println("LD ==> " + System.getProperty("java.library.path"));
             System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
             org.apache.log4j.Logger.getLogger("net.sf.jnati").setLevel(Level.WARN);
 
@@ -190,11 +214,14 @@ public abstract class ApplicationCore {
 
             //create custom properties if it not exists -> everything is commented out
             if (Files.notExists(customProfileFile)) {
-                try (InputStream stream = ApplicationCore.class.getResourceAsStream("/custom.config")) {
-                    List<String> lines =
-                            FileUtils.ensureBuffering(new InputStreamReader(stream,
-                                    StandardCharsets.UTF_8)).lines().map(line -> line.startsWith("#") ? line : "#" + line).collect(Collectors.toList());
-                    Files.write(customProfileFile, lines);
+                final StringWriter buff = new StringWriter();
+                PropertyManager.DEFAULTS.write(buff);
+                String[] lines = buff.toString().split(System.lineSeparator());
+                try (BufferedWriter w = Files.newBufferedWriter(customProfileFile,StandardCharsets.UTF_8)) {
+                    for(String line : lines){
+                        w.write(line.startsWith("#") ? line : "#" + line);
+                        w.newLine();
+                    }
                 } catch (IOException e) {
                     System.err.println("Could NOT create sirius properties file");
                     e.printStackTrace();
@@ -221,10 +248,16 @@ public abstract class ApplicationCore {
             PropertyManager.setProperty("de.unijena.bioinf.sirius.versionString", (version != null) ? "SIRIUS " + version : "SIRIUS <Version Unknown>");
             DEFAULT_LOGGER.info("You run " + VERSION_STRING());
 
-            String prop = PropertyManager.getProperty("de.unijena.bioinf.sirius.cite");
-            CITATION = prop != null ? prop : "";
-            prop = PropertyManager.getProperty("de.unijena.bioinf.sirius.cite-bib");
-            CITATION_BIBTEX = prop != null ? prop : "";
+            BibTeXDatabase bibtex = null;
+            try {
+                BibTeXParser bibParser = new BibTeXParser();
+                bibtex = bibParser.parse(new InputStreamReader(ApplicationCore.class.getResourceAsStream("/cite.bibtex")));
+            } catch (Exception e) {
+                DEFAULT_LOGGER.warn("Could NOT parse citation file. Citations may not be shown.", e);
+            } finally {
+                BIBTEX = new BibtexManager(bibtex);
+            }
+
 
             DEFAULT_LOGGER.debug("build properties initialized!");
 
@@ -284,13 +317,8 @@ public abstract class ApplicationCore {
         }
     }
 
-    public static String VERSION_STRING(){
+    public static String VERSION_STRING() {
         return PropertyManager.getProperty("de.unijena.bioinf.sirius.versionString");
-    }
-
-    public static void cite() {
-        System.err.println(System.lineSeparator() + System.lineSeparator() + "Please cite the following publications when using our tool:" + System.lineSeparator());
-        System.err.println(ApplicationCore.CITATION);
     }
 }
 
