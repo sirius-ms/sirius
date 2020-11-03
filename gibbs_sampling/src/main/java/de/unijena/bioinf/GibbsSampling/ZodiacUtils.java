@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
@@ -555,7 +575,7 @@ public class ZodiacUtils {
         final String[] keys = candidateMap.keySet().toArray(String[]::new);
         Arrays.sort(keys, Comparator.comparingInt(u->candidateMap.get(u).get(0).getFragments().length).reversed());
         Deviation deviation = candidateMap.get(keys[0]).get(0).getExperiment().getAnnotation(MS1MassDeviation.class).map(x -> x.allowedMassDeviation).orElse(new Deviation(20, 0.01)).divide(2);
-        final HashSet<String> formulaSet = new HashSet<>();
+        final HashSet<MolecularFormula> formulaSet = new HashSet<>();
         final HashSet<String> alreadyClustered = new HashSet<>();
         final ArrayList<String> cluster = new ArrayList<>();
         System.out.println("START CLUSTERING");

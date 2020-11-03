@@ -1,12 +1,32 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.canopus;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.canopus.dnn.ActivationFunction;
 import de.unijena.bioinf.canopus.dnn.FullyConnectedLayer;
 import de.unijena.bioinf.canopus.dnn.PlattLayer;
-import de.unijena.bioinf.fingerid.KernelToNumpyConverter;
 import org.tensorflow.*;
 
 import java.io.*;
@@ -39,6 +59,21 @@ public class TensorflowModel implements AutoCloseable, Closeable {
     protected int numberOfLayers = 0;
     protected String[] TRAINABLE_VARIABLES;
 
+    protected float regularizerStrength = 0f;
+    protected Tensor regStren;
+
+    public float getRegularizerStrength() {
+        return regularizerStrength;
+    }
+
+    public void setRegularizerStrength(float regularizerStrength) {
+        if (this.regularizerStrength!=regularizerStrength) {
+            this.regularizerStrength = regularizerStrength;
+            this.regStren.close();
+            this.regStren = Tensor.create(new float[]{regularizerStrength});
+        }
+    }
+
     public interface Resetter {
         public void resetWeights();
     }
@@ -53,6 +88,12 @@ public class TensorflowModel implements AutoCloseable, Closeable {
             if (graph.operation(layer)==null) break;
             trainable.add(layer);
             trainable.add("fully_connected_"+numberOfLayers+"/biases");
+        }
+        if (graph.operation("npc/weights")!=null && graph.operation("npc/biases")!=null) {
+            trainable.add("npc/weights");
+            trainable.add("npc/biases");
+            System.out.println("USE NPC in DNN");
+            npcLayers=1;
         }
         this.TRAINABLE_VARIABLES = trainable.toArray(new String[trainable.size()]);
     }
@@ -110,6 +151,7 @@ public class TensorflowModel implements AutoCloseable, Closeable {
     protected static int nformulaLayers = 2;
     protected static int nplattLayers = 1;
     protected static int ninnerLayers = 2;
+    protected int npcLayers;
 
 
     protected final Graph graph;
@@ -123,6 +165,7 @@ public class TensorflowModel implements AutoCloseable, Closeable {
         this.graph = modelBundle.graph();
         this.session = modelBundle.session();
         in_training_tensor = Tensor.create(true);
+        this.regStren = Tensor.create(new float[]{0f});
         not_in_training_tensor = Tensor.create(false);
         HAS_TRAINING_FLAG = graph.operation("in_training") != null;
         readTrainableLayers();
@@ -167,6 +210,14 @@ public class TensorflowModel implements AutoCloseable, Closeable {
         return matrix;
     }
 
+    public float[][] predictNPC(TrainingBatch batch) {
+        final Tensor output = feedTraining(session.runner(), false).feed("input_platts", batch.platts).feed("input_formulas", batch.formulas).fetch("npc_output", 0).run().get(0);
+        final float[][] matrix = new float[(int) output.shape()[0]][(int) output.shape()[1]];
+        output.copyTo(matrix);
+        output.close();
+        return matrix;
+    }
+
     private PredictionPerformance[] evaluatePerformance(TrainingBatch batch) {
 
         /*
@@ -198,8 +249,53 @@ public class TensorflowModel implements AutoCloseable, Closeable {
 
         // compute report
         final PredictionPerformance.Modify[] performance = new PredictionPerformance.Modify[matrix[0].length];
-        for (int i = 0; i < performance.length; ++i) performance[i] = new PredictionPerformance(0, 0, 0, 0, 0, false).modify();
+        for (int i = 0; i < performance.length; ++i) performance[i] = new PredictionPerformance(0, 0, 0, 0, 0).modify();
 
+
+        for (int row = 0; row < matrix.length; ++row) {
+            final float[] truth = labels[row];
+            for (int col = 0; col < truth.length; ++col) {
+                performance[col].update(truth[col] >= 0, matrix[row][col] >= 0);
+            }
+        }
+        final PredictionPerformance[] ps = new PredictionPerformance[performance.length];
+        for (int i = 0; i < ps.length; ++i) ps[i] = performance[i].done();
+        return ps;
+    }
+
+
+    private PredictionPerformance[] evaluateNPCPerformance(TrainingBatch batch) {
+
+        /*
+        final List<Tensor<?>> outputs = feedTraining(session.runner(), false).feed("input_platts", batch.platts).feed("input_formulas", batch.formulas).fetch(OUTPUT_LAYER, 0).fetch("check_mean1",0).fetch("check_std1",0).fetch("check_sd1", 0).fetch("check_mean3",0).fetch("check_std3",0).fetch("check_sd3", 0).fetch("check_mean0",0).fetch("check_sd0",0).fetch("check_std0",0).run();
+        final Tensor output = outputs.get(0);
+        final double mean1 = outputs.get(1).floatValue(), std1 = outputs.get(2).floatValue(), sd1 = outputs.get(3).floatValue(), mean2 = outputs.get(4).floatValue(), std2 = outputs.get(5).floatValue(), sd2 = outputs.get(6).floatValue(), mean0 = outputs.get(7).floatValue(), sd0 = outputs.get(8).floatValue(), std0 = outputs.get(9).floatValue();
+        System.out.printf("#Check network layer means: Input: mean = %f with std = %f, Standard deviation: %f.\tLayer 1: mean = %f with std = %f. Standard deviation: %f.\tLayer 3: mean = %f with std = %f. Standard deviation: %f\n", mean0, std0, sd0, mean1, std1, sd1, mean2, std2, sd2);
+        */
+
+        final List<Tensor<?>> outputs = feedTraining(session.runner(), false).feed("input_platts", batch.platts).feed("input_formulas", batch.formulas).fetch("npc_output", 0).run();
+        final Tensor output = outputs.get(0);
+
+
+
+        final float[][] labels = new float[(int) batch.npcLabels.shape()[0]][(int) batch.npcLabels.shape()[1]];
+        batch.npcLabels.copyTo(labels);
+        final float[][] matrix = new float[(int) output.shape()[0]][(int) output.shape()[1]];
+        output.copyTo(matrix);
+        for (Tensor<?> t : outputs) t.close();
+
+        /*
+        try {
+            new KernelToNumpyConverter().writeToFile(new File("labels.matrix"), labels);
+            new KernelToNumpyConverter().writeToFile(new File("output.matrix"), matrix);
+        } catch (IOException e) {
+
+        }
+        */
+
+        // compute report
+        final PredictionPerformance.Modify[] performance = new PredictionPerformance.Modify[matrix[0].length];
+        for (int i = 0; i < performance.length; ++i) performance[i] = new PredictionPerformance(0, 0, 0, 0, 0).modify();
 
         for (int row = 0; row < matrix.length; ++row) {
             final float[] truth = labels[row];
@@ -214,6 +310,10 @@ public class TensorflowModel implements AutoCloseable, Closeable {
 
     public Report evaluate(TrainingBatch batch) {
         return new Report(evaluatePerformance(batch));
+    }
+
+    public Report evaluateNPC(TrainingBatch batch) {
+        return new Report(evaluateNPCPerformance(batch));
     }
 
     public Report[] evaluateWithFingerprints(TrainingBatch batch, List<DummyMolecularProperty> dummyMolecularProperties, int[] CSI_USED_INDIZES) {
@@ -247,15 +347,38 @@ public class TensorflowModel implements AutoCloseable, Closeable {
     }
 
     public double[] train(Tensor plattValues, Tensor formulaValues, Tensor labels) {
-        final List<Tensor<?>> values = feedTraining(session.runner(), true).feed("input_platts", plattValues).feed("input_formulas", formulaValues).feed("input_labels", labels).fetch(this.loss, 0).fetch("regularization",0).fetch(optimizer).run();
+        final List<Tensor<?>> values = feedTraining(session.runner(), true).feed("input_platts", plattValues).feed("input_formulas", formulaValues).feed("input_labels", labels).feed("regstren", regStren).fetch(this.loss, 0).fetch("regularization",0).fetch(optimizer).run();
         final double lossValue = values.get(0).floatValue();
         final double regularizer = values.get(1).floatValue();
         for (Tensor<?> t : values) t.close();
         return new double[]{lossValue, regularizer};
     }
 
-    public void saveWithoutPlattEstimate(TrainingData data, int id, boolean saveMatricesAsNumpy, boolean saveModelForJava, boolean trainMissingCompounds, double[] As, double[] Bs) throws IOException {
-        final File fileName = new File("saved_model_" + (trainMissingCompounds ? "final_" : "") + id);
+    public double[] trainWithGradient(Tensor plattValues, Tensor formulaValues, Tensor labels) {
+        final List<Tensor<?>> values = feedTraining(session.runner(), true).feed("input_platts", plattValues).feed("input_formulas", formulaValues).feed("input_labels", labels).feed("regstren", regStren).fetch(this.loss, 0).fetch("regularization",0).fetch("gradient_sum",0).fetch(optimizer).run();
+        final double lossValue = values.get(0).floatValue();
+        final double regularizer = values.get(1).floatValue();
+        final double gradient_sum = values.get(2).floatValue();
+        for (Tensor<?> t : values) t.close();
+        return new double[]{lossValue, regularizer,gradient_sum};
+    }
+
+    public double[] train_npc(Tensor plattValues, Tensor formulaValues, Tensor labels, Tensor NPC_LABELS) {
+        final List<Tensor<?>> values = feedTraining(session.runner(), true).feed("input_platts", plattValues).feed("input_formulas", formulaValues).feed("input_labels", labels).feed("npc_labels", NPC_LABELS).feed("regstren", regStren).fetch("npc_loss",0).fetch(this.loss, 0).fetch("npc_regularization",0).fetch("npc_op").run();
+        final double npcValue = values.get(0).floatValue();
+        final double lossValue = values.get(1).floatValue();
+        final double regularizer = values.get(2).floatValue();
+        for (Tensor<?> t : values) t.close();
+        return new double[]{npcValue, lossValue, regularizer};
+    }
+
+    public void saveWithoutPlattEstimate(TrainingData data, int id, boolean saveMatricesAsNumpy, boolean saveModelForJava, boolean trainMissingCompounds, double[] As, double[] Bs, double[] npcAs, double[] npcBs) throws IOException {
+        String descr = trainMissingCompounds ? "final" : "notrained";
+        saveWithoutPlattEstimate(descr,data,id,saveMatricesAsNumpy,saveModelForJava,trainMissingCompounds,As,Bs,npcAs,npcBs);
+    }
+
+    public void saveWithoutPlattEstimate(String descr, TrainingData data, int id, boolean saveMatricesAsNumpy, boolean saveModelForJava, boolean trainMissingCompounds, double[] As, double[] Bs, double[] npcAs, double[] npcBs) throws IOException {
+        final File fileName = new File("saved_model_" + descr + "_" + id);
         if (!fileName.exists()) fileName.mkdirs();
         final IntBuffer scalar = IntBuffer.allocate(1);
         scalar.put(id);
@@ -275,24 +398,18 @@ public class TensorflowModel implements AutoCloseable, Closeable {
             final List<EvaluationInstance> allMissingCompounds = new ArrayList<>();
             allMissingCompounds.addAll(data.crossvalidation);
             if (data.independent!=null) allMissingCompounds.addAll(data.independent);
+            final List<EvaluationInstance> npcCompounds = data.npcInstances;
             // train for 6 epochs, halve simulated, halve real
             int tick = 35000;
-            try (final TrainingBatch real = data.generateBatch(allMissingCompounds)) {
-                for (int I = 0; I < 10; ++I) {
-                    train(real);
-                    for (int k = 0; k < 5; ++k) {
+            try (final TrainingBatch npc = data.generateNPCBatch(npcCompounds)) {
+                try (final TrainingBatch real = data.generateBatch(allMissingCompounds)) {
+                    for (int I = 0; I < 200; ++I) {
+                        train(real);
                         try (final TrainingBatch sim = data.generateBatch(tick++, null, service)) {
                             train(sim);
-
                         }
-                    }
-                    try (final TrainingBatch resam = data.resample(allMissingCompounds, tick++)) {
-                        train(resam);
-                    }
-                    for (int k = 0; k < 5; ++k) {
-                        try (final TrainingBatch sim = data.generateBatch(tick++, null, service)) {
-                            train(sim);
-
+                        if (data.isNPC()) {
+                            train_npc(npc.platts, npc.formulas, npc.labels, npc.npcLabels);
                         }
                     }
                 }
@@ -309,7 +426,7 @@ public class TensorflowModel implements AutoCloseable, Closeable {
                     final float[][] fmatrix = new float[(int) M.shape()[0]][(int) M.shape()[1]];
                     M.copyTo(fmatrix);
                     if (saveMatricesAsNumpy)
-                        new KernelToNumpyConverter().writeToFile(new File(fileName, String.valueOf(k) + ".matrix"), fmatrix);
+                        FileUtils.writeFloatMatrix(new File(fileName, String.valueOf(k) + ".matrix"), fmatrix);
                     if (saveModelForJava) {
                         weightMatrices.add(fmatrix);
                     }
@@ -317,7 +434,7 @@ public class TensorflowModel implements AutoCloseable, Closeable {
                     final float[] fmatrix = new float[(int) M.shape()[0]];
                     M.copyTo(fmatrix);
                     if (saveMatricesAsNumpy) {
-                        try (final BufferedWriter bw = KernelToNumpyConverter.getWriter(new File(fileName, String.valueOf(k) + ".matrix"))) {
+                        try (final BufferedWriter bw = FileUtils.getWriter(new File(fileName, String.valueOf(k) + ".matrix"));) {
                             for (float val : fmatrix) {
                                 bw.write(String.valueOf(val));
                                 bw.newLine();
@@ -335,7 +452,7 @@ public class TensorflowModel implements AutoCloseable, Closeable {
         if (saveModelForJava) {
             final ActivationFunction F = getActivationFunction();
             final ArrayList<FullyConnectedLayer> layerMatrices = new ArrayList<>();
-            final int outputLayer = weightMatrices.size() - 1;
+            final int outputLayer = weightMatrices.size() - 1 - npcLayers;
             for (int i = 0; i < weightMatrices.size(); ++i) {
                 layerMatrices.add(new FullyConnectedLayer(weightMatrices.get(i), biasMatrices.get(i), i == outputLayer ? new ActivationFunction.Identity() : F));
             }
@@ -390,10 +507,16 @@ public class TensorflowModel implements AutoCloseable, Closeable {
                 }
                 cdkMask = v.toMask();
             }
+            final FullyConnectedLayer npcOut;
+            if (data.isNPC()) {
+                npcOut = new FullyConnectedLayer(weightMatrices.get(weightMatrices.size()-1), biasMatrices.get(biasMatrices.size()-1), new ActivationFunction.Identity());
+            } else {
+                npcOut = null;
+            }
 
             final Canopus canopus = new Canopus(
                     formulaLayers, plattLayers, innerLayers, layerMatrices.remove(0), new PlattLayer(As, Bs), data.formulaNorm, data.formulaScale, plattCentering, plattScale, data.classyFireMask, cdkMask
-            );
+            , data.isNPC() ? npcOut : null,data.isNPC() ? new PlattLayer(npcAs,npcBs) : null);
 
             try (final OutputStream stream = new GZIPOutputStream(new FileOutputStream(new File("canopus_" + (trainMissingCompounds ? "final_" : "") + id + ".data.gz")))) {
                 canopus.dump(stream);
@@ -404,12 +527,56 @@ public class TensorflowModel implements AutoCloseable, Closeable {
 
 
     }
+    public double[][] plattEstimate(TrainingData d) {
+        return plattEstimate(d,true);
+    }
 
-    public double[][] plattEstimate(TrainingData data) {
+    public double[][] plattEstimateForNPC(TrainingData data, boolean includeIndep) {
         double[] As = null, Bs = null;
         final ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         // learn platt decision function
-        try (final TrainingBatch batch = data.fillUpWithTrainData()) {
+        try (final TrainingBatch batch = data.fillUpWithTrainDataNPC(includeIndep)) {
+            final float[][] ys = predictNPC(batch);
+            final float[][] labels = new float[ys.length][ys[0].length];
+            batch.npcLabels.copyTo(labels);
+            // train sigmoid function
+            final List<Future<double[]>> parameters = new ArrayList<>();
+            for (int k = 0; k < ys[0].length; ++k) {
+                final int column = k;
+                parameters.add(service.submit(new Callable<double[]>() {
+                    @Override
+                    public double[] call() throws Exception {
+                        final double[] decisionValues = new double[ys.length];
+                        for (int i = 0; i < ys.length; ++i)
+                            decisionValues[i] = ys[i][column];
+                        final double[] classLabels = new double[ys.length];
+                        for (int i = 0; i < ys.length; ++i)
+                            classLabels[i] = labels[i][column];
+                        return PlattLayer.sigmoid_train(decisionValues, classLabels);
+                    }
+                }));
+            }
+            As = new double[ys[0].length];
+            Bs = new double[ys[0].length];
+            for (int k = 0; k < parameters.size(); ++k) {
+                try {
+                    final double[] AB = parameters.get(k).get();
+                    As[k] = AB[0];
+                    Bs[k] = AB[1];
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        service.shutdown();
+        return new double[][]{As,Bs};
+    }
+
+    public double[][] plattEstimate(TrainingData data, boolean includeIndep) {
+        double[] As = null, Bs = null;
+        final ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        // learn platt decision function
+        try (final TrainingBatch batch = data.fillUpWithTrainData(includeIndep)) {
             final float[][] ys = predict(batch);
             final float[][] labels = new float[ys.length][ys[0].length];
             batch.labels.copyTo(labels);
@@ -446,15 +613,35 @@ public class TensorflowModel implements AutoCloseable, Closeable {
         return new double[][]{As,Bs};
     }
 
+    public void saveWithPlattOnCrossval(TrainingData data, int id, boolean saveMatricesAsNumpy, boolean saveModelForJava) throws IOException {
+        double[] As = null, Bs = null, npcAs=null, npcBs=null;
+        if (saveModelForJava) {
+            double[][] plattestimate = plattEstimate(data,false);
+            As = plattestimate[0];
+            Bs = plattestimate[1];
+            if (data.isNPC()) {
+                plattestimate = plattEstimateForNPC(data, false);
+                npcAs = plattestimate[0];
+                npcBs = plattestimate[1];
+            }
+        }
+        saveWithoutPlattEstimate(data,id,saveMatricesAsNumpy,saveModelForJava,false,As,Bs,npcAs,npcBs);
+    }
+
     public void save(TrainingData data, int id, boolean saveMatricesAsNumpy, boolean saveModelForJava, boolean trainMissingCompounds) throws IOException {
         // platt estimate
-        double[] As = null, Bs = null;
+        double[] As = null, Bs = null, npcAs=null, npcBs=null;
         if (saveModelForJava) {
             double[][] plattestimate = plattEstimate(data);
             As = plattestimate[0];
             Bs = plattestimate[1];
+            if (data.isNPC()) {
+                plattestimate = plattEstimateForNPC(data, true);
+                npcAs = plattestimate[0];
+                npcBs = plattestimate[1];
+            }
         }
-        saveWithoutPlattEstimate(data,id,saveMatricesAsNumpy,saveModelForJava,trainMissingCompounds,As,Bs);
+        saveWithoutPlattEstimate(data,id,saveMatricesAsNumpy,saveModelForJava,trainMissingCompounds,As,Bs,npcAs,npcBs);
     }
 
 

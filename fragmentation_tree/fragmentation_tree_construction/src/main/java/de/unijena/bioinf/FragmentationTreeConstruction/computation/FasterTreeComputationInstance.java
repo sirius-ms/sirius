@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
@@ -250,38 +270,45 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final ExactJob[] beautify = new ExactJob[exact.length];
         final TIntArrayList beautifyTodo = new TIntArrayList();
 
-        while (tss!=null) {
-            beautifyTodo.clearQuick();
-            for (int k=0; k < exact.length; ++k) {
-                if (!exact[k].tree.getAnnotation(Beautified.class, Beautified::ugly).isBeautiful()) {
-                    if ((treeSize >= MAX_TREESIZE || inc >= MAX_TREESIZE_INCREASE )|| isHighQuality(exact[k])) {
-                        setBeautiful(exact[k], treeSize, originalTreeSize, originalScores[k]);
-                    } else {
-                        beautifyTodo.add(k);
+
+        if (tss!=null) {
+            //beautify trees
+            while (true) {
+                beautifyTodo.clearQuick();
+                for (int k=0; k < exact.length; ++k) {
+                    if (!exact[k].tree.getAnnotation(Beautified.class, Beautified::ugly).isBeautiful()) {
+                        if ((treeSize >= MAX_TREESIZE || inc >= MAX_TREESIZE_INCREASE )|| isHighQuality(exact[k])) {
+                            setBeautiful(exact[k], treeSize, originalTreeSize, originalScores[k]);
+                        } else {
+                            beautifyTodo.add(k);
+                        }
                     }
                 }
-            }
-            if (beautifyTodo.isEmpty()) break;
-            inc += TREE_SIZE_INCREASE;
-            treeSize += TREE_SIZE_INCREASE;
-            tss.fastReplace(pinput, new TreeSizeScorer.TreeSizeBonus(treeSize));
-            for (int j=0; j < beautifyTodo.size(); ++j) {
-                final int K = beautifyTodo.getQuick(j);
-                if (exact[K].input!=null) {
-                    tss.fastReplace(exact[K].input, new TreeSizeScorer.TreeSizeBonus(treeSize));
-                    exact[K].input.setAnnotation(Beautified.class, Beautified.inProcess(inc));
-                } else {
-                    pinput.setAnnotation(Beautified.class, Beautified.inProcess(inc));
+                if (beautifyTodo.isEmpty()) break;
+                inc += TREE_SIZE_INCREASE;
+                treeSize += TREE_SIZE_INCREASE;
+                tss.fastReplace(pinput, new TreeSizeScorer.TreeSizeBonus(treeSize));
+                for (int j=0; j < beautifyTodo.size(); ++j) {
+                    final int K = beautifyTodo.getQuick(j);
+                    if (exact[K].input!=null) {
+                        tss.fastReplace(exact[K].input, new TreeSizeScorer.TreeSizeBonus(treeSize));
+                        exact[K].input.setAnnotation(Beautified.class, Beautified.inProcess(inc));
+                    } else {
+                        pinput.setAnnotation(Beautified.class, Beautified.inProcess(inc));
+                    }
+                    beautify[K] = submitSubJob(new ExactJob(exact[K]));
                 }
-                beautify[K] = submitSubJob(new ExactJob(exact[K]));
+                for (int j=0; j < beautifyTodo.size(); ++j) {
+                    final int K = beautifyTodo.getQuick(j);
+                    exact[K] = beautify[K].takeResult();
+                }
             }
-            for (int j=0; j < beautifyTodo.size(); ++j) {
-                final int K = beautifyTodo.getQuick(j);
-                exact[K] = beautify[K].takeResult();
+            revertTreeSizeIncrease(exact, originalTreeSize);
+        } else {
+            for (ExactResult exactResult : exact) {
+                setUgly(exactResult);
             }
         }
-
-        revertTreeSizeIncrease(exact, originalTreeSize);
 
         return exact;
     }
@@ -298,6 +325,10 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
     private void setBeautiful(ExactResult t, double maxTreeSize, double originalTreeSize, double originalScore) {
         t.tree.setAnnotation(Beautified.class, Beautified.beautified(maxTreeSize-originalTreeSize, t.score-originalScore));
+    }
+
+    private void setUgly(ExactResult exactResult) {
+        exactResult.tree.setAnnotation(Beautified.class, Beautified.ugly());
     }
 
     private List<ExactResult> extractExactResults(List<ExactResult> results, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {

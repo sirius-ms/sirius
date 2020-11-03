@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.sirius.validation;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
@@ -123,7 +143,18 @@ public class Ms2Validator extends Ms1Validator {
         final double neutralmass = input.getMoleculeNeutralMass();
         if ((input.getMolecularFormula() != null || neutralmass > 0) && input.getIonMass() > 0 && !input.getPrecursorIonType().isIonizationUnknown()) {
             final double modification = input.getIonMass()-neutralmass;
-            if (Math.abs(input.getPrecursorIonType().neutralMassToPrecursorMass(neutralmass)-input.getIonMass()) > absError) {
+            final double error = input.getPrecursorIonType().neutralMassToPrecursorMass(neutralmass) - input.getIonMass();
+            if (Math.abs(error) > absError) {
+                // as we sometimes store the molecular formula of intrinsical charged ions inconsistently, check this possibility
+                if (input.getPrecursorIonType().isIntrinsicalCharged()) {
+                    // we always report a neutral formula, even if it should be intrinsical charged
+                    // check if it works when we use protonation
+                    if (input.getPrecursorIonType().getCharge()>0) {
+                        if (Math.abs(PeriodicTable.getInstance().getPrecursorProtonation().neutralMassToPrecursorMass(neutralmass)-input.getIonMass()) <= absError) return;
+                    } else {
+                        if (Math.abs(PeriodicTable.getInstance().getPrecursorDeprotonation().neutralMassToPrecursorMass(neutralmass)-input.getIonMass()) <= absError) return;
+                    }
+                }
                 final PrecursorIonType iontype = PeriodicTable.getInstance().ionByMass(modification, absError, input.getPrecursorIonType().getCharge());
                 if (iontype != null) {
                     throwOrWarn(warn, true, nameOf(input) + ": PrecursorIonType is inconsistent with the data (" + input.getPrecursorIonType().toString() + " but " + iontype.toString() + " is estimated after looking at the data)");
@@ -133,6 +164,7 @@ public class Ms2Validator extends Ms1Validator {
                     input.setPrecursorIonType(PeriodicTable.getInstance().getUnknownPrecursorIonType(input.getPrecursorIonType().getCharge()));
                 }
             }
+            return;
         }
         if (repair && input.getPrecursorIonType().isIonizationUnknown() && (input.getMolecularFormula() != null)) {
             if (input.getIonMass()==0 || Double.isNaN(input.getIonMass())) {

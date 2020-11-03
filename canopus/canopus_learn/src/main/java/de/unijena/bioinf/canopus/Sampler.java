@@ -1,8 +1,28 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.canopus;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.fingerid.KernelToNumpyConverter;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -15,7 +35,7 @@ import java.util.regex.Pattern;
 public class Sampler {
 
     protected TDoubleArrayList[] positives, negatives, tps, fps, tns, fns;
-    protected double[] recall, precision;
+    protected double[] recall, precision, truePositiveRate, falsePositiveRate, trueNegativeRate, falseNegativeRate;
     protected MaskedFingerprintVersion version;
 
     protected Pattern exclude,include;
@@ -23,9 +43,20 @@ public class Sampler {
     protected HashSet<String> trainInchiKeys;
     protected ProbabilityFingerprint[] trainFps;
     protected ArrayFingerprint[] perfectFps;
+    protected ErrorStats[] errorStats;
 
     protected HashMap<String, Duplicate> structures;
     protected CovarianceTree covarianceTree;
+
+    private static class ErrorStats {
+        private double fpr, fnr, tanimoto;
+
+        public ErrorStats(double fpr, double fnr, double tanimoto) {
+            this.fpr = fpr;
+            this.fnr = fnr;
+            this.tanimoto = tanimoto;
+        }
+    }
 
     private static class Duplicate {
         private final String inchikey;
@@ -76,16 +107,82 @@ public class Sampler {
             tns[i] = new TDoubleArrayList();
             fns[i] = new TDoubleArrayList();
         }
+        truePositiveRate = new double[version.size()];
+        falsePositiveRate = new double[version.size()];
+        trueNegativeRate = new double[version.size()];
+        falseNegativeRate = new double[version.size()];
         this.version = version;
         this.trainInchiKeys = new HashSet<>();
         this.structures = new HashMap<>();
     }
 
+
+    public double[] sampleByErrorStats(ArrayFingerprint truth, int tries) {
+        ErrorStats selected = null;
+        Random r = new Random();
+        for (int k=0; k  < tries; ++k) {
+            ErrorStats s = errorStats[r.nextInt(errorStats.length)];
+            if (selected==null || s.tanimoto < selected.tanimoto)
+                selected = s;
+        }
+        // sampling
+        final int positives = truth.cardinality();
+        final int negatives = truth.getFingerprintVersion().size()-positives;
+
+        // we expect
+        double expectedFalsePositives = negatives*selected.fpr;
+        double expectedFalseNegatives = positives*selected.fnr;
+        int k=0;
+        double fpsum = 0d, fnsum = 0d;
+        for (FPIter x : truth) {
+            if (x.isSet()) {
+                fnsum += falseNegativeRate[k];
+            } else {
+                fpsum += falsePositiveRate[k];
+            }
+            ++k;
+        }
+        if (fpsum == 0) fpsum = 0.5d;
+        if (fnsum == 0) fnsum = 0.5d;
+        double scaleFp = expectedFalsePositives / fpsum;
+        double scaleFn = expectedFalseNegatives / fnsum;
+
+        if (false){
+            System.out.printf("positives: %d, negatives: %d, expected FP: %.1f, expected FN: %.1f\nAverage #fp: %.1f, Average #fn: %.1f\n", positives, negatives,
+                    expectedFalsePositives, expectedFalseNegatives, fpsum, fnsum);
+        }
+
+        final double[] vec = trainFps[0].toProbabilityArray();
+
+        k=0;
+        for (FPIter x : truth) {
+            double random = r.nextDouble();
+            if (x.isSet()) {
+                if (random < (falseNegativeRate[k]*scaleFn)) {
+                    vec[k] = draw(fns[k], r);
+                } else {
+                    vec[k] = draw(tps[k], r);
+                }
+
+            } else {
+                if (random < (falsePositiveRate[k]*scaleFp)) {
+                    vec[k] = draw(fps[k], r);
+                } else {
+                    vec[k] = draw(tns[k], r);
+                }
+            }
+            ++k;
+        }
+
+        return vec;
+    }
+
     public List<EvaluationInstance> readCrossvalidation(File file, HashMap<String,LabeledCompound> compounds) throws IOException {
+        ArrayList<ErrorStats> errorStatList = new ArrayList<>();
         ArrayList<ProbabilityFingerprint> probabilityFingerprints = new ArrayList<>();
         ArrayList<ArrayFingerprint> perfectFingerprints = new ArrayList<>();
         ArrayList<EvaluationInstance> instances = new ArrayList<>();
-        try (final BufferedReader br = KernelToNumpyConverter.getReader(file)) {
+        try (final BufferedReader br = FileUtils.getReader(file)) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] tbs = line.split("\t");
@@ -123,29 +220,45 @@ public class Sampler {
                     System.err.println("No classification information for " + tbs[0] + " with InChI-Key " + inchiKey);
                 }
 
+                int union = 0, intersection = 0, falsePositives = 0, falseNegatives = 0, npositives=0, nnegatives=0;
+
                 // add platt pool
                 int k = 0;
                 for (FPIter2 fp : perfectPrediction.asBooleans().foreachPair(trainFp)) {
                     if (fp.isLeftSet()) {
+                        ++npositives;
+                        ++union;
                         positives[k].add(fp.getRightProbability());
                         if (fp.isRightSet()) {
                             tps[k].add(fp.getRightProbability());
+                            ++intersection;
                         } else {
                             fns[k].add(fp.getRightProbability());
+                            falseNegatives++;
                         }
                     } else {
+                        ++nnegatives;
                         negatives[k].add(fp.getRightProbability());
                         if (fp.isRightSet()) {
                             fps[k].add(fp.getRightProbability());
+                            ++union;
+                            ++falsePositives;
                         } else {
                             tns[k].add(fp.getRightProbability());
                         }
                     }
                     ++k;
                 }
-
+                ErrorStats stat = new ErrorStats(
+                        falsePositives / (double)nnegatives,
+                        falseNegatives / (double)npositives,
+                        intersection / (double)union
+                );
+                errorStatList.add(stat);
             }
         }
+        this.errorStats = errorStatList.toArray(ErrorStats[]::new);
+        Arrays.sort(errorStats, Comparator.comparingDouble(x->x.tanimoto));
         this.perfectFps = perfectFingerprints.toArray(new ArrayFingerprint[perfectFingerprints.size()]);
         this.trainFps = probabilityFingerprints.toArray(new ProbabilityFingerprint[probabilityFingerprints.size()]);
 
@@ -176,7 +289,13 @@ public class Sampler {
         for (int i=0; i < recall.length; ++i) {
             recall[i] = tps[i].size() / ((double)(tps[i].size()+fns[i].size()));
             precision[i] = tps[i].size() / ((double)tps[i].size() + fps[i].size());
+            truePositiveRate[i] = recall[i];
+            falsePositiveRate[i] = fps[i].size() / ((double)(tns[i].size()+fps[i].size()));
+            trueNegativeRate[i] = tns[i].size() / ((double)(tns[i].size()+fps[i].size()));
+            falseNegativeRate[i] = fns[i].size() / ((double)fns[i].size() + tps[i].size());
         }
+
+
         return instances;
     }
 
@@ -189,12 +308,16 @@ public class Sampler {
             iter.next();
             if (iter.isSet()) {
                 if (noisy && random.nextDouble()<0.05) {
-                    sampled[k] = draw(fps[k],random);
+                    sampled[k] = draw(fns[k],random);
                 } else {
                     sampled[k] = draw(positives[k],random);
                 }
             } else {
-                sampled[k] = draw(negatives[k],random);
+                if (noisy && random.nextDouble() < 0.002) {
+                    sampled[k] = draw(fps[k],random);
+                } else {
+                    sampled[k] = draw(negatives[k],random);
+                }
             }
         }
         return new ProbabilityFingerprint(version, sampled);
@@ -239,7 +362,7 @@ public class Sampler {
             if (noisy) {
                 if (f.isSet() && sampled[k]>= 0.5) {
                     double freq = this.positives[k].size()/((double)this.negatives[k].size()+this.positives[k].size());
-                    double simRecall = Math.min(1d, freq / 0.025);
+                    double simRecall = Math.min(1d, freq / 0.01);
                     final double recall = this.recall[k];
                     simRecall = (simRecall*recall*2)/(simRecall+recall);
                     if (r.nextDouble() > simRecall) {
@@ -259,28 +382,21 @@ public class Sampler {
 
         if (noisy) {
             // add some fp from sample
-            alist.sort(Comparator.reverseOrder());
-            final Iterator<Scored<Duplicate>> iter = alist.iterator();
-            Scored<Duplicate> chosenCandidate = null;
-            while (iter.hasNext()) {
-                chosenCandidate = iter.next();
-                if (chosenCandidate.getScore()>=0.98)
-                    continue;
-                if (r.nextDouble() < chosenCandidate.getScore()) {
-                    break;
-                }
-            }
-            int j=0;
-            for (FPIter2 i : chosenCandidate.getCandidate().perfectFingerprint.foreachPair(truth)) {
-                if (i.isLeftSet() && !i.isRightSet()) {
-                    if (r.nextDouble() > this.precision[j]) {
-                        // swap
-                        sampled[j] = draw(this.fps[j], r);
-                        ++posChanged;
-                        ++posChangedNeg;
+            Collections.shuffle(alist);
+            Scored<Sampler.Duplicate> chosenCandidate = alist.get(0);
+            if (chosenCandidate!=null) {
+                int j = 0;
+                for (FPIter2 i : chosenCandidate.getCandidate().perfectFingerprint.foreachPair(truth)) {
+                    if (i.isLeftSet() && !i.isRightSet()) {
+                        if (r.nextDouble() > this.precision[j]) {
+                            // swap
+                            sampled[j] = draw(this.fps[j], r);
+                            ++posChanged;
+                            ++posChangedNeg;
+                        }
                     }
+                    ++j;
                 }
-                ++j;
             }
         }
         //System.out.println("Noisying changed " + posChanged +" positions. " + posChangedPos + " properties are removed, " + posChangedNeg + " properties are added. " + truth.cardinality() + " properties were part of the original molecule. Tanimoto to original is " + Tanimoto.probabilisticTanimoto(new ProbabilityFingerprint(version, sampled), truth).expectationValue() );
@@ -302,7 +418,7 @@ public class Sampler {
             }
             if (tanimoto < 0.95 && tanimoto > threshold) {
                 bestMatching.add(new Scored<>(dup, tanimoto));
-                if (bestMatching.size() > 30) {
+                if (bestMatching.size() > 100) {
                     bestMatching.poll();
                     threshold = bestMatching.peek().getScore();
                 }
@@ -321,7 +437,7 @@ public class Sampler {
         Scored<Duplicate> chosenCandidate = null;
         while (iter.hasNext()) {
             chosenCandidate = iter.next();
-            if (r.nextDouble() < 0.25) {
+            if (r.nextDouble() < 0.1) {
                 break;
             }
         }

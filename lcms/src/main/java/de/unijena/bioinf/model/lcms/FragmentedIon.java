@@ -1,7 +1,28 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.model.lcms;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.CompoundReport;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.Trace;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
@@ -26,6 +47,7 @@ public class FragmentedIon extends IonGroup {
     protected int alignments=0; // internal counter
     protected Quality ms2Quality;
     protected Polarity polarity;
+    protected ArrayList<CompoundReport> additionalInfos;
 
     // might be useful for chimeric detection?
     protected double intensityAfterPrecursor;
@@ -33,7 +55,9 @@ public class FragmentedIon extends IonGroup {
     protected List<ChromatographicPeak> chimerics;
     private double chimericPollution;
 
-    public FragmentedIon(Polarity polarity, Scan ms2Scan, CosineQuerySpectrum msms, Quality ms2Quality, ChromatographicPeak chromatographicPeak,ChromatographicPeak.Segment segment) {
+    protected Scan[] mergedScans;
+
+    public FragmentedIon(Polarity polarity, Scan ms2Scan, CosineQuerySpectrum msms, Quality ms2Quality, ChromatographicPeak chromatographicPeak,ChromatographicPeak.Segment segment, Scan[] mergedScans) {
         super(chromatographicPeak, segment, new ArrayList<>());
         this.polarity = polarity;
         this.msms = msms;
@@ -43,6 +67,12 @@ public class FragmentedIon extends IonGroup {
         this.ms2Quality = ms2Quality;
         this.alternativeIonTypes = Collections.emptySet();
         this.chimerics = new ArrayList<>();
+        this.additionalInfos = new ArrayList<>();
+        this.mergedScans = mergedScans;
+    }
+
+    public Scan[] getMergedScans() {
+        return mergedScans;
     }
 
     public CoelutingTraceSet asLCMSSubtrace(ProcessedSample sample) {
@@ -176,6 +206,10 @@ return null;
         return "MS/MS("+chargeState+") m/z = " + (msms==null ? "GAP FILLED" : ms2Scan.getPrecursor().getMass()) + ", apex = " + peak.getRetentionTimeAt(segment.getApexIndex())/60000d + " min";
     }
 
+    public ArrayList<CompoundReport> getAdditionalInfos() {
+        return additionalInfos;
+    }
+
     public double getIntensity() {
         return peak.getIntensityAt(segment.apex);
     }
@@ -206,5 +240,9 @@ return null;
 
     public double getChimericPollution() {
         return chimericPollution;
+    }
+
+    public boolean isCompound() {
+        return true;
     }
 }

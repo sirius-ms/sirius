@@ -1,20 +1,24 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
@@ -42,6 +46,8 @@ public class MassDeviationVertexScorer implements DecompositionScorer<MassDeviat
     private final static double sqrt2 = Math.sqrt(2);
 
     private boolean useOriginalMz = false;
+
+    protected double weight = 1d;
 
     public MassDeviationVertexScorer() {
     }
@@ -75,7 +81,7 @@ public class MassDeviationVertexScorer implements DecompositionScorer<MassDeviat
     public double score(MolecularFormula formula, Ionization ion,double realMass, Deviation dev) {
         final double theoreticalMass = ion.addToMass(formula.getMass());
         final double sd = dev.absoluteFor(realMass);
-        return Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
+        return weight * Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
 
     }
 
@@ -92,6 +98,14 @@ public class MassDeviationVertexScorer implements DecompositionScorer<MassDeviat
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         document.addToDictionary(dictionary, "useOriginalMz", useOriginalMz);
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
     }
 
     protected static class Prepared {

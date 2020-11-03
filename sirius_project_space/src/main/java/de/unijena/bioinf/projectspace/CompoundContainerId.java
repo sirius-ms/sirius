@@ -1,8 +1,29 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,9 +40,11 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     protected Lock containerLock;
 
     // ID defining fields
+    private final int compoundIndex;
+    @NotNull
     private String directoryName;
+    @NotNull
     private String compoundName;
-    private int compoundIndex;
 
     // fields for fast compound filtering
     @Nullable
@@ -32,33 +55,39 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     private DetectedAdducts possibleAdducts = null;
     @NotNull
     private List<Class<? extends FormulaScore>> rankingScores = Collections.emptyList();
+    @Nullable
+    private RetentionTime rt;
 
 
-    protected CompoundContainerId(String directoryName, String compoundName, int compoundIndex) {
-        this(directoryName, compoundName, compoundIndex, null, null);
+    protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex) {
+        this(directoryName, compoundName, compoundIndex, null, null, null);
     }
 
-    protected CompoundContainerId(String directoryName, String compoundName, int compoundIndex, @Nullable Double ionMass, @Nullable PrecursorIonType ionType) {
+    protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex, @Nullable Double ionMass, @Nullable PrecursorIonType ionType, @Nullable RetentionTime rt) {
         this.directoryName = directoryName;
         this.compoundName = compoundName;
         this.compoundIndex = compoundIndex;
         this.containerLock = new ReentrantLock();
         this.ionMass = ionMass;
         this.ionType = ionType;
-    }
-
-    public String getDirectoryName() {
-        return directoryName;
-    }
-
-    public String getCompoundName() {
-        return compoundName;
+        this.rt = rt;
     }
 
     public int getCompoundIndex() {
         return compoundIndex;
     }
 
+    @NotNull
+    public String getDirectoryName() {
+        return directoryName;
+    }
+
+    @NotNull
+    public String getCompoundName() {
+        return compoundName;
+    }
+
+    @NotNull
     public Optional<Double> getIonMass() {
         return Optional.ofNullable(ionMass);
     }
@@ -67,6 +96,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.ionMass = ionMass;
     }
 
+    @NotNull
     public Optional<PrecursorIonType> getIonType() {
         return Optional.ofNullable(ionType);
     }
@@ -79,12 +109,22 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         return rankingScores;
     }
 
+    @NotNull
     public Optional<DetectedAdducts> getDetectedAdducts() {
         return Optional.ofNullable(possibleAdducts);
     }
 
     public void setDetectedAdducts(@Nullable DetectedAdducts possibleAdducts) {
         this.possibleAdducts = possibleAdducts;
+    }
+
+    @NotNull
+    public Optional<RetentionTime> getRt() {
+        return Optional.ofNullable(rt);
+    }
+
+    public void setRt(@Nullable RetentionTime rt) {
+        this.rt = rt;
     }
 
     @SafeVarargs
@@ -116,6 +156,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         getIonMass().ifPresent(im -> kv.put("ionMass", String.valueOf(im)));
         getIonType().ifPresent(it -> kv.put("ionType", it.toString()));
         getDetectedAdducts().ifPresent(pa -> kv.put("detectedAdducts", pa.toString()));
+        getRt().ifPresent(rt -> kv.put("rt", RetentionTime.asStringValue(rt)));
 
         if (!rankingScores.isEmpty())
             kv.put(RANKING_KEY, rankingScores.stream().map(Score::simplify).collect(Collectors.joining(",")));
@@ -130,5 +171,6 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         setIonMass(cid.ionMass);
         setIonType(cid.ionType);
         setDetectedAdducts(cid.possibleAdducts);
+        setRt(cid.rt);
     }
 }

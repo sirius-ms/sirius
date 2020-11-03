@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
@@ -130,6 +150,15 @@ public class InChIs {
         return extractFormulas(inChI).nextFormula();
     }
 
+    /**
+     * this formula is used to store structures in the database.
+     * @param inChI
+     * @return
+     */
+    public static MolecularFormula extractNeutralFormulaByAdjustingHsOrThrow(String inChI) {
+        return extractFormulas(inChI, MolecularFormulaNeutralizationMethod.NEUTRALIZE_BY_ADJUSTING_H_FOR_EACH_CHARGE).next();
+    }
+
     public static MolecularFormula extractFormulaOrThrow(String inChI) {
         return extractFormulas(inChI).next();
     }
@@ -138,13 +167,40 @@ public class InChIs {
         return new InChIFormulaExtractor(inChI);
     }
 
+    public static InChIFormulaExtractor extractFormulas(String inChI, MolecularFormulaNeutralizationMethod neutralizationMethod) {
+        return new InChIFormulaExtractor(inChI, neutralizationMethod);
+    }
+
     protected static class InChIFormulaExtractor implements Iterator<MolecularFormula> {
         final String[] formulaStrings;
-        final String[] chargeString;
+        final String[] qChargeString;
+        final String[] pChargeString;
+
+        MolecularFormulaNeutralizationMethod neutralizationMethod;
 
         public InChIFormulaExtractor(String inChI) {
+            this(inChI, MolecularFormulaNeutralizationMethod.ION_MF);
+        }
+
+        /**
+         *
+         * @param inChI
+         * @param neutralizationMethod specifies which MF is reported. E.g. is is neutralized or not.
+         */
+        public InChIFormulaExtractor(String inChI, MolecularFormulaNeutralizationMethod neutralizationMethod) {
             formulaStrings = extractFormulaLayer(inChI).split("[.]");
-            chargeString = extractQLayer(inChI).split(";");
+            this.neutralizationMethod = neutralizationMethod;
+
+            if (neutralizationMethod==MolecularFormulaNeutralizationMethod.ION_MF) {
+                pChargeString = extractPLayer(inChI).split(";");
+                qChargeString = null;
+            } else if (neutralizationMethod==MolecularFormulaNeutralizationMethod.NEUTRALIZE_BY_ADJUSTING_H_FOR_EACH_CHARGE) {
+                qChargeString = extractQLayer(inChI).split(";");
+                pChargeString = null;
+            } else {
+                qChargeString = null;
+                pChargeString = null;
+            }
         }
 
         int index = 0;
@@ -169,13 +225,54 @@ public class InChIs {
             if (multiplier < 1) {
                 String[] fc = splitOnNumericPrefix(formulaStrings[index]);
                 multiplier = fc[0].isBlank() ? 1 : Integer.parseInt(fc[0]);
-                cache = extractFormula(fc[1], chargeString[index]);
+                if (neutralizationMethod==MolecularFormulaNeutralizationMethod.InChI_DEFAULT) {
+                    cache = extractDefaultFormula(fc[1]);
+                } else if (neutralizationMethod==MolecularFormulaNeutralizationMethod.ION_MF) {
+                    cache = extractFormulaAndAdjustChargesByH(fc[1], pChargeString[index], true);
+                } else if (neutralizationMethod==MolecularFormulaNeutralizationMethod.NEUTRALIZE_BY_ADJUSTING_H_FOR_EACH_CHARGE) {
+                    cache = extractFormulaAndAdjustChargesByH(fc[1], qChargeString[index], false);
+                } else {
+                    throw new RuntimeException("unexpected formula neutralization method");
+                }
+
                 index++;
             }
 
             multiplier--;
             return cache;
         }
+    }
+
+    protected enum MolecularFormulaNeutralizationMethod {
+        /*
+        Note on charge from https://www.inchi-trust.org/technical-faq-2/:
+        For most compounds the /q layer uses a positive or negative integer to represent the actual charge on the species;
+        the formula represents the correct composition.
+
+        For certain hydrides (compounds containing H), or compounds derivable from hydrides the charge is derived by removing
+        or adding a proton(s) from a neutral hydride. The formula is then NOT the actual composition of the compound but a
+        neutral hydride from which it is derived by (de)protonation. A table of corresponding rules is given in Appendix 1 of
+        the InChI Technical Manual.
+         */
+
+        /*
+        as displayed in InCHI. Correct composition MF except if /p charge exists. Then it is the MF of neutral hybride
+         */
+        InChI_DEFAULT,
+        /*
+        Molecular formula of the ion
+         */
+        ION_MF,
+        /*
+         For each charge one H is added/subtracted.
+         This is useful to obtain the formula for "M" if you treat the InChI structure being [M]+ as [M+H]+.
+         It results in the same formula as calculating the ionized formula using the SMILES and then adjusting
+         charges by adding/subtracting Hs to neutralize the formula.
+
+         Chemically, this makes no sense! Because the /q charge cannot be removed by removing the H
+         */
+        NEUTRALIZE_BY_ADJUSTING_H_FOR_EACH_CHARGE
+
     }
 
     protected static String[] splitOnNumericPrefix(String formula) {
@@ -199,15 +296,38 @@ public class InChIs {
         return inChI.substring(a, b);
     }
 
-    protected static MolecularFormula extractFormula(String formulaString, String chargeString) throws UnknownElementException {
+    /**
+     * default way to obtain (neutral) molecular formula (this is the MF in the InChI). This is the MF of ion or of the neutral hybride if p-charge exists
+     * @param formulaString
+     * @return
+     * @throws UnknownElementException
+     */
+    protected static MolecularFormula extractDefaultFormula(String formulaString) throws UnknownElementException {
         final MolecularFormula formula = MolecularFormula.parse(formulaString);
-        final int q = parseCharge(chargeString);
+        return formula;
+    }
 
-        if (q == 0) return formula;
-        else if (q < 0) {
-            return formula.add(MolecularFormula.parse(Math.abs(q) + "H"));
+    /**
+     * This method extracts a neutralized formula but assumes that for any charge one H must be added/subtracted.
+     * This is useful to obtain the formula for "M" if you treat the InChI structure being [M]+ as [M+H]+.
+     * It results in the same formula as calculating the ionized formula using the SMILES and then adjusting charges
+     * by adding/subtracting Hs to neutralize the formula.
+     * @param formulaString
+     * @param chargeString
+     * @param isPCharge if true, chargeString is p-charge. start from the neutral hybride MF and add Hs to obtain original (ion) MF
+     *                  if false, chargeString is q-charge. also remove Hs for q-charges to obtain the neutral MF of a theoretical structure obtained by neutralizing the original ion by modifying Hs
+     * @return
+     * @throws UnknownElementException
+     */
+    protected static MolecularFormula extractFormulaAndAdjustChargesByH(String formulaString, String chargeString, boolean isPCharge) throws UnknownElementException {
+        final MolecularFormula formula = MolecularFormula.parse(formulaString);
+        final int pOrQ = parseCharge(chargeString);
+
+        if (pOrQ == 0) return formula;
+        else if ((pOrQ > 0) && isPCharge) {
+            return formula.add(MolecularFormula.parse(Math.abs(pOrQ) + "H"));
         } else {
-            return formula.subtract(MolecularFormula.parse(q + "H"));
+            return formula.subtract(MolecularFormula.parse(pOrQ + "H"));
         }
     }
 

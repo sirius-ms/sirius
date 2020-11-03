@@ -1,8 +1,30 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.model.lcms;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
@@ -12,6 +34,7 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,6 +42,8 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
 
     protected final int featureId;
     protected final Feature[] features;
+    // if MS/MS is given, this is the ID of the feature with the best MS/MS scan
+    protected final int ms2RepresentativeFeature;
     protected final SimpleSpectrum[] coelutedPeaks;
     protected final SimpleSpectrum[] ms2;
     protected final long averageRetentionTime;
@@ -28,9 +53,10 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
     protected final double chimericPollution;
     protected Annotated.Annotations<DataAnnotation> annotations = new Annotated.Annotations<>();
 
-    public ConsensusFeature(int featureId, Feature[] features, SimpleSpectrum[] coelutedPeaks, SimpleSpectrum[] ms2, PrecursorIonType ionType,  long averageRetentionTime,CollisionEnergy collisionEnergy ,double averageMass, double totalIntensity, double chimericPollution) {
+    public ConsensusFeature(int featureId, Feature[] features, int ms2RepresentativeFeature, SimpleSpectrum[] coelutedPeaks, SimpleSpectrum[] ms2, PrecursorIonType ionType,  long averageRetentionTime,CollisionEnergy collisionEnergy ,double averageMass, double totalIntensity, double chimericPollution) {
         this.featureId = featureId;
         this.features = features;
+        this.ms2RepresentativeFeature = ms2RepresentativeFeature;
         this.coelutedPeaks = coelutedPeaks;
         this.ms2 = ms2;
         this.averageRetentionTime = averageRetentionTime;
@@ -39,6 +65,10 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         this.totalIntensity = totalIntensity;
         this.ionType = ionType;
         this.chimericPollution = chimericPollution;
+    }
+
+    public LCMSPeakInformation getLCMSPeakInformation() {
+        return new LCMSPeakInformation(Arrays.stream(features).map(f->f.traceset).toArray(CoelutingTraceSet[]::new));
     }
 
     private SimpleSpectrum getIsotopes() {
@@ -103,6 +133,10 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         exp.setMs2Spectra(ms2Spectra);
         exp.setIonMass(averageMass);
         exp.setAnnotation(RetentionTime.class, new RetentionTime(averageRetentionTime/1000d));
+
+        if (ms2RepresentativeFeature>=0) {
+            exp.setAnnotation(NoiseInformation.class, features[ms2RepresentativeFeature].ms2NoiseModel);
+        }
 
         final TObjectDoubleHashMap<String> map = new TObjectDoubleHashMap<>();
         boolean good = false;

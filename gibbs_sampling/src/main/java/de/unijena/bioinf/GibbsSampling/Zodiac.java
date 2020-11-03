@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
@@ -71,6 +91,7 @@ public class Zodiac {
         return new BasicMasterJJob<ZodiacResultsWithClusters>(JJob.JobType.CPU) {
             @Override
             protected ZodiacResultsWithClusters compute() throws Exception {
+                masterJJob = this;
                 init();
                 if (ids.length<=1) {
                     Log.error("Cannot run ZODIAC. SIRIUS input consists of " + ids.length + " instances. More are needed for running a network analysis.");
@@ -82,7 +103,7 @@ public class Zodiac {
                     TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions, FragmentsCandidate.class);
                     twoPhaseGibbsSampling.setIterationSteps(iterationSteps, burnIn);
                     if (masterJJob!=null) masterJJob.submitSubJob(twoPhaseGibbsSampling);
-                    else SiriusJobs.getGlobalJobManager().submitJob(twoPhaseGibbsSampling);
+                    else this.submitSubJob(twoPhaseGibbsSampling);
                     zodiacResult = twoPhaseGibbsSampling.awaitResult();
                 } else {
                     zodiacResult = runOneStepZodiacOnly(iterationSteps, burnIn, repetitions);

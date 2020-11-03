@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.sirius.elementdetection.prediction;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
@@ -23,10 +43,7 @@ public class DNNRegressionPredictor implements ElementPredictor {
         Arrays.fill(modifiers, 0.33);
         setModifiers("S", 1d);
         setModifiers("Si", 1d);
-        final Element[] elems = new Element[FREE_ELEMENTS.length+DETECTABLE_ELEMENTS.length];
-        System.arraycopy(FREE_ELEMENTS, 0, elems, 0, FREE_ELEMENTS.length);
-        System.arraycopy(DETECTABLE_ELEMENTS, 0, elems, FREE_ELEMENTS.length, DETECTABLE_ELEMENTS.length);
-        this.alphabet = new ChemicalAlphabet(elems);
+        this.alphabet = new ChemicalAlphabet(DETECTABLE_ELEMENTS);
     }
 
     public void setModifiers(double modifier) {
@@ -59,8 +76,7 @@ public class DNNRegressionPredictor implements ElementPredictor {
     }
 
     private final static Element[] DETECTABLE_ELEMENTS;
-    private final static int[] UPPERBOUNDS, FREE_UPPERBOUNDS;
-    private final static Element[] FREE_ELEMENTS;
+    private final static int[] UPPERBOUNDS;
     private final static Element SELENE;
 
     static {
@@ -73,25 +89,13 @@ public class DNNRegressionPredictor implements ElementPredictor {
                 T.getByName("Si"),
                 T.getByName("Se"),
         };
-        FREE_ELEMENTS = new Element[]{
-                T.getByName("C"),
-                T.getByName("H"),
-                T.getByName("N"),
-                T.getByName("O"),
-                T.getByName("P"),
-                T.getByName("F"),
-                T.getByName("I")
-        };
         UPPERBOUNDS = new int[]{2,5,5,10,2,2};
-        FREE_UPPERBOUNDS = new int[]{Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, 10, 20, 6};
         SELENE = T.getByName("Se");
     }
 
     @Override
     public FormulaConstraints predictConstraints(SimpleSpectrum pickedPattern) {
         final HashMap<Element, Integer> elements = new HashMap<>(10);
-        for (Element e : FREE_ELEMENTS)
-            elements.put(e, Integer.MAX_VALUE);
         // special case for selene
         if (pickedPattern.size() > 5) {
             double intensityAfterFifth = 0d;
@@ -127,9 +131,6 @@ public class DNNRegressionPredictor implements ElementPredictor {
         if (!silicon) elements.remove(PeriodicTable.getInstance().getByName("Si"));
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(elements.keySet().toArray(new Element[elements.size()]));
         final FormulaConstraints constraints = new FormulaConstraints(alphabet);
-        for (int i=0; i < FREE_UPPERBOUNDS.length; ++i) {
-            constraints.setUpperbound(FREE_ELEMENTS[i], FREE_UPPERBOUNDS[i]);
-        }
         for (int i=0; i < UPPERBOUNDS.length; ++i) {
             if (elements.containsKey(DETECTABLE_ELEMENTS[i]))
                 constraints.setUpperbound(DETECTABLE_ELEMENTS[i], elements.get(DETECTABLE_ELEMENTS[i]));

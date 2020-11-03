@@ -1,6 +1,27 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling.model.scorer;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.GibbsSampling.model.FragmentWithIndex;
 import de.unijena.bioinf.GibbsSampling.model.FragmentsCandidate;
@@ -46,7 +67,7 @@ public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAnd
         maxIdx += 1;
 
 
-        Set<String>[] matchedFragments;
+        Set<MolecularFormula>[] matchedFragments;
         double[] maxScore;//todo use 0 as min?
         if (useFragments){
             matchedFragments = new Set[maxIdx*ions.size()];
@@ -63,7 +84,7 @@ public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAnd
             if (useFragments){
                 fragments = c.getFragments();
                 for (int i = 0; i < fragments.length; i++) {
-                    final String formula = fragments[i].getFormula();
+                    final MolecularFormula formula = fragments[i].getFormula();
                     final double score = fragments[i].getScore();
                     final int idx = fragments[i].getIndex()+maxIdx*ionToIdx.get(fragments[i].getIonization());
                     if (matchedFragments[idx]==null){
@@ -77,7 +98,7 @@ public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAnd
                 fragments = c.getLosses();
 
                 for (int i = 0; i < fragments.length; i++) {
-                    final String formula = fragments[i].getFormula();
+                    final MolecularFormula formula = fragments[i].getFormula();
                     final double score = fragments[i].getScore();
                     final short idx = fragments[i].getIndex();
                     if (matchedFragments[idx]==null){
@@ -93,7 +114,7 @@ public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAnd
 
 
         int numOfRealPeaks = 0;
-        for (Set<String> matched : matchedFragments) {
+        for (Set<MolecularFormula> matched : matchedFragments) {
             if (matched!=null) ++numOfRealPeaks;
         }
 
@@ -102,7 +123,7 @@ public class CommonFragmentAndLossWithTreeScoresScorer extends CommonFragmentAnd
         pos = 0;
         for (int j = 0; j < matchedFragments.length; j++) {
             if (matchedFragments[j]!=null){
-                final String[] mfArray = matchedFragments[j].toArray(new String[0]);
+                final MolecularFormula[] mfArray = matchedFragments[j].toArray(new MolecularFormula[0]);
                 final double mass = meanMass(mfArray);
                 double bestScore = maxScore[pos];
                 peaksWithExplanations[pos] = new PeakWithExplanation(mfArray, mass, bestScore);

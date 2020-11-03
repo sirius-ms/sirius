@@ -1,5 +1,26 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.lcms;
 
+import de.unijena.bioinf.model.lcms.ChromatographicPeak;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -64,21 +85,31 @@ class Extrema {
     /**
      * removes extrema which differences are below noise level. However, if after removal less than
      * minimumNumberExtrema is kept, the removal is canceled.
+     *
+     * There are two requirements for smoothing:
+     * 1.) as higher the surrounding noise, as more is smoothed
+     * 2.) as higher the intensity, as less is smoothed
+     *
      * @return true, if there are more than minimumNumberExtrema after smoothing
      */
-    boolean smooth(float[] noiseLevelPerScan, int power, int minimumNumberExtrema) {
+    boolean smooth(float[] noiseLevelPerScan, ChromatographicPeak cpeak, double relativeSlopeThreshold, double noiseWeight) {
+        if (extrema.size()<=1) return false;
+
         final BitSet delete = new BitSet(indizes.size());
         for (int k=1; k < indizes.size()-1; ++k) {
             double intensityLeft = extrema.getQuick(k-1);
             double intensityRight = extrema.getQuick(k+1);
             double peak = extrema.getQuick(k);
-            double avgSlope = (Math.abs(peak-intensityLeft)+Math.abs(peak-intensityRight))/2d;
-            if (avgSlope <= noiseLevelPerScan[indizes.getQuick(k)]*power){
+            int length = indizes.getQuick(k+1)-indizes.getQuick(k-1);
+            boolean isMaximum = intensityLeft<peak || intensityRight<peak;
+            double minSlope = Math.min(Math.abs(peak-intensityLeft),Math.abs(peak-intensityRight));
+            double relativeSlope = minSlope/Math.max(peak, Math.max(intensityLeft,intensityRight));
+            if (relativeSlope < relativeSlopeThreshold && minSlope <= noiseWeight*noiseLevelPerScan[indizes.getQuick(k)] && length <= 4){
                 delete.set(k);
             }
         }
         int cardinality = delete.cardinality();
-        if (indizes.size()-cardinality >= minimumNumberExtrema && cardinality > 0) {
+        if (indizes.size()-cardinality >= 1) {
             final double[] newExtrema = new double[indizes.size()-cardinality];
             final int[] newIndizes = new int[indizes.size()-cardinality];
             boolean minimum = true;
@@ -116,5 +147,48 @@ class Extrema {
             indizes.add(newIndizes, 0, k);
             return true;
         } else return cardinality==0;
+    }
+
+    private void calcWidthAt33Maximum(ChromatographicPeak cpeak, long[] widthAt33Maximum, int k) {
+        double intensity = extrema.getQuick(k);
+        final boolean minimum = (k == 0 && extrema.getQuick(k+1)>intensity)
+                || (k>0 && extrema.getQuick(k-1)>intensity);
+        if (minimum) {
+            int i,j;
+            // go left
+            if (k>0) {
+                i = indizes.getQuick(k);
+                double threshold = cpeak.getIntensityAt(indizes.get(k-1))*0.33;
+                while (i >= 0 && cpeak.getIntensityAt(i)< threshold) --i;
+                i = Math.min(++i,indizes.getQuick(k));
+            } else i = indizes.getQuick(k);
+            // go right
+            if (k+1<indizes.size()) {
+                j = indizes.getQuick(k);
+                double threshold = cpeak.getIntensityAt(indizes.get(k+1))*0.33;
+                while (j < cpeak.numberOfScans() && cpeak.getIntensityAt(j) < threshold) ++j;
+                j = Math.max(--j,indizes.getQuick(k));
+            } else j = indizes.getQuick(k);
+            widthAt33Maximum[k] = cpeak.getRetentionTimeAt(j)-cpeak.getRetentionTimeAt(i);
+
+        } else {
+            int i,j;
+            // go left
+            if (k>0) {
+                i = indizes.getQuick(k);
+                double threshold = cpeak.getIntensityAt(indizes.get(k))*0.33;
+                while (i >= 0 && cpeak.getIntensityAt(i)> threshold) --i;
+                i = Math.min(++i,indizes.getQuick(k));
+            } else i = indizes.getQuick(k);
+            // go right
+            if (k+1<indizes.size()) {
+                j = indizes.getQuick(k);
+                double threshold = cpeak.getIntensityAt(indizes.get(k))*0.33;
+                while (j < cpeak.numberOfScans() && cpeak.getIntensityAt(j) > threshold) ++j;
+                j = Math.max(--j,indizes.getQuick(k));
+            } else j = indizes.getQuick(k);
+            widthAt33Maximum[k] = cpeak.getRetentionTimeAt(j)-cpeak.getRetentionTimeAt(i);
+
+        }
     }
 }

@@ -1,11 +1,27 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.confidence_score.features;
 
-import Tools.ExpectationMaximization1D;
-import Tools.KMeans;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import jMEF.MixtureModel;
-import jMEF.PVector;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.ParetoDistribution;
@@ -303,68 +319,6 @@ return null;
         return ((biosize/candidates.length)*pvalue);
         //return -Math.expm1(biosize* Math.log1p(-pvalue));
     }
-
-
-
-    public double compute_pvalue_with_gmm(Scored<FingerprintCandidate>[] candidates, Scored<FingerprintCandidate> current){
-
-
-        double pvalue=0;
-        int component_nr=1;
-
-        if(candidates.length>50) component_nr=2;
-
-
-
-
-
-
-
-
-
-        double transformed_curr_score = Math.log(current.getScore()+score_shift);
-
-        ArrayList<Double> score_samples = new ArrayList<>();
-
-        for (int i=0;i<candidates.length;i++) {
-
-            score_samples.add( Math.log(candidates[i].getScore() + score_shift));
-
-
-        }
-
-        PVector[]         vector   =  new PVector[score_samples.size()];
-
-        for(int i=0;i<vector.length;i++){
-            vector[i]= new PVector(1);
-            vector[i].array[0]= score_samples.get(i);
-        }
-
-
-        Vector<PVector>[] clusters = KMeans.run(vector, component_nr);
-
-        // Classical EM
-        MixtureModel mmc;
-        mmc = ExpectationMaximization1D.initialize(clusters);
-        mmc = ExpectationMaximization1D.run(vector, mmc);
-
-
-        for(int i=0;i<mmc.param.length;i++){
-            PVector vec=(PVector)mmc.param[i];
-            double mean= vec.array[0];
-            double sigma= vec.array[1];
-            double weight= mmc.weight[i];
-
-            NormalDistribution norm= new NormalDistribution(mean,Math.sqrt(sigma));
-
-            double partial = weight*(1-norm.cumulativeProbability(transformed_curr_score))*(weight*candidates.length);
-            pvalue+=partial;
-
-
-        }
-        return pvalue;
-    }
-
 
     public LogNormalDistribution estimate_lognormal_parameters(ArrayList<Double> scores){
 

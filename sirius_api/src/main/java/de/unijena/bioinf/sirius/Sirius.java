@@ -1,20 +1,24 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai DÃ¼hrkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
@@ -44,6 +48,7 @@ import de.unijena.bioinf.sirius.plugins.*;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.treemotifs.model.TreeMotifPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -612,16 +617,21 @@ public class Sirius {
 
         @Override
         protected List<IdentificationResult<SiriusScore>> compute() throws Exception {
-            final ProcessedInput input = preprocessForMs2Analysis(experiment);
-            if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
-                profile.isotopePatternAnalysis.computeAndScoreIsotopePattern(input);
-            final FasterTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
-            instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105, (int) evt.getNewValue()));
-            submitSubJob(instance);
-            FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
+            try {
+                final ProcessedInput input = preprocessForMs2Analysis(experiment);
+                if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
+                    profile.isotopePatternAnalysis.computeAndScoreIsotopePattern(input);
+                final FasterTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
+                instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105, (int) evt.getNewValue()));
+                submitSubJob(instance);
+                FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
-            List<IdentificationResult<SiriusScore>> r = createIdentificationResults(fr, instance);//postprocess results
-            return r;
+                List<IdentificationResult<SiriusScore>> r = createIdentificationResults(fr, instance);//postprocess results
+                return r;
+            } catch (RuntimeException e) {
+                LoggerFactory.getLogger(Sirius.class).error("Error in instance " + String.valueOf(experiment.getSource()) + ": " + e.getMessage());
+                throw e;
+            }
         }
 
         private List<IdentificationResult<SiriusScore>> createIdentificationResults(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
@@ -645,7 +655,7 @@ public class Sirius {
                 ProcessedInput pinput = computationInstance.getProcessedInput();
                 PossibleAdducts pa = pinput.getAnnotationOrThrow(PossibleAdducts.class);
                 irs = irs.stream()
-                        .map(idr->new IdentificationResult<SiriusScore>(resolveAdductIfPossible(idr.getTree(), pa, pinput), idr.getScoreObject()))
+                        .map(idr-> new IdentificationResult<>(resolveAdductIfPossible(idr.getTree(), pa, pinput), idr.getScoreObject()))
                         .collect(Collectors.toList());
             }
             return irs;
@@ -660,55 +670,61 @@ public class Sirius {
          * @return
          */
         private FTree resolveAdductIfPossible(FTree tree, PossibleAdducts possibleAdducts, ProcessedInput pinput) {
-            PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElseThrow();
-            final MolecularFormula mf = tree.getRoot().getFormula();
-            final FormulaConstraints constraints = pinput.getAnnotationOrThrow(FormulaConstraints.class);
+            //todo this is a hotfix. we have to do this right at some point.
+            try {
+                PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElseThrow();
+                final MolecularFormula mf = tree.getRoot().getFormula();
+                final FormulaConstraints constraints = pinput.getAnnotationOrThrow(FormulaConstraints.class);
 
-            //todo if an ion source fragment is set. is it then always already set for all possible adducts?
-            final MolecularFormula inSourceFragmentation = pinput.getExperimentInformation().getPrecursorIonType().getInSourceFragmentation();
+                //todo if an ion source fragment is set. is it then always already set for all possible adducts?
+                final MolecularFormula inSourceFragmentation = pinput.getExperimentInformation().getPrecursorIonType().getInSourceFragmentation();
 
-            Set<PrecursorIonType> usedIonTypes;
-            final AdductSettings adductSettings = pinput.getAnnotationOrNull(AdductSettings.class);
-            if (adductSettings != null && possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
-                //todo check if it makes sense to use the detectables
-                usedIonTypes = adductSettings.getDetectable(possibleAdducts.getIonModes());
-            } else {
-                //there seem to be some information from the preprocessing
-                usedIonTypes = possibleAdducts.getAdducts();
-            }
-
-            Set<PrecursorIonType> adducts = new PossibleAdducts(usedIonTypes).getAdducts(ionType.getIonization());
-            if (adducts.size()==0) {
-                throw new RuntimeException("Ionization not known in FasterTreeComputationInstance: "+ionType.getIonization());
-            }
-
-            PrecursorIonType validIontype = null;
-            for (PrecursorIonType precursorIonType : adducts) {
-                boolean isValid = true;
-                for (FormulaFilter filter : constraints.getFilters()) {
-                    if (!filter.isValid(mf, precursorIonType)){
-                        isValid = false;
-                        break;
-                    }
-                }
-                if (isValid) {
-                    if (validIontype != null){
-                        //at least 2 valid iontypes, cannot decide for one
-                        //return input
-                        return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
-                    } else {
-                        validIontype = precursorIonType;
-                    }
-                }
-            }
-            if (validIontype.hasNeitherAdductNorInsource()) {
-                return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
-            } else {
-                if (!inSourceFragmentation.isEmpty()){
-                    return new IonTreeUtils().treeToNeutralTree(tree, validIontype.substituteInsource(inSourceFragmentation));
+                Set<PrecursorIonType> usedIonTypes;
+                final AdductSettings adductSettings = pinput.getAnnotationOrNull(AdductSettings.class);
+                if (adductSettings != null && possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
+                    //todo check if it makes sense to use the detectables
+                    usedIonTypes = adductSettings.getDetectable(possibleAdducts.getIonModes());
                 } else {
-                    return new IonTreeUtils().treeToNeutralTree(tree, validIontype);
+                    //there seem to be some information from the preprocessing
+                    usedIonTypes = possibleAdducts.getAdducts();
                 }
+
+                Set<PrecursorIonType> adducts = new PossibleAdducts(usedIonTypes).getAdducts(ionType.getIonization());
+                if (adducts.size()==0) {
+                    throw new RuntimeException("Ionization not known in FasterTreeComputationInstance: "+ionType.getIonization());
+                }
+
+                PrecursorIonType validIontype = null;
+                for (PrecursorIonType precursorIonType : adducts) {
+                    boolean isValid = true;
+                    for (FormulaFilter filter : constraints.getFilters()) {
+                        if (!filter.isValid(mf, precursorIonType)){
+                            isValid = false;
+                            break;
+                        }
+                    }
+                    if (isValid) {
+                        if (validIontype != null){
+                            //at least 2 valid iontypes, cannot decide for one
+                            //return input
+                            return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
+                        } else {
+                            validIontype = precursorIonType;
+                        }
+                    }
+                }
+                if (validIontype.hasNeitherAdductNorInsource()) {
+                    return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
+                } else {
+                    if (!inSourceFragmentation.isEmpty()){
+                        return new IonTreeUtils().treeToNeutralTree(tree, validIontype.substituteInsource(inSourceFragmentation));
+                    } else {
+                        return new IonTreeUtils().treeToNeutralTree(tree, validIontype);
+                    }
+                }
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).error("Exception in Unstable 'resolveAdducts' Code. PLease report this problem. Using unmodified Tree!", e);
+                return tree;
             }
         }
 

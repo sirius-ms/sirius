@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.lcms.align;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.HierarchicalClustering;
@@ -22,7 +42,10 @@ import de.unijena.bioinf.lcms.Ms2CosineSegmenter;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.quality.AlignmentQuality;
 import de.unijena.bioinf.lcms.quality.Quality;
-import de.unijena.bioinf.model.lcms.*;
+import de.unijena.bioinf.model.lcms.ConsensusFeature;
+import de.unijena.bioinf.model.lcms.Feature;
+import de.unijena.bioinf.model.lcms.FragmentedIon;
+import de.unijena.bioinf.model.lcms.MergedSpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
@@ -109,6 +132,10 @@ public class Aligner {
             final Set<PrecursorIonType> ionTypes = new HashSet<>();
             PrecursorIonType ionType=null;
             double chimericPollution = 0d;
+
+            ProcessedSample representativeSample = null;
+            double representativeTIC = Double.NEGATIVE_INFINITY;
+
             for (ProcessedSample sample : samples) {
                 final FragmentedIon ion = f.features.get(sample);
                 if (Math.abs(ion.getChargeState())>1)
@@ -116,13 +143,20 @@ public class Aligner {
                 retentionTimes.add(ion.getRetentionTime());
                 if (ion.getMsMsScan()!=null)collision_energies.add(ion.getMsMsScan().getCollisionEnergy());
 
-                final Feature e = instance.makeFeature(sample, ion, ion instanceof GapFilledIon);
+                final Feature e = instance.makeFeature(sample, ion, !ion.isCompound());
                 features.add(e);
                 totalInt += e.getIntensity();
 
                 final MergedSpectrum msms;
                 if (ion.getMsMsScan()==null || rejectedSamples.contains(sample)) msms=null;
                 else msms = new MergedSpectrum(ion.getMsMsScan(), instance.getMs2(ion.getMsMsScan()), ion.getMsMsScan().getPrecursor(),sample.ms2NoiseModel.getNoiseLevel(ion.getMsMsScan().getIndex(),ion.getMass()));
+
+                if (msms!=null) {
+                    final double tic = msms.totalTic();
+                    if (tic > representativeTIC) {
+                        representativeSample = sample;
+                    }
+                }
 
 
                 if (merged==null) merged = msms;
@@ -201,7 +235,7 @@ public class Aligner {
             SimpleMutableSpectrum ms2merged = new SimpleMutableSpectrum(merged.finishMerging());
             // remove isotope peaks from the MS/MS
             Spectrums.filterIsotopePeaks(ms2merged,new Deviation(10),0.2, 0.55,3,new ChemicalAlphabet(MolecularFormula.parseOrNull("CHNOPS").elementArray()),true);
-            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]), allMs1Spectra.toArray(SimpleSpectrum[]::new), new SimpleSpectrum[]{new SimpleSpectrum(ms2merged)}, ionType, medianRet, new CollisionEnergy(lowestNonZero,highest),mass, totalInt,chimericPollution);
+            final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]),representativeSample==null ? -1 : samples.indexOf(representativeSample), allMs1Spectra.toArray(SimpleSpectrum[]::new), new SimpleSpectrum[]{new SimpleSpectrum(ms2merged)}, ionType, medianRet, new CollisionEnergy(lowestNonZero,highest),mass, totalInt,chimericPollution);
             consensusFeatures.add(F);
         }
 

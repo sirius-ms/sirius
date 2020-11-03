@@ -1,4 +1,24 @@
 
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.babelms.cef;
 
 import javax.xml.bind.annotation.*;
@@ -12,21 +32,21 @@ import java.math.BigInteger;
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType>
- *   &lt;complexContent>
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;attribute name="rt" type="{http://www.w3.org/2001/XMLSchema}decimal" />
- *       &lt;attribute name="rte" type="{http://www.w3.org/2001/XMLSchema}decimal" />
- *       &lt;attribute name="rts" type="{http://www.w3.org/2001/XMLSchema}decimal" />
- *       &lt;attribute name="rtw" type="{http://www.w3.org/2001/XMLSchema}integer" />
- *       &lt;attribute name="s" type="{http://www.w3.org/2001/XMLSchema}anySimpleType" />
- *       &lt;attribute name="v" type="{http://www.w3.org/2001/XMLSchema}integer" />
- *       &lt;attribute name="x" type="{http://www.w3.org/2001/XMLSchema}decimal" />
- *       &lt;attribute name="y" type="{http://www.w3.org/2001/XMLSchema}decimal" />
- *       &lt;attribute name="z" type="{http://www.w3.org/2001/XMLSchema}integer" />
- *     &lt;/restriction>
- *   &lt;/complexContent>
- * &lt;/complexType>
+ * &lt;complexType&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;attribute name="rt" type="{http://www.w3.org/2001/XMLSchema}decimal" /&gt;
+ *       &lt;attribute name="rte" type="{http://www.w3.org/2001/XMLSchema}decimal" /&gt;
+ *       &lt;attribute name="rts" type="{http://www.w3.org/2001/XMLSchema}decimal" /&gt;
+ *       &lt;attribute name="rtw" type="{http://www.w3.org/2001/XMLSchema}integer" /&gt;
+ *       &lt;attribute name="s" type="{http://www.w3.org/2001/XMLSchema}anySimpleType" /&gt;
+ *       &lt;attribute name="v" type="{http://www.w3.org/2001/XMLSchema}integer" /&gt;
+ *       &lt;attribute name="x" type="{http://www.w3.org/2001/XMLSchema}decimal" /&gt;
+ *       &lt;attribute name="y" type="{http://www.w3.org/2001/XMLSchema}decimal" /&gt;
+ *       &lt;attribute name="z" type="{http://www.w3.org/2001/XMLSchema}integer" /&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
  * </pre>
  * 
  * 

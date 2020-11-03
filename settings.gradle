@@ -1,4 +1,4 @@
-rootProject.name = 'sirius'
+rootProject.name = 'sirius-libs'
 include ':default_properties'
 	include ':default_properties:annotations'
 	include ':default_properties:processor'
@@ -13,6 +13,9 @@ include ':fragmentation_tree'
         include ":fragmentation_tree:FastFragmentationTreeAlign:FTBlast"
         include ":fragmentation_tree:FastFragmentationTreeAlign:ClassicTreeAlign"
         include ":fragmentation_tree:FastFragmentationTreeAlign:AlignmentViewer"
+    include 'fragmentation_tree:ft_glpk'
+    include 'fragmentation_tree:ft_cplex'
+    include 'fragmentation_tree:ft_gurobi'
 include ':isotope_pattern'
 	include ':isotope_pattern:isotope_pattern_analysis'
     include ':isotope_pattern:isogen_cli'
@@ -28,11 +31,13 @@ include ':passatutto'
     include ':passatutto:passatutto_project_space'
 include ':utils'
 include ':lcms'
+    include 'lcms:lcms_gui'
     include ':lcms:mzml-converter'
 include ':quality_assessment'
 include ':retention_order_prediction_oss'
     include ':retention_order_prediction_oss:retention_cli'
 include ':fingerprinter_oss'
+    include 'fingerprinter_oss:fingerprinter_cli'
 include ':fingerprint_pvalues_oss'
 include ':fingerblast_oss'
 include ':fingerid_base_oss'
@@ -42,14 +47,16 @@ include ':chemical_db_oss:chemdb_file_oss'
 include ':chemical_db_oss:chemdb_utils_oss'
 include ':error_reporter_oss'
 include 'ml_utils'
+include ':rest_service_oss:rest_core_oss'
+include 'agents'
 
 
-// 1. remove them for first sirius build.
-// 2.  build csi fingerid project
+// 1. remove them for first sirius build (build reduced).
+// 2. build reduced csi fingerid project
 // 3. include again an rebuild sirius project again
+// 4. build csi fingerid (full)
 include ':chemical_db_oss:chemdb_rest_oss'
 include ':rest_service_oss:rest_client_oss'
-include ':rest_service_oss:rest_core_oss'
 include ':fingerid_project_space_oss'
 include ':sirius_web_client'
 include ':canopus'
@@ -58,5 +65,4 @@ include ':canopus:canopus_predict_oss'
 include ':confidence_score'
 include ':confidence_score:confidence_score_train'
 include ':confidence_score:confidence_score_predict_oss'
-
 

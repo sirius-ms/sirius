@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -15,6 +35,7 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.ionidentity.IonNetwork;
+import de.unijena.bioinf.lcms.noise.Ms2NoiseStatistics;
 import de.unijena.bioinf.lcms.noise.NoiseStatistics;
 import de.unijena.bioinf.lcms.peakshape.CustomPeakShape;
 import de.unijena.bioinf.lcms.peakshape.CustomPeakShapeFitting;
@@ -87,7 +108,7 @@ public class LCMSProccessingInstance {
         final SimpleSpectrum spec2 = Spectrums.extractMostIntensivePeaks(spec, 8, 100);
         final Scan scan = new Scan(id, merged.getScans().get(0).getPolarity(),peak.getRetentionTimeAt(segment.getApexIndex()), merged.getScans().get(0).getCollisionEnergy(),spec.size(), Spectrums.calculateTIC(spec), true, merged.getPrecursor());
         ms2Storage.add(scan, spec);
-        final FragmentedIon ion = new FragmentedIon(merged.getScans().get(0).getPolarity(), scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(spec), peak, segment);
+        final FragmentedIon ion = new FragmentedIon(merged.getScans().get(0).getPolarity(), scan, new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20))).createQueryWithIntensityTransformationNoLoss(spec2, merged.getPrecursor().getMass(), true), merged.getQuality(spec), peak, segment, merged.getScans().toArray(Scan[]::new));
         return ion;
     }
 
@@ -130,7 +151,10 @@ public class LCMSProccessingInstance {
     }
 
     public ProcessedSample addSample(LCMSRun run, SpectrumStorage storage) {
-        final NoiseStatistics noiseStatisticsMs1 = new NoiseStatistics(100, 0.1), noiseStatisticsMs2 = new NoiseStatistics(10, 0.85);
+        final NoiseStatistics noiseStatisticsMs1 = new NoiseStatistics(100, 0.2, 1000)/*, noiseStatisticsMs2 = new NoiseStatistics(10, 0.85, 60)*/;
+
+        final Ms2NoiseStatistics ms2NoiseStatistics = new Ms2NoiseStatistics();
+
         for (Scan s : run.getScans()) {
             if (!s.isCentroided()) {
                 this.centroided = false;
@@ -138,13 +162,17 @@ public class LCMSProccessingInstance {
                 continue;
             }
             if (s.isMsMs()) {
-                noiseStatisticsMs2.add(s, storage.getScan(s));
+                //noiseStatisticsMs2.add(s, storage.getScan(s));
+                ms2NoiseStatistics.add(s,storage.getScan(s));
             } else {
                 noiseStatisticsMs1.add(s,storage.getScan(s));
             }
         }
+
+        ms2NoiseStatistics.done();
+
         final ProcessedSample sample = new ProcessedSample(
-                run, noiseStatisticsMs1.getLocalNoiseModel(), noiseStatisticsMs2.getGlobalNoiseModel(),
+                run, noiseStatisticsMs1.getLocalNoiseModel(), ms2NoiseStatistics,
                 new ChromatogramCache(), storage
         );
         synchronized (this) {
@@ -171,18 +199,6 @@ public class LCMSProccessingInstance {
             collisionEnergy= null;
         }
 
-
-        final ArrayList<ScanPoint> trace = new ArrayList<>();
-        final ArrayList<ScanPoint> debugTrace = new ArrayList<>();
-
-        for (int a=ion.getSegment().getStartIndex(), b = ion.getSegment().getEndIndex(); a <= b; ++a) {
-            trace.add(ion.getPeak().getScanPointAt(a));
-        }
-
-
-        for (int a=Math.max(0, ion.getSegment().getStartIndex()-10), b = Math.min(ion.getSegment().getEndIndex()+10, ion.getPeak().numberOfScans()-1); a <= b; ++a) {
-            debugTrace.add(ion.getPeak().getScanPointAt(a));
-        }
 
         final double ionMass;
         {
@@ -232,11 +248,10 @@ public class LCMSProccessingInstance {
             fitPeakShape(sample,ion);
 
 
-        final Feature feature = new Feature(sample.run, ionMass, intensity, trace.toArray(new ScanPoint[0]), correlatedFeatures.toArray(new SimpleSpectrum[0]), 0,ion.getMsMsScan()==null ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ms2Storage.getScan(ion.getMsMsScan())},collisionEnergy, ionType, ion.getPossibleAdductTypes(), sample.recalibrationFunction,
+        final Feature feature = new Feature(sample.run, ionMass, intensity, getTraceset(sample,ion), correlatedFeatures.toArray(new SimpleSpectrum[0]), 0,ion.getMsMsScan()==null ? new SimpleSpectrum[0] : new SimpleSpectrum[]{ms2Storage.getScan(ion.getMsMsScan())},sample.ms2NoiseInformation,collisionEnergy, ionType, ion.getPossibleAdductTypes(), sample.recalibrationFunction,
                 ion.getPeakShape().getPeakShapeQuality(), ion.getMsQuality(), ion.getMsMsQuality(),ion.getChimericPollution()
 
                 );
-        feature.completeTraceDebug = debugTrace.toArray(new ScanPoint[0]);
         feature.setAnnotation(PeakShape.class, fitPeakShape(sample,ion));
         return feature;
     }

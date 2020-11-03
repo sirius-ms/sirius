@@ -1,5 +1,26 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.projectspace.sirius;
 
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
@@ -21,8 +42,10 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
             return null;
 
         final Ms2Experiment exp = reader.textFile(SiriusLocations.MS2_EXPERIMENT, (b) -> new JenaMsParser().parse(b, Path.of(id.getDirectoryName(), SiriusLocations.MS2_EXPERIMENT).toUri().toURL()));
+
         if (exp != null)
             id.getDetectedAdducts().ifPresent(pa -> exp.setAnnotation(DetectedAdducts.class, pa));
+
         return exp;
     }
 
@@ -34,6 +57,7 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
         // actualize optional values in ID
         id.setIonMass(experiment.getIonMass());
         id.setIonType(experiment.getPrecursorIonType());
+        id.setRt(experiment.getAnnotationOrNull(RetentionTime.class));
         id.setDetectedAdducts(experiment.getAnnotationOrNull(DetectedAdducts.class));
 
         writer.keyValues(SiriusLocations.COMPOUND_INFO, id.asKeyValuePairs());

@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.canopus;
 
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
@@ -134,8 +154,8 @@ class CovarianceTree {
         PredictionPerformance positive, negative;
 
         protected Edge(Node source, Node target, double[] predictionsA, double[] predictionsB, boolean[] truthB) {
-            PredictionPerformance.Modify negative = new PredictionPerformance(0,0,0,0,0d,false).modify();
-            PredictionPerformance.Modify positive = new PredictionPerformance(0,0,0,0,0d, false).modify();
+            PredictionPerformance.Modify negative = new PredictionPerformance(0,0,0,0,0d).modify();
+            PredictionPerformance.Modify positive = new PredictionPerformance(0,0,0,0,0d).modify();
             for (int k=0; k < predictionsA.length; ++k) {
                 positive.update(truthB[k], true, predictionsA[k]*predictionsB[k]);
                 positive.update(truthB[k], false, predictionsA[k]*(1d-predictionsB[k]));

@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling.model;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
@@ -7,7 +27,6 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
@@ -546,7 +565,19 @@ public class Graph<C extends Candidate<?>> {
             numberOfBadlyConnected += maxCompoundConnectionsStats.get(connectionCount);
         }
 
-//        System.out.println("numberOfPeaks "+numberOfPeaks);
+
+        System.out.println("number of badly connected compounds "+ numberOfBadlyConnected);
+
+        {
+            int below5 = 0;
+            int above15 = 0;
+            for (int connectionCount : connectionCounts) {
+                if (connectionCount < 5) ++below5;
+                if (connectionCount >= 15) ++above15;
+            }
+            System.out.println("number of compounds with more than 15 neighbours "+ above15);
+        }
+
 //        for (int connectionCount : connectionCounts) {
 //            System.out.println(connectionCount+": "+maxCompoundConnectionsStats.get(connectionCount));
 //        }

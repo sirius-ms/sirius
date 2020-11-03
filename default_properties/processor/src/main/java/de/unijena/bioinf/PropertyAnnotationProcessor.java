@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf;
 
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
@@ -11,6 +31,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,12 +60,19 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
             try {
                 FileObject resource = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "tmp");
                 Path moduleRoot = Paths.get(resource.toUri()).getParent().getParent().getParent().getParent().getParent();
-                Path resourcePath = moduleRoot.resolve("configs").resolve(moduleRoot.getFileName() + ".auto.config");
+                Path resourcePath = moduleRoot.resolve("src/main/resources/de.unijena.bioinf.ms.defaults").resolve(moduleRoot.getFileName() + ".auto.config");
                 Path configsMap = resourcePath.getParent().resolve(moduleRoot.getFileName() + ".class.map");
 
                 System.out.println("#####################");
                 System.out.println(resourcePath);
                 System.out.println("#####################");
+
+                Properties existingConfig = new Properties();
+                if (Files.isReadable(resourcePath)) {
+                    try (BufferedReader r = Files.newBufferedReader(resourcePath)) {
+                        existingConfig.load(r);
+                    }
+                }
 
                 Files.createDirectories(resourcePath.getParent());
                 Files.deleteIfExists(resourcePath);
@@ -68,6 +96,8 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
                             if (!f.comment.isEmpty() || !f.possibleValues.isEmpty())
                                 w.write(f.beautifiedComment());
                             w.write(f.paramString());
+                            if (existingConfig.containsKey(f.paramKey()))
+                                w.write(existingConfig.getProperty(f.paramKey()));
                             w.write('\n');
                         }
                         w.write("\n");
@@ -342,13 +372,17 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
                 buf.append(", ");
                 buf.append("'").append(possibleValues.get(k).toString()).append("'");
             }
-            buf.append(" or ").append(possibleValues.get(possibleValues.size()-1).toString()).append("'");
+            buf.append(" or ").append(possibleValues.get(possibleValues.size() - 1).toString()).append("'");
             return buf.toString();
         }
 
         public String paramString() {
-            if (name.isEmpty()) return parent + " = ";
-            else return parent + "." + name + " = ";
+            return paramKey() + " = ";
+        }
+
+        public String paramKey() {
+            if (name.isEmpty()) return parent;
+            else return parent + "." + name;
         }
     }
 }

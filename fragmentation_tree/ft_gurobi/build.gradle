@@ -1,0 +1,6 @@
+dependencies {
+    compile project(':fragmentation_tree:fragmentation_tree_construction')
+
+    compile project(':agents')
+    compileOnly group: 'gurobi', name: 'gurobi-linux64', version: "$gurobi_version"
+}

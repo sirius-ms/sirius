@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.model.lcms;
 
 import com.google.common.collect.Range;
@@ -188,18 +208,25 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         }
     }
 
-    public boolean joinAllSegmentsWithinScanIds(int a, int b) {
+    public Optional<Segment> joinAllSegmentsWithinScanIds(int a, int b) {
+        if (a>b){
+            int z = a;
+            a = b;
+            b = z;
+        }
         final List<Segment> segmentsToDelete = new ArrayList<>();
         for (Segment s : segments) {
-            if (s.getStartScanNumber() >= a && s.getEndScanNumber() <= b)
+            if ((a >= s.getStartScanNumber() && a <= s.getEndScanNumber()) || (b >= s.getStartScanNumber() && b <= s.getEndScanNumber()) ) {
                 segmentsToDelete.add(s);
+            }
         }
-        if (segmentsToDelete.isEmpty()) return false;
+        if (segmentsToDelete.isEmpty()) return Optional.empty();
         final int minA = segmentsToDelete.stream().mapToInt(s->s.getStartIndex()).min().getAsInt();
         final int maxB = segmentsToDelete.stream().mapToInt(s->s.getEndIndex()).max().getAsInt();
         segments.removeAll(segmentsToDelete);
         final int apex = segmentsToDelete.stream().max(Comparator.comparingDouble(u -> getIntensityAt(u.apex))).get().apex;
-        segments.add(new Segment(this, minA, apex, maxB));
-        return true;
+        final Segment s = new Segment(this, minA, apex, maxB);
+        segments.add(s);
+        return Optional.of(s);
     }
 }

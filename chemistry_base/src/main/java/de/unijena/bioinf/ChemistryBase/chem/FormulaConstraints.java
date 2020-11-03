@@ -1,20 +1,24 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
@@ -25,6 +29,7 @@ import gnu.trove.list.array.TIntArrayList;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * FormulaConstraints contain all constraints which reduce the size of all possible decompositions of a mass.
@@ -516,7 +521,8 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
 
     public FormulaConstraints intersection(FormulaConstraints formulaConstraints) {
         final List<Element> elements = new ArrayList<>(this.chemicalAlphabet.getElements());
-        elements.removeIf(e -> !formulaConstraints.hasElement(e));
+        //remove elements if bounds do not intersect
+        elements.removeIf(e -> !formulaConstraints.hasElement(e) || (Math.max(getLowerbound(e), formulaConstraints.getLowerbound(e)) > Math.min(getUpperbound(e), formulaConstraints.getUpperbound(e))));
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(elements.toArray(Element[]::new));
         final FormulaConstraints intersection = new FormulaConstraints(alphabet);
         final HashMap<Class<? extends FormulaFilter>, FormulaFilter> ifils = new HashMap<>();
@@ -528,6 +534,19 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         for (Element e : elements) {
             intersection.setBound(e, Math.max(getLowerbound(e), formulaConstraints.getLowerbound(e)), Math.min(getUpperbound(e), formulaConstraints.getUpperbound(e)));
         }
+        return intersection;
+    }
+
+    /**
+     * limits the {@link FormulaConstraints} to an array of elements.
+     * @param elements
+     * @return
+     */
+    public FormulaConstraints intersection(Element... elements) {
+        final List<Element> newElements = Arrays.stream(elements).collect(Collectors.toList());
+        newElements.removeIf(e -> !hasElement(e));
+        final ChemicalAlphabet alphabet = new ChemicalAlphabet(newElements.toArray(Element[]::new));
+        final FormulaConstraints intersection = new FormulaConstraints(alphabet, filters);
         return intersection;
     }
 

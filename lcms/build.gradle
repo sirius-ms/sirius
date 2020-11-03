@@ -1,8 +1,11 @@
-version =  parent.siriusVersion
+allprojects {
+    version =  parent.siriusVersion
+}
 
 dependencies {
     compile project(':chemistry_base')
     compile project(':spectral_alignment')
+    compile project(':mass_decomposition:mass_decomposer')
     //internal
     compile group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
     // external
@@ -10,18 +13,24 @@ dependencies {
     compile ('uk.ac.ebi.jmzml:jmzml:1.7.11') {
         exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
         exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-xml-handling' //pom dependency that does not work
+        exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'
+
     }
     compile ('psidev.psi.tools:xxindex:0.23'){
         exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
-    } //jmzl dep. from excluded pom dep
-    compile ('it.unimi.dsi:fastutil:6.5.1'){
-        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
-    } //jmzl dep. from excluded pom dep
+        exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'
 
+    } //jmzml dep. from excluded pom dep
+
+    //todo do we need this
+    compile ('it.unimi.dsi:fastutil:8.4.0'){
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
+        exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'
+    } //jmzml dep. from excluded pom dep
+
+
+    compile group: 'cpdetector', name: 'cpdetector', version:  '1.04'
     compile 'javax.xml.bind:jaxb-api:2.3.0' //also needed by jmzl but not exclusively
     compile 'org.glassfish.jaxb:jaxb-core:2.3.0' //also needed by jmzl but not exclusively
     compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: '2.3.2'
-
-    testCompile project(':io')
-    testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }

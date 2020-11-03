@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
@@ -118,7 +138,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
                         if (!ionType.equals(ir.getTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getTree(), ionType)) {
                             try {
                                 IdentificationResult<S> newIr = IdentificationResult.withPrecursorIonType(ir, ionType);
-                                if (newIr.getTree().numberOfVertices() >= 3 && neutralFormulas.add(newIr.getMolecularFormula()))
+                                if (newIr.getTree().numberOfVertices() >= 3 && (neutralFormulas.add(newIr.getMolecularFormula())))
                                     ionTypes.put(newIr, ir);
                             } catch (IllegalArgumentException e) {
                                 logError("Error with instance " + getExperiment().getName() + " and formula " + ir.getMolecularFormula() + " and ion type " + ionType);
@@ -131,10 +151,17 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
 
             idResult.addAll(ionTypes.keySet());
 
-            // workaround: we have to remove the original results if they do not match the ion type
+            // WORKAROUND: we have to remove the original results if they do not match the ion type
             if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
-                idResult.removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType()));
-                ionTypes.keySet().removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType())); //todo needed?
+                if (experiment.getPrecursorIonType().isIntrinsicalCharged()) {
+                    // for this special case we do not want to duplicate all the trees
+                    // but we also have to ensure not to delete all trees just because they look
+                    // identical to the original one
+                    //idResult.replaceAll(x->IdentificationResult.withPrecursorIonType(x, experiment.getPrecursorIonType()));
+                } else {
+                    idResult.removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType()));
+                    ionTypes.keySet().removeIf(f -> !f.getPrecursorIonType().equals(experiment.getPrecursorIonType())); //todo needed?
+                }
             }
 
             idResult.sort(Collections.reverseOrder()); //descending

@@ -1,6 +1,26 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Each compound is assigned to an CoelutingTraceset PER SAMPLE. The CoelutingTraceset is
@@ -9,50 +29,80 @@ import javax.annotation.Nonnull;
  */
 public class CoelutingTraceSet {
 
-    @Nonnull protected final String sampleName;
-    @Nonnull protected final MsDataSourceReference sampleRef;
-    @Nonnull protected final CompoundTrace ionTrace;
+    @NotNull protected final String sampleName;
+    @NotNull protected final MsDataSourceReference sampleRef;
+    @NotNull protected final CompoundTrace ionTrace;
 
-    @Nonnull  protected final long[] retentionTimes;
-    @Nonnull  protected final int[] scanIds; // the INDEX of the spectrum
-    @Nonnull protected final float[] noiseLevels;
+    @NotNull protected final long[] retentionTimes;
+    @NotNull protected final int[] scanIds; // the INDEX of the spectrum
+    @NotNull protected final float[] noiseLevels;
 
-    public CoelutingTraceSet(@Nonnull String sampleName, @Nonnull MsDataSourceReference sampleRef, @Nonnull CompoundTrace trace, @Nonnull long[] retentionTimes, @Nonnull int[] scanIds, @Nonnull float[] noiselevels) {
+    /**
+     * the IDs of scans that are part of the merged MS/MS spectrum
+     */
+    @NotNull protected final int[] ms2ScanIds;
+    @NotNull protected final long[] ms2RetentionTimes;
+
+    @NotNull protected final CompoundReport[] reports;
+
+
+    public CoelutingTraceSet(@NotNull String sampleName, @NotNull MsDataSourceReference sampleRef, @NotNull CompoundTrace trace, @NotNull long[] retentionTimes, @NotNull int[] scanIds, @NotNull float[] noiselevels, int[] ms2Scans, long[] ms2RetentionTimes, CompoundReport[] reports) {
         this.sampleName = sampleName;
         this.sampleRef = sampleRef;
         this.ionTrace = trace;
         this.retentionTimes = retentionTimes;
         this.scanIds = scanIds;
         this.noiseLevels = noiselevels;
+        this.ms2ScanIds = ms2Scans;
+        this.ms2RetentionTimes = ms2RetentionTimes;
+        this.reports = reports;
+        if (getMs2RetentionTimes().length!=getMs2ScanIds().length || retentionTimes.length!=scanIds.length) {
+            throw new IllegalArgumentException("different number of scan ids and retention times");
+        }
     }
 
-    @Nonnull
+    @NotNull
+    public long[] getMs2RetentionTimes() {
+        return ms2RetentionTimes;
+    }
+
+    @NotNull
+    public int[] getMs2ScanIds() {
+        return ms2ScanIds;
+    }
+
+    @NotNull
     public String getSampleName() {
         return sampleName;
     }
 
-    @Nonnull
+    @NotNull
     public MsDataSourceReference getSampleRef() {
         return sampleRef;
     }
 
-    @Nonnull
+    @NotNull
     public CompoundTrace getIonTrace() {
         return ionTrace;
     }
 
-    @Nonnull
+    @NotNull
     public long[] getRetentionTimes() {
         return retentionTimes;
     }
 
-    @Nonnull
+    @NotNull
     public int[] getScanIds() {
         return scanIds;
     }
 
-    @Nonnull
+    @NotNull
     public float[] getNoiseLevels() {
         return noiseLevels;
+    }
+
+    @NotNull
+    public CompoundReport[] getReports() {
+        return reports;
     }
 }

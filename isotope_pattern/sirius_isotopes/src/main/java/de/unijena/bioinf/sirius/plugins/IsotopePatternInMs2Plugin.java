@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.sirius.plugins;
 
 import com.google.common.collect.Range;
@@ -54,6 +74,13 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
     protected void afterGraphBuilding(ProcessedInput input, FGraph graph) {
         if (input.getPeakAnnotations().containsKey(ExtractedMs2IsotopePattern.class))
             new IntroduceIsotopeLosses(input, graph).introduceIsotopeLosses();
+    }
+
+    private boolean hasIsotopicPeaks(ProcessedInput input) {
+        if(!input.getPeakAnnotations().containsKey(ExtractedMs2IsotopePattern.class))
+            return false;
+        final PeakAnnotation<ExtractedMs2IsotopePattern> pat = input.getPeakAnnotationOrThrow(ExtractedMs2IsotopePattern.class);
+        return input.getMergedPeaks().stream().anyMatch(x->pat.get(x)!=null);
     }
 
     @Override
@@ -304,9 +331,9 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
         /**
          * Achtung: superhacky!
          * Isotopes are implemented via two annotations:
-         *  -> Ms2IsotopePattern (in fragment node):
+         *  - Ms2IsotopePattern (in fragment node):
          *      - contains the full pattern with score 0
-         *  -> IsotopicScore (in losses between isotopic peaks)
+         *  - IsotopicScore (in losses between isotopic peaks)
          *      - contains score bonus for elongation of the pattern
          *
          *  we only create synthetic isotope peak nodes for peaks which are part of the graph. If a peak is NOT part of the graph
@@ -484,7 +511,14 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
                 }
             }
             // there should be no peak with no isotope pattern which is more intensive than peaks with isotope pattern
-            return atLeastOne && highestIsotopicIntensity> highestNonIsotopicIntensity;
+            final boolean found = atLeastOne && highestIsotopicIntensity> highestNonIsotopicIntensity;
+
+            // delete annotation if we haven't found isotope peaks
+            if (!found) {
+                input.getMergedPeaks().forEach(x->ano.set(x,null));
+            }
+            return found;
+
         }
 
         public SimpleSpectrum findPatternInMostIntensiveScan(ProcessedInput input, ProcessedPeak peak) {

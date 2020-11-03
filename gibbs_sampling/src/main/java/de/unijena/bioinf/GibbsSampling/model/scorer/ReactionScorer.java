@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling.model.scorer;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -5,6 +25,7 @@ import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 import de.unijena.bioinf.GibbsSampling.model.Reaction;
 import de.unijena.bioinf.GibbsSampling.model.ReactionStepSizeScorer;
+import de.unijena.bioinf.jjobs.BasicJJob;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,6 +109,17 @@ public class ReactionScorer implements EdgeScorer {
     }
 
     public void clean() {
+    }
+
+    @Override
+    public BasicJJob<Object> getPrepareJob(Candidate[][] var1) {
+        return new BasicJJob<Object>() {
+            @Override
+            protected Object compute() throws Exception {
+                prepare(var1);
+                return true;
+            }
+        };
     }
 
     public double[] normalization(Candidate[][] candidates, double minimum_number_matched_peaks_losses) {

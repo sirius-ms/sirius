@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.math.MathUtils;
@@ -6,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.info.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.PeaklistSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -18,6 +39,7 @@ import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.hash.TIntHashSet;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
@@ -159,19 +181,21 @@ public class Ms2CosineSegmenter {
             }
             final double chimericThreshold = lowestChimeric+0.2d;
             final double scoreThreshold = bestChimericScore*0.75;
-
+            final ArrayList<RejectedMsMs> rejectedMsMs = new ArrayList<>();
+            final ArrayList<JoinedSegmentDuetoCosine> joinedSegments = new ArrayList<>();
             for (Ms2Scan ms2Scan : entry.getValue()) {
                 // if this scan has a high chimeric pollution while the others do not, reject it
                 if (ms2Scan.chimericPollution > chimericThreshold && (ms2Scan.precursorIntensity*Math.sqrt(ms2Scan.precursorIntensity)/Math.max(0.1,ms2Scan.chimericPollution) < scoreThreshold))
                 {
                     LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("Reject spectrum because of high chimeric pollution.");
+                    rejectedMsMs.add(new RejectedMsMsDueToChimeric(ms2Scan.ms2Scan.getRetentionTime(), ms2Scan.ms2Scan.getIndex(), (float)ms2Scan.chimericPollution));
                     continue;
                 }
 
                 final Scan s = ms2Scan.ms2Scan;
                 final Optional<ChromatographicPeak.Segment> segment = entry.getKey().getSegmentForScanId(s.getIndex());
                 ChromatographicPeak.Segment ms2Segment = null;
-                if (!segment.isPresent()) {
+                if (segment.isEmpty()) {
                     // it seems that the MS/MS scan is shot after the peak of the MS1. This might mean that either the
                     // instrument shot into noise, OR we shoot that many MS2 scans that we do not see the "end of the MS1"
                     // to allow the latter one, we check if we have a proper fwhm end. If not, we check if the retention
@@ -205,6 +229,7 @@ public class Ms2CosineSegmenter {
             final int[] segmentIds = perSegment.keys();
             Arrays.sort(segmentIds);
             final MergedSpectrum[] spectraPerSegment = new MergedSpectrum[segmentIds.length];
+            final CosineQuery[][] rejectedMsMsLowCosine = new CosineQuery[segmentIds.length][];
             int k=-1;
             for (int segmentId : segmentIds) {
                 ++k;
@@ -212,6 +237,17 @@ public class Ms2CosineSegmenter {
                 if (cos.length==0) continue;
                 MergedSpectrum mergedPeaks = (cos.length==1) ? cos[0].originalSpectrum : mergeViaClustering(sample,cos);
                 spectraPerSegment[k] = mergedPeaks;
+                int rejected = cos.length - mergedPeaks.getScans().size();
+                rejectedMsMsLowCosine[k] = new CosineQuery[rejected];
+                {
+                    final TIntHashSet have = new TIntHashSet(mergedPeaks.getScans().stream().mapToInt(Scan::getIndex).toArray());
+                    int j=0;
+                    for (CosineQuery q : cos) {
+                        if (!have.contains(q.originalSpectrum.getScans().get(0).getIndex())) {
+                            rejectedMsMsLowCosine[k][j++] = q;
+                        }
+                    }
+                }
             }
 
             // merge across segment ids
@@ -226,6 +262,8 @@ public class Ms2CosineSegmenter {
                     continue;
                 }
                 CosineQuery queryLeft = prepareForCosine(sample, merged);
+
+                rejectedMsMs.addAll(rejectedByCosine(merged, queryLeft, rejectedMsMsLowCosine[j]));
                 CosineQuery queryRight = prepareForCosine(sample, spectraPerSegment[i]);
                 SpectralSimilarity cosine = queryLeft.cosine(queryRight);
                 final MutableChromatographicPeak mutableChromatographicPeak = entry.getKey().mutate();
@@ -237,22 +275,42 @@ public class Ms2CosineSegmenter {
                     if (gap > medianWidth) {
                         // do not merge
                         //System.out.println("Do not merge " + queryLeft.originalSpectrum.getPrecursor().getMass() + " " + mutableChromatographicPeak.getIntensityAt(left.getApexIndex()) + " with " + mutableChromatographicPeak.getIntensityAt(right.getApexIndex()) + " with cosine "+ cosine.similarity + " (" + cosine.shardPeaks + " peaks), due to gap above " + medianWidth);
-                        ions.add(instance.createMs2Ion(sample,merged, entry.getKey(), left));
+                        final FragmentedIon ms2Ion = instance.createMs2Ion(sample, merged, entry.getKey(), left);
+                        ms2Ion.getAdditionalInfos().add(new SimilarMsMsButLargeGap((left.getPeak().getRetentionTimeAt(left.getEndIndex()) + right.getPeak().getRetentionTimeAt(left.getEndIndex()))/2,
+                                        (float)cosine.similarity,
+                                (short)cosine.shardPeaks,
+                                queryRight.originalSpectrum.getScans().stream().mapToLong(Scan::getRetentionTime).toArray(),queryRight.originalSpectrum.getScans().stream().mapToInt(Scan::getIndex).toArray(), gap
+                        ));
+                        ms2Ion.getAdditionalInfos().addAll(rejectedMsMs);
+                        rejectedMsMs.clear();
+                        ms2Ion.getAdditionalInfos().addAll(joinedSegments);
+                        joinedSegments.clear();
+                        ions.add(ms2Ion);
                         if (!SEGS.add(left))
                             System.out.println("=/");
                         merged = spectraPerSegment[i];
                         j=i;
                     } else {
+                        joinedSegments.add(new JoinedSegmentDuetoCosine(left.getPeak().getRetentionTimeAt(left.getEndIndex()), (float)cosine.similarity,(short)cosine.shardPeaks));
                         merged = merge(merged, spectraPerSegment[i]);
                         mutableChromatographicPeak.joinAllSegmentsWithinScanIds(segmentIds[j], segmentIds[i]);
                     }
                 } else if (cosine.similarity < 0.75) {
                     if (queryLeft.spectrum.size() <= 3 || queryRight.spectrum.size() <= 3) {
                         //System.out.println("Low quality MSMS");
-                    } else if (cosine.shardPeaks < Math.min(queryLeft.spectrum.size(),queryRight.spectrum.size())*0.33) {
+                    } else {
                         //System.out.println("Split segments");
                         final ChromatographicPeak.Segment left = mutableChromatographicPeak.getSegmentForScanId(segmentIds[j]).get();
-                        ions.add(instance.createMs2Ion(sample, merged, entry.getKey(), left));
+                        final FragmentedIon ms2Ion = instance.createMs2Ion(sample, merged, entry.getKey(), left);
+                        ms2Ion.getAdditionalInfos().addAll(rejectedMsMs);
+                        rejectedMsMs.clear();
+                        ms2Ion.getAdditionalInfos().add(new SplittedSegmentDueToLowCosine(
+                                left.getPeak().getRetentionTimeAt(left.getEndIndex()),
+                                (float)cosine.similarity, (short)cosine.shardPeaks,
+                                queryRight.originalSpectrum.getScans().stream().mapToLong(Scan::getRetentionTime).toArray(),queryRight.originalSpectrum.getScans().stream().mapToInt(Scan::getIndex).toArray()));
+                        ms2Ion.getAdditionalInfos().addAll(joinedSegments);
+                        joinedSegments.clear();
+                        ions.add(ms2Ion);
                         if (!SEGS.add(left))
                             System.out.println("=/");
                         merged = spectraPerSegment[i];
@@ -277,6 +335,10 @@ public class Ms2CosineSegmenter {
                 }
                 ms2Ion.setChimerics(new ArrayList<>(chimerics));
                 ms2Ion.setChimericPollution(chimericPollution);
+                ms2Ion.getAdditionalInfos().addAll(rejectedMsMs);
+                rejectedMsMs.clear();
+                ms2Ion.getAdditionalInfos().addAll(joinedSegments);
+                joinedSegments.clear();
                 if (chimericPollution>=0.33) {
                     ms2Ion.setMs2Quality(Quality.BAD);
                 }
@@ -294,6 +356,17 @@ public class Ms2CosineSegmenter {
         return ions;
 
     }
+
+    private List<RejectedMsMsDueToLowCosine> rejectedByCosine(MergedSpectrum merged, CosineQuery queryLeft, CosineQuery[] cosineQueries) {
+        final ArrayList<RejectedMsMsDueToLowCosine> rejected = new ArrayList<>();
+        for (CosineQuery q : cosineQueries) {
+            final SpectralSimilarity cosine = queryLeft.cosine(q);
+            final Scan scan = q.originalSpectrum.getScans().get(0);
+            rejected.add(new RejectedMsMsDueToLowCosine(scan.getRetentionTime(), scan.getIndex(), (float)cosine.similarity, (short)cosine.shardPeaks));
+        }
+        return rejected;
+    }
+
     private CosineQuery prepareForCosine(ProcessedSample sample, Scan scan) {
         return prepareForCosine(sample, new MergedSpectrum(scan, sample.storage.getScan(scan), scan.getPrecursor(), sample.ms2NoiseModel.getNoiseLevel(scan.getIndex(),scan.getPrecursor().getMass())));
     }

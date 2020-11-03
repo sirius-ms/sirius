@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *  
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker, 
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *  
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.lcms.noise;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Quickselect;
@@ -12,13 +32,13 @@ import java.util.Arrays;
 public class NoiseStatistics {
 
     private float[] noise;
-    private int offset, len;
+    private int offset, len, k;
     private TIntArrayList scanNumbers;
     private TFloatArrayList noiseLevels;
     private float avgNoise;
     private double percentile;
 
-    public NoiseStatistics(int bandWidth, double percentile) {
+    public NoiseStatistics(int bandWidth, double percentile, int k) {
         this.noise = new float[bandWidth];
         this.offset = 0;
         this.len = 0;
@@ -26,6 +46,7 @@ public class NoiseStatistics {
         this.noiseLevels = new TFloatArrayList();
         this.avgNoise = 0;
         this.percentile = percentile;
+        this.k = k;
     }
 
     public NoiseModel getLocalNoiseModel() {
@@ -65,6 +86,7 @@ public class NoiseStatistics {
             noiseLevels.add(avgNoise/len);
         }
     }
+
     // TODO: for MS/MS use decomposer
     private float calculateNoiseLevel(SimpleSpectrum spectrum) {
         final double[] array = Spectrums.copyIntensities(spectrum);
@@ -76,8 +98,8 @@ public class NoiseStatistics {
                 ++numberOnNonZeros;
             }
         }
-        if (numberOnNonZeros>=100) {
-            int k = (int)Math.floor(array.length*percentile);
+        if (numberOnNonZeros>=50) {
+            int k = Math.max(array.length-this.k, (int)Math.floor(array.length*percentile));
             float fl = (float)Quickselect.quickselectInplace(array,0,array.length, k);
             if (fl<=0) return lowestRecordedIntensity/5f;
             else return fl;

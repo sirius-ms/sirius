@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *  
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker, 
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *  
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.retention;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
@@ -14,12 +34,20 @@ import de.unijena.bioinf.retention.kernels.*;
 import de.unijena.bioinf.svm.RankSVM;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
+import org.openscience.cdk.depict.DepictionGenerator;
+import org.openscience.cdk.exception.CDKException;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.*;
 import java.util.logging.LogManager;
 import java.util.stream.Collectors;
 
@@ -27,9 +55,13 @@ import java.util.stream.Collectors;
 
 public class Main {
 
+    private static enum Mode {Alignf, Unimkl, Reweighted};
+
+    private static Mode MODE = Mode.Reweighted;
+
     final static boolean USEALL = false;
 
-    protected final static int NPAIRS = 8;
+    protected final static int NPAIRS = 4;
 
 
     private final static double EPSILON=1,
@@ -94,21 +126,21 @@ public class Main {
                     i *= 2;
                 }*/
 
-                for (int add = 0; add < 4; ++add) {
+                for (int add = 0; add < 2; ++add) {
                     i += 8;
                     if (i < train.size()) {
                         dataset.addRelation(train.get(k), train.get(i));
                     }
                 }
 
-                for (int add = 0; add < 4; ++add) {
+                for (int add = 0; add < 2; ++add) {
                     i += 16;
                     if (i < train.size()) {
                         dataset.addRelation(train.get(k), train.get(i));
                     }
                 }
 
-                for (int add = 0; add < 4; ++add) {
+                for (int add = 0; add < 2; ++add) {
                     i += 32;
                     if (i < train.size()) {
                         dataset.addRelation(train.get(k), train.get(i));
@@ -142,8 +174,7 @@ public class Main {
                     //new OutGroupKernel()//,
                     //new LongestPathKernel(2)
                     new QSARKernel()
-                    ,
-                    new ShapeKernel()
+                    //new ShapeKernel()
             ));
         }
         final double[][][] Ks = new double[kernels.size()][][];
@@ -160,7 +191,7 @@ public class Main {
 
         // ALIGNF
         final double[] WEIGHTS;
-        if (true){
+        if (MODE==Mode.Alignf){
 
             final TDoubleArrayList retentionTimes = new TDoubleArrayList();
             for (SimpleCompound c : train) retentionTimes.add(c.retentionTime);
@@ -187,9 +218,27 @@ public class Main {
             WEIGHTS = weights.clone();
 
 
-        } else {
+        } else if (MODE==Mode.Unimkl){
             WEIGHTS = new double[kernels.size()];
             Arrays.fill(WEIGHTS, 1d/kernels.size());
+        } else {
+
+            // compute frobenius norm of each kernel
+            WEIGHTS = new double[kernels.size()];
+            double weightsum = 0d;
+            for (int k=0; k < kernels.size(); ++k) {
+                WEIGHTS[k] = 1d/Math.sqrt(MatrixUtils.frobeniusNorm(Ks[k]));
+                weightsum += WEIGHTS[k];
+            }
+            weightsum = 1d/weightsum;
+            for (int k=0; k < kernels.size(); ++k) {
+                WEIGHTS[k] *= weightsum;
+            }
+            System.out.println("Kernel weights: ");
+            for (int k=0; k < kernels.size(); ++k) {
+                final String simpleName = kernels.get(k).getClass().getSimpleName();
+                System.out.println(simpleName + ":\t\t" + WEIGHTS[k]);
+            }
         }
 
         final double[][] K = new double[train.size()][train.size()];
@@ -236,7 +285,10 @@ public class Main {
         }
 
         final ArrayList<Pred> trainPred = new ArrayList<>(train.stream().map(x->new Pred(x)).collect(Collectors.toList()));
-        for (int k=0; k < trainPred.size(); ++k) trainPred.get(k).kernel = K[k];
+        for (int k=0; k < trainPred.size(); ++k) {
+            trainPred.get(k).kernel = K[k];
+            trainPred.get(k).index = k;
+        }
         final int NKERNELS=kernels.size();
         /////////////
         // REWEIGHT
@@ -264,7 +316,7 @@ public class Main {
             e.printStackTrace();
         }
 
-        for (double c : new double[]{1d, 2d, 8d, 16d}) {
+        for (double c : new double[]{1d}) {
             final RankSVM rankSVM = new RankSVM(K, dataset.getPairs(), c);
             final double[] coefficients = rankSVM.fit();
             System.out.println(Arrays.toString(coefficients));
@@ -274,29 +326,6 @@ public class Main {
                 p.prediction = 0d;
                 for (int i=0; i < coefficients.length; ++i) {
                     p.prediction += coefficients[i] * p.kernel[i];
-                }
-            }
-
-            if (c==2 && false) {
-                final ArrayList<Example> examples = findExamples(train, test);
-                try (final PrintStream out = new PrintStream("examples.csv")) {
-                    try (final PrintStream smiles = new PrintStream("examples.smi")) {
-                        out.println(
-                                "missmatches\tcompound\tbestKernel\tbestKernel.ret\tbestKernel.smiles\tclosest.kernel\tclosest.ret\tclosest.smiles"
-                        );
-                        for (Example ex : examples) {
-                            out.println(
-                                    ex.missmatches + "\t" + ex.compound.compound.smiles + "\t" + ex.bestKernelValue + "\t" + Math.abs(ex.bestKernel.retentionTime-ex.compound.compound.retentionTime) + "\t" + ex.bestKernel.smiles +"\t" + ex.bestRetValue + "\t" + Math.abs(ex.bestRet.retentionTime-ex.compound.compound.retentionTime) + "\t" + ex.bestRet.smiles
-                            );
-                            smiles.println(ex.compound.compound.smiles);
-                            smiles.println(ex.bestKernel.smiles);
-                            smiles.println(ex.bestRet.smiles);
-                        }
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
                 }
             }
 
@@ -313,6 +342,9 @@ public class Main {
 
 
         }
+
+        new ExampleUI(trainPred, test);
+
         try {
             manager.shutdown();
         } catch (InterruptedException e) {
@@ -426,6 +458,9 @@ public class Main {
                 double diff = predictions.get(i).compound.retentionTime - predictions.get(j).compound.retentionTime;
                 if (diff < EPSILON) {
                     ++matches;
+                } else {
+                    predictions.get(i).errors++;
+                    predictions.get(j).errors++;
                 }
                 ++total;
             }
@@ -450,6 +485,7 @@ public class Main {
         private double prediction;
         private SimpleCompound compound;
         private double[] kernel;
+        int errors,index;
 
         public Pred(SimpleCompound compound) {
             this.compound = compound;
@@ -469,5 +505,154 @@ public class Main {
         }
         return xs;
     }
+
+
+
+    public static class ExampleUI extends JFrame {
+
+        private List<Pred> predictions;
+        private List<Pred> train;
+
+        private int offset;
+        CompoundView compoundView;
+        CompoundListView listA, listB;
+
+        public ExampleUI(List<Pred> train, List<Pred> predictions) throws HeadlessException {
+            super();
+            this.predictions = predictions;
+            this.train = train;
+            this.offset = -1;
+            predictions.sort(Comparator.comparingDouble(x -> -x.errors));
+            getContentPane().setLayout(new BorderLayout());
+
+            Box box = Box.createHorizontalBox();
+            compoundView = new CompoundView();
+            listA = new CompoundListView();
+            listB = new CompoundListView();
+
+            JSlider slider = new JSlider(0, predictions.size() - 1, 1);
+            getContentPane().add(slider, BorderLayout.SOUTH);
+            slider.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    setActiveCompound(slider.getValue());
+                    listA.model.clear();
+                    listB.model.clear();
+                    ArrayList<Pred> mostSimilarTrainByKernel = new ArrayList<>(train);
+                    ArrayList<Pred> mostSimilarTrainByTime = new ArrayList<>(train);
+                    new SwingWorker<>() {
+                        @Override
+                        protected Object doInBackground() throws Exception {
+                            final Pred active = predictions.get(offset);
+                            mostSimilarTrainByKernel.sort(Comparator.comparingDouble(x -> -active.kernel[x.index]));
+                            mostSimilarTrainByTime.sort(Comparator.comparingDouble(x -> Math.abs(x.compound.retentionTime - active.compound.retentionTime)));
+                            return "done.";
+                        }
+
+                        @Override
+                        protected void done() {
+                            super.done();
+                            listA.model.addAll(mostSimilarTrainByKernel.subList(0, 100));
+                            listB.model.addAll(mostSimilarTrainByTime.subList(0, 100));
+                        }
+                    }.execute();
+                }
+            });
+
+
+            box.add(compoundView);
+            box.add(new JScrollPane(listA));
+            box.add(new JScrollPane(listB));
+            getContentPane().add(box, BorderLayout.CENTER);
+            setPreferredSize(new Dimension(1400,700));
+            slider.setValue(0);
+
+            pack();
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            setVisible(true);
+
+        }
+
+        private void setActiveCompound(int value) {
+            if (offset != value) {
+                offset = value;
+                Pred active = predictions.get(Math.min(predictions.size(), value));
+                compoundView.setActiveCompound(active);
+
+            }
+        }
+
+
+        protected class CompoundListView extends JList<Pred> {
+            DefaultListModel<Pred> model;
+            CompoundView v;
+
+            public CompoundListView() {
+                super(new DefaultListModel<>());
+                this.model = (DefaultListModel<Pred>) getModel();
+                this.v = new CompoundView();
+                setCellRenderer(new ListCellRenderer<Pred>() {
+                    @Override
+                    public Component getListCellRendererComponent(JList<? extends Pred> list, Pred value, int index, boolean isSelected, boolean cellHasFocus) {
+                        v.setActiveCompound(value, predictions.get(offset), value.index);
+                        return v;
+                    }
+                });
+            }
+        }
+
+        protected class CompoundView extends Canvas {
+            DepictionGenerator gen;
+            Pred compound;
+            Pred testCompound;
+            int activeIndex;
+
+            public CompoundView() {
+                super();
+                setFocusable(true);
+                this.gen = new DepictionGenerator();
+                this.setPreferredSize(new Dimension(640, 384));
+            }
+
+            public void setActiveCompound(Pred simpleCompound) {
+                setActiveCompound(simpleCompound,null,-1);
+            }
+
+            public void setActiveCompound(Pred simpleCompound, Pred testCompound, int index) {
+                this.compound = simpleCompound;
+                this.activeIndex = index;
+                this.testCompound = testCompound;
+                repaint();
+            }
+
+            @Override
+            public void paint(Graphics g) {
+                super.paint(g);
+                g.clearRect(0, 0, getWidth(), getHeight());
+                if (compound == null) return;
+                try {
+                    int X = (int) (this.getSize().getWidth() * 0.125);
+                    int Y = (int) (this.getSize().getHeight() * 0.125);
+                    int w = (int) (this.getSize().getWidth() * 0.75);
+                    int h = (int) (this.getSize().getHeight() * 0.75);
+                    final BufferedImage bufferedImage = gen.withSize(w, h).withFillToFit().depict(compound.compound.molecule).toImg();
+                    g.drawImage(bufferedImage, X, Y, null);
+                    // draw stats
+                    g.setColor(Color.BLACK);
+                    final int hh = g.getFontMetrics().getHeight();
+                    g.drawString(String.format(Locale.US, "ROI = %.4f", compound.prediction), X, Y + h);
+                    g.drawString(String.format(Locale.US, "t   = %.4f", compound.compound.retentionTime), X, Y + h + hh + 4);
+                    if (activeIndex>=0) {
+                        g.drawString(String.format(Locale.US, "Ker = %.4f", testCompound.kernel[activeIndex]), X, Y + h + 2 * hh + 8);
+                    }
+                    //, t = %.4f, kernel = %.4f"));
+                } catch (CDKException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
 
 }

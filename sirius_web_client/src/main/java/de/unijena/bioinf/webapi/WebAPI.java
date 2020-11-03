@@ -1,19 +1,23 @@
+
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
 package de.unijena.bioinf.webapi;
@@ -29,13 +33,9 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
-import de.unijena.bioinf.fingerid.CSIPredictor;
-import de.unijena.bioinf.fingerid.CanopusWebJJob;
-import de.unijena.bioinf.fingerid.FingerprintPredictionJJob;
-import de.unijena.bioinf.fingerid.StructurePredictor;
+import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.blast.CovarianceScoringMethod;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
@@ -52,6 +52,8 @@ import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
+import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
+import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
@@ -68,7 +70,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Frontend WebAPI class, that represents the client to our backend rest api
@@ -233,7 +234,7 @@ public final class WebAPI {
         return jobWatcher.watchJob(new FingerprintPredictionJJob(input, jobUpdate, version, System.currentTimeMillis(), input.experiment.getName()));
     }
 
-    //caches predicors so that we do not have to download the statistics and fingerprint infos every
+    //caches predicors so that we do not have to download the statistics and fingerprint info every time
     private final EnumMap<PredictorType, StructurePredictor> fingerIdPredictors = new EnumMap<>(PredictorType.class);
 
     public @NotNull StructurePredictor getStructurePredictor(int charge) throws IOException {
@@ -260,6 +261,12 @@ public final class WebAPI {
                 fingerIdData.put(predictorType, ProxyManager.applyClient(client -> fingerprintClient.getFingerIdData(predictorType, client)));
         }
         return fingerIdData.get(predictorType);
+    }
+
+    // use via predictor/scoring method
+    public CovtreeWebJJob submitCovtreeJob(@NotNull MolecularFormula formula, @NotNull PredictorType predictorType) throws IOException {
+        final JobUpdate<CovtreeJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postCovtreeJobs(new CovtreeJobInput(formula.toString(), predictorType), client));
+        return jobWatcher.watchJob(new CovtreeWebJJob(formula, jobUpdate, System.currentTimeMillis()));
     }
 
     //uncached -> access via predictor
@@ -299,7 +306,7 @@ public final class WebAPI {
     }
 
     /**
-     * @return The Fingerprint version used by the rest Database ->  not really needed but for sanity checks
+     * @return The Fingerprint version used by the rest Database --  not really needed but for sanity checks
      * @throws IOException if connection error happens
      */
     public CdkFingerprintVersion getCDKChemDBFingerprintVersion() throws IOException {

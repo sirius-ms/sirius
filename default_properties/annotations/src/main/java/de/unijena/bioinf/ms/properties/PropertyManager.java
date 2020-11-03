@@ -1,13 +1,32 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.properties;
 
-import org.apache.commons.configuration2.CombinedConfiguration;
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.ImmutableConfiguration;
-import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.*;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.io.FileHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.reflections8.Reflections;
+import org.reflections8.scanners.ResourcesScanner;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -21,6 +40,7 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 /**
  * Created as part of the SIRIUS
@@ -34,19 +54,20 @@ public class PropertyManager {
     private static final String PROPERTY_LOCATIONS_KEY = MS_PROPERTY_BASE + ".propertyLocations";
 
     public static final String DEFAULT_PROPERTY_SOURCE = "sirius.build.properties";
-    public static final String DEFAULT_CONFIG_SOURCE = "default.config";
-    public static final String DEFAULT_CONFIG_CLASSES_SOURCE = "default_config_class.map";
+//    public static final String DEFAULT_CONFIG_SOURCE = "default.config";
+//    public static final String DEFAULT_CONFIG_CLASSES_SOURCE = "default_config_class.map";
 
     public static final String MS_CONFIGS_BASE = PropertyManager.MS_PROPERTY_BASE + ".configs";
     public static final String MS_CONFIG_CLASSES_BASE = PropertyManager.MS_PROPERTY_BASE + ".configClasses";
 
+    // this key is used to specify additions config files.
     public static final String CONFIGS_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configLocations";
-    public static final String CONFIG_CLASSES_LOCATIONS_KEY = PropertyManager.MS_PROPERTY_BASE + ".configClassesLocations";
 
     protected static final CombinedConfiguration PERSISTENT_PROPERTIES;
     protected static final PropertiesConfiguration CHANGED_PROPERTIES;
     protected static final CombinedConfiguration PROPERTIES;
     public static final ParameterConfig DEFAULTS;
+    public static final PropertiesConfigurationLayout DEFAULTS_LAYOUT;
 
 
     static {
@@ -58,16 +79,27 @@ public class PropertyManager {
             PERSISTENT_PROPERTIES.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
             CHANGED_PROPERTIES = loadDefaultProperties();
 
+
+            final Reflections reflections = new Reflections("de.unijena.bioinf.ms.defaults", new ResourcesScanner());
+            DEFAULTS_LAYOUT = new PropertiesConfigurationLayout();
+
+            LinkedHashSet<String> classResources =  new LinkedHashSet<>(reflections.getResources(Pattern.compile(".*\\.map")));
+            CombinedConfiguration classConfig = addPropertiesFromResources(classResources, MS_CONFIG_CLASSES_BASE, "CONFIG_CLASSES");
+
+            LinkedHashSet<String> configResources =  new LinkedHashSet<>(reflections.getResources(Pattern.compile(".*\\.config")));
+            // this addes changed defaults from some locations specified by this key
+            configResources.addAll(SiriusConfigUtils.parseResourcesLocation(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY)));
+            CombinedConfiguration globalConfig = addPropertiesFromResources(configResources, MS_CONFIGS_BASE, "GLOBAL_CONFIG");
+
+
             DEFAULTS = new ParameterConfig(
-                    loadDefaultConfigs(),//config class for configs
-                    loadDefaultConfigClasses(),//configs an properties need to have disjoint keys
-                    DEFAULT_CONFIG_SOURCE,
+                    globalConfig,//config class for configs
+                    classConfig,//configs an properties need to have disjoint keys
+                    DEFAULTS_LAYOUT,
                     null,
                     MS_CONFIGS_BASE,
                     MS_CONFIG_CLASSES_BASE
             ).newIndependentInstance("CHANGED_DEFAULT_CONFIGS");
-
-
         } catch (Throwable e) {
             System.err.println("Property Manager STATIC Block Error!");
             e.printStackTrace(System.err);
@@ -102,17 +134,9 @@ public class PropertyManager {
         CombinedConfiguration configToAdd = SiriusConfigUtils.newCombinedConfiguration();
         PropertiesConfiguration changeable = SiriusConfigUtils.newConfiguration();
         configToAdd.addConfiguration(changeable, "CHANGED_DEFAULT_PROPERTIES");
-        SiriusConfigUtils.makeConfigFromResources(configToAdd, SiriusConfigUtils.parseResourcesLocation(System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), DEFAULT_PROPERTY_SOURCE));
+        SiriusConfigUtils.makeConfigFromResources(configToAdd, SiriusConfigUtils.parseResourcesLocation(System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), DEFAULT_PROPERTY_SOURCE), null);
         addConfiguration(configToAdd, null, "PROPERTIES");
         return changeable;
-    }
-
-    private static CombinedConfiguration loadDefaultConfigClasses() {
-        return addPropertiesFromResources(PROPERTIES.getString(CONFIG_CLASSES_LOCATIONS_KEY), DEFAULT_CONFIG_CLASSES_SOURCE, MS_CONFIG_CLASSES_BASE, "CONFIG_CLASSES");
-    }
-
-    private static CombinedConfiguration loadDefaultConfigs() {
-        return addPropertiesFromResources(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY), DEFAULT_CONFIG_SOURCE, MS_CONFIGS_BASE, "GLOBAL_CONFIG");
     }
 
     public static PropertiesConfiguration loadConfigurationFromStream(@NotNull InputStream input) throws ConfigurationException {
@@ -168,9 +192,8 @@ public class PropertyManager {
 
         name = (name == null || name.isEmpty()) ? String.join("_", resources) : name;
 
-
         return addConfiguration(
-                SiriusConfigUtils.makeConfigFromResources(resources),
+                SiriusConfigUtils.makeConfigFromResources(resources, DEFAULTS_LAYOUT),
                 prefixToAdd, name
         );
     }
@@ -178,16 +201,16 @@ public class PropertyManager {
     public static <C extends Configuration> C addConfiguration(@NotNull final C configToAdd, @Nullable String prefixToAdd, @NotNull String name) {
         PROPERTIES.addConfiguration(configToAdd, name, prefixToAdd);
         if (configToAdd instanceof CombinedConfiguration)
-            listenCombinedConfiguration((CombinedConfiguration) configToAdd, prefixToAdd, name);
+            listenCombinedConfiguration((CombinedConfiguration) configToAdd);
         return configToAdd;
     }
 
-    private static void listenCombinedConfiguration(@NotNull final CombinedConfiguration configToAdd, @Nullable String prefixToAdd, @NotNull String name) {
+    private static void listenCombinedConfiguration(@NotNull final CombinedConfiguration configToAdd) {
         configToAdd.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
     }
 
     public static PropertiesConfiguration addPropertiesFromResource(@NotNull final String resource, @Nullable String prefixToAdd, @Nullable String name) {
-        PropertiesConfiguration configToAdd = SiriusConfigUtils.makeConfigFromStream(resource);
+        PropertiesConfiguration configToAdd = SiriusConfigUtils.makeConfigFromStream(resource,null);
         PROPERTIES.addConfiguration(configToAdd, name, prefixToAdd);
         return configToAdd;
     }

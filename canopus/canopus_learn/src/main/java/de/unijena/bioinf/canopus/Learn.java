@@ -1,35 +1,40 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.canopus;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.babelms.ms.JenaMsWriter;
-import de.unijena.bioinf.fingerid.InputFeatures;
-import de.unijena.bioinf.fingerid.KernelToNumpyConverter;
-import de.unijena.bioinf.fingerid.Prediction;
-import de.unijena.bioinf.fingerid.SpectralPreprocessor;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Sirius;
-import gnu.trove.list.array.TDoubleArrayList;
+import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 import org.tensorflow.Tensor;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.FloatBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.LogManager;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Learn {
 
@@ -66,20 +71,11 @@ public class Learn {
     }
 
     public static void main(String[] args) {
+        System.out.println("Use fingerprints from " + ChemicalDatabase.FINGERPRINT_TABLE + " with ID " + ChemicalDatabase.FINGERPRINT_ID);
+
+        System.out.println("Uptodate version 5");
+        System.out.println("CLIPPING? " + TrainingData.CLIPPING);
         args = removeOpts(args);
-        if (args[0].startsWith("play-around")) {
-            try {
-                if (args.length!=5) {
-                    System.err.println("Usage:\nevaluate modeldir model.tgz outputdir independentPattern");
-                } else {
-                    playAround(new File(args[1]), new File(args[2]), new File(args[3]), args[4]);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            System.exit(0);
-            return;
-        }
         if (args[0].startsWith("evaluate")) {
             try {
                 if (args.length!=5) {
@@ -93,75 +89,66 @@ public class Learn {
             System.exit(0);
             return;
         }
-        if (args[0].startsWith("continue")) {
+        if (args[0].startsWith("evaluate-indep")) {
             try {
-                final String indepSet = findArgWithValue(args, "--independent");
-                continueModel(new File(args[1]), new File(args[2]), indepSet);
+                if (args.length!=5) {
+                    System.err.println("Usage:\nevaluate modeldir model.tgz outputdir independentPattern");
+                } else {
+                    getDecisionValueOutputAndPerformanceOnIndep(new File(args[1]), new File(args[2]), new File(args[3]), args[4]);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
             System.exit(0);
             return;
         }
+        if (args[0].startsWith("readAndSample")) {
+            try {
+                readAndSample(new File(args[1]), new File(args[2]));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (args[0].startsWith("continue")) {
+            try {
+                final String indepSet = findArgWithValue(args, "--independent");
+                continueModel(new File(args[1]), new File(args[2]), indepSet, false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.exit(0);
+            return;
+        }
+        if (args[0].startsWith("finalize")) {
+            try {
+                final String indepSet = findArgWithValue(args, "--independent");
+                continueModel(new File(args[1]), new File(args[2]), indepSet, true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.exit(0);
+            return;
+        }
+        if (args[0].startsWith("sample")) {
+            sample(new File(args[1]));
+            return;
+        }
         if (args[0].startsWith("prepare")) {
             System.out.println("Prepare learning");
             final String pathName = args[1];
+
             try {
                 Prepare.prepare(new File(pathName));
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
+
             return;
         } else if (args[0].startsWith("fix")) {
             fix();
             return;
-        } else if (args[0].startsWith("decoy")) {
-
-            try {
-                final Prediction csi = Prediction.loadFromFile(new File("fingerid.data"));
-                final DecoySpectrumGenerator gen = new DecoySpectrumGenerator(csi);
-                for (int i=0; i < 50; ++i) {
-                    InputFeatures pre;
-                    final Ms2Experiment exp = gen.drawExperiment();
-                    final Sirius.SiriusIdentificationJob job = gen.sirius.makeIdentificationJob(exp);
-                    SiriusJobs.getGlobalJobManager().submitJob(job);
-                    final IdentificationResult ir = job.takeResult().get(0);
-                    if (ir!=null)
-                        pre = SpectralPreprocessor.preprocessFromSirius(gen.sirius,ir,exp);
-                    else {
-                        System.out.println("Empty spectrum");
-                        continue;
-                    }
-                    final ProbabilityFingerprint fp = csi.predictProbabilityFingerprint(pre);
-                    System.out.println("---------------------------");
-                    System.out.println("Tree: " + pre.tree.numberOfVertices());
-                    System.out.println("Spectrum: " + pre.spectrum.size());
-                    int c=0;
-                    for (FPIter iter : fp.presentFingerprints()) {
-                        ++c;
-                    }
-                    System.out.println("Fingerprint: " + c);
-                    System.out.println("..............");
-                    System.out.println(Arrays.toString(fp.toProbabilityArray()));
-                    try (final BufferedWriter bw = FileUtils.getWriter(new File(String.format(Locale.US, "decoys/%03d.ms", i)))) {
-                        new JenaMsWriter().write(bw, exp);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            try {
-                SiriusJobs.getGlobalJobManager().shutdown();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return;
-
-
         }
-
 
         final File modelFile = new File(args[0]);
         final int modelId = Integer.parseInt(args[1]);
@@ -173,7 +160,7 @@ public class Learn {
 
             final TrainingData trainingData = new TrainingData(new File("."),indepSet==null ? null : Pattern.compile(indepSet));
             final BatchGenerator generator = new BatchGenerator(trainingData, 20);
-            System.out.println("Loss function: " + tf.loss.substring(0, tf.loss.indexOf('/')));
+            System.out.println("Loss function: " + tf.loss);//.substring(0, tf.loss.indexOf('/')));
             System.out.println("PLATT CENTERING: " + String.valueOf(TrainingData.PLATT_CENTERING));
             System.out.println("PLATT SCALING: " + String.valueOf(TrainingData.SCALE_BY_STD));
             System.out.println("VECTOR NORM: " + String.valueOf(TrainingData.VECNORM_SCALING));
@@ -190,7 +177,7 @@ public class Learn {
                 System.out.println(i.fingerprint.toTabSeparatedString());
                 System.out.println("(Above 33%):");
                 for (FPIter f : i.fingerprint) {
-                    if (f.getProbability()>=0.5) {
+                    if (f.getProbability()>=0.33) {
                         System.out.print("\t");
                         System.out.print(f.getIndex());
                     }
@@ -198,60 +185,73 @@ public class Learn {
                 System.out.println("");
 
                 System.out.println("Probabilistic Tanimoto to truth: " + Tanimoto.probabilisticTanimoto(i.fingerprint, i.compound.fingerprint).expectationValue());
-
-                final ProbabilityFingerprint fp = trainingData.fingerprintSampler.sampleIndependently(i.compound.fingerprint, true);
-                System.out.println("########### SAMPLE ##########");
-                System.out.println("Platt probabilities:");
-                System.out.println(fp.toTabSeparatedString());
-                System.out.println("(Above 33%):");
-                for (FPIter f : fp) {
-                    if (f.getProbability()>=0.5) {
-                        System.out.print("\t");
-                        System.out.print(f.getIndex());
+                {
+                    ProbabilityFingerprint fp = trainingData.fingerprintSampler.sampleIndependently(i.compound.fingerprint, true);
+                    final double[] array = fp.toProbabilityArray();
+                    FloatBuffer buf = FloatBuffer.wrap(new float[array.length]);
+                    trainingData.addNormalizedPlatts(buf, array);
+                    final float[] array1 = buf.array();
+                    for (int k = 0; k < array1.length; ++k) {
+                        array[k] = array1[k];
                     }
+                    fp = new ProbabilityFingerprint(fp.getFingerprintVersion(), array);
+                    System.out.println("########### SAMPLE ##########");
+                    System.out.println("Platt probabilities:");
+                    System.out.println(fp.toTabSeparatedString());
+                    System.out.println("(Above 33%):");
+                    for (FPIter f : fp) {
+                        if (f.getProbability() >= 0.33) {
+                            System.out.print("\t");
+                            System.out.print(f.getIndex());
+                        }
+                    }
+                    System.out.println("");
+                    System.out.println("Probabilistic Tanimoto to truth: " + Tanimoto.probabilisticTanimoto(fp, i.compound.fingerprint).expectationValue());
                 }
-                System.out.println("");
-                System.out.println("Probabilistic Tanimoto to truth: " + Tanimoto.probabilisticTanimoto(fp, i.compound.fingerprint).expectationValue());
-                System.exit(0);
+                {
+                    ProbabilityFingerprint fp = trainingData.fingerprintSampler.sample(i.compound.fingerprint, false);
+                    final double[] array = fp.toProbabilityArray();
+                    FloatBuffer buf = FloatBuffer.wrap(new float[array.length]);
+                    trainingData.addNormalizedPlatts(buf, array);
+                    final float[] array1 = buf.array();
+                    for (int k = 0; k < array1.length; ++k) {
+                        array[k] = array1[k];
+                    }
+                    fp = new ProbabilityFingerprint(fp.getFingerprintVersion(), array);
+                    System.out.println("########### SAMPLE (TEMPLATE) ##########");
+                    System.out.println("Platt probabilities:");
+                    System.out.println(fp.toTabSeparatedString());
+                    System.out.println("(Above 33%):");
+                    for (FPIter f : fp) {
+                        if (f.getProbability() >= 0.33) {
+                            System.out.print("\t");
+                            System.out.print(f.getIndex());
+                        }
+                    }
+                    System.out.println("");
+                    System.out.println("Probabilistic Tanimoto to truth: " + Tanimoto.probabilisticTanimoto(fp, i.compound.fingerprint).expectationValue());
+                }
             }
 
-            if (false) {
-                System.out.println("MEAN VECTOR:");
-                System.out.println(Arrays.toString(trainingData.plattNorm));
-                System.out.println("STD VECTOR:");
-                System.out.println(Arrays.toString(trainingData.plattScale));
-                System.out.println("Example input");
-                final EvaluationInstance sample = trainingData.crossvalidation.get(0);
-                try (final TrainingBatch batch = trainingData.generateBatch(Arrays.asList(sample))) {
-                    {
-                        final float[][] matrix = new float[(int)batch.platts.shape()[0]][(int)batch.platts.shape()[1]];
-                        batch.platts.copyTo(matrix);
-                        final double[] v = MatrixUtils.float2double(matrix[0]);
-                        System.out.printf(Locale.US, "Platt: (mean = %f, std = %f)\n", MatrixUtils.vectorMean(v), MatrixUtils.vectorStd(v));
-                        System.out.println(Arrays.toString(matrix[0]));
-                    }
-                    {
-                        final float[][] matrix = new float[(int)batch.formulas.shape()[0]][(int)batch.formulas.shape()[1]];
-                        batch.formulas.copyTo(matrix);
-                        final double[] v = MatrixUtils.float2double(matrix[0]);
-                        System.out.printf(Locale.US, "Formulas: (mean = %f, std = %f)\n", MatrixUtils.vectorMean(v), MatrixUtils.vectorStd(v));
-                        System.out.println(Arrays.toString(matrix[0]));
-                    }
-                    {
-                        final float[][] matrix = new float[(int)batch.labels.shape()[0]][(int)batch.labels.shape()[1]];
-                        batch.labels.copyTo(matrix);
-                        final double[] v = MatrixUtils.float2double(matrix[0]);
-                        System.out.printf(Locale.US, "Labels: (mean = %f, std = %f)\n", MatrixUtils.vectorMean(v), MatrixUtils.vectorStd(v));
-                        System.out.println(Arrays.toString(matrix[0]));
-                    }
-                }
-            }
+            boolean saveOnce=true;
 
             final List<Thread> generatorThreads = new ArrayList<>();
             for (int K=0; K < 2; ++K) {
                 generatorThreads.add(new Thread(generator));
             }
             for (Thread t : generatorThreads) t.start();
+
+            final Thread npcThread;
+            final BatchGenerator npcGenerator;
+            if (trainingData.isNPC()) {
+                npcGenerator = new BatchGenerator(trainingData, 4);
+                npcGenerator.npc = true;
+                npcThread = new Thread(npcGenerator);
+                npcThread.start();
+            } else {
+                npcThread = null;
+                npcGenerator = null;
+            }
 
             TrainingBatch evalBatch = generator.poll(0);
             final List<EvaluationInstance> novels = new ArrayList<>();
@@ -267,6 +267,9 @@ public class Learn {
             }
             final TrainingBatch crossvalBatch = trainingData.generateBatch(trainingData.crossvalidation);
             final TrainingBatch independentBatch = trainingData.independent==null?null:trainingData.generateBatch(trainingData.independent);
+
+            final TrainingBatch npcEvaluationBatch = trainingData.generateNPCBatch(trainingData.npcInstances);
+
             final TrainingBatch independentNovelBatch = trainingData.independent==null?null:trainingData.generateBatch(novels);
             final boolean IS_INDEP = independentBatch!=null;
             int[] CSI_USED_INDIZES = null;
@@ -294,51 +297,91 @@ public class Learn {
             System.out.println("Resample");System.out.flush();
             TrainingBatch resampledCrossval = trainingData.resampleMultithreaded(trainingData.crossvalidation, (a,b)-> TrainingData.SamplingStrategy.CONDITIONAL);
             System.out.println("Start."); System.out.flush();
-            double lastMCC = Double.NEGATIVE_INFINITY;
+            tf.setRegularizerStrength(0f);
+            double lastScore = Double.NEGATIVE_INFINITY;
+            int NPC_FREQ = 1;
             int _step_=0;
-            try {
-                for (int k = 0; k <= 30000; ++k) {
+
+                for (int k = 0; k <= 40000; ++k) {
+                    if (k==500) {
+                        System.out.println("Set regularization to " + REGSTREN);
+                        tf.setRegularizerStrength((float)REGSTREN);
+                    }
                     try (final TrainingBatch batch = generator.poll(k)) {
                         if (k<=0)
                             System.out.println("Batch size: ~" + batch.platts.shape()[0]);
                         ++_step_;
                         final long time1 = System.currentTimeMillis();
-                        final double[] losses = tf.train(batch);
-                        final long time2 = System.currentTimeMillis();
-                        System.out.println(k + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
-                        if (k % 200 == 0) {
-                            //writeExample(tf,trainingData);
-                            //reportStuff(evalBatch, crossvalBatch, independentBatch,independentNovelBatch,CSI_USED_INDIZES, dummyProps, csiReport,novelReport, tf, k);
-                            reportStuff(Arrays.asList(evalBatch, crossvalBatch, resampledCrossval, independentBatch, independentNovelBatch),
-                                    Arrays.asList("simulated", "crossval", "resampled", "indep", "indepNovel"), tf, k);
+                        if (k%10==0) {
+                            final double[] losses = tf.trainWithGradient(batch.platts,batch.formulas,batch.labels);
+                            final long time2 = System.currentTimeMillis();
+                            System.out.println(k + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\tgradient = " + losses[2] + "\t (" + ((time2 - time1) / 1000d) + " s)");
+                        } else {
+                            final double[] losses = tf.train(batch.platts,batch.formulas,batch.labels);
+                            final long time2 = System.currentTimeMillis();
+                            System.out.println(k + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
                         }
 
-                        if (k > 0 && k % 2000 == 0) {
-                            Report evaluate = tf.evaluate(crossvalBatch);
-                            if (evaluate.mcc > lastMCC) {
-                                System.out.println("############ SAVE MODEL ##############");
-                                tf.save(trainingData, modelId, true, true, k >= 30000);
-                                lastMCC = evaluate.mcc;
-                            }
 
-                            evalBatch.close();
-                            if (k >= (30000 * TrainingData.GROW)) break;
-                            evalBatch = generator.poll(0);
-                            resampledCrossval.close();
-                            resampledCrossval = trainingData.resampleMultithreaded(trainingData.crossvalidation, (a,b)-> TrainingData.SamplingStrategy.CONDITIONAL);
+
+                        if (npcGenerator!=null && k % NPC_FREQ == 0) {
+                            // NPC classyfire
+                            final long xtime1 = System.currentTimeMillis();
+                            try (final TrainingBatch npcBatch = npcGenerator.poll(k)) {
+                                final double[] xlosses = tf.train_npc(npcBatch.platts, npcBatch.formulas, npcBatch.labels, npcBatch.npcLabels);
+                                final long xtime2 = System.currentTimeMillis();
+                                System.out.println(k + ".)\tnpcloss = " + xlosses[0] + "\tloss = " + xlosses[1] + "\tl2 norm = " + xlosses[2] + "\t (" + ((xtime2 - xtime1) / 1000d) + " s)");
+                                if (k > 2000) NPC_FREQ = 4;
+                                else if (k > 500) NPC_FREQ = 2;
+                            }
+                        }
+
+                        if (k % 400 == 0) {
+                            //writeExample(tf,trainingData);
+                            //reportStuff(evalBatch, crossvalBatch, independentBatch,independentNovelBatch,CSI_USED_INDIZES, dummyProps, csiReport,novelReport, tf, k);
+                            Report[] reps = reportStuff(Arrays.asList(evalBatch, crossvalBatch, resampledCrossval, independentBatch, independentNovelBatch),
+                                    Arrays.asList("simulated", "crossval", "resampled", "indep", "indepNovel"), tf, k);
+
+                            // eval npc
+                            if (trainingData.isNPC()) evalNPC(npcEvaluationBatch, tf);
+
+                        }
+
+                        if (k >= 18000) {
+                            Report evaluate = tf.evaluate(crossvalBatch);
+                            final double score = evaluate.score();
+                            if (score > lastScore) {
+                                System.out.println("############ SAVE MODEL ##############");
+                                final File target = new File("canopus_final_model_" + modelId);
+                                {
+                                    float[][] crossval = tf.predict(crossvalBatch);
+                                    float[][] indep = tf.predict(independentBatch);
+                                    writePredictOutput(target, "crossvalidation", trainingData, trainingData.crossvalidation, crossval);
+                                    writePredictOutput(target, "independent", trainingData, trainingData.independent, indep);
+                                }
+                                if (trainingData.isNPC()){
+                                    float[][] indep = tf.predictNPC(npcEvaluationBatch);
+                                    writeNPCPredictOutput(target, "crossvalidation", trainingData, trainingData.npcInstances, indep);
+                                }
+                                tf.saveWithPlattOnCrossval(trainingData, -modelId, true, true);
+                                tf.save(trainingData, modelId, true, true, true);
+                                lastScore = score;
+                                evalBatch.close();
+                                break;
+                                //evalBatch = generator.poll(0);
+                                //resampledCrossval.close();
+                                //resampledCrossval = trainingData.resampleMultithreaded(trainingData.crossvalidation, (a,b)-> TrainingData.SamplingStrategy.CONDITIONAL);
+                            }
                         }
                     }
                 }
-            } finally {
-                if (_step_ > 1000) {
-                    System.out.println("############ SAVE MODEL temp ##############");
-                    tf.save(trainingData, -modelId, true, true, false);
-                }
-            }
+
             generator.stop();
+            if (npcGenerator!=null)npcGenerator.stop();
             crossvalBatch.close();
             for (Thread t : generatorThreads)
                 t.interrupt();
+            if (npcThread!=null) npcThread.interrupt();
             System.out.println("SHUTDOWN");
             resampledCrossval.close();
             //independentBatch.close();
@@ -352,6 +395,64 @@ public class Learn {
 
     }
 
+    private static void sample(File file) {
+        TrainingData.PLATT_CENTERING=false; TrainingData.CLIPPING=false; TrainingData.SCALE_BY_MAX=false;
+        TrainingData.SCALE_BY_STD=false; TrainingData.VECNORM_SCALING=false;
+        final TrainingData trainingData;
+        try {
+            trainingData = new TrainingData(new File("."),null);
+            final BatchGenerator generator = new BatchGenerator(trainingData, 20);
+            final List<EvaluationInstance> examples = new ArrayList<>();
+            List<EvaluationInstance> all = new ArrayList<>(trainingData.crossvalidation);
+            Collections.shuffle(all);
+            all = new ArrayList<>(all.subList(0,5000));
+            for (TrainingData.SamplingStrategy s : TrainingData.SamplingStrategy.values()) {
+                File filename = new File("sample_"+s.name() + ".csv");
+                if (!filename.exists()) {
+                    final List<double[]> fps = all.stream().map(x -> trainingData.sampleBy(x, s)).collect(Collectors.toList());
+                    try (final BufferedWriter bw = FileUtils.getWriter(filename)) {
+                        for (int i = 0; i < all.size(); ++i) {
+                            final EvaluationInstance I = all.get(i);
+                            bw.write(I.name);
+                            bw.write('\t');
+                            bw.write(I.compound.inchiKey);
+                            bw.write('\t');
+                            bw.write(I.compound.fingerprint.toOneZeroString());
+                            bw.write('\t');
+                            bw.write(I.fingerprint.toTabSeparatedString());
+                            for (double val : fps.get(i)) {
+                                bw.write('\t');
+                                bw.write(String.valueOf(val));
+                            }
+                            bw.newLine();
+                        }
+                    }
+                }
+            };
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void evalFl(TrainingData trainingData, Report[] reps) {
+        if (FLINDEX<0) {
+            int k=0;
+            for (int index :trainingData.classyFireMask.allowedIndizes()) {
+                final String name = trainingData.classyFireFingerprintVersion.getMolecularProperty(index).getName();
+                if (name.equals("Flavonoids")) {FLINDEX = k;};
+                if (name.equals("Flavonoid glycosides")) { FLGINDEX = k;};
+                ++k;
+            }
+        }
+        for (Report r : reps) {
+            System.out.println("Flavonoids: " + r.performancePerClass[FLINDEX]);
+            System.out.println("Flavonoid glycosides: " + r.performancePerClass[FLGINDEX]);
+        }
+    }
+
+    private static int FLINDEX=-1;
+    private static int FLGINDEX=-1;
+    private static double REGSTREN = 1d;
     private static String[] removeOpts(String[] args) {
         final List<String> xs = new ArrayList<>(args.length);
         for (String arg : args) {
@@ -360,6 +461,9 @@ public class Learn {
                 TrainingData.SCALE_BY_MAX = false;
                 TrainingData.PLATT_CENTERING = false;
                 TrainingData.VECNORM_SCALING = false;
+            } else if (arg.startsWith("--l2=")) {
+                REGSTREN = Double.parseDouble(arg.split("=")[1]);
+                System.out.println("Multiply the l2 norm with " + REGSTREN);
             } else {
                 xs.add(arg);
             }
@@ -379,11 +483,11 @@ public class Learn {
             final float[][] fm = (float[][])exampleBatch.formulas.copyTo(new float[1][(int)exampleBatch.formulas.shape()[1]]);
             final float[][] pm = (float[][])exampleBatch.platts.copyTo(new float[1][(int)exampleBatch.platts.shape()[1]]);
             final float[][] lm = (float[][])exampleBatch.labels.copyTo(new float[1][(int)exampleBatch.labels.shape()[1]]);
-            new KernelToNumpyConverter().writeToFile(new File("example/formula.matrix"), fm);
-            new KernelToNumpyConverter().writeToFile(new File("example/platts.matrix"), pm);
-            new KernelToNumpyConverter().writeToFile(new File("example/labels.matrix"), lm);
-            new KernelToNumpyConverter().writeToFile(new File("example/prediction.matrix"), prediction);
-            try (final BufferedWriter bw = KernelToNumpyConverter.getWriter(new File("example/example.txt"))) {
+            FileUtils.writeFloatMatrix(new File("example/formula.matrix"), fm);
+            FileUtils.writeFloatMatrix(new File("example/platts.matrix"), pm);
+            FileUtils.writeFloatMatrix(new File("example/labels.matrix"), lm);
+            FileUtils.writeFloatMatrix(new File("example/prediction.matrix"), prediction);
+            try (final BufferedWriter bw = FileUtils.getWriter(new File("example/example.txt"))) {
                 bw.write(example.compound.inchiKey);
                 bw.write('\t');
                 bw.write(example.compound.formula.toString());
@@ -437,163 +541,79 @@ public class Learn {
         return new Report(ps);
     }
 
-
-    public static void playAround(File tfFile, File modelFile, File target, String pattern) throws IOException {
+    public static void getDecisionValueOutputAndPerformance(File tfFile, File modelFile, File target, String pattern) throws IOException {
         final TrainingData trainingData = new TrainingData(new File("."), pattern!=null ? Pattern.compile(pattern) : null);
-        final TrainingBatch crossvalBatch = trainingData.generateBatch(trainingData.crossvalidation);
-        final TrainingBatch indepBatch = trainingData.generateBatch(trainingData.independent);
-        final Canopus canopus = Canopus.loadFromFile(modelFile);
-        final String smiles = "C1C(C2=CC=CC=C2OC1C3=CC=CC=C3)NC(=S)NN=CC4=CC=CC=C4";
-        final String inchikey = "SUZFIXDOJRIJQR";
+        try (final TrainingBatch crossvalBatch = trainingData.generateBatch(trainingData.crossvalidation)) {
+            try (final TrainingBatch indepBatch = trainingData.generateBatch(trainingData.independent)) {
+                final Canopus canopus = Canopus.loadFromFile(modelFile);
+                try (final TensorflowModel tf = new TensorflowModel(tfFile)) {
+                    tf.feedWeightMatrices(canopus).resetWeights();
+                    float[][] crossval = tf.predict(crossvalBatch);
+                    float[][] indep = tf.predict(indepBatch);
+                    writePredictOutput(target, "crossvalidation", trainingData, trainingData.crossvalidation, crossval);
+                    writePredictOutput(target, "independent", trainingData, trainingData.independent, indep);
+                    //
+                    {
+                        // finally: sample 100 examples for each class
+                        final Random r = new Random();
+                        final List<EvaluationInstance> examples = new ArrayList<>();
+                        List<CompoundClass> klasses = new ArrayList<>(trainingData.compoundClasses.valueCollection());
+                        klasses.sort(Comparator.comparingInt(x -> x.index));
 
-        final String[] myklasses = new String[]{"1-benzopyrans","Alkyl aryl ethers","Benzene and substituted derivatives","Benzenoids","Benzopyrans","Chemical entities","Ethers","Flavans","Flavonoids","Hydrazines and derivatives","Hydrocarbon derivatives","Organic compounds","Organic nitrogen compounds","Organic oxygen compounds","Organoheterocyclic compounds","Organonitrogen compounds","Organooxygen compounds","Organopnictogen compounds","Organosulfur compounds","Oxacyclic compounds","Phenylpropanoids and polyketides","Thiosemicarbazides","Thiosemicarbazones"};
-        final Set<String> onto = new HashSet<>(Arrays.asList(myklasses));
-        final TShortArrayList indizes = new TShortArrayList();
-        for (int index : trainingData.classyFireMask.allowedIndizes()) {
-            String name = trainingData.classyFireFingerprintVersion.getMolecularProperty(index).getName();
-            if (onto.contains(name)) {
-                System.out.println("has " + name);
-                indizes.add((short)index);
-            }
-        }
+                        final ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+                        final ArrayList<Future<EvaluationInstance>> simulator = new ArrayList<>();
+                        for (CompoundClass c : klasses) {
+                            if (c.compounds.isEmpty()) {
+                                System.err.println("No example for " + c.ontology.getName());
+                                continue;
+                            }
+                            final ArrayList<LabeledCompound> cmps = new ArrayList<>(c.compounds);
+                            Collections.shuffle(cmps, r);
+                            for (int k = 0; k < Math.min(cmps.size(), 20); ++k) {
+                                LabeledCompound labeledCompound = cmps.get(k);
 
-        MolecularFormula formula = MolecularFormula.parseOrThrow("C23H21N3OS");
-        final LabeledCompound labeledCompound = new LabeledCompound(inchikey, formula, trainingData.fingerprintVersion.mask(new ArrayFingerprint(CdkFingerprintVersion.getDefault(), new short[]{9,11,36,38,44,45,47,48,56,72,197,215,328,329,333,341,349,354,356,361,404,408,413,418,423,430,434,438,439,440,442,449,452,455,458,459,465,466,467,472,474,480,485,486,492,493,494,498,503,505,506,512,513,517,518,519,522,523,524,525,526,528,529,530,537,538,539,540,542,543,546,561,706,707,712,713,714,720,721,727,783,785,787,811,812,813,814,821,827,828,860,861,866,867,868,869,872,873,874,879,880,883,884,893,894,898,899,903,909,910,912,918,920,921,922,926,933,944,946,949,958,962,963,969,970,974,975,992,995,998,1004,1018,1026,1036,1039,1044,1045,1048,1052,1056,1066,1068,1069,1070,1076,1077,1080,1083,1084,1088,1092,1093,1098,1101,1102,1104,1106,1110,1112,1117,1120,1122,1123,1127,1131,1132,1134,1135,1136,1141,1142,1146,1147,1148,1154,1156,1160,1161,1162,1163,1165,1166,1168,1169,1171,1172,1179,1182,1183,1188,1192,1194,1196,1205,1206,1207,1208,1211,1216,1217,1224,1225,1226,1236,1237,1238,1284,1347,1409,1441,1442,1569,1705,1706,2085,2086,2344,2345,2369,2533,2972,2974,3733,3955,3956,4103,4383,4421,4632,4823,4838,5014,5048,5090,5112,5148,5152,5158,5181,5196,5290,5334,5357,5358,5364,5408,5488,5521,5617,5629,5646,5695,5701,5709,5710,5724,5739,6221,6251,6286,6550,6603,6606,6617,6712,6771,6840,6862,6878,6954,7118,7145,7211,7305,7380,7594,7626,7660,7718,7834,7922,8095,8186,8277,8297,8327,8348,8376,8403,8406,8469,8491,8512,8590,8639,8767,8793})).asArray(), trainingData.classyFireMask.mask(new ArrayFingerprint(trainingData.classyFireFingerprintVersion,indizes.toArray())), Canopus.getFormulaFeatures(formula), null);
-        trainingData.normalizeVector(labeledCompound);
-
-
-        try (final TensorflowModel tf = new TensorflowModel(tfFile)) {
-            tf.feedWeightMatrices(canopus).resetWeights();
-
-            final List<TrainingData.SamplingStrategy> STRATEGIES = Arrays.asList(
-                    TrainingData.SamplingStrategy.CONDITIONAL, TrainingData.SamplingStrategy.INDEPENDENT, TrainingData.SamplingStrategy.TEMPLATE, TrainingData.SamplingStrategy.DISTURBED_TEMPLATE, TrainingData.SamplingStrategy.PERFECT, null
-            );
-
-            for (TrainingData.SamplingStrategy S : STRATEGIES) {
-                if (S==null) continue;
-                double[][] M = new double[100][];
-                M[0] = labeledCompound.fingerprint.asProbabilistic().toProbabilityArray();
-                for (int k=1; k<100; ++k) {
-                    M[k] = trainingData.sampleFingerprintVector(labeledCompound,S);
-                }
-                FileUtils.writeDoubleMatrix(new File(S.name()+".matrix"), M);
-            }
-
-
-            ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
-            for (TrainingData.SamplingStrategy S : STRATEGIES){
-                String name = (S==null) ? "real" : S.name();
-                System.out.println("-------------- " + name +  "-------------- ");
-                TDoubleArrayList tanimotosReal = new TDoubleArrayList();
-                TDoubleArrayList tanimotoSim = new TDoubleArrayList();
-                TDoubleArrayList tanimotoTog = new TDoubleArrayList();
-                List<EvaluationInstance> instances = new ArrayList<>(trainingData.crossvalidation);
-                Collections.shuffle(instances);
-                instances = instances.subList(0,Math.min(10000,instances.size()));
-
-                final List<Future<ProbabilityFingerprint>> simulations = new ArrayList<>();
-                for (EvaluationInstance I : instances) {
-                    if (S==null) {
-                        simulations.add(service.submit(() -> I.fingerprint));
-                    } else {
-                        simulations.add(service.submit(() -> trainingData.sampleFingerprint(I.compound, S)));
-                    }
-                }
-                double avgOnes = 0d;
-                for (int K = 0; K  < instances.size(); ++K) {
-                    final EvaluationInstance eval = instances.get(K);
-                    final ProbabilityFingerprint FP;
-                    try {
-                        FP = simulations.get(K).get();
-                        tanimotoSim.add(Tanimoto.fastTanimoto(FP, eval.compound.fingerprint));
-                        tanimotosReal.add(Tanimoto.fastTanimoto(eval.fingerprint, eval.compound.fingerprint));
-                        double dot = 0d, dotLL=0d, dotRR = 0d;
-                        for (FPIter2 f : FP.foreachPair(eval.fingerprint)) {
-                            double a = f.getLeftProbability();
-                            double b = f.getRightProbability();
-                            dot += a*b;
-                            dotLL += a*a;
-                            dotRR += b*b;
-                            a = 1d-f.getLeftProbability();
-                            b = 1d-f.getRightProbability();
-                            dot += a*b;
-                            dotLL += a*a;
-                            dotRR += b*b;
-                            avgOnes += f.getLeftProbability();
+                                simulator.add(service.submit(() -> new EvaluationInstance(c.ontology.getName(), new ProbabilityFingerprint(trainingData.fingerprintVersion, trainingData.sampleFingerprintVector(labeledCompound, TrainingData.SamplingStrategy.DISTURBED_TEMPLATE)), labeledCompound)));
+                            }
                         }
-                        tanimotoTog.add(dot / Math.sqrt(dotLL*dotRR));
-                    } catch (InterruptedException|ExecutionException e) {
-                        e.printStackTrace();
-                        throw new RuntimeException(e);
-                    }
-                }
-                avgOnes /= instances.size();
-                /*
-                for (int k=0; k < tanimotoSim.size(); ++k) {
-                    System.out.println(tanimotosReal.get(k) + "\t\t" + tanimotoSim.get(k));
-                }
-                */
-                System.out.printf("------\nAverage: real %f, simulated %f\tSimilarity predicted vs. simulated: %f\tavg. #1 = %f\n", tanimotosReal.sum()/tanimotosReal.size(), tanimotoSim.sum()/tanimotoSim.size(), tanimotoTog.sum()/tanimotoTog.size(), avgOnes);
+                        simulator.forEach(x -> {
+                            try {
+                                examples.add(x.get());
+                            } catch (InterruptedException | ExecutionException e) {
+                                e.printStackTrace();
+                                throw new RuntimeException(e);
+                            }
+                        });
+                        service.shutdown();
+                        try (TrainingBatch batch = trainingData.generateBatch(examples);) {
+                            float[][] exampleB = tf.predict(batch);
+                            writePredictOutput(target, "simulated", trainingData, examples, exampleB);
+                        }
 
+                    }
+
+                }
             }
-            service.shutdown();;
         }
     }
 
-    public static void getDecisionValueOutputAndPerformance(File tfFile, File modelFile, File target, String pattern) throws IOException {
+
+    public static void getDecisionValueOutputAndPerformanceOnIndep(File tfFile, File modelFile, File target, String pattern) throws IOException {
         final TrainingData trainingData = new TrainingData(new File("."), pattern!=null ? Pattern.compile(pattern) : null);
-        final TrainingBatch crossvalBatch = trainingData.generateBatch(trainingData.crossvalidation);
-        final TrainingBatch indepBatch = trainingData.generateBatch(trainingData.independent);
-        final Canopus canopus = Canopus.loadFromFile(modelFile);
-        try (final TensorflowModel tf = new TensorflowModel(tfFile)) {
-            tf.feedWeightMatrices(canopus).resetWeights();
-            float[][] crossval = tf.predict(crossvalBatch);
-            float[][] indep = tf.predict(indepBatch);
-            writePredictOutput(target, "crossvalidation", trainingData, trainingData.crossvalidation, crossval);
-            writePredictOutput(target, "independent", trainingData, trainingData.independent, indep);
-            //
-            {
-                // finally: sample 100 examples for each class
-                final Random r = new Random();
-                final List<EvaluationInstance> examples = new ArrayList<>();
-                List<CompoundClass> klasses = new ArrayList<>(trainingData.compoundClasses.valueCollection());
-                klasses.sort(Comparator.comparingInt(x->x.index));
+        try (final TrainingBatch crossvalBatch = trainingData.generateBatch(trainingData.crossvalidation)) {
+            try (final TrainingBatch indepBatch = trainingData.generateBatch(trainingData.independent)) {
+                final Canopus canopus = Canopus.loadFromFile(modelFile);
+                try (final TensorflowModel tf = new TensorflowModel(tfFile)) {
+                    tf.feedWeightMatrices(canopus).resetWeights();
+                    final double[][] doubles = tf.plattEstimate(trainingData, false);
+                    canopus.setPlattCalibration(doubles[0], doubles[1]);
+                    float[][] crossval = tf.predict(crossvalBatch);
+                    float[][] indep = tf.predict(indepBatch);
+                    writePredictOutput(target, "crossvalidation", trainingData, trainingData.crossvalidation, crossval);
+                    writePredictOutput(target, "independent", trainingData, trainingData.independent, indep);
 
-                final ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-                final ArrayList<Future<EvaluationInstance>> simulator = new ArrayList<>();
-                for (CompoundClass c : klasses) {
-                    if (c.compounds.isEmpty()) {
-                        System.err.println("No example for " + c.ontology.getName());
-                        continue;
-                    }
-                    final ArrayList<LabeledCompound> cmps = new ArrayList<>(c.compounds);
-                    Collections.shuffle(cmps, r);
-                    for (int k=0; k < Math.min(cmps.size(),20); ++k) {
-                        LabeledCompound labeledCompound = cmps.get(k);
-
-                        simulator.add(service.submit(() -> new EvaluationInstance(c.ontology.getName(), new ProbabilityFingerprint(trainingData.fingerprintVersion, trainingData.sampleFingerprintVector(labeledCompound, TrainingData.SamplingStrategy.DISTURBED_TEMPLATE)), labeledCompound)));
-                    }
                 }
-                simulator.forEach(x-> {
-                    try {
-                        examples.add(x.get());
-                    } catch (InterruptedException | ExecutionException e) {
-                        e.printStackTrace();
-                        throw new RuntimeException(e);
-                    }
-                });
-                service.shutdown();
-                try (TrainingBatch batch = trainingData.generateBatch(examples);) {
-                    float[][] exampleB = tf.predict(batch);
-                    writePredictOutput(target, "simulated", trainingData, examples, exampleB);
-                }
-
             }
-
         }
-        indepBatch.close();
-        crossvalBatch.close();
     }
 
     private static void writePredictOutput(File dir, String prefix, TrainingData data, List<EvaluationInstance> crossvalidation, float[][] crossval) {
@@ -603,7 +623,7 @@ public class Learn {
         final PredictionPerformance.Modify[] byIndex = new PredictionPerformance.Modify[data.compoundClasses.size()];
         int K=0;
         for (int index : data.classyFireMask.allowedIndizes()) {
-            PredictionPerformance.Modify modify = new PredictionPerformance(0, 0, 0, 0, 0, false).modify();
+            PredictionPerformance.Modify modify = new PredictionPerformance(0, 0, 0, 0, 0).modify();
             props[K] = (ClassyfireProperty) data.classyFireMask.getMolecularProperty(index);
             byIndex[K] = modify;
             ++K;
@@ -630,7 +650,7 @@ public class Learn {
             e.printStackTrace();
         }
         try (final BufferedWriter bw = FileUtils.getWriter(new File(dir, prefix + "_stats.csv"))) {
-            bw.write("name\tid\tparent\tparentId\t" + PredictionPerformance.csvHeader());
+            bw.write("index\tname\tid\tparent\tparentId\t" + PredictionPerformance.csvHeader());
             for(int i=0; i < props.length; ++i) {
                 ClassyfireProperty p = props[i];
                 bw.write(String.valueOf(i));
@@ -639,9 +659,60 @@ public class Learn {
                 bw.write('\t');
                 bw.write(p.getChemontIdentifier());
                 bw.write('\t');
-                bw.write(p.getParent().getName());
+                bw.write(p.getParent()==null ? "" : p.getParent().getName());
                 bw.write('\t');
-                bw.write(p.getParent().getChemontIdentifier());
+                bw.write(p.getParent()==null ? "" : p.getParent().getChemontIdentifier());
+                bw.write('\t');
+                bw.write(byIndex[i].done().toCsvRow());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private static void writeNPCPredictOutput(File dir, String prefix, TrainingData data, List<EvaluationInstance> crossvalidation, float[][] crossval) {
+        dir.mkdirs();
+        // write class statistics
+        final NPCFingerprintVersion.NPCProperty[] props = new NPCFingerprintVersion.NPCProperty[data.NPCVersion.size()];
+        final PredictionPerformance.Modify[] byIndex = new PredictionPerformance.Modify[data.NPCVersion.size()];
+        int K=0;
+        for (int index=0; index < data.NPCVersion.size(); ++index) {
+            PredictionPerformance.Modify modify = new PredictionPerformance(0, 0, 0, 0, 0).modify();
+            props[K] = (NPCFingerprintVersion.NPCProperty) data.NPCVersion.getMolecularProperty(index);
+            byIndex[K] = modify;
+            ++K;
+        }
+        // write output
+        try (final BufferedWriter bw = FileUtils.getWriter(new File(dir, prefix + "npc_prediction.csv"))) {
+            for (int k=0; k < crossvalidation.size(); ++k) {
+                EvaluationInstance i = crossvalidation.get(k);
+                bw.write(i.name);
+                bw.write('\t');
+                bw.write(i.compound.inchiKey);
+                bw.write('\t');
+                bw.write(i.compound.npcLabel.toOneZeroString());
+                final boolean[] is = i.compound.npcLabel.toBooleanArray();
+                float[] pred = crossval[k];
+                for (int j=0; j < pred.length; ++j) {
+                    bw.write('\t');
+                    bw.write(String.valueOf(pred[j]));
+                    byIndex[j].update(is[j], pred[j]>=0);
+                }
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try (final BufferedWriter bw = FileUtils.getWriter(new File(dir, prefix + "npc_stats.csv"))) {
+            bw.write("index\tname\tid\ttype\t" + PredictionPerformance.csvHeader());
+            for(int i=0; i < props.length; ++i) {
+                NPCFingerprintVersion.NPCProperty p = props[i];
+                bw.write(String.valueOf(i));
+                bw.write('\t');
+                bw.write(p.name);
+                bw.write('\t');
+                bw.write(String.valueOf(p.npcIndex));
+                bw.write('\t');
+                bw.write(p.level.name);
                 bw.write('\t');
                 bw.write(byIndex[i].done().toCsvRow());
             }
@@ -650,7 +721,158 @@ public class Learn {
         }
     }
 
-    public static void continueModel(File tfFile, File modelFile,String pattern) throws IOException {
+    public static void readAndSample(File modelFile, File keyFile) throws IOException {
+        final Canopus canopus = Canopus.loadFromFile(modelFile);
+        final TrainingData trainingData = new TrainingData(new File("."), null);
+        final LinkedHashSet<LabeledCompound> compounds = new LinkedHashSet<>();
+        final HashMap<String,Integer> counter = new HashMap<>();
+        final HashMap<String, String[]> keys = new HashMap<>();
+        final HashMap<String,Integer> klass2index = new HashMap<>();
+        try (final BufferedReader r = FileUtils.getReader(keyFile)) {
+            String line;
+            while ((line=r.readLine())!=null) {
+                String[] cols = line.split("\t");
+                if (cols.length>1) {
+                    String[] kls = new String[cols.length - 1];
+                    System.arraycopy(cols, 1, kls, 0, kls.length);
+                    keys.put(cols[0], kls);
+                    for (String k : kls) {
+                        counter.putIfAbsent(k,0);
+                        counter.put(k, counter.get(k)+1);
+                    }
+                }
+            }
+        }
+        // sort klasses by frequency
+        String[] klasses = new String[counter.size()];
+        {
+            int i=0;
+            for (String key : counter.keySet()) {
+                klasses[i++] = key;
+            }
+            Arrays.sort(klasses, (x,y)->-Integer.compare(counter.get(x), counter.get(y)));
+            i=0;
+            for (String k : klasses) {
+                klass2index.put(k, i++);
+                System.out.println(k + ":\t" + klass2index.get(k) + " (" + counter.get(k) + " examples)");
+            }
+        }
+        for (LabeledCompound c : trainingData.compounds) {
+            if (keys.containsKey(c.inchiKey) && !trainingData.blacklist.contains(c.inchiKey))
+                compounds.add(c);
+        }
+        System.out.println(klass2index.size() + " natural product classes found.");
+        System.out.println(compounds.size() + " training compounds found.");
+
+        try (final BufferedWriter w = FileUtils.getWriter(new File("natural_product_classes.txt"))) {
+            for (String key : klasses) {
+                w.write(String.valueOf(klass2index.get(key)));
+                w.write("\t");
+                w.write(key);
+                w.write("\t");
+                w.write(String.valueOf(counter.get(key)));
+                w.newLine();
+            }
+        }
+
+        final ExecutorService SERV = Executors.newFixedThreadPool(80);
+
+
+        // first create sample from real data
+        {
+            ArrayList<EvaluationInstance> data = new ArrayList<>(trainingData.crossvalidation);
+            ListIterator<EvaluationInstance> iter = data.listIterator();
+            while (iter.hasNext()) {
+                final EvaluationInstance next = iter.next();
+                if (!keys.containsKey(next.compound.inchiKey)) {
+                    System.out.println("No NP classification for " + next.compound.inchiKey);
+                    iter.remove();
+                }
+            }
+            System.out.println(data.size()+ " instances.");
+            //data.addAll(trainingData.independent);
+
+            final int[] vec = new int[klass2index.size()];
+            try (DataOutputStream out = new DataOutputStream(FileUtils.getOut(new File("Yms.binary")))) {
+                for (EvaluationInstance c : data) {
+                    Arrays.fill(vec, 0);
+                    for (String m : keys.get(c.compound.inchiKey)) {
+                        vec[klass2index.get(m)] = 1;
+                    }
+                    for (int value : vec) {
+                        out.writeByte(value);
+                    }
+                }
+            }
+            try (DataOutputStream out = new DataOutputStream(FileUtils.getOut(new File("Xms.binary")))) {
+                final ArrayList<Future<double[]>> vectors = new ArrayList<>();
+                for (EvaluationInstance x : data) {
+                    vectors.add(SERV.submit(new Callable<double[]>() {
+                        @Override
+                        public double[] call() throws Exception {
+                            final double[] doubles = canopus.predictLatentVector(x.compound.formula, x.fingerprint);
+                            return doubles;
+                        }
+                    }));
+                }
+                for (Future<double[]> v : vectors) {
+                    try {
+                        for (double w : v.get()) {
+                            out.writeFloat((float)w);
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        {
+            // now create samples
+            final int[] vec = new int[klass2index.size()];
+            try (DataOutputStream out = new DataOutputStream(FileUtils.getOut(new File("Y.binary")))) {
+                for (LabeledCompound c : compounds) {
+                    Arrays.fill(vec, 0);
+                    for (String m : keys.get(c.inchiKey)) {
+                        vec[klass2index.get(m)] = 1;
+                    }
+                    for (int value : vec) {
+                        out.writeByte(value);
+                    }
+                }
+            }
+        }
+        for (int i=0; i  < 3; ++i) {
+            try (DataOutputStream out = new DataOutputStream(FileUtils.getOut(new File("sample_" + i + ".binary")))) {
+                final ArrayList<Future<double[]>> vectors = new ArrayList<>();
+                for (LabeledCompound c : compounds) {
+                    vectors.add(SERV.submit(new Callable<double[]>() {
+                        @Override
+                        public double[] call() throws Exception {
+                            ProbabilityFingerprint fp = trainingData.sampleFingerprint(c, Math.random() >= 0.9 ? TrainingData.SamplingStrategy.DISTURBED_TEMPLATE : TrainingData.SamplingStrategy.TEMPLATE);
+                            final double[] doubles = canopus.predictLatentVector(c.formula, fp);
+                            return doubles;
+                        }
+                    }));
+                }
+                for (Future<double[]> v : vectors) {
+                    try {
+                        for (double w : v.get()) {
+                            out.writeFloat((float)w);
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+    }
+
+    public static void continueModel(File tfFile, File modelFile,String pattern, boolean finalize) throws IOException {
         final Canopus canopus = Canopus.loadFromFile(modelFile);
         final TrainingData trainingData = new TrainingData(new File("."), Pattern.compile(pattern));
         final BatchGenerator generator = new BatchGenerator(trainingData, 20);
@@ -671,8 +893,12 @@ public class Learn {
                         novels.add(i);
                         */
         }
-        final TrainingBatch crossvalBatch = trainingData.generateBatch(trainingData.crossvalidation);
-        final TrainingBatch indepBatch = trainingData.generateBatch(trainingData.independent);
+        final TrainingBatch batch;
+        {
+            final ArrayList<EvaluationInstance> instances = new ArrayList<>(trainingData.crossvalidation);
+            instances.addAll(trainingData.independent);
+            batch = trainingData.generateBatch(instances);
+        }
         int[] CSI_USED_INDIZES = null;
         final List<DummyMolecularProperty> dummyProps = new ArrayList<>();
 
@@ -680,59 +906,46 @@ public class Learn {
             final TensorflowModel.Resetter resetter = tf.feedWeightMatrices(canopus);
             resetter.resetWeights();
             final double[][] PLATT = tf.plattEstimate(trainingData);
+            final double[][] PLATT_NPC = tf.plattEstimateForNPC(trainingData,true);
             // does it still works?
             int k = 0;
-            reportStuff(Arrays.asList(evalBatch, crossvalBatch), Arrays.asList("simulated", "crossval", "indep"), tf, k);
+            reportStuff(Arrays.asList(batch), Arrays.asList("all"), tf, k);
             // we just want to "initialize" Adam
-            for (int i=0; i < 100; ++i){
-                if (i % 10 == 0) {
+            for (int i=0; i < 400; ++i){
+                try (final TrainingBatch b = generator.poll(30000 + i)) {
                     final long time1 = System.currentTimeMillis();
-                    final double[] losses = tf.train(crossvalBatch);
-                    tf.train(indepBatch);
+                    final double[] losses = tf.train(b);
                     final long time2 = System.currentTimeMillis();
                     System.out.println((k + i) + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
-                } else {
-                    try (final TrainingBatch batch = generator.poll(30000 + i)) {
-                        final long time1 = System.currentTimeMillis();
-                        final double[] losses = tf.train(batch);
-                        final long time2 = System.currentTimeMillis();
-                        System.out.println((k + i) + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
-                        tf.train(batch);
-                    }
                 }
-                if (i%25==0) {
+                if (i%50==0) {
+                    reportStuff(Arrays.asList(batch), Arrays.asList("all"), tf, k);
                     System.out.println("---> reset all weights.");
                     resetter.resetWeights();
-                    reportStuff(Arrays.asList(evalBatch, crossvalBatch), Arrays.asList("simulated", "crossval", "indep"), tf, k);                }
+                    reportStuff(Arrays.asList(batch), Arrays.asList("all"), tf, k);                }
             }
-            reportStuff(Arrays.asList(evalBatch, crossvalBatch), Arrays.asList("simulated", "crossval", "indep"), tf, k);
             resetter.resetWeights();
             System.out.println("---> reset all weights.");
-            reportStuff(Arrays.asList(evalBatch, crossvalBatch), Arrays.asList("simulated", "crossval", "indep"), tf, k);
             for (int i = 0; i < 1000; ++i) {
                 k = 30000 + i;
                 if (i % 10 == 0) {
                     final long time1 = System.currentTimeMillis();
-                    final double[] losses = tf.train(crossvalBatch);
-                    final long time2 = System.currentTimeMillis();
-                    System.out.println(k + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
-                } else if (i % 10 == 1) {
-                    final long time1 = System.currentTimeMillis();
-                    final double[] losses = tf.train(indepBatch);
+                    final double[] losses = tf.train(batch);
                     final long time2 = System.currentTimeMillis();
                     System.out.println(k + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
                 } else {
-                    try (final TrainingBatch batch = generator.poll(k)) {
+                    try (final TrainingBatch b = generator.poll(k)) {
                         final long time1 = System.currentTimeMillis();
-                        final double[] losses = tf.train(batch);
+                        final double[] losses = tf.train(b);
                         final long time2 = System.currentTimeMillis();
                         System.out.println(k + ".)\tloss = " + losses[0] + "\tl2 norm = " + losses[1] + "\t (" + ((time2 - time1) / 1000d) + " s)");
                     }
                 }
             }
-            reportStuff(Arrays.asList(evalBatch, crossvalBatch), Arrays.asList("simulated", "crossval", "indep"), tf, k);
-            tf.saveWithoutPlattEstimate(trainingData, 100, true, true, false, PLATT[0], PLATT[1]);
+            reportStuff(Arrays.asList(batch), Arrays.asList("all"), tf, k);
+            tf.saveWithoutPlattEstimate(trainingData, 100, true, true, false, PLATT[0], PLATT[1],PLATT_NPC[0],PLATT_NPC[1]);
         }
+        batch.close();
     }
 
     private static void reportStuff(TrainingBatch evalBatch, TrainingBatch crossvalBatch, TrainingBatch independentBatch, TrainingBatch independentNovelBatch, int[] CSI_USED_INDIZES, List<DummyMolecularProperty> dummyProps, Report csiReport, Report indepNovelReport, TensorflowModel tf, int k) {
@@ -783,14 +996,23 @@ public class Learn {
         }
     }
 
+    private static void evalNPC(TrainingBatch npcs, TensorflowModel tf) {
+        final Report report = tf.evaluateNPC(npcs);
+        System.out.print("NPC Evaluation:\t");
+        System.out.println(report);
+    }
 
-    private static void reportStuff(List<TrainingBatch> batches, List<String> names, TensorflowModel tf, int k) {
+
+    private static Report[] reportStuff(List<TrainingBatch> batches, List<String> names, TensorflowModel tf, int k) {
+        Report[] reports = new Report[batches.size()];
         for (int i=0; i < batches.size(); ++i) {
             final TrainingBatch batch = batches.get(i);
             final String name = names.get(i);
             final Report sampled = tf.evaluate(batch);
+            reports[i] = sampled;
             System.out.println(k + ".) " + name + ":\t" + sampled);
         }
+        return reports;
     }
 
     private static void fix() {

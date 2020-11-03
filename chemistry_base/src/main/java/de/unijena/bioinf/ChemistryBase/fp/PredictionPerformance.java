@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ChemistryBase.fp;
 
 import java.util.Locale;
@@ -15,11 +35,10 @@ public final class PredictionPerformance {
             this.tn = tn;
             this.fn = fn;
             this.pseudoCount = pseudoCount;
-            this.relabeling = relabeling;
         }
 
         private Modify(double tp, double fp, double tn, double fn, double pseudoCount) {
-            this(tp, fp, tn, fn, pseudoCount, true);
+            this(tp, fp, tn, fn, pseudoCount, false);
         }
 
         private Modify(double tp, double fp, double tn, double fn) {
@@ -31,7 +50,8 @@ public final class PredictionPerformance {
         private boolean relabeling;
 
         public PredictionPerformance done() {
-            return new PredictionPerformance(tp,fp,tn,fn,pseudoCount,relabeling);
+            if (relabeling) return new PredictionPerformance(tp,fp,tn,fn,pseudoCount).relabel();
+            else return new PredictionPerformance(tp,fp,tn,fn,pseudoCount);
         }
 
         public PredictionPerformance done(PredictionPerformance performance) {
@@ -144,23 +164,14 @@ public final class PredictionPerformance {
     private double tp, fp, tn, fn;
     private double pseudoCount;
     private double f, precision, recall, accuracy, specitivity, mcc;
-    private final boolean allowRelabeling;
 
     @Override
     public String toString() {
         return String.format(Locale.US, "tp=%.1f\tfp=%.1f\ttn=%.1f\tfn=%.1f\tf1=%.4f\tprecision=%.4f\trecall=%.4f\tmcc=%.4f\taccuracy=%.4f", tp,fp,tn,fn,f,precision,recall, mcc, accuracy);
     }
 
-    /**
-     * If true (default mode), PredictionPerformance will always use the smaller class. If false, PredictionPerformance
-     * will use the POSITIVE class.
-     */
-    public PredictionPerformance withRelabelingAllowed(boolean value) {
-        return new PredictionPerformance(tp, fp, tn, fn, pseudoCount, value);
-    }
-
     public Modify modify() {
-        return new Modify(tp,fp,tn,fn, pseudoCount, allowRelabeling);
+        return new Modify(tp,fp,tn,fn, pseudoCount);
     }
 
     @Deprecated
@@ -172,8 +183,21 @@ public final class PredictionPerformance {
         calc();
     }
 
+    /**
+     * @return a PredictionPerformance instance with the smaller class is always the positive class
+     */
+    public PredictionPerformance relabel() {
+        final double positives = tp+fn;
+        final double negatives = tn+fp;
+        if (positives < negatives) {
+            return this;
+        } else {
+            return new PredictionPerformance(tn,fn,tp,fp,pseudoCount);
+        }
+    }
+
     public PredictionPerformance withPseudoCount(double pseudoCount) {
-        return new PredictionPerformance(tp,fp,tn,fn, pseudoCount, allowRelabeling);
+        return new PredictionPerformance(tp,fp,tn,fn, pseudoCount);
     }
 
     public void set(PredictionPerformance other) {
@@ -218,7 +242,7 @@ public final class PredictionPerformance {
     }
 
     public PredictionPerformance() {
-        this(0,0,0,0,0,true);
+        this(0,0,0,0,0);
     }
 
     public PredictionPerformance(PredictionPerformance perf) {
@@ -227,25 +251,19 @@ public final class PredictionPerformance {
         this.tn=perf.getTn();
         this.fn=perf.getFn();
         this.pseudoCount = perf.pseudoCount;
-        this.allowRelabeling = perf.allowRelabeling;
         calc();
     }
 
     public PredictionPerformance(double tp, double fp, double tn, double fn) {
-        this(tp, fp, tn, fn, 0d, true);
+        this(tp, fp, tn, fn, 0d);
     }
 
     public PredictionPerformance(double tp, double fp, double tn, double fn, double pseudoCount) {
-        this(tp, fp, tn, fn, pseudoCount, true);
-    }
-
-    public PredictionPerformance(double tp, double fp, double tn, double fn, double pseudoCount, boolean allowRelabeling) {
         this.tp = tp;
         this.fp = fp;
         this.tn = tn;
         this.fn = fn;
         this.pseudoCount = pseudoCount;
-        this.allowRelabeling = allowRelabeling;
         calc();
     }
 
@@ -258,11 +276,7 @@ public final class PredictionPerformance {
     }
 
     public double getCount() {
-        if (allowRelabeling) {
-            return getSmallerClassSize();
-        } else {
-            return tp+fn+2*pseudoCount;
-        }
+        return tp+fn+2*pseudoCount;
     }
 
     public double getTpRate() {
@@ -349,11 +363,7 @@ public final class PredictionPerformance {
         final double positive = tp+fn;
         final double negative = tn+fp;
         final double TP, FP, TN, FN;
-        if (allowRelabeling && positive > negative) {
-            TP = tn+pseudoCount; FP = fn+pseudoCount; TN = tp+pseudoCount; FN = fp+pseudoCount;
-        } else {
-            TP=tp+pseudoCount; FP=fp+pseudoCount; TN=tn+pseudoCount; FN=fn+pseudoCount;
-        }
+        TP=tp+pseudoCount; FP=fp+pseudoCount; TN=tn+pseudoCount; FN=fn+pseudoCount;
 
         // now calculate F score related to the smaller class
         if ((TP + FP + TN + FN)==0)

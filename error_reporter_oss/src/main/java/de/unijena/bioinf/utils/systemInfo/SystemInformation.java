@@ -1,9 +1,24 @@
-package de.unijena.bioinf.utils.systemInfo;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.09.16.
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
+package de.unijena.bioinf.utils.systemInfo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +32,6 @@ import oshi.util.FormatUtil;
 
 import javax.swing.*;
 import java.io.*;
-import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.*;
 
 /**
@@ -108,8 +120,6 @@ public class SystemInformation {
                 outputStream.write("USER_HOME = " + System.getProperty("user.home"));
                 outputStream.write(System.lineSeparator());
                 outputStream.write("USER_DIR = " + System.getProperty("user.dir"));
-//            outputStream.write(System.lineSeparator());
-//            outputStream.write("APP_DIR = " + ApplicationCore.class.getProtectionDomain().getCodeSource().getLocation().toString());
                 outputStream.write(System.lineSeparator());
                 outputStream.write(System.lineSeparator());
                 setProgress(5);
@@ -122,26 +132,18 @@ public class SystemInformation {
                 publishAndInfo("Checking Memory...");
                 printMemory(hal.getMemory(), outputStream);
                 outputStream.write(System.lineSeparator());
-                setProgress(20);
-//            publishAndInfo("Checking CPU...");
-//            printCpu(hal.getProcessor(),outputStream);
-//            outputStream.write(System.lineSeparator());
                 setProgress(25);
 
-                publishAndInfo("Checking Processes...");
+                /*publishAndInfo("Checking Processes...");
                 printProcesses(os, hal.getMemory(), outputStream);
                 outputStream.write(System.lineSeparator());
-                setProgress(30);
+                setProgress(30);*/
 
                 publishAndInfo("Checking Sensors...");
                 printSensors(hal.getSensors(), outputStream);
                 outputStream.write(System.lineSeparator());
                 setProgress(40);
 
-                publishAndInfo("Checking Power sources...");
-                printPowerSources(hal.getPowerSources(), outputStream);
-                outputStream.write(System.lineSeparator());
-                setProgress(50);
 
                 publishAndInfo("Checking Disks...");
                 printDisks(hal.getDiskStores(), outputStream);
@@ -191,9 +193,9 @@ public class SystemInformation {
         outputStream.write(" " + processor.getLogicalProcessorCount() + " logical CPU(s)");
         outputStream.write(System.lineSeparator());
 
-        outputStream.write("Identifier: " + processor.getIdentifier());
+        outputStream.write("Identifier: " + processor.getProcessorIdentifier().getIdentifier());
         outputStream.write(System.lineSeparator());
-        outputStream.write("Serial Num: " + processor.getProcessorID());
+        outputStream.write("Serial Num: " + processor.getProcessorIdentifier().getProcessorID());
         outputStream.write(System.lineSeparator());
     }
 
@@ -201,60 +203,13 @@ public class SystemInformation {
         outputStream.write("Memory: " + FormatUtil.formatBytes(memory.getAvailable()) + "/"
                 + FormatUtil.formatBytes(memory.getTotal()));
         outputStream.write(System.lineSeparator());
-//        outputStream.write("Swap used: " + FormatUtil.formatBytes(memory.getSwapUsed()) + "/"
-//                + FormatUtil.formatBytes(memory.getSwapTotal()));
-//        outputStream.write(System.lineSeparator());
     }
-
-   /* private static void printCpu(CentralProcessor processor, OutputStreamWriter outputStream) throws IOException {
-//        outputStream.write("Uptime: " + FormatUtil.formatElapsedSecs(processor.getS));
-//        outputStream.write(System.lineSeparator());
-
-        long[] prevTicks = processor.getSystemCpuLoadTicks();
-        outputStream.write("CPU, IOWait, and IRQ ticks @ 0 sec:" + Arrays.toString(prevTicks));
-        outputStream.write(System.lineSeparator());
-        // Wait a second...
-        Util.sleep(1000);
-        long[] ticks = processor.getSystemCpuLoadTicks();
-        outputStream.write("CPU, IOWait, and IRQ ticks @ 1 sec:" + Arrays.toString(ticks));
-        outputStream.write(System.lineSeparator());
-
-//        long user = ticks[TickType.USER.getIndex()] - prevTicks[TickType.USER.getIndex()];
-//        long nice = ticks[TickType.NICE.getIndex()] - prevTicks[TickType.NICE.getIndex()];
-//        long sys = ticks[TickType.SYSTEM.getIndex()] - prevTicks[TickType.SYSTEM.getIndex()];
-//        long idle = ticks[TickType.IDLE.getIndex()] - prevTicks[TickType.IDLE.getIndex()];
-//        long iowait = ticks[TickType.IOWAIT.getIndex()] - prevTicks[TickType.IOWAIT.getIndex()];
-//        long irq = ticks[TickType.IRQ.getIndex()] - prevTicks[TickType.IRQ.getIndex()];
-//        long softirq = ticks[TickType.SOFTIRQ.getIndex()] - prevTicks[TickType.SOFTIRQ.getIndex()];
-//        long totalCpu = user + nice + sys + idle + iowait + irq + softirq;
-
-//        outputStream.write(String.format(
-//                "User: %.1f%% Nice: %.1f%% System: %.1f%% Idle: %.1f%% IOwait: %.1f%% IRQ: %.1f%% SoftIRQ: %.1f%%%n",
-//                100d * user / totalCpu, 100d * nice / totalCpu, 100d * sys / totalCpu, 100d * idle / totalCpu,
-//                100d * iowait / totalCpu, 100d * irq / totalCpu, 100d * softirq / totalCpu));
-//        outputStream.write(String.format("CPU load: %.1f%% (counting ticks)%n", processor.getSystemCpuLoadBetweenTicks() * 100));
-//        outputStream.write(String.format("CPU load: %.1f%% (OS MXBean)%n", processor.geS * 100));
-        double[] loadAverage = processor.getSystemLoadAverage(3);
-        outputStream.write("CPU load averages:" + (loadAverage[0] < 0 ? " N/A" : String.format(" %.2f", loadAverage[0]))
-                + (loadAverage[1] < 0 ? " N/A" : String.format(" %.2f", loadAverage[1]))
-                + (loadAverage[2] < 0 ? " N/A" : String.format(" %.2f", loadAverage[2])));
-
-        outputStream.write(System.lineSeparator());
-        // per core CPU
-        StringBuilder procCpu = new StringBuilder("CPU load per processor:");
-        double[] load = processor.getProcessorCpuLoadBetweenTicks();
-        for (double avg : load) {
-            procCpu.append(String.format(" %.1f%%", avg * 100));
-        }
-        outputStream.write(procCpu.toString());
-        outputStream.write(System.lineSeparator());
-    }*/
 
     private static void printProcesses(OperatingSystem os, GlobalMemory memory, OutputStreamWriter outputStream) throws IOException {
         outputStream.write("Processes: " + os.getProcessCount() + ", Threads: " + os.getThreadCount());
         outputStream.write(System.lineSeparator());
         // Sort by highest CPU
-        List<OSProcess> procs = Arrays.asList(os.getProcesses(5, OperatingSystem.ProcessSort.CPU));
+        List<OSProcess> procs = os.getProcesses(5, OperatingSystem.ProcessSort.CPU);
 
         outputStream.write("   PID  %CPU %MEM       VSZ       RSS Name");
         outputStream.write(System.lineSeparator());
@@ -277,29 +232,8 @@ public class SystemInformation {
         outputStream.write(System.lineSeparator());
     }
 
-    private static void printPowerSources(PowerSource[] powerSources, OutputStreamWriter outputStream) throws IOException {
-        StringBuilder sb = new StringBuilder("Power: ");
-        if (powerSources.length == 0) {
-            sb.append("Unknown");
-        } else {
-            double timeRemaining = powerSources[0].getTimeRemaining();
-            if (timeRemaining < -1d) {
-                sb.append("Charging");
-            } else if (timeRemaining < 0d) {
-                sb.append("Calculating time remaining");
-            } else {
-                sb.append(String.format("%d:%02d remaining", (int) (timeRemaining / 3600),
-                        (int) (timeRemaining / 60) % 60));
-            }
-        }
-        for (PowerSource pSource : powerSources) {
-            sb.append(String.format("%n %s @ %.1f%%", pSource.getName(), pSource.getRemainingCapacity() * 100d));
-        }
-        outputStream.write(sb.toString());
-        outputStream.write(System.lineSeparator());
-    }
 
-    private static void printDisks(HWDiskStore[] diskStores, OutputStreamWriter outputStream) throws IOException {
+    private static void printDisks(List<HWDiskStore> diskStores, OutputStreamWriter outputStream) throws IOException {
         outputStream.write("Disks:");
         outputStream.write(System.lineSeparator());
         for (HWDiskStore disk : diskStores) {
@@ -310,11 +244,10 @@ public class SystemInformation {
                     readwrite ? disk.getReads() : "?", readwrite ? FormatUtil.formatBytes(disk.getReadBytes()) : "?",
                     readwrite ? disk.getWrites() : "?", readwrite ? FormatUtil.formatBytes(disk.getWriteBytes()) : "?",
                     readwrite ? disk.getTransferTime() : "?"));
-            HWPartition[] partitions = disk.getPartitions();
-            if (partitions == null) {
-                // TODO Remove when all OS's implemented
+            List<HWPartition> partitions = disk.getPartitions();
+            if (partitions == null)
                 continue;
-            }
+
             for (HWPartition part : partitions) {
                 outputStream.write(String.format(" |-- %s: %s (%s) Maj:Min=%d:%d, size: %s%s%n", part.getIdentification(),
                         part.getName(), part.getType(), part.getMajor(), part.getMinor(),
@@ -331,7 +264,7 @@ public class SystemInformation {
         outputStream.write(String.format(" File Descriptors: %d/%d%n", fileSystem.getOpenFileDescriptors(),
                 fileSystem.getMaxFileDescriptors()));
 
-        OSFileStore[] fsArray = fileSystem.getFileStores();
+        List<OSFileStore> fsArray = fileSystem.getFileStores();
         for (OSFileStore fs : fsArray) {
             long usable = fs.getUsableSpace();
             long total = fs.getTotalSpace();
@@ -342,7 +275,7 @@ public class SystemInformation {
         }
     }
 
-    private static void printNetworkInterfaces(NetworkIF[] networkIFs, OutputStreamWriter outputStream) throws IOException {
+    private static void printNetworkInterfaces(List<NetworkIF> networkIFs, OutputStreamWriter outputStream) throws IOException {
         outputStream.write("Network interfaces:");
         outputStream.write(System.lineSeparator());
 
@@ -362,7 +295,7 @@ public class SystemInformation {
         }
     }
 
-    private static void printDisplays(Display[] displays, OutputStreamWriter outputStream) throws IOException {
+    private static void printDisplays(List<Display> displays, OutputStreamWriter outputStream) throws IOException {
         outputStream.write("Displays:");
         outputStream.write(System.lineSeparator());
         int i = 0;
@@ -375,93 +308,12 @@ public class SystemInformation {
         }
     }
 
-    private static void printUsbDevices(UsbDevice[] usbDevices, OutputStreamWriter outputStream) throws IOException {
+    private static void printUsbDevices(List<UsbDevice> usbDevices, OutputStreamWriter outputStream) throws IOException {
         outputStream.write("USB Devices:");
         outputStream.write(System.lineSeparator());
         for (UsbDevice usbDevice : usbDevices) {
             outputStream.write(usbDevice.toString());
             outputStream.write(System.lineSeparator());
         }
-    }
-
-    public static SystemKey generateSystemKey() {
-        return new SystemKey();
-    }
-
-    public static String getSystemHexHash() {
-        return generateSystemKey().getSystemHexHash();
-    }
-
-   /* public static String getInstanceHexHash() {
-        return generateSystemKey().getInstanceHexHash();
-    }*/
-
-    private static class SystemKey {
-        //system hash fields
-        public final String cpuID;
-        public final Set<String> macs;
-        public final String systemSerial;
-        public final String baseBoardSerial;
-        public final String hostname;
-
-        //additional instance hash field
-        public final String processID;
-
-        public final long systemHash;
-//        public final long instanceHash;
-
-        public SystemKey() {
-            HardwareAbstractionLayer ha = new SystemInfo().getHardware();
-            cpuID = ha.getProcessor().getProcessorID();
-
-            Set<String> macsTm = new HashSet<>();
-            for (NetworkIF netIF : ha.getNetworkIFs()) {
-                macsTm.add(netIF.getMacaddr());
-            }
-            macs = Collections.unmodifiableSet(macsTm);
-
-            ComputerSystem system = ha.getComputerSystem();
-            systemSerial = system.getSerialNumber();
-            baseBoardSerial = system.getBaseboard().getSerialNumber();
-
-            String h = "unknown";
-            try {
-                h = InetAddress.getLocalHost().getHostName();
-            } catch (UnknownHostException e) {
-                LoggerFactory.getLogger(this.getClass()).warn("Could not find a valid hostname");
-            }
-            hostname = h;
-
-            processID = ManagementFactory.getRuntimeMXBean().getName();
-
-            systemHash = makeSystemHash();
-//            instanceHash = makeInstanceHash();
-        }
-
-        public String getSystemHexHash() {
-            return Long.toHexString(systemHash);
-        }
-
-        /*public String getInstanceHexHash() {
-            return Long.toHexString(instanceHash);
-        }*/
-
-        private long makeSystemHash() {
-            long result = cpuID != null ? cpuID.hashCode() : 0;
-            result = 31 * result + (macs != null ? macs.hashCode() : 0);
-            result = 31 * result + (systemSerial != null ? systemSerial.hashCode() : 0);
-            result = 31 * result + (baseBoardSerial != null ? baseBoardSerial.hashCode() : 0);
-            result = 31 * result + hostname.hashCode();
-            return result;
-        }
-
-
-       /* private long makeInstanceHash() {
-            long result = systemHash;
-            result = 31 * result + (processID != null ? processID.hashCode() : 0);
-            result = 31 * result + ;
-
-            return result;
-        }*/
     }
 }

@@ -1,24 +1,30 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ChemistryBase.math;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
+
+import java.util.Objects;
 
 import static java.lang.Math.*;
 
@@ -107,6 +113,15 @@ public final class ParetoDistribution extends RealDistribution {
         }
         return new ParetoDistribution(values.length / m, xmin);
     }
+    public static ParetoDistribution learnFromData(float xmin, float[] values) {
+        if (xmin <= 0) throw new IllegalArgumentException("xmin have to be greater than zero, but " + xmin + " is given!");
+        double m = 0d;
+        for (float v : values) {
+            if (v <= 0) throw new IllegalArgumentException("Negative values are not allowed, as they should have probability of zero!");
+            m += Math.log(v/xmin);
+        }
+        return new ParetoDistribution(values.length / m, xmin);
+    }
 
     public double getQuantile(double quantile) {
         return xmin / Math.pow(1d-quantile, 1d/k);
@@ -115,6 +130,20 @@ public final class ParetoDistribution extends RealDistribution {
     @Override
     public String toString() {
         return "ParetoDistribution(xmin=" + xmin + ", k=" + k + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ParetoDistribution that = (ParetoDistribution) o;
+        return Double.compare(that.k, k) == 0 &&
+                Double.compare(that.xmin, xmin) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(k, xmin);
     }
 
     @HasParameters

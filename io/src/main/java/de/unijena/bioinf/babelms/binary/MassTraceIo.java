@@ -1,61 +1,157 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.babelms.binary;
 
 import de.unijena.bioinf.ChemistryBase.ms.lcms.*;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Optional;
-
+import java.net.URI;
 public class MassTraceIo {
 
-    public CoelutingTraceSet[] readAll(InputStream stream, SampleLibrary library) throws IOException {
-        final ArrayList<CoelutingTraceSet> traceSets = new ArrayList<>();
-        CoelutingTraceSet set;
-        while ((set=read(stream,library))!=null) {
-            traceSets.add(set);
+    private static int SCHEMA_ID = 1;
+
+    public CoelutingTraceSet[] readAll(InputStream stream) throws IOException {
+        DataInputStream in = new DataInputStream(stream);
+        final int version = in.readInt();
+        if (version > SCHEMA_ID) {
+            LoggerFactory.getLogger(MassTraceIo.class).warn("binary file is of schema id " + version + " but SIRIUS uses still schema id  " + SCHEMA_ID + " for reading chromatographic cache information.");
         }
-        return traceSets.toArray(CoelutingTraceSet[]::new);
-    }
-
-    public void writeAll(OutputStream stream, SampleLibrary library, CoelutingTraceSet[] traceSets) throws IOException {
-        for (CoelutingTraceSet t : traceSets)
-            write(stream,library,t);
-    }
-
-    public void writeAll(OutputStream stream, SampleLibrary library, Iterable<CoelutingTraceSet> traceSets) throws IOException {
-        for (CoelutingTraceSet t : traceSets)
-            write(stream,library,t);
-    }
-
-    public CoelutingTraceSet read(InputStream stream, SampleLibrary library) throws IOException {
-        byte[] bytes = new byte[4];
-        int read = stream.read(bytes);
-        if (read < 4) return null;
-        int length = ((bytes[0] << 24) + (bytes[1] << 16) + (bytes[2] << 8) + (bytes[3]));
-        bytes = new byte[length];
-        return fromBytes(bytes,library);
-    }
-
-    public void write(OutputStream stream, SampleLibrary library, CoelutingTraceSet traceset) throws IOException {
-        final byte[] bytes = toBytes(library, traceset);
-        // write number of bytes
+        final int nsamples = in.readInt();
+        final CoelutingTraceSet[] traceSets = new CoelutingTraceSet[nsamples];
+        final String[] names = new String[nsamples];
+        final MsDataSourceReference[] refs = new MsDataSourceReference[nsamples];
+        // read libraries
         {
-            final int v = bytes.length;
-            stream.write((v >>> 24) & 0xFF);
-            stream.write((v >>> 16) & 0xFF);
-            stream.write((v >>> 8) & 0xFF);
-            stream.write((v) & 0xFF);
+            String[] fileNames = new String[nsamples],
+                    runids = new String[nsamples], mzmlIds = new String[nsamples];
+            URI[] sourceLoc = new URI[nsamples];
+            for (int k=0; k < refs.length; ++k) {
+                names[k] = in.readUTF();
+            }
+            for (int k=0; k < refs.length; ++k) {
+                String s = in.readUTF();
+                if (!s.isEmpty()) {
+                    sourceLoc[k] = URI.create(s);
+                }
+            }
+            for (int k=0; k < refs.length; ++k) {
+                String s = in.readUTF();
+                if (!s.isEmpty()) {
+                    fileNames[k] = s;
+                }
+            }
+            for (int k=0; k < refs.length; ++k) {
+                String s = in.readUTF();
+                if (!s.isEmpty()) {
+                    mzmlIds[k] = s;
+                }
+            }
+            for (int k=0; k < refs.length; ++k) {
+                String s = in.readUTF();
+                if (!s.isEmpty()) {
+                    runids[k] = s;
+                }
+            }
+            for (int k=0; k < refs.length; ++k) {
+                refs[k] = new MsDataSourceReference(
+                  sourceLoc[k], fileNames[k], runids[k], mzmlIds[k]
+                );
+            }
         }
-        // write bytes
-        stream.write(bytes);
+        // read traces
+        for (int k=0; k < traceSets.length; ++k) {
+            traceSets[k] = readTrace(in, names[k], refs[k]);
+        }
+        return traceSets;
     }
 
-    private CoelutingTraceSet fromBytes(byte[] bytes, SampleLibrary library) throws IOException {
-        final DataInputStream stream = new DataInputStream(new ByteArrayInputStream(bytes));
+    public void writeAll(OutputStream stream, CoelutingTraceSet[] traceSets) throws IOException {
+        DataOutputStream out = new DataOutputStream(stream);
+        // write version
+        out.writeInt(SCHEMA_ID);
+        // write libraries
+        out.writeInt(traceSets.length);
+        {
 
-        final int ID = stream.readInt();
-        final String name = library.getNameAt(ID);
-        final MsDataSourceReference ref = library.getReferenceAt(ID);
+            for (CoelutingTraceSet set : traceSets) {
+                out.writeUTF(set.getSampleName());
+            }
+            for (CoelutingTraceSet set : traceSets) {
+                out.writeUTF(set.getSampleRef().getSourceLocation().map(URI::toString).orElse(""));
+            }
+            for (CoelutingTraceSet set : traceSets) {
+                out.writeUTF(set.getSampleRef().getFileName().orElse(""));
+            }
+            for (CoelutingTraceSet set : traceSets) {
+                out.writeUTF(set.getSampleRef().getMzmlId().orElse(""));
+            }
+            for (CoelutingTraceSet set : traceSets) {
+                out.writeUTF(set.getSampleRef().getRunId().orElse(""));
+            }
+            out.flush();
+        }
+        // now write tracesets
+        for (CoelutingTraceSet t : traceSets)
+            writeTrace(out,t);
+    }
+
+    public void writeTrace(DataOutputStream stream, CoelutingTraceSet traceset) throws IOException {
+        stream.writeInt(traceset.getScanIds().length);
+        for (int i : traceset.getScanIds())
+            stream.writeInt(i);
+        for (long i : traceset.getRetentionTimes())
+            stream.writeLong(i);
+        for (float f : traceset.getNoiseLevels())
+            stream.writeFloat(f);
+        writeIon(stream, traceset.getIonTrace().getIsotopes());
+        stream.writeInt(traceset.getIonTrace().getAdducts().length);
+        for (IonTrace adduct : traceset.getIonTrace().getAdducts())
+            writeIon(stream, adduct.getIsotopes());
+
+        stream.writeByte(41); // alignment check
+
+        stream.writeInt(traceset.getIonTrace().getInSourceFragments().length);
+        for (IonTrace insource : traceset.getIonTrace().getInSourceFragments())
+            writeIon(stream, insource.getIsotopes());
+
+        // ms2 scans
+        stream.writeInt(traceset.getMs2RetentionTimes().length);
+        for (int id : traceset.getMs2ScanIds())
+            stream.writeInt(id);
+        for (long time : traceset.getMs2RetentionTimes())
+            stream.writeLong(time);
+
+        // metadata
+        stream.writeByte(5); // metadata version information
+        stream.writeInt(0); // metadata skip bytes
+
+        // reports
+        stream.writeByte(5); // report version information
+        final ObjectOutputStream obj = new ObjectOutputStream(stream);
+        obj.writeObject(traceset.getReports());
+        obj.flush();
+    }
+
+    private CoelutingTraceSet readTrace(DataInputStream stream, String name, MsDataSourceReference ref) throws IOException {
 
         final int numberOfscanIds = stream.readInt();
         final int[] scanIds = new int[numberOfscanIds];
@@ -84,55 +180,47 @@ public class MassTraceIo {
             throw new IOException("Invalid stream");
 
         int numberOfInsources = stream.readInt();
-        final IonTrace[] insources = new IonTrace[numberOfAdducts];
-        for (int i=0; i < numberOfAdducts; ++i) {
+        final IonTrace[] insources = new IonTrace[numberOfInsources];
+        for (int i=0; i < numberOfInsources; ++i) {
             insources[i] = new IonTrace(readIon(stream));
         }
 
+        // read ms2 scan ids
+        int numberOfMs2Scans = stream.readInt();
+        final int[] ms2ScanIds = new int[numberOfMs2Scans];
+        final long[] ms2RetentionTimes = new long[numberOfMs2Scans];
+        for (int i=0; i < numberOfMs2Scans; ++i) {
+            ms2ScanIds[i] = stream.readInt();
+        }
+        for (int i=0; i < numberOfMs2Scans; ++i) {
+            ms2RetentionTimes[i] = stream.readLong();
+        }
+
         // skip metadata
+        byte metaDataVersion = stream.readByte();
+        if (metaDataVersion!=5) {
+            throw new IOException("Unknown metadata version '" + metaDataVersion + "'");
+        }
         int metadataSize = stream.readInt();
-        if (metadataSize>0) stream.read(new byte[metadataSize]);
+        if (metadataSize>0) stream.skipBytes(metadataSize);
 
-        return new CoelutingTraceSet(
-          name,ref,new CompoundTrace(mainIonTraces,adducts,insources),retentionTimes,scanIds,noiseLevels
-        );
+        byte reportVersion = stream.readByte();
+        if (reportVersion!=5) {
+            throw new IOException("Unknown report version '" + reportVersion + "'");
+        }
+        final ObjectInputStream obj = new ObjectInputStream(stream);
+        try {
+            final CompoundReport[] reports = (CompoundReport[]) obj.readObject();
+
+            return new CoelutingTraceSet(
+                    name,ref,new CompoundTrace(mainIonTraces,adducts,insources),retentionTimes,scanIds,noiseLevels, ms2ScanIds, ms2RetentionTimes, reports
+            );
+        } catch (ClassNotFoundException e) {
+            throw new IOException(e.getMessage());
+        }
 
     }
 
-    private byte[] toBytes(SampleLibrary library, CoelutingTraceSet traceset) throws IOException {
-
-        final Optional<Integer> ID = library.getIndexFor(traceset.getSampleRef());
-        if (ID.isEmpty()) throw new IOException("Unknown sample id " + traceset.getSampleRef());
-
-        // we first write into a byte channel
-        final ByteArrayOutputStream buffer = new ByteArrayOutputStream(2048);
-        final DataOutputStream stream = new DataOutputStream(buffer);
-        stream.writeInt(ID.get());
-
-        stream.writeInt(traceset.getScanIds().length);
-        for (int i : traceset.getScanIds())
-            stream.writeInt(i);
-        for (long i : traceset.getRetentionTimes())
-            stream.writeLong(i);
-        for (float f : traceset.getNoiseLevels())
-            stream.writeFloat(f);
-        writeIon(stream, traceset.getIonTrace().getIsotopes());
-        stream.writeInt(traceset.getIonTrace().getAdducts().length);
-        for (IonTrace adduct : traceset.getIonTrace().getAdducts())
-            writeIon(stream, adduct.getIsotopes());
-
-        stream.writeByte(41); // alignment check
-
-        stream.writeInt(traceset.getIonTrace().getInSourceFragments().length);
-        for (IonTrace insource : traceset.getIonTrace().getInSourceFragments())
-            writeIon(stream, insource.getIsotopes());
-
-        // metadata
-        stream.writeInt(0);
-
-        stream.close();
-        return buffer.toByteArray();
-    }
 
     private Trace[] readIon(DataInputStream stream) throws IOException {
         final int n = stream.readInt();

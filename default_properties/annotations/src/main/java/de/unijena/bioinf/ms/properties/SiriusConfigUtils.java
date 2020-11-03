@@ -1,7 +1,28 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.properties;
 
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.PropertiesConfigurationLayout;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.ReloadingFileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
@@ -16,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 
 public class SiriusConfigUtils {
@@ -70,35 +92,41 @@ public class SiriusConfigUtils {
 
     public static LinkedHashSet<String> parseResourcesLocation(@Nullable final String locations, @Nullable final String defaultLocation) {
         LinkedHashSet<String> resources = new LinkedHashSet<>();
-        if (defaultLocation != null && !defaultLocation.isEmpty())
+        if (defaultLocation != null && !defaultLocation.isBlank())
             resources.add(defaultLocation);
 
-        if (locations != null && !locations.isEmpty())
+        if (locations != null && !locations.isBlank())
             resources.addAll(Arrays.asList(locations.trim().split("\\s*,\\s*")));
 
+        resources.removeIf(String::isBlank);
         return resources;
     }
 
     //this reads and merges read only properties from within jar resources
-    public static CombinedConfiguration makeConfigFromResources(@NotNull final LinkedHashSet<String> resources) {
-        return makeConfigFromResources(SiriusConfigUtils.newCombinedConfiguration(), resources);
+    public static CombinedConfiguration makeConfigFromResources(@NotNull final LinkedHashSet<String> resources, @Nullable PropertiesConfigurationLayout layout) {
+        return makeConfigFromResources(SiriusConfigUtils.newCombinedConfiguration(), resources, layout);
     }
 
-    public static CombinedConfiguration makeConfigFromResources(@NotNull CombinedConfiguration configToAddTo, @NotNull final LinkedHashSet<String> resources) {
+    public static CombinedConfiguration makeConfigFromResources(@NotNull CombinedConfiguration configToAddTo, @NotNull final LinkedHashSet<String> resources, @Nullable PropertiesConfigurationLayout layout) {
         List<String> reverse = new ArrayList<>(resources);
         Collections.reverse(reverse);
         for (String resource : reverse) {
-            configToAddTo.addConfiguration(makeConfigFromStream(resource), resource);
+            configToAddTo.addConfiguration(makeConfigFromStream(resource, layout), resource);
         }
 
         return configToAddTo;
     }
 
-    public static PropertiesConfiguration makeConfigFromStream(@NotNull final String resource) {
+    public static PropertiesConfiguration makeConfigFromStream(@NotNull final String resource, @Nullable PropertiesConfigurationLayout layout) {
         final PropertiesConfiguration config = newConfiguration();
         try (InputStream input = PropertyManager.class.getResourceAsStream("/" + resource)) {
-            if (input != null)
-                new FileHandler(config).load(input);
+            if (input != null){
+                if(layout != null){
+                    layout.load(config, new InputStreamReader(input));
+                }else {
+                    new FileHandler(config).load(input);
+                }
+            }
 
         } catch (ConfigurationException | IOException e) {
             System.err.println("Could not load properties from " + resource);

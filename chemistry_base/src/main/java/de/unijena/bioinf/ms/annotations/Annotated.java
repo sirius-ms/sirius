@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.annotations;
 
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -19,7 +39,7 @@ public interface Annotated<A extends DataAnnotation> {
     Annotations<A> annotations();
 
     /**
-     * @return an iterator over all map
+     * An iterator over all map
      */
     default void forEachAnnotation(BiConsumer<? super Class<A>, ? super A> action) {
         annotations().forEach(action);
@@ -189,7 +209,7 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     /**
-     * Add all annotations of type Class<A> from the given config. Overrides existing.
+     * Add all annotations of type  {@literal Class<A>} from the given config. Overrides existing.
      * Missing keys will be skipped with warning.
      *
      * @param config from which the annotations will be add
@@ -200,7 +220,7 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     /**
-     * Add all annotations of type Class<A> from the given config. Overrides existing.
+     * Add all annotations of type {@literal Class<A>} from the given config. Overrides existing.
      *
      * @param config from which the annotations will be add
      * @param clz type of the annotations that will be parsed
@@ -233,7 +253,7 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     /**
-     * Add all annotations of type Class<A> from the given config if they do  NOT already exist.
+     * Add all annotations of type {@literal Class<A>} from the given config if they do  NOT already exist.
      * Missing keys will be skipped with warning.
      *
      * @param config from which the annotations will be add
@@ -244,7 +264,7 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     /**
-     * Add all annotations of type Class<A> from the given config if they do  NOT already exist.
+     * Add all annotations of type {@literal Class<A>} from the given config if they do  NOT already exist.
      *
      * @param config from which the annotations will be add
      * @param clz type of the annotations that will be parsed
