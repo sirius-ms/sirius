@@ -37,7 +37,7 @@ public class BayesianNetworkFromDatabaseProvider implements BayesianNetworkScori
     }
 
     @Override
-    public void storeScoring(MolecularFormula formula, BayesnetScoring scoring) {
+    public void storeScoring(MolecularFormula formula, BayesnetScoring scoring, boolean override) {
 
     }
 
@@ -47,7 +47,7 @@ public class BayesianNetworkFromDatabaseProvider implements BayesianNetworkScori
     }
 
     @Override
-    public void storeDefaultScoring(BayesnetScoring scoring) throws IOException {
+    public void storeDefaultScoring(BayesnetScoring scoring, boolean override) throws IOException {
 
     }
 }

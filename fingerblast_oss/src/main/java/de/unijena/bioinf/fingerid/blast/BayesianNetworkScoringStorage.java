@@ -26,7 +26,7 @@ import java.io.IOException;
 
 public interface BayesianNetworkScoringStorage {
 
-    public void storeScoring(MolecularFormula formula, BayesnetScoring scoring) throws IOException;
+    public void storeScoring(MolecularFormula formula, BayesnetScoring scoring, boolean override) throws IOException;
 
-    public void storeDefaultScoring(BayesnetScoring scoring) throws IOException;
+    public void storeDefaultScoring(BayesnetScoring scoring, boolean override) throws IOException;
 }

@@ -60,6 +60,10 @@ public class ScoringMethodFactory {
         return new BayesnetScoringWithDynamicComputationScoringMethod();
     }
 
+    public static BayesnetScoringWithDynamicComputationScoringPersistentMethod getBayesnetScoringWithDynamicComputationPersistent(BayesianNetworkScoringProvider bayesianNetworkScoringProvider) {
+        return new BayesnetScoringWithDynamicComputationScoringPersistentMethod(bayesianNetworkScoringProvider);
+    }
+
     public static class CSIFingerIdScoringMethod implements FingerblastScoringMethod<CSIFingerIdScoring> {
         private final PredictionPerformance[] performances;
 
@@ -115,6 +119,19 @@ public class ScoringMethodFactory {
         @Override
         public BayesnetScoringWithDynamicComputation getScoring() {
             return new BayesnetScoringWithDynamicComputation();
+        }
+    }
+
+
+    public static class BayesnetScoringWithDynamicComputationScoringPersistentMethod implements FingerblastScoringMethod<BayesnetScoringWithDynamicComputationPersistent> {
+        private final BayesianNetworkScoringProvider bayesianNetworkScoringProvider;
+
+        public BayesnetScoringWithDynamicComputationScoringPersistentMethod(BayesianNetworkScoringProvider bayesianNetworkScoringProvider) {
+            this.bayesianNetworkScoringProvider = bayesianNetworkScoringProvider;
+        }
+        @Override
+        public BayesnetScoringWithDynamicComputationPersistent getScoring() {
+            return new BayesnetScoringWithDynamicComputationPersistent(bayesianNetworkScoringProvider);
         }
     }
 
