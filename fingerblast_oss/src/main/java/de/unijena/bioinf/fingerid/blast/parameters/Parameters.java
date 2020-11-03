@@ -40,6 +40,7 @@
 
 package de.unijena.bioinf.fingerid.blast.parameters;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
@@ -51,6 +52,7 @@ public interface Parameters {
 
     @FunctionalInterface
     interface FP {
+        //this is the predicted fingerprint;
         ProbabilityFingerprint getFP();
     }
 
@@ -58,6 +60,14 @@ public interface Parameters {
     @FunctionalInterface
     interface Stats {
         PredictionPerformance[] getStatistics();
+    }
+
+    @FunctionalInterface
+    interface WithMolecularFormula {
+        MolecularFormula getFormula();
+    }
+
+    interface WithMFandFP<S extends FingerblastScoring<?>> extends FP, WithMolecularFormula {
     }
 
     interface PreparedScoring<S extends FingerblastScoring<?>> extends FP {
