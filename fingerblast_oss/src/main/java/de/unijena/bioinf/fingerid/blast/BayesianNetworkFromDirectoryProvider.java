@@ -88,7 +88,7 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
             //todo always store scoring after being computed?
             scoring = bayesianScoringUtils.computeScoring(formula);
             if (autoSaveComputedScorings && (scoring != null)) {
-                storeScoring(formula, scoring);
+                storeScoring(formula, scoring, true);
             }
         } catch (ChemicalDatabaseException e) {
             e.printStackTrace();
@@ -112,7 +112,7 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
             } else {
                 defaultScoring = bayesianScoringUtils.computeDefaultScoring();
                 if (autoSaveComputedScorings && (defaultScoring != null)) {
-                    storeDefaultScoring(defaultScoring);
+                    storeDefaultScoring(defaultScoring, true);
                 }
             }
             return defaultScoring;
@@ -157,13 +157,15 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
     }
 
     @Override
-    public synchronized void storeScoring(MolecularFormula formula, BayesnetScoring scoring) throws IOException {
+    public synchronized void storeScoring(MolecularFormula formula, BayesnetScoring scoring, boolean override) throws IOException {
+        if (!override & hasPrecomputedScoring(formula)) return;
         Path scoringPath = getScoringPath(formula);
         scoring.writeTreeWithCovToFile(scoringPath);
     }
 
     @Override
-    public synchronized void storeDefaultScoring(BayesnetScoring scoring) throws IOException {
+    public synchronized void storeDefaultScoring(BayesnetScoring scoring, boolean override) throws IOException {
+        if (!override & hasPrecomputedDefaultScoring()) return;
         Path scoringPath = getDefaultScoringPath();
         scoring.writeTreeWithCovToFile(scoringPath);
     }

@@ -1,4 +1,4 @@
-/*
+package de.unijena.bioinf.fingerid.blast.parameters;/*
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
@@ -18,36 +18,26 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.fingerid.blast;
-
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 
-import java.io.IOException;
+public class MFandFpParameters implements Parameters.WithMFandFP {
 
-public class BayesianNetworkFromDatabaseProvider implements BayesianNetworkScoringProvider {
+    protected final MolecularFormula queryMF;
+    protected final ProbabilityFingerprint queryFP;
 
-    @Override
-    public BayesnetScoring getScoringOrNull(MolecularFormula formula) throws IOException {
-        return null;
+    public MFandFpParameters(MolecularFormula queryMF, ProbabilityFingerprint queryFP) {
+        this.queryMF = queryMF;
+        this.queryFP = queryFP;
     }
 
     @Override
-    public BayesnetScoring getScoringOrDefault(MolecularFormula formula) throws IOException {
-        return null;
+    public ProbabilityFingerprint getFP() {
+        return queryFP;
     }
 
     @Override
-    public void storeScoring(MolecularFormula formula, BayesnetScoring scoring, boolean override) {
-
-    }
-
-    @Override
-    public BayesnetScoring getDefaultScoring() throws IOException {
-        return null;
-    }
-
-    @Override
-    public void storeDefaultScoring(BayesnetScoring scoring, boolean override) throws IOException {
-
+    public MolecularFormula getFormula() {
+        return queryMF;
     }
 }
