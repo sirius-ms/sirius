@@ -1,25 +1,47 @@
-package de.unijena.bioinf.ms.gui.dialogs;
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
 
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+package de.unijena.bioinf.ms.gui.dialogs;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
-public class InfoDialog extends JDialog {
-    public InfoDialog(Frame owner, String title, String text) {
-        super(owner, title, true);
-        setLayout(new BorderLayout());
-        add(new JLabel(GuiUtils.formatToolTip(text)),BorderLayout.CENTER);
+public class InfoDialog extends WarningDialog {
+    public InfoDialog(Window owner, String warning) {
+        super(owner, warning);
+    }
 
-        final JPanel subpanel = new JPanel(new FlowLayout());
-        final JButton ok = new JButton("Close");
-        ok.addActionListener(e -> dispose());
-        subpanel.add(ok);
-        subpanel.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
-        add(subpanel, BorderLayout.SOUTH);
+    public InfoDialog(Window owner, String warning, String propertyKey) {
+        super(owner, warning, propertyKey);
+    }
 
-        setLocationRelativeTo(owner);
-        pack();
-        setVisible(true);
+    public InfoDialog(Window owner, String title, String warning, String propertyKey) {
+        super(owner, title, warning, propertyKey);
+    }
+
+    public InfoDialog(Window owner, String title, Supplier<String> messageProvider, String propertyKey) {
+        super(owner, title, messageProvider, propertyKey);
+    }
+
+    @Override
+    protected Icon makeDialogIcon() {
+        return UIManager.getIcon("OptionPane.informationIcon");
     }
 }

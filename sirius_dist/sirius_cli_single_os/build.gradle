@@ -1,0 +1,29 @@
+dependencies {
+    compile project(':sirius_cli')
+    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+}
+
+mainClassName = 'de.unijena.bioinf.ms.frontend.SiriusCLIApplication'
+
+distImage {
+    dependsOn getParent().tasks.getByName('extractRuntimeImageHeadless')
+    runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageHeadless').outputs.files.singleFile
+    imageName = 'sirius'
+    mainClass = mainClassName
+    mainJarName = getRootProject().getChildProjects().get('sirius_cli').tasks.getByName('jar').outputs.files.singleFile.getName()
+    winConsole = true
+    macPackageName = 'SIRIUS-headless'
+}
+
+publishing {
+    publications {
+        sirius(org.gradle.api.publish.maven.MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-headless", extension: 'zip'
+            artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
+
+        }
+    }
+}

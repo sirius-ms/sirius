@@ -20,8 +20,8 @@
 %% For Ubuntu install: apt-get install biber
 %% compile pdflatex biber pdflatex pdflatex
 \usepackage[backend=biber,natbib,style=nature,date=year,isbn=false,%
-  doi=false,url=false,bibencoding=ISO-8859-1]{biblatex}
-\addbibresource{bibtex/group-literature.bib}
+  doi=false,url=false,bibencoding=UTF8]{biblatex}
+\addbibresource{SIRIUS.bib}
 
 \graphicspath{{./graphics/}}
 
@@ -154,7 +154,7 @@
 
 \maketitle
 {\huge\textcolor{red}{ This manual is currently being updated to describe 
-all new features of SIRIUS 4.4.0}}
+all new features of SIRIUS 4.4}}
 
 \tableofcontents
 \phantomsection\label{index::doc}
@@ -1923,10 +1923,15 @@ sirius --adduct [M+H]+ -1 c1_ms.csv -2 c1_msms.csv -f C6H12O6 --adduct [M+?]+ -1
 \end{Verbatim}
 
 \section{ZODIAC: Improve Molecular Formula Identifications}
-If your input data is derived from an biological sample or any other set of derivates, similarities between different compounds can be leveraged to improve molecular formula annotation of the individual compounds. 
-ZODIAC takes advantage of the fact that an organism produces related metabolites that are derived from multiple, but limited, biosynthetic pathways.
-The \code{zodiac} tool builds upon the \code{formula} tool and uses, say, its top 50 molecular formula annotations as candidates for one compound. 
-ZODIAC then re-ranks molecular formula candidates using Bayesian statistics.
+If your input data is derived from a biological sample or any other set of 
+derivatives, similarities between different compounds can be leveraged to 
+improve molecular formula annotation of the individual compounds. 
+ZODIAC builds a similarity network between molecular formula candidates of 
+all compounds that where computed via the \code{formula} tool and re-ranks 
+these candidates using Bayesian statistics (Gibbs Sampling). 
+This decreases error rates (of top 1 candidates) by approximately 2 fold --- 
+on challenging datasets that contain many large compounds, improvements can 
+be much more dramatic.
 
 The \code{zodiac} tool can be executed after the \code{formula} tool without the need of many parameters:
 
@@ -1934,13 +1939,43 @@ The \code{zodiac} tool can be executed after the \code{formula} tool without the
 sirius  -i <input> -o <output>  formula -c 50  zodiac
 \end{Verbatim}
 
-Zodiac will run on all compounds that have formula candidates computed and re-ranks these formula candidates by the \gui{Zodiac\_Score} (\code{formula\_candidates.csv}).
+When using ZODIAC, it is reasonable to increase the maximum number of formula 
+candidates (\code{-c}) that are stored after running \code{formula}. These 
+candidates are 
+input to ZODIAC. If the correct candidate is missing, ZODIAC cannot recover 
+it.
+In order to reduce memory consumption and running time, ZODIAC uses a dynamic 
+number of candidates per compound based on the m/z --- the idea is, 
+for low-mass compounds the correct molecular formula is much more likely to 
+be in the, say, top 10. By default, ZODIAC uses 10 candidates for compounds 
+with m/z lower equal 
+to 300 (\code{--considered-candidates-at-300 10}) and 50 candidates 
+for compounds with m/z greater equal to 800 
+(\code{--considered-candidates-at-800 50}).
 
-The Network ZODIAC creates may consume a huge amount of system memory but many of the edges in this network does not contribute much information.
-Zero weight edges are automatically ignored. Which amount of low weight edges are omitted from the analysis can be specified by the \code{--edge-threshold} parameter (default: 0.95). A higher value will speed up computation but will also increase the risk to lose information.
+ The density of the ZODIAC network mainly depends on two parameters: 
+ \code{--edge-threshold} (default:0.95) and \code{--minLocalConnections} 
+ (default:10). The edge threshold defines the ratio of all possible edges 
+ between candidates that are discarded. Because most formula candidates are 
+ incorrect (there is only one correct candidate per compound) we assume most 
+ edges are spurious and we throw away 
+ the 95\,\% with lowest score. However, to prevent compounds being 
+ disconnected completely from the rest of the network, we discard edges
+ in such a way that one candidate per compound is connected to at least
+ \code{--minLocalConnections} other compounds. This introduces an individual 
+ edge score threshold for each compound.
+ However, when using \code{--minLocalConnections}, 
+ ZODIAC first has to create the complete network and filter edges
+ afterwards. Thus, ZODIAC may consume a large amount of system memory.
 
-Zodiac ensures that at least one candidate per compound is connected to a minimum number (\code{--minLocalConnections}) of other compounds. For that ZODIAC has to create the complete network first and filters the edges afterwards. 
-For very large datasets this network may not fit in 1TB system memory and more. I such cases the memory consumption can be dramatically decreased by setting  \code{--minLocalConnections=0}. This will allow ZODIAC to filter low weight edges on the fly when creating the network. \textbf{Use this setting with care, since it can result in a badly connected network that may cause unreliable results:} 
+For very large datasets, the ZODIAC network may not fit in 1TB system memory
+and more. Please, perform a feature alignment between your LC-MS/MS runs to
+reduce the number of compounds and thus reduce the size of the ZODIAC network.
+If this is still not sufficient, memory consumption can be dramatically
+decreased by setting  \code{--minLocalConnections=0}. This will allow ZODIAC
+to filter low weight edges on the fly when creating the network. \textbf{Use
+this setting with care, since it can result in a badly connected network that
+may decrease performance:}
 
 \begin{Verbatim}[commandchars=\\\{\}]
 sirius  -i <input> -o <output>  formula -c 50  zodiac --minLocalConnections 0 --edge-threshold 0.99
@@ -2415,7 +2450,7 @@ Writes the annotated spectrum into a csv file.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \chapter{Frequently asked questions (FAQ)}
-\input{../build/faq.tex}
+\input{../../build/manual/faq.tex}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2423,7 +2458,7 @@ Writes the annotated spectrum into a csv file.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \chapter{Changelog}
-\input{../build/changelog.tex}
+\input{../../build/manual/changelog.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%  BIBLIOGRAPHY  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

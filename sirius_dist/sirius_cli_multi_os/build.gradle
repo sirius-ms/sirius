@@ -1,4 +1,4 @@
-import java.nio.file.Files
+import java.util.stream.Stream
 
 dependencies {
 //project
@@ -12,18 +12,34 @@ project.ext.set("type", ['console'])
 
 /*################### Jar build Stuff ################### */
 jar {
-    zip64=true
     manifest {
         attributes 'Main-Class': mainClassName
-    }
-
-    from {
-        configurations.runtimeClasspath.filter {f ->!project.libExclude.stream().anyMatch{s -> f.name.startsWith(s)}}
-                .collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 
 /*################### Windows release Stuff ################### */
+launch4j {
+    icon = getRootProject().getRootDir().toPath().resolve('icons/sirius-icon.ico').toFile()
+    copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
+    companyName = "Friedrich-Schiller-University Jena"
+    version = project.version
+    textVersion = project.version
+    supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
+
+    initialHeapSize = 1024 // initial heap not too big improves startup time on windows
+    maxHeapSize = 4096
+    maxHeapPercent = 60
+
+    dontWrapJar = true
+    jdkPreference = 'preferJre'
+
+    classpath.add('./lib/*')
+    classpath.addAll(Stream.of(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':')).filter({ s -> !s.contains('APP_HOME') }).toArray())
+    println("================THE PATH: $classpath")
+
+}
+
+
 project.type.each{t ->
     project.arch.each { a ->
         tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
@@ -32,15 +48,10 @@ project.type.each{t ->
             headerType = t
             jreRuntimeBits = a
 
-            jar = "../../../All/Sirius/lib/${tasks.jar.archiveName}"
+            jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
 
-            classpath.add("../../../All/Sirius/lib/${tasks.jar.archiveName}") //add
+            classpath.add('../../../All/Sirius/lib/*') //add
             println(classpath)
-
-            //this is to include JAVA_HOME variable
-            bundledJre64Bit = a.equals('64')
-            bundledJrePath = '%JAVA_HOME%'
-            jreMinVersion = targetCompatibility
 
             outfile = "${project.appName}-${t}-${a}.exe"
         }
@@ -80,15 +91,13 @@ distributions {
         baseName = "${project.appName}-$n"
         contents {
             into('All/Sirius/lib') {
-                from('build/libs/')
+                from("build/install/${project.name}/lib") {
+                    exclude libExclude
+                }
             }
 
             project.arch.each { ar ->
                 into("Linux/${ar}bit/Sirius/lib") {
-                    from("${project.glpkPath}/l${ar}/") {
-                        include('libglpk.so.40')
-                        include('libglpk_java.so')
-                    }
                     from("${project.clpPath}/l${ar}/")
                     exclude('*.zip')
                 }
@@ -98,18 +107,19 @@ distributions {
                         exclude("*.bat")
                     }
                     from("${project.distPath}") {
-                        include('COPYING.txt')
+                        include('COPYING_OpenMS.txt')
+                        include('LICENSE.txt')
                     }
-                    from("${getRootDir()}/LICENSE.txt")
+                    rename{String name -> name.replace('COPYING_OpenMS.txt','COPYING.txt')}
                 }
 
                 into("Windows/${ar}bit/Sirius") {
-                    from("${project.glpkPath}/w${ar}/")
                     from("${project.clpPath}/w${ar}/")
                     from("${project.distPath}") {
-                        include('COPYING.txt')
+                        include('COPYING_OpenMS.txt')
+                        include('LICENSE.txt')
                     }
-                    from { "${getRootDir()}/LICENSE.txt" }
+                    rename{String name -> name.replace('COPYING_OpenMS.txt','COPYING.txt')}
                     from('build/launch4j') {
                         include("sirius-console-${ar}.exe")
                     }
@@ -117,7 +127,6 @@ distributions {
 
             }
             into('MacOS/64bit/Sirius/lib') {
-                from("${project.glpkPath}/osx/")
                 from("${project.clpPath}/osx/")
                 exclude('*.zip')
             }
@@ -128,13 +137,14 @@ distributions {
                     exclude("*.bat")
                 }
                 from("${project.distPath}") {
-                    include('COPYING.txt')
+                    include('COPYING_OpenMS.txt')
+                    include('LICENSE.txt')
                 }
-                from("${getRootDir()}/LICENSE.txt")
+                rename{String name -> name.replace('COPYING_OpenMS.txt','COPYING.txt')}
             }
         }
     })
-//    distribute.dependsOn 'downloadOpenmsScript'
+
     distribute.dependsOn "${n}DistZip"
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
     getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'

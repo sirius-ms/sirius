@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.gui.ms_viewer.data;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -8,8 +27,8 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.FormulaResultId;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.text.DecimalFormat;
@@ -19,7 +38,7 @@ import java.util.Map;
 import java.util.TreeSet;
 
 public class ExperimentContainerDataModel implements MSViewerDataModel {
-
+    private static final String NA_EV = "N/A eV";
     public static final String MS1_DISPLAY = "MS 1", MS1_MERGED_DISPLAY = "MS 1 merged", MSMS_DISPLAY = "MSMS", MSMS_MERGED_DISPLAY = "MSMS merged";
     private static final DecimalFormat cEFormat = new DecimalFormat("#0.0");
 
@@ -97,14 +116,18 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
                             double minEn = sp.getCollisionEnergy().getMinEnergy();
                             double maxEn = sp.getCollisionEnergy().getMaxEnergy();
 
-                            if (minEn == maxEn) {
+                            if (minEn == 0d && maxEn == 0d) {
+                                key = NA_EV;
+                            } else if (minEn == maxEn) {
                                 key = cEFormat.format(minEn) + " eV";
                             } else {
                                 key = cEFormat.format(minEn) + "-" + cEFormat.format(maxEn) + " eV";
                             }
                             int counter = 2;
                             while (identifierToSpectrum.containsKey(key)) {
-                                if (minEn == maxEn) {
+                                if (key.equals(NA_EV)) {
+                                    key = NA_EV + " (" + counter + ")";
+                                } else if (minEn == maxEn) {
                                     key = cEFormat.format(minEn) + " eV (" + counter + ")";
                                 } else {
                                     key = cEFormat.format(minEn) + "-" + cEFormat.format(maxEn) + " eV (" + counter + ")";

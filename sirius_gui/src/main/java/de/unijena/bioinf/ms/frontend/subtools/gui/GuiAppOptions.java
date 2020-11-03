@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.frontend.subtools.gui;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -6,18 +25,15 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.splash.Splash;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
-//import de.unijena.bioinf.ms.frontend.workfow.WebServiceWorkflow;
-import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.NewsDialog;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.gui.dialogs.UpdateDialog;
+import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -35,8 +51,13 @@ import java.awt.event.WindowEvent;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
-    public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.writeSummaries.dontAskAgain";
+    public static final String DONT_ASK_SUM_KEY = "de.unijena.bioinf.sirius.computeDialog.writeSummaries.dontAskAgain";
     public static final String COMPOUND_BUFFER_KEY = "de.unijena.bioinf.sirius.gui.instanceBuffer";
+    private final Splash splash;
+
+    public GuiAppOptions(@Nullable Splash splash) {
+        this.splash = splash;
+    }
 
     @CommandLine.Option(names = {"--compound-buffer"}, description = "Number of compounds that will be cached in Memory by the GUI. A larger buffer may improve loading times of views that display many results. A smaller buffer reduces the memory maximal consumption of the GUI.", defaultValue = "10")
     public void setInitialInstanceBuffer(int instanceBuffer) {
@@ -49,7 +70,7 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 
     }
 
-    public static class Flow implements Workflow {
+    public class Flow implements Workflow {
         private final PreprocessingJob<ProjectSpaceManager> preproJob;
         private final ParameterConfig config;
 
@@ -77,15 +98,9 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
                         Jobs.runInBackgroundAndLoad(MainFrame.MF, "Cancelling running jobs...", Jobs::cancelALL);
                         if (new QuestionDialog(MainFrame.MF,
-                                "<html>Do you want to write summary files to the project-space before closing this project?<br>This may take some time for large projects. </html>").isSuccess()) {
+                                "<html>Do you want to write summary files to the project-space before closing this project?<br>This may take some time for large projects. </html>", DONT_ASK_SUM_KEY).isSuccess()) {
                             ApplicationCore.DEFAULT_LOGGER.info("Writing Summaries to Project-Space before termination.");
-                            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Writing Summaries to Project-Space", true, new TinyBackgroundJJob<Boolean>() {
-                                @Override //todo summary job with real loading screen
-                                protected Boolean compute() throws Exception {
-                                    MainFrame.MF.ps().updateSummaries(ProjectSpaceManager.defaultSummarizer());
-                                    return true;
-                                }
-                            });
+                            SiriusActions.SUMMARY_WS.getInstance().actionPerformed(null);
                         }
                         ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space");
                         Jobs.runInBackgroundAndLoad(MainFrame.MF, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
@@ -97,13 +112,14 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         });
                         Jobs.runInBackgroundAndLoad(MainFrame.MF, "Disconnecting from webservice...", SiriusCLIApplication::shutdownWebservice);
                     } finally {
-                        MainFrame.CONNECTION_MONITOR.close();
+                        MainFrame.MF.CONNECTION_MONITOR().close();
                         System.exit(0);
                     }
                 }
             });
 
-            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Firing up SIRIUS...", new TinyBackgroundJJob<Boolean>() {
+            // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
+            TinyBackgroundJJob<Boolean> j = new TinyBackgroundJJob<>() {
                 @Override
                 protected Boolean compute() throws Exception {
                     try {
@@ -125,8 +141,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         MainFrame.MF.decoradeMainFrameInstance((GuiProjectSpaceManager) projectSpace);
 
                         ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
-                        updateProgress(0,max,progress++,"Checking Webservice connection...");
-                        ConnectionMonitor.ConnetionCheck cc = MainFrame.CONNECTION_MONITOR.checkConnection();
+                        updateProgress(0, max, progress++, "Checking Webservice connection...");
+                        ConnectionMonitor.ConnetionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
                         if (cc.isConnected()) {
                             @Nullable VersionsInfo versionsNumber = ApplicationCore.WEB_API.getVersionInfo();
                             ApplicationCore.DEFAULT_LOGGER.debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
@@ -145,7 +161,20 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         throw e;
                     }
                 }
-            });
+            };
+
+            if (splash != null)
+                j.addPropertyChangeListener(splash);
+
+            Jobs.runInBackground(j).takeResult();
+
+            if (splash != null) {
+                splash.setVisible(false);
+                splash.dispose();
+            }
+
+            if (!PropertyManager.getBoolean(AboutDialog.PROPERTY_KEY, false))
+                new AboutDialog(MainFrame.MF, true);
         }
     }
 }

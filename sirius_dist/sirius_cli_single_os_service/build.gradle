@@ -1,0 +1,81 @@
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE")
+    }
+}
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+ext['jna.version'] = '5.4.0'
+
+
+dependencies {
+    compile project(':sirius_rest_service')
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+}
+
+//mainClassName = 'org.springframework.boot.loader.PropertiesLauncher'
+mainClassName = 'org.springframework.boot.loader.JarLauncher'
+
+
+/*################### Jar build Stuff ################### */
+jar{
+    enabled = false
+}
+
+bootJar{
+    enabled = false
+}
+
+distImage {
+    dependsOn getParent().tasks.getByName('extractRuntimeImageHeadlessBoot')
+    dependsOn  getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('installBootDist')
+
+    inputDir = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('installBootDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
+    runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageHeadlessBoot').outputs.files.singleFile
+    imageName = 'sirius-rest'
+    mainClass = mainClassName
+    mainJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
+    winConsole = true
+    macPackageName = 'SIRIUS-headless'
+
+    doLast {
+        File libsTarget
+        File appRootTarget
+        if (OS.isLinux()) {
+            appRootTarget = outputDir.toPath().resolve(imageName).toFile()
+            libsTarget = appRootTarget.toPath().resolve("lib/app").toFile()
+        } else if (OS.isWindows()) {
+            appRootTarget = outputDir.toPath().resolve(imageName).toFile()
+            libsTarget = appRootTarget.toPath().resolve('app').toFile()
+        } else if (OS.isMacOsX()) {
+            appRootTarget = outputDir.toPath().resolve("${imageName}.app/Contents").toFile()
+            libsTarget = appRootTarget.toPath().resolve("app").toFile() //todo check path
+        } else {
+            throw new RuntimeException("Could not detect OS for packaging!")
+        }
+
+        copy {
+            from(installDist.outputs.files.singleFile.toPath().resolve('lib').resolve("agents-${siriusVersion}.jar"))
+            into(libsTarget)
+        }
+    }
+}
+
+
+publishing {
+    publications {
+        sirius(org.gradle.api.publish.maven.MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-headless-rest", extension: 'zip'
+            artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless-rest", extension: installerNameType
+
+        }
+    }
+}
+

@@ -1,3 +1,22 @@
+/*
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -6,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MultipleSources;
 import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.io.lcms.LCMSParsing;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
@@ -19,7 +39,9 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -103,7 +125,11 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
             // set name to common prefix
             // kaidu: this is super slow, so we just ignore the filename
             experiment.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(sourcelocation.value));
-            importedCompounds.add(space.newCompoundWithUniqueId(experiment).getID());
+            final Instance compound = space.newCompoundWithUniqueId(experiment);
+            importedCompounds.add(compound.getID());
+            final CompoundContainer compoundContainer = compound.loadCompoundContainer(LCMSPeakInformation.class);
+            compoundContainer.setAnnotation(LCMSPeakInformation.class, feature.getLCMSPeakInformation());
+            compound.updateCompound(compoundContainer,LCMSPeakInformation.class);
             updateProgress(0, consensusFeatures.length, ++progress, "Write project space.");
         }
         return space;

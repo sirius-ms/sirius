@@ -1,19 +1,22 @@
+
+
 /*
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
  *
- *  This library is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
 package de.unijena.bioinf.ms.gui.compute;
@@ -58,7 +61,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     // main parts
     private ExperimentEditPanel editPanel;
     private final Box mainPanel;
-    private final JCheckBox recompute;
+    private final JCheckBox recomputeBox;
 
     // tool configurations
     private final ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
@@ -91,7 +94,9 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
             zodiacConfigs = new ActZodiacConfigPanel();
-            addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
+            if (compoundsToProcess.size() > 1)
+                addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
+
 
             csiConfigs = new ActFingerIDConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList, formulaIDConfigPanel.content.searchDBList.checkBoxList);
             addConfigPanel("CSI:FingerID - Structure Elucidation", csiConfigs);
@@ -109,12 +114,12 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
 
             JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-            recompute = new JCheckBox("Recompute already computed tasks?", false);
-            recompute.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
-            lsouthPanel.add(recompute);
+            recomputeBox = new JCheckBox("Recompute already computed tasks?", false);
+            recomputeBox.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
+            lsouthPanel.add(recomputeBox);
 
             //checkConnectionToUrl by default when just one experiment is selected
-            if (compoundsToProcess.size() == 1) recompute.setSelected(true);
+            if (compoundsToProcess.size() == 1) recomputeBox.setSelected(true);
 
             JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
             JButton compute = new JButton("Compute");
@@ -123,7 +128,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             abort.addActionListener(e -> dispose());
             JButton showCommand = new JButton("Show Command");
             showCommand.addActionListener(e ->
-                    new InfoDialog(owner, "Command", String.join(" ", makeCommand())));
+                    new InfoDialog(owner, "Command:" + GuiUtils.formatToolTip(String.join(" ", makeCommand()))));
 
             rsouthPanel.add(showCommand);
             rsouthPanel.add(compute);
@@ -136,7 +141,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         }
 
         //finalize panel build
-        setMaximumSize(Toolkit.getDefaultToolkit().getScreenSize());
+        setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
         if (getMaximumSize().width < getPreferredSize().width)
             mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         configureActions();
@@ -189,13 +194,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         if (editPanel != null && compoundsToProcess.size() == 1)
             saveEdits(compoundsToProcess.get(0));
 
-        if (recompute.isSelected()) {
-            boolean recompute = false;
+        if (this.recomputeBox.isSelected()) {
             if (!PropertyManager.getBoolean(DONT_ASK_RECOMPUTE_KEY, false) && this.compoundsToProcess.size() > 1) {
-                QuestionDialog questionDialog = new QuestionDialog(this, "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
-                recompute = questionDialog.isSuccess();
+                QuestionDialog questionDialog = new QuestionDialog(this, "Recompute?", "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
+                this.recomputeBox.setSelected(questionDialog.isSuccess());
             }
-            //todo implement compute state handling
         }
 
         // todo hotfix to prevent gui from going crazy
@@ -255,31 +258,30 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         List<String> configCommand = new ArrayList<>();
 
         configCommand.add("config");
-        if (formulaIDConfigPanel.isToolSelected()) {
+        if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
             toolCommands.add(formulaIDConfigPanel.content.toolCommand());
             configCommand.addAll(formulaIDConfigPanel.asParameterList());
         }
 
-        if (zodiacConfigs.isToolSelected()) {
+        if (zodiacConfigs != null && zodiacConfigs.isToolSelected()) {
             toolCommands.add(zodiacConfigs.content.toolCommand());
             configCommand.addAll(zodiacConfigs.asParameterList());
         }
 
-        if (csiConfigs.isToolSelected()) {
+        if (csiConfigs != null && csiConfigs.isToolSelected()) {
             toolCommands.add(csiConfigs.content.toolCommand());
             configCommand.addAll(csiConfigs.asParameterList());
         }
 
-        if (canopusConfigPanel.isToolSelected()) {
-            noNegativeCanopusWarning();
+        if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
+//            noNegativeCanopusWarning();
             toolCommands.add(canopusConfigPanel.content.toolCommand());
             configCommand.addAll(canopusConfigPanel.asParameterList());
         }
 
         final List<String> command = new ArrayList<>();
-
         configCommand.add("--RecomputeResults");
-        configCommand.add(String.valueOf(recompute.isSelected()));
+        configCommand.add(String.valueOf(recomputeBox.isSelected()));
 
         command.addAll(configCommand);
         command.addAll(toolCommands);

@@ -1,5 +1,5 @@
 *<span style="color: #808080;">SIRIUS and CSI:FingerID are offered to
-the public as freely available resources. Use and re-distribution of the
+the public as freely available resources. (Re-)distribution of the
 methods, in whole or in part, for commercial purposes requires explicit
 permission of the authors and explicit acknowledgment of the source
 material and the original publications. We ask that users who use SIRIUS
@@ -31,24 +31,24 @@ CSI:FingerID.</span>
 
 ### Documentation
 - [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.26/sirius-4.4.26-manual.pdf)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.4.26 (2020-06-22)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.4.29 (2020-08-24)
 ##### This versions have the JRE already included! Just download, unpack and execute.
-- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.26/sirius-4.4.26-win64.zip)
-- for Linux [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.26/sirius-4.4.26-linux64.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.26/sirius-4.4.26-osx64.zip)
+- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-win64.zip)
+- for Linux [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-linux64.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-osx64.zip)
 
-### SIRIUS+CSI:FingerID Commandline only - Version 4.4.26 (2020-06-22)
+### SIRIUS+CSI:FingerID Commandline only - Version 4.4.29 (2020-08-24)
 ##### [Java Runtime Environment 11 (JRE-11)](https://www.azul.com/downloads/zulu-community/?version=java-11-lts&architecture=x86-64-bit&package=jre) or higher required.
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.26/sirius-4.4.26-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.26/sirius-4.4.26-win64-headless.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.26/sirius-4.4.26-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.26/sirius-4.4.26-linux64-headless.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.26/sirius-4.4.26-osx64-headless.zip)
+- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-win64-headless.zip)
+- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-linux64-headless.zip)
+- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-osx64-headless.zip)
 
 ### Sources on GitHub
-- [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)
-- [SIRIUS library](https://github.com/boecker-lab/sirius)
+- [SIRIUS frontend](https://github.com/boecker-lab/sirius)
+- [SIRIUS libraries](https://github.com/boecker-lab/sirius-libs)
 
 <!--end download-->
 
@@ -65,9 +65,9 @@ The training Structures of CSI:FingerID predictors are available through
 the CSI:FingerID WebAPI.
 
 ##### Training structures for positive ion mode:
-https://www.csi-fingerid.uni-jena.de/v1.4.3-SNAPSHOT/api/fingerid/trainingstructures?predictor=1
+https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=1
 ##### Training structures for negative ion mode:
-https://www.csi-fingerid.uni-jena.de/v1.4.3-SNAPSHOT/api/fingerid/trainingstructures?predictor=2
+https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=2
 
 ### Fragmentation Tree Computation
 
@@ -96,9 +96,26 @@ command-line tool.
 
 <!--begin cite-->
 ## Main citations
-Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
+
+**Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
 [Sirius 4: turning tandem mass spectra into metabolite structure information](https://doi.org/10.1038/s41592-019-0344-8), 
-*Nat methods*, 16, 2019.
+*Nat methods*, 16, 2019.**
+
+---
+
+Kai Dührkop, Louis-Félix Nothias, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffmann, Juho Rousu, Pieter C. Dorrestein,  Sebastian Böcker
+[Classes for the masses: Systematic classification of unknowns using fragmentation spectra](https://doi.org/10.1101/2020.04.17.046672)
+bioRxiv, 2020.
+(Cite if you are using *CANOPUS*)
+
+Marcus Ludwig, Louis-Félix Nothias, Kai Dührkop, Irina Koester, Markus Fleischauer, Martin A. Hoffmann, Daniel Petras, Fernando Vargas, Mustafa Morsy, Lihini Aluwihare, Pieter C. Dorrestein, Sebastian Böcker
+[ZODIAC: database-independent molecular formula annotation using Gibbs sampling reveals unknown small molecules](https://doi.org/10.1101/842740)
+bioRxiv, 2019.
+(Cite if you are using *ZODIAC*)
+
+Yannick Djoumbou Feunang, Roman Eisner, Craig Knox, Leonid Chepelev, Janna Hastings, Gareth Owen, Eoin Fahy, Christoph Steinbeck, Shankar Subramanian, Evan Bolton, Russell Greiner, David S. Wishart
+[ClassyFire: automated chemical classification with a comprehensive, computable taxonomy](https://doi.org/10.1186/s13321-016-0174-y)
+J Cheminf, 8, 2016. (Cite if you are using *CANOPUS*)
 
 Kai Dührkop and Sebastian Böcker. [Fragmentation trees
 reloaded.](http://dx.doi.org/10.1007/978-3-319-16706-0_10)  *J
@@ -119,6 +136,10 @@ identification.](http://bioinformatics.oxfordjournals.org/content/25/2/218.full)
 (2009) 25 (2): 218-224. (Cite this for *isotope pattern analysis*)
 
 ### Additional citations
+
+Marcus Ludwig, Kai Dührkop and Sebastian and Böcker.
+[Bayesian networks for mass spectrometric metabolite identification via molecular fingerprints.](http://doi.org/10.1093/bioinformatics/bty245) 
+*Bioinformatics*, 34(13): i333-i340. 2018. Proc. of Intelligent Systems for Molecular Biology (ISMB 2018). (Cite for CSI:FingerID Scoring) 
 
 W. Timothy J. White, Stephan Beyer, Kai Dührkop, Markus Chimani and
 Sebastian Böcker. [Speedy Colorful
@@ -163,9 +184,8 @@ mention fragmentation trees* as used by SIRIUS)
 
 ## License
 
-Starting with version 3.4, SIRIUS is licensed under the [GNU General
-Public License (GPL)](https://www.gnu.org/licenses/gpl.html). If you integrate SIRIUS into other software, we
-strongly encourage you to make the usage of SIRIUS as well as the
-literature to cite transparent to the user.
+Starting with version 4.4.27, SIRIUS is licensed under the [GNU Affero General
+Public License (GPL)](https://www.gnu.org/licenses/agpl-3.0.txt). If you integrate SIRIUS into other software, we
+strongly encourage you to make the usage of SIRIUS as well as the literature to cite transparent to the user.
 
 
