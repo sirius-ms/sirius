@@ -201,11 +201,13 @@ public class BayesianScoringUtils {
 
     /**
      * Computes the default Bayesian Network scoring which is unspecific for the molecular formula
-     * @return
-     * @throws ChemicalDatabaseException
+     * @return BayesnetScoring with Covariance Tree
+     * @throws ChemicalDatabaseException  if a db exceptions happens
      */
     public BayesnetScoring computeDefaultScoring() throws ChemicalDatabaseException {
         List<int[]> treeStructure = computeDefaultTreeTopology();
+        if (treeStructure.size() < 3)
+            throw new RuntimeException("Tree has less than 3 nodes."); //todo @marcus check!
         BayesnetScoring scoring = estimateScoringDefaultScoring(treeStructure);
         return scoring;
     }
@@ -213,15 +215,17 @@ public class BayesianScoringUtils {
 
     /**
      * Computes the Bayesian Network Scoring specific for this molecular formula
-     * @param formula
-     * @return
-     * @throws ChemicalDatabaseException
+     * @param formula for which the tree will be computed
+     * @return BayesnetScoring with Covariance Tree
+     * @throws ChemicalDatabaseException if a db exceptions happens
+     * @throws InsufficientDataException  if there are not enough candidates in the Database to compute the scoring
      */
     public BayesnetScoring computeScoring(MolecularFormula formula) throws InsufficientDataException, ChemicalDatabaseException {
         //compute tree edges (relative indices)
         List<int[]> treeStructure = computeTreeTopology(formula, minNumInformativePropertiesMfSpecificScoring);
-        BayesnetScoring scoring = estimateScoring(formula, treeStructure);
-        return scoring;
+        if (treeStructure.size() < 3)
+            throw new InsufficientDataException("Tree has less than 3 nodes."); //todo @marcus check!
+        return estimateScoring(formula, treeStructure);
     }
 
     @Deprecated
