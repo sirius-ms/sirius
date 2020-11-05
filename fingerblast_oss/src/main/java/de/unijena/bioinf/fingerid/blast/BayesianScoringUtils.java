@@ -31,6 +31,7 @@ import gnu.trove.list.linked.TIntLinkedList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jgrapht.alg.interfaces.SpanningTreeAlgorithm;
 import org.jgrapht.alg.spanning.KruskalMinimumSpanningTree;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -39,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -99,7 +99,8 @@ public class BayesianScoringUtils {
 
 
 
-    private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_MF_SPECIFIC_SCORING = 0; //todo this is for testing // do for every MF/500;
+    //todo @marcus check!
+    private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_MF_SPECIFIC_SCORING = 500; //todo this is for testing // do for every MF/500; @marcus check
 
     private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_SAME_MF = 200;
     private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_INCLUDING_BIOTRANSFORMATIONS = 1000;
@@ -349,31 +350,31 @@ public class BayesianScoringUtils {
     }
 
     private Fingerprint[] getTrueReferenceFingerprintsByFormula(Set<MolecularFormula> formulas) {
-        return extractByMF(trainingData.trueFingerprintsReferenceData, trainingData.formulasReferenceData, formulas);
+        return extractByMF(trainingData.trueFingerprintsReferenceData, trainingData.formulasReferenceData, formulas).toArray(Fingerprint[]::new);
     }
 
     private ProbabilityFingerprint[] getPredictedReferenceFingerprintsByFormula(Set<MolecularFormula> formulas) {
-        return extractByMF(trainingData.estimatedFingerprintsReferenceData, trainingData.formulasReferenceData, formulas);
+        return extractByMF(trainingData.estimatedFingerprintsReferenceData, trainingData.formulasReferenceData, formulas).toArray(ProbabilityFingerprint[]::new);
     }
 
-
-    private <T> T[] extractByMF(T[] fingerprints, MolecularFormula[] formulas, Set<MolecularFormula> mfSet){
+    @NotNull
+    private <T extends AbstractFingerprint> List<T> extractByMF(T[] fingerprints, MolecularFormula[] formulas, Set<MolecularFormula> mfSet) {
         //todo test
         try {
             List<T> fingerprintList = new ArrayList<>();
             for (int i = 0; i < fingerprints.length; i++) {
                 if (mfSet.contains(formulas[i])) fingerprintList.add(fingerprints[i]);
             }
-            return fingerprintList.toArray((T[]) Array.newInstance(fingerprints[0].getClass(),0));
+            return fingerprintList;
         } catch (ArrayIndexOutOfBoundsException e) {
-            System.out.println("ArrayIndexOutOfBoundsException for "+Arrays.toString(mfSet.stream().toArray(l->new MolecularFormula[l])));
-            System.out.println("fingerprints "+fingerprints.length);
+            System.out.println("ArrayIndexOutOfBoundsException for " + Arrays.toString(mfSet.toArray(MolecularFormula[]::new)));
+            System.out.println("fingerprints " + fingerprints.length);
             System.out.println("formulas "+formulas.length);
             System.out.println("mfset "+mfSet.size());
 
             System.out.println(trainingData.estimatedFingerprintsReferenceData.length+" "+trainingData.formulasReferenceData.length+" "+
                     trainingData.predictionPerformances.length+" "+trainingData.trueFingerprintsReferenceData.length);
-            return null;
+            return List.of(); //todo @marcus ist this intended error handling or a debugging catch?
         }
 
     }
