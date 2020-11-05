@@ -47,9 +47,8 @@ import java.util.Objects;
 public class CustomDatabase implements SearchableDatabase {
     protected static Logger logger = LoggerFactory.getLogger(CustomDatabase.class);
 
-    protected String name;
-    protected File path;
-
+    protected final String name;
+    protected final File path;
 
     // statistics
     protected long numberOfCompounds, numberOfFormulas, megabytes;
@@ -79,41 +78,14 @@ public class CustomDatabase implements SearchableDatabase {
         return db;
     }
 
-    @NotNull
-    public static List<CustomDatabase> loadCustomDatabases(boolean up2date) {
-        final List<CustomDatabase> databases = new ArrayList<>();
-        final File custom = SearchableDatabases.getCustomDatabaseDirectory();
-        if (!custom.exists()) {
-            return databases;
-        }
-        for (File subDir : custom.listFiles()) {
-            try {
-                final CustomDatabase db = loadCustomDatabaseFromLocation(subDir, up2date);
-                databases.add(db);
-            } catch (IOException e) {
-                e.printStackTrace();
-                logger.error(e.getMessage(), e);
-            }
-        }
-        return databases;
-    }
-
-    @NotNull
-    public static CustomDatabase loadCustomDatabaseFromLocation(File dbDir, boolean up2date) throws IOException {
-        if (dbDir.isDirectory()) {
-            final CustomDatabase db = new CustomDatabase(dbDir.getName(), dbDir);
-            db.readSettings();
-            if (!up2date || !db.needsUpgrade())
-                return db;
-            throw new OutdatedDBExeption("DB '" + db.name + "' is outdated (DB-Version: " + db.databaseVersion + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
-        }
-        throw new IOException("Illegal DB location '" + dbDir.getAbsolutePath() + "'. DB location needs to be a directory.");
-    }
-
     public CustomDatabase(String name, File path) {
         this.name = name;
         this.path = path;
         CustomDataSources.addCustomSourceIfAbsent(this.name);
+    }
+
+    public int getDatabaseVersion() {
+        return databaseVersion;
     }
 
     public boolean needsUpgrade() {

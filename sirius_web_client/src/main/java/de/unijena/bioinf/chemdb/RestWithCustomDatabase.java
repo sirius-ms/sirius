@@ -23,6 +23,7 @@ package de.unijena.bioinf.chemdb;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.webapi.WebAPI;
@@ -49,19 +50,22 @@ import java.util.stream.Stream;
  * the {@link SearchStructureByFormula} API.
  */
 public class RestWithCustomDatabase {
-    public static final String REST_CACHE_DIR = "rest-cache"; //chache directory for all rest dbs
-    public static final String CUSTOM_DB_DIR = "custom";
     protected static Logger logger = LoggerFactory.getLogger(RestWithCustomDatabase.class);
 
-    protected File directory;
+
+    protected final File directory;
+    protected final String restCacheDir;
+    protected final String customDbDir;
     protected HashMap<String, FilebasedDatabase> customDatabases;
 
     protected final WebAPI api;
     private VersionsInfo versionInfoCache = null;
 
-    public RestWithCustomDatabase(WebAPI api, File dir) {
+    public RestWithCustomDatabase(WebAPI api, File dir, String restCacheDir, String customDbDir) {
         this.api = api;
         this.directory = dir;
+        this.restCacheDir = restCacheDir;
+        this.customDbDir = customDbDir;
         this.customDatabases = new HashMap<>();
     }
 
@@ -100,7 +104,7 @@ public class RestWithCustomDatabase {
 
 
     public synchronized void destroyCache() throws IOException {
-        final File all = getRestDBCacheDir(directory);
+        final File all = getRestDBCacheDir();
         if (all.exists()) {
             for (File f : all.listFiles()) {
                 Files.deleteIfExists(f.toPath());
@@ -128,11 +132,11 @@ public class RestWithCustomDatabase {
         for (PrecursorIonType ionType : ionTypes)
             loadMolecularFormulas(ionMass, deviation, ionType, dbs, results);
 
-        return mergeFormulas(results);
+        return mergeFormulas(results, getAdditionalCustomDBs(dbs));
     }
 
     public Set<FormulaCandidate> loadMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType ionType, Collection<SearchableDatabase> dbs) throws IOException {
-        return mergeFormulas(loadMolecularFormulas(ionMass, deviation, ionType, dbs, new ArrayList<>()));
+        return mergeFormulas(loadMolecularFormulas(ionMass, deviation, ionType, dbs, new ArrayList<>()), getAdditionalCustomDBs(dbs));
     }
 
     protected List<FormulaCandidate> loadMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType ionType, Collection<SearchableDatabase> dbs, final List<FormulaCandidate> candidates) throws IOException {
@@ -141,13 +145,16 @@ public class RestWithCustomDatabase {
 
         final long requestFilter = extractFilterBits(dbs);
         if (requestFilter >= 0) {
-            api.consumeRestDB(requestFilter, getRestDBCacheDir(directory), restDb -> {
+            api.consumeRestDB(requestFilter, getRestDBCacheDir(), restDb -> {
                 candidates.addAll(restDb.lookupMolecularFormulas(ionMass, deviation, ionType));
             });
         }
 
-        for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).collect(Collectors.toList()))
-            candidates.addAll(getCustomDb(cdb).lookupMolecularFormulas(ionMass, deviation, ionType));
+        for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).collect(Collectors.toList())) {
+            final List<FormulaCandidate> mfs = getCustomDb(cdb.name()).lookupMolecularFormulas(ionMass, deviation, ionType);
+            mfs.forEach(fc -> fc.setBitset(CustomDataSources.getSourceFromName(cdb.name()).flag())); //annotate with bitset
+            candidates.addAll(mfs);
+        }
 
         return candidates;
     }
@@ -167,14 +174,17 @@ public class RestWithCustomDatabase {
             final long searchFilter = includeRestAllDb ? 0 : requestFilter;
 
             if (searchFilter >= 0)
-                result = api.applyRestDB(searchFilter, getRestDBCacheDir(directory), restDb -> new CandidateResult(
+                result = api.applyRestDB(searchFilter, getRestDBCacheDir(), restDb -> new CandidateResult(
                         restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
             else
                 result = new CandidateResult();
 
             for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).collect(Collectors.toList()))
                 result.addCustom(cdb.name(),
-                        getCustomDb(cdb).lookupStructuresAndFingerprintsByFormula(formula));
+                        getCustomDb(cdb.name()).lookupStructuresAndFingerprintsByFormula(formula), false);
+
+            for (FilebasedDatabase custom : getAdditionalCustomDBs(dbs))
+                result.addCustom(custom.getName(), custom.lookupStructuresAndFingerprintsByFormula(formula), true);
 
             return result;
         } catch (ChemicalDatabaseException e) {
@@ -182,23 +192,42 @@ public class RestWithCustomDatabase {
         }
     }
 
-    protected FilebasedDatabase getCustomDb(CustomDatabase db) throws IOException {
-        if (!customDatabases.containsKey(db.name()))
-            customDatabases.put(db.name(), new FilebasedDatabase(api.getCDKChemDBFingerprintVersion(), db.getDatabasePath()));
+    protected FilebasedDatabase getCustomDb(String dbName) throws IOException {
+        if (!customDatabases.containsKey(dbName))
+            customDatabases.put(dbName, new FilebasedDatabase(api.getCDKChemDBFingerprintVersion(), new File(getCustomDBDirectory(), dbName)));
 
-        return customDatabases.get(db.name());
+        return customDatabases.get(dbName);
     }
+
+
+    protected List<FilebasedDatabase> getAdditionalCustomDBs(Collection<SearchableDatabase> dbs) throws IOException {
+        final Set<String> customToSearch = dbs.stream().filter(SearchableDatabase::isCustomDb).map(SearchableDatabase::name).collect(Collectors.toSet());
+        List<FilebasedDatabase> fdbs = new ArrayList<>(CustomDataSources.size());
+        for (CustomDataSources.Source customSource : CustomDataSources.sources()) {
+            if (customSource.isCustomSource() && !customToSearch.contains(customSource.name()))
+                fdbs.add(getCustomDb(customSource.name()));
+        }
+        return fdbs;
+    }
+
 
 
     /**
      * merge formulas with same Formula and IonType {@literal ->}  Merge the filterBits
+     * It is also possible to add Custom dbs for additional flags
      */
-    public static Set<FormulaCandidate> mergeFormulas(Collection<FormulaCandidate> formulas) {
+    public static Set<FormulaCandidate> mergeFormulas(Collection<FormulaCandidate> formulas, List<FilebasedDatabase> dbsToAddKeysFrom) {
         HashMap<FormulaKey, AtomicLong> map = new HashMap<>();
         for (FormulaCandidate formula : formulas) {
             final FormulaKey key = new FormulaKey(formula);
             map.computeIfAbsent(key, k -> new AtomicLong(0))
                     .accumulateAndGet(formula.bitset, (a, b) -> a |= b);
+        }
+
+        //add non contained custom db flags
+        for (Map.Entry<FormulaKey, AtomicLong> e : map.entrySet()) {
+            e.getValue().accumulateAndGet(CustomDataSources.getDBFlagsFromNames(dbsToAddKeysFrom.stream().filter(db -> db.containsFormula(e.getKey().formula))
+                    .map(FilebasedDatabase::getName).collect(Collectors.toSet())), (a, b) -> a |= b);
         }
 
         return map.entrySet().stream().map(e ->
@@ -237,25 +266,37 @@ public class RestWithCustomDatabase {
     }
 
 
+    public static List<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds) {
+        return mergeCompounds(compounds, false);
+    }
+
+
     /**
      * merge compounds with same InChIKey
      */
-    public static List<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds) {
+    public static List<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, boolean onlyContained) {
         HashMap<String, FingerprintCandidate> it = new HashMap<>();
-        mergeCompounds(compounds, it);
+        mergeCompounds(compounds, it, onlyContained);
         return new ArrayList<>(it.values());
     }
 
     public static Set<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, final HashMap<String, FingerprintCandidate> mergeMap) {
+        return mergeCompounds(compounds, mergeMap, false);
+    }
+
+    public static Set<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, final HashMap<String, FingerprintCandidate> mergeMap, boolean onlyContained) {
         final Set<FingerprintCandidate> mergedCandidates = new HashSet<>(compounds.size());
         for (FingerprintCandidate c : compounds) {
             final String key = c.getInchiKey2D();
             FingerprintCandidate x = mergeMap.get(key);
 
+
             if (x != null) {
                 x.mergeDBLinks(c.links);
                 x.mergeBits(c.bitset);
             } else {
+                if (onlyContained)
+                    continue;
                 mergeMap.put(c.getInchi().key2D(), c);
             }
             mergedCandidates.add(mergeMap.get(key));
@@ -282,12 +323,11 @@ public class RestWithCustomDatabase {
             restDbInChIs = mergeCompounds(compounds, cs);
         }
 
-        private void addCustom(String name, List<FingerprintCandidate> compounds) {
+        private void addCustom(String name, List<FingerprintCandidate> compounds, boolean onlyContained) {
             if (customInChIs.containsKey(name))
                 throw new IllegalArgumentException("Custom db already exists: '" + name + "'");
-            customInChIs.put(name, mergeCompounds(compounds, cs));
+            customInChIs.put(name, mergeCompounds(compounds, cs, onlyContained));
         }
-
 
 
         public Set<String> getCombCandidatesInChIs() {
@@ -373,14 +413,17 @@ public class RestWithCustomDatabase {
     }
 
     @NotNull
-    public static File getRestDBCacheDir(final File root) {
-        return new File(root, REST_CACHE_DIR);
+    public File getRestDBCacheDir() {
+        return new File(directory, restCacheDir);
     }
 
     @NotNull
-    public static File getCustomDBDirectory(final File root) {
-        return new File(root, CUSTOM_DB_DIR);
+    public File getCustomDBDirectory() {
+        return new File(directory, customDbDir);
     }
+
+
+
 
 
 }

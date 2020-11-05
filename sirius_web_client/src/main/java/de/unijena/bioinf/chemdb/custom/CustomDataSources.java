@@ -163,6 +163,10 @@ public class CustomDataSources {
         return SOURCE_MAP.size();
     }
 
+    public static Stream<Source> sourceStream() {
+        return SOURCE_MAP.values().stream();
+    }
+
     public static Iterable<Source> sources() {
         return SOURCE_MAP.values();
     }

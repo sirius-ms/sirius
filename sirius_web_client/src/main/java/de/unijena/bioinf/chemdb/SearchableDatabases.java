@@ -21,7 +21,9 @@
 package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.chemdb.custom.OutdatedDBExeption;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -39,20 +41,24 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SearchableDatabases {
+    //todo should be configurable
+    public static final String REST_CACHE_DIR = "rest-cache"; //chache directory for all rest dbs
+    public static final String CUSTOM_DB_DIR = "custom";
+
     private SearchableDatabases() {
+    }
+
+    public static File getCustomDatabaseDirectory(){
+        return new File(getDatabaseDirectory(),CUSTOM_DB_DIR);
+    }
+
+    public static File getRESTDatabaseCacheDirectory() {
+        return new File(getDatabaseDirectory(),REST_CACHE_DIR);
     }
 
     public static File getDatabaseDirectory() {
         final String val = PropertyManager.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
         return Paths.get(val).toFile();
-    }
-
-    public static File getRESTDatabaseCacheDirectory() {
-        return RestWithCustomDatabase.getRestDBCacheDir(getDatabaseDirectory());
-    }
-
-    public static File getCustomDatabaseDirectory() {
-        return RestWithCustomDatabase.getCustomDBDirectory(getDatabaseDirectory());
     }
 
     public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name) {
@@ -85,7 +91,7 @@ public class SearchableDatabases {
     @NotNull
     public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir) {
         try {
-            return CustomDatabase.loadCustomDatabaseFromLocation(dbDir.toFile(), true);
+            return loadCustomDatabaseFromLocation(dbDir.toFile(), true);
         } catch (IOException e) {
             throw new RuntimeException("Could not load DB from path: " + dbDir.toString(), e);
         }
@@ -121,19 +127,49 @@ public class SearchableDatabases {
 
     @NotNull
     public static List<CustomDatabase> getCustomDatabases(final boolean up2date) {
-        return CustomDatabase.loadCustomDatabases(up2date);
+        return loadCustomDatabases(up2date);
     }
 
     public static RestWithCustomDatabase makeRestWithCustomDB(WebAPI webAPI) {
-        return new RestWithCustomDatabase(webAPI, getDatabaseDirectory());
+        return new RestWithCustomDatabase(webAPI, getDatabaseDirectory(), REST_CACHE_DIR, CUSTOM_DB_DIR);
     }
 
     @NotNull
     public static List<SearchableDatabase> getAvailableDatabases() {
         final List<SearchableDatabase> db = Stream.of(DataSource.values()).map(DataSource::realName).map(SearchableDatabases::getDatabaseByNameOrThrow).collect(Collectors.toList());
-        Collections.swap(db,2, DataSource.BIO.ordinal()); //just to put bio on index 3
+        Collections.swap(db, 2, DataSource.BIO.ordinal()); //just to put bio on index 3
         db.addAll(getCustomDatabases());
         return db;
+    }
+
+    @NotNull
+    public static List<CustomDatabase> loadCustomDatabases(boolean up2date) {
+        final List<CustomDatabase> databases = new ArrayList<>();
+        final File custom = getCustomDatabaseDirectory();
+        if (!custom.exists()) {
+            return databases;
+        }
+        for (File subDir : custom.listFiles()) {
+            try {
+                final CustomDatabase db = loadCustomDatabaseFromLocation(subDir, up2date);
+                databases.add(db);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(CustomDatabase.class).error(e.getMessage(), e);
+            }
+        }
+        return databases;
+    }
+
+    @NotNull
+    public static CustomDatabase loadCustomDatabaseFromLocation(File dbDir, boolean up2date) throws IOException {
+        if (dbDir.isDirectory()) {
+            final CustomDatabase db = new CustomDatabase(dbDir.getName(), dbDir);
+            db.readSettings();
+            if (!up2date || !db.needsUpgrade())
+                return db;
+            throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
+        }
+        throw new IOException("Illegal DB location '" + dbDir.getAbsolutePath() + "'. DB location needs to be a directory.");
     }
 
     public static SearchableDatabase getAllDb() {
