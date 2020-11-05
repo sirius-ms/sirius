@@ -42,7 +42,7 @@ import java.util.zip.GZIPInputStream;
  */
 public class FilebasedDatabase extends AbstractChemicalDatabase {
 
-    private String name;
+    private final String name;
     private File dir;
     private String format; // csv or json or csv.gz or json.gz
     private CompoundReader reader;
@@ -54,6 +54,10 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
         setDir(dir);
         this.name = dir.getName();
         this.version = version;
+    }
+
+    public String getName() {
+        return name;
     }
 
     protected File getFileFor(MolecularFormula formula) {
@@ -105,6 +109,10 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
         Arrays.sort(this.formulas);
     }
 
+    public boolean containsFormula(MolecularFormula formula){
+        return getFileFor(formula).exists(); // should be faster that searching the array for large numbers
+    }
+
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
 
@@ -126,7 +134,7 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
         final double max = mass+deviation.absoluteFor(ionMass);
         ArrayList<FormulaCandidate> candidates = new ArrayList<>();
         while (insertionPoint < formulas.length && formulas[insertionPoint].getMass() <= max) {
-            candidates.add(new FormulaCandidate(formulas[insertionPoint++], ionType, 0)); // TODO: add bitset?
+            candidates.add(new FormulaCandidate(formulas[insertionPoint++], ionType, 0));
         }
 
         return candidates;
