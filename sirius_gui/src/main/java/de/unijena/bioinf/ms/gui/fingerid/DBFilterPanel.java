@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -32,7 +33,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FormulaResultBean>>, CustomDataSources.DataSourceChangeListener {
-    public final static Set<String> BLACK_LIST = Set.of(DataSource.ADDITIONAL.realName, DataSource.ALL.realName, DataSource.ALL_BUT_INSILICO.realName,
+    public final static Set<String> BLACK_LIST = Set.of(/*DataSource.ADDITIONAL.realName,*/ DataSource.ALL.realName, DataSource.ALL_BUT_INSILICO.realName,
             DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
             DataSource.SUPERNATURAL.realName
     );
@@ -109,34 +110,36 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
 
     @Override
     public void fireDataSourceChanged(Collection<String> changes) {
-        HashSet<String> changed = new HashSet<>(changes);
-        isRefreshing.set(true);
-        boolean c = false;
-        Iterator<JCheckBox> it = checkboxes.iterator();
+        Jobs.runEDTLater(() -> {
+            HashSet<String> changed = new HashSet<>(changes);
+            isRefreshing.set(true);
+            boolean c = false;
+            Iterator<JCheckBox> it = checkboxes.iterator();
 
-        while (it.hasNext()) {
-            JCheckBox checkbox = it.next();
-            if (changed.remove(checkbox.getText())) {
-                it.remove();
+            while (it.hasNext()) {
+                JCheckBox checkbox = it.next();
+                if (changed.remove(checkbox.getText())) {
+                    it.remove();
+                    c = true;
+                }
+            }
+
+            for (String name : changed) {
+                checkboxes.add(new JCheckBox(name));
                 c = true;
             }
-        }
 
-        for (String name : changed) {
-            checkboxes.add(new JCheckBox(name));
-            c = true;
-        }
-
-        if (c) {
-            removeAll();
-            addBoxes();
-            revalidate();
-            repaint();
-            fireFilterChangeEvent();
-        }
+            if (c) {
+                removeAll();
+                addBoxes();
+                revalidate();
+                repaint();
+                fireFilterChangeEvent();
+            }
 
 
-        isRefreshing.set(false);
+            isRefreshing.set(false);
+        });
     }
 
     public interface FilterChangeListener extends EventListener {

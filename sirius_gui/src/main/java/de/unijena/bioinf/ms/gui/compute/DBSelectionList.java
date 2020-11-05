@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
-    public final static Set<String> BLACK_LIST = Set.of(DataSource.ADDITIONAL.realName, DataSource.TRAIN.realName,
+    public final static Set<String> BLACK_LIST = Set.of(/*DataSource.ADDITIONAL.realName,*/ DataSource.TRAIN.realName,
             DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
             DataSource.SUPERNATURAL.realName
     );
