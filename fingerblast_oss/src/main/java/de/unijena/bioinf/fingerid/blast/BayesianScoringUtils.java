@@ -325,10 +325,10 @@ public class BayesianScoringUtils {
         ProbabilityFingerprint[] specificPredFPs;
         if (useBiotransformations()){
             Set<MolecularFormula> biotransF = applyBioTransformations(formula, true);
-            Log.info("formula: "+formula+" with transformations: "+Arrays.toString(biotransF.toArray()));
+//            Log.info("formula: "+formula+" with transformations: "+Arrays.toString(biotransF.toArray()));
             specificRefFPs = getTrueReferenceFingerprintsByFormula(biotransF);
             specificPredFPs = getPredictedReferenceFingerprintsByFormula(biotransF);
-            Log.info("extracted instances: "+specificRefFPs.length+" for formula "+formula);
+            Log.debug("extracted instances: "+specificRefFPs.length+" for formula "+formula);
         } else {
             Set<MolecularFormula> singletonSetMF = Collections.singleton(formula);
             specificRefFPs = getTrueReferenceFingerprintsByFormula(singletonSetMF);
@@ -358,25 +358,12 @@ public class BayesianScoringUtils {
     }
 
     @NotNull
-    private <T extends AbstractFingerprint> List<T> extractByMF(T[] fingerprints, MolecularFormula[] formulas, Set<MolecularFormula> mfSet) {
-        //todo test
-        try {
-            List<T> fingerprintList = new ArrayList<>();
-            for (int i = 0; i < fingerprints.length; i++) {
-                if (mfSet.contains(formulas[i])) fingerprintList.add(fingerprints[i]);
-            }
-            return fingerprintList;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            System.out.println("ArrayIndexOutOfBoundsException for " + Arrays.toString(mfSet.toArray(MolecularFormula[]::new)));
-            System.out.println("fingerprints " + fingerprints.length);
-            System.out.println("formulas "+formulas.length);
-            System.out.println("mfset "+mfSet.size());
-
-            System.out.println(trainingData.estimatedFingerprintsReferenceData.length+" "+trainingData.formulasReferenceData.length+" "+
-                    trainingData.predictionPerformances.length+" "+trainingData.trueFingerprintsReferenceData.length);
-            return List.of(); //todo @marcus ist this intended error handling or a debugging catch?
+    private <T extends AbstractFingerprint> List<T> extractByMF(T[] fingerprints, MolecularFormula[] formulas, Set<MolecularFormula> mfSet){
+        List<T> fingerprintList = new ArrayList<>();
+        for (int i = 0; i < fingerprints.length; i++) {
+            if (mfSet.contains(formulas[i])) fingerprintList.add(fingerprints[i]);
         }
-
+        return fingerprintList;
     }
 
     private BayesnetScoring estimateScoringDefaultScoring(List<int[]> edges) {
