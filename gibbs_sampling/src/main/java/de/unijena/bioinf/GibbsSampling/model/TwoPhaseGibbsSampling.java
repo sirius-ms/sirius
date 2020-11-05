@@ -72,15 +72,18 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     }
 
     private void init() throws ExecutionException {
-        firstRoundCompoundsIdx = new TIntArrayList();
+        firstRoundCompoundsIdx = selectCompoundsForFirstRoundGibbsSampling();
         for (int i = 0; i < possibleFormulas.length; i++) {
             C[] poss = possibleFormulas[i];
-//            if (poss.length>0 && CompoundQuality.isNotBadQuality(poss[0].getExperiment())){
-            //todo compound quality handling has changed a lot
-            if (poss.length>0 && poss[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new).isNotBadQuality()){
-                firstRoundCompoundsIdx.add(i);
+////            if (poss.length>0 && CompoundQuality.isNotBadQuality(poss[0].getExperiment())){
+//            //todo compound quality handling has changed a lot
+//            if (poss.length>0 && poss[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new).isNotBadQuality()){
+//                firstRoundCompoundsIdx.add(i);
+//            }
+            if (cClass==null && poss.length>0){
+                cClass = (Class<C>)poss[0].getClass();
+                break;
             }
-            if (cClass==null && poss.length>0) cClass = (Class<C>)poss[0].getClass();
         }
 
 
@@ -106,6 +109,46 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
         GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, cClass);
         graph = submitSubJob(graphBuilder).awaitResult();
         logInfo("finished building graph after: "+(System.currentTimeMillis()-start)+" ms");
+    }
+
+    /*
+    select compounds for first round of sampling based on quality.
+     */
+    private TIntArrayList selectCompoundsForFirstRoundGibbsSampling(){
+        int totalNumber = possibleFormulas.length;
+        long numberOfGoodQualityCompounds = Arrays.stream(possibleFormulas).filter(c->c.length>0 && c[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new).isNotBadQuality()).count();
+
+        double goodRatio = 1d*numberOfGoodQualityCompounds/totalNumber;
+        boolean onlyUseGoodAndUnknownQuality;
+        if (numberOfGoodQualityCompounds<300 || goodRatio<0.33) {
+            //if we have few good quality compounds, also use some others with only bad MS1 but good MS2
+            onlyUseGoodAndUnknownQuality = false;
+        } else {
+            onlyUseGoodAndUnknownQuality = true;
+        }
+
+        for (int i = 0; i < possibleFormulas.length; i++) {
+            C[] poss = possibleFormulas[i];
+            if (onlyUseGoodAndUnknownQuality) {
+                //check if MS1 and MS2-quality is ok
+                if (poss.length>0 && poss[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new).isNotBadQuality()){
+                    firstRoundCompoundsIdx.add(i);
+                }
+            } else {
+                //check only if MS2-quality is ok
+                if (poss.length>0){
+                    CompoundQuality quality = poss[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new);
+                    if (quality.isNot(CompoundQuality.CompoundQualityFlag.FewPeaks) &&
+                            quality.isNot(CompoundQuality.CompoundQualityFlag.Chimeric) &&
+                            quality.isNot(CompoundQuality.CompoundQualityFlag.PoorlyExplained)) {
+                        firstRoundCompoundsIdx.add(i);
+                    }
+                }
+            }
+
+            if (cClass==null && poss.length>0) cClass = (Class<C>)poss[0].getClass();
+        }
+        return firstRoundCompoundsIdx;
     }
 
     private int maxSteps = -1;
