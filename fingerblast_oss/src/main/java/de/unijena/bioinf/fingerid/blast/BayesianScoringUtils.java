@@ -98,14 +98,12 @@ public class BayesianScoringUtils {
     private static final int MIN_NUM_INFORMATIVE_PROPERTIES_DEFAULT_SCORING = 500;
 
 
-
-    //todo @marcus check!
-    private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_MF_SPECIFIC_SCORING = 500; //todo this is for testing // do for every MF/500; @marcus check
+    private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_MF_SPECIFIC_SCORING = 500; //todo check in eval
 
     private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_SAME_MF = 200;
     private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_INCLUDING_BIOTRANSFORMATIONS = 1000;
 
-    private static final int DEFAULT_MIN_NUM_INFORMATIVE_PROPERTIES_MF_SPECIFIC_SCORING = 0; //todo this is for testing //0 informative properties will result in Platt scoring
+    private static final int DEFAULT_MIN_NUM_INFORMATIVE_PROPERTIES_MF_SPECIFIC_SCORING = 100; //sanity check, the number of informative properties should normally exceed 1000. 0 informative properties will result in Platt scoring
 
 
     /**
@@ -207,8 +205,8 @@ public class BayesianScoringUtils {
      */
     public BayesnetScoring computeDefaultScoring() throws ChemicalDatabaseException {
         List<int[]> treeStructure = computeDefaultTreeTopology();
-        if (treeStructure.size() < 3)
-            throw new RuntimeException("Tree has less than 3 nodes."); //todo @marcus check!
+        if (treeStructure.size() < 10) //should never happen
+            throw new RuntimeException("Tree has less than 10 edges.");
         BayesnetScoring scoring = estimateScoringDefaultScoring(treeStructure);
         return scoring;
     }
@@ -225,7 +223,7 @@ public class BayesianScoringUtils {
         //compute tree edges (relative indices)
         List<int[]> treeStructure = computeTreeTopology(formula, minNumInformativePropertiesMfSpecificScoring);
         if (treeStructure.size() < 3)
-            throw new InsufficientDataException("Tree has less than 3 nodes."); //todo @marcus check!
+            throw new InsufficientDataException("Tree has less than 3 nodes.");
         return estimateScoring(formula, treeStructure);
     }
 
