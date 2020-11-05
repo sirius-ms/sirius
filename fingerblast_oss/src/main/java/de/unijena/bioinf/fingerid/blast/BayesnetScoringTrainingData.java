@@ -31,6 +31,9 @@ public class BayesnetScoringTrainingData {
     public final PredictionPerformance[] predictionPerformances;
 
     public BayesnetScoringTrainingData(MolecularFormula[] formulasReferenceData, Fingerprint[] trueFingerprintsReferenceData, ProbabilityFingerprint[] estimatedFingerprintsReferenceData, PredictionPerformance[] predictionPerformances) {
+        if (formulasReferenceData.length != trueFingerprintsReferenceData.length) throw new RuntimeException("number of molecular formulas must match the number of compound fingerprints.");
+        if (trueFingerprintsReferenceData.length != estimatedFingerprintsReferenceData.length) throw new RuntimeException("number of true fingerprints must match the number of predicted fingerprints.");
+        if (trueFingerprintsReferenceData.length != estimatedFingerprintsReferenceData.length) throw new RuntimeException("number of fingerprints must match the number of predictor performances.");
         this.formulasReferenceData = formulasReferenceData;
         this.trueFingerprintsReferenceData = trueFingerprintsReferenceData;
         this.estimatedFingerprintsReferenceData = estimatedFingerprintsReferenceData;
