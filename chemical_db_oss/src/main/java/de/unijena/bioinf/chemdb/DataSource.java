@@ -40,12 +40,13 @@ public enum DataSource {
     METACYC("Biocyc", 2048, "unique_id","biocyc", "http://biocyc.org/compound?orgid=META&id=%s"),
     GNPS("GNPS", 4096, "id","gnps", "https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=%s"),
     ZINCBIO("ZINC bio", 8192, "zinc_id","zincbio", "http://zinc.docking.org/substance/%s"),
-    TRAIN("Training Set", 16384, null, null, null), //todo obsolete?
+    TRAIN("Training Set", 16384, null, null, null), //not part of the PSQL database anymore but assigned for each predictor individually
     UNDP("Natural Products", 32768, "undp_id","undp",  null),
     YMDB("YMDB", 65536, "ymdb_id","ymdb", "http://www.ymdb.ca/compounds/YMDB%d05"),
     PLANTCYC("Plantcyc", 131072, "unique_id","plantcyc",  "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s"),
-    NORMAN("NORMAN", 262144,  null,null, null), //TODO implement importer
-    ADDITIONAL("additional", 524288,  null,null,null, 0, false), //proably mostly training structures, but maybe more.
+    NORMAN("NORMAN", 262144,  null,null, null),
+    //this is currently only interesting for internal testing.
+//    ADDITIONAL("additional", 524288,  null,null,null, 0, false), //proably mostly training structures, but maybe more.
     SUPERNATURAL("SuperNatural", 1048576,  "id", "supernatural", "http://bioinf-applied.charite.de/supernatural_new/index.php?site=compound_search&start=0&supplier=all&tox=any&classification=all&compound_input=true&sn_id=%s"),
     COCONUT("COCONUT", 2097152,  "id", "coconut", null),
     PUBCHEMANNOTATIONBIO("PubChem classifications: bio and metabolites", 16777216,  null,null,null, 0, false), //2**24; Pubchem Annotations now have a separate flag
@@ -53,6 +54,7 @@ public enum DataSource {
     PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem classifications: safety and toxic", 67108864,  null,null,null, 0, false),
     PUBCHEMANNOTATIONFOOD("PubChem classification: food", 134217728,  null,null,null, 0, false),
 
+    //everything with flags greater equal to 2**32 are databases of artificial structures.
     KEGGMINE("KEGG Mine", 8589934592L, null,null, null, 8589934592L | 256L, true),
     ECOCYCMINE("EcoCyc Mine", 17179869184L, null,null, null, 17179869184L | 2048L, true),
     YMDBMINE("YMDB Mine", 34359738368L, null,null, null, 34359738368L | 65536L, true);
@@ -118,10 +120,11 @@ public enum DataSource {
         return Arrays.stream(DataSource.values()).filter(it -> it != ALL && !it.mines).toArray(DataSource[]::new);
     }
 
-    // 4294967292
+    // 4294959036
     private static long makeBIOFLAG() {
         long bioflag = 0L;
         for (int i = 2; i < 32; ++i) {
+            if (i==6 || i==13) continue; //PubMed and Zinc_bio should not be included into bio database
             bioflag |= (1L << i);
         }
         return bioflag;
