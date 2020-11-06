@@ -25,9 +25,7 @@ import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -196,12 +194,13 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     private static final int DB_LABEL_PADDING = 4;
 
     public static class DatabasePanel extends JPanel {
-        private final Font dbPanelFont = Fonts.FONT_BOLD.deriveFont(12f);
+        private final Font dbPanelFont = Fonts.FONT_BOLD.deriveFont(11f);
 
         public DatabasePanel() {
             setOpaque(false);
-            setLayout(new FlowLayout(FlowLayout.LEFT));
-            setBorder(new EmptyBorder(5, 2, 2, 2));
+            setLayout(new FlowLayout(FlowLayout.LEFT,2,2));
+            setPreferredSize(new Dimension(Integer.MAX_VALUE,
+                    ((int) (new TextLayout("W", dbPanelFont, new FontRenderContext(null, false, false)).getBounds().getHeight()) +  2 * DB_LABEL_PADDING + 10) * 3));
         }
 
         public void setCompound(FingerprintCandidateBean candidate) {
@@ -368,7 +367,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             agpanel.add(agreements, BorderLayout.WEST);
             add(agpanel);
 
-            ag = new FingerprintView(120);
+            ag = new FingerprintView(100);
             add(ag);
 
 
