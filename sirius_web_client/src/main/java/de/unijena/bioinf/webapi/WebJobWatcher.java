@@ -163,7 +163,7 @@ final class WebJobWatcher {
                     // else set back to normal for fast reaction times
                     if (toRemove == null || toRemove.isEmpty()) {
                         waitTime = (long) Math.min(waitTime * NetUtils.WAIT_TIME_MULTIPLIER, 30000);
-                        logInfo("No CSI:FingerID prediction jobs finished. Try again in " + waitTime / 1000d + "s");
+                        logDebug("No CSI:FingerID prediction jobs finished. Try again in " + waitTime / 1000d + "s");
                     } else {
                         waitTime = INIT_WAIT_TIME;
                     }
