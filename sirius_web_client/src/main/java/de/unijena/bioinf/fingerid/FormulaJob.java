@@ -55,18 +55,6 @@ public class FormulaJob extends BasicJJob<RestWithCustomDatabase.CandidateResult
     protected RestWithCustomDatabase.CandidateResult compute() throws Exception {
         return NetUtils.tryAndWait(() -> {
             final RestWithCustomDatabase.CandidateResult result = searchDatabase.loadCompoundsByFormula(formula, dbs, includeRestAllDb);
-            /* we no longer store protonated compounds as protonated compounds
-            final CompoundCandidateChargeState chargeState = CompoundCandidateChargeState.getFromPrecursorIonType(ionType);
-            if (chargeState != CompoundCandidateChargeState.NEUTRAL_CHARGE) {
-                final MolecularFormula hydrogen = MolecularFormula.parseOrThrow("H");
-                final RestWithCustomDatabase.CandidateResult protonated = searchDatabase.loadCompoundsByFormula(
-                        ionType.getCharge() > 0 ? formula.subtract(hydrogen) : formula.add(hydrogen),
-                        dbs, includeRestAllDb);
-
-                result.merge(protonated);
-            }
-             */
-
             return result;
         }, this::checkForInterruption);
     }

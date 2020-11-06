@@ -121,9 +121,9 @@ public class RestWithCustomDatabase {
         }
     }
 
-    private static long extractFilterBits(Collection<SearchableDatabase> dbs) {
+    private static OptionalLong extractFilterBits(Collection<SearchableDatabase> dbs) {
         return dbs.stream().filter(SearchableDatabase::isRestDb).
-                mapToLong(SearchableDatabase::getFilterFlag).reduce((a, b) -> a |= b).orElse(-1);
+                mapToLong(SearchableDatabase::getFilterFlag).reduce((a, b) -> a | b);
     }
 
 
@@ -143,9 +143,9 @@ public class RestWithCustomDatabase {
         if (dbs == null || dbs.isEmpty())
             throw new IllegalArgumentException("No search DB given!");
 
-        final long requestFilter = extractFilterBits(dbs);
-        if (requestFilter >= 0) {
-            api.consumeRestDB(requestFilter, getRestDBCacheDir(), restDb -> {
+        final OptionalLong requestFilterOpt = extractFilterBits(dbs);
+        if (requestFilterOpt.isPresent()) {
+            api.consumeRestDB(requestFilterOpt.getAsLong(), getRestDBCacheDir(), restDb -> {
                 candidates.addAll(restDb.lookupMolecularFormulas(ionMass, deviation, ionType));
             });
         }
@@ -170,14 +170,15 @@ public class RestWithCustomDatabase {
         try {
             final CandidateResult result;
 
-            final long requestFilter = extractFilterBits(dbs);
-            final long searchFilter = includeRestAllDb ? 0 : requestFilter;
-
-            if (searchFilter >= 0)
+            final OptionalLong requestFilter = extractFilterBits(dbs);
+            if (requestFilter.isPresent()) {
+                final long searchFilter = includeRestAllDb ? 0 : requestFilter.getAsLong();
                 result = api.applyRestDB(searchFilter, getRestDBCacheDir(), restDb -> new CandidateResult(
-                        restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
-            else
+                        restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter.getAsLong()));
+            } else {
+                logger.warn("Error when parsing filter bits vom DB list: '" + dbs.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) + "'. Returning empty search list from REST DB");
                 result = new CandidateResult();
+            }
 
             for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).collect(Collectors.toList()))
                 result.addCustom(cdb.name(),

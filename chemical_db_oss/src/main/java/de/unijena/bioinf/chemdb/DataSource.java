@@ -23,6 +23,9 @@ package de.unijena.bioinf.chemdb;
 import java.util.Arrays;
 import java.util.Locale;
 
+//ATTENTION Do not use `:{}[];` in the String here because that might break parsing
+//Names: names should be descriptive and short because they have to be rendered in the GUI
+//Flags/BitSets: Every bit that is set in our postgres db should also represented as DataSource here
 public enum DataSource {
     ALL("All included DBs", 0, null, null, null),
     ALL_BUT_INSILICO("All DBs, except combinatorial DBs", 2|makeBIOFLAG(), null, null, null),
@@ -46,13 +49,13 @@ public enum DataSource {
     PLANTCYC("Plantcyc", 131072, "unique_id","plantcyc",  "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s"),
     NORMAN("NORMAN", 262144,  null,null, null),
     //this is currently only interesting for internal testing.
-//    ADDITIONAL("additional", 524288,  null,null,null, 0, false), //proably mostly training structures, but maybe more.
+    ADDITIONAL("additional", 524288,  null,null,null, 0, false), //proably mostly training structures, but maybe more.
     SUPERNATURAL("SuperNatural", 1048576,  "id", "supernatural", "http://bioinf-applied.charite.de/supernatural_new/index.php?site=compound_search&start=0&supplier=all&tox=any&classification=all&compound_input=true&sn_id=%s"),
     COCONUT("COCONUT", 2097152,  "id", "coconut", null),
-    PUBCHEMANNOTATIONBIO("PubChem classifications: bio and metabolites", 16777216,  null,null,null, 0, false), //2**24; Pubchem Annotations now have a separate flag
-    PUBCHEMANNOTATIONDRUG("PubChem classifications: drug", 33554432,  null,null,null, 0, false),
-    PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem classifications: safety and toxic", 67108864,  null,null,null, 0, false),
-    PUBCHEMANNOTATIONFOOD("PubChem classification: food", 134217728,  null,null,null, 0, false),
+    PUBCHEMANNOTATIONBIO("PubChem class - bio and metabolites", 16777216,  null,null,null, 0, false), //2**24; Pubchem Annotations now have a separate flag
+    PUBCHEMANNOTATIONDRUG("PubChem class - drug", 33554432,  null,null,null, 0, false),
+    PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, 0, false),
+    PUBCHEMANNOTATIONFOOD("PubChem class - food", 134217728,  null,null,null, 0, false),
 
     //everything with flags greater equal to 2**32 are databases of artificial structures.
     KEGGMINE("KEGG Mine", 8589934592L, null,null, null, 8589934592L | 256L, true),

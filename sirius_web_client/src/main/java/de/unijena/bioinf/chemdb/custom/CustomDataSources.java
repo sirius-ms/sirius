@@ -36,7 +36,7 @@ public class CustomDataSources {
     private static final Set<DataSourceChangeListener> listeners = new LinkedHashSet<>();
     private static final int lastEnumBit;
     private static final BitSet bits;
-    public static final Map<String, Source> SOURCE_MAP;
+    private static final Map<String, Source> SOURCE_MAP;
 
     static {
         SOURCE_MAP = new LinkedHashMap<>(DataSource.values().length * +5);
@@ -200,6 +200,26 @@ public class CustomDataSources {
         return set;
     }
 
+    public static boolean containsDB(String name){
+        return SOURCE_MAP.containsKey(name);
+    }
+
+    public static long removeCustomSourceFromFlag(long flagToChange){
+        return flagToChange & getNonCustomSourceFlags();
+    }
+
+    public static long getNonCustomSourceFlags(){
+        return SOURCE_MAP.values().stream().filter(s -> !s.isCustomSource()).mapToLong(Source::flag).reduce((a, b) -> a | b).orElse(0);
+    }
+
+    public static long getCustomSourceFlags(){
+        return SOURCE_MAP.values().stream().filter(Source::isCustomSource).mapToLong(Source::flag).reduce((a, b) -> a | b).orElse(0);
+    }
+
+    public static List<CustomSource> getCustomSources(){
+        return SOURCE_MAP.values().stream().filter(Source::isCustomSource).map(s -> (CustomSource)s).collect(Collectors.toList());
+    }
+
     public static long getDBFlagsFromNames(Collection<String> names) {
         return getSourcesFromNamesStrm(names).mapToLong(Source::flag).reduce((a, b) -> a | b).orElse(0);
     }
@@ -212,6 +232,10 @@ public class CustomDataSources {
         return names.stream().map(CustomDataSources::getSourceFromName).filter(Objects::nonNull);
     }
 
+
+    public static long getFlagFromName(String name) {
+        return getSourceFromName(name).flag();
+    }
 
     public static Source getSourceFromName(String name) {
         return SOURCE_MAP.get(name);
