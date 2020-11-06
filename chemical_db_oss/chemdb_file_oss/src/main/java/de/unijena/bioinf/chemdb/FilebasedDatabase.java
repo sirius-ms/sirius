@@ -110,7 +110,7 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
     }
 
     public boolean containsFormula(MolecularFormula formula){
-        return getFileFor(formula).exists(); // should be faster that searching the array for large numbers
+        return getFileFor(formula).exists(); //todo binary search or FS operation?
     }
 
     @Override

@@ -80,7 +80,7 @@ public class DataSources {
     }
 
     public static long getDBFlag(@NotNull Set<DataSource> sources) {
-        return sources.stream().mapToLong(DataSource::flag).reduce((a, b) -> a |= b).orElse(0L);
+        return sources.stream().mapToLong(DataSource::flag).reduce((a, b) -> a | b).orElse(0);
     }
 
     public static Multimap<String, String> getLinkedDataSources(CompoundCandidate candidate) {
