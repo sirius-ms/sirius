@@ -45,6 +45,8 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
     private final boolean autoSaveComputedScorings;
 
     public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, boolean autoSaveComputedScorings) {
+        if (!Files.exists(scoringDirectory)) throw new IllegalArgumentException("Directory does not exist, please create first: "+scoringDirectory);
+        if (!Files.isDirectory(scoringDirectory)) throw new IllegalArgumentException(scoringDirectory+" is not a directory");
         this.scoringDirectory = scoringDirectory;
         this.bayesianScoringUtils = bayesianScoringUtils;
         this.autoSaveComputedScorings = autoSaveComputedScorings;
