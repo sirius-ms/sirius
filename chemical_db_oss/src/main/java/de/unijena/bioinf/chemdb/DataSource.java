@@ -46,7 +46,7 @@ public enum DataSource {
     PLANTCYC("Plantcyc", 131072, "unique_id","plantcyc",  "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s"),
     NORMAN("NORMAN", 262144,  null,null, null),
     //this is currently only interesting for internal testing.
-//    ADDITIONAL("additional", 524288,  null,null,null, 0, false), //proably mostly training structures, but maybe more.
+    ADDITIONAL("additional", 524288,  null,null,null, 0, false), //proably mostly training structures, but maybe more.
     SUPERNATURAL("SuperNatural", 1048576,  "id", "supernatural", "http://bioinf-applied.charite.de/supernatural_new/index.php?site=compound_search&start=0&supplier=all&tox=any&classification=all&compound_input=true&sn_id=%s"),
     COCONUT("COCONUT", 2097152,  "id", "coconut", null),
     PUBCHEMANNOTATIONBIO("PubChem classifications: bio and metabolites", 16777216,  null,null,null, 0, false), //2**24; Pubchem Annotations now have a separate flag
@@ -124,7 +124,7 @@ public enum DataSource {
     private static long makeBIOFLAG() {
         long bioflag = 0L;
         for (int i = 2; i < 32; ++i) {
-            if (i==6 || i==13) continue; //PubMed and Zinc_bio should not be included into bio database
+            if (i==6 || i==13 || i==19) continue; //PubMed and Zinc_bio should not be included into bio database
             bioflag |= (1L << i);
         }
         return bioflag;
