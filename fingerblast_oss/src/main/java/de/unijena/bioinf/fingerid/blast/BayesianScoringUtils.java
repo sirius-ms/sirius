@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.linked.TIntLinkedList;
@@ -272,8 +273,14 @@ public class BayesianScoringUtils {
     }
 
 
-    private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = 35132;
+//    private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = 35132;
+    private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = DataSource.BIO.flag(); //todo changed. use all bio
 //    private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = 256; //KEGG for fast testing
+
+    /**
+     *
+     * @return list of edges of between molecular properties. Only properties from masedFingerprint version used but saved with absolute indices
+     */
     private List<int[]> computeDefaultTreeTopology() throws ChemicalDatabaseException {
         Log.debug("retrieve fingerprints");
         long startTime = System.currentTimeMillis();
@@ -295,9 +302,17 @@ public class BayesianScoringUtils {
      * @throws ChemicalDatabaseException
      */
     private List<int[]> computeTreeTopologyOrThrow(List<FingerprintCandidate>  candidates, int minNumInformativeProperties, MolecularFormula formula) throws InsufficientDataException {
-
+        if (candidates.size()==0) throw new InsufficientDataException("No structure with fingerprints provided");
         boolean[][] fingerprints = extractFPMatrix(candidates, maskedFingerprintVersion);
-        int[] informativeProperties = getInformativeProperties(candidates, maskedFingerprintVersion, 0.99); //TODO which rate? 95%?. In publication 100%
+
+        //informative properties as relative indices
+        //todo changed for testing
+//        int[] informativeProperties = getInformativeProperties(candidates, maskedFingerprintVersion, 0.99); //TODO which rate? 95%?. In publication 100%
+
+        int[] informativeProperties = new int[fingerprints.length];
+        for (int i = 0; i < informativeProperties.length; i++) {
+            informativeProperties[i] = i;
+        }
 
         System.out.println(informativeProperties.length+" of "+maskedFingerprintVersion.size()+" properties are informative");
         if (informativeProperties.length<minNumInformativeProperties){
@@ -311,6 +326,8 @@ public class BayesianScoringUtils {
         Log.debug("computing mutual info took "+(endTime-startTime)/1000+" seconds");
 
         double[][] distance = negate(mutualInfo);
+
+        //edges are absolute indices
         List<int[]> edges = computeSpanningTree(distance, informativeProperties, formula);
 
         return edges;
@@ -446,7 +463,7 @@ public class BayesianScoringUtils {
      * @param candidates
      * @param maskedFingerprintVersion
      * @param maxAllowedImbalance value in [0.5, 1] which indicates how imbalanced a property can be to be assumed as informative. E.g. 0.95 mean the ratio of positive examples is allowed to be between 5% and 95%
-     * @return
+     * @return indices of informative properties, relative indices based on maskedFingerprintVersion
      */
     protected int[] getInformativeProperties(List<FingerprintCandidate> candidates, MaskedFingerprintVersion maskedFingerprintVersion, double maxAllowedImbalance) {
         final int numCandidates = candidates.size();
@@ -458,7 +475,7 @@ public class BayesianScoringUtils {
         int i = 0;
         for (FingerprintCandidate fpc : candidates) {
             boolean[] fp = maskedFingerprintVersion.mask(fpc.getFingerprint()).toBooleanArray();
-            for (int j = 0; j < fp.length; j++) {
+            for (int j = 0; j < fp.length; j++) { //todo improve efficiency
                 if (fp[j]) properties[j].set(i);
             }
             ++i;
@@ -505,6 +522,7 @@ public class BayesianScoringUtils {
 //        System.out.println("used properties:");
 //        System.out.println(Arrays.toString(usedProperties));
 
+        //only use the set of informative properties. dinstance matrix contains all.
         for (int i = 0; i < usedProperties.length; i++) {
             graph.addVertex(usedProperties[i]);
         }
