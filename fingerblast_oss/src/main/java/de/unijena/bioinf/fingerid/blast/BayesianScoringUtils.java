@@ -309,7 +309,7 @@ public class BayesianScoringUtils {
         //todo changed for testing
 //        int[] informativeProperties = getInformativeProperties(candidates, maskedFingerprintVersion, 0.99); //TODO which rate? 95%?. In publication 100%
 
-        int[] informativeProperties = new int[fingerprints.length];
+        int[] informativeProperties = new int[fingerprints[0].length];
         for (int i = 0; i < informativeProperties.length; i++) {
             informativeProperties[i] = i;
         }
