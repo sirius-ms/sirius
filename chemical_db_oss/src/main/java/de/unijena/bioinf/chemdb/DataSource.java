@@ -127,7 +127,7 @@ public enum DataSource {
     private static long makeBIOFLAG() {
         long bioflag = 0L;
         for (int i = 2; i < 32; ++i) {
-            if (i==6 || i==13) continue; //PubMed and Zinc_bio should not be included into bio database
+            if (i==6 || i==13 || i==19) continue; //PubMed and Zinc_bio should not be included into bio database
             bioflag |= (1L << i);
         }
         return bioflag;

@@ -324,7 +324,7 @@ public class InChIs {
         final int pOrQ = parseCharge(chargeString);
 
         if (pOrQ == 0) return formula;
-        else if ((pOrQ > 0) && isPCharge) {
+        else if (isPCharge? (pOrQ > 0) : (pOrQ < 0)) {
             return formula.add(MolecularFormula.parse(Math.abs(pOrQ) + "H"));
         } else {
             return formula.subtract(MolecularFormula.parse(pOrQ + "H"));
