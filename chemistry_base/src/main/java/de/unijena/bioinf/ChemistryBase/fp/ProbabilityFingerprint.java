@@ -32,7 +32,13 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
         super(fingerprintVersion);
         this.fingerprint = fingerprint.clone();
         if (fingerprint.length != fingerprintVersion.size()) throw new IllegalArgumentException("fp length does not match fingerprint version length: " + fingerprint.length + " vs. " + fingerprintVersion.size());
+    }
 
+    public ProbabilityFingerprint(FingerprintVersion fingerprintVersion, float[] fingerprint) {
+        super(fingerprintVersion);
+        this.fingerprint = new double[fingerprint.length];
+        for (int k=0; k < this.fingerprint.length; ++k) this.fingerprint[k] = fingerprint[k];
+        if (fingerprint.length != fingerprintVersion.size()) throw new IllegalArgumentException("fp length does not match fingerprint version length: " + fingerprint.length + " vs. " + fingerprintVersion.size());
     }
 
     public static ProbabilityFingerprint fromProbabilityArrayBinary(FingerprintVersion fingerprintVersion, byte[] binary){
