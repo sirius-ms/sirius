@@ -21,6 +21,8 @@
 package de.unijena.bioinf.retention;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.chemdb.LogPEstimator;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 public class SimpleCompound implements PredictableCompound {
@@ -29,12 +31,21 @@ public class SimpleCompound implements PredictableCompound {
     protected final String smiles;
     protected double retentionTime;
     protected final IAtomContainer molecule;
+    protected double xlogp;
 
     public SimpleCompound(InChI inchi, String smiles, IAtomContainer molecule, double retentionTime) {
         this.inchi = inchi;
         this.molecule = molecule;
         this.smiles = smiles;
         this.retentionTime = retentionTime;
+
+        // xlogp calculation
+        try {
+            this.xlogp = new LogPEstimator().prepareMolAndComputeLogP(molecule.clone());;
+        } catch (CDKException | CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public double getRetentionTime() {
