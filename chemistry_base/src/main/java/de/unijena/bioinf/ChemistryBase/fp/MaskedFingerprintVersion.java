@@ -50,6 +50,12 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
         }
     }
 
+    public static MaskedFingerprintVersion allowAll(FingerprintVersion v) {
+        Builder b = buildMaskFor(v);
+        b.enableAll();
+        return b.toMask();
+    }
+
     public int[] allowedIndizes() {
         return allowedIndizes.clone();
     }

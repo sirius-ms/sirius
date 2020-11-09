@@ -141,6 +141,16 @@ public class Tanimoto {
         return ((double)intersection)/(union);
     }
 
+    public static double tanimoto(boolean[] as, boolean[] bs) {
+        int union=0, intersection=0;
+        for (int k=0; k < as.length; ++k) {
+            if (as[k]||bs[k]) ++union;
+            if (as[k]&&bs[k]) ++intersection;
+        }
+        if (union==0) return 0d;
+        else return intersection/(double)union;
+    }
+
     public static double tanimoto(AbstractFingerprint left, AbstractFingerprint right) {
         if (left instanceof ProbabilityFingerprint) {
             if (right instanceof ProbabilityFingerprint) {
