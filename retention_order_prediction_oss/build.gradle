@@ -21,7 +21,7 @@
 dependencies {
     compile project(':chemistry_base')
     compile project(':fingerprinter_oss')
-    //compile name: "fingerid", group: "de.unijena.bioinf.ms", version: "1.4.3-SNAPSHOT"
+    compile project(':chemical_db_oss:chemdb_utils_oss')
     testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
     compile name: "cdk-qsarbond", group:"org.openscience.cdk", version: "$cdk_version"
 }
