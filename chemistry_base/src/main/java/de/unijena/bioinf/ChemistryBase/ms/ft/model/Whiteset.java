@@ -150,6 +150,25 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return Arrays.asList(decompositionSet.toArray(new Decomposition[decompositionSet.size()]));
     }
 
+    /*
+     * Bad hack.
+     * Basically, the >formula field in .ms files expect neutral formulas. However, as sometimes strange stuff happens
+     * (like adducts or intrinsical charged affect the formula), we re-apply the ionization to all formulas such that
+     * the correct formula is definitely in the whiteset.
+
+    public Whiteset applyIonizationBothWays(PrecursorIonType ionType) {
+        Set<MolecularFormula> n = new HashSet<>(neutralFormulas);
+        Set<MolecularFormula> m = new HashSet<>(measuredFormulas);
+        for (MolecularFormula f : measuredFormulas) {
+            n.add(ionType.precursorIonToNeutralMolecule(f));
+        }
+        for (MolecularFormula f : neutralFormulas) {
+            n.add(ionType.neutralMoleculeToPrecursorIon(f));
+        }
+        return new Whiteset(n,m);
+    }
+     */
+
     public boolean isEmpty() {
         return measuredFormulas.isEmpty() && neutralFormulas.isEmpty();
     }
