@@ -303,35 +303,69 @@ public class BayesianScoringUtils {
      */
     private List<int[]> computeTreeTopologyOrThrow(List<FingerprintCandidate>  candidates, int minNumInformativeProperties, MolecularFormula formula) throws InsufficientDataException {
         if (candidates.size()==0) throw new InsufficientDataException("No structure with fingerprints provided");
-        boolean[][] fingerprints = extractFPMatrix(candidates, maskedFingerprintVersion);
+//        boolean[][] fingerprints = extractFPMatrix(candidates, maskedFingerprintVersion);
 
         //informative properties as relative indices
         //todo changed for testing
 //        int[] informativeProperties = getInformativeProperties(candidates, maskedFingerprintVersion, 0.99); //TODO which rate? 95%?. In publication 100%
 
-        int[] informativeProperties = new int[fingerprints[0].length];
-        for (int i = 0; i < informativeProperties.length; i++) {
-            informativeProperties[i] = i;
-        }
+//        int[] informativeProperties = new int[fingerprints[0].length];
+//        for (int i = 0; i < informativeProperties.length; i++) {
+//            informativeProperties[i] = i;
+//        }
 
-        System.out.println(informativeProperties.length+" of "+maskedFingerprintVersion.size()+" properties are informative");
-        if (informativeProperties.length<minNumInformativeProperties){
-            throw new InsufficientDataException("to few informative properties: "+informativeProperties.length);
-        }
+//        System.out.println(informativeProperties.length+" of "+maskedFingerprintVersion.size()+" properties are informative");
+//        if (informativeProperties.length<minNumInformativeProperties){
+//            throw new InsufficientDataException("to few informative properties: "+informativeProperties.length);
+//        }
 
 
         long startTime = System.currentTimeMillis();
-        double[][] mutualInfo = mutualInfoRows(transpose(fingerprints));
+//        double[][] mutualInfo = mutualInfoRows(transpose(fingerprints));
+
+        MutualInformationAndIndices mutualInformationAndIndices = mutualInfoBetweenProperties(candidates.stream().map(FingerprintCandidate::getFingerprint).collect(Collectors.toList()), 1.0, minNumInformativeProperties);
         long endTime = System.currentTimeMillis();
         Log.debug("computing mutual info took "+(endTime-startTime)/1000+" seconds");
 
-        double[][] distance = negate(mutualInfo);
+//        double[][] distance = negate(mutualInfo);
+
+        int[] informativePropertiesDummy = new int[mutualInformationAndIndices.usedProperties.length];
+        for (int i = 0; i < informativePropertiesDummy.length; i++) {
+            informativePropertiesDummy[i] = i;
+        }
 
         //edges are absolute indices
-        List<int[]> edges = computeSpanningTree(distance, informativeProperties, formula);
+        TreeEdgesAndRoot treeEdgesAndRoot = computeSpanningTree(mutualInformationAndIndices.mutualInfo, informativePropertiesDummy, formula, true);
+        List<int[]> edges = treeEdgesAndRoot.edges;
+        edges = mapPropertyIndex(edges, mutualInformationAndIndices.usedProperties);
+
+        final boolean appendUnusedPropertiesToRoot = true;
+        if (appendUnusedPropertiesToRoot) {
+
+            int[] usedProperties = mutualInformationAndIndices.usedProperties; //are sorted
+            int idx = 0;
+            for (int relPropIdx = 0; relPropIdx < maskedFingerprintVersion.size(); relPropIdx++) {
+                if (usedProperties[idx]==relPropIdx) {
+                    ++idx;
+                } else {
+                    //not used so far
+                    edges.add(new int[]{treeEdgesAndRoot.root, relPropIdx});
+
+                }
+
+            }
+        }
 
         return edges;
 
+    }
+
+    private List<int[]> mapPropertyIndex(List<int[]> edges, int[] usedProperties) {
+        List<int[]> edgesNew = new ArrayList<>();
+        for (int[] edge : edges) {
+            edgesNew.add(new int[]{usedProperties[edge[0]], usedProperties[edge[1]]});
+        }
+        return edgesNew;
     }
 
 
@@ -495,15 +529,15 @@ public class BayesianScoringUtils {
 
     }
 
-    protected List<int[]> computeSpanningTree(double[][] distance, int[] usedProperties, MolecularFormula formula) {
+    protected TreeEdgesAndRoot computeSpanningTree(double[][] distance, int[] usedProperties, MolecularFormula formula, boolean negateWeights) {
         Log.debug("create graph and compute");
         if (usedProperties.length==0){
             Log.debug("0 used properties. No tree to be computed.");
-            return Collections.EMPTY_LIST;
+            return new TreeEdgesAndRoot(Collections.EMPTY_LIST, -1);
         } else if (usedProperties.length==1){
             //the same?
             Log.debug("1 used property. No tree to be computed.");
-            return Collections.EMPTY_LIST;
+            return new TreeEdgesAndRoot(Collections.EMPTY_LIST, -1);
         }
         SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Integer, DefaultWeightedEdge>(DefaultWeightedEdge.class);
         //construct graph ....
@@ -531,7 +565,8 @@ public class BayesianScoringUtils {
             for (int j = i+1; j < usedProperties.length; j++) {
                 int propJ = usedProperties[j];
                 DefaultWeightedEdge e = graph.addEdge(propI,propJ);
-                graph.setEdgeWeight(e, distance[propI][propJ]);
+                final double weight = negateWeights ? -distance[propI][propJ] : distance[propI][propJ];
+                graph.setEdgeWeight(e, weight);
             }
         }
 
@@ -612,7 +647,8 @@ public class BayesianScoringUtils {
                 }
             });
         }
-        return edges;
+
+        return new TreeEdgesAndRoot(edges, root);
     }
 
 
@@ -638,6 +674,80 @@ public class BayesianScoringUtils {
         return negation;
     }
 
+
+    /**
+     *
+     * @param fingerprints these are the already masked fingerprints
+     * @param maxAllowedImbalance value in [0.5, 1] which indicates how imbalanced a property can be to be assumed as informative. E.g. 0.95 mean the ratio of positive examples is allowed to be between 5% and 95%
+     * @return indices of informative properties, relative indices based on maskedFingerprintVersion, and mutualInformation matrix of these informative properties
+     */
+    private MutualInformationAndIndices mutualInfoBetweenProperties(List<Fingerprint> fingerprints, double maxAllowedImbalance, int minNumInformativeProperties) throws InsufficientDataException {
+        final int numOfExamples = fingerprints.size();
+        final int numOfProperties = fingerprints.get(0).getFingerprintVersion().size();
+        int maxAllowedImbalanceAbsoluteCount = (int)Math.ceil(maxAllowedImbalance*numOfExamples);
+
+        BitSet[] bitSets = new BitSet[numOfProperties];
+
+        for (int i = 0; i < numOfProperties; i++) {
+            final BitSet bitSet = new BitSet(numOfExamples);
+            bitSets[i] = bitSet;
+        }
+
+        int fingerprintIdx = 0;
+        for (Fingerprint fingerprint : fingerprints) {
+            //iterate over active properties
+            for (FPIter fpIter : fingerprint.presentFingerprints()) {
+                if (fpIter.isSet()){
+                    //iterator reports absolute indices.
+                    final int relIndex = fingerprint.getFingerprintVersion().getRelativeIndexOf(fpIter.getIndex());
+                    bitSets[relIndex].set(fingerprintIdx);
+                }
+            }
+            ++fingerprintIdx;
+        }
+
+        TIntArrayList informativeProperties = new TIntArrayList();
+        for (int j = 0; j < bitSets.length; j++) {
+            BitSet property = bitSets[j];
+            int card = property.cardinality();
+            if (card!=0 && card!=numOfExamples && card<=maxAllowedImbalanceAbsoluteCount && (numOfExamples-card)<=maxAllowedImbalanceAbsoluteCount){
+                // properties with all 0 or 1 are never informative
+                informativeProperties.add(j);
+            }
+        }
+
+        int[] informativePropertiesArray = informativeProperties.toArray();
+
+        System.out.println(informativePropertiesArray.length+" of "+numOfProperties+" properties are informative");
+        if (informativePropertiesArray.length<minNumInformativeProperties){
+            throw new InsufficientDataException("to few informative properties: "+informativePropertiesArray.length);
+        }
+
+        BitSet[] selectedProperties = new BitSet[informativePropertiesArray.length];
+        for (int i = 0; i < informativePropertiesArray.length; i++) {
+            selectedProperties[i] = bitSets[informativePropertiesArray[i]];
+        }
+
+        double[][] mutualInfo =  mutualInfo(selectedProperties, numOfExamples);
+        return new MutualInformationAndIndices(mutualInfo, informativePropertiesArray);
+    }
+
+    private double[][] mutualInfoColumns(boolean[][] matrix){
+        final int numOfExamples = matrix.length;
+        final int numOfProperties = matrix[0].length;
+        BitSet[] bitSets = new BitSet[numOfProperties];
+
+        for (int i = 0; i < numOfProperties; i++) {
+            final BitSet bitSet = new BitSet(numOfExamples);
+            for (int j = 0; j < numOfExamples; j++) {
+                if (matrix[j][i]) bitSet.set(j);
+            }
+            bitSets[i] = bitSet;
+        }
+
+        return mutualInfo(bitSets, numOfExamples);
+    }
+
     private double[][] mutualInfoRows(boolean[][] matrix){
         final int numOfExamples = matrix[0].length;
         BitSet[] bitSets = new BitSet[matrix.length];
@@ -651,14 +761,14 @@ public class BayesianScoringUtils {
             bitSets[i] = bitSet;
         }
 
-        return mutualInfoRows(bitSets, numOfExamples);
+        return mutualInfo(bitSets, numOfExamples);
     }
 
-    private double[][] mutualInfoRows(BitSet[] propertyBitSets, int numOfExamples){
+    private double[][] mutualInfo(BitSet[] propertyBitSets, int lengthOfBitset){
         final int numOfProperties = propertyBitSets.length;
 
-        double[] entropy = entropyPerRow(propertyBitSets, numOfExamples);
-        double[][] condEntropy = conditionalEntropyRows(propertyBitSets, numOfExamples);
+        double[] entropy = entropy(propertyBitSets, lengthOfBitset);
+        double[][] condEntropy = conditionalEntropyRows(propertyBitSets, lengthOfBitset);
         double[][] mutualInfo = new double[numOfProperties][numOfProperties];
         for (int i = 0; i < numOfProperties; i++) {
             for (int j = 0; j < numOfProperties; j++) {
@@ -668,7 +778,7 @@ public class BayesianScoringUtils {
         return mutualInfo;
     }
 
-    private double[] entropyPerRow(BitSet[] propertyBitSets, int numOfExamples){
+    private double[] entropy(BitSet[] propertyBitSets, int numOfExamples){
         final int numOfProperties = propertyBitSets.length;
         final double l = numOfExamples;
 
@@ -688,8 +798,6 @@ public class BayesianScoringUtils {
 
             entropy[i] = -prob_ones*Math.log(prob_ones)-prob_zeros*Math.log(prob_zeros);
         }
-//        System.out.println("warning: missing state. Property never set: "+Arrays.toString(neverSet.toArray()));
-//        System.out.println("warning: missing state. Property always set: "+Arrays.toString(alwaysSet.toArray()));
 
         Log.debug("warning: contains "+neverSet.size()+ "missing states. properties never set");
         Log.debug("warning: contains "+alwaysSet.size()+"missing states. properties always set");
@@ -742,4 +850,161 @@ public class BayesianScoringUtils {
         return condEntropy;
     }
 
+    private class MutualInformationAndIndices {
+        final double[][] mutualInfo;
+        final int[] usedProperties;
+
+        private MutualInformationAndIndices(double[][] mutualInfo, int[] usedProperties) {
+            this.mutualInfo = mutualInfo;
+            this.usedProperties = usedProperties;
+        }
+    }
+
+    private class TreeEdgesAndRoot {
+        final List<int[]> edges;
+        final int root;
+
+        private TreeEdgesAndRoot(List<int[]> edges, int root) {
+            this.edges = edges;
+            this.root = root;
+        }
+    }
+
+    private BayesianScoringUtils(){
+        this.chemicalDatabase = null;
+        this.maskedFingerprintVersion = null;
+        this.trainingData = null;
+        this.biotransformations = null;
+
+        //todo these number are only checked, if no scoring already exists
+        this.minNumStructuresTopologyMfSpecificScoring = 0;
+        this.minNumStructuresTopologySameMf = 0;
+        this.minNumStructuresTopologyIncludingBiotransformations = 0;
+        this.minNumInformativePropertiesMfSpecificScoring = 0;
+
+        this.pseudoCount = 0;
+        this.useCorrelationScoring = false;
+    }
+//    public static void main(String... args) throws InsufficientDataException {
+//
+////        boolean[][] fingerprints = new boolean[][]{
+////                new boolean[]{false, false, true, true, false},
+////                new boolean[]{false, false, true, true, true},
+////                new boolean[]{false, false, true, true, false},
+////
+////        };
+//        boolean[][] fingerprints = new boolean[][]{
+//                new boolean[]{true, false, true, true, false},
+//                new boolean[]{false, true, true, true, true},
+//                new boolean[]{false, false, true, true, false},
+//
+//        };
+//
+//        boolean[][] fingerprints2 = new boolean[][]{
+//                new boolean[]{true, false, false, true, false, true, false},
+//                new boolean[]{false, true, false, true, false, true, true},
+//                new boolean[]{false, false, false, true, false, true, false},
+//
+//        };
+//        FingerprintVersion version = new TestVersion(7);
+//        MaskedFingerprintVersion maskedVersion = MaskedFingerprintVersion.buildMaskFor(version).disable(2).disable(4).toMask();
+//        Fingerprint[] fps = new Fingerprint[fingerprints2.length];
+//        for (int i = 0; i < fingerprints2.length; i++) {
+//            fps[i] = maskedVersion.mask(new BooleanFingerprint(version, fingerprints2[i]));
+//
+//        }
+//        BayesianScoringUtils bayesianScoringUtils = new BayesianScoringUtils();
+//        long startTime = System.currentTimeMillis();
+//        boolean[][] transposed = bayesianScoringUtils.transpose(fingerprints);
+//        System.out.println();
+//        double[][] mutualInfo = bayesianScoringUtils.mutualInfoRows(transposed);
+//        double[][] mutualInfo2 = bayesianScoringUtils.mutualInfoColumns(fingerprints);
+////        MutualInformationAndIndices mutualInformationAndIndices = bayesianScoringUtils.mutualInfoBetweenProperties(fps, 1.0);
+//
+//        MutualInformationAndIndices mutualInformationAndIndices = bayesianScoringUtils.mutualInfoBetweenProperties(Arrays.asList(fps.clone()), 1.0, 0);
+//
+//        int[] informativePropertiesDummy = new int[mutualInformationAndIndices.usedProperties.length];
+//        for (int i = 0; i < informativePropertiesDummy.length; i++) {
+//            informativePropertiesDummy[i] = i;
+//        }
+//
+//        //edges are absolute indices
+//        TreeEdgesAndRoot treeEdgesAndRoot = bayesianScoringUtils.computeSpanningTree(mutualInformationAndIndices.mutualInfo, informativePropertiesDummy, null, true);
+//        List<int[]> edges = treeEdgesAndRoot.edges;
+//        edges = bayesianScoringUtils.mapPropertyIndex(edges, mutualInformationAndIndices.usedProperties);
+//        final boolean appendUnusedPropertiesToRoot = true;
+//        if (appendUnusedPropertiesToRoot) {
+//
+//            int[] usedProperties = mutualInformationAndIndices.usedProperties; //are sorted
+//            int idx = 0;
+//            for (int relPropIdx = 0; relPropIdx < maskedVersion.size(); relPropIdx++) {
+//                if (usedProperties[idx]==relPropIdx) {
+//                    ++idx;
+//                } else {
+//                    //not used so far
+//                    edges.add(new int[]{treeEdgesAndRoot.root, relPropIdx});
+//
+//                }
+//
+//            }
+//        }
+//
+//        double[][] mutualInfo3 = mutualInformationAndIndices.mutualInfo;
+//        long endTime = System.currentTimeMillis();
+////        Log.debug("computing mutual info took "+(endTime-startTime)/1000+" seconds");
+//
+//        double[][] distance = bayesianScoringUtils.negate(mutualInfo);
+////        int[] infProps =bayesianScoringUtils.getInformativeProperties()
+//        System.out.println();
+//    }
+//
+//    private static class PseudoProperty extends MolecularProperty {
+//        private int index;
+//        private PseudoProperty(int index) {
+//            this.index = index;
+//        }
+//        @Override
+//        public String getDescription() {
+//            return String.valueOf(index);
+//        }
+//
+//        @Override
+//        public boolean equals(Object o) {
+//            if (this == o) return true;
+//            if (o == null || getClass() != o.getClass()) return false;
+//
+//            PseudoProperty that = (PseudoProperty) o;
+//
+//            return index == that.index;
+//
+//        }
+//
+//        @Override
+//        public int hashCode() {
+//            return index;
+//        }
+//    }
+//
+//    protected static final class TestVersion extends FingerprintVersion {
+//
+//        private final int size;
+//        public TestVersion(int size) {
+//            this.size=size;
+//        }
+//
+//        @Override
+//        public MolecularProperty getMolecularProperty(int index) {
+//            return new PseudoProperty(index);
+//        }
+//
+//        @Override
+//        public int size() {
+//            return size;
+//        }
+//
+//        @Override
+//        public boolean compatible(FingerprintVersion fingerprintVersion) {
+//            return fingerprintVersion.equals(this);
+//        }
+//    }
 }
