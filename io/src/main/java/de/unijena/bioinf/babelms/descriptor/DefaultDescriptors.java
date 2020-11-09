@@ -493,6 +493,11 @@ class DefaultDescriptors {
         @Override
         public <G, D, L> SpectralRecalibration read(DataDocument<G, D, L> document, D dictionary) {
             if (!document.hasKeyInDictionary(dictionary, "recalibration")) return SpectralRecalibration.none();
+            if (document.isString(document.getFromDictionary(dictionary, "recalibration"))) {
+                //backward compatibility
+                RecalibrationFunction merged = RecalibrationFunction.fromString(document.getStringFromDictionary(dictionary, "recalibration"));
+                return new SpectralRecalibration(null, merged);
+            }
             final D rec = document.getDictionaryFromDictionary(dictionary, "recalibration");
             final RecalibrationFunction merged;
             if (!document.hasKeyInDictionary(rec,"merged")) merged = RecalibrationFunction.identity();
