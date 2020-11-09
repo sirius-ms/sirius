@@ -240,6 +240,10 @@ public class TableSelection implements Cloneable {
         return id;
     }
 
+    public short[] makeCompomer() {
+        return new short[entries.length];
+    }
+
     public <S> Map<Element, S> toMap() {
         return new ElementMap<S>(this);
     }
