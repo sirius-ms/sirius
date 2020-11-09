@@ -46,7 +46,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
 
     public CommonFragmentAndLossScorerNoiseIntensityWeighted(double threshold) {
         super(threshold);
-        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 2d; //changed from 5
+        MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 1d; //changed from 5
         beta = 0.00001;
         double xmin = 0.002;
 //        double medianNoise = 0.005;
@@ -57,7 +57,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
     }
 
 
-    private double peakIsNoNoise(double relativeIntensity) {
+    protected double peakIsNoNoise(double relativeIntensity) {
         if (relativeIntensity>=1d) return 1d;
         final double clipping = 1d - distribution.getCumulativeProbability(1d);
         final double peakIntensity = relativeIntensity;

@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -39,6 +40,24 @@ import java.util.Optional;
  * - every modification that has to be applied to the precursor ion AND all of its fragments go into ionization
  * - every modification that only apply to the precursor (e.g. in-source fragmentation) goes into modification
  * - every modification that apply to the precursor but might get lost in the fragments (e.g. adducts) goes into modification
+ * <p>
+ * We distinguish three different kind of formula types:
+ * - NEUTRAL formulas are molecular formulas without any charge, protonation, adduct, in-source, modification. These
+ *   are molecular formulas of the original molecule as they are stored in the database. An exception are intrinsical
+ *   charged compounds, as those are represented in their neutralized form, too.
+ * - MEASURED formulas are the neutral form of the molecule as it is measured in the MS. This means: it does not contain
+ *   the charge, but it contains all other modifications (like in-source, adducts) but no H+, Na+ and so on.
+ * - PRECURSOR formulas are the charged variant as it is measured in the MS. It contains a molecular formula that is, when adding the electron masses, identical in mass to the m/z of the peak.
+ *
+ * Internally, SIRIUS will always work with MEASURED formulas. However, whenever we communicate with a database or with
+ * user input, we assume that this input might be the NEUTRAL formula. Again, a special exception are intrinsical-charged
+ * compounds: they might be represented in their PRECURSOR formula when fetching them from database or getting them
+ * from user input. In this case, the method that directly receives this input has to transform the formula into its
+ * NEUTRAL form. This can be done in the Database class or in the Ms2Validator class.
+ * </p>
+ *
+ *
+ *
  */
 public class PrecursorIonType implements TreeAnnotation {
 
@@ -49,7 +68,6 @@ public class PrecursorIonType implements TreeAnnotation {
     private final Ionization ionization;
     private final MolecularFormula inSourceFragmentation;
     private final MolecularFormula adduct;
-    private final MolecularFormula modification;
     private final String name;
 
 
@@ -101,7 +119,6 @@ public class PrecursorIonType implements TreeAnnotation {
         this.ionization = ion;
         this.inSourceFragmentation = insource == null ? MolecularFormula.emptyFormula() : insource;
         this.adduct = adduct == null ? MolecularFormula.emptyFormula() : adduct;
-        this.modification = this.adduct.subtract(this.inSourceFragmentation);
         this.special = special;
         this.name = formatToString();
     }
@@ -140,7 +157,7 @@ public class PrecursorIonType implements TreeAnnotation {
 
     public boolean equals(PrecursorIonType other) {
         if (other == null) return false;
-        return this.special == other.special && this.ionization.equals(other.ionization) && this.modification.equals(other.modification);
+        return this.special == other.special && this.ionization.equals(other.ionization) && this.adduct.equals(other.adduct) && this.inSourceFragmentation.equals(other.inSourceFragmentation);
     }
 
     public boolean equals(Object other) {
@@ -168,7 +185,7 @@ public class PrecursorIonType implements TreeAnnotation {
 
     @Override
     public int hashCode() {
-        return 31 * ionization.hashCode() + modification.hashCode() + 17 * special.hashCode();
+        return Objects.hash(ionization, inSourceFragmentation, adduct, special);
     }
 
     @Override
@@ -246,79 +263,114 @@ public class PrecursorIonType implements TreeAnnotation {
         return ionization.getCharge();
     }
 
-    //////// ????????????????
+    /**
+     *
+     * @param neutral molecular formula without any modification in neutralized form (even when intrinsical-charged)
+     * @return molecular formula with adducts, in-source fragmentations and so on, but WITHOUT charge (no H+, Na+, ...)
+     */
     public MolecularFormula neutralMoleculeToMeasuredNeutralMolecule(MolecularFormula neutral) {
-        /*
-        if (isIntrinsicalCharged())
-            neutral = getCharge() > 0 ? neutral.subtract(MolecularFormula.getHydrogen()) : neutral.add(MolecularFormula.getHydrogen());
-
-         */
         return neutral.subtract(inSourceFragmentation).add(adduct);
     }
 
     /**
-     * The measured neutral molecule is the ion without the charge (proton, sodium or similar). But it contains all
-     * adducts and other modificatons (like in source fragments)
+     * @param measured molecular formula with adducts, in-source fragmentations and so on, but WITHOUT charge (no H+, Na+, ...)
+     * @return molecular formula without any modification in neutralized form (even when intrinsical-charged)
      */
     public MolecularFormula measuredNeutralMoleculeToNeutralMolecule(MolecularFormula measured) {
-        if (isIntrinsicalCharged())
-            measured = getCharge() > 0 ? measured.add(MolecularFormula.getHydrogen()) : measured.subtract(MolecularFormula.getHydrogen());
-        if (inSourceFragmentation == null) return measured;
         return measured.add(inSourceFragmentation).subtract(adduct);
+    }
+
+    /**
+     * @param precursor molecular formula with adducts, in-source fragmentations AND charge (atoms of the ionization)
+     * @return molecular formula without any modification in neutralized form (even when intrinsical-charged)
+     */
+    public MolecularFormula precursorIonToNeutralMolecule(MolecularFormula precursor) {
+        return precursor.subtract(adduct).add(inSourceFragmentation).subtract(ionization.getAtoms());
+    }
+
+    /**
+     * @param formula molecular formula without any modification in neutralized form (even when intrinsical-charged)
+     * @return molecular formula with adducts, in-source fragmentations AND charge (atoms of the ionization)
+     */
+    public MolecularFormula neutralMoleculeToPrecursorIon(MolecularFormula formula) {
+        return formula.add(adduct).subtract(inSourceFragmentation).add(ionization.getAtoms());
+    }
+
+    /**
+     *
+     * @param neutral molecular formula without any modification in neutralized form (even when intrinsical-charged)
+     * @return molecular formula with adducts, in-source fragmentations and so on, but WITHOUT charge (no H+, Na+, ...)
+     */
+    public double neutralMassToMeasuredNeutralMass(double neutral) {
+        return neutral - inSourceFragmentation.getMass() + adduct.getMass();
+    }
+
+    /**
+     * @param measured molecular formula with adducts, in-source fragmentations and so on, but WITHOUT charge (no H+, Na+, ...)
+     * @return molecular formula without any modification in neutralized form (even when intrinsical-charged)
+     */
+    public double measuredNeutralMassToNeutralMass(double measured) {
+        return measured + inSourceFragmentation.getMass() - adduct.getMass();
     }
 
 
     /**
-     * the precursor ion is the measured(!) ion. The neutral molecule is the "expected" neutral molecule.
-     * Translation from precursor to expected molecule involves removing of the adduct and reverting all
-     * in source fragmentations.
+     * @param precursor molecular formula with adducts, in-source fragmentations AND charge (atoms of the ionization)
+     * @return molecular formula without any modification in neutralized form (even when intrinsical-charged)
      */
-    public MolecularFormula precursorIonToNeutralMolecule(MolecularFormula precursor) {
-        return precursor.subtract(modification).subtract(ionization.getAtoms());
+    public double precursorMassToNeutralMass(double precursor) {
+        return ionization.subtractFromMass(precursor - adduct.getMass() + inSourceFragmentation.getMass());
     }
 
-    public MolecularFormula neutralMoleculeToPrecursorIon(MolecularFormula formula) {
-        return formula.add(modification).add(ionization.getAtoms());
+    /**
+     * @param formula molecular formula without any modification in neutralized form (even when intrinsical-charged)
+     * @return molecular formula with adducts, in-source fragmentations AND charge (atoms of the ionization)
+     */
+    public double neutralMassToPrecursorMass(double formula) {
+        return ionization.addToMass(formula + adduct.getMass() - inSourceFragmentation.getMass());
     }
+
+
+    /**
+     * @param precursor molecular formula with adducts, in-source fragmentations AND charge (atoms of the ionization)
+     * @return molecular formula without any modification in neutralized form (even when intrinsical-charged)
+     */
+    public double precursorMassToMeasuredNeutralMass(double precursor) {
+        return ionization.subtractFromMass(precursor);
+    }
+
+    /**
+     * @param formula molecular formula without any modification in neutralized form (even when intrinsical-charged)
+     * @return molecular formula with adducts, in-source fragmentations AND charge (atoms of the ionization)
+     */
+    public double measuredNeutralMassToPrecursorMass(double formula) {
+        return ionization.addToMass(formula);
+    }
+
+
 
     /**
      * @return the mass difference between the ion mass and the neutral mass including in-source fragmentation, adduct, and electron masses
      */
     public double getModificationMass() {
-        return ionization.getMass() + modification.getMass();
+        return ionization.getMass() + adduct.getMass() - inSourceFragmentation.getMass();
     }
 
     public double subtractIonAndAdduct(double mz) {
         return ionization.subtractFromMass(mz - adduct.getMass());
     }
 
-    /*
-    TODO: in-source is not contained here. is this correct? CHECK!
-     */
     public double addIonAndAdduct(double mz) {
         return ionization.addToMass(mz + adduct.getMass());
     }
 
-    /**
-     * is used by mass decomposer to translate a m/z value into a neutralized mass which can then be decomposed into
-     * a molecular formula (of a neutral molecule)
-     */
-    public double precursorMassToNeutralMass(double mz) {
-        if (isIntrinsicalCharged()) return mz - modification.getMass() + Charge.ELECTRON_MASS * ionization.getCharge();
-        return ionization.subtractFromMass(mz - modification.getMass());
-    }
-
-    public double neutralMassToPrecursorMass(double mz) {
-        if (isIntrinsicalCharged()) return mz + modification.getMass() - Charge.ELECTRON_MASS * ionization.getCharge();
-        return ionization.addToMass(mz + modification.getMass());
-    }
 
 
     /**
      * @return the sum of all modifications (adducts and in-source fragmentations)
      */
     public MolecularFormula getModification() {
-        return modification;
+        return adduct.subtract(inSourceFragmentation);
     }
 
     public Ionization getIonization() {
@@ -342,6 +394,6 @@ public class PrecursorIonType implements TreeAnnotation {
     }
 
     public boolean isPlainProtonationOrDeprotonation() {
-        return this.modification.isEmpty() && this.inSourceFragmentation.isEmpty() && ((getCharge() > 0 && ionization.equals(PeriodicTable.getInstance().getProtonation())) || (getCharge() < 0 && ionization.equals(PeriodicTable.getInstance().getDeprotonation()))) && !isIntrinsicalCharged();
+        return this.adduct.isEmpty() && this.inSourceFragmentation.isEmpty() && ((getCharge() > 0 && ionization.equals(PeriodicTable.getInstance().getProtonation())) || (getCharge() < 0 && ionization.equals(PeriodicTable.getInstance().getDeprotonation()))) && !isIntrinsicalCharged();
     }
 }
