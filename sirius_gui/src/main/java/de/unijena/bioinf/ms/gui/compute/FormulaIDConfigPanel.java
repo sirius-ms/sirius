@@ -170,7 +170,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.emptyList();
             return (elementsToAutoDetect.isEmpty() ? "," :
                     elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
-        }); //todo check if this makes scence
+        }); //todo check if this makes sense
 
 
         // ilp timeouts
@@ -248,9 +248,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
                 pi.getAnnotation(FormulaConstraints.class).
                         ifPresentOrElse(c -> {
-                                    final Set<Element> pe = pp.getSetOfPredictableElements();
                                     for (Element element : c.getChemicalAlphabet()) {
-                                        if (!pe.contains(element)) {
+                                        if (c.getUpperbound(element)<=0) {
                                             c.setLowerbound(element, 0);
                                             c.setUpperbound(element, 0);
                                         }

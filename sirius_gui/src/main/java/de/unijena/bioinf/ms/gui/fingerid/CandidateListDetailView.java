@@ -25,13 +25,13 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.chemdb.DataSources;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -52,6 +52,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalInt;
 
 public class CandidateListDetailView extends CandidateListView implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>, MouseListener, ActionListener {
     public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
@@ -224,11 +225,7 @@ public class CandidateListDetailView extends CandidateListView implements Active
         if (ag != null)
             rowcol = calculateAgreementIndex(ag, relativeRect, point);
 
-        if (rowcol != null) {
-            highlightAgree = candidate.substructures.indexAt(rowcol[0], rowcol[1]);
-            structureSearcher.reloadList(source, highlightAgree, highlightedCandidate);
-            molecularPropertyMatcherEditor.highlightChanged(filterByMolecularPropertyButton.isSelected());
-        } else {
+        if (rowcol == null || candidate.substructures.indexAt(rowcol[0], rowcol[1]).isEmpty()) {
             if (highlightAgree >= 0) {
                 highlightAgree = -1;
                 structureSearcher.reloadList(source, highlightAgree, highlightedCandidate);
@@ -241,6 +238,10 @@ public class CandidateListDetailView extends CandidateListView implements Active
                     break;
                 }
             }
+        } else {
+            highlightAgree = candidate.substructures.indexAt(rowcol[0], rowcol[1]).getAsInt();
+            structureSearcher.reloadList(source, highlightAgree, highlightedCandidate);
+            molecularPropertyMatcherEditor.highlightChanged(filterByMolecularPropertyButton.isSelected());
         }
     }
 
@@ -341,13 +342,13 @@ public class CandidateListDetailView extends CandidateListView implements Active
             final FingerprintCandidateBean candidate = getModel().getElementAt(index);
             final Rectangle relativeRect = getCellBounds(index, index);
 
-
             final FingerprintAgreement ag = candidate.substructures;
             if (ag != null) {
                 int[] rowcol = calculateAgreementIndex(ag, relativeRect, point);
                 if (rowcol != null) {
-                    int fpindex = candidate.substructures.indexAt(rowcol[0], rowcol[1]);
-                    return candidate.candidate.getFingerprint().getFingerprintVersion().getMolecularProperty(fpindex).getDescription() + "  (" + prob.format(candidate.getPlatts().getProbability(fpindex)) + " %)";
+                    OptionalInt in = candidate.substructures.indexAt(rowcol[0], rowcol[1]);
+                    if (in.isPresent())
+                        return candidate.candidate.getFingerprint().getFingerprintVersion().getMolecularProperty(in.getAsInt()).getDescription() + "  (" + prob.format(candidate.getPlatts().getProbability(in.getAsInt())) + " %)";
                 }
             }
             return null;

@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 public class CustomDBOptions implements StandaloneTool<Workflow> {
 
     @Option(names = "--name", required = true,
-            description = {"Name of the custom database. It will be stored at in ('$USER_HOME/.sirius/csi_fingerid_cache/custom') or the specified sirius workspace (--workspace)."})
+            description = {"Name of the custom database. It will be stored in '$SIRIUS_WORKSPACE/csi_fingerid_cache/custom'. The Location of the SIRIUS workspace can be set by (--workspace)."})
     public String dbName;
 
     @Option(names = "--output",
@@ -79,7 +79,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                         input.msInput.unknownFiles.stream().map(Path::toFile).collect(Collectors.toList()),
                         parentDBs,
                         ApplicationCore.WEB_API, writeBuffer);
-                LoggerFactory.getLogger(CustomDatabaseImporter.class).info("Database imported. Use 'structure --db=\"" + loc.toString() + "\"' to search in this database.");
+                LoggerFactory.getLogger(CustomDatabaseImporter.class).info("Database imported. Use 'structure --db=\"" + loc.resolve(dbName).toString() + "\"' to search in this database.");
             } catch (IOException e) {
                 LoggerFactory.getLogger(CustomDatabaseImporter.class).error("error when storing custom db");
             }

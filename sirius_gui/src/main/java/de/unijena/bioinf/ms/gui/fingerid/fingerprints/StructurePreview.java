@@ -138,14 +138,14 @@ public class StructurePreview extends JPanel implements Runnable {
                     }
                     IAtomContainer[] depiction;
                     if (viz==null) {
-
-                        if (entry.getMolecularProperty().getClass() == SubstructureProperty.class) {
+                        //todo kaidu: this code seems to be obsolete and induced errors
+                        /*if (entry.getMolecularProperty().getClass() == SubstructureProperty.class) {
                             // try to parse the SMARTS itself
                             SmilesParser parser = new SmilesParser(SilentChemObjectBuilder.getInstance());
                             parser.kekulise(true);
                             depiction = new IAtomContainer[]{parser.parseSmiles(((SubstructureProperty)(entry.getMolecularProperty())).getSmarts())};
 
-                        }
+                        }*/
 
                         depiction = new IAtomContainer[0];
                     } else {

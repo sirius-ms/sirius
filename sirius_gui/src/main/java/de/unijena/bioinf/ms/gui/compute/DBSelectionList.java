@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -28,24 +29,29 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
-    public final static Set<String> BLACK_LIST = Set.of(DataSource.ADDITIONAL.realName, DataSource.TRAIN.realName,
+    public final static Set<String> BLACK_LIST = Set.of(/*DataSource.ADDITIONAL.realName,*/ DataSource.TRAIN.realName,
             DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
             DataSource.SUPERNATURAL.realName
     );
 
     public DBSelectionList() {
-        this((String) null);
+        this(true);
+    }
+    public DBSelectionList( boolean includeCustom) {
+        this((String) null,includeCustom);
     }
 
-    public DBSelectionList(@Nullable String descriptionKey) {
+    public DBSelectionList(@Nullable String descriptionKey, boolean includeCustom) {
         this(descriptionKey, SearchableDatabases.getAvailableDatabases().stream().
                 filter(db -> !BLACK_LIST.contains(db.name())).
+                filter(db -> includeCustom || !db.isCustomDb()).
                 collect(Collectors.toList()));
     }
 
@@ -67,4 +73,15 @@ public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
         if (descKey != null)
             GuiUtils.assignParameterToolTip(this, descKey);
     }
+
+    public List<String> getSelectedFormulaSearchDBStrings() {
+        return getCheckedItems().stream().map(db -> {
+            if (db.isCustomDb())
+                return db.name();
+            else
+                return DataSources.getSourceFromName(db.name()).map(DataSource::name).orElse(null);
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+
 }
