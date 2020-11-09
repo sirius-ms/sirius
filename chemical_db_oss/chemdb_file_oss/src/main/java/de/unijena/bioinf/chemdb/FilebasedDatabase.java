@@ -30,7 +30,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.CloseableIterator;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
@@ -110,7 +109,34 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
     }
 
     public boolean containsFormula(MolecularFormula formula){
-        return getFileFor(formula).exists(); //todo binary search or FS operation?
+
+        final int formulaIndex = Arrays.binarySearch(formulas, formula, Comparator.comparingDouble(MolecularFormula::getMass));
+        if (formulaIndex < 0)
+            return false;
+
+        if (formulas[formulaIndex].equals(formula))
+            return true;
+
+        //search to the right
+        for (int i = formulaIndex + 1; i < formulas.length; i++) {
+            MolecularFormula fc = formulas[i];
+            if (Double.compare(fc.getMass(), formula.getMass()) != 0)
+                break;
+            if (fc.equals(formula))
+                return true;
+        }
+
+        //search to the left
+        for (int i = formulaIndex - 1; i >= 0; i--) {
+            MolecularFormula fc = formulas[i];
+            if (Double.compare(fc.getMass(), formula.getMass()) != 0)
+                break;
+            if (fc.equals(formula))
+                return true;
+        }
+
+        return false;
+//        return getFileFor(formula).exists(); //binary search or FS operation?
     }
 
     @Override
@@ -185,24 +211,6 @@ public class FilebasedDatabase extends AbstractChemicalDatabase {
             return fingerprintCandidates;
         } else return fingerprintCandidates;
     }
-
-    /*@Override
-    public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-
-        final File name = new File(databasePath, formula.toString() + ".json.gz");
-        if (name.exists()) {
-            try (final GZIPInputStream zin = new GZIPInputStream(new BufferedInputStream(new FileInputStream(name)))) {
-                try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(version, new InputStreamReader(zin))) {
-                    while (fciter.hasNext()) fingerprintCandidates.add(fciter.next());
-                }
-            } catch (IOException e) {
-                throw new ChemicalDatabaseException(e);
-            }
-            return fingerprintCandidates;
-        } else {
-            return fingerprintCandidates;
-        }
-    }*/
 
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
