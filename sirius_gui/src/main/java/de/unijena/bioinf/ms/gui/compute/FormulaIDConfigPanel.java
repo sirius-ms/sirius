@@ -248,9 +248,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
                 pi.getAnnotation(FormulaConstraints.class).
                         ifPresentOrElse(c -> {
-                                    final Set<Element> pe = pp.getSetOfPredictableElements();
                                     for (Element element : c.getChemicalAlphabet()) {
-                                        if (!pe.contains(element)) {
+                                        if (c.getUpperbound(element)<=0) {
                                             c.setLowerbound(element, 0);
                                             c.setUpperbound(element, 0);
                                         }
