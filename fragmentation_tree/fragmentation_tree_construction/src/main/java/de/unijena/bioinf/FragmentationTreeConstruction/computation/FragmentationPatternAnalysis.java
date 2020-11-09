@@ -153,7 +153,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         siriusPlugins.values().forEach(p->p.beforeDecomposing(input));
 
         final PeriodicTable PT = PeriodicTable.getInstance();
-        final Whiteset whiteset = input.getAnnotationOrNull(Whiteset.class);
+        Whiteset whiteset = input.getAnnotationOrNull(Whiteset.class);
         final FormulaConstraints constraints = input.getAnnotationOrNull(FormulaConstraints.class);
         final Ms2Experiment experiment = input.getExperimentInformation();
         final double parentMass;
@@ -184,10 +184,17 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         final List<MolecularFormula> pmds;
         final List<Decomposition> decomps = new ArrayList<>();
 
+        // we use "ORIGINAL" input here, such that we do not use molecular formula information from InChI
+        // this is just for evaluation purpose! We want to be able to evaluate the formula identification rate
+        // without having to remove any field that is not directly related to formula but helps to infer the formula.
         if (input.getOriginalInput().getMolecularFormula()!=null){
             //always use formula. don't look at mass dev.
-            final MolecularFormula formula = input.getOriginalInput().getMolecularFormula();
+            final MolecularFormula formula = input.getExperimentInformation().getMolecularFormula();
             final PrecursorIonType ionType = experiment.getPrecursorIonType();
+
+            // HACKY. We have to get that right at some point! :(
+            //Decomposition decomposition = Whiteset.ofMeasuredOrNeutral(Set.of(formula)).applyIonizationBothWays(experiment.getPrecursorIonType()).resolve(parentPeak.getMass(), parentDeviation, Arrays.asList(ionType)).get(0);
+
             Decomposition decomposition = new Decomposition(ionType.neutralMoleculeToMeasuredNeutralMolecule(formula), ionType.getIonization(), 0d);
             decomps.add(decomposition);
             pmds = new ArrayList<>();
@@ -199,16 +206,18 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             }
         } else if (whiteset != null && !whiteset.isEmpty()) {
             final Collection<PrecursorIonType> ionTypes;
-            if (experiment.getPrecursorIonType().isIonizationUnknown())
+            if (experiment.getPrecursorIonType().isIonizationUnknown()) {
                 ionTypes = input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
-            else ionTypes = Arrays.asList(experiment.getPrecursorIonType());
+            } else {
+                ionTypes = Arrays.asList(experiment.getPrecursorIonType());
+            }
             decomps.addAll(whiteset.resolve(parentMass, parentDeviation, ionTypes));
             pmds = new ArrayList<>();
             for (Decomposition d : decomps) pmds.add(d.getCandidate());
         } else if (!experiment.getPrecursorIonType().isIonizationUnknown()) {
             // use given ionization
             final PrecursorIonType ionType = experiment.getPrecursorIonType();
-            final List<MolecularFormula> forms = decomposer.decomposeToFormulas(parentMass-ionType.getModification().getMass(), ionType.getIonization(), parentDeviation.absoluteFor(parentMass), constraints);
+            final List<MolecularFormula> forms = decomposer.decomposeToFormulas(ionType.measuredNeutralMassToNeutralMass(parentMass), ionType.getIonization(), parentDeviation.absoluteFor(parentMass), constraints);
             pmds = new ArrayList<>();
             for (MolecularFormula f : forms)  {
                 final MolecularFormula neutralMeasuredFormula = ionType.neutralMoleculeToMeasuredNeutralMolecule(f);
@@ -218,7 +227,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 }
             }
         } else {
-
             pmds = new ArrayList<>();
             for (Ionization ion : ionModes) {
                 final List<MolecularFormula> forms = decomposer.decomposeToFormulas(parentMass, ion, parentDeviation.absoluteFor(parentMass), constraints);

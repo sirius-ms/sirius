@@ -26,10 +26,12 @@ import de.unijena.bioinf.projectspace.Location;
 public interface CanopusLocations {
 
     Location
-            CANOPUS = new Location("canopus/", "fpt", FormulaResultId::fileName);
+            CANOPUS = new Location("canopus/", "fpt", FormulaResultId::fileName),
+            NPC = new Location("canopus_npc", "fpt", FormulaResultId::fileName);
 
 
     String
             CANOPUS_CLIENT_DATA = "canopus.tsv",
-            CANOPUS_CLIENT_DATA_NEG = "canopus_neg.tsv";
+            CANOPUS_CLIENT_DATA_NEG = "canopus_neg.tsv",
+            NPC_CLIENT_DATA = "canopus_npc.tsv";
 }

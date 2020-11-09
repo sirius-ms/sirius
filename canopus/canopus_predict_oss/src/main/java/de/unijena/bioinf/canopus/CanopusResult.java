@@ -23,14 +23,31 @@ package de.unijena.bioinf.canopus;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
+import java.util.Optional;
+
 public class CanopusResult implements DataAnnotation {
     protected ProbabilityFingerprint canopusFingerprint;
+
+    protected Optional<ProbabilityFingerprint> npcFingerprint;
 
     public ProbabilityFingerprint getCanopusFingerprint() {
         return canopusFingerprint;
     }
 
+    public Optional<ProbabilityFingerprint> getNpcFingerprint() {
+        return npcFingerprint;
+    }
+
     public CanopusResult(ProbabilityFingerprint canopusFingerprint) {
+        this(canopusFingerprint, Optional.empty());
+    }
+
+    public CanopusResult(ProbabilityFingerprint canopusFingerprint, ProbabilityFingerprint npcFingerprint) {
+        this(canopusFingerprint, Optional.of(npcFingerprint));
+    }
+
+    public CanopusResult(ProbabilityFingerprint canopusFingerprint, Optional<ProbabilityFingerprint> optNpcFingerprint) {
         this.canopusFingerprint = canopusFingerprint;
+        this.npcFingerprint = optNpcFingerprint;
     }
 }

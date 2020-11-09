@@ -22,28 +22,27 @@
 
 package de.unijena.bioinf.chemdb;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.FPIter;
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TShortArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
-import javax.json.stream.JsonGenerator;
-import java.io.StringWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.IntConsumer;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
-
-import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
 
 public class CompoundCandidate {
     protected final InChI inchi;
@@ -61,6 +60,19 @@ public class CompoundCandidate {
 
     //citation info
     protected PubmedLinks pubmedIDs = null;
+
+    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, DBLink[] links, PubmedLinks pubmedIDs) {
+        this.inchi = inchi;
+        this.name = name;
+        this.smiles = smiles;
+        this.pLayer = pLayer;
+        this.qLayer = qLayer;
+        this.xlogp = xlogp;
+        this.tanimoto = tanimoto;
+        this.bitset = bitset;
+        this.links = links;
+        this.pubmedIDs = pubmedIDs;
+    }
 
     public CompoundCandidate(CompoundCandidate c) {
         this.inchi = c.inchi;
@@ -80,53 +92,6 @@ public class CompoundCandidate {
         this.inchi = inchi;
     }
 
-    public static CompoundCandidate fromJSON(JsonObject o) {
-        final CompoundCandidate c = new CompoundCandidate(inchiFromJson(o));
-        c.readCompoundCandidateFromJson(o);
-        return c;
-    }
-
-    protected final void readCompoundCandidateFromJson(JsonObject o) {
-        this.name = o.getString("name", null);
-        this.bitset = o.getJsonNumber("bitset").longValue();
-        this.smiles = o.getString("smiles", null);
-        this.pLayer = o.getInt("pLayer", 0);
-        this.qLayer = o.getInt("qLayer", 0);
-        this.xlogp = Double.NaN;
-        try {//todo HACK:  sometimes this is not parsable
-            if (o.containsKey("xlogp") && !o.isNull("xlogp")) {
-                this.xlogp = o.getJsonNumber("xlogp").doubleValue();
-            }
-        } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).warn("Could not parse xlogp from String.", e);
-        }
-        this.tanimoto = null;
-        if (o.containsKey("tanimoto") && !o.isNull("tanimoto"))
-            this.tanimoto = o.getJsonNumber("tanimoto").doubleValue();
-
-        final JsonObject map = o.getJsonObject("links");
-        if (map != null) {
-            final ArrayList<DBLink> links = new ArrayList<>();
-            for (final String dbName : map.keySet()) {
-                final JsonArray ary = map.getJsonArray(dbName);
-                for (int k = 0; k < ary.size(); ++k) {
-                    links.add(new DBLink(dbName, ary.getString(k)));
-                }
-            }
-            this.links = links.toArray(new DBLink[links.size()]);
-        }
-
-        final JsonArray cites = o.getJsonArray("pubmedIDs");
-        if (cites != null) {
-            TIntSet pubmedIDs = new TIntHashSet(cites.size());
-            for (int i = 0; i < cites.size(); i++) {
-                pubmedIDs.add(cites.getInt(i));
-            }
-            this.pubmedIDs = new PubmedLinks(pubmedIDs);
-        }
-    }
-
-
     public PubmedLinks getPubmedIDs() {
         return pubmedIDs;
     }
@@ -134,75 +99,6 @@ public class CompoundCandidate {
     public void setPubmedIDs(PubmedLinks pubmedIDs) {
         this.pubmedIDs = pubmedIDs;
     }
-
-    protected static InChI inchiFromJson(JsonObject obj) {
-        final String inchikey = obj.getString("inchikey");
-        final String inchi = obj.getString("inchi");
-        return newInChI(inchikey, inchi);
-    }
-
-    public final String toJSON() {
-        final StringWriter sw = new StringWriter();
-        try (final JsonGenerator w = Json.createGenerator(sw)) {
-            writeToJSON(w);
-        }
-        return sw.toString();
-    }
-
-    public final void writeToJSON(JsonGenerator writer) {
-        writeToJSON(writer, true);
-    }
-
-    public final void writeToJSON(JsonGenerator writer, boolean encloseInBrackets) {
-        if (encloseInBrackets) writer.writeStartObject();
-        writeContent(writer);
-        if (encloseInBrackets) writer.writeEnd();
-    }
-
-    protected void writeContent(JsonGenerator writer) {
-        writer.write("inchi", inchi.in3D);
-        writer.write("inchikey", inchi.key);
-        writer.write("pLayer", pLayer);
-        writer.write("qLayer", qLayer);
-
-        if (Double.isNaN(xlogp))
-            writer.write("xlogp", JsonNumber.NULL);
-        else
-            writer.write("xlogp", xlogp);
-
-        if (tanimoto == null || Double.isNaN(tanimoto))
-            writer.write("tanimoto", JsonNumber.NULL);
-        else
-            writer.write("tanimoto", tanimoto);
-
-        if (name != null) writer.write("name", name);
-        if (smiles != null) writer.write("smiles", smiles);
-        writer.write("bitset", bitset);
-        if (links != null) {
-            final HashMap<String, ArrayList<DBLink>> grouped = new HashMap<>();
-            for (DBLink l : links) {
-                if (!grouped.containsKey(l.name)) grouped.put(l.name, new ArrayList<DBLink>());
-                grouped.get(l.name).add(l);
-            }
-            writer.writeStartObject("links");
-            for (Map.Entry<String, ArrayList<DBLink>> map : grouped.entrySet()) {
-                writer.writeStartArray(map.getKey());
-                for (DBLink l : map.getValue()) {
-                    if (l.id != null) writer.write(l.id);
-                }
-                writer.writeEnd();
-            }
-            writer.writeEnd();
-        }
-
-        if (pubmedIDs != null) {
-            writer.writeStartArray("pubmedIDs");
-            pubmedIDs.iterator().forEachRemaining((IntConsumer) writer::write);
-            writer.writeEnd();
-        }
-    }
-
-
 
     public InChI getInchi() {
         return inchi;
@@ -321,5 +217,163 @@ public class CompoundCandidate {
     public void mergeBits(long bitset) {
         this.bitset |= bitset;
     }
+
+    public static class CompoundCandidateSerializer {
+
+        public void serialize(CompoundCandidate value, JsonGenerator gen) throws IOException {
+            gen.writeStartObject();
+            gen.writeStringField("name", value.name);
+            gen.writeStringField("inchi", value.inchi.in3D);
+            gen.writeStringField("inchikey",value.getInchiKey2D());
+            if (value.pLayer!=0) gen.writeNumberField("pLayer",value.pLayer);
+            if (value.qLayer!=0) gen.writeNumberField("qLayer",value.qLayer);
+            gen.writeNumberField("xlogp",value.xlogp);
+            gen.writeStringField("smiles", value.smiles);
+            gen.writeNumberField("bitset", value.bitset);
+            gen.writeObjectFieldStart("links");
+            final Set<String> set = new HashSet<>(3);
+            for (int k=0; k < value.links.length; ++k) {
+                final DBLink link = value.links[k];
+                if (set.add(link.name)) {
+                    gen.writeArrayFieldStart(link.name);
+                    gen.writeString(link.id);
+                    for (int j=k+1; j < value.links.length; ++j) {
+                        if (value.links[j].name.equals(link.name)) {
+                            gen.writeString(link.id);
+                        }
+                    }
+                    gen.writeEndArray();
+                }
+            }
+            gen.writeEndObject();
+            if (value.pubmedIDs!=null && value.pubmedIDs.getNumberOfPubmedIDs()>0) {
+                gen.writeArrayFieldStart("pubmedIDs");
+                for (int id : value.pubmedIDs.getCopyOfPubmedIDs()) {
+                    gen.writeNumber(id);
+                }
+                gen.writeEndArray();
+            }
+            // quickn dirty
+            if (value instanceof FingerprintCandidate) {
+                FingerprintCandidate fpc = (FingerprintCandidate)value;
+                gen.writeArrayFieldStart("fingerprint");
+                for (FPIter iter : fpc.fingerprint.presentFingerprints()) {
+                    gen.writeNumber(iter.getIndex());
+                }
+                gen.writeEndArray();
+            }
+            gen.writeEndObject();
+        }
+    }
+
+    public static class CompoundCandidateDeserializer {
+
+        private final FingerprintVersion version;
+
+        protected CompoundCandidateDeserializer(FingerprintVersion version) {
+            this.version = version;
+        }
+
+        public CompoundCandidate deserialize(JsonParser p) throws IOException, JsonProcessingException {
+            String inchi = null, inchikey = null, smiles=null,name=null;
+            int player=0,qlayer=0;
+            long bitset=0;
+            double xlogp=0;
+            TShortArrayList indizes = null;
+            TIntArrayList pubmedIds= null;
+            JsonToken jsonToken = p.nextToken();
+            ArrayList<DBLink> links = new ArrayList<>();
+            while (true) {
+                if (jsonToken.isStructEnd()) break;
+
+                // expect field name
+
+                final String fieldName = p.currentName();
+                switch (fieldName) {
+                    case "inchi":
+                        inchi = p.nextTextValue();
+                        break;
+                    case "inchikey":
+                        inchikey = p.nextTextValue();
+                        break;
+                    case "name":
+                        name = p.nextTextValue();
+                        break;
+                    case "pLayer":
+                        player = p.nextIntValue(0);
+                        break;
+                    case "qLayer":
+                        qlayer = p.nextIntValue(0);
+                        break;
+                    case "xlogp":
+                        if (p.nextToken().isNumeric()) {
+                            xlogp = p.getNumberValue().doubleValue();
+                        } else {
+                            LoggerFactory.getLogger("Warning: xlogp is invalid value for " + String.valueOf(inchikey) );
+                        }
+                        break;
+                    case "smiles":
+                        smiles = p.nextTextValue();
+                        break;
+                    case "bitset":
+                        bitset = p.nextLongValue(0L);
+                        break;
+                    case "links":
+                        if (p.nextToken() != JsonToken.START_OBJECT)
+                            throw new IOException("malformed json. expected object"); // array start
+                        do {
+                            jsonToken = p.nextToken();
+                            if (jsonToken == JsonToken.END_OBJECT) break;
+                            else {
+                                String linkName = p.currentName();
+                                if (p.nextToken() != JsonToken.START_ARRAY)
+                                    throw new IOException("malformed json. expected array"); // array start
+                                do {
+                                    jsonToken = p.nextToken();
+                                    if (jsonToken == JsonToken.END_ARRAY) break;
+                                    else links.add(new DBLink(linkName, p.getText()));
+                                } while (true);
+                            }
+                        } while (true);
+                        break;
+                    case "pubmedIDs":
+                        pubmedIds = new TIntArrayList();
+                        if (p.nextToken() != JsonToken.START_ARRAY)
+                            throw new IOException("malformed json. expected array"); // array start
+                        do {
+                            jsonToken = p.nextToken();
+                            if (jsonToken == JsonToken.END_ARRAY) break;
+                            else pubmedIds.add(Integer.parseInt(p.getText()));
+                        } while (true);
+                        break;
+                    case "fingerprint":
+                        indizes = new TShortArrayList();
+                        if (p.nextToken() != JsonToken.START_ARRAY)
+                            throw new IOException("malformed json. expected array"); // array start
+                        do {
+                            jsonToken = p.nextToken();
+                            if (jsonToken == JsonToken.END_ARRAY) break;
+                            else indizes.add(Short.parseShort(p.getText()));
+                        } while (true);
+
+                        break;
+                    default:
+                        p.nextToken();
+                        break;
+                }
+                jsonToken = p.nextToken();
+            }
+            final CompoundCandidate C = new CompoundCandidate(
+                    new InChI(inchikey, inchi), name, smiles, player,qlayer,xlogp,null,bitset,links.toArray(DBLink[]::new),
+                    pubmedIds==null ? null : new PubmedLinks(pubmedIds.toArray())
+            );
+            if (indizes==null) {
+                return C;
+            } else {
+                return new FingerprintCandidate(C, new ArrayFingerprint(version,indizes.toArray()));
+            }
+        }
+    }
+
 }
 
