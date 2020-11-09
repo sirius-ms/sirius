@@ -25,8 +25,8 @@ import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DBLink;
-import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.PubmedLinks;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.projectspace.ComponentSerializer;
 import de.unijena.bioinf.projectspace.FormulaResultId;
@@ -53,7 +53,7 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
         if (!reader.exists(FINGERBLAST.relFilePath(id)))
             return null;
 
-        final Pattern dblinkPat = Pattern.compile("^.+?:\\(.+\\)$");
+        final Pattern dblinkPat = Pattern.compile("^.+?:\\(.*\\)$");
         final ArrayList<Scored<CompoundCandidate>> results = new ArrayList<>();
         reader.table(FINGERBLAST.relFilePath(id), true, (row) -> {
             if (row.length == 0) return;
@@ -68,33 +68,50 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
             candidate.setSmiles(smiles);
             candidate.setPubmedIDs(PubmedLinks.fromString(row[8]));
 
-            final List<DBLink> links = new ArrayList<>();
-            long linkReconstructuredBitset = 0;
+            //here we reconstruct the bitset from db links to add ne non persistent custom
+            //db flags
+            {
+                final List<DBLink> links = new ArrayList<>();
+                final List<String> importedNames = new ArrayList<>();
+                for (String db : row[9].split(";")) {
+                    Matcher matcher = dblinkPat.matcher(db);
+                    db = db.trim();
+                    if (matcher.matches()) {
+                        String[] split = matcher.group().split(":");
 
-            for (String db : row[9].split(";")) {
-                Matcher matcher = dblinkPat.matcher(db);
-                db = db.trim();
-                if (matcher.matches()) {
-                    String[] split = matcher.group().split(":");
-
-                    final String dbName = split[0].trim();
-                    final String ids = split[1].trim();
-                    for (String dbId : ids.substring(1, ids.length() - 1).split(","))
-                        links.add(new DBLink(dbName, dbId.trim()));
-
-                    linkReconstructuredBitset |= DataSources.getDBFlag(dbName);
-                } else {
-                    LoggerFactory.getLogger(getClass()).warn("Could not match DB link '" + db + "' Skipping this entry!");
+                        final String dbName = split[0].trim();
+                        final String ids = split[1].trim();
+                        if (!ids.isBlank())
+                            for (String dbId : ids.substring(1, ids.length() - 1).split(","))
+                                links.add(new DBLink(dbName,
+                                        dbId.isBlank() || dbId.equalsIgnoreCase("null") || dbId.equalsIgnoreCase("na") || dbId.equalsIgnoreCase("n/a")
+                                                ? null : dbId.trim()));
+                        if (CustomDataSources.containsDB(dbName))
+                            importedNames.add(dbName);
+                        else
+                            LoggerFactory.getLogger(getClass()).warn("Importing Unmatched DB flag '" + dbName + "'. This might be due to an Custom DB that is not available.");
+                    } else {
+                        LoggerFactory.getLogger(getClass()).warn("Could not match DB link '" + db + "' Skipping this entry!");
+                    }
                 }
+
+                candidate.setBitset(CustomDataSources.getDBFlagsFromNames(importedNames));
+                candidate.setLinks(links.toArray(DBLink[]::new));
             }
-            candidate.setLinks(links.toArray(DBLink[]::new));
 
             if (row.length > 10 && row[10] != null && !row[10].isBlank() && !row[10].equals("N/A")) {
                 candidate.setTanimoto(Double.valueOf(row[10]));
             } else
                 candidate.setTanimoto(null);
 
-            candidate.setBitset(row.length > 11 && !row[11].isBlank() ? Long.parseLong(row[11]) : linkReconstructuredBitset);
+
+            // we sanity check if reconstructed NON custom db bits match the stored bit set.
+            if (row.length > 11 && !row[11].isBlank()) {
+                final long linkbasedNonCustomBits = CustomDataSources.removeCustomSourceFromFlag(candidate.getBitset());
+                final long bits = Long.parseLong(row[11]);
+                if (linkbasedNonCustomBits != bits)
+                    LoggerFactory.getLogger(getClass()).warn("Reconstructed db flags differ from imported.'" + linkbasedNonCustomBits + "' vs '" + bits + "'.");
+            }
 
             results.add(new Scored<>(candidate, score));
         });
@@ -125,9 +142,10 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
             row[8] = c.getPubmedIDs() != null ? c.getPubmedIDs().toString() : "";
             row[9] = c.getLinkedDatabases().asMap().entrySet().stream().map((k) -> k.getValue().isEmpty() ? k.getKey() : k.getKey() + ":(" + String.join(", ", k.getValue()) + ")").collect(Collectors.joining("; "));
             row[10] = c.getTanimoto() == null ? "N/A" : String.valueOf(c.getTanimoto());
-            row[11] = String.valueOf(c.getBitset());
+            row[11] = String.valueOf(CustomDataSources.removeCustomSourceFromFlag(c.getBitset())); //We remove custom db bits since they are only valid ad runtime and user dependent.
             return row;
         })::iterator);
+
     }
 
     @Override

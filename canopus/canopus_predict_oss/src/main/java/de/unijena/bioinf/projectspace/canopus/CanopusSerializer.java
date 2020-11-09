@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.projectspace.canopus;
 
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
@@ -33,6 +35,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 import static de.unijena.bioinf.projectspace.canopus.CanopusLocations.CANOPUS;
+import static de.unijena.bioinf.projectspace.canopus.CanopusLocations.NPC;
 
 public class CanopusSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, CanopusResult> {
     @Override
@@ -45,7 +48,14 @@ public class CanopusSerializer implements ComponentSerializer<FormulaResultId, F
 
         final double[] probabilities = reader.doubleVector(loc);
         final ProbabilityFingerprint probabilityFingerprint = new ProbabilityFingerprint(canopusData.getFingerprintVersion(), probabilities);
-        return new CanopusResult(probabilityFingerprint);
+
+        final Optional<ProbabilityFingerprint> npcFingerprint;
+        final String npcLoc = NPC.relFilePath(id);
+        if (reader.exists(npcLoc)) {
+            npcFingerprint = Optional.of(new ProbabilityFingerprint(MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()), reader.doubleVector(npcLoc)));
+        } else npcFingerprint = Optional.empty();
+
+        return new CanopusResult(probabilityFingerprint, npcFingerprint);
     }
 
     @Override
@@ -56,10 +66,17 @@ public class CanopusSerializer implements ComponentSerializer<FormulaResultId, F
             writer.doubleVector(CANOPUS.fileName(id), canopusResult.getCanopusFingerprint().toProbabilityArray());
             return true;
         });
+        if (canopusResult.getNpcFingerprint().isPresent()) {
+            writer.inDirectory(NPC.relDir(), () -> {
+                writer.doubleVector(CANOPUS.fileName(id), canopusResult.getNpcFingerprint().get().toProbabilityArray());
+                return true;
+            });
+        }
     }
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
         writer.delete(CANOPUS.relFilePath(id));
+        writer.delete(NPC.relFilePath(id));
     }
 }

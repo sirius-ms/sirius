@@ -139,7 +139,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
     }
 
 
-    private void calculateWeight() throws ExecutionException {
+    protected void calculateWeight() throws ExecutionException {
         C[][] allCandidates = (C[][]) Array.newInstance(cClass, graph.getPossibleFormulas().length, 1);
 
         for(int minValue = 0; minValue < allCandidates.length; ++minValue) {
@@ -214,7 +214,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
     }
 
 
-    private void setConnections() throws ExecutionException {
+    protected void setConnections() throws ExecutionException {
         long time = System.currentTimeMillis();
         graph.connections = this.edgeFilter.postprocessCompleteGraph(graph, this);
         HighQualityRandom random = new HighQualityRandom();

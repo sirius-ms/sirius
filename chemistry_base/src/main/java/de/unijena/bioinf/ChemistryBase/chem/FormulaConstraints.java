@@ -547,6 +547,9 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         newElements.removeIf(e -> !hasElement(e));
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(newElements.toArray(Element[]::new));
         final FormulaConstraints intersection = new FormulaConstraints(alphabet, filters);
+        for (Element e : newElements) {
+            intersection.setBound(e, getLowerbound(e), getUpperbound(e));
+        }
         return intersection;
     }
 

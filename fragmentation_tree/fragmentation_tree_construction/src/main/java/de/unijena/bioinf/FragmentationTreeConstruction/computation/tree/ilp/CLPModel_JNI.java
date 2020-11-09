@@ -44,7 +44,7 @@ public class CLPModel_JNI {
 		List<String> dependencies;
 		String os = System.getProperty("os.name").toLowerCase();
 		String arch = System.getProperty("os.arch").toLowerCase();
-		System.out.println("os: " + os + ", arch: " + arch);
+//		System.out.println("os: " + os + ", arch: " + arch);
 		if (os.contains("win")){
 			// NOTE: has to be in correct order for windows
 			if (arch.contains("64"))

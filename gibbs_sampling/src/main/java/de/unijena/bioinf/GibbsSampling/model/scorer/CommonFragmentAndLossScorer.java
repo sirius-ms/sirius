@@ -43,7 +43,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
     protected BitSet[] maybeSimilar;
 
     protected double threshold;
-    protected  double MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 3; //changed: this is now the value which is just not good enough; 3;//changed from 3 / 5
+    protected  double MINIMUM_NUMBER_MATCHED_PEAKS_LOSSES = 2d; //changed: this is now the value which is just not good enough; 3;//changed from 3 / 5
 
     //do not recompute when preparing with new threshold
     protected TObjectDoubleHashMap<Ms2Experiment> normalizationMap;
@@ -102,14 +102,9 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
 
         long start = System.currentTimeMillis();
         for(int i = 0; i < allFragmentPeaks.length; ++i) {
-            for(int j = 0; j < i; ++j) {
+            for(int j = i + 1; j < allFragmentPeaks.length; ++j) {
                 final double commonL = this.scoreCommons(allFragmentPeaks[i], allFragmentPeaks[j]);
                 final double commonF = this.scoreCommons(allLossPeaks[i], allLossPeaks[j]);
-//                final double score = ((commonF + commonL) / norm[i]) + ((commonF + commonL) / norm[j]);
-//                if((commonF + commonL) >= minimum_number_matched_peaks_losses && (score >= this.threshold)){
-//                    this.maybeSimilar[i].set(j);
-//
-//                }
 
                 final double sumFLMinusMinCount = commonF+commonL-minimum_number_matched_peaks_losses;
                 final double score =  ((sumFLMinusMinCount) / norm[i]) + ((sumFLMinusMinCount) / norm[j]);
@@ -400,7 +395,9 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
                         final double sumFLMinusMinCount = commonF + commonL - minimum_number_matched_peaks_losses;
                         final double score = ((sumFLMinusMinCount) / norm[i]) + ((sumFLMinusMinCount) / norm[j]);
 
-                        if ((sumFLMinusMinCount > 0) && (score >= threshold)  &&   (commonF+commonL > extraPenaltyForLargeTrees)) {
+//                        if ((sumFLMinusMinCount > 0) && (score >= threshold)  &&   (commonF+commonL > extraPenaltyForLargeTrees)) {
+                        //todo do not penalize large trees for now
+                        if ((sumFLMinusMinCount > 0) && (score >= threshold)) {
                             maybeSimilar[i].set(j);
                         }
                     }

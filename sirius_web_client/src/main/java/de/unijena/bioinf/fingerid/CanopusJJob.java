@@ -46,7 +46,7 @@ public class CanopusJJob extends FingerprintDependentJJob<CanopusResult> {
     @Override
     protected CanopusResult compute() throws Exception {
         progressInfo("Predict compound categories for " + formula + ": \nid\tname\tprobability");
-        final ProbabilityFingerprint fingerprint = canopus.predictClassificationFingerprint(formula, fp);
+        final ProbabilityFingerprint fingerprint = canopus.predictFingerprint(formula, fp, Canopus.Predictable.ClassyFire);
         for (FPIter category : fingerprint.iterator()) {
             if (category.getProbability() >= 0.333) {
                 ClassyfireProperty prop = ((ClassyfireProperty) category.getMolecularProperty());

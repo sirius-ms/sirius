@@ -24,19 +24,21 @@ import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.canopus.dnn.ActivationFunction;
 import de.unijena.bioinf.canopus.dnn.FullyConnectedLayer;
 import de.unijena.bioinf.canopus.dnn.PlattLayer;
 import org.ejml.data.FMatrixRMaj;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.EnumSet;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 public class Canopus {
+
+    public static enum Predictable {
+        ClassyFire, NPC, Fingerprint; // order is important
+    };
 
     public static final boolean BINARIZE = false, CLIPPING = false;
 
@@ -50,19 +52,10 @@ public class Canopus {
     protected double[] formulaScaling, formulaCentering, plattScaling, plattCentering;
     protected ClassyFireFingerprintVersion classyFireFingerprintVersion;
     protected MaskedFingerprintVersion classyFireMask;
-
+    protected NPCFingerprintVersion npcFingerprintVersion;
+    protected MaskedFingerprintVersion npcMask;
     protected CdkFingerprintVersion cdkFingerprintVersion;
     protected MaskedFingerprintVersion cdkMask;
-
-    public static void main(String[] args) {
-        try {
-            final Canopus c = Canopus.loadFromFile(new File("/home/kaidu/temp/canopus_100.data.gz"));
-            System.out.println(c.classyFireMask.allowedIndizes().length);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 
     public String toString() {
         StringBuilder buf = new StringBuilder();
@@ -166,7 +159,7 @@ public class Canopus {
         return outputArray;
     }
 
-    protected Canopus(FullyConnectedLayer[] formulaLayers, FullyConnectedLayer[] fingerprintLayers, FullyConnectedLayer[] innerLayers, FullyConnectedLayer outputLayer, PlattLayer plattLayer, double[] formulaCentering, double[] formulaScaling, double[] plattCentering, double[] plattScaling, MaskedFingerprintVersion classyFireMask, MaskedFingerprintVersion cdkMask, FullyConnectedLayer npcLayer, PlattLayer npcPlatt) {
+    protected Canopus(FullyConnectedLayer[] formulaLayers, FullyConnectedLayer[] fingerprintLayers, FullyConnectedLayer[] innerLayers, FullyConnectedLayer outputLayer, PlattLayer plattLayer, double[] formulaCentering, double[] formulaScaling, double[] plattCentering, double[] plattScaling, MaskedFingerprintVersion classyFireMask, MaskedFingerprintVersion cdkMask, MaskedFingerprintVersion npcMask, FullyConnectedLayer npcLayer, PlattLayer npcPlatt) {
         this.formulaLayers = formulaLayers;
         this.fingerprintLayers = fingerprintLayers;
         this.innerLayers = innerLayers;
@@ -182,6 +175,8 @@ public class Canopus {
         this.cdkFingerprintVersion = cdkMask==null ? null : (CdkFingerprintVersion) cdkMask.getMaskedFingerprintVersion();
         this.npcLayer = npcLayer;
         this.npcPlattLayer = npcPlatt;
+        this.npcMask = npcMask;
+        this.npcFingerprintVersion = npcMask==null ? null : (NPCFingerprintVersion)npcMask.getMaskedFingerprintVersion();
     }
 
     public boolean isPredictingFingerprints() {
@@ -196,6 +191,14 @@ public class Canopus {
         return cdkMask;
     }
 
+    public MaskedFingerprintVersion getNPCMask() {
+        return npcMask;
+    }
+
+    public NPCFingerprintVersion getNpcFingerprintVersion() {
+        return npcFingerprintVersion;
+    }
+
     public MaskedFingerprintVersion getCanopusMask() {
         return classyFireMask;
     }
@@ -204,39 +207,109 @@ public class Canopus {
         return classyFireFingerprintVersion;
     }
 
-    public List<String> getKlassNames() {
-        final List<String> names = new ArrayList<>(classyFireMask.size());
-        for (int index : classyFireMask.allowedIndizes()) {
-            names.add(((ClassyfireProperty)classyFireMask.getMolecularProperty(index)).getName());
+    /**
+     * Predicts the latent vector - this is the non-linear transformation of the input from which all
+     * classifications are predicted in a strictly linear fashion.
+     */
+    public float[] predictLatentVector(MolecularFormula formula, ProbabilityFingerprint fingerprint) {
+        final double[] ff = getFormulaFeatures(formula);
+        // normalize/center
+        for (int i=0; i < ff.length; ++i) {
+            ff[i] -= formulaCentering[i];
+            ff[i] /= formulaScaling[i];
         }
-        return names;
-    }
-
-    public ProbabilityFingerprint predictClassificationFingerprint(MolecularFormula formula, ProbabilityFingerprint fingerprint) {
-        double[] probs = predictProbability(formula, fingerprint);
-        if (cdkFingerprintVersion==null) return new ProbabilityFingerprint(classyFireMask, probs);
-        else {
-            probs = Arrays.copyOf(probs, classyFireMask.size());
-            return new ProbabilityFingerprint(classyFireMask, probs);
+        final double[] fp = fingerprint.toProbabilityArray();
+        for (int i=0; i < fp.length; ++i) {
+            fp[i] -= plattCentering[i];
+            fp[i] /= plattScaling[i];
+            if (BINARIZE) {
+                fp[i] = Math.round(fp[i]);
+            } else if (CLIPPING) {
+                fp[i] = (Math.min(Math.max(fp[i],0.2d),1.0d)-0.2d)/0.6d;
+            }
         }
-    }
-    public ProbabilityFingerprint predictFingerprintFromFingerprint(MolecularFormula formula, ProbabilityFingerprint fingerprint) {
-        if (!isPredictingFingerprints())
-            throw new RuntimeException("No predictor for fingerprints available in this model");
-        return predict(formula, fingerprint)[1];
+        // for the DNN we have to convert our vectors into float
+        final float[] formulaInput = new float[ff.length];
+        for (int i=0; i < ff.length; ++i) formulaInput[i] = (float)ff[i];
+        final float[] plattInput = new float[fp.length];
+        for (int i=0; i < fp.length; ++i) plattInput[i] = (float)fp[i];
+        // wrap into matrix
+        FMatrixRMaj formulaInputVector = FMatrixRMaj.wrap(1, formulaInput.length, formulaInput);
+        for (FullyConnectedLayer l : formulaLayers)
+            formulaInputVector = l.eval(formulaInputVector);
+
+        FMatrixRMaj fpInputVector = FMatrixRMaj.wrap(1, plattInput.length, plattInput);
+        for (FullyConnectedLayer l : fingerprintLayers)
+            fpInputVector = l.eval(fpInputVector);
+
+        final float[] combined = new float[fpInputVector.numCols+formulaInputVector.numCols];
+        System.arraycopy(formulaInputVector.data, 0, combined, 0, formulaInputVector.numCols);
+        System.arraycopy(fpInputVector.data, 0, combined, formulaInputVector.numCols, fpInputVector.numCols);
+
+        FMatrixRMaj combinedVector = FMatrixRMaj.wrap(1, combined.length, combined);
+
+        for (FullyConnectedLayer l : innerLayers)
+            combinedVector = l.eval(combinedVector);
+        return combinedVector.data;
     }
 
-    public ProbabilityFingerprint[] predict(MolecularFormula formula, ProbabilityFingerprint fingerprint) {
-        final double[] probs = predictProbability(formula, fingerprint);
-        final double[] buf1 = Arrays.copyOf(probs, classyFireMask.size());
-        final double[] buf2 = new double[cdkMask.size()];
-        System.arraycopy(probs, classyFireMask.size(), buf2, 0, buf2.length);
-        return new ProbabilityFingerprint[]{new ProbabilityFingerprint(classyFireMask, buf1), new ProbabilityFingerprint(cdkMask, buf2)};
+    public float[][] predictDecisionValues(MolecularFormula formula, ProbabilityFingerprint fingerprint, EnumSet<Predictable> topredict) {
+        float[] vec = predictLatentVector(formula, fingerprint);
+        final FMatrixRMaj latent = FMatrixRMaj.wrap(1, vec.length, vec);
+        float[][] buffs = new float[topredict.size()][];
+        int k=0;
+        if (topredict.contains(Predictable.ClassyFire)) {
+            buffs[k] = this.outputLayer.eval(latent).data;
+            ++k;
+        }
+        if (topredict.contains(Predictable.Fingerprint)) {
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+        if (topredict.contains(Predictable.NPC)) {
+            buffs[k] = this.npcLayer.eval(latent).data;
+            ++k;
+        }
+        return buffs;
+    }
+    public float[][] predictProbabilities(MolecularFormula formula, ProbabilityFingerprint fingerprint, EnumSet<Predictable> topredict) {
+        final float[][] values = predictDecisionValues(formula, fingerprint, topredict);
+        int k=0;
+        if (topredict.contains(Predictable.ClassyFire)) {
+            values[k] = this.plattLayer.eval(FMatrixRMaj.wrap(1, values[k].length, values[k])).data;
+            ++k;
+        }
+        if (topredict.contains(Predictable.Fingerprint)) {
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+        if (topredict.contains(Predictable.NPC)) {
+            values[k] = this.npcPlattLayer.eval(FMatrixRMaj.wrap(1, values[k].length, values[k])).data;
+            ++k;
+        }
+        return values;
+    }
+    public ProbabilityFingerprint predictFingerprint(MolecularFormula formula, ProbabilityFingerprint fingerprint, Predictable topredict) {
+        return predictFingerprints(formula,fingerprint,EnumSet.of(topredict))[0];
+    }
+    public ProbabilityFingerprint[] predictFingerprints(MolecularFormula formula, ProbabilityFingerprint fingerprint, EnumSet<Predictable> topredict) {
+        final float[][] values = predictProbabilities(formula, fingerprint, topredict);
+        final ProbabilityFingerprint[] fps = new ProbabilityFingerprint[topredict.size()];
+        int k=0;
+        if (topredict.contains(Predictable.ClassyFire)) {
+            fps[k] = new ProbabilityFingerprint(classyFireMask, values[k]);
+            ++k;
+        }
+        if (topredict.contains(Predictable.Fingerprint)) {
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+        if (topredict.contains(Predictable.NPC)) {
+            fps[k] = npcMask.mask(new ProbabilityFingerprint(npcFingerprintVersion, values[k]));
+            ++k;
+        }
+        return fps;
+
     }
 
-    public double[] predictProbability(MolecularFormula formula, ProbabilityFingerprint fingerprint) {
-        return predictDecisionValues(formula, fingerprint, true);
-    }
+
 
     public double[] getNormalizedFormulaVector(MolecularFormula formula) {
         final double[] ff = getFormulaFeatures(formula);
@@ -261,90 +334,6 @@ public class Canopus {
         }
         return fp;
     }
-
-    public double[] predictDecisionValues(MolecularFormula formula, ProbabilityFingerprint fingerprint, boolean plattTransform) {
-        final double[] ff = getNormalizedFormulaVector(formula);
-        final double[] fp = getNormalizedFingerprintVector(fingerprint);
-        // for the DNN we have to convert our vectors into float
-        final float[] formulaInput = new float[ff.length];
-        for (int i=0; i < ff.length; ++i) formulaInput[i] = (float)ff[i];
-        final float[] plattInput = new float[fp.length];
-        for (int i=0; i < fp.length; ++i) plattInput[i] = (float)fp[i];
-        // wrap into matrix
-        FMatrixRMaj formulaInputVector = FMatrixRMaj.wrap(1, formulaInput.length, formulaInput);
-        for (FullyConnectedLayer l : formulaLayers)
-            formulaInputVector = l.eval(formulaInputVector);
-
-        FMatrixRMaj fpInputVector = FMatrixRMaj.wrap(1, plattInput.length, plattInput);
-        for (FullyConnectedLayer l : fingerprintLayers)
-            fpInputVector = l.eval(fpInputVector);
-
-        final float[] combined = new float[fpInputVector.numCols+formulaInputVector.numCols];
-        System.arraycopy(formulaInputVector.data, 0, combined, 0, formulaInputVector.numCols);
-        System.arraycopy(fpInputVector.data, 0, combined, formulaInputVector.numCols, fpInputVector.numCols);
-
-        FMatrixRMaj combinedVector = FMatrixRMaj.wrap(1, combined.length, combined);
-
-        for (FullyConnectedLayer l : innerLayers)
-            combinedVector = l.eval(combinedVector);
-
-        FMatrixRMaj outputVector = outputLayer.eval(combinedVector);
-        if (plattTransform) outputVector = plattLayer.eval(outputVector);
-        // convert back to double
-        final double[] outputArray = new double[outputVector.numCols];
-        for (int i=0; i < outputArray.length; ++i) outputArray[i] = outputVector.data[i];
-        return outputArray;
-    }
-
-
-    /**
-     * Outputs the last layer before the output layer
-     */
-    public double[] predictLatentVector(MolecularFormula formula, ProbabilityFingerprint fingerprint) {
-        final double[] ff = getFormulaFeatures(formula);
-        // normalize/center
-        for (int i=0; i < ff.length; ++i) {
-            ff[i] -= formulaCentering[i];
-            ff[i] /= formulaScaling[i];
-        }
-        final double[] fp = fingerprint.toProbabilityArray();
-        for (int i=0; i < fp.length; ++i) {
-            fp[i] -= plattCentering[i];
-            fp[i] /= plattScaling[i];
-            if (BINARIZE) {
-                fp[i] = Math.round(fp[i]);
-            } else if (CLIPPING) {
-                fp[i] = (Math.min(Math.max(fp[i],0.2d),1.0d)-0.2d)/0.6d;
-            }
-        }
-        // for the DNN we have to convert our vectors into float
-        final float[] formulaInput = new float[ff.length];
-        for (int i=0; i < ff.length; ++i) formulaInput[i] = (float)ff[i];
-        final float[] plattInput = new float[fp.length];
-        for (int i=0; i < fp.length; ++i) plattInput[i] = (float)fp[i];
-        // wrap into matrix
-        FMatrixRMaj formulaInputVector = FMatrixRMaj.wrap(1, formulaInput.length, formulaInput);
-        for (FullyConnectedLayer l : formulaLayers)
-            formulaInputVector = l.eval(formulaInputVector);
-
-        FMatrixRMaj fpInputVector = FMatrixRMaj.wrap(1, plattInput.length, plattInput);
-        for (FullyConnectedLayer l : fingerprintLayers)
-            fpInputVector = l.eval(fpInputVector);
-
-        final float[] combined = new float[fpInputVector.numCols+formulaInputVector.numCols];
-        System.arraycopy(formulaInputVector.data, 0, combined, 0, formulaInputVector.numCols);
-        System.arraycopy(fpInputVector.data, 0, combined, formulaInputVector.numCols, fpInputVector.numCols);
-
-        FMatrixRMaj combinedVector = FMatrixRMaj.wrap(1, combined.length, combined);
-
-        for (FullyConnectedLayer l : innerLayers)
-            combinedVector = l.eval(combinedVector);
-
-        final double[] outputArray = new double[combinedVector.numCols];
-        for (int i=0; i < outputArray.length; ++i) outputArray[i] = combinedVector.data[i];
-        return outputArray;
-    }
-
 
     public static double[] getFormulaFeatures(MolecularFormula f) {
         final PeriodicTable t = PeriodicTable.getInstance();
@@ -588,20 +577,9 @@ public class Canopus {
                 npcPlatt = PlattLayer.load(b);
             }
 
+            final NPCFingerprintVersion npc = NPCFingerprintVersion.get();
 
-            return new Canopus(formulaLayers, fingerprintLayers, innerLayers, outputLayer, plattLayer, formulaCentering, formulaScaling, plattCentering, plattScaling, v, cdkMask, npcLayer, npcPlatt);
-        }
-    }
-
-    public void replaceToRelu() {
-        for (FullyConnectedLayer l : formulaLayers) {
-            l.setActivationFunction(new ActivationFunction.ReLu());
-        }
-        for (FullyConnectedLayer l : fingerprintLayers) {
-            l.setActivationFunction(new ActivationFunction.ReLu());
-        }
-        for (FullyConnectedLayer l : innerLayers) {
-            l.setActivationFunction(new ActivationFunction.ReLu());
+            return new Canopus(formulaLayers, fingerprintLayers, innerLayers, outputLayer, plattLayer, formulaCentering, formulaScaling, plattCentering, plattScaling, v, cdkMask, MaskedFingerprintVersion.allowAll(npc),  npcLayer, npcPlatt);
         }
     }
 
@@ -699,7 +677,6 @@ public class Canopus {
             for ()
         }
     }
-     */
 
     public static final class InputGradient {
 
@@ -710,5 +687,6 @@ public class Canopus {
             this.formulaGradient = formulaGradient;
         }
     }
+*/
 
 }

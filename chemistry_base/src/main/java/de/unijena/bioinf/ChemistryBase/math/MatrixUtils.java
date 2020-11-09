@@ -163,6 +163,42 @@ public class MatrixUtils {
         }
         return transposed;
     }
+    public static float[][] transpose(float[][] matrix) {
+        final float[][] transposed = new float[matrix[0].length][matrix.length];
+        for (int i=0; i < matrix.length; ++i) {
+            for (int j=0; j < matrix[i].length; ++j) {
+                transposed[j][i] = matrix[i][j];
+            }
+        }
+        return transposed;
+    }
+    public static boolean[][] transpose(boolean[][] matrix) {
+        final boolean[][] transposed = new boolean[matrix[0].length][matrix.length];
+        for (int i=0; i < matrix.length; ++i) {
+            for (int j=0; j < matrix[i].length; ++j) {
+                transposed[j][i] = matrix[i][j];
+            }
+        }
+        return transposed;
+    }
+    public static int[][] transpose(int[][] matrix) {
+        final int[][] transposed = new int[matrix[0].length][matrix.length];
+        for (int i=0; i < matrix.length; ++i) {
+            for (int j=0; j < matrix[i].length; ++j) {
+                transposed[j][i] = matrix[i][j];
+            }
+        }
+        return transposed;
+    }
+    public static long[][] transpose(long[][] matrix) {
+        final long[][] transposed = new long[matrix[0].length][matrix.length];
+        for (int i=0; i < matrix.length; ++i) {
+            for (int j=0; j < matrix[i].length; ++j) {
+                transposed[j][i] = matrix[i][j];
+            }
+        }
+        return transposed;
+    }
 
     public static void normalize(double[][] matrix) {
         if (matrix.length != matrix[0].length) throw new RuntimeException("matrix is not symetric: " + matrix.length + " rows and " + matrix[0].length + " cols");

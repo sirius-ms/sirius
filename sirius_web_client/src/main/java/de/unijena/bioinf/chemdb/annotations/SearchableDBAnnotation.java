@@ -38,7 +38,7 @@ public abstract class SearchableDBAnnotation implements Ms2ExperimentAnnotation 
 
     protected SearchableDBAnnotation(@Nullable Collection<SearchableDatabase> searchDBs) {
         this.searchDBs = searchDBs == null ? Collections.emptyList() : List.copyOf(searchDBs);
-        filter = this.searchDBs.stream().mapToLong(SearchableDatabase::getFilterFlag).reduce((a, b) -> a |= b).orElse(0);
+        filter = this.searchDBs.stream().mapToLong(SearchableDatabase::getFilterFlag).reduce((a, b) -> a | b).orElse(0);
         containsCustomDb = this.searchDBs.stream().anyMatch(SearchableDatabase::isCustomDb);
         containsRestDb = this.searchDBs.stream().anyMatch(SearchableDatabase::isRestDb);
     }
