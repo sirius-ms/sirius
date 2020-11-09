@@ -30,7 +30,6 @@ import gnu.trove.list.array.TIntArrayList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 class DefaultDescriptors {
 
@@ -493,6 +492,11 @@ class DefaultDescriptors {
         @Override
         public <G, D, L> SpectralRecalibration read(DataDocument<G, D, L> document, D dictionary) {
             if (!document.hasKeyInDictionary(dictionary, "recalibration")) return SpectralRecalibration.none();
+            if (document.isString(document.getFromDictionary(dictionary, "recalibration"))) {
+                //backward compatibility
+                RecalibrationFunction merged = RecalibrationFunction.fromString(document.getStringFromDictionary(dictionary, "recalibration"));
+                return new SpectralRecalibration(null, merged);
+            }
             final D rec = document.getDictionaryFromDictionary(dictionary, "recalibration");
             final RecalibrationFunction merged;
             if (!document.hasKeyInDictionary(rec,"merged")) merged = RecalibrationFunction.identity();
@@ -534,7 +538,7 @@ class DefaultDescriptors {
 
     private static class ScoreDescriptor implements Descriptor<Score> {
 
-        private final WeakHashMap<String[], String[]> constantPool = new WeakHashMap<String[], String[]>();
+        //private final WeakHashMap<String[], String[]> constantPool = new WeakHashMap<String[], String[]>();
 
         @Override
         public String[] getKeywords() {
@@ -554,12 +558,15 @@ class DefaultDescriptors {
                 nameList.add(keyword);
             }
             String[] names = nameList.toArray(new String[nameList.size()]);
+            /*
             synchronized (constantPool) {
-                if (constantPool.get(names)!=null)
+                if (constantPool.get(names)!=null) {
                     names = constantPool.get(names);
-                else
-                    constantPool.put(names,names);
+                } else {
+                    constantPool.put(names, names);
+                }
             }
+             */
             final Score.HeaderBuilder score = Score.defineScoring();
             for (int k=0; k < names.length; ++k) {
                 score.define(names[k]);

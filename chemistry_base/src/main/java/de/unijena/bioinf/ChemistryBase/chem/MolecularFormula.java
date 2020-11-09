@@ -579,6 +579,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         Returns a new formula consisting of the maximum of each element of the single formulas
      */
     public MolecularFormula union(MolecularFormula other) {
+        if (other.isEmpty()) return this;
         final short[] amounts = buffer();
         final TableSelection selection = getTableSelection();
         final short[] otherAmounts = other.buffer();
@@ -669,6 +670,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
      * returns a new formula containing the atoms of both formulas
      */
     public MolecularFormula add(MolecularFormula other) {
+        if (other.isEmpty()) return this;
+        if (isEmpty()) return other;
         final short[] amounts = buffer();
         final TableSelection selection = getTableSelection();
         final short[] otherAmounts = other.buffer();
@@ -713,6 +716,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
      * the result is a subformula which appears after other is cut of from self.
      */
     public MolecularFormula subtract(MolecularFormula other) {
+        if (other.isEmpty()) return this;
         final short[] amounts = buffer();
         final TableSelection selection = getTableSelection();
         final short[] otherAmounts = other.buffer();

@@ -28,6 +28,10 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.set.hash.TCustomHashSet;
 import gnu.trove.strategy.HashingStrategy;
 
+/**
+ * Contains the MEASURED molecule together with its ionization
+ * Note: the adduct is part of the MEASURED molecular formula, but not the charge (H+, Na+,...)
+ */
 public class Decomposition extends Scored<MolecularFormula> implements DataAnnotation  {
 
     protected final Ionization ion;

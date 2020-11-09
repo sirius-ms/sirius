@@ -29,13 +29,18 @@ import java.util.Set;
 
 public final class FormulaCandidate {
     final MolecularFormula formula;
-    final long bitset;
+    long bitset;
     final PrecursorIonType precursorIonType;
 
     public FormulaCandidate(MolecularFormula formula, PrecursorIonType ionization, long bitset) {
         this.formula = formula;
         this.bitset = bitset;
         this.precursorIonType = ionization;
+    }
+
+
+    public void setBitset(long bitset) {
+        this.bitset = bitset;
     }
 
     public long getBitset() {

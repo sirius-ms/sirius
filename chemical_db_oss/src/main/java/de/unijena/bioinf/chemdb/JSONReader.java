@@ -20,12 +20,12 @@
 
 package de.unijena.bioinf.chemdb;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.babelms.CloseableIterator;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonReader;
 import java.io.IOException;
 import java.io.Reader;
 
@@ -42,20 +42,49 @@ public class JSONReader extends CompoundReader {
     }
 
     private static class READ {
-        protected JsonArray ary;
-        protected int offset=0;
-        protected READ(Reader breader) throws IOException {
-            JsonReader reader = Json.createReader(breader);
-            ary = reader.readObject().getJsonArray("compounds");
-            reader.close();
+        protected JsonParser parser;
+        protected CompoundCandidate.CompoundCandidateDeserializer deserializer;
+
+        protected CompoundCandidate candidate;
+
+        protected READ(Reader breader, FingerprintVersion version) throws IOException {
+            parser = new JsonFactory().createParser(breader);
+            deserializer = new CompoundCandidate.CompoundCandidateDeserializer(version);
+            // read boilerplate
+            while (true) {
+                final JsonToken jsonToken = parser.nextToken();
+                if (jsonToken==JsonToken.FIELD_NAME && parser.currentName().equals("compounds")) {
+                    break;
+                }
+            }
+            if (parser.nextToken()!=JsonToken.START_ARRAY)
+                throw new IOException("expected array of compounds");
+            fetch();
+
+        }
+
+        protected CompoundCandidate next()  {
+            final CompoundCandidate C = candidate;
+            try {
+                fetch();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return C;
+        }
+
+        private void fetch() throws IOException {
+            if (parser.nextToken() != JsonToken.END_ARRAY) {
+                candidate = deserializer.deserialize(parser);
+            } else candidate = null;
         }
 
         public void close() throws IOException {
-            ary = null;
+            parser.close();
         }
 
         public boolean hasNext() {
-            return offset < ary.size();
+            return candidate!=null;
         }
 
         public void remove() {
@@ -68,24 +97,23 @@ public class JSONReader extends CompoundReader {
         protected FingerprintVersion version;
 
         protected READFP(FingerprintVersion version, Reader breader) throws IOException {
-            super(breader);
-            this.version = version;
+            super(breader, version);
         }
 
         @Override
         public FingerprintCandidate next() {
-            return FingerprintCandidate.fromJSON(version, ary.getJsonObject(offset++));
+                return (FingerprintCandidate)super.next();
         }
     }
     private static class READCMP extends READ implements CloseableIterator<CompoundCandidate> {
 
         protected READCMP(Reader breader) throws IOException {
-            super(breader);
+            super(breader,null);
         }
 
         @Override
         public CompoundCandidate next() {
-            return CompoundCandidate.fromJSON(ary.getJsonObject(offset++));
+            return super.next();
         }
     }
 }
