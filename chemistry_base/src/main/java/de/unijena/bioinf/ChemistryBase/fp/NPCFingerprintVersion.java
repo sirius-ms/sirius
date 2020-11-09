@@ -1,11 +1,10 @@
-package de.unijena.bioinf.canopus;
+package de.unijena.bioinf.ChemistryBase.fp;
 
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.MolecularProperty;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,28 +12,42 @@ import java.util.Objects;
 
 public class NPCFingerprintVersion extends FingerprintVersion {
 
-    public static NPCFingerprintVersion readFromDirectory(File directory) throws IOException {
+    private static final NPCFingerprintVersion SINGLETON;
+
+    static {
+        NPCFingerprintVersion v = null;
+        try {
+            v = readFromClasspath();
+        } catch (IOException e) {
+            e.printStackTrace();
+            LoggerFactory.getLogger(NPCFingerprintVersion.class).error("Cannot load NPC fingerprint version.");
+        }
+        SINGLETON = v;
+    }
+
+    public static NPCFingerprintVersion get() {
+        return SINGLETON;
+    }
+
+    private static NPCFingerprintVersion readFromClasspath() throws IOException {
         final ArrayList<NPCProperty> pathway = new ArrayList<>();
-        final File pathways = new File(directory, "pathways.csv");
-        for (String[] cols : FileUtils.readTable(pathways)) {
+        for (String[] cols : FileUtils.readTable(FileUtils.ensureBuffering(new InputStreamReader(NPCFingerprintVersion.class.getResourceAsStream("/fingerprints/npc/pathways.csv"))))) {
             pathway.add(new NPCProperty(
                cols[0],
                NPCLevel.PATHWAY,
                Integer.parseInt(cols[1])
             ));
         }
-        final File superclasses = new File(directory, "superclasses.csv");
         final ArrayList<NPCProperty> superclass = new ArrayList<>();
-        for (String[] cols : FileUtils.readTable(superclasses)) {
+        for (String[] cols : FileUtils.readTable(FileUtils.ensureBuffering(new InputStreamReader(NPCFingerprintVersion.class.getResourceAsStream("/fingerprints/npc/superclasses.csv"))))) {
             superclass.add(new NPCProperty(
                     cols[0],
                     NPCLevel.SUPERCLASS,
                     Integer.parseInt(cols[1])
             ));
         }
-        final File classes = new File(directory, "classes.csv");
         final ArrayList<NPCProperty> klass = new ArrayList<>();
-        for (String[] cols : FileUtils.readTable(classes)) {
+        for (String[] cols : FileUtils.readTable(FileUtils.ensureBuffering(new InputStreamReader(NPCFingerprintVersion.class.getResourceAsStream("/fingerprints/npc/classes.csv"))))) {
             klass.add(new NPCProperty(
                     cols[0],
                     NPCLevel.CLASS,
@@ -76,8 +89,8 @@ public class NPCFingerprintVersion extends FingerprintVersion {
 
     public static enum NPCLevel {
         PATHWAY("Pathway", 0), SUPERCLASS("Superclass", 1), CLASS("class", 2);
-        protected String name;
-        protected int level;
+        public final String name;
+        public final int level;
 
         private NPCLevel(String name, int level) {
             this.name = name;
@@ -86,9 +99,9 @@ public class NPCFingerprintVersion extends FingerprintVersion {
     }
 
     public static class NPCProperty extends MolecularProperty{
-        protected final String name;
-        protected final NPCLevel level;
-        protected final int npcIndex;
+        public final String name;
+        public final NPCLevel level;
+        public final int npcIndex;
 
         protected NPCProperty(String name, NPCLevel level, int npcIndex) {
             this.name = name;

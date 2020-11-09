@@ -22,6 +22,7 @@ package de.unijena.bioinf.canopus;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.canopus.dnn.ActivationFunction;
@@ -516,7 +517,7 @@ public class TensorflowModel implements AutoCloseable, Closeable {
 
             final Canopus canopus = new Canopus(
                     formulaLayers, plattLayers, innerLayers, layerMatrices.remove(0), new PlattLayer(As, Bs), data.formulaNorm, data.formulaScale, plattCentering, plattScale, data.classyFireMask, cdkMask
-            , data.isNPC() ? npcOut : null,data.isNPC() ? new PlattLayer(npcAs,npcBs) : null);
+            , data.isNPC() ? MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()) : null, data.isNPC() ? npcOut : null,data.isNPC() ? new PlattLayer(npcAs,npcBs) : null);
 
             try (final OutputStream stream = new GZIPOutputStream(new FileOutputStream(new File("canopus_" + (trainMissingCompounds ? "final_" : "") + id + ".data.gz")))) {
                 canopus.dump(stream);

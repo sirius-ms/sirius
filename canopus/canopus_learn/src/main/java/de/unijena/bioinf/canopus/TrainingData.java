@@ -1019,7 +1019,7 @@ public class TrainingData {
             this.npcList = new ArrayList<>();
             if (new File("npc").exists()) {
                 System.out.println("Load NPC data.");
-                NPCVersion = NPCFingerprintVersion.readFromDirectory(new File("npc"));
+                NPCVersion = NPCFingerprintVersion.get();
                 FileUtils.eachRow(new File("npc/compounds.csv"), (row)->{
                     final LabeledCompound labeledCompound = compoundHashMap.get(row[0]);
                     if (labeledCompound==null) {

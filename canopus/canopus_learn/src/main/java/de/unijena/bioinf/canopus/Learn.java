@@ -28,10 +28,16 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 import org.tensorflow.Tensor;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.FloatBuffer;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.LogManager;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -101,13 +107,6 @@ public class Learn {
             }
             System.exit(0);
             return;
-        }
-        if (args[0].startsWith("readAndSample")) {
-            try {
-                readAndSample(new File(args[1]), new File(args[2]));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
         if (args[0].startsWith("continue")) {
             try {
@@ -719,157 +718,6 @@ public class Learn {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void readAndSample(File modelFile, File keyFile) throws IOException {
-        final Canopus canopus = Canopus.loadFromFile(modelFile);
-        final TrainingData trainingData = new TrainingData(new File("."), null);
-        final LinkedHashSet<LabeledCompound> compounds = new LinkedHashSet<>();
-        final HashMap<String,Integer> counter = new HashMap<>();
-        final HashMap<String, String[]> keys = new HashMap<>();
-        final HashMap<String,Integer> klass2index = new HashMap<>();
-        try (final BufferedReader r = FileUtils.getReader(keyFile)) {
-            String line;
-            while ((line=r.readLine())!=null) {
-                String[] cols = line.split("\t");
-                if (cols.length>1) {
-                    String[] kls = new String[cols.length - 1];
-                    System.arraycopy(cols, 1, kls, 0, kls.length);
-                    keys.put(cols[0], kls);
-                    for (String k : kls) {
-                        counter.putIfAbsent(k,0);
-                        counter.put(k, counter.get(k)+1);
-                    }
-                }
-            }
-        }
-        // sort klasses by frequency
-        String[] klasses = new String[counter.size()];
-        {
-            int i=0;
-            for (String key : counter.keySet()) {
-                klasses[i++] = key;
-            }
-            Arrays.sort(klasses, (x,y)->-Integer.compare(counter.get(x), counter.get(y)));
-            i=0;
-            for (String k : klasses) {
-                klass2index.put(k, i++);
-                System.out.println(k + ":\t" + klass2index.get(k) + " (" + counter.get(k) + " examples)");
-            }
-        }
-        for (LabeledCompound c : trainingData.compounds) {
-            if (keys.containsKey(c.inchiKey) && !trainingData.blacklist.contains(c.inchiKey))
-                compounds.add(c);
-        }
-        System.out.println(klass2index.size() + " natural product classes found.");
-        System.out.println(compounds.size() + " training compounds found.");
-
-        try (final BufferedWriter w = FileUtils.getWriter(new File("natural_product_classes.txt"))) {
-            for (String key : klasses) {
-                w.write(String.valueOf(klass2index.get(key)));
-                w.write("\t");
-                w.write(key);
-                w.write("\t");
-                w.write(String.valueOf(counter.get(key)));
-                w.newLine();
-            }
-        }
-
-        final ExecutorService SERV = Executors.newFixedThreadPool(80);
-
-
-        // first create sample from real data
-        {
-            ArrayList<EvaluationInstance> data = new ArrayList<>(trainingData.crossvalidation);
-            ListIterator<EvaluationInstance> iter = data.listIterator();
-            while (iter.hasNext()) {
-                final EvaluationInstance next = iter.next();
-                if (!keys.containsKey(next.compound.inchiKey)) {
-                    System.out.println("No NP classification for " + next.compound.inchiKey);
-                    iter.remove();
-                }
-            }
-            System.out.println(data.size()+ " instances.");
-            //data.addAll(trainingData.independent);
-
-            final int[] vec = new int[klass2index.size()];
-            try (DataOutputStream out = new DataOutputStream(FileUtils.getOut(new File("Yms.binary")))) {
-                for (EvaluationInstance c : data) {
-                    Arrays.fill(vec, 0);
-                    for (String m : keys.get(c.compound.inchiKey)) {
-                        vec[klass2index.get(m)] = 1;
-                    }
-                    for (int value : vec) {
-                        out.writeByte(value);
-                    }
-                }
-            }
-            try (DataOutputStream out = new DataOutputStream(FileUtils.getOut(new File("Xms.binary")))) {
-                final ArrayList<Future<double[]>> vectors = new ArrayList<>();
-                for (EvaluationInstance x : data) {
-                    vectors.add(SERV.submit(new Callable<double[]>() {
-                        @Override
-                        public double[] call() throws Exception {
-                            final double[] doubles = canopus.predictLatentVector(x.compound.formula, x.fingerprint);
-                            return doubles;
-                        }
-                    }));
-                }
-                for (Future<double[]> v : vectors) {
-                    try {
-                        for (double w : v.get()) {
-                            out.writeFloat((float)w);
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-        {
-            // now create samples
-            final int[] vec = new int[klass2index.size()];
-            try (DataOutputStream out = new DataOutputStream(FileUtils.getOut(new File("Y.binary")))) {
-                for (LabeledCompound c : compounds) {
-                    Arrays.fill(vec, 0);
-                    for (String m : keys.get(c.inchiKey)) {
-                        vec[klass2index.get(m)] = 1;
-                    }
-                    for (int value : vec) {
-                        out.writeByte(value);
-                    }
-                }
-            }
-        }
-        for (int i=0; i  < 3; ++i) {
-            try (DataOutputStream out = new DataOutputStream(FileUtils.getOut(new File("sample_" + i + ".binary")))) {
-                final ArrayList<Future<double[]>> vectors = new ArrayList<>();
-                for (LabeledCompound c : compounds) {
-                    vectors.add(SERV.submit(new Callable<double[]>() {
-                        @Override
-                        public double[] call() throws Exception {
-                            ProbabilityFingerprint fp = trainingData.sampleFingerprint(c, Math.random() >= 0.9 ? TrainingData.SamplingStrategy.DISTURBED_TEMPLATE : TrainingData.SamplingStrategy.TEMPLATE);
-                            final double[] doubles = canopus.predictLatentVector(c.formula, fp);
-                            return doubles;
-                        }
-                    }));
-                }
-                for (Future<double[]> v : vectors) {
-                    try {
-                        for (double w : v.get()) {
-                            out.writeFloat((float)w);
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
     }
 
     public static void continueModel(File tfFile, File modelFile,String pattern, boolean finalize) throws IOException {

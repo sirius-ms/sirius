@@ -23,38 +23,54 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.canopus.CanopusResult;
-import de.unijena.bioinf.webapi.WebJJob;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
+import de.unijena.bioinf.webapi.WebJJob;
 import org.jetbrains.annotations.NotNull;
 
 public class CanopusWebJJob extends WebJJob<CanopusWebJJob, CanopusResult, CanopusJobOutput> {
 
-    protected final MaskedFingerprintVersion version;
+    protected final MaskedFingerprintVersion classyfireVersion, npcVersion;
     protected ProbabilityFingerprint compoundClasses = null;
+    protected ProbabilityFingerprint npcClasses = null;
 
-    public CanopusWebJJob(@NotNull JobId jobId, de.unijena.bioinf.ms.rest.model.JobState serverState, MaskedFingerprintVersion version, long submissionTime) {
+    public CanopusWebJJob(@NotNull JobId jobId, de.unijena.bioinf.ms.rest.model.JobState serverState, MaskedFingerprintVersion classyfireVersion, MaskedFingerprintVersion npcVersion, long submissionTime) {
         super(jobId, serverState, submissionTime);
-        this.version = version;
+        this.classyfireVersion = classyfireVersion;
+        this.npcVersion = npcVersion;
     }
 
     @Override
     protected CanopusResult makeResult() {
-        return new CanopusResult(compoundClasses);
+        return new CanopusResult(compoundClasses, npcClasses);
     }
 
     @Override
     protected synchronized CanopusWebJJob updateTyped(@NotNull JobUpdate<CanopusJobOutput> update) {
         if (updateState(update)) {
             if (update.data != null) {
-                if (update.data.compoundClasses != null)
-                    compoundClasses = ProbabilityFingerprint.fromProbabilityArrayBinary(version, update.data.compoundClasses);
+                if (update.data.compoundClasses != null) {
+                    ProbabilityFingerprint[] fps = readMultipleFingerprints(update.data.compoundClasses);
+                    this.compoundClasses = fps[0];
+                    this.npcClasses = fps[1];
+                }
             }
         }
 
         checkForTimeout();
         evaluateState();
         return this;
+    }
+
+    private ProbabilityFingerprint[] readMultipleFingerprints(byte[] data) {
+        byte[] buf1 = new byte[this.classyfireVersion.size() * 8];
+        System.arraycopy(data, 0, buf1, 0, buf1.length);
+        byte[] buf2 = new byte[this.npcVersion.size() * 8];
+        System.arraycopy(data, buf1.length, buf2, 0, buf2.length);
+        return new ProbabilityFingerprint[]{
+                ProbabilityFingerprint.fromProbabilityArrayBinary(classyfireVersion, buf1),
+                ProbabilityFingerprint.fromProbabilityArrayBinary(npcVersion, buf2)
+        };
     }
 }
