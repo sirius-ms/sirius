@@ -85,9 +85,9 @@ class SiriusToolbar extends JToolBar {
 
         //todo implement database menu
         //todo reenable if fixed
-//        db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance());
-//        add(db);
-//        addSeparator(new Dimension(20,20));
+        db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance());
+        add(db);
+        addSeparator(new Dimension(20,20));
 
         jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance());
         add(jobs);

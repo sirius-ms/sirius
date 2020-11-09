@@ -233,7 +233,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 checkForInterruption();
 
                 try {
-
                     final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
                     final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), compoundsToProcess), configOptionLoader, new GuiInstanceBufferFactory());
                     final Run computation = new Run(wfBuilder);

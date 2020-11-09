@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.OptionalInt;
 
 public class FingerprintAgreement {
 
@@ -78,11 +79,11 @@ public class FingerprintAgreement {
         return new FingerprintAgreement(indizes, weights, weights2);
     }
 
-    public int indexAt(int row, int col) {
+    public OptionalInt indexAt(int row, int col) {
         try {
-            return indizes[row* numberOfCols + col];
+            return OptionalInt.of(indizes[row* numberOfCols + col]);
         }catch (IndexOutOfBoundsException e) {
-            return 0;
+            return OptionalInt.empty();
         }
     }
 }

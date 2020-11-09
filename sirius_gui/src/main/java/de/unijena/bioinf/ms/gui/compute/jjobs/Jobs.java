@@ -208,9 +208,9 @@ public class Jobs {
 
     //todo Singelton runs that are cancelable
 
-    public static void runWorkflow(Workflow computation, List<InstanceBean> compoundsToProcess) {
+    public static TextAreaJJobContainer<Boolean> runWorkflow(Workflow computation, List<InstanceBean> compoundsToProcess) {
         //todo the run could be a job that reports progress. That would also be great for the cli
-        submit(new ComputationJJob(computation,compoundsToProcess), String.valueOf(COMPUTATION_COUNTER.incrementAndGet()), "Computation");
+        return submit(new ComputationJJob(computation,compoundsToProcess), String.valueOf(COMPUTATION_COUNTER.incrementAndGet()), "Computation");
     }
 
     private static class ComputationJJob extends BasicJJob<Boolean> {
