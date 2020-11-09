@@ -49,10 +49,38 @@ public class Ms2Validator extends Ms1Validator {
             throw new InvalidException("Missing MS2 and MS1 spectra");
         if (input.getMs1Spectra() == null) input.setMs1Spectra(new ArrayList<SimpleSpectrum>());
         checkScanNumbers(warn, repair,input);
+        checkIntrinsicalCharged(warn,repair,input);
         checkIonization(warn, repair, input);
         checkMergedMs1(warn, repair, input);
         checkIonMass(warn, repair, input);
         return true;
+    }
+
+    /**
+     * if the molecule is intrinsical charged, we will neutralize its molecular formula (and neutral mass annotation)
+     * because intrinsical charged ion types are, internally, represented via an protonation ionization.
+     */
+    private void checkIntrinsicalCharged(Warning warn, boolean repair, MutableMs2Experiment input) {
+        final Deviation dev = new Deviation(20,0.1);
+        if (input.getMolecularFormula()==null)
+            return;
+        if (input.getPrecursorIonType().isIntrinsicalCharged() || dev.inErrorWindow(input.getMolecularFormula().getMass(), input.getIonMass())) {
+            // compound is intrinsical charged
+            if (dev.inErrorWindow(input.getMolecularFormula().getMass(), input.getIonMass())) {
+                // and formula is ionized
+                if (repair) {
+                    if (input.getPrecursorIonType().getCharge()>0) {
+                        input.setMolecularFormula(input.getMolecularFormula().subtract(MolecularFormula.getHydrogen()));
+                    } else {
+                        input.setMolecularFormula(input.getMolecularFormula().add(MolecularFormula.getHydrogen()));
+                    }
+                } else {
+                    warn.warn("Molecular formula " + input.getMolecularFormula() + " is ionized, but should be converted into neutral form, even for intrinsical charged compounds.");
+                }
+            }
+
+
+        }
     }
 
     private void checkScanNumbers(Warning warn, boolean repair, MutableMs2Experiment input) {
