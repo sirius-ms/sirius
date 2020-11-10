@@ -28,9 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.DataSources;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -89,7 +87,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     }
 
     protected final JCheckboxListPanel<String> ionizationList;
-    protected final JCheckboxListPanel<SearchableDatabase> searchDBList;
+    protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
     protected final JComboBox<Instrument> profileSelector;
     protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout;
     protected final JComboBox<IsotopeMs2Settings.Strategy> ms2IsotpeSetting;
@@ -230,7 +228,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
         //enable disable element panel if db is selected
         searchDBList.checkBoxList.addListSelectionListener(e -> {
-            final List<SearchableDatabase> source = getFormulaSearchDBs();
+            final List<CustomDataSources.Source> source = getFormulaSearchDBs();
             elementPanel.enableElementSelection(source == null || source.isEmpty());
             if (elementAutoDetect != null)
                 elementAutoDetect.setEnabled(source == null || source.isEmpty());
@@ -280,17 +278,12 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         return ((SpinnerNumberModel) candidatesPerIonSpinner.getModel()).getNumber().intValue();
     }
 
-    public List<SearchableDatabase> getFormulaSearchDBs() {
+    public List<CustomDataSources.Source> getFormulaSearchDBs() {
         return searchDBList.checkBoxList.getCheckedItems();
     }
 
     public List<String> getFormulaSearchDBStrings() {
-        return getFormulaSearchDBs().stream().map(db -> {
-            if (db.isCustomDb())
-                return db.name();
-            else
-                return DataSources.getSourceFromName(db.name()).map(DataSource::name).orElse(null);
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+        return getFormulaSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public PossibleAdducts getDerivedAdducts() {
