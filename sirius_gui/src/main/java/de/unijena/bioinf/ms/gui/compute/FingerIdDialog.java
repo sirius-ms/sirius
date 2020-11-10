@@ -21,13 +21,8 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
-
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class FingerIdDialog extends JDialog {
 
@@ -69,40 +64,25 @@ public class FingerIdDialog extends JDialog {
         if (showComputeButton) {
             final JButton computeAll = new JButton("Search all");
             computeAll.setToolTipText("Search ALL " + buttonSuffix + " with CSI:FingerID");
-            computeAll.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    returnState = COMPUTE_ALL;
-                    dispose();
-                }
+            computeAll.addActionListener(e -> {
+                returnState = COMPUTE_ALL;
+                dispose();
             });
             southPanel.add(computeAll);
         }
 
         JButton approve = new JButton("Search selected");
         approve.setToolTipText("Search SELECTED " + buttonSuffix + " with CSI:FingerID");
-        approve.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                returnState = COMPUTE;
-                dispose();
-            }
+        approve.addActionListener(e -> {
+            returnState = COMPUTE;
+            dispose();
         });
 
         final JButton abort = new JButton("Close");
-        abort.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dispose();
-            }
-        });
+        abort.addActionListener(e -> dispose());
         southPanel.add(approve);
         southPanel.add(abort);
         pack();
         setVisible(true);
-    }
-
-    public java.util.List<SearchableDatabase> getSearchDb() {
-        return dbForm.getStructureSearchDBs();
     }
 }

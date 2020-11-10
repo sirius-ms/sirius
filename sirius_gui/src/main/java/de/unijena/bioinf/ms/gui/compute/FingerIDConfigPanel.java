@@ -22,9 +22,7 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.DataSources;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
@@ -47,11 +45,11 @@ import java.util.stream.Collectors;
 public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
     //todo sync db selection with sirius panel
 
-    protected final JCheckboxListPanel<SearchableDatabase> searchDBList;
+    protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
     public final JCheckboxListPanel<String> adductOptions;
     protected final JToggleButton enforceAdducts;
 
-    public FingerIDConfigPanel(final JCheckBoxList<String> sourceIonization, @Nullable final JCheckBoxList<SearchableDatabase> syncSource) {
+    public FingerIDConfigPanel(final JCheckBoxList<String> sourceIonization, @Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
         super(FingerIdOptions.class);
 
         // configure database to search list
@@ -74,13 +72,13 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
 
         add(new TextHeaderBoxPanel("Additional Options", additionalOptions));
 
-        searchDBList.checkBoxList.check(SearchableDatabases.getBioDb());
+        searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.realName()));
 
         if (syncSource != null)
             syncSource.addListSelectionListener(e -> {
                 searchDBList.checkBoxList.uncheckAll();
                 if (syncSource.getCheckedItems().isEmpty())
-                    searchDBList.checkBoxList.check(SearchableDatabases.getBioDb());
+                    searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.realName()));
                 else
                     searchDBList.checkBoxList.checkAll(syncSource.getCheckedItems());
             });
@@ -91,16 +89,11 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
                 .flatMap(Optional::stream).collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new));
     }
 
-    public List<SearchableDatabase> getStructureSearchDBs() {
+    public List<CustomDataSources.Source> getStructureSearchDBs() {
         return searchDBList.checkBoxList.getCheckedItems();
     }
 
     public List<String> getStructureSearchDBStrings() {
-        return getStructureSearchDBs().stream().map(db -> {
-            if (db.isCustomDb())
-                return db.name();
-            else
-                return DataSources.getSourceFromName(db.name()).map(DataSource::name).orElse(null);
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+        return getStructureSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }
