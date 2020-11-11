@@ -59,6 +59,10 @@ public class MutableMs2Experiment implements Ms2Experiment {
     }
 
     public MutableMs2Experiment(Ms2Experiment experiment) {
+        this(experiment, true);
+    }
+
+    public MutableMs2Experiment(Ms2Experiment experiment, boolean cloneAnnotations) {
         this.precursorIonType = experiment.getPrecursorIonType();
         this.ms1Spectra = new ArrayList<>();
         for (Spectrum<Peak> spec : experiment.getMs1Spectra())
@@ -72,9 +76,8 @@ public class MutableMs2Experiment implements Ms2Experiment {
             this.ms2Spectra.add(ms2);
 
         }
-        this.annotations = experiment.annotations().clone();
+        this.annotations = cloneAnnotations ? experiment.annotations().clone() : new Annotations<>();
         this.ionMass = experiment.getIonMass();
-//        this.moleculeNeutralMass = experiment.getMoleculeNeutralMass();
         this.molecularFormula = experiment.getMolecularFormula();
         this.name = experiment.getName();
     }
