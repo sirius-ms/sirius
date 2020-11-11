@@ -72,7 +72,7 @@ class TraceConverter {
         // determine the background and trace
         Range<Integer> range = getCommonRange(segments);
         Range<Integer> background = extendRangeForBackground(mainIon, range);
-        System.out.println(background);
+//        System.out.println(background);
 
         {
             final TIntArrayList scanids = new TIntArrayList();

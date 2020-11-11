@@ -59,7 +59,7 @@ public class Ms2NoiseStatistics {
         buffer.clearQuick();
         buffer2.clearQuick();
         final double samplingChance = 100d/spectrum.size();
-        System.out.println(samplingChance);
+//        System.out.println(samplingChance);
         for (int k=0; k < spectrum.size(); ++k) {
             if (samplingChance<1 && Math.random()>samplingChance)
                 continue;
