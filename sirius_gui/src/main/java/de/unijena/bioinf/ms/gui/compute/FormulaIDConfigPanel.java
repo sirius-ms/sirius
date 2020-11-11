@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
@@ -242,7 +243,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
                 final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(ec.getExperiment());
+                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(),false));
 
                 pi.getAnnotation(FormulaConstraints.class).
                         ifPresentOrElse(c -> {
