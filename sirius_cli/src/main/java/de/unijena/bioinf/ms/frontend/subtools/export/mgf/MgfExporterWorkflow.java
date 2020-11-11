@@ -61,6 +61,7 @@ public class MgfExporterWorkflow implements Workflow {
         this.quantPath = Optional.ofNullable(options.quantTable).map(File::toPath);
     }
 
+    
     @Override
     public void run() {
         try {
