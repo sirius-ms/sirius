@@ -9,7 +9,8 @@
 - **update: Structure DB update due to major changes in PubChem standardization since the last one.**
 - **breaking:**  additional columns (`ionMass`, `retentionTimeInSeconds`) have been added to project wide summary files
 such as `formula_identifications.tsv`, `compound_identifications.tsv` and `compound_identifications_adducts.tsv`
-- **breaking:** column name in `formula_candidates.tsv` has changed from `massError(ppm)` to `massErrorPrecursor(ppm)`  
+- **breaking:** column names in `formula_candidates.tsv` have changed: `massError(ppm)` to `massErrorPrecursor(ppm)`, `explainedPeaks` to `numExplainedPeaks`, `medianAbsoluteMassError(ppm)` to `medianAbsoluteMassErrorFragmentPeaks(ppm)`
+- **breaking:** column names describing scores now use camel case instead of underscores: `ConfidenceScore`, `SiriusScore`, `ZodiacScore`,`TreeScore`,`IsotopeScore`, `CSI:FingerIDScore`
 
 **NOTE: SIRIUS versions will now follow semantic versioning (all upcoming releases)**
 
