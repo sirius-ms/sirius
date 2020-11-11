@@ -115,7 +115,7 @@ public class IsotopePatternAnalysis implements Parameterized {
     public static IsotopePatternAnalysis defaultAnalyzer() {
         final PeriodicTable T = PeriodicTable.getInstance();
         final IsotopePatternAnalysis analyzer = new IsotopePatternAnalysis();
-        double offset = 1.323d;
+//        double offset = 1.323d;
         analyzer.intensityOffset = 0d;
         analyzer.isotopePatternScorers.add(new MassDifferenceDeviationScorer());
         analyzer.isotopePatternScorers.add(new NormalDistributedIntensityScorer());
@@ -161,7 +161,6 @@ public class IsotopePatternAnalysis implements Parameterized {
     public SimpleSpectrum extractPattern(Spectrum<Peak> ms1Spec, MS1MassDeviation deviation, ChemicalAlphabet stdalphabet, double targetMz) {
         // extract all isotope peaks starting from the given target mz
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1Spec);
-        final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>();
         final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, targetMz, deviation.allowedMassDeviation);
         if (index < 0) return null;
         final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
