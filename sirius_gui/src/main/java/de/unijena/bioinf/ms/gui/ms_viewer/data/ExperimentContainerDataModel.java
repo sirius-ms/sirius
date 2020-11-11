@@ -187,44 +187,19 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         final Spectrum<?> spec = getSpectrumByID(id);
 
         if (id.equals(MSMS_MERGED_DISPLAY)) {
-            if (currentResult != null) {
-                //todo @kai, why is the ms2experiment modified during view???
-
-               /* if (tree != null && tree.getAnnotationOrNull(ProcessedInput.class) != null) {
-                    ms2 = tree.getAnnotationOrNull(ProcessedInput.class).getExperimentInformation();
-                } else {
-                    ms2 = ec.getMs2Experiment();
-                }*/
-
-                //ioMass
-                /*double ionMass;
-                if (tree != null && tree.getAnnotationOrNull(PrecursorIonType.class) != null) {
-                    ionMass = tree.getAnnotationOrNull(PrecursorIonType.class).addIonAndAdduct(tree.getRoot().getFormula().getMass());
-                } else {
-                    ionMass = ec.getIonMass();
-                }
-*/
-                // remove peaks behind the parent
-                /*
-                for (MutableMs2Spectrum ms2spec : ms2.getMs2Spectra()) {
-                    Spectrums.cutByMassThreshold(ms2spec, ionMass + 1d);
-                }
-                */
-                final FTree tree = currentResult.getFragTree().orElse(null);
-
-                underlyingModel = new SiriusMergedMs2Annotated(tree, ec.getExperiment(), minMz, maxMz);
+            if (currentResult != null && currentResult.getFragTree().isPresent()) {
+                underlyingModel = new SiriusMergedMs2Annotated(currentResult.getFragTree().get(), ec.getExperiment(), minMz, maxMz);
             } else {
                 underlyingModel = new SiriusMergedMs2(ec.getExperiment(), minMz, maxMz);
             }
         } else if (spec == null) {
             underlyingModel = new DummySpectrumModel();
         } else {
-            if (currentResult != null) {
-                final FTree tree = currentResult.getFragTree().orElse(null);
+            if (currentResult != null && currentResult.getFragTree().isPresent()) {
                 if (spec.getMsLevel() == 1) {
-                    underlyingModel = new SiriusIsotopePattern(tree, spec);
+                    underlyingModel = new SiriusIsotopePattern(currentResult.getFragTree().get(), ec.getExperiment(), spec);
                 } else {
-                    underlyingModel = new SiriusSingleSpectrumAnnotated(tree, spec, minMz, maxMz);
+                    underlyingModel = new SiriusSingleSpectrumAnnotated(currentResult.getFragTree().get(), spec, minMz, maxMz);
                 }
             } else {
                 underlyingModel = new SiriusSingleSpectrumModel(spec);
