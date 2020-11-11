@@ -34,6 +34,7 @@ import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -46,15 +47,18 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Ms2IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
+import de.unijena.bioinf.sirius.Ms2Preprocessor;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 
 public class SpectraJSONWriter{
-	
+
 	class PeakMatch {
 		// Peak matches *between* two spectra
 
 		int index1, index2;
 		JsonObject matchMetadata;
-		
+
 		public PeakMatch(int index1, int index2, JsonObject matchMetadata){
 			this.index1 = index1;
 			this.index2 = index2;
@@ -65,9 +69,9 @@ public class SpectraJSONWriter{
 			this(index1, index2, new JsonObject());
 		}
 	}
-   
+
 	// DEBUG: for testing, MSViewerDataModel class should probably be removed
-	@Deprecated	
+	@Deprecated
 	public String spectrumJSONString(MSViewerDataModel dmodel){
 		JsonObject spectrum = spectrum2json(dmodel);
 		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -89,7 +93,7 @@ public class SpectraJSONWriter{
 		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		return gson.toJson(spectra);
 	}
-	
+
 	// MS2 Spectrum with FragmentationTree (single)
 	public String ms2JSON(MutableMs2Spectrum spectrum, FTree tree) {
 		Fragment[] fragments = annotate(spectrum, tree);
@@ -97,6 +101,23 @@ public class SpectraJSONWriter{
 		annotatePeakPairs(jSpectrum, tree, fragments);
 		final JsonObject j = new JsonObject();
 		j.addProperty("massDeviation", 0);					   // TODO:
+		JsonArray spectra = new JsonArray();
+		spectra.add(jSpectrum);
+		j.add("spectra", spectra);
+		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		return gson.toJson(j);
+	}
+
+	// MS2 Spectrum with FragmentationTree (single) MERGED
+	public String ms2JSON(Ms2Experiment experiment, FTree tree) {
+		final JsonArray jPeaks = ms2JsonPeaks(experiment, tree);
+		final JsonObject jSpectrum = new JsonObject();
+		jSpectrum.addProperty("name", "MS2 merged");
+		final JsonObject spectrumMetadata = new JsonObject(); // TODO
+		jSpectrum.add("spectrumMetadata", spectrumMetadata);
+		final JsonObject j = new JsonObject();
+		j.addProperty("massDeviation", 0);					   // TODO:
+		jSpectrum.add("peaks", jPeaks);
 		JsonArray spectra = new JsonArray();
 		spectra.add(jSpectrum);
 		j.add("spectra", spectra);
@@ -132,7 +153,7 @@ public class SpectraJSONWriter{
 	protected JsonObject spectrum2json(SimpleSpectrum spectrum){
 		final JsonObject jSpectrum = new JsonObject();
 		jSpectrum.addProperty("name", "");					  // TODO
-		final JsonObject spectrumMetadata = new JsonObject(); // TODO	   
+		final JsonObject spectrumMetadata = new JsonObject(); // TODO
 		jSpectrum.add("spectrumMetadata", spectrumMetadata);
 		double scale  = spectrum.getMaxIntensity();
 		final JsonArray peaks = new JsonArray();
@@ -159,7 +180,7 @@ public class SpectraJSONWriter{
 	protected JsonObject spectrum2json(MSViewerDataModel dmodel){
 		final JsonObject jSpectrum = new JsonObject();
 		jSpectrum.addProperty("name", "");					  // TODO
-		final JsonObject spectrumMetadata = new JsonObject(); // TODO	   
+		final JsonObject spectrumMetadata = new JsonObject(); // TODO
 		jSpectrum.add("spectrumMetadata", spectrumMetadata);
 		final JsonArray peaks = new JsonArray();
 		for (int i = 0; i < dmodel.getSize(); i++){
@@ -182,8 +203,8 @@ public class SpectraJSONWriter{
 		return jSpectrum;
 	}
 
-	
-	protected JsonObject ms2Annotated(MutableMs2Spectrum spectrum, Fragment[] fragments) {
+
+	protected JsonObject ms2Annotated(Spectrum<? extends Peak> spectrum, Fragment[] fragments) {
 		final JsonObject jSpectrum = new JsonObject();
 		jSpectrum.addProperty("name", getSpectrumName(spectrum, "MS2"));
 		final JsonObject spectrumMetadata = new JsonObject(); // TODO
@@ -213,7 +234,7 @@ public class SpectraJSONWriter{
 		return jSpectrum;
 	}
 
-	private String getSpectrumName(Spectrum<Peak> spectrum, String fallback) {
+	private String getSpectrumName(Spectrum<? extends Peak> spectrum, String fallback) {
 		int MsLevel = spectrum.getMsLevel();
 		CollisionEnergy energy;
 		if (MsLevel != -1 && (energy = spectrum.getCollisionEnergy()) != null)
@@ -226,7 +247,7 @@ public class SpectraJSONWriter{
 		Fragment u, v;
 		MolecularFormula lossFormula;
 		JsonArray peaks = jSpectrum.get("peaks").getAsJsonArray();
-		for (int ui = 0; ui < fragments.length; ++ui){			
+		for (int ui = 0; ui < fragments.length; ++ui){
 			if ((u = fragments[ui]) == null)
 				continue;
 			JsonArray uPairs = peaks.get(ui).getAsJsonObject().get("peakPairs").getAsJsonArray();
@@ -235,7 +256,7 @@ public class SpectraJSONWriter{
 					continue;
 				JsonArray vPairs = peaks.get(vi).getAsJsonObject().get("peakPairs").getAsJsonArray();
 				Loss loss;
-				try{ 
+				try{
 					loss = tree.getLoss(u, v);
 				} catch (IndexOutOfBoundsException e){
 					loss = null;
@@ -267,7 +288,7 @@ public class SpectraJSONWriter{
 	// Peak matches *between* spectra
 	protected void annotatePeakMatches(JsonArray spectra, List<PeakMatch> matches) {
 		JsonArray pattern1Peaks = spectra.get(0).getAsJsonObject()
-			.get("peaks").getAsJsonArray();			
+			.get("peaks").getAsJsonArray();
 		JsonArray pattern2Peaks = spectra.get(1).getAsJsonObject()
 			.get("peaks").getAsJsonArray();
 		for (PeakMatch m : matches) {
@@ -291,14 +312,79 @@ public class SpectraJSONWriter{
 			int j = siriusIsotopePattern.findIndexOfPeak(p.getMass(), 0.1);
 			if (j >= 0) peakMatches.add(new PeakMatch(j, i));
 		}
-		return peakMatches;			
+		return peakMatches;
 	}
-	
+
+	protected JsonArray ms2JsonPeaks(Ms2Experiment experiment, FTree ftree) {
+		final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
+		final ProcessedInput processedInput = preprocessor.preprocess(experiment);
+		List<ProcessedPeak> peaks = processedInput.getMergedPeaks();
+		final JsonArray jPeaks = new JsonArray();
+		for (ProcessedPeak peak : peaks) {
+			JsonObject jPeak = new JsonObject();
+			jPeak.addProperty("mz", peak.getMass());
+			jPeak.addProperty("intensity", peak.getRelativeIntensity());
+			JsonObject jPeakMetadata = new JsonObject();
+			jPeakMetadata.addProperty("absoluteIntensity", peak.getIntensity());
+			jPeak.add("peakMetadata", jPeakMetadata);
+			JsonArray peakPairs = new JsonArray();
+			jPeak.add("peakPairs", peakPairs);
+			JsonObject peakMatches = new JsonObject();
+			jPeak.add("peakMatches", peakMatches);
+			jPeaks.add(jPeak);
+		}
+		if (ftree != null){
+			double precursorMass = experiment.getMs2Spectra().get(0).getPrecursorMz();
+			processedInput.mapTreeToInput(ftree);
+			for (Fragment f: ftree){
+				short i = f.getPeakId();
+				if (i >= 0){
+					JsonObject jPeak = jPeaks.get(i).getAsJsonObject();
+					MolecularFormula formula = f.getFormula();
+					if (formula != null)
+						jPeak.addProperty("formula", formula.toString()
+							+ " + " + f.getIonization().toString());
+					// deviation (from FTJsonWriter tree2json)
+					Deviation dev = ftree.getMassError(f);
+					if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
+						dev = ftree.getMassErrorTo(f, precursorMass);
+					Deviation rdev = ftree.getRecalibratedMassError(f);
+					if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
+						rdev = ftree.getMassErrorTo(f, precursorMass);
+					jPeak.addProperty("massDeviationMz", dev.getAbsolute());
+					jPeak.addProperty("massDeviationPpm", dev.getPpm());
+					jPeak.addProperty("recalibratedMassDeviationMz", rdev.getAbsolute());
+					jPeak.addProperty("recalibratedMassDeviationPpm", rdev.getPpm());
+					JsonArray jPairs = jPeak.get("peakPairs").getAsJsonArray();
+					for (Loss l : f.getIncomingEdges()){
+						short other_index = l.getSource().getPeakId();
+						if (other_index >= 0){
+							JsonObject pair = new JsonObject();
+							pair.addProperty("index", other_index);
+							pair.addProperty("formula", l.getFormula().toString());
+							jPairs.add(pair);
+						}
+					}
+					for (Loss l : f.getOutgoingEdges()){
+						short other_index = l.getTarget().getPeakId();
+						if (other_index >= 0){
+							JsonObject pair = new JsonObject();
+							pair.addProperty("index", other_index);
+							pair.addProperty("formula", l.getFormula().toString());
+							jPairs.add(pair);
+						}
+					}
+				}
+			}
+		}
+		return jPeaks;
+	}
+
 	// Copied from SingleSpectrumAnnotated
 	private Fragment[] annotate(Spectrum<? extends Peak> spectrum, FTree tree) {
 		Fragment[] annotatedFormulas = new Fragment[spectrum.size()];
 		BitSet isIsotopicPeak = new BitSet(spectrum.size());
-		
+
         final FragmentAnnotation<AnnotatedPeak> annotatedPeak = tree.getFragmentAnnotationOrNull(AnnotatedPeak.class);
         if (annotatedPeak==null) return null;
         final FragmentAnnotation<Ms2IsotopePattern> isoAno = tree.getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
