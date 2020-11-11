@@ -118,7 +118,7 @@ public class FormulaSummaryWriter implements Summarizer {
         final StringBuilder headerBuilder = new StringBuilder("molecularFormula\tadduct\tprecursorFormula");/*	rankingScore*/
         if (scorings != null && !scorings.isEmpty())
             headerBuilder.append("\t").append(scorings);
-        headerBuilder.append("\texplainedPeaks\texplainedIntensity\tmedianMassError(ppm)\tmedianAbsoluteMassError(ppm)\tmassErrorPrecursor(ppm)");
+        headerBuilder.append("\tnumExplainedPeaks\texplainedIntensity\tmedianMassErrorFragmentPeaks(ppm)\tmedianAbsoluteMassErrorFragmentPeaks(ppm)\tmassErrorPrecursor(ppm)");
         return headerBuilder.toString();
     }
 
