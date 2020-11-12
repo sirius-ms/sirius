@@ -126,9 +126,9 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
     private static class FilenameFormat implements FormatString {
         @Override
         public String format(Ms2Experiment experimentResult) {
-            if (experimentResult.getSource() == null)
+            if (experimentResult.getSourceString() == null)
                 return "unknown";
-            return simplifyURL(experimentResult.getSource().getFile());
+            return simplifyURL(experimentResult.getSourceString());
         }
     }
 
@@ -171,7 +171,7 @@ public class StandardMSFilenameFormatter implements FilenameFormatter {
             return null;
         if (name.length() > 64)
             name = name.substring(0, 48);
-        return name.replaceAll("[:/?#\\[\\]@!$&'()*+,;=<>%{}|\\\\^\"`]+", "");
+        return name.replaceAll("[:/?#\\[\\]@!$&'( )*+,;=<>%{}|\\\\^\"`]+", "");
     }
 
     public static String simplifyURL(String filename) {
