@@ -1,6 +1,6 @@
 dependencies {
     compile project(':sirius_cli')
-    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
+//    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
