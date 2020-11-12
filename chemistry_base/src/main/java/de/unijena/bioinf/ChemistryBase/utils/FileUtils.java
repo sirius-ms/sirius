@@ -754,4 +754,39 @@ public class FileUtils {
     }
 
 
+    public static long estimateNumOfLines(Path p) throws IOException {
+        return estimateNumOfLines(p, 1024, 10);
+    }
+
+    public static long estimateNumOfLines(Path p, int sampleSize, int maxNumOfSamples) throws IOException {
+       return estimateCharOccurrence(p,System.lineSeparator().charAt(0),sampleSize,maxNumOfSamples); //returns  CR o LR
+
+    }
+
+    public static long estimateCharOccurrence(Path p, char query, int sampleSize, int maxNumOfSamples) throws IOException {
+        final long size = Files.size(p);
+
+        long chunkSize = size / maxNumOfSamples;
+
+        sampleSize = (int) Math.min(sampleSize, chunkSize);
+
+        try (InputStream stream = Files.newInputStream(p)) {
+            byte[] buffer = new byte[sampleSize];
+            int count = 0;
+
+            int n;
+            int totalN = 0;
+            while ((n = stream.read(buffer)) > 0) {
+                totalN += n;
+                for (int i = 0; i < n; i++) {
+                    if (buffer[i] == query) count++;
+                }
+                stream.skip(chunkSize - n);
+            }
+
+            return (long) ((double) count / (double) totalN * (double) size);
+        }
+    }
+
+
 }
