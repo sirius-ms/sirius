@@ -51,7 +51,7 @@ public enum DataSource {
     //this is currently only interesting for internal testing.
     ADDITIONAL("additional", 524288,  null,null,null, 0, false), //proably mostly training structures, but maybe more.
     SUPERNATURAL("SuperNatural", 1048576,  "id", "supernatural", "http://bioinf-applied.charite.de/supernatural_new/index.php?site=compound_search&start=0&supplier=all&tox=any&classification=all&compound_input=true&sn_id=%s"),
-    COCONUT("COCONUT", 2097152,  "id", "coconut", null),
+    COCONUT("COCONUT", 2097152,  "id", "coconut", "https://coconut.naturalproducts.net/compound/coconut_id/%s"),
     PUBCHEMANNOTATIONBIO("PubChem class - bio and metabolites", 16777216,  null,null,null, 0, false), //2**24; Pubchem Annotations now have a separate flag
     PUBCHEMANNOTATIONDRUG("PubChem class - drug", 33554432,  null,null,null, 0, false),
     PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, 0, false),
