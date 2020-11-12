@@ -33,6 +33,7 @@ import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import gnu.trove.list.array.TDoubleArrayList;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -146,7 +147,7 @@ public class CorrelatedPeakDetector {
         detectIsotopesAndSetChargeStateForAndChimerics(sample, ion, alreadyAnnotatedMzs);
 
         if (ion.getChargeState() > 1) {
-            System.out.println("========> Multiple charged Ion detected! Ion = " + ion.toString() + "\t" + ion.getIntensityAfterPrecursor());
+            LoggerFactory.getLogger(getClass()).warn("Multiple charged Ion detected! Ion = " + ion.toString() + "\t" + ion.getIntensityAfterPrecursor());
         }
         // do I am an isotope peak myself?
         if (doIAmAnIsotope(sample, ion, alreadyAnnotatedMzs)) {
