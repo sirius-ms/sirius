@@ -269,8 +269,7 @@ public class BayesianScoringUtils {
 
 
 //    private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = 35132;
-    private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = DataSource.BIO.flag(); //todo changed. use all bio
-//    private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = 256; //KEGG for fast testing
+    private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = DataSource.BIO.flag();
 
     /**
      *
