@@ -235,7 +235,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             if (s == null) return Colors.DB_UNKNOWN;
             if (s.isCustomSource()) return Colors.DB_CUSTOM;
             if (s.name().equals(DataSource.TRAIN.realName)) return Colors.DB_TRAINING;
-            return label.values.length == 0 ? Colors.DB_UNLINKED : Colors.DB_LINKED;
+            return label.values.length == 0 || s.URI() == null ? Colors.DB_UNLINKED : Colors.DB_LINKED;
         }
 
 
