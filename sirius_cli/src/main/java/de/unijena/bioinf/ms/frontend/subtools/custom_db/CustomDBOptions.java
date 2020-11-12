@@ -19,9 +19,13 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
@@ -33,10 +37,12 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
@@ -65,24 +71,55 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
     @Override
     public Workflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
-        return () -> {
+        return new CustomDBWorkflow(rootOptions.getInput());
+    }
 
-            final InputFilesOptions input = rootOptions.getInput();
-            if (dbName == null || dbName.isEmpty() || input == null || input.msInput == null || input.msInput.unknownFiles.isEmpty()) {
-                LoggerFactory.getLogger(CustomDatabaseImporter.class).error("No input data given. Do nothing");
-                return;
-            }
+
+    public class CustomDBWorkflow extends BasicJJob<Boolean> implements Workflow{
+        final InputFilesOptions input;
+        public CustomDBWorkflow(InputFilesOptions input) {
+            super(JJob.JobType.SCHEDULER, "CustomDatabaseImporter");
+            this.input = input;
+        }
+
+        @Override
+        public void run() {
             try {
-                Path loc = outputDir != null ? outputDir : SearchableDatabases.getCustomDatabaseDirectory().toPath();
-                Files.createDirectories(loc);
-                CustomDatabaseImporter.importDatabase(loc.resolve(dbName).toFile(),
-                        input.msInput.unknownFiles.stream().map(Path::toFile).collect(Collectors.toList()),
-                        parentDBs,
-                        ApplicationCore.WEB_API, writeBuffer);
-                LoggerFactory.getLogger(CustomDatabaseImporter.class).info("Database imported. Use 'structure --db=\"" + loc.resolve(dbName).toString() + "\"' to search in this database.");
-            } catch (IOException e) {
-                LoggerFactory.getLogger(CustomDatabaseImporter.class).error("error when storing custom db");
+                SiriusJobs.getGlobalJobManager().submitJob(this).awaitResult();
+            } catch (ExecutionException e) {
+                LoggerFactory.getLogger(CustomDatabaseImporter.class).error("error when storing custom db", e);
             }
-        };
+        }
+
+        @Override
+        protected Boolean compute() throws Exception {
+
+            if (dbName == null || dbName.isEmpty() || input == null || input.msInput == null || input.msInput.unknownFiles.isEmpty()) {
+                logError("No input data given. Do nothing");
+                return false;
+            }
+
+            final AtomicLong lines = new AtomicLong(0);
+            for (Path f : input.msInput.unknownFiles)
+                lines.addAndGet(FileUtils.estimateNumOfLines(f));
+
+            final AtomicInteger count = new AtomicInteger(0);
+
+            Path loc = outputDir != null ? outputDir : SearchableDatabases.getCustomDatabaseDirectory().toPath();
+            Files.createDirectories(loc);
+            CustomDatabaseImporter.importDatabase(loc.resolve(dbName).toFile(),
+                    input.msInput.unknownFiles.stream().map(Path::toFile).collect(Collectors.toList()),
+                    parentDBs,
+                    ApplicationCore.WEB_API, writeBuffer,
+                    inChI -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Importing '" + inChI.key2D() + "'")
+            );
+            logInfo("Database imported. Use 'structure --db=\"" + loc.resolve(dbName).toString() + "\"' to search in this database.");
+            return true;
+        }
+
+        @Override
+        public void cancel() {
+            cancel(true);
+        }
     }
 }
