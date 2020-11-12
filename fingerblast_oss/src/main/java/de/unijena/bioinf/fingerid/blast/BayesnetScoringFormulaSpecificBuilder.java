@@ -52,7 +52,7 @@ public class BayesnetScoringFormulaSpecificBuilder extends BayesnetScoringBuilde
     protected ProbabilityFingerprint[] predictedSpecific;
     protected Fingerprint[] correctSpecific;
     protected double generalDataWeight;
-//        private static TSynchronizedIntObjectMap<double[][][]> indexToContingencyTableCommonPart; //cannot save computation. tree structure is different!!!!
+//        private static TSynchronizedIntObjectMap<double[][][]> indexToContingencyTableCommonPart; //cannot easily store this data since tree structure is different
 
     public BayesnetScoringFormulaSpecificBuilder(PredictionPerformance[] performances, ProbabilityFingerprint[] predictedSpecific, Fingerprint[] correctSpecific, ProbabilityFingerprint[] predictedAll, Fingerprint[] correctAll, int[][] covTreeEdges, boolean allowOnlyNegativeScores, double generalDataWeight) {
         super(performances, predictedAll, correctAll, covTreeEdges, allowOnlyNegativeScores);
@@ -125,12 +125,6 @@ public class BayesnetScoringFormulaSpecificBuilder extends BayesnetScoringBuilde
         }
 
 
-//            //changed test
-//            TDoubleArrayList sums = new TDoubleArrayList();
-//            boolean[] correctBool = null;
-//            if (correctSpecific.length==1){
-//                correctBool = correctSpecific[0].toBooleanArray();
-//            }
 
         //all predictions are worth xxx
         double allPredictionsWeight = generalDataWeight + pseudo*4;
@@ -141,25 +135,11 @@ public class BayesnetScoringFormulaSpecificBuilder extends BayesnetScoringBuilde
             //just one-parent case
             double[][][] plattContingencyTables = nodeToPlattContingencyTables.get(node);
 
-//                //changed test: distribution if just 1 specific strucutre
-//                if (correctSpecific.length==1){
-//                    AbstractCorrelationTreeNode[] parents = node.getParents();
-//                    boolean[] parentsTruth = getParentTruth(parents, correctBool);
-//                    final boolean truth = correctBool[node.getFingerprintIndex()];
-//                    int idx = node.getArrayIdxForGivenAssignment(truth, parentsTruth);
-//                    double[][] plattContingencyTable = plattContingencyTables[idx];
-//                    double sum = plattContingencyTable[ChildT][RootT] + plattContingencyTable[ChildT][RootF] + plattContingencyTable[ChildF][RootT] + plattContingencyTable[ChildF][RootF];
-//                    sums.add(Math.round(100*sum)/100d); //                    ../less than thres testing!!!
-//                }
-
 
             for (int i = 0; i < plattContingencyTables.length; i++) {
                 double[][] plattContingencyTable = plattContingencyTables[i];
                 double sum = plattContingencyTable[ChildT][RootT] + plattContingencyTable[ChildT][RootF] + plattContingencyTable[ChildF][RootT] + plattContingencyTable[ChildF][RootF];
 
-                //changed test
-//                    sums.add(Math.round(100*sum)/100d); //                    ../less than thres testing!!!
-//                   ///// changed don't skip!
                 if (sum<allPredictionsWeight) continue; //we don't want to upscale common instances
 
 
@@ -170,26 +150,6 @@ public class BayesnetScoringFormulaSpecificBuilder extends BayesnetScoringBuilde
                 plattContingencyTable[ChildF][RootF] /= norm;
             }
         }
-
-//            if ( correctSpecific.length==1) System.out.println("sums (1 correct): "+ Arrays.toString(sums.toArray()));
-
-//
-//                for (AbstractCorrelationTreeNode node : nodeList) {
-//                    final boolean isRoot = node.numberOfParents()==0;
-//                    if (isRoot) continue;
-//                    if (indexToContingencyTableCommonPart.containsKey(node.getFingerprintIndex())){
-//                        double[][][] plattContingencyTables = cloneArray(indexToContingencyTableCommonPart.get(node.getFingerprintIndex()));
-//                        nodeToPlattContingencyTables.put(node, plattContingencyTables);
-//                    } else {
-//                        synchronized (indexToContingencyTableCommonPart) {
-//                            if (indexToContingencyTableCommonPart.containsKey(node.getFingerprintIndex())) continue;
-//                            double[][][] plattContingencyTables = cloneArray(nodeToPlattContingencyTables.get(node));
-//                            indexToContingencyTableCommonPart.put(node.getFingerprintIndex(), plattContingencyTables);
-//                        }
-//
-//                    }
-//                }
-
 
         for (int i = 0; i < predictedSpecific.length; i++) {
             double[] probFp = predictedSpecific[i].toProbabilityArray();
