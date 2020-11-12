@@ -119,25 +119,26 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                     for (FormulaResultBean e : formulasToShow) {
                         checkForInterruption();
                         if (e != null) {
-                            final FormulaResult res = e.getResult(FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
+                            final Optional<FormulaResult> resOpt = e.getResult(FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
                             checkForInterruption();
-                            res.getAnnotation(FBCandidateFingerprints.class).ifPresent(fbfps ->
-                                    res.getAnnotation(FBCandidates.class).ifPresent(fbc -> {
-                                        data.add(e);
-                                        for (int j = 0; j < fbc.getResults().size(); j++) {
-                                            FingerprintCandidateBean c = new FingerprintCandidateBean(j + 1,
-                                                    res.getAnnotationOrThrow(FingerprintResult.class).fingerprint,
-                                                    fbc.getResults().get(j),
-                                                    fbfps.getFingerprints().get(j),
-                                                    e.getPrecursorIonType());
-                                            emChache.add(c);
-                                            csiScoreStats.addValue(c.getScore());
-                                            Optional.ofNullable(c.getXLogPOrNull()).ifPresent(logPStats::addValue);
-                                            Double tm = c.getTanimotoScore();
-                                            tanimotoStats.addValue(tm == null ? Double.NaN : tm);
-                                        }
-                                    })
-                            );
+                            resOpt.ifPresent(res ->
+                                    res.getAnnotation(FBCandidateFingerprints.class).ifPresent(fbfps ->
+                                            res.getAnnotation(FBCandidates.class).ifPresent(fbc -> {
+                                                data.add(e);
+                                                for (int j = 0; j < fbc.getResults().size(); j++) {
+                                                    FingerprintCandidateBean c = new FingerprintCandidateBean(j + 1,
+                                                            res.getAnnotationOrThrow(FingerprintResult.class).fingerprint,
+                                                            fbc.getResults().get(j),
+                                                            fbfps.getFingerprints().get(j),
+                                                            e.getPrecursorIonType());
+                                                    emChache.add(c);
+                                                    csiScoreStats.addValue(c.getScore());
+                                                    Optional.ofNullable(c.getXLogPOrNull()).ifPresent(logPStats::addValue);
+                                                    Double tm = c.getTanimotoScore();
+                                                    tanimotoStats.addValue(tm == null ? Double.NaN : tm);
+                                                }
+                                            })
+                                    ));
                         }
                     }
                     checkForInterruption();

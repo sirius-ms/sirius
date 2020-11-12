@@ -100,21 +100,23 @@ public class Instance {
     }
 
     @SafeVarargs
-    public final synchronized FormulaResult loadFormulaResult(FormulaResultId fid, Class<? extends DataAnnotation>... components) {
+    public final synchronized Optional<FormulaResult> loadFormulaResult(FormulaResultId fid, Class<? extends DataAnnotation>... components) {
         try {
             if (!formulaResultCache.containsKey(fid)) {
-                if (!compoundCache.contains(fid))
-                    LoggerFactory.getLogger(getClass()).warn("Unknown FormulaResultID, Either a wrong ID was inserted or the cached project-space was modified with bypassing the cache!");
+                if (!compoundCache.contains(fid)) { // fid may have been deleted du to this thread waited for the lock
+                    LoggerFactory.getLogger(getClass()).debug("FID '" + fid + "' may have been deleted by another thread, or the cached project-space was bypassed.");
+                    return Optional.empty();
+                }
                 final FormulaResult fr = projectSpace().getFormulaResult(fid, components);
                 formulaResultCache.put(fid, fr);
-                return fr;
+                return Optional.of(fr);
             } else {
                 FormulaResult fr = formulaResultCache.get(fid);
                 final Class[] missing = Arrays.stream(components).filter(comp -> !fr.hasAnnotation(comp)).toArray(Class[]::new);
                 if (missing.length > 0)
                     fr.setAnnotationsFrom(projectSpace().getFormulaResult(fid, missing));
 
-                return fr;
+                return Optional.of(fr);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -145,7 +147,7 @@ public class Instance {
         if (sScoreds.isEmpty()) return Optional.empty();
         else {
             FormulaResult candidate = sScoreds.get(0).getCandidate();
-            return Optional.of(loadFormulaResult(candidate.getId(), components));
+            return loadFormulaResult(candidate.getId(), components);
         }
     }
 
