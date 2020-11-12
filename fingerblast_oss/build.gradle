@@ -25,6 +25,4 @@ dependencies() {
 	compile project(':chemical_db_oss')
 	compile project(':chemical_db_oss:chemdb_sql_oss')
 
-	// external
-	compile group: "org.jgrapht", name: "jgrapht-core", version: "1.0.1"
 }

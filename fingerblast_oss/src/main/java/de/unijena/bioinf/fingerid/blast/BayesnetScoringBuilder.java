@@ -106,10 +106,7 @@ public class BayesnetScoringBuilder {
 //                covariances[pos] = new double[]{Double.parseDouble(row[2]), Double.parseDouble(row[3]), Double.parseDouble(row[4]), Double.parseDouble(row[5])};
             } else {
                 int numberOfParents = Integer.parseInt(row[0]);
-//                int child = Integer.parseInt(row[numberOfParents+1]);
-//                for (int i = 1; i <= numberOfParents; i++) {
-//                    edges.add(new int[]{Integer.parseInt(row[i]), child});
-//                }
+
                 int[] current_edges = new int[numberOfParents+1];
                 for (int i = 1; i <= numberOfParents+1; i++) {
                     current_edges[i-1] = Integer.parseInt(row[i]);
@@ -123,16 +120,7 @@ public class BayesnetScoringBuilder {
             }
             pos++;
         }
-//        return new BayesnetScoring(edges.toArray(new int[0][]), covariances, fpVersion, alpha, allowOnlyNegativeScores);
 
-            /**
-     *
-     * @param covTreeEdges array of edges int[k][0] -- int[k][1] or int[l][0] -- int[l][2], int[l][1] -- int[l][2] using absolute indices
-     * @param covariances covariances per edge. Use correct ordering for each kind of nodes (one or two parent node)
-     * @param fpVersion corresponding {@link FingerprintVersion}
-     * @param alpha alpha used for laplace smoothing
-     */
-//    public BayesnetScoring(int[][] covTreeEdges, double[][] covariances, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores){
         int[][] covTreeEdges = edges.toArray(new int[0][]);
 
         if (covTreeEdges.length!=covariances.length) throw new RuntimeException("size of edge and covariances array differ");
@@ -142,13 +130,13 @@ public class BayesnetScoringBuilder {
         final List<BayesnetScoring.AbstractCorrelationTreeNode> fs = new ArrayList<>(10);
         final BayesnetScoring.AbstractCorrelationTreeNode[] nodeList = new BayesnetScoring.AbstractCorrelationTreeNode[nodes.size()];
         int k=0;
-//        int numberOfChildren = 0;
+
         for (BayesnetScoring.AbstractCorrelationTreeNode n : nodes.valueCollection()) {
             if (n.numberOfParents()==0) fs.add(n);
             nodeList[k++] = n;
-//            numberOfChildren += n.getChildren().size();
+
         }
-//        System.out.println("number of children "+numberOfChildren);
+
         final BayesnetScoring.AbstractCorrelationTreeNode[] forests = fs.toArray(new BayesnetScoring.AbstractCorrelationTreeNode[fs.size()]);
         for (int i = 0; i < covTreeEdges.length; i++) {
             int child = covTreeEdges[i][covTreeEdges[i].length-1];
@@ -162,10 +150,9 @@ public class BayesnetScoringBuilder {
         }
 
         return new BayesnetScoring(nodes, nodeList, forests, alpha, fpVersion, null, allowOnlyNegativeScores);
-        //    }
+
 
     }
-
 
 
     public static BayesnetScoring readScoringFromFile(Path treeFile, FingerprintVersion fpVersion, double alpha) throws IOException {
@@ -350,8 +337,6 @@ public class BayesnetScoringBuilder {
         TIntArrayList notContained = new TIntArrayList();
         for (int i = 0; i < fpVersion.size(); i++) {
             if (!nodesRelativeIdx.contains(i)){
-                //todo changed, ignore
-//                throw new RuntimeException("Property " + fpVersion.getAbsoluteIndexOf(i) + " is not contained in tree");
                 notContained.add(fpVersion.getAbsoluteIndexOf(i));
                 nodesRelativeIdx.put(i, createTreeNode(i));
             }
@@ -369,7 +354,8 @@ public class BayesnetScoringBuilder {
         } else if (parentNodes.length==1){
             return new BayesnetScoring.CorrelationTreeNode(fingerprintIndex, parentNodes[0]);
         } else if (parentNodes.length==2) {
-            return new BayesnetScoring.TwoParentsCorrelationTreeNode(fingerprintIndex, parentNodes);
+            //currently not used. would only be part of BayesnetScoringWithTwoParents
+            return new BayesnetScoringWithTwoParents.TwoParentsCorrelationTreeNode(fingerprintIndex, parentNodes);
         } else {
             throw new RuntimeException("don't support nodes with no or more than 2 parents");
         }
@@ -403,8 +389,6 @@ public class BayesnetScoringBuilder {
         BayesnetScoring.AbstractCorrelationTreeNode[] forests = fs.toArray(new BayesnetScoring.CorrelationTreeNode[fs.size()]);
         double alpha = 1d/performances[0].withPseudoCount(0.25d).numberOfSamplesWithPseudocounts();
         makeStatistics(nodeList, alpha);
-
-//        boolean allowOnlyNegativeScores = allowOnlyNegativeScores;
 
         if (hasCycles(forests, fpVersion)){
             throw new RuntimeException("bayes net contains cycles");
@@ -461,6 +445,7 @@ public class BayesnetScoringBuilder {
 //            final double platt = laplaceSmoothing(predictedFP[parent.getFingerprintIndex()], alpha);
             //changed
             int idx = parent.getFingerprintIndex();
+
             final double platt = transformProbability(predictedFP[idx], trueFP[idx], performances[idx], alpha);
             parentPlatt[i] = platt;
         }
