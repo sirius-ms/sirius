@@ -52,15 +52,15 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     //the results data structure
-    @NotNull private final FormulaResultId fid;
-    @NotNull private final InstanceBean parent;
+    private final FormulaResultId fid;
+    private final InstanceBean parent;
 
     //additional UI fields
     private final int rank;
 
     private List<ContainerListener.Defined> listeners = null;
 
-    public FormulaResultBean(@NotNull FormulaResultId fid, @NotNull InstanceBean parent, int rank) {
+    public FormulaResultBean(FormulaResultId fid, InstanceBean parent, int rank) {
         this.fid = fid;
         this.parent = parent;
         this.rank = rank;
