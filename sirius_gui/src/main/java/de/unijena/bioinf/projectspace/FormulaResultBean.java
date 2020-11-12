@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,21 +52,15 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     //the results data structure
-    private final FormulaResultId fid;
-    private final InstanceBean parent;
+    @NotNull private final FormulaResultId fid;
+    @NotNull private final InstanceBean parent;
 
     //additional UI fields
     private final int rank;
 
     private List<ContainerListener.Defined> listeners = null;
 
-    protected FormulaResultBean(int rank) {
-        this.rank = rank;
-        fid = null;
-        parent = null;
-    }
-
-    public FormulaResultBean(FormulaResultId fid, InstanceBean parent, int rank) {
+    public FormulaResultBean(@NotNull FormulaResultId fid, @NotNull InstanceBean parent, int rank) {
         this.fid = fid;
         this.parent = parent;
         this.rank = rank;
@@ -136,7 +131,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     @SafeVarargs
-    public final FormulaResult getResult(Class<? extends DataAnnotation>... components) {
+    public final Optional<FormulaResult> getResult(Class<? extends DataAnnotation>... components) {
         parent.addToCache();
         return parent.loadFormulaResult(getID(), components);
     }
@@ -150,28 +145,28 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     public <T extends FormulaScore> Optional<T> getScore(final Class<T> scoreType) {
-        return getResult(FormulaScoring.class).getAnnotation(FormulaScoring.class).flatMap(it -> it.getAnnotation(scoreType));
+        return getResult(FormulaScoring.class).flatMap(r -> r.getAnnotation(FormulaScoring.class).flatMap(it -> it.getAnnotation(scoreType)));
     }
 
     public Optional<FTree> getFragTree() {
-        return getResult(FTree.class).getAnnotation(FTree.class);
+        return getResult(FTree.class).flatMap(r -> r.getAnnotation(FTree.class));
     }
 
 
     public Optional<FingerprintResult> getFingerprintResult(){
-        return getResult(FingerprintResult.class).getAnnotation(FingerprintResult.class);
+        return getResult(FingerprintResult.class).flatMap(r -> r.getAnnotation(FingerprintResult.class));
     }
     public Optional<FBCandidates> getFingerIDCandidates(){
-        return getResult(FBCandidates.class).getAnnotation(FBCandidates.class);
+        return getResult(FBCandidates.class).flatMap(r -> r.getAnnotation(FBCandidates.class));
     }
 
     public Optional<FBCandidateFingerprints> getFingerIDCandidatesFPs(){
-        return getResult(FBCandidateFingerprints.class).getAnnotation(FBCandidateFingerprints.class);
+        return getResult(FBCandidateFingerprints.class).flatMap(r -> r.getAnnotation(FBCandidateFingerprints.class));
     }
 
 
     public Optional<CanopusResult> getCanopusResult(){
-        return getResult(CanopusResult.class).getAnnotation(CanopusResult.class);
+        return getResult(CanopusResult.class).flatMap(r -> r.getAnnotation(CanopusResult.class));
     }
 
     //ranking stuff
@@ -211,7 +206,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     private Optional<FTreeMetricsHelper> getMetrics() {
-        return getResult(FTree.class).getAnnotation(FTree.class).map(FTreeMetricsHelper::new);
+        return getResult(FTree.class).flatMap(r -> r.getAnnotation(FTree.class).map(FTreeMetricsHelper::new));
     }
 
     public double getExplainedPeaksRatio() {

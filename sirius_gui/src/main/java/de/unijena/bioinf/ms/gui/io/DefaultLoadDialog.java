@@ -113,7 +113,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
 
 
         //edit panel
-        editPanel = new ExperimentEditPanel();
+        editPanel = new ExperimentEditPanel(true);
         list.addListEventListener(listChanges -> {
             editPanel.precursorSelection.setData(list, editPanel.getSelectedIonMass());
         });
