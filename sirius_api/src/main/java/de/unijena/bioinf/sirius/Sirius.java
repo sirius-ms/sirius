@@ -629,7 +629,7 @@ public class Sirius {
                 List<IdentificationResult<SiriusScore>> r = createIdentificationResults(fr, instance);//postprocess results
                 return r;
             } catch (RuntimeException e) {
-                LoggerFactory.getLogger(Sirius.class).error("Error in instance " + String.valueOf(experiment.getSource()) + ": " + e.getMessage());
+                LoggerFactory.getLogger(Sirius.class).error("Error in instance " + experiment.getSourceString() + ": " + e.getMessage());
                 throw e;
             }
         }

@@ -98,6 +98,13 @@ public class MutableMs2Experiment implements Ms2Experiment {
         return s != null ? s.value : null;
     }
 
+    @Override
+    @Nullable
+    public String getSourceString() {
+        final SourceLocation s = getSourceAnnotation();
+        return s != null ? s.toString() : null;
+    }
+
     @Nullable
     public SourceLocation getSourceAnnotation() {
         if (hasAnnotation(SpectrumFileSource.class))
