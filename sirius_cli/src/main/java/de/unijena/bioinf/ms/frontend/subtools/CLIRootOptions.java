@@ -58,7 +58,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     public enum LogLevel {OFF, SEVERE, WARNING, INFO, CONFIG, FINE, FINER, FINEST, ALL}
 
-    @Option(names = {"--log", "--loglevel"}, description = "Set logging level of the Jobs SIRIUS will execute. Valid values: ${COMPLETION-CANDIDATES}", order = 5)
+    @Option(names = {"--log", "--loglevel"}, description = "Set logging level of the Jobs SIRIUS will execute. Valid values: ${COMPLETION-CANDIDATES}", order = 5, defaultValue = "WARNING")
     public void setLogLevel(LogLevel loglevel) {
         try {
             LogManager.getLogManager().updateConfiguration(key -> {

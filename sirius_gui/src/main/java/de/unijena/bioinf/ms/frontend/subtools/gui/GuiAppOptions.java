@@ -126,21 +126,21 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         int progress = 0;
                         int max = 7;
                         updateProgress(0, max, progress++);
-                        ApplicationCore.DEFAULT_LOGGER.info("Configuring CDK InChIGeneratorFactory...");
+//                        ApplicationCore.DEFAULT_LOGGER.info("Configuring CDK InChIGeneratorFactory...");
                         updateProgress(0, max, progress++, "Configuring CDK InChIGeneratorFactory...");
                         InChIGeneratorFactory.getInstance();
-                        ApplicationCore.DEFAULT_LOGGER.info("Initializing available DBs...");
+//                        ApplicationCore.DEFAULT_LOGGER.info("Initializing available DBs...");
                         updateProgress(0, max, progress++, "Initializing available DBs");
                         SearchableDatabases.getAvailableDatabases();
-                        ApplicationCore.DEFAULT_LOGGER.info("Initializing Startup Project-Space...");
+//                        ApplicationCore.DEFAULT_LOGGER.info("Initializing Startup Project-Space...");
                         updateProgress(0, max, progress++, "Initializing Project-Space...");
                         // run prepro job. this jobs imports all existing data into the projectspace we use for the GUI session
                         final ProjectSpaceManager projectSpace = SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
-                        ApplicationCore.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
+//                        ApplicationCore.DEFAULT_LOGGER.info("GUI initialized, showing GUI..");
                         updateProgress(0, max, progress++, "Painting GUI...");
                         MainFrame.MF.decoradeMainFrameInstance((GuiProjectSpaceManager) projectSpace);
 
-                        ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
+//                        ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
                         updateProgress(0, max, progress++, "Checking Webservice connection...");
                         ConnectionMonitor.ConnetionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
                         if (cc.isConnected()) {

@@ -63,7 +63,9 @@ public class ComputeAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!MF.getCompoundListSelectionModel().isSelectionEmpty()) {
-            new BatchComputeDialog(MF, List.copyOf(MF.getCompoundListSelectionModel().getSelected()));
+            List<InstanceBean> l = List.copyOf(MF.getCompoundListSelectionModel().getSelected());
+            if (l.stream().noneMatch(InstanceBean::isComputing))
+                new BatchComputeDialog(MF, l);
         }
     }
 }
