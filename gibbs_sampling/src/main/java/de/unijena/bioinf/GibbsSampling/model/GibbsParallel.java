@@ -146,7 +146,7 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
         List<BasicJJob> jobs = new ArrayList<>();
         for (final GibbsMFCorrectionNetwork gibbsNetwork : gibbsNetworks) {
             gibbsNetwork.setIterationSteps(maxStepProportioned, burnIn);
-            gibbsNetwork.addPropertyChangeListener(this);
+            gibbsNetwork.addJobProgressListener(this);
             jobs.add(gibbsNetwork);
             submitSubJob(gibbsNetwork);
         }
@@ -197,7 +197,6 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
         int progress = progressEvent.getNewValue();
         if (progress<=0) return;
         ++currentProgress;
-//        updateProgress(0, maxProgress, currentProgress, progressEvent.getMessage());
         if(currentProgress % step == 0) {
             logInfo((100*(currentProgress)/maxProgress)+"%");
         }

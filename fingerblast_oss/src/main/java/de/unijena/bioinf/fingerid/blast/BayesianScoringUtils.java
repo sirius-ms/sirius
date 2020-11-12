@@ -55,7 +55,6 @@ public class BayesianScoringUtils {
 
     private final ChemicalDatabase chemicalDatabase;
 
-    //TODO can we retrieve the data from somewhere else?
     private final MaskedFingerprintVersion maskedFingerprintVersion;
     private final BayesnetScoringTrainingData trainingData;
 
@@ -109,7 +108,6 @@ public class BayesianScoringUtils {
         this.trainingData = trainingData;
         this.biotransformations = biotransformations;
 
-        //todo these number are only checked, if no scoring already exists
         this.minNumStructuresTopologyMfSpecificScoring = minNumStructuresTopologyMfSpecificScoring;
         this.minNumStructuresTopologySameMf = minNumStructuresTopologySameMf;
         this.minNumStructuresTopologyIncludingBiotransformations = minNumStructuresTopologyIncludingBiotransformations;

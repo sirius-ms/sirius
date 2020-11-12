@@ -33,7 +33,7 @@ import static de.unijena.bioinf.fingerid.blast.BayesnetScoring.*;
 
 public class BayesnetScoringFormulaSpecificBuilder extends BayesnetScoringBuilder {
 
-    //todo change to non-static to override methods?
+
     public static BayesnetScoring createScoringMethod(PredictionPerformance[] performances, ProbabilityFingerprint[] predictedSpecific, Fingerprint[] correctSpecific, ProbabilityFingerprint[] predictedAll, Fingerprint[] correctAll, Path dotFilePath) throws IOException {
         int[][] covTreeEdges = parseTreeFromDotFile(dotFilePath);
         return new BayesnetScoringFormulaSpecificBuilder(performances, predictedSpecific, correctSpecific, predictedAll, correctAll, covTreeEdges, false, 100).buildScoring();
@@ -65,7 +65,7 @@ public class BayesnetScoringFormulaSpecificBuilder extends BayesnetScoringBuilde
 
     @Override
     protected void makeStatistics(AbstractCorrelationTreeNode[] nodeList, double alpha) {
-        //todo currently only supports one parent case
+        //currently only supports one parent case
         Map<AbstractCorrelationTreeNode, double[][][]> nodeToPlattContingencyTables = new HashMap<>();
 
         //changed final double pseudo = 0.5d;

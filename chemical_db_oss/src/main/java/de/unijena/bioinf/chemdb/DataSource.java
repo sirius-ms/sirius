@@ -28,7 +28,7 @@ import java.util.Locale;
 //Flags/BitSets: Every bit that is set in our postgres db should also represented as DataSource here
 public enum DataSource {
     ALL("All included DBs", 0, null, null, null),
-    ALL_BUT_INSILICO("All DBs, except combinatorial DBs", 2|makeBIOFLAG(), null, null, null),
+    ALL_BUT_INSILICO("All but combinatorial DBs", 2|makeBIOFLAG(), null, null, null),
     PUBCHEM("PubChem", 2, "compound_id","pubchem", "https://pubchem.ncbi.nlm.nih.gov/compound/%s"),
     MESH("MeSH", 4, "compound_id", "hasmesh", "http://www.ncbi.nlm.nih.gov/mesh/%s"),
     HMDB("HMDB", 8, "hmdb_id", "hmdb", "http://www.hmdb.ca/metabolites/HMDB%07d"),
@@ -51,7 +51,7 @@ public enum DataSource {
     //this is currently only interesting for internal testing.
     ADDITIONAL("additional", 524288,  null,null,null, 0, false), //proably mostly training structures, but maybe more.
     SUPERNATURAL("SuperNatural", 1048576,  "id", "supernatural", "http://bioinf-applied.charite.de/supernatural_new/index.php?site=compound_search&start=0&supplier=all&tox=any&classification=all&compound_input=true&sn_id=%s"),
-    COCONUT("COCONUT", 2097152,  "id", "coconut", null),
+    COCONUT("COCONUT", 2097152,  "id", "coconut", "https://coconut.naturalproducts.net/compound/coconut_id/%s"),
     PUBCHEMANNOTATIONBIO("PubChem class - bio and metabolites", 16777216,  null,null,null, 0, false), //2**24; Pubchem Annotations now have a separate flag
     PUBCHEMANNOTATIONDRUG("PubChem class - drug", 33554432,  null,null,null, 0, false),
     PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, 0, false),
