@@ -21,4 +21,7 @@
 version =  parent.siriusVersion
 dependencies{
     annotationProcessor project(':default_properties:processor')
+
+    //testing
+    testCompile group: "org.jgrapht", name: "jgrapht-core", version: "1.0.1"
 }
