@@ -43,6 +43,12 @@ public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotat
 
     URL getSource();
 
+    /**
+     * Tries to return a nice String representation for local URLS
+     * @return String with file Path/URL
+     */
+    String getSourceString();
+
     String getName();
 
     /**
