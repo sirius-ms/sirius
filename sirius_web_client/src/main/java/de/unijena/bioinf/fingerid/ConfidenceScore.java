@@ -35,6 +35,6 @@ public class ConfidenceScore extends FormulaScore {
 
     @Override
     public String name() {
-        return "Confidence_Score";
+        return "ConfidenceScore";
     }
 }

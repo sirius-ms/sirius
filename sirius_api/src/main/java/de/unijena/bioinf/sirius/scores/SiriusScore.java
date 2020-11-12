@@ -30,7 +30,7 @@ public class SiriusScore extends FormulaScore {
 
     @Override
     public String name() {
-        return "TreeIsotope_Score";
+        return "SiriusScore";
     }
 
     @Override
