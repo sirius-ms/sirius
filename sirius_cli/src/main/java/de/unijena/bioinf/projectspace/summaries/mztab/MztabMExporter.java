@@ -375,7 +375,7 @@ public class MztabMExporter implements Summarizer {
 
         final AdditionalFields global = exp.getAnnotation(AdditionalFields.class).orElse(new AdditionalFields());
 
-        final String globalSource = global.getOrDefault(SOURCE_FILE, Optional.ofNullable(exp.getSource()).map(URL::getFile).orElse(null));
+        final String globalSource = global.getOrDefault(SOURCE_FILE, Optional.ofNullable(exp.getSourceString()).orElse(null));
 
         return specs.stream().map((it) -> {
             if (it instanceof AnnotatedSpectrum)

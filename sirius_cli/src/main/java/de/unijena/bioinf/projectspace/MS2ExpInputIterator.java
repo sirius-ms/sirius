@@ -98,7 +98,7 @@ public class MS2ExpInputIterator implements InstIterProvider {
                     if (experiment.getPrecursorIonType() == null){
                         LOG.warn("No ion or charge given for: " + experiment.getName() + " Try guessing charge from name.");
                         final String name = (Optional.ofNullable(experiment.getName()).orElse("") +
-                                "_" +  Optional.ofNullable(experiment.getSource()).map(URL::getPath).orElse("")).toLowerCase();
+                                "_" +  Optional.ofNullable(experiment.getSourceString()).orElse("")).toLowerCase();
 
                         if ((name.contains("negative") || name.contains("neg")) && (!name.contains("positive") && !name.contains("pos"))){
                             LOG.info(experiment.getName() + ": Negative charge keyword found!");
