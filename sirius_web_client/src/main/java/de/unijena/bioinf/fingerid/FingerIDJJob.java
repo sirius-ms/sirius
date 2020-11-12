@@ -298,6 +298,6 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
 
     @Override
     public String identifier() {
-        return super.identifier() + " | Instance: " + experiment.toString() + "@" + experiment.getIonMass() + "m/z";
+        return super.identifier() + " | Instance: " + experiment.getName() + "@" + experiment.getIonMass() + "m/z";
     }
 }
