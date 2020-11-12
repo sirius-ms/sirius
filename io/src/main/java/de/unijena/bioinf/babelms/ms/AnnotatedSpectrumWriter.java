@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.ChemistryBase.ms.ft.ImplicitAdduct;
 
 import java.io.*;
 import java.util.*;
@@ -40,6 +41,7 @@ public class AnnotatedSpectrumWriter {
         EXACTMASS("exactmass"),
         FORMULA("formula"),
         ION("ionization"),
+        ADDUCT("implicitAdduct"),
         //ISOTOPE("isotope")
         ;
 
@@ -69,9 +71,13 @@ public class AnnotatedSpectrumWriter {
         final BufferedWriter bw = (writer instanceof BufferedWriter) ? (BufferedWriter)writer : new BufferedWriter(writer);
 
         final PrecursorIonType ion = tree.getAnnotationOrThrow(PrecursorIonType.class);
+        final FragmentAnnotation<ImplicitAdduct> adductsByFragment = tree.getFragmentAnnotationOrNull(ImplicitAdduct.class);
         final FragmentAnnotation<AnnotatedPeak> peakAno = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         final List<Fragment> fragments = new ArrayList<Fragment>(tree.getFragments());
         Collections.sort(fragments);
+        if (adductsByFragment == null) {
+            enabledFields.remove(Fields.ADDUCT);
+        }
         bw.write(Arrays.stream(Fields.values()).filter(enabledFields::contains).map(x->x.name).collect(Collectors.joining("\t")));
         bw.newLine();
         final List<String> values = new ArrayList<>();
@@ -96,6 +102,10 @@ public class AnnotatedSpectrumWriter {
             }
             if (enabledFields.contains(Fields.ION)) {
                 values.add(f.getIonization().toString());
+            }
+            if (enabledFields.contains(Fields.ADDUCT)) {
+                final ImplicitAdduct adduct = adductsByFragment.get(f);
+                values.add(adduct.hasImplicitAdduct() ? adduct.getAdductFormula().toString() : "");
             }
             bw.write(values.stream().collect(Collectors.joining("\t")));
             bw.newLine();
