@@ -27,16 +27,10 @@ import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.utils.PrimsSpanningTree;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.list.linked.TIntLinkedList;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jgrapht.alg.interfaces.SpanningTreeAlgorithm;
-import org.jgrapht.alg.spanning.KruskalMinimumSpanningTree;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,19 +42,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class BayesianScoringUtils {
-    //todo have another look if the default parameters used in many part are reasonable
     private final Logger Log = LoggerFactory.getLogger(BayesianScoringUtils.class);
 
     private final boolean useCorrelationScoring;
 
     //TODO optimize transformations? Allow directions?
 //    private static final String[] allTransformations = new String[]{"C10H11N5O3", "C10H11N5O4", "C10H12N2O4", "C10H12N5O6P", "C10H12N5O7P", "C10H13N2O7P", "C10H13N5O10P2", "C10H13N5O9P2", "C10H14N2O10P2", "C10H14N2O2S", "C10H15N2O3S", "C10H15N3O5S", "C10H15N3O6S", "C11H10N2O", "C12H20O10", "C12H20O11", "C16H30O", "C18H30O15", "C21H33N7O15P3S", "C21H34N7O16P3S", "C2H2", "C2H2O", "C2H3NO", "C2H3O2", "C2H4", "C2H5NO2S", "C2O2", "C3H2O3", "C3H5NO", "C3H5NO2", "C3H5NO2S", "C3H5NOS", "C3H5O", "C4H2N2O", "C4H3N2O2", "C4H3N3", "C4H4N3O", "C4H4O2", "C4H5NO3", "C4H6N2O2", "C4H7NO2", "C5H3N5", "C5H4N2O", "C5H4N5", "C5H4N5O", "C5H5N2O2", "C5H7", "C5H7NO", "C5H7NO3", "C5H7NO3S", "C5H8N2O2", "C5H8O4", "C5H9NO", "C5H9NOS", "C6H10N2O3S2", "C6H10O5", "C6H10O6", "C6H11NO", "C6H11O8P", "C6H12N2O", "C6H12N4O", "C6H7N3O", "C6H8O6", "C7H13NO2", "C8H8NO5P", "C9H10N2O5", "C9H11N2O8P", "C9H11N3O4", "C9H12N2O11P2", "C9H12N3O7P", "C9H13N3O10P2", "C9H9NO", "C9H9NO2", "CH2", "CH2ON", "CH3N2O", "CHO2", "CO", "CO2", "H2", "H2O", "H3O6P2", "HPO3", "N", "NH", "NH2", "NH3", "O", "P", "PP", "SO3"};
-//        private static final String[] bioTransformations = new String[]{"H2", "O", "H2O", "CO", "CO2", "CH2", "C2O2", "H2O"}; //"C2H4",
     public static final String[] bioTransformationsBelow100 = new String[]{"C2H2", "C2H2O", "C2H3NO", "C2H3O2", "C2H4", "C2O2", "C3H2O3", "C3H5NO", "C3H5NO2", "C3H5O", "C4H2N2O", "C4H3N3", "C4H4O2", "C5H7", "C5H7NO", "C5H9NO", "CH2", "CH2ON", "CH3N2O", "CHO2", "CO", "CO2", "H2", "H2O", "N", "NH", "NH2", "NH3", "O"};
     public static final boolean allowOnlyNegativeScores = false;
     //pseudo count for Bayesian network scoring
     private final double pseudoCount;
-
 
     private final ChemicalDatabase chemicalDatabase;
 
@@ -99,12 +90,12 @@ public class BayesianScoringUtils {
     private static final int MIN_NUM_INFORMATIVE_PROPERTIES_DEFAULT_SCORING = 500;
 
 
-    private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_MF_SPECIFIC_SCORING = 500; //todo check in eval
+    private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_MF_SPECIFIC_SCORING = 50; //todo check in eval
 
-    private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_SAME_MF = 200;
-    private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_INCLUDING_BIOTRANSFORMATIONS = 1000;
+    private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_SAME_MF = 10;
+    private static final int DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_INCLUDING_BIOTRANSFORMATIONS = 100;
 
-    private static final int DEFAULT_MIN_NUM_INFORMATIVE_PROPERTIES_MF_SPECIFIC_SCORING = 100; //sanity check, the number of informative properties should normally exceed 1000. 0 informative properties will result in Platt scoring
+    private static final int DEFAULT_MIN_NUM_INFORMATIVE_PROPERTIES_MF_SPECIFIC_SCORING = 10; //sanity check, usually the number of informative properties should be much higher. 0 informative properties will result in Platt scoring. Hoever, it is possible that all structure candidates are super similar and hence, can only be differentiated by a small number of properties
 
 
     /**
@@ -236,8 +227,11 @@ public class BayesianScoringUtils {
 
     private final static boolean USE_BIOTRANSFORMATIONS_FOR_TREE_TOPOLOGY = true;
     private List<int[]> computeTreeTopology(MolecularFormula formula, int minNumInformativeProperties) throws ChemicalDatabaseException, InsufficientDataException {
-        //todo always use whole pubchem?
+        long startTime = System.currentTimeMillis();
         List<FingerprintCandidate> candidates = chemicalDatabase.lookupStructuresAndFingerprintsByFormula(formula);
+        long endTime = System.currentTimeMillis();
+        Log.debug("retrieving candidates took "+(endTime-startTime)/1000+" seconds");
+
         //1. if enough data, compute tree topology solely based on candidates with same MF
         if (isSufficientDataToCreateTreeTopology(candidates)) {
             try {
@@ -250,11 +244,14 @@ public class BayesianScoringUtils {
 
         //2. if it is was insufficient data, compute tree topology based on candidates with same MF or biotransformations
         if (USE_BIOTRANSFORMATIONS_FOR_TREE_TOPOLOGY && candidates.size()>=minNumStructuresTopologySameMf) {
+            startTime = System.currentTimeMillis();
             Set<MolecularFormula> transformationMFs = applyBioTransformations(formula, false);
             List<FingerprintCandidate> transformationCandidates = new ArrayList<>();
             for (MolecularFormula transformationMF : transformationMFs) {
                 chemicalDatabase.lookupStructuresAndFingerprintsByFormula(transformationMF, transformationCandidates);
             }
+            endTime = System.currentTimeMillis();
+            Log.debug("retrieving candidates with biotransformations took "+(endTime-startTime)/1000+" seconds");
 
             if (!isSufficientDataToCreateTreeTopology(candidates, transformationCandidates)){
                 throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology for molecular formula "+formula);
@@ -303,59 +300,41 @@ public class BayesianScoringUtils {
      */
     private List<int[]> computeTreeTopologyOrThrow(List<FingerprintCandidate>  candidates, int minNumInformativeProperties, MolecularFormula formula) throws InsufficientDataException {
         if (candidates.size()==0) throw new InsufficientDataException("No structure with fingerprints provided");
-//        boolean[][] fingerprints = extractFPMatrix(candidates, maskedFingerprintVersion);
-
-        //informative properties as relative indices
-        //todo changed for testing
-//        int[] informativeProperties = getInformativeProperties(candidates, maskedFingerprintVersion, 0.99); //TODO which rate? 95%?. In publication 100%
-
-//        int[] informativeProperties = new int[fingerprints[0].length];
-//        for (int i = 0; i < informativeProperties.length; i++) {
-//            informativeProperties[i] = i;
-//        }
-
-//        System.out.println(informativeProperties.length+" of "+maskedFingerprintVersion.size()+" properties are informative");
-//        if (informativeProperties.length<minNumInformativeProperties){
-//            throw new InsufficientDataException("to few informative properties: "+informativeProperties.length);
-//        }
-
 
         long startTime = System.currentTimeMillis();
-//        double[][] mutualInfo = mutualInfoRows(transpose(fingerprints));
 
-        MutualInformationAndIndices mutualInformationAndIndices = mutualInfoBetweenProperties(candidates.stream().map(FingerprintCandidate::getFingerprint).collect(Collectors.toList()), 1.0, minNumInformativeProperties);
+        List<Fingerprint> maskedFingerprints = candidates.stream().map(c-> maskedFingerprintVersion.mask(c.getFingerprint())).collect(Collectors.toList());
+        MutualInformationAndIndices mutualInformationAndIndices = mutualInfoBetweenProperties(maskedFingerprints, 1.0, minNumInformativeProperties);
         long endTime = System.currentTimeMillis();
         Log.debug("computing mutual info took "+(endTime-startTime)/1000+" seconds");
-
-//        double[][] distance = negate(mutualInfo);
-
-        int[] informativePropertiesDummy = new int[mutualInformationAndIndices.usedProperties.length];
-        for (int i = 0; i < informativePropertiesDummy.length; i++) {
-            informativePropertiesDummy[i] = i;
-        }
+        startTime = endTime;
 
         //edges are absolute indices
-        TreeEdgesAndRoot treeEdgesAndRoot = computeSpanningTree(mutualInformationAndIndices.mutualInfo, informativePropertiesDummy, formula, true);
+        TreeEdgesAndRoot treeEdgesAndRoot = computeSpanningTree(mutualInformationAndIndices.mutualInfo, true);
         List<int[]> edges = treeEdgesAndRoot.edges;
         edges = mapPropertyIndex(edges, mutualInformationAndIndices.usedProperties);
 
-        final boolean appendUnusedPropertiesToRoot = true;
-        if (appendUnusedPropertiesToRoot) {
 
-            int[] usedProperties = mutualInformationAndIndices.usedProperties; //are sorted
-            int idx = 0;
-            for (int relPropIdx = 0; relPropIdx < maskedFingerprintVersion.size(); relPropIdx++) {
-                if (usedProperties[idx]==relPropIdx) {
-                    ++idx;
-                } else {
-                    //not used so far
-                    edges.add(new int[]{treeEdgesAndRoot.root, relPropIdx});
+        //don't append properties to tree which are not informative. This are added as 'unconnected' nodes in BayesnetScoring anyways
+//        final boolean appendUnusedPropertiesToRoot = false;
+//        if (appendUnusedPropertiesToRoot) {
+//            int root =  mutualInformationAndIndices.usedProperties[treeEdgesAndRoot.root];
+//            int[] usedProperties = mutualInformationAndIndices.usedProperties; //are sorted
+//            int idx = 0;
+//            for (int relPropIdx = 0; relPropIdx < maskedFingerprintVersion.size(); relPropIdx++) {
+//                if (idx<usedProperties.length && usedProperties[idx]==relPropIdx) {
+//                    ++idx;
+//                } else {
+//                    //not used so far
+//                    edges.add(new int[]{root, relPropIdx});
+//
+//                }
+//
+//            }
+//        }
 
-                }
-
-            }
-        }
-
+        endTime = System.currentTimeMillis();
+        Log.debug("computing spanning tree  took "+(endTime-startTime)/1000+" seconds");
         return edges;
 
     }
@@ -372,6 +351,7 @@ public class BayesianScoringUtils {
     private BayesnetScoring estimateScoring(MolecularFormula formula, List<int[]> treeStructure) {
         Fingerprint[] specificRefFPs;
         ProbabilityFingerprint[] specificPredFPs;
+        long startTime = System.currentTimeMillis();
         if (useBiotransformations()){
             Set<MolecularFormula> biotransF = applyBioTransformations(formula, true);
 //            Log.info("formula: "+formula+" with transformations: "+Arrays.toString(biotransF.toArray()));
@@ -383,18 +363,25 @@ public class BayesianScoringUtils {
             specificRefFPs = getTrueReferenceFingerprintsByFormula(singletonSetMF);
             specificPredFPs = getPredictedReferenceFingerprintsByFormula(singletonSetMF);
         }
+        long endTime = System.currentTimeMillis();
+        Log.debug("getting specific fingerprints took "+(endTime-startTime)/1000+" seconds");
+
 
         double generalDataWeight = 10d;
-        //todo use better representation, so we do not have to parse this
+        //todo maybe use better representation, so we do not have to parse this
         int[][] edgeArray = convertEdgeRepresentation(treeStructure, maskedFingerprintVersion);
-        //todo MFSpecific scoring can be removed. Only builder necessary
+
+        startTime = System.currentTimeMillis();
         BayesnetScoring scoringFormulaSpecific;
         if (useCorrelationScoring) {
+
             scoringFormulaSpecific = BayesnetScoringCorrelationFormulaSpecificBuilder.createScoringMethod(trainingData.predictionPerformances, specificPredFPs, specificRefFPs, trainingData.estimatedFingerprintsReferenceData, trainingData.trueFingerprintsReferenceData, edgeArray, allowNegativeScoresForBayesianNetScoringOnly(), generalDataWeight);
 
         } else {
             scoringFormulaSpecific = BayesnetScoringFormulaSpecificBuilder.createScoringMethod(trainingData.predictionPerformances, specificPredFPs, specificRefFPs, trainingData.estimatedFingerprintsReferenceData, trainingData.trueFingerprintsReferenceData, edgeArray, allowNegativeScoresForBayesianNetScoringOnly(), generalDataWeight);
         }
+        endTime = System.currentTimeMillis();
+        Log.debug("creating scoring took "+(endTime-startTime)/1000+" seconds");
         return scoringFormulaSpecific;
     }
 
@@ -435,12 +422,7 @@ public class BayesianScoringUtils {
     create array, test, convert relative to absolute indices
      */
     private int[][] convertEdgeRepresentation(List<int[]> edges, MaskedFingerprintVersion fpversion) {
-//        if (true) throw new RuntimeException("not sufficiently tested");
-        //the output format should be [[a,b],...,[x,y,z]] contains edges a->b, ..., x->y,x->z //todo isn't it x->z and y->z ?
-        //this means if a node has multiple parents this must be one line
-        //todo does this have to include singleton nodes? probably not, this should be part of the parsing in the Scoring.
-        //todo currently only support tree topology
-
+        //currently only support tree topology
         TIntHashSet knownChildNodes = new TIntHashSet();
         int[][] edgeArray = new int[edges.size()][];
         for (int i = 0; i < edges.size(); i++) {
@@ -483,17 +465,9 @@ public class BayesianScoringUtils {
         return fps;
     }
 
-    protected boolean[][] extractFPMatrix(List<FingerprintCandidate> candidates, MaskedFingerprintVersion maskedFingerprintVersion){
-        boolean[][] fps = new boolean[candidates.size()][];
-        int i = 0;
-        for (FingerprintCandidate candidate : candidates) {
-            fps[i++] = maskedFingerprintVersion.mask(candidate.getFingerprint()).toBooleanArray();
-        }
-        return fps;
-    }
 
     /**
-     *
+     * this is now part of the mutual information calculation
      * @param candidates
      * @param maskedFingerprintVersion
      * @param maxAllowedImbalance value in [0.5, 1] which indicates how imbalanced a property can be to be assumed as informative. E.g. 0.95 mean the ratio of positive examples is allowed to be between 5% and 95%
@@ -509,7 +483,7 @@ public class BayesianScoringUtils {
         int i = 0;
         for (FingerprintCandidate fpc : candidates) {
             boolean[] fp = maskedFingerprintVersion.mask(fpc.getFingerprint()).toBooleanArray();
-            for (int j = 0; j < fp.length; j++) { //todo improve efficiency
+            for (int j = 0; j < fp.length; j++) { //not efficient
                 if (fp[j]) properties[j].set(i);
             }
             ++i;
@@ -529,150 +503,24 @@ public class BayesianScoringUtils {
 
     }
 
-    protected TreeEdgesAndRoot computeSpanningTree(double[][] distance, int[] usedProperties, MolecularFormula formula, boolean negateWeights) {
+    protected TreeEdgesAndRoot computeSpanningTree(double[][] distance, boolean negateWeights) {
         Log.debug("create graph and compute");
-        if (usedProperties.length==0){
+        if (distance.length==0){
             Log.debug("0 used properties. No tree to be computed.");
             return new TreeEdgesAndRoot(Collections.EMPTY_LIST, -1);
-        } else if (usedProperties.length==1){
+        } else if (distance.length==1){
             //the same?
             Log.debug("1 used property. No tree to be computed.");
             return new TreeEdgesAndRoot(Collections.EMPTY_LIST, -1);
         }
-        SimpleWeightedGraph<Integer, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Integer, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-        //construct graph ....
-//        for (int i = 0; i < distance.length; i++) {
-//            graph.addVertex(i);
-//        }
-//        for (int i = 0; i < distance.length; i++) {
-//            for (int j = i+1; j < distance.length; j++) {
-//                DefaultWeightedEdge e = graph.addEdge(i,j);
-//                graph.setEdgeWeight(e, distance[i][j]);
-//            }
-//        }
+        PrimsSpanningTree primsSpanningTree = new PrimsSpanningTree(distance, negateWeights);
 
-
-        Log.debug("distance array size = "+distance.length);
-//        System.out.println("used properties:");
-//        System.out.println(Arrays.toString(usedProperties));
-
-        //only use the set of informative properties. dinstance matrix contains all.
-        for (int i = 0; i < usedProperties.length; i++) {
-            graph.addVertex(usedProperties[i]);
-        }
-        for (int i = 0; i < usedProperties.length; i++) {
-            int propI = usedProperties[i];
-            for (int j = i+1; j < usedProperties.length; j++) {
-                int propJ = usedProperties[j];
-                DefaultWeightedEdge e = graph.addEdge(propI,propJ);
-                final double weight = negateWeights ? -distance[propI][propJ] : distance[propI][propJ];
-                graph.setEdgeWeight(e, weight);
-            }
-        }
-
-
-        KruskalMinimumSpanningTree<Integer, DefaultWeightedEdge> kruskal = new KruskalMinimumSpanningTree<>(graph);
-
-        SpanningTreeAlgorithm.SpanningTree<DefaultWeightedEdge> spanningTree = kruskal.getSpanningTree();
-
-
-        //#root tree, minimum summed dist to all others
-        //not possible with upper triangle!!!!
-        double minDist = Double.MAX_VALUE;
-        int root = -1;
-//        for (int i = 0; i < distance.length; i++) {
-//            final double[] row = distance[i];
-//            double s = sum(row)-row[i]; //minus diagonal
-//            if (s<minDist){
-//                root = i;
-//                minDist = s;
-//            }
-//        }
-        for (int i = 0; i < usedProperties.length; i++) {
-            int propI = usedProperties[i];
-            final double[] row = distance[propI];
-            double s = sum(row)-row[propI]; //minus diagonal
-            if (s<minDist){
-                root = propI;
-                minDist = s;
-            }
-        }
-
-
-        Set<DefaultWeightedEdge> treeEdges = spanningTree.getEdges();
-
-
-
-        TIntObjectHashMap<TIntArrayList> idxToNeighbors = new TIntObjectHashMap();
-        for (DefaultWeightedEdge edge : treeEdges) {
-            final int s = graph.getEdgeSource(edge);
-            final int t = graph.getEdgeTarget(edge);
-
-            TIntArrayList list = idxToNeighbors.get(s);
-            if (list==null){
-                list = new TIntArrayList();
-                idxToNeighbors.put(s, list);
-            }
-            list.add(t);
-
-            list = idxToNeighbors.get(t);
-            if (list==null){
-                list = new TIntArrayList();
-                idxToNeighbors.put(t, list);
-            }
-            list.add(s);
-        }
-
-        List<int[]> edges = new ArrayList<>();
-        TIntHashSet used = new TIntHashSet();
-        TIntLinkedList idxQueue = new TIntLinkedList();
-        idxQueue.add(root);
-        while (!idxQueue.isEmpty()){
-            int current = idxQueue.removeAt(0);
-            used.add(current);
-            TIntArrayList children = idxToNeighbors.get(current);
-//            null for C25H48O16P2 current 2952 | 0
-            if (children==null) System.out.println("null for "+formula+" current "+current+" | "+idxToNeighbors.size());
-            children.forEach(new TIntProcedure() {
-                @Override
-                public boolean execute(int value) {
-                    if (used==null) System.out.println("null2 for "+formula);
-                    if (!used.contains(value)){
-                        if (idxQueue==null) System.out.println("null3 for "+formula);
-                        if (edges==null) System.out.println("null4 for "+formula);
-                        idxQueue.add(value);
-                        edges.add(new int[]{current, value});
-                    }
-                    return true;
-                }
-            });
-        }
+        List<int[]> edges = primsSpanningTree.computeSpanningTree();
+        int root = primsSpanningTree.getRoot();
 
         return new TreeEdgesAndRoot(edges, root);
     }
 
-
-    private boolean[][] transpose(boolean[][] matrix){
-        boolean[][] transposed = new boolean[matrix[0].length][matrix.length];
-
-        for (int i = 0; i < matrix.length; i++) {
-            final boolean[] row = matrix[i];
-            for (int j = 0; j < row.length; j++) {
-                transposed[j][i] = row[j];
-            }
-        }
-        return transposed;
-    }
-
-    private double[][] negate(double[][] matrix) {
-        double[][] negation = new double[matrix.length][matrix[0].length];
-        for (int i = 0; i < negation.length; i++) {
-            for (int j = 0; j < negation.length; j++) {
-                negation[i][j] = -matrix[i][j];
-            }
-        }
-        return negation;
-    }
 
 
     /**
@@ -682,6 +530,7 @@ public class BayesianScoringUtils {
      * @return indices of informative properties, relative indices based on maskedFingerprintVersion, and mutualInformation matrix of these informative properties
      */
     private MutualInformationAndIndices mutualInfoBetweenProperties(List<Fingerprint> fingerprints, double maxAllowedImbalance, int minNumInformativeProperties) throws InsufficientDataException {
+        //todo parallelize?
         final int numOfExamples = fingerprints.size();
         final int numOfProperties = fingerprints.get(0).getFingerprintVersion().size();
         int maxAllowedImbalanceAbsoluteCount = (int)Math.ceil(maxAllowedImbalance*numOfExamples);
@@ -718,7 +567,7 @@ public class BayesianScoringUtils {
 
         int[] informativePropertiesArray = informativeProperties.toArray();
 
-        System.out.println(informativePropertiesArray.length+" of "+numOfProperties+" properties are informative");
+        Log.debug(informativePropertiesArray.length+" of "+numOfProperties+" properties are informative");
         if (informativePropertiesArray.length<minNumInformativeProperties){
             throw new InsufficientDataException("to few informative properties: "+informativePropertiesArray.length);
         }
@@ -732,37 +581,6 @@ public class BayesianScoringUtils {
         return new MutualInformationAndIndices(mutualInfo, informativePropertiesArray);
     }
 
-    private double[][] mutualInfoColumns(boolean[][] matrix){
-        final int numOfExamples = matrix.length;
-        final int numOfProperties = matrix[0].length;
-        BitSet[] bitSets = new BitSet[numOfProperties];
-
-        for (int i = 0; i < numOfProperties; i++) {
-            final BitSet bitSet = new BitSet(numOfExamples);
-            for (int j = 0; j < numOfExamples; j++) {
-                if (matrix[j][i]) bitSet.set(j);
-            }
-            bitSets[i] = bitSet;
-        }
-
-        return mutualInfo(bitSets, numOfExamples);
-    }
-
-    private double[][] mutualInfoRows(boolean[][] matrix){
-        final int numOfExamples = matrix[0].length;
-        BitSet[] bitSets = new BitSet[matrix.length];
-
-        for (int i = 0; i < matrix.length; i++) {
-            final boolean[] booleans = matrix[i];
-            final BitSet bitSet = new BitSet(numOfExamples);
-            for (int j = 0; j < booleans.length; j++) {
-                if (booleans[j]) bitSet.set(j);
-            }
-            bitSets[i] = bitSet;
-        }
-
-        return mutualInfo(bitSets, numOfExamples);
-    }
 
     private double[][] mutualInfo(BitSet[] propertyBitSets, int lengthOfBitset){
         final int numOfProperties = propertyBitSets.length;
@@ -802,15 +620,6 @@ public class BayesianScoringUtils {
         Log.debug("warning: contains "+neverSet.size()+ "missing states. properties never set");
         Log.debug("warning: contains "+alwaysSet.size()+"missing states. properties always set");
         return entropy;
-    }
-
-
-    private double sum(double[] array){
-        double sum = 0d;
-        for (double d : array) {
-            sum += d;
-        }
-        return sum;
     }
 
 
@@ -870,141 +679,4 @@ public class BayesianScoringUtils {
         }
     }
 
-    private BayesianScoringUtils(){
-        this.chemicalDatabase = null;
-        this.maskedFingerprintVersion = null;
-        this.trainingData = null;
-        this.biotransformations = null;
-
-        //todo these number are only checked, if no scoring already exists
-        this.minNumStructuresTopologyMfSpecificScoring = 0;
-        this.minNumStructuresTopologySameMf = 0;
-        this.minNumStructuresTopologyIncludingBiotransformations = 0;
-        this.minNumInformativePropertiesMfSpecificScoring = 0;
-
-        this.pseudoCount = 0;
-        this.useCorrelationScoring = false;
-    }
-//    public static void main(String... args) throws InsufficientDataException {
-//
-////        boolean[][] fingerprints = new boolean[][]{
-////                new boolean[]{false, false, true, true, false},
-////                new boolean[]{false, false, true, true, true},
-////                new boolean[]{false, false, true, true, false},
-////
-////        };
-//        boolean[][] fingerprints = new boolean[][]{
-//                new boolean[]{true, false, true, true, false},
-//                new boolean[]{false, true, true, true, true},
-//                new boolean[]{false, false, true, true, false},
-//
-//        };
-//
-//        boolean[][] fingerprints2 = new boolean[][]{
-//                new boolean[]{true, false, false, true, false, true, false},
-//                new boolean[]{false, true, false, true, false, true, true},
-//                new boolean[]{false, false, false, true, false, true, false},
-//
-//        };
-//        FingerprintVersion version = new TestVersion(7);
-//        MaskedFingerprintVersion maskedVersion = MaskedFingerprintVersion.buildMaskFor(version).disable(2).disable(4).toMask();
-//        Fingerprint[] fps = new Fingerprint[fingerprints2.length];
-//        for (int i = 0; i < fingerprints2.length; i++) {
-//            fps[i] = maskedVersion.mask(new BooleanFingerprint(version, fingerprints2[i]));
-//
-//        }
-//        BayesianScoringUtils bayesianScoringUtils = new BayesianScoringUtils();
-//        long startTime = System.currentTimeMillis();
-//        boolean[][] transposed = bayesianScoringUtils.transpose(fingerprints);
-//        System.out.println();
-//        double[][] mutualInfo = bayesianScoringUtils.mutualInfoRows(transposed);
-//        double[][] mutualInfo2 = bayesianScoringUtils.mutualInfoColumns(fingerprints);
-////        MutualInformationAndIndices mutualInformationAndIndices = bayesianScoringUtils.mutualInfoBetweenProperties(fps, 1.0);
-//
-//        MutualInformationAndIndices mutualInformationAndIndices = bayesianScoringUtils.mutualInfoBetweenProperties(Arrays.asList(fps.clone()), 1.0, 0);
-//
-//        int[] informativePropertiesDummy = new int[mutualInformationAndIndices.usedProperties.length];
-//        for (int i = 0; i < informativePropertiesDummy.length; i++) {
-//            informativePropertiesDummy[i] = i;
-//        }
-//
-//        //edges are absolute indices
-//        TreeEdgesAndRoot treeEdgesAndRoot = bayesianScoringUtils.computeSpanningTree(mutualInformationAndIndices.mutualInfo, informativePropertiesDummy, null, true);
-//        List<int[]> edges = treeEdgesAndRoot.edges;
-//        edges = bayesianScoringUtils.mapPropertyIndex(edges, mutualInformationAndIndices.usedProperties);
-//        final boolean appendUnusedPropertiesToRoot = true;
-//        if (appendUnusedPropertiesToRoot) {
-//
-//            int[] usedProperties = mutualInformationAndIndices.usedProperties; //are sorted
-//            int idx = 0;
-//            for (int relPropIdx = 0; relPropIdx < maskedVersion.size(); relPropIdx++) {
-//                if (usedProperties[idx]==relPropIdx) {
-//                    ++idx;
-//                } else {
-//                    //not used so far
-//                    edges.add(new int[]{treeEdgesAndRoot.root, relPropIdx});
-//
-//                }
-//
-//            }
-//        }
-//
-//        double[][] mutualInfo3 = mutualInformationAndIndices.mutualInfo;
-//        long endTime = System.currentTimeMillis();
-////        Log.debug("computing mutual info took "+(endTime-startTime)/1000+" seconds");
-//
-//        double[][] distance = bayesianScoringUtils.negate(mutualInfo);
-////        int[] infProps =bayesianScoringUtils.getInformativeProperties()
-//        System.out.println();
-//    }
-//
-//    private static class PseudoProperty extends MolecularProperty {
-//        private int index;
-//        private PseudoProperty(int index) {
-//            this.index = index;
-//        }
-//        @Override
-//        public String getDescription() {
-//            return String.valueOf(index);
-//        }
-//
-//        @Override
-//        public boolean equals(Object o) {
-//            if (this == o) return true;
-//            if (o == null || getClass() != o.getClass()) return false;
-//
-//            PseudoProperty that = (PseudoProperty) o;
-//
-//            return index == that.index;
-//
-//        }
-//
-//        @Override
-//        public int hashCode() {
-//            return index;
-//        }
-//    }
-//
-//    protected static final class TestVersion extends FingerprintVersion {
-//
-//        private final int size;
-//        public TestVersion(int size) {
-//            this.size=size;
-//        }
-//
-//        @Override
-//        public MolecularProperty getMolecularProperty(int index) {
-//            return new PseudoProperty(index);
-//        }
-//
-//        @Override
-//        public int size() {
-//            return size;
-//        }
-//
-//        @Override
-//        public boolean compatible(FingerprintVersion fingerprintVersion) {
-//            return fingerprintVersion.equals(this);
-//        }
-//    }
 }
