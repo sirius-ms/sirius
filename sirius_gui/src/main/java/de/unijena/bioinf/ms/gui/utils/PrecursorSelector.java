@@ -140,13 +140,13 @@ public class PrecursorSelector extends JPanel {
     }
 
     public void setData(java.util.List<SimpleSpectrum> ms1, java.util.List<? extends Ms2Spectrum<Peak>> ms2, double ioMass) {
+        //todo ugly. slow data parsig should be done outside this model
         MsExperiments.PrecursorCandidates masses = MsExperiments.findPossiblePrecursorPeaks(ms1, ms2, ioMass);
         peaks.clear();
         peaks.addAll(masses);
         setMaxMass();
         box.setSelectedItem(masses.getDefaultPrecursor() != null ? masses.getDefaultPrecursor() : String.valueOf(ioMass));
         if (peaks.isEmpty()) autoDetectFM.setEnabled(false);
-
     }
 
 

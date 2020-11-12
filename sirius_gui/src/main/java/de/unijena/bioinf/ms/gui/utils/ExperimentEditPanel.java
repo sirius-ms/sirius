@@ -35,7 +35,7 @@ public class ExperimentEditPanel extends JPanel {
     public final JTextField nameTF;
     public final JTextField formulaTF;
 
-    public ExperimentEditPanel() {
+    public ExperimentEditPanel(boolean enablePrecursorSelection) {
         RelativeLayout rl = new RelativeLayout(RelativeLayout.X_AXIS, 15);
         rl.setAlignment(RelativeLayout.LEADING);
         setLayout(rl);
@@ -43,8 +43,13 @@ public class ExperimentEditPanel extends JPanel {
         nameTF = new JTextField(12);
         add(new TextHeaderBoxPanel("Name", nameTF));
 
-        precursorSelection = new PrecursorSelector();
-        add(new TextHeaderBoxPanel(PrecursorSelector.name, precursorSelection));
+
+        if (enablePrecursorSelection) {
+            precursorSelection = new PrecursorSelector();
+            add(new TextHeaderBoxPanel(PrecursorSelector.name, precursorSelection));
+        }else {
+            precursorSelection = null;
+        }
 
         ionizationCB = new PrecursorIonTypeSelector();
         add(new TextHeaderBoxPanel(PrecursorIonTypeSelector.name, ionizationCB));
@@ -53,18 +58,20 @@ public class ExperimentEditPanel extends JPanel {
         add(new TextHeaderBoxPanel("Molecular Formula", formulaTF));
     }
 
-    public ExperimentEditPanel(InstanceBean ec) {
-        this();
-        if (ec != null) {
-            setData(ec);
-        }
-    }
+//    public ExperimentEditPanel(InstanceBean ec) {
+//        this(true);
+//        if (ec != null) {
+//            setData(ec);
+//        }
+//    }
 
     public double getSelectedIonMass() {
-        return precursorSelection.getSelectedIonMass();
+        return precursorSelection == null ? Double.NaN :  precursorSelection.getSelectedIonMass();
     }
 
     public boolean setSelectedIonMass(double ionMass) {
+        if (precursorSelection == null)
+            return false;
         return precursorSelection.setSelectedItem(ionMass);
     }
 
@@ -82,8 +89,10 @@ public class ExperimentEditPanel extends JPanel {
     public void setData(InstanceBean ec) {
         nameTF.setText(ec.getName());
         ionizationCB.setSelectedItem(ec.getIonization().toString());
-        precursorSelection.setData(ec.getMs1Spectra(), ec.getMs2Spectra(), ec.getIonMass());
         setMolecularFomula(ec.getExperiment());
+        if (precursorSelection != null){
+            precursorSelection.setData(ec.getMs1Spectra(), ec.getMs2Spectra(), ec.getIonMass());
+        }
     }
 
     public void setMolecularFomula(Ms2Experiment ec) {
