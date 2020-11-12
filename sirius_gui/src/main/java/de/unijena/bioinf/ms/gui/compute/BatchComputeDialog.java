@@ -326,7 +326,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         JPanel north = new JPanel(new BorderLayout());
 
         InstanceBean ec = compoundsToProcess.get(0);
-        editPanel = new ExperimentEditPanel();
+        editPanel = new ExperimentEditPanel(false);
         editPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Edit Input Data"));
         north.add(editPanel, BorderLayout.NORTH);
 
