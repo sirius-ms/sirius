@@ -52,6 +52,8 @@ public class CustomDataSources {
     public interface Source {
         long flag();
 
+        String id();
+
         String name();
 
         long searchFlag();
@@ -61,6 +63,7 @@ public class CustomDataSources {
         boolean isCustomSource();
 
         String getLink(String id);
+
     }
 
     static class EnumSource implements Source {
@@ -70,9 +73,18 @@ public class CustomDataSources {
             this.source = source;
         }
 
+        public DataSource source() {
+            return source;
+        }
+
         @Override
         public long flag() {
             return source.flag;
+        }
+
+        @Override
+        public String id() {
+            return source.name();
         }
 
         @Override
@@ -99,6 +111,11 @@ public class CustomDataSources {
         public String getLink(String id) {
             return source.getLink(id);
         }
+
+        @Override
+        public String toString() {
+            return name();
+        }
     }
 
     static class CustomSource implements Source {
@@ -119,6 +136,11 @@ public class CustomDataSources {
         @Override
         public long flag() {
             return flag;
+        }
+
+        @Override
+        public String id() {
+            return name();
         }
 
         @Override
@@ -145,6 +167,11 @@ public class CustomDataSources {
         public String getLink(String id) {
             return null;
         }
+
+        @Override
+        public String toString() {
+            return name();
+        }
     }
 
     public static boolean removeCustomSource(String name) {
@@ -163,7 +190,7 @@ public class CustomDataSources {
         return SOURCE_MAP.size();
     }
 
-    public static Stream<Source> sourceStream() {
+    public static Stream<Source> sourcesStream() {
         return SOURCE_MAP.values().stream();
     }
 
@@ -208,20 +235,34 @@ public class CustomDataSources {
         return flagToChange & getNonCustomSourceFlags();
     }
 
-    public static long getNonCustomSourceFlags(){
+    public static long getNonCustomSourceFlags() {
         return SOURCE_MAP.values().stream().filter(s -> !s.isCustomSource()).mapToLong(Source::flag).reduce((a, b) -> a | b).orElse(0);
     }
 
-    public static long getCustomSourceFlags(){
+    public static long getCustomSourceFlags() {
         return SOURCE_MAP.values().stream().filter(Source::isCustomSource).mapToLong(Source::flag).reduce((a, b) -> a | b).orElse(0);
     }
 
-    public static List<CustomSource> getCustomSources(){
-        return SOURCE_MAP.values().stream().filter(Source::isCustomSource).map(s -> (CustomSource)s).collect(Collectors.toList());
+    public static List<Source> getSources() {
+        return sourcesStream().collect(Collectors.toList());
     }
 
-    public static long getDBFlagsFromNames(Collection<String> names) {
-        return getSourcesFromNamesStrm(names).mapToLong(Source::flag).reduce((a, b) -> a | b).orElse(0);
+
+    public static List<EnumSource> getNonCustomSources() {
+        return sourcesStream().filter(s -> !s.isCustomSource()).map(s -> (EnumSource) s).collect(Collectors.toList());
+    }
+
+    public static List<CustomSource> getCustomSources() {
+        return sourcesStream().filter(Source::isCustomSource).map(s -> (CustomSource) s).collect(Collectors.toList());
+    }
+
+
+    public static Source getSourceFromName(String name) {
+        return SOURCE_MAP.get(name);
+    }
+
+    public static List<Source> getSourcesFromNames(String... names) {
+        return getSourcesFromNames(Arrays.asList(names));
     }
 
     public static List<Source> getSourcesFromNames(Collection<String> names) {
@@ -237,9 +278,10 @@ public class CustomDataSources {
         return getSourceFromName(name).flag();
     }
 
-    public static Source getSourceFromName(String name) {
-        return SOURCE_MAP.get(name);
+    public static long getDBFlagsFromNames(Collection<String> names) {
+        return getSourcesFromNamesStrm(names).mapToLong(Source::flag).reduce((a, b) -> a | b).orElse(0);
     }
+
 
     public static void notifyListeners(Collection<String> changed) {
         for (DataSourceChangeListener listener : listeners) {

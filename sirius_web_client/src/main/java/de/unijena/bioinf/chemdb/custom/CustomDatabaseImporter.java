@@ -305,7 +305,6 @@ public class CustomDatabaseImporter {
         }
     }
 
-
     private class FingerprintCalculator {
         private final String dbname;
         private final FixedFingerprinter fingerprinter;
@@ -372,7 +371,6 @@ public class CustomDatabaseImporter {
             } else {
                 fc.setLinks(new DBLink[0]);
             }
-//            fc.setBitset(CustomDataSources.getSourceFromName(dbname).flag()); //todo this should only be in memory or?
             // compute XLOGP
             fc.setXlogp(logPEstimator.prepareMolAndComputeLogP(molecule.container));
             return fc;
@@ -457,13 +455,16 @@ public class CustomDatabaseImporter {
 
     public static void importDatabase(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, WebAPI api, int bufferSize) {
         final Logger log = LoggerFactory.getLogger(CustomDatabaseImporter.class);
+        importDatabase(dbPath, files, deriveFrom, api, bufferSize, inchi -> log.debug(inchi.in2D + " imported"));
+    }
+    public static void importDatabase(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, WebAPI api, int bufferSize, Listener listener) {
         try {
             final CustomDatabase db = CustomDatabase.createNewDatabase(dbPath.getName(), dbPath, api.getCDKChemDBFingerprintVersion());
             if (deriveFrom != null && !deriveFrom.isEmpty()) {
                 db.setDeriveFromRestDb(true);
                 db.setFilterFlag(DataSources.getDBFlag(deriveFrom));
             }
-            db.buildDatabase(files, inchi -> log.debug(inchi.in2D + " imported"), api, bufferSize);
+            db.buildDatabase(files, listener, api, bufferSize);
         } catch (IOException | CDKException e) {
             LoggerFactory.getLogger(CustomDatabaseImporter.class).error("Error during database import!", e);
         }

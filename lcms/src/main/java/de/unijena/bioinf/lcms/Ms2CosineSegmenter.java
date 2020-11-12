@@ -69,7 +69,8 @@ public class Ms2CosineSegmenter {
                             break; // we often see H2O gains...
                         maxMass = Math.max(maxMass, mz);
                         if (maxMass>10) {
-                            System.err.println(")/");
+                            LoggerFactory.getLogger(getClass()).debug(")/");
+//                            System.err.println(")/");
                         }
                     }
                 }
@@ -351,7 +352,7 @@ public class Ms2CosineSegmenter {
             //System.out.println(ions.size());
         }
 
-        System.out.println("Number of scans outside = " + numberOfScansOutside + ", number of scans inside = " + numberOfInside + ", number of multiplies = " + numberOfMultiple);
+       LoggerFactory.getLogger(getClass()).info("Number of scans outside = " + numberOfScansOutside + ", number of scans inside = " + numberOfInside + ", number of multiplies = " + numberOfMultiple);
 
         return ions;
 

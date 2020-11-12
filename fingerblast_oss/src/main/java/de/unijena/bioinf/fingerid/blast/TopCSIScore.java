@@ -36,6 +36,6 @@ public class TopCSIScore extends FormulaScore {
 
     @Override
     public String name() {
-        return "CSI:FingerID_Score";
+        return "CSI:FingerIDScore";
     }
 }

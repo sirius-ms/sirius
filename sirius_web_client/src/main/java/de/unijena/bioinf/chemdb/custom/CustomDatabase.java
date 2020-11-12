@@ -22,13 +22,13 @@ package de.unijena.bioinf.chemdb.custom;
 
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -232,10 +232,11 @@ public class CustomDatabase implements SearchableDatabase {
         return Objects.hash(name, path);
     }
 
-    public void buildDatabase(List<File> files, CustomDatabaseImporter.Listener listener, @NotNull WebAPI api, int bufferSize) throws IOException, CDKException {
+    public void buildDatabase(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI api, int bufferSize) throws IOException, CDKException {
         final CustomDatabaseImporter importer = getImporter(api, bufferSize);
         importer.init();
-        importer.addListener(listener);
+        if (listener != null)
+            importer.addListener(listener);
         for (File f : files) {
             importer.importFrom(f);
         }
