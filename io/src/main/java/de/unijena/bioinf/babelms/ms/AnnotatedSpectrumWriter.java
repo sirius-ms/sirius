@@ -75,9 +75,9 @@ public class AnnotatedSpectrumWriter {
         final FragmentAnnotation<AnnotatedPeak> peakAno = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         final List<Fragment> fragments = new ArrayList<Fragment>(tree.getFragments());
         Collections.sort(fragments);
-        if (adductsByFragment == null) {
+        if (adductsByFragment == null)
             enabledFields.remove(Fields.ADDUCT);
-        }
+
         bw.write(Arrays.stream(Fields.values()).filter(enabledFields::contains).map(x->x.name).collect(Collectors.joining("\t")));
         bw.newLine();
         final List<String> values = new ArrayList<>();
@@ -105,9 +105,9 @@ public class AnnotatedSpectrumWriter {
             }
             if (enabledFields.contains(Fields.ADDUCT)) {
                 final ImplicitAdduct adduct = adductsByFragment.get(f);
-                values.add(adduct.hasImplicitAdduct() ? adduct.getAdductFormula().toString() : "");
+                values.add(adduct !=  null && adduct.hasImplicitAdduct() ? adduct.getAdductFormula().toString() : "");
             }
-            bw.write(values.stream().collect(Collectors.joining("\t")));
+            bw.write(String.join("\t", values));
             bw.newLine();
         }
         bw.close();
