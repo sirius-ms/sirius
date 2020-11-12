@@ -234,6 +234,8 @@ public class Jobs {
             checkForInterruption();
             compoundsToProcess.forEach(i -> i.setComputing(true));
             checkForInterruption();
+            if (computation instanceof ProgressJJob)
+                ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
             computation.run();
             checkForInterruption();
             return true;

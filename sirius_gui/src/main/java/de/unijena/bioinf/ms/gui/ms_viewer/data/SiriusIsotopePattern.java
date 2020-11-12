@@ -20,10 +20,13 @@
 package de.unijena.bioinf.ms.gui.ms_viewer.data;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -33,9 +36,9 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
     protected MolecularFormula patternFormula;
     protected int[] indizes;
 
-    public SiriusIsotopePattern(FTree tree, Spectrum<? extends Peak> spectrum) {
+    public SiriusIsotopePattern(FTree tree, Ms2Experiment exp, Spectrum<? extends Peak> spectrum) {
         super(spectrum);
-        annotate(tree);
+        annotate(tree, exp);
     }
 
     @Override
@@ -55,20 +58,21 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
         return false;
     }
 
-    private void annotate(FTree tree) {
+    private void annotate(FTree tree, Ms2Experiment exp) {
         final IsotopePattern pattern = tree.getAnnotationOrNull(IsotopePattern.class);
-        if (pattern!=null) {
+        if (pattern != null) {
             isotopePattern = pattern.getPattern();
             patternFormula = pattern.getCandidate();
-            final TIntArrayList indizes = new TIntArrayList();
-            // find isotope peaks in spectrum
-            for (Peak p : pattern.getPattern()) {
-                final int i = findIndexOfPeak(p.getMass(), 0.1);
-                if (i>=0) indizes.add(i);
-            }
-            this.indizes = indizes.toArray();
         } else {
-            indizes = new int[0];
+            isotopePattern = Spectrums.extractIsotopePattern(spectrum, exp.getAnnotationOrDefault(MS1MassDeviation.class), exp.getIonMass(), exp.getPrecursorIonType().getCharge(), true);
+            patternFormula = tree.getRoot().getFormula();
         }
+        final TIntArrayList indizes = new TIntArrayList();
+        // find isotope peaks in spectrum
+        for (Peak p : isotopePattern) {
+            final int i = findIndexOfPeak(p.getMass(), 0.1);
+            if (i >= 0) indizes.add(i);
+        }
+        this.indizes = indizes.toArray();
     }
 }

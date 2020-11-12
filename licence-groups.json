@@ -1,0 +1,45 @@
+{
+  "bundles" : [
+    { "bundleName" : "apache1", "licenseName" : "Apache Software License, Version 1.1", "licenseUrl" : "http://www.apache.org/licenses/LICENSE-1.1" },
+    { "bundleName" : "apache2", "licenseName" : "Apache License, Version 2.0", "licenseUrl" : "http://www.apache.org/licenses/LICENSE-2.0" },
+    { "bundleName" : "cddl1", "licenseName" : "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE Version 1.0 (CDDL-1.0)", "licenseUrl" : "http://opensource.org/licenses/CDDL-1.0" },
+    { "bundleName" : "lgpl2", "licenseName" : "GNU LESSER GENERAL PUBLIC LICENSE, Version 2.1", "licenseUrl" : "https://www.gnu.org/licenses/lgpl-2.1" },
+    { "bundleName" : "lgpl3", "licenseName" : "GNU LESSER GENERAL PUBLIC LICENSE, Version 3", "licenseUrl" : "https://www.gnu.org/licenses/lgpl-3.0" },
+    { "bundleName" : "gpl3ce", "licenseName" : "GNU GENERAL PUBLIC LICENSE, Version 3", "licenseUrl" : "https://www.gnu.org/licenses/gpl-3.0" },
+    { "bundleName" : "gpl2ce", "licenseName" : "GNU GENERAL PUBLIC LICENSE, Version 2 + Classpath Exception", "licenseUrl" : "https://www.gnu.org/licenses/gpl-2.0" },
+    { "bundleName" : "edl", "licenseName" : "Eclipse Distribution License - v 1.0", "licenseUrl" : "https://www.eclipse.org/org/documents/edl-v10.html" },
+    { "bundleName" : "epl2", "licenseName" : "Eclipse Public License - v 2.0", "licenseUrl" : "https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt" }
+  ],
+  "transformationRules" : [
+    { "bundleName" : "apache2", "licenseNamePattern" : ".*The Apache Software License, Version 2.0.*" },
+    { "bundleName" : "apache2", "licenseNamePattern" : "Apache 2*" },
+    { "bundleName" : "apache2", "licenseNamePattern" : "Apache 2.0*" },
+    { "bundleName" : "apache2", "licenseNamePattern" : "Apache License 2.0*" },
+    { "bundleName" : "apache2", "licenseNamePattern" : "Apache License v2.0*" },
+    { "bundleName" : "apache2", "licenseNamePattern" : "Apache License, Version 2.0*" },
+    { "bundleName" : "apache2", "licenseNamePattern" : "Apache-2.0*" },
+    { "bundleName" : "apache2", "licenseUrlPattern" : "http://www.apache.org/licenses/LICENSE-2.0.txt" },
+    { "bundleName" : "apache2", "licenseNamePattern" : "Special Apache", "transformUrl" : false },
+    { "bundleName" : "apache2", "licenseNamePattern" : "Keep this name", "transformName" : false },
+
+    { "bundleName" : "cddl1", "licenseNamePattern" : "CDDL+GPL License" },
+    { "bundleName" : "cddl1", "licenseNamePattern" : "CDDL/GPLv2+CE" },
+    { "bundleName" : "cddl1", "licenseUrlPattern" : "https://oss.oracle.com/licenses/CDDL" },
+    { "bundleName" : "cddl1", "licenseUrlPattern" : "https://oss.oracle.com/licenses/CDDL-1.1" },
+    { "bundleName" : "cddl1", "licenseNamePattern" : "Dual license consisting of the CDDL v1.1 and GPL v2" },
+
+    { "bundleName" : "lgpl3", "licenseNamePattern" : "Lesser General Public License (LGPL)" },
+    { "bundleName" : "lgpl3", "licenseNamePattern" : "Lesser General Public License" },
+    { "bundleName" : "lgpl3", "licenseNamePattern" : "GNU Lesser General Public License (LGPL)" },
+    { "bundleName" : "lgpl3", "licenseNamePattern" : "GNU Lesser General Public License" },
+    { "bundleName" : "lgpl3", "licenseNamePattern" : "GNU Lesser General Public License v3.*" },
+    { "bundleName" : "lgpl3", "licenseUrlPattern" : "http://www.gnu.org/licenses/lgpl-3.0.txt" },
+
+    { "bundleName" : "lgpl2", "licenseNamePattern" : "LGPL, version 2.1*" },
+    { "bundleName" : "lgpl2", "licenseNamePattern" : "GNU Lesser General Public License Version 2.1.*" },
+
+    { "bundleName" : "edl", "licenseNamePattern" : "EDL 1.0" },
+
+    { "bundleName" : "gpl2ce", "licenseNamePattern" : "GPLv2 license, includes the CLASSPATH exception" }
+  ]
+}

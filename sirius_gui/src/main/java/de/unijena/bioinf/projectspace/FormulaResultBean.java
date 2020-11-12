@@ -233,6 +233,11 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     public double getMedianMassDevPPM() {
         return getMetrics().map(FTreeMetricsHelper::getMedianMassDeviation).map(Deviation::getPpm).orElse(Double.NaN);
     }
+
+    public double getMedianAbsoluteMassDevPPM() {
+        return getMetrics().map(FTreeMetricsHelper::getMedianAbsoluteMassDeviation).map(Deviation::getPpm).orElse(Double.NaN);
+    }
+
     public double getMedianMassDev() {
         return getMetrics().map(FTreeMetricsHelper::getMedianMassDeviation).map(Deviation::getAbsolute).orElse(Double.NaN);
     }
