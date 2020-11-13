@@ -21,6 +21,7 @@
 package de.unijena.bioinf.babelms.mzml;
 
 import com.google.common.collect.Iterators;
+import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.lcms.InMemoryStorage;
@@ -75,7 +76,13 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
             }
         } catch (Throwable e) {
             LoggerFactory.getLogger(AbstractMzParser.class).error("Error while parsing " + sourceURL + ": " + e.getMessage());
-            throw e;
+            if (e instanceof InvalidInputData){
+                return null;
+            } else  if (e instanceof IOException) {
+                throw (IOException)e;
+            } else {
+                throw new IOException(e);
+            }
         }
         }
 }

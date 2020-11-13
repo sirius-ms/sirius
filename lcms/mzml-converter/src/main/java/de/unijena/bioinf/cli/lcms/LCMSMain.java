@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.cli.lcms;
 
+import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.io.lcms.MzXMLParser;
 import de.unijena.bioinf.lcms.InMemoryStorage;
@@ -52,7 +53,7 @@ public class LCMSMain {
                     //                    bw.write(feature.toMsExperiment());
 
                 }
-            } catch (IOException e) {
+            } catch (IOException | InvalidInputData e) {
                 e.printStackTrace();
                 System.exit(1);
             }
