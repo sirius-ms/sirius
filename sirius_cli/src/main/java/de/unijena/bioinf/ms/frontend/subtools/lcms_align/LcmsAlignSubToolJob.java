@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
+import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -89,9 +90,11 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
                         LcmsAlignSubToolJob.this.updateProgress(0, files.size(), c, "Parse LC/MS runs");
                     } catch (Throwable e) {
                         LoggerFactory.getLogger(LcmsAlignSubToolJob.class).error("Error while parsing file '" + f + "': " + e.getMessage());
-                        e.printStackTrace();
-                        throw new RuntimeException(e);
-
+                        if (!(e instanceof InvalidInputData)) {
+                            //stacktrace for unexpected errors
+                            e.printStackTrace();
+                            throw new RuntimeException(e);
+                        }
                     }
                     return "";
                 }
@@ -101,6 +104,12 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         for (BasicJJob<?> j : jobs) j.takeResult();
         i.getMs2Storage().backOnDisc();
         i.getMs2Storage().dropBuffer();
+
+        if (i.getSamples().size()==0) {
+            LoggerFactory.getLogger(LcmsAlignSubToolJob.class).error("No input data available to be aligned.");
+            return space;
+        }
+
         Cluster alignment = i.alignAndGapFilling(this);
         updateProgress(0, 2, 0, "Assign adducts.");
         i.detectAdductsWithGibbsSampling(alignment);
