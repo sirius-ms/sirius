@@ -32,40 +32,46 @@ import java.io.File;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FileChooserPanel extends JPanel {
-    final JTextField field = new JTextField();
-    final JButton changeDir = Buttons.getFileChooserButton16("Choose file or directory");
+    public final JTextField field = new JTextField();
+    public final JButton changeDir = Buttons.getFileChooserButton16("Choose file or directory");
 
     public FileChooserPanel() {
-        this("", 2);
+        this("", 2, JFileChooser.OPEN_DIALOG);
     }
 
     public FileChooserPanel(String currentPath) {
-        this(currentPath, 2);
+        this(currentPath, 2, JFileChooser.OPEN_DIALOG);
     }
 
     public FileChooserPanel(int fileChooserMode) {
-        this("", fileChooserMode);
+        this("", fileChooserMode, JFileChooser.OPEN_DIALOG);
+    }
+    public FileChooserPanel(int fileChooserMode, int dialogMode) {
+        this("", fileChooserMode, dialogMode);
     }
 
     public FileChooserPanel(String currentPath, int fileChooserMode) {
+        this(currentPath,fileChooserMode, JFileChooser.OPEN_DIALOG);
+
+    }
+    public FileChooserPanel(String currentPath, int fileChooserMode, int dialogMode) {
         super();
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
 
         final JFileChooser fileChooser = new JFileChooser(currentPath);
+        fileChooser.setDialogType(dialogMode);
         fileChooser.setFileSelectionMode(fileChooserMode);
+
         field.setText(currentPath);
         add(field);
         add(changeDir);
-        changeDir.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final int r = fileChooser.showOpenDialog(FileChooserPanel.this);
-                if (r == JFileChooser.APPROVE_OPTION) {
-                    final File file = fileChooser.getSelectedFile();
-                    if (file != null && file.isDirectory()) {
-                        field.setText(file.toString());
-                    }
+        changeDir.addActionListener(e -> {
+            final int r = fileChooser.showOpenDialog(FileChooserPanel.this);
+            if (r == JFileChooser.APPROVE_OPTION) {
+                final File file = fileChooser.getSelectedFile();
+                if (file != null) {
+                    field.setText(file.toString());
                 }
             }
         });
@@ -83,23 +89,20 @@ public class FileChooserPanel extends JPanel {
     }
 
     public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-                    ex.printStackTrace();
-                }
-
-                String s = ApplicationCore.VERSION_STRING();
-                JFrame frame = new JFrame("Testing");
-                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.add(new FileChooserPanel(System.getProperty("user.home"), 1));
-                frame.pack();
-                frame.setLocationRelativeTo(null);
-                frame.setVisible(true);
+        EventQueue.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+                ex.printStackTrace();
             }
+
+            String s = ApplicationCore.VERSION_STRING();
+            JFrame frame = new JFrame("Testing");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.add(new FileChooserPanel(System.getProperty("user.home"), 1));
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
         });
     }
 }

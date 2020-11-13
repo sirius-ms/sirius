@@ -49,11 +49,11 @@ import java.util.concurrent.ExecutionException;
 public class MgfExporterWorkflow implements Workflow {
     private final Path outputPath;
     private final MgfWriter mgfWriter;
-    private final PreprocessingJob<ProjectSpaceManager> ppj;
+    private final PreprocessingJob<? extends Iterable<Instance>> ppj;
     private final Optional<Path> quantPath;
 
 
-    public MgfExporterWorkflow(PreprocessingJob<ProjectSpaceManager> ppj, MgfExporterOptions options, ParameterConfig config) {
+    public MgfExporterWorkflow(PreprocessingJob<? extends Iterable<Instance>> ppj, MgfExporterOptions options, ParameterConfig config) {
         outputPath = options.output;
         Deviation mergeMs2Deviation = new Deviation(options.ppmDev);
         mgfWriter = new MgfWriter(options.writeMs1, options.mergeMs2, mergeMs2Deviation,true);
@@ -65,7 +65,7 @@ public class MgfExporterWorkflow implements Workflow {
     @Override
     public void run() {
         try {
-            final ProjectSpaceManager ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
+            final Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
             try (final BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
                 for (Instance inst : ps){
                     try {
@@ -94,7 +94,7 @@ public class MgfExporterWorkflow implements Workflow {
         }
     }
 
-    private void writeQuantifiactionTable(ProjectSpaceManager ps, Path path) throws IOException {
+    private void writeQuantifiactionTable(Iterable<Instance> ps, Path path) throws IOException {
         final HashMap<String, QuantInfo> compounds = new HashMap<>();
         final Set<String> sampleNames = new HashSet<>();
 
@@ -106,7 +106,7 @@ public class MgfExporterWorkflow implements Workflow {
                     sampleNames.addAll(quant.getSamples());
                     compounds.put(experiment.getName(), new QuantInfo(
                             experiment.getIonMass(),
-                            experiment.getAnnotation(RetentionTime.class).orElse(new RetentionTime(0d)).getRetentionTimeInSeconds(),
+                            experiment.getAnnotation(RetentionTime.class).orElse(new RetentionTime(0d)).getRetentionTimeInSeconds() / 60d, //use min
                             quant
                     ));
                 });
