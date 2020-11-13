@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms.debuggui;
 
+import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.io.lcms.MzMLParser;
@@ -138,7 +139,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
             final GUI gui = new GUI(i, sample);
 
-        } catch (IOException e) {
+        } catch (IOException| InvalidInputData e) {
             e.printStackTrace();
         }
 

@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.debuggui;
 
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
@@ -288,7 +289,13 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                 else
                     parser = new MzMLParser();
                 final LCMSRun parse = parser.parse(f, storage);
-                final ProcessedSample sample = i.addSample(parse, storage);
+                final ProcessedSample sample;
+                try {
+                    sample = i.addSample(parse, storage);
+                } catch (InvalidInputData e){
+                    System.err.println("Error while processing run " + f + ": " + e.getMessage());
+                    continue;
+                }
                 i.detectFeatures(sample);
                 int c1=0, c2=0,c3=0;
                 for (FragmentedIon ion : sample.ions) {

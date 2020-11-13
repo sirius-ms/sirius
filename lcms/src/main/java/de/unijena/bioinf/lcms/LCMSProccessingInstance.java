@@ -21,6 +21,7 @@
 package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
@@ -150,11 +151,12 @@ public class LCMSProccessingInstance {
         return centroided;
     }
 
-    public ProcessedSample addSample(LCMSRun run, SpectrumStorage storage) {
+    public ProcessedSample addSample(LCMSRun run, SpectrumStorage storage) throws InvalidInputData {
         final NoiseStatistics noiseStatisticsMs1 = new NoiseStatistics(100, 0.2, 1000)/*, noiseStatisticsMs2 = new NoiseStatistics(10, 0.85, 60)*/;
 
         final Ms2NoiseStatistics ms2NoiseStatistics = new Ms2NoiseStatistics();
 
+        boolean hasMsMs = false;
         for (Scan s : run.getScans()) {
             if (!s.isCentroided()) {
                 this.centroided = false;
@@ -162,12 +164,15 @@ public class LCMSProccessingInstance {
                 continue;
             }
             if (s.isMsMs()) {
+                hasMsMs = true;
                 //noiseStatisticsMs2.add(s, storage.getScan(s));
                 ms2NoiseStatistics.add(s,storage.getScan(s));
             } else {
                 noiseStatisticsMs1.add(s,storage.getScan(s));
             }
         }
+
+        if (!hasMsMs) throw new InvalidInputData("Run has no MS/MS spectra.");
 
         ms2NoiseStatistics.done();
 

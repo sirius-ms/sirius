@@ -76,6 +76,7 @@ public class GenericParser<T> implements Parser<T> {
         return new CloseableIterator<S>() {
             @Override
             public void close() throws IOException {
+                //todo reader should only be closed outside and not inside this class here.
                 tryclose();
             }
 
@@ -83,7 +84,8 @@ public class GenericParser<T> implements Parser<T> {
             S elem = parse(reader, source);
             @Override
             public boolean hasNext() {
-                return reader != null;
+                if (elem==null) tryclose(); //for reader without any element
+                return reader!=null;
             }
 
             @Override
