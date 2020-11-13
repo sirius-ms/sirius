@@ -58,6 +58,7 @@ public enum SiriusActions {
     SAVE_WS(ProjectSaveAction.class),
     EXPORT_WS(ProjectSaveCopyAction.class),
     SUMMARY_WS(ProjectSummaryAction.class),
+    EXPORT_FBMN(FBMNExportAction.class),
 
     SHOW_SETTINGS(ShowSettingsDialogAction.class),
     SHOW_BUGS(ShowBugReportDialogAction.class),

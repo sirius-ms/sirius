@@ -25,7 +25,7 @@ import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -72,6 +72,6 @@ public class MgfExporterOptions implements StandaloneTool<MgfExporterWorkflow> {
 
     @Override
     public MgfExporterWorkflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
-        return new MgfExporterWorkflow((PreprocessingJob<ProjectSpaceManager>) rootOptions.makeDefaultPreprocessingJob(), this, config);
+        return new MgfExporterWorkflow((PreprocessingJob<? extends Iterable<Instance>>) rootOptions.makeDefaultPreprocessingJob(), this, config);
     }
 }
