@@ -141,6 +141,32 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         this(host, username, password, null);
     }
 
+
+    public List<MolecularFormula> lookupMolecularFormulasByFilter(long filter) throws ChemicalDatabaseException {
+        final List<MolecularFormula> xs = new ArrayList<>();
+        try (final PooledConnection<Connection> c = connection.orderConnection()) {
+            final PreparedStatement statement = c.connection.prepareStatement(
+                    "SELECT formula FROM formulas WHERE (flags & " + filter + ") != 0"
+            );
+            try (final ResultSet set = statement.executeQuery()) {
+                while (set.next()) {
+                    xs.add(MolecularFormula.parseOrThrow(set.getString(1)));
+                }
+            }
+
+        } catch (InterruptedException e) {
+            log.error(e.getMessage(), e);
+            Thread.currentThread().interrupt();
+            return new ArrayList<>();
+        } catch (IOException | SQLException e) {
+            log.error(e.getMessage(), e);
+            throw new ChemicalDatabaseException(e);
+        }
+        return xs;
+    }
+
+
+
     /**
      * Search for molecular formulas in the database
      *
