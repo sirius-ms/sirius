@@ -55,6 +55,10 @@ public class FormulaJob extends BasicJJob<RestWithCustomDatabase.CandidateResult
     protected RestWithCustomDatabase.CandidateResult compute() throws Exception {
         return NetUtils.tryAndWait(() -> {
             final RestWithCustomDatabase.CandidateResult result = searchDatabase.loadCompoundsByFormula(formula, dbs, includeRestAllDb);
+            if (ionType.isIntrinsicalCharged()){
+                // if [M]+ or [M]- was specifically selected, candidates are fitered to also require this charge
+                return result.selectCandidatesByCharge(ionType.getCharge());
+            }
             return result;
         }, this::checkForInterruption);
     }
