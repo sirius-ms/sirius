@@ -294,7 +294,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
 
     private List<FormulaCandidate> lookupFormulaWithIon(final long filter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException, SQLException {
         final double delta = deviation.absoluteFor(mass);
-        final double neutralMass = ionType.precursorMassToNeutralMass(mass);
+        final double neutralMass = ionType.getQueryMass(mass);
         final double minmz = neutralMass - delta;
         final double maxmz = neutralMass + delta;
         final ArrayList<FormulaCandidate> list = new ArrayList<>();
