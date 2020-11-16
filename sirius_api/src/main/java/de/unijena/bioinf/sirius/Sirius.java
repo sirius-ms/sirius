@@ -634,6 +634,9 @@ public class Sirius {
             }
         }
 
+        /**
+         * resolves adduct, current trees are still only based on ionizations without adducts
+         */
         private List<IdentificationResult<SiriusScore>> createIdentificationResults(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
             List<IdentificationResult<SiriusScore>> irs = fr.getResults().stream()
                     .map(tree -> new IdentificationResult<>(tree, new SiriusScore(FTreeMetricsHelper.getSiriusScore(tree))))
@@ -642,8 +645,8 @@ public class Sirius {
 
             final PrecursorIonType ionType = computationInstance.getProcessedInput().getExperimentInformation().getPrecursorIonType();
 
-            if (!ionType.isIonizationUnknown() && !ionType.getAdduct().isEmpty()) {
-                //resolve in case it has an adduct
+            if (!ionType.isIonizationUnknown() && (!ionType.getAdduct().isEmpty() || ionType.isIntrinsicalCharged())) {
+                //resolve in case it has an adduct or is intrinsically charged (for the 2nd it only replaces the PrecursorIonType)
                 logDebug("Compound has set a fixed Adduct: " + ionType.toString() + ". Transforming trees to Adduct if necessary.");
                 irs = irs.stream()
                         .filter(idr -> idr.getMolecularFormula().isSubtractable(ionType.getAdduct()))
@@ -714,7 +717,7 @@ public class Sirius {
                     }
                 }
                 if (validIontype.hasNeitherAdductNorInsource()) {
-                    return new IonTreeUtils().treeToNeutralTree(tree, validIontype);
+                    return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
                 } else {
                     if (!inSourceFragmentation.isEmpty()){
                         return new IonTreeUtils().treeToNeutralTree(tree, validIontype.substituteInsource(inSourceFragmentation));
