@@ -411,41 +411,6 @@ public class RestWithCustomDatabase {
             restDbInChIs.addAll(mergeCompounds(other.restDbInChIs, cs));
             other.customInChIs.forEach((k, v) -> customInChIs.get(k).addAll(mergeCompounds(v, cs)));
         }
-
-        /**
-         * Produce a new {@link CandidateResult} containing only structures with the specific charge. Required for intrinsically charged compounds.
-         * @param charge
-         * @return
-         */
-        public CandidateResult selectCandidatesByCharge(int charge){
-            CandidateResult filteredResult = new CandidateResult(Collections.emptyList(), restFilter, requestFilter);
-
-            for (Map.Entry<String, FingerprintCandidate> strToFpCandEntry : cs.entrySet()) {
-                final FingerprintCandidate candidate = strToFpCandEntry.getValue();
-                if (candidate.getInchi().getFormalCharges()==charge){
-                    filteredResult.cs.put(strToFpCandEntry.getKey(), candidate);
-                }
-            }
-            for (Map.Entry<String, Set<FingerprintCandidate>> stringSetEntry : customInChIs.entrySet()) {
-                final Set<FingerprintCandidate> filtered = filterSet(stringSetEntry.getValue(), charge);
-                if (filtered.size()>0){
-                    filteredResult.customInChIs.put(stringSetEntry.getKey(), filtered);
-                }
-            }
-            filteredResult.restDbInChIs.addAll(filterSet(restDbInChIs, charge));
-
-            return filteredResult;
-        }
-
-        private Set<FingerprintCandidate> filterSet(Set<FingerprintCandidate> candidates, int charge) {
-            Set<FingerprintCandidate> filteredCandidates = new HashSet<>();
-            for (FingerprintCandidate candidate : candidates) {
-                if (candidate.getInchi().getFormalCharges()==charge){
-                    filteredCandidates.add(candidate);
-                }
-            }
-            return filteredCandidates;
-        }
     }
 
     @NotNull

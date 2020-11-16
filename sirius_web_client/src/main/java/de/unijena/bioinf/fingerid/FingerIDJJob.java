@@ -22,7 +22,6 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -240,8 +239,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
                         fingeridInput.getMolecularFormula(),
                         predictor.database,
                         searchDB.searchDBs,
-                        getIonTypeForStructureSearch(fingeridInput.getPrecursorIonType()), //different structure search for intrinsically charged compounds
-                        true) //todo maybe only if confidence is "enabled"
+                        fingeridInput.getPrecursorIonType(), true) //todo maybe only if confidence is "enabled"
         ).collect(Collectors.toList());
 
         jobManager.submitJobsInBatches(formulaJobs);
@@ -314,20 +312,6 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
         logDebug("CSI:FingerID Search DONE!");
         //in linked maps values() collection is not a set -> so we have to make that distinct
         return annotationJJobs.values().stream().distinct().collect(Collectors.toList());
-    }
-
-    private PrecursorIonType getIonTypeForStructureSearch(PrecursorIonType ionType){
-        final PrecursorIonType experimentIonType = experiment.getPrecursorIonType();
-        if (experimentIonType.isIntrinsicalCharged()){
-            //if ion type is explicitly intrinsically charged (specified in file or by user), use this for structure search.
-            final PrecursorIonType expectedTreeIonType = experimentIonType.getCharge()>0 ? PeriodicTable.getInstance().getPrecursorProtonation() : PeriodicTable.getInstance().getPrecursorDeprotonation();
-            if (ionType.equals(expectedTreeIonType)){
-                return experimentIonType;
-            } else {
-                LoggerFactory.getLogger(FingerIDJJob.class).error("Compound is specified as being intrinsically charge, but fragmentation tree is not");
-            }
-        }
-        return ionType;
     }
 
     @Override

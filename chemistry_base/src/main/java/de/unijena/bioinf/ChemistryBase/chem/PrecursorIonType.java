@@ -322,15 +322,6 @@ public class PrecursorIonType implements TreeAnnotation {
         return ionization.subtractFromMass(precursor - adduct.getMass() + inSourceFragmentation.getMass());
     }
 
-    /**
-     * transforms an m/z value into a mass that can be searched in a molecular database
-     * usually, this should be the same as the neutral molecule EXCEPT for intrinsical charged
-     * where we add the protonation/deprotonation here
-     */
-    public double getQueryMass(double mz) {
-        if (isIntrinsicalCharged()) return mz - adduct.getMass() + inSourceFragmentation.getMass();
-        else return precursorMassToNeutralMass(mz);
-    }
 
     /**
      * @param formula molecular formula without any modification in neutralized form (even when intrinsical-charged)
