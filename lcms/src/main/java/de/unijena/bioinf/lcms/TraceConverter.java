@@ -104,8 +104,12 @@ class TraceConverter {
                 new CompoundTrace(isotopeTraces(mainIon), adducts.toArray(IonTrace[]::new),
                         insources.toArray(IonTrace[]::new)), retentionTime, scanIds, noiseLevels,
                 Arrays.stream(mainIon.getMergedScans()).mapToInt(Scan::getIndex).toArray(), Arrays.stream(mainIon.getMergedScans()).mapToLong(Scan::getRetentionTime).toArray(),
-                mainIon.getAdditionalInfos().toArray(CompoundReport[]::new)
 
+                // ignore this for SIRIUS release 4.5
+                // it is not necessary and we might change the internal
+                // data format of reports in later versions
+                //mainIon.getAdditionalInfos().toArray(CompoundReport[]::new)
+                new CompoundReport[0]
         );
 
     }

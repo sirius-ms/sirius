@@ -88,7 +88,7 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             }
         }
 
-        writeIfAvailable(writer, ">noise", data.getAnnotationOrNull(NoiseInformation.class));
+        //writeIfAvailable(writer, ">noise", data.getAnnotationOrNull(NoiseInformation.class));
 
         final Map<String, String> arbitraryKeys = data.getAnnotation(AdditionalFields.class, AdditionalFields::new);
         for (Map.Entry<String, String> e : arbitraryKeys.entrySet()) {

@@ -20,6 +20,10 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,23 +31,25 @@ import org.jetbrains.annotations.NotNull;
  * the collection of all mass traces associated to the compound and its correlated ions (adducts,
  * isotopes, in-source fragments)
  */
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE,getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CoelutingTraceSet {
 
-    @NotNull protected final String sampleName;
-    @NotNull protected final MsDataSourceReference sampleRef;
-    @NotNull protected final CompoundTrace ionTrace;
+    @JsonIgnore @NotNull protected final String sampleName;
+    @JsonIgnore @NotNull protected final MsDataSourceReference sampleRef;
+    @JsonProperty @NotNull protected final CompoundTrace ionTrace;
 
-    @NotNull protected final long[] retentionTimes;
-    @NotNull protected final int[] scanIds; // the INDEX of the spectrum
-    @NotNull protected final float[] noiseLevels;
+    @JsonProperty @NotNull protected final long[] retentionTimes;
+    @JsonProperty @NotNull protected final int[] scanIds; // the INDEX of the spectrum
+    @JsonProperty @NotNull protected final float[] noiseLevels;
 
     /**
      * the IDs of scans that are part of the merged MS/MS spectrum
      */
-    @NotNull protected final int[] ms2ScanIds;
-    @NotNull protected final long[] ms2RetentionTimes;
+    @JsonProperty @NotNull protected final int[] ms2ScanIds;
+    @JsonProperty @NotNull protected final long[] ms2RetentionTimes;
 
-    @NotNull protected final CompoundReport[] reports;
+    @JsonProperty @NotNull protected final CompoundReport[] reports;
 
 
     public CoelutingTraceSet(@NotNull String sampleName, @NotNull MsDataSourceReference sampleRef, @NotNull CompoundTrace trace, @NotNull long[] retentionTimes, @NotNull int[] scanIds, @NotNull float[] noiselevels, int[] ms2Scans, long[] ms2RetentionTimes, CompoundReport[] reports) {
