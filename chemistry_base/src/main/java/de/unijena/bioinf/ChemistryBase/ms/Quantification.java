@@ -20,14 +20,18 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationMeasure;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@Deprecated
 public class Quantification implements Ms2ExperimentAnnotation {
 
     private final TObjectDoubleHashMap<String> quant;
@@ -40,6 +44,49 @@ public class Quantification implements Ms2ExperimentAnnotation {
         this.quant = new TObjectDoubleHashMap<>();
         for (String k : quant.keySet())
             this.quant.put(k, quant.get(k));
+    }
+
+    public QuantificationTable asQuantificationTable() {
+        final String[] names = quant.keys(new String[quant.size()]);
+        final double[] vec = new double[quant.size()];
+        final TObjectIntHashMap<String> name2index = new TObjectIntHashMap<>(names.length,0.75f,-1);
+        for (int k=0; k < names.length; ++k) {
+            name2index.put(names[k],k);
+            vec[k] = quant.get(names[k]);
+        }
+        return new QuantificationTable() {
+            @Override
+            public String getName(int i) {
+                return names[i];
+            }
+
+            @Override
+            public double getAbundance(int i) {
+                return vec[i];
+            }
+
+            @Override
+            public double getAbundance(String name) {
+                int i = name2index.get(name);
+                return i>=0 ? vec[i] : 0d;
+            }
+
+            @Override
+            public Optional<Double> mayGetAbundance(String name) {
+                int i = name2index.get(name);
+                return i>=0 ? Optional.of(vec[i]) : Optional.empty();
+            }
+
+            @Override
+            public int length() {
+                return vec.length;
+            }
+
+            @Override
+            public QuantificationMeasure getMeasure() {
+                return QuantificationMeasure.APEX;
+            }
+        };
     }
 
     public Set<String> getSamples() {
