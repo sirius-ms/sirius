@@ -714,7 +714,7 @@ public class Sirius {
                     }
                 }
                 if (validIontype.hasNeitherAdductNorInsource()) {
-                    return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
+                    return new IonTreeUtils().treeToNeutralTree(tree, validIontype);
                 } else {
                     if (!inSourceFragmentation.isEmpty()){
                         return new IonTreeUtils().treeToNeutralTree(tree, validIontype.substituteInsource(inSourceFragmentation));
