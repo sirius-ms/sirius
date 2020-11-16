@@ -179,22 +179,27 @@ public class CompoundCandidate {
         this.tanimoto = tanimoto;
     }
 
+    @Deprecated
     public boolean canBeNeutralCharged() {
         return hasChargeState(CompoundCandidateChargeState.NEUTRAL_CHARGE);
     }
 
+    @Deprecated
     public boolean canBePositivelyCharged() {
         return hasChargeState(CompoundCandidateChargeState.POSITIVE_CHARGE);
     }
 
+    @Deprecated
     public boolean canBeNegativelyCharged() {
         return hasChargeState(CompoundCandidateChargeState.NEGATIVE_CHARGE);
     }
 
+    @Deprecated
     public boolean hasChargeState(CompoundCandidateChargeState chargeState) {
         return (hasChargeState(pLayer, chargeState.getValue()) || hasChargeState(qLayer, chargeState.getValue()));
     }
 
+    @Deprecated
     public boolean hasChargeState(CompoundCandidateChargeLayer chargeLayer, CompoundCandidateChargeState chargeState) {
         return (chargeLayer == CompoundCandidateChargeLayer.P_LAYER ?
                 hasChargeState(pLayer, chargeState.getValue()) :

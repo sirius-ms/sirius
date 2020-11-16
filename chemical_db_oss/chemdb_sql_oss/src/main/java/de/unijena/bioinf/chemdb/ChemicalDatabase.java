@@ -275,6 +275,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             );
             for (PrecursorIonType ionType : ionTypes) {
                 try {
+                    //we do not longer process intrinsically charged compounds differently. Hence, [M]+ and [M+H]+ will result in the exact same list of FormulaCandidates.
                     xs.add(lookupFormulaWithIon(filter, statement, mass, deviation, ionType));
                 } catch (ChemicalDatabaseException e) {
                     throw new ChemicalDatabaseException(e);
@@ -291,27 +292,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
         return xs;
     }
 
-    private List<FormulaCandidate> lookupFormulaWithIon(long filter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException, SQLException {
-        if (ionType.isIntrinsicalCharged()) {
-            final List<FormulaCandidate> protonated = lookupFormulaWithIonIntrinsicalChargedAreConsidered(filter, statement, mass, deviation, ionType.getCharge() > 0 ? PrecursorIonType.getPrecursorIonType("[M+H]+") : PrecursorIonType.getPrecursorIonType("[M-H]-"));
-            final List<FormulaCandidate> intrinsical = lookupFormulaWithIonIntrinsicalChargedAreConsidered(filter, statement, mass, deviation, ionType);
-            // merge both together
-            final HashMap<MolecularFormula, FormulaCandidate> map = new HashMap<>();
-            for (FormulaCandidate fc : intrinsical) {
-                map.put(fc.formula, fc);
-            }
-            final MolecularFormula hydrogen = MolecularFormula.parseOrThrow("H");
-            for (FormulaCandidate fc : protonated) {
-                final MolecularFormula intrinsic = ionType.getCharge() > 0 ? fc.formula.subtract(hydrogen) : fc.formula.add(hydrogen);
-                map.put(intrinsic, new FormulaCandidate(intrinsic, ionType, fc.bitset));
-            }
-            return new ArrayList<>(map.values());
-        } else {
-            return lookupFormulaWithIonIntrinsicalChargedAreConsidered(filter, statement, mass, deviation, ionType);
-        }
-    }
-
-    private List<FormulaCandidate> lookupFormulaWithIonIntrinsicalChargedAreConsidered(final long filter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException, SQLException {
+    private List<FormulaCandidate> lookupFormulaWithIon(final long filter, PreparedStatement statement, double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException, SQLException {
         final double delta = deviation.absoluteFor(mass);
         final double neutralMass = ionType.precursorMassToNeutralMass(mass);
         final double minmz = neutralMass - delta;
@@ -453,6 +434,7 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
                             candidate.setName(set.getString(3));
                             candidate.setSmiles(set.getString(4));
                             candidate.setBitset(set.getLong(5));
+                            //todo if we decide to never store p/q-layer information separately, we can remove these field from CompoundCandidate
                             //candidate.setpLayer(set.getInt(6));
                             //candidate.setqLayer(set.getInt(7));
                             candidate.setXlogp(set.getDouble(6));
