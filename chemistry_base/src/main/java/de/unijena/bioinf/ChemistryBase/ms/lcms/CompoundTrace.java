@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +33,7 @@ import java.util.function.Consumer;
 /**
  * A compound has traces of adducts and in-source fragments
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CompoundTrace extends IonTrace implements Iterable<IonTrace> {
 
     @Nonnull protected final IonTrace[] adducts;

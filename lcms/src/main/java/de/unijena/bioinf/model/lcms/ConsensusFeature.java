@@ -134,9 +134,11 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         exp.setIonMass(averageMass);
         exp.setAnnotation(RetentionTime.class, new RetentionTime(averageRetentionTime/1000d));
 
+        /*
         if (ms2RepresentativeFeature>=0) {
             exp.setAnnotation(NoiseInformation.class, features[ms2RepresentativeFeature].ms2NoiseModel);
         }
+         */
 
         final TObjectDoubleHashMap<String> map = new TObjectDoubleHashMap<>();
         boolean good = false;
@@ -155,7 +157,8 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         }
         final boolean chimeric = chimericPollution>0.33;
 
-        exp.setAnnotation(Quantification.class, new Quantification(map));
+        // deprecated
+        //exp.setAnnotation(Quantification.class, new Quantification(map));
 
         CompoundQuality quality = new CompoundQuality();
         if (!chimeric && good) quality = quality.updateQuality(CompoundQuality.CompoundQualityFlag.Good);
