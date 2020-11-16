@@ -48,7 +48,10 @@ public class ComputeCSILocalAction extends ComputeCSIAction {
     public void actionPerformed(ActionEvent e) {
         if (CheckConnectionAction.isNotConnectedAndLoad())
             return;
-        
+
+        //todo this functionality needs to be implemented in the CLI first.
+        if (true) return;
+
         //calculate csi
         final FingerIdDialog dialog = new FingerIdDialog(MF, CheckConnectionAction.isConnectedAndLoad(),  true);
         final int returnState = dialog.run();
