@@ -23,34 +23,7 @@ window.addEventListener("resize", function(){
 
 window.addEventListener('contextmenu', event => event.preventDefault());
 
-var mouseover = function() {
-    tooltip.style("opacity", 1);
-    d3.select(this).attr("fill", col.annotation);
-};
-
-var mousemove = function(d) {
-    // NOTE: These distances might need to be changed, when the font size and content of hover are changed.
-    if ("formula" in d) {
-        tooltip.html("Formula: " + d.formula + "<br>m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place));
-        if (d3.mouse(this)[1]+45+60 > current.h) {
-            tooltip.style("top", (d3.mouse(this)[1]-30 + "px"));
-        } else {
-            tooltip.style("top", (d3.mouse(this)[1]+45 + "px"));
-        }
-    } else {
-        tooltip.html("m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place));
-        if (d3.mouse(this)[1]+45+40 > current.h) {
-            tooltip.style("top", (d3.mouse(this)[1]-30 + "px"));
-        } else {
-            tooltip.style("top", (d3.mouse(this)[1]+45 + "px"));
-        }
-    }
-    if (d3.mouse(this)[0]+70+130 > current.w) {
-        tooltip.style("left", (d3.mouse(this)[0]-70 + "px"));
-    } else {
-        tooltip.style("left", (d3.mouse(this)[0]+70 + "px"));
-    }
-};
+function idled() { idleTimeout = null; };
 
 function firstNChar(str, num) {
     if (str.length > num) {
@@ -60,7 +33,50 @@ function firstNChar(str, num) {
     }
 };
 
-function idled() { idleTimeout = null; };
+function translateHover(mouse_w, mouse_h) {
+    // NOTE: These distances might need to be changed, when the font size and content of hover are changed.
+    // current hover style: padding = 5px, border-width = 1px
+    let tmp_tooltip = document.querySelector("#tooltip");
+    let tmp_h = parseFloat(window.getComputedStyle(tmp_tooltip).getPropertyValue("height")) + 12;
+    let tmp_w = parseFloat(window.getComputedStyle(tmp_tooltip).getPropertyValue("width")) + 12;
+    if (mouse_h+tmp_h+15 > current.h) {
+        tooltip.style("top", (mouse_h - 15 - tmp_h/2 + "px"));
+    } else {
+        tooltip.style("top", (mouse_h + 15 + "px"));
+    }
+    if (mouse_w+tmp_w+15 > current.w) {
+        tooltip.style("left", (mouse_w - 15 - tmp_w + "px"));
+    } else {
+        tooltip.style("left", (mouse_w + 15 + "px"));
+    }
+};
+
+function showHover(d) {
+    if ("formula" in d) {
+        let sign = "";
+        if (d.massDeviationMz > 0) {
+            sign = "+";
+        }
+        tooltip.html("Formula: " + d.formula.replace(" + [M", "").replace("]","") +
+                     "<br>Intensity: " + d.intensity.toFixed(decimal_place) +
+                     "<br>m/z: " + d.mz.toFixed(decimal_place) +
+                     "<br>Mass deviation: " + sign + (d.massDeviationMz*1000).toFixed(decimal_place) + " mDa<br>" +
+                     "&nbsp;".repeat(25) + "(" + sign + d.massDeviationPpm.toFixed(decimal_place) + " ppm)");
+    } else {
+        tooltip.html("m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place));
+    }
+};
+
+var mouseover = function() {
+    tooltip.style("opacity", 1);
+    d3.select(this).attr("fill", col.annotation);
+};
+
+var mousemove = function(d) {
+    showHover(d);
+    let event = window.event;
+    translateHover(event.clientX, event.clientY);
+};
 
 function resize() {
     current = {w: window.innerWidth, h: window.innerHeight};
