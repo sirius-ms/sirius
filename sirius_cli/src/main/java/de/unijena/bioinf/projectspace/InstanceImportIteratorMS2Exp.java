@@ -20,11 +20,14 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Quantification;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
@@ -57,6 +60,39 @@ class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
         if (ms2ExperimentIterator.hasNext()) {
             final Ms2Experiment input = ms2ExperimentIterator.next();
             @NotNull Instance inst = spaceManager.newCompoundWithUniqueId(input); //this writers
+
+            // TODO: hacky solution
+            // store LC/MS data into project space
+            // might change in future. Its important that the trace is written after
+            // importing from mzml/mzxml
+            if (input!=null){
+                LCMSPeakInformation lcmsInfo = input.getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
+                if (lcmsInfo.isEmpty()) {
+                    // check if there are quantification information
+                    // grab them and remove them
+                    final Quantification quant = input.getAnnotationOrNull(Quantification.class);
+                    if (quant!=null) {
+                        lcmsInfo = new LCMSPeakInformation(quant.asQuantificationTable());
+                        input.removeAnnotation(Quantification.class);
+                    }
+                }
+                if (!lcmsInfo.isEmpty()) {
+                    // store this information into the compound container instead
+                    final CompoundContainer compoundContainer = inst.loadCompoundContainer(LCMSPeakInformation.class);
+                    final Optional<LCMSPeakInformation> annotation = compoundContainer.getAnnotation(LCMSPeakInformation.class);
+                    if (annotation.orElseGet(LCMSPeakInformation::empty).isEmpty()) {
+                        compoundContainer.setAnnotation(LCMSPeakInformation.class, lcmsInfo);
+                        inst.updateCompound(compoundContainer,LCMSPeakInformation.class);
+                    }
+                }
+                // remove annotation from experiment
+                {
+                    final Ms2Experiment exp = inst.getExperiment();
+                    exp.removeAnnotation(LCMSPeakInformation.class);
+                    exp.removeAnnotation(Quantification.class);
+                    inst.updateExperiment();
+                }
+            }
 
             if (input == null || !filter.test(inst.loadCompoundContainer(Ms2Experiment.class))) {
                 LoggerFactory.getLogger(getClass()).info("Skipping instance " + inst.getID().getDirectoryName() + " because it does not match the Filter criterion.");

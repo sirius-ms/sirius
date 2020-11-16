@@ -24,14 +24,14 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Quantification;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.mgf.MgfWriter;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import gnu.trove.map.TObjectIntMap;
 import org.apache.commons.text.translate.CsvTranslators;
 import org.slf4j.LoggerFactory;
 
@@ -101,9 +101,8 @@ public class MgfExporterWorkflow implements Workflow {
         try (BufferedWriter bw = FileUtils.getWriter(path.toFile())) {
             for (Instance i : ps) {
                 final Ms2Experiment experiment = i.getExperiment();
-                // TODO: this will change when quants are not longer written into ms files!!!
-                experiment.getAnnotation(Quantification.class).ifPresent(quant->{
-                    sampleNames.addAll(quant.getSamples());
+                getQuantificationTable(i, experiment).ifPresent(quant->{
+                    for (int j=0; j < quant.length(); ++j) sampleNames.add(quant.getName(j));
                     compounds.put(experiment.getName(), new QuantInfo(
                             experiment.getIonMass(),
                             experiment.getAnnotation(RetentionTime.class).orElse(new RetentionTime(0d)).getRetentionTimeInSeconds() / 60d, //use min
@@ -132,19 +131,31 @@ public class MgfExporterWorkflow implements Workflow {
                 bw.write(String.valueOf(quantInfo.rt));
                 for (String sampleName : sampleNameList) {
                     bw.write(',');
-                    bw.write(quantInfo.quants.getQuantificationForOpt(sampleName).map(String::valueOf).orElse(String.valueOf(0d)));
+                    bw.write(String.valueOf(quantInfo.quants.getAbundance(sampleName)));
                 }
                 bw.newLine();
             }
         }
     }
 
+    private Optional<QuantificationTable> getQuantificationTable(Instance i, Ms2Experiment experiment) {
+        LCMSPeakInformation lcms = i.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
+        if (lcms.isEmpty()) {
+            lcms = experiment.getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
+        }
+        if (lcms.isEmpty()) {
+            Quantification quant = experiment.getAnnotationOrNull(Quantification.class);
+            if (quant!=null) lcms = new LCMSPeakInformation(quant.asQuantificationTable());
+        }
+        return lcms.isEmpty() ? Optional.empty() : Optional.of(lcms.getQuantificationTable());
+    }
+
     private static class QuantInfo {
         final double ionMass;
         final double rt;
-        final Quantification quants;
+        final QuantificationTable quants;
 
-        private QuantInfo(double ionMass, double rt, Quantification quants) {
+        private QuantInfo(double ionMass, double rt, QuantificationTable quants) {
             this.ionMass = ionMass;
             this.rt = rt;
             this.quants = quants;
