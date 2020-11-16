@@ -20,6 +20,9 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
@@ -37,13 +40,14 @@ import java.util.Optional;
  *
  * Note: mzXML files do not have an ID and can only be referenced with a source location.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public final class MsDataSourceReference {
 
-    @Nullable protected final String runId;
-    @Nullable protected final String mzmlId;
+    @JsonProperty @Nullable protected final String runId;
+    @JsonProperty @Nullable protected final String mzmlId;
 
-    @Nullable protected final String fileName;
-    @Nullable protected final URI sourceLocation;
+    @JsonProperty @Nullable protected final String fileName;
+    @JsonProperty @Nullable protected final URI sourceLocation;
 
     @Nonnull  private final int hashcode;
 
@@ -70,22 +74,23 @@ public final class MsDataSourceReference {
         return hashcode;
     }
 
-    public Optional<String> getFileName() {
+
+    @JsonIgnore public Optional<String> getFileName() {
         return Optional.ofNullable(fileName);
     }
-    public Optional<String> getRunId() {
+    @JsonIgnore public Optional<String> getRunId() {
         return Optional.ofNullable(runId);
     }
 
-    public Optional<String> getMzmlId() {
+    @JsonIgnore public Optional<String> getMzmlId() {
         return Optional.ofNullable(mzmlId);
     }
 
-    public Optional<URI> getSourceLocation() {
+    @JsonIgnore public Optional<URI> getSourceLocation() {
         return Optional.ofNullable(sourceLocation);
     }
 
-    public Optional<URI> getSource() {
+    @JsonIgnore public Optional<URI> getSource() {
         return (sourceLocation!=null && fileName!=null) ? Optional.of(sourceLocation.resolve("./" + fileName)) : Optional.empty();
     }
 }

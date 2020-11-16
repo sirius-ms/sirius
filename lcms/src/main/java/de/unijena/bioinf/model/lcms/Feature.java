@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.Trace;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -35,7 +36,6 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Set;
 
 public class Feature implements Annotated<DataAnnotation> {
@@ -176,12 +176,16 @@ public class Feature implements Annotated<DataAnnotation> {
             quality=quality.updateQuality(CompoundQuality.CompoundQualityFlag.Good);
 
         final TObjectDoubleHashMap<String> map = new TObjectDoubleHashMap<>();
-        exp.setAnnotation(Quantification.class, new Quantification(Collections.singletonMap(origin.identifier, intensity)));
+        // deprecated
+        //exp.setAnnotation(Quantification.class, new Quantification(Collections.singletonMap(origin.identifier, intensity)));
         exp.setAnnotation(CompoundQuality.class,quality);
         exp.setSource(new SpectrumFileSource(origin.source.getUrl()));
 
         final Set<PrecursorIonType> ionTypes = getPossibleAdductTypes();
         exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(LCMSProccessingInstance.POSSIBLE_ADDUCTS_KEY,new PossibleAdducts(ionTypes));
+
+        // add trace information
+        exp.setAnnotation(LCMSPeakInformation.class, new LCMSPeakInformation(new CoelutingTraceSet[]{getTraceset()}));
 
         return exp;
     }

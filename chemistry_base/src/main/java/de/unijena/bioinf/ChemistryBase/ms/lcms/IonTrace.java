@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.annotation.Nonnull;
 
 /**
@@ -36,7 +38,7 @@ public class IonTrace {
         this.isotopes = isotopes;
     }
 
-    public Trace getMonoisotopicPeak() {
+    @JsonIgnore public Trace getMonoisotopicPeak() {
         return this.isotopes[0];
     }
 

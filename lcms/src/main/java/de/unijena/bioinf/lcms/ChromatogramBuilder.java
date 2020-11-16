@@ -203,23 +203,23 @@ public class ChromatogramBuilder {
         final Extrema extrema = new Extrema();
         boolean minimum = true;
         for (int k=0; k < peak.numberOfScans()-1; ++k) {
-            final double a = (k==0) ? 0 : peak.getIntensityAt(k-1);
+            final double a = ((k==0) ? 0 : peak.getIntensityAt(k-1)) + (minimum ? -Float.MIN_VALUE : Float.MIN_VALUE);
             final double b = peak.getIntensityAt(k);
-            final double c = peak.getIntensityAt(k+1);
-            final double slope = Math.min(Math.abs(b-a),Math.abs(b-c));
+            final double c = peak.getIntensityAt(k+1) + (minimum ? -Float.MIN_VALUE : Float.MIN_VALUE);
+            //final double slope = Math.min(Math.abs(b-a),Math.abs(b-c));
             if ((b-a) < 0 && (b - c) < 0) {
                 // minimum
                 if (minimum) {
                     if (extrema.lastExtremumIntensity() > b)
                         extrema.replaceLastExtremum(k, b);
-                } else if (extrema.lastExtremumIntensity() - b > noiseLevels[k] || slope/extrema.lastExtremum() >= 0.25) {
+                } else if (extrema.lastExtremumIntensity() - b > noiseLevels[k]/* || slope/extrema.lastExtremum() >= 0.25*/) {
                     extrema.addExtremum(k, b);
                     minimum = true;
                 }
             } else if ((b-a)>0 && (b-c)>0) {
                 // maximum
                 if (minimum) {
-                    if (b - extrema.lastExtremumIntensity() > noiseLevels[k] || slope/b>=0.25) {
+                    if (b - extrema.lastExtremumIntensity() > noiseLevels[k] /* || slope/b>=0.25*/) {
                         extrema.addExtremum(k, b);
                         minimum = false;
                     }

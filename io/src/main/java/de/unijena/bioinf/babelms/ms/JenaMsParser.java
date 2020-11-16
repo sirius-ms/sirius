@@ -94,6 +94,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 }
             } catch (IOException e) {
                 LoggerFactory.getLogger(getClass()).warn("Error when parsing Compound '" + p.compoundName + "'. Skipping this entry! \n" + e.getMessage());
+                e.printStackTrace();
             } finally {
                 if (p != null) {
                     if (p.compoundName != null) {
@@ -128,7 +129,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private Whiteset formulas;
         private List<String> tags;
 
-        private NoiseInformation noiseInformation;
+        //private NoiseInformation noiseInformation;
 
         private List<List<String>> ms1Comments, ms2Comments;
         private boolean hasPeakComment;
@@ -157,7 +158,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
 
         private void newCompound(String name) {
-            noiseInformation = null;
+            //noiseInformation = null;
             inchi = null;
             inchikey = null;
             smiles = null;
@@ -328,9 +329,12 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 smiles = value;
             } else if (optionName.equalsIgnoreCase("splash")) {
                 splash = value;
+            /*
             } else if (optionName.equalsIgnoreCase("noise")) {
                 noiseInformation = NoiseInformation.fromString(value);
+             */
             } else if (optionName.equalsIgnoreCase("quality")) {
+
                 spectrumQualityString = value;
             } else if (optionName.equalsIgnoreCase("rt") || optionName.equalsIgnoreCase("retention")) {
                 retentionTime = parseRetentionTimeMiddle(value);
@@ -441,8 +445,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
             exp.setAnnotation(Tagging.class, new Tagging(tags.toArray(new String[0])));
 
+            /*
             if (noiseInformation!=null)
                 exp.setAnnotation(NoiseInformation.class, noiseInformation);
+            */
 
             if (mergedMs1 != null) exp.setMergedMs1Spectrum(mergedMs1);
             exp.setAnnotation(MsFileSource.class, source);

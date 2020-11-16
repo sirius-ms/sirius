@@ -20,27 +20,30 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.annotation.Nonnull;
 
 public final class Trace {
     /**
      * The offset between the first array element and the first index of the trace set
      */
-    private final int indexOffset;
+    @JsonProperty private final int indexOffset;
 
     /**
      * the apex for fast access
      */
-    private final int apex;
+    @JsonProperty private final int apex;
 
     /**
      * the index of the array element which is the first peak in the detected feature
      * (the peaks before it are background)
      */
-    private final int detectedFeatureOffset;
-    private final int detectedFeatureLength;
-    @Nonnull private final double[] masses;
-    @Nonnull private final float[] intensities;
+    @JsonProperty private final int detectedFeatureOffset;
+    @JsonProperty private final int detectedFeatureLength;
+    @JsonProperty @Nonnull private final double[] masses;
+    @JsonProperty @Nonnull private final float[] intensities;
 
     public Trace(int offset, int detectorOffset, int detectedLength, double[] masses, float[] intensities) {
         if (masses==null || intensities==null) {
@@ -69,49 +72,49 @@ public final class Trace {
 
     }
 
-    public double getApexMass() {
+    @JsonIgnore public double getApexMass() {
         return masses[apex];
     }
-    public float getApexIntensity() {
+    @JsonIgnore public float getApexIntensity() {
         return intensities[apex];
     }
-    public int getAbsoluteIndexApex() {
+    @JsonIgnore public int getAbsoluteIndexApex() {
         return apex + indexOffset;
     }
 
-    public float getLeftEdgeIntensity() {
+    @JsonIgnore public float getLeftEdgeIntensity() {
         return intensities[detectedFeatureOffset];
     }
-    public float getRightEdgeIntensity() {
+    @JsonIgnore public float getRightEdgeIntensity() {
         return intensities[detectedFeatureOffset+detectedFeatureLength-1];
     }
 
-    public int getIndexOffset() {
+    @JsonIgnore public int getIndexOffset() {
         return indexOffset;
     }
 
-    public int getDetectedFeatureOffset() {
+    @JsonIgnore public int getDetectedFeatureOffset() {
         return detectedFeatureOffset;
     }
 
-    public int absoluteIndexLeft() {
+    @JsonIgnore public int absoluteIndexLeft() {
         return indexOffset+detectedFeatureOffset;
     }
 
-    public int absoluteIndexRight() {
+    @JsonIgnore public int absoluteIndexRight() {
         return absoluteIndexLeft()+detectedFeatureLength-1;
     }
 
-    public int getDetectedFeatureLength() {
+    @JsonIgnore public int getDetectedFeatureLength() {
         return detectedFeatureLength;
     }
 
-    @Nonnull
+    @Nonnull @JsonIgnore
     public double[] getMasses() {
         return masses;
     }
 
-    @Nonnull
+    @Nonnull @JsonIgnore
     public float[] getIntensities() {
         return intensities;
     }

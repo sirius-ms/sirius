@@ -59,7 +59,7 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
                 sample = instance.addSample(run, inMemoryStorage);
                 instance.detectFeatures(sample);
 
-                ions = Iterators.filter(sample.ions.iterator(), i -> Math.abs(i.getChargeState()) <= 1
+                ions = Iterators.filter(sample.ions.iterator(), i -> i!=null && Math.abs(i.getChargeState()) <= 1
                         // TODO: kaidu: maybe we can add some parameter for that? But Marcus SpectralQuality is not flexible enough for this
                         && i.getMsMsQuality().betterThan(Quality.BAD) );
             }
