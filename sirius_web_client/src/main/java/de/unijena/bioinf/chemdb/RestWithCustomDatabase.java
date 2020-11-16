@@ -444,7 +444,7 @@ public class RestWithCustomDatabase {
                     filteredCandidates.add(candidate);
                 }
             }
-            return candidates;
+            return filteredCandidates;
         }
     }
 
