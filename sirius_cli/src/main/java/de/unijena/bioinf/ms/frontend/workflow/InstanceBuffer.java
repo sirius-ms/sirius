@@ -20,8 +20,12 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.jjobs.JobSubmitter;
+import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
+import org.jetbrains.annotations.Nullable;
 
 public interface InstanceBuffer extends JobSubmitter, Runnable {
+    @Nullable DataSetJob getCollectorJob();
+
     void start() throws InterruptedException;
 
     void cancel();

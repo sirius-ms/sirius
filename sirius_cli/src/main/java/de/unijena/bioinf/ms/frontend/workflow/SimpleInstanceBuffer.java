@@ -52,12 +52,17 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
     private final int bufferSize;
     private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
-    public SimpleInstanceBuffer(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob dependJob, JobSubmitter jobSubmitter) {
+    public SimpleInstanceBuffer(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> dependJobFactory, JobSubmitter jobSubmitter) {
         this.bufferSize = bufferSize < 1 ? Integer.MAX_VALUE : bufferSize;
         this.jobSubmitter = jobSubmitter;
         this.instances = instances;
         this.tasks = tasks;
-        this.dependJob = dependJob;
+        this.dependJob = dependJobFactory == null ? null : dependJobFactory.makeJob(this);
+    }
+
+    @Override
+    public @Nullable DataSetJob getCollectorJob() {
+        return dependJob;
     }
 
     @Override
@@ -193,8 +198,8 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
 
     public static class Factory implements InstanceBufferFactory<SimpleInstanceBuffer> {
         @Override
-        public SimpleInstanceBuffer create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob dependJob) {
-            return new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, SiriusJobs.getGlobalJobManager());
+        public SimpleInstanceBuffer create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> dependJobFactory) {
+            return new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJobFactory, SiriusJobs.getGlobalJobManager());
         }
     }
 }

@@ -33,5 +33,5 @@ public interface InstanceBufferFactory<B extends InstanceBuffer> {
         return create(bufferSize, instances, tasks, null);
     }
 
-    B create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob dependJob);
+    B create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> collectorJobFactory);
 }
