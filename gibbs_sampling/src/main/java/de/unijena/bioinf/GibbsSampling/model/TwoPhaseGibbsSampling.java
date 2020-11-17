@@ -115,6 +115,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     select compounds for first round of sampling based on quality.
      */
     private TIntArrayList selectCompoundsForFirstRoundGibbsSampling(){
+        TIntArrayList firstRoundCompoundsIdx = new TIntArrayList();
         int totalNumber = possibleFormulas.length;
         long numberOfGoodQualityCompounds = Arrays.stream(possibleFormulas).filter(c->c.length>0 && c[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new).isNotBadQuality()).count();
 
