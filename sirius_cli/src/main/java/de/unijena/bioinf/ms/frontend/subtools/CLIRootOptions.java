@@ -63,13 +63,9 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         try {
             LogManager.getLogManager().updateConfiguration(key -> {
                 if (key.equals("de.unijena.bioinf.jjobs.JJob.level"))
-                    return (k, v) -> {
-                        return loglevel.name();
-                    };
+                    return (k, v) -> loglevel.name();
                 else
-                    return (k, v) -> {
-                        return k;
-                    };
+                    return (k, v) -> k;
             });
         } catch (IOException e) {
             throw new CommandLine.PicocliException(e.getMessage());
