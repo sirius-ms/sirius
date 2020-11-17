@@ -48,6 +48,7 @@ include ':chemical_db_oss:chemdb_utils_oss'
 include ':error_reporter_oss'
 include 'ml_utils'
 include ':rest_service_oss:rest_core_oss'
+include ":combinatorial_fragmenter"
 include 'agents'
 
 
