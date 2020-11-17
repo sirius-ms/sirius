@@ -230,6 +230,7 @@ public class Jobs {
                 ACTIVE_COMPUTATIONS.add(this);
                 ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
                 SiriusActions.SUMMARY_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
+                SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
             }
             checkForInterruption();
             compoundsToProcess.forEach(i -> i.setComputing(true));
@@ -253,6 +254,7 @@ public class Jobs {
                 ACTIVE_COMPUTATIONS.remove(this);
                 ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
                 SiriusActions.SUMMARY_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
+                SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
             }
             compoundsToProcess.forEach(i -> i.setComputing(false));
             super.cleanup();
