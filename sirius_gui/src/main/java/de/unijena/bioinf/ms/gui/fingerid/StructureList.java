@@ -31,10 +31,13 @@ import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -48,6 +51,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
     public final DoubleListStats logPStats;
     public final DoubleListStats tanimotoStats;
 
+    private final AtomicBoolean loadAll = new AtomicBoolean(false);
 
     public StructureList(final FormulaList source) {
         this(source, DataSelectionStrategy.ALL_SELECTED);
@@ -69,6 +73,10 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
 
     @Override
     public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selectionModel) {
+        resultsChanged(sre, resultElements, selectionModel, loadAll.get());
+    }
+
+    public void resultsChanged(FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selectionModel, final boolean loadAllCandidates) {
         //may be io intense so run in background and execute ony ui updates from EDT to not block the UI too much
         try {
             backgroundLoaderLock.lock();
@@ -94,6 +102,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                         logPStats.reset();
                         tanimotoStats.reset();
                         data = new HashSet<>();
+                        loadAll.set(loadAllCandidates);
                     });
 
                     checkForInterruption();
@@ -106,9 +115,13 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                             formulasToShow.add(sre);
                             break;
                         case ALL_SELECTED:
-                            for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
-                                if (selectionModel.isSelectedIndex(i)) {
-                                    formulasToShow.add(resultElements.get(i));
+                            if (selectionModel == null) {
+                                formulasToShow.addAll(resultElements);
+                            } else {
+                                for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
+                                    if (selectionModel.isSelectedIndex(i)) {
+                                        formulasToShow.add(resultElements.get(i));
+                                    }
                                 }
                             }
                             break;
@@ -119,11 +132,14 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                     for (FormulaResultBean e : formulasToShow) {
                         checkForInterruption();
                         if (e != null) {
-                            final Optional<FormulaResult> resOpt = e.getResult(FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
+                            Class<? extends FBCandidates> cClass = loadAll.get() ? FBCandidates.class : FBCandidatesGUI.class;
+                            Class<? extends FBCandidateFingerprints> fpClass = loadAll.get() ? FBCandidateFingerprints.class : FBCandidateFingerprintsGUI.class;
+
+                            final Optional<FormulaResult> resOpt = e.getResult(FingerprintResult.class, cClass, fpClass);
                             checkForInterruption();
                             resOpt.ifPresent(res ->
-                                    res.getAnnotation(FBCandidateFingerprints.class).ifPresent(fbfps ->
-                                            res.getAnnotation(FBCandidates.class).ifPresent(fbc -> {
+                                    res.getAnnotation(fpClass).ifPresent(fbfps ->
+                                            res.getAnnotation(cClass).ifPresent(fbc -> {
                                                 data.add(e);
                                                 for (int j = 0; j < fbc.getResults().size(); j++) {
                                                     FingerprintCandidateBean c = new FingerprintCandidateBean(j + 1,
@@ -164,6 +180,11 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
         } finally {
             backgroundLoaderLock.unlock();
         }
+    }
+
+    protected void reloadData(boolean loadAll) {
+        if (loadAll != this.loadAll.get())
+            resultsChanged(null, new ArrayList<>(data), null, loadAll);
     }
 
     protected Function<FingerprintCandidateBean, Boolean> getBestFunc() {

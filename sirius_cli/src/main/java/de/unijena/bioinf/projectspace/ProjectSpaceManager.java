@@ -57,6 +57,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Manage the project space.
@@ -64,12 +65,40 @@ import java.util.function.Predicate;
  * maybe some type of caching?
  */
 public class ProjectSpaceManager implements Iterable<Instance> {
+    @NotNull public static Supplier<ProjectSpaceConfiguration> DEFAULT_CONFIG = () -> {
+        final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
+        //configure ProjectSpaceProperties
+        config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
+        //configure compound container
+        config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
+        config.registerComponent(CompoundContainer.class, ProjectSpaceConfig.class, new ProjectSpaceConfigSerializer());
+        config.registerComponent(CompoundContainer.class, Ms2Experiment.class, new MsExperimentSerializer());
+        //configure formula result
+        config.registerContainer(FormulaResult.class, new FormulaResultSerializer());
+        config.registerComponent(FormulaResult.class, FTree.class, new TreeSerializer());
+        config.registerComponent(FormulaResult.class, FormulaScoring.class, new FormulaScoringSerializer());
+        //pssatuto components
+        config.registerComponent(FormulaResult.class, Decoy.class, new PassatuttoSerializer());
+        //fingerid components
+        config.defineProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataSerializer());
+        config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
+        config.registerComponent(FormulaResult.class, FBCandidates.class, new FBCandidatesSerializer());
+        config.registerComponent(FormulaResult.class, FBCandidateFingerprints.class, new FBCandidateFingerprintSerializer());
+        //canopus
+        config.defineProjectSpaceProperty(CanopusDataProperty.class, new CanopusDataSerializer());
+        config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
+
+        config.registerComponent(CompoundContainer.class, LCMSPeakInformation.class, new LCMSPeakSerializer());
+
+        return config;
+    };
 
     private final SiriusProjectSpace space;
     public final Function<Ms2Experiment, String> nameFormatter;
     public final BiFunction<Integer, String, String> namingScheme;
     private Predicate<CompoundContainerId> compoundIdFilter;
     protected final InstanceFactory<?> instFac;
+
 
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
         this.space = space;
@@ -179,32 +208,9 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         return list;
     }
 
+
     public static ProjectSpaceConfiguration newDefaultConfig(){
-        final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
-        //configure ProjectSpaceProperties
-        config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
-        //configure compound container
-        config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
-        config.registerComponent(CompoundContainer.class, ProjectSpaceConfig.class, new ProjectSpaceConfigSerializer());
-        config.registerComponent(CompoundContainer.class, Ms2Experiment.class, new MsExperimentSerializer());
-        //configure formula result
-        config.registerContainer(FormulaResult.class, new FormulaResultSerializer());
-        config.registerComponent(FormulaResult.class, FTree.class, new TreeSerializer());
-        config.registerComponent(FormulaResult.class, FormulaScoring.class, new FormulaScoringSerializer());
-        //pssatuto components
-        config.registerComponent(FormulaResult.class, Decoy.class, new PassatuttoSerializer());
-        //fingerid components
-        config.defineProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataSerializer());
-        config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
-        config.registerComponent(FormulaResult.class, FBCandidates.class, new FBCandidatesSerializer());
-        config.registerComponent(FormulaResult.class, FBCandidateFingerprints.class, new FBCandidateFingerprintSerializer());
-        //canopus
-        config.defineProjectSpaceProperty(CanopusDataProperty.class, new CanopusDataSerializer());
-        config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
-
-        config.registerComponent(CompoundContainer.class, LCMSPeakInformation.class, new LCMSPeakSerializer());
-
-        return config;
+        return DEFAULT_CONFIG.get();
     }
 
     public int size() {

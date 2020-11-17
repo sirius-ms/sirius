@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.matchers.MatcherEditor;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.CandidateStringMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
@@ -32,6 +31,7 @@ import de.unijena.bioinf.ms.gui.table.MinMaxMatcherEditor;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,9 +88,13 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
             }
         });
         tb.add(filter);
+        tb.addSeparator();
+
+        final JToggleButton loadAll = new ToolbarToggleButton(Icons.FILTER_DOWN_24, "Load all Candidates (Might be many!).");
+        loadAll.addActionListener(e -> source.reloadData(loadAll.isSelected()));
+        tb.add(loadAll);
+
         filter.doClick();
-
-
 //        final JButton exportToCSV = Buttons.getExportButton24("export candidate list");
 //        exportToCSV.addActionListener(e -> doExport());
 //        tb.add(exportToCSV);
