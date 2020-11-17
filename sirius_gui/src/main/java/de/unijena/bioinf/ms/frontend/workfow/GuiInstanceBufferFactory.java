@@ -47,7 +47,7 @@ public class GuiInstanceBufferFactory implements InstanceBufferFactory<SimpleIns
 
 
     @Override
-    public SimpleInstanceBuffer create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob dependJob) {
+    public SimpleInstanceBuffer create(int bufferSize, @NotNull Iterator<? extends Instance> instances, @NotNull List<InstanceJob.Factory<?>> tasks, @Nullable DataSetJob.Factory<?> dependJob) {
         return new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, new JobSubmitter() {
             @Override
             public <Job extends JJob<Result>, Result> Job submitJob(Job j) { //todo what do we want to show here?

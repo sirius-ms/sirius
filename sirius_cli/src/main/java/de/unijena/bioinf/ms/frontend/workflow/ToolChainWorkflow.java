@@ -99,10 +99,9 @@ public class ToolChainWorkflow implements Workflow {
                 if (o instanceof InstanceJob.Factory) {
                     instanceJobChain.add((InstanceJob.Factory<?>) o);
                 } else if (o instanceof DataSetJob.Factory) {
-                    final DataSetJob dataSetJob = ((DataSetJob.Factory<?>) o).makeJob(submitter);
-                    submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, dataSetJob);
+                    submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, ((DataSetJob.Factory<?>) o));
                     submitter.start();
-                    iteratorSource = submitter.submitJob(dataSetJob).awaitResult();
+                    iteratorSource = submitter.submitJob(submitter.getCollectorJob()).awaitResult();
 
                     checkForCancellation();
                     instanceJobChain.clear();
