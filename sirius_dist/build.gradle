@@ -28,12 +28,24 @@ ext {
 }
 
 task downloadJDK(type: Download) {
-    String fname = "zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64"
+    String fname = "zulu${zulu_jre_version}-ca-jdk${jre_version}-${zosName}_x64"
     String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}";
     project.ext.set("jdkPath", getBuildDir().toPath().resolve('tmp').resolve(fname).toFile())
 
 
-    src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/fx-jdk/${zulu_jre_version}/${fname + ext}"
+    src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/jdk/${zulu_jre_version}/${fname + ext}"
+    dest getBuildDir().toPath().resolve('tmp').resolve(fname + ext).toFile()
+    onlyIfModified true
+    overwrite false
+}
+
+task downloadJDKFX(type: Download) {
+    String fname = "zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64"
+    String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}";
+    project.ext.set("jdkfxPath", getBuildDir().toPath().resolve('tmp').resolve(fname).toFile())
+
+
+    src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/jdk/${zulu_jre_version}/${fname + ext}"
     dest getBuildDir().toPath().resolve('tmp').resolve(fname + ext).toFile()
     onlyIfModified true
     overwrite false
@@ -55,7 +67,23 @@ task extractJDK(dependsOn: downloadJDK) {
 
 }
 
-task createRuntimeImgs(dependsOn: extractJDK) {
+task extractJDKFX(dependsOn: downloadJDKFX) {
+    def s = downloadJDKFX.outputs.files.singleFile
+    outputs.file(jdkfxPath)
+    doLast {
+        if (OS.isWindows()) {
+            copy {
+                from zipTree(s)
+                into buildDir.toPath().resolve('tmp').toFile()
+            }
+        } else {
+            exec { commandLine(['tar', 'zxf', s.absolutePath, '-C', buildDir.toPath().resolve('tmp').toString()]) }
+        }
+    }
+
+}
+
+task createRuntimeImgs(dependsOn: [extractJDK,extractJDKFX]) {
     String[] baseModules = ['java.sql', 'java.logging', 'jdk.jsobject', 'java.xml', 'jdk.xml.dom', 'java.datatransfer',
                             'java.naming', 'java.prefs', 'java.instrument']
     String[] fxModules = baseModules +
@@ -63,8 +91,10 @@ task createRuntimeImgs(dependsOn: extractJDK) {
     String[] bootModules = baseModules +
             ['java.management']
 
+    File jlinkfx = jdkfxPath.toPath().resolve('bin').resolve(OS.isWindows() ? 'jlink.exe' : 'jlink').toFile()
     File jlink = jdkPath.toPath().resolve('bin').resolve(OS.isWindows() ? 'jlink.exe' : 'jlink').toFile()
-    File outFX = buildDir.toPath().resolve('runtime').resolve("sirius-${jlink.toPath().getParent().getParent().getFileName().toString()}").toFile()
+
+    File outFX = buildDir.toPath().resolve('runtime').resolve("sirius-${jlinkfx.toPath().getParent().getParent().getFileName().toString()}").toFile()
     File outheadl = Paths.get(outFX.absolutePath.replace('-fx-', '-headless-')).toFile()
     File outboot = Paths.get(outheadl.absolutePath.replace('-headless-', '-headless-boot-')).toFile()
     outputs.files(outFX, outheadl,outboot)
@@ -77,7 +107,7 @@ task createRuntimeImgs(dependsOn: extractJDK) {
             commandLine(c + args)
         }
         exec {
-            String[] c = [jlink.absolutePath, '--add-modules', "${fxModules.join(',')}", '--output', outFX.absolutePath]
+            String[] c = [jlinkfx.absolutePath, '--add-modules', "${fxModules.join(',')}", '--output', outFX.absolutePath]
             commandLine(c + args)
         }
         exec {
