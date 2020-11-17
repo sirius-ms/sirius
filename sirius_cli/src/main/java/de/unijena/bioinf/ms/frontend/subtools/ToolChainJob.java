@@ -59,7 +59,7 @@ public interface ToolChainJob<T> extends ProgressJJob<T> {
 
 
     interface Factory<J extends ToolChainJob<?>> {
-        J makeJob(JobSubmitter submitter);
+        J makeJob(@NotNull JobSubmitter submitter);
 
         Factory<J> addInvalidator(Consumer<Instance> invalidator);
     }
@@ -76,7 +76,7 @@ public interface ToolChainJob<T> extends ProgressJJob<T> {
         }
 
         @Override
-        public J makeJob(JobSubmitter submitter) {
+        public J makeJob(@NotNull JobSubmitter submitter) {
             J j = jobCreator.apply(submitter);
             j.setInvalidator(invalidator);
             return j;

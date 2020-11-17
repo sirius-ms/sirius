@@ -70,7 +70,7 @@ public class ZodiacSubToolJob extends DataSetJob {
     int maxCandidatesAt800;
     double forcedCandidatesPerIonizationRatio;
 
-    public ZodiacSubToolJob(ZodiacOptions cliOptions, JobSubmitter jobSubmitter) {
+    public ZodiacSubToolJob(ZodiacOptions cliOptions, @NotNull JobSubmitter jobSubmitter) {
         super(in -> !in.loadCompoundContainer().getResults().isEmpty(), jobSubmitter); //check whether the compound has formula results or not
         this.cliOptions = cliOptions;
     }
