@@ -20,7 +20,9 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Iterators;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,13 +38,14 @@ import java.util.function.Consumer;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CompoundTrace extends IonTrace implements Iterable<IonTrace> {
 
-    @Nonnull protected final IonTrace[] adducts;
-    @Nonnull protected final IonTrace[] inSourceFragments;
+    @Nonnull @JsonProperty protected final IonTrace[] adducts;
+    @Nonnull @JsonProperty protected final IonTrace[] inSourceFragments;
 
-    public CompoundTrace(@Nonnull Trace[] isotopes, @Nonnull IonTrace[] adducts, @Nonnull IonTrace[] inSourceFragments) {
+    @JsonCreator
+    public CompoundTrace(@JsonProperty("isotopes") Trace[] isotopes, @JsonProperty("adducts") IonTrace[] adducts, @JsonProperty("inSourceFragments") IonTrace[] inSourceFragments) {
         super(isotopes);
-        this.adducts = adducts;
-        this.inSourceFragments = inSourceFragments;
+        this.adducts = adducts==null ? new IonTrace[0] : adducts;
+        this.inSourceFragments = inSourceFragments==null ? new IonTrace[0] : inSourceFragments;
     }
 
     @Nonnull
