@@ -59,9 +59,9 @@ public class FileBasedProjectSpaceReader extends FileBasedProjectSpaceIO impleme
     }
 
     @Override
-    public void table(String relativePath, boolean skipHeader, Consumer<String[]> f) throws IOException {
+    public void table(String relativePath, boolean skipHeader, int fromLineInkl, int toLineExkl, Consumer<String[]> f) throws IOException {
         try (final BufferedReader br = Files.newBufferedReader(asPath(relativePath))) {
-            FileUtils.readTable(br, skipHeader, f);
+            FileUtils.readTable(br, skipHeader, fromLineInkl,toLineExkl, f);
         }
     }
 

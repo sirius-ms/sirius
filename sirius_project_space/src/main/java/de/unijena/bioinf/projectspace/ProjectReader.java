@@ -54,7 +54,7 @@ public interface ProjectReader extends ProjectIO {
         return textFile(relativePath, FileUtils::readAsDoubleMatrix);
     }
 
-    public void table(String relativePath, boolean skipHeader, Consumer<String[]> f) throws IOException;
+    public void table(String relativePath, boolean skipHeader, int fromLine, int toLine, Consumer<String[]> f) throws IOException;
 
 
     public static interface ForContainer<S extends ProjectSpaceContainerId,T extends ProjectSpaceContainer<S>> {
