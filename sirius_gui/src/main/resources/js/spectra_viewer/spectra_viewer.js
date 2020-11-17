@@ -67,6 +67,11 @@ function showHover(d) {
     }
 };
 
+function hideHover() {
+    tooltip.style("opacity", 0);
+    tooltip.html("");
+};
+
 var mouseover = function() {
     tooltip.style("opacity", 1);
     d3.select(this).attr("fill", col.annotation);
@@ -208,7 +213,7 @@ function spectrumPlot(spectrum) {
             .on("mouseover", mouseover)
             .on("mousemove", mousemove)
             .on("mouseleave", function(d) {
-                tooltip.style("opacity", 0);
+                hideHover();
                 if ("formula" in d) {
                     d3.select(this).attr("fill", col.spec2);
                 } else {
@@ -314,7 +319,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("height", function(d) { return h/2 - y1(d.intensity); })
             .attr("fill", col.spec1)
             .on("mouseleave", function(d) {
-                tooltip.style("opacity", 0);
+                hideHover();
                 d3.select(this).attr("fill", col.spec1);
             });
     // Peaks 2
@@ -329,7 +334,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("height", function(d) { return y2(d.intensity); })
             .attr("fill", col.spec2)
             .on("mouseleave", function() {
-                tooltip.style("opacity", 0);
+                hideHover();
                 d3.select(this).attr("fill", col.spec2); });
 
     peakArea.selectAll(".peak")
