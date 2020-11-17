@@ -26,13 +26,13 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -156,12 +156,12 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     public Optional<FingerprintResult> getFingerprintResult(){
         return getResult(FingerprintResult.class).flatMap(r -> r.getAnnotation(FingerprintResult.class));
     }
-    public Optional<FBCandidates> getFingerIDCandidates(){
-        return getResult(FBCandidates.class).flatMap(r -> r.getAnnotation(FBCandidates.class));
+    public Optional<FBCandidatesGUI> getFingerIDCandidates(){
+        return getResult(FBCandidatesGUI.class).flatMap(r -> r.getAnnotation(FBCandidatesGUI.class));
     }
 
-    public Optional<FBCandidateFingerprints> getFingerIDCandidatesFPs(){
-        return getResult(FBCandidateFingerprints.class).flatMap(r -> r.getAnnotation(FBCandidateFingerprints.class));
+    public Optional<FBCandidateFingerprintsGUI> getFingerIDCandidatesFPs(){
+        return getResult(FBCandidateFingerprintsGUI.class).flatMap(r -> r.getAnnotation(FBCandidateFingerprintsGUI.class));
     }
 
 
@@ -241,6 +241,4 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     public int compareTo(FormulaResultBean o) {
         return Integer.compare(getRank(), o.getRank());
     }
-
-
 }

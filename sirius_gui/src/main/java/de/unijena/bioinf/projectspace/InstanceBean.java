@@ -134,6 +134,8 @@ public class InstanceBean extends Instance implements SiriusPCS {
         }
     }
 
+
+
     public List<ContainerListener.Defined> registerProjectSpaceListeners() {
         if (listeners == null)
             listeners = configureListeners();

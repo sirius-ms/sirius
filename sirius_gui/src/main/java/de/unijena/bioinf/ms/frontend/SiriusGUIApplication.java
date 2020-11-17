@@ -32,8 +32,17 @@ import de.unijena.bioinf.ms.frontend.workfow.GuiWorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.ProjectSpaceConfiguration;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintSerializerGUI;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidatesSerializerGUI;
+import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -42,6 +51,14 @@ import java.util.Arrays;
 public class SiriusGUIApplication extends SiriusCLIApplication {
 
     public static void main(String[] args) {
+        final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
+        ProjectSpaceManager.DEFAULT_CONFIG = () -> {
+            final ProjectSpaceConfiguration config = dc.get();
+            config.registerComponent(FormulaResult.class, FBCandidatesGUI.class, new FBCandidatesSerializerGUI());
+            config.registerComponent(FormulaResult.class, FBCandidateFingerprintsGUI.class, new FBCandidateFingerprintSerializerGUI());
+            return config;
+        };
+
         final Splash splash = Arrays.stream(args).anyMatch(it -> it.toLowerCase().equals("gui")) ? new Splash() : null;
         if (TIME)
             t1 = System.currentTimeMillis();
