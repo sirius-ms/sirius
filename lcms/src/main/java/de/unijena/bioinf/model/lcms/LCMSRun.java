@@ -50,8 +50,8 @@ public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
         this.scans = new TreeMap<>();
         this.annotations = new Annotated.Annotations();
         String name = new File(source.getUrl().getFile()).getName();
-        int li = name.lastIndexOf('.');
-        if (li>=0) name = name.substring(0,li);
+        //int li = name.lastIndexOf('.');
+        //if (li>=0) name = name.substring(0,li);
         this.identifier = name;
     }
 
