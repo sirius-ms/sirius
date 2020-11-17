@@ -675,22 +675,32 @@ public class FileUtils {
     }
 
     public static Map<String,String> readKeyValues(BufferedReader reader) throws IOException {
-        final HashMap<String,String> keyValues = new HashMap<>();
+        final HashMap<String, String> keyValues = new HashMap<>();
         String line;
-        while ((line=reader.readLine())!=null) {
-            String[] kv = line.split("\\s+",2);
-            keyValues.put(kv[0],kv[1]);
+        while ((line = reader.readLine()) != null) {
+            String[] kv = line.split("\\s+", 2);
+            keyValues.put(kv[0], kv[1]);
         }
         return keyValues;
     }
 
     public static void readTable(BufferedReader br, boolean skipHeader, Consumer<String[]> f) throws IOException {
+        readTable(br, skipHeader, 0, -1, f);
+    }
+
+    public static void readTable(BufferedReader br, boolean skipHeader, int fromLineInkl, int toLineExcl, Consumer<String[]> f) throws IOException {
+        fromLineInkl = Math.max(0, fromLineInkl);
+
         String line;
         if (skipHeader)
             br.readLine();
-        while ((line=br.readLine())!=null) {
-            f.accept(line.split("\t",-1));
-        }
+
+        br.skip(fromLineInkl);
+
+        int readCount = toLineExcl - fromLineInkl;
+
+        while ((line = br.readLine()) != null && (toLineExcl < 0 || readCount-- > 0))
+            f.accept(line.split("\t", -1));
     }
 
     /**

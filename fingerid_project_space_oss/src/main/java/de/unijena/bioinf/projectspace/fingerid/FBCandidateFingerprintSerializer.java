@@ -43,19 +43,18 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.FINGERBLAST_FPs;
 
 public class FBCandidateFingerprintSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FBCandidateFingerprints> {
-    @Nullable
-    @Override
-    public FBCandidateFingerprints read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
+    protected List<Fingerprint> readFingerprints(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         //read fingerprints from binary
         if (reader.exists(FINGERBLAST_FPs.relFilePath(id))) {
             final FingerIdData fingerIdData = reader.getProjectSpaceProperty(FingerIdDataProperty.class)
                     .map(p -> p.getByIonType(id.getIonType())).orElseThrow();
 
+            final FBCandidateNumber numC = container.getAnnotationOrNull(FBCandidateNumber.class);
             return reader.binaryFile(FINGERBLAST_FPs.relFilePath(id), br -> {
                 List<Fingerprint> fps = new ArrayList<>();
                 try (DataInputStream dis = new DataInputStream(br)) {
                     TShortArrayList shorts = new TShortArrayList(2000); //use it to reconstruct the array
-                    while (dis.available() > 0) {
+                    while (dis.available() > 0 && (numC == null || fps.size() < numC.value)) {
                         short value = dis.readShort();
                         if (value < 0) {
                             fps.add(new ArrayFingerprint(fingerIdData.getFingerprintVersion(), shorts.toArray()));
@@ -65,10 +64,19 @@ public class FBCandidateFingerprintSerializer implements ComponentSerializer<For
                         }
                     }
                 }
-                return new FBCandidateFingerprints(fps);
+                return fps;
             });
         }
         return null; // no fingerprints file
+
+    }
+
+
+    @Nullable
+    @Override
+    public FBCandidateFingerprints read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
+        final List<Fingerprint> fps = readFingerprints(reader, id, container);
+        return fps == null ? null : new FBCandidateFingerprints(fps);
     }
 
     @Override
