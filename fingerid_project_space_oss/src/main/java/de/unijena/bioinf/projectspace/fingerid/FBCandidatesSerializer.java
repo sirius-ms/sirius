@@ -48,14 +48,15 @@ import static de.unijena.bioinf.projectspace.fingerid.FingerIdLocations.FINGERBL
 
 public class FBCandidatesSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FBCandidates> {
 
-    @Override
-    public FBCandidates read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
+    protected ArrayList<Scored<CompoundCandidate>> readCandidates(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         if (!reader.exists(FINGERBLAST.relFilePath(id)))
             return null;
 
         final Pattern dblinkPat = Pattern.compile("^.+?:\\(.*\\)$");
         final ArrayList<Scored<CompoundCandidate>> results = new ArrayList<>();
-        reader.table(FINGERBLAST.relFilePath(id), true, (row) -> {
+        final FBCandidateNumber numC = container.getAnnotation(FBCandidateNumber.class).orElse(FBCandidateNumber.ALL);
+
+        reader.table(FINGERBLAST.relFilePath(id), true, 0, numC.value, (row) -> {
             if (row.length == 0) return;
             final double score = Double.parseDouble(row[4]);
             final InChI inchi = InChIs.newInChI(row[0], row[1]);
@@ -115,9 +116,13 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
 
             results.add(new Scored<>(candidate, score));
         });
+        return results;
+    }
 
-
-        return new FBCandidates(results);
+    @Override
+    public FBCandidates read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
+        final ArrayList<Scored<CompoundCandidate>> c = readCandidates(reader, id, container);
+        return c == null ? null : new FBCandidates(c);
     }
 
     @Override
