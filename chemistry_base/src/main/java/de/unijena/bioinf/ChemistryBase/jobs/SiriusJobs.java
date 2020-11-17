@@ -70,6 +70,7 @@ public class SiriusJobs {
         replace(manager);
     }
 
+    @NotNull
     public static JobManager getGlobalJobManager() {
         if (globalJobManager == null) {
             setGlobalJobManager(PropertyManager.getNumberOfCores());
