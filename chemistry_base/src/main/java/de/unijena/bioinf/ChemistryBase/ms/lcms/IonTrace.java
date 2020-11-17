@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.Nonnull;
 
@@ -32,10 +33,11 @@ public class IonTrace {
     /**
      * traces of the isotopes. The monoisotopic peak has index 0.
      */
+    @JsonProperty
     @Nonnull protected final Trace[] isotopes;
 
-    public IonTrace(@Nonnull Trace[] isotopes) {
-        this.isotopes = isotopes;
+    public IonTrace(@JsonProperty("isotopes") Trace[] isotopes) {
+        this.isotopes = isotopes==null ? new Trace[0] : isotopes;
     }
 
     @JsonIgnore public Trace getMonoisotopicPeak() {
