@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -34,7 +35,7 @@ public final class Trace {
     /**
      * the apex for fast access
      */
-    @JsonProperty private final int apex;
+    @JsonIgnore private final int apex;
 
     /**
      * the index of the array element which is the first peak in the detected feature
@@ -45,7 +46,8 @@ public final class Trace {
     @JsonProperty @Nonnull private final double[] masses;
     @JsonProperty @Nonnull private final float[] intensities;
 
-    public Trace(int offset, int detectorOffset, int detectedLength, double[] masses, float[] intensities) {
+    @JsonCreator
+    public Trace(@JsonProperty("indexOffset") int offset, @JsonProperty("detectedFeatureOffset") int detectorOffset, @JsonProperty("detectedFeatureLength")  int detectedLength, @JsonProperty("masses")  double[] masses, @JsonProperty("intensities") float[] intensities) {
         if (masses==null || intensities==null) {
             throw new NullPointerException();
         }

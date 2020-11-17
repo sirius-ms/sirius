@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -47,7 +48,7 @@ public final class MsDataSourceReference {
     @JsonProperty @Nullable protected final String mzmlId;
 
     @JsonProperty @Nullable protected final String fileName;
-    @JsonProperty @Nullable protected final URI sourceLocation;
+    @JsonIgnore @Nullable protected final URI sourceLocation;
 
     @Nonnull  private final int hashcode;
 
@@ -57,6 +58,11 @@ public final class MsDataSourceReference {
         this.fileName = fileName;
         this.sourceLocation = sourceLocation;
         this.hashcode = Objects.hash(lcmsRunId, mzmlId, sourceLocation, fileName);
+    }
+
+    @JsonCreator
+    public MsDataSourceReference(@JsonProperty("sourceLocation") String sourceLocation, @JsonProperty("filename") String filename, @JsonProperty("lcmsrunid") String lcmsrunid, @JsonProperty("mzmlid") String mzmlId) {
+        this(URI.create(sourceLocation), filename, lcmsrunid, mzmlId);
     }
 
     public boolean equals(Object o) {
@@ -92,5 +98,10 @@ public final class MsDataSourceReference {
 
     @JsonIgnore public Optional<URI> getSource() {
         return (sourceLocation!=null && fileName!=null) ? Optional.of(sourceLocation.resolve("./" + fileName)) : Optional.empty();
+    }
+
+    @JsonProperty("sourceLocation")
+    private String getSourceURIAsString() {
+        return sourceLocation==null ? null : sourceLocation.toString();
     }
 }
