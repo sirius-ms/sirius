@@ -208,7 +208,7 @@ task extractRuntimeImageHeadlessBoot(type: ExtractRuntime, dependsOn: downloadRu
 
 task downloadManual(type: Download, group: 'documentation') {
     String manualName = "manual-$version-manual.pdf"
-    src "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/manual/$version/$manualName"
+    src "https://bio.informatik.uni-jena.de/repository/${version.toString().endsWith('-SNAPSHOT')?'dist-snapshot-local':'dist-release-local'}/de/unijena/bioinf/ms/manual/$version/$manualName"
     dest buildDir.toPath().resolve("manual/$manualName").toFile()
     onlyIfModified true
     overwrite false
