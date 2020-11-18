@@ -64,11 +64,11 @@ public class FBCandidateFingerprintSerializerGUI implements ComponentSerializer<
 
     @Override
     public void write(ProjectWriter projectWriter, FormulaResultId formulaResultId, FormulaResult formulaResult, Optional<FBCandidateFingerprintsGUI> optional) throws IOException {
-        LoggerFactory.getLogger(getClass()).warn("Cannot write, this is a read only serializer");
+//        LoggerFactory.getLogger(getClass()).warn("Cannot write, this is a read only serializer");
     }
 
     @Override
     public void delete(ProjectWriter projectWriter, FormulaResultId formulaResultId) throws IOException {
-        LoggerFactory.getLogger(getClass()).warn("Cannot delete, this is a read only serializer");
+//        LoggerFactory.getLogger(getClass()).warn("Cannot delete, this is a read only serializer");
     }
 }

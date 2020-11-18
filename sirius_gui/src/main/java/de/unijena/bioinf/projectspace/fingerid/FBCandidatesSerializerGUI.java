@@ -64,11 +64,11 @@ public class FBCandidatesSerializerGUI implements ComponentSerializer<FormulaRes
 
     @Override
     public void write(ProjectWriter writer, FormulaResultId id, FormulaResult container, Optional<FBCandidatesGUI> optFingeridResult) throws IOException {
-        LoggerFactory.getLogger(getClass()).warn("Cannot write, this is a read only serializer");
+//        LoggerFactory.getLogger(getClass()).warn("Cannot write, this is a read only serializer");
     }
 
     @Override
     public void delete(ProjectWriter writer, FormulaResultId id) throws IOException {
-        LoggerFactory.getLogger(getClass()).warn("Cannot delete, this is a read only serializer");
+//        LoggerFactory.getLogger(getClass()).warn("Cannot delete, this is a read only serializer");
     }
 }
