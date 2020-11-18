@@ -32,11 +32,11 @@ bootJar{
 }
 
 distImage {
-    dependsOn getParent().tasks.getByName('extractRuntimeImageHeadlessBoot')
+    dependsOn getParent().tasks.getByName('extractRuntimeImageHeadless')
     dependsOn  getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('installBootDist')
 
     inputDir = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('installBootDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
-    runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageHeadlessBoot').outputs.files.singleFile
+    runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageHeadless').outputs.files.singleFile
     imageName = 'sirius-rest'
     mainClass = mainClassName
     mainJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()

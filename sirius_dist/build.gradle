@@ -164,7 +164,8 @@ task downloadCLP(type: Download) {
 
 
 task downloadRuntimeImageFX(type: Download) {
-    String fname = "sirius-zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64.zip"
+//    String fname = "sirius-zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64.zip"
+    String fname = "zulu${zulu_jre_version}-ca-fx-jre${jre_version}-${zosName}_x64.zip"
 
     src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
     dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
@@ -177,7 +178,8 @@ task extractRuntimeImageFX(type: ExtractRuntime, dependsOn: downloadRuntimeImage
 }
 
 task downloadRuntimeImageHeadless(type: Download) {
-    String fname = "sirius-zulu${zulu_jre_version}-ca-headless-jdk${jre_version}-${zosName}_x64.zip"
+//    String fname = "sirius-zulu${zulu_jre_version}-ca-headless-jdk${jre_version}-${zosName}_x64.zip"
+    String fname = "zulu${zulu_jre_version}-ca-jre${jre_version}-${zosName}_x64.zip"
 
     src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
     dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
@@ -189,8 +191,9 @@ task extractRuntimeImageHeadless(type: ExtractRuntime, dependsOn: downloadRuntim
     inputArchive = downloadRuntimeImageHeadless.dest
 }
 
-task downloadRuntimeImageHeadlessBoot(type: Download) {
+/*task downloadRuntimeImageHeadlessBoot(type: Download) {
     String fname = "sirius-zulu${zulu_jre_version}-ca-headless-boot-jdk${jre_version}-${zosName}_x64.zip"
+
 
     src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
     dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
@@ -200,7 +203,7 @@ task downloadRuntimeImageHeadlessBoot(type: Download) {
 
 task extractRuntimeImageHeadlessBoot(type: ExtractRuntime, dependsOn: downloadRuntimeImageHeadlessBoot) {
     inputArchive = downloadRuntimeImageHeadlessBoot.dest
-}
+}*/
 
 
 task downloadManual(type: Download, group: 'documentation') {
