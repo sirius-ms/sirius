@@ -36,7 +36,7 @@ public class ActCanopusConfigPanel extends ActivatableConfigPanel<SubToolConfigP
     public static final String BIBTEX_KEY = "djoumbou-feunang16classyfire";
 
     public ActCanopusConfigPanel() {
-        super("CANOPUS", Icons.BUG_32, true, () -> {
+        super("CANOPUS", Icons.WORM_32, true, () -> {
             SubToolConfigPanel<CanopusOptions> p = new SubToolConfigPanel<>(CanopusOptions.class) {
             };
             p.add(new JLabel("Parameter-Free! Nothing to set up here. =)"));

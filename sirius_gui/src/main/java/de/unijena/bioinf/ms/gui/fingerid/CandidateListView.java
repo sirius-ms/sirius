@@ -90,7 +90,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         tb.add(filter);
         tb.addSeparator();
 
-        final JToggleButton loadAll = new ToolbarToggleButton(Icons.FILTER_DOWN_24, "Load all Candidates (Might be many!).");
+        final JToggleButton loadAll = new ToolbarToggleButton(Icons.LOAD_ALL_24, "Load all Candidates (Might be many!).");
         loadAll.addActionListener(e -> source.reloadData(loadAll.isSelected()));
         tb.add(loadAll);
 
