@@ -187,19 +187,13 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         }
         final Spectrum<?> spec = getSpectrumByID(id);
 
-        if (spec == null || spec.isEmpty()){
-            underlyingModel = new DummySpectrumModel();
-            LoggerFactory.getLogger(getClass()).warn("Cannot render empty Spectrum!");
-            return;
-        }
-
-        if (id.equals(MSMS_MERGED_DISPLAY)) {
+       if (id.equals(MSMS_MERGED_DISPLAY)) {
             if (currentResult != null && currentResult.getFragTree().isPresent()) {
                 underlyingModel = new SiriusMergedMs2Annotated(currentResult.getFragTree().get(), ec.getExperiment(), minMz, maxMz);
             } else {
                 underlyingModel = new SiriusMergedMs2(ec.getExperiment(), minMz, maxMz);
             }
-        } else if (spec == null) {
+        } else if (spec == null || spec.isEmpty()) {
             underlyingModel = new DummySpectrumModel();
         } else {
             if (currentResult != null && currentResult.getFragTree().isPresent()) {
