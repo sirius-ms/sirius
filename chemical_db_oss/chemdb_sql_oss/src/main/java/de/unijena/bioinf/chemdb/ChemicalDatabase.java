@@ -58,6 +58,8 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
 
     //
     public final static String REF_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references", null, "ref");
+    //REF_MAPPING_TABLE_SUFFIX is included for compatibility reasons all recent database version should contain a VIEW ref.xxx_mapping_id_inchi_key that combines InChIKeys of non-standardized and standardized structures
+    public final static String REF_MAPPING_TABLE_SUFFIX = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references.mapping.suffix", null, "");
     public final static String PUBCHEM_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.pubchem", null, "pubchem");
     public final static String DEFAULT_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.default", null, "public");
     public final static String FINGERPRINT_ID = PropertyManager.getProperty("de.unijena.bioinf.chemdb.fingerprint.id", null, "1");
@@ -540,7 +542,8 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
             final PreparedStatement[] statements = new PreparedStatement[sources.length];
             int k = 0;
             for (DataSource source : sources) {
-                String sql = String.format("SELECT %s FROM %s.%s WHERE inchi_key_1 = ?", source.sqlIdColumn, REF_SCHEME, source. sqlRefTable);
+                final String tableName = source.sqlRefTable+REF_MAPPING_TABLE_SUFFIX;
+                String sql = String.format("SELECT %s FROM %s.%s WHERE inchi_key_1 = ?", source.sqlIdColumn, REF_SCHEME, tableName);
                 statements[k++] = source.sqlRefTable == null ? null : c.connection.prepareStatement(sql);
             }
             final ArrayList<DBLink> buffer = new ArrayList<>();

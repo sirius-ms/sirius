@@ -44,10 +44,10 @@ public enum DataSource {
     GNPS("GNPS", 4096, "id","gnps", "https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=%s"),
     ZINCBIO("ZINC bio", 8192, "zinc_id","zincbio", "http://zinc.docking.org/substance/%s"),
     TRAIN("Training Set", 16384, null, null, null), //not part of the PSQL database anymore but assigned for each predictor individually
-    UNDP("Natural Products", 32768, "undp_id","undp",  null),
+    UNDP("Natural Products", 32768, "undp_id","unpd",  null),
     YMDB("YMDB", 65536, "ymdb_id","ymdb", "http://www.ymdb.ca/compounds/YMDB%d05"),
     PLANTCYC("Plantcyc", 131072, "unique_id","plantcyc",  "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s"),
-    NORMAN("NORMAN", 262144,  null,null, null),
+    NORMAN("NORMAN", 262144,  "id","norman", null),
     //this is currently only interesting for internal testing.
     ADDITIONAL("additional", 524288,  null,null,null, 0, false), //proably mostly training structures, but maybe more.
     SUPERNATURAL("SuperNatural", 1048576,  "id", "supernatural", "http://bioinf-applied.charite.de/supernatural_new/index.php?site=compound_search&start=0&supplier=all&tox=any&classification=all&compound_input=true&sn_id=%s"),
