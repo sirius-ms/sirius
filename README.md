@@ -35,13 +35,13 @@ CSI:FingerID.</span>
 ### SIRIUS+CSI:FingerID GUI and CLI - Version 4.5.0 (2020-11-18)
 ##### This versions have the JRE already included! Just download, install/unpack and execute.
 - for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-win64.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-win64.zip)
-- for Linux (64bit): [deb](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-linux64.deb) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-linux64.zip)
+- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-linux64.zip)
 - for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-osx64.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-osx64.zip)
 
 ### SIRIUS+CSI:FingerID Commandline only - Version 4.5.0 (2020-11-18)
 ##### This versions have the JRE already included! Just download, install/unpack and execute.
 - for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-win64-headless.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-win64-headless.zip)
-- for Linux (64bit): [deb](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-linux64-headless.deb) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-linux64-headless.zip)
+- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-linux64-headless.zip)
 - for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-osx64-headless.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.0/sirius-4.5.0-osx64-headless.zip)
 
 ### Installation
