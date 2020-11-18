@@ -1,7 +1,4 @@
 ##### Coming soon...
-- Another Structure DB update due to major changes in PubChem standardization since the last one.
-- CANOPUS for negative ion mode data
-- GUI: Custom-DB importer View
 - GUI: Progress information for running jobs
 - GUI: More detailed Visualisation of what has already been computed
 - more bugfixes ;-)
@@ -9,18 +6,22 @@
 ##### 4.5.0
 - **feature: CANOPUS for negative ion mode data**
 - feature: Custom-DB importer View (GUI)
+- feature: mgf export for Feature Based Molecular Networking is now available in the GUI
 - **update: Structure DB update due to major changes in PubChem standardization since the last one.**
+  - feature: COCONUT, NORMAN and Super Natural are now officially supported 
 - **breaking:**  additional columns (`ionMass`, `retentionTimeInSeconds`) have been added to project wide summary files
 such as `formula_identifications.tsv`, `compound_identifications.tsv` and `compound_identifications_adducts.tsv`
 - **breaking:** column names in `formula_candidates.tsv` have changed: `massError(ppm)` to `massErrorPrecursor(ppm)`, `explainedPeaks` to `numExplainedPeaks`, `medianAbsoluteMassError(ppm)` to `medianAbsoluteMassErrorFragmentPeaks(ppm)`
 - **breaking:** column names describing scores now use camel case instead of underscores: `ConfidenceScore`, `SiriusScore`, `ZodiacScore`,`TreeScore`,`IsotopeScore`, `CSI:FingerIDScore`
 
-**NOTE: SIRIUS versions will now follow semantic versioning (all upcoming releases)**
-
-##### 4.4.30
-- fix: damaged JRE MacOS (see installation instructions)
+- fix: incompatibility with recent MaOSX version cause by gatekeeper. We now provide an installable packages.
 - fix: missing SCANS annotation in mgf-export subtool - creates now a valid input for FBMN
 - fix: un-parsed retention times in CEF format.   
+- fix: Structure DB linking (wrong ids, missing link flags, duplicate entries, etc.)
+
+- Many other bug fixes and performance improvements 
+
+**NOTE: SIRIUS versions will now follow semantic versioning (all upcoming releases)**
 
 ##### 4.4.29
 - fix: Error when parsing FragTree json with non numeric double values
