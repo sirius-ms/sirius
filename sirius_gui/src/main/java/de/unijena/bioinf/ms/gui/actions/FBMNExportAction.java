@@ -33,7 +33,7 @@ public class FBMNExportAction extends AbstractAction {
 
     public FBMNExportAction() {
         super("FBMN Export");
-        putValue(Action.LARGE_ICON_KEY, Icons.EXPORT_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.FBMN_32);
         putValue(Action.SHORT_DESCRIPTION, "Export project for GNPS Feature Based Molecular Networking.");
         setEnabled(true);
     }

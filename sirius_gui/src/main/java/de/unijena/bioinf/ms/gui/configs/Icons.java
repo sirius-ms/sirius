@@ -83,6 +83,21 @@ public abstract class Icons {
     public static final Icon CHOOSE_FILE_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-file-16px.png"));
 
 
+    public static final Icon FBMN_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn-16px.png"));
+    public static final Icon FBMN_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn@0.5x.png"));
+//    public static final Icon FBMN_64 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn.png"));
+
+    public static final Icon SIRIUS_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-sirius@0.5x.png"));
+    public static final Icon SIRIUS_64 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-sirius.png"));
+
+    public static final Icon WORM_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-worm@0.5x.png"));
+    public static final Icon WORM_64 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-worm.png"));
+
+    public static final Icon LOAD_ALL_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-loadAll-16px.png"));
+    public static final Icon LOAD_ALL_24 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-loadAll-24px.png"));
+    public static final Icon LOAD_ALL_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-loadAll.png"));
+
+
     public static final Icon ADD_DOC_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-add-doc-16px.png"));
     public static final Icon BATCH_DOC_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-documents-16px.png"));
     public static final Icon REMOVE_DOC_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-remove-doc-16px.png"));
