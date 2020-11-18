@@ -50,13 +50,20 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
+    public static final String DO_NOT_SHOW_AGAIN_KEY_Z_COMP = "de.unijena.bioinf.sirius.computeDialog.zodiac.compounds.dontAskAgain";
+    public static final String DO_NOT_SHOW_AGAIN_KEY_Z_MEM = "de.unijena.bioinf.sirius.computeDialog.zodiac.memory.dontAskAgain";
+    public static final String DO_NOT_SHOW_AGAIN_KEY_S_MASS = "de.unijena.bioinf.sirius.computeDialog.sirius.highmass.dontAskAgain";
+
 
     // main parts
     private ExperimentEditPanel editPanel;
@@ -94,6 +101,30 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
             zodiacConfigs = new ActZodiacConfigPanel();
+            zodiacConfigs.addEnableChangeListener((s, enabled) -> {
+                if (enabled) {
+                    if (!PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_COMP, false)) {
+                        if (new QuestionDialog(MainFrame.MF, "Low number of Compounds",
+                                GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
+                                DO_NOT_SHOW_AGAIN_KEY_Z_COMP).isAbort()) {
+                            zodiacConfigs.activationButton.setSelected(false);
+                            return;
+                        }
+                    }
+
+                    if ((compoundsToProcess.size() > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)
+                            && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_MEM, false)) {
+                        if (new QuestionDialog(MainFrame.MF, "High Memory Consumption",
+                                GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
+                                DO_NOT_SHOW_AGAIN_KEY_Z_MEM).isAbort()) {
+                            zodiacConfigs.activationButton.setSelected(false);
+                            return;
+                        }
+                    }
+                }
+
+
+            });
             if (compoundsToProcess.size() > 1)
                 addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
 
@@ -207,12 +238,26 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             MF.getCompoundListSelectionModel().setSelectionInterval(index, index);
         }
 
+
         Jobs.runInBackgroundAndLoad(getOwner(), "Submitting Identification Jobs", new TinyBackgroundJJob<>() {
             @Override
-            protected Boolean compute() throws InterruptedException {
+            protected Boolean compute() throws InterruptedException, InvocationTargetException {
                 updateProgress(0, 100, 0, "Configuring Computation...");
                 checkForInterruption();
+                List<InstanceBean> finalComps = compoundsToProcess;
+                if (formulaIDConfigPanel.isToolSelected()) {
+                    List<InstanceBean> lowMass = finalComps.stream().filter(i -> i.getIonMass() <= 850).collect(Collectors.toList());
+                    int highMass = finalComps.size() - lowMass.size();
+                    final AtomicBoolean success = new AtomicBoolean(false);
+                    if (highMass > 1) //do not ask for a single compound
+                        Jobs.runEDTAndWait(() -> success.set(new QuestionDialog(MainFrame.MF, "High mass Compounds detected!",
+                                GuiUtils.formatToolTip("Your analysis contains '" + highMass + "' compounds with a mass higher than 850Da. Fragmentation tree computation may take very long (days) to finish. You might want to exclude compounds with mass >850Da and compute them on individual basis afterwards.", "", "Do you wish to exclude the high mass compounds?"),
+                                DO_NOT_SHOW_AGAIN_KEY_Z_COMP).isSuccess()));
+                    if (success.get())
+                        finalComps = lowMass;
+                }
 
+                checkForInterruption();
                 // CHECK ILP SOLVER
                 TreeBuilder builder = new Sirius().getMs2Analyzer().getTreeBuilder();
                 if (builder == null) {
@@ -234,12 +279,12 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
                 try {
                     final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                    final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), compoundsToProcess), configOptionLoader, new GuiInstanceBufferFactory());
+                    final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), finalComps), configOptionLoader, new GuiInstanceBufferFactory());
                     final Run computation = new Run(wfBuilder);
                     computation.parseArgs(makeCommand().toArray(String[]::new));
 
                     if (computation.isWorkflowDefined())
-                        Jobs.runWorkflow(computation.getFlow(), compoundsToProcess);//todo make som nice head job that does some organizing stuff
+                        Jobs.runWorkflow(computation.getFlow(), finalComps);//todo make som nice head job that does some organizing stuff
                     //todo else some error message with pico cli output
                 } catch (Exception e) {
                     new ExceptionDialog(MF, e.getMessage());
