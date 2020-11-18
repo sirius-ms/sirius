@@ -23,32 +23,35 @@ also possible using the command line version of SIRIUS.)
 <span style="color: #339966;">This is the recommended way of using
 CSI:FingerID.</span>
 
-**Note: CANOPUS is currently NOT available for negative ion mode data and will still take some time until it will be there.**
-
 ## Download Links
 
 <!--begin download-->
 
 ### Documentation
 - [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-manual.pdf)
+- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-manual.pdf)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.4.29 (2020-08-24)
-##### This versions have the JRE already included! Just download, unpack and execute.
-- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-win64.zip)
-- for Linux [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-linux64.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-osx64.zip)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.5.0-SNAPSHOT (2020-11-18)
+##### This versions have the JRE already included! Just download, install/unpack and execute.
+- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-win64.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-win64.zip)
+- for Linux (64bit): [deb](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-linux64.deb) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-linux64.zip)
+- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-osx64.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-osx64.zip)
 
-### SIRIUS+CSI:FingerID Commandline only - Version 4.4.29 (2020-08-24)
-##### [Java Runtime Environment 11 (JRE-11)](https://www.azul.com/downloads/zulu-community/?version=java-11-lts&architecture=x86-64-bit&package=jre) or higher required.
-- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-win32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-win64-headless.zip)
-- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-linux32-headless.zip) / [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-linux64-headless.zip)
-- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.4.29/sirius-4.4.29-osx64-headless.zip)
+### SIRIUS+CSI:FingerID Commandline only - Version 4.5.0-SNAPSHOT (2020-11-18)
+##### This versions have the JRE already included! Just download, install/unpack and execute.
+- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-win64-headless.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-win64-headless.zip)
+- for Linux (64bit): [deb](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-linux64-headless.deb) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-linux64-headless.zip)
+- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-osx64-headless.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.5.0-SNAPSHOT/sirius-4.5.0-SNAPSHOT-osx64-headless.zip)
+
+### Installation
+On Windows and MacOS the installer version of SIRIUS (msi/pkg) should be preferred but might require admin permissions.
+Since we do not pay Microsoft/Apple for certification you might have to confirm that you want to trust software from an unknown source on Windows/MacOS.
+On MacOS the option to confirm the execution of the installer (pkg) might be hidden under 'System Settings' -> 'Security & Privacy'.
 
 ### Sources on GitHub
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius)
-- [SIRIUS libraries](https://github.com/boecker-lab/sirius-libs)
+- [SIRIUS library](https://github.com/boecker-lab/sirius-libs)
 
 <!--end download-->
 

@@ -232,23 +232,31 @@ task refreshDownloadLinks {
                 "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
                 "",
                 "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
-                "##### This versions have the JRE already included! Just download, unpack and execute.",
-                "- for Windows [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
-                "- for Linux [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
-                "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
+                "##### This versions have the JRE already included! Just download, install/unpack and execute.",
+                "- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.msi) / " +
+                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
+                "- for Linux (64bit): [deb](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.deb) / " +
+                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
+                "- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.pkg) / " +
+                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
                 "",
                 "### SIRIUS+CSI:FingerID Commandline only - Version $version (${new Date().format('yyyy-MM-dd')})",
-                "##### [Java Runtime Environment 11 (JRE-11)](https://www.azul.com/downloads/zulu-community/?version=java-11-lts&architecture=x86-64-bit&package=jre) or higher required.",
-                "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32-headless.zip) / " +
-                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
-                "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32-headless.zip) / " +
-                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
-                "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
+                "##### This versions have the JRE already included! Just download, install/unpack and execute.",
+                "- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.msi) / " +
+                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
+                "- for Linux (64bit): [deb](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.deb) / " +
+                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
+                "- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.pkg) / " +
+                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
+                "",
+                "### Installation",
+                "On Windows and MacOS the installer version of SIRIUS (msi/pkg) should be preferred but might require admin permissions.",
+                "Since we do not pay Microsoft/Apple for certification you might have to confirm that you want to trust software from an unknown source on Windows/MacOS.",
+                "On MacOS the option to confirm the execution of the installer (pkg) might be hidden under 'System Settings' -> 'Security & Privacy'.",
                 "",
                 "### Sources on GitHub",
-                "- [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)",
-                "- [SIRIUS library](https://github.com/boecker-lab/sirius)"
-
+                "- [SIRIUS frontend](https://github.com/boecker-lab/sirius)",
+                "- [SIRIUS library](https://github.com/boecker-lab/sirius-libs)"
         ] as List
 
         Files.deleteIfExists(outfile.toPath())
