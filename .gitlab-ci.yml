@@ -41,6 +41,7 @@ doc:
   only:
     refs:
       - master
+      - release-4.5
 #todo artifactory publish
 
 distCliLinux64:
@@ -61,6 +62,7 @@ distCliLinux64:
   only:
     refs:
       - master
+      - release-4.5
 
 distGuiLinux64:
   variables:
@@ -80,6 +82,7 @@ distGuiLinux64:
   only:
     refs:
       - master
+      - release-4.5
 
 distCliWin64:
   variables:
@@ -100,6 +103,7 @@ distCliWin64:
   only:
     refs:
       - master
+      - release-4.5
 
 distGuiWin64:
   variables:
@@ -120,6 +124,7 @@ distGuiWin64:
   only:
     refs:
       - master
+      - release-4.5
 
 distCliMacOSX:
   variables:
@@ -139,6 +144,7 @@ distCliMacOSX:
   only:
     refs:
       - master
+      - release-4.5
 
 distGuiMacOX:
   variables:
@@ -158,3 +164,4 @@ distGuiMacOX:
   only:
     refs:
       - master
+      - release-4.5
