@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.text.DecimalFormat;
@@ -185,6 +186,12 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
             return;
         }
         final Spectrum<?> spec = getSpectrumByID(id);
+
+        if (spec == null || spec.isEmpty()){
+            underlyingModel = new DummySpectrumModel();
+            LoggerFactory.getLogger(getClass()).warn("Cannot render empty Spectrum!");
+            return;
+        }
 
         if (id.equals(MSMS_MERGED_DISPLAY)) {
             if (currentResult != null && currentResult.getFragTree().isPresent()) {

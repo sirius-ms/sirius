@@ -22,6 +22,7 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.sirius.Sirius;
@@ -108,11 +109,25 @@ public class MS2ExpInputIterator implements InstIterProvider {
                             experiment.setPrecursorIonType(PrecursorIonType.unknownPositive());
                         }
                     }
-                    if (!filter.test(experiment)) {
-                        LOG.info("Skipping instance " + experiment.getName() + " because it did not pass the filter setting.");
+
+                    if (experiment.getMs1Spectra().removeIf(Spectrum::isEmpty))
+                        LoggerFactory.getLogger(getClass()).warn("Removed at lease one empty MS1 spectrum from '" + experiment.getName() + "'.");
+                    if (experiment.getMs2Spectra().removeIf(Spectrum::isEmpty))
+                        LoggerFactory.getLogger(getClass()).warn("Removed at lease one empty MS/MS spectrum from '" + experiment.getName() + "'.");
+
+                    if (experiment.getMs2Spectra().isEmpty()) {
+                        LOG.info("Skipping instance '" + experiment.getName() + "' because it does not contain any non Empty MS/MS.");
+                    } else if (!filter.test(experiment)) {
+                        LOG.info("Skipping instance '" + experiment.getName() + "' because it did not pass the filter setting.");
                     } else if (experiment.getMolecularFormula() != null && experiment.getMolecularFormula().numberOf("D") > 0) {
-                        LOG.warn("Deuterium Formula found in: " + experiment.getName() + " Instance will be Ignored: ");
+                        LOG.warn("Deuterium Formula found in: " + experiment.getName() + " Instance will be Ignored.");
                     } else {
+
+
+                        if (experiment.getMs2Spectra().isEmpty()){
+
+                        }
+
                         if (ignoreFormula)
                             experiment.setMolecularFormula(null);
                         instances.add(experiment);
