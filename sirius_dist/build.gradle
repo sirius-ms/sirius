@@ -301,6 +301,8 @@ subprojects {
         winConsole = true
 
         jvmArgs = [
+                '-Xms1G',
+                '-XX:MaxRAMPercentage=85',
                 '--illegal-access=permit',
                 '--add-opens java.base/java.lang=ALL-UNNAMED',
                 '--add-opens java.base/java.net=ALL-UNNAMED',
