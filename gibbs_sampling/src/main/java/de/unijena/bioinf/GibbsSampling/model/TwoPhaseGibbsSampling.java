@@ -136,7 +136,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
                     firstRoundCompoundsIdx.add(i);
                 }
             } else {
-                //check only if MS2-quality is ok
+                //just check if MS2-quality is ok
                 if (poss.length>0){
                     CompoundQuality quality = poss[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new);
                     if (quality.isNot(CompoundQuality.CompoundQualityFlag.FewPeaks) &&
