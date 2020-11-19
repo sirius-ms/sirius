@@ -104,7 +104,7 @@ public enum DataSource {
     }
 
     public static boolean isBioOnly(long flags) {
-        return (flags & BIO.flag) != 0;
+        return flags != 0 && (flags & BIO.flag) == flags;
     }
 
     public boolean isBioOnly() {
@@ -113,6 +113,10 @@ public enum DataSource {
 
     public boolean isNotBioOnly() {
         return !isBioOnly(flag);
+    }
+
+    public static DataSource[] valuesALLBio() {
+        return Arrays.stream(DataSource.values()).filter(DataSource::isBioOnly).toArray(DataSource[]::new);
     }
 
     public static DataSource[] valuesNoALL() {
