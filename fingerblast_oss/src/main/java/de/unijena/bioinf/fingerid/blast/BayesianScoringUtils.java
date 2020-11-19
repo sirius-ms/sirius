@@ -136,6 +136,7 @@ public class BayesianScoringUtils {
      * apply all biotransformation to the given formula
      * //TODO allow for directional transformations? E.g. it might make sense to remove a Br from a formula to get all similar structures, but you might not want to add id
      * @param formula
+     * @param includeInputFormula
      * @return
      */
     public Set<MolecularFormula> applyBioTransformations(MolecularFormula formula, boolean includeInputFormula) {
