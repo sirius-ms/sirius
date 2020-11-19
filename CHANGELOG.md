@@ -21,7 +21,7 @@ such as `formula_identifications.tsv`, `compound_identifications.tsv` and `compo
 - fix: missing SCANS annotation in mgf-export subtool - creates now a valid input for FBMN
 - fix: un-parsed retention times in CEF format.   
 - fix: Structure DB linking (wrong ids, missing link flags, duplicate entries, etc.)
-- fix: reduced memory consuption of CLI and GUI 
+- fix: reduced memory consumption of CLI and GUI 
 
 - JRE is now included in all version of SIRIUS
 - Many more bug fixes and performance improvements 
