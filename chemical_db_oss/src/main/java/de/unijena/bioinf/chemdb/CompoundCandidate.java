@@ -244,7 +244,7 @@ public class CompoundCandidate {
                     gen.writeString(link.id);
                     for (int j=k+1; j < value.links.length; ++j) {
                         if (value.links[j].name.equals(link.name)) {
-                            gen.writeString(link.id);
+                            gen.writeString(value.links[j].id);
                         }
                     }
                     gen.writeEndArray();

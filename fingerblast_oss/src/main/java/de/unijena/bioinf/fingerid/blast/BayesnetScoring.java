@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Scoring from {@see <a href=https://academic.oup.com/bioinformatics/article/34/13/i333/5045719</a>}
+ * Scoring from @see <a href=https://academic.oup.com/bioinformatics/article/34/13/i333/5045719></a>
  * <p>
  * In the paper this is named Bayesian (fixed tree).
  */
