@@ -39,8 +39,6 @@ import java.util.regex.Pattern;
 @CommandLine.Command(name = "project-space", aliases = {"PS"}, description = "<STANDALONE> Modify a given project Space: Read project(s) with --input, apply modification and write the result via --output. If either onl --input or --output is give the modifications will be made in-place.",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> {
 
-
-
     @CommandLine.Option(names = {"--repair-scores"},
             description = "Remove CSI scores that have not Candidates anymore", hidden = true)
     boolean repairScores;

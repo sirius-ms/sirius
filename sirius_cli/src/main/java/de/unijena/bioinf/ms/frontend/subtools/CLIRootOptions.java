@@ -177,7 +177,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                 }
             });
 
-            InstanceImporter.checkAndFixNegativeDataFiles(space.projectSpace(), ApplicationCore.WEB_API);
+            InstanceImporter.checkAndFixDataFiles(space.projectSpace(), ApplicationCore.WEB_API);
             return space;
         } catch (IOException e) {
             throw new CommandLine.PicocliException("Could not initialize workspace!", e);
@@ -204,7 +204,6 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     public boolean assessDataQuality;
     //endregion
 
-
     @NotNull
     @Override
     public PreprocessingJob<M> makeDefaultPreprocessingJob() {
@@ -215,7 +214,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                 InputFilesOptions input = getInput();
                 if (space != null) {
                     if (input != null)
-                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz, (c) -> true).makeImportJJob(input)).awaitResult();
+                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz, (c) -> true, false, getOutput().isUpdateFingerprints()).makeImportJJob(input)).awaitResult();
                     if (space.size() < 1)
                         logInfo("No Input has been imported to Project-Space. Starting application without input data.");
                     return space;
@@ -233,8 +232,6 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
             protected Boolean compute() throws Exception {
                 M project = getProjectSpace();
                 try {
-                    //remove recompute annotation since it should be cli only option
-//                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null)); //todo fix needed?
                     //use all experiments in workspace to create summaries
                     if (defaultConfigOptions.config.createInstanceWithDefaults(WriteSummaries.class).value) {
                         LOG.info("Writing summary files...");
