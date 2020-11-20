@@ -20,10 +20,11 @@
 
 package de.unijena.bioinf.projectspace.canopus;
 
+import de.unijena.bioinf.ChemistryBase.fp.ClassyFireFingerprintVersion;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
-import de.unijena.bioinf.projectspace.PosNegProperty;
+import de.unijena.bioinf.projectspace.PosNegFpProperty;
 
-public class CanopusDataProperty extends PosNegProperty<CanopusData> {
+public class CanopusDataProperty extends PosNegFpProperty<ClassyFireFingerprintVersion, CanopusData> {
     public CanopusDataProperty(CanopusData positive, CanopusData negative) {
         super(positive, negative);
     }
