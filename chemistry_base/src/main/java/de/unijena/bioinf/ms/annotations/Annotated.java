@@ -170,7 +170,9 @@ public interface Annotated<A extends DataAnnotation> {
      */
 
     default <T extends A> T removeAnnotation(Class<T> klass) {
-        return (T) fireAnnotationChange(annotations().map.remove(klass), null);
+        final T old = (T) annotations().map.remove(klass);
+        fireAnnotationChange(old, null);
+        return old;
     }
 
     /**
