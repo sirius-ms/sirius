@@ -28,12 +28,12 @@ public class MsBatchDataFormatFilter extends FileFilter {
 	public boolean accept(File f) {
 		if(f.isDirectory()) return true;
 		String name = f.getName();name = name.toLowerCase();
-        return name.endsWith(".ms") || name.endsWith(".mgf");
+        return name.endsWith(".ms") || name.endsWith(".mgf") || name.endsWith(".mzml") || name.endsWith(".mzxml");
     }
 
 	@Override
 	public String getDescription() {
-		return ".ms, .mgf";
+		return ".ms, .mgf, .mzml, .mzxml";
 	}
 
 }
