@@ -73,7 +73,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                         source = rootOptions.getSpaceManagerFactory().create(
                                 new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createTemporaryProjectSpace(),
                                 rootOptions.getOutput().getProjectSpaceFilenameFormatter());
-                        InstanceImporter importer = new InstanceImporter(source, expFilter, cidFilter, projecSpaceOptions.move);
+                        InstanceImporter importer = new InstanceImporter(source, expFilter, cidFilter, projecSpaceOptions.move, rootOptions.getOutput().isUpdateFingerprints());
                         importer.doImport(projectInput);
                         move = true;
                     } else if (projectInput.msInput.projects.size() == 1) {
@@ -129,7 +129,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                                     source.nameFormatter);
 
                             LoggerFactory.getLogger(getClass()).info("Copying compounds '" + p.stream().map(CompoundContainerId::getDirectoryName).collect(Collectors.joining(",")) + "' to Batch '" + batchSpace.projectSpace().getLocation().toString());
-                            InstanceImporter.importProject(source.projectSpace(), batchSpace, expFilter, (cid) -> p.contains(cid) && cidFilter.test(cid), move);
+                            InstanceImporter.importProject(source.projectSpace(), batchSpace, expFilter, (cid) -> p.contains(cid) && cidFilter.test(cid), move, rootOptions.getOutput().isUpdateFingerprints());
 
                             if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
                                 LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of Batch '" + batchSpace.projectSpace().getLocation().toString());
@@ -169,7 +169,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                     }
 
 
-                    new InstanceImporter(space, expFilter, cidFilter, projecSpaceOptions.move)
+                    new InstanceImporter(space, expFilter, cidFilter, projecSpaceOptions.move, rootOptions.getOutput().isUpdateFingerprints())
                             .doImport(input);
 
 

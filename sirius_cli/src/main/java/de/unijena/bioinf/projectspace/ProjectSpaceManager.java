@@ -31,7 +31,11 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
 import de.unijena.bioinf.projectspace.canopus.CanopusDataSerializer;
@@ -45,15 +49,14 @@ import de.unijena.bioinf.projectspace.summaries.mztab.MztabMExporter;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
+import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -150,7 +153,23 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     }
 
     public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
-        return projectSpace().setProjectSpaceProperty(key, value);
+        if (PosNegFpProperty.class.isAssignableFrom(key))
+            synchronized (dataCompatibilityCache) {
+                dataCompatibilityCache.remove(key);
+                return projectSpace().setProjectSpaceProperty(key, value);
+            }
+        else
+            return projectSpace().setProjectSpaceProperty(key, value);
+    }
+
+    public <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key) {
+        if (PosNegFpProperty.class.isAssignableFrom(key))
+            synchronized (dataCompatibilityCache) {
+                dataCompatibilityCache.remove(key);
+                return projectSpace().deleteProjectSpaceProperty(key);
+            }
+        else
+            return projectSpace().deleteProjectSpaceProperty(key);
     }
 
     @NotNull
@@ -188,6 +207,56 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         };
     }
 
+    public int size() {
+        return space.size();
+    }
+
+    public boolean containsCompound(String dirName) {
+        return space.containsCompound(dirName);
+    }
+
+    public boolean containsCompound(CompoundContainerId id) {
+        return space.containsCompound(id);
+    }
+
+
+    public void updateSummaries(Summarizer... summarizers) throws IOException {
+        space.updateSummaries(summarizers);
+    }
+
+    public void close() throws IOException {
+        space.close();
+    }
+
+    private final Map<Class<? extends PosNegFpProperty<?, ?>>, Boolean> dataCompatibilityCache = new HashMap<>();
+    public boolean evaluateFingerprintDataCompatibility(NetUtils.InterruptionCheck interrupted) throws TimeoutException, InterruptedException {
+        synchronized (dataCompatibilityCache) {
+            try {
+                if (dataCompatibilityCache.containsKey(FingerIdDataProperty.class)) {
+                    final FingerIdData fpos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
+                    final FingerIdData fneg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted);
+                    dataCompatibilityCache.put(FingerIdDataProperty.class,
+                            getProjectSpaceProperty(FingerIdDataProperty.class).map(it -> it.compatible(new FingerIdDataProperty(fpos, fneg))).orElse(true));
+                }
+
+                if (!dataCompatibilityCache.containsKey(FingerIdDataProperty.class)) {
+                    final CanopusData cpos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
+                    final CanopusData cneg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted);
+                    dataCompatibilityCache.put(CanopusDataProperty.class,
+                            getProjectSpaceProperty(CanopusDataProperty.class).map(it -> it.compatible(new CanopusDataProperty(cpos, cneg))).orElse(true));
+                }
+
+                return dataCompatibilityCache.values().stream().reduce((a,b) -> a && b).orElse(true);
+            } catch (TimeoutException | InterruptedException e) {
+                dataCompatibilityCache.clear();
+                LoggerFactory.getLogger(getClass()).warn("Could not retrieve FingerprintData from server! \n" + e.getMessage());
+                throw e;
+            }
+        }
+    }
+
+
+    //region static helper
     public static Summarizer[] defaultSummarizer() {
         return new Summarizer[]{
                 new FormulaSummaryWriter(),
@@ -212,25 +281,5 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     public static ProjectSpaceConfiguration newDefaultConfig(){
         return DEFAULT_CONFIG.get();
     }
-
-    public int size() {
-        return space.size();
-    }
-
-    public boolean containsCompound(String dirName) {
-        return space.containsCompound(dirName);
-    }
-
-    public boolean containsCompound(CompoundContainerId id) {
-        return space.containsCompound(id);
-    }
-
-
-    public void updateSummaries(Summarizer... summarizers) throws IOException {
-        space.updateSummaries(summarizers);
-    }
-
-    public void close() throws IOException {
-        space.close();
-    }
+    //end region
 }

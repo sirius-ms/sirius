@@ -27,6 +27,7 @@ import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -121,5 +122,14 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
             return job;
         }
 
+    }
+
+    protected boolean checkFingerprintCompatibility() throws TimeoutException, InterruptedException {
+        final boolean compatible = input.getProjectSpaceManager().evaluateFingerprintDataCompatibility(this::checkForInterruption);
+        if (!compatible) {
+            logWarn("Incompatible Fingerprint data files!" + "The project can be Converted using `--update-fingerprint-version`." + System.lineSeparator() +
+                    "WARNING: Conversion will delete all Fingerprint related results like CSI:FingerID and CANOPUS. Skipping...");
+        }
+        return compatible;
     }
 }

@@ -44,4 +44,11 @@ public class OutputOptions {
     public FilenameFormatter getProjectSpaceFilenameFormatter() {
         return projectSpaceFilenameFormatter;
     }
+
+    @CommandLine.Option(names = "--update-fingerprint-version", description = {"Updates Fingerprint versions of the input project to the one used by this SIRIUS version.","WARNING: All Fingerprint related results (CSI:FingerID, CANOPUS) will be lost!"}, order = 230)
+    private boolean updateFingerprints;
+
+    public boolean isUpdateFingerprints() {
+        return updateFingerprints;
+    }
 }
