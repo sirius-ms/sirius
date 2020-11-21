@@ -345,7 +345,7 @@ subprojects {
                 into(nativeLibsTarget)
             }
             copy {
-                from("${distPath}") {
+                from("${rootDir}") {
                     include('COPYING.txt')
                     include('LICENSE.txt')
                 }
