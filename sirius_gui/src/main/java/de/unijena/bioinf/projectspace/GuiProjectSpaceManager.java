@@ -23,10 +23,14 @@ import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
+import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -39,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -139,6 +144,17 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                         .map(id -> (InstanceBean) newInstanceFromCompound(id, Ms2Experiment.class))
                         .collect(Collectors.toList()));
             } else {
+                //todo check for outdated results and
+                /*final List<Path> outdated = Jobs.runInBackgroundAndLoad(MF, "Checking for alignable input...", () -> {
+
+                    if (input.msInput.projects.size() == 0)
+                        return List.of();
+                    final List<Path> out = input.msInput.projects.stream().filter(p -> {
+
+                    }).collect(Collectors.toList());
+                    return out;
+
+                }).getResult();*/
                 InstanceImporter importer = new InstanceImporter(this,
                         x -> {
                             if (x.getPrecursorIonType() != null) {
@@ -173,6 +189,32 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
 
         if (ex != null)
             new ExceptionDialog(MF, ex.getMessage());
+    }
+
+    public synchronized void updateFingerprintData() {
+        Jobs.runInBackgroundAndLoad(MF, new TinyBackgroundJJob<Boolean>() {
+            @Override
+            protected Boolean compute() throws Exception {
+                List<Consumer<Instance>> invalidators = new ArrayList<>();
+                invalidators.add(new FingerIdOptions(null).getInvalidator());
+                invalidators.add(new CanopusOptions(null).getInvalidator());
+                final AtomicInteger progress = new AtomicInteger(0);
+                int max = INSTANCE_LIST.size() * invalidators.size() + 3;
+                updateProgress(0, max, progress.getAndIncrement(), "Starting Update...");
+                // remove fingerprint related results
+                INSTANCE_LIST.forEach(i -> invalidators.forEach(inv -> {
+                    updateProgress(0, max, progress.getAndIncrement(), "Deleting results for '" + i.getName() + "'...");
+                    inv.accept(i);
+                }));
+                //remove Fingerprint data
+                updateProgress(0, max, progress.getAndIncrement(), "delete CSI:FinerID Data");
+                deleteProjectSpaceProperty(FingerIdDataProperty.class);
+                updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS Data");
+                deleteProjectSpaceProperty(CanopusDataProperty.class);
+                updateProgress(0, max, progress.get(), "DONE!");
+                return true;
+            }
+        });
     }
 
     /**
