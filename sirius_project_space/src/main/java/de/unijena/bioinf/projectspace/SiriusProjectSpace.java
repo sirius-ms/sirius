@@ -145,9 +145,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public synchronized void close() throws IOException {
         try {
             this.ids.clear();
-            final FileSystem fs = root.getFileSystem();
-            if (!fs.equals(FileSystems.getDefault()) && fs.isOpen())
-                fs.close();
+            FileUtils.closeIfNotDefaultFS(root);
         } finally {
             fireProjectSpaceChange(ProjectSpaceEvent.CLOSED);
         }
@@ -561,12 +559,26 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     public final  synchronized <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
         synchronized (projectSpaceProperties) {
+            if (value == null)
+                return deleteProjectSpaceProperty(key);
+
             try {
                 configuration.getProjectSpacePropertySerializer(key).write(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), null, null, value != null ? Optional.of(value) : Optional.empty());
             } catch (IOException e) {
                 LoggerFactory.getLogger(SiriusProjectSpace.class).error(e.getMessage(), e);
             }
             return (T) projectSpaceProperties.put(key, value);
+        }
+    }
+
+    public final  synchronized <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key) {
+        synchronized (projectSpaceProperties) {
+            try {
+                configuration.getProjectSpacePropertySerializer(key).delete(new FileBasedProjectSpaceWriter(root, this::getProjectSpaceProperty), null);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(SiriusProjectSpace.class).error(e.getMessage(), e);
+            }
+            return (T) projectSpaceProperties.remove(key);
         }
     }
 
