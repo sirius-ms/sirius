@@ -26,13 +26,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
-import java.nio.file.*;
-import java.util.HashMap;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.unijena.bioinf.ChemistryBase.utils.FileUtils.asZipFS;
 
 
 public class ProjectSpaceIO {
@@ -103,13 +104,6 @@ public class ProjectSpaceIO {
         return new SiriusProjectSpace(configuration, fs);
     }
 
-    protected static Path asZipFS(Path zipFile, boolean createNew) throws IOException {
-        final Map<String, String> option = new HashMap<>();
-        if (createNew)
-            option.put("create", "true");
-        FileSystem zipFS = FileSystems.newFileSystem(URI.create("jar:file:" + zipFile.toUri().getPath()), option);
-        return zipFS.getPath(zipFS.getSeparator());
-    }
 
     public SiriusProjectSpace createTemporaryProjectSpace() throws IOException {
         final Path tempFile = createTmpProjectSpaceLocation();
