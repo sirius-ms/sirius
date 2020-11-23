@@ -52,19 +52,23 @@ function translateHover(mouse_w, mouse_h) {
 };
 
 function showHover(d) {
+    let anno = "";
     if ("formula" in d) {
         let sign = "";
         if (d.massDeviationMz > 0) {
             sign = "+";
         }
-        tooltip.html("Formula: " + d.formula.replace(" + [M", "").replace("]","") +
-                     "<br>Intensity: " + d.intensity.toFixed(decimal_place) +
-                     "<br>m/z: " + d.mz.toFixed(decimal_place) +
-                     "<br>Mass deviation: " + sign + (d.massDeviationMz*1000).toFixed(decimal_place) + " mDa<br>" +
-                     "&nbsp;".repeat(25) + "(" + sign + d.massDeviationPpm.toFixed(decimal_place) + " ppm)");
+        anno = "Formula: " + d.formula.replace(" + [M", "").replace("]","") +
+               "<br>Intensity: " + d.intensity.toFixed(decimal_place) +
+               "<br>m/z: " + d.mz.toFixed(decimal_place);
+        if ("massDeviationMz" in d) {
+               anno = anno + "<br>Mass deviation: " + sign + (d.massDeviationMz*1000).toFixed(decimal_place) + " mDa<br>" +
+                      "&nbsp;".repeat(25) + "(" + sign + d.massDeviationPpm.toFixed(decimal_place) + " ppm)";
+         }
     } else {
-        tooltip.html("m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place));
+        anno = "m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place);
     }
+    tooltip.html(anno);
 };
 
 function hideHover() {
