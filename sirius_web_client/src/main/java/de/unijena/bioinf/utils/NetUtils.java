@@ -114,4 +114,13 @@ public class NetUtils {
         void check() throws InterruptedException;
     }
 
+
+    public static InterruptionCheck checkThreadInterrupt(@NotNull final Thread thread) {
+        return () -> {
+            if (thread.isInterrupted())
+                throw new InterruptedException("Interruption by thread: " + thread.getName());
+        };
+    }
+
+
 }

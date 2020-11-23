@@ -145,9 +145,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     public synchronized void close() throws IOException {
         try {
             this.ids.clear();
-            final FileSystem fs = root.getFileSystem();
-            if (!fs.equals(FileSystems.getDefault()) && fs.isOpen())
-                fs.close();
+            FileUtils.closeIfNotDefaultFS(root);
         } finally {
             fireProjectSpaceChange(ProjectSpaceEvent.CLOSED);
         }
