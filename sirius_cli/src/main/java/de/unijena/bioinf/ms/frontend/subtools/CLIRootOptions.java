@@ -21,10 +21,10 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.annotations.WriteSummaries;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +33,7 @@ import picocli.CommandLine.Option;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.LogManager;
 
 /**
@@ -177,7 +178,13 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                 }
             });
 
-            InstanceImporter.checkAndFixDataFiles(space.projectSpace(), ApplicationCore.WEB_API);
+
+            try {
+                space.checkAndFixDataFiles(NetUtils.checkThreadInterrupt(Thread.currentThread()));
+            } catch (TimeoutException | InterruptedException e) {
+                LoggerFactory.getLogger(getClass()).warn("Could not check Fingerprint version on Project creation. " + e.getMessage());
+            }
+
             return space;
         } catch (IOException e) {
             throw new CommandLine.PicocliException("Could not initialize workspace!", e);

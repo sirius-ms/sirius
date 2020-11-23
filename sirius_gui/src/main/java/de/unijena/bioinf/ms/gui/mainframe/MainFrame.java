@@ -42,6 +42,7 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -172,7 +173,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final AtomicBoolean compatible = new AtomicBoolean(true);
         this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
             final SiriusProjectSpace ps = makeSpace.get();
-            compatible.set(InstanceImporter.checkAndFixDataFiles(ps, ApplicationCore.WEB_API));
+            compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
             Jobs.cancelALL();
             final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 9));
             inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));

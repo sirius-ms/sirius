@@ -228,33 +228,93 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         space.close();
     }
 
+    public static void writeIncompatibleLog() {
+        LoggerFactory.getLogger(ProjectSpaceManager.class).warn("INCOMPATIBLE INPUT: The Fingerprint version of your Project ist incompatible to the one used by this SIRIUS version (outdated)." +
+                " The project can be Converted using `--update-fingerprint-version`." +
+                " WARNING: This will delete all Fingerprint related results like CSI:FingerID and CANOPUS.");
+    }
+
     private final Map<Class<? extends PosNegFpProperty<?, ?>>, Boolean> dataCompatibilityCache = new HashMap<>();
-    public boolean evaluateFingerprintDataCompatibility(NetUtils.InterruptionCheck interrupted) throws TimeoutException, InterruptedException {
+
+    /**
+     * This checks whether the data files are compatible with them on the server. Since have had versions of the PS with
+     * incomplete data files it also load missing files from the server but only if the existing one are compatible.
+     * <p>
+     * Results are cached!
+     *
+     * @param interrupted  Tell the waiting job how it can check if it was interrupted
+     * @return true if data files are  NOT incompatible with the Server version (compatible or not existent)
+     * @throws TimeoutException     if server request times out
+     * @throws InterruptedException if waiting for server request is interrupted
+     */
+    public boolean checkAndFixDataFiles(NetUtils.InterruptionCheck interrupted) throws TimeoutException, InterruptedException {
         synchronized (dataCompatibilityCache) {
             try {
-                if (dataCompatibilityCache.containsKey(FingerIdDataProperty.class)) {
-                    final FingerIdData fpos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
-                    final FingerIdData fneg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted);
-                    dataCompatibilityCache.put(FingerIdDataProperty.class,
-                            getProjectSpaceProperty(FingerIdDataProperty.class).map(it -> it.compatible(new FingerIdDataProperty(fpos, fneg))).orElse(true));
-                }
-
                 if (!dataCompatibilityCache.containsKey(FingerIdDataProperty.class)) {
-                    final CanopusData cpos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
-                    final CanopusData cneg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted);
-                    dataCompatibilityCache.put(CanopusDataProperty.class,
-                            getProjectSpaceProperty(CanopusDataProperty.class).map(it -> it.compatible(new CanopusDataProperty(cpos, cneg))).orElse(true));
+                    final FingerIdDataProperty fd = getProjectSpaceProperty(FingerIdDataProperty.class).orElse(null);
+                    if (fd != null) {
+                        dataCompatibilityCache.put(FingerIdDataProperty.class, true);
+                        final FingerIdData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
+                        final FingerIdData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted);
+                        if (fd.getPositive() != null) {
+                            if (!fd.getPositive().compatible(pos)) {
+                                dataCompatibilityCache.put(FingerIdDataProperty.class, false);
+                            } else if (fd.getNegative() == null) {
+                                LoggerFactory.getLogger(InstanceImporter.class).warn("Negative FingerIdData missing in project. Try to repair by reloading from webservice.");
+                                setProjectSpaceProperty(FingerIdDataProperty.class,
+                                        new FingerIdDataProperty(fd.getPositive(), neg));
+                            }
+                        }
+
+                        if (fd.getNegative() != null) {
+                            if (!fd.getNegative().compatible(neg)) {
+                                dataCompatibilityCache.put(FingerIdDataProperty.class, false);
+                            } else if (fd.getPositive() == null) {
+                                LoggerFactory.getLogger(InstanceImporter.class).warn("Positive FingerIdData missing in project. Try to repair by reloading from webservice.");
+                                setProjectSpaceProperty(FingerIdDataProperty.class,
+                                        new FingerIdDataProperty(pos, fd.getNegative()));
+                            }
+                        }
+                    }
                 }
 
-                return dataCompatibilityCache.values().stream().reduce((a,b) -> a && b).orElse(true);
-            } catch (TimeoutException | InterruptedException e) {
+                if (!dataCompatibilityCache.containsKey(CanopusDataProperty.class)) {
+                    final CanopusDataProperty cd = getProjectSpaceProperty(CanopusDataProperty.class).orElse(null);
+                    if (cd != null) {
+                        dataCompatibilityCache.put(CanopusDataProperty.class, true);
+                        final CanopusData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
+                        final CanopusData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted);
+                        if (cd.getPositive() != null) {
+                            if (!cd.getPositive().compatible(pos)) {
+                                dataCompatibilityCache.put(CanopusDataProperty.class, false);
+                            } else if (cd.getNegative() == null) {
+                                LoggerFactory.getLogger(InstanceImporter.class).warn("Negative CanopusData missing in project. Try to repair by reloading from webservice.");
+                                setProjectSpaceProperty(CanopusDataProperty.class,
+                                        new CanopusDataProperty(cd.getPositive(), neg));
+                            }
+                        }
+
+                        if (cd.getNegative() != null) {
+                            if (!cd.getNegative().compatible(neg)) {
+                                dataCompatibilityCache.put(CanopusDataProperty.class, false);
+                            } else if (cd.getPositive() == null) {
+                                LoggerFactory.getLogger(InstanceImporter.class).warn("Positive CanopusData missing in project. Try to repair by reloading from webservice.");
+                                setProjectSpaceProperty(CanopusDataProperty.class,
+                                        new CanopusDataProperty(neg, cd.getNegative()));
+                            }
+                        }
+                    }
+                }
+                boolean out = dataCompatibilityCache.values().stream().reduce((a, b) -> a && b).orElse(true);
+                if (!out) writeIncompatibleLog();
+                return out;
+            } catch (Exception e) {
                 dataCompatibilityCache.clear();
                 LoggerFactory.getLogger(getClass()).warn("Could not retrieve FingerprintData from server! \n" + e.getMessage());
                 throw e;
             }
         }
     }
-
 
     //region static helper
     public static Summarizer[] defaultSummarizer() {

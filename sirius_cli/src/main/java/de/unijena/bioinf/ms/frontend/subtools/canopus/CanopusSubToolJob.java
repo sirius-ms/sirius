@@ -70,17 +70,19 @@ public class CanopusSubToolJob extends InstanceJob {
             return;
         }
 
-        // submit canopus jobs for Identification results that contain CSI:FingerID results
-        Map<FormulaResult, CanopusWebJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmitRemote));
-
-        jobs.forEach((k, v) -> k.setAnnotation(CanopusResult.class, v.takeResult()));
+        if (!checkFingerprintCompatibility()) return;
 
         // write Canopus client data
         if (inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusDataProperty.class).isEmpty()) {
             final CanopusData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
             final CanopusData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
             inst.getProjectSpaceManager().setProjectSpaceProperty(CanopusDataProperty.class, new CanopusDataProperty(pos, neg));
-        }else if (!checkFingerprintCompatibility()) return;
+        }
+
+        // submit canopus jobs for Identification results that contain CSI:FingerID results
+        Map<FormulaResult, CanopusWebJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmitRemote));
+
+        jobs.forEach((k, v) -> k.setAnnotation(CanopusResult.class, v.takeResult()));
 
         // write canopus results
         for (FormulaResult r : res)

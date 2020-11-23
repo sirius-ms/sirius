@@ -125,11 +125,6 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     }
 
     protected boolean checkFingerprintCompatibility() throws TimeoutException, InterruptedException {
-        final boolean compatible = input.getProjectSpaceManager().evaluateFingerprintDataCompatibility(this::checkForInterruption);
-        if (!compatible) {
-            logWarn("Incompatible Fingerprint data files!" + "The project can be Converted using `--update-fingerprint-version`." + System.lineSeparator() +
-                    "WARNING: Conversion will delete all Fingerprint related results like CSI:FingerID and CANOPUS. Skipping...");
-        }
-        return compatible;
+        return input.getProjectSpaceManager().checkAndFixDataFiles(this::checkForInterruption);
     }
 }

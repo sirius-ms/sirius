@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import org.jetbrains.annotations.NotNull;
@@ -144,17 +145,25 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                         .map(id -> (InstanceBean) newInstanceFromCompound(id, Ms2Experiment.class))
                         .collect(Collectors.toList()));
             } else {
-                //todo check for outdated results and
-                /*final List<Path> outdated = Jobs.runInBackgroundAndLoad(MF, "Checking for alignable input...", () -> {
+                final List<Path> outdated = Jobs.runInBackgroundAndLoad(MF, "Checking for incompatible data...", new TinyBackgroundJJob<List<Path>>() {
+                    @Override
+                    protected List<Path> compute() throws Exception {
+                        if (input.msInput.projects.size() == 0)
+                            return List.of();
+                        final List<Path> out = new ArrayList<>(input.msInput.projects.size());
+                        for(Path p : input.msInput.projects){
+                            if (InstanceImporter.checkDataCompatibility(p,GuiProjectSpaceManager.this,this::checkForInterruption) != null)
+                                out.add(p);
+                        }
+                        return out;
+                    }
+                }).getResult();
 
-                    if (input.msInput.projects.size() == 0)
-                        return List.of();
-                    final List<Path> out = input.msInput.projects.stream().filter(p -> {
+                boolean updateIfNeeded = !outdated.isEmpty() && new QuestionDialog(MF, GuiUtils.formatToolTip(
+                        "The following input projects are incompatible with the target", "'" + this.projectSpace().getLocation()+ "'", "",
+                        outdated.stream().map(Path::getFileName).map(Path::toString).collect(Collectors.joining(",")),"",
+                        "Do you wish to import and update the fingerprint data?","WARNING: All fingerprint related results will be excluded during import (CSI:FingerID, CANOPUS)")).isSuccess();
 
-                    }).collect(Collectors.toList());
-                    return out;
-
-                }).getResult();*/
                 InstanceImporter importer = new InstanceImporter(this,
                         x -> {
                             if (x.getPrecursorIonType() != null) {
@@ -164,7 +173,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                                 return false;
                             }
                         },
-                        x -> true
+                        x -> true, false, updateIfNeeded
                 );
                 List<InstanceBean> imported = Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...",  importer.makeImportJJob(input))
                         .getResult().stream().map(id -> (InstanceBean) newInstanceFromCompound(id, Ms2Experiment.class)).collect(Collectors.toList());

@@ -20,9 +20,11 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
@@ -39,12 +41,13 @@ import de.unijena.bioinf.projectspace.fingerid.FingerIdLocations;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
-import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -245,85 +248,178 @@ public class InstanceImporter {
             @NotNull Predicate<Ms2Experiment> expFilter, @NotNull Predicate<CompoundContainerId> cidFilter,
             boolean move, boolean updateFingerprintVersion, @NotNull Progress prog) throws IOException {
 
-        List<Path> globalFiles = FileUtils.listAndClose(inputSpace.getRootPath(), l -> l.filter(Files::isRegularFile).filter(p ->
-                !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME) &&
-                        !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
-                        !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY) &&
-                        !p.getFileName().toString().equals(SummaryLocations.FORMULA_SUMMARY) &&
-                        !p.getFileName().toString().equals(SummaryLocations.CANOPUS_SUMMARY) &&
-                        !p.getFileName().toString().equals(SummaryLocations.MZTAB_SUMMARY)
-        ).collect(Collectors.toList()));
-
-        for (Path s : globalFiles) {
-            final Path t = importTarget.projectSpace().getRootPath().resolve(s.getFileName().toString());
-            try {
-                if (Files.notExists(t))
-                    Files.copy(s, t); // no copying here because this may be needed multiple times
-            } catch (IOException e) {
-                LOG.error("Could not Copy `" + s.toString() + "` to new location `" + t.toString() + "` Project might be corrupted!", e);
-            }
-        }
-
         //check is fingerprint data is compatible and clean if not.
-        @Nullable final Predicate<String> resultsToSkip;
-        if (!checkAndFixDataFiles(importTarget.projectSpace(), ApplicationCore.WEB_API) && updateFingerprintVersion) {
-            LoggerFactory.getLogger(InstanceImporter.class).info("Updating Fingerprint versions and deleting all corresponding results!");
-            importTarget.deleteProjectSpaceProperty(FingerIdDataProperty.class);
-            importTarget.deleteProjectSpaceProperty(CanopusDataProperty.class);
-
-            resultsToSkip = n -> !n.equals(SummaryLocations.STRUCTURE_CANDIDATES) && !n.equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP)
-                    && !n.equals(FingerIdLocations.FINGERBLAST.relDir()) && !n.equals(FingerIdLocations.FINGERBLAST_FPs.relDir()) && !n.equals(FingerIdLocations.FINGERPRINTS.relDir())
-                    && !n.equals(CanopusLocations.CANOPUS.relDir()) && !n.equals(CanopusLocations.NPC.relDir());
-        } else resultsToSkip = null;
-
-        final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);/*, expFilter*/
+        @Nullable Predicate<String> resultsToSkip = checkDataCompatibility(inputSpace, importTarget, NetUtils.checkThreadInterrupt(Thread.currentThread()));
         final List<CompoundContainerId> imported = new ArrayList<>(inputSpace.size());
-        prog.updateStats(inputSpace.size());
 
-        while (psIter.hasNext()) {
-            final CompoundContainerId sourceId = psIter.next();
-            // create compound
-            CompoundContainerId id = importTarget.projectSpace().newUniqueCompoundId(sourceId.getCompoundName(), (idx) -> importTarget.namingScheme.apply(idx, sourceId.getCompoundName())).orElseThrow();
-            id.setAllNonFinal(sourceId);
-            importTarget.projectSpace().updateCompoundContainerID(id);
+        if (resultsToSkip == null || updateFingerprintVersion) {
+            List<Path> globalFiles = FileUtils.listAndClose(inputSpace.getRootPath(), l -> l.filter(Files::isRegularFile).filter(p ->
+                    !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME) &&
+                            !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
+                            !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY) &&
+                            !p.getFileName().toString().equals(SummaryLocations.FORMULA_SUMMARY) &&
+                            !p.getFileName().toString().equals(SummaryLocations.CANOPUS_SUMMARY) &&
+                            !p.getFileName().toString().equals(SummaryLocations.MZTAB_SUMMARY) &&
+                            (resultsToSkip == null || DATA_FILES_TO_SKIP.test(p.getFileName().toString())) //skip data files if incompatible
+            ).collect(Collectors.toList()));
 
-            final List<Path> files = FileUtils.listAndClose(inputSpace.getRootPath().resolve(sourceId.getDirectoryName()), l ->
-                    l.filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO)).filter(it -> resultsToSkip == null || resultsToSkip.test(it.getFileName().toString())).collect(Collectors.toList()));
-            for (Path s : files) {
-                final Path t = importTarget.projectSpace().getRootPath().resolve(id.getDirectoryName()).resolve(s.getFileName().toString());
+            for (Path s : globalFiles) {
+                final Path t = importTarget.projectSpace().getRootPath().resolve(s.getFileName().toString());
                 try {
-                    Files.createDirectories(t);
-                    if (move)
-                        FileUtils.moveFolder(s, t);
-                    else
-                        FileUtils.copyFolder(s, t);
+                    if (Files.notExists(t))
+                        Files.copy(s, t); // no moving here because this may be needed multiple times
                 } catch (IOException e) {
-                    LOG.error("Could not Copy instance `" + id.getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
+                    LOG.error("Could not Copy `" + s.toString() + "` to new location `" + t.toString() + "` Project might be corrupted!", e);
                 }
             }
-            if (resultsToSkip != null) {
-                LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id.toString() + "' after deleting Fingerprint related results...");
-                Instance inst = importTarget.newInstanceFromCompound(id);
-                List<FormulaResult> l = inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate).
-                        filter(r -> r.getAnnotation(FormulaScoring.class).map(s -> (s.removeAnnotation(TopCSIScore.class) != null) || (s.removeAnnotation(ConfidenceScore.class) != null)).orElse(false)).collect(Collectors.toList());
-                l.forEach(r ->
-                        inst.updateFormulaResult(r, FormulaScoring.class));
-                LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id.toString() + "' DONE!");
 
+
+            final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);/*, expFilter*/
+            prog.updateStats(inputSpace.size());
+
+            while (psIter.hasNext()) {
+                final CompoundContainerId sourceId = psIter.next();
+                // create compound
+                CompoundContainerId id = importTarget.projectSpace().newUniqueCompoundId(sourceId.getCompoundName(), (idx) -> importTarget.namingScheme.apply(idx, sourceId.getCompoundName())).orElseThrow();
+                id.setAllNonFinal(sourceId);
+                importTarget.projectSpace().updateCompoundContainerID(id);
+
+                final List<Path> files = FileUtils.listAndClose(inputSpace.getRootPath().resolve(sourceId.getDirectoryName()), l -> l
+                        .filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO))
+                        .filter(it -> resultsToSkip == null || resultsToSkip.test(it.getFileName().toString()))
+                        .collect(Collectors.toList()));
+
+                for (Path s : files) {
+                    final Path t = importTarget.projectSpace().getRootPath().resolve(id.getDirectoryName()).resolve(s.getFileName().toString());
+                    try {
+                        Files.createDirectories(t);
+                        if (move)
+                            FileUtils.moveFolder(s, t);
+                        else
+                            FileUtils.copyFolder(s, t);
+                    } catch (IOException e) {
+                        LOG.error("Could not Copy instance `" + id.getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
+                    }
+                }
+                if (resultsToSkip != null) {
+                    LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id.toString() + "' after deleting Fingerprint related results...");
+                    Instance inst = importTarget.newInstanceFromCompound(id);
+                    List<FormulaResult> l = inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
+                            .filter(r -> r.getAnnotation(FormulaScoring.class).map(s -> (s.removeAnnotation(TopCSIScore.class) != null)
+                                    || (s.removeAnnotation(ConfidenceScore.class) != null)).orElse(false))
+                            .collect(Collectors.toList());
+
+                    l.forEach(r -> inst.updateFormulaResult(r, FormulaScoring.class));
+                    LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id.toString() + "' DONE!");
+                }
+
+                imported.add(id);
+                prog.accept();
+                importTarget.projectSpace().fireCompoundCreated(id);
+
+                if (move)
+                    inputSpace.deleteCompound(sourceId);
             }
-
-            imported.add(id);
-            prog.accept();
-            importTarget.projectSpace().fireCompoundCreated(id);
-
-
-            if (move)
-                inputSpace.deleteCompound(sourceId);
+        } else {
+            LoggerFactory.getLogger(ProjectSpaceManager.class).warn(
+                    "INCOMPATIBLE INPUT: The Fingerprint version of the project location you trying to import '" + inputSpace.getLocation() +
+                            "'ist incompatible to the one at the target location '" + importTarget.projectSpace().getLocation() +
+                            "'. or with the one used by this SIRIUS version. Nothing has been imported!" +
+                            " Try again `--update-fingerprint-version` to exclude incompatible parts from the import." +
+                            " WARNING: This will exclude all Fingerprint related results like CSI:FingerID and CANOPUS from the import.");
         }
 
         prog.updateStats(0);
         return imported;
     }
+
+
+    private final static Predicate<String> DATA_FILES_TO_SKIP = n -> !n.equals(FingerIdLocations.FINGERID_CLIENT_DATA) && !n.equals(FingerIdLocations.FINGERID_CLIENT_DATA_NEG)
+            && !n.equals(CanopusLocations.CANOPUS_CLIENT_DATA) && !n.equals(CanopusLocations.CANOPUS_CLIENT_DATA_NEG);
+
+    private final static Predicate<String> RESULTS_TO_SKIP = n -> !n.equals(SummaryLocations.STRUCTURE_CANDIDATES) && !n.equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP)
+            && !n.equals(FingerIdLocations.FINGERBLAST.relDir()) && !n.equals(FingerIdLocations.FINGERBLAST_FPs.relDir()) && !n.equals(FingerIdLocations.FINGERPRINTS.relDir())
+            && !n.equals(CanopusLocations.CANOPUS.relDir()) && !n.equals(CanopusLocations.NPC.relDir());
+
+    private static <D extends FingerprintData<?>> D checkAnReadData(Path inputFile, IOFunctions.IOFunction<BufferedReader, D> read) throws IOException {
+        if (Files.exists(inputFile)) {
+            try (BufferedReader r = Files.newBufferedReader(inputFile)) {
+                return read.apply(r);
+            }
+
+        }
+        return null;
+    }
+
+
+    public static Predicate<String> checkDataCompatibility(@NotNull Path toImportPath, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) throws IOException {
+        try {
+            if (FileUtils.isZipArchive(toImportPath))
+                toImportPath = FileUtils.asZipFS(toImportPath, false);
+            FingerIdData fdPos = checkAnReadData(toImportPath.resolve(FingerIdLocations.FINGERID_CLIENT_DATA), FingerIdData::read);
+            FingerIdData fdNeg = checkAnReadData(toImportPath.resolve(FingerIdLocations.FINGERID_CLIENT_DATA_NEG), FingerIdData::read);
+            CanopusData cdPos = checkAnReadData(toImportPath.resolve(CanopusLocations.CANOPUS_CLIENT_DATA), CanopusData::read);
+            CanopusData cdNeg = checkAnReadData(toImportPath.resolve(CanopusLocations.CANOPUS_CLIENT_DATA_NEG), CanopusData::read);
+            return checkDataCompatibility(
+                    (fdNeg != null || fdPos != null) ? new FingerIdDataProperty(fdPos, fdNeg) : null,
+                    (cdNeg != null || cdPos != null) ? new CanopusDataProperty(cdPos, cdNeg) : null, importTarget, interrupted);
+        } finally {
+            FileUtils.closeIfNotDefaultFS(toImportPath);
+        }
+    }
+
+    /**
+     * This checks whether the data files of the input project are compatible with the import target or them on the server.
+     * <p>
+     *
+     * @param toImport     project to be imported that should be checked for compatibility
+     * @param importTarget project to compare with, If null or data not server input is compared to server version
+     * @param interrupted  Tell the waiting job how it can check if it was interrupted
+     * @return null if compatible, predicate checking for paths to be skipped during import.
+     */
+    public static Predicate<String> checkDataCompatibility(@NotNull SiriusProjectSpace toImport, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) {
+        return checkDataCompatibility(toImport.getProjectSpaceProperty(FingerIdDataProperty.class).orElse(null),
+                toImport.getProjectSpaceProperty(CanopusDataProperty.class).orElse(null), importTarget, interrupted);
+    }
+
+    public static Predicate<String> checkDataCompatibility(@NotNull SiriusProjectSpace toImport, NetUtils.InterruptionCheck interrupted) {
+        return checkDataCompatibility(toImport, null, interrupted);
+    }
+
+
+    public static Predicate<String> checkDataCompatibility(@Nullable final FingerIdDataProperty importFd, @Nullable final CanopusDataProperty importCd, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) {
+        try {
+            //check finerid
+            if (importFd != null) {
+                FingerIdDataProperty targetFd = importTarget != null ? importTarget.getProjectSpaceProperty(FingerIdDataProperty.class).orElse(null) : null;
+                if (targetFd == null)
+                    targetFd = new FingerIdDataProperty(
+                            NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted),
+                            NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted));
+
+                if (!importFd.compatible(targetFd))
+                    return RESULTS_TO_SKIP;
+
+                //check canopus
+                if (importCd != null) {
+                    CanopusDataProperty targetCd = importTarget != null ? importTarget.getProjectSpaceProperty(CanopusDataProperty.class).orElse(null) : null;
+                    if (targetCd == null)
+                        targetCd = new CanopusDataProperty(
+                                NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted),
+                                NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted));
+
+                    if (!importCd.compatible(targetCd))
+                        return RESULTS_TO_SKIP;
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            LoggerFactory.getLogger(InstanceImporter.class).warn("Could not retrieve FingerprintData from server! Importing without checking for already outdated fingerprint data" + e.getMessage());
+            return null;
+        }
+
+    }
+
 
     //expanding input files
     public static InputFilesOptions.MsInput expandInputFromFile(@NotNull final List<File> files) {
@@ -352,73 +448,6 @@ public class InstanceImporter {
 
     public static InputExpanderJJob makeExpandPathsJJob(@NotNull final List<Path> files, @NotNull final InputFilesOptions.MsInput expandTo) {
         return new InputExpanderJJob(files, expandTo);
-    }
-
-    public static boolean checkAndFixDataFiles(SiriusProjectSpace toCheck, WebAPI webAPI) throws IOException {
-        final FingerIdDataProperty fd = toCheck.getProjectSpaceProperty(FingerIdDataProperty.class).orElse(null);
-        if (fd != null) {
-            final FingerIdData pos = webAPI.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE);
-            final FingerIdData neg = webAPI.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE);
-            if (fd.getPositive() != null) {
-                if (!fd.getPositive().compatible(pos)) {
-                    writeIncompatibleLog();
-                    return false;
-                }
-                if (fd.getNegative() == null) {
-                    LoggerFactory.getLogger(InstanceImporter.class).warn("Negative FingerIdData missing in project. Try to repair by reloading from webservice.");
-                    toCheck.setProjectSpaceProperty(FingerIdDataProperty.class,
-                            new FingerIdDataProperty(fd.getPositive(), neg));
-                }
-            }
-
-            if (fd.getNegative() != null) {
-                if (!fd.getNegative().compatible(neg)) {
-                    writeIncompatibleLog();
-                    return false;
-                }
-                if (fd.getPositive() == null) {
-                    LoggerFactory.getLogger(InstanceImporter.class).warn("Positive FingerIdData missing in project. Try to repair by reloading from webservice.");
-                    toCheck.setProjectSpaceProperty(FingerIdDataProperty.class,
-                            new FingerIdDataProperty(pos, fd.getNegative()));
-                }
-            }
-        }
-
-        final CanopusDataProperty cd = toCheck.getProjectSpaceProperty(CanopusDataProperty.class).orElse(null);
-        if (cd != null) {
-            final CanopusData pos = webAPI.getCanopusdData(PredictorType.CSI_FINGERID_POSITIVE);
-            final CanopusData neg = webAPI.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE);
-            if (cd.getPositive() != null) {
-                if (!cd.getPositive().compatible(pos)) {
-                    writeIncompatibleLog();
-                    return false;
-                }
-                if (cd.getNegative() == null) {
-                    LoggerFactory.getLogger(InstanceImporter.class).warn("Negative CanopusData missing in project. Try to repair by reloading from webservice.");
-                    toCheck.setProjectSpaceProperty(CanopusDataProperty.class,
-                            new CanopusDataProperty(cd.getPositive(), neg));
-                }
-            }
-
-            if (cd.getNegative() != null) {
-                if (!cd.getNegative().compatible(neg)) {
-                    writeIncompatibleLog();
-                    return false;
-                }
-                if (cd.getPositive() == null) {
-                    LoggerFactory.getLogger(InstanceImporter.class).warn("Positive CanopusData missing in project. Try to repair by reloading from webservice.");
-                    toCheck.setProjectSpaceProperty(CanopusDataProperty.class,
-                            new CanopusDataProperty(neg, cd.getNegative()));
-                }
-            }
-        }
-        return true;
-    }
-
-    private static void writeIncompatibleLog() {
-        LoggerFactory.getLogger(InstanceImporter.class).warn("The Fingerprint version of your Project ist incompatible to the one used by this SIRIUS version (out-dated).\n" +
-                "The project can be Converted using `--update-fingerprint-version`.\n " +
-                "WARNING: This will delete all Fingerprint related results like CSI:FingerID and CANOPUS.");
     }
 
     public static class InputExpanderJJob extends BasicJJob<InputFilesOptions.MsInput> {
