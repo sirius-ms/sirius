@@ -105,10 +105,9 @@ command-line tool.
 *Nat methods*, 16, 2019.**
 
 ---
-
-Kai Dührkop, Louis-Félix Nothias, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffmann, Juho Rousu, Pieter C. Dorrestein,  Sebastian Böcker
-[Classes for the masses: Systematic classification of unknowns using fragmentation spectra](https://doi.org/10.1101/2020.04.17.046672)
-bioRxiv, 2020.
+Kai Dührkop, Louis-Félix Nothias, Markus Fleischauer, Raphael Reher, Marcus Ludwig, Martin A. Hoffmann, Daniel Petras, William H. Gerwick, Juho Rousu, Pieter C. Dorrestein and Sebastian Böcker
+[Systematic classification of unknown metabolites using high-resolution fragmentation mass spectra](https://doi.org/10.1038/s41587-020-0740-8)
+Nature Biotechnology, 2020.  
 (Cite if you are using *CANOPUS*)
 
 Marcus Ludwig, Louis-Félix Nothias, Kai Dührkop, Irina Koester, Markus Fleischauer, Martin A. Hoffmann, Daniel Petras, Fernando Vargas, Mustafa Morsy, Lihini Aluwihare, Pieter C. Dorrestein, Sebastian Böcker
