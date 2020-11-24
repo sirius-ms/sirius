@@ -8,6 +8,7 @@
 - fix: project-space with outdated fingeprint versions (e.g. from SIRIUS 4.4) are now handled correctly and can be converted. 
 - fix: database formulas could be used if candidates even if they were incompatible with the adduct 
 - fix: mzml/mzxml files are now shown in input file selector
+
 ##### 4.5.0
 - **feature: [CANOPUS:](https://www.biorxiv.org/content/10.1101/2020.04.17.046672v1) for negative ion mode data**
 - feature: [Bayesian (individual tree)](https://doi.org/10.1093/bioinformatics/bty245) scoring is now the default for ranking structure candidates
