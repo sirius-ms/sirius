@@ -179,7 +179,7 @@ public class InstanceImporter {
 
             List<CompoundContainerId> l;
             try (final SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(file)) {
-                l = InstanceImporter.importProject(ps, importTarget, expFilter, cidFilter, move, updateFingerprintData, prog);
+                l = InstanceImporter.importProject(ps, importTarget, cidFilter, move, updateFingerprintData, prog);
             }
             if (move)
                 FileUtils.deleteRecursively(file);
@@ -236,17 +236,17 @@ public class InstanceImporter {
 
     public static List<CompoundContainerId> importProject(
             @NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget,
-            @NotNull Predicate<Ms2Experiment> expFilter, @NotNull Predicate<CompoundContainerId> cidFilter,
-            boolean move, boolean updateFingerprintVersion) throws IOException {
+            @NotNull Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintVersion) throws IOException {
 
-        return importProject(inputSpace, importTarget, expFilter, cidFilter, move, updateFingerprintVersion, (i) -> {
+        return importProject(inputSpace, importTarget, cidFilter, move, updateFingerprintVersion, (i) -> {
         });
     }
 
+    // we do not exp level filter here since we want to prevent reading the spectrum file
+    // we do file system level copies where we can here
     public static List<CompoundContainerId> importProject(
             @NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget,
-            @NotNull Predicate<Ms2Experiment> expFilter, @NotNull Predicate<CompoundContainerId> cidFilter,
-            boolean move, boolean updateFingerprintVersion, @NotNull Progress prog) throws IOException {
+            @NotNull Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintVersion, @NotNull Progress prog) throws IOException {
 
         //check is fingerprint data is compatible and clean if not.
         @Nullable Predicate<String> resultsToSkip = checkDataCompatibility(inputSpace, importTarget, NetUtils.checkThreadInterrupt(Thread.currentThread()));
@@ -274,7 +274,7 @@ public class InstanceImporter {
             }
 
 
-            final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);/*, expFilter*/
+            final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);
             prog.updateStats(inputSpace.size());
 
             while (psIter.hasNext()) {

@@ -129,7 +129,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                                     source.nameFormatter);
 
                             LoggerFactory.getLogger(getClass()).info("Copying compounds '" + p.stream().map(CompoundContainerId::getDirectoryName).collect(Collectors.joining(",")) + "' to Batch '" + batchSpace.projectSpace().getLocation().toString());
-                            InstanceImporter.importProject(source.projectSpace(), batchSpace, expFilter, (cid) -> p.contains(cid) && cidFilter.test(cid), move, rootOptions.getOutput().isUpdateFingerprints());
+                            InstanceImporter.importProject(source.projectSpace(), batchSpace, (cid) -> p.contains(cid) && cidFilter.test(cid), move, rootOptions.getOutput().isUpdateFingerprints());
 
                             if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
                                 LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of Batch '" + batchSpace.projectSpace().getLocation().toString());
