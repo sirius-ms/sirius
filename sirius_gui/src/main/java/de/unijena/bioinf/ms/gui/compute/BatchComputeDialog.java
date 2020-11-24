@@ -63,6 +63,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     public static final String DO_NOT_SHOW_AGAIN_KEY_Z_COMP = "de.unijena.bioinf.sirius.computeDialog.zodiac.compounds.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_Z_MEM = "de.unijena.bioinf.sirius.computeDialog.zodiac.memory.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_S_MASS = "de.unijena.bioinf.sirius.computeDialog.sirius.highmass.dontAskAgain";
+    public static final String DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.dontAskAgain";
 
 
     // main parts
@@ -232,6 +233,23 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             }
         }
 
+
+        if (formulaIDConfigPanel.isToolSelected() || canopusConfigPanel.isToolSelected() && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
+            boolean compCheck = Jobs.runInBackgroundAndLoad(MF, "Checking FP version...", new TinyBackgroundJJob<Boolean>() {
+                @Override
+                protected Boolean compute() throws Exception {
+                    return MF.ps().checkAndFixDataFiles(this::checkForInterruption);
+                }
+
+            }).getResult();
+
+            if (!compCheck) {
+                new WarningDialog(this, "Outdated Fingerprint version!", "<html><body>You are working on an project with an outdated Fingerprint version!<br> " +
+                        "CSI:FingerID and CANOPUS are not available; all jobs will be skipped.<br>" +
+                        "Project conversion can be selected during import or via the commandline.<br><br>" +
+                        "</body></html>", DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS);
+            }
+        }
         // todo hotfix to prevent gui from going crazy
         {
             int index = MF.getCompoundListSelectionModel().getMinSelectionIndex();
@@ -249,10 +267,10 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                     List<InstanceBean> lowMass = finalComps.stream().filter(i -> i.getIonMass() <= 850).collect(Collectors.toList());
                     int highMass = finalComps.size() - lowMass.size();
                     final AtomicBoolean success = new AtomicBoolean(false);
-                    if (highMass > 1) //do not ask for a single compound
+                    if (highMass > 1 && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_S_MASS, false)) //do not ask for a single compound
                         Jobs.runEDTAndWait(() -> success.set(new QuestionDialog(MainFrame.MF, "High mass Compounds detected!",
                                 GuiUtils.formatToolTip("Your analysis contains '" + highMass + "' compounds with a mass higher than 850Da. Fragmentation tree computation may take very long (days) to finish. You might want to exclude compounds with mass >850Da and compute them on individual basis afterwards.", "", "Do you wish to exclude the high mass compounds?"),
-                                DO_NOT_SHOW_AGAIN_KEY_Z_COMP).isSuccess()));
+                                DO_NOT_SHOW_AGAIN_KEY_S_MASS).isSuccess()));
                     if (success.get())
                         finalComps = lowMass;
                 }
