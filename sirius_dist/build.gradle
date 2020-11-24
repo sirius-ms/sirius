@@ -292,32 +292,31 @@ subprojects {
 
 //###################################### END Default values ##########################################
 
-
     task distImage(type: AppImage, group: 'distribution') {
-        dependsOn installDist, downloadManual, downloadCLP, downloadGLPK/*, checkDefaultProfile*/
+        dependsOn installDist, downloadManual, downloadCLP, downloadGLPK
         jpackagerBin = Paths.get(System.getProperty("java.home")).resolve('bin').resolve(OS.isWindows() ? 'jpackage.exe' : 'jpackage').toFile()
         mainClass = mainClassName
         outputDir = buildDir.toPath().resolve('distributions').toFile()
         winConsole = true
 
-        jvmArgs = [
+        String[] jArgs = [
                 '-Xms1G',
                 '-XX:MaxRAMPercentage=85',
                 '--illegal-access=permit',
-                '--add-opens java.base/java.lang=ALL-UNNAMED',
-                '--add-opens java.base/java.net=ALL-UNNAMED',
+                '--add-opens=java.base/java.lang=ALL-UNNAMED',
+                '--add-opens=java.base/java.net=ALL-UNNAMED',
         ]
 
 
         if (OS.isWindows()) {
-            jvmArgs += ['-Djava.library.path=$APPDIR\\..',
-                        '-javaagent:$APPDIR\\\\agents-' + siriusVersion + '.jar',
-            ]
-        } else {
-            jvmArgs += ['-Djava.library.path=\\$APPDIR/../native',
-                        '-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar',
-            ]
+            jvmArgs = jArgs + ['-Djava.library.path=$APPDIR\\..',
+                               '-javaagent:$APPDIR\\\\agents-' + siriusVersion + '.jar']
+        } else if (OS.isLinux()) {
+            jvmArgs = jArgs + ['-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar']
 
+        } else {
+            jvmArgs = jArgs + ['-Djava.library.path=\\$APPDIR/../native',
+                        '-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar']
         }
 
         doLast {
@@ -325,7 +324,7 @@ subprojects {
             File appRootTarget
             if (OS.isLinux()) {
                 appRootTarget = outputDir.toPath().resolve(imageName).toFile()
-                nativeLibsTarget = appRootTarget.toPath().resolve("lib/native").toFile()
+                nativeLibsTarget = appRootTarget.toPath().resolve("lib/runtime/lib").toFile()
             } else if (OS.isWindows()) {
                 appRootTarget = outputDir.toPath().resolve(imageName).toFile()
                 nativeLibsTarget = appRootTarget
@@ -351,6 +350,21 @@ subprojects {
                 }
                 from(downloadManual.outputs.files.singleFile)
                 into(appRootTarget)
+            }
+
+            if (OS.isLinux()) {
+                def lines = file("${rootDir}/scripts/sirius.sh").readLines()
+                def f = file("$appRootTarget/bin/sirius.sh")
+                f.withWriter {
+                    lines.forEach { l ->
+                        if (l.startsWith('DEFAULT_JVM_OPTS='))
+                            l = l.replace('DEFAULT_JVM_OPTS=', "DEFAULT_JVM_OPTS='${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))} \"-javaagent:\$APP_HOME/lib/app/agents-${siriusVersion}.jar\"'")
+                        else if (l.startsWith('MAIN_CLASS='))
+                            l = l.replace('MAIN_CLASS=', 'MAIN_CLASS="' + mainClassName + '"')
+                        it.writeLine(l)
+                    }
+                }
+                f.setExecutable(true, false)
             }
         }
     }
