@@ -3,25 +3,36 @@
 - GUI: More detailed Visualisation of what has already been computed
 - more bugfixes ;-)
 
+##### 4.5.1
+- improvement: CLP native libs are now compatible with glibc 2.12+ (instead of 2.18+) 
+- fix: project-space with outdated fingeprint versions (e.g. from SIRIUS 4.4) are now handled correctly and can be converted. 
+- fix: database formulas could be used if candidates even if they were incompatible with the adduct 
+- fix: mzml/mzxml files are now shown in input file selector
 ##### 4.5.0
-- **feature: CANOPUS for negative ion mode data**
-- feature: Custom-DB importer View (GUI)
-- feature: mgf export for Feature Based Molecular Networking is now available in the GUI
+- **feature: [CANOPUS:](https://www.biorxiv.org/content/10.1101/2020.04.17.046672v1) for negative ion mode data**
+- feature: [Bayesian (individual tree)](https://doi.org/10.1093/bioinformatics/bty245) scoring is now the default for ranking structure candidates
 - **update: Structure DB update due to major changes in PubChem standardization since the last one.**
-  - feature: COCONUT, NORMAN and Super Natural are now officially supported 
+  - feature: COCONUT, NORMAN and Super Natural are now officially supported
+- feature: Custom-DB importer View (GUI)
+
+- feature: mgf export for Feature Based Molecular Networking is now available in the GUI
+
 - **breaking:**  additional columns (`ionMass`, `retentionTimeInSeconds`) have been added to project wide summary files
 such as `formula_identifications.tsv`, `compound_identifications.tsv` and `compound_identifications_adducts.tsv`
 - **breaking:** column names in `formula_candidates.tsv` have changed: `massError(ppm)` to `massErrorPrecursor(ppm)`, `explainedPeaks` to `numExplainedPeaks`, `medianAbsoluteMassError(ppm)` to `medianAbsoluteMassErrorFragmentPeaks(ppm)`
 - **breaking:** column names describing scores now use camel case instead of underscores: `ConfidenceScore`, `SiriusScore`, `ZodiacScore`,`TreeScore`,`IsotopeScore`, `CSI:FingerIDScore`
 
-- fix: incompatibility with recent MaOSX version cause by gatekeeper. We now provide an installable packages.
+- fix: incompatibility with recent MaOSX version caused by gatekeeper. We now provide an installable packages.
 - fix: missing SCANS annotation in mgf-export subtool - creates now a valid input for FBMN
 - fix: un-parsed retention times in CEF format.   
 - fix: Structure DB linking (wrong ids, missing link flags, duplicate entries, etc.)
+- fix: reduced memory consumption of CLI and GUI 
 
-- Many other bug fixes and performance improvements 
+- JRE is now included in all version of SIRIUS
+- Many more bug fixes and performance improvements 
 
-**NOTE: SIRIUS versions will now follow semantic versioning (all upcoming releases)**
+**NOTE: SIRIUS versions will now follow semantic versioning (all upcoming releases)** 
+regarding the command line interface and project-space output.  
 
 ##### 4.4.29
 - fix: Error when parsing FragTree json with non numeric double values

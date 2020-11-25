@@ -21,10 +21,10 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.annotations.WriteSummaries;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +33,7 @@ import picocli.CommandLine.Option;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.LogManager;
 
 /**
@@ -177,7 +178,13 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                 }
             });
 
-            InstanceImporter.checkAndFixNegativeDataFiles(space.projectSpace(), ApplicationCore.WEB_API);
+
+            try {
+                space.checkAndFixDataFiles(NetUtils.checkThreadInterrupt(Thread.currentThread()));
+            } catch (TimeoutException | InterruptedException e) {
+                LoggerFactory.getLogger(getClass()).warn("Could not check Fingerprint version on Project creation. " + e.getMessage());
+            }
+
             return space;
         } catch (IOException e) {
             throw new CommandLine.PicocliException("Could not initialize workspace!", e);
@@ -204,7 +211,6 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     public boolean assessDataQuality;
     //endregion
 
-
     @NotNull
     @Override
     public PreprocessingJob<M> makeDefaultPreprocessingJob() {
@@ -215,7 +221,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                 InputFilesOptions input = getInput();
                 if (space != null) {
                     if (input != null)
-                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz, (c) -> true).makeImportJJob(input)).awaitResult();
+                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz, (c) -> c.getIonMass().map(m -> m < maxMz).orElse(true), false, getOutput().isUpdateFingerprints()).makeImportJJob(input)).awaitResult();
                     if (space.size() < 1)
                         logInfo("No Input has been imported to Project-Space. Starting application without input data.");
                     return space;
@@ -233,8 +239,6 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
             protected Boolean compute() throws Exception {
                 M project = getProjectSpace();
                 try {
-                    //remove recompute annotation since it should be cli only option
-//                iteratorSource.forEach(it -> it.getExperiment().setAnnotation(RecomputeResults.class,null)); //todo fix needed?
                     //use all experiments in workspace to create summaries
                     if (defaultConfigOptions.config.createInstanceWithDefaults(WriteSummaries.class).value) {
                         LOG.info("Writing summary files...");
