@@ -31,9 +31,11 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
+import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -56,12 +58,6 @@ public class CanopusSubToolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        //skip negative data
-        /*if (inst.getID().getIonType().orElseGet(() -> inst.getExperiment().getPrecursorIonType()).isNegative()){
-            logWarn("Skipping because NEGATIVE ion mode data is currently not supported by CANOPUS.");
-            return;
-        }*/
-
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(FormulaScoring.class, FingerprintResult.class, CanopusResult.class);
 
         // create input
@@ -74,10 +70,7 @@ public class CanopusSubToolJob extends InstanceJob {
             return;
         }
 
-        // submit canopus jobs for Identification results that contain CSI:FingerID results
-        Map<FormulaResult, CanopusWebJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmitRemote));
-
-        jobs.forEach((k, v) -> k.setAnnotation(CanopusResult.class, v.takeResult()));
+        if (!checkFingerprintCompatibility()) return;
 
         // write Canopus client data
         if (inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusDataProperty.class).isEmpty()) {
@@ -85,6 +78,11 @@ public class CanopusSubToolJob extends InstanceJob {
             final CanopusData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
             inst.getProjectSpaceManager().setProjectSpaceProperty(CanopusDataProperty.class, new CanopusDataProperty(pos, neg));
         }
+
+        // submit canopus jobs for Identification results that contain CSI:FingerID results
+        Map<FormulaResult, CanopusWebJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmitRemote));
+
+        jobs.forEach((k, v) -> k.setAnnotation(CanopusResult.class, v.takeResult()));
 
         // write canopus results
         for (FormulaResult r : res)

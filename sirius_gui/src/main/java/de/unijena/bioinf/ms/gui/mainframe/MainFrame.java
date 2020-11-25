@@ -42,6 +42,7 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,6 +53,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -158,6 +160,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     public void openNewProjectSpace(Path selFile) {
+
         changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile));
     }
 
@@ -165,13 +168,14 @@ public class MainFrame extends JFrame implements DropTargetListener {
         changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(selFile));
     }
 
-    protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace){
+    protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace) {
         final BasicEventList<InstanceBean> psList = this.ps.INSTANCE_LIST;
+        final AtomicBoolean compatible = new AtomicBoolean(true);
         this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
             final SiriusProjectSpace ps = makeSpace.get();
-            InstanceImporter.checkAndFixNegativeDataFiles(ps, ApplicationCore.WEB_API);
+            compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
             Jobs.cancelALL();
-            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY,9));
+            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 9));
             inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
             gps.projectSpace().addProjectSpaceListener(event -> {
                 if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
@@ -179,15 +183,21 @@ public class MainFrame extends JFrame implements DropTargetListener {
             });
             return gps;
         }).getResult();
+
+        if (!compatible.get())
+            if (new QuestionDialog(MF, "<html><body>" +
+                    "The opened project-space contains results based on an outdated fingerprint version.<br><br>" +
+                    "You can either convert the project to the new fingerprint version and <b>lose all fingerprint related results</b> (e.g. CSI:FingerID an CANOPUS),<br>" +
+                    "or you stay with the old fingerprint version but without being able to execute any  fingerprint related computations.<br><br>" +
+                    "Do you wish to convert and lose all fingerprint related results?" +
+                    "</body></html>").isSuccess())
+                ps().updateFingerprintData();
     }
 
     public void decoradeMainFrameInstance(@NotNull GuiProjectSpaceManager projectSpaceManager) {
-        //create computation
-        //todo get predictor from application core?
-        // create project space
+        //add project-space
         ps = projectSpaceManager;
         inEDTAndWait(() -> MF.setTitlePath(ps.projectSpace().getLocation().toString()));
-
 
         // create models for views
         compoundList = new CompoundList(ps);
@@ -198,7 +208,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         jobDialog = new JobDialog(this);
         // results Panel
         resultsPanel = new ResultPanel(formulaList, ApplicationCore.WEB_API);
-
+        // toolbar
         toolbar = new SiriusToolbar();
 
         final JPanel mainPanel = new JPanel(new BorderLayout());

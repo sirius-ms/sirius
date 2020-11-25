@@ -27,6 +27,7 @@ import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -121,5 +122,9 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
             return job;
         }
 
+    }
+
+    protected boolean checkFingerprintCompatibility() throws TimeoutException, InterruptedException {
+        return input.getProjectSpaceManager().checkAndFixDataFiles(this::checkForInterruption);
     }
 }
