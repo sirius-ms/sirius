@@ -61,6 +61,16 @@ import java.util.Optional;
  */
 public class PrecursorIonType implements TreeAnnotation {
 
+
+    public boolean isApplicableToNeutralFormula(MolecularFormula neutralFormula) {
+        if (inSourceFragmentation.isEmpty()) return true;
+        else return neutralFormula.isSubtractable(inSourceFragmentation);
+    }
+    public boolean isApplicableToMeasuredFormula(MolecularFormula measuredFormula) {
+        if (adduct.isEmpty()) return true;
+        else return measuredFormula.isSubtractable(adduct);
+    }
+
     protected static enum SPECIAL_TYPES {
         REGULAR, UNKNOWN, INTRINSICAL_CHARGED
     }

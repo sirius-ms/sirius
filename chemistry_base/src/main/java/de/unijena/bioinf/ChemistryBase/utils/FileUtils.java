@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -43,6 +44,32 @@ import java.util.zip.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class FileUtils {
+
+
+    public static void closeIfNotDefaultFS(Path zipFS) throws IOException {
+        final FileSystem fs = zipFS.getFileSystem();
+        if (!fs.equals(FileSystems.getDefault()) && fs.isOpen())
+            fs.close();
+    }
+
+    public static boolean isZipArchive(Path f) throws IOException {
+        if (!Files.isRegularFile(f))
+            return false;
+        int fileSignature;
+        try (RandomAccessFile raf = new RandomAccessFile(f.toFile(), "r")) {
+            fileSignature = raf.readInt();
+        }
+        return fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708;
+    }
+
+
+    public static Path asZipFS(Path zipFile, boolean createNew) throws IOException {
+        final Map<String, String> option = new HashMap<>();
+        if (createNew)
+            option.put("create", "true");
+        FileSystem zipFS = FileSystems.newFileSystem(URI.create("jar:file:" + zipFile.toUri().getPath()), option);
+        return zipFS.getPath(zipFS.getSeparator());
+    }
 
     /**
      * @param folder
