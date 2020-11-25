@@ -20,10 +20,11 @@
 
 package de.unijena.bioinf.projectspace.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.projectspace.PosNegProperty;
+import de.unijena.bioinf.projectspace.PosNegFpProperty;
 
-public class FingerIdDataProperty extends PosNegProperty<FingerIdData> {
+public class FingerIdDataProperty extends PosNegFpProperty<CdkFingerprintVersion, FingerIdData> {
     public FingerIdDataProperty(FingerIdData positive, FingerIdData negative) {
         super(positive, negative);
     }

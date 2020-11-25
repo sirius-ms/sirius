@@ -132,7 +132,7 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         eachFormula:
         for (MolecularFormula formula : neutralFormulas) {
             for (PrecursorIonType ionType : allowedPrecursorIonTypes) {
-                if (deviation.inErrorWindow(parentMass, ionType.neutralMassToPrecursorMass(formula.getMass()))) {
+                if (ionType.isApplicableToNeutralFormula(formula) && deviation.inErrorWindow(parentMass, ionType.neutralMassToPrecursorMass(formula.getMass()))) {
                     decompositionSet.add(new Decomposition(ionType.neutralMoleculeToMeasuredNeutralMolecule(formula), ionType.getIonization(), 0d));
                     continue eachFormula;
                 }
@@ -141,7 +141,7 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         eachFormula:
         for (MolecularFormula formula : measuredFormulas) {
             for (PrecursorIonType ionType : allowedPrecursorIonTypes) {
-                if (deviation.inErrorWindow(parentMass, ionType.getIonization().addToMass(formula.getMass()))) {
+                if (ionType.isApplicableToMeasuredFormula(formula) && deviation.inErrorWindow(parentMass, ionType.getIonization().addToMass(formula.getMass()))) {
                     decompositionSet.add(new Decomposition(formula, ionType.getIonization(), 0d));
                     continue eachFormula;
                 }

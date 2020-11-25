@@ -20,10 +20,7 @@
 
 package de.unijena.bioinf.ms.rest.model.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.MolecularProperty;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.projectspace.ProjectSpaceProperty;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +34,7 @@ import java.util.Arrays;
 /**
  * Has to be set by CLI when first running CSI via WebAPI call
  */
-public class FingerIdData {
+public class FingerIdData implements FingerprintData<CdkFingerprintVersion> {
 
     protected MaskedFingerprintVersion fingerprintVersion;
     protected CdkFingerprintVersion cdkFingerprintVersion;
@@ -55,6 +52,11 @@ public class FingerIdData {
 
     public CdkFingerprintVersion getCdkFingerprintVersion() {
         return cdkFingerprintVersion;
+    }
+
+    @Override
+    public CdkFingerprintVersion getBaseFingerprintVersion() {
+        return getCdkFingerprintVersion();
     }
 
     public PredictionPerformance[] getPerformances() {
