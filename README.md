@@ -6,7 +6,7 @@ We ask that users of our tools cite the corresponding papers in any resulting pu
 
 Contact: ![](https://raw.githubusercontent.com/boecker-lab/sirius_frontend/release/manual/source/siriusMailtrans.png)
 
-SIRIUS is a java-based software framework for the analysis of LC-MS/MS data of metabolites and other small molecules.
+SIRIUS is a java-based software framework for the analysis of LC-MS/MS data of metabolites and other "small molecules of biological interest".
 SIRIUS integrates a collection of our tools, including CSI:FingerID, ZODIAC and CANOPUS. In particular, both the
 graphical user interface and the command line version of SIRIUS seamlessly integrate the CSI:FingerID and CANOPUS web services.
 
@@ -18,7 +18,7 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 - [Training material](https://bio.informatik.uni-jena.de/sirius-training/)
 - [Manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-manual.pdf)
 - [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
-- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
+- [Demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
 ### SIRIUS+CSI:FingerID GUI and CLI - Version 4.5.1 (2020-11-24)
 ##### This versions includes the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
