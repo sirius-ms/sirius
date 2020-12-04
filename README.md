@@ -1,6 +1,6 @@
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
 methods, in whole or in part, for commercial purposes is prohibited.
-CSI:FingerID and CANOPUS web services hosted by the [Böcker group](https://bio.informatik.uni-jena.de/) is for non-commercial use only. 
+CSI:FingerID and CANOPUS web services hosted by the [Böcker group](https://bio.informatik.uni-jena.de/) are for non-commercial use only. 
 For commercial users, the [Bright Giant GmbH](https://bright-giant.com) provides all related services.
 We ask that users of our tools cite the corresponding papers in any resulting publications.</span>*
 
