@@ -26,7 +26,7 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 - for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-linux64.zip)
 - for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-osx64.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-osx64.zip)
 
-### SIRIUS+CSI:FingerID Commandline only - Version 4.5.1 (2020-11-24)
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.5.1 (2020-11-24)
 ##### This versions includes the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
 - for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-win64-headless.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-win64-headless.zip)
 - for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-linux64-headless.zip)
