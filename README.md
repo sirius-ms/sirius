@@ -16,8 +16,8 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 
 ### Documentation
 - [Documentation](https://boecker-lab.github.io/docs.sirius.github.io/)
-- [Manual(pdf)](https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/ms/manual/4.5.1/manual-4.5.1-manual.pdf)
 - [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
+- [Manual(pdf)](https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/ms/manual/4.5.1/manual-4.5.1-manual.pdf)
 - [Training material](https://bio.informatik.uni-jena.de/sirius-training/)
 - [Demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
