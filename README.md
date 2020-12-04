@@ -54,11 +54,8 @@ displayed in the SIRIUS graphical user interface. This functionality is
 also available for the SIRIUS command-line tool.
 Training structures for CSI:FingerID's predictors are available through 
 the CSI:FingerID WebAPI:
-
-##### Training structures for positive ion mode:
-https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=1
-##### Training structures for negative ion mode:
-https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=2
+- https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
+- https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
 
 ### Fragmentation Tree Computation
 
