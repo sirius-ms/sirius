@@ -1,35 +1,23 @@
-*<span style="color: #808080;">SIRIUS and CSI:FingerID are offered to
-the public as freely available resources. (Re-)distribution of the
-methods, in whole or in part, for commercial purposes requires explicit
-permission of the authors and explicit acknowledgment of the source
-material and the original publications. We ask that users who use SIRIUS
-and CSI:FingerID cite the corresponding papers in any resulting
-publications.</span>*
+*<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
+methods, in whole or in part, for commercial purposes is prohibited.
+CSI:FingerID and CANOPUS web services hosted by the [Böcker group](https://bio.informatik.uni-jena.de/) is for non-commercial use only. 
+For commercial users, the [Bright Giant GmbH](https://bright-giant.com) provides all related services.
+We ask that users of our tools cite the corresponding papers in any resulting publications.</span>*
 
 Contact: ![](https://raw.githubusercontent.com/boecker-lab/sirius_frontend/release/manual/source/siriusMailtrans.png)
 
-*<span style="color: #808080;">
-The CSI:FingerID web-service hosted by the [boecker group](https://bio.informatik.uni-jena.de/) at https://www.csi-fingerid.uni-jena.de, which is used by default in SIRIUS, is for non-commercial use only. 
-For commercial users the [Bright Giant GmbH](https://bright-giant.com) provides CSI:FignerID related services that can be used with SIRIUS.</span>*
-
-SIRIUS is a java-based software framework for discovering a
-landscape of de-novo identification of metabolites using single and
-tandem mass spectrometry. SIRIUS uses isotope pattern analysis for
-detecting the molecular formula and further analyses the fragmentation
-pattern of a compound using fragmentation trees. 
-<span style="color: #339966;">Fragmentation trees can be uploaded to CSI:FingerID via a web service,
-and results can be displayed in the SIRIUS graphical user interface.</span> (This is
-also possible using the command line version of SIRIUS.) 
-<span style="color: #339966;">This is the recommended way of using
-CSI:FingerID.</span>
+SIRIUS is a java-based software framework for the analysis of LC-MS/MS data of metabolites and other small molecules.
+SIRIUS integrates a collection of our tools, including CSI:FingerID, ZODIAC and CANOPUS. In particular, both the
+graphical user interface and the command line version of SIRIUS seamlessly integrate the CSI:FingerID and CANOPUS web services.
 
 ## Download Links
 
 <!--begin download-->
 
 ### Documentation
-- [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-manual.pdf)
+- [Training material](https://bio.informatik.uni-jena.de/sirius-training/)
+- [Manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-manual.pdf)
+- [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
 - [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
 ### SIRIUS+CSI:FingerID GUI and CLI - Version 4.5.1 (2020-11-24)
