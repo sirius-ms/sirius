@@ -15,20 +15,16 @@
 - **update: Structure DB update due to major changes in PubChem standardization since the last one.**
   - feature: COCONUT, NORMAN and Super Natural are now officially supported
 - feature: Custom-DB importer View (GUI)
-
 - feature: mgf export for Feature Based Molecular Networking is now available in the GUI
-
 - **breaking:**  additional columns (`ionMass`, `retentionTimeInSeconds`) have been added to project wide summary files
 such as `formula_identifications.tsv`, `compound_identifications.tsv` and `compound_identifications_adducts.tsv`
 - **breaking:** column names in `formula_candidates.tsv` have changed: `massError(ppm)` to `massErrorPrecursor(ppm)`, `explainedPeaks` to `numExplainedPeaks`, `medianAbsoluteMassError(ppm)` to `medianAbsoluteMassErrorFragmentPeaks(ppm)`
 - **breaking:** column names describing scores now use camel case instead of underscores: `ConfidenceScore`, `SiriusScore`, `ZodiacScore`,`TreeScore`,`IsotopeScore`, `CSI:FingerIDScore`
-
 - fix: incompatibility with recent MaOSX version caused by gatekeeper. We now provide an installable packages.
 - fix: missing SCANS annotation in mgf-export subtool - creates now a valid input for FBMN
 - fix: un-parsed retention times in CEF format.   
 - fix: Structure DB linking (wrong ids, missing link flags, duplicate entries, etc.)
 - fix: reduced memory consumption of CLI and GUI 
-
 - JRE is now included in all version of SIRIUS
 - Many more bug fixes and performance improvements 
 
