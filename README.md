@@ -7,7 +7,8 @@ We ask that users of our tools cite the corresponding papers in any resulting pu
 Contact: ![](https://raw.githubusercontent.com/boecker-lab/sirius_frontend/release/manual/source/siriusMailtrans.png)
 
 SIRIUS is a java-based software framework for the analysis of LC-MS/MS data of metabolites and other "small molecules of biological interest".
-SIRIUS integrates a collection of our tools, including CSI:FingerID, ZODIAC and CANOPUS. In particular, both the
+SIRIUS integrates a collection of our tools, including CSI:FingerID, [ZODIAC](https://bio.informatik.uni-jena.de/software/zodiac/) and 
+[CANOPUS](https://bio.informatik.uni-jena.de/software/canopus/). In particular, both the
 graphical user interface and the command line version of SIRIUS seamlessly integrate the CSI:FingerID and CANOPUS web services.
 
 ## Download Links
@@ -17,7 +18,7 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 ### Documentation
 - [Documentation](https://boecker-lab.github.io/docs.sirius.github.io/)
 - [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
-- [Manual(pdf)](https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/ms/manual/4.5.1/manual-4.5.1-manual.pdf)
+- [Manual (pdf)](https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/ms/manual/4.5.1/manual-4.5.1-manual.pdf)
 - [Training material](https://bio.informatik.uni-jena.de/sirius-training/)
 - [Demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
@@ -34,9 +35,9 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 - for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-osx64-headless.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-osx64-headless.zip)
 
 ### Installation
-On Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require admin permissions.
-Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust software from an unknown source on Windows/MacOS.
-On MacOS the option to confirm the execution of the installer (pkg) might be hidden under 'System Settings' -> 'Security & Privacy'.
+For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
+Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from an unknown source" on Windows/MacOS.
+On MacOS, the option to confirm the execution of the installer (pkg) may be hidden under 'System Settings' -> 'Security & Privacy'.
 
 ### Sources on GitHub
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius)
