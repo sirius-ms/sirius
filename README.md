@@ -19,7 +19,7 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 - [Documentation](https://boecker-lab.github.io/docs.sirius.github.io/)
 - [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
 - [Manual (pdf)](https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/ms/manual/4.5.1/manual-4.5.1-manual.pdf)
-- [Bookchapter on "De novo molecular formula annotation and structure elucidation using SIRIUS 4"](https://doi.org/10.1007/978-1-0716-0239-3_11) (Preprint) -- does not cover the new LC-MS/MS processing option
+- [Bookchapter on using SIRIUS 4](https://doi.org/10.1007/978-1-0716-0239-3_11) (Preprint) -- does not cover the new LC-MS/MS processing option
 - [Training material](https://bio.informatik.uni-jena.de/sirius-training/)
 - [Demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
 
