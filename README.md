@@ -49,13 +49,9 @@ For **SIRIUS 4.0.1** click [here](https://bio.informatik.uni-jena.de/software/si
 
 ### Integration of CSI:FingerID
 
-Fragmentation trees and spectra can be directly uploaded from SIRIUS to
-a CSI:FingerID web service, without the need to access the (deprecated) CSI:FingerID
-website. Results are retrieved from the web service and can be
-displayed in the SIRIUS graphical user interface. This functionality is
-also available for the SIRIUS command-line tool.
-Training structures for CSI:FingerID's predictors are available through 
-the CSI:FingerID WebAPI:
+Fragmentation trees and spectra can be directly uploaded from SIRIUS to a CSI:FingerID web service, without the need to access the (deprecated) CSI:FingerID
+website. Results are retrieved from the web service and can be displayed in the SIRIUS graphical user interface. This functionality is
+also available for the SIRIUS command-line tool. Training structures for CSI:FingerID's predictors are available through the CSI:FingerID web API:
 - https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
 - https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
 
@@ -87,42 +83,39 @@ command-line tool.
 <!--begin cite-->
 ## Main citations
 
-**Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
-[Sirius 4: turning tandem mass spectra into metabolite structure information](https://doi.org/10.1038/s41592-019-0344-8), 
-*Nat methods*, 16, 2019.**
+Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
+[SIRIUS 4: Turning tandem mass spectra into metabolite structure information.](https://doi.org/10.1038/s41592-019-0344-8)
+*Nature Methods* 16, 299–302, 2019.
 
 ---
 Kai Dührkop, Louis-Félix Nothias, Markus Fleischauer, Raphael Reher, Marcus Ludwig, Martin A. Hoffmann, Daniel Petras, William H. Gerwick, Juho Rousu, Pieter C. Dorrestein and Sebastian Böcker.
 [Systematic classification of unknown metabolites using high-resolution fragmentation mass spectra.](https://doi.org/10.1038/s41587-020-0740-8)
-Nature Biotechnology, 2020.  
+*Nature Biotechnology*, 2020.  
 (Cite if you are using *CANOPUS*)
+
+Yannick Djoumbou Feunang, Roman Eisner, Craig Knox, Leonid Chepelev, Janna Hastings, Gareth Owen, Eoin Fahy, Christoph Steinbeck, Shankar Subramanian, Evan Bolton, Russell Greiner, David S. Wishart.
+[ClassyFire: automated chemical classification with a comprehensive, computable taxonomy.](https://doi.org/10.1186/s13321-016-0174-y)
+*Journal of Cheminformatics* 8, 61, 2016. (*ClassyFire* publication; cite this if you are using *CANOPUS*)
 
 Marcus Ludwig, Louis-Félix Nothias, Kai Dührkop, Irina Koester, Markus Fleischauer, Martin A. Hoffmann, Daniel Petras, Fernando Vargas, Mustafa Morsy, Lihini Aluwihare, Pieter C. Dorrestein, Sebastian Böcker.
 [Database-independent molecular formula annotation using Gibbs sampling through ZODIAC.](https://doi.org/10.1038/s42256-020-00234-6)
-*Nat Mach Intell*, 2020.
+*Nature Machine Intelligence* 2, 629–641, 2020.
 (Cite if you are using *ZODIAC*)
 
-Yannick Djoumbou Feunang, Roman Eisner, Craig Knox, Leonid Chepelev, Janna Hastings, Gareth Owen, Eoin Fahy, Christoph Steinbeck, Shankar Subramanian, Evan Bolton, Russell Greiner, David S. Wishart
-[ClassyFire: automated chemical classification with a comprehensive, computable taxonomy](https://doi.org/10.1186/s13321-016-0174-y)
-J Cheminf, 8, 2016. (Cite if you are using *CANOPUS*)
+Kai Dührkop and Sebastian Böcker.
+[Fragmentation trees reloaded.](http://dx.doi.org/10.1007/978-3-319-16706-0_10)
+*Journal of Cheminformatics* 8, 5, 2016.
+(Cite this for *fragmentation pattern analysis and fragmentation tree computation*) 
 
-Kai Dührkop and Sebastian Böcker. [Fragmentation trees
-reloaded.](http://dx.doi.org/10.1007/978-3-319-16706-0_10)  *J
-Cheminform*, 8:5, 2016. (Cite this for *fragmentation pattern analysis
-and fragmentation tree computation*) 
+Kai Dührkop, Huibin Shen, Marvin Meusel, Juho Rousu, and Sebastian Böcker.
+[Searching molecular structure databases with tandem mass spectra using CSI:FingerID](http://dx.doi.org/10.1073/pnas.1509788112).
+*Proceedings of the National Academy of Sciences U S A* 112(41), 12580-12585, 2015.
+(cite this when *using CSI:FingerID*) 
 
-Kai Dührkop, Huibin Shen, Marvin
-Meusel, Juho Rousu, and Sebastian Böcker. [Searching molecular structure
-databases with tandem mass spectra using
-CSI:FingerID](http://dx.doi.org/10.1073/pnas.1509788112). *Proc Natl
-Acad Sci U S A*, 112(41):12580-12585, 2015. (cite this when *using
-CSI:FingerID*) 
-
-Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták
-and Anton Pervukhin. [SIRIUS: decomposing isotope patterns for
-metabolite
-identification.](http://bioinformatics.oxfordjournals.org/content/25/2/218.full) *Bioinformatics*
-(2009) 25 (2): 218-224. (Cite this for *isotope pattern analysis*)
+Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták and Anton Pervukhin.
+[SIRIUS: decomposing isotope patterns for metabolite identification.](http://bioinformatics.oxfordjournals.org/content/25/2/218.full)
+*Bioinformatics* 25(2), 218-224, 2009.
+(Cite this for *isotope pattern analysis*)
 
 ### Additional citations
 
