@@ -34,16 +34,16 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 - for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-linux64-headless.zip)
 - for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-osx64-headless.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-osx64-headless.zip)
 
-### Installation
+<!--end download-->
+
+### [Installation](https://boecker-lab.github.io/docs.sirius.github.io/install)
 For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
 Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from an unknown source" on Windows/MacOS.
-On MacOS, the option to confirm the execution of the installer (pkg) may be hidden under 'System Settings' -> 'Security & Privacy'.
+See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/install) for details.
 
 ### Sources on GitHub
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius)
 - [SIRIUS library](https://github.com/boecker-lab/sirius-libs)
-
-<!--end download-->
 
 For **SIRIUS 4.0.1** click [here](https://bio.informatik.uni-jena.de/software/sirius-4-0-1/).
 
@@ -52,8 +52,10 @@ For **SIRIUS 4.0.1** click [here](https://bio.informatik.uni-jena.de/software/si
 Fragmentation trees and spectra can be directly uploaded from SIRIUS to a CSI:FingerID web service, without the need to access the (deprecated) CSI:FingerID
 website. Results are retrieved from the web service and can be displayed in the SIRIUS graphical user interface. This functionality is
 also available for the SIRIUS command-line tool. Training structures for CSI:FingerID's predictors are available through the CSI:FingerID web API:
+<!--begin training-->
 - https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
 - https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
+<!--end training-->
 
 ### Fragmentation Tree Computation
 
