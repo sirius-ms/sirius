@@ -16,7 +16,7 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 <!--begin download-->
 
 ### Documentation
-- [Documentation](https://boecker-lab.github.io/docs.sirius.github.io/)
+- [Online Documentation](https://boecker-lab.github.io/docs.sirius.github.io/)
 - [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
 - [Manual (pdf)](https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/ms/manual/4.5.1/manual-4.5.1-manual.pdf)
 - [Bookchapter on using SIRIUS 4](https://doi.org/10.1007/978-1-0716-0239-3_11) (Preprint) -- does not cover the new LC-MS/MS processing option
