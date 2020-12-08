@@ -227,15 +227,15 @@ task refreshDownloadLinks {
 
         List<String> lines = [
                 "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
-                "##### This versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
+                "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
                 "- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.msi) / " +
                         "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
                 "- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
                 "- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.pkg) / " +
                         "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
                 "",
-                "### SIRIUS+CSI:FingerID Commandline only - Version $version (${new Date().format('yyyy-MM-dd')})",
-                "##### This versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
+                "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $version (${new Date().format('yyyy-MM-dd')})",
+                "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
                 "- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.msi) / " +
                         "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
                 "- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
@@ -273,8 +273,8 @@ task refreshReadMe {
     group = 'publishing'
 
     doFirst {
-        File dld = inputs.files.get(0)
-        File clg = inputs.files.get(1)
+        File dld = inputs.files.getAt(0)
+        File clg = inputs.files.getAt(1)
         File out = outputs.files.singleFile
 
         List<String> links = Files.readAllLines(dld.toPath())
