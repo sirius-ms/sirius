@@ -18,19 +18,6 @@ task cleanDoku {
 }
 clean.dependsOn cleanDoku
 
-/*task htmlDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${manualPath}/source")
-    outputs.file("${manualBuildPath}/html")
-    outputs.upToDateWhen { return false }
-    commandLine(['latex2html', '-rootdir', "${manualBuildPath}/html", '-mkdir', 'SIRIUS'])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${manualBuildPath}"))
-    }
-}
-htmlDoku.mustRunAfter cleanDoku*/
-
 //colleact files for docu and readme
 task createVersion {
     doFirst {
@@ -46,29 +33,6 @@ task createVersion {
         Files.write(out, Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
     }
 }
-
-task createChangelogTex(type: Exec) {
-    group = 'documentation'
-    inputs.file("${project.getRootProject().rootDir}/CHANGELOG.md")
-    outputs.file("${manualBuildPath}/changelog.tex")
-    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${manualBuildPath}"))
-    }
-}
-
-task createFAQTex(type: Exec) {
-    group = 'documentation'
-    inputs.file("${project.getRootProject().rootDir}/FAQ.md")
-    outputs.file("${manualBuildPath}/faq.tex")
-    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${manualBuildPath}"))
-    }
-}
-
 
 task pdfDoku(type: Exec) {
     group = 'documentation'
@@ -104,8 +68,6 @@ task pdfDoku(type: Exec) {
     """
 }
 pdfDoku.dependsOn createVersion
-pdfDoku.dependsOn createChangelogTex
-pdfDoku.dependsOn createFAQTex
 pdfDoku.mustRunAfter cleanDoku
 
 class Pdf extends AbstractArchiveTask {
