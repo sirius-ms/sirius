@@ -41,7 +41,7 @@ For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be pref
 Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from an unknown source" on Windows/MacOS.
 See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/install) for details.
 
-### Sources on GitHub
+### [Sources on GitHub](https://github.com/boecker-lab)
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius)
 - [SIRIUS library](https://github.com/boecker-lab/sirius-libs)
 
