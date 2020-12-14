@@ -101,14 +101,22 @@ public final class DetectedAdducts extends ConcurrentHashMap<String, PossibleAdd
     }
 
     public static DetectedAdducts fromString(String json) {
-        final DetectedAdducts ads = new DetectedAdducts();
+        if (json == null || json.isBlank())
+            return null;
+
         String[] mappings = json.split("\\s*}\\s*,\\s*");
+        if (mappings.length ==0)
+            return null;
+
+        final DetectedAdducts ads = new DetectedAdducts();
         for (String mapping : mappings) {
             String[] keyValue = mapping.replace("}", "").split("\\s*(:|->)\\s*\\{\\s*");
             PossibleAdducts val = keyValue.length > 1 ? Arrays.stream(keyValue[1].split(",")).filter(Objects::nonNull).filter(s -> !s.isBlank()).map(PrecursorIonType::parsePrecursorIonType).flatMap(Optional::stream)
                     .collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new)) : new PossibleAdducts();
-            ads.put(keyValue[0], val);
+            if (keyValue.length > 0)
+                ads.put(keyValue[0], val);
         }
+
         return ads;
     }
 }
