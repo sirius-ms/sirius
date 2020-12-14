@@ -694,7 +694,8 @@ public class Sirius {
 
                 Set<PrecursorIonType> adducts = new PossibleAdducts(usedIonTypes).getAdducts(ionType.getIonization());
                 if (adducts.size()==0) {
-                    throw new RuntimeException("Ionization not known in FasterTreeComputationInstance: "+ionType.getIonization());
+                    LoggerFactory.getLogger(getClass()).warn("No valid adducts found for ionization " + ionType.getIonization() + " for compound " + experiment.getName() + ". Using incorrect adduct parameters?");
+                    return tree;
                 }
 
                 PrecursorIonType validIontype = null;
@@ -716,10 +717,10 @@ public class Sirius {
                         }
                     }
                 }
-                if (validIontype.hasNeitherAdductNorInsource()) {
+                if (validIontype == null || validIontype.hasNeitherAdductNorInsource()) {
                     return treeWithInSourceIfNotEmpty(tree, ionType.getIonization(), inSourceFragmentation);
                 } else {
-                    if (!inSourceFragmentation.isEmpty()){
+                    if (!inSourceFragmentation.isEmpty()) {
                         return new IonTreeUtils().treeToNeutralTree(tree, validIontype.substituteInsource(inSourceFragmentation));
                     } else {
                         return new IonTreeUtils().treeToNeutralTree(tree, validIontype);
