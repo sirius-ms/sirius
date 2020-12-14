@@ -726,7 +726,7 @@ public class Sirius {
                     }
                 }
             } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).error("Exception in Unstable 'resolveAdducts' Code. PLease report this problem. Using unmodified Tree!", e);
+                LoggerFactory.getLogger(getClass()).error("Exception in unstable 'resolveAdducts' code for compound " + experiment.getName() + ". Please report this problem. Using unmodified tree!", e);
                 return tree;
             }
         }
