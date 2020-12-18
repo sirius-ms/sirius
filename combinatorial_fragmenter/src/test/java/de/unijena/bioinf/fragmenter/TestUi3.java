@@ -1,17 +1,15 @@
 package de.unijena.bioinf.fragmenter;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
-import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.babelms.MsIO;
-import de.unijena.bioinf.babelms.descriptor.Descriptor;
-import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
-import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 import de.unijena.bioinf.sirius.Sirius;
 import org.openscience.cdk.depict.DepictionGenerator;
 import org.openscience.cdk.exception.CDKException;
@@ -28,15 +26,18 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.io.StringWriter;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class TestUi3 {
 
@@ -97,7 +98,7 @@ public class TestUi3 {
                 entries.add(e);
 
             }
-            return new Instance(graph,entries, tree.numberOfVertices()-1);
+            return new Instance(graph,entries, tree.numberOfVertices()-1, tree);
 
 
         } catch (InvalidSmilesException e) {
@@ -219,6 +220,75 @@ public class TestUi3 {
             bx.add(Box.createHorizontalStrut(64),BorderLayout.NORTH);
             final JCheckBox show_suboptimal_solution = new JCheckBox("Show suboptimal solution");
             bx.add(show_suboptimal_solution);
+
+            final JButton toSVG = new JButton("SVG");
+            bx.add(toSVG);
+            toSVG.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        String svg = new DepictionGenerator().depict(instance.graph.molecule).toSvgStr();
+                        Toolkit.getDefaultToolkit()
+                                .getSystemClipboard()
+                                .setContents(
+                                        new StringSelection(svg),
+                                        null
+                                );
+                    } catch (CDKException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+            final JButton toJSON = new JButton("JSON");
+            bx.add(toJSON);
+            toJSON.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    StringWriter W = new StringWriter();
+                    try {
+                        final JsonGenerator G = new JsonFactory().createGenerator(W);
+                        G.writeStartArray();
+                        FragmentAnnotation<AnnotatedPeak> peak = instance.tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
+                        for (Entry entry : instance.entries) {
+                            G.writeStartObject();
+                            G.writeStringField("formula", entry.formula);
+                            G.writeNumberField("peakmass", peak.get(entry.bestMatchingFragment).getMass());
+                            // write bonds and atoms
+                            G.writeArrayFieldStart("atoms");
+                            Set<IAtom> atoms = new HashSet<>();
+                            for (IAtom atom : entry.fragment) {
+                                G.writeNumber(atom.getIndex());
+                                atoms.add(atom);
+                            }
+                            G.writeEndArray();
+                            G.writeArrayFieldStart("bonds");
+                            for (IBond bond : instance.graph.getBonds()) {
+                                if (atoms.contains(bond.getAtom(0)) && atoms.contains(bond.getAtom(1))) {
+                                    G.writeNumber(bond.getIndex());
+                                }
+                            }
+                            G.writeEndArray();
+                            G.writeArrayFieldStart("cuts");
+                            for (IBond bond : entry.bondsToCut) {
+                                G.writeNumber(bond.getIndex());
+                            }
+                            G.writeEndArray();
+                            G.writeEndObject();
+                        }
+                        G.writeEndArray();
+                        G.flush();
+                        Toolkit.getDefaultToolkit()
+                                .getSystemClipboard()
+                                .setContents(
+                                        new StringSelection(W.toString()),
+                                        null
+                                );
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+
             show_suboptimal_solution.addChangeListener(new ChangeListener() {
                 @Override
                 public void stateChanged(ChangeEvent e) {
@@ -242,11 +312,13 @@ public class TestUi3 {
         private List<Entry> entries;
         private MolecularGraph graph;
         private int numberOfVertices;
+        private FTree tree;
 
-        public Instance(MolecularGraph graph, List<Entry> entries, int numberOfVertices) {
+        public Instance(MolecularGraph graph, List<Entry> entries, int numberOfVertices, FTree tree) {
             this.entries = entries;
             this.graph = graph;
             this.numberOfVertices = numberOfVertices;
+            this.tree = tree;
         }
     }
 

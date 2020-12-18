@@ -234,14 +234,15 @@ public class DirectedBondTypeScoring {
         private TObjectDoubleHashMap<MolecularFormula> fragmentScores;
 
         public Impl(MolecularGraph graph, FTree tree) {
-            FragmentAnnotation<AnnotatedPeak> ano = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
-
             this.bondScoresLeft = new double[graph.bonds.length];
             this.bondScoresRight = new double[graph.bonds.length];
-            this.fragmentScores = new TObjectDoubleHashMap<>(tree.numberOfVertices(), 0.75f, 0);
-            for (Fragment f : tree) {
-                final double intensityScore = ano.get(f).getRelativeIntensity() ;
-                fragmentScores.adjustOrPutValue(f.getFormula().withoutHydrogen(), intensityScore,intensityScore);
+            this.fragmentScores = tree==null ? null : new TObjectDoubleHashMap<>(tree.numberOfVertices(), 0.75f, 0);
+            if (tree!=null) {
+                FragmentAnnotation<AnnotatedPeak> ano = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
+                for (Fragment f : tree) {
+                    final double intensityScore = ano.get(f).getRelativeIntensity();
+                    fragmentScores.adjustOrPutValue(f.getFormula().withoutHydrogen(), intensityScore, intensityScore);
+                }
             }
             final double wildcard = name2score.get("*~*");
             for (int i=0; i < bondScoresLeft.length; ++i) {
@@ -276,6 +277,11 @@ public class DirectedBondTypeScoring {
 
         }
 
+        /**
+         * score for cutting the bond. direction is true when the bond goes from fragment to loss and
+         * false when the bond goes from loss to fragment
+         * @return
+         */
         @Override
         public double scoreBond(IBond bond, boolean direction) {
             return (direction ? bondScoresLeft[bond.getIndex()] : bondScoresRight[bond.getIndex()]);
@@ -283,6 +289,7 @@ public class DirectedBondTypeScoring {
 
         @Override
         public double scoreFragment(CombinatorialFragment fragment) {
+            if (fragmentScores==null) return 0d;
             return fragmentScores.get(fragment.getFormula());
         }
     }
