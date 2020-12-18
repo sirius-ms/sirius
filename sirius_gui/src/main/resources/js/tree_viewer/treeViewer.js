@@ -837,6 +837,8 @@ function resetZoom() {
     var t = d3.transition().duration(500).ease(d3.easeQuad);
     zoom_base.transition(t).call(zoom.transform, d3.zoomIdentity.scale(1));
     svg.select('.brush').transition(t).call(zoom.transform, d3.zoomIdentity.scale(1));
+    if (isXmas)
+	deactivateSpecial();
 }
 
 // fixes bug that clicks don't register after excessive use of zooms/drags/brush
@@ -916,6 +918,10 @@ function colorCode(variant, scheme) {
         max = rel_int_max;
         break;
     }
+    if (isXmas()){
+	scheme_fn = d3.interpolateRgbBasis(['#990000', 'white', '#006600']);
+    }
+
     if (max == 0)
         // prevents division by zero
         max = 0.0001;
@@ -937,6 +943,10 @@ function colorCode(variant, scheme) {
                md_ppm: 'mass deviation in ppm',
                md_ppm_abs: 'mass deviation in ppm (absolute)',
                rel_int: 'relative intensity'}[variant]);
+    if (isXmas()){
+	cb_label.text('Merry Christmas! (dbl-click to deactivate)')
+	    .on('click', function () { console.log('deactivated xmas :('); });
+    }
     d3.selectAll('.node').selectAll('rect').
         transition(t).
         style('fill', function(d) {
