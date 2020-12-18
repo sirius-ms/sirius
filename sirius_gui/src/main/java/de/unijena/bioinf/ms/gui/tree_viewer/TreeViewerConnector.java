@@ -25,6 +25,8 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.ftalign.CommonLossScoring;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -57,5 +59,13 @@ public class TreeViewerConnector{
     public String[] getCommonLosses(){
         return CommonLossScoring.LOSSES;
     }
+
+	public boolean getXmas(){
+		return SiriusProperties.getProperty("de.unijena.bioinf.tree_viewer.special", null, "xmas").equals("xmas");
+	}
+
+	public void deactivateSpecial(){
+		SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty("de.unijena.bioinf.tree_viewer.special", "");
+	}
 
 }
