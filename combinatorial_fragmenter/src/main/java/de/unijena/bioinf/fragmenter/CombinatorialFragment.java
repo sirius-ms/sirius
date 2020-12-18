@@ -1,9 +1,7 @@
 package de.unijena.bioinf.fragmenter;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.BitsetOps;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
-import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
@@ -124,6 +122,9 @@ public class CombinatorialFragment {
 
     public boolean stillContains(IBond b) {
         return bitset.get(b.getAtom(0).getIndex()) && bitset.get(b.getAtom(1).getIndex());
+    }
+    public boolean stillContains(IAtom a) {
+        return bitset.get(a.getIndex());
     }
 
     public String toSMILES() {
