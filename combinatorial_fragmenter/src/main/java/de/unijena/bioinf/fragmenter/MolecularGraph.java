@@ -1,12 +1,10 @@
 package de.unijena.bioinf.fragmenter;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.BitsetOps;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.stack.array.TIntArrayStack;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.Cycles;
@@ -18,7 +16,6 @@ import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.List;
 import java.util.Optional;
 
 public class MolecularGraph {
@@ -101,7 +98,7 @@ public class MolecularGraph {
         }
     }
 
-    CombinatorialFragment asFragment() {
+    public CombinatorialFragment asFragment() {
         BitSet bitset = new BitSet();
         for (int i=0; i < natoms; ++i) bitset.set(i);;
         return new CombinatorialFragment(this, bitset, new BitSet(bondsOfRings.length));
