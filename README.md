@@ -22,17 +22,29 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.5.2 (2020-12-18)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.5.3 (2021-01-04)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.2/sirius-4.5.2-win64.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.2/sirius-4.5.2-win64.zip)
-- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.2/sirius-4.5.2-linux64.zip)
-- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.2/sirius-4.5.2-osx64.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.2/sirius-4.5.2-osx64.zip)
 
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.5.2 (2020-12-18)
+- for Windows (
+  64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.3/sirius-4.5.3-win64.msi)
+  / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.3/sirius-4.5.3-win64.zip)
+- for Linux (
+  64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.3/sirius-4.5.3-linux64.zip)
+- for Mac (
+  64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.3/sirius-4.5.3-osx64.pkg)
+  / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.3/sirius-4.5.3-osx64.zip)
+
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.5.3 (2021-01-04)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.2/sirius-4.5.2-win64-headless.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.2/sirius-4.5.2-win64-headless.zip)
-- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.2/sirius-4.5.2-linux64-headless.zip)
-- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.2/sirius-4.5.2-osx64-headless.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.2/sirius-4.5.2-osx64-headless.zip)
+
+- for Windows (
+  64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.3/sirius-4.5.3-win64-headless.msi)
+  / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.3/sirius-4.5.3-win64-headless.zip)
+- for Linux (
+  64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.3/sirius-4.5.3-linux64-headless.zip)
+- for Mac (
+  64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.3/sirius-4.5.3-osx64-headless.pkg)
+  / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.3/sirius-4.5.3-osx64-headless.zip)
 
 
 <!--end download-->
