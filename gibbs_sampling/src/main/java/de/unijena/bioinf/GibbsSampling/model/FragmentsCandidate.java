@@ -159,21 +159,23 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
     }
 
     private static Peak getPeak(AnnotatedPeak annotatedPeak){
+        final double mass;
         if (annotatedPeak.getOriginalPeaks().length>0){
             double meanMass = 0d;
-//            double meanIntensity = 0d;
             for (Peak p : annotatedPeak.getOriginalPeaks()) {
                 meanMass += p.getMass();
-//                meanIntensity += p.getIntensity();
             }
             meanMass /= annotatedPeak.getOriginalPeaks().length;
-//            meanIntensity /= annotatedPeak.getOriginalPeaks().length;
 
-            return new SimplePeak(meanMass, annotatedPeak.getRelativeIntensity());
-
+            mass = meanMass;
         } else {
-            return new SimplePeak(annotatedPeak.getMass(), annotatedPeak.getRelativeIntensity());
+            mass = annotatedPeak.getMass();
         }
+
+        double intensity = annotatedPeak.getRelativeIntensity();
+        if (Double.isNaN(intensity)) intensity = 0d;
+
+        return new SimplePeak(mass, intensity);
     }
 
     private static FragmentsAndLosses getFragments(FTree tree, TObjectIntMap<Peak> peakToIdx, Ms2Experiment experiment, List<ProcessedPeak> mergedSpectrum) {
