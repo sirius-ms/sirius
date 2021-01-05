@@ -1,84 +1,72 @@
-*<span style="color: #808080;">SIRIUS and CSI:FingerID are offered to
-the public as freely available resources. (Re-)distribution of the
-methods, in whole or in part, for commercial purposes requires explicit
-permission of the authors and explicit acknowledgment of the source
-material and the original publications. We ask that users who use SIRIUS
-and CSI:FingerID cite the corresponding papers in any resulting
-publications.</span>*
+*<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
+methods, in whole or in part, for commercial purposes is prohibited.
+CSI:FingerID and CANOPUS web services hosted by the [Böcker group](https://bio.informatik.uni-jena.de/) are for non-commercial use only. 
+For commercial users, the [Bright Giant GmbH](https://bright-giant.com) provides all related services.
+We ask that users of our tools cite the corresponding papers in any resulting publications.</span>*
 
 Contact: ![](https://raw.githubusercontent.com/boecker-lab/sirius_frontend/release/manual/source/siriusMailtrans.png)
 
-*<span style="color: #808080;">
-The CSI:FingerID web-service hosted by the [boecker group](https://bio.informatik.uni-jena.de/) at https://www.csi-fingerid.uni-jena.de, which is used by default in SIRIUS, is for non-commercial use only. 
-For commercial users the [Bright Giant GmbH](https://bright-giant.com) provides CSI:FignerID related services that can be used with SIRIUS.</span>*
-
-SIRIUS is a java-based software framework for discovering a
-landscape of de-novo identification of metabolites using single and
-tandem mass spectrometry. SIRIUS uses isotope pattern analysis for
-detecting the molecular formula and further analyses the fragmentation
-pattern of a compound using fragmentation trees. 
-<span style="color: #339966;">Fragmentation trees can be uploaded to CSI:FingerID via a web service,
-and results can be displayed in the SIRIUS graphical user interface.</span> (This is
-also possible using the command line version of SIRIUS.) 
-<span style="color: #339966;">This is the recommended way of using
-CSI:FingerID.</span>
+SIRIUS is a java-based software framework for the analysis of LC-MS/MS data of metabolites and other "small molecules of biological interest".
+SIRIUS integrates a collection of our tools, including CSI:FingerID, [ZODIAC](https://bio.informatik.uni-jena.de/software/zodiac/) and 
+[CANOPUS](https://bio.informatik.uni-jena.de/software/canopus/). In particular, both the
+graphical user interface and the command line version of SIRIUS seamlessly integrate the CSI:FingerID and CANOPUS web services.
 
 ## Download Links
 
+### Documentation
+- [Online Documentation](https://boecker-lab.github.io/docs.sirius.github.io/)
+- [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
+- [Manual (pdf)](https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/ms/manual/4.5.1/manual-4.5.1-manual.pdf)
+- [Bookchapter on using SIRIUS 4](https://doi.org/10.1007/978-1-0716-0239-3_11) ([Preprint](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2020/12/SIRIUS4_book_chapter_preprint-2.pdf)) -- does not cover the new LC-MS/MS processing option
+- [Demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
+
 <!--begin download-->
 
-### Documentation
-- [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)
-- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-manual.pdf)
-- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.5.4 (2021-01-05)
+##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
+- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.4/sirius-4.5.4-win64.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.4/sirius-4.5.4-win64.zip)
+- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.4/sirius-4.5.4-linux64.zip)
+- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.4/sirius-4.5.4-osx64.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.4/sirius-4.5.4-osx64.zip)
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.5.1 (2020-11-24)
-##### This versions have the JRE already included! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-win64.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-win64.zip)
-- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-linux64.zip)
-- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-osx64.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-osx64.zip)
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.5.4 (2021-01-05)
+##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
+- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.4/sirius-4.5.4-win64-headless.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.4/sirius-4.5.4-win64-headless.zip)
+- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.4/sirius-4.5.4-linux64-headless.zip)
+- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.4/sirius-4.5.4-osx64-headless.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.4/sirius-4.5.4-osx64-headless.zip)
 
-### SIRIUS+CSI:FingerID Commandline only - Version 4.5.1 (2020-11-24)
-##### This versions have the JRE already included! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-win64-headless.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-win64-headless.zip)
-- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-linux64-headless.zip)
-- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-osx64-headless.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.5.1/sirius-4.5.1-osx64-headless.zip)
-
-### Installation
-On Windows and MacOS the installer version of SIRIUS (msi/pkg) should be preferred but might require admin permissions.
-Since we do not pay Microsoft/Apple for certification you might have to confirm that you want to trust software from an unknown source on Windows/MacOS.
-On MacOS the option to confirm the execution of the installer (pkg) might be hidden under 'System Settings' -> 'Security & Privacy'.
-
-### Sources on GitHub
-- [SIRIUS frontend](https://github.com/boecker-lab/sirius)
-- [SIRIUS library](https://github.com/boecker-lab/sirius-libs)
 
 <!--end download-->
+
+### [Installation](https://boecker-lab.github.io/docs.sirius.github.io/install)
+For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
+Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from an unknown source" on Windows/MacOS.
+See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/install) for details.
+
+### [Sources on GitHub](https://github.com/boecker-lab)
+- [SIRIUS frontend](https://github.com/boecker-lab/sirius)
+- [SIRIUS library](https://github.com/boecker-lab/sirius-libs)
 
 For **SIRIUS 4.0.1** click [here](https://bio.informatik.uni-jena.de/software/sirius-4-0-1/).
 
 ### Integration of CSI:FingerID
 
-Fragmentation trees and spectra can be directly uploaded from SIRIUS to
-a CSI:FingerID web service (without the need to access the CSI:FingerID
-website). Results are retrieved from the web service and can be
-displayed in the SIRIUS graphical user interface. This functionality is
-also available for the SIRIUS command-line tool.
-The training Structures of CSI:FingerID predictors are available through 
-the CSI:FingerID WebAPI.
+Fragmentation trees and spectra can be directly uploaded from SIRIUS to a CSI:FingerID web service, without the need to access the (deprecated) CSI:FingerID
+website. Results are retrieved from the web service and can be displayed in the SIRIUS graphical user interface. This functionality is
+also available for the SIRIUS command-line tool. Training structures for CSI:FingerID's predictors are available through the CSI:FingerID web API:
+<!--begin training-->
 
-##### Training structures for positive ion mode:
-https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=1
-##### Training structures for negative ion mode:
-https://www.csi-fingerid.uni-jena.de/v1.4.5/api/fingerid/trainingstructures?predictor=2
+- https://www.csi-fingerid.uni-jena.de/v1.4.8/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
+- https://www.csi-fingerid.uni-jena.de/v1.4.8/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
+
+<!--end training-->
 
 ### Fragmentation Tree Computation
 
 The manual interpretation of tandem mass spectra is time-consuming and
 non-trivial. SIRIUS analyses the fragmentation pattern resulting in
-hypothetical fragmentation trees in which nodes are annotated with
-molecular formulas of the fragments and arcs represent fragmentation
-events. SIRIUS allows for the automated and high-throughput analysis of
+a hypothetical fragmentation tree, in which nodes are annotated with
+molecular formulas of the fragments and arcs (edges) represent fragmentation
+events (losses). SIRIUS allows for the automated and high-throughput analysis of
 small-compound MS data beyond elemental composition without requiring
 compound structures or a mass spectral database.
 
@@ -100,43 +88,39 @@ command-line tool.
 <!--begin cite-->
 ## Main citations
 
-**Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
-[Sirius 4: turning tandem mass spectra into metabolite structure information](https://doi.org/10.1038/s41592-019-0344-8), 
-*Nat methods*, 16, 2019.**
+Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
+[SIRIUS 4: Turning tandem mass spectra into metabolite structure information.](https://doi.org/10.1038/s41592-019-0344-8)
+*Nature Methods* 16, 299–302, 2019.
 
 ---
-
-Kai Dührkop, Louis-Félix Nothias, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffmann, Juho Rousu, Pieter C. Dorrestein,  Sebastian Böcker
-[Classes for the masses: Systematic classification of unknowns using fragmentation spectra](https://doi.org/10.1101/2020.04.17.046672)
-bioRxiv, 2020.
+Kai Dührkop, Louis-Félix Nothias, Markus Fleischauer, Raphael Reher, Marcus Ludwig, Martin A. Hoffmann, Daniel Petras, William H. Gerwick, Juho Rousu, Pieter C. Dorrestein and Sebastian Böcker.
+[Systematic classification of unknown metabolites using high-resolution fragmentation mass spectra.](https://doi.org/10.1038/s41587-020-0740-8)
+*Nature Biotechnology*, 2020.
 (Cite if you are using *CANOPUS*)
 
-Marcus Ludwig, Louis-Félix Nothias, Kai Dührkop, Irina Koester, Markus Fleischauer, Martin A. Hoffmann, Daniel Petras, Fernando Vargas, Mustafa Morsy, Lihini Aluwihare, Pieter C. Dorrestein, Sebastian Böcker
-[ZODIAC: database-independent molecular formula annotation using Gibbs sampling reveals unknown small molecules](https://doi.org/10.1101/842740)
-bioRxiv, 2019.
+Yannick Djoumbou Feunang, Roman Eisner, Craig Knox, Leonid Chepelev, Janna Hastings, Gareth Owen, Eoin Fahy, Christoph Steinbeck, Shankar Subramanian, Evan Bolton, Russell Greiner, David S. Wishart.
+[ClassyFire: automated chemical classification with a comprehensive, computable taxonomy.](https://doi.org/10.1186/s13321-016-0174-y)
+*Journal of Cheminformatics* 8, 61, 2016. (*ClassyFire* publication; cite this if you are using *CANOPUS*)
+
+Marcus Ludwig, Louis-Félix Nothias, Kai Dührkop, Irina Koester, Markus Fleischauer, Martin A. Hoffmann, Daniel Petras, Fernando Vargas, Mustafa Morsy, Lihini Aluwihare, Pieter C. Dorrestein, Sebastian Böcker.
+[Database-independent molecular formula annotation using Gibbs sampling through ZODIAC.](https://doi.org/10.1038/s42256-020-00234-6)
+*Nature Machine Intelligence* 2, 629–641, 2020.
 (Cite if you are using *ZODIAC*)
 
-Yannick Djoumbou Feunang, Roman Eisner, Craig Knox, Leonid Chepelev, Janna Hastings, Gareth Owen, Eoin Fahy, Christoph Steinbeck, Shankar Subramanian, Evan Bolton, Russell Greiner, David S. Wishart
-[ClassyFire: automated chemical classification with a comprehensive, computable taxonomy](https://doi.org/10.1186/s13321-016-0174-y)
-J Cheminf, 8, 2016. (Cite if you are using *CANOPUS*)
+Kai Dührkop and Sebastian Böcker.
+[Fragmentation trees reloaded.](http://dx.doi.org/10.1007/978-3-319-16706-0_10)
+*Journal of Cheminformatics* 8, 5, 2016.
+(Cite this for *fragmentation pattern analysis and fragmentation tree computation*) 
 
-Kai Dührkop and Sebastian Böcker. [Fragmentation trees
-reloaded.](http://dx.doi.org/10.1007/978-3-319-16706-0_10)  *J
-Cheminform*, 8:5, 2016. (Cite this for *fragmentation pattern analysis
-and fragmentation tree computation*) 
+Kai Dührkop, Huibin Shen, Marvin Meusel, Juho Rousu, and Sebastian Böcker.
+[Searching molecular structure databases with tandem mass spectra using CSI:FingerID](http://dx.doi.org/10.1073/pnas.1509788112).
+*Proceedings of the National Academy of Sciences U S A* 112(41), 12580-12585, 2015.
+(cite this when *using CSI:FingerID*) 
 
-Kai Dührkop, Huibin Shen, Marvin
-Meusel, Juho Rousu, and Sebastian Böcker. [Searching molecular structure
-databases with tandem mass spectra using
-CSI:FingerID](http://dx.doi.org/10.1073/pnas.1509788112). *Proc Natl
-Acad Sci U S A*, 112(41):12580-12585, 2015. (cite this when *using
-CSI:FingerID*) 
-
-Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták
-and Anton Pervukhin. [SIRIUS: decomposing isotope patterns for
-metabolite
-identification.](http://bioinformatics.oxfordjournals.org/content/25/2/218.full) *Bioinformatics*
-(2009) 25 (2): 218-224. (Cite this for *isotope pattern analysis*)
+Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták and Anton Pervukhin.
+[SIRIUS: decomposing isotope patterns for metabolite identification.](http://bioinformatics.oxfordjournals.org/content/25/2/218.full)
+*Bioinformatics* 25(2), 218-224, 2009.
+(Cite this for *isotope pattern analysis*)
 
 ### Additional citations
 
@@ -173,7 +157,7 @@ learning](http://dx.doi.org/10.1093/bioinformatics/bts437).
 Florian Rasche, Aleš Svatoš, Ravi Kumar Maddula, Christoph Böttcher, and
 Sebastian Böcker. [Computing Fragmentation Trees from Tandem Mass
 Spectrometry
-Data](http://pubs.acs.org/doi/abs/10.1021/ac101825k). *Analytical
+Data](http://pubs.acs.org/doi/abs/10.1021/ac101825k). *Analytical
 Chemistry* (2011) 83 (4): 1243–1251. (Cite this for *introduction of
 fragmentation trees* as used by SIRIUS)
 
