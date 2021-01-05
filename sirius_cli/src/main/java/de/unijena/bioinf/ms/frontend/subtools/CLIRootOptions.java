@@ -104,12 +104,17 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     @Option(names = "--maxmz", description = "Only considers compounds with a precursor m/z lower or equal [--maxmz]. All other compounds in the input will be skipped.", defaultValue = "Infinity", order = 110)
     public double maxMz;
 
+
+    @Option(names = {"--no-citations", "--noCitations", "--noCite"}, description = "Do not write summary files to the project-space", order = 299)
+    private void setNoCitationInfo(boolean noCitations) throws Exception {
+        PropertyManager.DEFAULTS.changeConfig("PrintCitations", String.valueOf(!noCitations)); //this is a bit hacky
+    }
     //endregion
 
 
     // region Options: INPUT/OUTPUT
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    @Option(names = {"--no-summaries", "--noSummaries"}, description = "Do not write summary files to the project-space", order = 299)
+    @Option(names = {"--no-summaries", "--noSummaries"}, description = "Do not write summary files to the project-space", order = 298)
     private void setNoSummaries(boolean noSummaries) throws Exception {
         defaultConfigOptions.changeOption("WriteSummaries", !noSummaries);
     }
