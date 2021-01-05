@@ -61,7 +61,7 @@ public class TreeViewerConnector{
     }
 
 	public boolean getXmas(){
-		return SiriusProperties.getProperty("de.unijena.bioinf.tree_viewer.special", null, "xmas").equals("xmas");
+		return SiriusProperties.getProperty("de.unijena.bioinf.tree_viewer.special", null, "").equals("xmas");
 	}
 
 	public void deactivateSpecial(){
