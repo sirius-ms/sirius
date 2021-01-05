@@ -650,7 +650,7 @@ LibLinearImpl imp;
     public void writeFold(ArrayList<String> ids_test, TrainedSVM svm, String foldID,String dist,String fe){
         try {
             System.out.println("writing fold"+foldID);
-            File folder = new File("/vol/clusterdata/fingerid_martin/fingerid_confidence_120/cv_folds/fold"+foldID);
+            File folder = new File("/vol/clusterdata/fingerid_martin/fingerid_confidence_123/cv_folds/fold"+foldID);
             BufferedWriter write_folds = new BufferedWriter(new FileWriter(new File(folder+"/testids_"+dist+"_"+fe+"_"+foldID)));
 
             for(int i=0;i<ids_test.size();i++){
@@ -704,8 +704,8 @@ LibLinearImpl imp;
     public void writeScores(double[] scores, boolean[] labels){
 
 try {
-    FileWriter write_true = new FileWriter("/vol/clusterdata/fingerid_martin/fingerid_confidence_120/scores_true.txt");
-    FileWriter write_bogus = new FileWriter("/vol/clusterdata/fingerid_martin/fingerid_confidence_120/scores_bogus.txt");
+    FileWriter write_true = new FileWriter("/vol/clusterdata/fingerid_martin/fingerid_confidence_123/scores_true_tmp072020.txt");
+    FileWriter write_bogus = new FileWriter("/vol/clusterdata/fingerid_martin/fingerid_confidence_123/scores_bogus_tmp072020.txt");
 
 
     for(int i=0;i<scores.length;i++){
