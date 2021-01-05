@@ -20,3 +20,13 @@ function getCommonLosses(){
     else
         return [];
 }
+
+function isXmas(){
+    return connector.getXmas();
+}
+
+function deactivateSpecial(){
+    connector.deactivateSpecial();
+    d3.selectAll('span').remove();
+    reset();
+}

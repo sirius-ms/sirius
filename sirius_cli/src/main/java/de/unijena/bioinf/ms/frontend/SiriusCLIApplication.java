@@ -20,12 +20,14 @@
 package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.webapi.ProxyManager;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +39,7 @@ import java.util.stream.Stream;
 
 public class SiriusCLIApplication {
     protected static Run RUN = null;
+    protected static boolean successfulParsed;
 
     protected static final boolean TIME = false;
     protected static long t1;
@@ -47,7 +50,6 @@ public class SiriusCLIApplication {
         try {
             configureShutDownHook(shutdownWebservice());
             measureTime("Start Run method");
-
             run(args, () -> {
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
                 return new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
@@ -78,7 +80,8 @@ public class SiriusCLIApplication {
                 e.printStackTrace();
             } finally {
                 ProxyManager.disconnect();
-                ApplicationCore.BIBTEX.citeToSystemErr();
+                if (successfulParsed && PropertyManager.DEFAULTS.createInstanceWithDefaults(PrintCitations.class).value)
+                    ApplicationCore.BIBTEX.citeToSystemErr();
             }
         }));
     }
@@ -103,9 +106,9 @@ public class SiriusCLIApplication {
             measureTime("init Run");
             RUN = new Run(supplier.make());
             measureTime("Start Parse args");
-            boolean b = RUN.parseArgs(args);
+            successfulParsed = RUN.parseArgs(args);
             measureTime("Parse args Done!");
-            if (b){
+            if (successfulParsed){
                 measureTime("Compute");
                 RUN.compute();
                 measureTime("Compute DONE!");
