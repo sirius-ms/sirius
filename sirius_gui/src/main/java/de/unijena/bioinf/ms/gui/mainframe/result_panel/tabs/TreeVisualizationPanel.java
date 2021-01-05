@@ -157,7 +157,7 @@ public class TreeVisualizationPanel extends JPanel
         browser.addJS("tree_viewer/treeViewer.js");
         browser.addJS("tree_viewer/treeViewerSettings.js");
         browser.addJS("tree_viewer/treeViewerConnector.js");
-		if (SiriusProperties.getProperty("de.unijena.bioinf.tree_viewer.special", null, "xmas").equals("xmas"))
+		if (SiriusProperties.getProperty("de.unijena.bioinf.tree_viewer.special", null, "").equals("xmas"))
 			browser.addJS("snow.js");
         this.add((JFXPanel) this.browser, BorderLayout.CENTER);
         this.setVisible(true);
