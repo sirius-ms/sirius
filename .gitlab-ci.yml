@@ -41,7 +41,7 @@ doc:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 #todo artifactory publish
 
 distCliLinux64:
