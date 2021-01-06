@@ -20,69 +20,74 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.sun.istack.Nullable;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.StorageOptions;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.channels.Channels;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 /*
-    A file based database consists of a directory of files (either .csv or .json), each file contains compounds from the
+    A file based database based on Google cloud storage consists of a directory of files (either .csv or .json), each file contains compounds from the
     same molecular formula. The filenames consists of the molecular formula strings.
  */
-public class FilebasedDatabase extends AbstractBlobBasedDatabase {
-    private File dir;
+public class GoogleCloudStoreDatabase extends AbstractBlobBasedDatabase {
 
-    public FilebasedDatabase(FingerprintVersion version, File dir) throws IOException {
-        super(version,dir.getName());
-        setDir(dir);
+    private Bucket bucket;
+    protected Map<String,String> bucketLabels;
+
+    public GoogleCloudStoreDatabase(FingerprintVersion version, String bucketName) throws IOException {
+        this(version, StorageOptions.getDefaultInstance().getService().get(bucketName));
     }
 
-
-
-    public File getDir() {
-        return dir;
-    }
-
-    public void setDir(File dir) throws IOException {
-        this.dir = dir;
+    public GoogleCloudStoreDatabase(FingerprintVersion version, Bucket bucket) throws IOException {
+        super(version, bucket.getName());
+        this.bucket = bucket;
         refresh();
     }
+
 
     @Override
     protected void refresh() throws IOException {
         final ArrayList<MolecularFormula> formulas = new ArrayList<>();
-        if (!dir.exists() || !dir.isDirectory()) throw new IOException("Database have to be a directory of .csv xor .json files");
-        for (File f : dir.listFiles()) {
-            final String name = f.getName();
+        if (!bucket.exists())
+            throw new IOException("Database bucket seems to be not existent or you have not the correct permissions");
+        bucketLabels = bucket.getLabels();
+        format = "." + bucketLabels.get("chemdb-format").replace('-','.').toUpperCase(Locale.US);
+
+
+        final Iterable<Blob> blobs = bucket.list().iterateAll();
+
+        for (Blob b : blobs) {
+            final String name = b.getName();
             final String upName = name.toUpperCase(Locale.US);
-            if (upName.startsWith("SETTINGS")) continue;
-            boolean found = false;
 
             for (String s : SUPPORTED_FORMATS) {
                 if (upName.endsWith(s)) {
                     if (format == null || format.equals(s)) {
                         format = s;
-                        found = true;
                         break;
                     } else {
-                        throw new IOException("Database contains several formats. Only one format is allowed! Given format is " + String.valueOf(format) + " but " + name + " found.");
+                        throw new IOException("Database contains several formats. Only one format is allowed! Given format is " + format + " but " + name + " found.");
                     }
                 }
             }
 
-            if (!found) continue;
             final String form = name.substring(0, name.length() - format.length());
             MolecularFormula.parseAndExecute(form, formulas::add);
         }
         if (format == null) throw new IOException("Couldn't find any compounds in given database");
-        format = format.toLowerCase();
+
         this.reader = format.equals(".json") || format.equals(".json.gz") ? new JSONReader() : new CSVReader();
         this.compressed = format.endsWith(".gz");
         this.formulas = formulas.toArray(MolecularFormula[]::new);
@@ -90,19 +95,15 @@ public class FilebasedDatabase extends AbstractBlobBasedDatabase {
     }
 
     @Override
-    @Nullable
     protected Reader getReaderFor(MolecularFormula formula) throws IOException {
-        File structureFile = getFileFor(formula);
-        if (structureFile == null || !structureFile.isFile())
+        Blob blob = bucket.get(formula.toString() + format);
+        if (blob == null || !blob.exists())
             return null;
-        if (compressed) {
-            return new InputStreamReader(new GZIPInputStream(new FileInputStream(structureFile)), StandardCharsets.UTF_8);
-        } else {
-            return Files.newBufferedReader(structureFile.toPath(), StandardCharsets.UTF_8);
-        }
-    }
 
-    protected File getFileFor(MolecularFormula formula) {
-        return new File(dir, formula.toString() + format);
+        if (compressed) {
+            return new InputStreamReader(new GZIPInputStream(Channels.newInputStream(blob.reader())), StandardCharsets.UTF_8);
+        } else {
+            return Channels.newReader(blob.reader(), StandardCharsets.UTF_8);
+        }
     }
 }

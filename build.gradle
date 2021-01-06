@@ -156,15 +156,15 @@ allprojects {
         }
     }
 
-    sourceSets {
+   /* sourceSets {
         main {
             resources {
                 srcDirs "src/main/resources", "configs"
             }
         }
     }
-
-    task cleanConfig {
+*/
+    /*task cleanConfig {
         group = 'build'
         doLast {
             def f = file("${projectDir}/configs")
@@ -172,7 +172,7 @@ allprojects {
                 f.deleteDir()
         }
     }
-    clean.dependsOn cleanConfig
+    clean.dependsOn cleanConfig*/
 }
 
 task downloadGLPK(type: Copy) {

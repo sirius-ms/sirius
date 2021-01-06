@@ -45,6 +45,8 @@ include ':chemical_db_oss'
 include ':chemical_db_oss:chemdb_sql_oss'
 include ':chemical_db_oss:chemdb_file_oss'
 include ':chemical_db_oss:chemdb_utils_oss'
+include ':chemical_db_oss:chemdb_cloud_oss'
+
 include ':error_reporter_oss'
 include 'ml_utils'
 include ':rest_service_oss:rest_core_oss'
