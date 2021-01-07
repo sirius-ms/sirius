@@ -183,4 +183,9 @@ public class InMemoryChemicalDatabase extends AbstractChemicalDatabase {
     public void close() throws IOException {
 
     }
+
+    @Override
+    public boolean containsFormula(MolecularFormula formula) {
+        return ChemDBs.containsFormula(formulas, formula);
+    }
 }

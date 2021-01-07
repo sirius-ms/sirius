@@ -91,7 +91,7 @@ public class FilebasedDatabase extends AbstractBlobBasedDatabase {
 
     @Override
     @Nullable
-    protected Reader getReaderFor(MolecularFormula formula) throws IOException {
+    public Reader getReaderFor(MolecularFormula formula) throws IOException {
         File structureFile = getFileFor(formula);
         if (structureFile == null || !structureFile.isFile())
             return null;
