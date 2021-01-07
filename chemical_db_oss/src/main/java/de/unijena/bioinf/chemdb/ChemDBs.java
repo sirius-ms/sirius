@@ -20,6 +20,10 @@
 
 package de.unijena.bioinf.chemdb;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -30,5 +34,34 @@ public class ChemDBs {
 
     public static <T> Predicate<T> inFilter(Function<T, Long> bitProvider, long filterBits) {
         return t -> inFilter(bitProvider.apply(t),filterBits);
+    }
+
+    public static boolean containsFormula(MolecularFormula[] sortedByMass, MolecularFormula query){
+        final int formulaIndex = Arrays.binarySearch(sortedByMass, query, Comparator.comparingDouble(MolecularFormula::getMass));
+        if (formulaIndex < 0)
+            return false;
+
+        if (sortedByMass[formulaIndex].equals(query))
+            return true;
+
+        //search to the right
+        for (int i = formulaIndex + 1; i < sortedByMass.length; i++) {
+            MolecularFormula fc = sortedByMass[i];
+            if (Double.compare(fc.getMass(), query.getMass()) != 0)
+                break;
+            if (fc.equals(query))
+                return true;
+        }
+
+        //search to the left
+        for (int i = formulaIndex - 1; i >= 0; i--) {
+            MolecularFormula fc = sortedByMass[i];
+            if (Double.compare(fc.getMass(), query.getMass()) != 0)
+                break;
+            if (fc.equals(query))
+                return true;
+        }
+
+        return false;
     }
 }

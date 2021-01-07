@@ -20,17 +20,23 @@
 
 package de.unijena.bioinf.chemdb;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.StorageOptions;
+import com.sun.istack.Nullable;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.channels.Channels;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
@@ -43,11 +49,17 @@ import java.util.zip.GZIPInputStream;
  */
 public class GoogleCloudStoreDatabase extends AbstractBlobBasedDatabase {
 
-    private Bucket bucket;
+    private final Bucket bucket;
     protected Map<String,String> bucketLabels;
 
+    public GoogleCloudStoreDatabase() throws IOException {
+        this(FingerIDProperties.gcsBucketName());
+    }
+    public GoogleCloudStoreDatabase(String bucketName) throws IOException {
+        this(USE_EXTENDED_FINGERPRINTS ? CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getDefault(), bucketName);
+    }
     public GoogleCloudStoreDatabase(FingerprintVersion version, String bucketName) throws IOException {
-        this(version, StorageOptions.getDefaultInstance().getService().get(bucketName));
+        this(version, storageOptions().getService().get(bucketName));
     }
 
     public GoogleCloudStoreDatabase(FingerprintVersion version, Bucket bucket) throws IOException {
@@ -56,18 +68,27 @@ public class GoogleCloudStoreDatabase extends AbstractBlobBasedDatabase {
         refresh();
     }
 
+    private static StorageOptions storageOptions(){
+        try {
+            FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(
+                    ServiceAccountCredentials.fromStream(Files.newInputStream(FingerIDProperties.gcsCredentialsPath())));
+            return StorageOptions.newBuilder().setCredentials(credentialsProvider.getCredentials()).build();
+        } catch (IOException e) {
+            throw new RuntimeException("Could not found google cloud credentials json at: " + FingerIDProperties.gcsCredentialsPath());
+        }
+    }
+
 
     @Override
     protected void refresh() throws IOException {
+
         final ArrayList<MolecularFormula> formulas = new ArrayList<>();
         if (!bucket.exists())
             throw new IOException("Database bucket seems to be not existent or you have not the correct permissions");
         bucketLabels = bucket.getLabels();
         format = "." + bucketLabels.get("chemdb-format").replace('-','.').toUpperCase(Locale.US);
 
-
         final Iterable<Blob> blobs = bucket.list().iterateAll();
-
         for (Blob b : blobs) {
             final String name = b.getName();
             final String upName = name.toUpperCase(Locale.US);
@@ -87,7 +108,7 @@ public class GoogleCloudStoreDatabase extends AbstractBlobBasedDatabase {
             MolecularFormula.parseAndExecute(form, formulas::add);
         }
         if (format == null) throw new IOException("Couldn't find any compounds in given database");
-
+        format = format.toLowerCase();
         this.reader = format.equals(".json") || format.equals(".json.gz") ? new JSONReader() : new CSVReader();
         this.compressed = format.endsWith(".gz");
         this.formulas = formulas.toArray(MolecularFormula[]::new);
@@ -95,7 +116,8 @@ public class GoogleCloudStoreDatabase extends AbstractBlobBasedDatabase {
     }
 
     @Override
-    protected Reader getReaderFor(MolecularFormula formula) throws IOException {
+    @Nullable
+    public Reader getReaderFor(MolecularFormula formula) throws IOException {
         Blob blob = bucket.get(formula.toString() + format);
         if (blob == null || !blob.exists())
             return null;

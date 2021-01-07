@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -32,6 +33,8 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractChemicalDatabase implements Closeable, Cloneable, SearchStructureByFormula, AnnotateStructures {
+    // temporary switch
+    public static final boolean USE_EXTENDED_FINGERPRINTS = PropertyManager.getBoolean("de.unijena.bioinf.chemdb.fingerprint.extended", null, false);
 
     /**
      * Search for molecular formulas in the database
@@ -56,11 +59,14 @@ public abstract class AbstractChemicalDatabase implements Closeable, Cloneable, 
         return candidates;
     }
 
-    /**
-     * Lookup structures by the given molecular formula. This method will NOT add database links to these structures
-     * @param formula
-     * @return
-     */
+    public abstract boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException;
+
+
+        /**
+         * Lookup structures by the given molecular formula. This method will NOT add database links to these structures
+         * @param formula
+         * @return
+         */
     public abstract List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException;
 
     /**

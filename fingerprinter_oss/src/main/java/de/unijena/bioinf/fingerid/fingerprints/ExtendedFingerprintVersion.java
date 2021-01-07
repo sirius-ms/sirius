@@ -55,6 +55,11 @@ public class ExtendedFingerprintVersion extends FingerprintVersion {
         }
 
         @Override
+        public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
+            return innerDatabase.containsFormula(formula);
+        }
+
+        @Override
         public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
             return innerDatabase.lookupStructuresByFormula(formula);
         }
