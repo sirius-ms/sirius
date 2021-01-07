@@ -23,10 +23,7 @@ package de.unijena.bioinf.fingerid.blast;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.chemdb.ChemicalDatabase;
-import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.utils.PrimsSpanningTree;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
@@ -53,7 +50,7 @@ public class BayesianScoringUtils {
     //pseudo count for Bayesian network scoring
     private final double pseudoCount;
 
-    private final ChemicalDatabase chemicalDatabase;
+//    private final ChemicalDatabase chemicalDatabase;
 
     private final MaskedFingerprintVersion maskedFingerprintVersion;
     private final BayesnetScoringTrainingData trainingData;
@@ -102,8 +99,7 @@ public class BayesianScoringUtils {
      */
     private final Set<MolecularFormula> biotransformations;
 
-    private BayesianScoringUtils(ChemicalDatabase chemicalDatabase, MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, Set<MolecularFormula> biotransformations, int minNumStructuresTopologyMfSpecificScoring, int minNumStructuresTopologySameMf, int minNumStructuresTopologyIncludingBiotransformations, int minNumInformativePropertiesMfSpecificScoring, boolean useCorrelationScoring) {
-        this.chemicalDatabase = chemicalDatabase;
+    private BayesianScoringUtils(MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, Set<MolecularFormula> biotransformations, int minNumStructuresTopologyMfSpecificScoring, int minNumStructuresTopologySameMf, int minNumStructuresTopologyIncludingBiotransformations, int minNumInformativePropertiesMfSpecificScoring, boolean useCorrelationScoring) {
         this.maskedFingerprintVersion = maskedFingerprintVersion;
         this.trainingData = trainingData;
         this.biotransformations = biotransformations;
@@ -117,13 +113,13 @@ public class BayesianScoringUtils {
         this.useCorrelationScoring = useCorrelationScoring;
     }
 
-    public static BayesianScoringUtils getInstance(ChemicalDatabase chemicalDatabase, MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, boolean useCorrelationScoring) {
-        return new BayesianScoringUtils(chemicalDatabase, maskedFingerprintVersion, trainingData, Arrays.stream(bioTransformationsBelow100).map(MolecularFormula::parseOrThrow).collect(Collectors.toSet()),
+    public static BayesianScoringUtils getInstance(MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, boolean useCorrelationScoring) {
+        return new BayesianScoringUtils(maskedFingerprintVersion, trainingData, Arrays.stream(bioTransformationsBelow100).map(MolecularFormula::parseOrThrow).collect(Collectors.toSet()),
                 DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_MF_SPECIFIC_SCORING, DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_SAME_MF, DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_INCLUDING_BIOTRANSFORMATIONS, DEFAULT_MIN_NUM_INFORMATIVE_PROPERTIES_MF_SPECIFIC_SCORING, useCorrelationScoring);
     }
 
-    public static BayesianScoringUtils getInstance(ChemicalDatabase chemicalDatabase, MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, int minNumStructuresTopologyMfSpecificScoring, int minNumStructuresTopologySameMf, int minNumStructuresTopologyWithBiotransformations, int minNumInformativePropertiesMfSpecificScoring, boolean useCorrelationScoring) {
-        return new BayesianScoringUtils(chemicalDatabase, maskedFingerprintVersion, trainingData, Arrays.stream(bioTransformationsBelow100).map(MolecularFormula::parseOrThrow).collect(Collectors.toSet()),
+    public static BayesianScoringUtils getInstance(MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, int minNumStructuresTopologyMfSpecificScoring, int minNumStructuresTopologySameMf, int minNumStructuresTopologyWithBiotransformations, int minNumInformativePropertiesMfSpecificScoring, boolean useCorrelationScoring) {
+        return new BayesianScoringUtils(maskedFingerprintVersion, trainingData, Arrays.stream(bioTransformationsBelow100).map(MolecularFormula::parseOrThrow).collect(Collectors.toSet()),
                 minNumStructuresTopologyMfSpecificScoring, minNumStructuresTopologySameMf, minNumStructuresTopologyWithBiotransformations, minNumInformativePropertiesMfSpecificScoring, useCorrelationScoring);
     }
 
@@ -194,8 +190,8 @@ public class BayesianScoringUtils {
      * @return BayesnetScoring with Covariance Tree
      * @throws ChemicalDatabaseException  if a db exceptions happens
      */
-    public BayesnetScoring computeDefaultScoring() throws ChemicalDatabaseException {
-        List<int[]> treeStructure = computeDefaultTreeTopology();
+    public BayesnetScoring computeDefaultScoring(ChemicalDatabase sqlChemDB) throws ChemicalDatabaseException {
+        List<int[]> treeStructure = computeDefaultTreeTopology(sqlChemDB);
         if (treeStructure.size() < 10) //should never happen
             throw new RuntimeException("Tree has less than 10 edges.");
         BayesnetScoring scoring = estimateScoringDefaultScoring(treeStructure);
@@ -210,24 +206,24 @@ public class BayesianScoringUtils {
      * @throws ChemicalDatabaseException if a db exceptions happens
      * @throws InsufficientDataException  if there are not enough candidates in the Database to compute the scoring
      */
-    public BayesnetScoring computeScoring(MolecularFormula formula) throws InsufficientDataException, ChemicalDatabaseException {
+    public BayesnetScoring computeScoring(MolecularFormula formula, @NotNull AbstractChemicalDatabase chemdb) throws InsufficientDataException, ChemicalDatabaseException {
         //compute tree edges (relative indices)
-        List<int[]> treeStructure = computeTreeTopology(formula, minNumInformativePropertiesMfSpecificScoring);
+        List<int[]> treeStructure = computeTreeTopology(formula, minNumInformativePropertiesMfSpecificScoring, chemdb);
         if (treeStructure.size() < 3)
             throw new InsufficientDataException("Tree has less than 3 nodes.");
         return estimateScoring(formula, treeStructure);
     }
 
     @Deprecated
-    public List<int[]> computeTreeTopologyTest(MolecularFormula formula, int minNumInformativeProperties) throws ChemicalDatabaseException, InsufficientDataException {
-        return computeTreeTopology(formula, minNumInformativeProperties);
+    public List<int[]> computeTreeTopologyTest(MolecularFormula formula, int minNumInformativeProperties, @NotNull AbstractChemicalDatabase chemdb) throws ChemicalDatabaseException, InsufficientDataException {
+        return computeTreeTopology(formula, minNumInformativeProperties, chemdb);
     }
 
 
     private final static boolean USE_BIOTRANSFORMATIONS_FOR_TREE_TOPOLOGY = true;
-    private List<int[]> computeTreeTopology(MolecularFormula formula, int minNumInformativeProperties) throws ChemicalDatabaseException, InsufficientDataException {
+    private List<int[]> computeTreeTopology(MolecularFormula formula, int minNumInformativeProperties, @NotNull AbstractChemicalDatabase chemdb) throws ChemicalDatabaseException, InsufficientDataException {
         long startTime = System.currentTimeMillis();
-        List<FingerprintCandidate> candidates = chemicalDatabase.lookupStructuresAndFingerprintsByFormula(formula);
+        List<FingerprintCandidate> candidates = chemdb.lookupStructuresAndFingerprintsByFormula(formula);
         long endTime = System.currentTimeMillis();
         Log.debug("retrieving candidates took "+(endTime-startTime)/1000+" seconds");
 
@@ -247,7 +243,7 @@ public class BayesianScoringUtils {
             Set<MolecularFormula> transformationMFs = applyBioTransformations(formula, false);
             List<FingerprintCandidate> transformationCandidates = new ArrayList<>();
             for (MolecularFormula transformationMF : transformationMFs) {
-                chemicalDatabase.lookupStructuresAndFingerprintsByFormula(transformationMF, transformationCandidates);
+                chemdb.lookupStructuresAndFingerprintsByFormula(transformationMF, transformationCandidates);
             }
             endTime = System.currentTimeMillis();
             Log.debug("retrieving candidates with biotransformations took "+(endTime-startTime)/1000+" seconds");
@@ -276,10 +272,10 @@ public class BayesianScoringUtils {
      *
      * @return list of edges of between molecular properties. Only properties from masedFingerprint version used but saved with absolute indices
      */
-    private List<int[]> computeDefaultTreeTopology() throws ChemicalDatabaseException {
+    private List<int[]> computeDefaultTreeTopology(ChemicalDatabase sqlChemDB) throws ChemicalDatabaseException {
         Log.debug("retrieve fingerprints");
         long startTime = System.currentTimeMillis();
-        List<FingerprintCandidate>  candidates = getFingerprints(DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP);
+        List<FingerprintCandidate>  candidates = getFingerprints(DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP, sqlChemDB);
         long endTime = System.currentTimeMillis();
         Log.debug("retrieving "+candidates.size()+" structures took " + (endTime - startTime) / 1000 + " seconds");
         try {
@@ -441,10 +437,10 @@ public class BayesianScoringUtils {
 
 
 
-    private List<FingerprintCandidate> getFingerprints(long mask) throws ChemicalDatabaseException {
+    private List<FingerprintCandidate> getFingerprints(long mask, ChemicalDatabase sqlChemDB) throws ChemicalDatabaseException {
         final Set<String> keys;
         try {
-            keys = chemicalDatabase.useConnection(connection -> {
+            keys = sqlChemDB.useConnection(connection -> {
                             final Set<String> k = new HashSet<>();
                             try (PreparedStatement st = connection.connection.prepareStatement(String.format("SELECT inchi_key_1, inchi FROM structures  WHERE flags&%d>0", mask))) {
                                 try (ResultSet set = st.executeQuery()) {
@@ -458,9 +454,8 @@ public class BayesianScoringUtils {
             e.printStackTrace();
             throw new ChemicalDatabaseException(e.getMessage());
         }
-        final List<FingerprintCandidate> fps = chemicalDatabase.lookupManyFingerprintsByInchis(keys);
 
-        return fps;
+        return sqlChemDB.lookupManyFingerprintsByInchis(keys);
     }
 
 
