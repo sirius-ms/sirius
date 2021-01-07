@@ -40,6 +40,7 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
+import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
 import de.unijena.bioinf.ms.rest.client.info.InfoClient;
 import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
@@ -81,7 +82,7 @@ public final class WebAPI {
 
     public final InfoClient serverInfoClient;
     public final JobsClient jobsClient;
-    public final ChemDBClient chemDBClient;
+    public final StructureSearchClient chemDBClient;
     public final FingerIdClient fingerprintClient;
     public final CanopusClient canopusClient;
 

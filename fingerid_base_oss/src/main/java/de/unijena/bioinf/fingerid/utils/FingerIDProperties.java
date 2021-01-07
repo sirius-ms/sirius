@@ -23,6 +23,8 @@ package de.unijena.bioinf.fingerid.utils;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
+import java.nio.file.Path;
+
 /**
  * All version numbers are directly taken from the build. So there is no more redundant data. Note that version a.b.c-SNAPSHOT lower than a.b.c
  */
@@ -50,5 +52,25 @@ public class FingerIDProperties {
 
     public static String sirius_guiVersion() {
         return siriusVersion();
+    }
+
+
+    public static String gcsDBName() {
+        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gks.name");
+    }
+
+    public static String gcsDBFlavor() {
+        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gks.flavor", null, "default");
+    }
+
+    public static String gcsBucketName() {
+        return gcsDBName() + "_" + databaseDate() + "_" + gcsDBFlavor();
+    }
+    public static String gcsCredentials() {
+        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gks.credentials");
+    }
+
+    public static Path gcsCredentialsPath() {
+        return Path.of(System.getProperty("user.home")).resolve(gcsCredentials());
     }
 }

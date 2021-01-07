@@ -57,37 +57,11 @@ public abstract class AbstractBlobBasedDatabase extends AbstractChemicalDatabase
     protected abstract void refresh() throws IOException;
 
     @Nullable
-    protected abstract Reader getReaderFor(MolecularFormula formula) throws IOException;
+    public abstract Reader getReaderFor(MolecularFormula formula) throws IOException;
 
 
     public boolean containsFormula(MolecularFormula formula) {
-
-        final int formulaIndex = Arrays.binarySearch(formulas, formula, Comparator.comparingDouble(MolecularFormula::getMass));
-        if (formulaIndex < 0)
-            return false;
-
-        if (formulas[formulaIndex].equals(formula))
-            return true;
-
-        //search to the right
-        for (int i = formulaIndex + 1; i < formulas.length; i++) {
-            MolecularFormula fc = formulas[i];
-            if (Double.compare(fc.getMass(), formula.getMass()) != 0)
-                break;
-            if (fc.equals(formula))
-                return true;
-        }
-
-        //search to the left
-        for (int i = formulaIndex - 1; i >= 0; i--) {
-            MolecularFormula fc = formulas[i];
-            if (Double.compare(fc.getMass(), formula.getMass()) != 0)
-                break;
-            if (fc.equals(formula))
-                return true;
-        }
-
-        return false;
+        return ChemDBs.containsFormula(formulas,formula);
     }
 
     @Override
@@ -182,7 +156,7 @@ public abstract class AbstractBlobBasedDatabase extends AbstractChemicalDatabase
 
         for (Map.Entry<MolecularFormula, Collection<CompoundCandidate>> entry : formulas2Candidates.asMap().entrySet()) {
             final MolecularFormula f = entry.getKey();
-            final Collection<FingerprintCandidate> pseudoQueue = new AbstractCollection<FingerprintCandidate>() {
+            final Collection<FingerprintCandidate> pseudoQueue = new AbstractCollection<>() {
 
                 @Override
                 public boolean add(FingerprintCandidate fingerprintCandidate) {

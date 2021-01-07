@@ -122,6 +122,11 @@ public class FileDatabase extends AbstractChemicalDatabase {
     }
 
     @Override
+    public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
+        return ChemDBs.containsFormula(formulasOrderedByMass,formula);
+    }
+
+    @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         final List<CompoundCandidate> cc = new ArrayList<>();
         for (FingerprintCandidate fc : lookupStructuresAndFingerprintsByFormula(formula)) {

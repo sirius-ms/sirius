@@ -52,11 +52,6 @@ import java.util.*;
 import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
 
 public class ChemicalDatabase extends AbstractChemicalDatabase implements PooledDB<Connection> {
-
-    // temporary switch
-    public static final boolean USE_EXTENDED_FINGERPRINTS = PropertyManager.getBoolean("de.unijena.bioinf.chemdb.fingerprint.extended", null, false);
-
-    //
     public final static String REF_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references", null, "ref");
     //REF_MAPPING_TABLE_SUFFIX is included for compatibility reasons all recent database version should contain a VIEW ref.xxx_mapping_id_inchi_key that combines InChIKeys of non-standardized and standardized structures
     public final static String REF_MAPPING_TABLE_SUFFIX = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references.mapping.suffix", null, "");
@@ -147,9 +142,9 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
     public List<MolecularFormula> lookupMolecularFormulasByFilter(long filter) throws ChemicalDatabaseException {
         final List<MolecularFormula> xs = new ArrayList<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            final PreparedStatement statement = c.connection.prepareStatement(
-                    "SELECT formula FROM formulas WHERE (flags & " + filter + ") != 0"
-            );
+            final PreparedStatement statement = filter == 0
+                    ? c.connection.prepareStatement("SELECT formula FROM formulas")
+                    : c.connection.prepareStatement("SELECT formula FROM formulas WHERE (flags & " + filter + ") != 0");
             try (final ResultSet set = statement.executeQuery()) {
                 while (set.next()) {
                     xs.add(MolecularFormula.parseOrThrow(set.getString(1)));

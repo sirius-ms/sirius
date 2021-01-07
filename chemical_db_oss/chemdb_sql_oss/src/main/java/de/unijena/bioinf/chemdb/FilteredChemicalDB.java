@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 
+import javax.naming.OperationNotSupportedException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -115,5 +116,10 @@ public class FilteredChemicalDB extends AbstractChemicalDatabase implements Clon
 
     public ChemicalDatabase getWrappedDB() {
         return wrappedDB;
+    }
+
+    @Override
+    public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
     }
 }
