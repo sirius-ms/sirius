@@ -23,6 +23,8 @@ package de.unijena.bioinf.fingerid.blast;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
+import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,21 +41,25 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
 
     private final static String filePrefix = "bayesianScoring_";
     private final static String fileSuffix = "";
+    private final ChemicalDatabase chemDB;
 
     private BayesnetScoring defaultScoring = null;
 
     private final boolean autoSaveComputedScorings;
 
-    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, boolean autoSaveComputedScorings) {
-        if (!Files.exists(scoringDirectory)) throw new IllegalArgumentException("Directory does not exist, please create first: "+scoringDirectory);
-        if (!Files.isDirectory(scoringDirectory)) throw new IllegalArgumentException(scoringDirectory+" is not a directory");
+    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, ChemicalDatabase chemDB, boolean autoSaveComputedScorings) {
+        if (!Files.exists(scoringDirectory))
+            throw new IllegalArgumentException("Directory does not exist, please create first: " + scoringDirectory);
+        if (!Files.isDirectory(scoringDirectory))
+            throw new IllegalArgumentException(scoringDirectory + " is not a directory");
         this.scoringDirectory = scoringDirectory;
         this.bayesianScoringUtils = bayesianScoringUtils;
         this.autoSaveComputedScorings = autoSaveComputedScorings;
+        this.chemDB = chemDB;
     }
 
-    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils) {
-        this(scoringDirectory, bayesianScoringUtils, true);
+    public BayesianNetworkFromDirectoryProvider(Path scoringDirectory, BayesianScoringUtils bayesianScoringUtils, ChemicalDatabase chemDB) {
+        this(scoringDirectory, bayesianScoringUtils, chemDB, true);
     }
 
     @Override
@@ -88,7 +94,7 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
         BayesnetScoring scoring = null;
         try {
             //todo always store scoring after being computed?
-            scoring = bayesianScoringUtils.computeScoring(formula);
+            scoring = bayesianScoringUtils.computeScoring(formula, chemDB);
             if (autoSaveComputedScorings && (scoring != null)) {
                 storeScoring(formula, scoring, true);
             }
@@ -112,7 +118,7 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
             if (Files.exists(scoringPath)) {
                 defaultScoring = readScoringFromFile(scoringPath);
             } else {
-                defaultScoring = bayesianScoringUtils.computeDefaultScoring();
+                defaultScoring = bayesianScoringUtils.computeDefaultScoring(chemDB);
                 if (autoSaveComputedScorings && (defaultScoring != null)) {
                     storeDefaultScoring(defaultScoring, true);
                 }
