@@ -29,6 +29,8 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.CloseableIterator;
+import gnu.trove.map.TObjectLongMap;
+import gnu.trove.map.hash.TObjectLongHashMap;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -41,6 +43,7 @@ public abstract class AbstractBlobBasedDatabase extends AbstractChemicalDatabase
     protected String format; // csv or json or csv.gz or json.gz
     protected CompoundReader reader;
     protected MolecularFormula[] formulas;
+    protected final TObjectLongMap<MolecularFormula> formulaFlags = new TObjectLongHashMap<>();
     protected FingerprintVersion version;
     protected boolean compressed = false;
 
@@ -85,7 +88,8 @@ public abstract class AbstractBlobBasedDatabase extends AbstractChemicalDatabase
         final double max = mass + deviation.absoluteFor(ionMass);
         ArrayList<FormulaCandidate> candidates = new ArrayList<>();
         while (insertionPoint < formulas.length && formulas[insertionPoint].getMass() <= max) {
-            candidates.add(new FormulaCandidate(formulas[insertionPoint++], ionType, 0));
+            final MolecularFormula f = formulas[insertionPoint++];
+            candidates.add(new FormulaCandidate(f, ionType, formulaFlags.get(f)));
         }
 
         return candidates;
