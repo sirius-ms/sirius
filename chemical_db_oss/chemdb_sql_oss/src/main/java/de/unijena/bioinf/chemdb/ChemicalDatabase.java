@@ -140,21 +140,25 @@ public class ChemicalDatabase extends AbstractChemicalDatabase implements Pooled
 
 
     public List<MolecularFormula> lookupMolecularFormulasByFilter(long filter) throws ChemicalDatabaseException {
-        final List<MolecularFormula> xs = new ArrayList<>();
+            return new ArrayList<>(lookupMolecularFormulasWithFlagsByFilter(filter).keySet());
+    }
+
+    public Map<MolecularFormula, Long> lookupMolecularFormulasWithFlagsByFilter(long filter) throws ChemicalDatabaseException {
+        final Map<MolecularFormula, Long> xs = new HashMap<>();
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
             final PreparedStatement statement = filter == 0
-                    ? c.connection.prepareStatement("SELECT formula FROM formulas")
-                    : c.connection.prepareStatement("SELECT formula FROM formulas WHERE (flags & " + filter + ") != 0");
+                    ? c.connection.prepareStatement("SELECT formula, flags FROM formulas")
+                    : c.connection.prepareStatement("SELECT formula, flags FROM formulas WHERE (flags & " + filter + ") != 0");
             try (final ResultSet set = statement.executeQuery()) {
                 while (set.next()) {
-                    xs.add(MolecularFormula.parseOrThrow(set.getString(1)));
+                    xs.put(MolecularFormula.parseOrThrow(set.getString(1)), set.getLong(2));
                 }
             }
 
         } catch (InterruptedException e) {
             log.error(e.getMessage(), e);
             Thread.currentThread().interrupt();
-            return new ArrayList<>();
+            return new HashMap<>();
         } catch (IOException | SQLException e) {
             log.error(e.getMessage(), e);
             throw new ChemicalDatabaseException(e);
