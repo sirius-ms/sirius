@@ -29,6 +29,17 @@ import java.util.Arrays;
 
 public class MatrixUtils {
 
+    public static double frobeniusProduct(double[][] M, double[][] N) {
+        double prod = 0d;
+        for (int i=0; i < M.length; ++i) {
+            for (int j=0; j < M.length; ++j) {
+                prod += M[i][j]*N[i][j];
+            }
+        }
+        return prod;
+    }
+
+
     public static double frobeniusNorm(double[][] M) {
         double norm = 0d;
         for (int i=0; i < M.length; ++i) {
