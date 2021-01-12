@@ -80,6 +80,18 @@ public class LCMSPeakInformation implements DataAnnotation, Ms2ExperimentAnnotat
         else return Optional.empty();
     }
 
+    public double getIntensityOf(String name) {
+        return getIntensityOf(getIndexOf(name));
+    }
+    public double getIntensityOf(int index) {
+        if (index<0) return 0;
+        if (quantificationTable!=null) {
+            return quantificationTable.getAbundance(index);
+        } else {
+            return getTracesFor(index).map(x->x.getIonTrace().getMonoisotopicPeak().getApexIntensity()).orElse(0f).doubleValue();
+        }
+    }
+
     @JsonIgnore
     public Optional<CoelutingTraceSet> getTracesFor(int index) {
         return Optional.ofNullable(traceSet[index]);

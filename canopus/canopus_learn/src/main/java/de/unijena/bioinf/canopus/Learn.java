@@ -346,7 +346,7 @@ public class Learn {
 
                         }
 
-                        if (k >= 18000) {
+                        if (k >= 15000) {
                             Report evaluate = tf.evaluate(crossvalBatch);
                             final double score = evaluate.score();
                             if (score > lastScore) {
