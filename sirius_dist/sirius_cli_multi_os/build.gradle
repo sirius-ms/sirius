@@ -84,7 +84,7 @@ task multiOSImage(group: 'distribution') {
         copy {
             from(osx64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius.app/Contents') {
                 exclude "app"
-                exclude 'MacOs'
+                exclude 'MacOS'
                 exclude 'COPYING.txt'
                 exclude 'LICENSE.txt'
                 exclude "manual-$version-manual.pdf"
@@ -100,14 +100,16 @@ task multiOSImage(group: 'distribution') {
                 include 'LICENSE.txt'
                 include "manual-$version-manual.pdf"
             }
-            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius/lib') {
-                include "app"
-            }
             into outputs.files.singleFile
         }
+        copy {
+            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius/lib/app')
+            into outputs.files.singleFile.toPath().resolve('app')
+        }
 
-        //modify windows script
-        /*def lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve(win64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.bat'))
+
+            //modify windows script
+        def lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve(win64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.bat'))
         outputs.files.singleFile.toPath().resolve(win64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.bat').toFile().withWriter {
             lines.forEach( {l ->
                 if (l.startsWith("set JAR_HOME="))
@@ -135,17 +137,17 @@ task multiOSImage(group: 'distribution') {
                 else
                     it.writeLine(l)
             })
-        }*/
+        }
     }
 
 
 }
 
 task multiOSImageZip(dependsOn: multiOSImage, group: 'distribution') {
-    inputs.dir(multiOSImage.outputs)
+//    inputs.dir(multiOSImage.outputs)
     outputs.file(multiOSImage.outputs.files.singleFile.toString() + ".zip")
     doFirst {
-        def imageDir = inputs.files.singleFile
+        def imageDir = multiOSImage.outputs.files.singleFile
         def parentPath = imageDir.parentFile.toPath()
         def zipFile = parentPath.resolve("${imageDir.getName()}.zip")
         project.ant.zip(destfile: zipFile, duplicate: 'fail') {
