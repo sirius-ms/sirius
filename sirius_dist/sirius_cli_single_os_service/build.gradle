@@ -66,6 +66,8 @@ distImage {
     }
 }
 
+distribution.dependsOn 'distImageZip'
+distribution.dependsOn 'distInstaller'
 
 publishing {
     publications {
