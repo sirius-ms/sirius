@@ -43,8 +43,11 @@ cd "$SAVED" >/dev/null
 # Add default JVM options here. You can also use JAVA_OPTS and SIRIUS_OPTS to pass JVM options to this script.
 DEFAULT_JVM_OPTS=
 
+# Add location of jar files for Classpath
+JAR_HOME=
+
+
 # Add full lib dir to classpath
-#CLASSPATH="$APP_HOME/lib/app/*"
 CLASSPATH=
 
 # Determine the Java command to use to start the JVM.

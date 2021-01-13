@@ -33,6 +33,8 @@ set APP_HOME=%DIRNAME:~0,-1%
 @rem Resolve any "." and ".." in APP_HOME to make it shorter.
 for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
 
+set JAR_HOME=
+
 @rem Add default JVM options here. You can also use JAVA_OPTS and SIRIUS_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS=
 set JAVA_EXE=%APP_HOME%\runtime\bin\java.exe
