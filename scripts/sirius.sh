@@ -44,7 +44,8 @@ cd "$SAVED" >/dev/null
 DEFAULT_JVM_OPTS=
 
 # Add full lib dir to classpath
-CLASSPATH="$APP_HOME/lib/app/*"
+#CLASSPATH="$APP_HOME/lib/app/*"
+CLASSPATH=
 
 # Determine the Java command to use to start the JVM.
 JAVACMD="$APP_HOME/lib/runtime/bin/java"
