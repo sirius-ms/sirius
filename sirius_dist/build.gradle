@@ -371,7 +371,7 @@ subprojects {
 
             }else if(OS.isMacOsX()){
                 def lines = file("${rootDir}/scripts/sirius.sh").readLines()
-                def f = file("$appRootTarget/bin/sirius.sh")
+                def f = file("$appRootTarget/sirius.sh")
                 f.withWriter {
                     lines.forEach { l ->
                         if (l.startsWith('DEFAULT_JVM_OPTS='))
