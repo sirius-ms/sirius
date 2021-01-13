@@ -359,11 +359,13 @@ subprojects {
                     lines.forEach { l ->
                         if (l.startsWith('DEFAULT_JVM_OPTS='))
                             l = l.replace('DEFAULT_JVM_OPTS=', "DEFAULT_JVM_OPTS='${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
-                                    " \"-javaagent:\$APP_HOME/lib/app/agents-${siriusVersion}.jar\"'")
+                                    " \"-javaagent:\$JAR_HOME/agents-${siriusVersion}.jar\"'")
                         else if (l.startsWith('MAIN_CLASS='))
                             l = l.replace('MAIN_CLASS=', 'MAIN_CLASS="' + mainClassName + '"')
                         else if (l.startsWith('CLASSPATH='))
-                            l = l.replace('CLASSPATH=', 'CLASSPATH="\$APP_HOME/lib/app/*"')
+                            l = l.replace('CLASSPATH=', 'CLASSPATH="\$JAR_HOME/*"')
+                        else if (l.startsWith('JAR_HOME='))
+                            l = l.replace('JAR_HOME=', 'JAR_HOME="\$APP_HOME/lib/app"')
                         it.writeLine(l)
                     }
                 }
@@ -376,11 +378,13 @@ subprojects {
                     lines.forEach { l ->
                         if (l.startsWith('DEFAULT_JVM_OPTS='))
                             l = l.replace('DEFAULT_JVM_OPTS=', "DEFAULT_JVM_OPTS='${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
-                                    " \"-javaagent:\$APP_HOME/app/agents-${siriusVersion}.jar\" \"-Djava.library.path=\$APP_HOME/native\"'")
+                                    " \"-javaagent:\$JAR_HOME/agents-${siriusVersion}.jar\" \"-Djava.library.path=\$APP_HOME/native\"'")
                         else if (l.startsWith('MAIN_CLASS='))
                             l = l.replace('MAIN_CLASS=', 'MAIN_CLASS="' + mainClassName + '"')
                         else if (l.startsWith('CLASSPATH='))
-                            l = l.replace('CLASSPATH=', 'CLASSPATH="\$APP_HOME/app/*"')
+                            l = l.replace('CLASSPATH=', 'CLASSPATH="\$JAR_HOME/*"')
+                        else if (l.startsWith('JAR_HOME='))
+                            l = l.replace('JAR_HOME=', 'JAR_HOME="\$APP_HOME/app"')
                         it.writeLine(l)
                     }
                 }
@@ -392,11 +396,13 @@ subprojects {
                     lines.forEach { l ->
                         if (l.startsWith('set DEFAULT_JVM_OPTS='))
                                 l = l.replace('set DEFAULT_JVM_OPTS=', "set DEFAULT_JVM_OPTS=${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
-                                        " \"-javaagent:%APP_HOME%\\app\\agents-${siriusVersion}.jar\" \"-Djava.library.path=%APP_HOME%\"")
+                                        " \"-javaagent:%JAR_HOME%\\agents-${siriusVersion}.jar\" \"-Djava.library.path=%APP_HOME%\"")
                         else if (l.startsWith('set MAIN_CLASS='))
                             l = l.replace('set MAIN_CLASS=', 'set MAIN_CLASS="' + mainClassName + '"')
                         else if (l.startsWith('set CLASSPATH='))
-                            l = l.replace('set CLASSPATH=', 'set CLASSPATH="%APP_HOME%\\app\\*"')
+                            l = l.replace('set CLASSPATH=', 'set CLASSPATH="%JAR_HOME%\\*"')
+                        else if (l.startsWith('set JAR_HOME='))
+                            l = l.replace('set JAR_HOME=', 'set JAR_HOME=%APP_HOME%\\app')
                         it.writeLine(l)
                     }
                 }
