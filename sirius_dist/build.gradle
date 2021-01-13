@@ -437,9 +437,6 @@ subprojects {
     }
 
     task distribution { group = 'distribution' }
-
-    distribution.dependsOn 'distImageZip'
-    distribution.dependsOn 'distInstaller'
     artifactoryPublish.dependsOn 'distribution'
 }
 

@@ -1,175 +1,173 @@
-import java.util.stream.Stream
+import java.nio.file.Files
 
 dependencies {
-//project
     compile project(':sirius_cli')
+//    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
-/*################### Environment variables ################### */
-mainClassName = 'de.unijena.bioinf.ms.frontend.SiriusCLIApplication'
-project.ext.set("type", ['console'])
-
-/*################### Jar build Stuff ################### */
-jar {
-    manifest {
-        attributes 'Main-Class': mainClassName
-    }
-}
-
-/*################### Windows release Stuff ################### */
-launch4j {
-    icon = getRootProject().getRootDir().toPath().resolve('icons/sirius-icon.ico').toFile()
-    copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
-    companyName = "Friedrich-Schiller-University Jena"
-    version = project.version
-    textVersion = project.version
-    supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
-
-    initialHeapSize = 1024 // initial heap not too big improves startup time on windows
-    maxHeapSize = 4096
-    maxHeapPercent = 60
-
-    dontWrapJar = true
-    jdkPreference = 'preferJre'
-
-    classpath.add('./lib/*')
-    classpath.addAll(Stream.of(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':')).filter({ s -> !s.contains('APP_HOME') }).toArray())
-    println("================THE PATH: $classpath")
-
-}
-
-
-project.type.each{t ->
-    project.arch.each { a ->
-        tasks.create("launch4j-$t-$a", edu.sc.seis.launch4j.tasks.Launch4jLibraryTask) {
-            group = 'launch4j'
-            mainClassName = project.mainClassName
-            headerType = t
-            jreRuntimeBits = a
-
-            jar = "../../../All/Sirius/lib/${project(':sirius_gui').tasks.jar.archiveName}"
-
-            classpath.add('../../../All/Sirius/lib/*') //add
-            println(classpath)
-
-            outfile = "${project.appName}-${t}-${a}.exe"
-        }
-    }
-}
-
-
-startScripts {
-    applicationName = "${project.appName}"
+task linux64Dist(type: Download, group: 'download') {
+    String distName = "sirius-$version-linux64-headless"
+    src "https://bio.informatik.uni-jena.de/repository/${version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}/de/unijena/bioinf/ms/sirius/$version/${distName}.zip"
+    dest buildDir.toPath().resolve("tmp/source-dists/${distName}.zip").toFile()
+    onlyIfModified true
+    overwrite false
 
     doLast {
-        def openMSLibPath = '$APP_HOME/../../../All/Sirius/lib'
-        String[] lines = unixScript.text.split(System.lineSeparator())
-
-        int insert = -1;
-        for (int i = 0; i < lines.length; i++) {
-            if (lines[i].startsWith('APP_HOME="`pwd -P`"')) {
-                insert = i + 1;
-            }
-            if (lines[i].startsWith('CLASSPATH=')) {
-                lines[i] = "CLASSPATH=\"${openMSLibPath}/*:${runtimeClasspath}\""
-            }
+        copy {
+            from zipTree(dest)
+            into buildDir.toPath().resolve("tmp/source-dists").resolve(distName).toFile()
         }
-        if (insert >= 0)
-            lines = (lines as List).plus(insert, 'APP_HOME="$APP_HOME/Sirius"')
-        unixScript.text = lines.join(System.lineSeparator())
     }
 }
 
-/*################### Build distributions ################### */
-task distribute { group = 'distribution' }
+task osx64Dist(type: Download, group: 'download') {
+    String distName = "sirius-$version-osx64-headless"
+    src "https://bio.informatik.uni-jena.de/repository/${version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}/de/unijena/bioinf/ms/sirius/$version/${distName}.zip"
+    dest buildDir.toPath().resolve("tmp/source-dists/${distName}.zip").toFile()
+    onlyIfModified true
+    overwrite false
 
-distributions {
-    //create OpenMS dist
-    def n = "multiOS"
-    create(n, {
-        baseName = "${project.appName}-$n"
-        contents {
-            into('All/Sirius/lib') {
-                from("build/install/${project.name}/lib") {
-                    exclude libExclude
-                }
-            }
-
-            project.arch.each { ar ->
-                into("Linux/${ar}bit/Sirius/lib") {
-                    from("${project.clpPath}/l${ar}/")
-                    exclude('*.zip')
-                }
-
-                into("Linux/${ar}bit/Sirius") {
-                    from("build/install/${project.name}/bin") {
-                        exclude("*.bat")
-                    }
-                    from("${project.distPath}") {
-                        include('COPYING_OpenMS.txt')
-                        include('LICENSE.txt')
-                    }
-                    rename{String name -> name.replace('COPYING_OpenMS.txt','COPYING.txt')}
-                }
-
-                into("Windows/${ar}bit/Sirius") {
-                    from("${project.clpPath}/w${ar}/")
-                    from("${project.distPath}") {
-                        include('COPYING_OpenMS.txt')
-                        include('LICENSE.txt')
-                    }
-                    rename{String name -> name.replace('COPYING_OpenMS.txt','COPYING.txt')}
-                    from('build/launch4j') {
-                        include("sirius-console-${ar}.exe")
-                    }
-                }
-
-            }
-            into('MacOS/64bit/Sirius/lib') {
-                from("${project.clpPath}/osx/")
-                exclude('*.zip')
-            }
-
-            into('MacOS/64bit/Sirius') {
-//                from project.openmsScript
-                from("build/install/${project.name}/bin") {
-                    exclude("*.bat")
-                }
-                from("${project.distPath}") {
-                    include('COPYING_OpenMS.txt')
-                    include('LICENSE.txt')
-                }
-                rename{String name -> name.replace('COPYING_OpenMS.txt','COPYING.txt')}
-            }
+    doLast {
+        copy {
+            from zipTree(dest)
+            into buildDir.toPath().resolve("tmp/source-dists").resolve(distName).toFile()
         }
-    })
-
-    distribute.dependsOn "${n}DistZip"
-    getTasks().findByPath("${n}DistZip").dependsOn ':downloadGLPK'
-    getTasks().findByPath("${n}DistZip").dependsOn ':downloadCLP'
-    getTasks().findByPath("${n}DistZip").dependsOn 'createAllExecutables'
-    getTasksByName("${n}DistTar", false).each { it.setEnabled(false) }
-
-    project.getTasksByName("distTar", false).each { it.setEnabled(false) }
-    project.getTasksByName("distZip", false).each { it.setEnabled(false) }
-
-    multiOSDistZip.dependsOn 'installDist'
-    multiOSDistTar.dependsOn 'installDist'
-    installMultiOSDist.dependsOn 'installDist'
-    multiOSDistZip.dependsOn 'createExe'
-    multiOSDistTar.dependsOn 'createExe'
-    installMultiOSDist.dependsOn 'createExe'
+    }
 }
 
-// what should be published
+task win64Dist(type: Download, group: 'download') {
+    String distName = "sirius-$version-win64-headless"
+    src "https://bio.informatik.uni-jena.de/repository/${version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}/de/unijena/bioinf/ms/sirius/$version/${distName}.zip"
+    dest buildDir.toPath().resolve("tmp/source-dists/${distName}.zip").toFile()
+    onlyIfModified true
+    overwrite false
+
+    doLast {
+        copy {
+            from zipTree(dest)
+            into buildDir.toPath().resolve("tmp/source-dists").resolve(distName).toFile()
+        }
+    }
+}
+
+task multiOSImage(group: 'distribution') {
+    dependsOn("linux64Dist", "osx64Dist", "win64Dist")
+    inputs.files(osx64Dist.outputs.files.singleFile.toString().replace(".zip", ""), linux64Dist.outputs.files.singleFile.toString().replace(".zip", ""))
+    outputs.file(getBuildDir().toPath().resolve("distributions").resolve(project.name))
+
+    doFirst {
+        copy {
+            from(win64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
+                exclude 'sirius.exe'
+                exclude 'sirius-gui.exe'
+                exclude 'sirius-gui.exe'
+                exclude 'COPYING.txt'
+                exclude 'LICENSE.txt'
+                exclude "manual-$version-manual.pdf"
+                exclude "app"
+            }
+            into outputs.files.singleFile.toPath().resolve(win64Dist.outputs.files.singleFile.getName().replace(".zip", ""))
+        }
+
+        copy {
+            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
+                exclude 'bin/sirius'
+                exclude 'COPYING.txt'
+                exclude 'LICENSE.txt'
+                exclude "manual-$version-manual.pdf"
+                exclude "lib/app"
+            }
+            into outputs.files.singleFile.toPath().resolve(linux64Dist.outputs.files.singleFile.getName().replace(".zip", ""))
+        }
+
+        copy {
+            from(osx64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius.app/Contents') {
+                exclude "app"
+                exclude 'MacOs'
+                exclude 'COPYING.txt'
+                exclude 'LICENSE.txt'
+                exclude "manual-$version-manual.pdf"
+                exclude 'Info.plist'
+                exclude 'PkgInfo'
+            }
+            into outputs.files.singleFile.toPath().resolve(osx64Dist.outputs.files.singleFile.getName().replace(".zip", ""))
+        }
+
+        copy {
+            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
+                include 'COPYING.txt'
+                include 'LICENSE.txt'
+                include "manual-$version-manual.pdf"
+            }
+            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius/lib') {
+                include "app"
+            }
+            into outputs.files.singleFile
+        }
+
+        //modify windows script
+        /*def lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve(win64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.bat'))
+        outputs.files.singleFile.toPath().resolve(win64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.bat').toFile().withWriter {
+            lines.forEach( {l ->
+                if (l.startsWith("set JAR_HOME="))
+                    it.writeLine('set JAR_HOME=%APP_HOME%\\..\\app')
+                else
+                    it.writeLine(l)
+            })
+        }
+
+        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve(linux64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('bin/sirius.sh'))
+        outputs.files.singleFile.toPath().resolve(linux64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.sh').toFile().withWriter {
+            lines.forEach( {l ->
+                if (l.startsWith("JAR_HOME="))
+                    it.writeLine('JAR_HOME="\$APP_HOME/../app"')
+                else
+                    it.writeLine(l)
+            })
+        }
+
+        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve(osx64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.sh'))
+        outputs.files.singleFile.toPath().resolve(osx64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.sh').toFile().withWriter {
+            lines.forEach( {l ->
+                if (l.startsWith("JAR_HOME="))
+                    it.writeLine('JAR_HOME="\$APP_HOME/../app"')
+                else
+                    it.writeLine(l)
+            })
+        }*/
+    }
+
+
+}
+
+task multiOSImageZip(dependsOn: multiOSImage, group: 'distribution') {
+    inputs.dir(multiOSImage.outputs)
+    outputs.file(multiOSImage.outputs.files.singleFile.toString() + ".zip")
+    doFirst {
+        def imageDir = inputs.files.singleFile
+        def parentPath = imageDir.parentFile.toPath()
+        def zipFile = parentPath.resolve("${imageDir.getName()}.zip")
+        project.ant.zip(destfile: zipFile, duplicate: 'fail') {
+            imageDir.eachFileRecurse { f ->
+                int mode = f.canExecute() ? 755 : 644
+                def relPath = parentPath.relativize(f.toPath()).toString()
+                zipfileset(dir: parentPath, includes: relPath, filemode: mode)
+            }
+        }
+    }
+}
+
+
+distribution.dependsOn 'multiOSImage'
+distribution.dependsOn 'multiOSImageZip'
+
 publishing {
     publications {
-        sirius(MavenPublication) {
+        sirius(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
-            pom.withXml {}
-            artifact source: multiOSDistZip, classifier: 'multiOS', extension: 'zip'
+            artifact source: "${multiOSImageZip.outputs.files.singleFile}", classifier: "multiOS-headless", extension: 'zip'
         }
     }
 }
