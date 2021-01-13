@@ -24,6 +24,9 @@ distInstaller{
     linuxShortcut = true
 }
 
+distribution.dependsOn 'distImageZip'
+distribution.dependsOn 'distInstaller'
+
 publishing {
     publications {
         sirius(org.gradle.api.publish.maven.MavenPublication) {

@@ -112,6 +112,10 @@ allprojects {
         mavenCentral()
         maven {//public libs only so anybody can build the frontend without login
             url "https://bio.informatik.uni-jena.de/repository/libs-oss"
+            metadataSources {
+                mavenPom()
+                artifact()
+            }
         }
         maven {
             url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
@@ -123,10 +127,10 @@ allprojects {
         maven {
             url "https://repo1.maven.org/maven2/" //glazed lists
         }
-        maven {
+        /*maven {
             url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl
             metadataSources { artifact() }
-        }
+        }*/
 
     }
 

@@ -19,6 +19,10 @@ repositories {
     mavenCentral()
     maven {//public libs only so anybody can build the frontend without login
         url "https://bio.informatik.uni-jena.de/repository/libs-oss"
+        metadataSources {
+            mavenPom()
+            artifact()
+        }
     }
     maven {
         url "https://www.xypron.de/repository" //glpk repo
