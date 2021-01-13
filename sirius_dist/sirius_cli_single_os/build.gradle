@@ -16,6 +16,9 @@ distImage {
     macPackageName = 'SIRIUS-headless'
 }
 
+distribution.dependsOn 'distImageZip'
+distribution.dependsOn 'distInstaller'
+
 publishing {
     publications {
         sirius(org.gradle.api.publish.maven.MavenPublication) {
