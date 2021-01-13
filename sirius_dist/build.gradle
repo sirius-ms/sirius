@@ -358,9 +358,51 @@ subprojects {
                 f.withWriter {
                     lines.forEach { l ->
                         if (l.startsWith('DEFAULT_JVM_OPTS='))
-                            l = l.replace('DEFAULT_JVM_OPTS=', "DEFAULT_JVM_OPTS='${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))} \"-javaagent:\$APP_HOME/lib/app/agents-${siriusVersion}.jar\"'")
+                            l = l.replace('DEFAULT_JVM_OPTS=', "DEFAULT_JVM_OPTS='${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
+                                    " \"-javaagent:\$JAR_HOME/agents-${siriusVersion}.jar\"'")
                         else if (l.startsWith('MAIN_CLASS='))
                             l = l.replace('MAIN_CLASS=', 'MAIN_CLASS="' + mainClassName + '"')
+                        else if (l.startsWith('CLASSPATH='))
+                            l = l.replace('CLASSPATH=', 'CLASSPATH="\$JAR_HOME/*"')
+                        else if (l.startsWith('JAR_HOME='))
+                            l = l.replace('JAR_HOME=', 'JAR_HOME="\$APP_HOME/lib/app"')
+                        it.writeLine(l)
+                    }
+                }
+                f.setExecutable(true, false)
+
+            }else if(OS.isMacOsX()){
+                def lines = file("${rootDir}/scripts/sirius.sh").readLines()
+                def f = file("$appRootTarget/bin/sirius.sh")
+                f.withWriter {
+                    lines.forEach { l ->
+                        if (l.startsWith('DEFAULT_JVM_OPTS='))
+                            l = l.replace('DEFAULT_JVM_OPTS=', "DEFAULT_JVM_OPTS='${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
+                                    " \"-javaagent:\$JAR_HOME/agents-${siriusVersion}.jar\" \"-Djava.library.path=\$APP_HOME/native\"'")
+                        else if (l.startsWith('MAIN_CLASS='))
+                            l = l.replace('MAIN_CLASS=', 'MAIN_CLASS="' + mainClassName + '"')
+                        else if (l.startsWith('CLASSPATH='))
+                            l = l.replace('CLASSPATH=', 'CLASSPATH="\$JAR_HOME/*"')
+                        else if (l.startsWith('JAR_HOME='))
+                            l = l.replace('JAR_HOME=', 'JAR_HOME="\$APP_HOME/app"')
+                        it.writeLine(l)
+                    }
+                }
+                f.setExecutable(true, false)
+            }else if(OS.isWindows()){
+                def lines = file("${rootDir}/scripts/sirius.bat").readLines()
+                def f = file("$appRootTarget/sirius.bat")
+                f.withWriter {
+                    lines.forEach { l ->
+                        if (l.startsWith('set DEFAULT_JVM_OPTS='))
+                                l = l.replace('set DEFAULT_JVM_OPTS=', "set DEFAULT_JVM_OPTS=${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
+                                        " \"-javaagent:%JAR_HOME%\\agents-${siriusVersion}.jar\" \"-Djava.library.path=%APP_HOME%\"")
+                        else if (l.startsWith('set MAIN_CLASS='))
+                            l = l.replace('set MAIN_CLASS=', 'set MAIN_CLASS="' + mainClassName + '"')
+                        else if (l.startsWith('set CLASSPATH='))
+                            l = l.replace('set CLASSPATH=', 'set CLASSPATH="%JAR_HOME%\\*"')
+                        else if (l.startsWith('set JAR_HOME='))
+                            l = l.replace('set JAR_HOME=', 'set JAR_HOME=%APP_HOME%\\app')
                         it.writeLine(l)
                     }
                 }
@@ -395,9 +437,6 @@ subprojects {
     }
 
     task distribution { group = 'distribution' }
-
-    distribution.dependsOn 'distImageZip'
-    distribution.dependsOn 'distInstaller'
     artifactoryPublish.dependsOn 'distribution'
 }
 
