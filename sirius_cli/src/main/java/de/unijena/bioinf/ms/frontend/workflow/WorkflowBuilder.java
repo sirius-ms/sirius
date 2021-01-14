@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.workflow;
 
-import com.google.common.collect.Streams;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
@@ -130,8 +129,8 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
         rootSpec = forAnnotatedObjectWithSubCommands(
                 this.rootOptions,
-                Streams.concat(Stream.of(standaloneTools()), Stream.of(configSpec, lcmsAlignSpec), chainToolSpecs.values().stream())
-                        .toArray()
+                Stream.concat(
+                        Stream.concat(Stream.of(standaloneTools()), Stream.of(configSpec, lcmsAlignSpec)), chainToolSpecs.values().stream()).toArray()
         );
     }
 
