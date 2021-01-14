@@ -62,7 +62,7 @@ distCliLinux64:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distGuiLinux64:
   variables:
@@ -82,7 +82,7 @@ distGuiLinux64:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distCliWin64:
   variables:
@@ -103,7 +103,7 @@ distCliWin64:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distGuiWin64:
   variables:
@@ -124,7 +124,7 @@ distGuiWin64:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distCliMacOSX:
   variables:
@@ -144,7 +144,7 @@ distCliMacOSX:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distGuiMacOX:
   variables:
@@ -164,7 +164,7 @@ distGuiMacOX:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distCliMultiOS:
   variables:
@@ -184,4 +184,4 @@ distCliMultiOS:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
