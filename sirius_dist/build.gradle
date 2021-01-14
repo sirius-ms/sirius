@@ -365,7 +365,7 @@ subprojects {
                         else if (l.startsWith('CLASSPATH='))
                             l = l.replace('CLASSPATH=', 'CLASSPATH="\$JAR_HOME/*"')
                         else if (l.startsWith('JAVACMD='))
-                            l = l.replace("", 'JAVACMD="\$APP_HOME/lib/runtime/bin/java"')
+                            l = l.replace("JAVACMD=", 'JAVACMD="\$APP_HOME/lib/runtime/bin/java"')
                         else if (l.startsWith('JAR_HOME='))
                             l = l.replace('JAR_HOME=', 'JAR_HOME="\$APP_HOME/lib/app"')
                         it.writeLine(l)
@@ -375,7 +375,8 @@ subprojects {
 
             }else if(OS.isMacOsX()){
                 def lines = file("${rootDir}/scripts/sirius.sh").readLines()
-                def f = file("$appRootTarget/sirius.sh")
+                file("$appRootTarget/bin").mkdirs()
+                def f = file("$appRootTarget/bin/sirius.sh")
                 f.withWriter {
                     lines.forEach { l ->
                         if (l.startsWith('DEFAULT_JVM_OPTS='))
@@ -386,7 +387,7 @@ subprojects {
                         else if (l.startsWith('CLASSPATH='))
                             l = l.replace('CLASSPATH=', 'CLASSPATH="\$JAR_HOME/*"')
                         else if (l.startsWith('JAVACMD='))
-                            l = l.replace("", 'JAVACMD="\$APP_HOME/runtime/bin/java"')
+                            l = l.replace("JAVACMD=", 'JAVACMD="\$APP_HOME/runtime/Contents/Home/bin/java"')
                         else if (l.startsWith('JAR_HOME='))
                             l = l.replace('JAR_HOME=', 'JAR_HOME="\$APP_HOME/app"')
                         it.writeLine(l)
