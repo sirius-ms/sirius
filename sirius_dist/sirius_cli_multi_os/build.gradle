@@ -120,7 +120,7 @@ task multiOSImage(group: 'distribution') {
         }
 
         lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve(linux64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('bin/sirius.sh'))
-        outputs.files.singleFile.toPath().resolve(linux64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.sh').toFile().withWriter {
+        outputs.files.singleFile.toPath().resolve(linux64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('bin/sirius.sh').toFile().withWriter {
             lines.forEach( {l ->
                 if (l.startsWith("JAR_HOME="))
                     it.writeLine('JAR_HOME="\$APP_HOME/../app"')
@@ -129,8 +129,8 @@ task multiOSImage(group: 'distribution') {
             })
         }
 
-        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve(osx64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.sh'))
-        outputs.files.singleFile.toPath().resolve(osx64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.sh').toFile().withWriter {
+        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve(osx64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('bin/sirius.sh'))
+        outputs.files.singleFile.toPath().resolve(osx64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('bin/sirius.sh').toFile().withWriter {
             lines.forEach( {l ->
                 if (l.startsWith("JAR_HOME="))
                     it.writeLine('JAR_HOME="\$APP_HOME/../app"')

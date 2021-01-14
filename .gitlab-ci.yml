@@ -11,6 +11,7 @@ stages:
   - clean
   - prepare
   - build-cli
+  - build-multi-cli
   - build-gui
   - publish
 
@@ -62,7 +63,7 @@ distCliLinux64:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distGuiLinux64:
   variables:
@@ -82,7 +83,7 @@ distGuiLinux64:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distCliWin64:
   variables:
@@ -103,7 +104,7 @@ distCliWin64:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distGuiWin64:
   variables:
@@ -124,7 +125,7 @@ distGuiWin64:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distCliMacOSX:
   variables:
@@ -144,7 +145,7 @@ distCliMacOSX:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distGuiMacOX:
   variables:
@@ -164,12 +165,12 @@ distGuiMacOX:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
 
 distCliMultiOS:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
-  stage: build-cli
+  stage: build-multi-cli
   needs: ["distCliWin64","distCliMacOSX","distCliLinux64"]
   script:
     - cd sirius_dist/sirius_cli_multi_os
@@ -184,4 +185,4 @@ distCliMultiOS:
   only:
     refs:
       - master
-      - release-4.5
+      - release-4
