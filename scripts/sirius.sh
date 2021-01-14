@@ -51,7 +51,7 @@ JAR_HOME=
 CLASSPATH=
 
 # Determine the Java command to use to start the JVM.
-JAVACMD="$APP_HOME/lib/runtime/bin/java"
+JAVACMD=
 
 # Main class to run the app
 MAIN_CLASS=
