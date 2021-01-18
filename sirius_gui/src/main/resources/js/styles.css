@@ -1,3 +1,4 @@
+/* Global style */
 body {
     overflow-x: hidden;
     overflow-y: hidden;
@@ -11,8 +12,59 @@ body {
 
 #tooltip, .popup {
     background-color: white;
-    border:  solid;
-    border-width:  1px;
+    border: solid 1px;
     border-radius:  5px;
     padding:  5px;
 }
+
+/* SpectraViewer_v2 Basic: */
+#tooltip, #structureView, #spectrumView, .anno { position: absolute; }
+
+.spectrum_label, .spectrum_legend { text-anchor: middle; }
+
+#container {
+    vertical-align: top;
+    width: 100%;
+    position: relative;
+    display: inline-block;
+    margin: 0;
+}
+
+#spectrumView {
+    top: 0;
+    left: 0;
+}
+
+#structureView { top: 20px; }
+
+.anno {
+    white-space: pre-line;
+    left: 5px;
+}
+
+/* SpectraViewer_v2 Changeable: */
+.spectrum_legend { fill: #808080; }
+
+.peak { width: 2px;}
+.peak_1 { fill: #000000; }
+.peak_2 { fill: #32CD32; }
+.peak_hover {fill: #A9A9A9; }
+.peak_select {
+    fill: #4169E1;
+    width: 3px;
+}
+
+#str_border {
+    border: 0.5px solid #cfcfcf;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.highlight_bond { stroke: #4169E1; }
+.highlight_cut { stroke: red; }
+.highlight_atom { fill: #4169E1; }
+.rest_bond { stroke: #A9A9A9; }
+.rest_atom { fill: #A9A9A9; }
+
+.anno {color: #808080;}
+#anno_leftClick { color: #4169E1; }

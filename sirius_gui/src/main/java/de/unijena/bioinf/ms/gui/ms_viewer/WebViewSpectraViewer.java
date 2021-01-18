@@ -22,11 +22,12 @@ package de.unijena.bioinf.ms.gui.ms_viewer;
 import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
 
 public class WebViewSpectraViewer extends WebViewPanel {
-	
-	public void loadData(String json_spectra) {
+
+    public void loadData(String json_spectra, String json_highlight, String svg) { // TEST CODE
         cancelTasks();
-		executeJS("loadJSONData('" + json_spectra.replaceAll("(\\r\\n|\\r|\\n)", " ") + "')");
-		System.out.println("executed JS function");
+        executeJS("loadJSONData('" + json_spectra.replaceAll("(\\r\\n|\\r|\\n)", " ") + "', '" +
+                json_highlight + "', '" + svg.replaceAll("'", "\"").replaceAll("(\\r\\n|\\r|\\n)", " ") + "')");
+        System.out.println("executed JS function");
     }
 
 	public void clear(){

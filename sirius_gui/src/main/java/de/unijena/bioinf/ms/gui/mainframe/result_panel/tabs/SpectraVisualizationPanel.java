@@ -64,6 +64,8 @@ import java.awt.event.MouseListener;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.HashMap;
 
@@ -144,6 +146,8 @@ public class SpectraVisualizationPanel
 		if (mode == null)
 			return;
 		String jsonSpectra = null;
+		String jsonHighlight = null; // TEST CODE
+		String strSVG = null; // TEST CODE
 		SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
 
 		if (mode.contains(MS1_DISPLAY)) {
@@ -188,7 +192,13 @@ public class SpectraVisualizationPanel
 		}
 		if (jsonSpectra != null){
 			// debugWriteSpectra(jsonSpectra, "/tmp/test_spectra.json"); // FIXME: DEBUG
-			browser.loadData(jsonSpectra);
+			try {
+				jsonHighlight = Files.readString(Paths.get("/media/witta/Volume1/sirius/sirius_frontend/sirius_gui/src/test/resources/Bicuculline_highlight.json"));
+				strSVG = Files.readString(Paths.get("/media/witta/Volume1/sirius/sirius_frontend/sirius_gui/src/test/resources/Bicuculline_svg.xml"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			browser.loadData(jsonSpectra, jsonHighlight, strSVG);
 		}
 	}
 
