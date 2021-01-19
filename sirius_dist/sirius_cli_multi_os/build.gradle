@@ -57,83 +57,88 @@ task multiOSImage(group: 'distribution') {
     outputs.file(getBuildDir().toPath().resolve("distributions").resolve(project.name))
 
     doFirst {
+
+        //build windows directory
         copy {
             from(win64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
                 exclude 'sirius.exe'
                 exclude 'sirius-gui.exe'
                 exclude 'sirius-gui.exe'
-                exclude 'COPYING.txt'
-                exclude 'LICENSE.txt'
+//                exclude 'COPYING.txt'
+//                exclude 'LICENSE.txt'
                 exclude "manual-$version-manual.pdf"
                 exclude "app"
             }
-            into outputs.files.singleFile.toPath().resolve(win64Dist.outputs.files.singleFile.getName().replace(".zip", ""))
+            into outputs.files.singleFile.toPath().resolve('Windows').resolve('64bit').resolve('Sirius')
         }
 
+        // build Linux directory
         copy {
             from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
                 exclude 'bin/sirius'
-                exclude 'COPYING.txt'
-                exclude 'LICENSE.txt'
+//                exclude 'COPYING.txt'
+//                exclude 'LICENSE.txt'
                 exclude "manual-$version-manual.pdf"
                 exclude "lib/app"
             }
-            into outputs.files.singleFile.toPath().resolve(linux64Dist.outputs.files.singleFile.getName().replace(".zip", ""))
+            into outputs.files.singleFile.toPath().resolve('Linux').resolve('64bit').resolve('Sirius')
         }
 
+        //build All directory
         copy {
             from(osx64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius.app/Contents') {
                 exclude "app"
                 exclude 'MacOS'
-                exclude 'COPYING.txt'
-                exclude 'LICENSE.txt'
+//                exclude 'COPYING.txt'
+//                exclude 'LICENSE.txt'
                 exclude "manual-$version-manual.pdf"
                 exclude 'Info.plist'
                 exclude 'PkgInfo'
             }
-            into outputs.files.singleFile.toPath().resolve(osx64Dist.outputs.files.singleFile.getName().replace(".zip", ""))
+            into outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius')
         }
 
+        //build All directory
         copy {
             from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
                 include 'COPYING.txt'
                 include 'LICENSE.txt'
                 include "manual-$version-manual.pdf"
             }
-            into outputs.files.singleFile
+            into outputs.files.singleFile.toPath().resolve('All').resolve('Sirius')
         }
         copy {
             from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius/lib/app')
-            into outputs.files.singleFile.toPath().resolve('app')
+            into outputs.files.singleFile.toPath().resolve('All').resolve('Sirius').resolve('app')
         }
 
 
-            //modify windows script
-        def lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve(win64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.bat'))
-        outputs.files.singleFile.toPath().resolve(win64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('sirius.bat').toFile().withWriter {
+        //modify windows script
+        def lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve('Windows').resolve('64bit').resolve('Sirius').resolve('sirius.bat'))
+        outputs.files.singleFile.toPath().resolve('Windows').resolve('64bit').resolve('Sirius').resolve('sirius.bat').toFile().withWriter {
             lines.forEach( {l ->
                 if (l.startsWith("set JAR_HOME="))
-                    it.writeLine('set JAR_HOME=%APP_HOME%\\..\\app')
+                    it.writeLine('set JAR_HOME=%APP_HOME%\\..\\..\\..\\All\\Sirius\\app')
                 else
                     it.writeLine(l)
             })
         }
 
-        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve(linux64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('bin/sirius.sh'))
-        outputs.files.singleFile.toPath().resolve(linux64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('bin/sirius.sh').toFile().withWriter {
+        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve('Linux').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius.sh'))
+        outputs.files.singleFile.toPath().resolve('Linux').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius.sh').toFile().withWriter {
             lines.forEach( {l ->
                 if (l.startsWith("JAR_HOME="))
-                    it.writeLine('JAR_HOME="\$APP_HOME/../app"')
+                    it.writeLine('JAR_HOME="\$APP_HOME/../../../All/Sirius/app"')
                 else
                     it.writeLine(l)
             })
         }
 
-        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve(osx64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('bin/sirius.sh'))
-        outputs.files.singleFile.toPath().resolve(osx64Dist.outputs.files.singleFile.getName().replace(".zip", "")).resolve('bin/sirius.sh').toFile().withWriter {
+        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius.sh'))
+        outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius.sh').toFile().withWriter {
             lines.forEach( {l ->
                 if (l.startsWith("JAR_HOME="))
-                    it.writeLine('JAR_HOME="\$APP_HOME/../app"')
+                    it.writeLine('JAR_HOME="\$APP_HOME/../../../All/Sirius/app"')
                 else
                     it.writeLine(l)
             })
