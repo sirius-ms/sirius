@@ -110,7 +110,7 @@ public class FragmentsCandidate extends StandardCandidate<FragmentsAndLosses>{
             peakToIdx.put(peak, i++);
         }
 
-        assert peakToFragments.size()<=numberOfPeaks(experiment.getMs2Spectra());
+        assert peakToFragments.size()<=numberOfPeaks(experiment.getMs2Spectra())+1;
 
         ProcessedInput input = assignFragmentsToPeaks(experiment, trees);
 
