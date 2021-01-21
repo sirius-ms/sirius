@@ -30,24 +30,28 @@ import java.util.Locale;
 
 public class IonGroup {
 
-    protected ChromatographicPeak peak;
+    protected MutableChromatographicPeak peak;
     protected List<CorrelationGroup> isotopes;
     protected SimpleSpectrum isotopeSpectrum;
     protected IonAnnotation ionAnnotation;
     protected int chargeState;
-    protected final ChromatographicPeak.Segment segment;
 
-    public IonGroup(ChromatographicPeak peak, ChromatographicPeak.Segment segment, List<CorrelationGroup> isotopes) {
+
+    //protected final ChromatographicPeak.Segment segment;
+    // apex index of the segment
+    protected int segmentApexIndex;
+
+    public IonGroup(MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, List<CorrelationGroup> isotopes) {
         this.peak = peak;
         this.isotopes = isotopes;
-        this.segment = segment;
+        this.segmentApexIndex = segment.apex;
     }
 
     public boolean chargeStateIsNotDifferent(IonGroup other) {
         return chargeState == 0 || other.chargeState==0 || other.chargeState==chargeState;
     }
 
-    public ChromatographicPeak getPeak() {
+    public MutableChromatographicPeak getPeak() {
         return peak;
     }
 
@@ -83,12 +87,12 @@ public class IonGroup {
     }
 
     public ChromatographicPeak.Segment getSegment() {
-        return segment;
+        return peak.getSegmentWithApexId(segmentApexIndex).orElseThrow();
     }
 
     public String toString() {
         if (peak.getSegments().isEmpty()) return "";
-        int apex = peak.getSegments().first().apex;
+        int apex = peak.getSegments().firstKey();
         String iso = isotopes.isEmpty() ? "" : (isotopes.size() + " isotopes with correlation " + Arrays.toString(isotopes.stream().mapToDouble(x->x.getCorrelation()).toArray()));
         return String.format(Locale.US, "ScanID: %d .. %d. m/z = %.5f, intensity = %.1f. %s", peak.getScanNumberAt(0), peak.getScanNumberAt(peak.numberOfScans()-1), peak.getMzAt(apex), peak.getIntensityAt(apex), iso);
     }
@@ -104,9 +108,13 @@ public class IonGroup {
     }
 
     protected void setMinMaxScanIndex(int[] scanIndex, int surrounding) {
-        segment.setMinMaxScanIndex(scanIndex,surrounding);
+        getSegment().setMinMaxScanIndex(scanIndex,surrounding);
         for (CorrelationGroup iso : isotopes) {
             iso.rightSegment.setMinMaxScanIndex(scanIndex,surrounding);
         }
+    }
+
+    public int getApexIndex() {
+        return segmentApexIndex;
     }
 }
