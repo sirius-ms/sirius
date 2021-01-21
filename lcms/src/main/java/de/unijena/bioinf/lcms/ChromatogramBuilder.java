@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.model.lcms.*;
 import gnu.trove.list.array.TDoubleArrayList;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 public class ChromatogramBuilder {
@@ -174,7 +175,7 @@ public class ChromatogramBuilder {
                 int end = k + 10;
                 if (end + 10 > peak.numberOfScans()) end = peak.numberOfScans();
                 int middle = start + (end - start) / 2;
-                double noiseLevel = 2*sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(middle), peak.getMzAt(middle));
+                double noiseLevel = sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(middle), peak.getMzAt(middle));
                 for (int i=start; i < end; ++i) {
                     if (i>0) medianSlope.add(Math.abs(peak.getIntensityAt(i) - peak.getIntensityAt(i - 1)));
                 }
@@ -186,7 +187,7 @@ public class ChromatogramBuilder {
             }
         } else {
             for (int i=0; i < peak.numberOfScans(); ++i) {
-                noiseLevels[i] = 2*(float)sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(i), peak.getMzAt(i));
+                noiseLevels[i] = (float)sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(i), peak.getMzAt(i));
                 if (i>0) medianSlope.add(peak.getIntensityAt(i)-peak.getIntensityAt(i-1));
             }
             medianSlope.sort();
@@ -196,6 +197,9 @@ public class ChromatogramBuilder {
                 }
             }
         }
+
+        /// WOHOO
+        Arrays.fill(noiseLevels, 0f);
 
         double mxm = 0d;
         for (int i=0; i < peak.numberOfScans(); ++i) mxm = Math.max(mxm, peak.getIntensityAt(i));
@@ -231,6 +235,9 @@ public class ChromatogramBuilder {
             }
 
         }
+
+        extrema.smooth(noiseLevels, peak, 0.33, 5);
+
         return extrema;
 
     }

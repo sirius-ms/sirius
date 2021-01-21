@@ -57,7 +57,7 @@ public class FragmentedIon extends IonGroup {
 
     protected Scan[] mergedScans;
 
-    public FragmentedIon(Polarity polarity, Scan ms2Scan, CosineQuerySpectrum msms, Quality ms2Quality, ChromatographicPeak chromatographicPeak,ChromatographicPeak.Segment segment, Scan[] mergedScans) {
+    public FragmentedIon(Polarity polarity, Scan ms2Scan, CosineQuerySpectrum msms, Quality ms2Quality, MutableChromatographicPeak chromatographicPeak,ChromatographicPeak.Segment segment, Scan[] mergedScans) {
         super(chromatographicPeak, segment, new ArrayList<>());
         this.polarity = polarity;
         this.msms = msms;
@@ -194,16 +194,16 @@ return null;
     }
 
     public double getMass() {
-        return peak.getMzAt(segment.apex);
+        return peak.getMzAt(segmentApexIndex);
     }
 
 
     public long getRetentionTime() {
-        return peak.getRetentionTimeAt(segment.apex);
+        return peak.getRetentionTimeAt(segmentApexIndex);
     }
 
     public String toString() {
-        return "MS/MS("+chargeState+") m/z = " + (msms==null ? "GAP FILLED" : ms2Scan.getPrecursor().getMass()) + ", apex = " + peak.getRetentionTimeAt(segment.getApexIndex())/60000d + " min";
+        return "MS/MS("+chargeState+") m/z = " + (msms==null ? "GAP FILLED" : ms2Scan.getPrecursor().getMass()) + ", apex = " + peak.getRetentionTimeAt(segmentApexIndex)/60000d + " min";
     }
 
     public ArrayList<CompoundReport> getAdditionalInfos() {
@@ -211,7 +211,7 @@ return null;
     }
 
     public double getIntensity() {
-        return peak.getIntensityAt(segment.apex);
+        return peak.getIntensityAt(segmentApexIndex);
     }
 
     public Quality getMsMsQuality() {

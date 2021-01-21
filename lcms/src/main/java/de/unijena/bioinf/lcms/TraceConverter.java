@@ -108,8 +108,8 @@ class TraceConverter {
                 // ignore this for SIRIUS release 4.5
                 // it is not necessary and we might change the internal
                 // data format of reports in later versions
-                //mainIon.getAdditionalInfos().toArray(CompoundReport[]::new)
-                new CompoundReport[0]
+                mainIon.getAdditionalInfos().toArray(CompoundReport[]::new)
+                //new CompoundReport[0]
         );
 
     }

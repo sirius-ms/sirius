@@ -32,6 +32,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.lcms.align.*;
@@ -46,6 +47,7 @@ import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.apache.commons.math3.distribution.LaplaceDistribution;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -383,7 +385,7 @@ public class LCMSProccessingInstance {
                 allSegments.add(ion.getSegment());
             }
             for (FragmentedIon ion : sample.ions) {
-                for (ChromatographicPeak.Segment s : ion.getPeak().getSegments()) {
+                for (ChromatographicPeak.Segment s : ion.getPeak().getSegments().values()) {
                     if (!allSegments.contains(s)) {
                         final GapFilledIon newIon = new GapFilledIon(Polarity.of(ion.getPolarity()), ion.getPeak(), s, ion);
                         fitPeakShape(sample, newIon);
@@ -405,6 +407,24 @@ public class LCMSProccessingInstance {
         return alignAndGapFilling(null);
     }
 
+    private void setPeakShapeQualities(JobManager manager, Cluster c) {
+        final List<BasicJJob> jobs = new ArrayList<>();
+        for (final AlignedFeatures f : c.getFeatures()) {
+            jobs.add(manager.submitJob(new BasicJJob<Object>(){
+                @Override
+                protected Object compute() throws Exception {
+                    for (var pair : f.getFeatures().entrySet()) {
+                        if (pair.getValue().getPeakShape()==null) {
+                            pair.getValue().setPeakShape(fitPeakShape(pair.getKey(),pair.getValue()));
+                        }
+                    }
+                    return null;
+                }
+            }));
+        }
+        jobs.forEach(JJob::takeResult);
+    }
+
     public Cluster alignAndGapFilling(ProgressJJob<?> jobWithProgress) {
         final int maxProgress = 7;
         int currentProgress = 0;
@@ -417,25 +437,26 @@ public class LCMSProccessingInstance {
             s.maxRT = maxRt;
             numberOfUnalignedIons += s.ions.size();
         }
-        double error = new Aligner(false).estimateErrorTerm(samples);
-        System.out.println("ERROR = " + error);
+        //double error = new Aligner(false).estimateErrorTerm(samples);
+        LaplaceDistribution error = new Aligner(false).estimateErrorLaplace(samples);
+        System.out.println("ERROR = " + error.getScale());
 
-        final double initialError = error;
+        final double initialError = error.getScale();
         int n=0;
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Filter data: remove ions with low quality MS/MS spectrum and MS1 peak");
         System.out.println("Start with " + numberOfUnalignedIons + " unaligned ions.");
         System.out.println("Remove features with low MS/MS quality that do not align properly");System.out.flush();
-        int deleted = manager.submitJob(new Aligner(false).prealignAndFeatureCutoff2(samples, 15*error, 1)).takeResult();
+        int deleted = manager.submitJob(new Aligner(false).prealignAndFeatureCutoff2(samples, 15*error.getScale(), 1)).takeResult();
         System.out.println("Remove " + deleted + " features that do not align well. Keep " + (numberOfUnalignedIons-deleted) + " features." );
 
         addAllSegmentsAsPseudoIons();
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Start first alignment ");
-        BasicJJob<Cluster> clusterJob = new Aligner2(error*5).align(samples);//new Aligner().recalibrateRetentionTimes(this.samples);
+        BasicJJob<Cluster> clusterJob = new Aligner2(error).align(samples);//new Aligner().recalibrateRetentionTimes(this.samples);
         manager.submitJob(clusterJob);
         Cluster cluster = clusterJob.takeResult();
-        error = cluster.estimateError();
-        final double errorFromClustering = error;
-        clusterJob = new GapFilling().gapFillingInParallel(this, cluster.deleteRowsWithNoMsMs(), error,cluster.estimatePeakShapeError(), true);
+        error = cluster.estimateLaplaceError();
+        final double errorFromClustering = error.getScale();
+        clusterJob = new GapFilling().gapFillingInParallel(this, cluster.deleteRowsWithNoMsMs(), error.getScale(),cluster.estimatePeakShapeError(), Quality.GOOD);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Estimate parameters and start second alignment");
@@ -443,20 +464,21 @@ public class LCMSProccessingInstance {
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Recalibrate retention times");
-        manager.submitJob(new Aligner(false).recalibrateRetentionTimes(samples, cluster, error)).takeResult();
-        error = cluster.estimateError();
-        final double errorDueToRecalibration = error;
+        setPeakShapeQualities(manager, cluster);
+        manager.submitJob(new Aligner(false).recalibrateRetentionTimes(samples, cluster, error.getScale())).takeResult();
+        error = cluster.estimateLaplaceError();
+        final double errorDueToRecalibration = error.getScale();
         addAllSegmentsAsPseudoIons();
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Start third alignment");
         clusterJob  = new Aligner2(error).align(samples);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult().deleteRowsWithNoMsMs();
         System.out.println("Start Gapfilling #2");System.out.flush();
-        clusterJob = new GapFilling().gapFillingInParallel(this, cluster, error, cluster.estimatePeakShapeError(), false);
+        clusterJob = new GapFilling().gapFillingInParallel(this, cluster, error.getScale(), cluster.estimatePeakShapeError(), Quality.DECENT);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
 
-        final double finalError = cluster.estimateError();
+        final double finalError = cluster.estimateError(true);
 
         System.out.println("########################################");
         System.out.println("Initial Error: " + initialError);

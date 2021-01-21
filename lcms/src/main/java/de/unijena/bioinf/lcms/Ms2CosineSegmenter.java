@@ -161,7 +161,7 @@ public class Ms2CosineSegmenter {
 
         TLongArrayList medianWidthOfPeaks = new TLongArrayList();
         for (ChromatographicPeak peak : scansPerPeak.keySet()) {
-            for (ChromatographicPeak.Segment s : peak.getSegments()) {
+            for (ChromatographicPeak.Segment s : peak.getSegments().values()) {
                 medianWidthOfPeaks.add(s.fwhm());
             }
         }
@@ -201,7 +201,7 @@ public class Ms2CosineSegmenter {
                     // instrument shot into noise, OR we shoot that many MS2 scans that we do not see the "end of the MS1"
                     // to allow the latter one, we check if we have a proper fwhm end. If not, we check if the retention
                     // time difference between the MS2 and the apex is small enough
-                    for (ChromatographicPeak.Segment seg : entry.getKey().segments.descendingSet()) {
+                    for (ChromatographicPeak.Segment seg : entry.getKey().segments.descendingMap().values()) {
                         if (s.getIndex() > seg.getEndScanNumber()) {
                             if (seg.getFwhmEndIndex() == seg.getApexIndex()) {
                                 LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("MS2 scan outside of an segment of an chromatographic peak because of BAD PEAK SHAPE");
