@@ -180,7 +180,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeighted extends CommonFra
             if (matchedFragments[j]!=null){
                 final MolecularFormula[] mfArray = matchedFragments[j].toArray(new MolecularFormula[0]);
                 final double mass = meanMass(mfArray);
-                double bestScore = maxScore[pos];
+                double bestScore = maxScore[j];
                 peaksWithExplanations[pos] = new PeakWithExplanation(mfArray, mass, bestScore);
                 ++pos;
             }
