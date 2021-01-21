@@ -22,6 +22,9 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
+import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
@@ -30,6 +33,7 @@ import de.unijena.bioinf.babelms.descriptor.Descriptor;
 import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.annotations.NoiseThresholdSettings;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.slf4j.LoggerFactory;
 
@@ -43,13 +47,35 @@ import java.util.stream.Collectors;
 
 public class ExamplePreparationUtils {
 
-    public static Map<Ms2Experiment, List<FTree>> getData(String resource) throws IOException {
+    public static Map<Ms2Experiment, List<FTree>> getData(String resource, double ppm, boolean disableNoiseIntensityThreshold) throws IOException {
         final Path exampleDir = Paths.get(ExamplePreparationUtils.class.getResource(resource).getFile());
 
         LoggerFactory.getLogger(GraphBuilderTest.class).warn("test");
         Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.readData(exampleDir);
 
+        setPpmAnnotations(data.keySet(), ppm);
+        if (disableNoiseIntensityThreshold) {
+            disableNoiseIntensityThreshold(data.keySet());
+        }
+
         return data;
+    }
+
+    private static void setPpmAnnotations(Collection<Ms2Experiment> experiments, double ppm) {
+        for (Ms2Experiment experiment : experiments) {
+            MS1MassDeviation ms1MassDeviation = experiment.computeAnnotationIfAbsent(MS1MassDeviation.class);
+            MS2MassDeviation ms2MassDeviation = experiment.computeAnnotationIfAbsent(MS2MassDeviation.class);
+
+            experiment.setAnnotation(MS1MassDeviation.class, new MS1MassDeviation(new Deviation(ppm), ms1MassDeviation.standardMassDeviation, ms1MassDeviation.massDifferenceDeviation));
+            experiment.setAnnotation(MS2MassDeviation.class, new MS2MassDeviation(new Deviation(ppm), ms2MassDeviation.standardMassDeviation, ms2MassDeviation.massDifferenceDeviation));
+            experiment.setAnnotation(NoiseThresholdSettings.class, new NoiseThresholdSettings(0.0, 1000, NoiseThresholdSettings.BASE_PEAK.NOT_PRECURSOR, 0.0));
+        }
+    }
+
+    private static void disableNoiseIntensityThreshold(Collection<Ms2Experiment> experiments) {
+        for (Ms2Experiment experiment : experiments) {
+            experiment.setAnnotation(NoiseThresholdSettings.class, new NoiseThresholdSettings(0.0, Integer.MAX_VALUE, NoiseThresholdSettings.BASE_PEAK.NOT_PRECURSOR, 0.0));
+        }
     }
 
     public static FragmentsCandidate[][] extractCandidates(Map<Ms2Experiment, List<FTree>> data) {

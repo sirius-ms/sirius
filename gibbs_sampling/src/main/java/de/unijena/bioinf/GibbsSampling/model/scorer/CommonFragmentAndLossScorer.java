@@ -102,7 +102,7 @@ public class CommonFragmentAndLossScorer implements EdgeScorer<FragmentsCandidat
 
         long start = System.currentTimeMillis();
         for(int i = 0; i < allFragmentPeaks.length; ++i) {
-            for(int j = i + 1; j < allFragmentPeaks.length; ++j) {
+            for(int j = 0; j < i; ++j) {
                 final double commonL = this.scoreCommons(allFragmentPeaks[i], allFragmentPeaks[j]);
                 final double commonF = this.scoreCommons(allLossPeaks[i], allLossPeaks[j]);
 
