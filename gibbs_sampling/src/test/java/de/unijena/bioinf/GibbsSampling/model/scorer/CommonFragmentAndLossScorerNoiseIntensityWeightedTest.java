@@ -20,21 +20,15 @@ package de.unijena.bioinf.GibbsSampling.model.scorer;/*
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.GibbsSampling.model.*;
-import de.unijena.bioinf.GibbsSampling.model.distributions.LogNormalDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionFix;
+import de.unijena.bioinf.GibbsSampling.model.ExamplePreparationUtils;
+import de.unijena.bioinf.GibbsSampling.model.FragmentsCandidate;
 import org.junit.Test;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class CommonFragmentAndLossScorerNoiseIntensityWeightedTest extends CommonFragmentAndLossScorerTest {
@@ -47,7 +41,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeightedTest extends Commo
         double[] intensities = new double[]{1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001, 0.0005, 0.0001};
         double[] noiseScores = new double[]{1.0, 0.9950552298783638, 0.9893242471797059, 0.9825398445660384, 0.9743102871284064, 0.9639963585122723, 0.9504602297080231, 0.931403312666137, 0.9011309152339133, 0.8385182100945479, 0.7590451647732577, 0.6202347100245089, 0.48198231538281655, 0.3065013359125933, 0.0, 0.0, 0.0};
         for (int i = 0; i < intensities.length; i++) {
-//            System.out.print(c.peakIsNoNoise(intensities[i])+", ");
+            System.out.print(c.peakIsNoNoise(intensities[i]) + ", ");
             assertEquals(noiseScores[i], c.peakIsNoNoise(intensities[i]), 1e-15);
         }
 
@@ -59,30 +53,27 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeightedTest extends Commo
         CommonFragmentAndLossScorerNoiseIntensityWeighted c = new CommonFragmentAndLossScorerNoiseIntensityWeighted(0);
         double[] norm = new double[]{34.76523958175724, 18.447953335807952, 33.947789416589714};
 
-        assertNormalization(c, norm);
+        assertNormalization(c, norm, "/tiny-example");
     }
-
 
     @Test
     public void testScoreCommonPeaks() throws IOException {
         CommonFragmentAndLossScorerNoiseIntensityWeighted c = new CommonFragmentAndLossScorerNoiseIntensityWeighted(0);
 
         double[][] expectedFragmentScores = new double[][]{
-                new double[]{48.793704383631365, 4.598044752581925, 0.7963137583724964, },
-                new double[]{4.598044752581925, 7.861420109983392, 0.0, },
-                new double[]{0.7963137583724964, 0.0, 44.6670560056125, }
+                new double[]{48.793704383631365, 4.598044752581925, 0.7377711399747388},
+                new double[]{4.598044752581925, 7.861420109983392, 0.0},
+                new double[]{0.7377711399747388, 0.0, 46.48262777396501}
         };
 
         double[][] expectedLossScores = new double[][]{
                 new double[]{15.26456812787712, 0.6611386583688609, 2.148753636215405, },
                 new double[]{0.6611386583688609, 6.861420109983391, 0.0, },
                 new double[]{2.148753636215405, 0.0, 14.701186551927554, }
-
         };
 
         testScoreCommonPeaks(c, expectedFragmentScores, expectedLossScores, true);
         testScoreCommonPeaks(c, expectedFragmentScores, expectedLossScores, false);
-
 
     }
 
@@ -91,7 +82,7 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeightedTest extends Commo
         CommonFragmentAndLossScorer.PeakWithExplanation[][]  allFragmentPeaksExpected = parseFragmentPeaksWithExplanationFromString();
         CommonFragmentAndLossScorer.PeakWithExplanation[][]  allLossPeaksExpected = parseLossPeaksWithExplanationFromString();
 
-        Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example");
+        Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example", 15, true);
         FragmentsCandidate[][] candidates = ExamplePreparationUtils.parseExpectedCandidatesFromString(data);
 
         CommonFragmentAndLossScorerNoiseIntensityWeighted c = new CommonFragmentAndLossScorerNoiseIntensityWeighted(0.0);
@@ -115,11 +106,16 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeightedTest extends Commo
         double minNumberMatchedPeaksLossesExpected = 1.0;
         double thresholdExpected = 0.0;
         double[] normalizationExpected = new double[]{34.76523958175724, 18.447953335807952, 33.947789416589714};
-        BitSet[] maybeSimilarExpected = new BitSet[]{BitSet.valueOf(new long[]{6}), new BitSet(), new BitSet()};//BitSet {1,2}
+//        BitSet[] maybeSimilarExpected = new BitSet[]{BitSet.valueOf(new long[]{6}), new BitSet(), new BitSet()};//BitSet {1,2}
+        BitSet[] maybeSimilarExpected = new BitSet[]{new BitSet(), BitSet.valueOf(new long[]{1}), BitSet.valueOf(new long[]{1})};//BitSet {0}
         assertAfterCalculatingWeights(c, minNumberMatchedPeaksLossesExpected, thresholdExpected, normalizationExpected, maybeSimilarExpected);
     }
 
 
+    @Override
+    public void testScoreFragmentCandidates() throws IOException {
+        //parent test
+    }
 
     protected CommonFragmentAndLossScorer.PeakWithExplanation[][] parseFragmentPeaksWithExplanationFromString() {
         String[][] allPeaks = new String[][]{
@@ -215,64 +211,64 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeightedTest extends Commo
                 new String[]{
                         "C14H26O2, 226.193280072, 0.27795896230668543",
                         "C15H24O2, 236.177630008, 0.048287275093802075",
-                        "C17H22O, 242.167065324, 1.0",
+                        "C17H22O, 242.167065324, 0.27795896230668543",
                         "C14H28O3, 244.20384475599997, 0.15490183695424192",
-                        "C18H20O, 252.15141526, 0.27795896230668543",
+                        "C18H20O, 252.15141526, 0.048287275093802075",
                         "C15H26O3, 254.18819469199997, 1.0",
-                        "C17H24O2, 260.177630008, 0.048287275093802075",
+                        "C17H24O2, 260.177630008, 0.15490183695424192",
                         "C19H20O, 264.15141525999996, 0.27795896230668543",
-                        "C18H22O2, 270.161979944, 0.15490183695424192",
+                        "C18H22O2, 270.161979944, 1.0",
                         "C15H28O4, 272.198759376, 0.608529115059614",
                         "C20H18O, 274.13576519599997, 0.048287275093802075",
                         "C19H22O2, 282.161979944, 0.15490183695424192",
                         "C16H30O4, 286.21440944, 0.016733073756886884",
-                        "C18H24O3, 288.17254462799997, 1.0",
+                        "C18H24O3, 288.17254462799997, 0.608529115059614",
                         "C15H30O5, 290.20932406, 0.11623119957824768",
                         "C20H20O2, 292.14632988, 1.0",
                         "C17H28O4, 296.198759376, 0.06460786875566013",
-                        "C19H26O3, 302.18819469199997, 0.608529115059614",
-                        "C18H26O4, 306.183109312, 0.016733073756886884",
+                        "C19H26O3, 302.18819469199997, 0.016733073756886884",
+                        "C18H26O4, 306.183109312, 0.11623119957824768",
                         "C20H22O3, 310.15689456399997, 0.608529115059614",
-                        "C20H24O3, 312.17254462799997, 0.11623119957824768",
+                        "C20H24O3, 312.17254462799997, 0.06460786875566013",
                         "C17H30O5, 314.20932406, 0.5363894048708605",
                         "C21H24O3, 324.17254462799997, 0.016733073756886884",
                         "C20H24O4, 328.167459248, 0.11623119957824768",
-                        "C20H26O4, 330.183109312, 0.06460786875566013",
+                        "C20H26O4, 330.183109312, 0.5363894048708605",
                         "C17H32O6, 332.21988874399995, 0.3047148569148157",
                         "C22H22O3, 334.15689456399997, 0.06460786875566013",
                         "C18H34O6, 346.235538808, 0.0792755947436882",
-                        "C20H28O5, 348.193673996, 0.5363894048708605",
+                        "C20H28O5, 348.193673996, 0.3047148569148157",
                         "C22H24O4, 352.167459248, 0.5363894048708605",
-                        "C21H30O5, 362.20932406, 0.3047148569148157",
+                        "C21H30O5, 362.20932406, 0.0792755947436882",
                         "C22H26O5, 370.178023932, 0.3047148569148157",
-                        "C19H34O7, 374.230453428, 0.0",
+                        "C19H34O7, 374.230453428, 0.5376515762882368",
                         "C23H28O5, 384.193673996, 0.0792755947436882",
                         "C22H28O6, 388.18858861599995, 0.014283104158260366",
-                        "C22H30O6, 390.20423868, 0.0792755947436882",
-                        "C19H36O8, 392.241018112, 0.5376515762882368",
-                        "C22H32O7, 408.214803364, 0.0",
+                        "C22H30O6, 390.20423868, 0.5376515762882368",
+                        "C19H36O8, 392.241018112, 0.3240437990720521",
+                        "C22H32O7, 408.214803364, 0.3240437990720521",
                         "C24H28O6, 412.18858861599995, 0.5376515762882368",
-                        "C22H38O7, 414.261753556, 0.3240437990720521",
+                        "C22H38O7, 414.261753556, 0.12779450797511283",
                         "C24H30O7, 430.1991533, 0.3240437990720521",
-                        "C25H34O6, 430.235538808, 0.5376515762882368",
-                        "C21H38O9, 434.251582796, 0.12779450797511283",
-                        "C24H34O8, 450.22536804799995, 0.3240437990720521",
+                        "C25H34O6, 430.235538808, 0.12779450797511283",
+                        "C21H38O9, 434.251582796, 0.20349395899495204",
+                        "C24H34O8, 450.22536804799995, 0.20349395899495204",
                         "C27H32O6, 452.21988874399995, 0.12779450797511283",
-                        "C21H40O10, 452.26214747999995, 0.20349395899495204",
-                        "C24H40O8, 456.27231824, 0.04498330191209444",
-                        "C24H36O9, 468.235932732, 0.12779450797511283",
+                        "C21H40O10, 452.26214747999995, 0.04498330191209444",
+                        "C24H40O8, 456.27231824, 0.034656375465698275",
+                        "C24H36O9, 468.235932732, 0.04498330191209444",
                         "C26H32O8, 472.209717984, 0.20349395899495204",
-                        "C27H36O7, 472.246103492, 0.20349395899495204",
-                        "C24H42O9, 474.282882924, 0.034656375465698275",
+                        "C27H36O7, 472.246103492, 0.034656375465698275",
+                        "C24H42O9, 474.282882924, 0.218883870272458",
                         "C26H34O9, 490.220282668, 0.04498330191209444",
-                        "C27H38O8, 490.25666817599995, 0.04498330191209444",
+                        "C27H38O8, 490.25666817599995, 0.218883870272458",
                         "C29H34O7, 494.230453428, 0.034656375465698275",
-                        "C23H42O11, 494.272712164, 0.218883870272458",
-                        "C26H38O10, 510.246497416, 0.034656375465698275",
+                        "C23H42O11, 494.272712164, 0.2049804507741606",
+                        "C26H38O10, 510.246497416, 0.2049804507741606",
                         "C29H36O8, 512.241018112, 0.218883870272458",
                         "C28H36O10, 532.230847352, 0.2049804507741606",
-                        "C28H50O13, 594.32514166, 0.2049804507741606",
-                        "C31H46O12, 610.298926912, 0.218883870272458",
+                        "C28H50O13, 594.32514166, 1.0",
+                        "C31H46O12, 610.298926912, 1.0",
                         "C33H44O12, 632.283276848, 1.0",
                 },
         };
@@ -351,5 +347,6 @@ public class CommonFragmentAndLossScorerNoiseIntensityWeightedTest extends Commo
         };
         return parseAllCandidatesFromString(allPeaks);
     }
+
 
 }
