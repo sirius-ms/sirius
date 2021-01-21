@@ -96,7 +96,7 @@ public class CorrelatedPeakDetector {
             return false;
         }
         List<CorrelationGroup> correlationGroups = new ArrayList<>();
-        detectIsotopesFor(sample, peakBeforeChr.get(), segmentForScanId.get(), ion.getChargeState(), correlationGroups);
+        detectIsotopesFor(sample, peakBeforeChr.get().mutate(), segmentForScanId.get(), ion.getChargeState(), correlationGroups);
         for (CorrelationGroup g : correlationGroups) {
             int scanNumber = g.getRight().findScanNumber(ms1Scan.getIndex());
             if (scanNumber >= 0 && g.getCosine() >= STRICT_COSINE_THRESHOLD && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass())<1e-8) {
@@ -185,7 +185,7 @@ public class CorrelatedPeakDetector {
                     final Optional<ChromatographicPeak> detection = sample.builder.detectExact(ms1Scan,ms1.getMzAt(l));
                     if (detection.isPresent()) {
 
-                        Optional<CorrelationGroup> correlate = correlate(ion.getPeak(), ion.getSegment(), detection.get());
+                        Optional<CorrelationGroup> correlate = correlate(ion.getPeak(), ion.getSegment(), detection.get().mutate());
                         if (correlate.isEmpty()) continue;
                         if (correlate.get().getCosine() >= STRICT_COSINE_THRESHOLD) {
                             final IonGroup ion1 = ionWithIsotopes(sample, correlate.get().getRight(), correlate.get().getRightSegment(), ion.getChargeState(),alreadyAnnotatedMzs);
@@ -234,7 +234,7 @@ public class CorrelatedPeakDetector {
                         if (alreadyFound(alreadyAnnotatedMzs, peakMass))
                             continue;
                         // add ion as possibleIonType. But first make correlation analysis
-                        Optional<CorrelationGroup> maybeCorrelate = correlate(ion.getPeak(), ion.getSegment(), detect.get());
+                        Optional<CorrelationGroup> maybeCorrelate = correlate(ion.getPeak(), ion.getSegment(), detect.get().mutate());
                         CorrelationGroup correlate = null;
                         if (maybeCorrelate.isPresent()) {
                             correlate = maybeCorrelate.get();
@@ -332,14 +332,14 @@ public class CorrelatedPeakDetector {
         }
     }
 
-    public IonGroup ionWithIsotopes(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, TDoubleArrayList alreadyAnnotatedMzs) {
+    public IonGroup ionWithIsotopes(ProcessedSample sample, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, TDoubleArrayList alreadyAnnotatedMzs) {
         IonGroup ion = new IonGroup(peak, segment, new ArrayList<>());
         detectIsotopesAndSetChargeStateForAndChimerics(sample,ion,alreadyAnnotatedMzs);
         if (ion.getChargeState() == charge || ion.getChargeState()==0) return ion;
         else return null;
     }
 
-    public double detectIsotopesFor(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, List<CorrelationGroup> isoPeaks) {
+    public double detectIsotopesFor(ProcessedSample sample, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, List<CorrelationGroup> isoPeaks) {
 
         Scan scan = sample.run.getScanByNumber(segment.getApexScanNumber()).get();
         final SimpleSpectrum spectrum = sample.storage.getScan(scan);
@@ -355,7 +355,7 @@ public class CorrelatedPeakDetector {
             for (int i=a; i < spectrum.size(); ++i) {
                 if (spectrum.getMzAt(i) > maxMz)
                     break;
-                sample.builder.detectExact(scan, spectrum.getMzAt(i)).map(x->correlate(peak, segment, x)).filter(x->x.map(CorrelationGroup::getCosine).orElse(0d) >= ISOTOPE_COSINE_THRESHOLD).map(Optional::get).ifPresent(isoPeaks::add);
+                sample.builder.detectExact(scan, spectrum.getMzAt(i)).map(x->correlate(peak, segment, x.mutate())).filter(x->x.map(CorrelationGroup::getCosine).orElse(0d) >= ISOTOPE_COSINE_THRESHOLD).map(Optional::get).ifPresent(isoPeaks::add);
             }
             if (isoPeaks.size() <= nsize) {
                 break forEachIsotopePeak;
@@ -367,7 +367,8 @@ public class CorrelatedPeakDetector {
     }
 
 
-    public Optional<CorrelationGroup> correlate(ChromatographicPeak main, ChromatographicPeak.Segment mainSegment, ChromatographicPeak mightBeCorrelated) {
+    public Optional<CorrelationGroup> correlate(MutableChromatographicPeak main, ChromatographicPeak.Segment mainSegment, MutableChromatographicPeak mightBeCorrelated) {
+        /*
         // overlap both
         int start = mainSegment.getStartScanNumber();
         int end = mainSegment.getEndScanNumber();
@@ -397,7 +398,11 @@ public class CorrelatedPeakDetector {
             return null;
         */
 
-        final ChromatographicPeak.Segment otherSegment = mightBeCorrelated.createSegmentFromIndizes(otherStart,otherEnd);
+        //final ChromatographicPeak.Segment otherSegment = mightBeCorrelated.getOrCreateSegmentFromIndizes(otherStart,otherEnd);
+        final Optional<ChromatographicPeak.Segment> mayHaveOtherSegment = mightBeCorrelated.getSegmentForScanId(mainSegment.getApexScanNumber());
+        if (mayHaveOtherSegment.isEmpty()) return Optional.empty();
+        ChromatographicPeak.Segment otherSegment = mayHaveOtherSegment.get();
+
 
         // the the apex of one peak should be in the fhm of the other and vice-versa
         if (mainSegment.getApexScanNumber() > otherSegment.getPeak().getScanNumberAt(otherSegment.getFwhmEndIndex()) || mainSegment.getApexScanNumber() < otherSegment.getPeak().getScanNumberAt(otherSegment.getFwhmStartIndex()) || otherSegment.getApexScanNumber() > mainSegment.getPeak().getScanNumberAt(mainSegment.getFwhmEndIndex()) || otherSegment.getApexScanNumber() < mainSegment.getPeak().getScanNumberAt(mainSegment.getFwhmStartIndex()) ) {
@@ -406,13 +411,13 @@ public class CorrelatedPeakDetector {
 
         if (main.getIntensityAt(mainSegment.getApexIndex()) > mightBeCorrelated.getIntensityAt(otherSegment.getApexIndex())) {
             return Optional.ofNullable(correlateBiggerToSmaller(main, mainSegment, mightBeCorrelated, otherSegment));
-        } else return Optional.ofNullable(correlateBiggerToSmaller(mightBeCorrelated, otherSegment, main, mainSegment)).map(x->x.invert());
+        } else return Optional.ofNullable(correlateBiggerToSmaller(mightBeCorrelated, otherSegment, main, mainSegment)).map(CorrelationGroup::invert);
 
 
 
     }
 
-    private @Nullable CorrelationGroup correlateBiggerToSmaller(ChromatographicPeak large, ChromatographicPeak.Segment largeSegment, ChromatographicPeak small, ChromatographicPeak.Segment smallSegment) {
+    private @Nullable CorrelationGroup correlateBiggerToSmaller(MutableChromatographicPeak large, ChromatographicPeak.Segment largeSegment, MutableChromatographicPeak small, ChromatographicPeak.Segment smallSegment) {
         final TDoubleArrayList a = new TDoubleArrayList(), b = new TDoubleArrayList();
 
         // find index that is above 25% intensity of main peak

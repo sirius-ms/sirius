@@ -23,7 +23,7 @@ package de.unijena.bioinf.model.lcms;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 public class CorrelationGroup {
-    protected ChromatographicPeak left, right;
+    protected MutableChromatographicPeak left, right;
     protected ChromatographicPeak.Segment leftSegment, rightSegment;
     protected int start, end;
     protected double correlation, kl, cosine;
@@ -33,7 +33,7 @@ public class CorrelationGroup {
     // for adduct types
     protected PrecursorIonType leftType, rightType;
 
-    public CorrelationGroup(ChromatographicPeak left, ChromatographicPeak right, ChromatographicPeak.Segment leftSegment, ChromatographicPeak.Segment rightSegment, int start, int end, double correlation, double kl, double cosine) {
+    public CorrelationGroup(MutableChromatographicPeak left, MutableChromatographicPeak right, ChromatographicPeak.Segment leftSegment, ChromatographicPeak.Segment rightSegment, int start, int end, double correlation, double kl, double cosine) {
         this.left = left;
         this.right = right;
         this.leftSegment = leftSegment;
@@ -53,11 +53,11 @@ public class CorrelationGroup {
         return kl;
     }
 
-    public ChromatographicPeak getLeft() {
+    public MutableChromatographicPeak getLeft() {
         return left;
     }
 
-    public ChromatographicPeak getRight() {
+    public MutableChromatographicPeak getRight() {
         return right;
     }
 
