@@ -23,13 +23,15 @@ package de.unijena.bioinf.confidence_score.parameters;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.parameters.BayesnetDynamicParameters;
+import de.unijena.bioinf.fingerid.blast.parameters.FpNestedScorerParameters;
 import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 public interface SuperParameters extends Parameters.ScorerParameterProvider {
-    <P> Parameters.NestedParameters<P> asNestedScorerParameter(Class<? extends FingerblastScoring<P>> key);
+    <P> DefaultAsNested<P> asNestedScorerParameter(Class<? extends FingerblastScoring<P>> key);
 
     class Default extends FpIdResultParameters<IdentificationResult<?>> implements SuperParameters {
 
@@ -38,7 +40,7 @@ public interface SuperParameters extends Parameters.ScorerParameterProvider {
         }
 
         @Override
-        public <P> NestedParameters<P> asNestedScorerParameter(Class<? extends FingerblastScoring<P>> key) {
+        public <P> DefaultAsNested<P> asNestedScorerParameter(Class<? extends FingerblastScoring<P>> key) {
             return new DefaultAsNested<>(this) {
                 @Override
                 public P getNested() {
@@ -49,7 +51,7 @@ public interface SuperParameters extends Parameters.ScorerParameterProvider {
 
         @Override
         public <P> P getScorerParameter(Class<? extends FingerblastScoring<P>> key) {
-            Class<?> clz = Arrays.stream(key.getDeclaredMethods()).filter(m -> m.getName().equals("prepare")).findFirst()
+            Class<?> clz = Arrays.stream(key.getDeclaredMethods()).filter(m -> m.getName().equals("prepare")).filter(m -> Modifier.isPublic(m.getModifiers())).findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Unsupported Fingerblast Scoring" + key.getName()))
                     .getParameterTypes()[0];
 
@@ -58,7 +60,7 @@ public interface SuperParameters extends Parameters.ScorerParameterProvider {
             if (clz.isAssignableFrom(FP.class)) {
                 return (P) (FP) () -> getFP();
             } else if (clz.isAssignableFrom(BayesnetDynamicParameters.class)) {
-                //todo return bayesnet Scoring parameters in needed
+                //todo return bayesnet Scoring parameters if needed
             }
 
             throw new IllegalArgumentException("Unsupported Fingerblast Scoring" + key.getName());
@@ -71,7 +73,7 @@ public interface SuperParameters extends Parameters.ScorerParameterProvider {
 
         }
 
-        public DefaultAsNested(ProbabilityFingerprint query, IdentificationResult<?> idresult) {
+        public DefaultAsNested(ProbabilityFingerprint query, IdentificationResult<?> idresult)  {
             super(query, idresult);
         }
     }

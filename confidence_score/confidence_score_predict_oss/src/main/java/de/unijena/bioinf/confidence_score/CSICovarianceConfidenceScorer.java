@@ -33,10 +33,8 @@ import de.unijena.bioinf.confidence_score.parameters.SuperParameters;
 import de.unijena.bioinf.confidence_score.svm.SVMPredict;
 import de.unijena.bioinf.confidence_score.svm.SVMUtils;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
-import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
-import de.unijena.bioinf.fingerid.blast.CSIFingerIdScoring;
-import de.unijena.bioinf.fingerid.blast.FingerblastScoringMethod;
-import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
+import de.unijena.bioinf.fingerid.blast.*;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,7 +183,7 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
         }
 
         final String ce = makeCeString(exp.getMs2Spectra());
-        final CombinedFeatureCreator<SuperParameters.Default> comb;
+        final CombinedFeatureCreator<SuperParameters.DefaultAsNested<Parameters.FP>> comb;
         final String distanceType;
         final String dbType;
 
@@ -204,7 +202,7 @@ public class CSICovarianceConfidenceScorer implements ConfidenceScorer {
             dbType = DB_BIO_ID;
         }
 
-        final double[] features = comb.computeFeatures(new SuperParameters.Default(query,idResult));
+        final double[] features = comb.computeFeatures(new SuperParameters.Default(query,idResult).asNestedScorerParameter(BayesnetScoring.Scorer.class));
         return calculateConfidence(features, dbType, distanceType, ce);
     }
 

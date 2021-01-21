@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
+import de.unijena.bioinf.confidence_score.parameters.SuperParameters;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.parameters.FpNestedScorerParameters;
 import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
@@ -35,7 +36,7 @@ import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 /**
  * Created by Marcus Ludwig on 07.03.16.
  */
-public class ScoreFeaturesNonBio<P> implements FeatureCreator<FpNestedScorerParameters<P>> {
+public class ScoreFeaturesNonBio<P> implements FeatureCreator<SuperParameters.DefaultAsNested<P>> {
     private final String[] names;
     private final FingerblastScoring<P> scoring;
     Scored<FingerprintCandidate>[] rankedCandidates;
@@ -56,7 +57,7 @@ public class ScoreFeaturesNonBio<P> implements FeatureCreator<FpNestedScorerPara
     }
 
     @Override
-    public double[] computeFeatures(FpNestedScorerParameters<P> para) {
+    public double[] computeFeatures(SuperParameters.DefaultAsNested<P> para) {
         final ProbabilityFingerprint query = para.getFP();
 
         assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();

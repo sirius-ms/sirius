@@ -26,12 +26,14 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.features.*;
 import de.unijena.bioinf.confidence_score.parameters.SuperParameters;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
+import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
+import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 /**
  * Created by martin on 22.08.18.
  */
-public class CombinedFeatureCreatorALL extends CombinedFeatureCreator<SuperParameters.Default> {
+public class CombinedFeatureCreatorALL extends CombinedFeatureCreator<SuperParameters.DefaultAsNested<Parameters.FP>> {
 
     //Scorer for pubchem list (unfiltered)
     public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, BayesnetScoring.Scorer covscore) {

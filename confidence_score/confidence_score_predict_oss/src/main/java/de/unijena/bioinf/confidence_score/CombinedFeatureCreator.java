@@ -28,24 +28,32 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.confidence_score.parameters.SuperParameters;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Marcus Ludwig on 09.03.16.
  */
 public class CombinedFeatureCreator<P extends SuperParameters> implements FeatureCreator<P>{
-    public FeatureCreator[] featureCreators;
+    public List<FeatureCreator<?>> featureCreators;
     protected int featureCount;
     protected double[] computed_features;
 
 
-    public CombinedFeatureCreator(Collection<FeatureCreator> featureCreators){
-        this(featureCreators.stream().toArray(FeatureCreator[]::new));
+    public CombinedFeatureCreator(Collection<FeatureCreator<?>> featureCreators){
+        this(new ArrayList<>(featureCreators));
     }
 
-    public CombinedFeatureCreator(FeatureCreator... featureCreators){
-        this.featureCreators = featureCreators;
-        this.featureCount = Arrays.stream(featureCreators).mapToInt(FeatureCreator::getFeatureSize).sum();
+    @SafeVarargs
+    public CombinedFeatureCreator(FeatureCreator<?>... featureCreators){
+            this(Arrays.stream(featureCreators).collect(Collectors.toList()));
     }
+
+    private CombinedFeatureCreator(List<FeatureCreator<?>> featureCreators){
+        this.featureCreators = featureCreators;
+        this.featureCount = featureCreators.stream().mapToInt(FeatureCreator::getFeatureSize).sum();
+    }
+
+
 
 
     @Override
@@ -90,17 +98,16 @@ public class CombinedFeatureCreator<P extends SuperParameters> implements Featur
         int pos = 0;
         for (FeatureCreator<?> featureCreator : featureCreators) {
             final String[] currentNames = featureCreator.getFeatureNames();
-            for (int i = 0; i < currentNames.length; i++) names[pos++] = currentNames[i];
+            for (String currentName : currentNames) names[pos++] = currentName;
         }
         return names;
     }
 
     @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
-        List<FeatureCreator<?>> featureCreatorList = new ArrayList<>();
-        fillList(featureCreatorList, helper, document, dictionary, "featureCreators");
-        this.featureCreators = featureCreatorList.toArray(new FeatureCreator[0]);
-        this.featureCount = Arrays.stream(featureCreators).mapToInt(FeatureCreator::getFeatureSize).sum();
+        this.featureCreators = new ArrayList<>();
+        fillList(this.featureCreators, helper, document, dictionary, "featureCreators");
+        this.featureCount = featureCreators.stream().mapToInt(FeatureCreator::getFeatureSize).sum();
     }
 
     private <T, G, D, L> void fillList(List<T> list, ParameterHelper helper, DataDocument<G, D, L> document, D dictionary, String keyName) {
