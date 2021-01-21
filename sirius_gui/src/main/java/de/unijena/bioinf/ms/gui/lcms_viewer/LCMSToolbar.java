@@ -23,6 +23,7 @@ public class LCMSToolbar extends JToolBar {
         box.setRenderer(new ListCellRenderer<Entry>() {
             @Override
             public Component getListCellRendererComponent(JList<? extends Entry> list, Entry value, int index, boolean isSelected, boolean cellHasFocus) {
+                if (value==null) return label;
                 label.setText(value.toString());
                 Color forc, backc;
                 if (isSelected) {
