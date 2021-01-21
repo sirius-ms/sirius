@@ -30,13 +30,69 @@ public class FragmentCandidateTest {
 
     @Test
     public void testParsing() throws IOException {
-        Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example");
+        Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example", 15, true);
         FragmentsCandidate[][] candidates = ExamplePreparationUtils.extractCandidates(data);
 
         FragmentsCandidate[][] expectedCandidates = ExamplePreparationUtils.parseExpectedCandidatesFromString(data);
 
         assertEquals(expectedCandidates, candidates);
 
+    }
+
+    void assertEquals(FragmentsCandidate[][] expectedCandidates, FragmentsCandidate[][] candidates, double allowedIntensityDifference) {
+        Assert.assertEquals(expectedCandidates.length, candidates.length);
+        for (int i = 0; i < expectedCandidates.length; i++) {
+            assertEquals(expectedCandidates[i], candidates[i], allowedIntensityDifference);
+        }
+    }
+
+    private void assertEquals(FragmentsCandidate[] expectedCandidates, FragmentsCandidate[] candidates, double allowedIntensityDifference) {
+        Assert.assertEquals(expectedCandidates.length, candidates.length);
+        for (int i = 0; i < expectedCandidates.length; i++) {
+            assertEquals(expectedCandidates[i], candidates[i], allowedIntensityDifference);
+        }
+    }
+
+    private void assertEquals(FragmentsCandidate expectedCandidate, FragmentsCandidate candidate, double allowedIntensityDifference) {
+        Assert.assertEquals(expectedCandidate.getExperiment().getName(), candidate.getExperiment().getName());
+        Assert.assertEquals(expectedCandidate.formula, candidate.formula);
+        Assert.assertEquals(expectedCandidate.ionType, candidate.ionType);
+        Assert.assertEquals(expectedCandidate.getScore(), candidate.getScore(), 1e-14);
+
+        assertEquals(expectedCandidate.getCandidate(), candidate.getCandidate(), allowedIntensityDifference);
+    }
+
+    private void assertEquals(FragmentsAndLosses expectedFragmentsAndLosses, FragmentsAndLosses fragmentsAndLosses, double allowedIntensityDifference) {
+        assertEquals(expectedFragmentsAndLosses.getFragments(), fragmentsAndLosses.getFragments(), allowedIntensityDifference);
+        assertEquals(expectedFragmentsAndLosses.getLosses(), fragmentsAndLosses.getLosses(), allowedIntensityDifference);
+    }
+
+    private void assertEquals(FragmentWithIndex[] expectedFragments, FragmentWithIndex[] fragments, double allowedIntensityDifference) {
+        Assert.assertEquals(expectedFragments.length, fragments.length);
+
+        //todo changed! sorting!!!
+        Arrays.sort(expectedFragments, new Comparator<FragmentWithIndex>() {
+            @Override
+            public int compare(FragmentWithIndex o1, FragmentWithIndex o2) {
+                return o1.getFormula().compareTo(o2.getFormula());
+            }
+
+        });
+
+        Arrays.sort(fragments, new Comparator<FragmentWithIndex>() {
+            @Override
+            public int compare(FragmentWithIndex o1, FragmentWithIndex o2) {
+                return o1.getFormula().compareTo(o2.getFormula());
+            }
+        });
+
+        for (int i = 0; i < expectedFragments.length; i++) {
+//            Assert.assertEquals(expectedFragments[i].idx, fragments[i].idx); //not that important?
+            Assert.assertEquals(expectedFragments[i].getFormula(), fragments[i].getFormula());
+            Assert.assertEquals(expectedFragments[i].getIonization(), fragments[i].getIonization());
+            Assert.assertEquals(expectedFragments[i].score, fragments[i].score, allowedIntensityDifference);
+
+        }
     }
 
     private void assertEquals(FragmentsCandidate[][] expectedCandidates, FragmentsCandidate[][] candidates) {
