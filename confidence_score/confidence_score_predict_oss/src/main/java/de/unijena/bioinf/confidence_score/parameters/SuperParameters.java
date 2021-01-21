@@ -23,7 +23,6 @@ package de.unijena.bioinf.confidence_score.parameters;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.parameters.BayesnetDynamicParameters;
-import de.unijena.bioinf.fingerid.blast.parameters.FpNestedScorerParameters;
 import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 import de.unijena.bioinf.sirius.IdentificationResult;
 

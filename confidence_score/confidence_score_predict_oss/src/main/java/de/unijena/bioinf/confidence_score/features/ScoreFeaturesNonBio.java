@@ -30,8 +30,6 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.confidence_score.parameters.SuperParameters;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
-import de.unijena.bioinf.fingerid.blast.parameters.FpNestedScorerParameters;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 /**
  * Created by Marcus Ludwig on 07.03.16.
