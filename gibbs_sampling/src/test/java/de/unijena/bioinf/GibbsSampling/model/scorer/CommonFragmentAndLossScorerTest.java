@@ -29,14 +29,17 @@ import de.unijena.bioinf.GibbsSampling.model.distributions.LogNormalDistribution
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
 import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionFix;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import org.junit.Test;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class CommonFragmentAndLossScorerTest {
 
@@ -63,11 +66,34 @@ public class CommonFragmentAndLossScorerTest {
     }
 
     @Test
-    public void testCreatePeaksWithExplanations() throws IOException {
-        CommonFragmentAndLossScorer.PeakWithExplanation[][]  allFragmentPeaksExpected = parseFragmentPeaksWithExplanationFromString();
-        CommonFragmentAndLossScorer.PeakWithExplanation[][]  allLossPeaksExpected = parseLossPeaksWithExplanationFromString();
+    public void testScoreFragmentCandidates() throws IOException {
+        CommonFragmentAndLossScorer.PeakWithExplanation[][] allFragmentPeaksExpected = parseFragmentPeaksWithExplanationFromString();
+        CommonFragmentAndLossScorer.PeakWithExplanation[][] allLossPeaksExpected = parseLossPeaksWithExplanationFromString();
 
-        Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example");
+        Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example", 15, true);
+        FragmentsCandidate[][] candidates = ExamplePreparationUtils.parseExpectedCandidatesFromString(data);
+
+        CommonFragmentAndLossScorer c = new CommonFragmentAndLossScorer(0.0);
+        EdgeFilter edgeFilter = new EdgeThresholdMinConnectionsFilter(0.0, 1, 1);
+
+        CommonFragmentAndLossScorer.PeakWithExplanation[][] allFragmentPeaks = extractFragmentPeaks(candidates, c, true);
+        CommonFragmentAndLossScorer.PeakWithExplanation[][] allLossPeaks = extractFragmentPeaks(candidates, c, false);
+
+        prepareEdgeScorer(candidates, c, edgeFilter);
+
+        double score = c.score(candidates[0][0], candidates[1][0]);
+
+        assertEqualWithoutIndex(allFragmentPeaksExpected, allFragmentPeaks);
+        assertEqualWithoutIndex(allLossPeaksExpected, allLossPeaks);
+
+    }
+
+    @Test
+    public void testCreatePeaksWithExplanations() throws IOException {
+        CommonFragmentAndLossScorer.PeakWithExplanation[][] allFragmentPeaksExpected = parseFragmentPeaksWithExplanationFromString();
+        CommonFragmentAndLossScorer.PeakWithExplanation[][] allLossPeaksExpected = parseLossPeaksWithExplanationFromString();
+
+        Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example", 15, true);
         FragmentsCandidate[][] candidates = ExamplePreparationUtils.parseExpectedCandidatesFromString(data);
 
         CommonFragmentAndLossScorer c = new CommonFragmentAndLossScorer(0.0);
@@ -107,7 +133,7 @@ public class CommonFragmentAndLossScorerTest {
             allLossPeaks = parseLossPeaksWithExplanationFromString();
         } else {
             //do all parsing from MS input
-            Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example");
+            Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example", 15, true);
             FragmentsCandidate[][] candidates = ExamplePreparationUtils.extractCandidates(data);
 
             allFragmentPeaks = extractFragmentPeaks(candidates, c, true);
@@ -154,11 +180,11 @@ public class CommonFragmentAndLossScorerTest {
         CommonFragmentAndLossScorer c = new CommonFragmentAndLossScorer(0);
         double[] norm = new double[]{40.0, 42.0, 40.0};
 
-        assertNormalization(c, norm);
+        assertNormalization(c, norm, "/tiny-example");
     }
 
-    protected void assertNormalization(CommonFragmentAndLossScorer c, double[] expectedNorm) throws IOException {
-        Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example");
+    protected void assertNormalization(CommonFragmentAndLossScorer c, double[] expectedNorm, String resource) throws IOException {
+        Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData(resource, 15, true);
         FragmentsCandidate[][] candidates = ExamplePreparationUtils.parseExpectedCandidatesFromString(data);
 
         assertArrayEquals(expectedNorm, c.normalization(candidates, 1.0), 1e-15);
@@ -171,12 +197,13 @@ public class CommonFragmentAndLossScorerTest {
         double minNumberMatchedPeaksLossesExpected = 2.0;
         double thresholdExpected = 0.0;
         double[] normalizationExpected = new double[]{39.0, 41.0, 39.0};
-        BitSet[] maybeSimilarExpected = new BitSet[]{BitSet.valueOf(new long[]{6}), new BitSet(), new BitSet()};//BitSet {1,2}
-        assertAfterCalculatingWeights(c,  minNumberMatchedPeaksLossesExpected, thresholdExpected, normalizationExpected, maybeSimilarExpected);
+//        BitSet[] maybeSimilarExpected = new BitSet[]{BitSet.valueOf(new long[]{6}), new BitSet(), new BitSet()};//BitSet {1,2}
+        BitSet[] maybeSimilarExpected = new BitSet[]{new BitSet(), BitSet.valueOf(new long[]{1}), BitSet.valueOf(new long[]{1})};//BitSet {0}
+        assertAfterCalculatingWeights(c, minNumberMatchedPeaksLossesExpected, thresholdExpected, normalizationExpected, maybeSimilarExpected);
     }
 
     protected void assertAfterCalculatingWeights(CommonFragmentAndLossScorer c, double minNumberMatchedPeaksLossesExpected, double thresholdExpected, double[] normalizationExpected, BitSet[] maybeSimilarExpected) throws IOException {
-        Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example");
+        Map<Ms2Experiment, List<FTree>> data = ExamplePreparationUtils.getData("/tiny-example", 15, true);
         System.out.println();
 
         EdgeFilter edgeFilter = new EdgeThresholdMinConnectionsFilter(0.5, 1, 1);
@@ -256,16 +283,81 @@ public class CommonFragmentAndLossScorerTest {
             }
 
         } else if (edgeScorer instanceof ScoreProbabilityDistributionEstimator){
-            if (edgeFilter instanceof EdgeThresholdFilter){
-                ((ScoreProbabilityDistributionEstimator)edgeScorer).setThresholdAndPrepare(allCandidates);
+            if (edgeFilter instanceof EdgeThresholdFilter) {
+                ((ScoreProbabilityDistributionEstimator) edgeScorer).setThresholdAndPrepare(allCandidates);
             } else {
-                ((ScoreProbabilityDistributionEstimator)edgeScorer).prepare(allCandidates);
+                ((ScoreProbabilityDistributionEstimator) edgeScorer).prepare(allCandidates);
             }
         } else {
             edgeScorer.prepare(allCandidates);
         }
     }
 
+    protected PairwiseEdgeScorerCompoundSimilarities createSimpleCompoundSimilarityRepresentation(FragmentsCandidate[][] fragmentsCandidates, BitSet[] similarCompounds) {
+        PairwiseEdgeScorerCompoundSimilarities compoundSimilarities = new PairwiseEdgeScorerCompoundSimilarities();
+//        int idx = 0;
+        for (int i = 0; i < fragmentsCandidates.length; i++) {
+            FragmentsCandidate[] candidates = fragmentsCandidates[i];
+            compoundSimilarities.compoundIds.add(candidates[0].getExperiment().getName());
+            compoundSimilarities.maybeSimilarList.add(similarCompounds[i]);
+
+        }
+        return compoundSimilarities;
+    }
+
+
+    protected void writeEdgeScorerCompoundsSimilarities(PairwiseEdgeScorerCompoundSimilarities compoundSimilarities, String resource) {
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(resource))) {
+            for (int i = 0; i < compoundSimilarities.compoundIds.size(); i++) {
+                String expName = compoundSimilarities.compoundIds.get(i);
+                String indexString = compoundSimilarities.maybeSimilarList.get(i).stream().mapToObj(Integer::toString).collect(Collectors.joining("\t"));
+
+                writer.write(expName + "\t" + indexString);
+                writer.newLine();
+            }
+
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    protected int[] extractIntegers(String[] cols, int start, int end) {
+        String[] part = Arrays.copyOfRange(cols, start, end);
+        return Arrays.stream(part).mapToInt(Integer::parseInt).toArray();
+    }
+
+    protected void checkEdgeScorerCompoundSimilarities(PairwiseEdgeScorerCompoundSimilarities expectedCompoundSimilarities, PairwiseEdgeScorerCompoundSimilarities actualCompoundSimilarities) {
+        assertEquals(expectedCompoundSimilarities.compoundIds.size(), actualCompoundSimilarities.compoundIds.size());
+
+        TObjectIntHashMap<String> expectedIndexMap = expectedCompoundSimilarities.createIndexMap();
+        TObjectIntHashMap<String> actualIndexMap = actualCompoundSimilarities.createIndexMap();
+        for (int i = 0; i < actualCompoundSimilarities.compoundIds.size(); i++) {
+            assertAllEdgesContained(actualCompoundSimilarities.compoundIds.get(i), actualCompoundSimilarities.maybeSimilarList.get(i), actualCompoundSimilarities, expectedCompoundSimilarities, expectedIndexMap);
+            assertAllEdgesContained(expectedCompoundSimilarities.compoundIds.get(i), expectedCompoundSimilarities.maybeSimilarList.get(i), expectedCompoundSimilarities, actualCompoundSimilarities, actualIndexMap);
+        }
+    }
+
+    protected void assertAllEdgesContained(String experimentName, BitSet edges, PairwiseEdgeScorerCompoundSimilarities compoundSimilarities, PairwiseEdgeScorerCompoundSimilarities compoundSimilaritiesToCompare, TObjectIntHashMap<String> indexMapToCompare) {
+        int toCompareIndex = indexMapToCompare.get(experimentName);
+        int[] directionChanged = new int[]{0};
+        edges.stream().forEach(idx -> {
+            String experimentName2 = compoundSimilarities.compoundIds.get(idx);
+            int toCompareIndex2 = indexMapToCompare.get(experimentName2);
+            if (compoundSimilaritiesToCompare.maybeSimilarList.get(toCompareIndex).get(toCompareIndex2)) {
+                //all good
+            } else if (compoundSimilaritiesToCompare.maybeSimilarList.get(toCompareIndex2).get(toCompareIndex)) {
+                ++directionChanged[0];
+            } else {
+                fail("compound similarity edge missing.");
+            }
+        });
+
+        if (directionChanged[0] > 0) {
+            System.err.println("direction of edges of this compound changed for " + directionChanged[0] + " of " + edges.cardinality() + " total");
+        }
+    }
 
     protected CommonFragmentAndLossScorer.PeakWithExplanation[][] parseFragmentPeaksWithExplanationFromString() {
         String[][] allPeaks = new String[][]{
@@ -508,11 +600,37 @@ public class CommonFragmentAndLossScorerTest {
                 String[] mfs = peak[0].split("\\|");
                 double mass = Double.valueOf(peak[1]);
                 double score = Double.valueOf(peak[2]);
+                //todo initial data was without ionzation, hence using dummy
+                Ionization ionization = PrecursorIonType.unknownPositive().getIonization();
+//                CommonFragmentAndLossScorer.PeakWithExplanation p = new CommonFragmentAndLossScorer.PeakWithExplanation(mfs, mass, score);
+                short idx = (short) j; //todo use sorted index
                 CommonFragmentAndLossScorer.PeakWithExplanation p = new CommonFragmentAndLossScorer.PeakWithExplanation(Arrays.stream(mfs).map(mf->MolecularFormula.parseOrThrow(mf)).toArray(MolecularFormula[]::new), mass, score);
                 peaks[j] = p;
             }
             peakWithExplanations[i] = peaks;
         }
         return peakWithExplanations;
+    }
+
+
+    protected class PairwiseEdgeScorerCompoundSimilarities {
+        final public List<String> compoundIds;
+        final List<BitSet> maybeSimilarList;
+
+        public PairwiseEdgeScorerCompoundSimilarities() {
+            super();
+            this.maybeSimilarList = new ArrayList<>();
+            this.compoundIds = new ArrayList<>();
+        }
+
+        public TObjectIntHashMap<String> createIndexMap() {
+            TObjectIntHashMap<String> map = new TObjectIntHashMap<>();
+            for (int i = 0; i < compoundIds.size(); i++) {
+                String name = compoundIds.get(i);
+                map.put(name, i);
+            }
+            return map;
+        }
+
     }
 }
