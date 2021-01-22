@@ -25,9 +25,13 @@ public class WebViewSpectraViewer extends WebViewPanel {
 
     public void loadData(String json_spectra, String json_highlight, String svg) { // TEST CODE
         cancelTasks();
-        executeJS("loadJSONData('" + json_spectra.replaceAll("(\\r\\n|\\r|\\n)", " ") + "', '" +
-                json_highlight + "', '" + svg.replaceAll("'", "\"").replaceAll("(\\r\\n|\\r|\\n)", " ") + "')");
-        System.out.println("executed JS function");
+        executeJS("loadJSONData(" + json_spectra + "," +
+                escapeNull(json_highlight) + "," + escapeNull(svg) + ")");
+    }
+
+    private String escapeNull(String val) {
+        if (val==null) return "null";
+        else return val;
     }
 
 	public void clear(){
