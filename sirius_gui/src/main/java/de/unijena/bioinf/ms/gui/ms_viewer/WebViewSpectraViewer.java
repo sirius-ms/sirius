@@ -17,22 +17,24 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.tree_viewer;
+package de.unijena.bioinf.ms.gui.ms_viewer;
 
 import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
-/*
-NOTE: first create new WebViewTreeViewer, then add all JS resources (addJS);
-finally load() (only once!)
-*/
-public class WebViewTreeViewer extends WebViewPanel implements TreeViewerBrowser{
-	
-    public void loadTree(String json_tree) {
+
+public class WebViewSpectraViewer extends WebViewPanel {
+
+    public void loadData(String json_spectra, String json_highlight, String svg) { // TEST CODE
         cancelTasks();
-        executeJS("loadJSONTree('" + json_tree.replaceAll("(\\r\\n|\\r|\\n)", " ")
-                + "')");
+        executeJS("loadJSONData(" + json_spectra + "," +
+                escapeNull(json_highlight) + "," + escapeNull(svg) + ")");
     }
 
-    public void clear(){
-        executeJS("clearSVG();");
+    private String escapeNull(String val) {
+        if (val==null) return "null";
+        else return val;
     }
+
+	public void clear(){
+		executeJS("clear()");
+	}
 }
