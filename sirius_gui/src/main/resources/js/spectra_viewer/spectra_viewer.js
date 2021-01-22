@@ -547,8 +547,9 @@ function loadJSONData(data_spectra, data_highlight, data_svg) {
         anno_str = JSON.parse(data_highlight);
         svg_str = data_svg;
     }
-    spectraViewer(JSON.parse(data_spectra));
-
+    if ((typeof data_spectra) == "string") {
+    	spectraViewer(JSON.parse(data_spectra));
+    } else {
+    	spectraViewer(data_spectra);
+    }
 }
-
-// d3.json("bicuculline.json").then(spectraViewer);

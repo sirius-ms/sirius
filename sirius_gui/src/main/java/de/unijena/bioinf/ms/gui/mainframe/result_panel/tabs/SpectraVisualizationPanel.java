@@ -22,52 +22,34 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
-import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.ms.gui.configs.Buttons;
-import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
+import de.unijena.bioinf.ms.gui.ms_viewer.InSilicoSelectionBox;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
-import de.unijena.bioinf.ms.gui.ms_viewer.data.ExperimentContainerDataModel;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.MSViewerDataModel;
-import de.unijena.bioinf.ms.gui.ms_viewer.data.PeakInformation;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.SiriusIsotopePattern;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
-import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.sirius.Ms2Preprocessor;
-import de.unijena.bioinf.sirius.ProcessedInput;
-import de.unijena.bioinf.sirius.ProcessedPeak;
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
+import javafx.embed.swing.JFXPanel;
 
 import javax.swing.*;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 public class SpectraVisualizationPanel
 	extends JPanel implements ActionListener, ItemListener, PanelDescription,
@@ -84,6 +66,7 @@ public class SpectraVisualizationPanel
 	FormulaResultBean sre = null;
 	JComboBox<String> modesBox;
 	JComboBox<String> ceBox;
+	InSilicoSelectionBox anoBox;
 	String preferredMode = MS1_DISPLAY;
 	String preferredCE = MS2_MERGED_DISPLAY;
 	FormulaResultBean currentResult;
@@ -106,8 +89,10 @@ public class SpectraVisualizationPanel
 		northPanel.add(modesBox);
 		northPanel.add(ceBox);
 
-		northPanel.addSeparator(new Dimension(10, 10));
+		anoBox = new InSilicoSelectionBox(new Dimension(200,100), 5);
+		northPanel.add(anoBox);
 
+		northPanel.addSeparator(new Dimension(10, 10));
 		this.add(northPanel, BorderLayout.NORTH);
 
 
@@ -166,7 +151,7 @@ public class SpectraVisualizationPanel
 		} else if (mode.equals(MS2_DISPLAY)) {
 
 			if (ce.equals(MS2_MERGED_DISPLAY)){
-				jsonSpectra = spectraWriter.ms2JSON(experiment.getExperiment(), sre.getFragTree().orElse(null));
+				jsonSpectra = spectraWriter.ms2JSON(experiment.getExperiment(), Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null));
 				debugWriteSpectra(jsonSpectra, "/tmp/test_spectra_MS2_merged.json"); // FIXME: DEBUG
 			} else {
 				MutableMs2Spectrum spectrum = experiment.getMs2Spectra().stream()
@@ -191,14 +176,7 @@ public class SpectraVisualizationPanel
 			return;
 		}
 		if (jsonSpectra != null){
-			// debugWriteSpectra(jsonSpectra, "/tmp/test_spectra.json"); // FIXME: DEBUG
-			try {
-				jsonHighlight = Files.readString(Paths.get("/media/witta/Volume1/sirius/sirius_frontend/sirius_gui/src/test/resources/Bicuculline_highlight.json"));
-				strSVG = Files.readString(Paths.get("/media/witta/Volume1/sirius/sirius_frontend/sirius_gui/src/test/resources/Bicuculline_svg.xml"));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			browser.loadData(jsonSpectra, jsonHighlight, strSVG);
+			browser.loadData(jsonSpectra, null, null);
 		}
 	}
 
@@ -216,6 +194,14 @@ public class SpectraVisualizationPanel
 				if (sre != null) {
 					if (experiment.getMs1Spectra().size() > 0)
 						modesBox.addItem(MS1_MIRROR_DISPLAY);
+					if (experiment.getMs2Spectra().size() > 0)
+						modesBox.addItem(MS2_DISPLAY);
+					for (MutableMs2Spectrum spectrum : experiment.getMs2Spectra()){
+						ceBox.addItem(spectrum.getCollisionEnergy().toString());
+					}
+					ceBox.addItem(MS2_MERGED_DISPLAY);
+					ceBox.setSelectedItem(MS2_MERGED_DISPLAY);
+				} else {
 					if (experiment.getMs2Spectra().size() > 0)
 						modesBox.addItem(MS2_DISPLAY);
 					for (MutableMs2Spectrum spectrum : experiment.getMs2Spectra()){
@@ -253,6 +239,7 @@ public class SpectraVisualizationPanel
 		// store data to switch between modes without having to switch to other results
 		this.experiment = experiment;
 		this.sre = sre;
+		anoBox.resultsChanged(experiment,sre,resultElements,selections);
 	}
 
 
@@ -310,6 +297,11 @@ public class SpectraVisualizationPanel
 	public void itemStateChanged(ItemEvent e) {
 			Object sel = modesBox.getSelectedItem();
 			ceBox.setVisible(sel.equals(MS2_DISPLAY));
+			if (sel.equals(MS2_DISPLAY) || sel.equals(MS2_MERGED_DISPLAY)) {
+				anoBox.activate();
+			} else {
+				anoBox.deactivate();
+			}
 			preferredMode = (String) sel;
 			// System.out.println("Changed preferred mode to " + preferredMode);
 			if (sel != null && !(experiment == null && sre == null)){
