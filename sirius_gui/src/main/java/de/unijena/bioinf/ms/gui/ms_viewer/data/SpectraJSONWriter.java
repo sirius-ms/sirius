@@ -20,36 +20,23 @@
 
 package de.unijena.bioinf.ms.gui.ms_viewer.data;
 
-import java.util.BitSet;
-import java.util.LinkedList;
-import java.util.List;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
-import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Ms2IsotopePattern;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+
+import java.util.BitSet;
+import java.util.LinkedList;
+import java.util.List;
 
 public class SpectraJSONWriter{
 
@@ -79,10 +66,10 @@ public class SpectraJSONWriter{
 	}
 
 	// MS1 vs. simulated MS1 isotope pattern (mirror)
-	public String ms1MirrorJSON(SimpleSpectrum pattern1, SimpleSpectrum pattern2, FTree ftree){
+	public String ms1MirrorJSON(SimpleSpectrum pattern1, SimpleSpectrum pattern2, FTree ftree,Ms2Experiment experiment){
 		JsonObject spectra = ms1MirrorIsotope(pattern1, pattern2);
 		if (ftree != null)
-			annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(ftree, pattern1));
+			annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(ftree, experiment, pattern1));
 		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		return gson.toJson(spectra);
 	}
@@ -303,8 +290,8 @@ public class SpectraJSONWriter{
 		}
 	}
 
-	protected List<PeakMatch> matchPeaks(FTree ftree, SimpleSpectrum spectrum){
-		SiriusIsotopePattern siriusIsotopePattern = new SiriusIsotopePattern(ftree, spectrum);
+	protected List<PeakMatch> matchPeaks(FTree ftree, Ms2Experiment experiment, SimpleSpectrum spectrum){
+		SiriusIsotopePattern siriusIsotopePattern = new SiriusIsotopePattern(ftree,experiment, spectrum);
 		List<PeakMatch> peakMatches = new LinkedList<>();
 		final SimpleSpectrum pattern = ftree.getAnnotationOrNull(IsotopePattern.class).getPattern();
 		for (int i = 0; i < pattern.size(); i++) {

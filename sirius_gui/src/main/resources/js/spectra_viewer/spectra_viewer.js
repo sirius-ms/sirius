@@ -544,7 +544,11 @@ function loadJSONData(data_spectra, data_highlight, data_svg) {
         highlights = [];
     }
     if (data_highlight !== null && data_svg !== null) {
-        anno_str = JSON.parse(data_highlight);
+    	if ((typeof data_highlight) == "string") {
+    		anno_str = JSON.parse(data_highlight);
+    	} else {
+    		anno_str = data_highlight;
+    	}
         svg_str = data_svg;
     }
     if ((typeof data_spectra) == "string") {

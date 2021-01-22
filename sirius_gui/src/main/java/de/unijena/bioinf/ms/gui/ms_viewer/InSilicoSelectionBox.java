@@ -2,12 +2,12 @@ package de.unijena.bioinf.ms.gui.ms_viewer;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.CompactComboBox;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.depict.DepictionGenerator;
 import org.openscience.cdk.exception.CDKException;
@@ -77,7 +77,7 @@ public class InSilicoSelectionBox extends CompactComboBox<InSilicoSelectionBox.I
         if (sre==null) {
             setCandidateSet(new ArrayList<>());
         } else {
-            final Optional<FBCandidates> candidates = sre.getFingerIDCandidates();
+            final Optional<FBCandidatesGUI> candidates = sre.getFingerIDCandidates();
             if (candidates.isPresent()) {
                 final List<Scored<CompoundCandidate>> results = candidates.get().getResults();
                 setCandidateSet(results);
@@ -144,7 +144,7 @@ public class InSilicoSelectionBox extends CompactComboBox<InSilicoSelectionBox.I
         }
     }
 
-    protected static class Item {
+    public static class Item {
         private String description;
         private IAtomContainer molecule;
         private CompoundCandidate candidate;
@@ -158,6 +158,10 @@ public class InSilicoSelectionBox extends CompactComboBox<InSilicoSelectionBox.I
             this.description = candidate.getName()!=null && /*WTF*/ !candidate.getName().equals("null") ? candidate.getName() : candidate.getSmiles();
             this.candidate = candidate;
             this.molecule = null;
+        }
+
+        public CompoundCandidate getCandidate() {
+            return candidate;
         }
 
         public String getDescription() {

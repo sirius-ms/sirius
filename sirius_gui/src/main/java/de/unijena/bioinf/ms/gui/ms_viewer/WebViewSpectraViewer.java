@@ -20,13 +20,27 @@
 package de.unijena.bioinf.ms.gui.ms_viewer;
 
 import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
+import netscape.javascript.JSObject;
 
 public class WebViewSpectraViewer extends WebViewPanel {
 
     public void loadData(String json_spectra, String json_highlight, String svg) { // TEST CODE
         cancelTasks();
-        executeJS("loadJSONData(" + json_spectra + "," +
-                escapeNull(json_highlight) + "," + escapeNull(svg) + ")");
+
+        queueTaskInJFXThread(() -> {
+                    JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { \"spectrum\": " + json_spectra + ", \"highlight\": " + escapeNull(json_highlight) + ", svg: null};");
+                    System.out.println("document.webview = { \"spectrum\": " + json_spectra + ", \"highlight\": " + escapeNull(json_highlight) + ", \"svg\": null};");
+                    if (svg!=null) {
+                        obj.setMember("svg", svg);
+                    }
+                    webView.getEngine().executeScript("loadJSONData(document.webview.spectrum, document.webview.highlight, document.webview.svg)");
+        }
+        );
+    }
+
+    private String jsonString(String val) {
+        if (val==null) return "null";
+        else return "\""+val+"\"";
     }
 
     private String escapeNull(String val) {

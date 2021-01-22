@@ -3,6 +3,7 @@ dependencies {
     compile group: "info.picocli", name: "picocli", version: "$picocli_version"
     //internal
     compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
+
 //    compile group: "de.unijena.bioinf.ms", name: "zodiac_project_space", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "tree_motif_search", version: "$siriusVersion"
