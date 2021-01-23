@@ -20,9 +20,6 @@
 package de.unijena.bioinf.ms.gui.webView;
 
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -34,6 +31,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.FutureTask;
@@ -96,13 +94,16 @@ public abstract class WebViewPanel extends JFXPanel{
     }
 
     public void load(){
-        this.html_builder.append("</body></html>");
+        /*
+	    this.html_builder.append("</body></html>");
         queueTaskInJFXThread(() -> {
 				this.webView.getEngine().setJavaScriptEnabled(true);
 				this.webView.getEngine().loadContent(html_builder.toString(),
 													 "text/html");
 			});
         // TODO: notify the class when the loading is complete!
+         */
+        load(Collections.emptyMap());
     }
 
     public void load(Map<String, Object> bridges){
@@ -117,6 +118,7 @@ public abstract class WebViewPanel extends JFXPanel{
 							JSObject win = (JSObject) getJSObject("window");
 							for (Map.Entry<String, Object> entry : bridges.entrySet())
 								win.setMember(entry.getKey(), entry.getValue());
+                            win.setMember("console", new Console());
 							executeJS("applySettings()");
 						}
 					});
@@ -165,5 +167,15 @@ public abstract class WebViewPanel extends JFXPanel{
         br.close();
         raw_script.append("</script>");
         return raw_script.toString();
+    }
+
+    protected static class Console {
+	    public void log(Object msg) {
+	        if (msg instanceof JSObject) {
+                System.err.println(((JSObject) msg).call("toString"));
+            } else {
+                System.err.println(msg);
+            }
+        }
     }
 }

@@ -1,3 +1,5 @@
+'use strict';
+const TOLERANCE = 40;
 // General Variables
 var svg, tooltip, peakArea, brush, idleTimeout, data, w, h,
 current = {w, h},
@@ -110,7 +112,7 @@ function highlighting(bonds, cuts, atoms) {
 
 function idled() { idleTimeout = null; };
 
-function resetColor(d) { return ("formula" in d) ? "peak_2 peak" : "peak_1 peak"; };
+function resetColor(d) { return ("structureHighlight" in d) ? "peak_2 structureInformation peak" : (("formula" in d) ? "peak_2 peak" : "peak_1 peak"); };
 
 function translateHover(mouse_w, mouse_h) {
     // NOTE: These distances might need to be changed, when the font size and content of hover are changed.
@@ -118,17 +120,18 @@ function translateHover(mouse_w, mouse_h) {
     let tmp_tooltip = document.querySelector("#tooltip");
     let tmp_h = parseFloat(window.getComputedStyle(tmp_tooltip).getPropertyValue("height")) + 12;
     let tmp_w = parseFloat(window.getComputedStyle(tmp_tooltip).getPropertyValue("width")) + 12;
+    const distanceVertical = 30, distanceHorizontal = 30;
     // style: vertical distance between cursor and hover = 24px (depending on size of cursor)
-    if (mouse_h+tmp_h+25 > current.h) {
-        tooltip.style("top", (mouse_h - 25 - tmp_h/2 + "px"));
+    if (mouse_h+tmp_h+distanceVertical > current.h) {
+        tooltip.style("top", (mouse_h - distanceVertical - tmp_h/2 + "px"));
     } else {
-        tooltip.style("top", (mouse_h - 25 + "px"));
+        tooltip.style("top", (mouse_h - distanceVertical + "px"));
     }
     // style: horizontal distance between cursor and hover = 12px (depending on size of cursor)
-    if (mouse_w+tmp_w+15 > current.w) {
-        tooltip.style("left", (mouse_w - 15 - tmp_w + "px"));
+    if (mouse_w+tmp_w+distanceHorizontal > current.w) {
+        tooltip.style("left", (mouse_w - distanceHorizontal - tmp_w + "px"));
     } else {
-        tooltip.style("left", (mouse_w + 15 + "px"));
+        tooltip.style("left", (mouse_w + distanceHorizontal + "px"));
     }
 };
 
@@ -184,6 +187,50 @@ function loadHighlights(mzs) {
     }
     anno_str = [];
 };
+
+/*
+takes the spectrum and the x-domain and returns a mouse event listener which
+calls the given callback with the peak index as argument whenever the
+mouse comes close to a peak
+*/
+const mouseMovingFunction = function(spectrum, tolerance, xdomain, ydomain, callbackIn, callbackLeave) {
+    const mzvalues = [];
+    for (let i=0; i < spectrum.peaks.length; ++i) {
+        mzvalues.push(spectrum.peaks[i].mz);
+    }
+    var lastPeakSelected = -1;
+    return function() {
+        event = d3.event; // -_- old d3 version
+        event.preventDefault();
+        const mousePointer = d3.mouse(document.getElementById("peaks"));
+        const mzcurrent = xdomain.invert(mousePointer[0]-tolerance);
+        let closestPeakIndex = -1;
+        let bestDist=Infinity;
+        for (let k=Math.max(0,d3.bisect(mzvalues, mzcurrent)-1); k < mzvalues.length; ++k) {
+            const mzp = xdomain(mzvalues[k]);
+            if (mzp > mousePointer[0]+tolerance) {
+                break;
+            }
+            if (mzp >= mousePointer[0]-tolerance) {
+                const intens = ydomain(spectrum.peaks[k].intensity/2.0);
+                const distance = Math.abs(mzp-mousePointer[0]) + (Math.abs(intens-mousePointer[1]))/2.0;
+                if (distance < bestDist) {
+                    bestDist = distance;
+                    closestPeakIndex = k;
+                }
+            }
+        } 
+        const selection = closestPeakIndex;
+        if (selection != lastPeakSelected) {
+            lastPeakSelected = selection;
+            if (selection>=0) {
+                callbackIn(selection);
+            } else {
+                callbackLeave();
+            }
+        }
+    };
+}
 
 var mouseoverMS1 = function() {
     d3.select(this).attr("class", "peak_hover peak");
@@ -314,12 +361,37 @@ function initStructureView() {
     d3.select("#xLabel").attr("x", w/2);
 };
 
+/*
+    I think this is a bit cleaner and safer than loadHighlights
+*/
+function injectStructureInformation(spectrum) {
+    const structure = anno_str; // this should not be a global variable
+    const formula2nodes = {};
+    for (let peak of spectrum.peaks) {
+        let formula = peak.formula;
+        if (formula) {
+            formula = formula.split(" ")[0];
+            if (!formula2nodes[formula]) formula2nodes[formula]=[];
+            formula2nodes[formula].push(peak);
+        }
+    }
+    for (let struct of structure) {
+        const formula = struct.formula;
+        if (formula2nodes[formula]) {
+            for (let node of formula2nodes[formula]) {
+                node.structureHighlight = struct;
+            }
+        }
+    }
+}
+
 function spectrumPlot(spectrum, structureView) {
     let mzs = spectrum.peaks.map(d => d.mz);
     ms2Size = mzs.length;
     if (structureView) {
         initStructureView();
-        loadHighlights(mzs);
+        injectStructureInformation(spectrum);
+        loadHighlights(mzs); // todo: remove this, use injectStructureInformation instead
     }
     let min = d3.min(mzs)-1;
     let max = d3.max(mzs)+1;
@@ -375,6 +447,7 @@ function spectrumPlot(spectrum, structureView) {
             .attr("id", function(d, i) { return "peak"+i; })
             .attr("class", function(d, i) { return (selected.leftClick === i) ? "peak_select peak" : resetColor(d); });
     if (structureView) {
+        /*
         peakArea.selectAll(".peak")
             .on("mousedown", mousedown)
             .on("mousemove", mousemoveMS2)
@@ -393,13 +466,61 @@ function spectrumPlot(spectrum, structureView) {
                     hideHover();
                 }
             });
+            */
+
+
+            svg.on("mousemove", mouseMovingFunction(spectrum, TOLERANCE, x,y,function(i) {
+                const selection = d3.select("#peak"+i);
+                const node = selection.node();
+                if (!selection.classed("peak_select")) {
+                        selection.attr("class", "peak_hover peak");
+                        tooltip.style("opacity", 1);
+                    }
+                mousemoveMS2.bind(node)(spectrum.peaks[i],i);
+            }, function() {
+                if (selected.hover !== null) {
+                    d3.select("#peak"+selected.hover).attr("class", resetColor);
+                    selected.hover = null;
+                    hideHover();
+                }
+            })) ;
+
+            tooltip.on("mousemove", function(){
+                translateHover(d3.event.clientX, d3.event.clientY);
+            });
+
+            d3.select("svg").on("click", function(){
+                if (selected.hover != null) {
+                    mousedown.bind(document.getElementById("peak"+selected.hover))(spectrum.peaks[selected.hover], selected.hover);
+                }
+            });
+
     } else {
+        /*
         peakArea.selectAll(".peak")
             .on("mousemove", mousemoveMS1)
             .on("mouseover", mouseoverMS1)
             .on("mouseleave", function(d) {
                 hideHover();
                 d3.select(this).attr("class", resetColor);
+            });
+            */
+            svg.on("mousemove", mouseMovingFunction(spectrum, TOLERANCE, x,y,function(i) {
+                const selection = d3.select("#peak"+i);
+                const node = selection.node();
+                selection.attr("class", "peak_hover peak");
+                tooltip.style("opacity", 1);
+                mousemoveMS1.bind(node)(spectrum.peaks[i],i);
+            }, function() {
+                if (selected.hover !== null) {
+                    d3.select("#peak"+selected.hover).attr("class", resetColor);
+                    selected.hover = null;
+                    hideHover();
+                }
+            })) ;
+
+            tooltip.on("mousemove", function(){
+                translateHover(d3.event.clientX, d3.event.clientY);
             });
     }
 };
@@ -543,17 +664,20 @@ function loadJSONData(data_spectra, data_highlight, data_svg) {
         basic_structure = null;
         highlights = [];
     }
+    anno_str = [];
     if (data_highlight !== null && data_svg !== null) {
-    	if ((typeof data_highlight) == "string") {
-    		anno_str = JSON.parse(data_highlight);
-    	} else {
-    		anno_str = data_highlight;
-    	}
+        if ((typeof data_highlight) == "string") {
+            anno_str = JSON.parse(data_highlight);
+        } else {
+            anno_str = data_highlight;
+        }
         svg_str = data_svg;
     }
     if ((typeof data_spectra) == "string") {
-    	spectraViewer(JSON.parse(data_spectra));
+        spectraViewer(JSON.parse(data_spectra));
     } else {
-    	spectraViewer(data_spectra);
+        spectraViewer(data_spectra);
     }
+    return true;
 }
+window.loadJSONData = loadJSONData;
