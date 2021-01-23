@@ -44,7 +44,6 @@ import java.awt.event.ItemListener;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -101,13 +100,8 @@ public class SpectraVisualizationPanel
 		// Browser //
 		/////////////
 		this.browser = new WebViewSpectraViewer();
-
-		browser.addJS("d3.min.js");
-		browser.addJS("spectra_viewer/spectra_viewer.js");
 		this.add((JFXPanel) this.browser, BorderLayout.CENTER);
 		this.setVisible(true);
-		HashMap<String, Object> bridges = new HashMap<String, Object>() {{}};
-		browser.load(bridges);
 	}
 
 	@Override
@@ -162,7 +156,7 @@ public class SpectraVisualizationPanel
 						ce);
 				   return;
 				}
-				jsonSpectra = spectraWriter.ms2JSON(spectrum, sre.getFragTree().orElse(null));
+				jsonSpectra = spectraWriter.ms2JSON(spectrum, Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null));
 			}
 			// for (int i = 0; i < spectra2.size(); i++) {
 			// 	System.out.printf("MS2 spectra %d%n", i);

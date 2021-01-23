@@ -24,17 +24,23 @@ import netscape.javascript.JSObject;
 
 public class WebViewSpectraViewer extends WebViewPanel {
 
+    public WebViewSpectraViewer() {
+        super();
+        addJS("d3.min.js");
+        addJS("spectra_viewer/spectra_viewer.js");
+        load();
+    }
+
     public void loadData(String json_spectra, String json_highlight, String svg) { // TEST CODE
         cancelTasks();
 
         queueTaskInJFXThread(() -> {
                     JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { \"spectrum\": " + json_spectra + ", \"highlight\": " + escapeNull(json_highlight) + ", svg: null};");
-                    System.out.println("document.webview = { \"spectrum\": " + json_spectra + ", \"highlight\": " + escapeNull(json_highlight) + ", \"svg\": null};");
                     if (svg!=null) {
                         obj.setMember("svg", svg);
                     }
-                    webView.getEngine().executeScript("loadJSONData(document.webview.spectrum, document.webview.highlight, document.webview.svg)");
-        }
+            webView.getEngine().executeScript("window.loadJSONData(document.webview.spectrum, document.webview.highlight, document.webview.svg)");
+                }
         );
     }
 
@@ -51,4 +57,5 @@ public class WebViewSpectraViewer extends WebViewPanel {
 	public void clear(){
 		executeJS("clear()");
 	}
+
 }
