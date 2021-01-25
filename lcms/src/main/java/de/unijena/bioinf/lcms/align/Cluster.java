@@ -26,6 +26,7 @@ import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
 import de.unijena.bioinf.model.lcms.GapFilledIon;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.apache.commons.math3.distribution.LaplaceDistribution;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -153,7 +154,7 @@ public class Cluster {
         return new Cluster(alf.toArray(new AlignedFeatures[0]), score, left, right,mergedSamples);
     }
 
-    public double estimateError() {
+    public double estimateError(boolean onlyGoodFeatures) {
         final TDoubleArrayList values = new TDoubleArrayList();
         final TDoubleArrayList buf = new TDoubleArrayList();
         final int thr = Math.max(2,Math.min(10,(int)Math.ceil(this.mergedSamples.size()*0.2)));
@@ -161,9 +162,9 @@ public class Cluster {
         for (AlignedFeatures f : features) {
             final ArrayList<ProcessedSample> xs = new ArrayList<>(f.features.keySet());
             for (int i=0; i < xs.size(); ++i) {
-                if (f.features.get(xs.get(i)).getPeakShape().getPeakShapeQuality().betterThan(Quality.BAD)) {
+                if (f.features.get(xs.get(i)).getPeakShape().getPeakShapeQuality().betterThan(Quality.DECENT)) {
                     for (int j=0; j < i; ++j) {
-                        if (f.features.get(xs.get(j)).getPeakShape().getPeakShapeQuality().betterThan(Quality.BAD)) {
+                        if (f.features.get(xs.get(j)).getPeakShape().getPeakShapeQuality().betterThan(Quality.DECENT)) {
                             buf.add(Math.abs(xs.get(i).getRecalibratedRT(f.features.get(xs.get(i)).getRetentionTime()) - xs.get(j).getRecalibratedRT(f.features.get(xs.get(j)).getRetentionTime())));
                         }
                     }
@@ -177,13 +178,19 @@ public class Cluster {
         }
         values.sort();
         double mean = 0d;
-        int k=(int)(values.size()*0.25), n =(int)(values.size()*0.9);
+        int k=0, n=values.size();//(int)(values.size()*0.25), n =(int)(values.size()*0.9);
         for (int i=k; i < n; ++i) {
             mean += values.getQuick(i);
         }
         System.out.println("USED " + count + " features for error estimation. Mean error is " + (mean/(n-k)));
         return (mean/(n-k));
     }
+
+
+    public LaplaceDistribution estimateLaplaceError() {
+        return new LaplaceDistribution(0, estimateError(true));
+    }
+
     public double estimatePeakShapeError() {
         final TDoubleArrayList values = new TDoubleArrayList();
 
