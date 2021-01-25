@@ -50,7 +50,7 @@ public class ChromatogramCache {
     }
 
     public void add(ChromatographicPeak peak) {
-        double mzAt = peak.getMzAt(peak.getSegments().first().apex);
+        double mzAt = peak.getMzAt(peak.getSegments().firstKey());
         final int keyDown = (int)Math.floor(mzAt*10);
         final int keyUp = (int)Math.ceil(mzAt*10);
         store(peak, keyDown);

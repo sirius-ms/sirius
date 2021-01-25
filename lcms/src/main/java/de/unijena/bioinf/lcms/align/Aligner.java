@@ -59,6 +59,7 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.hash.TLongHashSet;
 import org.apache.commons.math3.analysis.function.Identity;
 import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
+import org.apache.commons.math3.distribution.LaplaceDistribution;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -242,6 +243,30 @@ public class Aligner {
         return consensusFeatures.toArray(new ConsensusFeature[0]);
     }
 
+    public LaplaceDistribution estimateErrorLaplace(List<ProcessedSample> samples) {
+        // start with the 15% percentile distance of consecutive features with same mz as initial error term
+        TDoubleArrayList distances = new TDoubleArrayList();
+        for (ProcessedSample s : samples) {
+            // binned ions
+            final TIntObjectHashMap<List<FragmentedIon>> binnedIons = new TIntObjectHashMap<>();
+            for (FragmentedIon f : s.ions) {
+                int m = (int)Math.round(f.getMass()*100);
+                if (!binnedIons.containsKey(m)) binnedIons.put(m, new ArrayList<>());
+                binnedIons.get(m).add(f);
+            }
+            binnedIons.forEachValue(x->{x.sort(Comparator.comparingDouble(y->y.getRetentionTime())); return true;});
+            for (List<FragmentedIon> ionList : binnedIons.valueCollection()) {
+                for (int j=1; j < ionList.size(); ++j) {
+                    distances.add(ionList.get(j).getRetentionTime()-ionList.get(j-1).getRetentionTime());
+                }
+            }
+        }
+        distances.sort();
+        double sigma = 0d;
+        distances.transformValues(x->Math.abs(x));
+        return new LaplaceDistribution(0d, distances.sum()/distances.size());
+    }
+
     public double estimateErrorTerm(List<ProcessedSample> samples) {
         // start with the 15% percentile distance of consecutive features with same mz as initial error term
         TDoubleArrayList distances = new TDoubleArrayList();
@@ -281,7 +306,7 @@ public class Aligner {
                 TObjectIntHashMap<ProcessedSample> alignmentSize = new TObjectIntHashMap<>();
                 int naligns = 0;
                 for (AlignedFeatures f : cluster.features) {
-                    if (f.features.size()>1) {
+                    if (f.features.size()>1  ) {
                         for (Map.Entry<ProcessedSample, FragmentedIon> g : f.features.entrySet()) {
                             alignmentSize.adjustOrPutValue(g.getKey(),1,1);
                             ++naligns;
@@ -313,11 +338,11 @@ public class Aligner {
                             // add anchors
 
                             for (AlignedFeatures f : cluster.features) {
-                                if (f.features.size()>1 && f.features.containsKey(s)) {
+                                if (f.features.size()>1 && f.features.containsKey(s) && f.features.get(s).getPeakShape().getPeakShapeQuality().betterThan(Quality.DECENT)) {
                                     buff.addPeak(f.features.get(s).getRetentionTime(), f.rt);
                                 }
                             }
-                            buff.addPeak(1d,1d);
+                            //buff.addPeak(1d,1d);
                             if (buff.size() >= 22) {
                                 Spectrums.sortSpectrumByMass(buff);
                                 for (int k=1; k < buff.size(); ++k) {
