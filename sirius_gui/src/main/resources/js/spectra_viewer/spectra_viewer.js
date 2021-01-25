@@ -112,7 +112,7 @@ function highlighting(bonds, cuts, atoms) {
 
 function idled() { idleTimeout = null; };
 
-function resetColor(d) { return ("structureHighlight" in d) ? "peak_2 structureInformation peak" : (("formula" in d) ? "peak_2 peak" : "peak_1 peak"); };
+function resetColor(d) { return ("structureInformation" in d) ? "peak_2 structureInformation peak" : (("formula" in d) ? "peak_2 peak" : "peak_1 peak"); };
 
 function translateHover(mouse_w, mouse_h) {
     // NOTE: These distances might need to be changed, when the font size and content of hover are changed.
@@ -151,6 +151,12 @@ function annotation(d) {
             anno = anno + "<br>Mass deviation: " + sign + (d.massDeviationMz*1000).toFixed(decimal_place) + " mDa<br>" +
                    "&nbsp;".repeat(25) + "(" + sign + d.massDeviationPpm.toFixed(decimal_place) + " ppm)";
         }
+        
+        if ("structureInformation" in d) {
+            const score = d.structureInformation.score;
+            anno = anno + "<br>Fragmenter Score: " + score.toFixed(2);
+        }
+        
     } else {
         anno = "m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place);
     }
@@ -379,7 +385,7 @@ function injectStructureInformation(spectrum) {
         const formula = struct.formula;
         if (formula2nodes[formula]) {
             for (let node of formula2nodes[formula]) {
-                node.structureHighlight = struct;
+                node.structureInformation = struct;
             }
         }
     }

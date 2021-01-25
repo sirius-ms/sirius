@@ -241,6 +241,11 @@ public class SpectraVisualizationPanel
 		this.sre = sre;
 		clearInsilicoResult();
 		anoBox.resultsChanged(experiment,sre,resultElements,selections);
+		if (getCurrentMode().msLevel>1) {
+			anoBox.activate();
+		} else {
+			anoBox.deactivate();
+		}
 	}
 
 	@Override
