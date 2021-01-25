@@ -33,6 +33,8 @@ public class CorrelationGroup {
     // for adduct types
     protected PrecursorIonType leftType, rightType;
 
+    public double score,score2;
+
     public CorrelationGroup(MutableChromatographicPeak left, MutableChromatographicPeak right, ChromatographicPeak.Segment leftSegment, ChromatographicPeak.Segment rightSegment, int start, int end, double correlation, double kl, double cosine) {
         this.left = left;
         this.right = right;
@@ -43,6 +45,13 @@ public class CorrelationGroup {
         this.cosine = cosine;
         this.start = start;
         this.end = end;
+    }
+
+    public int getStartIndex() {
+        return start;
+    }
+    public int getEndIndex() {
+        return end;
     }
 
     public double getCosine() {
