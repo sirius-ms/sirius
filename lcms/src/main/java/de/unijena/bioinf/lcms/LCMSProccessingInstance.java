@@ -225,7 +225,7 @@ public class LCMSProccessingInstance {
 
         final ArrayList<SimpleSpectrum> correlatedFeatures = new ArrayList<>();
         {
-            final SimpleMutableSpectrum isotope = toIsotopeSpectrum(ion, ionMass);
+            final SimpleMutableSpectrum isotope = new SimpleMutableSpectrum(ion.getIsotopesAsSpectrum());
 
             {
                 if (isotope.size() <= 2 && ion.getMsQuality().betterThan(Quality.DECENT)) {
@@ -241,7 +241,7 @@ public class LCMSProccessingInstance {
 
             correlatedFeatures.add(new SimpleSpectrum(isotope));
             for (CorrelatedIon adduct : ion.getAdducts()) {
-                correlatedFeatures.add(new SimpleSpectrum(toIsotopeSpectrum(adduct.ion, adduct.ion.getPeak().getMzAt(adduct.ion.getPeak().findScanNumber(ion.getSegment().getApexScanNumber())))));
+                correlatedFeatures.add(adduct.ion.getIsotopesAsSpectrum());
             }
 
         }
