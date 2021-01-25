@@ -139,6 +139,7 @@ public class AnnotateFragmentationTree {
             G.writeStartObject();
             G.writeStringField("formula", entry.formula);
             G.writeNumberField("peakmass", peak.get(entry.bestMatchingFragment).getMass());
+            G.writeNumberField("score", entry.totalScore);
             // write bonds and atoms
             G.writeArrayFieldStart("atoms");
             Set<IAtom> atoms = new HashSet<>();
