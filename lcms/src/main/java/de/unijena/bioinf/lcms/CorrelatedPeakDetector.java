@@ -23,11 +23,13 @@ package de.unijena.bioinf.lcms;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.lcms.ionidentity.CorrelationGroupScorer;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
@@ -49,9 +51,15 @@ public class CorrelatedPeakDetector {
             Range.closed(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
     };
 
-    protected final static double ISOTOPE_COSINE_THRESHOLD=0.97,
+    /*
+    protected final static double ISOTOPE_COSINE_THRESHOLD=0.8,//0.97,
                                     COSINE_THRESHOLD = 0.98d,
                                   STRICT_COSINE_THRESHOLD = 0.99;
+*/
+
+    protected final static double PROBABILITY_THRESHOLD_ISOTOPES = 0.5d,
+    PROBABILITY_THRESHOLD_ADDUCTS = 0.75d, STRICT_THRESHOLD = 0.9;
+
 
     protected Set<PrecursorIonType> detectableIonTypes;
 
@@ -96,10 +104,10 @@ public class CorrelatedPeakDetector {
             return false;
         }
         List<CorrelationGroup> correlationGroups = new ArrayList<>();
-        detectIsotopesFor(sample, peakBeforeChr.get(), segmentForScanId.get(), ion.getChargeState(), correlationGroups);
+        detectIsotopesFor(sample, peakBeforeChr.get().mutate(), segmentForScanId.get(), ion.getChargeState(), correlationGroups);
         for (CorrelationGroup g : correlationGroups) {
             int scanNumber = g.getRight().findScanNumber(ms1Scan.getIndex());
-            if (scanNumber >= 0 && g.getCosine() >= STRICT_COSINE_THRESHOLD && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass())<1e-8) {
+            if (scanNumber >= 0 && new CorrelationGroupScorer().predictProbability(g) >= STRICT_THRESHOLD  /*g.getCosine() >= STRICT_COSINE_THRESHOLD*/ && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass())<1e-8) {
                 final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
                 for (CorrelationGroup h : correlationGroups) {
                     int sc = h.getRight().findScanNumber(ms1Scan.getIndex());
@@ -185,9 +193,9 @@ public class CorrelatedPeakDetector {
                     final Optional<ChromatographicPeak> detection = sample.builder.detectExact(ms1Scan,ms1.getMzAt(l));
                     if (detection.isPresent()) {
 
-                        Optional<CorrelationGroup> correlate = correlate(ion.getPeak(), ion.getSegment(), detection.get());
+                        Optional<CorrelationGroup> correlate = correlate(ion.getPeak(), ion.getSegment(), detection.get().mutate());
                         if (correlate.isEmpty()) continue;
-                        if (correlate.get().getCosine() >= STRICT_COSINE_THRESHOLD) {
+                        if (correlate.get().score >= STRICT_THRESHOLD) {
                             final IonGroup ion1 = ionWithIsotopes(sample, correlate.get().getRight(), correlate.get().getRightSegment(), ion.getChargeState(),alreadyAnnotatedMzs);
                             if (ion1==null) continue;
                             ion.getInSourceFragments().add(new CorrelatedIon(correlate.get(), ion1));
@@ -234,14 +242,14 @@ public class CorrelatedPeakDetector {
                         if (alreadyFound(alreadyAnnotatedMzs, peakMass))
                             continue;
                         // add ion as possibleIonType. But first make correlation analysis
-                        Optional<CorrelationGroup> maybeCorrelate = correlate(ion.getPeak(), ion.getSegment(), detect.get());
+                        Optional<CorrelationGroup> maybeCorrelate = correlate(ion.getPeak(), ion.getSegment(), detect.get().mutate());
                         CorrelationGroup correlate = null;
                         if (maybeCorrelate.isPresent()) {
                             correlate = maybeCorrelate.get();
                             correlate.setLeftType(ionType);
                             correlate.setRightType(other);
                         }
-                        if (maybeCorrelate.isPresent() && correlate.getCosine() >= COSINE_THRESHOLD && correlate.getKullbackLeibler() <= 0.5 && correlate.getNumberOfCorrelatedPeaks() >= 4) {
+                        if (maybeCorrelate.isPresent() && correlate.score >= PROBABILITY_THRESHOLD_ADDUCTS && correlate.getNumberOfCorrelatedPeaks() >= 4) {
                             final IonGroup ion1 = ionWithIsotopes(sample, correlate.getRight(), correlate.getRightSegment(), ion.getChargeState(), alreadyAnnotatedMzs);
                             if (ion1==null) continue;
                             adducts.add(new CorrelatedIon(correlate, ion1));
@@ -329,17 +337,51 @@ public class CorrelatedPeakDetector {
                 ion.setChargeState(bestChargeState);
                 ion.addIsotopes(bestPattern);
             }
+        } else {
+            // we still look for an isotope peak. If we cannot correlate anything, so what
+            final SimpleSpectrum iso = detectIsotopesWithoutCorrelationFor(sample, ion.getPeak(), ion.getSegment(), 1);
+            ion.assignIsotopePeaksWithoutCorrelation(iso);
+            System.out.println(iso);
+
+
         }
     }
 
-    public IonGroup ionWithIsotopes(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, TDoubleArrayList alreadyAnnotatedMzs) {
+    private SimpleSpectrum detectIsotopesWithoutCorrelationFor(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge) {
+        Scan scan = sample.run.getScanByNumber(segment.getApexScanNumber()).get();
+        final SimpleSpectrum spectrum = sample.storage.getScan(scan);
+        final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
+        buffer.addPeak(segment.getApexMass(), segment.getApexIntensity());
+        final double mz = peak.getMzAt(segment.getApexIndex());
+        double score = 0d;
+        forEachIsotopePeak:
+        for (int k = 0; k < ISO_RANGES.length; ++k) {
+            // try to detect +k isotope peak
+            final double maxMz = mz + ISO_RANGES[k].upperEndpoint()/charge;
+            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].lowerEndpoint()/charge, maxMz);
+            if ( a < 0) break forEachIsotopePeak;
+            boolean found=false;
+            for (int i=a; i < spectrum.size(); ++i) {
+                if (spectrum.getMzAt(i) > maxMz)
+                    break;
+                buffer.addPeak(spectrum.getMzAt(i), spectrum.getIntensityAt(i));
+                found=true;
+            }
+            if (!found) {
+                break forEachIsotopePeak;
+            }
+        }
+        return Spectrums.getNormalizedSpectrum(buffer, Normalization.Max);
+    }
+
+    public IonGroup ionWithIsotopes(ProcessedSample sample, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, TDoubleArrayList alreadyAnnotatedMzs) {
         IonGroup ion = new IonGroup(peak, segment, new ArrayList<>());
         detectIsotopesAndSetChargeStateForAndChimerics(sample,ion,alreadyAnnotatedMzs);
         if (ion.getChargeState() == charge || ion.getChargeState()==0) return ion;
         else return null;
     }
 
-    public double detectIsotopesFor(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, List<CorrelationGroup> isoPeaks) {
+    public double detectIsotopesFor(ProcessedSample sample, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, List<CorrelationGroup> isoPeaks) {
 
         Scan scan = sample.run.getScanByNumber(segment.getApexScanNumber()).get();
         final SimpleSpectrum spectrum = sample.storage.getScan(scan);
@@ -355,7 +397,7 @@ public class CorrelatedPeakDetector {
             for (int i=a; i < spectrum.size(); ++i) {
                 if (spectrum.getMzAt(i) > maxMz)
                     break;
-                sample.builder.detectExact(scan, spectrum.getMzAt(i)).map(x->correlate(peak, segment, x)).filter(x->x.map(CorrelationGroup::getCosine).orElse(0d) >= ISOTOPE_COSINE_THRESHOLD).map(Optional::get).ifPresent(isoPeaks::add);
+                sample.builder.detectExact(scan, spectrum.getMzAt(i)).map(x->correlate(peak, segment, x.mutate())).filter(x->x.map(y->y.score).orElse(0d) >= PROBABILITY_THRESHOLD_ISOTOPES).map(Optional::get).ifPresent(isoPeaks::add);
             }
             if (isoPeaks.size() <= nsize) {
                 break forEachIsotopePeak;
@@ -367,7 +409,8 @@ public class CorrelatedPeakDetector {
     }
 
 
-    public Optional<CorrelationGroup> correlate(ChromatographicPeak main, ChromatographicPeak.Segment mainSegment, ChromatographicPeak mightBeCorrelated) {
+    public Optional<CorrelationGroup> correlate(MutableChromatographicPeak main, ChromatographicPeak.Segment mainSegment, MutableChromatographicPeak mightBeCorrelated) {
+        /*
         // overlap both
         int start = mainSegment.getStartScanNumber();
         int end = mainSegment.getEndScanNumber();
@@ -397,7 +440,11 @@ public class CorrelatedPeakDetector {
             return null;
         */
 
-        final ChromatographicPeak.Segment otherSegment = mightBeCorrelated.createSegmentFromIndizes(otherStart,otherEnd);
+        //final ChromatographicPeak.Segment otherSegment = mightBeCorrelated.getOrCreateSegmentFromIndizes(otherStart,otherEnd);
+        final Optional<ChromatographicPeak.Segment> mayHaveOtherSegment = mightBeCorrelated.getSegmentForScanId(mainSegment.getApexScanNumber());
+        if (mayHaveOtherSegment.isEmpty()) return Optional.empty();
+        ChromatographicPeak.Segment otherSegment = mayHaveOtherSegment.get();
+
 
         // the the apex of one peak should be in the fhm of the other and vice-versa
         if (mainSegment.getApexScanNumber() > otherSegment.getPeak().getScanNumberAt(otherSegment.getFwhmEndIndex()) || mainSegment.getApexScanNumber() < otherSegment.getPeak().getScanNumberAt(otherSegment.getFwhmStartIndex()) || otherSegment.getApexScanNumber() > mainSegment.getPeak().getScanNumberAt(mainSegment.getFwhmEndIndex()) || otherSegment.getApexScanNumber() < mainSegment.getPeak().getScanNumberAt(mainSegment.getFwhmStartIndex()) ) {
@@ -406,17 +453,17 @@ public class CorrelatedPeakDetector {
 
         if (main.getIntensityAt(mainSegment.getApexIndex()) > mightBeCorrelated.getIntensityAt(otherSegment.getApexIndex())) {
             return Optional.ofNullable(correlateBiggerToSmaller(main, mainSegment, mightBeCorrelated, otherSegment));
-        } else return Optional.ofNullable(correlateBiggerToSmaller(mightBeCorrelated, otherSegment, main, mainSegment)).map(x->x.invert());
+        } else return Optional.ofNullable(correlateBiggerToSmaller(mightBeCorrelated, otherSegment, main, mainSegment)).map(CorrelationGroup::invert);
 
 
 
     }
 
-    private @Nullable CorrelationGroup correlateBiggerToSmaller(ChromatographicPeak large, ChromatographicPeak.Segment largeSegment, ChromatographicPeak small, ChromatographicPeak.Segment smallSegment) {
+    private @Nullable CorrelationGroup correlateBiggerToSmaller(MutableChromatographicPeak large, ChromatographicPeak.Segment largeSegment, MutableChromatographicPeak small, ChromatographicPeak.Segment smallSegment) {
         final TDoubleArrayList a = new TDoubleArrayList(), b = new TDoubleArrayList();
 
         // find index that is above 25% intensity of main peak
-        final Range<Integer> t25 = smallSegment.calculateFWHM(0.15d);
+        final Range<Integer> t25 = smallSegment.calculateFWHMMinPeaks(0.15d,3);
 
 
         for (int i = t25.lowerEndpoint(); i <= t25.upperEndpoint(); ++i) {
@@ -426,12 +473,15 @@ public class CorrelatedPeakDetector {
             b.add(small.getIntensityAt(i));
         }
         if (a.size()<3) return null;
-        final double correlation = pearson(a,b,a.size());
+        final double correlation = pearson(a,b);
         final double kl = kullbackLeibler(a,b, a.size());
-        return new CorrelationGroup(large,small,largeSegment,smallSegment,t25.lowerEndpoint(), t25.upperEndpoint(), correlation, kl, cosine(a,b));
+        final CorrelationGroup correlationGroup = new CorrelationGroup(large, small, largeSegment, smallSegment, t25.lowerEndpoint(), t25.upperEndpoint(), correlation, kl, cosine(a, b));
+        correlationGroup.score = new CorrelationGroupScorer().predictProbability(correlationGroup);
+        return correlationGroup;
     }
 
-    private double cosine(TDoubleArrayList a, TDoubleArrayList b) {
+
+    public static double cosine(TDoubleArrayList a, TDoubleArrayList b) {
         double[] x = normalized(a);
         double[] y = normalized(b);
         double cosine = 0d, l=0d, r=0d;
@@ -444,7 +494,7 @@ public class CorrelatedPeakDetector {
         return cosine/Math.sqrt(l*r);
     }
 
-    private double kullbackLeibler(TDoubleArrayList a, TDoubleArrayList b, int size) {
+    public static double kullbackLeibler(TDoubleArrayList a, TDoubleArrayList b, int size) {
         double[] x =normalized(a);
         double[] y = normalized(b);
         double l=0d, r=0d;
@@ -456,7 +506,7 @@ public class CorrelatedPeakDetector {
         return l+r;
     }
 
-    private double[] normalized(TDoubleArrayList a) {
+    public static double[] normalized(TDoubleArrayList a) {
         final double[] b = a.toArray();
         if (b.length<1) return b;
         double sum = a.sum();
@@ -465,10 +515,19 @@ public class CorrelatedPeakDetector {
         }
         return b;
     }
+    public static double[] normalizedToMax(TDoubleArrayList a) {
+        final double[] b = a.toArray();
+        if (b.length<1) return b;
+        double mx = a.max();
+        for (int k=0; k < b.length; ++k) {
+            b[k] /= mx;
+        }
+        return b;
+    }
 
 
-    private double pearson(TDoubleArrayList a, TDoubleArrayList b, int n) {
-
+    public static double pearson(TDoubleArrayList a, TDoubleArrayList b) {
+        final int n = b.size();
         double meanA=0d;
         double meanB=0d;
         for (int i=0; i < n; ++i) {
@@ -487,6 +546,98 @@ public class CorrelatedPeakDetector {
         }
         if (va*vb==0) return 0d;
         return vab / Math.sqrt(va*vb);
+    }
+
+    private final static double LAMBDA = 100d, SIGMA_ABS = 0.05, SIGMA_REL = 0.01;
+
+    private final static double LAMBDA2 = 200d, SIGMA_ABS2 = 0.1, SIGMA_REL2 = 0.01;
+    public static double maximumLikelihoodIsotopeScore(TDoubleArrayList xslist, TDoubleArrayList yslist) {
+        double currentScore = 0d;
+        double maxScore = 0d;
+        int maxLenLeft, maxLenRight = 0;
+        int apex = findApex(xslist);
+        double penalty = 0d;
+        final double[] xs = normalizedToMax(xslist);
+        final double[] ys = normalizedToMax(yslist);
+        final int n = xs.length;
+        // we start at position apex and then extend pattern to both sides
+        for (int i=apex-1; i >= 0; --i) {
+            final double intensityScore = LAMBDA*xs[i];
+            penalty += intensityScore;
+            final double delta = xs[i]-ys[i];
+            final double matchScore = (-(delta*delta)/(2*(SIGMA_ABS*SIGMA_ABS + xs[i]*xs[i]*SIGMA_REL*SIGMA_REL))) - Math.log(2*Math.PI*xs[i]*SIGMA_REL*SIGMA_REL);
+            final double score = intensityScore+matchScore;
+            currentScore += score;
+            if (currentScore>=maxScore) {
+                maxScore = currentScore;
+                maxLenLeft = apex-i;
+            }
+        }
+        currentScore = maxScore;
+        // we start at position apex and then extend pattern to both sides
+        for (int i=apex+1; i < xs.length; ++i) {
+            final double intensityScore = LAMBDA*xs[i];
+            penalty += intensityScore;
+            final double delta = xs[i]-ys[i];
+            final double matchScore = (-(delta*delta)/(2*(SIGMA_ABS*SIGMA_ABS + xs[i]*xs[i]*SIGMA_REL*SIGMA_REL))) - Math.log(2*Math.PI*xs[i]*SIGMA_REL*SIGMA_REL);
+            final double score = intensityScore+matchScore;
+            currentScore += score;
+            if (currentScore>=maxScore) {
+                maxScore = currentScore;
+                maxLenRight = i-apex;
+            }
+        }
+        return maxScore-penalty;
+    }
+
+    public static double maximumLikelihoodIsotopeScore2(TDoubleArrayList xslist, TDoubleArrayList yslist) {
+        double currentScore = 0d;
+        double maxScore = 0d;
+        int maxLenLeft, maxLenRight = 0;
+        int apex = findApex(xslist);
+        double penalty = 0d;
+        final double[] xs = normalizedToMax(xslist);
+        final double[] ys = normalizedToMax(yslist);
+        final int n = xs.length;
+        // we start at position apex and then extend pattern to both sides
+        for (int i=apex-1; i >= 0; --i) {
+            final double intensityScore = LAMBDA2*xs[i];
+            penalty += intensityScore;
+            final double delta = xs[i]-ys[i];
+            final double matchScore = Math.exp(-(delta*delta)/(2*(SIGMA_ABS2*SIGMA_ABS2 + xs[i]*xs[i]*SIGMA_REL2*SIGMA_REL2)))/(2*Math.PI*xs[i]*SIGMA_REL2*SIGMA_REL2);
+            final double score = intensityScore+Math.log(matchScore);
+            currentScore += score;
+            if (currentScore>=maxScore) {
+                maxScore = currentScore;
+                maxLenLeft = apex-i;
+            }
+        }
+        currentScore = maxScore;
+        // we start at position apex and then extend pattern to both sides
+        for (int i=apex+1; i < xs.length; ++i) {
+            final double intensityScore = LAMBDA2*xs[i];
+            penalty += intensityScore;
+            final double delta = xs[i]-ys[i];
+            final double matchScore = Math.exp(-(delta*delta)/(2*(SIGMA_ABS2*SIGMA_ABS2 + xs[i]*xs[i]*SIGMA_REL2*SIGMA_REL2)))/(2*Math.PI*xs[i]*SIGMA_REL2*SIGMA_REL2);
+            final double score = intensityScore+Math.log(matchScore);
+            currentScore += score;
+            if (currentScore>=maxScore) {
+                maxScore = currentScore;
+                maxLenRight = i-apex;
+            }
+        }
+        return maxScore-penalty;
+    }
+
+    public static int findApex(TDoubleArrayList xs) {
+        int apex=0;
+        double apexInt = Double.NEGATIVE_INFINITY;
+        for (int i=0; i < xs.size(); ++i) {
+            if (xs.getQuick(i)>apexInt) {
+                apex = i; apexInt = xs.getQuick(i);
+            }
+        }
+        return apex;
     }
 
 }
