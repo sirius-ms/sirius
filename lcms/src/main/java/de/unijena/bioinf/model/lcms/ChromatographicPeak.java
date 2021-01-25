@@ -174,6 +174,21 @@ public interface ChromatographicPeak {
             return fwhmEnd;
         }
 
+        public Range<Integer> calculateFWHMMinPeaks(double threshold, int minPeaks) {
+            Range<Integer> range = calculateFWHM(threshold);
+            int a = range.lowerEndpoint(), b = range.upperEndpoint();
+            if (b-a+1 >= minPeaks) return range;
+            // extend range until it reaches minPeaks
+            while (b-a+1 < minPeaks) {
+                double intLeft = (a > startIndex) ? peak.getIntensityAt(a-1) : Double.NEGATIVE_INFINITY;
+                double intRight = (b < endIndex) ? peak.getIntensityAt(b+1) : Double.NEGATIVE_INFINITY;
+                if (Double.isFinite(intLeft) && intLeft>intRight) --a;
+                else if (Double.isFinite(intRight)) ++b;
+                else break;
+            }
+            return Range.closed(a,b);
+        }
+
         public Range<Integer> calculateFWHM(double threshold) {
             double intApex = peak.getIntensityAt(apex);
             double halveMaximum = intApex*threshold;

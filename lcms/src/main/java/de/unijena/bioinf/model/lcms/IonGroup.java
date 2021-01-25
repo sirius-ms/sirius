@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.model.lcms;
 
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.quality.Quality;
@@ -36,7 +37,8 @@ public class IonGroup {
     protected IonAnnotation ionAnnotation;
     protected int chargeState;
 
-
+    //////// here we can add adducts which cannot be correlated but are still there ///////
+    protected SimpleMutableSpectrum otherMzValues;
     //protected final ChromatographicPeak.Segment segment;
     // apex index of the segment
     protected int segmentApexIndex;
@@ -44,7 +46,14 @@ public class IonGroup {
     public IonGroup(MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, List<CorrelationGroup> isotopes) {
         this.peak = peak;
         this.isotopes = isotopes;
-        this.segmentApexIndex = segment.apex;
+        this.segment = segment;
+        this.otherMzValues = new SimpleMutableSpectrum();
+            this.segmentApexIndex = segment.apex;
+
+        }
+
+    public void assignIsotopePeaksWithoutCorrelation(SimpleSpectrum spec) {
+        this.isotopeSpectrum = spec;
     }
 
     public boolean chargeStateIsNotDifferent(IonGroup other) {
