@@ -147,6 +147,40 @@ public final class ParameterConfig {
         return config;
     }
 
+    public List<String> getConfigNames() {
+        return config.getConfigurationNameList();
+    }
+
+    public Configuration removeConfig(String name) {
+        return config.removeConfiguration(name);
+    }
+
+    public void updateConfig(ParameterConfig update) {
+        updateConfig(update.getLocalConfigName(), update.localConfig());
+    }
+    public void updateConfig(String name, Configuration update) {
+        setOnConfig(name, update, true);
+    }
+
+    public void addToConfig(ParameterConfig update) {
+        addToConfig(update.getLocalConfigName(), update.localConfig());
+    }
+
+    public void addToConfig(String name, Configuration update) {
+        setOnConfig(name, update, false);
+    }
+
+    private void setOnConfig(String name, Configuration update, final boolean overrideExistingKeys) {
+        if (!containsConfiguration(name))
+            throw new IllegalArgumentException("Update failed: Configuration with name '" + name + "' does not exist.");
+        final Configuration toUpdate = config.getConfiguration(name);
+        update.getKeys().forEachRemaining(k -> {
+            if (overrideExistingKeys || !toUpdate.containsKey(k))
+                toUpdate.setProperty(k, update.getProperty(k));
+        });
+    }
+
+
     public ImmutableConfiguration getClassConfigs() {
         return classesConfig;
     }
@@ -154,6 +188,7 @@ public final class ParameterConfig {
     public boolean isModifiable() {
         return localConfigName != null && !localConfigName.isEmpty();
     }
+
     private PropertiesConfiguration localConfig() {
         if (!isModifiable())
             throw new UnsupportedOperationException("This is an unmodifiable config. Please use newIndependentInstance(name) to create a modifiable child instance.");
