@@ -22,7 +22,6 @@ package de.unijena.bioinf.chemdb;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.sun.istack.Nullable;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -31,10 +30,15 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import gnu.trove.map.TObjectLongMap;
 import gnu.trove.map.hash.TObjectLongHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.zip.GZIPInputStream;
 
 public abstract class AbstractBlobBasedDatabase extends AbstractChemicalDatabase {
     protected final static String[] SUPPORTED_FORMATS = new String[]{".CSV", ".CSV.GZ", ".JSON", ".JSON.GZ"};
@@ -48,7 +52,7 @@ public abstract class AbstractBlobBasedDatabase extends AbstractChemicalDatabase
     protected boolean compressed = false;
 
 
-    public AbstractBlobBasedDatabase(FingerprintVersion version, String name) throws IOException {
+    public AbstractBlobBasedDatabase(FingerprintVersion version, String name) {
         this.name = name;
         this.version = version;
     }
@@ -59,16 +63,49 @@ public abstract class AbstractBlobBasedDatabase extends AbstractChemicalDatabase
 
     protected abstract void refresh() throws IOException;
 
-    @Nullable
-    public abstract Reader getReaderFor(MolecularFormula formula) throws IOException;
+
+    @NotNull
+    public Optional<Reader> getCompoundReader(@NotNull MolecularFormula formula) throws IOException {
+        return getReader(formula.toString());
+    }
+
+    @NotNull
+    public Optional<Reader> getReader(@NotNull String name) throws IOException {
+        return getStream(name).map(inputStream -> new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Returns stream for the requested filename and handles decompression if needed
+     *
+     * @param name resource name
+     * @return Stream of the resource
+     * @throws IOException if IO goes wrong
+     */
+    @NotNull
+    public Optional<InputStream> getStream(@NotNull String name) throws IOException {
+        Optional<InputStream> opt = getRawStream(name);
+        if (opt.isEmpty())
+            return Optional.empty();
+        return compressed ? Optional.of(new GZIPInputStream(opt.get())) : opt;
+    }
+
+    /**
+     * Returns stream for the filename without handling decompression
+     *
+     * @param name resource name
+     * @return Optional of Stream of the resource
+     */
+    @NotNull
+    public abstract Optional<InputStream> getRawStream(@NotNull String name) throws IOException;
 
 
     public boolean containsFormula(MolecularFormula formula) {
-        return ChemDBs.containsFormula(formulas,formula);
+        return ChemDBs.containsFormula(formulas, formula);
     }
 
     @Override
-    public List<FormulaCandidate> lookupMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
+    public List<FormulaCandidate> lookupMolecularFormulas(final double ionMass, Deviation
+            deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
 
         final double mass = ionType.precursorMassToNeutralMass(ionMass);
 
@@ -99,7 +136,8 @@ public abstract class AbstractBlobBasedDatabase extends AbstractChemicalDatabase
     @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         final ArrayList<CompoundCandidate> candidates = new ArrayList<>();
-        try (final Reader blobReader = getReaderFor(formula)) {
+
+        try (final Reader blobReader = getCompoundReader(formula).orElse(null)) {
             if (blobReader != null) {
                 try (final CloseableIterator<CompoundCandidate> iter = reader.readCompounds(blobReader)) {
                     iter.forEachRemaining(candidates::add);
@@ -119,7 +157,7 @@ public abstract class AbstractBlobBasedDatabase extends AbstractChemicalDatabase
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        try (final Reader blobReader = getReaderFor(formula)) {
+        try (final Reader blobReader = getCompoundReader(formula).orElse(null)) {
             if (blobReader != null) {
                 try (final CloseableIterator<FingerprintCandidate> iter = reader.readFingerprints(version, blobReader)) {
                     iter.forEachRemaining(fingerprintCandidates::add);

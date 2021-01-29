@@ -20,17 +20,19 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.sun.istack.Nullable;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.zip.GZIPInputStream;
+import java.util.Optional;
 
 /*
     A file based database consists of a directory of files (either .csv or .json), each file contains compounds from the
@@ -90,19 +92,14 @@ public class FilebasedDatabase extends AbstractBlobBasedDatabase {
     }
 
     @Override
-    @Nullable
-    public Reader getReaderFor(MolecularFormula formula) throws IOException {
-        File structureFile = getFileFor(formula);
-        if (structureFile == null || !structureFile.isFile())
-            return null;
-        if (compressed) {
-            return new InputStreamReader(new GZIPInputStream(new FileInputStream(structureFile)), StandardCharsets.UTF_8);
-        } else {
-            return Files.newBufferedReader(structureFile.toPath(), StandardCharsets.UTF_8);
-        }
+    public @NotNull Optional<InputStream> getRawStream(@NotNull String name) throws IOException {
+        Path structureFile = getFileFor(name);
+        if (!Files.isRegularFile(structureFile))
+            return Optional.empty();
+        return Optional.of(Files.newInputStream(structureFile));
     }
 
-    protected File getFileFor(MolecularFormula formula) {
-        return new File(dir, formula.toString() + format);
+    protected Path getFileFor(String name) {
+        return dir.toPath().resolve(name + format);
     }
 }
