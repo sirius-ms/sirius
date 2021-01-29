@@ -27,24 +27,25 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.StorageOptions;
-import com.sun.istack.NotNull;
-import com.sun.istack.Nullable;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.zip.GZIPInputStream;
 
 /*
     A file based database based on Google cloud storage consists of a directory of files (either .csv or .json), each file contains compounds from the
@@ -127,8 +128,9 @@ public class GoogleCloudStoreDatabase extends AbstractBlobBasedDatabase {
 
 //        System.out.println("start parsing after: " + ((double) (System.currentTimeMillis() - time)) / 1000d);
 
-        try (Reader r = getReaderFor("formulas")) {
-            final Map<String, String> map = new ObjectMapper().readValue(r, new TypeReference<Map<String, String>>() {});
+        try (Reader r = getReader("formulas").orElseThrow(() -> new IOException("Formula index not found!"))) {
+            final Map<String, String> map = new ObjectMapper().readValue(r, new TypeReference<Map<String, String>>() {
+            });
 //            System.out.println("stop parsing after: " + ((double) (System.currentTimeMillis() - time)) / 1000d);
 
             this.formulas = new MolecularFormula[map.size()];
@@ -148,21 +150,33 @@ public class GoogleCloudStoreDatabase extends AbstractBlobBasedDatabase {
         }
     }
 
+
+
     @Override
-    @Nullable
-    public Reader getReaderFor(@NotNull MolecularFormula formula) throws IOException {
-        return getReaderFor(formula.toString());
+    public @NotNull Optional<Reader> getReader(@NotNull String name) throws IOException {
+        if (compressed) {
+            return getStream(name).map(inputStream -> new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+        } else {
+            return getByteChannel(name).map(s -> Channels.newReader(s, StandardCharsets.UTF_8));
+        }
     }
 
-    private Reader getReaderFor(@NotNull String name) throws IOException {
+    /**
+     * Returns stream for the filename without handling decompression
+     *
+     * @param name resource name
+     * @return Optional of Stream of the resource
+     */
+    @Override
+    public @NotNull Optional<InputStream> getRawStream(@NotNull String name) {
+        return getByteChannel(name).map(Channels::newInputStream);
+    }
+
+    public Optional<ReadableByteChannel> getByteChannel(@NotNull String name) {
         Blob blob = bucket.get(name + format);
         if (blob == null || !blob.exists())
-            return null;
+            return Optional.empty();
 
-        if (compressed) {
-            return new InputStreamReader(new GZIPInputStream(Channels.newInputStream(blob.reader())), StandardCharsets.UTF_8);
-        } else {
-            return Channels.newReader(blob.reader(), StandardCharsets.UTF_8);
-        }
+        return Optional.of(blob.reader());
     }
 }
