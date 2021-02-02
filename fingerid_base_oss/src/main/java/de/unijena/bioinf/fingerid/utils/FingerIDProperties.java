@@ -55,22 +55,22 @@ public class FingerIDProperties {
     }
 
 
-    public static String gcsDBName() {
+    public static String gcsChemDBName() {
         return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gks.name");
     }
 
-    public static String gcsDBFlavor() {
+    public static String gcsChemDBFlavor() {
         return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gks.flavor", null, "default");
     }
 
-    public static String gcsBucketName() {
-        return gcsDBName() + "_" + databaseDate() + "_" + gcsDBFlavor();
+    public static String gcsChemDBBucketName() {
+        return gcsChemDBName() + "_" + databaseDate() + "_" + gcsChemDBFlavor();
     }
-    public static String gcsCredentials() {
+    public static String gcsChemDBCredentials() {
         return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gks.credentials");
     }
 
-    public static Path gcsCredentialsPath() {
-        return Path.of(System.getProperty("user.home")).resolve(gcsCredentials());
+    public static Path gcsChemDBCredentialsPath() {
+        return Path.of(System.getProperty("user.home")).resolve(gcsChemDBCredentials());
     }
 }
