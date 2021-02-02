@@ -51,24 +51,24 @@ import java.util.concurrent.atomic.AtomicInteger;
     A file based database based on Google cloud storage consists of a directory of files (either .csv or .json), each file contains compounds from the
     same molecular formula. The filenames consists of the molecular formula strings.
  */
-public class GoogleCloudStoreDatabase extends AbstractBlobBasedDatabase {
+public class GCSDatabase extends AbstractBlobBasedDatabase {
 
     private final Bucket bucket;
     protected Map<String, String> bucketLabels;
 
-    public GoogleCloudStoreDatabase() throws IOException {
-        this(FingerIDProperties.gcsBucketName());
+    public GCSDatabase() throws IOException {
+        this(FingerIDProperties.gcsChemDBBucketName());
     }
 
-    public GoogleCloudStoreDatabase(String bucketName) throws IOException {
+    public GCSDatabase(String bucketName) throws IOException {
         this(USE_EXTENDED_FINGERPRINTS ? CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getDefault(), bucketName);
     }
 
-    public GoogleCloudStoreDatabase(FingerprintVersion version, String bucketName) throws IOException {
+    public GCSDatabase(FingerprintVersion version, String bucketName) throws IOException {
         this(version, storageOptions().getService().get(bucketName));
     }
 
-    public GoogleCloudStoreDatabase(FingerprintVersion version, Bucket bucket) throws IOException {
+    public GCSDatabase(FingerprintVersion version, Bucket bucket) throws IOException {
         super(version, bucket.getName());
         this.bucket = bucket;
         refresh();
@@ -77,10 +77,10 @@ public class GoogleCloudStoreDatabase extends AbstractBlobBasedDatabase {
     private static StorageOptions storageOptions() {
         try {
             FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(
-                    ServiceAccountCredentials.fromStream(Files.newInputStream(FingerIDProperties.gcsCredentialsPath())));
+                    ServiceAccountCredentials.fromStream(Files.newInputStream(FingerIDProperties.gcsChemDBCredentialsPath())));
             return StorageOptions.newBuilder().setCredentials(credentialsProvider.getCredentials()).build();
         } catch (IOException e) {
-            throw new RuntimeException("Could not found google cloud credentials json at: " + FingerIDProperties.gcsCredentialsPath());
+            throw new RuntimeException("Could not found google cloud credentials json at: " + FingerIDProperties.gcsChemDBCredentialsPath());
         }
     }
 
