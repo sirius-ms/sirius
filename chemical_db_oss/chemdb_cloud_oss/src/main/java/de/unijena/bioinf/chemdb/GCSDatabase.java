@@ -87,7 +87,6 @@ public class GCSDatabase extends AbstractBlobBasedDatabase {
 
     @Override
     protected void refresh() throws IOException {
-
         if (!bucket.exists())
             throw new IOException("Database bucket seems to be not existent or you have not the correct permissions");
         bucketLabels = bucket.getLabels();
