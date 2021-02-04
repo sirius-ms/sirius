@@ -1,0 +1,3 @@
+dependencies {
+    compile 'com.google.cloud:google-cloud-storage:1.113.4'
+}
