@@ -52,6 +52,9 @@ include 'ml_utils'
 include ':rest_service_oss:rest_core_oss'
 include 'agents'
 
+include ':google-cloud-support'
+
+
 
 // 1. remove them for first sirius build (build reduced).
 // 2. build reduced csi fingerid project

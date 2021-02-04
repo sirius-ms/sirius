@@ -31,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.gc.GCSUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -65,23 +66,13 @@ public class GCSDatabase extends AbstractBlobBasedDatabase {
     }
 
     public GCSDatabase(FingerprintVersion version, String bucketName) throws IOException {
-        this(version, storageOptions().getService().get(bucketName));
+        this(version, GCSUtils.storageOptions(FingerIDProperties.gcsChemDBCredentialsPath()).getService().get(bucketName));
     }
 
     public GCSDatabase(FingerprintVersion version, Bucket bucket) throws IOException {
         super(version, bucket.getName());
         this.bucket = bucket;
         refresh();
-    }
-
-    private static StorageOptions storageOptions() {
-        try {
-            FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(
-                    ServiceAccountCredentials.fromStream(Files.newInputStream(FingerIDProperties.gcsChemDBCredentialsPath())));
-            return StorageOptions.newBuilder().setCredentials(credentialsProvider.getCredentials()).build();
-        } catch (IOException e) {
-            throw new RuntimeException("Could not found google cloud credentials json at: " + FingerIDProperties.gcsChemDBCredentialsPath());
-        }
     }
 
 
