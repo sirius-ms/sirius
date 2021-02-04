@@ -46,8 +46,6 @@ public class FilebasedDatabase extends AbstractBlobBasedDatabase {
         setDir(dir);
     }
 
-
-
     public File getDir() {
         return dir;
     }
