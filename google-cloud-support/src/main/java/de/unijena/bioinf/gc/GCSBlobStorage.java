@@ -24,11 +24,13 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.StorageException;
 import de.unijena.bioinf.ChemistryBase.data.BlobStorage;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -71,7 +73,7 @@ public class GCSBlobStorage implements BlobStorage {
     }
 
     @Override
-    public @Nullable InputStream getRaw(@NotNull Path path) throws IOException {
+    public @Nullable InputStream reader(@NotNull Path path) throws IOException {
         try {
             Blob blob = bucket.get(path.toString());
             if (blob == null || !blob.exists())
@@ -91,10 +93,11 @@ public class GCSBlobStorage implements BlobStorage {
         }
     }
 
+
     @Override
-    public void addRaw(@NotNull Path path, @NotNull InputStream finalizedStream) throws IOException {
-        try (finalizedStream) {
-            bucket.create(path.toString(), finalizedStream);
+    public OutputStream writer(Path relative) throws IOException {
+        try  {
+            return Channels.newOutputStream(bucket.create(relative.toString(), (byte[]) null).writer());
         } catch (StorageException e) {
             throw new IOException(e);
         }

@@ -42,6 +42,7 @@ package de.unijena.bioinf.ChemistryBase.data;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -60,17 +61,16 @@ public interface BlobStorage {
     boolean hasBlob(Path relative) throws IOException;
 
     /**
-     * Reads the given InputStream into the storage
+     * returns a writer for the given path
      * @param relative elative path from storage root
-     * @param finalizedStream bytes will be witten as they are without modification
      */
-    void addRaw(Path relative, InputStream finalizedStream) throws IOException;
+    OutputStream writer(Path relative) throws IOException;
 
     /**
      * Returns the raw unmodified byte stream from the store.
      * @param relative relative path from storage root
      * @return raw unmodified byte stream
      */
-    InputStream getRaw(Path relative) throws IOException;
+    InputStream reader(Path relative) throws IOException;
 
 }
