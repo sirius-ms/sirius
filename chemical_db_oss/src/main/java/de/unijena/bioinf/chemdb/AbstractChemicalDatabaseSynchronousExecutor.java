@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Created by Marcus Ludwig on 15.11.16.
  */
-public class AbstractChemicalDatabaseSynchronousExecutor extends AbstractChemicalDatabase implements Closeable {
+public class AbstractChemicalDatabaseSynchronousExecutor implements AbstractChemicalDatabase,  Closeable {
 
     AbstractChemicalDatabase[] databases;
     AtomicBoolean[] isRunning;

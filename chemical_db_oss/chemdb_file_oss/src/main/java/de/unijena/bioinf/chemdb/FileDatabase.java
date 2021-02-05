@@ -41,7 +41,7 @@ import java.util.zip.GZIPInputStream;
  * TODO: May be replacable by with {@link FilebasedDatabase}
  */
 @Deprecated
-public class FileDatabase extends AbstractChemicalDatabase {
+public class FileDatabase implements AbstractChemicalDatabase {
 
     private final HashMap<MolecularFormula, File> formulas;
     private final MolecularFormula[] formulasOrderedByMass;

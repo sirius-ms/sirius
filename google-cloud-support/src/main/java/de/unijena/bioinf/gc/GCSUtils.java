@@ -23,6 +23,7 @@ package de.unijena.bioinf.gc;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.StorageOptions;
 
 import java.io.IOException;
@@ -41,4 +42,11 @@ public class GCSUtils {
             throw new RuntimeException("Could not found google cloud credentials json at: " + credentials.toString());
         }
     }
+
+    public static boolean bucketExists(String name, Path credentials) {
+        final Bucket b = storageOptions(credentials).getService().get(name);
+        return b != null && b.exists();
+    }
+
+
 }

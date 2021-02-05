@@ -40,7 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 
-public abstract class AbstractBlobBasedDatabase extends AbstractChemicalDatabase {
+public abstract class AbstractBlobBasedDatabase implements AbstractChemicalDatabase {
     protected final static String[] SUPPORTED_FORMATS = new String[]{".CSV", ".CSV.GZ", ".JSON", ".JSON.GZ"};
 
     protected final String name;

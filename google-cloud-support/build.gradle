@@ -1,3 +1,4 @@
 dependencies {
+    compile project(':chemistry_base')
     compile 'com.google.cloud:google-cloud-storage:1.113.4'
 }

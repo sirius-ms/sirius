@@ -34,7 +34,7 @@ import java.util.List;
 // this class is just a workaround to prevent old api for the internal csi Fingerid tools and should not
 // be used for new code
 @Deprecated
-public class FilteredChemicalDB extends AbstractChemicalDatabase implements Cloneable {
+public class FilteredChemicalDB implements AbstractChemicalDatabase, Cloneable {
 
 
     private long filter = DataSource.ALL.flag();
