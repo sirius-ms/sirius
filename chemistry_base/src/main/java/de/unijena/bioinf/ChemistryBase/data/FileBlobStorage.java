@@ -48,7 +48,7 @@ public class FileBlobStorage implements BlobStorage {
 
 
     @Override
-    public @Nullable InputStream getRaw(@NotNull Path relative) throws IOException {
+    public @Nullable InputStream reader(@NotNull Path relative) throws IOException {
         Path blob = root.resolve(relative);
         if (!Files.isRegularFile(blob))
             return null;
@@ -61,12 +61,10 @@ public class FileBlobStorage implements BlobStorage {
     }
 
     @Override
-    public void addRaw(@NotNull Path path, @NotNull InputStream finalizedStream) throws IOException {
-        @NotNull Path target = root.resolve(path);
+    public OutputStream writer(Path relative) throws IOException {
+        @NotNull Path target = root.resolve(relative);
         Files.createDirectories(target.getParent());
-        try (OutputStream out = Files.newOutputStream(target)) {
-            finalizedStream.transferTo(out);
-        }
+        return Files.newOutputStream(target);
     }
 
 }
