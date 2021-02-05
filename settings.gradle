@@ -48,11 +48,12 @@ include ':chemical_db_oss:chemdb_utils_oss'
 include ':chemical_db_oss:chemdb_cloud_oss'
 
 include ':error_reporter_oss'
-include 'ml_utils'
+include ':ml_utils'
 include ':rest_service_oss:rest_core_oss'
-include 'agents'
+include ':agents'
 
 include ':google-cloud-support'
+include ':blob-storage'
 
 
 

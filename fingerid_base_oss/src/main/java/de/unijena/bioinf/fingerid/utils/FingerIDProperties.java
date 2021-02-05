@@ -56,18 +56,18 @@ public class FingerIDProperties {
 
 
     public static String gcsChemDBName() {
-        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gks.name");
+        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.name");
     }
 
     public static String gcsChemDBFlavor() {
-        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gks.flavor", null, "default");
+        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.flavor", null, "default");
     }
 
     public static String gcsChemDBBucketName() {
         return gcsChemDBName() + "_" + databaseDate() + "_" + gcsChemDBFlavor();
     }
     public static String gcsChemDBCredentials() {
-        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gks.credentials");
+        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.credentials");
     }
 
     public static Path gcsChemDBCredentialsPath() {

@@ -18,13 +18,13 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.gc;
+package de.unijena.bioinf.storage.blob.gcs;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.StorageException;
-import de.unijena.bioinf.ChemistryBase.data.BlobStorage;
-import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.gc.GCSUtils;
+import de.unijena.bioinf.storage.blob.BlobStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,6 +82,11 @@ public class GCSBlobStorage implements BlobStorage {
         } catch (StorageException e) {
             throw new IOException(e);
         }
+    }
+
+    @Override
+    public String getName() {
+        return bucket.getName();
     }
 
     @Override

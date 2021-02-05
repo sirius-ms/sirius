@@ -28,40 +28,69 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.CloseableIterator;
+import de.unijena.bioinf.storage.blob.AbstractCompressible;
+import de.unijena.bioinf.storage.blob.BlobStorage;
+import de.unijena.bioinf.storage.blob.Compressible;
 import gnu.trove.map.TObjectLongMap;
 import gnu.trove.map.hash.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
-import java.util.zip.GZIPInputStream;
 
-public abstract class AbstractBlobBasedDatabase implements AbstractChemicalDatabase {
-    protected final static String[] SUPPORTED_FORMATS = new String[]{".CSV", ".CSV.GZ", ".JSON", ".JSON.GZ"};
+public abstract class ChemicalBlobDatabase<Storage extends BlobStorage> extends AbstractCompressible implements AbstractChemicalDatabase {
+enum Format {
+    CSV(".csv"), JSON(".json");
+    public final String ext;
 
-    protected final String name;
-    protected String format; // csv or json or csv.gz or json.gz
+    Format(@NotNull String ext) {
+        this.ext = ext;
+    }
+
+    public String ext() {
+        return ext;
+    }
+
+    public static @Nullable Format fromPath(@NotNull Path p){
+        return fromName(p.toString());
+    }
+    public static @Nullable Format fromName(@NotNull String s){
+        s = s.toLowerCase();
+        if (s.endsWith(CSV.ext()))
+            return CSV;
+        if (s.endsWith(JSON.ext()))
+            return JSON;
+        return null;
+    }
+}
+
+    protected final Storage storage;
+    protected Format format; // csv or json
     protected CompoundReader reader;
     protected MolecularFormula[] formulas;
     protected final TObjectLongMap<MolecularFormula> formulaFlags = new TObjectLongHashMap<>();
     protected FingerprintVersion version;
-    protected boolean compressed = false;
 
 
-    public AbstractBlobBasedDatabase(FingerprintVersion version, String name) {
-        this.name = name;
+    public ChemicalBlobDatabase(FingerprintVersion version, Storage storage) throws IOException {
+        super(Compression.NONE);
+        this.storage = storage;
         this.version = version;
+        setDecompressStreams(true);
+        init();
     }
 
     public String getName() {
-        return name;
+        return storage.getName();
     }
 
-    protected abstract void refresh() throws IOException;
+
+    protected abstract void init() throws IOException;
 
 
     @NotNull
@@ -71,7 +100,7 @@ public abstract class AbstractBlobBasedDatabase implements AbstractChemicalDatab
 
     @NotNull
     public Optional<Reader> getReader(@NotNull String name) throws IOException {
-        return getStream(name).map(inputStream -> new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+        return getStream(name).map(inputStream -> new InputStreamReader(inputStream, storage.getCharset()));
     }
 
     /**
@@ -83,10 +112,7 @@ public abstract class AbstractBlobBasedDatabase implements AbstractChemicalDatab
      */
     @NotNull
     public Optional<InputStream> getStream(@NotNull String name) throws IOException {
-        Optional<InputStream> opt = getRawStream(name);
-        if (opt.isEmpty())
-            return Optional.empty();
-        return compressed ? Optional.of(new GZIPInputStream(opt.get())) : opt;
+        return Compressible.decompressRawStream(storage.reader(Path.of(name + format.ext() + getCompression().ext())), getCompression(), isDecompressStreams());
     }
 
     /**
@@ -96,7 +122,9 @@ public abstract class AbstractBlobBasedDatabase implements AbstractChemicalDatab
      * @return Optional of Stream of the resource
      */
     @NotNull
-    public abstract Optional<InputStream> getRawStream(@NotNull String name) throws IOException;
+    public Optional<InputStream> getRawStream(@NotNull String name) throws IOException{
+        return Optional.ofNullable(storage.reader(Path.of(name + format.ext() + getCompression().ext())));
+    }
 
 
     public boolean containsFormula(MolecularFormula formula) {

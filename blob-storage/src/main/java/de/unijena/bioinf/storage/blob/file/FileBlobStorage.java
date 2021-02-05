@@ -18,9 +18,12 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ChemistryBase.data;
+
+package de.unijena.bioinf.storage.blob.file;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.storage.blob.BlobStorage;
+import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +49,9 @@ public class FileBlobStorage implements BlobStorage {
         this.root = root;
     }
 
+    public Path getRoot() {
+        return root;
+    }
 
     @Override
     public @Nullable InputStream reader(@NotNull Path relative) throws IOException {
@@ -53,6 +59,11 @@ public class FileBlobStorage implements BlobStorage {
         if (!Files.isRegularFile(blob))
             return null;
         return Files.newInputStream(blob);
+    }
+
+    @Override
+    public String getName() {
+        return root.getFileName().toString();
     }
 
     @Override
