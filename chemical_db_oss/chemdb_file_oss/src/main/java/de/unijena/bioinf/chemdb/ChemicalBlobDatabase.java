@@ -44,7 +44,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public abstract class ChemicalBlobDatabase<Storage extends BlobStorage> extends AbstractCompressible implements AbstractChemicalDatabase {
-enum Format {
+public enum Format {
     CSV(".csv"), JSON(".json");
     public final String ext;
 
@@ -267,5 +267,4 @@ enum Format {
     public void close() throws IOException {
 
     }
-
 }
