@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /*
@@ -61,9 +62,11 @@ public class ChemicalGCSDatabase extends ChemicalBlobDatabase<GCSBlobStorage> {
 
     @Override
     protected void init() throws IOException {
-        format = storage.getLabel("chemdb-format").map(String::toUpperCase).map(Format::valueOf)
+        Map<String, String> labels = storage.getBucket().getLabels();
+
+        format = Optional.ofNullable(labels.get("chemdb-format")).map(String::toUpperCase).map(Format::valueOf)
                 .orElseThrow(() -> new IOException("Could not determine database file format."));
-        compression = storage.getLabel("chemdb-compression").map(String::toUpperCase).map(Compression::valueOf)
+        compression = Optional.ofNullable(labels.get("chemdb-compression")).map(String::toUpperCase).map(Compression::valueOf)
                 .orElseGet(() -> {
                     LoggerFactory.getLogger(getClass()).warn("Could not determine compressions type. Assuming uncompressed data!");
                     return Compression.NONE;

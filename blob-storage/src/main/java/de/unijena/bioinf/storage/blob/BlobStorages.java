@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
 public class BlobStorages {
 
@@ -58,36 +56,24 @@ public class BlobStorages {
         throw new IllegalArgumentException("Unsupported Model storage location");
     }
 
-    public static BlobStorage createDefault(@NotNull String path, Path credentials) throws IOException {
-        return createDefault(path, Compressible.Compression.GZIP, credentials);
-    }
 
-    public static BlobStorage createDefault(@NotNull String path, @NotNull Compressible.Compression compression, Path credentials) throws IOException {
+    public static BlobStorage createDefault(@NotNull String path, Path credentials) throws IOException {
         if (!path.isBlank()) {
             if (path.startsWith(GCSUtils.URL_PREFIX))
-                return createDefaultGCS(path.substring(5).split("/")[0], compression, credentials);
+                return createDefaultGCS(path.substring(5).split("/")[0], credentials);
             return createDefaultFileStore(path);
         }
         throw new IOException("Unsupported Model storage location `" + path + "`.");
     }
 
-    public static BlobStorage createDefaultGCS(@NotNull String name, @NotNull Compressible.Compression compression, Path credentials) throws IOException {
-        return createDefaultGCS(name, null, compression, credentials);
-    }
 
-    public static BlobStorage createDefaultGCS(@NotNull String name, @Nullable String flavor, @NotNull Compressible.Compression compression, Path credentials)
+    public static BlobStorage createDefaultGCS(@NotNull String name, Path credentials)
             throws IOException {
         try {
-            final Map<String, String> labels = new HashMap<>();
-            labels.put("modelstore-name", name);
-            if (flavor != null)
-                labels.put("modelstore-flavor", flavor);
-            labels.put("modelstore-compression", compression.name().toLowerCase());
             StorageOptions opts = GCSUtils.storageOptions(credentials);
             Bucket b = opts.getService().create(BucketInfo.newBuilder(name)
                     .setStorageClass(StorageClass.STANDARD)
                     .setLocation("EU")
-                    .setLabels(labels)
                     .build());
             return new GCSBlobStorage(b);
         } catch (StorageException e) {

@@ -33,15 +33,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.util.function.Consumer;
 
 public class GCSBlobStorage implements BlobStorage {
 
     // Init
-    private final Bucket bucket;
-    protected Map<String, String> bucketLabels;
+    private Bucket bucket;
 
 
     public GCSBlobStorage(String bucketName, Path credentials) {
@@ -56,12 +53,16 @@ public class GCSBlobStorage implements BlobStorage {
     private void init() {
         if (!bucket.exists())
             throw new IllegalArgumentException("Database bucket seems to be not existent or you have not the correct permissions");
-        bucketLabels = Collections.unmodifiableMap(bucket.getLabels());
     }
 
+    public Bucket getBucket() {
+        return bucket;
+    }
 
-    public Optional<String> getLabel(String key){
-        return Optional.ofNullable(bucketLabels.get(key));
+    public void updateBucket(Consumer<Bucket.Builder> update) {
+        final Bucket.Builder b = bucket.toBuilder();
+        update.accept(b);
+        bucket = b.build().update();
     }
 
     //API
