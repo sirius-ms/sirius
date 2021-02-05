@@ -23,5 +23,5 @@ dependencies {
     compile project(':chemical_db_oss')
     compile project(':chemical_db_oss:chemdb_file_oss')
     // google client api
-    compile project(':google-cloud-support')
+    compile project(':blob-storage')
 }
