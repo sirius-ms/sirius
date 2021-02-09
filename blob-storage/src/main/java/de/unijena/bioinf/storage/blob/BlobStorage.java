@@ -20,6 +20,9 @@
 
 package de.unijena.bioinf.storage.blob;
 
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,7 +34,12 @@ import java.nio.file.Path;
  * Super simple object reading/writing API
  */
 
-public interface BlobStorage {
+public interface BlobStorage extends Closeable, AutoCloseable {
+
+    @Override
+    default void close() throws IOException {
+
+    }
 
     default Charset getCharset() {
         return StandardCharsets.UTF_8;
@@ -43,12 +51,17 @@ public interface BlobStorage {
 
     /**
      * returns a writer for the given path
-     * @param relative elative path from storage root
+     *
+     * @param relative   relative path from storage root
+     * @param withStream consume OutputStream to write data
      */
-    OutputStream writer(Path relative) throws IOException;
+
+    void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException;
+
 
     /**
      * Returns the raw unmodified byte stream from the store.
+     *
      * @param relative relative path from storage root
      * @return raw unmodified byte stream
      */
