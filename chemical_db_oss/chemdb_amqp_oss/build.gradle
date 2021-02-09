@@ -1,0 +1,5 @@
+
+dependencies {
+    compile project(':chemical_db_oss')
+    compile project(':chemical_db_oss:chemdb_file_oss')
+}
