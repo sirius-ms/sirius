@@ -26,6 +26,8 @@ import de.unijena.bioinf.fingerid.connection_pooling.ConnectionPool;
 import de.unijena.bioinf.fingerid.connection_pooling.PooledConnection;
 import de.unijena.bioinf.rabbitmq.RabbitMqConnector;
 import de.unijena.bioinf.storage.blob.BlobStorage;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -33,18 +35,25 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * Implementation of the SIRIUS BlobStorage Client API based on the AMQP protocol using RabbitMQ
+ * Can e.g. be used to communicate wit the Backend Data-Service
+ */
 public class RabbitMqBlobStorage implements BlobStorage {
     enum ResourceRequest{
         EXISTS, GET, SET, DELETE
     }
+
     protected final ConnectionPool<Channel> channelPool;
     protected final String routingKey;
     protected final String exchange;
 
 
-    public RabbitMqBlobStorage(ConnectionFactory client, String routingKey, String exchange) {
+    public RabbitMqBlobStorage(@NotNull ConnectionFactory client, @NotNull String routingKey, @Nullable String exchange) {
+        if (routingKey.isBlank())
+            throw new IllegalArgumentException("RabbitMQ routing key cannot be empty");
         this.routingKey = routingKey;
-        this.exchange = exchange;
+        this.exchange = exchange == null || exchange.isBlank() ? "" : exchange;
         final RabbitMqConnector connector = new RabbitMqConnector(client);
         connector.addExchange(this.exchange, "direct"); //all channels will have this exchange
         this.channelPool = new ConnectionPool<>(connector);
@@ -58,31 +67,45 @@ public class RabbitMqBlobStorage implements BlobStorage {
 
     @Override
     public boolean hasBlob(Path relative) throws IOException {
-        return false;
+        RpcClient.Response resp = rpcRequest(relative, ResourceRequest.EXISTS);
+        if (resp.getProperties().getBodySize() == 0)
+            throw new IOException("Error during RPC call: 'EMPTY Response body!'");
+
+        return Boolean.parseBoolean(new String(resp.getBody(), Charset.forName(resp.getProperties().getContentEncoding())));
+    }
+
+    protected RpcClient.Response rpcRequest(@NotNull Path relative, @NotNull ResourceRequest requestType) throws IOException {
+        return rpcRequest(relative, requestType, null);
+    }
+
+    protected RpcClient.Response rpcRequest(@NotNull Path relative, @NotNull ResourceRequest requestType, byte[] message) throws IOException {
+        try (PooledConnection<Channel> c = channelPool.orderConnection()) {
+            String callbackQueueName = c.connection.queueDeclare().getQueue();
+            AMQP.BasicProperties props = new AMQP.BasicProperties.Builder().contentEncoding(getCharset().name())
+                    .replyTo(callbackQueueName).headers(Map.of("path", relative, "request", requestType)).build();
+
+            RpcClient rpcClient = new RpcClient(new RpcClientParams().channel(c.connection).replyTo(callbackQueueName).exchange(exchange).routingKey(routingKey));
+
+            return rpcClient.doCall(props, message != null ? message : new byte[]{});
+        } catch (InterruptedException | TimeoutException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             withStream.accept(out);
-            try (PooledConnection<Channel> c = channelPool.orderConnection()){
-                String callbackQueueName = c.connection.queueDeclare().getQueue();
-                AMQP.BasicProperties props = new AMQP.BasicProperties.Builder().contentEncoding(getCharset().name())
-                        .replyTo(callbackQueueName).headers(Map.of("path", relative, "request", ResourceRequest.SET)).build();
-
-                RpcClient rpcClient = new RpcClient(new RpcClientParams().channel(c.connection).replyTo(callbackQueueName).exchange(exchange).routingKey(routingKey));
-                RpcClient.Response resp = rpcClient.doCall(props, out.toByteArray());
-                if (resp.getProperties().getBodySize() != 0)
-                    throw new IOException("Error duting RPC call: \n" + new String(resp.getBody(), Charset.forName(resp.getProperties().getContentEncoding())));
-            } catch (InterruptedException | TimeoutException e) {
-                throw  new IOException(e);
-            }
+            final RpcClient.Response resp = rpcRequest(relative, ResourceRequest.SET, out.toByteArray());
+            if (resp.getProperties().getBodySize() != 0)
+                throw new IOException("Error during RPC call: \n" + new String(resp.getBody(), Charset.forName(resp.getProperties().getContentEncoding())));
         }
     }
 
     @Override
     public InputStream reader(Path relative) throws IOException {
-        return null;
+        RpcClient.Response resp = rpcRequest(relative, ResourceRequest.GET);
+        return new ByteArrayInputStream(resp.getBody());
     }
 
     @Override
