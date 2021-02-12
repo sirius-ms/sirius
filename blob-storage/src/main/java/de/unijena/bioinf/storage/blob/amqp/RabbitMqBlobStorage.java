@@ -24,7 +24,7 @@ import com.rabbitmq.client.*;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.connection_pooling.ConnectionPool;
 import de.unijena.bioinf.fingerid.connection_pooling.PooledConnection;
-import de.unijena.bioinf.rabbitmq.RabbitMqConnector;
+import de.unijena.bioinf.rabbitmq.RabbitMqChannelPool;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ import java.util.concurrent.TimeoutException;
  * Can e.g. be used to communicate wit the Backend Data-Service
  */
 public class RabbitMqBlobStorage implements BlobStorage {
-    enum ResourceRequest{
+    enum ResourceRequest {
         EXISTS, GET, SET, DELETE
     }
 
@@ -48,15 +48,19 @@ public class RabbitMqBlobStorage implements BlobStorage {
     protected final String routingKey;
     protected final String exchange;
 
-
     public RabbitMqBlobStorage(@NotNull ConnectionFactory client, @NotNull String routingKey, @Nullable String exchange) {
+        this(new RabbitMqChannelPool(client), routingKey, exchange == null || exchange.isBlank() ? "" : exchange);
+    }
+
+    public RabbitMqBlobStorage(@NotNull RabbitMqChannelPool channelPool, @NotNull String routingKey, @NotNull String exchange) {
         if (routingKey.isBlank())
             throw new IllegalArgumentException("RabbitMQ routing key cannot be empty");
         this.routingKey = routingKey;
-        this.exchange = exchange == null || exchange.isBlank() ? "" : exchange;
-        final RabbitMqConnector connector = new RabbitMqConnector(client);
-        connector.addExchange(this.exchange, "direct"); //all channels will have this exchange
-        this.channelPool = new ConnectionPool<>(connector);
+        this.exchange = exchange;
+        this.channelPool = channelPool;
+        //add exchanges and queues to connector to ensure that they will be available when a channel is requested
+        channelPool.putExchange(this.exchange, BuiltinExchangeType.DIRECT); //all channels will have this exchange
+        channelPool.addBinding(routingKey, exchange, routingKey); // queue named like the routing key since we have a direct exchange anyways
     }
 
 
@@ -85,7 +89,6 @@ public class RabbitMqBlobStorage implements BlobStorage {
                     .replyTo(callbackQueueName).headers(Map.of("path", relative, "request", requestType)).build();
 
             RpcClient rpcClient = new RpcClient(new RpcClientParams().channel(c.connection).replyTo(callbackQueueName).exchange(exchange).routingKey(routingKey));
-
             return rpcClient.doCall(props, message != null ? message : new byte[]{});
         } catch (InterruptedException | TimeoutException e) {
             throw new IOException(e);

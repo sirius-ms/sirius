@@ -20,49 +20,62 @@
 
 package de.unijena.bioinf.rabbitmq;
 
+import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.connection_pooling.ConnectionPool;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 /**
  * Holds a single connection and Pools channels of this connection.
- * It also maintains connection restoring and based on that channel restoring
+ * It also maintains connection restoring, and based on that, channel restoring
  */
 public class RabbitMqConnector implements ConnectionPool.Connector<Channel> {
     private final ConnectionFactory factory;
-    private final Map<String,String> exchanges;
+
+    private Connection connection = null;
 
     public RabbitMqConnector(ConnectionFactory factory) {
         this.factory = factory;
-        this.exchanges = new ConcurrentHashMap<>();
+        this.factory.setAutomaticRecoveryEnabled(true); //todo check if this recovery is reliable
+        this.factory.setTopologyRecoveryEnabled(true);
+        this.factory.setRequestedHeartbeat(15);
     }
 
-    //todo fill me
     @Override
     public Channel open() throws IOException {
-        return null;
+        if (connection == null) {
+            try {
+                connection = factory.newConnection();
+            } catch (TimeoutException e) {
+                throw new IOException(e);
+            }
+        }
+        return connection.createChannel();
     }
 
     @Override
-    public void close(Channel connection) throws IOException {
-
+    public void close(Channel channel) throws IOException {
+        try {
+            channel.close();
+        } catch (TimeoutException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public boolean isValid(Channel connection) {
-        return false;
+        return connection.isOpen();
     }
 
-    public String addExchange(String key, String value) {
-        return exchanges.put(key, value);
-    }
 
-    public String removeExchange(String key) {
-        return exchanges.remove(key);
-    }
 }
