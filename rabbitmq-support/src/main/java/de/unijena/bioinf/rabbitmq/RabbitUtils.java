@@ -44,13 +44,13 @@ public class RabbitUtils {
     public static void ensureBaseInfrastructure(Channel channel) throws IOException {
         //Alternative queue to manage clients
         channel.exchangeDeclare(REGISTER_CLIENT_EX, BuiltinExchangeType.FANOUT, true, false, true, null);
-        channel.queueDeclare(REGISTER_CLIENT_EX + ".q", true, false, false, null);
-        channel.queueBind(REGISTER_CLIENT_EX + ".q", REGISTER_CLIENT_EX, "");
+        channel.queueDeclare(REGISTER_CLIENT_EX, true, false, false, null);
+        channel.queueBind(REGISTER_CLIENT_EX, REGISTER_CLIENT_EX, "");
 
         //dead letter queue for dead job messages
         channel.exchangeDeclare(DEAD_JOB_EX, BuiltinExchangeType.FANOUT, true, false, true, null);
-        channel.queueDeclare(DEAD_JOB_EX + ".q", true, false, false, null);
-        channel.queueBind(DEAD_JOB_EX + ".q", DEAD_JOB_EX, "");
+        channel.queueDeclare(DEAD_JOB_EX, true, false, false, null);
+        channel.queueBind(DEAD_JOB_EX, DEAD_JOB_EX, "");
 
         channel.exchangeDeclare(WORKER_EX, BuiltinExchangeType.TOPIC, true, false, false, null);
 
