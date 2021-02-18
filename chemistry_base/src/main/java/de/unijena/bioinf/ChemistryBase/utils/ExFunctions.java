@@ -2,7 +2,7 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
@@ -15,44 +15,33 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
 package de.unijena.bioinf.ChemistryBase.utils;
 
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
-import java.io.IOException;
 import java.util.Optional;
 
-public abstract class IOFunctions {
-
-    public interface IOCallable<T> {
-        T call() throws IOException;
+public abstract class ExFunctions {
+    public interface Runnable {
+        void run() throws Exception;
     }
 
-    public interface IORunnable {
-        void run() throws IOException;
+    public interface Function<A,B> {
+        B apply(A a) throws Exception;
     }
 
-    public interface IOFunction<A,B> {
-        B apply(A a) throws IOException;
-    }
-
-    public interface IOConsumer<A> {
-        void accept(A a) throws IOException;
-    }
-
-    public interface IOSupplier<A> {
-        A get() throws IOException;
+    public interface Consumer<A> {
+        void accept(A a) throws Exception;
     }
 
     public interface ClassValueProducer {
-        <T extends DataAnnotation> Optional<T> apply(Class<T> klass) throws IOException;
+        <T extends DataAnnotation> Optional<T> apply(Class<T> klass) throws Exception;
     }
 
     public interface ClassValueConsumer {
-        <T extends DataAnnotation> void apply(Class<T> klass, T value) throws IOException;
+        <T extends DataAnnotation> void apply(Class<T> klass, T value) throws Exception;
     }
-
 }
