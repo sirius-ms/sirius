@@ -1,4 +1,4 @@
 
 dependencies {
-    compile project(':rest_service_oss:rest_core_oss') //maybe split du remove rest stuff
+    compile project(':rest_service_oss:rest_core_oss') //maybe split to remove rest stuff
 }
