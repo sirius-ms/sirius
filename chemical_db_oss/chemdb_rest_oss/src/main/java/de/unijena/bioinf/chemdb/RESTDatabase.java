@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-public class RESTDatabase extends AbstractChemicalDatabase {
+public class RESTDatabase implements AbstractChemicalDatabase {
     static {
         FingerIDProperties.fingeridVersion();
     }
