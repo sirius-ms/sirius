@@ -126,8 +126,6 @@ public class SpectraVisualizationPanel
 		if (mode == null)
 			return;
 		String jsonSpectra = null;
-		String jsonHighlight = null; // TEST CODE
-		String strSVG = null; // TEST CODE
 		SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
 
 		if (mode.contains(MS1_DISPLAY)) {
@@ -175,6 +173,8 @@ public class SpectraVisualizationPanel
 			if (insilicoResult!=null) {
 				json = insilicoResult.getJson();
 				svg = insilicoResult.getSvg();
+				debugWriteSpectra(json, "/tmp/test_highlight.json");
+				debugWriteSpectra(svg, "/tmp/test_svg.xml");
 			}
 			browser.loadData(jsonSpectra, json, svg);
 		}
