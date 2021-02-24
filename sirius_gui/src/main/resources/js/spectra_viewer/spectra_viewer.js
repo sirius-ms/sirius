@@ -420,7 +420,7 @@ function spectrumPlot(spectrum, structureView) {
     svg.selectAll(".label").attr("opacity", 1);
     // brushing
     function updateChart() {
-        extent = d3.event.selection
+        let extent = d3.event.selection
         if(!extent){
             if (!idleTimeout) return idleTimeout = setTimeout(idled, 350);
             x.domain([min, max])
@@ -586,7 +586,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
         .attr("transform", "rotate(-90)");
     // brushing
     function updateChart() {
-        extent = d3.event.selection
+        let extent = d3.event.selection
         if(!extent){
             if (!idleTimeout) return idleTimeout = setTimeout(idled, 350);
             x.domain([min, max])
