@@ -10,7 +10,7 @@ decimal_place = 4,
 strucArea, annoArea, ms2Size,
 selected = {leftClick: null, hover: null},
 svg_str = null, basic_structure = null,
-anno_str = [], highlights = [],
+anno_str = [], highlights = {},
 // Mirror Plot
 view = {mirror: "normal"}; // alternativ: "simple"
 
@@ -60,7 +60,7 @@ function clear() {
     svg_str = null;
     basic_structure = null;
     anno_str = [];
-    highlights = [];
+    highlights = {};
 };
 
 function firstNChar(str, num) { return (str.length > num) ? str.slice(0, num) : str; };
@@ -75,7 +75,7 @@ function showStructure(i) {
         strucArea.selectAll(".bond").classed("highlight_bond", true);
         strucArea.selectAll(".atom").classed("highlight_atom", true);
         basic_structure.style("opacity", 1);
-    } else if (highlights[i] !== null) {
+    } else if (i in highlights) {
         strucArea.html("");
         document.getElementById('str_border').innerHTML = svg_str;
         basic_structure = strucArea.select('svg')
@@ -151,12 +151,10 @@ function annotation(d) {
             anno = anno + "<br>Mass deviation: " + sign + (d.massDeviationMz*1000).toFixed(decimal_place) + " mDa<br>" +
                    "&nbsp;".repeat(25) + "(" + sign + d.massDeviationPpm.toFixed(decimal_place) + " ppm)";
         }
-        
         if ("structureInformation" in d) {
             const score = d.structureInformation.score;
             anno = anno + "<br>Fragmenter Score: " + score.toFixed(2);
         }
-        
     } else {
         anno = "m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place);
     }
@@ -172,23 +170,19 @@ function sortByKey(array, key){
     });
 };
 
-function loadHighlights(mzs) {
-    if (highlights.length === 0) {
-        for (var i = 0; i<ms2Size; i++) {
-            highlights.push(null);
+function loadHighlights(spectrum) {
+    const tmp_peaks = spectrum.peaks;
+    let formulasInSpec = {};
+    for (let i in tmp_peaks) {
+        if ("formula" in tmp_peaks[i]) {
+            const formula = tmp_peaks[i].formula.split(" ")[0];
+            formulasInSpec[formula] = i; 
         }
     }
-    let sorted_anno = sortByKey(anno_str, 'peakmass');
-    var k = 0;
-    for (let i in mzs) {
-        for (var j = k; j<sorted_anno.length; j++) {
-            if (mzs[i] === sorted_anno[k].peakmass) {
-                highlights[i] = sorted_anno[k];
-                k = j+1;
-                break;
-            } else if (mzs[i] > sorted_anno[k].peakmass) {
-                k = j;
-            }
+    for (let struct of anno_str) {
+        const formula = struct.formula;
+        if (formula in formulasInSpec) {
+            highlights[formulasInSpec[formula]] = struct;
         }
     }
     anno_str = [];
@@ -370,34 +364,35 @@ function initStructureView() {
 /*
     I think this is a bit cleaner and safer than loadHighlights
 */
-function injectStructureInformation(spectrum) {
-    const structure = anno_str; // this should not be a global variable
-    const formula2nodes = {};
-    for (let peak of spectrum.peaks) {
-        let formula = peak.formula;
-        if (formula) {
-            formula = formula.split(" ")[0];
-            if (!formula2nodes[formula]) formula2nodes[formula]=[];
-            formula2nodes[formula].push(peak);
-        }
-    }
-    for (let struct of structure) {
-        const formula = struct.formula;
-        if (formula2nodes[formula]) {
-            for (let node of formula2nodes[formula]) {
-                node.structureInformation = struct;
-            }
-        }
-    }
-}
+// function injectStructureInformation(spectrum) {
+//     const structure = anno_str; // this should not be a global variable
+//     const formula2nodes = {};
+//     for (let peak of spectrum.peaks) {
+//         let formula = peak.formula;
+//         if (formula) {
+//             formula = formula.split(" ")[0];
+//             if (!formula2nodes[formula]) formula2nodes[formula]=[];
+//             formula2nodes[formula].push(peak);
+//         }
+//     }
+//     for (let struct of structure) {
+//         const formula = struct.formula;
+//         if (formula2nodes[formula]) {
+//             for (let node of formula2nodes[formula]) {
+//                 node.structureInformation = struct;
+//             }
+//         }
+//     }
+//     console.log(formula2nodes);
+// }
 
 function spectrumPlot(spectrum, structureView) {
     let mzs = spectrum.peaks.map(d => d.mz);
     ms2Size = mzs.length;
     if (structureView) {
         initStructureView();
-        injectStructureInformation(spectrum);
-        loadHighlights(mzs); // todo: remove this, use injectStructureInformation instead
+        // injectStructureInformation(spectrum);
+        loadHighlights(spectrum);
     }
     let min = d3.min(mzs)-1;
     let max = d3.max(mzs)+1;
@@ -473,8 +468,6 @@ function spectrumPlot(spectrum, structureView) {
                 }
             });
             */
-
-
             svg.on("mousemove", mouseMovingFunction(spectrum, TOLERANCE, x,y,function(i) {
                 const selection = d3.select("#peak"+i);
                 const node = selection.node();
@@ -647,7 +640,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
 function spectraViewer(json){
     init();
     if (json.spectra[1] == null) { // 1. mode
-        if (json.spectra[0].name.includes("MS1") || ((anno_str.length === 0 || highlights.length === 0 ) && svg_str === null)) {
+        if (json.spectra[0].name.includes("MS1") || ((anno_str.length === 0 || Object.keys(highlights).length === 0 ) && svg_str === null)) {
             // 1.1 Mode: MS1, MS2 without structureViewer
             spectrumPlot(json.spectra[0], false);
         } else { // 1.2 Mode: MS2 + StructureViewer
@@ -668,9 +661,9 @@ function loadJSONData(data_spectra, data_highlight, data_svg) {
         x_tmp = {min: null, max: null};
         selected = {leftClick: null, hover: null};
         basic_structure = null;
-        highlights = [];
+        highlights = {};
     }
-    anno_str = [];
+    // anno_str = [];
     if (data_highlight !== null && data_svg !== null) {
         if ((typeof data_highlight) == "string") {
             anno_str = JSON.parse(data_highlight);
