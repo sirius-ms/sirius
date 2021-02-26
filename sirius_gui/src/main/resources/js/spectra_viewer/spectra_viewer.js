@@ -60,7 +60,6 @@ function clear() {
     svg_str = null;
     basic_structure = null;
     anno_str = [];
-    //highlights = {};
 };
 
 function firstNChar(str, num) { return (str.length > num) ? str.slice(0, num) : str; };
@@ -231,40 +230,24 @@ var mousemoveMS1 = function(d, i) {
     }
 };
 
-var mousemoveMS2 = function(d, i) {
-    let tmp = d3.select(this);
-    if (!tmp.classed("peak_select")) {
-        let event = window.event;
-        tooltip.html(annotation(d));
-        translateHover(event.clientX, event.clientY);
-        if (selected.hover !== i) {
-            d3.select("#peak"+selected.hover).attr("class", resetColor);
-            selected.hover = i;
-        }
-    }
-};
-
 var mousedown = function(d, i) {
-    if (d3.event.button === 0) {
-        let tmp = d3.select(this);
-        if (selected.leftClick !== null && tmp.classed("peak_select")) { // cancel the selection
-            selected.leftClick = null;
-            tmp.attr("class", resetColor);
-            document.getElementById("anno_leftClick").innerText = "Left click to choose a peak...";
-            annoArea.attr("id", "nothing");
-            if (basic_structure !== null) basic_structure.style("opacity", 0);
-        } else { // create a new selection
-            if (selected.leftClick !== null && !tmp.classed("peak_select")) { //cancel the last selection
-                d3.select("#peak"+selected.leftClick).attr("class", resetColor);
-            }
-            selected.leftClick = i;
-            tmp.attr("class", "peak_select peak");
-            annoArea.attr("id", "anno_leftClick");
-            document.getElementById("anno_leftClick").innerText = annotation(d, selected.leftClick).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
-            showStructure(i);
-            selected.hover = null;
-            hideHover();
+    let tmp = d3.select("#peak"+i);
+    if (selected.leftClick !== null && tmp.classed("peak_select")) { // cancel the selection
+        selected.leftClick = null;
+        tmp.classed("peak_select", false);
+        document.getElementById("anno_leftClick").innerText = "Left click to choose a peak...";
+        annoArea.attr("id", "nothing");
+        if (basic_structure !== null) basic_structure.style("opacity", 0);
+    } else { // create a new selection
+        if (selected.leftClick !== null && !tmp.classed("peak_select")) { //cancel the last selection
+            d3.select("#peak"+selected.leftClick).attr("class", resetColor);
         }
+        selected.leftClick = i;
+        tmp.classed("peak_select", true);
+        annoArea.attr("id", "anno_leftClick");
+        document.getElementById("anno_leftClick").innerText = annotation(d).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
+        showStructure(i);
+        hideHover();
     }
 };
 
@@ -430,75 +413,66 @@ function spectrumPlot(spectrum, structureView) {
             .attr("id", function(d, i) { return "peak"+i; })
             .attr("class", function(d, i) { return (selected.leftClick === i) ? "peak_select peak" : resetColor(d); });
     if (structureView) {
-        /*
-        peakArea.selectAll(".peak")
-            .on("mousedown", mousedown)
-            .on("mousemove", mousemoveMS2)
-            .on("mouseover", function(d) {
-                d3.select(this).call(function(selection) {
-                    if (!selection.classed("peak_select")) {
-                        selection.attr("class", "peak_hover peak");
-                        tooltip.style("opacity", 1);
-                    }
-                })
-            })
-            .on("mouseleave", function(d) {
-                if (selected.hover !== null) {
-                    d3.select("#peak"+selected.hover).attr("class", resetColor);
-                    selected.hover = null;
-                    hideHover();
+        svg.on("mousemove", mouseMovingFunction(spectrum, TOLERANCE, x, y, function(i) {
+            const newSelected = d3.select("#peak"+i);
+            if (!newSelected.classed("peak_select")) {
+                newSelected.attr("class", "peak_hover peak");
+            } else {
+                newSelected.attr("class", "peak_hover peak_select peak");
+            }
+
+            tooltip.style("opacity", 1);
+            tooltip.html(annotation(spectrum.peaks[i]));
+            const event = window.event;
+            translateHover(event.clientX, event.clientY);
+
+            if (selected.hover !== i) {
+                const lastSelected = d3.select("#peak"+selected.hover);
+                if (selected.hover !== selected.leftClick) {
+                    lastSelected.attr("class", resetColor);
+                } else {
+                    lastSelected.classed("peak_hover", false);
                 }
-            });
-            */
-            svg.on("mousemove", mouseMovingFunction(spectrum, TOLERANCE, x,y,function(i) { //mouseover + mousemove
-                const selection = d3.select("#peak"+i);
-                const node = selection.node();
-                if (!selection.classed("peak_select")) {
-                    selection.attr("class", "peak_hover peak");
-                    tooltip.style("opacity", 1);
+                selected.hover = i;
+            }
+        }, function() {
+        //NOTE: If the distance between 2 peaks is too narrow, mouseleave might be skipped.
+            if (selected.hover !== null) {
+                const lastSelected = d3.select("#peak"+selected.hover);
+                if (!lastSelected.classed("peak_select")) {
+                    lastSelected.attr("class", resetColor);
+                } else {
+                    lastSelected.classed("peak_hover", false);
                 }
-                mousemoveMS2.bind(node)(spectrum.peaks[i],i);
-            }, function() { //mouseleave
-                if (selected.hover !== null) {
-                    d3.select("#peak"+selected.hover).attr("class", resetColor);
-                    selected.hover = null;
-                    hideHover();
-                }
-            })) ;
-            tooltip.on("mousemove", function(){
-                translateHover(d3.event.clientX, d3.event.clientY);
-            });
-            d3.select("svg").on("click", function(){
-                if (selected.hover != null) {
-                    mousedown.bind(document.getElementById("peak"+selected.hover))(spectrum.peaks[selected.hover], selected.hover);
-                }
-            });
-    } else {
-        /*
-        peakArea.selectAll(".peak")
-            .on("mousemove", mousemoveMS1)
-            .on("mouseover", mouseoverMS1)
-            .on("mouseleave", function(d) {
+                selected.hover = null;
                 hideHover();
-                d3.select(this).attr("class", resetColor);
-            });
-            */
-            svg.on("mousemove", mouseMovingFunction(spectrum, TOLERANCE, x,y,function(i) {
-                const selection = d3.select("#peak"+i);
-                const node = selection.node();
-                selection.attr("class", "peak_hover peak");
-                tooltip.style("opacity", 1);
-                mousemoveMS1.bind(node)(spectrum.peaks[i],i);
-            }, function() {
-                if (selected.hover !== null) {
-                    d3.select("#peak"+selected.hover).attr("class", resetColor);
-                    selected.hover = null;
-                    hideHover();
-                }
-            })) ;
-            tooltip.on("mousemove", function(){
-                translateHover(d3.event.clientX, d3.event.clientY);
-            });
+            }
+        })) ;
+        tooltip.on("mousemove", function(){
+            translateHover(d3.event.clientX, d3.event.clientY);
+        });
+        d3.select("svg").on("click", function(){
+            if (selected.hover != null) {
+                mousedown.bind(document.getElementById("peak"+selected.hover))(spectrum.peaks[selected.hover], selected.hover);
+            }
+        });
+    } else {
+        svg.on("mousemove", mouseMovingFunction(spectrum, TOLERANCE, x, y, function(i) {
+            const selection = d3.select("#peak"+i);
+            const node = selection.node();
+            selection.attr("class", "peak_hover peak");
+            tooltip.style("opacity", 1);
+            mousemoveMS1.bind(node)(spectrum.peaks[i],i);
+        }, function() {
+            if (selected.hover !== null) {
+                d3.select("#peak"+selected.hover).attr("class", resetColor);
+                selected.hover = null;
+                hideHover();
+            }
+        })) ;
+        tooltip.on("mousemove", function(){
+            translateHover(d3.event.clientX, d3.event.clientY);
+        });
     }
 };
 
