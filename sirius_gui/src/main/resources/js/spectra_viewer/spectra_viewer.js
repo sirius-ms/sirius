@@ -20,7 +20,6 @@ d3.select("body").append("div").attr("id", "container");
 window.addEventListener('contextmenu', event => event.preventDefault());
 
 window.addEventListener("resize", function(){
-    d3.select("#container").html("");
     spectraViewer(data);
     if (selected.leftClick !== null) {
         showStructure(selected.leftClick);
@@ -61,8 +60,6 @@ function clear() {
     basic_structure = null;
     anno_str = [];
 };
-
-function firstNChar(str, num) { return (str.length > num) ? str.slice(0, num) : str; };
 
 function showStructure(i) {
     if (i === ms2Size - 1) {
@@ -114,6 +111,7 @@ function idled() { idleTimeout = null; };
 
 //function resetColor(d) { return ("structureInformation" in d) ? "peak_2 structureInformation peak" : (("formula" in d) ? "peak_2 peak" : "peak_1 peak"); };
 // Wei: Why do we need structureInformation?
+// Only used in spectrumPlot: peak_1 = unannotated, peak_2 = annotated
 function resetColor(d) { return (("formula" in d) ? "peak_2 peak" : "peak_1 peak"); };
 
 function translateHover(mouse_w, mouse_h) {
@@ -123,13 +121,13 @@ function translateHover(mouse_w, mouse_h) {
     let tmp_h = parseFloat(window.getComputedStyle(tmp_tooltip).getPropertyValue("height")) + 12;
     let tmp_w = parseFloat(window.getComputedStyle(tmp_tooltip).getPropertyValue("width")) + 12;
     const distanceVertical = 30, distanceHorizontal = 30;
-    // style: vertical distance between cursor and hover = 24px (depending on size of cursor)
+    // style: vertical distance between cursor and hover (depending on size of cursor)
     if (mouse_h+tmp_h+distanceVertical > current.h) {
         tooltip.style("top", (mouse_h - distanceVertical - tmp_h/2 + "px"));
     } else {
         tooltip.style("top", (mouse_h - distanceVertical + "px"));
     }
-    // style: horizontal distance between cursor and hover = 12px (depending on size of cursor)
+    // style: horizontal distance between cursor and hover (depending on size of cursor)
     if (mouse_w+tmp_w+distanceHorizontal > current.w) {
         tooltip.style("left", (mouse_w - distanceHorizontal - tmp_w + "px"));
     } else {
@@ -162,25 +160,13 @@ function annotation(d) {
     return anno;
 };
 
-function sortByKey(array, key){
-    return array.sort(function(a, b) {
-        let x = a[key];
-        let y = b[key];
-        return ((x < y) ? -1
-             : ((x > y) ? 1 : 0));
-    });
-};
-
 /*
 takes the spectrum and the x-domain and returns a mouse event listener which
 calls the given callback with the peak index as argument whenever the
 mouse comes close to a peak
 */
 const mouseMovingFunction = function(spectrum, tolerance, xdomain, ydomain, callbackIn, callbackLeave) {
-    const mzvalues = [];
-    for (let i=0; i < spectrum.peaks.length; ++i) {
-        mzvalues.push(spectrum.peaks[i].mz);
-    }
+    const mzvalues = spectrum.peaks.map(d => d.mz);
     var lastPeakSelected = -1;
     return function() {
         event = d3.event; // -_- old d3 version
@@ -204,6 +190,7 @@ const mouseMovingFunction = function(spectrum, tolerance, xdomain, ydomain, call
             }
         } 
         const selection = closestPeakIndex;
+        if (selection === lastPeakSelected && lastPeakSelected === -1) callbackLeave(); // Wei: In mirror plot, somehow it never leaves...So I add this line.
         if (selection != lastPeakSelected) {
             lastPeakSelected = selection;
             if (selection>=0) {
@@ -213,20 +200,25 @@ const mouseMovingFunction = function(spectrum, tolerance, xdomain, ydomain, call
             }
         }
     };
-}
-
-var mouseoverMS1 = function() {
-    d3.select(this).attr("class", "peak_hover peak");
-    tooltip.style("opacity", 1);
 };
 
-var mousemoveMS1 = function(d, i) {
+var mousemoveGeneral = function(d, i) {
     let event = window.event;
-    tooltip.html(annotation(d));
     translateHover(event.clientX, event.clientY);
+    tooltip.html(annotation(d));
+    tooltip.style("opacity", 1);
+    d3.select("#peak"+i).classed("peak_hover", true);
     if (selected.hover !== i) {
-        d3.select("#peak"+selected.hover).attr("class", resetColor);
+        d3.select("#peak"+selected.hover).classed("peak_hover", false);
         selected.hover = i;
+    }
+};
+
+var mouseleaveGeneral = function() {
+    if (selected.hover !== null) {
+        d3.select("#peak"+selected.hover).classed("peak_hover", false);
+        selected.hover = null;
+        hideHover();
     }
 };
 
@@ -252,6 +244,7 @@ var mousedown = function(d, i) {
 };
 
 function init() {
+    d3.select("#container").html("");
     resize();
     svg = d3.select("#container")
         .append('svg')
@@ -378,6 +371,7 @@ function spectrumPlot(spectrum, structureView) {
         .range([h, 0]);
     svg.append("g").call(d3.axisLeft(y));
     svg.selectAll(".label").attr("opacity", 1);
+    
     // brushing
     function updateChart() {
         let extent = d3.event.selection
@@ -402,6 +396,7 @@ function spectrumPlot(spectrum, structureView) {
     brush = d3.brushX().extent( [ [0,0], [w, h] ]);
     brush.on("end", updateChart);
     peakArea.select("#brushArea").call(brush);
+
     // add Peaks
     peakArea.selectAll()
         .data(spectrum.peaks)
@@ -435,7 +430,7 @@ function spectrumPlot(spectrum, structureView) {
                 }
                 selected.hover = i;
             }
-        }, function() {
+        }, function() { 
         //NOTE: If the distance between 2 peaks is too narrow, mouseleave might be skipped.
             if (selected.hover !== null) {
                 const lastSelected = d3.select("#peak"+selected.hover);
@@ -458,17 +453,10 @@ function spectrumPlot(spectrum, structureView) {
         });
     } else {
         svg.on("mousemove", mouseMovingFunction(spectrum, TOLERANCE, x, y, function(i) {
-            const selection = d3.select("#peak"+i);
-            const node = selection.node();
-            selection.attr("class", "peak_hover peak");
-            tooltip.style("opacity", 1);
-            mousemoveMS1.bind(node)(spectrum.peaks[i],i);
+            const node = d3.select("#peak"+i).node();
+            mousemoveGeneral.bind(node)(spectrum.peaks[i],i);
         }, function() {
-            if (selected.hover !== null) {
-                d3.select("#peak"+selected.hover).attr("class", resetColor);
-                selected.hover = null;
-                hideHover();
-            }
+            mouseleaveGeneral();
         })) ;
         tooltip.on("mousemove", function(){
             translateHover(d3.event.clientX, d3.event.clientY);
@@ -515,7 +503,9 @@ function mirrorPlot(spectrum1, spectrum2, view) {
         .attr("transform", "translate(0," + h/2 + ")")
         .call(d3.axisLeft(y2));
     svg.selectAll(".label").attr("opacity", 1);
+
     // legends: 2 spectrum names
+    function firstNChar(str, num) { return (str.length > num) ? str.slice(0, num) : str; };
     svg.append("text")
         .attr("class", "legend spectrum_legend")
         .attr("x", -h/4)
@@ -529,6 +519,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
     svg.selectAll(".legend")
         .attr("y", w)
         .attr("transform", "rotate(-90)");
+
     // brushing
     function updateChart() {
         let extent = d3.event.selection
@@ -558,35 +549,56 @@ function mirrorPlot(spectrum1, spectrum2, view) {
     brush = d3.brushX().extent( [ [0,0], [w-20, h] ]);
     brush.on("end", updateChart);
     peakArea.select("#brushArea").call(brush);
+
     // Peaks 1
     peakArea.selectAll()
         .data(spectrum1.peaks)
         .enter()
         .append("rect")
             .attr("class", "peak_1 peak")
+            .attr("id", function(d, i) { return "peak"+i; })
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", function(d) { return y1(d.intensity); })
-            .attr("height", function(d) { return h/2 - y1(d.intensity); })
-            .on("mouseleave", function() {
-                hideHover();
-                d3.select(this).attr("class", "peak_1 peak");
-            });
+            .attr("height", function(d) { return h/2 - y1(d.intensity); });
     // Peaks 2
     peakArea.selectAll()
         .data(spectrum2.peaks)
         .enter()
         .append("rect")
             .attr("class", "peak_2 peak")
+            .attr("id", function(d, i) { return "peak"+(i+mzs1.length); })
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", h/2)
-            .attr("height", function(d) { return y2(d.intensity); })
-            .on("mouseleave", function() {
-                hideHover();
-                d3.select(this).attr("class", "peak_2 peak");
-            });
-    peakArea.selectAll(".peak")
-        .on("mousemove", mousemoveMS1)
-        .on("mouseover", mouseoverMS1);
+            .attr("height", function(d) { return y2(d.intensity); });
+
+    function upOrDown(currentY, callbackUp, callbackDown) {
+        if (currentY <= h/2) {
+            callbackUp();
+        } else {
+            callbackDown();
+        }
+    };
+
+    svg.on("mousemove", function() {
+        let currentY = d3.event.clientY;
+        upOrDown(currentY,
+            mouseMovingFunction(spectrum1, TOLERANCE, x, y1, function(i) {
+                const node = d3.select("#peak"+i).node();
+                mousemoveGeneral.bind(node)(spectrum1.peaks[i],i);
+            }, function() {
+                mouseleaveGeneral();
+            }),
+            mouseMovingFunction(spectrum2, TOLERANCE, x, y2, function(i) {
+                const node = d3.select("#peak"+(i+mzs1.length)).node();
+                mousemoveGeneral.bind(node)(spectrum2.peaks[i],(i+mzs1.length));
+            }, function() {
+                mouseleaveGeneral();
+            })
+        );
+    });
+    tooltip.on("mousemove", function(){
+        translateHover(d3.event.clientX, d3.event.clientY);
+    });
 };
 
 function spectraViewer(json){
