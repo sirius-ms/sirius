@@ -259,7 +259,7 @@ function init() {
         .attr("class", "label spectrum_label")
         .attr("id", "xLabel")
         .attr("x", w/2)
-        .attr("y", h + margin.top + 10)
+        .attr("y", h + margin.top + 20)
         .text("m/z");
     // Y label
     svg.append("text")
@@ -594,7 +594,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             }, function() {
                 mouseleaveGeneral();
             })
-        );
+	);
     });
     tooltip.on("mousemove", function(){
         translateHover(d3.event.clientX, d3.event.clientY);
@@ -604,7 +604,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
 function spectraViewer(json){
     init();
     if (json.spectra[1] == null) { // 1. mode
-        if (json.spectra[0].name.includes("MS1") || ((anno_str.length === 0) && svg_str === null)) {
+        if (json.spectra[0].name.includes("MS1") || (anno_str.length === 0 && svg_str === null)) {
             // 1.1 Mode: MS1, MS2 without structureViewer
             spectrumPlot(json.spectra[0], false);
         } else { // 1.2 Mode: MS2 + StructureViewer
