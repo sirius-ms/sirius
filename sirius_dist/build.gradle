@@ -27,17 +27,6 @@ ext {
     }
 }
 
-task downloadJDK(type: Download) {
-    String fname = "zulu${zulu_jre_version}-ca-jdk${jre_version}-${zosName}_x64"
-    String ext = ".${OS.isWindows() ? 'zip' : 'tar.gz'}";
-    project.ext.set("jdkPath", getBuildDir().toPath().resolve('tmp').resolve(fname).toFile())
-
-
-    src "https://bio.informatik.uni-jena.de/repository/list/ext-release-local/zulu/jdk/${zulu_jre_version}/${fname + ext}"
-    dest getBuildDir().toPath().resolve('tmp').resolve(fname + ext).toFile()
-    onlyIfModified true
-    overwrite false
-}
 
 task downloadJDKFX(type: Download) {
     String fname = "zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64"
@@ -49,22 +38,6 @@ task downloadJDKFX(type: Download) {
     dest getBuildDir().toPath().resolve('tmp').resolve(fname + ext).toFile()
     onlyIfModified true
     overwrite false
-}
-
-task extractJDK(dependsOn: downloadJDK) {
-    def s = downloadJDK.outputs.files.singleFile
-    outputs.file(jdkPath)
-    doLast {
-        if (OS.isWindows()) {
-            copy {
-                from zipTree(s)
-                into buildDir.toPath().resolve('tmp').toFile()
-            }
-        } else {
-            exec { commandLine(['tar', 'zxf', s.absolutePath, '-C', buildDir.toPath().resolve('tmp').toString()]) }
-        }
-    }
-
 }
 
 task extractJDKFX(dependsOn: downloadJDKFX) {
@@ -83,27 +56,26 @@ task extractJDKFX(dependsOn: downloadJDKFX) {
 
 }
 
-task createRuntimeImgs(dependsOn: [extractJDK,extractJDKFX]) {
+task createRuntimeImgs(dependsOn: [extractJDKFX]) {
     String[] baseModules = ['java.sql', 'java.logging', 'jdk.jsobject', 'java.xml', 'jdk.xml.dom', 'java.datatransfer',
-                            'java.naming', 'java.prefs', 'java.instrument']
+                            'java.naming', 'java.prefs', 'java.instrument', 'java.desktop'] //todo can we get rid of beans to remove java.desktop
     String[] fxModules = baseModules +
             ['java.desktop', 'javafx.base', 'javafx.web', 'javafx.graphics', 'javafx.swing', 'javafx.controls']
     String[] bootModules = baseModules +
             ['java.management']
 
     File jlinkfx = jdkfxPath.toPath().resolve('bin').resolve(OS.isWindows() ? 'jlink.exe' : 'jlink').toFile()
-    File jlink = jdkPath.toPath().resolve('bin').resolve(OS.isWindows() ? 'jlink.exe' : 'jlink').toFile()
 
-    File outFX = buildDir.toPath().resolve('runtime').resolve("sirius-${jlinkfx.toPath().getParent().getParent().getFileName().toString()}").toFile()
-    File outheadl = Paths.get(outFX.absolutePath.replace('-fx-', '-headless-')).toFile()
-    File outboot = Paths.get(outheadl.absolutePath.replace('-headless-', '-headless-boot-')).toFile()
+    File outFX = buildDir.toPath().resolve('runtime').resolve("${jlinkfx.toPath().getParent().getParent().getFileName().toString().replace("jdk","jre")}").toFile()
+    File outheadl = Paths.get(outFX.absolutePath.replace('-fx-', '-')).toFile()
+    File outboot = Paths.get(outFX.absolutePath.replace('-fx-', '-headless-boot-')).toFile()
     outputs.files(outFX, outheadl,outboot)
 
     String[] args = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
 
     doLast {
         exec {
-            String[] c = [jlink.absolutePath, '--add-modules', "${baseModules.join(',')}", '--output', outheadl.absolutePath]
+            String[] c = [jlinkfx.absolutePath, '--add-modules', "${baseModules.join(',')}", '--output', outheadl.absolutePath]
             commandLine(c + args)
         }
         exec {
@@ -111,7 +83,7 @@ task createRuntimeImgs(dependsOn: [extractJDK,extractJDKFX]) {
             commandLine(c + args)
         }
         exec {
-            String[] c = [jlink.absolutePath, '--add-modules', "${bootModules.join(',')}", '--output', outboot.absolutePath]
+            String[] c = [jlinkfx.absolutePath, '--add-modules', "${bootModules.join(',')}", '--output', outboot.absolutePath]
             commandLine(c + args)
         }
     }
@@ -164,7 +136,6 @@ task downloadCLP(type: Download) {
 
 
 task downloadRuntimeImageFX(type: Download) {
-//    String fname = "sirius-zulu${zulu_jre_version}-ca-fx-jdk${jre_version}-${zosName}_x64.zip"
     String fname = "zulu${zulu_jre_version}-ca-fx-jre${jre_version}-${zosName}_x64.zip"
 
     src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
@@ -178,7 +149,6 @@ task extractRuntimeImageFX(type: ExtractRuntime, dependsOn: downloadRuntimeImage
 }
 
 task downloadRuntimeImageHeadless(type: Download) {
-//    String fname = "sirius-zulu${zulu_jre_version}-ca-headless-jdk${jre_version}-${zosName}_x64.zip"
     String fname = "zulu${zulu_jre_version}-ca-jre${jre_version}-${zosName}_x64.zip"
 
     src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
@@ -302,13 +272,12 @@ subprojects {
         String[] jArgs = [
                 '-Xms1G',
                 '-XX:MaxRAMPercentage=85',
-                '--illegal-access=permit',
-                '--add-opens=java.base/java.lang=ALL-UNNAMED',
-                '--add-opens=java.base/java.net=ALL-UNNAMED',
+//                '--illegal-access=permit',
+//                '--add-opens=java.base/java.lang=ALL-UNNAMED',
+//                '--add-opens=java.base/java.net=ALL-UNNAMED',
         ]
 
-
-        if (OS.isWindows()) {
+        /*if (OS.isWindows()) {
             jvmArgs = jArgs + ['-Djava.library.path=$APPDIR\\..',
                                '-javaagent:$APPDIR\\\\agents-' + siriusVersion + '.jar']
         } else if (OS.isLinux()) {
@@ -317,20 +286,27 @@ subprojects {
         } else {
             jvmArgs = jArgs + ['-Djava.library.path=\\$APPDIR/../native',
                         '-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar']
-        }
+        }*/
+
+
+
 
         doLast {
             File nativeLibsTarget
             File appRootTarget
+            File launcherTarget
             if (OS.isLinux()) {
                 appRootTarget = outputDir.toPath().resolve(imageName).toFile()
-                nativeLibsTarget = appRootTarget.toPath().resolve("lib/runtime/lib").toFile()
+                nativeLibsTarget = appRootTarget.toPath().resolve("lib/native").toFile()
+                launcherTarget = appRootTarget.toPath().resolve("bin").toFile()
             } else if (OS.isWindows()) {
                 appRootTarget = outputDir.toPath().resolve(imageName).toFile()
                 nativeLibsTarget = appRootTarget
+                launcherTarget = appRootTarget
             } else if (OS.isMacOsX()) {
                 appRootTarget = outputDir.toPath().resolve("${imageName}.app/Contents").toFile()
                 nativeLibsTarget = appRootTarget.toPath().resolve("native").toFile()
+                launcherTarget = appRootTarget.toPath().resolve("MacOS").toFile()
             } else {
                 throw new RuntimeException("Could not detect OS for packaging!")
             }
@@ -352,31 +328,61 @@ subprojects {
                 into(appRootTarget)
             }
 
-            if (OS.isLinux()) {
-                def lines = file("${rootDir}/scripts/sirius.sh").readLines()
-                def f = file("$appRootTarget/bin/sirius.sh")
-                f.withWriter {
-                    lines.forEach { l ->
-                        if (l.startsWith('DEFAULT_JVM_OPTS='))
-                            l = l.replace('DEFAULT_JVM_OPTS=', "DEFAULT_JVM_OPTS='${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
-                                    " \"-javaagent:\$JAR_HOME/agents-${siriusVersion}.jar\"'")
-                        else if (l.startsWith('MAIN_CLASS='))
-                            l = l.replace('MAIN_CLASS=', 'MAIN_CLASS="' + mainClassName + '"')
-                        else if (l.startsWith('CLASSPATH='))
-                            l = l.replace('CLASSPATH=', 'CLASSPATH="\$JAR_HOME/*"')
-                        else if (l.startsWith('JAVACMD='))
-                            l = l.replace("JAVACMD=", 'JAVACMD="\$APP_HOME/lib/runtime/bin/java"')
-                        else if (l.startsWith('JAR_HOME='))
-                            l = l.replace('JAR_HOME=', 'JAR_HOME="\$APP_HOME/lib/app"')
-                        it.writeLine(l)
+            if (launchers != null){
+                launchers.forEach({k,v ->
+                    copy {
+                        from(v)
+                        into(launcherTarget)
+                        rename(v.getName(), k)
                     }
-                }
-                f.setExecutable(true, false)
+                })
+            }
+
+
+
+            def templateBinding = [
+                    toolName: "SIRIUS",
+                    mainClass: mainClassName
+            ]
+
+            def f;
+            if (OS.isLinux()) {
+                f = file("$appRootTarget/bin/sirius")
+
+                templateBinding.classPath ="\$JAR_HOME/*:\$GUROBI_HOME/lib/gurobi.jar:\$CPLEX_HOME/lib/cplex.jar"
+                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/lib/native:\$APP_HOME/lib/runtime/lib"
+                templateBinding.javaCommand = "\$APP_HOME/lib/runtime/bin/java"
+                templateBinding.libraryPathKey = "LD_LIBRARY_PATH"
+                templateBinding.libraryPathVal = "\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/lib/native:\$APP_HOME/lib/runtime/lib:\$LD_LIBRARY_PATH"
+                templateBinding.jarHome = "\$APP_HOME/lib/app"
+            } else if (OS.isMacOsX) {
+                f = file("$appRootTarget/MacOS/sirius")
+                templateBinding.classPath ="\$JAR_HOME/*:\$GUROBI_HOME/lib:\$CPLEX_HOME/lib"
+                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/native:\$APP_HOME/runtime/Contents/Home/lib"
+                templateBinding.javaCommand ="\$APP_HOME/runtime/Contents/Home/bin/java"
+                templateBinding.libraryPathKey = "DYLD_LIBRARY_PATH"
+                templateBinding.libraryPathVal = "\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_osx:\$APP_HOME/native:\$APP_HOME/runtime/Contents/Home/lib:\$DYLD_LIBRARY_PATH"
+                templateBinding.jarHome = "\$APP_HOME/app"
+            } else if (OS.isWindows()) {
+                f = file("$appRootTarget/sirius.bat")
+                //todo create exe from batch?
+            } else {
+                throw new IllegalArgumentException("Cannot determine operating system for build")
+            }
+
+            String script = file("${rootDir}/scripts/sirius.sh.templ").text
+            templateBinding.forEach({k,v -> script = script.replace("#$k#",v)})
+            f.withWriter {it.write(script)}
+            f.setExecutable(true, false)
+
+            if (OS.isLinux()) {
+
+
 
             }else if(OS.isMacOsX()){
-                def lines = file("${rootDir}/scripts/sirius.sh").readLines()
+                /*def lines = file("${rootDir}/scripts/sirius").readLines()
                 file("$appRootTarget/bin").mkdirs()
-                def f = file("$appRootTarget/bin/sirius.sh")
+                def f = file("$appRootTarget/bin/sirius")
                 f.withWriter {
                     lines.forEach { l ->
                         if (l.startsWith('DEFAULT_JVM_OPTS='))
@@ -393,10 +399,10 @@ subprojects {
                         it.writeLine(l)
                     }
                 }
-                f.setExecutable(true, false)
+                f.setExecutable(true, false)*/
             }else if(OS.isWindows()){
                 def lines = file("${rootDir}/scripts/sirius.bat").readLines()
-                def f = file("$appRootTarget/sirius.bat")
+                f = file("$appRootTarget/sirius.bat")
                 f.withWriter {
                     lines.forEach { l ->
                         if (l.startsWith('set DEFAULT_JVM_OPTS='))
@@ -486,7 +492,7 @@ abstract class AppImage extends DefaultTask {
     String mainJarName
     File runtimeImageDirectory
     boolean winConsole
-    Map<String, File> launchers
+    Map<String, File> launchers = [:]
 
     /*--mac-package-name name string
     Name of the application as it appears in the Menu Bar.
@@ -551,9 +557,9 @@ abstract class AppImage extends DefaultTask {
             for (String arg : args)
                 paras += ['--arguments', "\"$arg\""]
 
-        if (launchers != null)
+        /*if (launchers != null)
             for (String name : launchers.keySet())
-                paras += ["--add-launcher", "\"$name=${launchers.get(name)}\""]
+                paras += ["--add-launcher", "\"$name=${launchers.get(name)}\""]*/
 
 
         def iconDir = project.getRootProject().rootDir.toPath().resolve('icons')
