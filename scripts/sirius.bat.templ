@@ -33,7 +33,7 @@ set APP_HOME=%DIRNAME:~0,-1%
 @rem Resolve any "." and ".." in APP_HOME to make it shorter.
 for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
 
-set JAR_HOME="jarHome"
+set JAR_HOME=#jarHome#
 
 @rem Add default JVM options here. You can also use JAVA_OPTS and SIRIUS_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS=#jvmOpts#
@@ -50,7 +50,13 @@ goto fail
 :execute
 @rem Setup the command line
 
-set CLASSPATH="#classPath#"
+set CLASSPATH=#classPath#
+
+set GUROBI_JAR=#gurobiJar#
+if exist "%GUROBI_JAR%" set CLASSPATH=%CLASSPATH%;%GUROBI_JAR%
+
+set CPLEX_JAR=#cplexJar#
+if exist "%CPLEX_JAR%" set CLASSPATH=%CLASSPATH%;%CPLEX_JAR%
 
 
 @rem Execute sirius
