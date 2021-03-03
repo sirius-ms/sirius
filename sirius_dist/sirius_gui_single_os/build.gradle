@@ -15,16 +15,18 @@ distImage {
     args = ['gui']
     runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageFX').outputs.files.singleFile
     mainJarName = getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
-    launchers = ['sirius':getRootProject().rootDir.toPath().resolve('jpackage').resolve('cli-launcher.properties').toFile()]
+    launchers = ['sirius': getRootProject().rootDir.toPath().resolve('jpackage').resolve('cli-launcher.properties').toFile()]
     winConsole = false
     macPackageName = 'SIRIUS'
+    if (OS.isWindows()) {
 
-    launchers = [
-            "sirius-gui":file("${rootDir}/scripts/${OS.isMacOsX() ? "sirius-gui.zsh" : "sirius-gui.sh"}")
-    ]
+    } else {
+        launchers = ["sirius-gui": file("${rootDir}/scripts/${OS.isMacOsX() ? "sirius-gui.zsh" : "sirius-gui.sh"}")]
+    }
+
 }
 
-distInstaller{
+distInstaller {
     linuxShortcut = true
 }
 

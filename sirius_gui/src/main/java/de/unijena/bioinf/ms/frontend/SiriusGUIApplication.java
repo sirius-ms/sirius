@@ -42,7 +42,6 @@ import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.function.Supplier;
 
 /**

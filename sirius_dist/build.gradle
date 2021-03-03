@@ -277,20 +277,6 @@ subprojects {
 //                '--add-opens=java.base/java.net=ALL-UNNAMED',
         ]
 
-        /*if (OS.isWindows()) {
-            jvmArgs = jArgs + ['-Djava.library.path=$APPDIR\\..',
-                               '-javaagent:$APPDIR\\\\agents-' + siriusVersion + '.jar']
-        } else if (OS.isLinux()) {
-            jvmArgs = jArgs + ['-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar']
-
-        } else {
-            jvmArgs = jArgs + ['-Djava.library.path=\\$APPDIR/../native',
-                        '-javaagent:\\$APPDIR/agents-' + siriusVersion + '.jar']
-        }*/
-
-
-
-
         doLast {
             File nativeLibsTarget
             File appRootTarget
@@ -371,10 +357,13 @@ subprojects {
             } else if (OS.isWindows()) {
                 f = file("$appRootTarget/sirius.bat")
                 sf =  file("${rootDir}/scripts/sirius.bat.templ")
-                templateBinding.classPath = "%JAR_HOME%\\*;%GUROBI_HOME%\\lib\\gurobi.jar;%CPLEX_HOME%\\lib\\cplex.jar"
+                templateBinding.classPath = "%JAR_HOME%\\*"
                 templateBinding.jvmOpts ="${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
-                        "\"-Djava.library.path=%APP_HOME%;%GUROBI_HOME%\\bin;%CPLEX_HOME%/bin/x64_win64\""
+                        " \"-Djava.library.path=%APP_HOME%;%GUROBI_HOME%\\bin;%CPLEX_HOME%\\bin\\x64_win64\""
                 templateBinding.jarHome = "%APP_HOME%\\app"
+                templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
+                templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
+
                 //todo create exe from batch?
             } else {
                 throw new IllegalArgumentException("Cannot determine operating system for build")
