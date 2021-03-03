@@ -18,8 +18,9 @@ distImage {
     launchers = ['sirius':getRootProject().rootDir.toPath().resolve('jpackage').resolve('cli-launcher.properties').toFile()]
     winConsole = false
     macPackageName = 'SIRIUS'
+
     launchers = [
-            "sirius-gui":file("${rootDir}/scripts/sirius-gui.sh")
+            "sirius-gui":file("${rootDir}/scripts/${OS.isMacOsX() ? "sirius-gui.zsh" : "sirius-gui.sh"}")
     ]
 }
 
