@@ -345,10 +345,11 @@ subprojects {
                     mainClass: mainClassName
             ]
 
-            def f;
+            def f
+            def sf
             if (OS.isLinux()) {
                 f = file("$appRootTarget/bin/sirius")
-
+                sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.classPath ="\$JAR_HOME/*:\$GUROBI_HOME/lib/gurobi.jar:\$CPLEX_HOME/lib/cplex.jar"
                 templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/lib/native:\$APP_HOME/lib/runtime/lib"
                 templateBinding.javaCommand = "\$APP_HOME/lib/runtime/bin/java"
@@ -357,6 +358,7 @@ subprojects {
                 templateBinding.jarHome = "\$APP_HOME/lib/app"
             } else if (OS.isMacOsX) {
                 f = file("$appRootTarget/MacOS/sirius")
+                sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.classPath ="\$JAR_HOME/*:\$GUROBI_HOME/lib:\$CPLEX_HOME/lib"
                 templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/native:\$APP_HOME/runtime/Contents/Home/lib"
                 templateBinding.javaCommand ="\$APP_HOME/runtime/Contents/Home/bin/java"
@@ -365,60 +367,20 @@ subprojects {
                 templateBinding.jarHome = "\$APP_HOME/app"
             } else if (OS.isWindows()) {
                 f = file("$appRootTarget/sirius.bat")
+                sf =  file("${rootDir}/scripts/sirius.bat.templ")
+                templateBinding.classPath = "%JAR_HOME%\\*;%GUROBI_HOME%\\lib\\gurobi.jar;%CPLEX_HOME%\\lib\\cplex.jar"
+                templateBinding.jvmOpts ="${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
+                        "\"-Djava.library.path=%APP_HOME%;%GUROBI_HOME%\\bin;%CPLEX_HOME%/bin/x64_win64\""
+                templateBinding.jarHome = "%APP_HOME%\\app"
                 //todo create exe from batch?
             } else {
                 throw new IllegalArgumentException("Cannot determine operating system for build")
             }
 
-            String script = file("${rootDir}/scripts/sirius.sh.templ").text
+            String script = sf.text
             templateBinding.forEach({k,v -> script = script.replace("#$k#",v)})
             f.withWriter {it.write(script)}
             f.setExecutable(true, false)
-
-            if (OS.isLinux()) {
-
-
-
-            }else if(OS.isMacOsX()){
-                /*def lines = file("${rootDir}/scripts/sirius").readLines()
-                file("$appRootTarget/bin").mkdirs()
-                def f = file("$appRootTarget/bin/sirius")
-                f.withWriter {
-                    lines.forEach { l ->
-                        if (l.startsWith('DEFAULT_JVM_OPTS='))
-                            l = l.replace('DEFAULT_JVM_OPTS=', "DEFAULT_JVM_OPTS='${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
-                                    " \"-javaagent:\$JAR_HOME/agents-${siriusVersion}.jar\" \"-Djava.library.path=\$APP_HOME/native\"'")
-                        else if (l.startsWith('MAIN_CLASS='))
-                            l = l.replace('MAIN_CLASS=', 'MAIN_CLASS="' + mainClassName + '"')
-                        else if (l.startsWith('CLASSPATH='))
-                            l = l.replace('CLASSPATH=', 'CLASSPATH="\$JAR_HOME/*"')
-                        else if (l.startsWith('JAVACMD='))
-                            l = l.replace("JAVACMD=", 'JAVACMD="\$APP_HOME/runtime/Contents/Home/bin/java"')
-                        else if (l.startsWith('JAR_HOME='))
-                            l = l.replace('JAR_HOME=', 'JAR_HOME="\$APP_HOME/app"')
-                        it.writeLine(l)
-                    }
-                }
-                f.setExecutable(true, false)*/
-            }else if(OS.isWindows()){
-                def lines = file("${rootDir}/scripts/sirius.bat").readLines()
-                f = file("$appRootTarget/sirius.bat")
-                f.withWriter {
-                    lines.forEach { l ->
-                        if (l.startsWith('set DEFAULT_JVM_OPTS='))
-                                l = l.replace('set DEFAULT_JVM_OPTS=', "set DEFAULT_JVM_OPTS=${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
-                                        " \"-javaagent:%JAR_HOME%\\agents-${siriusVersion}.jar\" \"-Djava.library.path=%APP_HOME%\"")
-                        else if (l.startsWith('set MAIN_CLASS='))
-                            l = l.replace('set MAIN_CLASS=', 'set MAIN_CLASS="' + mainClassName + '"')
-                        else if (l.startsWith('set CLASSPATH='))
-                            l = l.replace('set CLASSPATH=', 'set CLASSPATH="%JAR_HOME%\\*"')
-                        else if (l.startsWith('set JAR_HOME='))
-                            l = l.replace('set JAR_HOME=', 'set JAR_HOME=%APP_HOME%\\app')
-                        it.writeLine(l)
-                    }
-                }
-                f.setExecutable(true, false)
-            }
         }
     }
 
