@@ -3,6 +3,9 @@ import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import java.nio.file.Paths
 import java.util.stream.Collectors
 
+plugins {
+    id 'edu.sc.seis.launch4j' version '2.4.6'
+}
 ext {
     OS = DefaultNativePlatform.currentOperatingSystem
 
@@ -58,7 +61,8 @@ task extractJDKFX(dependsOn: downloadJDKFX) {
 
 task createRuntimeImgs(dependsOn: [extractJDKFX]) {
     String[] baseModules = ['java.sql', 'java.logging', 'jdk.jsobject', 'java.xml', 'jdk.xml.dom', 'java.datatransfer',
-                            'java.naming', 'java.prefs', 'java.instrument', 'java.desktop'] //todo can we get rid of beans to remove java.desktop
+                            'java.naming', 'java.prefs', 'java.instrument', 'java.desktop']
+    //todo can we get rid of beans to remove java.desktop
     String[] fxModules = baseModules +
             ['java.desktop', 'javafx.base', 'javafx.web', 'javafx.graphics', 'javafx.swing', 'javafx.controls']
     String[] bootModules = baseModules +
@@ -66,10 +70,10 @@ task createRuntimeImgs(dependsOn: [extractJDKFX]) {
 
     File jlinkfx = jdkfxPath.toPath().resolve('bin').resolve(OS.isWindows() ? 'jlink.exe' : 'jlink').toFile()
 
-    File outFX = buildDir.toPath().resolve('runtime').resolve("${jlinkfx.toPath().getParent().getParent().getFileName().toString().replace("jdk","jre")}").toFile()
+    File outFX = buildDir.toPath().resolve('runtime').resolve("${jlinkfx.toPath().getParent().getParent().getFileName().toString().replace("jdk", "jre")}").toFile()
     File outheadl = Paths.get(outFX.absolutePath.replace('-fx-', '-')).toFile()
     File outboot = Paths.get(outFX.absolutePath.replace('-fx-', '-headless-boot-')).toFile()
-    outputs.files(outFX, outheadl,outboot)
+    outputs.files(outFX, outheadl, outboot)
 
     String[] args = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
 
@@ -88,7 +92,6 @@ task createRuntimeImgs(dependsOn: [extractJDKFX]) {
         }
     }
 }
-
 
 
 task downloadGLPK(type: Download) {
@@ -178,7 +181,7 @@ task extractRuntimeImageHeadlessBoot(type: ExtractRuntime, dependsOn: downloadRu
 
 task downloadManual(type: Download, group: 'documentation') {
     String manualName = "manual-$version-manual.pdf"
-    src "https://bio.informatik.uni-jena.de/repository/${version.toString().endsWith('-SNAPSHOT')?'dist-snapshot-local':'dist-release-local'}/de/unijena/bioinf/ms/manual/$version/$manualName"
+    src "https://bio.informatik.uni-jena.de/repository/${version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}/de/unijena/bioinf/ms/manual/$version/$manualName"
     dest buildDir.toPath().resolve("manual/$manualName").toFile()
     onlyIfModified true
     overwrite false
@@ -186,6 +189,7 @@ task downloadManual(type: Download, group: 'documentation') {
 
 
 subprojects {
+    apply plugin: 'edu.sc.seis.launch4j'
 
     jar {
         enabled = false
@@ -193,7 +197,7 @@ subprojects {
 
     //###################################### Start Default values ##########################################
 
-//collect auto generated profiles and check them for null values
+    //collect auto generated profiles and check them for null values
     task collectProfiles() {
         group = 'properties'
         outputs.dir("$buildDir/tmp/profiles/de.unijena.bioinf.ms.defaults")
@@ -260,10 +264,43 @@ subprojects {
     }
     checkDefaultProfile.dependsOn('makeProfileTemplate')
 
-//###################################### END Default values ##########################################
+    //###################################### END Default values ##########################################
+    launch4j {
+        copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
+        companyName = "Friedrich-Schiller-University Jena"
+
+        version = project.version.toString().replace("-SNAPSHOT", "")
+        textVersion = project.version
+        supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
+        fileDescription = "SIRIUS command-line interface"
+
+        icon = "${rootProject.projectDir}/icons/sirius-icon.ico"
+        headerType = "console"
+        outfile = "sirius.exe"
+
+        jvmOptions = [
+                '-Xms1G',
+                '-XX:MaxRAMPercentage=85',
+        ]
+
+        dontWrapJar = true
+        bundledJrePath = "./runtime"
+        classpath = ["app\\*", "%GUROBI_HOME%\\lib\\gurobi.jar", "%CPLEX_HOME%\\lib\\cplex.jar"]
+        libraryDir = "app"
+
+        jdkPreference = "preferJre"
+        jreMinVersion = "11"
+        bundledJre64Bit = true
+        jreRuntimeBits = "64"
+        messagesBundledJreError = "Could not Load bundled JRE."
+    }
+
 
     task distImage(type: AppImage, group: 'distribution') {
         dependsOn installDist, downloadManual, downloadCLP, downloadGLPK
+        if (OS.isWindows())
+            dependsOn createAllExecutables
+
         jpackagerBin = Paths.get(System.getProperty("java.home")).resolve('bin').resolve(OS.isWindows() ? 'jpackage.exe' : 'jpackage').toFile()
         mainClass = mainClassName
         outputDir = buildDir.toPath().resolve('distributions').toFile()
@@ -272,9 +309,6 @@ subprojects {
         String[] jArgs = [
                 '-Xms1G',
                 '-XX:MaxRAMPercentage=85',
-//                '--illegal-access=permit',
-//                '--add-opens=java.base/java.lang=ALL-UNNAMED',
-//                '--add-opens=java.base/java.net=ALL-UNNAMED',
         ]
 
         doLast {
@@ -297,6 +331,7 @@ subprojects {
                 throw new RuntimeException("Could not detect OS for packaging!")
             }
 
+
             copy {
                 from("${glpkPath}/$nativeLibs/") {
                     include('libglpk.so.40')
@@ -314,8 +349,27 @@ subprojects {
                 into(appRootTarget)
             }
 
-            if (launchers != null){
-                launchers.forEach({k,v ->
+
+            if (OS.isWindows()) {
+                //delete exes because they are write protected
+                appRootTarget.listFiles(new FilenameFilter(){
+                    @Override
+                    boolean accept(File dir, String name) {
+                        return name.endsWith(".exe")
+                    }
+                }).iterator().forEachRemaining({i ->i.delete()})
+
+                copy {
+                    from("${buildDir}/launch4j") {
+                        include("*.exe")
+                    }
+                    into(appRootTarget)
+                }
+            }
+
+
+            if (launchers != null) {
+                launchers.forEach({ k, v ->
                     copy {
                         from(v)
                         into(launcherTarget)
@@ -325,9 +379,8 @@ subprojects {
             }
 
 
-
             def templateBinding = [
-                    toolName: "SIRIUS",
+                    toolName : "SIRIUS",
                     mainClass: mainClassName
             ]
 
@@ -337,7 +390,7 @@ subprojects {
                 f = file("$appRootTarget/bin/sirius")
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "sh"
-                templateBinding.classPath ="\$JAR_HOME/*:\$GUROBI_HOME/lib/gurobi.jar:\$CPLEX_HOME/lib/cplex.jar"
+                templateBinding.classPath = "\$JAR_HOME/*:\$GUROBI_HOME/lib/gurobi.jar:\$CPLEX_HOME/lib/cplex.jar"
                 templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/lib/native:\$APP_HOME/lib/runtime/lib"
                 templateBinding.javaCommand = "\$APP_HOME/lib/runtime/bin/java"
                 templateBinding.libraryPathKey = "LD_LIBRARY_PATH"
@@ -347,19 +400,18 @@ subprojects {
                 f = file("$appRootTarget/MacOS/sirius")
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "zsh"
-                templateBinding.classPath ="\$JAR_HOME/*:\$GUROBI_HOME/lib/gurobi.jar:\$CPLEX_HOME/lib/cplex.jar"
-                templateBinding.classPath ="\$JAR_HOME/*:\$GUROBI_HOME/lib:\$CPLEX_HOME/lib"
+                templateBinding.classPath = "\$JAR_HOME/*:\$GUROBI_HOME/lib/gurobi.jar:\$CPLEX_HOME/lib/cplex.jar"
+                templateBinding.classPath = "\$JAR_HOME/*:\$GUROBI_HOME/lib:\$CPLEX_HOME/lib"
                 templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/native:\$APP_HOME/runtime/Contents/Home/lib"
-                templateBinding.javaCommand ="\$APP_HOME/runtime/Contents/Home/bin/java"
+                templateBinding.javaCommand = "\$APP_HOME/runtime/Contents/Home/bin/java"
                 templateBinding.libraryPathKey = "DYLD_LIBRARY_PATH"
                 templateBinding.libraryPathVal = "\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_osx:\$APP_HOME/native:\$APP_HOME/runtime/Contents/Home/lib:\$DYLD_LIBRARY_PATH"
                 templateBinding.jarHome = "\$APP_HOME/app"
             } else if (OS.isWindows()) {
                 f = file("$appRootTarget/sirius.bat")
-                sf =  file("${rootDir}/scripts/sirius.bat.templ")
+                sf = file("${rootDir}/scripts/sirius.bat.templ")
                 templateBinding.classPath = "%JAR_HOME%\\*"
-                templateBinding.jvmOpts ="${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}" +
-                        " \"-Djava.library.path=%APP_HOME%;%GUROBI_HOME%\\bin;%CPLEX_HOME%\\bin\\x64_win64\""
+                templateBinding.jvmOpts = "${Arrays.stream(jArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}"
                 templateBinding.jarHome = "%APP_HOME%\\app"
                 templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
                 templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
@@ -370,8 +422,8 @@ subprojects {
             }
 
             String script = sf.text
-            templateBinding.forEach({k,v -> script = script.replace("#$k#",v)})
-            f.withWriter {it.write(script)}
+            templateBinding.forEach({ k, v -> script = script.replace("#$k#", v) })
+            f.withWriter { it.write(script) }
             f.setExecutable(true, false)
         }
     }
@@ -463,7 +515,7 @@ abstract class AppImage extends DefaultTask {
     }
 
     File getImageDir() {
-        return outputDir.toPath().resolve(project.OS.isMacOsX()?"${imageName}.app":imageName).toFile()
+        return outputDir.toPath().resolve(project.OS.isMacOsX() ? "${imageName}.app" : imageName).toFile()
     }
 
     @TaskAction
@@ -559,8 +611,6 @@ abstract class AppInstaller extends DefaultTask {
     /*--linux-deb-maintainer <email address>
           Maintainer for .deb package*/
     String debPackageMaintaner = null
-
-
 
 
     /*
