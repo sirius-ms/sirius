@@ -390,18 +390,17 @@ subprojects {
                 f = file("$appRootTarget/bin/sirius")
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "sh"
-                templateBinding.classPath = "\$JAR_HOME/*:\$GUROBI_HOME/lib/gurobi.jar:\$CPLEX_HOME/lib/cplex.jar"
-                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/lib/native:\$APP_HOME/lib/runtime/lib"
+                templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
+                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\\\"\$GUROBI_HOME/lib\\\":\\\"\$CPLEX_HOME/bin/x86-64_linux\\\":\\\"\$APP_HOME/lib/native\\\":\\\"\$APP_HOME/lib/runtime/lib\\\""
                 templateBinding.javaCommand = "\$APP_HOME/lib/runtime/bin/java"
                 templateBinding.libraryPathKey = "LD_LIBRARY_PATH"
-                templateBinding.libraryPathVal = "\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/lib/native:\$APP_HOME/lib/runtime/lib:\$LD_LIBRARY_PATH"
+                templateBinding.libraryPathVal = "\\\"\$GUROBI_HOME/lib\\\":\\\"\$CPLEX_HOME/bin/x86-64_linux\\\":\\\"\$APP_HOME/lib/native\\\":\\\"\$APP_HOME/lib/runtime/lib\\\":\$LD_LIBRARY_PATH"
                 templateBinding.jarHome = "\$APP_HOME/lib/app"
             } else if (OS.isMacOsX()) {
                 f = file("$appRootTarget/MacOS/sirius")
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "zsh"
-                templateBinding.classPath = "\$JAR_HOME/*:\$GUROBI_HOME/lib/gurobi.jar:\$CPLEX_HOME/lib/cplex.jar"
-                templateBinding.classPath = "\$JAR_HOME/*:\$GUROBI_HOME/lib:\$CPLEX_HOME/lib"
+                templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
                 templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/native:\$APP_HOME/runtime/Contents/Home/lib"
                 templateBinding.javaCommand = "\$APP_HOME/runtime/Contents/Home/bin/java"
                 templateBinding.libraryPathKey = "DYLD_LIBRARY_PATH"
