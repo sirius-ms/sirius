@@ -137,7 +137,7 @@ task multiOSImage(group: 'distribution') {
                     it.writeLine('# Add location of jar files for Classpath (STANDARD THIRDPARTY configuration)\n' +
                             'JAR_HOME="$APP_HOME/../../../All/Sirius/app"\n' +
                             '\n' +
-                            'if ![ -d "$JAR_HOME" ]; then\n' +
+                            'if ! [ -d "$JAR_HOME" ]; then\n' +
                             '  # $JAR_HOME does not exist: assuming FLAT THIRDPARTY configuration\n' +
                             '  JAR_HOME="$APP_HOME/app"\n' +
                             'fi')
@@ -154,7 +154,7 @@ task multiOSImage(group: 'distribution') {
                     it.writeLine('# Add location of jar files for Classpath (default standard THIRDPARTY configuration)\n' +
                             'JAR_HOME="$APP_HOME/../../../All/Sirius/app"\n' +
                             '\n' +
-                            'if ![ -d "$JAR_HOME" ]; then\n' +
+                            'if ! [ -d "$JAR_HOME" ]; then\n' +
                             '  # $JAR_HOME not exist: assuming flat THIRDPARTY configuration\n' +
                             '  JAR_HOME="$APP_HOME/app"\n' +
                             'fi')
