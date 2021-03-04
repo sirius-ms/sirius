@@ -2,7 +2,6 @@ import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
 
 dependencies {
     compile project(':sirius_gui')
-//    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
@@ -15,6 +14,7 @@ launch4j{
     jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
 }
 
+//additional GUI win launcher
 task createGuiExe(type: Launch4jLibraryTask) {
     outfile = 'sirius-gui.exe'
     fileDescription = 'SIRIUS graphical user interface'
@@ -31,9 +31,7 @@ distImage {
     mainJarName = getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
     winConsole = false
     macPackageName = 'SIRIUS'
-    if (OS.isWindows()) {
-
-    } else {
+    if (!OS.isWindows()) { //additional windows launchers are handled by launch4j
         launchers = ["sirius-gui": file("${rootDir}/scripts/${OS.isMacOsX() ? "sirius-gui.zsh" : "sirius-gui.sh"}")]
     }
 
@@ -56,13 +54,3 @@ publishing {
         }
     }
 }
-
-/*
-task runGUI(type: Exec, dependsOn: jpackageImage , group: 'application') {
-    doFirst {
-        getLogger().lifecycle("====> Note: This uses the Systen JRE!")
-    }
-    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}-gui").toFile()
-    commandLine([command.absolutePath])
-}*/
-
