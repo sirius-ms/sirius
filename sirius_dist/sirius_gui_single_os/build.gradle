@@ -1,3 +1,5 @@
+import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
+
 dependencies {
     compile project(':sirius_gui')
 //    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
@@ -8,6 +10,18 @@ dependencies {
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 
+launch4j{
+    mainClassName = project.mainClassName
+    jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
+}
+
+task createGuiExe(type: Launch4jLibraryTask) {
+    outfile = 'sirius-gui.exe'
+    fileDescription = 'SIRIUS graphical user interface'
+    headerType = "gui"
+    cmdLine = "gui"
+}
+
 distImage {
     dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
     mainClass = mainClassName
@@ -15,7 +29,6 @@ distImage {
     args = ['gui']
     runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageFX').outputs.files.singleFile
     mainJarName = getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
-    launchers = ['sirius': getRootProject().rootDir.toPath().resolve('jpackage').resolve('cli-launcher.properties').toFile()]
     winConsole = false
     macPackageName = 'SIRIUS'
     if (OS.isWindows()) {

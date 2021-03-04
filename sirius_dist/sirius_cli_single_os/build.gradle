@@ -5,6 +5,10 @@ dependencies {
 }
 
 mainClassName = 'de.unijena.bioinf.ms.frontend.SiriusCLIApplication'
+launch4j{
+    mainClassName = project.mainClassName
+    jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_cli').tasks.getByName('jar').outputs.files.singleFile.getName()
+}
 
 distImage {
     dependsOn getParent().tasks.getByName('extractRuntimeImageHeadless')

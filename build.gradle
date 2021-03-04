@@ -9,7 +9,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'edu.sc.seis.gradle:launch4j:2.4.6'
+//        classpath 'edu.sc.seis.gradle:launch4j:2.4.9'
         classpath 'commons-configuration:commons-configuration:1.10'
         classpath "com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE"
     }
@@ -157,7 +157,6 @@ allprojects {
 
 subprojects {
     apply plugin: 'application'
-    apply plugin: 'edu.sc.seis.launch4j'
 
 
     task listDependecies {
