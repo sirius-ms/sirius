@@ -7,11 +7,7 @@ import gurobi.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-
 public class GrbSolver extends AbstractSolver{
-    private final static String[] libs = new String[]{"gurobi91"};
-
     public final static IlpFactory<GrbSolver> Factory = new IlpFactory<>() {
         protected GRBEnv env = getDefaultEnv();
 
@@ -196,7 +192,6 @@ public class GrbSolver extends AbstractSolver{
 
     private static GRBEnv getDefaultEnv() {
         try {
-            Arrays.stream(libs).forEach(System::loadLibrary);
             final GRBEnv env = new GRBEnv();
             env.set(GRB.IntParam.OutputFlag, 0);
             return env;
