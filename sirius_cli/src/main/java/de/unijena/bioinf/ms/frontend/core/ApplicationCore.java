@@ -276,7 +276,7 @@ public abstract class ApplicationCore {
 
 
             DEFAULT_LOGGER.info(TreeBuilderFactory.ILP_VERSIONS_STRING);
-            DEFAULT_LOGGER.info("Treebuilder priorities are: " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()));
+            DEFAULT_LOGGER.info("Treebuilder priorities loaded from 'sirius.properties' are: " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()));
 
             measureTime("DONE init Configs, start Hardware Check");
 
