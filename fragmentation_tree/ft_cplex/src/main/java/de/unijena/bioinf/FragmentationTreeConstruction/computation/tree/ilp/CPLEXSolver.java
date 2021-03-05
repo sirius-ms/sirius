@@ -41,6 +41,15 @@ public class CPLEXSolver extends AbstractSolver {
         public String name() {
             return "CPLEX";
         }
+
+        @Override
+        public void checkSolver() throws ILPSolverException {
+            try {
+                new IloCplex();
+            } catch (Throwable e) {
+                throw new ILPSolverException(e);
+            }
+        }
     };
 
     protected CPLEXSolver(FGraph graph, ProcessedInput input, TreeBuilder.FluentInterface options) {

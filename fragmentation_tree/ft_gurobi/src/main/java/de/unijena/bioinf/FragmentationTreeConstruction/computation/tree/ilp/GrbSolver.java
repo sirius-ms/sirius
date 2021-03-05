@@ -25,6 +25,15 @@ public class GrbSolver extends AbstractSolver{
         public String name() {
             return "Gurobi";
         }
+
+        @Override
+        public void checkSolver() throws ILPSolverException {
+            try {
+                new GRBModel(env).getEnv();
+            } catch (Throwable e) {
+                throw new ILPSolverException(e);
+            }
+        }
     };
 
     protected GRBModel model;

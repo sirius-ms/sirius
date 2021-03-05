@@ -26,6 +26,5 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 
     compile project(':agents')
-    compileOnly "com.gurobi:gurobi-jar:$gurobi_version"
-
+    compile "com.gurobi:gurobi-jar:$gurobi_version"
 }
