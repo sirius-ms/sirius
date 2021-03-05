@@ -1,12 +1,26 @@
+import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
+
 dependencies {
     compile project(':sirius_gui')
-//    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
 
 /*################### Environment variables ################### */
 mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
+
+launch4j{
+    mainClassName = project.mainClassName
+    jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
+}
+
+//additional GUI win launcher
+task createGuiExe(type: Launch4jLibraryTask) {
+    outfile = 'sirius-gui.exe'
+    fileDescription = 'SIRIUS graphical user interface'
+    headerType = "gui"
+    cmdLine = "gui"
+}
 
 distImage {
     dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
@@ -15,12 +29,15 @@ distImage {
     args = ['gui']
     runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageFX').outputs.files.singleFile
     mainJarName = getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
-    launchers = ['sirius':getRootProject().rootDir.toPath().resolve('jpackage').resolve('cli-launcher.properties').toFile()]
     winConsole = false
     macPackageName = 'SIRIUS'
+    if (!OS.isWindows()) { //additional windows launchers are handled by launch4j
+        launchers = ["sirius-gui": file("${rootDir}/scripts/${OS.isMacOsX() ? "sirius-gui.zsh" : "sirius-gui.sh"}")]
+    }
+
 }
 
-distInstaller{
+distInstaller {
     linuxShortcut = true
 }
 
@@ -37,13 +54,3 @@ publishing {
         }
     }
 }
-
-/*
-task runGUI(type: Exec, dependsOn: jpackageImage , group: 'application') {
-    doFirst {
-        getLogger().lifecycle("====> Note: This uses the Systen JRE!")
-    }
-    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve("bin/${project.appName}-gui").toFile()
-    commandLine([command.absolutePath])
-}*/
-

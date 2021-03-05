@@ -44,6 +44,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -147,11 +148,11 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     //if we want to add taskbar stuff we can configure this here
     private void configureTaskbar() {
-        /*if (Taskbar.isTaskbarSupported()){
-            LoggerFactory.getLogger(getClass()).info("Adding Taskbar support");
+        if (Taskbar.isTaskbarSupported()){
+            LoggerFactory.getLogger(getClass()).debug("Adding Taskbar support");
             if (Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE))
                 Taskbar.getTaskbar().setIconImage(Icons.SIRIUS_APP_IMAGE);
-        }*/
+        }
     }
 
     public void setTitlePath(String path) {

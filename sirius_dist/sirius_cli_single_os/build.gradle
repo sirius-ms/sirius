@@ -1,10 +1,13 @@
 dependencies {
     compile project(':sirius_cli')
-//    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
 mainClassName = 'de.unijena.bioinf.ms.frontend.SiriusCLIApplication'
+launch4j{
+    mainClassName = project.mainClassName
+    jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_cli').tasks.getByName('jar').outputs.files.singleFile.getName()
+}
 
 distImage {
     dependsOn getParent().tasks.getByName('extractRuntimeImageHeadless')
