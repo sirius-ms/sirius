@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 public class CLPSolver extends AbstractSolver {
 
-    public final static IlpFactory<CLPSolver> Factory = new IlpFactory<CLPSolver>() {
+    public final static IlpFactory<CLPSolver> Factory = new IlpFactory<>() {
         @Override
         public CLPSolver create(ProcessedInput input, FGraph graph, TreeBuilder.FluentInterface options) {
             return new CLPSolver(graph, input, options);
@@ -47,6 +47,15 @@ public class CLPSolver extends AbstractSolver {
         @Override
         public String name() {
             return "COIN-OR LP";
+        }
+
+        @Override
+        public void checkSolver() throws ILPSolverException {
+            try {
+                new CLPModel_JNI(0,0);
+            } catch (Throwable e) {
+                throw new ILPSolverException(e);
+            }
         }
     };
 
