@@ -6,6 +6,8 @@ import java.util.stream.Collectors
 plugins {
     id 'edu.sc.seis.launch4j' version '2.4.6'
 }
+
+
 ext {
     OS = DefaultNativePlatform.currentOperatingSystem
 
@@ -315,22 +317,29 @@ subprojects {
             File nativeLibsTarget
             File appRootTarget
             File launcherTarget
+            File libTarget
             if (OS.isLinux()) {
                 appRootTarget = outputDir.toPath().resolve(imageName).toFile()
                 nativeLibsTarget = appRootTarget.toPath().resolve("lib/native").toFile()
                 launcherTarget = appRootTarget.toPath().resolve("bin").toFile()
+                libTarget = appRootTarget.toPath().resolve("lib/app").toFile()
             } else if (OS.isWindows()) {
                 appRootTarget = outputDir.toPath().resolve(imageName).toFile()
                 nativeLibsTarget = appRootTarget
                 launcherTarget = appRootTarget
+                libTarget = appRootTarget.toPath().resolve("app").toFile()
             } else if (OS.isMacOsX()) {
                 appRootTarget = outputDir.toPath().resolve("${imageName}.app/Contents").toFile()
                 nativeLibsTarget = appRootTarget.toPath().resolve("native").toFile()
                 launcherTarget = appRootTarget.toPath().resolve("MacOS").toFile()
+                libTarget = appRootTarget.toPath().resolve("app").toFile()
             } else {
                 throw new RuntimeException("Could not detect OS for packaging!")
             }
 
+            project.delete {
+                delete fileTree(dir: libTarget, includes: libExclude)
+            }
 
             copy {
                 from("${glpkPath}/$nativeLibs/") {
@@ -352,12 +361,16 @@ subprojects {
 
             if (OS.isWindows()) {
                 //delete exes because they are write protected
-                appRootTarget.listFiles(new FilenameFilter(){
+                /*appRootTarget.listFiles(new FilenameFilter(){
                     @Override
                     boolean accept(File dir, String name) {
                         return name.endsWith(".exe")
                     }
                 }).iterator().forEachRemaining({i ->i.delete()})
+*/
+                project.delete {
+                    delete fileTree(dir: appRootTarget, includes: "*.exe")
+                }
 
                 copy {
                     from("${buildDir}/launch4j") {
@@ -414,8 +427,6 @@ subprojects {
                 templateBinding.jarHome = "%APP_HOME%\\app"
                 templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
                 templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
-
-                //todo create exe from batch?
             } else {
                 throw new IllegalArgumentException("Cannot determine operating system for build")
             }
