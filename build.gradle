@@ -9,7 +9,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'edu.sc.seis.gradle:launch4j:2.4.6'
+//        classpath 'edu.sc.seis.gradle:launch4j:2.4.9'
         classpath 'commons-configuration:commons-configuration:1.10'
         classpath "com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE"
     }
@@ -23,8 +23,8 @@ plugins {
 //Global Properties
 ext {
     // version for bundeled JRE
-    jre_version = '11.0.9.1'
-    zulu_jre_version = '11.43.55'
+    jre_version = '15.0.2'
+    zulu_jre_version = '15.29.15'
 
     //version for external libraries
     slf4j_version = '1.7.25'
@@ -157,7 +157,6 @@ allprojects {
 
 subprojects {
     apply plugin: 'application'
-    apply plugin: 'edu.sc.seis.launch4j'
 
 
     task listDependecies {
