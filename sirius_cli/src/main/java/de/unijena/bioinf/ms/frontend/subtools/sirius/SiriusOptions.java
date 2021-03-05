@@ -172,7 +172,6 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     @Option(names = {"--solver", "--ilp-solver"}, description = {"Set ILP solver to be used for fragmentation computation. Valid values: 'CLP' (included), 'CPLEX', 'GUROBI'.", "For GUROBI and CPLEX environment variables need to be configure (see Manual)."})
     public void setSolver(TreeBuilderFactory.DefaultBuilder solver) {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", solver.name());
-        TreeBuilderFactory.setBuilderPriorities(solver); //just to ensure that it is replaced even if it is already set.
     }
 
 
