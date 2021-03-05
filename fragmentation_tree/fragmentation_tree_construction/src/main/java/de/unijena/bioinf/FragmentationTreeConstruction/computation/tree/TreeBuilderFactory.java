@@ -126,7 +126,7 @@ public final class TreeBuilderFactory {
         try {
             return (IlpFactory<T>) builderClass.getDeclaredField("Factory").get(null);
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING);
+            LoggerFactory.getLogger(this.getClass()).error("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING, e);
             LoggerFactory.getLogger(this.getClass()).debug("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }

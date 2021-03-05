@@ -60,6 +60,7 @@
 
 package de.unijena.bioinf.ms.agents;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -170,6 +171,7 @@ public class ILPAgent {
                 if (Files.isDirectory(p)) {
                     addClassPath(p.resolve("gurobi.jar").toFile());
                     addLibraryPath(p.toAbsolutePath().toString());
+                    addLibraryPath(Path.of(env).resolve("bin").toAbsolutePath().toString()); // On Win jni lib is in bin dir Oo
                 }else {
                     throw new Exception("Could not determine a valid Gurobi native libs directory!");
                 }
