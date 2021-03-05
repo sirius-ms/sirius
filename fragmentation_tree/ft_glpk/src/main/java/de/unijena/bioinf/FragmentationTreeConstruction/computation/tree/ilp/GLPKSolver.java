@@ -41,11 +41,12 @@ public class GLPKSolver extends AbstractSolver {
     protected glp_prob LP;
     protected glp_iocp parm;
 
-    public final static IlpFactory<GLPKSolver> Factory = new IlpFactory<GLPKSolver>() {
+    public final static IlpFactory<GLPKSolver> Factory = new IlpFactory<>() {
         @Override
         public GLPKSolver create(ProcessedInput input, FGraph graph, TreeBuilder.FluentInterface options) {
-            return new GLPKSolver(graph,input,options);
+            return new GLPKSolver(graph, input, options);
         }
+
         @Override
         public boolean isThreadSafe() {
             return false;
@@ -54,6 +55,15 @@ public class GLPKSolver extends AbstractSolver {
         @Override
         public String name() {
             return "GLPK";
+        }
+
+        @Override
+        public void checkSolver() throws ILPSolverException {
+            try {
+                GLPK.glp_create_prob();
+            } catch (Throwable e) {
+                throw new ILPSolverException(e);
+            }
         }
     };
 
