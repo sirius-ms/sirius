@@ -7,13 +7,17 @@ import gurobi.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GrbSolver extends AbstractSolver{
+import java.util.Arrays;
 
-    public final static IlpFactory<GrbSolver> Factory = new IlpFactory<GrbSolver>() {
+public class GrbSolver extends AbstractSolver{
+    private final static String[] libs = new String[]{"gurobi91"};
+
+    public final static IlpFactory<GrbSolver> Factory = new IlpFactory<>() {
         protected GRBEnv env = getDefaultEnv();
+
         @Override
         public GrbSolver create(ProcessedInput input, FGraph graph, TreeBuilder.FluentInterface options) {
-            return new GrbSolver(env, graph,input,options);
+            return new GrbSolver(env, graph, input, options);
         }
 
         @Override
@@ -192,6 +196,7 @@ public class GrbSolver extends AbstractSolver{
 
     private static GRBEnv getDefaultEnv() {
         try {
+            Arrays.stream(libs).forEach(System::loadLibrary);
             final GRBEnv env = new GRBEnv();
             env.set(GRB.IntParam.OutputFlag, 0);
             return env;
