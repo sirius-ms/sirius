@@ -45,8 +45,7 @@ ext {
     lib_path = 'lib'
     native_path = 'native'
 
-    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar:${APP_HOME}/' + "${lib_path}/*"
-    libExclude = ['gurobi-*.jar', 'cplex-*.jar']
+    libExclude = ['gurobi-jar-*.jar', 'cplex-*.jar']
 
 
     jetbrains_version = "17.0.0"
@@ -135,6 +134,7 @@ allprojects {
     }
 
     dependencies {
+
         annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
         compile 'net.sf.trove4j:core:3.1.0'
         //switched from 'net.sf.trove4j:trove4j:3.0.3' which seems to be buggy and no longer supported
@@ -142,6 +142,10 @@ allprojects {
         compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
 
         testCompile group: 'junit', name: 'junit', version: '4.12'
+
+        // intellij seems to ignore other scopes than compile so we need to have this here and remove it before distribution
+//        compile "com.gurobi:gurobi-jar:9.1.1"
+//        compile "cplex:cplex:12.7.1"
     }
 
     //there are some outdated incompatible trove dependencies in some libs.
