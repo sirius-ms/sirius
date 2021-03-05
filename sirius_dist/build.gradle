@@ -401,10 +401,10 @@ subprojects {
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "zsh"
                 templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
-                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_linux:\$APP_HOME/native:\$APP_HOME/runtime/Contents/Home/lib"
+                templateBinding.jvmOpts = "${Arrays.stream(jArgs).collect(Collectors.joining(' '))} -Djava.library.path=\\\"\$GUROBI_HOME/lib\\\":\\\"\$CPLEX_HOME/bin/x86-64_linux\\\":\\\"\$APP_HOME/native\\\":\\\"\$APP_HOME/runtime/Contents/Home/lib\\\""
                 templateBinding.javaCommand = "\$APP_HOME/runtime/Contents/Home/bin/java"
                 templateBinding.libraryPathKey = "DYLD_LIBRARY_PATH"
-                templateBinding.libraryPathVal = "\$GUROBI_HOME/lib:\$CPLEX_HOME/bin/x86-64_osx:\$APP_HOME/native:\$APP_HOME/runtime/Contents/Home/lib:\$DYLD_LIBRARY_PATH"
+                templateBinding.libraryPathVal = "\\\"\$GUROBI_HOME/lib\\\":\\\"\$CPLEX_HOME/bin/x86-64_osx\\\":\\\"\$APP_HOME/native\\\":\\\"\$APP_HOME/runtime/Contents/Home/lib\\\":\\\"\$DYLD_LIBRARY_PATH\\\""
                 templateBinding.jarHome = "\$APP_HOME/app"
             } else if (OS.isWindows()) {
                 f = file("$appRootTarget/sirius.bat")
