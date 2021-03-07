@@ -50,7 +50,8 @@ public class ProjectSpaceIO {
 
         if (isZipProjectSpace(path)) {
             space = newZipProjectSpace(path, false);
-        } else if (isExistingProjectspaceDirectory(path) || (Files.isDirectory(path) && FileUtils.listAndClose(path, Stream::count) == 0)) {
+        } else if (isExistingProjectspaceDirectory(path) || (Files.isDirectory(path) &&
+                FileUtils.listAndClose(path, s -> s.filter(p -> !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME)).count()) == 0)) {
             doTSVConversion(path);
             space = new SiriusProjectSpace(configuration, path);
         } else throw new IOException("Location '" + path + "' is not a valid Project Location");
