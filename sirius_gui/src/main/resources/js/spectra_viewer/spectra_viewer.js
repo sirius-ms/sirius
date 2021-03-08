@@ -36,8 +36,11 @@ document.onkeyup = function(e) {
         }
         if (new_selected !== -1) {
             svg.select("#peak"+selected.leftClick).attr("class", resetColor);
+            if (selected.leftClick === selected.hover) {
+            	svg.select("#peak"+selected.leftClick).classed("peak_hover", true);
+            }
             selected.leftClick = new_selected;
-            svg.select("#peak"+selected.leftClick).attr("class", "peak_select peak");
+            svg.select("#peak"+selected.leftClick).classed("peak_select", true);
             document.getElementById("anno_leftClick").innerText = annotation(data.spectra[0].peaks[selected.leftClick]).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
             showStructure(selected.leftClick);
         }
