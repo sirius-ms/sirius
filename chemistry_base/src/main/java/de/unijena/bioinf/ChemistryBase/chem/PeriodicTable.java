@@ -24,6 +24,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.utils.*;
+import de.unijena.bioinf.ChemistryBase.exceptions.MultimereException;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -322,7 +323,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
 
     private PrecursorIonType parseIonType(String name) throws UnknownElementException {
         if (MULTIMERE_PATTERN.matcher(name).find())
-            throw new IllegalArgumentException("Do not support multiplier before a molecular formula: '" + name + "'");
+            throw new MultimereException("Do not support multiplier before a molecular formula: '" + name + "'");
         // tokenize String
         final String ACN = "CH3CN"; // ACN
         final String FA = "H2CO2"; // FA
@@ -362,7 +363,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
             switch (c) {
                 case '(':
                     if (number != 1) {
-                        throw new IllegalArgumentException("Do not support multiplier before a molecular formula: '" + name + "'");
+                        throw new MultimereException("Do not support multiplier before a molecular formula: '" + name + "'");
                     } else break;
                 case ')':
                     break;
@@ -585,7 +586,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         if (charge == 1) return UNKNOWN_POSITIVE_IONTYPE;
         else if (charge == -1) return UNKNOWN_NEGATIVE_IONTYPE;
         else if (charge == 0) throw new IllegalArgumentException("unknown ion type with unknown charge");
-        throw new MultipleChargeException("Multiple charges are not allowed!");
+        throw new MultipleChargeException("Do not support multiple charges yet.");
     }
 
     private final static class ElementStack {

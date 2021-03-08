@@ -63,7 +63,7 @@ public final class ParameterConfig {
     public void write(Writer writer) throws IOException {
         try {
             final PropertiesConfiguration toWrite = SiriusConfigUtils.newConfiguration();
-            config.getKeys().forEachRemaining(key -> toWrite.setProperty(key, config.getString(key)));
+            getConfigKeys().forEachRemaining(key -> toWrite.setProperty(key, config.getString(key)));
             layout.save(toWrite, writer);
         } catch (ConfigurationException e) {
             throw new IOException(e);
