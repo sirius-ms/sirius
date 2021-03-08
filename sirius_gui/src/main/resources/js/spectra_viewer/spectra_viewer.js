@@ -246,6 +246,11 @@ var mousedown = function(d, i) {
     }
 };
 
+function rightClickOnly() {
+	let event = d3.event;
+	return event.button === 2;
+};
+
 function init() {
     d3.select("#container").html("");
     resize();
@@ -396,8 +401,10 @@ function spectrumPlot(spectrum, structureView) {
             .attr("y", function(d) { return y(d.intensity); })
             .attr("height", function(d) { return h - y(d.intensity); });
     };
-    brush = d3.brushX().extent( [ [0,0], [w, h] ]);
-    brush.on("end", updateChart);
+    brush = d3.brushX()
+    	.extent( [ [0,0], [w,h] ])
+    	.filter(rightClickOnly)
+    	.on("end", updateChart);
     peakArea.select("#brushArea").call(brush);
 
     // add Peaks
@@ -549,8 +556,10 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("y", h/2)
             .attr("height", function(d) { return y2(d.intensity); });
     };
-    brush = d3.brushX().extent( [ [0,0], [w-20, h] ]);
-    brush.on("end", updateChart);
+    brush = d3.brushX()
+    	.extent( [ [0,0], [w-20, h] ])
+    	.filter(rightClickOnly)
+    	.on("end", updateChart);
     peakArea.select("#brushArea").call(brush);
 
     // Peaks 1
