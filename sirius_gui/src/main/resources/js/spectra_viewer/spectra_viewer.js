@@ -15,7 +15,11 @@ anno_str = [],
 view = {mirror: "normal"}; // alternativ: "simple"
 
 
-d3.select("body").append("div").attr("id", "container");
+d3.select("body")
+    .attr("ondragstart", "return false;")
+    .attr("ondrop", "return false;")
+    .append("div")
+        .attr("id", "container");
 
 window.addEventListener('contextmenu', event => event.preventDefault());
 
@@ -278,7 +282,7 @@ function init() {
         .text("Relative intensity");
 
     svg.selectAll(".label")
-        .attr("opacity", 0);
+        .attr("visibility", "hidden");
     //tooltip
     tooltip = d3.select("#container")
         .append("div")
@@ -310,7 +314,7 @@ function initStructureView() {
             .append('div')
             .attr("id", "str_border")
             .style("height", w/4+"px")
-            .style("width", w/4+"px")
+            .style("width", w/4+"px");
     let anno_top = w/4+10; // because padding=5
     annoArea = d3.select("#structureView")
         .append('p')
@@ -378,7 +382,7 @@ function spectrumPlot(spectrum, structureView) {
         .domain([0, 1])
         .range([h, 0]);
     svg.append("g").call(d3.axisLeft(y));
-    svg.selectAll(".label").attr("opacity", 1);
+    svg.selectAll(".label").attr("visibility", "visible");
     
     // brushing
     function updateChart() {
@@ -512,7 +516,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
     svg.append("g")
         .attr("transform", "translate(0," + h/2 + ")")
         .call(d3.axisLeft(y2));
-    svg.selectAll(".label").attr("opacity", 1);
+    svg.selectAll(".label").attr("visibility", "visible");
 
     // legends: 2 spectrum names
     function firstNChar(str, num) { return (str.length > num) ? str.slice(0, num) : str; };
