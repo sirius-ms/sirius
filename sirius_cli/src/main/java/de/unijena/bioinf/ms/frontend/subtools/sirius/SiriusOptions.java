@@ -167,6 +167,18 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
 
+    //heuristic threshods
+    @Option(names = {"--heuristic"}, descriptionKey ="UseHeuristic.mzToUseHeuristic" , description = "Enable heuristic preprocessing for compounds >= the specified m/z.")
+    public void setMzToUseHeuristic(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("UseHeuristic.mzToUseHeuristic", value);
+    }
+
+    @Option(names = {"--heuristic-only"}, descriptionKey ="UseHeuristic.mzToUseHeuristicOnly" , description = "Use only heuristic tree computation compounds >= the specified m/z.")
+    public void setMzToUseHeuristicOnly(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("UseHeuristic.mzToUseHeuristicOnly", value);
+    }
+
+
     //ILP solver from the command Line
     @Option(names = {"--solver", "--ilp-solver"}, description = {"Set ILP solver to be used for fragmentation computation. Valid values: 'CLP' (included), 'CPLEX', 'GUROBI'.", "For GUROBI and CPLEX environment variables need to be configure (see Manual)."})
     public void setSolver(TreeBuilderFactory.DefaultBuilder solver) {
