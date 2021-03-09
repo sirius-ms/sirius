@@ -66,6 +66,3 @@ body {
 .highlight_atom { fill: #4169E1; }
 .rest_bond { stroke: #A9A9A9; }
 .rest_atom { fill: #A9A9A9; }
-
-.anno {color: #808080;}
-#anno_leftClick { color: #4169E1; }
