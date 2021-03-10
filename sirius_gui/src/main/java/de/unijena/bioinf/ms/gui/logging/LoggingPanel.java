@@ -51,8 +51,7 @@ public class LoggingPanel extends JPanel {
         logger.setLevel(Level.ALL);
 
         JTextArea textArea = new JTextArea();
-        OutputStream os = new TextAreaOutputStream(textArea);
-        logger.addHandler(new TextAreaHandler(os, Level.ALL));
+        logger.addHandler(new TextAreaHandler(textArea, Level.ALL));
 
         LoggingPanel logPane = new LoggingPanel(textArea);
 
