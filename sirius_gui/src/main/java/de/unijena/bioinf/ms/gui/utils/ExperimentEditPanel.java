@@ -58,13 +58,6 @@ public class ExperimentEditPanel extends JPanel {
         add(new TextHeaderBoxPanel("Molecular Formula", formulaTF));
     }
 
-//    public ExperimentEditPanel(InstanceBean ec) {
-//        this(true);
-//        if (ec != null) {
-//            setData(ec);
-//        }
-//    }
-
     public double getSelectedIonMass() {
         return precursorSelection == null ? Double.NaN :  precursorSelection.getSelectedIonMass();
     }
