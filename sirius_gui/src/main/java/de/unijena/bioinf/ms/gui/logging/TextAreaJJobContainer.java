@@ -19,12 +19,10 @@
 
 package de.unijena.bioinf.ms.gui.logging;
 
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.jjobs.SwingJJobContainer;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,14 +35,14 @@ public class TextAreaJJobContainer<R> extends SwingJJobContainer<R> {
         super(sourceJob, jobName);
         jobLog = new JTextArea();
         textAreaLogHandler = connectJobLogToTextArea();
-        registerJobLog(sourceJob);
+        registerJobLog();
     }
 
     public TextAreaJJobContainer(ProgressJJob<R> sourceJob, String jobName, String jobCategory) {
         super(sourceJob, jobName, jobCategory);
         jobLog = new JTextArea();
         textAreaLogHandler = connectJobLogToTextArea();
-        registerJobLog(sourceJob);
+        registerJobLog();
     }
 
     public JTextArea getJobLog() {
@@ -52,21 +50,19 @@ public class TextAreaJJobContainer<R> extends SwingJJobContainer<R> {
     }
 
     private TextAreaHandler connectJobLogToTextArea() {
-        return new TextAreaHandler(new TextAreaOutputStream(jobLog), Level.INFO);
+        return new TextAreaHandler(jobLog, Level.INFO);
     }
 
-    public void registerJobLogs(JJob... jobs) {
-        registerJobLogs(Arrays.asList(jobs));
+    public void registerJobLog() {
+        Logger.getLogger(sourceJob.loggerKey()).addHandler(textAreaLogHandler);
     }
 
-    public void registerJobLogs(Iterable<JJob> jobs) {
-        for (JJob job : jobs) {
-            registerJobLog(job);
+    @Override
+    public void clean() {
+        try {
+            Logger.getLogger(sourceJob.loggerKey()).removeHandler(textAreaLogHandler);
+        } finally {
+            super.clean();
         }
-    }
-
-    public void registerJobLog(JJob job) {
-        Logger logger = Logger.getLogger(job.loggerKey());
-        logger.addHandler(textAreaLogHandler);
     }
 }
