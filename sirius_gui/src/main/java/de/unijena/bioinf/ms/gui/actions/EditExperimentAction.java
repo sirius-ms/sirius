@@ -59,7 +59,6 @@ public class EditExperimentAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         InstanceBean ec = MF.getCompoundListSelectionModel().getSelected().get(0);
         if (ec == null) return;
-        String guiname = ec.getGUIName();
         LoadController lc = new LoadController(MF, ec);
         lc.showDialog();
     }
