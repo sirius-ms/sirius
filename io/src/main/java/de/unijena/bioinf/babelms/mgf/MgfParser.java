@@ -22,6 +22,7 @@
 package de.unijena.bioinf.babelms.mgf;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.exceptions.MultimereException;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -39,7 +40,6 @@ import java.util.regex.Pattern;
 import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
 
 public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
-
     private static enum SpecType {
         UNKNOWN, MS1, MSMS, CORRELATED;
     }
@@ -84,11 +84,14 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         protected boolean ignoreUnsupportedIonTypes;
 
         public MgfParserInstance(BufferedReader reader) {
+            this(reader, false);
+        }
+        public MgfParserInstance(BufferedReader reader, boolean ignoreUnsupportedIonTypes) {
             this.reader = reader;
             this.prototype = new MgfSpec();
             this.prototype.spectrum = new MutableMs2Spectrum();
             this.buffer = new ArrayDeque<MgfSpec>();
-            this.ignoreUnsupportedIonTypes = true;
+            this.ignoreUnsupportedIonTypes = ignoreUnsupportedIonTypes;
         }
 
         public boolean hasNext() throws IOException {
@@ -174,7 +177,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         } else {
 
                         }
-                    } catch (MultipleChargeException e) {
+                    } catch (MultipleChargeException | MultimereException e) {
                         LoggerFactory.getLogger(this.getClass()).warn(e.getMessage());
                         if (!ignoreUnsupportedIonTypes) throw (e);
                         else return;
@@ -249,8 +252,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         lastErrorFeatureId = spec.featureId;
                     }
 
-                    if (e instanceof MultipleChargeException) {
-                        LoggerFactory.getLogger(this.getClass()).warn("Compound " + lastErrorFeatureId + " ignored. SIRIUS does not support multiple charged compounds.");
+                    if (e instanceof MultipleChargeException || e instanceof MultimereException) {
+                        LoggerFactory.getLogger(this.getClass()).warn("Compound " + lastErrorFeatureId + " ignored because of: " +  e.getMessage());
                     } else {
                         LoggerFactory.getLogger(this.getClass()).error("Compund " + lastErrorFeatureId + " ignored because of unexpected parsing error.", e);
                     }
