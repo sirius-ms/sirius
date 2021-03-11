@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.WriteSummaries;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -33,7 +34,10 @@ import picocli.CommandLine.Option;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 
 /**
@@ -57,20 +61,23 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         this.spaceManagerFactory = spaceManagerFactory;
     }
 
-    public enum LogLevel {OFF, SEVERE, WARNING, INFO, CONFIG, FINE, FINER, FINEST, ALL}
+    public enum LogLevel {
+        SEVERE(Level.SEVERE), WARNING(Level.WARNING), INFO(Level.INFO), FINER(Level.FINER), ALL(Level.ALL);
+        public final Level level;
+
+        LogLevel(Level level) {
+            this.level = level;
+        }
+    }
 
     @Option(names = {"--log", "--loglevel"}, description = "Set logging level of the Jobs SIRIUS will execute. Valid values: ${COMPLETION-CANDIDATES}", order = 5, defaultValue = "WARNING")
-    public void setLogLevel(LogLevel loglevel) {
-        try {
-            LogManager.getLogManager().updateConfiguration(key -> {
-                if (key.equals("de.unijena.bioinf.jjobs.JJob.level"))
-                    return (k, v) -> loglevel.name();
-                else
-                    return (k, v) -> k;
-            });
-        } catch (IOException e) {
-            throw new CommandLine.PicocliException(e.getMessage());
-        }
+    public void setLogLevel(final LogLevel loglevel) {
+        Arrays.stream(LogManager.getLogManager().getLogger(JJob.DEFAULT_LOGGER_KEY).getHandlers())
+                .filter(h -> h instanceof ConsoleHandler).findFirst().ifPresent(h -> h.setFilter(r -> {
+            if (r.getLoggerName().equals(JJob.DEFAULT_LOGGER_KEY))
+                return r.getLevel().intValue() >= loglevel.level.intValue();
+            return true;
+        }));
     }
 
     @Option(names = {"--cores", "--processors"}, description = "Number of cpu cores to use. If not specified Sirius uses all available cores.", order = 10)

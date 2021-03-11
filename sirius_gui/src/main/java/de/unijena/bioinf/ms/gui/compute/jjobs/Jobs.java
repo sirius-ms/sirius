@@ -39,6 +39,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class Jobs {
     public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
@@ -55,6 +56,14 @@ public class Jobs {
     }
 
     public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, String jobName, String jobCategory) {
+        return submit(new TextAreaJJobContainer<>(j, jobName, jobCategory));
+    }
+
+    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, Supplier<String> jobName) {
+        return submit(new TextAreaJJobContainer<>(j, jobName));
+    }
+
+    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, Supplier<String> jobName, Supplier<String> jobCategory) {
         return submit(new TextAreaJJobContainer<>(j, jobName, jobCategory));
     }
 

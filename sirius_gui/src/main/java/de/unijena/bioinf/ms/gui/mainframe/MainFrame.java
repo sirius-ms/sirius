@@ -143,7 +143,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 
-        log = new LogDialog(null,false, Level.ALL);
+        log = new LogDialog(null,false, Level.INFO); //todo property
     }
 
     //if we want to add taskbar stuff we can configure this here

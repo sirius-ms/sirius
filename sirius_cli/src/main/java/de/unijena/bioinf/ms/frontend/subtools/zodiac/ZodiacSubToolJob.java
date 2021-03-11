@@ -24,7 +24,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -128,7 +127,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         for (Map.Entry<Ms2Experiment, List<FTree>> ms2ExperimentListEntry : ms2ExperimentToTreeCandidates.entrySet()) {
             Ms2Experiment experiment = ms2ExperimentListEntry.getKey();
             List<FTree> treeCandidates = ms2ExperimentListEntry.getValue();
-            boolean isPoorlyExplained = SiriusJobs.getGlobalJobManager().submitJob(treeQualityEvaluator.makeIsAllCandidatesPoorlyExplainSpectrumJob(treeCandidates)).awaitResult();
+            boolean isPoorlyExplained = submitJob(treeQualityEvaluator.makeIsAllCandidatesPoorlyExplainSpectrumJob(treeCandidates)).awaitResult();
             if (isPoorlyExplained) {
                 //update if poorly explained
                 CompoundQuality quality = experiment.getAnnotationOrNull(CompoundQuality.class);
@@ -207,7 +206,7 @@ public class ZodiacSubToolJob extends DataSetJob {
 
         //todo clustering disabled. Evaluate if it might help at any point?
         LoggerFactory.getLogger(ZodiacSubToolJob.class).info("RUN ZODIAC");
-        final ZodiacResultsWithClusters clusterResults = SiriusJobs.getGlobalJobManager().submitJob(
+        final ZodiacResultsWithClusters clusterResults = submitJob(
                 zodiac.makeComputeJob(zodiacEpochs.iterations, zodiacEpochs.burnInPeriod, zodiacEpochs.numberOfMarkovChains))
                 .awaitResult();
         final Map<Ms2Experiment, Map<FTree, ZodiacScore>> scoreResults = zodiac.getZodiacScoredTrees();
