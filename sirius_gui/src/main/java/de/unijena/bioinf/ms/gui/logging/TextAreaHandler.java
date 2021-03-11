@@ -25,10 +25,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.SimpleFormatter;
-import java.util.logging.StreamHandler;
+import java.util.logging.*;
 
 public class TextAreaHandler extends StreamHandler {
     private static final  int MAX_DOC_LENGTH = 100000;
@@ -59,17 +56,27 @@ public class TextAreaHandler extends StreamHandler {
                 area.getDocument().remove(0, docLength - MAX_DOC_LENGTH
                         + MAX_DOC_LENGTH / 10);
             } catch (BadLocationException e) {
-                LoggerFactory.getLogger(getClass()).warn("Error when shrinking log JTextArea",e);
+                LoggerFactory.getLogger(getClass()).warn("Error when shrinking log JTextArea", e);
             }
         }
     }
 
     private final JTextArea area;
+
     public TextAreaHandler(JTextArea area, Level level) {
+        this(area, level, null);
+    }
+
+    public TextAreaHandler(JTextArea area, Level level, Filter logFilter) {
         super();
         this.area = area;
         configure();
         setLevel(level);
+        setFilter(logFilter);
+    }
+
+    public JTextArea getArea() {
+        return area;
     }
 
     // [UnsynchronizedOverridesSynchronized] Unsynchronized method publish overrides synchronized method in StreamHandler

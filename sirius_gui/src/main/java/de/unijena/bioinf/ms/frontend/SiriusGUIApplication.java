@@ -67,8 +67,8 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
             TinyBackgroundJJob<Object> j = new TinyBackgroundJJob<>() {
                 @Override
                 protected Object compute() throws Exception {
-                    updateProgress(0, 7, 1, "Starting Application Core...");
                     ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
+                    updateProgress(0, 7, 1, "Starting Application Core...");
                     measureTime("Init Swing Job Manager");
                     SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(Math.min(defaultThreadNumber(), cpuThreads), 1));
                     ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());

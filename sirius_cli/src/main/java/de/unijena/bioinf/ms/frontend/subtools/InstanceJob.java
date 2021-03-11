@@ -88,7 +88,7 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
 
     @Override
     public String identifier() {
-        return super.identifier() + " | Instance: " + (input != null ? input.toString() : "Awaiting Instance!");
+        return super.identifier() + " | Instance: " + (input != null ? input.toString() : "<Awaiting Instance>");
     }
 
     protected void checkInput() {

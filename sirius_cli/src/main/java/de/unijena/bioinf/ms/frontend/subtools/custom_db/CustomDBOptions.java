@@ -78,7 +78,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     public class CustomDBWorkflow extends BasicJJob<Boolean> implements Workflow{
         final InputFilesOptions input;
         public CustomDBWorkflow(InputFilesOptions input) {
-            super(JJob.JobType.SCHEDULER, "CustomDatabaseImporter");
+            super(JJob.JobType.SCHEDULER);
             this.input = input;
         }
 

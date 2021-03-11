@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 public class FingeridSubToolJob extends InstanceJob {
 
     public static final boolean enableConfidence = PropertyManager.getBoolean("de.unijena.bioinf.fingerid.confidence", false);
-    public static final List<Class<? extends DataAnnotation>>  formulaResultComponentsToClear = new ArrayList<>(List.of(FTree.class, FBCandidates.class,  FBCandidateFingerprints.class));
+    public static final List<Class<? extends DataAnnotation>>  formulaResultComponentsToClear = new ArrayList<>(List.of(FTree.class, FBCandidates.class, FBCandidateFingerprints.class));
 
     public FingeridSubToolJob(JobSubmitter submitter) {
         super(submitter);
