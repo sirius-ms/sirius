@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.core;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -52,7 +51,6 @@ import java.util.Properties;
 import java.util.logging.Handler;
 import java.util.logging.LogManager;
 import java.util.logging.SimpleFormatter;
-import java.util.stream.Collectors;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)

@@ -23,6 +23,7 @@ import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.jjobs.SwingJJobContainer;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,26 +32,39 @@ public class TextAreaJJobContainer<R> extends SwingJJobContainer<R> {
     private final JTextArea jobLog;
     private final TextAreaHandler textAreaLogHandler;
 
-    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, String jobName) {
+
+    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, Supplier<String> jobName) {
         super(sourceJob, jobName);
         jobLog = new JTextArea();
         textAreaLogHandler = connectJobLogToTextArea();
         registerJobLog();
     }
 
-    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, String jobName, String jobCategory) {
+    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, Supplier<String> jobName, Supplier<String> jobCategory) {
         super(sourceJob, jobName, jobCategory);
         jobLog = new JTextArea();
         textAreaLogHandler = connectJobLogToTextArea();
         registerJobLog();
     }
 
+    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, String jobName) {
+        this(sourceJob, () -> jobName);
+    }
+
+    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, String jobName, String jobCategory) {
+        this(sourceJob, () -> jobName, () -> jobCategory);
+    }
+
     public JTextArea getJobLog() {
         return jobLog;
     }
 
+    public TextAreaHandler getTextAreaLogHandler() {
+        return textAreaLogHandler;
+    }
+
     private TextAreaHandler connectJobLogToTextArea() {
-        return new TextAreaHandler(jobLog, Level.INFO);
+        return new TextAreaHandler(jobLog, Level.INFO, sourceJob.getLogFilter());
     }
 
     public void registerJobLog() {

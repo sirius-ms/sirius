@@ -30,6 +30,10 @@ import java.util.function.Function;
 @FunctionalInterface
 public interface DymmyExpResultJob extends JJob<Instance> {
 
+    @Override
+    default long getID() {
+        return Long.MAX_VALUE;
+    }
 
     @Override
     default void addPropertyChangeListener(PropertyChangeListener listener) {

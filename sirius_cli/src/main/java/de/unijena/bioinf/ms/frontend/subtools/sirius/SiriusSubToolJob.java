@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
@@ -31,7 +30,6 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
@@ -67,10 +65,10 @@ public class SiriusSubToolJob extends InstanceJob {
         // create WhiteSet from DB if necessary
         //todo do we really want to restrict to organic even if the db is user selected
         final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
-        if (searchDB.isPresent() && searchDB.get().containsDBs()) {
-            FormulaWhiteListJob wsJob = new FormulaWhiteListJob(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp, true, false);
-            wSet = SiriusJobs.getGlobalJobManager().submitJob(wsJob).awaitResult();
-        }
+        if (searchDB.isPresent() && searchDB.get().containsDBs())
+            wSet = submitJob(new FormulaWhiteListJob(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp, true, false).delegateLog(this))
+                    .awaitResult();
+
 
         // todo this should be moved to annotations at some point.
         // so that the cli parser dependency can be removed
@@ -84,7 +82,7 @@ public class SiriusSubToolJob extends InstanceJob {
         exp.setAnnotation(Whiteset.class, wSet);
 
         final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(exp.getAnnotationOrThrow(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
-        List<IdentificationResult<SiriusScore>> results = SiriusJobs.getGlobalJobManager().submitJob(sirius.makeIdentificationJob(exp)).awaitResult();
+        List<IdentificationResult<SiriusScore>> results = submitJob(sirius.makeIdentificationJob(exp).delegateLog(this)).awaitResult();
 
         //write results to project space
         for (IdentificationResult<SiriusScore> result : results)

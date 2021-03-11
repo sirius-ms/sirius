@@ -22,25 +22,43 @@ package de.unijena.bioinf.ms.gui.logging;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class LoggingPanel extends JPanel {
+    JComboBox<String> levelBox;
+    TextAreaHandler handler;
 
-    public LoggingPanel(JTextArea textArea) {
+    public LoggingPanel(TextAreaHandler handler) {
         setLayout(new BorderLayout());
 
-        textArea.setEditable(false);
+        this.handler = handler;
+        handler.getArea().setEditable(false);
+
+
+        this.levelBox = new JComboBox<>(new String[]{"OFF", "SEVERE", "WARNING", "INFO", "CONFIG", "FINE", "FINER", "FINEST", "ALL"});
+        this.levelBox.setSelectedItem(handler.getLevel().getName());
+        this.levelBox.addActionListener(event -> {
+            Level l = Level.parse((String) levelBox.getModel().getSelectedItem());
+            if (handler.getLevel() != l)
+                handler.setLevel(l);
+        });
+
+        JPanel levelPane = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        levelPane.add(new JLabel("Log Level"));
+        levelPane.add(levelBox);
 
         JButton button = new JButton("Clear");
-        button.addActionListener(e -> textArea.setText(""));
+        button.addActionListener(e -> handler.getArea().setText(""));
+        JPanel buttonPane = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPane.add(button);
 
-        JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        south.add(button);
+        JPanel southPanel = new JPanel(new BorderLayout());
+        southPanel.add(buttonPane, BorderLayout.EAST);
+        southPanel.add(levelPane, BorderLayout.WEST);
 
-        add(new JScrollPane(textArea), BorderLayout.CENTER);
-        add(south, BorderLayout.SOUTH);
+        add(new JScrollPane(handler.getArea()), BorderLayout.CENTER);
+        add(southPanel, BorderLayout.SOUTH);
         setPreferredSize(new Dimension(320, 240));
     }
 
@@ -51,9 +69,10 @@ public class LoggingPanel extends JPanel {
         logger.setLevel(Level.ALL);
 
         JTextArea textArea = new JTextArea();
-        logger.addHandler(new TextAreaHandler(textArea, Level.ALL));
+        TextAreaHandler h = new TextAreaHandler(textArea, Level.ALL);
+        logger.addHandler(h);
 
-        LoggingPanel logPane = new LoggingPanel(textArea);
+        LoggingPanel logPane = new LoggingPanel(h);
 
         logger.info("test, TEST");
 

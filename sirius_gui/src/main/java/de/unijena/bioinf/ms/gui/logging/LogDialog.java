@@ -49,7 +49,7 @@ public class LogDialog extends JDialog {
         }
 
 
-        lPanel = new LoggingPanel(textArea);
+        lPanel = new LoggingPanel(handler);
         add(lPanel);
     }
 
