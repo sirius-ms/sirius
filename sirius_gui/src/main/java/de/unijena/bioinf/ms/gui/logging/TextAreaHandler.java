@@ -20,15 +20,18 @@
 package de.unijena.bioinf.ms.gui.logging;
 
 
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import javax.swing.text.BadLocationException;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.SimpleFormatter;
-import java.util.logging.StreamHandler;
+import java.util.logging.*;
 
 public class TextAreaHandler extends StreamHandler {
+    private static final  int MAX_DOC_LENGTH = 100000;
+
     private void configure() {
+        setOutputStream(new TextAreaOutputStream(area));
         setFormatter(new SimpleFormatter());
         try {
             setEncoding("UTF-8");
@@ -43,11 +46,37 @@ public class TextAreaHandler extends StreamHandler {
         }
     }
 
-    public TextAreaHandler(OutputStream os, Level level) {
+    private void shrinkToSize() {
+        int docLength = area.getDocument().getLength();
+
+        if (docLength > MAX_DOC_LENGTH) {
+            area.setCaretPosition(docLength);
+
+            try {
+                area.getDocument().remove(0, docLength - MAX_DOC_LENGTH
+                        + MAX_DOC_LENGTH / 10);
+            } catch (BadLocationException e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when shrinking log JTextArea", e);
+            }
+        }
+    }
+
+    private final JTextArea area;
+
+    public TextAreaHandler(JTextArea area, Level level) {
+        this(area, level, null);
+    }
+
+    public TextAreaHandler(JTextArea area, Level level, Filter logFilter) {
         super();
+        this.area = area;
         configure();
-        setOutputStream(os);
         setLevel(level);
+        setFilter(logFilter);
+    }
+
+    public JTextArea getArea() {
+        return area;
     }
 
     // [UnsynchronizedOverridesSynchronized] Unsynchronized method publish overrides synchronized method in StreamHandler
@@ -56,6 +85,7 @@ public class TextAreaHandler extends StreamHandler {
     public synchronized void publish(LogRecord record) {
         super.publish(record);
         flush();
+        shrinkToSize();
     }
 
     // [UnsynchronizedOverridesSynchronized] Unsynchronized method close overrides synchronized method in StreamHandler

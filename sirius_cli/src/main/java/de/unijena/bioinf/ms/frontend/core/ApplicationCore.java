@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.core;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -52,7 +51,6 @@ import java.util.Properties;
 import java.util.logging.Handler;
 import java.util.logging.LogManager;
 import java.util.logging.SimpleFormatter;
-import java.util.stream.Collectors;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -83,6 +81,8 @@ public abstract class ApplicationCore {
             t1 = System.currentTimeMillis();
         measureTime("Start AppCore");
         try {
+//            System.setProperty("de.unijena.bioinf.jjobs.DEBUG", "true");
+
 //            System.out.println("LD ==> " + System.getProperty("java.library.path"));
             System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
             org.apache.log4j.Logger.getLogger("net.sf.jnati").setLevel(Level.WARN);

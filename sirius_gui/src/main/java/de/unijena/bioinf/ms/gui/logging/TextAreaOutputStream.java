@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class TextAreaOutputStream extends OutputStream {
     private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -36,7 +37,7 @@ public class TextAreaOutputStream extends OutputStream {
     @Override
     public void flush() throws IOException {
         if (textArea != null)
-            textArea.append(buffer.toString("UTF-8"));
+            textArea.append(buffer.toString(StandardCharsets.UTF_8));
         buffer.reset();
     }
 

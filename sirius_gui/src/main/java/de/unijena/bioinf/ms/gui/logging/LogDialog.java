@@ -24,7 +24,6 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -38,8 +37,7 @@ public class LogDialog extends JDialog {
         super((Frame) null, "Log", modal);
 
         JTextArea textArea = new JTextArea();
-        OutputStream os = new TextAreaOutputStream(textArea);
-        this.handler = new TextAreaHandler(os, loglevel);
+        this.handler = new TextAreaHandler(textArea, loglevel);
 
         if (loggers == null || loggers.length == 0) {
             LogManager.getLogManager().getLoggerNames().asIterator().forEachRemaining(name -> {
@@ -51,7 +49,7 @@ public class LogDialog extends JDialog {
         }
 
 
-        lPanel = new LoggingPanel(textArea);
+        lPanel = new LoggingPanel(handler);
         add(lPanel);
     }
 
