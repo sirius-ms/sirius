@@ -70,9 +70,10 @@ public class FormulaListCompactView extends ActionListView<FormulaList> {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
                     // Double-click detected
-                    int index = resultListView.locationToIndex(e.getPoint());
-                    resultListView.setSelectedIndex(index);
-                    SiriusActions.COMPUTE_CSI_LOCAL.getInstance().actionPerformed(new ActionEvent(resultListView, 112, SiriusActions.COMPUTE_CSI_LOCAL.name()));
+                    //todo compute csi for this compound via compute panel and preselect csi only
+//                    int index = resultListView.locationToIndex(e.getPoint());
+//                    resultListView.setSelectedIndex(index);
+//                    SiriusActions.COMPUTE_CSI_LOCAL.getInstance().actionPerformed(new ActionEvent(resultListView, 112, SiriusActions.COMPUTE_CSI_LOCAL.name()));
                 }
             }
 
@@ -95,7 +96,7 @@ public class FormulaListCompactView extends ActionListView<FormulaList> {
 
         //decorate this guy
         KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
-        resultListView.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
-        resultListView.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(),SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
+//        resultListView.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
+//        resultListView.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(),SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
     }
 }

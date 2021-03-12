@@ -29,8 +29,8 @@ import java.util.logging.Logger;
 
 //this is a swing job wrapper that writes log output into a accociated text area instead into the console or the log file
 public class TextAreaJJobContainer<R> extends SwingJJobContainer<R> {
-    private final JTextArea jobLog;
-    private final TextAreaHandler textAreaLogHandler;
+    private JTextArea jobLog;
+    private TextAreaHandler textAreaLogHandler;
 
 
     public TextAreaJJobContainer(ProgressJJob<R> sourceJob, Supplier<String> jobName) {
@@ -75,6 +75,8 @@ public class TextAreaJJobContainer<R> extends SwingJJobContainer<R> {
     public void clean() {
         try {
             Logger.getLogger(sourceJob.loggerKey()).removeHandler(textAreaLogHandler);
+            textAreaLogHandler = null;
+            jobLog = null;
         } finally {
             super.clean();
         }

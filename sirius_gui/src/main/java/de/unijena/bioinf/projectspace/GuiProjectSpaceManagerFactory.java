@@ -36,6 +36,6 @@ public class GuiProjectSpaceManagerFactory implements ProjectSpaceManagerFactory
     }
 
     public GuiProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull BasicEventList<InstanceBean> actionList, @Nullable Function<Ms2Experiment, String> formatter) {
-        return new GuiProjectSpaceManager(space,actionList,formatter, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY,9));
+        return new GuiProjectSpaceManager(space,actionList,formatter, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY,10));
     }
 }
