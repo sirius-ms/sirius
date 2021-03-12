@@ -45,6 +45,7 @@ import java.util.List;
 public class CompoundList {
 
     final SearchTextField searchField;
+    final ObservableElementList<InstanceBean> obsevableScource;
     final SortedList<InstanceBean> sortedScource;
     final FilterList<InstanceBean> compoundList;
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
@@ -53,8 +54,8 @@ public class CompoundList {
 
     public CompoundList(@NotNull final GuiProjectSpaceManager ps) {
         searchField = new SearchTextField();
-
-        sortedScource = new SortedList<>(new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class)), Comparator.comparing(b -> b.getID().getCompoundIndex()));
+        obsevableScource = new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
+        sortedScource = new SortedList<>(obsevableScource, Comparator.comparing(b -> b.getID().getCompoundIndex()));
         compoundList = new FilterList<>(sortedScource,
                 new TextComponentMatcherEditor<>(searchField.textField, (baseList, element) -> {
                     baseList.add(element.getGUIName());

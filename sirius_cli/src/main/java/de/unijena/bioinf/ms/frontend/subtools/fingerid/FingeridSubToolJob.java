@@ -63,6 +63,7 @@ public class FingeridSubToolJob extends InstanceJob {
 
     public FingeridSubToolJob(JobSubmitter submitter) {
         super(submitter);
+        asWEBSERVICE();
     }
 
     @Override

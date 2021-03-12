@@ -26,7 +26,11 @@ import org.jetbrains.annotations.Nullable;
 public interface InstanceBuffer extends JobSubmitter, Runnable {
     @Nullable DataSetJob getCollectorJob();
 
-    void start() throws InterruptedException;
+    void start(boolean invalidateInstances) throws InterruptedException;
+
+    default void start() throws InterruptedException {
+        start(false);
+    }
 
     void cancel();
 
