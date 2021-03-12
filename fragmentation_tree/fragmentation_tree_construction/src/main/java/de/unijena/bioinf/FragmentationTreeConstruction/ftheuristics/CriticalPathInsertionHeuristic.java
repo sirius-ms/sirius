@@ -133,34 +133,35 @@ public class CriticalPathInsertionHeuristic extends AbstractHeuristic {
 
     public FTree solve() {
         initialize();
-        while (findCriticalPaths()) {
-
-        }
+        while (findCriticalPaths());
         return buildSolution();
     }
 
     protected FTree buildSolution() {
-        if (usedColorList.size()<=0) {
+        if (usedColorList.size() <= 0) {
             Fragment bestFrag = null;
             for (Fragment f : graph.getRoot().getChildren()) {
-                if (bestFrag==null || bestFrag.getIncomingEdge().getWeight() < f.getIncomingEdge().getWeight() ) {
+                if (bestFrag == null || bestFrag.getIncomingEdge().getWeight() < f.getIncomingEdge().getWeight()) {
                     bestFrag = f;
                 }
             }
             final FTree t = new FTree(bestFrag.getFormula(), bestFrag.getIonization());
             t.setTreeWeight(bestFrag.getIncomingEdge().getWeight());
+            mapping.mapLeftToRight(bestFrag, t.getRoot());
             return t;
         }
         selectedEdges.addAll(color2Edge.valueCollection());
         selectedEdges.sort(Comparator.comparingInt(a -> a.getTarget().getColor()));
         final Fragment target = selectedEdges.get(0).getTarget();
         final FTree tree = new FTree(target.getFormula(), target.getIonization());
+        mapping.mapLeftToRight(target, tree.getRoot());
         final HashMap<MolecularFormula, Fragment> fragmentsByFormula = new HashMap<>();
         fragmentsByFormula.put(tree.getRoot().getFormula(), tree.getRoot());
         double score = selectedEdges.get(0).getWeight();
         for (int i=1; i < selectedEdges.size(); ++i) {
             final Loss L = selectedEdges.get(i);
             final Fragment f = tree.addFragment(fragmentsByFormula.get(L.getSource().getFormula()), L.getTarget());
+            mapping.mapLeftToRight(L.getTarget(), f);
             f.getIncomingEdge().setWeight(L.getWeight());
             fragmentsByFormula.put(f.getFormula(), f);
             f.setPeakId(L.getTarget().getPeakId());
