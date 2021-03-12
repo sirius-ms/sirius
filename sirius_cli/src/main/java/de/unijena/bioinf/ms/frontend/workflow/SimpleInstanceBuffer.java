@@ -172,6 +172,9 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                     lock.lock();
                     try {
                         runningInstances.remove(this);
+                        //cleanup is not really needed for CLI but for everything on top that might keep instances alive.
+                        instance.clearFormulaResultsCache();
+                        instance.clearCompoundCache();
                         isFull.signal(); //all not needed?
                     } finally {
                         lock.unlock();

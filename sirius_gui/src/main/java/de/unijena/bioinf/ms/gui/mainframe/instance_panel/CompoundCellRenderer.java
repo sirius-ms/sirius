@@ -119,20 +119,20 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
 		if (trigger) g2.setPaint(p);
 
-		int ms1No = ec.getMs1Spectra().size();
-		int ms2No = ec.getMs2Spectra().size();
+//		int ms1No = ec.getMs1Spectra().size();
+//		int ms2No = ec.getMs2Spectra().size();
 
 		String ionizationProp = "Ionization";
 		String focMassProp = "Precursor";
 		String rtProp = "RT";
-		String specProp = "Spectra";
+//		String specProp = "Spectra";
 
 		g2.setFont(propertyFont);
 		g2.drawString(ionizationProp, 4, 32);
 		g2.drawString(focMassProp, 4, 48);
 		g2.drawString(rtProp, 4, 64);
 
-		int xPos = Stream.of(propertyFm.stringWidth(ionizationProp), propertyFm.stringWidth(focMassProp), propertyFm.stringWidth(rtProp), propertyFm.stringWidth(specProp))
+		int xPos = Stream.of(propertyFm.stringWidth(ionizationProp), propertyFm.stringWidth(focMassProp), propertyFm.stringWidth(rtProp))
 				.max(Integer::compareTo).get() + 15;
 
 		String ionValue = ec.getIonization().toString();
@@ -147,13 +147,13 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 		g2.drawString(rtValue, xPos, 64);
 
 //		int yPos = 64;
-		int yPos = 80;
+//		int yPos = 80;
 
 		g2.setFont(valueFont);
 
-		g2.drawString(specProp, 4, yPos);
-		String msValues = ms1No + " MS   " + ms2No + " MS/MS";
-		g2.drawString(msValues, xPos, yPos);
+//		g2.drawString(specProp, 4, yPos);
+//		String msValues = ms1No + " MS   " + ms2No + " MS/MS";
+//		g2.drawString(msValues, xPos, yPos);
 
 //			yPos+=16;
 
