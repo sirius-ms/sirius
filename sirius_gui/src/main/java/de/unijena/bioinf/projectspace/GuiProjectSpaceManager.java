@@ -57,7 +57,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
 
 
     protected final InstanceBuffer ringBuffer;
-    private final ContainerListener.Defined createListener;
+    private ContainerListener.Defined createListener;
 
     public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, int maxBufferSize) {
         this(space, new BasicEventList<>(), maxBufferSize);
@@ -72,14 +72,18 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         this.ringBuffer = new InstanceBuffer(maxBufferSize);
         this.INSTANCE_LIST = compoundList;
         final ArrayList<InstanceBean> buf = new ArrayList<>(size());
-        forEach(it -> buf.add((InstanceBean) it));
+        forEach(it -> {
+            it.clearFormulaResultsCache();
+            it.clearCompoundCache();
+            buf.add((InstanceBean) it);
+        });
         inEDTAndWait(() -> {
             INSTANCE_LIST.clear();
             INSTANCE_LIST.addAll(buf);
         });
 
         createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
-            final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID()/*, Ms2Experiment.class*/);
+            final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID());
             Jobs.runEDTLater(() -> INSTANCE_LIST.add(inst));
         })).register();
     }
@@ -142,7 +146,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                 final LcmsAlignSubToolJob j = new LcmsAlignSubToolJob(input, this);
                 Jobs.runInBackgroundAndLoad(MF, j);
                 INSTANCE_LIST.addAll(j.getImportedCompounds().stream()
-                        .map(id -> (InstanceBean) newInstanceFromCompound(id/*, Ms2Experiment.class*/))
+                        .map(id -> (InstanceBean) newInstanceFromCompound(id))
                         .collect(Collectors.toList()));
             } else {
                 final List<Path> outdated = Jobs.runInBackgroundAndLoad(MF, "Checking for incompatible data...", new TinyBackgroundJJob<List<Path>>() {
@@ -176,8 +180,10 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                         x -> true, false, updateIfNeeded
                 );
                 List<InstanceBean> imported = Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...",  importer.makeImportJJob(input))
-                        .getResult().stream().map(id -> (InstanceBean) newInstanceFromCompound(id/*, Ms2Experiment.class*/)).collect(Collectors.toList());
-                Jobs.runEDTLater(() -> INSTANCE_LIST.addAll(imported));
+                        .getResult().stream().map(id -> (InstanceBean) newInstanceFromCompound(id)).collect(Collectors.toList());
+
+                Jobs.runInBackgroundAndLoad(MF, "Showing imported data...",
+                        () -> Jobs.runEDTLater(() -> INSTANCE_LIST.addAll(imported)));
             }
         } finally {
             createListener.register();
@@ -246,5 +252,10 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         copy(copyLocation, false);
     }
 
-
+    @Override
+    public void close() throws IOException {
+        createListener.unregister();
+        createListener = null;
+        super.close();
+    }
 }

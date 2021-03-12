@@ -76,13 +76,14 @@ public class ComputeAllAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (isActive.get()) {
-            Jobs.cancelALL();
+            Jobs.runInBackgroundAndLoad(MF, "Canceling Jobs...", Jobs::cancelALL);
         } else {
             new BatchComputeDialog(MF, List.copyOf(MF.getCompounds()));
         }
     }
 
     private void computationCanceled() {
+        setEnabled(true);
         isActive.set(false);
         putValue(Action.NAME, "Compute All");
         putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
@@ -91,6 +92,7 @@ public class ComputeAllAction extends AbstractAction {
     }
 
     private void computationStarted() {
+        setEnabled(true);
         isActive.set(true);
         putValue(Action.NAME, "Cancel All");
         putValue(Action.LARGE_ICON_KEY, Icons.CANCEL_32);

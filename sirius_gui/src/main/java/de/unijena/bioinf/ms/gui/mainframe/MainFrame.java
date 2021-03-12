@@ -176,7 +176,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             final SiriusProjectSpace ps = makeSpace.get();
             compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
             Jobs.cancelALL();
-            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 9));
+            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
             inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
             gps.projectSpace().addProjectSpaceListener(event -> {
                 if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
@@ -222,11 +222,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         experimentListPanel.setPreferredSize(new Dimension(228, (int) experimentListPanel.getPreferredSize().getHeight()));
 
         //BUILD the MainFrame (GUI)
-//        final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
-//        tabbedPane.addTab("Compounds", experimentListPanel);
-//        tabbedPane.addTab("Identifications", new JPanel());
-//        tabbedPane.setEnabledAt(1, false);
-//        tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
         mainPanel.add(experimentListPanel, BorderLayout.WEST);
         mainPanel.add(resultsPanel, BorderLayout.CENTER);
         add(toolbar, BorderLayout.NORTH);
