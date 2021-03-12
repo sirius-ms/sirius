@@ -189,6 +189,25 @@ public class InstanceBean extends Instance implements SiriusPCS {
         return computeLock.get();
     }
 
+    public void setComputing(boolean computing, boolean noChangeEvent) {
+        if (noChangeEvent)
+            computeLock.set(computing);
+        else
+            setComputing(computing);
+    }
+
+    @Override
+    public synchronized void clearCompoundCache() {
+        if (!isComputing())
+            super.clearCompoundCache();
+    }
+
+    @Override
+    public synchronized void clearFormulaResultsCache() {
+        if (!isComputing())
+            super.clearFormulaResultsCache();
+    }
+
     public void setComputing(boolean computing) {
         pcs.firePropertyChange("computeState", computeLock.getAndSet(computing), computeLock.get());
     }

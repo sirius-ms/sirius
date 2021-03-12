@@ -110,12 +110,12 @@ public class ToolChainWorkflow implements Workflow {
                 }
             }
 
-            // we have no dataset job that ends the chain, so we have to collect resuts from
+            // we have no dataset job that ends the chain, so we have to collect results from
             // disk to not waste memory -> otherwise the whole buffer thing is useless.
             checkForCancellation();
             if (!instanceJobChain.isEmpty()) {
                 submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, null);
-                submitter.start();
+                submitter.start(true);
             }
             LOG.info("Workflow has been finished!");
 
