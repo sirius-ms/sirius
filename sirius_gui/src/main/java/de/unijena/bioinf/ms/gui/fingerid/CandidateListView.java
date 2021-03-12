@@ -95,59 +95,9 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         tb.add(loadAll);
 
         filter.doClick();
-//        final JButton exportToCSV = Buttons.getExportButton24("export candidate list");
-//        exportToCSV.addActionListener(e -> doExport());
-//        tb.add(exportToCSV);
 
         return tb;
     }
-
-    /*private void doExport() {
-        JFileChooser jfc = new JFileChooser();
-        jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_TREE_EXPORT_PATH));
-        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        jfc.setAcceptAllFileFilterUsed(false);
-        FileFilter csvFileFilter = new ExportCSVFormatsFilter();
-        jfc.addChoosableFileFilter(csvFileFilter);
-        File selectedFile = null;
-        while (selectedFile == null) {
-            int returnval = jfc.showSaveDialog(this);
-            if (returnval == JFileChooser.APPROVE_OPTION) {
-                File selFile = jfc.getSelectedFile();
-
-                Jobs.runInBackground(() ->
-                        SiriusProperties.SIRIUS_PROPERTIES_FILE().
-                                setAndStoreProperty(SiriusProperties.DEFAULT_TREE_EXPORT_PATH, selFile.getParentFile().getAbsolutePath())
-                );
-
-                if (selFile.exists()) {
-                    FilePresentDialog fpd = new FilePresentDialog(MF, selFile.getName());
-                    ReturnValue rv = fpd.getReturnValue();
-                    if (rv == ReturnValue.Success) {
-                        selectedFile = selFile;
-                    }
-                } else {
-                    selectedFile = selFile;
-                    if (!selectedFile.getName().endsWith(".csv"))
-                        selectedFile = new File(selectedFile.getAbsolutePath() + ".csv");
-                }
-            } else {
-                break;
-            }
-        }
-
-        if (selectedFile != null) {
-
-            final List<Scored<CompoundCandidate>> datas = source.getElementList().stream().map(fpc -> new Scored<CompoundCandidate>(fpc.candidate, fpc.score)).sorted(Comparator.reverseOrder()).collect(Collectors.toList());
-
-            try {
-                new StructureCSVExporter().exportFingerIdResults(Files.newBufferedWriter(selectedFile.toPath()), datas);
-            } catch (Exception e2) {
-                new ErrorReportDialog(MF, e2.getMessage());
-                LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);
-            }
-        }
-    }*/
 
     @Override
     protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {

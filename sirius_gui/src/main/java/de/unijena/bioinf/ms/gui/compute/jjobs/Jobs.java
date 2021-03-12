@@ -265,7 +265,8 @@ public class Jobs {
                 SiriusActions.SUMMARY_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
                 SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
             }
-            compoundsToProcess.forEach(i -> i.setComputing(false));
+
+            compoundsToProcess.forEach(i -> { i.setComputing(false); });
             super.cleanup();
         }
     }
