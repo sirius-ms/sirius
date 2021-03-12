@@ -20,10 +20,17 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.properties;
 
-import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 
-public class FinalConfig extends ConfigAnnotation implements Ms2ExperimentAnnotation {
+/**
+ * This config represents the merged config to
+ * be converted into actual Objects which will
+ * then be annotated to MS2Experiment for actual usage in the algorithms
+ * This representation is NOT stored in the MS2Experiment since this might be dropped from Memory from time to time
+ * but rather in the CompoundContainer and will
+ * not be serialized. However it is the base for the serialization of the updated ProjectSpaceConfig.
+ */
+public class FinalConfig extends ConfigAnnotation {
     public FinalConfig(ParameterConfig config) {
         super(config);
     }
