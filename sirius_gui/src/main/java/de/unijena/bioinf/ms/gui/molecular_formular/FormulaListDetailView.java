@@ -83,12 +83,13 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         table.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
+                //todo insert compute CSI option by opening batch compute
+                /*if (e.getClickCount() == 2) {
                     // Double-click detected
                     int index = table.rowAtPoint(e.getPoint());
                     table.setRowSelectionInterval(index, index);
                     SiriusActions.COMPUTE_CSI_LOCAL.getInstance().actionPerformed(new ActionEvent(table, 112, SiriusActions.COMPUTE_CSI_LOCAL.name()));
-                }
+                }*/
             }
 
             @Override
@@ -114,8 +115,8 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
 
         //decorate this guy
         KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
-        table.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
-        table.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(), SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
+//        table.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
+//        table.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(), SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
 
         this.add(
                 new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),

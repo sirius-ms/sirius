@@ -171,7 +171,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     public PrecursorIonType getIonization() {
-        return getMutableExperiment().getPrecursorIonType();
+        return getID().getIonType().orElseGet(() -> getMutableExperiment().getPrecursorIonType());
     }
 
     public List<FormulaResultBean> getResults() {
@@ -194,7 +194,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     private MutableMs2Experiment getMutableExperiment() {
-//        addToCache(); //todo enable if we can cache preview for compound list
+        addToCache();
         return (MutableMs2Experiment) getExperiment();
     }
 

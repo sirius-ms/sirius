@@ -37,6 +37,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
+import java.util.Optional;
 
 public class SpectraVisualizationPanel extends JPanel implements ActionListener, MSViewerPanelListener, MouseListener, PanelDescription, ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
     @Override
@@ -57,6 +58,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
     JPopupMenu zoomPopMenu;
     JMenuItem zoomInMI, zoomOutMI;
+    JLabel numMS;
 
     public SpectraVisualizationPanel() {
         model = new ExperimentContainerDataModel();
@@ -86,10 +88,17 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
         northPanel.add(l);
         northPanel.add(spectraSelection);
-
         northPanel.addSeparator(new Dimension(10, 10));
         northPanel.add(zoomIn);
         northPanel.add(zoomOut);
+        northPanel.add(Box.createGlue());
+
+        Optional<InstanceBean> ec = Optional.ofNullable(model.getEc());
+        numMS = new JLabel(
+                ec.map(InstanceBean::getMs1Spectra).map(List::size).map(String::valueOf).orElse("N/A") + " MS   " + ec.map(InstanceBean::getMs2Spectra).map(List::size).map(String::valueOf).orElse("N/A") + " MS/MS");
+        numMS.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
+        northPanel.add(numMS);
+
 
         this.add(northPanel, BorderLayout.NORTH);
 
@@ -170,6 +179,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
     @Override
     public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
+        numMS.setText(Optional.ofNullable(experiment).map(InstanceBean::getMs1Spectra).map(List::size).map(String::valueOf).orElse("N/A") + " MS   " + Optional.ofNullable(experiment).map(InstanceBean::getMs2Spectra).map(List::size).map(String::valueOf).orElse("N/A") + " MS/MS");
         final String selected = (String) spectraSelection.getSelectedItem();
         if (model.changeData(experiment, sre)) {
             spectraSelection.removeActionListener(this);

@@ -119,7 +119,7 @@ task downloadGLPK(type: Download) {
 
 task downloadCLP(type: Download) {
     project.ext.set("clpPath", getBuildDir().toPath().resolve('clp').toFile())
-    String fname = "clp-${project.clp_lib_version}.zip"
+    String fname = "clp_cbc-${project.clp_lib_version}.zip"
 
     src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/clp/$fname"
     dest getBuildDir().toPath().resolve('tmp').resolve(fname).toFile()
@@ -282,7 +282,10 @@ subprojects {
 
         jvmOptions = [
                 '-Xms1G',
+//                '-Xmx4G',
                 '-XX:MaxRAMPercentage=85',
+                '-XX:+UseG1GC',
+                '-XX:+UseStringDeduplication'
         ]
 
         dontWrapJar = true
@@ -310,7 +313,10 @@ subprojects {
 
         String[] jArgs = [
                 '-Xms1G',
+//                '-Xmx4G',
                 '-XX:MaxRAMPercentage=85',
+                '-XX:+UseG1GC',
+                '-XX:+UseStringDeduplication'
         ]
 
         doLast {

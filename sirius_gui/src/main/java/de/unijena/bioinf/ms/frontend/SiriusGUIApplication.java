@@ -59,7 +59,7 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
             return config;
         };
 
-        final Splash splash = Arrays.stream(args).anyMatch(it -> it.toLowerCase().equals("gui")) ? new Splash() : null;
+        final Splash splash = Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("gui")) ? new Splash() : null;
         if (TIME)
             t1 = System.currentTimeMillis();
 

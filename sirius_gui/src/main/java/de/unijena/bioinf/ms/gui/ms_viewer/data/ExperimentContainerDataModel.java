@@ -151,6 +151,10 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         return false;
     }
 
+    public InstanceBean getEc() {
+        return ec;
+    }
+
     private SimpleSpectrum merge(List<? extends Spectrum<Peak>> spectra) {
         return Spectrums.mergeSpectra(new Deviation(10, 0.1), true, false, spectra);
     }

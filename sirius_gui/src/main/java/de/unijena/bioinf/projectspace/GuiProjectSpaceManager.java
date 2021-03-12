@@ -79,7 +79,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         });
 
         createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
-            final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID(), Ms2Experiment.class);
+            final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID()/*, Ms2Experiment.class*/);
             Jobs.runEDTLater(() -> INSTANCE_LIST.add(inst));
         })).register();
     }
@@ -142,7 +142,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                 final LcmsAlignSubToolJob j = new LcmsAlignSubToolJob(input, this);
                 Jobs.runInBackgroundAndLoad(MF, j);
                 INSTANCE_LIST.addAll(j.getImportedCompounds().stream()
-                        .map(id -> (InstanceBean) newInstanceFromCompound(id, Ms2Experiment.class))
+                        .map(id -> (InstanceBean) newInstanceFromCompound(id/*, Ms2Experiment.class*/))
                         .collect(Collectors.toList()));
             } else {
                 final List<Path> outdated = Jobs.runInBackgroundAndLoad(MF, "Checking for incompatible data...", new TinyBackgroundJJob<List<Path>>() {
@@ -176,7 +176,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                         x -> true, false, updateIfNeeded
                 );
                 List<InstanceBean> imported = Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...",  importer.makeImportJJob(input))
-                        .getResult().stream().map(id -> (InstanceBean) newInstanceFromCompound(id, Ms2Experiment.class)).collect(Collectors.toList());
+                        .getResult().stream().map(id -> (InstanceBean) newInstanceFromCompound(id/*, Ms2Experiment.class*/)).collect(Collectors.toList());
                 Jobs.runEDTLater(() -> INSTANCE_LIST.addAll(imported));
             }
         } finally {
