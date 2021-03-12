@@ -31,11 +31,9 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +47,7 @@ public class CanopusSubToolJob extends InstanceJob {
 
     public CanopusSubToolJob(JobSubmitter submitter) {
         super(submitter);
+        asWEBSERVICE();
     }
 
     @Override

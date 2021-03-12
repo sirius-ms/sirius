@@ -66,7 +66,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
     }
 
     @Override
-    public void start() throws InterruptedException {
+    public void start(final boolean invalidate) throws InterruptedException {
         while (instances.hasNext()) {
             checkForCancellation();
 
@@ -80,7 +80,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
 
                 checkForCancellation();
                 final Instance instance = instances.next();
-                final InstanceJobCollectorJob collector = new InstanceJobCollectorJob(instance);
+                final InstanceJobCollectorJob collector = new InstanceJobCollectorJob(instance, invalidate);
 
                 JJob<Instance> jobToWaitOn = (DymmyExpResultJob) () -> instance;
                 for (InstanceJob.Factory<?> task : tasks) {
@@ -163,7 +163,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
             super.cancel(mayInterruptIfRunning);
         }
 
-        public InstanceJobCollectorJob(Instance instance) {
+        public InstanceJobCollectorJob(Instance instance, final boolean invalidate) {
             super(JobType.SCHEDULER,ReqJobFailBehaviour.IGNORE); //we want to ignore failing because we do not want to multiply exceptions
             this.instance = instance;
 
@@ -173,8 +173,10 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                     try {
                         runningInstances.remove(this);
                         //cleanup is not really needed for CLI but for everything on top that might keep instances alive.
-                        instance.clearFormulaResultsCache();
-                        instance.clearCompoundCache();
+                        if (invalidate) {//todo we should change our project space model so that spectra are independent from config stuff
+                            instance.clearFormulaResultsCache();
+                            instance.clearCompoundCache();
+                        }
                         isFull.signal(); //all not needed?
                     } finally {
                         lock.unlock();
