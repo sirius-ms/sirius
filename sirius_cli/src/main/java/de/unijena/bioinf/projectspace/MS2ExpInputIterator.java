@@ -25,12 +25,15 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.jjobs.JobProgressMerger;
+import de.unijena.bioinf.jjobs.ProgressInputStream;
 import de.unijena.bioinf.sirius.Sirius;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -50,21 +53,23 @@ public class MS2ExpInputIterator implements InstIterProvider {
     private final MsExperimentParser parser = new MsExperimentParser();
     private final boolean ignoreFormula;
 
+    @Nullable
+    private final JobProgressMerger progress;
 
     Path currentFile;
     Iterator<Ms2Experiment> currentExperimentIterator;
 
     public MS2ExpInputIterator(Collection<Path> input, double maxMz, boolean ignoreFormula) {
-        this(input, (exp) -> exp.getIonMass() <= maxMz, ignoreFormula);
+        this(input, (exp) -> exp.getIonMass() <= maxMz, ignoreFormula, null);
     }
 
-    public MS2ExpInputIterator(Collection<Path> input, Predicate<Ms2Experiment> filter, boolean ignoreFormula) {
+    public MS2ExpInputIterator(Collection<Path> input, Predicate<Ms2Experiment> filter, boolean ignoreFormula, @Nullable JobProgressMerger progress) {
+        this.progress = progress;
         this.fileIter = input.iterator();
         this.filter = filter;
         this.ignoreFormula = ignoreFormula;
         currentExperimentIterator = fetchNext();
     }
-
 
     @Override
     public boolean hasNext() {
@@ -87,7 +92,15 @@ public class MS2ExpInputIterator implements InstIterProvider {
                         GenericParser<Ms2Experiment> p = parser.getParser(currentFile);
                         if (p == null) {
                             LOG.error("Unknown file format: '" + currentFile + "'");
-                        } else currentExperimentIterator = p.parseFromPathIterator(currentFile);
+                        } else {
+                            if (progress == null) {
+                                currentExperimentIterator = p.parseFromPathIterator(currentFile);
+                            } else {
+                                ProgressInputStream s = new ProgressInputStream(currentFile);
+                                s.addPropertyChangeListener(progress);
+                                currentExperimentIterator = p.parseIterator(s, currentFile.toUri().toURL());
+                            }
+                        }
                     } catch (IOException e) {
                         LOG.error("Cannot parse file '" + currentFile + "':\n", e);
                     }

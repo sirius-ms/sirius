@@ -30,6 +30,8 @@ import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
@@ -53,7 +55,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.IntSummaryStatistics;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -93,9 +94,7 @@ public class InstanceImporter {
 
     public class ImportInstancesJJob extends BasicJJob<List<CompoundContainerId>> {
         private InputFilesOptions inputFiles;
-
-
-        private JobProgress prog;
+        private JobProgressMerger prog;
 
 
         public ImportInstancesJJob(InputFilesOptions inputFiles) {
@@ -105,10 +104,8 @@ public class InstanceImporter {
 
         @Override
         protected List<CompoundContainerId> compute() throws Exception {
-            prog = new JobProgress();
-            List<CompoundContainerId> l = importMultipleSources(inputFiles);
-            updateProgress(0, 100, 99);
-            return l;
+            prog = new JobProgressMerger(pcs, this);
+            return importMultipleSources(inputFiles);
         }
 
 
@@ -116,10 +113,17 @@ public class InstanceImporter {
             List<CompoundContainerId> list = new ArrayList<>();
             if (input != null) {
                 if (input.msInput != null) {
-                    list.addAll(importMsParserInput(input.msInput.msParserfiles));
-                    list.addAll(importProjectsInput(input.msInput.projects));
+                    input.msInput.msParserfiles.forEach((p, n) -> prog.addPreload(p, 0, n));
+                    input.msInput.projects.forEach((p, n) -> prog.addPreload(p, 0, n));
+
+                    list.addAll(importMsParserInput(input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList())));
+                    list.addAll(importProjectsInput(input.msInput.projects.keySet().stream().sorted().collect(Collectors.toList())));
                 }
-                list.addAll(importCSVInput(input.csvInputs));
+
+                if (input.csvInputs != null) {
+                    input.csvInputs.forEach(i -> prog.addPreload(i, 0, i.ms2.size()));
+                    list.addAll(importCSVInput(input.csvInputs));
+                }
             }
             return list;
 
@@ -129,34 +133,41 @@ public class InstanceImporter {
             if (csvInputs == null || csvInputs.isEmpty())
                 return List.of();
 
-            final InstanceImportIteratorMS2Exp it = new CsvMS2ExpIterator(csvInputs, expFilter).asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
+            final InstanceImportIteratorMS2Exp it = new CsvMS2ExpIterator(csvInputs, expFilter, prog).asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
             final List<CompoundContainerId> ll = new ArrayList<>();
 
-            while (it.hasNext()) {
+            // no progress
+            while (it.hasNext())
                 ll.add(it.next().getID());
-                prog.accept();
-            }
-            prog.updateStats();
+
             return ll;
         }
 
-        public List<CompoundContainerId> importMsParserInput(@Nullable List<Path> files) {
+        public List<CompoundContainerId> importMsParserInput(List<Path> files) {
             if (files == null || files.isEmpty())
                 return List.of();
 
-            final InstanceImportIteratorMS2Exp it = new MS2ExpInputIterator(files, expFilter, inputFiles.msInput.isIgnoreFormula()).asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
+            final InstanceImportIteratorMS2Exp it = new MS2ExpInputIterator(files, expFilter, inputFiles.msInput.isIgnoreFormula(), prog)
+                    .asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
             final List<CompoundContainerId> ll = new ArrayList<>();
 
+            if (prog.isDone())
+                prog.indeterminateProgress(); // just to show something in case only one small file
             while (it.hasNext()) {
-                ll.add(it.next().getID());
-                prog.accept();
+                CompoundContainerId id = it.next().getID();
+                if (prog.isDone())
+                    prog.indeterminateProgress(id.getCompoundName());
+                else
+                    prog.progressMessage(id.getCompoundName());
+                ll.add(id);
             }
-            prog.updateStats();
+
+
             return ll;
         }
 
 
-        public List<CompoundContainerId> importProjectsInput(@Nullable List<Path> files) {
+        public List<CompoundContainerId> importProjectsInput(List<Path> files) {
             if (files == null || files.isEmpty())
                 return List.of();
 
@@ -185,68 +196,23 @@ public class InstanceImporter {
                 FileUtils.deleteRecursively(file);
             return l;
         }
-
-        class JobProgress implements Progress {
-            private final int numOfFiles = (int) inputFiles.getAllFilesStream().count();
-            private int numberOfCompounds = 0;
-            private IntSummaryStatistics compoundStats = new IntSummaryStatistics();
-            private int currentCount = 0;
-
-
-            public void updateStats(int toAdd) {
-                currentCount = toAdd;
-                if (currentCount > 0)
-                    updateStats();
-            }
-
-            public void updateStats() {
-                compoundStats.accept(currentCount);
-                currentCount = 0;
-            }
-
-            public void accept(Integer inc) {
-                currentCount += inc;
-                numberOfCompounds += inc;
-
-                int max = (int) Math.ceil((currentCount * numOfFiles + 1) * 1.1d);
-                if (compoundStats.getCount() > 0) {
-                    max = Math.max((int) Math.ceil((compoundStats.getAverage() * numOfFiles + 1) * 1.1d), max);
-                }
-                updateProgress(0, max, numberOfCompounds);
-            }
-        }
     }
-
-    @FunctionalInterface
-    interface Progress {
-        default void updateStats(int toAdd) {
-            updateStats();
-        }
-
-        default void updateStats() {
-        }
-
-        default void accept() {
-            accept(1);
-        }
-
-        void accept(Integer inc);
-    }
-
 
     public static List<CompoundContainerId> importProject(
             @NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget,
             @NotNull Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintVersion) throws IOException {
 
-        return importProject(inputSpace, importTarget, cidFilter, move, updateFingerprintVersion, (i) -> {
-        });
+        return importProject(inputSpace, importTarget, cidFilter, move, updateFingerprintVersion, null);
     }
 
     // we do not exp level filter here since we want to prevent reading the spectrum file
     // we do file system level copies where we can here
     public static List<CompoundContainerId> importProject(
             @NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager importTarget,
-            @NotNull Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintVersion, @NotNull Progress prog) throws IOException {
+            @NotNull Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintVersion, @Nullable JobProgressMerger prog) throws IOException {
+
+        final int size = inputSpace.size();
+        int progress = 0;
 
         //check is fingerprint data is compatible and clean if not.
         @Nullable Predicate<String> resultsToSkip = checkDataCompatibility(inputSpace, importTarget, NetUtils.checkThreadInterrupt(Thread.currentThread()));
@@ -275,7 +241,7 @@ public class InstanceImporter {
 
 
             final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);
-            prog.updateStats(inputSpace.size());
+
 
             while (psIter.hasNext()) {
                 final CompoundContainerId sourceId = psIter.next();
@@ -314,7 +280,8 @@ public class InstanceImporter {
                 }
 
                 imported.add(id);
-                prog.accept();
+                if (prog != null)
+                    prog.progressChanged(new JobProgressEvent(inputSpace.getRootPath(), 0, size, ++progress, id.toString()));
                 importTarget.projectSpace().fireCompoundCreated(id);
 
                 if (move)
@@ -329,7 +296,8 @@ public class InstanceImporter {
                             " WARNING: This will exclude all Fingerprint related results like CSI:FingerID and CANOPUS from the import.");
         }
 
-        prog.updateStats(0);
+        if (prog != null)
+            prog.progressChanged(new JobProgressEvent(inputSpace.getRootPath(), 0, size, size, inputSpace.getRootPath().getFileName().toString() + " Done"));
         return imported;
     }
 
@@ -464,7 +432,6 @@ public class InstanceImporter {
 
         @Override
         protected InputFilesOptions.MsInput compute() throws Exception {
-//            final  = new InputFiles();
             if (input != null && !input.isEmpty()) {
                 updateProgress(0, input.size(), 0, "Expanding Input Files: '" + input.stream().map(Path::toString).collect(Collectors.joining(",")) + "'...");
                 expandInput(input, expandedFiles);
@@ -484,8 +451,9 @@ public class InstanceImporter {
 
                 if (Files.isDirectory(g)) {
                     // check whether it is a workspace or a gerneric directory with some other input
-                    if (ProjectSpaceIO.isExistingProjectspaceDirectory(g)) {
-                        inputFiles.projects.add(g);
+                    int size = ProjectSpaceIO.isExistingProjectspaceDirectoryNum(g);
+                    if (size > 0) {
+                        inputFiles.projects.put(g, size);
                     } else {
                         try {
                             final List<Path> ins =
@@ -497,20 +465,26 @@ public class InstanceImporter {
                             if (!ins.isEmpty())
                                 expandInput(ins, inputFiles);
                         } catch (IOException e) {
-                            LOG.warn("Could not list directory content of '" + g.toString() + "'. Skipping location!");
+                            LOG.warn("Could not list directory content of '" + g.toString() + "'. Skipping location! " + e.getMessage());
                         }
                     }
                 } else {
                     //check whether files are lcms runs copressed project-spaces or standard ms/mgf files
-                    final String name = g.getFileName().toString();
-                    if (ProjectSpaceIO.isZipProjectSpace(g)) {
-                        //compressed spaces are read only and can be handled as simple input
-                        inputFiles.projects.add(g);
-                    } else if (MsExperimentParser.isSupportedFileName(name)) {
-                        inputFiles.msParserfiles.add(g);
-                    } else {
-                        inputFiles.unknownFiles.add(g);
-//                    LOG.warn("File with the name \"" + name + "\" is not in a supported format or has a wrong file extension. File is skipped");
+                    try {
+                        final String name = g.getFileName().toString();
+                        if (ProjectSpaceIO.isZipProjectSpace(g)) {
+                            //compressed spaces are read only and can be handled as simple input
+                            try (SiriusProjectSpace ps = new ProjectSpaceIO(new ProjectSpaceConfiguration()).openExistingProjectSpace(g)) {
+                                inputFiles.projects.put(g, ps.size()); //todo estimate size
+                            }
+                        } else if (MsExperimentParser.isSupportedFileName(name)) {
+                            inputFiles.msParserfiles.put(g, (int) Files.size(g));
+                        } else {
+                            inputFiles.unknownFiles.put(g, (int) Files.size(g));
+                            //                    LOG.warn("File with the name \"" + name + "\" is not in a supported format or has a wrong file extension. File is skipped");
+                        }
+                    } catch (IOException e) {
+                        LOG.warn("Could not read '" + g.toString() + "'. Skipping location! " + e.getMessage());
                     }
                 }
                 updateProgress(0, files.size(), ++p);

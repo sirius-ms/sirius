@@ -133,7 +133,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
 
     public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
         boolean align = Jobs.runInBackgroundAndLoad(MF, "Checking for alignable input...", () ->
-                (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
+                (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
                 .getResult();
 
         // todo this is hacky we need some real view for that at some stage.
@@ -155,7 +155,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                         if (input.msInput.projects.size() == 0)
                             return List.of();
                         final List<Path> out = new ArrayList<>(input.msInput.projects.size());
-                        for(Path p : input.msInput.projects){
+                        for(Path p : input.msInput.projects.keySet()){
                             if (InstanceImporter.checkDataCompatibility(p,GuiProjectSpaceManager.this,this::checkForInterruption) != null)
                                 out.add(p);
                         }
