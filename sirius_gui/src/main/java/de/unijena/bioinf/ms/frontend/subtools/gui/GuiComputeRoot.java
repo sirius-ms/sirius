@@ -29,7 +29,10 @@ import picocli.CommandLine;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "gui-background-computation", aliases = {"gbc"},  versionProvider = Provide.Versions.class, sortOptions = false)
 public class GuiComputeRoot implements RootOptions<GuiProjectSpaceManager, PreprocessingJob<List<InstanceBean>>, PostprocessingJob<?>> {
@@ -62,7 +65,8 @@ public class GuiComputeRoot implements RootOptions<GuiProjectSpaceManager, Prepr
 
     public void setNonCompoundInput(List<Path> genericFiles) {
         inputFiles = new InputFilesOptions();
-        inputFiles.msInput = new InputFilesOptions.MsInput(null, null, new ArrayList<>(genericFiles));
+        Map<Path, Integer> map = genericFiles.stream().sequential().collect(Collectors.toMap(k -> k, k -> (int) k.toFile().length()));
+        inputFiles.msInput = new InputFilesOptions.MsInput(null, null, map);
     }
 
     @Override

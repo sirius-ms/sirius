@@ -153,7 +153,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         try {
             if (psOpts.outputProjectLocation == null) {
                 if (inputFiles != null && inputFiles.msInput.projects.size() == 1) {
-                    psOpts.outputProjectLocation = (inputFiles.msInput.projects.get(0));
+                    psOpts.outputProjectLocation = (inputFiles.msInput.projects.keySet().iterator().next());
                     LOG.info("No output location given. Writing output to input location: " + psOpts.outputProjectLocation.toString());
                 } else {
                     psOpts.outputProjectLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();
