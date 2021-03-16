@@ -622,7 +622,7 @@ public class Sirius {
                 if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
                     profile.isotopePatternAnalysis.computeAndScoreIsotopePattern(input);
                 final FasterTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
-                instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105, (int) evt.getNewValue()));
+                instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105,  ((Number)evt.getNewValue()).intValue()));
                 submitSubJob(instance);
                 FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
