@@ -48,8 +48,8 @@ body {
 .peak { width: 2px;}
 .peak_1 { fill: #000000; }
 .peak_2 { fill: #32CD32; }
-.peak.structureInformation.peak_2 { fill: #af7ac5; }
-.peak_hover {fill: red; }
+.peak_structInfo { fill: #af7ac5; }
+.peak_hover { fill: red; }
 .peak_select {
     fill: #4169E1;
     width: 3px;
