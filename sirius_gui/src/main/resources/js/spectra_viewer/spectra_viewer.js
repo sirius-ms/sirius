@@ -25,9 +25,7 @@ window.addEventListener('contextmenu', event => event.preventDefault());
 
 window.addEventListener("resize", function(){
     spectraViewer(data);
-    if (selected.leftClick !== null) {
-        showStructure(selected.leftClick);
-    }
+    if (selected.leftClick !== null) showStructure(selected.leftClick);
 });
 
 document.onkeyup = function(e) {
@@ -75,6 +73,8 @@ function showStructure(i) {
         basic_structure = strucArea.select('svg')
             .style('height', '100%')
             .style('width', '100%');
+        removeElementStyle("bond", "stroke");
+        removeElementStyle("atom", "fill");
         strucArea.selectAll(".bond").classed("highlight_bond", true);
         strucArea.selectAll(".atom").classed("highlight_atom", true);
         basic_structure.style("opacity", 1);
@@ -92,7 +92,23 @@ function showStructure(i) {
     }
 };
 
+function removeElementStyle(className, styleName) {
+	let elements = document.getElementsByClassName(className);
+    for (let e of elements) {
+    	if (e.nodeName === 'g') {
+    		let children = e.children;
+    		for (let child of children) {
+    		    if (child.hasAttribute(styleName)) child.removeAttribute(styleName);
+    		}
+    	} else {
+    		if (e.hasAttribute(styleName)) e.removeAttribute(styleName);
+    	}
+    }
+};
+
 function highlighting(bonds, cuts, atoms) {
+	removeElementStyle("bond", "stroke");
+	removeElementStyle("atom", "fill");
     let totalBond = d3.selectAll(".bond").size();
     let total = new Set(Array.from({length: totalBond}, (v, i) => i));
     let bond_set = new Set(bonds);
@@ -113,31 +129,24 @@ function highlighting(bonds, cuts, atoms) {
     for (let p of paths) {
     	let id = Number(p.id.replace("mol1atm", "")) - 1;
     	if (highlight_atoms.has(id)) {
-    			p.setAttribute('class', "atom highlight_atom");
-    		} else {
-    			p.setAttribute('class', "atom rest_atom");
-    		}
-    	if (p.nodeName === 'g') {
-    		let children = p.children;
-    		for (let child of children) {
-    			if (child.hasAttribute("fill")) {
-    				child.removeAttribute("fill");
-    			}
-    		}
+    		p.setAttribute('class', "atom highlight_atom");
     	} else {
-    		if (p.hasAttribute("fill")) {
-    			p.removeAttribute("fill");
-    		}
+    		p.setAttribute('class', "atom rest_atom");
     	}
     }
 };
 
 function idled() { idleTimeout = null; };
 
-//function resetColor(d) { return ("structureInformation" in d) ? "peak_2 structureInformation peak" : (("formula" in d) ? "peak_2 peak" : "peak_1 peak"); };
-// Wei: Why do we need structureInformation?
-// Only used in spectrumPlot: peak_1 = unannotated, peak_2 = annotated
-function resetColor(d) { return (("formula" in d) ? "peak_2 peak" : "peak_1 peak"); };
+// Only used in spectrumPlot: peak_1 = unannotated, peak_2 = annotate
+function resetColor(d) {
+	let precursor = data.spectra[0].peaks[ms2Size-1].formula;
+	if ("structureInformation" in d || (d.formula === precursor && svg_str !== null)) {
+		return "peak_2 peak_structInfo peak";
+	} else {
+		return ("formula" in d) ? "peak_2 peak" : "peak_1 peak";
+	}
+};
 
 function translateHover(mouse_w, mouse_h) {
     // NOTE: These distances might need to be changed, when the font size and content of hover are changed.
@@ -268,9 +277,7 @@ var mousedown = function(d, i) {
     }
 };
 
-function rightClickOnly() {
-	return d3.event.button === 2;
-};
+function rightClickOnly() { return d3.event.button === 2; };
 
 function init() {
     d3.select("#container").html("");
@@ -474,9 +481,8 @@ function spectrumPlot(spectrum, structureView) {
                 hideHover();
             }
         })) ;
-        tooltip.on("mousemove", function(){
-            translateHover(d3.event.clientX, d3.event.clientY);
-        });
+        tooltip.on("mousemove", function(){ translateHover(d3.event.clientX, d3.event.clientY); });
+        
         d3.select("svg").on("click", function(){
             if (selected.hover != null) {
                 mousedown.bind(document.getElementById("peak"+selected.hover))(spectrum.peaks[selected.hover], selected.hover);
@@ -489,9 +495,7 @@ function spectrumPlot(spectrum, structureView) {
         }, function() {
             mouseleaveGeneral();
         })) ;
-        tooltip.on("mousemove", function(){
-            translateHover(d3.event.clientX, d3.event.clientY);
-        });
+        tooltip.on("mousemove", function(){ translateHover(d3.event.clientX, d3.event.clientY); });
     }
 };
 
@@ -604,13 +608,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("y", h/2)
             .attr("height", function(d) { return y2(d.intensity); });
 
-    function upOrDown(currentY, callbackUp, callbackDown) {
-        if (currentY <= h/2) {
-            callbackUp();
-        } else {
-            callbackDown();
-        }
-    };
+    function upOrDown(currentY, callbackUp, callbackDown) { (currentY <= h/2) ? callbackUp() : callbackDown(); };
 
     svg.on("mousemove", function() {
         let currentY = d3.event.clientY;
@@ -619,7 +617,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
                 const node = d3.select("#peak"+i).node();
                 mousemoveGeneral.bind(node)(spectrum1.peaks[i],i);
             }, function() {
-                mouseleaveGeneral();
+            	mouseleaveGeneral();
             }),
             mouseMovingFunction(spectrum2, TOLERANCE, x, y2, function(i) {
                 const node = d3.select("#peak"+(i+mzs1.length)).node();
@@ -627,15 +625,14 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             }, function() {
                 mouseleaveGeneral();
             })
-	);
+		);
     });
-    tooltip.on("mousemove", function(){
-        translateHover(d3.event.clientX, d3.event.clientY);
-    });
+    tooltip.on("mousemove", function(){ translateHover(d3.event.clientX, d3.event.clientY); });
 };
 
 function spectraViewer(json){
     init();
+    data = json;
     if (json.spectra[1] == null) { // 1. mode
         if (json.spectra[0].name.includes("MS1") || (anno_str.length === 0 && svg_str === null)) {
             // 1.1 Mode: MS1, MS2 without structureViewer
@@ -646,7 +643,6 @@ function spectraViewer(json){
     } else { // 2. mode
         mirrorPlot(json.spectra[0], json.spectra[1], view.mirror);
     }
-    data = json;
 };
 
 //var debug = d3.select("body")
