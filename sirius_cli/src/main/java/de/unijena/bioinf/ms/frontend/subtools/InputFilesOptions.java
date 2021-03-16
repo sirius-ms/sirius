@@ -22,34 +22,23 @@ package de.unijena.bioinf.ms.frontend.subtools;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.projectspace.InstanceImporter;
-import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-//@CommandLine.Command(sortOptions = false, showDefaultValues = true)
 public class InputFilesOptions {
 
     public InputFilesOptions() {
     }
 
-    public InputFilesOptions(@NotNull List<Path> projects) {
-        msInput = new MsInput();
-        msInput.projects.addAll(projects);
-        csvInputs = null;
-    }
-
     public Stream<Path> getAllFilesStream() {
         if (msInput == null)
             return Stream.of();
-        return Stream.of(msInput.msParserfiles, msInput.projects, msInput.unknownFiles).flatMap(Collection::stream);
+        return Stream.of(msInput.msParserfiles.keySet(), msInput.projects.keySet(), msInput.unknownFiles.keySet()).flatMap(Collection::stream);
     }
 
     public List<Path> getAllFiles() {
@@ -65,13 +54,13 @@ public class InputFilesOptions {
 
 
     public static class MsInput {
-        public final List<Path> msParserfiles, projects, unknownFiles;
+        public final Map<Path,Integer> msParserfiles, projects, unknownFiles;
 
         public MsInput() {
-            this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+            this(new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>());
         }
 
-        public MsInput(List<Path> msParserfiles, List<Path> projects, List<Path> unknownFiles) {
+        public MsInput(Map<Path,Integer> msParserfiles, Map<Path,Integer> projects, Map<Path,Integer> unknownFiles) {
             this.msParserfiles = msParserfiles;
             this.projects = projects;
             this.unknownFiles = unknownFiles;

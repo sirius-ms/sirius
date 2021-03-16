@@ -78,7 +78,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                         move = true;
                     } else if (projectInput.msInput.projects.size() == 1) {
                         source = rootOptions.getSpaceManagerFactory().create(
-                                new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(projectInput.msInput.projects.get(0)));
+                                new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(projectInput.msInput.projects.keySet().stream().findFirst().get()));
                     } else {
                         LoggerFactory.getLogger(getClass()).warn("No input project-space given! Nothing to do");
                         return;
@@ -157,7 +157,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                     InputFilesOptions input = rootOptions.getInput();
 
                     // if the output project is also part of the input, we have to filter it also
-                    if (space.size() > 0 && input == null || input.msInput.projects.contains(space.projectSpace().getLocation())) {
+                    if (space.size() > 0 && input == null || input.msInput.projects.containsKey(space.projectSpace().getLocation())) {
                         space.projectSpace().filteredIterator(c -> !cidFilter.test(c)).forEachRemaining(id -> {
                             try {
                                 space.projectSpace().deleteCompound(id);

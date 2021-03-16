@@ -276,7 +276,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 openNewProject = new QuestionDialog(MF, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
             if (openNewProject)
-                MF.openNewProjectSpace(inputF.msInput.projects.get(0));
+                MF.openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
             else
                 importDragAndDropFiles(inputF);
         }
@@ -288,7 +288,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         // check if unknown files contain csv files with spectra
         final CSVFormatReader csvChecker = new CSVFormatReader();
-        List<File> csvFiles = files.msInput != null ? files.msInput.unknownFiles.stream().map(Path::toFile)
+        List<File> csvFiles = files.msInput != null ? files.msInput.unknownFiles.keySet().stream().map(Path::toFile)
                 .filter(f -> csvChecker.isCompatible(f) || f.getName().toLowerCase().endsWith(".txt"))
                 .collect(Collectors.toList()) : Collections.emptyList();
 
