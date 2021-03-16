@@ -194,7 +194,7 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
 
     @Override
     public void progressChanged(JobProgressEvent progressEvent) {
-        int progress = progressEvent.getNewValue();
+        long progress = progressEvent.getNewValue().longValue();
         if (progress<=0) return;
         ++currentProgress;
         if(currentProgress % step == 0) {
