@@ -100,17 +100,35 @@ function highlighting(bonds, cuts, atoms) {
     let rest = new Set([...total].filter(x => !bond_set.has(x)));
     rest = new Set([...rest].filter(x => !cut_set.has(x)));
     for (let i in bonds) {
-        d3.select("#mol1bnd"+(bonds[i]+1)).attr("class", "bond highlight_bond");
+        strucArea.select("#mol1bnd"+(bonds[i]+1)).attr("class", "bond highlight_bond");
     }
     for (let j in cuts) {
-        d3.select("#mol1bnd"+(cuts[j]+1)).attr("class", "bond highlight_cut");
+        strucArea.select("#mol1bnd"+(cuts[j]+1)).attr("class", "bond highlight_cut");
     }
     for (let l of rest) {
-        d3.select("#mol1bnd"+(l+1)).attr("class", "bond rest_bond");
+        strucArea.select("#mol1bnd"+(l+1)).attr("class", "bond rest_bond");
     }
-    d3.selectAll(".atom").attr("class", "atom rest_atom");
-    for (let k in atoms) {
-        d3.select("#mol1atm"+(atoms[k]+1)).attr("class", "atom highlight_atom");
+    let highlight_atoms = new Set(atoms);
+    let paths = document.getElementsByClassName("atom");
+    for (let p of paths) {
+    	let id = Number(p.id.replace("mol1atm", "")) - 1;
+    	if (highlight_atoms.has(id)) {
+    			p.setAttribute('class', "atom highlight_atom");
+    		} else {
+    			p.setAttribute('class', "atom rest_atom");
+    		}
+    	if (p.nodeName === 'g') {
+    		let children = p.children;
+    		for (let child of children) {
+    			if (child.hasAttribute("fill")) {
+    				child.removeAttribute("fill");
+    			}
+    		}
+    	} else {
+    		if (p.hasAttribute("fill")) {
+    			p.removeAttribute("fill");
+    		}
+    	}
     }
 };
 
@@ -251,8 +269,7 @@ var mousedown = function(d, i) {
 };
 
 function rightClickOnly() {
-	let event = d3.event;
-	return event.button === 2;
+	return d3.event.button === 2;
 };
 
 function init() {
