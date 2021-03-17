@@ -26,8 +26,9 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 
 import javax.swing.*;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by fleisch on 15.05.17.
@@ -35,7 +36,7 @@ import java.util.List;
 public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElements<E, D> {
     public enum DataSelectionStrategy {ALL, FIRST_SELECTED, ALL_SELECTED}
 
-    private final List<ActiveElementChangedListener<E, D>> listeners = new LinkedList<>();
+    private final Queue<ActiveElementChangedListener<E, D>> listeners = new ConcurrentLinkedQueue<>();
 
     protected ObservableElementList<E> elementList;
     protected DefaultEventSelectionModel<E> selectionModel;

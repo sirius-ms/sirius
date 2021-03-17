@@ -49,7 +49,7 @@ public class PassatuttoSubToolJob extends InstanceJob {
     }
 
     @Override
-    protected void computeAndAnnotateResult(@NotNull Instance inst) {
+    protected void computeAndAnnotateResult(@NotNull Instance inst) throws InterruptedException {
         final FormulaResult best = inst.loadTopFormulaResult(List.of(ZodiacScore.class, SiriusScore.class), FormulaScoring.class, FTree.class)
                 .orElse(null);
 
@@ -65,12 +65,14 @@ public class PassatuttoSubToolJob extends InstanceJob {
             return;
         }
 
+        checkForInterruption();
 
-        final Decoy decoyByRerootingTree = submitJob(
+        final Decoy decoyByRerootingTree = submitSubJob(
                 Passatutto.makePassatuttoJob(tree, tree.getAnnotationOrThrow(PrecursorIonType.class)))
                 .takeResult();
         best.setAnnotation(Decoy.class, decoyByRerootingTree);
 
+        checkForInterruption();
 
         //write Passatutto results
         inst.updateFormulaResult(best, Decoy.class);
