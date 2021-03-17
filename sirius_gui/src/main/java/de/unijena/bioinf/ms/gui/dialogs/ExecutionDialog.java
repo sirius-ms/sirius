@@ -159,7 +159,7 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
             computation.parseArgs(command.toArray(String[]::new));
 
             if (computation.isWorkflowDefined()) {
-                final TextAreaJJobContainer<Boolean> j = Jobs.runWorkflow(computation.getFlow(), compounds == null ? List.of() : compounds);
+                final TextAreaJJobContainer<Boolean> j = Jobs.runWorkflow(computation.getFlow(), compounds == null ? List.of() : compounds, command, configPanel.toolCommand());
                 LoadingBackroundTask.connectToJob(this, "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
             }
         } catch (Exception e) {

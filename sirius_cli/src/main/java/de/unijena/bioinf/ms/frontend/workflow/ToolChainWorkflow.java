@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -101,8 +102,8 @@ public class ToolChainWorkflow implements Workflow {
                 } else if (o instanceof DataSetJob.Factory) {
                     submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, ((DataSetJob.Factory<?>) o));
                     submitter.start();
+                    checkForCancellation();
                     iteratorSource = submitter.submitJob(submitter.getCollectorJob()).awaitResult();
-
                     checkForCancellation();
                     instanceJobChain.clear();
                 } else {
@@ -125,10 +126,13 @@ public class ToolChainWorkflow implements Workflow {
                 submitter.submitJob(postprocessingJob).awaitResult();
             }
 
-        } catch (ExecutionException e) {
-            LOG.error("Error When Executing ToolChain", e);
+        } catch (ExecutionException | RuntimeException e) {
+            if (e.getCause() instanceof CancellationException || e.getCause() instanceof InterruptedException)
+                LOG.info("Workflow was canceled by: " + e.getMessage());
+            else
+                LOG.error("Error When Executing ToolChain", e);
         } catch (InterruptedException e) {
-            LOG.info("Workflow successfully canceled!");
+            LOG.info("Workflow successfully canceled by interruption check!");
         }
     }
 }

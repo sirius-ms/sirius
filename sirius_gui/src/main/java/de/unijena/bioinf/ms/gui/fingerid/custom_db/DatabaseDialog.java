@@ -410,7 +410,7 @@ public class DatabaseDialog extends JDialog {
                 computation.parseArgs(command.toArray(String[]::new));
 
                 if (computation.isWorkflowDefined()) {
-                    final TextAreaJJobContainer<Boolean> j = Jobs.runWorkflow(computation.getFlow(), List.of());
+                    final TextAreaJJobContainer<Boolean> j = Jobs.runWorkflow(computation.getFlow(), List.of(), command, configPanel.toolCommand());
                     LoadingBackroundTask.connectToJob(this, "Importing into '" + name + "'...", false, j);
                     whenCustomDbIsAdded(name);
                 }
