@@ -160,14 +160,14 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
                 if (edgeFilter instanceof EdgeThresholdFilter){
                     ((ScoreProbabilityDistributionFix)edgeScorer).setThresholdAndPrepare(allCandidates);
                 } else {
-                    submitSubJob(((ScoreProbabilityDistributionFix)edgeScorer).getPrepareJob(allCandidates)).takeResult();
+                    submitSubJob(((ScoreProbabilityDistributionFix)edgeScorer).getPrepareJob(allCandidates)).awaitResult();
                 }
 
             } else if (edgeScorer instanceof ScoreProbabilityDistributionEstimator){
                 if (edgeFilter instanceof EdgeThresholdFilter){
                     ((ScoreProbabilityDistributionEstimator)edgeScorer).setThresholdAndPrepare(allCandidates);
                 } else {
-                    submitSubJob(((ScoreProbabilityDistributionEstimator)edgeScorer).getPrepareJob(allCandidates)).takeResult();
+                    submitSubJob(((ScoreProbabilityDistributionEstimator)edgeScorer).getPrepareJob(allCandidates)).awaitResult();
                 }
             } else {
                 edgeScorer.prepare(allCandidates);
