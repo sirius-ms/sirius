@@ -145,20 +145,24 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
         updateProgress(0, maxProgress, 0, "Sample probabilities");
         List<BasicJJob> jobs = new ArrayList<>();
         for (final GibbsMFCorrectionNetwork gibbsNetwork : gibbsNetworks) {
+            checkForInterruption();
             gibbsNetwork.setIterationSteps(maxStepProportioned, burnIn);
             gibbsNetwork.addJobProgressListener(this);
             jobs.add(gibbsNetwork);
             submitSubJob(gibbsNetwork);
         }
 
+        checkForInterruption();
+
         for (BasicJJob job : jobs) {
             job.awaitResult();
         }
 
-
         long start = System.currentTimeMillis();
         combineResults();
         logDebug("combined all results in: "+(System.currentTimeMillis()-start)+" ms");
+
+        checkForInterruption();
 
         return createCompoundResults();
 
