@@ -165,16 +165,17 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
         if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
         checkForInterruption();
         init();
+        checkForInterruption();
         logInfo("Running ZODIAC with "+firstRoundIds.length+" of "+ids.length+" compounds.");
         Graph.validateAndThrowError(graph, this::logWarn);
         gibbsParallel = new GibbsParallel<>(graph, repetitions);
         gibbsParallel.setIterationSteps(maxSteps, burnIn);
         long start = System.currentTimeMillis();
         submitSubJob(gibbsParallel);
-
-
+        checkForInterruption();
         results1 = gibbsParallel.awaitResult();
         logDebug("finished running " + repetitions + " repetitions in parallel: "+(System.currentTimeMillis()-start)+" ms");
+
         checkForInterruption();
 
         firstRoundIds = gibbsParallel.getGraph().getIds();
