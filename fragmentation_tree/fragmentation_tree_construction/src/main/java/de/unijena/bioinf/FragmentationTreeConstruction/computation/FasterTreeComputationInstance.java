@@ -158,8 +158,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final boolean useHeuristic = pinput.getParentPeak().getMass() >= uh.mzToUseHeuristic;
         final boolean useHeuristicOny = pinput.getParentPeak().getMass() >= uh.mzToUseHeuristicOnly;
 
+        checkForInterruption();
 
         final ExactResult[] results = estimateTreeSizeAndRecalibration(decompositions, useHeuristic, useHeuristicOny);
+
+        checkForInterruption();
 
         if (results.length > 0) {
             final UnconsideredCandidatesUpperBound it = new UnconsideredCandidatesUpperBound(
@@ -170,8 +173,6 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
         //we do not resolve here anymore -> because we need unresolved trees to expand adducts for fingerid
         final List<FTree> trees = Arrays.stream(results).map(r -> fixIonization(r.tree)).collect(Collectors.toList());
-
-
         return new FinalResult(trees);
     }
 
@@ -197,7 +198,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
     }
 
-    public ExactResult[] estimateTreeSizeAndRecalibration(List<Decomposition> decompositions, boolean useHeuristic, boolean useHeuristicOnly) throws ExecutionException {
+    public ExactResult[] estimateTreeSizeAndRecalibration(List<Decomposition> decompositions, boolean useHeuristic, boolean useHeuristicOnly) throws ExecutionException, InterruptedException {
         if (useHeuristicOnly)
             useHeuristic = true;
 
@@ -218,6 +219,8 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         double treeSize = treeSizeBonus == null ? 0d : treeSizeBonus.score;
         final double originalTreeSize = treeSize;
         final List<ExactResult> results = new ArrayList<>(decompositions.size());
+        checkForInterruption();
+
         // TREE SIZE
         while (inc <= MAX_TREESIZE_INCREASE) {
             configureProgress(2, useHeuristic ? 50 : 90,decompositions.size());
@@ -226,6 +229,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             final List<TreeComputationJob> jobs = new ArrayList<>(decompositions.size());
             final TreeBuilder builder = useHeuristic ? getHeuristicTreeBuilder() : analyzer.getTreeBuilder();
             for (Decomposition d : decompositions) {
+                checkForInterruption();
                 if (Double.isInfinite(d.getScore())) continue;
                 final TreeComputationJob job = new TreeComputationJob(builder, null, d);
                 submitSubJob(job);
@@ -233,6 +237,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             }
             int counter = 0;
             for (TreeComputationJob job : jobs) {
+                checkForInterruption();
                 results.add(job.awaitResult());
                 if (++counter % 100 == 0) {
                     checkTimeout();
@@ -256,6 +261,8 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
         final List<ExactResult> topResults = extractTopResults(results, numberOfResultsToKeep + 10, numberOfResultsToKeepPerIonization + 5);
         configureProgress(100, topResults.size());
+        checkForInterruption();
+
         if (pinput.getAnnotationOrDefault(ForbidRecalibration.class).isForbidden()) {
             final List<BasicJJob<ExactResult>> jobs = new ArrayList<>();
             if (useHeuristic && !useHeuristicOnly) {
@@ -269,6 +276,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         }
         final List<RecalibrationJob> recalibrationJobs = new ArrayList<>();
         for (ExactResult r : topResults) {
+            checkForInterruption();
             TreeBuilder builder = useHeuristic ? getHeuristicTreeBuilder() : analyzer.getTreeBuilder();
             final RecalibrationJob recalibrationJob = new RecalibrationJob(r, builder,
                     useHeuristicOnly ? builder : analyzer.getTreeBuilder());
@@ -282,9 +290,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final TIntArrayList beautifyTodo = new TIntArrayList();
 
 
+
         if (tss!=null) {
             //beautify trees
             while (true) {
+                checkForInterruption();
                 beautifyTodo.clearQuick();
                 for (int k = 0; k < recalibrated.length; ++k) {
                     if (!recalibrated[k].tree.getAnnotation(Beautified.class, Beautified::ugly).isBeautiful()) {
@@ -300,6 +310,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
                 treeSize += TREE_SIZE_INCREASE;
                 tss.fastReplace(pinput, new TreeSizeScorer.TreeSizeBonus(treeSize));
                 for (int j=0; j < beautifyTodo.size(); ++j) {
+                    checkForInterruption();
                     final int K = beautifyTodo.getQuick(j);
                     if (recalibrated[K].input != null) {
                         tss.fastReplace(recalibrated[K].input, new TreeSizeScorer.TreeSizeBonus(treeSize));
@@ -309,11 +320,14 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
                     }
                     beautify[K] = submitSubJob(new ExactJob(recalibrated[K], useHeuristicOnly ? getHeuristicTreeBuilder() : analyzer.getTreeBuilder()));
                 }
+
+                checkForInterruption();
                 for (int j=0; j < beautifyTodo.size(); ++j) {
                     final int K = beautifyTodo.getQuick(j);
                     recalibrated[K] = beautify[K].takeResult();
                 }
             }
+            checkForInterruption();
             revertTreeSizeIncrease(recalibrated, originalTreeSize);
         } else {
             for (ExactResult exactResult : recalibrated) {
