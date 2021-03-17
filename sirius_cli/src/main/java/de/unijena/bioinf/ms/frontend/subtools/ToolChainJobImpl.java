@@ -19,7 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.jjobs.BasicDependentJJob;
+import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.projectspace.Instance;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
-public abstract class ToolChainJobImpl<R> extends BasicDependentJJob<R> implements ToolChainJob<R>, JobSubmitter {
+public abstract class ToolChainJobImpl<R> extends BasicDependentMasterJJob<R> implements ToolChainJob<R>, JobSubmitter {
     private final JobSubmitter submitter;
     private Consumer<Instance> invalidator;
 
@@ -56,6 +56,11 @@ public abstract class ToolChainJobImpl<R> extends BasicDependentJJob<R> implemen
     public <Job extends JJob<Result>, Result> Job submitJob(Job job) {
         job.delegateLog(this);
         return submitter.submitJob(job);
+    }
 
+    @Override
+    public <Job extends JJob<Result>, Result> Job submitSubJob(Job subjob) {
+        subjob.delegateLog(this);
+        return super.submitSubJob(subjob);
     }
 }
