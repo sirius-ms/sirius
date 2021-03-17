@@ -30,6 +30,8 @@ import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
 import javafx.application.Platform;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -219,19 +221,23 @@ public class Jobs {
 
     //todo Singelton runs that are cancelable
 
-    public static TextAreaJJobContainer<Boolean> runWorkflow(Workflow computation, List<InstanceBean> compoundsToProcess) {
+    public static TextAreaJJobContainer<Boolean> runWorkflow(Workflow computation, List<InstanceBean> compoundsToProcess, @Nullable List<String> command, @Nullable String description) {
         //todo the run could be a job that reports progress. That would also be great for the cli
-        return submit(new ComputationJJob(computation,compoundsToProcess), String.valueOf(COMPUTATION_COUNTER.incrementAndGet()), "Computation");
+
+        return submit(new ComputationJJob(computation,compoundsToProcess, command),
+                COMPUTATION_COUNTER.incrementAndGet() + ": " + (description==null ? "" : description), "Computation");
     }
 
     private static class ComputationJJob extends BasicJJob<Boolean> {
         final Workflow computation;
         final List<InstanceBean> compoundsToProcess;
+        final String command;
 
-        private ComputationJJob(Workflow computation, List<InstanceBean> compoundsToProcess) {
+        private ComputationJJob(@NotNull Workflow computation, @NotNull List<InstanceBean> compoundsToProcess, @Nullable List<String> command) {
             super(JobType.SCHEDULER);
             this.computation = computation;
             this.compoundsToProcess = compoundsToProcess;
+            this.command = command == null ? null : "Command: `" + String.join(" ", command);
         }
 
         @Override
@@ -252,8 +258,8 @@ public class Jobs {
             checkForInterruption();
             if (computation instanceof ProgressJJob)
                 ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
+            logInfo(command);
             computation.run();
-            checkForInterruption();
             return true;
         }
 

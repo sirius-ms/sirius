@@ -62,12 +62,16 @@ public class SiriusSubToolJob extends InstanceJob {
         // set whiteSet or merge with whiteSet from db search if available
         Whiteset wSet = null;
 
+        checkForInterruption();
+
         // create WhiteSet from DB if necessary
         //todo do we really want to restrict to organic even if the db is user selected
         final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
         if (searchDB.isPresent() && searchDB.get().containsDBs())
-            wSet = submitJob(new FormulaWhiteListJob(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp, true, false).delegateLog(this))
+            wSet = submitSubJob(new FormulaWhiteListJob(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp, true, false))
                     .awaitResult();
+
+        checkForInterruption();
 
 
         // todo this should be moved to annotations at some point.
@@ -78,19 +82,27 @@ public class SiriusSubToolJob extends InstanceJob {
             else
                 wSet = cliOptions.formulaWhiteSet;
         }
-
         exp.setAnnotation(Whiteset.class, wSet);
 
+        checkForInterruption();
+
         final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(inst.loadCompoundContainer(FinalConfig.class).getAnnotationOrThrow(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
-        List<IdentificationResult<SiriusScore>> results = submitJob(sirius.makeIdentificationJob(exp).delegateLog(this)).awaitResult();
+        List<IdentificationResult<SiriusScore>> results = submitSubJob(sirius.makeIdentificationJob(exp)).awaitResult();
+
+        checkForInterruption();
+
 
         //write results to project space
         for (IdentificationResult<SiriusScore> result : results)
             inst.newFormulaResultWithUniqueId(result.getTree());
 
+        checkForInterruption();
+
         // set sirius to ranking score
         if (exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto())
             inst.getID().setRankingScoreTypes(new ArrayList<>(List.of(SiriusScore.class)));
+
+        checkForInterruption();
 
         //make possible adducts persistent without rewriting whole experiment
         inst.getID().setDetectedAdducts(exp.getAnnotationOrNull(DetectedAdducts.class));
