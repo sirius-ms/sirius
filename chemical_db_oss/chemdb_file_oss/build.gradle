@@ -21,4 +21,5 @@
 dependencies {
 	//project
     compile project(':chemical_db_oss')
+    compile project(':blob-storage')
 }

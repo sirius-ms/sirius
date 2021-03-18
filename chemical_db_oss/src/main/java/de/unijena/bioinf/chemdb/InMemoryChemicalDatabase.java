@@ -28,7 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import java.io.IOException;
 import java.util.*;
 
-public class InMemoryChemicalDatabase extends AbstractChemicalDatabase {
+public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
 
     protected List<FingerprintCandidate> fingerprintCandidates;
     protected HashMap<MolecularFormula, List<FingerprintCandidate>> candidatesPerFormula;

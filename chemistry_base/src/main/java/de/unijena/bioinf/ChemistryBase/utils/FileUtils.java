@@ -45,7 +45,6 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class FileUtils {
 
-
     public static void closeIfNotDefaultFS(Path zipFS) throws IOException {
         final FileSystem fs = zipFS.getFileSystem();
         if (!fs.equals(FileSystems.getDefault()) && fs.isOpen())

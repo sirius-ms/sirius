@@ -48,10 +48,13 @@ include ':chemical_db_oss:chemdb_utils_oss'
 include ':chemical_db_oss:chemdb_cloud_oss'
 
 include ':error_reporter_oss'
-include 'ml_utils'
+include ':ml_utils'
 include ':rest_service_oss:rest_core_oss'
-include ":combinatorial_fragmenter"
-include 'agents'
+include ':combinatorial_fragmenter'
+include ':agents'
+
+include ':google-cloud-support'
+include ':blob-storage'
 
 
 // 1. remove them for first sirius build (build reduced).

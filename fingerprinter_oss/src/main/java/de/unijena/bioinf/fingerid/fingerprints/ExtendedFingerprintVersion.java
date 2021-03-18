@@ -39,7 +39,7 @@ import java.util.*;
  */
 public class ExtendedFingerprintVersion extends FingerprintVersion {
 
-    protected class SearchEngine extends AbstractChemicalDatabase {
+    protected class SearchEngine implements AbstractChemicalDatabase {
 
         protected final AbstractChemicalDatabase innerDatabase;
 

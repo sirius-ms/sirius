@@ -51,7 +51,7 @@ import java.util.*;
 
 import static de.unijena.bioinf.ChemistryBase.chem.InChIs.newInChI;
 
-public class ChemicalDatabase extends AbstractChemicalDatabase implements PooledDB<Connection> {
+public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Connection> {
     public final static String REF_SCHEME = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references", null, "ref");
     //REF_MAPPING_TABLE_SUFFIX is included for compatibility reasons all recent database version should contain a VIEW ref.xxx_mapping_id_inchi_key that combines InChIKeys of non-standardized and standardized structures
     public final static String REF_MAPPING_TABLE_SUFFIX = PropertyManager.getProperty("de.unijena.bioinf.chemdb.scheme.references.mapping.suffix", null, "");

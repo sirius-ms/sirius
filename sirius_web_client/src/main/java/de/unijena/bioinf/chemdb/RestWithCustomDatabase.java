@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.storage.blob.BlobStorages;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -56,7 +57,7 @@ public class RestWithCustomDatabase {
     protected final File directory;
     protected final String restCacheDir;
     protected final String customDbDir;
-    protected HashMap<String, FilebasedDatabase> customDatabases;
+    protected HashMap<String, ChemicalBlobDatabase<?>> customDatabases;
 
     protected final WebAPI api;
     private VersionsInfo versionInfoCache = null;
@@ -184,7 +185,7 @@ public class RestWithCustomDatabase {
                 result.addCustom(cdb.name(),
                         getCustomDb(cdb.name()).lookupStructuresAndFingerprintsByFormula(formula), false);
 
-            for (FilebasedDatabase custom : getAdditionalCustomDBs(dbs))
+            for (ChemicalBlobDatabase<?> custom : getAdditionalCustomDBs(dbs))
                 result.addCustom(custom.getName(), custom.lookupStructuresAndFingerprintsByFormula(formula), true);
 
             return result;
@@ -193,17 +194,18 @@ public class RestWithCustomDatabase {
         }
     }
 
-    protected FilebasedDatabase getCustomDb(String dbName) throws IOException {
+    //todo at some stage we can also open this up for cloud databases
+    protected ChemicalBlobDatabase<?> getCustomDb(String dbName) throws IOException {
         if (!customDatabases.containsKey(dbName))
-            customDatabases.put(dbName, new FilebasedDatabase(api.getCDKChemDBFingerprintVersion(), new File(getCustomDBDirectory(), dbName)));
+            customDatabases.put(dbName, new ChemicalFileDatabase(api.getCDKChemDBFingerprintVersion(), BlobStorages.createDefaultFileStore(getCustomDBDirectory().toPath().resolve(dbName))));
 
         return customDatabases.get(dbName);
     }
 
 
-    protected List<FilebasedDatabase> getAdditionalCustomDBs(Collection<SearchableDatabase> dbs) throws IOException {
+    protected List<ChemicalBlobDatabase<?>> getAdditionalCustomDBs(Collection<SearchableDatabase> dbs) throws IOException {
         final Set<String> customToSearch = dbs.stream().filter(SearchableDatabase::isCustomDb).map(SearchableDatabase::name).collect(Collectors.toSet());
-        List<FilebasedDatabase> fdbs = new ArrayList<>(CustomDataSources.size());
+        List<ChemicalBlobDatabase<?>> fdbs = new ArrayList<>(CustomDataSources.size());
         for (CustomDataSources.Source customSource : CustomDataSources.sources()) {
             if (customSource.isCustomSource() && !customToSearch.contains(customSource.name()))
                 fdbs.add(getCustomDb(customSource.name()));
@@ -217,7 +219,7 @@ public class RestWithCustomDatabase {
      * merge formulas with same Formula and IonType {@literal ->}  Merge the filterBits
      * It is also possible to add Custom dbs for additional flags
      */
-    public static Set<FormulaCandidate> mergeFormulas(Collection<FormulaCandidate> formulas, List<FilebasedDatabase> dbsToAddKeysFrom) {
+    public static Set<FormulaCandidate> mergeFormulas(Collection<FormulaCandidate> formulas, List<ChemicalBlobDatabase<?>> dbsToAddKeysFrom) {
         HashMap<FormulaKey, AtomicLong> map = new HashMap<>();
         for (FormulaCandidate formula : formulas) {
             final FormulaKey key = new FormulaKey(formula);
@@ -228,7 +230,7 @@ public class RestWithCustomDatabase {
         //add non contained custom db flags
         for (Map.Entry<FormulaKey, AtomicLong> e : map.entrySet()) {
             e.getValue().accumulateAndGet(CustomDataSources.getDBFlagsFromNames(dbsToAddKeysFrom.stream().filter(db -> db.containsFormula(e.getKey().formula))
-                    .map(FilebasedDatabase::getName).collect(Collectors.toSet())), (a, b) -> a |= b);
+                    .map(ChemicalBlobDatabase::getName).collect(Collectors.toSet())), (a, b) -> a |= b);
         }
 
         return map.entrySet().stream().map(e ->

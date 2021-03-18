@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractChemicalDatabase implements Closeable, Cloneable, SearchStructureByFormula, AnnotateStructures {
+public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchStructureByFormula, AnnotateStructures {
     // temporary switch
     public static final boolean USE_EXTENDED_FINGERPRINTS = PropertyManager.getBoolean("de.unijena.bioinf.chemdb.fingerprint.extended", null, false);
 
@@ -52,7 +52,7 @@ public abstract class AbstractChemicalDatabase implements Closeable, Cloneable, 
      * @param ionTypes allowed adducts of the ion
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
-    public List<List<FormulaCandidate>> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType[] ionTypes)  throws ChemicalDatabaseException {
+    default List<List<FormulaCandidate>> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType[] ionTypes)  throws ChemicalDatabaseException {
         ArrayList<List<FormulaCandidate>> candidates = new ArrayList<>(ionTypes.length);
         for (PrecursorIonType type : ionTypes)
             candidates.add(lookupMolecularFormulas(mass, deviation, type));
@@ -75,7 +75,7 @@ public abstract class AbstractChemicalDatabase implements Closeable, Cloneable, 
      * @param formula
      * @return
      */
-    public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
+    default List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         return lookupStructuresAndFingerprintsByFormula(formula, new ArrayList<>());
     }
 
@@ -87,7 +87,7 @@ public abstract class AbstractChemicalDatabase implements Closeable, Cloneable, 
 
     public abstract List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException;
 
-    public final Fingerprint lookupFingerprintByInChI(InChI inchi) throws ChemicalDatabaseException {
+    default Fingerprint lookupFingerprintByInChI(InChI inchi) throws ChemicalDatabaseException {
         final List<FingerprintCandidate> xs = lookupFingerprintsByInchis(Collections.singleton(inchi.key2D()));
         if (xs.size()>0) return xs.get(0).getFingerprint();
         else return null;
