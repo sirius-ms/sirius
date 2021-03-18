@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 public class CustomDatabaseImporter {
     final CustomDatabase database;
     File currentPath;
-    List<Listener> listeners = new ArrayList<>();
+    Queue<Listener> listeners = new ConcurrentLinkedQueue<>();
 
     // fingerprint buffer
     private final List<FingerprintCandidate> buffer;
