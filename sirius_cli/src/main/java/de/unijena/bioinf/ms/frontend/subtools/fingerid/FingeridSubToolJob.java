@@ -49,19 +49,17 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Subtooljob for CSI:FingerID
- * good exaple for how to create such a job
+ * good example for how to create such a job
  */
 public class FingeridSubToolJob extends InstanceJob {
 
     public static final boolean enableConfidence = PropertyManager.getBoolean("de.unijena.bioinf.fingerid.confidence", false);
+    public static final List<Class<? extends DataAnnotation>>  formulaResultComponentsToClear = new ArrayList<>(List.of(FTree.class, FBCandidates.class,  FBCandidateFingerprints.class));
 
     public FingeridSubToolJob(JobSubmitter submitter) {
         super(submitter);
@@ -168,7 +166,7 @@ public class FingeridSubToolJob extends InstanceJob {
 
     @Override
     protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
-        return new Class[]{FTree.class, FBCandidates.class, FBCandidateFingerprints.class};
+        return formulaResultComponentsToClear.toArray(Class[]::new);
     }
 
     @Override
