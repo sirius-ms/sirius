@@ -28,7 +28,6 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
-import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -64,8 +63,9 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
         csiScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
         tanimotoStats = new DoubleListStats();
+
+        /////////// LISTENERS //////////////
         source.addActiveResultChangedListener(this);
-        resultsChanged(null, null, source.getElementList(), source.getResultListSelectionModel());
     }
 
     private JJob<Boolean> backgroundLoader = null;
@@ -82,7 +82,6 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
         try {
             backgroundLoaderLock.lock();
             final JJob<Boolean> old = backgroundLoader;
-
             backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
                 LoadMoleculeJob loadMols;
 

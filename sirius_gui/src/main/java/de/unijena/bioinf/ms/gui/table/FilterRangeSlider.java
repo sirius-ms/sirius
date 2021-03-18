@@ -19,12 +19,11 @@
 
 package de.unijena.bioinf.ms.gui.table;
 
-import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import eu.hansolo.rangeslider.RangeSlider;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
@@ -49,6 +48,8 @@ public class FilterRangeSlider<L extends ActionList<E, D>, E extends SiriusPCS, 
     private final int numberLength;
 
 
+    private final ChangeListener rangeSliderListener;
+
     public FilterRangeSlider(L source, DoubleListStats stats) {
         this(source, stats, false, DEFAUTL_DOUBLE_FORMAT);
     }
@@ -56,6 +57,7 @@ public class FilterRangeSlider<L extends ActionList<E, D>, E extends SiriusPCS, 
     public FilterRangeSlider(L source, DoubleListStats stats, boolean percentage) {
         this(source, stats, percentage, DEFAUTL_DOUBLE_FORMAT);
     }
+
 
     public FilterRangeSlider(L source, DoubleListStats stats, boolean percentage, String decimalFormat) {
 
@@ -106,12 +108,8 @@ public class FilterRangeSlider<L extends ActionList<E, D>, E extends SiriusPCS, 
         add(right, BorderLayout.EAST);
 
         source.addActiveResultChangedListener(this);
-        rangeSlider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                firePropertyChange(RANGE_CHANGE, null, rangeSlider);
-            }
-        });
+        rangeSliderListener = e -> firePropertyChange(RANGE_CHANGE, null, rangeSlider);
+        rangeSlider.addChangeListener(rangeSliderListener);
     }
 
 
@@ -137,22 +135,25 @@ public class FilterRangeSlider<L extends ActionList<E, D>, E extends SiriusPCS, 
     public void resultsChanged(D experiment, E sre, List<E> resultElements, ListSelectionModel selections) {
         if (!isRefreshing.getAndSet(true)) {
             try {
-                int pmin = ((int) Math.floor(stats.getMin())) * (int) valueMultiplier;
-                int pmax = ((int) Math.ceil(stats.getMax())) * (int) valueMultiplier;
+                rangeSlider.removeChangeListener(rangeSliderListener);
+                try {
+                    int pmin = ((int) Math.floor(stats.getMin())) * (int) valueMultiplier;
+                    int pmax = ((int) Math.ceil(stats.getMax())) * (int) valueMultiplier;
 
-                rangeSlider.setMinimum(pmin);
-                rangeSlider.setLowerValue(pmin);
+                    rangeSlider.setMinimum(pmin);
+                    rangeSlider.setLowerValue(pmin);
 
-                rangeSlider.setMaximum(pmax);
-                rangeSlider.setUpperValue(pmax);
+                    rangeSlider.setMaximum(pmax);
+                    rangeSlider.setUpperValue(pmax);
 
-                refreshText();
-
+                    refreshText();
+                    firePropertyChange(RANGE_CHANGE, null, rangeSlider);
+                } finally {
+                    rangeSlider.addChangeListener(rangeSliderListener);
+                }
             } finally {
                 isRefreshing.set(false);
             }
-
-            firePropertyChange(RANGE_CHANGE, null, rangeSlider);
         }
     }
 }

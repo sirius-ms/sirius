@@ -33,6 +33,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GeneralCSVDialog extends JPanel {
 
@@ -267,12 +268,12 @@ public class GeneralCSVDialog extends JPanel {
         protected Vector<Field> fields;
         protected Field[] assignments;
         protected SimpleCsvParser parser;
-        protected List<TableModelListener> listeners = new ArrayList<>();
+        protected Queue<TableModelListener> listeners;
         public CSVImporterModel(Vector<Field> fields) {
             this.preview = new ArrayList<>();
             this.content = new ArrayList<>();
             this.parser = new SimpleCsvParser();
-            this.listeners = new ArrayList<>();
+            this.listeners = new ConcurrentLinkedQueue<>();
             this.fields = fields;
             this.assignments = new Field[0];
         }

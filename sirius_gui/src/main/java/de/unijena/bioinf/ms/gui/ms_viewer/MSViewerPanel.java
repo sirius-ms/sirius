@@ -31,6 +31,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseListener, ComponentListener, KeyListener, MSViewerDataModelListener {
 
@@ -62,7 +63,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	private boolean dragged;
 	private int pressXPos;
 
-	private List<MSViewerPanelListener> listeners;
+	private final Queue<MSViewerPanelListener> listeners;
 
 	///////////////////////////////////// Variablen fuer die Darstellung //////////////////////////////////////////
 
@@ -155,7 +156,7 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 
 		this.notInitialized = true;
 
-		this.listeners = new ArrayList<MSViewerPanelListener>(5);
+		this.listeners = new ConcurrentLinkedQueue<>();
 		this.selectionMap = new HashSet<Double>();
 
 		this.showPeakInfoOnlyForImportantPeaks = false;

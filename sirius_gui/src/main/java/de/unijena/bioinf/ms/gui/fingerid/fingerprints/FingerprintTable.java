@@ -62,7 +62,6 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
         super(FingerIdPropertyBean.class, DataSelectionStrategy.FIRST_SELECTED);
         this.csiApi = api;
         source.addActiveResultChangedListener(this);
-        resultsChanged(null, null, source.getElementList(), source.getResultListSelectionModel());
         this.visualizations = visualizations;
     }
 
@@ -123,7 +122,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
                         }
                     }
                     checkForInterruption();
-                    Jobs.runEDTAndWait(() -> notifyListeners(sre, null, getElementList(), getResultListSelectionModel()));
+                    Jobs.runEDTAndWait(() -> notifyListeners(sre, null, elementList, elementListSelectionModel));
                     return true;
                 }
 

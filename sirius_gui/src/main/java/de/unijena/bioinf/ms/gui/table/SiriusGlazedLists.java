@@ -42,6 +42,7 @@ package de.unijena.bioinf.ms.gui.table;
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.event.ListEventAssembler;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,39 +67,44 @@ public class SiriusGlazedLists {
     }
 
     public static <E> boolean refill(EventList<E> list, ArrayList<E> innerList, Collection<E> elementsToFillIn) {
-        if (elementsToFillIn == null || elementsToFillIn.isEmpty()) {
-            list.clear();
-            return true;
-        } else if (innerList.equals(elementsToFillIn)) {
-            return false;
-        } else {
-            try {
-                list.getReadWriteLock().writeLock().lock();
-                final ListEventAssembler<E> eventAssembler = new ListEventAssembler<>(list, list.getPublisher());
-                eventAssembler.beginEvent();
+        try {
+            list.getReadWriteLock().writeLock().lock();
 
-                int index = 0;
-                for (E e : elementsToFillIn) {
-                    if (index < innerList.size()) {
-                        eventAssembler.elementUpdated(index, innerList.get(index), e);
-                        innerList.set(index, e);
-                    } else {
-                        eventAssembler.elementInserted(index, e);
-                        innerList.add(index, e);
-                    }
-                    index++;
-                }
-
-                for (int i = innerList.size() - 1; i >= index; i--) {
-                    eventAssembler.elementDeleted(i, innerList.get(i));
-                    innerList.remove(i);
-                }
-
-                eventAssembler.commitEvent();
+            if (elementsToFillIn == null || elementsToFillIn.isEmpty()) {
+                list.clear();
                 return true;
-            } finally {
-                list.getReadWriteLock().writeLock().unlock();
+            } else if (innerList.equals(elementsToFillIn)) {
+                return false;
+            } else {
+                try {
+                    final ListEventAssembler<E> eventAssembler = new ListEventAssembler<>(list, list.getPublisher());
+                    eventAssembler.beginEvent();
+                    int index = 0;
+                    for (E e : elementsToFillIn) {
+                        if (index < innerList.size()) {
+                            eventAssembler.elementUpdated(index, innerList.get(index), e);
+                            innerList.set(index, e);
+                        } else {
+                            eventAssembler.elementInserted(index, e);
+                            innerList.add(index, e);
+                        }
+                        index++;
+                    }
+
+                    for (int i = innerList.size() - 1; i >= index; i--) {
+                        eventAssembler.elementDeleted(i, innerList.get(i));
+                        innerList.remove(i);
+                    }
+
+                    eventAssembler.commitEvent();
+                    return true;
+                } catch (Exception e) {
+                    LoggerFactory.getLogger(SiriusGlazedLists.class).error("Error during Event list Refill.", e);
+                    return false;
+                }
             }
+        } finally {
+            list.getReadWriteLock().writeLock().unlock();
         }
     }
 
