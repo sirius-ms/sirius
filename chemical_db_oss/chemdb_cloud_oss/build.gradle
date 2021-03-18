@@ -19,10 +19,9 @@
  */
 
 dependencies {
-
     //project
     compile project(':chemical_db_oss')
     compile project(':chemical_db_oss:chemdb_file_oss')
     // google client api
-    compile 'com.google.cloud:google-cloud-storage:1.113.4'
-}	
+    compile project(':blob-storage')
+}
