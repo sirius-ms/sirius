@@ -24,7 +24,6 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class StructureSearcher implements Runnable {

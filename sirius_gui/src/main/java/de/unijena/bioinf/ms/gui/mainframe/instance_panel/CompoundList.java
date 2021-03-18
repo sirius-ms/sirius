@@ -32,8 +32,8 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * This is the main List of the SIRIUS UI.
@@ -50,7 +50,7 @@ public class CompoundList {
     final FilterList<InstanceBean> compoundList;
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
 
-    private final List<ExperimentListChangeListener> listeners = new LinkedList<>();
+    private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
     public CompoundList(@NotNull final GuiProjectSpaceManager ps) {
         searchField = new SearchTextField();
