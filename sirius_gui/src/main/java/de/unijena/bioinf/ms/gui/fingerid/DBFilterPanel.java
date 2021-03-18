@@ -30,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FormulaResultBean>>, CustomDataSources.DataSourceChangeListener {
@@ -38,7 +39,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
             DataSource.SUPERNATURAL.realName
     );
 
-    private final List<FilterChangeListener> listeners = new LinkedList<>();
+    private final Queue<FilterChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
     protected long bitSet;
     protected List<JCheckBox> checkboxes;

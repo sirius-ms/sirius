@@ -64,8 +64,9 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
         csiScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
         tanimotoStats = new DoubleListStats();
+
+        /////////// LISTENERS //////////////
         source.addActiveResultChangedListener(this);
-        resultsChanged(null, null, source.getElementList(), source.getResultListSelectionModel());
     }
 
     private JJob<Boolean> backgroundLoader = null;
@@ -82,7 +83,6 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
         try {
             backgroundLoaderLock.lock();
             final JJob<Boolean> old = backgroundLoader;
-
             backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
                 LoadMoleculeJob loadMols;
 

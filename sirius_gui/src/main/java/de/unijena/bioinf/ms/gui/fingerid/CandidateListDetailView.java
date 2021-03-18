@@ -52,7 +52,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalInt;
 
-public class CandidateListDetailView extends CandidateListView implements /*ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>,*/ MouseListener, ActionListener {
+public class CandidateListDetailView extends CandidateListView implements MouseListener, ActionListener {
     public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
     public static final Color INVERT_HIGHLIGHTED_COLOR2 = new Color(255, 197, 0, 192);
     public static final Color PRIMARY_HIGHLIGHTED_COLOR = new Color(0, 100, 255, 128);
@@ -75,6 +75,15 @@ public class CandidateListDetailView extends CandidateListView implements /*Acti
 
     public CandidateListDetailView(StructureList sourceList) {
         super(sourceList);
+        getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
+            if (experiment == null || experiment.stream().noneMatch(e -> e.getFingerprintResult().isPresent()))
+                showCenterCard(ActionList.ViewState.NOT_COMPUTED);
+            else if (resultElements.isEmpty())
+                showCenterCard(ActionList.ViewState.EMPTY);
+            else
+                showCenterCard(ActionList.ViewState.DATA);
+        });
+
         candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
@@ -83,15 +92,6 @@ public class CandidateListDetailView extends CandidateListView implements /*Acti
         candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         addToCenterCard(ActionList.ViewState.DATA, scrollPane);
-
-        getSource().getElementList().addListEventListener(listChanges -> {
-            if (getSource() == null || getSource().getData().stream().noneMatch(e -> e.getFingerprintResult().isPresent()))
-                showCenterCard(ActionList.ViewState.NOT_COMPUTED);
-            else if (listChanges.getSourceList().isEmpty())
-                showCenterCard(ActionList.ViewState.EMPTY);
-            else
-                showCenterCard(ActionList.ViewState.DATA);
-        });
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
 
         candidateList.addMouseListener(this);
@@ -182,7 +182,7 @@ public class CandidateListDetailView extends CandidateListView implements /*Acti
                 });
             }
         } else if (c!=null && e.getSource() == this.highlight) {
-            SwingWorker w = new SwingWorker<Object, Object>() {
+            SwingWorker w = new SwingWorker<>() {
 
                 @Override
                 protected Object doInBackground() throws Exception {
