@@ -80,29 +80,24 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                         checkForCancellation();
                     }
 
+
                     checkForCancellation();
 
                     final Instance instance = instances.next();
                     final InstanceJobCollectorJob collector = new InstanceJobCollectorJob(instance, invalidate);
-
                     JJob<Instance> jobToWaitOn = (DymmyExpResultJob) () -> instance;
                     for (InstanceJob.Factory<?> task : tasks) {
-                        checkForCancellation();
                         jobToWaitOn = task.createToolJob(jobToWaitOn);
-                        //                    collector.addRequiredJob(jobToWaitOn); //todo maybe this should be a real chain to save memory since depedent jobs will be cleared after execution
                         submitJob(jobToWaitOn);
                     }
-
-                    checkForCancellation();
-
                     collector.addRequiredJob(jobToWaitOn);
                     runningInstances.add(submitJob(collector));
+
+                    checkForCancellation();
 
                     // add dependency if necessary
                     if (dependJob != null)
                         dependJob.addRequiredJob(jobToWaitOn);
-
-
                 } finally {
                     lock.unlock();
                 }
@@ -143,7 +138,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
             runningInstances.forEach(JJob::cancel);
             if (dependJob != null)
                 dependJob.cancel();
-            isFull.signal();
+            isFull.signalAll();
         } finally {
             lock.unlock();
         }
@@ -160,8 +155,10 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
     }
 
     private class InstanceJobCollectorJob extends BasicDependentJJob<CompoundContainerId> {
-        final Instance instance;
+        private final Instance instance;
+        private final boolean invalidate;
         Set<JJob<?>> toWaitOnCleanUp = Set.of();
+
         @Override
         public void cancel(boolean mayInterruptIfRunning) {
             toWaitOnCleanUp = new HashSet<>();
@@ -178,6 +175,16 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
 
         @Override
         protected void cleanup() {
+            // this should always run because we ignore failling of reqiured jobs
+            //this runs if all jobs of the instance are finished
+            lock.lock();
+            try {
+                runningInstances.remove(this);
+                isFull.signalAll();
+            } finally {
+                lock.unlock();
+            }
+
             toWaitOnCleanUp.forEach(JJob::getResult);
             super.cleanup();
         }
@@ -185,32 +192,18 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
         public InstanceJobCollectorJob(Instance instance, final boolean invalidate) {
             super(JobType.SCHEDULER, ReqJobFailBehaviour.IGNORE); //we want to ignore failing because we do not want to multiply exceptions
             this.instance = instance;
-
-            addPropertyChangeListener(evt -> {
-                if (isFinished()) {
-                    lock.lock();
-                    try {
-                        runningInstances.remove(this);
-                        //cleanup is not really needed for CLI but for everything on top that might keep instances alive.
-                        if (invalidate) {//todo we should change our project space model so that spectra are independent from config stuff
-                            instance.clearFormulaResultsCache();
-                            instance.clearCompoundCache();
-                        }
-                        isFull.signal(); //all not needed?
-                    } finally {
-                        lock.unlock();
-                    }
-                }
-            });
-
-
+            this.invalidate = invalidate;
         }
 
 
         @Override
         protected CompoundContainerId compute() {
-            // this should always run because we ignore failling of reqiured jobs
-            //this runs if all jobs of the instance are finished
+            //cleanup is not really needed for CLI but for everything on top that might keep instances alive.
+            if (invalidate) {//todo we should change our project space model so that spectra are independent from config stuff
+                instance.clearFormulaResultsCache();
+                instance.clearCompoundCache();
+            }
+
             return instance.getID();
         }
 
