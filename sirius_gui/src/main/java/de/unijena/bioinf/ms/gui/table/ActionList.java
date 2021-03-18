@@ -24,11 +24,16 @@ import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 
 import javax.swing.*;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by fleisch on 15.05.17.
@@ -36,10 +41,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElements<E, D> {
     public enum DataSelectionStrategy {ALL, FIRST_SELECTED, ALL_SELECTED}
 
+    public enum ViewState {NOT_COMPUTED, EMPTY, DATA}
+
     private final Queue<ActiveElementChangedListener<E, D>> listeners = new ConcurrentLinkedQueue<>();
 
     protected ObservableElementList<E> elementList;
     protected DefaultEventSelectionModel<E> selectionModel;
+
+    private final ArrayList<E> elementData = new ArrayList<>();
+    private final BasicEventList<E> basicElementList = new BasicEventList<>(elementData);
 
     protected D data = null;
     public final DataSelectionStrategy selectionType;
@@ -50,7 +60,7 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
 
     public ActionList(Class<E> cls, DataSelectionStrategy strategy) {
         selectionType = strategy;
-        elementList = new ObservableElementList<>(new BasicEventList<E>(), GlazedLists.beanConnector(cls));
+        elementList = new ObservableElementList<>(basicElementList, GlazedLists.beanConnector(cls));
         selectionModel = new DefaultEventSelectionModel<>(elementList);
         selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -76,6 +86,20 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
                 }
             }
         });
+    }
+
+    protected boolean refillElementsEDT(final Collection<E> toFillIn) throws InvocationTargetException, InterruptedException {
+        AtomicBoolean ret = new AtomicBoolean();
+        Jobs.runEDTAndWait(() -> ret.set(refillElements(toFillIn)));
+        return ret.get();
+    }
+
+    protected boolean refillElements(final Collection<E> toFillIn) {
+        if (SiriusGlazedLists.refill(basicElementList, elementData, toFillIn)) {
+            notifyListeners(data, null, elementList, getResultListSelectionModel());
+            return true;
+        }
+        return false;
     }
 
     public D getData() {

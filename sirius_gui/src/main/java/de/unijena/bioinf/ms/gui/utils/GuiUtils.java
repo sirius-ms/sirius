@@ -24,10 +24,13 @@ package de.unijena.bioinf.ms.gui.utils;
  * 06.10.16.
  */
 
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -51,17 +54,6 @@ public class GuiUtils {
 
     public static void initUI() {
         //load nimbus look and feel, before mainframe is built
-     /*   try {
-            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            // If Nimbus is not available, you can set the GUI to another look and feel.
-        }*/
-
         try {
             //improve rendering?
             Fonts.initFonts();
@@ -230,9 +222,49 @@ public class GuiUtils {
         Insets in = getScreenInsets(c);
         return new Dimension(d.width - in.left - in.right, d.height - in.bottom - in.top);
     }
+
     public static Insets getScreenInsets(@NotNull GraphicsConfiguration c) {
         //height of the task bar
         return Toolkit.getDefaultToolkit().getScreenInsets(c);
+    }
+
+
+    public static JPanel newNoResultsComputedPanel() {
+        return newNoResultsComputedPanel(null);
+    }
+
+    public static JPanel newNoResultsComputedPanel(@Nullable String message) {
+        JPanel p = new JPanel(new BorderLayout());
+        JButton button = new ToolbarButton(SiriusActions.COMPUTE.getInstance());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.NORTH;
+
+        JPanel bp =  new JPanel(new GridBagLayout());
+        bp.add(button, gbc);
+
+        p.add(bp, BorderLayout.CENTER);
+
+        JPanel pp = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        pp.add(new JLabel(message == null ? "No results Computed!" : message));
+        p.add(pp, BorderLayout.SOUTH);
+        return p;
+    }
+
+
+    public static JPanel newEmptyResultsPanel() {
+        return newEmptyResultsPanel(null);
+    }
+
+    public static JPanel newEmptyResultsPanel(@Nullable String message) {
+        JPanel p = new JPanel(new BorderLayout());
+        p.add(new JLabel(Icons.NO_MATCH_128), BorderLayout.CENTER);
+        JPanel pp = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        pp.add(new JLabel(message == null ? "No results found!" : message));
+        p.add(pp, BorderLayout.SOUTH);
+        return p;
+
     }
 
 

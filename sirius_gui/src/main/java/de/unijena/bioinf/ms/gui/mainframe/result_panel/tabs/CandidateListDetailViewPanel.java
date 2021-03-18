@@ -41,81 +41,10 @@ public class CandidateListDetailViewPanel extends JPanel implements /* ActiveEle
     }
 
     protected CandidateListDetailView list;
-//    protected JButton searchCSIButton;
-
-//    protected CardLayout layout;
-
 
     public CandidateListDetailViewPanel(StructureList sourceList) {
         super(new BorderLayout());
         list = new CandidateListDetailView(sourceList);
-
         add(list, BorderLayout.CENTER);
-//        sourceList.addActiveResultChangedListener(this);
-//        init();
     }
-
-   /* private void init() {
-        this.layout = new CardLayout();
-        setLayout(layout);
-
-        add(new JPanel(), "null");
-//        add(new ComputeElement(), "computeButton");
-        add(new JLabel(Icons.FP_LOADER), "loader");
-
-        TwoColumnPanel nothing = new TwoColumnPanel();
-        nothing.add(new JLabel(Icons.NO_MATCH_128));
-        nothing.add(new JLabel("<html><B>No candidates found for to this Molecular Formula.</B></html>"), 5, false);
-        add(nothing, "empty");
-
-
-        add(list, "list");
-        setVisible(true);
-//        resultsChanged(null, null, null, null);
-        layout.show(this, "list");
-
-    }
-
-    @Override
-    public void resultsChanged(Set<FormulaResultBean> experiment, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
-        if (resultElements == null)
-            layout.show(this, "null");
-        else {
-//            if (ec.isComputing()) {
-//                layout.show(this, "loader");
-            *//*}else *//*
-
-            if (resultElements.isEmpty()) {
-                layout.show(this, "empty");
-            } else {
-                layout.show(this, "list");
-            }
-            *//*}else {
-//                layout.show(this, "computeButton");
-                layout.show(this, "null");
-            }*//*
-        }
-
-        *//*if (resultElement == null || !MainFrame.MF.isFingerid()) {
-
-            searchCSIButton.setEnabled(false);
-            searchCSIButton.setToolTipText("");
-        } else if (resultElement.getResult(FTree.class).getAnnotation(FTree.class).get().numberOfVertices() < 3) { //todo do we neeed null check???
-            searchCSIButton.setEnabled(false);
-            searchCSIButton.setToolTipText("Fragmentation tree must explain at least 3 peaks");
-        } else {
-            searchCSIButton.setEnabled(true);
-            searchCSIButton.setToolTipText("Start CSI:FingerId online search to identify the molecular structure of the measured compound");
-        }*//*
-    }
-*/
-    /*public class ComputeElement extends TwoColumnPanel {
-        public ComputeElement() {
-            searchCSIButton = new ToolbarButton(SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
-            add(searchCSIButton);
-
-            searchCSIButton.setEnabled((!(list.getSource().getElementList().isEmpty() || list.getSource().getResultListSelectionModel().isSelectionEmpty()) && MainFrame.MF.isFingerid()));
-            setVisible(true);
-        }
-    }*/
 }
