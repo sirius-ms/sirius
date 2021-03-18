@@ -196,7 +196,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
             setComputing(computing);
     }
 
-    @Override
+    /*@Override
     public synchronized void clearCompoundCache() {
         if (!isComputing())
             super.clearCompoundCache();
@@ -206,7 +206,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
     public synchronized void clearFormulaResultsCache() {
         if (!isComputing())
             super.clearFormulaResultsCache();
-    }
+    }*/
 
     public void setComputing(boolean computing) {
         pcs.firePropertyChange("computeState", computeLock.getAndSet(computing), computeLock.get());
