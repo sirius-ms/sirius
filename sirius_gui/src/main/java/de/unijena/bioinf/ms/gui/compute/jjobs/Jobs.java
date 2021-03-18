@@ -260,6 +260,7 @@ public class Jobs {
                 ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
             logInfo(command);
             computation.run();
+            System.gc(); //hint for the gc to collect som trash after computations
             return true;
         }
 

@@ -22,8 +22,6 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
-import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.event.ListEventListener;
 import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.ms.gui.table.*;
 
@@ -40,6 +38,14 @@ public class CandidateListTableView extends CandidateListView {
     public CandidateListTableView(final StructureList list) {
         super(list);
 
+        getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
+            if (experiment == null || experiment.stream().noneMatch(e -> e.getFingerprintResult().isPresent()))
+                showCenterCard(ActionList.ViewState.NOT_COMPUTED);
+            else if (resultElements.isEmpty())
+                showCenterCard(ActionList.ViewState.EMPTY);
+            else
+                showCenterCard(ActionList.ViewState.DATA);
+        });
 
         final CandidateTableFormat tf = new CandidateTableFormat(getSource().getBestFunc());
         this.table = new ActionTable<>(filteredSource, sortedSource, tf);
@@ -54,14 +60,6 @@ public class CandidateListTableView extends CandidateListView {
         linkRenderer.registerToTable(table, 7);
 
         addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
-        getSource().getElementList().addListEventListener(listChanges -> {
-            if (getSource() == null || getSource().getData().stream().noneMatch(e -> e.getFingerprintResult().isPresent()))
-                showCenterCard(ActionList.ViewState.NOT_COMPUTED);
-            else if (listChanges.getSourceList().isEmpty())
-                showCenterCard(ActionList.ViewState.EMPTY);
-            else
-                showCenterCard(ActionList.ViewState.DATA);
-        });
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
     }
 

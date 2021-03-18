@@ -30,7 +30,6 @@ import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -38,7 +37,6 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
@@ -67,7 +65,7 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         filteredSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         //sync selections models
-        selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
+        selectionConnection = new ConnectedSelection<>(source.getElementListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
         //todo re-enable threshold marker
@@ -131,9 +129,7 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
 
     @Override
     protected EventList<MatcherEditor<FormulaResultBean>> getSearchFieldMatchers() {
-        return GlazedLists.eventListOf(
-                (MatcherEditor<FormulaResultBean>) new StringMatcherEditor<>(tableFormat, searchField.textField)
-        );
+        return GlazedLists.eventListOf(new StringMatcherEditor<>(tableFormat, searchField.textField));
     }
 
     @Override
