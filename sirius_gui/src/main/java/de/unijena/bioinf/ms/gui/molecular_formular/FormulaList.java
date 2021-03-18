@@ -120,7 +120,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                             if (!elementList.isEmpty()) {
                                 elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
                                 selectionModel.clearSelection();
-                                elementList.clear();
+                                refillElements(null);
                             } else {
                                 // to have notification even if the list is already empty
                                 notifyListeners(data, null, elementList, selectionModel);
@@ -161,7 +161,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     private void intiResultList() {
         elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
         selectionModel.clearSelection();
-        elementList.clear();
+//        elementList.clear();
 
         final List<FormulaResultBean> r = data.getResults();
         if (r != null && !r.isEmpty()) {
@@ -180,7 +180,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 tScores[i] = element.getScoreValue(TreeScore.class);
                 csiScores[i++] = element.getScoreValue(TopCSIScore.class);
             }
-            elementList.addAll(r);
+//            elementList.addAll(r);
+            refillElements(r);
 
             this.zodiacScoreStats.update(zscores);
             this.siriusScoreStats.update(sscores);

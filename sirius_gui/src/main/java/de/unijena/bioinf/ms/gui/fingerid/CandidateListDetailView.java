@@ -28,10 +28,9 @@ import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
-import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -49,12 +48,11 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalInt;
 
-public class CandidateListDetailView extends CandidateListView implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>, MouseListener, ActionListener {
+public class CandidateListDetailView extends CandidateListView implements /*ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>,*/ MouseListener, ActionListener {
     public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
     public static final Color INVERT_HIGHLIGHTED_COLOR2 = new Color(255, 197, 0, 192);
     public static final Color PRIMARY_HIGHLIGHTED_COLOR = new Color(0, 100, 255, 128);
@@ -84,7 +82,17 @@ public class CandidateListDetailView extends CandidateListView implements Active
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        add(scrollPane, BorderLayout.CENTER);
+        addToCenterCard(ActionList.ViewState.DATA, scrollPane);
+
+        getSource().getElementList().addListEventListener(listChanges -> {
+            if (getSource() == null || getSource().getData().stream().noneMatch(e -> e.getFingerprintResult().isPresent()))
+                showCenterCard(ActionList.ViewState.NOT_COMPUTED);
+            else if (listChanges.getSourceList().isEmpty())
+                showCenterCard(ActionList.ViewState.EMPTY);
+            else
+                showCenterCard(ActionList.ViewState.DATA);
+        });
+        showCenterCard(ActionList.ViewState.NOT_COMPUTED);
 
         candidateList.addMouseListener(this);
         this.structureSearcher = new StructureSearcher(sourceList.getElementList().size()); //todo does this work
@@ -297,13 +305,6 @@ public class CandidateListDetailView extends CandidateListView implements Active
     @Override
     public void mouseExited(MouseEvent e) {
 
-    }
-
-    @Override
-    public void resultsChanged(InstanceBean experiment, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
-        if (sre != null)
-            this.structureSearcher.reloadList(source);
-        filterByMolecularPropertyButton.setSelected(false);
     }
 
     private int[] calculateAgreementIndex(FingerprintAgreement ag, Rectangle relativeRect, Point clickPoint) {

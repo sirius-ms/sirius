@@ -43,6 +43,8 @@ package de.unijena.bioinf.ms.gui.table;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.event.ListEventAssembler;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 
 public class SiriusGlazedLists {
@@ -61,6 +63,43 @@ public class SiriusGlazedLists {
             list.getReadWriteLock().writeLock().unlock();
         }
 
+    }
+
+    public static <E> boolean refill(EventList<E> list, ArrayList<E> innerList, Collection<E> elementsToFillIn) {
+        if (elementsToFillIn == null || elementsToFillIn.isEmpty()) {
+            list.clear();
+            return true;
+        } else if (innerList.equals(elementsToFillIn)) {
+            return false;
+        } else {
+            try {
+                list.getReadWriteLock().writeLock().lock();
+                final ListEventAssembler<E> eventAssembler = new ListEventAssembler<>(list, list.getPublisher());
+                eventAssembler.beginEvent();
+
+                int index = 0;
+                for (E e : elementsToFillIn) {
+                    if (index < innerList.size()) {
+                        eventAssembler.elementUpdated(index, innerList.get(index), e);
+                        innerList.set(index, e);
+                    } else {
+                        eventAssembler.elementInserted(index, e);
+                        innerList.add(index, e);
+                    }
+                    index++;
+                }
+
+                for (int i = innerList.size() - 1; i >= index; i--) {
+                    eventAssembler.elementDeleted(i, innerList.get(i));
+                    innerList.remove(i);
+                }
+
+                eventAssembler.commitEvent();
+                return true;
+            } finally {
+                list.getReadWriteLock().writeLock().unlock();
+            }
+        }
     }
 
 }
