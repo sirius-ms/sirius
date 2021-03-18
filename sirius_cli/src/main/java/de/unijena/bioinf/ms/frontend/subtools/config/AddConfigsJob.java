@@ -52,20 +52,35 @@ public class AddConfigsJob extends InstanceJob {
         final Ms2Experiment exp = inst.getExperiment();
         final Optional<ProjectSpaceConfig> psConfig = inst.loadConfig();
 
+
         ParameterConfig baseConfig;
 
         //override defaults
+        // CLI_CONFIG might already exist from previous runs and needs to be updated.
         baseConfig = psConfig
-                .map(projectSpaceConfig -> projectSpaceConfig.config.newIndependentInstance(cliConfig,true))
-                .orElse(cliConfig);
+                .map(projectSpaceConfig -> {
+                    if (projectSpaceConfig.config.containsConfiguration(cliConfig.getLocalConfigName())) {
+                        projectSpaceConfig.config.updateConfig(cliConfig);
+                        return projectSpaceConfig.config;
+                    } else {
+                        return projectSpaceConfig.config.newIndependentInstance(cliConfig, true);
+                    }
+                }).orElse(cliConfig);
 
-        if (exp.hasAnnotation(InputFileConfig.class)){
+        //remove runtime configs from previous analyses
+        baseConfig.getConfigNames().stream().filter(s -> s.startsWith("RUNTIME_CONFIG")).forEach(baseConfig::removeConfig);
+
+        //input file configs are intended to be immutable, we still reload to ensure that it is on top position after CLI config
+        if (exp.hasAnnotation(InputFileConfig.class)) {
             @NotNull InputFileConfig msConf = exp.getAnnotationOrThrow(InputFileConfig.class);
-            if (!baseConfig.containsConfiguration(msConf.config.getLocalConfigName()))
-                baseConfig = baseConfig.newIndependentInstance(msConf.config, false);
+            baseConfig.removeConfig(msConf.config.getLocalConfigName());
+            baseConfig = baseConfig.newIndependentInstance(msConf.config, false);
         }
 
-        baseConfig = baseConfig.newIndependentInstance("RUNTIME_CONFIGS:" + inst.getID(),true); //runtime modification layer,  that does not effect the other configs
+        //runtime modification layer,  that does not effect the other configs, needs to be cleared before further analyses starts
+        //name cannot be based on the ID because people might rename their compounds
+        baseConfig = baseConfig.newIndependentInstance("RUNTIME_CONFIG", true);
+
         //fill all annotations
         exp.setAnnotation(FinalConfig.class, new FinalConfig(baseConfig));
         exp.setAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
@@ -83,6 +98,10 @@ public class AddConfigsJob extends InstanceJob {
 
         inst.updateExperiment(); //todo we should optize this, so that this is not needed anymore
         inst.updateConfig();
+    }
+
+    private void clearRuntimeConfigs(final ParameterConfig config) {
+        //todo fill me
     }
 
     @Override
