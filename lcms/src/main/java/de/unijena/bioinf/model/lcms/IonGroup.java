@@ -46,10 +46,8 @@ public class IonGroup {
     public IonGroup(MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, List<CorrelationGroup> isotopes) {
         this.peak = peak;
         this.isotopes = isotopes;
-        this.segment = segment;
         this.otherMzValues = new SimpleMutableSpectrum();
-            this.segmentApexIndex = segment.apex;
-
+        this.segmentApexIndex = segment.apex;
         }
 
     public void assignIsotopePeaksWithoutCorrelation(SimpleSpectrum spec) {
