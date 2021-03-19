@@ -92,7 +92,7 @@ public class LoadWindow extends JPanel {
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
                         if (evt.getPropertyName().equals("progress")) {
-                            int progress = (Integer) evt.getNewValue();
+                            int progress = ((Number) evt.getNewValue()).intValue();
                             progressBar.setIndeterminate(false);
                             progressBar.setValue(progress);
                         }

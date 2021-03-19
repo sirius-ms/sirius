@@ -27,12 +27,14 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
+import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.BatchJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -40,7 +42,6 @@ import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -169,7 +170,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
             addedIdentificationResults = ionTypes;
         }
 
-
+        checkForInterruption();
         final ArrayList<IdentificationResult<S>> filteredResults = new ArrayList<>();
         {
             // WORKAROUND
@@ -206,7 +207,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
                 filteredResults.addAll(idResult);
             }
         }
-
+        checkForInterruption();
         {
             final Iterator<IdentificationResult<S>> iter = filteredResults.iterator();
             while (iter.hasNext()) {
@@ -217,7 +218,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
                 }
             }
         }
-
+        checkForInterruption();
         if (filteredResults.isEmpty()) {
             logWarn("No suitable fragmentation tree left.");
             return Collections.emptyList();
@@ -242,8 +243,8 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
                         fingeridInput.getPrecursorIonType(), true) //todo maybe only if confidence is "enabled"
         ).collect(Collectors.toList());
 
-        jobManager.submitJobsInBatches(formulaJobs);
-
+        List<BatchJJob<RestWithCustomDatabase.CandidateResult>> he = submitSubJobsInBatches(formulaJobs, 4);
+        checkForInterruption();
         int i = 0;
         for (IdentificationResult<S> fingeridInput : filteredResults) {
             final FingerIdResult fres = new FingerIdResult(fingeridInput.getTree());
@@ -294,20 +295,10 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
         /////////////////////////////////////////////////
         // Sub Jobs should also be usable without annotation stuff -> So we annotate outside the subjobs compute methods
 
-        // TODO kaidu: das ist total doof so. Nicht jeder Schritt darf abstürzen und der Rest geht einfach weiter.
-        // aber es darf auch nicht sein dass, wenn z.B. die Datenbankverbindung off ist, wir keine Fingerprints mehr
-        // berechnen können. Sauber wäre es, klar zu definieren welche Jobs abstürzen dürfen und welche nicht.
-        // Oder die Jobs bauen ordentliches Fehlerhandling!
-
         // this loop is just to ensure that we wait until all jobs are finished.
         // the logic if a job can fail or not is done via job dependencies (so above)
-        for (var job : annotationJJobs.keySet()) {
-            try {
-                job.takeAndAnnotateResult(annotationJJobs.get(job));
-            } catch (Throwable e) {
-                LoggerFactory.getLogger(FingerIDJJob.class).error("Error during fingerid job in step " + job.getClass().getSimpleName() + ". Skip this step but proceed with the other steps.", e);
-            }
-        }
+        checkForInterruption();
+        annotationJJobs.forEach((k,v) -> k.takeAndAnnotateResult(v));
 
         logDebug("CSI:FingerID Search DONE!");
         //in linked maps values() collection is not a set -> so we have to make that distinct
@@ -316,6 +307,6 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
 
     @Override
     public String identifier() {
-        return super.identifier() + " | Instance: " + experiment.getName() + "@" + experiment.getIonMass() + "m/z";
+        return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z";
     }
 }

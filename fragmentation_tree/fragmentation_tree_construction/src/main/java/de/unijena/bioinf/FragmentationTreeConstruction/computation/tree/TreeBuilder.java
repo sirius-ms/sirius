@@ -23,6 +23,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IntergraphMapping;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.ILPSolverException;
 import de.unijena.bioinf.sirius.ProcessedInput;
 
 public interface TreeBuilder {

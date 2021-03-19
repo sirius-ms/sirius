@@ -15,23 +15,28 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp;
 
-import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
-import de.unijena.bioinf.sirius.ProcessedInput;
+public class ILPSolverException extends Exception {
+    public ILPSolverException() {
+    }
 
-public interface IlpFactory<T extends AbstractSolver> {
+    public ILPSolverException(String message) {
+        super(message);
+    }
 
-    public T create(ProcessedInput input, FGraph graph, TreeBuilder.FluentInterface options);
+    public ILPSolverException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    public boolean isThreadSafe();
+    public ILPSolverException(Throwable cause) {
+        super(cause);
+    }
 
-    public String name();
-
-    public void checkSolver() throws ILPSolverException;
-
+    public ILPSolverException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 }

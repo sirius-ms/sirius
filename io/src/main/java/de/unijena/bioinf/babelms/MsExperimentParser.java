@@ -50,7 +50,7 @@ public class MsExperimentParser {
      * own {@link de.unijena.bioinf.ms.properties.ParameterConfig} and annotate this config wrapped as {@link InputFileConfig}
      * to the experiment. This allow to keep track of where parameters come from.
      */
-    private static final Consumer<Ms2Experiment> DEFAULTS_ANNOTATOR = exp -> exp.addAnnotationsFrom(
+    public static final Consumer<Ms2Experiment> DEFAULTS_ANNOTATOR = exp -> exp.addAnnotationsFrom(
             exp.getAnnotation(InputFileConfig.class).map(c -> c.config).orElse(PropertyManager.DEFAULTS), Ms2ExperimentAnnotation.class);
 
 

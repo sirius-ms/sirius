@@ -27,9 +27,11 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.InterruptionCheck;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.MasterJJob;
 import gnu.trove.map.hash.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,6 +100,8 @@ public class Zodiac {
                     return null;
                 }
 
+                checkForInterruption();
+
                 ZodiacResult<FragmentsCandidate> zodiacResult;
                 if (runTwoStep){
                     TwoPhaseGibbsSampling<FragmentsCandidate> twoPhaseGibbsSampling = new TwoPhaseGibbsSampling<>(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, repetitions, FragmentsCandidate.class);
@@ -106,10 +110,12 @@ public class Zodiac {
                     else this.submitSubJob(twoPhaseGibbsSampling);
                     zodiacResult = twoPhaseGibbsSampling.awaitResult();
                 } else {
-                    zodiacResult = runOneStepZodiacOnly(iterationSteps, burnIn, repetitions);
+                    zodiacResult = runOneStepZodiacOnly(iterationSteps, burnIn, repetitions, this::checkForInterruption);
                 }
 
+                checkForInterruption();
                 zodiacScoredTrees = mapZodiacScoresToFTrees(zodiacResult.getResults());
+                checkForInterruption();
                 if (clusterCompounds) zodiacResult = includedAllClusterInstances(zodiacResult);
                 else zodiacResult = new ZodiacResultsWithClusters(ids, zodiacResult.getGraph(), zodiacResult.getResults(), getSelfMapping(ids));
                 return (ZodiacResultsWithClusters)zodiacResult;
@@ -117,19 +123,23 @@ public class Zodiac {
         };
     }
 
-    private ZodiacResult<FragmentsCandidate> runOneStepZodiacOnly(int iterationSteps, int burnIn, int repetitions) throws ExecutionException {
+    private ZodiacResult<FragmentsCandidate> runOneStepZodiacOnly(int iterationSteps, int burnIn, int repetitions, @NotNull InterruptionCheck interruption) throws ExecutionException, InterruptedException {
         Log.info("ZODIAC: Graph building.");
         GraphBuilder<FragmentsCandidate> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesArray, nodeScorers, edgeScorers, edgeFilter, FragmentsCandidate.class);
 
         Graph<FragmentsCandidate> graph;
-        if (masterJJob!=null) graph = (Graph<FragmentsCandidate>)masterJJob.submitSubJob(graphBuilder).awaitResult();
+        if (masterJJob!=null) graph = masterJJob.submitSubJob(graphBuilder).awaitResult();
         else graph = SiriusJobs.getGlobalJobManager().submitJob(graphBuilder).awaitResult();
+
+        interruption.check();
 
         try {
             Graph.validateAndThrowError(graph, Log::warn);
         } catch (Exception e) {
             throw new ExecutionException(e);
         }
+
+        interruption.check();
 
         Log.info("ZODIAC: run sampling.");
         GibbsParallel<FragmentsCandidate> gibbsParallel = new GibbsParallel<>(graph, repetitions);
@@ -139,6 +149,8 @@ public class Zodiac {
         else SiriusJobs.getGlobalJobManager().submitJob(gibbsParallel);
 
         CompoundResult<FragmentsCandidate>[] results = gibbsParallel.awaitResult();
+
+        interruption.check();
 
         return new ZodiacResult<>(ids, graph, results);
     }

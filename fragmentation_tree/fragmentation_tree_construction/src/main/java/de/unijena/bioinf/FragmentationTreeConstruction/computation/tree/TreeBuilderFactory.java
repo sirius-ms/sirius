@@ -58,8 +58,6 @@ public final class TreeBuilderFactory {
 
     public enum DefaultBuilder {GUROBI, CPLEX, GLPK, CLP}
 
-    private static DefaultBuilder[] builderPriorities = null;
-
     private TreeBuilderFactory() {
     }
 
@@ -68,11 +66,6 @@ public final class TreeBuilderFactory {
             INSTANCE = new TreeBuilderFactory();
         return TreeBuilderFactory.INSTANCE;
     }
-
-    public static void setBuilderPriorities(DefaultBuilder... builders) {
-        builderPriorities = builders;
-    }
-
 
     private static DefaultBuilder[] parseBuilderPriority(String builders) {
         if (builders == null) return null;
@@ -96,19 +89,8 @@ public final class TreeBuilderFactory {
         return bs.toArray(new DefaultBuilder[bs.size()]);
     }
 
-    public static boolean setBuilderPriorities(String... builders) {
-        DefaultBuilder[] b = parseBuilderPriority(builders);
-        if (b!=null && b.length>0) {
-            builderPriorities = b;
-            return true;
-        }
-
-        return false;
-    }
-
     public static DefaultBuilder[] getBuilderPriorities() {
-        if (builderPriorities != null) return builderPriorities.clone();
-        DefaultBuilder[] b = parseBuilderPriority(PropertyManager.getProperty("de.unijena.bioinf.sirius.treebuilder.solvers"));
+        final DefaultBuilder[] b = parseBuilderPriority(PropertyManager.getProperty("de.unijena.bioinf.sirius.treebuilder.solvers"));
         if (b!=null && b.length>0) return b;
         return DefaultBuilder.values();
     }
@@ -117,7 +99,8 @@ public final class TreeBuilderFactory {
         try {
             return getTreeBuilderFromClass((Class<T>) getClass().getClassLoader().loadClass(className));
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + "! " + ILP_VERSIONS_STRING, e);
+            LoggerFactory.getLogger(this.getClass()).warn("Could not find and load " + className + "! " + ILP_VERSIONS_STRING + ": " + e.getMessage());
+            LoggerFactory.getLogger(this.getClass()).debug("Could not find and load " + className + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
     }
@@ -126,7 +109,7 @@ public final class TreeBuilderFactory {
         try {
             return (IlpFactory<T>) builderClass.getDeclaredField("Factory").get(null);
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING);
+            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING + ": " + e.getMessage());
             LoggerFactory.getLogger(this.getClass()).debug("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
@@ -156,8 +139,16 @@ public final class TreeBuilderFactory {
                 LoggerFactory.getLogger(this.getClass()).warn("TreeBuilder " + builder.toString() + " is Unknown, supported are: " + Arrays.toString(DefaultBuilder.values()), new IllegalArgumentException("Unknown BuilderType!"));
                 return null;
         }
-        if (factory == null) {
+        if (factory == null){
             return null;
+        } else{
+            try {
+                factory.checkSolver();
+            } catch (ILPSolverException e) {
+                LoggerFactory.getLogger(getClass()).warn("Could not load Solver '" + builder + "': " + e.getMessage());
+                LoggerFactory.getLogger(getClass()).debug("Could not load Solver '" + builder + "'", e);
+                return null;
+            }
         }
         return new AbstractTreeBuilder<>(factory);
     }
@@ -168,7 +159,7 @@ public final class TreeBuilderFactory {
             if (b != null)
                 return b;
         }
-        LoggerFactory.getLogger(TreeBuilderFactory.class).error("Your system does not ship with any ILP solver. Please install either GLPK for java, Gurobi or CPLEX to use SIRIUS.");
+        LoggerFactory.getLogger(TreeBuilderFactory.class).error("Your system does not ship with any instantiatable ILP solver. Please install either CLP,  Gurobi or CPLEX to use SIRIUS.");
         return null;
     }
 }

@@ -30,6 +30,7 @@ import org.apache.commons.configuration2.builder.fluent.PropertiesBuilderParamet
 import org.apache.commons.configuration2.convert.DisabledListDelimiterHandler;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.io.FileHandler;
+import org.apache.commons.configuration2.sync.ReadWriteSynchronizer;
 import org.apache.commons.configuration2.tree.OverrideCombiner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,11 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 public class SiriusConfigUtils {
+
+    private static ReadWriteSynchronizer getSynchronizer() {
+        return new ReadWriteSynchronizer();
+    }
+
 
     public static CombinedConfiguration newCombinedConfiguration() {
         return new CombinedConfiguration(new OverrideCombiner());
@@ -61,28 +67,34 @@ public class SiriusConfigUtils {
     }
 
     public static @NotNull PropertiesConfiguration newConfiguration(@Nullable File file) {
+        PropertiesConfiguration c;
         try {
-            return new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(makeConfigProps(file)).getConfiguration();
+            c = new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(makeConfigProps(file)).getConfiguration();
         } catch (ConfigurationException e) {
             System.err.println("WARNING: Error during PropertiesConfiguration initialization");
             e.printStackTrace();
-            return new PropertiesConfiguration();
+            c = new PropertiesConfiguration();
         }
+        c.setSynchronizer(getSynchronizer());
+        return c;
     }
 
     public static @NotNull PropertiesConfiguration newConfiguration(@NotNull PropertyFileWatcher watcher) {
+        PropertiesConfiguration c;
         try {
             ReloadingFileBasedConfigurationBuilder<PropertiesConfiguration> builder =
                     new ReloadingFileBasedConfigurationBuilder<>(PropertiesConfiguration.class)
                             .configure(makeConfigProps(watcher.getFile().toFile()));
             watcher.setController(builder.getReloadingController());
-            return builder.getConfiguration();
+            c =  builder.getConfiguration();
 
         } catch (ConfigurationException e) {
             System.err.println("WARNING: Error during PropertiesConfiguration initialization with auto reloading");
             e.printStackTrace();
-            return new PropertiesConfiguration();
+            c =  new PropertiesConfiguration();
         }
+        c.setSynchronizer(getSynchronizer());
+        return c;
     }
 
 
