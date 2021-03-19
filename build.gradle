@@ -1,94 +1,108 @@
-import org.gradle.api.internal.file.copy.CopyAction
-import org.gradle.api.internal.file.copy.FileCopyAction
-
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
+
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
+        mavenCentral()
         jcenter()
     }
     dependencies {
-        classpath 'edu.sc.seis.gradle:launch4j:2.4.4'
-        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
+//        classpath 'edu.sc.seis.gradle:launch4j:2.4.9'
+        classpath 'commons-configuration:commons-configuration:1.10'
+        classpath "com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE"
     }
-
 }
 
 plugins {
-    id "com.jfrog.artifactory" version "4.3.0"
+    id "com.jfrog.artifactory" version "4.17.2"
+    id "de.undercouch.download" version "4.1.1"
 }
 
 //Global Properties
 ext {
+    // version for bundeled JRE
+    jre_version = '15.0.2'
+    zulu_jre_version = '15.29.15'
+
     //version for external libraries
     slf4j_version = '1.7.25'
-    jjobs_version = '0.9.6'
+    jjobs_version = '0.9.20-SNAPSHOT'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 
-    glpk_lib_version = '4.60'
-    cdk_version = "2.1.1"
+    cdk_version = "2.3"
 
-    jewelcli_version = '0.8.9'
+    picocli_version = '4.3.2'//'3.9.5'
+
+    glpk_lib_version = '4.60'
+    clp_lib_version = '2.10'
 
     //locations of runtime libraries
-    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
-    libExclude = ['gurobi-*.jar', 'cplex-*.jar']
+    //jre path relative tu app home
+    jre_path = 'zulu'
+    lib_path = 'lib'
+    native_path = 'native'
 
-//    commons_email_version = '1.4'
-//    oshi_version = '3.2'
+    libExclude = ['gurobi-jar-*.jar', 'cplex-*.jar']
 
-    error_reporter_version = "0.9.2"
+
+    jetbrains_version = "17.0.0"
 
     logger.lifecycle('reading gradle properties file...')
     File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
-    getLogger().lifecycle("Loading properties from ${propertiesFile.absolutePath}")
-    Properties props = new Properties()
+    if (propertiesFile.exists()) {
+        getLogger().lifecycle("Loading properties from ${propertiesFile.absolutePath}")
+        Properties props = new Properties()
 
-    propertiesFile.withReader("UTF8", {
-        props.load(it)
-    })
-    System.properties.putAll(props)
+        propertiesFile.withReader("UTF8", {
+            props.load(it)
+        })
+        System.properties.putAll(props)
+    }else {
+        getLogger().lifecycle("No properties file found at '${propertiesFile.absolutePath}'. Some tasks might not work without this information.")
+    }
 
     logger.lifecycle('reading build properties file...')
     props = new Properties()
-    File propertiesFileIn = new File("${projectDir}/src/main/resources/sirius_frontend.build.properties")
+    File propertiesFileIn = new File("${projectDir}/sirius_cli/src/main/resources/sirius_frontend.build.properties")
     propertiesFileIn.withReader("UTF8", {
         props.load(it)
     })
     System.properties.putAll(props)
 
-    // edit all these verions in sirius_cli/src/main/resources/....build.properties
+    // edit all these versions in sirius_cli/src/main/resources/....build.properties
     appName = System.properties.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
-    buildNumber = System.properties.getProperty('de.unijena.bioinf.sirius.build')
-    println(buildNumber)
+//    buildNumber = System.properties.getProperty('de.unijena.bioinf.sirius.build')
+//    println(buildNumber)
+    siriusFrontendVersion = System.properties.getProperty('de.unijena.bioinf.siriusFrontend.version')
     siriusVersion = System.properties.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = System.properties.getProperty('de.unijena.bioinf.fingerid.version')
+    mztabm_version = System.properties.getProperty('de.unijena.bioinf.mztabm.version')
 }
+
 
 /*################### DISTRIBUTION STUFF ################### */
 project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")
 project.ext.set("macSuffix", "osx")
-project.ext.set("arch", ['64','32'])
-project.ext.set("manualPath", file('manual').absolutePath)
+project.ext.set("arch", ['64', '32'])
 project.ext.set("distPath", file('dist').absolutePath)
-
 
 
 allprojects {
     apply plugin: "com.jfrog.artifactory"
     apply plugin: 'java'
     apply plugin: 'maven-publish'
-
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    apply plugin: 'idea'
 
 
-    version = "$siriusVersion"
+    sourceCompatibility = 11
+    targetCompatibility = 11
+
+
+    version = "$siriusFrontendVersion"
     group = 'de.unijena.bioinf.ms'
 
     repositories {
@@ -96,282 +110,162 @@ allprojects {
         mavenCentral()
         maven {//public libs only so anybody can build the frontend without login
             url "https://bio.informatik.uni-jena.de/repository/libs-oss"
+            metadataSources {
+                mavenPom()
+                artifact()
+            }
         }
         maven {
-            url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
+            url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
         }
         maven {
             url "https://www.xypron.de/repository" //glpk repo
         }
 
+        maven {
+            url "https://repo1.maven.org/maven2/" //glazed lists
+        }
+        /*maven {
+            url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl
+            metadataSources { artifact() }
+        }*/
+
     }
 
     dependencies {
-        compile 'net.sf.trove4j:trove4j:3.0.3'
-        compile 'com.google.guava:guava:18.0'
+
+        annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
+        compile 'net.sf.trove4j:core:3.1.0'
+        //switched from 'net.sf.trove4j:trove4j:3.0.3' which seems to be buggy and no longer supported
+        compile "org.jetbrains:annotations:$jetbrains_version"
+        compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
 
         testCompile group: 'junit', name: 'junit', version: '4.12'
+
+        // intellij seems to ignore other scopes than compile so we need to have this here and remove it before distribution
+//        compile "com.gurobi:gurobi-jar:9.1.1"
+//        compile "cplex:cplex:12.7.1"
     }
-}
 
-task downloadGLPK(type: Copy) {
-    def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
-    project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
-
-    Path dir = project.glpkPath.toPath().getParent()
-    if (!dir.resolve('glpk').toFile().exists()) {
-        copy {
-            println(dir.toString())
-            dir.resolve('glpk').toFile().deleteDir()
-            Files.createDirectories(dir)
-
-            def glpkZipFile = Paths.get('glpk.zip')
-            def file = dir.resolve(glpkZipFile).newOutputStream()
-            file << glpkURL.openStream()
-            file.close()
-
-            from zipTree(dir.resolve(glpkZipFile).toFile())
-            into dir.toFile()
+    //there are some outdated incompatible trove dependencies in some libs.
+    // this is to exclude them and enforce the one we need.
+    configurations {
+        compile.exclude module: 'trove4j'
+        compileClasspath {
+            resolutionStrategy.force 'net.sf.trove4j:core:3.1.0'
         }
     }
 }
-
-/*################### Building the Documentation ################### */
-
-
-task cleanDoku {
-    group = 'documentation'
-    doLast {
-        def f = file("${project.manualPath}/build")
-        if (f.exists())
-            f.deleteDir()
-    }
-}
-clean.dependsOn cleanDoku
-
-task htmlDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}/source")
-    outputs.file("${project.manualPath}/build/html")
-    outputs.upToDateWhen { return false }
-    commandLine(['latex2html', '-rootdir', '../build/html', '-mkdir', 'SIRIUS'])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-}
-htmlDoku.mustRunAfter cleanDoku
-
-//colleact files for docu and readme
-task createVersion {
-    doFirst {
-        Path out = Paths.get("${project.manualPath}", "/source/version.txt")
-        if (Files.isReadable(out)) {
-            if (project.version.toString().equals(Files.readAllLines(out).first().toString())) {
-                getLogger().lifecycle("Version file already up to date")
-                return
-            }
-        }
-        getLogger().lifecycle("Updating version file")
-        Files.deleteIfExists(out)
-        Files.write(out, Arrays.asList("${project.version}"), StandardOpenOption.CREATE)
-    }
-}
-
-task createChangelogTex(type: Exec) {
-    group = 'documentation'
-    inputs.file("${project.rootDir}/CHANGELOG.md")
-    outputs.file("${project.manualPath}/build/changelog.tex")
-    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-}
-
-task createFAQTex(type: Exec) {
-    group = 'documentation'
-    inputs.file("${project.rootDir}/FAQ.md")
-    outputs.file("${project.manualPath}/build/faq.tex")
-    commandLine(["pandoc", "${inputs.files.singleFile}", "-t", "latex", "-o", "${outputs.files.singleFile}"])
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-}
-
-
-task pdfDoku(type: Exec) {
-    group = 'documentation'
-    workingDir = file("${project.manualPath}/source")
-    outputs.file(file("${project.manualPath}/build/SIRIUS.pdf"))
-
-    outputs.upToDateWhen {
-        File out = outputs.files.singleFile
-        if (Files.notExists(out.toPath()))
-            return false;
-        long time = out.lastModified()
-
-        boolean uptodate = true;
-        workingDir.eachFileRecurse { file ->
-            if (file.lastModified() >= time) {
-                getLogger().lifecycle("${file.getName()} - ${file.lastModified()} is newer than the pdf -> rebuild needed")
-                println()
-                uptodate = false
-            }
-        }
-        return uptodate
-    }
-
-    doFirst {
-        Files.createDirectories(Paths.get("${project.manualPath}/build"))
-    }
-
-    commandLine 'bash', '-e', '-c', """
-        pdflatex -output-directory ../build ./SIRIUS
-        biber -output-directory ../build SIRIUS
-        pdflatex -output-directory ../build ./SIRIUS
-        pdflatex -output-directory ../build ./SIRIUS
-    """
-}
-pdfDoku.dependsOn createVersion
-pdfDoku.dependsOn createChangelogTex
-pdfDoku.dependsOn createFAQTex
-pdfDoku.mustRunAfter cleanDoku
-
-class Pdf extends AbstractArchiveTask {
-    public static final String PDF_EXTENSION = "pdf";
-
-    Pdf() {
-        setExtension(PDF_EXTENSION);
-    }
-
-    void source(File sourceFile) {
-        from(sourceFile.toPath().getParent().toFile())
-        include(sourceFile.getName())
-        rename(sourceFile.getName(), getArchiveName())
-    }
-
-    @Override
-    protected CopyAction createCopyAction() {
-        return new FileCopyAction(getFileLookup().getFileResolver(getArchivePath().toPath().getParent().toFile()))
-    }
-}
-
-task pdfDokuArtifact(type: Pdf) {
-    group = 'documentation'
-    baseName = project.appName
-    classifier = 'manual'
-
-    File input = pdfDoku.outputs.files.singleFile;
-
-    outputs.upToDateWhen {
-        File out = outputs.files.singleFile
-        return Files.isRegularFile(out.toPath()) && out.lastModified() > input.lastModified()
-    }
-
-    source input
-
-    project.ext.set("pdfManualPath", outputs.files.singleFile)
-}
-
-pdfDokuArtifact.dependsOn pdfDoku
-
-task buildDoku {
-    group = 'documentation'
-    outputs.files(pdfDokuArtifact.outputs.files)
-//    outputs.files(singleFile,htmlDoku.outputs.files)
-}
-
-buildDoku.mustRunAfter cleanDoku
-buildDoku.dependsOn /*htmlDoku,*/ pdfDokuArtifact //todo solve problem and re enable
 
 
 subprojects {
     apply plugin: 'application'
-    apply plugin: 'edu.sc.seis.launch4j'
 
-    /*################### Windows release Stuff ################### */
-    launch4j {
-        icon = file('../dist/sirius.ico')
-        copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
-        companyName = "Friedrich-Schiller-University Jena"
-        version = project.version
-        textVersion = project.version
-        supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
 
-        initialHeapPercent = 50
-        maxHeapPercent = 80
+    task listDependecies {
+        group = 'reporting'
+        doLast {
+            project.configurations.compile.resolvedConfiguration.resolvedArtifacts.stream().map({ i -> i.getModuleVersion()..toString() })
+                    .sorted().forEach({ i -> println(i) })
+        }
+    }
+}
 
-        dontWrapJar = true
-        jdkPreference = "preferJre"
 
-        classpath.add('./lib/*')
-        classpath.addAll(runtimeClasspath.replace('${', '%').replaceAll('}', '%').split(':'))
-        println(classpath)
+task sourceJar(type: Jar) {
+    group = 'build'
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
 
-        sourceSets.main.resources {
-            srcDir rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    group = 'documentation'
+    archiveClassifier.set('javadoc')
+    from javadoc.destinationDir
+}
+
+def javaProjects() {
+    subprojects.findAll { new File(it.projectDir, 'src').directory }
+}
+
+allprojects {
+    configure(javaProjects()) {
+        publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    if (version.toString().endsWith('-SNAPSHOT'))
+                        setArtifacts([jar, sourceJar])
+                    else
+                        setArtifacts([jar, sourceJar, javadocJar])
+                }
+            }
         }
     }
 
-    /*################### Linux release Stuff ################### */
-    startScripts {
-        applicationName = "${project.appName}"
-        doLast {
-            def siriusLibPath = '$GUROBI_HOME/lib:$CPLEX_HOME/bin/x86-64_linux:$CPLEX_HOME/bin/x86-64_osx:$CPLEX_HOME/bin/x64_win64:$CPLEX_HOME/bin/x86_win32:$APP_HOME/lib'
-            def lines = unixScript.text.split(System.lineSeparator())
-            int insertIndex = -1
-            for (int i = 0; i < lines.length; i++) {
-                if (lines[i].startsWith('CLASSPATH=')) {
-                    lines[i] = lines[i].replace('CLASSPATH=', "CLASSPATH=\"${runtimeClasspath}:") + '"'
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from project.components.java
+                //adding submodules to pom
+                pom.withXml {
+                    if (!project.subprojects.isEmpty()) {
+                        def modlules = asNode().appendNode('modules', '')
+                        project.subprojects.each {
+                            new Node(modlules, 'module', it.name)
+                        }
+                    }
                 }
-                if (lines[i].startsWith('DEFAULT_JVM_OPTS=""')) {
-                    insertIndex = i - 1
-                    lines[i] = lines[i].replace('DEFAULT_JVM_OPTS=""', "DEFAULT_JVM_OPTS=\"-Djava.library.path=\\\"${siriusLibPath}\\\"" + '"')
-                }
+                setArtifacts([])
             }
-            lines = (lines as List).plus(insertIndex, "export LD_LIBRARY_PATH=\"${siriusLibPath}:\$LD_LIBRARY_PATH\"")
-            lines = (lines as List).plus(insertIndex + 1, "export DYLD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH\"")
-            unixScript.text = lines.join(System.lineSeparator())
         }
     }
 }
 
 task refreshDownloadLinks {
-    project.ext.set("webPath", getBuildDir().toPath().resolve('tmp/webSite/').toFile())
+    File webPath =  getBuildDir().toPath().resolve('tmp/webSite/').toFile()
     group = 'publishing'
-    File outfile = file("${project.webPath}/sirius-download.md")
+    File outfile = new File(webPath,"sirius-download.md")
     outputs.file(outfile)
 
     doLast {
-        Files.createDirectories(Paths.get("${project.webPath}"))
+        webPath.mkdirs()
         def repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
 
         List<String> lines = [
-                "### Documentation",
-                "- [SIRIUS Training material](https://bio.informatik.uni-jena.de/sirius-training/)",
-                "- [SIRIUS manual](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/${version}/sirius-${version}-manual.pdf)",
-                "- [demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)",
+                "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
+                "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
+                "- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.msi) / " +
+                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
+                "- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
+                "- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.pkg) / " +
+                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
                 "",
-                "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
-                "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32.zip) / " +
-                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
-                "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32.zip) / " +
-                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
-                "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
-                "",
-                "### SIRIUS+CSI:FingerID Commandline only - Version $version (Build ${project.buildNumber} from ${new Date().format('yyyy-MM-dd')})",
-                "- for Windows [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win32-headless.zip) / " +
-                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
-                "- for Linux [32bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux32-headless.zip) / " +
-                        "[64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
-                "- for Mac [64bit](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
-                "",
-                "### Sources on GitHub",
-                "- [SIRIUS frontend](https://github.com/boecker-lab/sirius_frontend)",
-                "- [SIRIUS library](https://github.com/boecker-lab/sirius)"
+                "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $version (${new Date().format('yyyy-MM-dd')})",
+                "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
+                "- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.msi) / " +
+                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
+                "- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
+                "- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.pkg) / " +
+                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
+                ""
+        ] as List
 
+        Files.deleteIfExists(outfile.toPath())
+        Files.write(outfile.toPath(), lines, StandardOpenOption.CREATE)
+    }
+}
+
+task refreshTrainingLinks {
+    File webPath =  getBuildDir().toPath().resolve('tmp/webSite/').toFile()
+    group = 'publishing'
+    File outfile = new File(webPath,"sirius-training.md")
+    outputs.file(outfile)
+
+    doLast {
+        webPath.mkdirs()
+        List<String> lines = [
+                "- https://www.csi-fingerid.uni-jena.de/v$fingeridVersion/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)",
+                "- https://www.csi-fingerid.uni-jena.de/v$fingeridVersion/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)"
         ] as List
 
         Files.deleteIfExists(outfile.toPath())
@@ -380,21 +274,21 @@ task refreshDownloadLinks {
 }
 
 task refreshReadMe {
-    inputs.files(refreshDownloadLinks.outputs.files.singleFile/*, downloadChangelog.outputs.files.singleFile*/)
+    inputs.files(refreshDownloadLinks.outputs.files.singleFile, refreshTrainingLinks.outputs.files.singleFile)
     outputs.file("${getRootDir()}/README.md")
     group = 'publishing'
 
     doFirst {
         File dld = inputs.files.getAt(0)
-//        File clg = inputs.files.getAt(1)
+        File clg = inputs.files.getAt(1)
         File out = outputs.files.singleFile
 
         List<String> links = Files.readAllLines(dld.toPath())
-//        List<String> changes = Files.readAllLines(clg.toPath())
+        List<String> training = Files.readAllLines(clg.toPath())
 
 
-        Map<String, String> keywords = ['<!--begin download-->': '<!--end download-->'/*, '<!--begin changelog-->': '<!--end changelog-->'*/]
-        Map<String, List<String>> replacements = ['<!--begin download-->': links/*, '<!--begin changelog-->': changes*/]
+        Map<String, String> keywords = ['<!--begin download-->': '<!--end download-->', '<!--begin training-->': '<!--end training-->']
+        Map<String, List<String>> replacements = ['<!--begin download-->': links, '<!--begin training-->': training]
 
         List<String> lines = Files.readAllLines(out.toPath())
         List<String> nuLines = new LinkedList<>()
@@ -402,7 +296,9 @@ task refreshReadMe {
         String keywordEnd = null
 
         lines.each { String line ->
-            if (keyword == null) {
+            if (line.startsWith("[![Generic badge](https://img.shields.io/badge/Version-")){
+                nuLines.add("[![Generic badge](https://img.shields.io/badge/Version-${project.version.replace("-","--")}-informational.svg)](https://shields.io/)")
+            }else if (keyword == null) {
                 keywordEnd = keywords.get(line)
                 nuLines.add(line)
                 if (keywordEnd != null) {
@@ -425,37 +321,20 @@ task refreshReadMe {
         Files.write(out.toPath(), nuLines, StandardOpenOption.CREATE)
     }
 }
-//refreshReadMe.dependsOn downloadChangelog
+refreshReadMe.dependsOn refreshTrainingLinks
 refreshReadMe.dependsOn refreshDownloadLinks
-
-publishing {
-    publications {
-        sirius(MavenPublication) {
-            artifactId = "$name"
-            groupId = "$group"
-
-            pom.withXml {}
-            artifact source: pdfDokuArtifact
-        }
-        manual(MavenPublication) {
-            artifactId = "manual"
-            groupId = "${group}.${project.appName}"
-            version = 'current'
-
-            pom.withXml {}
-            artifact source: pdfDokuArtifact, classifier: 'sirius'
-        }
-    }
-}
-
 // publication artifactory
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
     publish {
         repository {
             repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
-            username = System.properties['de.unijena.bioinf.build.artifactory.username']
-            password = System.properties['de.unijena.bioinf.build.artifactory.password']
+            username = System.getenv("ARTIFACTORY_USERNAME") != null
+                    ? System.getenv("ARTIFACTORY_USERNAME")
+                    : System.properties['de.unijena.bioinf.build.artifactory.username']
+            password = System.getenv("ARTIFACTORY_TOKEN") != null
+                    ? System.getenv("ARTIFACTORY_TOKEN")
+                    : System.properties['de.unijena.bioinf.build.artifactory.password']
         }
         defaults {
             //Publish every distribution to Artifactory

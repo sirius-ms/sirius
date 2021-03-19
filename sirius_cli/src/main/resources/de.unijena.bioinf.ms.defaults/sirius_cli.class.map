@@ -1,0 +1,3 @@
+WriteSummaries=de.unijena.bioinf.ms.annotations.WriteSummaries
+PrintCitations=de.unijena.bioinf.ms.annotations.PrintCitations
+RecomputeResults=de.unijena.bioinf.ms.annotations.RecomputeResults

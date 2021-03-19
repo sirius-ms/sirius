@@ -1,0 +1,66 @@
+
+dependencies {
+    //project
+    compile project(':sirius_cli')
+
+//    compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+
+
+    compile group: 'com.lexicalscope.jewelcli', name: 'jewelcli', version: '0.8.9'
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+}
+
+repositories {
+    maven {
+        url "http://repo.spring.io/plugins-release/" //org.antlr:com.springsource.antlr
+    }
+
+}
+
+
+
+apply plugin: 'application'
+
+mainClassName = "de.unijena.bioinf.ms.utils.UtilsCLI"
+project.ext.set("type", ['console'])
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
+startScripts {
+    applicationName = "sirius-utils"
+    defaultJvmOpts = ['-XX:+UseG1GC','-XX:+UseStringDeduplication']
+
+    doLast {
+        unixScript.text = unixScript.text.replace('CLASSPATH=', "CLASSPATH=${runtimeClasspath}:")
+        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', 'DEFAULT_JVM_OPTS=""')
+    }
+}
+
+/*distributions {
+    linux64 {
+        contents {
+            into('lib') {
+                from("build/install/${project.name}/lib")
+                from("${project.glpkPath}/l64/")
+            }
+
+            into('bin') {
+                from("build/install/${project.name}/bin") {
+                    exclude("*.bat")
+                }
+
+            }
+        }
+
+    }
+
+    getTasksByName("linux64DistTar", false).each {it.setEnabled(false)}
+    getTasksByName("linux64DistTar", false).each { it.setEnabled(false)}
+}*/
+
+linux64DistZip.dependsOn 'installDist'
+linux64DistTar.dependsOn 'installDist'
+installLinux64Dist.dependsOn 'installDist'
