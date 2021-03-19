@@ -219,7 +219,7 @@ public class Instance {
     }
 
     public synchronized void updateConfig() {
-        compoundCache.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(getExperiment().getAnnotationOrThrow(FinalConfig.class).config));
+        compoundCache.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(compoundCache.getAnnotationOrThrow(FinalConfig.class).config));
         updateCompound(compoundCache, ProjectSpaceConfig.class);
     }
 

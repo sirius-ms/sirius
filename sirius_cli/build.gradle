@@ -46,8 +46,12 @@ artifactory {
             else
                 repoKey = 'libs-release-local'
 
-            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
-            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+            username = System.getenv("ARTIFACTORY_USERNAME") != null
+                    ? System.getenv("ARTIFACTORY_USERNAME")
+                    : System.properties['de.unijena.bioinf.build.artifactory.username']
+            password = System.getenv("ARTIFACTORY_TOKEN") != null
+                    ? System.getenv("ARTIFACTORY_TOKEN")
+                    : System.properties['de.unijena.bioinf.build.artifactory.password']
         }
         defaults {
             publications('mavenJava')

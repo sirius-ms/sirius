@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
@@ -45,7 +46,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
     private final DataSetJob dependJob;
     protected final JobSubmitter jobSubmitter;
 
-    private final Set<InstanceJobCollectorJob> runningInstances = new LinkedHashSet<>();
+    private final Set<InstanceJobCollectorJob> runningInstances = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     final Lock lock = new ReentrantLock();
     final Condition isFull = lock.newCondition();
@@ -66,40 +67,43 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
     }
 
     @Override
-    public void start() throws InterruptedException {
-        while (instances.hasNext()) {
-            checkForCancellation();
+    public void start(final boolean invalidate) throws InterruptedException {
+        try {
+            while (instances.hasNext()) {
+                checkForCancellation();
 
-            lock.lock();
-            try {
-                //wait for free slot in buffer if it is full
-                while (runningInstances.size() >= bufferSize) {
-                    isFull.await();
+                lock.lock();
+                try {
+                    //wait for free slot in buffer if it is full
+                    while (runningInstances.size() >= bufferSize) {
+                        isFull.await();
+                        checkForCancellation();
+                    }
+
+
                     checkForCancellation();
-                }
 
-                checkForCancellation();
-                final Instance instance = instances.next();
-                final InstanceJobCollectorJob collector = new InstanceJobCollectorJob(instance);
-
-                JJob<Instance> jobToWaitOn = (DymmyExpResultJob) () -> instance;
-                for (InstanceJob.Factory<?> task : tasks) {
-                    jobToWaitOn = task.createToolJob(jobToWaitOn);
+                    final Instance instance = instances.next();
+                    final InstanceJobCollectorJob collector = new InstanceJobCollectorJob(instance, invalidate);
+                    JJob<Instance> jobToWaitOn = (DymmyExpResultJob) () -> instance;
+                    for (InstanceJob.Factory<?> task : tasks) {
+                        jobToWaitOn = task.createToolJob(jobToWaitOn);
+                        submitJob(jobToWaitOn);
+                    }
                     collector.addRequiredJob(jobToWaitOn);
-                    submitJob(jobToWaitOn);
+                    runningInstances.add(submitJob(collector));
+
+                    checkForCancellation();
+
+                    // add dependency if necessary
+                    if (dependJob != null)
+                        dependJob.addRequiredJob(jobToWaitOn);
+                } finally {
+                    lock.unlock();
                 }
-
-                checkForCancellation();
-                runningInstances.add(submitJob(collector));
-
-                // add dependency if necessary
-                if (dependJob != null)
-                    dependJob.addRequiredJob(jobToWaitOn);
-
-
-            } finally {
-                lock.unlock();
             }
+        } catch (InterruptedException e) {
+            LoggerFactory.getLogger(getClass()).info("Buffered Job Submission Canceled. Awaiting Cancellation of running Jobs...");
         }
 
         // wait for the last submitted jobs
@@ -131,8 +135,10 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
         lock.lock();
         try {
             isCanceled.set(true);
-            new ArrayList<>(runningInstances).forEach(JJob::cancel);
-            isFull.signal();
+            runningInstances.forEach(JJob::cancel);
+            if (dependJob != null)
+                dependJob.cancel();
+            isFull.signalAll();
         } finally {
             lock.unlock();
         }
@@ -149,44 +155,55 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
     }
 
     private class InstanceJobCollectorJob extends BasicDependentJJob<CompoundContainerId> {
-        final Instance instance;
+        private final Instance instance;
+        private final boolean invalidate;
+        Set<JJob<?>> toWaitOnCleanUp = Set.of();
 
         @Override
         public void cancel(boolean mayInterruptIfRunning) {
+            toWaitOnCleanUp = new HashSet<>();
             final LinkedList<JJob<?>> deps = new LinkedList<>(this.requiredJobs());
-            while (deps.peekFirst() != null){
+            while (deps.peekFirst() != null) {
                 JJob<?> current = deps.pollFirst();
                 if (current instanceof DependentJJob)
-                    deps.addAll(((DependentJJob<?>)current).requiredJobs());
+                    deps.addAll(((DependentJJob<?>) current).requiredJobs());
+                toWaitOnCleanUp.add(current);
                 current.cancel();
             }
             super.cancel(mayInterruptIfRunning);
         }
 
-        public InstanceJobCollectorJob(Instance instance) {
-            super(JobType.SCHEDULER,ReqJobFailBehaviour.IGNORE); //we want to ignore failing because we do not want to multiply exceptions
+        @Override
+        protected void cleanup() {
+            // this should always run because we ignore failling of reqiured jobs
+            //this runs if all jobs of the instance are finished
+            lock.lock();
+            try {
+                runningInstances.remove(this);
+                isFull.signalAll();
+            } finally {
+                lock.unlock();
+            }
+
+            toWaitOnCleanUp.forEach(JJob::getResult);
+            super.cleanup();
+        }
+
+        public InstanceJobCollectorJob(Instance instance, final boolean invalidate) {
+            super(JobType.SCHEDULER, ReqJobFailBehaviour.IGNORE); //we want to ignore failing because we do not want to multiply exceptions
             this.instance = instance;
-
-            addPropertyChangeListener(evt -> {
-                if (isFinished()) {
-                    lock.lock();
-                    try {
-                        runningInstances.remove(this);
-                        isFull.signal(); //all not needed?
-                    } finally {
-                        lock.unlock();
-                    }
-                }
-            });
-
-
+            this.invalidate = invalidate;
         }
 
 
         @Override
         protected CompoundContainerId compute() {
-            // this should always run because we ignore failling of reqiured jobs
-            //this runs if all jobs of the instance are finished
+            //cleanup is not really needed for CLI but for everything on top that might keep instances alive.
+            if (invalidate) {//todo we should change our project space model so that spectra are independent from config stuff
+                instance.clearFormulaResultsCache();
+                instance.clearCompoundCache();
+            }
+
             return instance.getID();
         }
 

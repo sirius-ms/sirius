@@ -71,7 +71,7 @@ public class LoadController implements LoadDialogListener {
 
             loadDialog.editPanel.setMolecularFomula(expToModify);
 
-            loadDialog.experimentNameChanged(expToModify.getName());
+            loadDialog.experimentNameChanged(inst.getName());
 
             loadDialog.setParentMass(expToModify.getIonMass());
 

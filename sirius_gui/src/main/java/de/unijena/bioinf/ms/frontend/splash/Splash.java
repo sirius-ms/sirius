@@ -3,13 +3,10 @@ package de.unijena.bioinf.ms.frontend.splash;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.ProgressJJob;
-import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Optional;
 
 public class Splash extends JWindow implements JobProgressEventListener {
     static {
@@ -55,20 +52,20 @@ public class Splash extends JWindow implements JobProgressEventListener {
     @Override
     public void progressChanged(JobProgressEvent progressEvent) {
         if (progressEvent.getSource() != source) {
-            source = progressEvent.getSource();
-            progressBar.setMaximum(progressBar.getMaximum() + progressEvent.getMaxValue());
-            progressBar.setMinimum(progressBar.getMinimum() + progressEvent.getMinValue());
+            source = progressEvent.getSourceJJob();
+            progressBar.setMaximum(progressBar.getMaximum() + (int) progressEvent.getMaxValue());
+            progressBar.setMinimum(progressBar.getMinimum() + (int) progressEvent.getMinValue());
         } else {
-            progressBar.setMaximum(progressBar.getMaximum() + (progressEvent.getMaxValue() - max));
-            progressBar.setMinimum(progressBar.getMinimum() + (progressEvent.getMinValue() - min));
+            progressBar.setMaximum(progressBar.getMaximum() + ((int) progressEvent.getMaxValue() - max));
+            progressBar.setMinimum(progressBar.getMinimum() + ((int) progressEvent.getMinValue() - min));
         }
 
-        max = progressEvent.getMaxValue();
-        min = progressEvent.getMinValue();
+        max = (int) progressEvent.getMaxValue();
+        min = (int) progressEvent.getMinValue();
 
         if (progressEvent.isDetermined()) {
             progressBar.setIndeterminate(false);
-            progressBar.setValue(progressBar.getValue() + (progressEvent.getNewValue() - Optional.ofNullable(progressEvent.getOldValue()).orElse(0)));
+            progressBar.setValue(progressBar.getValue() + progressEvent.getNewValue().intValue());
         } else {
             progressBar.setIndeterminate(true);
         }

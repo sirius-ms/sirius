@@ -27,8 +27,8 @@ import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
-import de.unijena.bioinf.ms.gui.ms_viewer.MSViewerPanel;
 import de.unijena.bioinf.ms.gui.io.spectrum.SpectrumContainer;
+import de.unijena.bioinf.ms.gui.ms_viewer.MSViewerPanel;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 
@@ -40,8 +40,9 @@ import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.File;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
 
 public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionListener, ListSelectionListener, WindowListener,
@@ -58,7 +59,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
     private JComboBox<String> msLevelBox;
 
 
-    private List<LoadDialogListener> listeners;
+    private final Queue<LoadDialogListener> listeners = new ConcurrentLinkedQueue<>();
 
     private DecimalFormat cEFormat;
 
@@ -71,7 +72,6 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
         super(owner, "Import as Single Compound", true);
 
         this.cEFormat = new DecimalFormat("#0.0");
-        listeners = new ArrayList<LoadDialogListener>();
 
         this.addWindowListener(this);
 

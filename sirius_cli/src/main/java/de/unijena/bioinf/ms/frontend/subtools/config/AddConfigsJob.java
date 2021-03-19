@@ -55,6 +55,8 @@ public class AddConfigsJob extends InstanceJob {
 
         ParameterConfig baseConfig;
 
+        checkForInterruption();
+
         //override defaults
         // CLI_CONFIG might already exist from previous runs and needs to be updated.
         baseConfig = psConfig
@@ -77,14 +79,17 @@ public class AddConfigsJob extends InstanceJob {
             baseConfig = baseConfig.newIndependentInstance(msConf.config, false);
         }
 
+        checkForInterruption();
+
         //runtime modification layer,  that does not effect the other configs, needs to be cleared before further analyses starts
         //name cannot be based on the ID because people might rename their compounds
         baseConfig = baseConfig.newIndependentInstance("RUNTIME_CONFIG", true);
+        inst.loadCompoundContainer().setAnnotation(FinalConfig.class, new FinalConfig(baseConfig));
 
         //fill all annotations
-        exp.setAnnotation(FinalConfig.class, new FinalConfig(baseConfig));
         exp.setAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
 
+        checkForInterruption();
 
         final FormulaResultRankingScore it = exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO);
         // this value is a commandline parameter that specifies how to handle the ranking score. If auto we decide how to
@@ -95,6 +100,8 @@ public class AddConfigsJob extends InstanceJob {
         } else {
             inst.getID().setRankingScoreTypes(it.value);
         }
+
+        checkForInterruption();
 
         inst.updateExperiment(); //todo we should optize this, so that this is not needed anymore
         inst.updateConfig();

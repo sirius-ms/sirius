@@ -30,7 +30,6 @@ public class DatabaseFilterMatcherEditor extends AbstractMatcherEditor<Fingerpri
 
     public DatabaseFilterMatcherEditor(DBFilterPanel panel) {
         panel.addFilterChangeListener(filterSet -> fireChanged(new DatabaseMatcher(filterSet)));
-
     }
 
     public static class DatabaseMatcher implements Matcher<FingerprintCandidateBean> {

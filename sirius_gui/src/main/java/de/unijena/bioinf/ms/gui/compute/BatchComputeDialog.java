@@ -160,7 +160,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             abort.addActionListener(e -> dispose());
             JButton showCommand = new JButton("Show Command");
             showCommand.addActionListener(e ->
-                    new InfoDialog(owner, "Command:" + GuiUtils.formatToolTip(String.join(" ", makeCommand()))));
+                    new InfoDialog(owner, "Command:" + GuiUtils.formatToolTip(String.join(" ", makeCommand(new ArrayList<>())))));
 
             rsouthPanel.add(showCommand);
             rsouthPanel.add(compute);
@@ -279,7 +279,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 // CHECK ILP SOLVER
                 TreeBuilder builder = new Sirius().getMs2Analyzer().getTreeBuilder();
                 if (builder == null) {
-                    String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers) " + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + ". Please read the installation instructions.";
+                    String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers), tried '" + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + "'. Please read the installation instructions.";
                     LoggerFactory.getLogger(BatchComputeDialog.class).error(noILPSolver);
                     new ErrorReportDialog(BatchComputeDialog.this, noILPSolver);
                     dispose();
@@ -296,13 +296,15 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 checkForInterruption();
 
                 try {
+                    final List<String> toolList = new ArrayList<>();
                     final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
                     final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), finalComps), configOptionLoader, new GuiInstanceBufferFactory());
                     final Run computation = new Run(wfBuilder);
-                    computation.parseArgs(makeCommand().toArray(String[]::new));
+                    final List<String> c = makeCommand(toolList);
+                    computation.parseArgs(c.toArray(String[]::new));
 
                     if (computation.isWorkflowDefined())
-                        Jobs.runWorkflow(computation.getFlow(), finalComps);//todo make som nice head job that does some organizing stuff
+                        Jobs.runWorkflow(computation.getFlow(), finalComps, c, String.join(" > ",toolList));//todo make som nice head job that does some organizing stuff
                     //todo else some error message with pico cli output
                 } catch (Exception e) {
                     new ExceptionDialog(MF, e.getMessage());
@@ -315,9 +317,9 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         dispose();
     }
 
-    private List<String> makeCommand() {
+    private List<String> makeCommand(final List<String> toolCommands) {
         // create computation parameters
-        List<String> toolCommands = new ArrayList<>();
+        toolCommands.clear();
         List<String> configCommand = new ArrayList<>();
 
         configCommand.add("config");

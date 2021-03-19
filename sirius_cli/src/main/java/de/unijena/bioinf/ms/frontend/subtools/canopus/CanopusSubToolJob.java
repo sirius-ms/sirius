@@ -31,11 +31,9 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +47,7 @@ public class CanopusSubToolJob extends InstanceJob {
 
     public CanopusSubToolJob(JobSubmitter submitter) {
         super(submitter);
+        asWEBSERVICE();
     }
 
     @Override
@@ -60,6 +59,8 @@ public class CanopusSubToolJob extends InstanceJob {
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(FormulaScoring.class, FingerprintResult.class, CanopusResult.class);
 
+        checkForInterruption();
+
         // create input
         List<FormulaResult> res = input.stream().map(SScored::getCandidate)
                 .filter(ir -> ir.hasAnnotation(FingerprintResult.class)).collect(Collectors.toList());
@@ -70,7 +71,11 @@ public class CanopusSubToolJob extends InstanceJob {
             return;
         }
 
+        checkForInterruption();
+
         if (!checkFingerprintCompatibility()) return;
+
+        checkForInterruption();
 
         // write Canopus client data
         if (inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusDataProperty.class).isEmpty()) {
@@ -79,8 +84,13 @@ public class CanopusSubToolJob extends InstanceJob {
             inst.getProjectSpaceManager().setProjectSpaceProperty(CanopusDataProperty.class, new CanopusDataProperty(pos, neg));
         }
 
+        checkForInterruption();
+
         // submit canopus jobs for Identification results that contain CSI:FingerID results
         Map<FormulaResult, CanopusWebJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmitRemote));
+
+        checkForInterruption();
+
 
         jobs.forEach((k, v) -> k.setAnnotation(CanopusResult.class, v.takeResult()));
 

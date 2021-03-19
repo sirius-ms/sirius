@@ -1,7 +1,7 @@
 /*
  *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
             return config;
         };
 
-        final Splash splash = Arrays.stream(args).anyMatch(it -> it.toLowerCase().equals("gui")) ? new Splash() : null;
+        final Splash splash = Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("gui")) ? new Splash() : null;
         if (TIME)
             t1 = System.currentTimeMillis();
 
@@ -67,8 +67,8 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
             TinyBackgroundJJob<Object> j = new TinyBackgroundJJob<>() {
                 @Override
                 protected Object compute() throws Exception {
-                    updateProgress(0, 7, 1, "Starting Application Core...");
                     ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
+                    updateProgress(0, 7, 1, "Starting Application Core...");
                     measureTime("Init Swing Job Manager");
                     SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(Math.min(defaultThreadNumber(), cpuThreads), 1));
                     ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());

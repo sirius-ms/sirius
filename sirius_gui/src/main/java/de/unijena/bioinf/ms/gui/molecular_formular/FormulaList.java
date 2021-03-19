@@ -36,7 +36,6 @@ import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -119,11 +118,11 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                         Jobs.runEDTAndWait(() -> {
                             if (!elementList.isEmpty()) {
                                 elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
-                                selectionModel.clearSelection();
-                                elementList.clear();
+                                elementListSelectionModel.clearSelection();
+                                refillElements(null);
                             } else {
                                 // to have notification even if the list is already empty
-                                notifyListeners(data, null, elementList, selectionModel);
+                                notifyListeners(data, null, elementList, elementListSelectionModel);
                             }
                             zodiacScoreStats.update(new double[0]);
                             siriusScoreStats.update(new double[0]);
@@ -133,24 +132,27 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                         });
                     }
 
-                    checkForInterruption();
-                    if (!elementList.isEmpty()) {
-                        final AtomicInteger index = new AtomicInteger(0);
-                        final Function<FormulaResultBean, Boolean> f = getBestFunc();
-                        for (FormulaResultBean resultBean : elementList) {
-                            if (f.apply(resultBean))
-                                break;
-                            index.incrementAndGet();
+                        checkForInterruption();
+                        //refreshing selection
+                        if (!elementList.isEmpty()) {
+                            final AtomicInteger index = new AtomicInteger(0);
+                            final Function<FormulaResultBean, Boolean> f = getBestFunc();
+                            for (FormulaResultBean resultBean : elementList) {
+                                if (f.apply(resultBean))
+                                    break;
+                                index.incrementAndGet();
+                            }
+                            //set selection
+                            Jobs.runEDTAndWait(() -> {
+                                if (index.get() < elementList.size())
+                                    elementListSelectionModel.setSelectionInterval(index.get(), index.get());
+                                else
+                                    elementListSelectionModel.clearSelection();
+                            });
+                        }else {
+                            elementListSelectionModel.clearSelection();
                         }
-                        //set selection
-                        Jobs.runEDTAndWait(() -> {
-                            if (index.get() < elementList.size())
-                                selectionModel.setSelectionInterval(index.get(), index.get());
-                            else
-                                selectionModel.clearSelection();
-                        });
-                    }
-                    return true;
+                        return true;
                 }
             });
         } finally {
@@ -160,8 +162,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
 
     private void intiResultList() {
         elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
-        selectionModel.clearSelection();
-        elementList.clear();
+        elementListSelectionModel.clearSelection();
+//        elementList.clear();
 
         final List<FormulaResultBean> r = data.getResults();
         if (r != null && !r.isEmpty()) {
@@ -180,7 +182,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 tScores[i] = element.getScoreValue(TreeScore.class);
                 csiScores[i++] = element.getScoreValue(TopCSIScore.class);
             }
-            elementList.addAll(r);
+//            elementList.addAll(r);
+            refillElements(r);
 
             this.zodiacScoreStats.update(zscores);
             this.siriusScoreStats.update(sscores);
@@ -199,8 +202,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
 
     public List<FormulaResultBean> getSelectedValues() {
         List<FormulaResultBean> selected = new ArrayList<>();
-        for (int i = selectionModel.getMinSelectionIndex(); i <= selectionModel.getMaxSelectionIndex(); i++) {
-            if (selectionModel.isSelectedIndex(i)) {
+        for (int i = elementListSelectionModel.getMinSelectionIndex(); i <= elementListSelectionModel.getMaxSelectionIndex(); i++) {
+            if (elementListSelectionModel.isSelectedIndex(i)) {
                 selected.add(elementList.get(i));
             }
         }

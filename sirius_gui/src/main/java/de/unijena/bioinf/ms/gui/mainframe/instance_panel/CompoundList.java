@@ -32,8 +32,8 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * This is the main List of the SIRIUS UI.
@@ -45,16 +45,17 @@ import java.util.List;
 public class CompoundList {
 
     final SearchTextField searchField;
+    final ObservableElementList<InstanceBean> obsevableScource;
     final SortedList<InstanceBean> sortedScource;
     final FilterList<InstanceBean> compoundList;
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
 
-    private final List<ExperimentListChangeListener> listeners = new LinkedList<>();
+    private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
     public CompoundList(@NotNull final GuiProjectSpaceManager ps) {
         searchField = new SearchTextField();
-
-        sortedScource = new SortedList<>(new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class)), Comparator.comparing(b -> b.getID().getCompoundIndex()));
+        obsevableScource = new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
+        sortedScource = new SortedList<>(obsevableScource, Comparator.comparing(b -> b.getID().getCompoundIndex()));
         compoundList = new FilterList<>(sortedScource,
                 new TextComponentMatcherEditor<>(searchField.textField, (baseList, element) -> {
                     baseList.add(element.getGUIName());

@@ -25,7 +25,9 @@ import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.SearchTextField;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,14 +36,20 @@ import java.awt.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends ActionList<E, D>> extends ActionListView<T> {
+
     protected final SearchTextField searchField;
     protected final FilterList<E> filteredSource;
     protected final DefaultEventSelectionModel<E> filteredSelectionModel;
     protected final JToolBar toolBar;
 
-    public ActionListDetailView(T source){
-        this(source,false);
+
+    protected final CardLayout centerCard = new CardLayout();
+    protected final JPanel centerCardPanel = new JPanel(centerCard);
+
+    public ActionListDetailView(T source) {
+        this(source, false);
     }
+
     public ActionListDetailView(T source, final boolean singleSelection) {
         super(source);
         setLayout(new BorderLayout());
@@ -53,7 +61,29 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
             filteredSelectionModel.setSelectionMode(DefaultEventSelectionModel.SINGLE_SELECTION);
         add(getNorth(), BorderLayout.NORTH);
 
+        addToCenterCard(ActionList.ViewState.NOT_COMPUTED, GuiUtils.newNoResultsComputedPanel());
+        addToCenterCard(ActionList.ViewState.EMPTY, GuiUtils.newEmptyResultsPanel());
+        add(centerCardPanel, BorderLayout.CENTER);
+        showCenterCard(ActionList.ViewState.NOT_COMPUTED);
     }
+
+    protected void addToCenterCard(@NotNull ActionList.ViewState name, @NotNull JComponent component) {
+        addToCenterCard(name.name(), component);
+    }
+
+    protected void addToCenterCard(@NotNull String name, @NotNull JComponent component) {
+        centerCardPanel.add(name, component);
+        showCenterCard(name);
+    }
+
+    protected void showCenterCard(@NotNull ActionList.ViewState name) {
+        showCenterCard(name.name());
+    }
+
+    protected void showCenterCard(@NotNull String name) {
+        centerCard.show(centerCardPanel, name);
+    }
+
 
     protected abstract JToolBar getToolBar();
 

@@ -69,9 +69,11 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
         }
         final TIntArrayList indizes = new TIntArrayList();
         // find isotope peaks in spectrum
-        for (Peak p : isotopePattern) {
-            final int i = findIndexOfPeak(p.getMass(), 0.1);
-            if (i >= 0) indizes.add(i);
+        if (isotopePattern != null) {
+            for (Peak p : isotopePattern) {
+                final int i = findIndexOfPeak(p.getMass(), 0.1);
+                if (i >= 0) indizes.add(i);
+            }
         }
         this.indizes = indizes.toArray();
     }

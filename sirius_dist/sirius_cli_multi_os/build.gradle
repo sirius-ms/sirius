@@ -63,9 +63,6 @@ task multiOSImage(group: 'distribution') {
             from(win64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
                 exclude 'sirius.exe'
                 exclude 'sirius-gui.exe'
-                exclude 'sirius-gui.exe'
-//                exclude 'COPYING.txt'
-//                exclude 'LICENSE.txt'
                 exclude "manual-$version-manual.pdf"
                 exclude "app"
             }
@@ -75,27 +72,28 @@ task multiOSImage(group: 'distribution') {
         // build Linux directory
         copy {
             from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
-                exclude 'bin/sirius'
-//                exclude 'COPYING.txt'
-//                exclude 'LICENSE.txt'
                 exclude "manual-$version-manual.pdf"
                 exclude "lib/app"
             }
             into outputs.files.singleFile.toPath().resolve('Linux').resolve('64bit').resolve('Sirius')
         }
 
-        //build All directory
+        //build Mac directory
         copy {
             from(osx64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius.app/Contents') {
                 exclude "app"
+                exclude "Resources"
                 exclude 'MacOS'
-//                exclude 'COPYING.txt'
-//                exclude 'LICENSE.txt'
                 exclude "manual-$version-manual.pdf"
                 exclude 'Info.plist'
                 exclude 'PkgInfo'
             }
             into outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius')
+        }
+
+        copy {
+            from(osx64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius.app/Contents/MacOS/sirius')
+            into  outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius').resolve("bin")
         }
 
         //build All directory
@@ -108,7 +106,10 @@ task multiOSImage(group: 'distribution') {
             into outputs.files.singleFile.toPath().resolve('All').resolve('Sirius')
         }
         copy {
-            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius/lib/app')
+            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius/lib/app') {
+                exclude '.jpackage.xml'
+                exclude 'sirius-gui.cfg'
+            }
             into outputs.files.singleFile.toPath().resolve('All').resolve('Sirius').resolve('app')
         }
 
@@ -117,28 +118,46 @@ task multiOSImage(group: 'distribution') {
         def lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve('Windows').resolve('64bit').resolve('Sirius').resolve('sirius.bat'))
         outputs.files.singleFile.toPath().resolve('Windows').resolve('64bit').resolve('Sirius').resolve('sirius.bat').toFile().withWriter {
             lines.forEach( {l ->
-                if (l.startsWith("set JAR_HOME="))
-                    it.writeLine('set JAR_HOME=%APP_HOME%\\..\\..\\..\\All\\Sirius\\app')
-                else
+                if (l.startsWith("set JAR_HOME=")) {
+                    it.writeLine('@rem DEFAULT THIRDPARTY configuration\n' +
+                            'set JAR_HOME=%APP_HOME%\\..\\..\\..\\All\\Sirius\\app\n' +
+                            '\n' +
+                            '@rem if JAR_HOME not exists: Assume FLAT THIRDPARTY configuration\n' +
+                            'if not exist "%JAR_HOME%" set JAR_HOME=%APP_HOME%\\app')
+                } else {
                     it.writeLine(l)
+                }
             })
         }
 
-        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve('Linux').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius.sh'))
-        outputs.files.singleFile.toPath().resolve('Linux').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius.sh').toFile().withWriter {
-            lines.forEach( {l ->
-                if (l.startsWith("JAR_HOME="))
-                    it.writeLine('JAR_HOME="\$APP_HOME/../../../All/Sirius/app"')
-                else
+        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve('Linux').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius'))
+        outputs.files.singleFile.toPath().resolve('Linux').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius').toFile().withWriter {
+            lines.forEach({ l ->
+                if (l.startsWith("JAR_HOME=")) {
+                    it.writeLine('# Add location of jar files for Classpath (STANDARD THIRDPARTY configuration)\n' +
+                            'JAR_HOME="$APP_HOME/../../../All/Sirius/app"\n' +
+                            '\n' +
+                            'if ! [ -d "$JAR_HOME" ]; then\n' +
+                            '  # $JAR_HOME does not exist: assuming FLAT THIRDPARTY configuration\n' +
+                            '  JAR_HOME="$APP_HOME/app"\n' +
+                            'fi')
+                } else {
                     it.writeLine(l)
+                }
             })
         }
 
-        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius.sh'))
-        outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius.sh').toFile().withWriter {
-            lines.forEach( {l ->
+        lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius'))
+        outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius').resolve('bin').resolve('sirius').toFile().withWriter {
+            lines.forEach({ l ->
                 if (l.startsWith("JAR_HOME="))
-                    it.writeLine('JAR_HOME="\$APP_HOME/../../../All/Sirius/app"')
+                    it.writeLine('# Add location of jar files for Classpath (default standard THIRDPARTY configuration)\n' +
+                            'JAR_HOME="$APP_HOME/../../../All/Sirius/app"\n' +
+                            '\n' +
+                            'if ! [ -d "$JAR_HOME" ]; then\n' +
+                            '  # $JAR_HOME not exist: assuming flat THIRDPARTY configuration\n' +
+                            '  JAR_HOME="$APP_HOME/app"\n' +
+                            'fi')
                 else
                     it.writeLine(l)
             })
