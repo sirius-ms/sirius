@@ -2,7 +2,7 @@ name: Build and Pubish
 on:
   push:
     branches:
-      - release-4-pre
+      - stable
 jobs:
   distCLI:
     strategy:
