@@ -15,32 +15,13 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.FragmentationTreeConstruction.model;
+package de.unijena.bioinf.ChemistryBase.exceptions;
 
-/**
- * If this annotation is set, only heuristic scores are reported and
- * the exact computation is ommitted.
- *
- * TODO: Not implemented yet!
- */
-public class EnforceHeuristic {
-
-    public static final EnforceHeuristic EXACT = new EnforceHeuristic(false), HEURISTIC = new EnforceHeuristic(true);
-
-    private final boolean heuristic;
-
-    public EnforceHeuristic(boolean heuristic) {
-        this.heuristic = heuristic;
-    }
-
-    public boolean isOnlyComputingHeuristic() {
-        return heuristic;
-    }
-
-    public boolean isExact() {
-        return !heuristic;
+public class MultimereException  extends IllegalArgumentException {
+    public MultimereException(String s) {
+        super(s);
     }
 }

@@ -8,12 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class GrbSolver extends AbstractSolver{
-
-    public final static IlpFactory<GrbSolver> Factory = new IlpFactory<GrbSolver>() {
+    public final static IlpFactory<GrbSolver> Factory = new IlpFactory<>() {
         protected GRBEnv env = getDefaultEnv();
+
         @Override
         public GrbSolver create(ProcessedInput input, FGraph graph, TreeBuilder.FluentInterface options) {
-            return new GrbSolver(env, graph,input,options);
+            return new GrbSolver(env, graph, input, options);
         }
 
         @Override
@@ -24,6 +24,15 @@ public class GrbSolver extends AbstractSolver{
         @Override
         public String name() {
             return "Gurobi";
+        }
+
+        @Override
+        public void checkSolver() throws ILPSolverException {
+            try {
+                new GRBModel(env).getEnv();
+            } catch (Throwable e) {
+                throw new ILPSolverException(e);
+            }
         }
     };
 

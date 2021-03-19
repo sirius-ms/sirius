@@ -194,10 +194,25 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
 
     private Optional<RetentionTime> parseRT(@NotNull Compound c, @Nullable Spectrum ms1) {
         try {
-            double middle = c.getLocation().getRt().doubleValue();
-            return Optional.of(Optional.ofNullable(ms1).map(Spectrum::getRTRanges).map(RTRanges::getRTRange)
-                    .map(range -> new RetentionTime(range.min.doubleValue() * 60, range.max.doubleValue() * 60, middle * 60))
-                    .orElse(new RetentionTime(middle * 60)));
+            double middle = Optional.ofNullable(c.getLocation()).map(Location::getRt).map(it -> it.doubleValue() * 60).orElse(Double.NaN);
+            double min = Optional.ofNullable(ms1).map(Spectrum::getRTRanges).map(RTRanges::getRTRange).map(RTRange::getMin).map(it -> it.doubleValue() * 60).orElse(Double.NaN);
+            double max = Optional.ofNullable(ms1).map(Spectrum::getRTRanges).map(RTRanges::getRTRange).map(RTRange::getMax).map(it -> it.doubleValue() * 60).orElse(Double.NaN);
+
+            RetentionTime rt = null;
+            if (Double.isNaN(middle)) {
+                if (min < max)
+                    rt = new RetentionTime(min, max);
+                else if (!Double.isNaN(min))
+                    rt = new RetentionTime(min);
+                else if (!Double.isNaN(max))
+                    rt = new RetentionTime(max);
+            } else if (min < middle && middle < max) {
+                rt = new RetentionTime(min, max, middle);
+            } else {
+                rt = new RetentionTime(middle);
+            }
+
+            return Optional.ofNullable(rt);
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).warn("Could not parse Retention time!", e);
             return Optional.empty();
