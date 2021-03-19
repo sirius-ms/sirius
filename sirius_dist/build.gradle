@@ -28,7 +28,7 @@ ext {
         osName = 'osx64'
         zosName = 'macosx'
         installerNameType = 'pkg'
-        installerAppendix = "-${version}.$installerNameType"
+        installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType"
     }
 }
 
