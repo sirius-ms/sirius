@@ -1,3 +1,7 @@
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Generic badge](https://img.shields.io/badge/Version-4.6.2--SNAPSHOT-informational.svg)](https://shields.io/)
+[![Build and Pubish](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml)
+
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
 methods, in whole or in part, for commercial purposes is prohibited.
 CSI:FingerID and CANOPUS web services hosted by the [Böcker group](https://bio.informatik.uni-jena.de/) are for non-commercial use only. 
@@ -22,17 +26,17 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.6.2 (2021-03-04)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.6.2-SNAPSHOT (2021-03-19)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.2/sirius-4.6.2-win64.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.2/sirius-4.6.2-win64.zip)
-- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.2/sirius-4.6.2-linux64.zip)
-- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.2/sirius-4.6.2-osx64.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.2/sirius-4.6.2-osx64.zip)
+- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.6.2-SNAPSHOT/sirius-4.6.2-SNAPSHOT-win64.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.6.2-SNAPSHOT/sirius-4.6.2-SNAPSHOT-win64.zip)
+- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.6.2-SNAPSHOT/sirius-4.6.2-SNAPSHOT-linux64.zip)
+- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.6.2-SNAPSHOT/sirius-4.6.2-SNAPSHOT-osx64.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.6.2-SNAPSHOT/sirius-4.6.2-SNAPSHOT-osx64.zip)
 
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.6.2 (2021-03-04)
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.6.2-SNAPSHOT (2021-03-19)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.2/sirius-4.6.2-win64-headless.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.2/sirius-4.6.2-win64-headless.zip)
-- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.2/sirius-4.6.2-linux64-headless.zip)
-- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.2/sirius-4.6.2-osx64-headless.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.2/sirius-4.6.2-osx64-headless.zip)
+- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.6.2-SNAPSHOT/sirius-4.6.2-SNAPSHOT-win64-headless.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.6.2-SNAPSHOT/sirius-4.6.2-SNAPSHOT-win64-headless.zip)
+- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.6.2-SNAPSHOT/sirius-4.6.2-SNAPSHOT-linux64-headless.zip)
+- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.6.2-SNAPSHOT/sirius-4.6.2-SNAPSHOT-osx64-headless.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.6.2-SNAPSHOT/sirius-4.6.2-SNAPSHOT-osx64-headless.zip)
 
 
 <!--end download-->

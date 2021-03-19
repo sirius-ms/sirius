@@ -62,7 +62,6 @@ ext {
         System.properties.putAll(props)
     }else {
         getLogger().lifecycle("No properties file found at '${propertiesFile.absolutePath}'. Some tasks might not work without this information.")
-
     }
 
     logger.lifecycle('reading build properties file...')
@@ -297,7 +296,9 @@ task refreshReadMe {
         String keywordEnd = null
 
         lines.each { String line ->
-            if (keyword == null) {
+            if (line.startsWith("[![Generic badge](https://img.shields.io/badge/Version-")){
+                nuLines.add("[![Generic badge](https://img.shields.io/badge/Version-${project.version.replace("-","--")}-informational.svg)](https://shields.io/)")
+            }else if (keyword == null) {
                 keywordEnd = keywords.get(line)
                 nuLines.add(line)
                 if (keywordEnd != null) {
@@ -328,8 +329,12 @@ artifactory {
     publish {
         repository {
             repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
-            username = System.properties['de.unijena.bioinf.build.artifactory.username']
-            password = System.properties['de.unijena.bioinf.build.artifactory.password']
+            username = System.getenv("ARTIFACTORY_USERNAME") != null
+                    ? System.getenv("ARTIFACTORY_USERNAME")
+                    : System.properties['de.unijena.bioinf.build.artifactory.username']
+            password = System.getenv("ARTIFACTORY_TOKEN") != null
+                    ? System.getenv("ARTIFACTORY_TOKEN")
+                    : System.properties['de.unijena.bioinf.build.artifactory.password']
         }
         defaults {
             //Publish every distribution to Artifactory

@@ -28,7 +28,7 @@ ext {
         osName = 'osx64'
         zosName = 'macosx'
         installerNameType = 'pkg'
-        installerAppendix = "-${version}.$installerNameType"
+        installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType"
     }
 }
 
@@ -375,7 +375,7 @@ subprojects {
                 }).iterator().forEachRemaining({i ->i.delete()})
 */
                 project.delete {
-                    delete fileTree(dir: appRootTarget, includes: "*.exe")
+                    delete fileTree(dir: appRootTarget, includes: ["*.exe"])
                 }
 
                 copy {
@@ -525,7 +525,7 @@ abstract class AppImage extends DefaultTask {
     AppImage() {
         imageName = project.name
         jvmArgs = []
-        version = project.OS.isWindows() ? project.version.replace('-SNAPSHOT', '') : project.version
+        version = project.OS.isLinux() ? project.version : project.version.replace('-SNAPSHOT', '')
         winConsole = false
         inputDir = project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
     }
