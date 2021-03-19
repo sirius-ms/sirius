@@ -1,0 +1,56 @@
+import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
+
+dependencies {
+    compile project(':sirius_gui')
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+}
+
+
+/*################### Environment variables ################### */
+mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
+
+launch4j{
+    mainClassName = project.mainClassName
+    jar = getLibraryDir() + "\\" + getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
+}
+
+//additional GUI win launcher
+task createGuiExe(type: Launch4jLibraryTask) {
+    outfile = 'sirius-gui.exe'
+    fileDescription = 'SIRIUS graphical user interface'
+    headerType = "gui"
+    cmdLine = "gui"
+}
+
+distImage {
+    dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
+    mainClass = mainClassName
+    imageName = 'sirius-gui'
+    args = ['gui']
+    runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageFX').outputs.files.singleFile
+    mainJarName = getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
+    winConsole = false
+    macPackageName = 'SIRIUS'
+    if (!OS.isWindows()) { //additional windows launchers are handled by launch4j
+        launchers = ["sirius-gui": file("${rootDir}/scripts/${OS.isMacOsX() ? "sirius-gui.zsh" : "sirius-gui.sh"}")]
+    }
+
+}
+
+distInstaller {
+    linuxShortcut = true
+}
+
+distribution.dependsOn 'distImageZip'
+distribution.dependsOn 'distInstaller'
+
+publishing {
+    publications {
+        sirius(org.gradle.api.publish.maven.MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
+            artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: osName, extension: installerNameType
+        }
+    }
+}

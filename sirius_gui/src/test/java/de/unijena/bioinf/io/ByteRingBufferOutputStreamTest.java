@@ -5,7 +5,7 @@ package de.unijena.bioinf.io;
  * 04.10.16.
  */
 
-import de.unijena.bioinf.sirius.gui.io.ByteRingBufferOutputStream;
+import de.unijena.bioinf.ms.frontend.io.ByteRingBufferOutputStream;
 import org.junit.Assert;
 import org.junit.Test;
 
