@@ -34,6 +34,7 @@ import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TIntArrayList;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -104,7 +105,7 @@ public class CorrelatedPeakDetector {
             return false;
         }
         List<CorrelationGroup> correlationGroups = new ArrayList<>();
-        detectIsotopesFor(sample, peakBeforeChr.get().mutate(), segmentForScanId.get(), ion.getChargeState(), correlationGroups);
+        detectIsotopesFor(sample, peakBeforeChr.get().mutate(), segmentForScanId.get(), ion.getChargeState(), correlationGroups, new SimpleMutableSpectrum());
         for (CorrelationGroup g : correlationGroups) {
             int scanNumber = g.getRight().findScanNumber(ms1Scan.getIndex());
             if (scanNumber >= 0 && new CorrelationGroupScorer().predictProbability(g) >= STRICT_THRESHOLD  /*g.getCosine() >= STRICT_COSINE_THRESHOLD*/ && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass())<1e-8) {
@@ -202,7 +203,7 @@ public class CorrelatedPeakDetector {
                             //System.out.println(ion + " :: Found IN-SOURCE FRAGMENT with delta m/z = " + (ion.getMsMs().getPrecursor().getMass() - peak)  + ", " + correlate );
                             //System.out.println("Add insource " + correlate.getRight().getScanPointForScanId(ms1Scan.getScanNumber()).getMass());
                             List<CorrelationGroup> isos = new ArrayList<>();
-                            detectIsotopesFor(sample, correlate.get().getRight(), correlate.get().getRightSegment(), ion.getChargeState(), isos);
+                            detectIsotopesFor(sample, correlate.get().getRight(), correlate.get().getRightSegment(), ion.getChargeState(), isos, new SimpleMutableSpectrum());
                             alreadyAnnotatedMzs.add(ms1.getMzAt(l));
                             for (CorrelationGroup isotopePeak : isos) {
                                 alreadyAnnotatedMzs.add(isotopePeak.getRight().getMzAt(isotopePeak.getRightSegment().getApexIndex()));
@@ -306,11 +307,13 @@ public class CorrelatedPeakDetector {
 
         // try different charge states
         List<CorrelationGroup> bestPattern = new ArrayList<>();
+        SimpleMutableSpectrum bestSpectrum = new SimpleMutableSpectrum();
         int bestChargeState = 0;
         double bestScore = Double.NEGATIVE_INFINITY;
         for (int charge = 1; charge < 4; ++charge) {
+            SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
             final List<CorrelationGroup> isoPeaks = new ArrayList<>();
-            double score = detectIsotopesFor(sample, ion.getPeak(), ion.getSegment(), charge, isoPeaks);
+            double score = detectIsotopesFor(sample, ion.getPeak(), ion.getSegment(), charge, isoPeaks, buf);
             if (charge>1)
                 score /= 4; // we have twice as many iso peaks, because every even peak picked before is part of this pattern
             if (Double.isFinite(score) && ion instanceof FragmentedIon && ((FragmentedIon) ion).getMsMsQuality().betterThan(Quality.BAD)&& sample.intensityAfterPrecursorDistribution!=null) {
@@ -326,6 +329,7 @@ public class CorrelatedPeakDetector {
                 bestChargeState =charge;
                 bestPattern = isoPeaks;
                 bestScore = score;
+                bestSpectrum = buf;
             }
         }
         if (bestPattern.size() > 0) {
@@ -335,15 +339,14 @@ public class CorrelatedPeakDetector {
             // do not trust a single isotope peak charge state...
             if (bestChargeState == 1 || bestPattern.size()>1 ) {
                 ion.setChargeState(bestChargeState);
-                ion.addIsotopes(bestPattern);
+                ion.addIsotopes(bestPattern, bestSpectrum);
+                System.err.println("-------- correlated ----\n" + LCMSProccessingInstance.toIsotopeSpectrum(bestPattern,ion.getMass()) + "\n------ all ---------\n" + bestSpectrum + "\n\n");
             }
         } else {
             // we still look for an isotope peak. If we cannot correlate anything, so what
             final SimpleSpectrum iso = detectIsotopesWithoutCorrelationFor(sample, ion.getPeak(), ion.getSegment(), 1);
             ion.assignIsotopePeaksWithoutCorrelation(iso);
-            System.out.println(iso);
-
-
+            System.err.println("-------- correlated ----\nnothing\n------ all ---------\n" + iso + "\n\n");
         }
     }
 
@@ -355,7 +358,7 @@ public class CorrelatedPeakDetector {
         final double mz = peak.getMzAt(segment.getApexIndex());
         double score = 0d;
         forEachIsotopePeak:
-        for (int k = 0; k < ISO_RANGES.length; ++k) {
+        for (int k = 0; k < 2; ++k) {
             // try to detect +k isotope peak
             final double maxMz = mz + ISO_RANGES[k].upperEndpoint()/charge;
             final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].lowerEndpoint()/charge, maxMz);
@@ -364,6 +367,13 @@ public class CorrelatedPeakDetector {
             for (int i=a; i < spectrum.size(); ++i) {
                 if (spectrum.getMzAt(i) > maxMz)
                     break;
+                // check if this peak is another feature
+                final Optional<ChromatographicPeak> cpeak = sample.builder.detectExact(scan, spectrum.getMzAt(i));
+                if (cpeak.isPresent() && cpeak.get().numberOfScans()>3) {
+                    // do not trust this one. We should habe found it in the correlation
+                    // analysis
+                    continue ;
+                }
                 buffer.addPeak(spectrum.getMzAt(i), spectrum.getIntensityAt(i));
                 found=true;
             }
@@ -381,30 +391,60 @@ public class CorrelatedPeakDetector {
         else return null;
     }
 
-    public double detectIsotopesFor(ProcessedSample sample, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, List<CorrelationGroup> isoPeaks) {
+    // some peaks might not correlate because we have not enough data points. We still
+    // add them as isotopes. isoPeaks is the list of correlated peaks, buffer is the
+    // spectrum of all isotopes
+    public double detectIsotopesFor(ProcessedSample sample, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, int charge, List<CorrelationGroup> isoPeaks, SimpleMutableSpectrum buffer) {
 
         Scan scan = sample.run.getScanByNumber(segment.getApexScanNumber()).get();
         final SimpleSpectrum spectrum = sample.storage.getScan(scan);
         final double mz = peak.getMzAt(segment.getApexIndex());
+        final double monoisotopicIntensity = peak.getIntensityAt(segment.getApexIndex());
+        final TIntArrayList indizes = new TIntArrayList();
         double score = 0d;
+        int lastCorrelatedPeak = -1;
         forEachIsotopePeak:
         for (int k = 0; k < ISO_RANGES.length; ++k) {
             // try to detect +k isotope peak
             final double maxMz = mz + ISO_RANGES[k].upperEndpoint()/charge;
             final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].lowerEndpoint()/charge, maxMz);
+            boolean anyCorrelatedPeak = false;
             if ( a < 0) break forEachIsotopePeak;
-            int nsize = isoPeaks.size();
             for (int i=a; i < spectrum.size(); ++i) {
                 if (spectrum.getMzAt(i) > maxMz)
                     break;
-                sample.builder.detectExact(scan, spectrum.getMzAt(i)).map(x->correlate(peak, segment, x.mutate())).filter(x->x.map(y->y.score).orElse(0d) >= PROBABILITY_THRESHOLD_ISOTOPES).map(Optional::get).ifPresent(isoPeaks::add);
+                final Optional<CorrelationGroup> potentialIsotopePeak = sample.builder.detectExact(scan, spectrum.getMzAt(i)).flatMap(x -> correlate(peak, segment, x.mutate()));
+                if (potentialIsotopePeak.isPresent()) {
+                    CorrelationGroup iso = potentialIsotopePeak.get();
+                    if (iso.score < PROBABILITY_THRESHOLD_ISOTOPES) {
+                        // this might be another feature. We rather skip this
+                    } else {
+                        isoPeaks.add(iso);
+                        anyCorrelatedPeak = true;
+                        lastCorrelatedPeak = k;
+                    }
+                } else if (k <= 2 && lastCorrelatedPeak==k-1) {
+                    // just add this peak even when we are not sure if it is really an isotope peak
+                    indizes.add(i);
+                }
             }
-            if (isoPeaks.size() <= nsize) {
-                break forEachIsotopePeak;
+            if (anyCorrelatedPeak) {
+                indizes.clear();
+            } else if (indizes.size()>0) {
+                for (int i : indizes.toArray()) {
+                    buffer.addPeak(spectrum.getMzAt(i),spectrum.getIntensityAt(i)/monoisotopicIntensity);
+                }
+                indizes.clear();
+            } else {
+                break; // no isotope peak
             }
         }
+        // add all other peaks into the spectrum
+        SimpleMutableSpectrum buf2 = LCMSProccessingInstance.toIsotopeSpectrum(isoPeaks, mz);
+        for (Peak p : buf2) buffer.addPeak(p);
+        Spectrums.sortSpectrumByMass(buffer);
         score += isoPeaks.stream().mapToInt(CorrelationGroup::getNumberOfCorrelatedPeaks).sum();
-        if (isoPeaks.isEmpty()) return Double.NEGATIVE_INFINITY;
+        if (isoPeaks.isEmpty() && buffer.isEmpty()) return Double.NEGATIVE_INFINITY;
         else return score;
     }
 
