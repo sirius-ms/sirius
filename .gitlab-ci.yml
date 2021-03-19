@@ -42,7 +42,7 @@ doc:
   only:
     refs:
       - master
-      - release-4
+      - stable
 
 distCliLinux64:
   variables:
