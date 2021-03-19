@@ -375,7 +375,7 @@ subprojects {
                 }).iterator().forEachRemaining({i ->i.delete()})
 */
                 project.delete {
-                    delete fileTree(dir: appRootTarget, includes: "*.exe")
+                    delete fileTree(dir: appRootTarget, includes: ["*.exe"])
                 }
 
                 copy {
