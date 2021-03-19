@@ -19,11 +19,18 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.annotations.WriteSummaries;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
@@ -31,6 +38,11 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.sirius.Ms2Preprocessor;
+import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
+import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
+import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
+import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -173,7 +185,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                             .doImport(input);
 
 
-                    if (projecSpaceOptions.repairScores)
+                    if (projecSpaceOptions.repairScores) {
                         space.forEach(instance -> {
                             instance.loadFormulaResults(FormulaScoring.class, FBCandidates.class).forEach(res -> {
                                 if (res.getCandidate().getAnnotation(FormulaScoring.class).map(s -> (s.hasAnnotation(TopCSIScore.class) || s.hasAnnotation(ConfidenceScore.class))).orElse(false)) {
@@ -186,6 +198,11 @@ public class ProjectSpaceWorkflow implements Workflow {
                                 }
                             });
                         });
+                    }
+
+                    if (projecSpaceOptions.mergeCompoundsTopK != null || projecSpaceOptions.mergeCompoundsCosine != null || projecSpaceOptions.mergeCompoundsRtDiff != null) {
+                        mergeCompounds(space,projecSpaceOptions);
+                    }
 
                     // io intense filters are applied as last
                     filterOnInstanceLevel(space, projecSpaceOptions);
@@ -204,6 +221,97 @@ public class ProjectSpaceWorkflow implements Workflow {
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Error when closing Project(s)!", e);
         }
+    }
+
+    private void mergeCompounds(ProjectSpaceManager space, ProjecSpaceOptions projecSpaceOptions) {
+        int topK = Optional.ofNullable(projecSpaceOptions.mergeCompoundsTopK).orElse(1);
+        double cosine = Optional.ofNullable(projecSpaceOptions.mergeCompoundsCosine).orElse(0.9);
+        long rtDiff = Optional.ofNullable(projecSpaceOptions.mergeCompoundsRtDiff).orElse(60L);
+        // group compounds by m/z
+        final Deviation dev = new Deviation(10);
+        final CosineQueryUtils Q = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(dev));
+        final HashMap<Integer, List<Instance>> grouped = new HashMap<>();
+        for (Instance instance : space) {
+            final double ionMass = instance.getID().getIonMass().orElseGet(()->instance.getExperiment().getIonMass());
+            instance.getID().setIonMass(ionMass);
+            grouped.computeIfAbsent((int)Math.round(ionMass), (x)->new ArrayList<>()).add(instance);
+        }
+        final List<BasicJJob<Object>> jobs = new ArrayList<>();
+        for (List<Instance> group : grouped.values()) {
+            jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<Object>() {
+                @Override
+                protected Object compute() throws Exception {
+                    final ArrayList<HashSet<Instance>> buckets = new ArrayList<>();
+                    int[] assignments = new int[group.size()];
+                    Arrays.fill(assignments,-1);
+                    int K = 0;
+                    for (int i=0; i < group.size(); ++i) {
+                        final Instance left = group.get(i);
+                        final double lm = left.getID().getIonMass().get();
+                        Long rtLeft = null;
+                        CosineQuerySpectrum leftExp = null;
+                        for (int j=i+1; j < group.size(); ++j) {
+                            if (assignments[j] >= 0 && assignments[i]>= 0)
+                                continue;
+                            final Instance right = group.get(j);
+                            final double rm = right.getID().getIonMass().get();
+                            final double mzDiff = Math.abs(lm-rm);
+                            Long rtRight = null;
+                            CosineQuerySpectrum rightExp = null;
+                            if (mzDiff <= dev.absoluteFor(Math.max(lm,rm))) {
+                                if (rtLeft==null) {
+                                    rtLeft = left.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).orElseGet(()->left.getExperiment().getAnnotation(RetentionTime.class).map(RetentionTime::getRetentionTimeInSeconds).orElse(0d)).longValue();
+                                }
+                                rtRight = right.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).orElseGet(()->left.getExperiment().getAnnotation(RetentionTime.class).map(RetentionTime::getRetentionTimeInSeconds).orElse(0d)).longValue();
+                                if (Math.abs(rtLeft-rtRight) < rtDiff) {
+                                    if (leftExp == null) {
+                                        leftExp = Q.createQueryWithIntensityTransformationNoLoss(Spectrums.from(new Ms2Preprocessor().preprocess(left.getExperiment()).getMergedPeaks()), lm, true );
+                                    }
+                                    rightExp = Q.createQueryWithIntensityTransformationNoLoss(Spectrums.from(new Ms2Preprocessor().preprocess(right.getExperiment()).getMergedPeaks()), rm, true );
+                                    final SpectralSimilarity spectralSimilarity = Q.cosineProduct(leftExp, rightExp);
+                                    if (spectralSimilarity.similarity >= cosine && spectralSimilarity.shardPeaks >= Math.min(6,Math.min(leftExp.size(),rightExp.size()))) {
+                                        // merge both compounds
+                                        int color = assignments[i];
+                                        if (color < 0) color = assignments[j];
+                                        if (color < 0) color = K++;
+                                        while (buckets.size()<=color) buckets.add(new HashSet<>());
+                                        buckets.get(color).add(left);
+                                        buckets.get(color).add(right);
+                                        assignments[i] = color;
+                                        assignments[j] =color;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // pick for each bucket the top k compounds
+                    HashSet<Instance> toDelete = new HashSet<>();
+                    for (HashSet<Instance> bucket : buckets) {
+                        if (bucket.size()<=topK)
+                            continue;
+                        final ArrayList<Instance> maydel = new ArrayList<>(bucket);
+                        maydel.sort(Comparator.comparingDouble(
+                                x->-(x.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class).map(y->Arrays.stream(y.getQuantificationTable().getAsVector()).max().orElse(0d)).orElse(0d)))
+                        );
+                        for (int k=topK; k < maydel.size(); ++k) {
+                            toDelete.add(maydel.get(k));
+                        }
+                    }
+
+                    for (Instance i : toDelete) {
+                        try {
+                            space.projectSpace().deleteCompound(i.getID());
+                            LoggerFactory.getLogger(getClass()).error("Deleting: " + i.getID().getDirectoryName());
+                        } catch (IOException e) {
+                            LoggerFactory.getLogger(getClass()).error("Could not delete Instance with ID: " + i.getID().getDirectoryName());
+                        }
+                    }
+                    return null;
+                }
+            }));
+        }
+        jobs.forEach(JJob::takeResult);
     }
 
     private void filterOnInstanceLevel(ProjectSpaceManager outputProject, ProjecSpaceOptions projecSpaceOptions) {

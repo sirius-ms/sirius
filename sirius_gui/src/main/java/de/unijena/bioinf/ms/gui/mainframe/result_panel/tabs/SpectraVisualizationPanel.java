@@ -130,7 +130,7 @@ public class SpectraVisualizationPanel
 
 		if (mode.contains(MS1_DISPLAY)) {
 			List<SimpleSpectrum> spectra1 = experiment.getMs1Spectra();
-			SimpleSpectrum spectrum = spectra1.get(0); // TODO: can there be more?
+			SimpleSpectrum spectrum = experiment.getMergedMs1Spectrum()==null ? spectra1.get(0) : experiment.getMergedMs1Spectrum(); // TODO: can there be more?
 			if (mode.equals(MS1_DISPLAY)) {
 				jsonSpectra = spectraWriter.ms1JSON(spectrum);
 			} else if (mode.equals(MS1_MIRROR_DISPLAY)) {
@@ -189,10 +189,10 @@ public class SpectraVisualizationPanel
 			ceBox.removeItemListener(this);
 			ceBox.removeAllItems();
 			if (experiment != null) {
-				if (experiment.getMs1Spectra().size() > 0)
+				if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum()!=null)
 					modesBox.addItem(MS1_DISPLAY);
 				if (sre != null) {
-					if (experiment.getMs1Spectra().size() > 0)
+					if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum()!=null)
 						modesBox.addItem(MS1_MIRROR_DISPLAY);
 					if (experiment.getMs2Spectra().size() > 0)
 						modesBox.addItem(MS2_DISPLAY);
