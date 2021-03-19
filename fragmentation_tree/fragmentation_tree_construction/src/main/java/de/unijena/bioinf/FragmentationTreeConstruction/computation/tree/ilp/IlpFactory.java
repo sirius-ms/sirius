@@ -32,4 +32,6 @@ public interface IlpFactory<T extends AbstractSolver> {
 
     public String name();
 
+    public void checkSolver() throws ILPSolverException;
+
 }
