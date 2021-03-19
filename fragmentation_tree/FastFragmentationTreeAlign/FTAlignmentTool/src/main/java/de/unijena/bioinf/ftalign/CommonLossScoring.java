@@ -1,20 +1,24 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ftalign;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -25,7 +29,7 @@ import java.util.HashSet;
  * Created by kaidu on 11.08.14.
  */
 public class CommonLossScoring extends StandardScoring {
-    private final static String[] LOSSES = new String[]{
+    public final static String[] LOSSES = new String[]{
             "H2O", "C2H2", "HO3P", "CH3", "H3O4P", "C2H4", "H3N", "CHN", "CS", "C2H6",
             "HS", "H2S", "CO", "CH3N", "C2H2O", "C4H4", "C3H2O", "C4H6", "CH4", "C3H4O",
             "OS", "O2S", "HF", "CH2S", "CH2", "C3H6", "C2H2S", "C2H7N", "C5H10", "CH2O2",
@@ -37,7 +41,7 @@ public class CommonLossScoring extends StandardScoring {
     public CommonLossScoring(boolean useFragment) {
         super(useFragment);
         this.commonLosses = new HashSet<MolecularFormula>();
-        for (String l : LOSSES) commonLosses.add(MolecularFormula.parse(l));
+        for (String l : LOSSES) commonLosses.add(MolecularFormula.parseOrThrow(l));
     }
 
     @Override

@@ -1,45 +1,95 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
+import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 /**
  * A Ms2Experiment is a MS/MS measurement of a *single* compound. If there are multiple compounds measured in your
  * spectrum, clean up and separate them into multiple Ms2Experiment instances, too!
  */
-public interface Ms2Experiment extends Cloneable {
+public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotation>, DataAnnotation {
 
 
     URL getSource();
 
+    /**
+     * Tries to return a nice String representation for local URLS
+     * @return String with file Path/URL
+     */
+    String getSourceString();
+
     String getName();
 
     /**
+     * Either the ion/adduct type of the ion OR the charge.
+     *
      * @return the ionization type of the ion (not null)
      */
-    PrecursorIonType getPrecursorIonType();
+    @NotNull PrecursorIonType getPrecursorIonType();
+
+
+    /**
+     * Returns a list of detected adducts, if available
+     *
+     * Do not add any enforced or fallback adducts!
+     * Use the #getPossibleAdductsOrFallback for that!
+     *
+     * @return Optional collection of detected adducts
+     */
+    @NotNull
+    default Optional<PossibleAdducts> getDetectedAdducts() {
+        final PossibleAdducts adducts = getAnnotation(DetectedAdducts.class).flatMap(DetectedAdducts::getAdducts)
+                .orElseGet(PossibleAdducts::empty);
+        return adducts.isEmpty() ? Optional.empty() : Optional.of(adducts);
+    }
+
+
+    /**
+     * Returns a list of detected adducts, if no adducts are found a fallback list will be returned
+     *
+     * @return collection of possible adducts
+     */
+    @NotNull
+    default PossibleAdducts getPossibleAdductsOrFallback() {
+        final PossibleAdducts ad = getDetectedAdducts().
+                orElseGet(() -> getAnnotation(AdductSettings.class).map(as -> as.getFallback(getPrecursorIonType().getCharge())).filter(it -> !it.isEmpty()).map(PossibleAdducts::new).
+                        orElseGet(() -> new PossibleAdducts(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getFallback(getPrecursorIonType().getCharge())))
+                );
+        final PossibleAdducts detected = getAnnotation(AdductSettings.class).map(as -> PossibleAdducts.union(ad, as.getEnforced(getPrecursorIonType().getCharge()))).orElse(ad);
+
+        return detected;
+    }
 
 
     /**
@@ -91,6 +141,13 @@ public interface Ms2Experiment extends Cloneable {
     }
 
     /**
+     * @return either a mutable copy, or a reference to itself when already mutable. Use new MutableMs2Experiment to enforce a copy!
+     */
+    default MutableMs2Experiment mutate() {
+        return new MutableMs2Experiment(this);
+    }
+
+    /**
      * @return molecular formula of the neutral molecule
      */
     MolecularFormula getMolecularFormula();
@@ -108,51 +165,6 @@ public interface Ms2Experiment extends Cloneable {
         of an annotation. The reason for this is that cloning an experiment will only do a shallow copy of the annotations
      */
 
-
-    /**
-     * @return an iterator over all annotations
-     */
-    Iterator<Map.Entry<Class<Object>, Object>> forEachAnnotation();
-
-    /**
-     * @return annotation value for the given class/key
-     * @throws NullPointerException if there is no entry for this key
-     */
-    <T> T getAnnotationOrThrow(Class<T> klass);
-
-    /**
-     * @return annotation value for the given class/key or null
-     */
-    <T> T getAnnotation(Class<T> klass);
-
-    /**
-     * @return annotation value for the given class/key or the given default value
-     */
-    <T> T getAnnotation(Class<T> klass, T defaultValue);
-
-    /**
-     * @return true if the given annotation is present
-     */
-    <T> boolean hasAnnotation(Class<T> klass);
-
-    /**
-     * Set the annotation with the given key
-     *
-     * @return true if there was no previous value for this annotation
-     */
-    <T> boolean setAnnotation(Class<T> klass, T value);
-
-    /**
-     * Remove the annotation with the given key
-     *
-     * @return the value associated with this key or null if there is no value for this key
-     */
-    <T> Object clearAnnotation(Class<T> klass);
-
-    /**
-     * Remove all annotations from this experiment
-     */
-    void clearAllAnnotations();
 
     /**
      * Allow cloning/copying of Ms2Experiments

@@ -1,26 +1,211 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ChemistryBase.utils;
 
-import com.google.common.base.Function;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TObjectProcedure;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
-import java.util.zip.InflaterInputStream;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.zip.*;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class FileUtils {
+
+
+    public static void closeIfNotDefaultFS(Path zipFS) throws IOException {
+        final FileSystem fs = zipFS.getFileSystem();
+        if (!fs.equals(FileSystems.getDefault()) && fs.isOpen())
+            fs.close();
+    }
+
+    public static boolean isZipArchive(Path f) throws IOException {
+        if (!Files.isRegularFile(f))
+            return false;
+        int fileSignature;
+        try (RandomAccessFile raf = new RandomAccessFile(f.toFile(), "r")) {
+            fileSignature = raf.readInt();
+        }
+        return fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708;
+    }
+
+
+    public static Path asZipFS(Path zipFile, boolean createNew) throws IOException {
+        final Map<String, String> option = new HashMap<>();
+        if (createNew)
+            option.put("create", "true");
+        FileSystem zipFS = FileSystems.newFileSystem(URI.create("jar:file:" + zipFile.toUri().getPath()), option);
+        return zipFS.getPath(zipFS.getSeparator());
+    }
+
+    /**
+     * @param folder
+     * @param zipFilePath
+     * @return new Created zip Files
+     * @throws IOException if zip file compression fails
+     */
+    public static Path zipDir(final Path folder, final Path zipFilePath) throws IOException {
+        try (
+                FileOutputStream fos = new FileOutputStream(zipFilePath.toFile());
+                ZipOutputStream zos = new ZipOutputStream(fos)
+        ) {
+            Files.walkFileTree(folder, new SimpleFileVisitor<>() {
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    zos.putNextEntry(new ZipEntry(folder.relativize(file).toString()));
+                    Files.copy(file, zos);
+                    zos.closeEntry();
+                    return FileVisitResult.CONTINUE;
+                }
+
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    zos.putNextEntry(new ZipEntry(folder.relativize(dir).toString() + "/"));
+                    zos.closeEntry();
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+            return zipFilePath;
+        }
+    }
+
+    /**
+     *
+     * @param zipFile
+     * @param target
+     * @return Target directory with unzipped data
+     * @throws IOException if extraction fails
+     */
+    public static Path unZipDir(final Path zipFile, final Path target) throws IOException {
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFile))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                final Path toPath = target.resolve(entry.getName());
+                if (entry.isDirectory()) {
+                    Files.createDirectory(toPath);
+                } else {
+                    Files.copy(zipInputStream, toPath);
+                }
+            }
+        }
+        return target;
+    }
+
+    /**
+     * Copies a File Tree recursively to another location.
+     * Src and dest might be different Filesystems (e.g. mounted ZipFile)
+     *
+     * Note: The target directory must already exist.
+     *
+     * @param src Source location
+     * @param dest Target location
+     * @throws IOException if I/O Error occurs
+     */
+
+
+    public static void copyFolder(Path src, Path dest) throws IOException {
+        if (Files.notExists(dest))
+            throw new IllegalArgumentException("Root destination dir/file must exist!");
+
+        List<Path> files = walkAndClose(w -> w.collect(Collectors.toList()), src);
+        for (Path source : files) {
+                String relative = src.relativize(source).toString();
+                final Path target = dest.resolve(relative);
+                if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
+                    Files.copy(source, target, REPLACE_EXISTING);
+
+        }
+
+
+        /*try (final Stream<Path> walker = Files.walk(src)) {
+            walker.forEach(source -> {
+                String relative = src.relativize(source).toString();
+                final Path target = dest.resolve(relative);
+                if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
+                    copy(source, target);
+            });
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof IOException)
+                throw (IOException) e.getCause();
+            throw e;
+        }*/
+
+    }
+
+    /*private static void copy(Path source, Path dest) {
+        try {
+            Files.copy(source, dest, REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }*/
+
+    /**
+     * Lazy move operation. If move not possible files will be copied but source will not be deleted
+     *
+     * @param src  Source location
+     * @param dest Target location
+     * @throws IOException if I/O Error occurs
+     */
+    public static boolean moveFolder(Path src, Path dest) throws IOException {
+        if (src.getFileSystem().provider() == dest.getFileSystem().provider()) {
+            Files.move(src, dest, REPLACE_EXISTING);
+            return true;
+        } else {
+            copyFolder(src, dest);
+            return false;
+        }
+    }
+
+    public static void deleteRecursively(Path rootPath) throws IOException {
+        if (Files.notExists(rootPath))
+            return;
+        if (Files.isRegularFile(rootPath)) {
+            Files.deleteIfExists(rootPath);
+        } else {
+            List<Path> files = walkAndClose(w -> w.sorted(Comparator.reverseOrder()).collect(Collectors.toList()), rootPath);
+            for (Path file : files)
+                Files.deleteIfExists(file);
+        }
+    }
 
     public static <T> List<T> mapLines(File file, Function<String, T> f) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return mapLines(br, f);
         }
     }
+
     public static <T> List<T> mapTable(File file, String separator, Function<String[], T> f) throws IOException {
         try (final BufferedReader br = getReader(file)) {
             return mapTable(br, separator, f);
@@ -44,7 +229,7 @@ public class FileUtils {
         String line;
         final ArrayList<T> list = new ArrayList<>();
         while ((line=reader.readLine())!=null) {
-            list.add(f.apply(line.split(separator)));
+            list.add(f.apply(line.split(separator,-1)));
         }
         return list;
     }
@@ -68,7 +253,7 @@ public class FileUtils {
     public static void eachRow(BufferedReader reader, TObjectProcedure<String[]> proc) throws IOException {
         String line;
         while ((line=reader.readLine())!=null) {
-            if (!proc.execute(line.split("\t")))
+            if (!proc.execute(line.split("\t",-1)))
                 break;
         }
     }
@@ -127,7 +312,7 @@ public class FileUtils {
         ArrayList<String[]> table = new ArrayList<>();
         if (skipHeader) reader.readLine();
         while ((line=reader.readLine())!=null) {
-            table.add(line.split(colSeparator));
+            table.add(line.split(colSeparator,-1));
         }
         return table.toArray(new String[table.size()][]);
     }
@@ -251,11 +436,11 @@ public class FileUtils {
         }
     }
 
-    private static BufferedReader makeBufferedReader(Reader r) {
+    public static BufferedReader ensureBuffering(Reader r) {
         if (r instanceof BufferedReader) return (BufferedReader)r;
         else return new BufferedReader(r, getRecommendetBufferSize());
     }
-    private static InputStream ensureBuffering(InputStream r) {
+    public static InputStream ensureBuffering(InputStream r) {
         if (r instanceof BufferedInputStream || r instanceof GZIPInputStream || r instanceof InflaterInputStream)
             return r;
         else return new BufferedInputStream(r, getRecommendetBufferSize());
@@ -290,7 +475,7 @@ public class FileUtils {
             if (n < line.length()) values.add(Float.parseFloat(line.substring(n,line.length())));
             if (values.size()==0) continue;
             rows.add(values.toArray());
-            values.reset();
+            values.clear();
         }
         return rows.toArray(new float[rows.size()][]);
     }
@@ -344,7 +529,7 @@ public class FileUtils {
             if (n < line.length()) values.add(Double.parseDouble(line.substring(n,line.length())));
             if (values.size()==0) continue;
             rows.add(values.toArray());
-            values.reset();
+            values.clear();
         }
         return rows.toArray(new double[rows.size()][]);
     }
@@ -398,7 +583,7 @@ public class FileUtils {
             if (n < line.length()) values.add(Integer.parseInt(line.substring(n,line.length())));
             if (values.size()==0) continue;
             rows.add(values.toArray());
-            values.reset();
+            values.clear();
         }
         return rows.toArray(new int[rows.size()][]);
     }
@@ -476,11 +661,169 @@ public class FileUtils {
             writer.write('\n');
         }
     }
+
     public static void writeIntVector(Writer writer, int[] vector) throws IOException {
         for (int value : vector) {
             writer.write(String.valueOf(value));
             writer.write('\n');
         }
     }
+
+    public static void writeKeyValues(Writer stream, Map<?, ?> map) throws IOException {
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            stream.write(String.valueOf(entry.getKey()));
+            stream.write('\t');
+            stream.write(String.valueOf(entry.getValue()));
+            stream.write('\n');
+        }
+    }
+
+    public static void writeTable(Writer w, @Nullable String[] header, Iterable<String[]> rows) throws IOException {
+        if (header != null) {
+            w.write(String.join("\t", header));
+            w.write(System.lineSeparator());
+        }
+        for (String[] row : rows) {
+            w.write(String.join("\t", row));
+            w.write(System.lineSeparator());
+        }
+    }
+
+    public static Map<String, String> readKeyValues(Path path) throws IOException {
+        try (final BufferedReader br = Files.newBufferedReader(path)) {
+            return readKeyValues(br);
+        }
+    }
+
+    public static Map<String,String> readKeyValues(File file) throws IOException {
+        try (final BufferedReader br = getReader(file)) {
+            return readKeyValues(br);
+        }
+    }
+
+    public static Map<String,String> readKeyValues(BufferedReader reader) throws IOException {
+        final HashMap<String, String> keyValues = new HashMap<>();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String[] kv = line.split("\\s+", 2);
+            keyValues.put(kv[0], kv[1]);
+        }
+        return keyValues;
+    }
+
+    public static void readTable(BufferedReader br, boolean skipHeader, Consumer<String[]> f) throws IOException {
+        readTable(br, skipHeader, 0, -1, f);
+    }
+
+    public static void readTable(BufferedReader br, boolean skipHeader, int fromLineInkl, int toLineExcl, Consumer<String[]> f) throws IOException {
+        fromLineInkl = Math.max(0, fromLineInkl);
+
+        String line;
+        if (skipHeader)
+            br.readLine();
+
+        br.skip(fromLineInkl);
+
+        int readCount = toLineExcl - fromLineInkl;
+
+        while ((line = br.readLine()) != null && (toLineExcl < 0 || readCount-- > 0))
+            f.accept(line.split("\t", -1));
+    }
+
+    /**
+     * read the first nlines lines from file. Keep buffersize low.
+     * If less than nlines lines exist in file, fill them with empty strings
+     */
+    public static String[] head(File file, int nlines) throws IOException {
+        String[] lines = new String[nlines];
+        int k=0;
+        try (final BufferedReader br = new BufferedReader(new FileReader(file),40*nlines)) {
+            while (k < nlines) {
+                String l = lines[k++] = br.readLine();
+                if (l==null) {
+                    Arrays.fill(lines,k,lines.length,"");
+                    return lines;
+                }
+            }
+        }
+        return lines;
+    }
+
+
+    public static Path newTempFile(@NotNull String directory, @NotNull String prefix, @NotNull String suffix) {
+        return Paths.get(directory, MessageFormat.format("{0}{1}{2}", prefix, UUID.randomUUID(), suffix));
+    }
+
+    public static Path newTempFile(@NotNull String prefix, @NotNull String suffix) {
+        return newTempFile(System.getProperty("java.io.tmpdir"), prefix, suffix);
+    }
+
+    public static <R> R listAndClose(Path p, Function<Stream<Path>, R> tryWith) throws IOException {
+        try (Stream<Path> s = Files.list(p)) {
+            return tryWith.apply(s);
+        }
+    }
+
+    public static <R> R findAndClose(Function<Stream<Path>, R> tryWith, Path p, int maxDepth,
+                              BiPredicate<Path, BasicFileAttributes> matcher,
+                              FileVisitOption... options) throws IOException {
+        try (Stream<Path> s = Files.find(p, maxDepth, matcher, options)) {
+            return tryWith.apply(s);
+        }
+    }
+
+    public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, FileVisitOption... options) throws IOException {
+        try (Stream<Path> s = Files.walk(p, options)) {
+            return tryWith.apply(s);
+        }
+    }
+
+    public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, int maxDepth, FileVisitOption... options) throws IOException {
+        try (Stream<Path> s = Files.walk(p, maxDepth, options)) {
+            return tryWith.apply(s);
+        }
+    }
+
+    public static <R> R linesAndClose(Path p, Function<Stream<String>, R> tryWith) throws IOException {
+        try (Stream<String> s = Files.lines(p)) {
+            return tryWith.apply(s);
+        }
+    }
+
+
+    public static long estimateNumOfLines(Path p) throws IOException {
+        return estimateNumOfLines(p, 1024, 10);
+    }
+
+    public static long estimateNumOfLines(Path p, int sampleSize, int maxNumOfSamples) throws IOException {
+       return estimateCharOccurrence(p,System.lineSeparator().charAt(0),sampleSize,maxNumOfSamples); //returns  CR o LR
+
+    }
+
+    public static long estimateCharOccurrence(Path p, char query, int sampleSize, int maxNumOfSamples) throws IOException {
+        final long size = Files.size(p);
+
+        long chunkSize = size / maxNumOfSamples;
+
+        sampleSize = (int) Math.min(sampleSize, chunkSize);
+
+        try (InputStream stream = Files.newInputStream(p)) {
+            byte[] buffer = new byte[sampleSize];
+            int count = 0;
+
+            int n;
+            int totalN = 0;
+            while ((n = stream.read(buffer)) > 0) {
+                totalN += n;
+                for (int i = 0; i < n; i++) {
+                    if (buffer[i] == query) count++;
+                }
+                stream.skip(chunkSize - n);
+            }
+
+            return (long) ((double) count / (double) totalN * (double) size);
+        }
+    }
+
 
 }

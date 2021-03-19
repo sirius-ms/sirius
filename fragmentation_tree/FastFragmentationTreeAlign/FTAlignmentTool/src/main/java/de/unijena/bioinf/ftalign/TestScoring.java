@@ -1,20 +1,24 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ftalign;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -78,8 +82,8 @@ public class TestScoring implements Scoring<Fragment>, SimpleEqualityScoring<Fra
     public TestScoring() {
         substMap = new HashMap<MolecularFormula, TObjectFloatHashMap<MolecularFormula>>();
         for (int i = 0; i < SUBSTITUENTS_LEFT.length; ++i) {
-            final MolecularFormula left = MolecularFormula.parse(SUBSTITUENTS_LEFT[i]);
-            final MolecularFormula right = MolecularFormula.parse(SUBSTITUENTS_RIGHT[i]);
+            final MolecularFormula left = MolecularFormula.parseOrThrow(SUBSTITUENTS_LEFT[i]);
+            final MolecularFormula right = MolecularFormula.parseOrThrow(SUBSTITUENTS_RIGHT[i]);
             final float score = SCORES[i];
             if (!substMap.containsKey(left)) substMap.put(left, new TObjectFloatHashMap<MolecularFormula>());
             if (!substMap.containsKey(right)) substMap.put(right, new TObjectFloatHashMap<MolecularFormula>());
@@ -87,12 +91,12 @@ public class TestScoring implements Scoring<Fragment>, SimpleEqualityScoring<Fra
             substMap.get(right).put(left, score);
         }
         fragmentSub = new TObjectFloatHashMap<MolecularFormula>();
-        for (String s : FRAGMENT_DIFFS) fragmentSub.put(MolecularFormula.parse(s), 4f);
+        for (String s : FRAGMENT_DIFFS) fragmentSub.put(MolecularFormula.parseOrThrow(s), 4f);
         lossFreqs = new TObjectDoubleHashMap<MolecularFormula>();
         for (int i = 0; i < LOSS_FREQUENCIES.length; ++i) {
             final double score = 4 + 2 * i;
             for (String s : LOSS_FREQUENCIES[i]) {
-                lossFreqs.put(MolecularFormula.parse(s), score);
+                lossFreqs.put(MolecularFormula.parseOrThrow(s), score);
             }
         }
     }

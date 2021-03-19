@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling.model.scorer;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -6,24 +26,15 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.Transformation;
-import de.unijena.bioinf.GibbsSampling.model.Candidate;
 import de.unijena.bioinf.GibbsSampling.model.EdgeScorer;
 import de.unijena.bioinf.GibbsSampling.model.FragmentsCandidate;
-import gnu.trove.list.array.TDoubleArrayList;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
-import java.util.Arrays;
+
 import java.util.BitSet;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -126,7 +137,7 @@ public class CommonFragmentScorer implements EdgeScorer<FragmentsCandidate> {
 //        final PrecursorIonType[] var26 = new PrecursorIonType[1];
 //        Transformation var10000 = new Transformation() {
 //            public Peak transform(Peak input) {
-//                return new Peak(var26[0].precursorMassToNeutralMass(input.getMass()), input.getIntensity());
+//                return new SimplePeak(var26[0].precursorMassToNeutralMass(input.getMass()), input.getIntensity());
 //            }
 //        };
 //
@@ -264,7 +275,7 @@ public class CommonFragmentScorer implements EdgeScorer<FragmentsCandidate> {
         return commonCounter;
     }
 
-    public double[] normalization(FragmentsCandidate[][] candidates) {
+    public double[] normalization(FragmentsCandidate[][] candidates, double minimum_number_matched_peaks_losses) {
         int[][] maxMatches = this.getMaximumMatchablePeaks(candidates);
         double[] norm = new double[candidates.length];
 
@@ -273,6 +284,17 @@ public class CommonFragmentScorer implements EdgeScorer<FragmentsCandidate> {
         }
 
         return norm;
+    }
+
+    @Override
+    public BasicJJob<Object> getPrepareJob(FragmentsCandidate[][] var1) {
+        return new BasicJJob<Object>() {
+            @Override
+            protected Object compute() throws Exception {
+                prepare(var1);
+                return true;
+            }
+        };
     }
 
     protected int sum(int[] array) {

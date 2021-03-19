@@ -1,20 +1,24 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
@@ -22,8 +26,9 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedInput;
 import gnu.trove.decorator.TObjectDoubleMapDecorator;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
@@ -57,11 +62,11 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
 
     public static FreeRadicalEdgeScorer getRadicalScorerWithDefaultSet(double knownRadicalScore, double generalRadicalScore, double normalization) {
         final MolecularFormula[] formulas = new MolecularFormula[]{
-                MolecularFormula.parse("H"), MolecularFormula.parse("O"), MolecularFormula.parse("OH"),
-                MolecularFormula.parse("CH3"), MolecularFormula.parse("CH3O"),
-                MolecularFormula.parse("C3H7"), MolecularFormula.parse("C4H9"),
-                MolecularFormula.parse("C6H5O"), MolecularFormula.parse("C6H5"), MolecularFormula.parse("C6H6N"), MolecularFormula.parse("I"),
-                MolecularFormula.parse("NO"), MolecularFormula.parse("NO2"), MolecularFormula.parse("Br"), MolecularFormula.parse("Cl")
+                MolecularFormula.parseOrThrow("H"), MolecularFormula.parseOrThrow("O"), MolecularFormula.parseOrThrow("OH"),
+                MolecularFormula.parseOrThrow("CH3"), MolecularFormula.parseOrThrow("CH3O"),
+                MolecularFormula.parseOrThrow("C3H7"), MolecularFormula.parseOrThrow("C4H9"),
+                MolecularFormula.parseOrThrow("C6H5O"), MolecularFormula.parseOrThrow("C6H5"), MolecularFormula.parseOrThrow("C6H6N"), MolecularFormula.parseOrThrow("I"),
+                MolecularFormula.parseOrThrow("NO"), MolecularFormula.parseOrThrow("NO2"), MolecularFormula.parseOrThrow("Br"), MolecularFormula.parseOrThrow("Cl")
         };
         final HashMap<MolecularFormula, Double> radicals = new HashMap<MolecularFormula, Double>(formulas.length * 2);
         for (MolecularFormula formula : formulas) {
@@ -95,7 +100,7 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
     }
 
     @Override
-    public Object prepare(ProcessedInput input) {
+    public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
@@ -117,7 +122,7 @@ public class FreeRadicalEdgeScorer implements LossScorer, MolecularFormulaScorer
         final D dict = document.getDictionaryFromDictionary(dictionary, "commonRadicals");
         for (String key : document.keySetOfDictionary(dict)) {
             final double value = document.getDoubleFromDictionary(dict, key);
-            addRadical(MolecularFormula.parse(key), value);
+            MolecularFormula.parseAndExecute(key, f -> addRadical(f, value));
         }
         setGeneralRadicalScore(document.getDoubleFromDictionary(dictionary, "radicalPenalty"));
         setNormalization(document.getDoubleFromDictionary(dictionary, "normalization"));

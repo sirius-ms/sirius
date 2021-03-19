@@ -1,0 +1,7 @@
+jar{
+    manifest {
+//        attributes.put('Launcher-Agent-Class', 'de.unijena.bioinf.ms.agents.ILPAgent')
+        attributes.put('Premain-Class', 'de.unijena.bioinf.ms.agents.ILPAgent')
+//        attributes.put('Agent-Class', 'de.unijena.bioinf.ms.agents.ILPAgent')
+    }
+}

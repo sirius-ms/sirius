@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':io')
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+}

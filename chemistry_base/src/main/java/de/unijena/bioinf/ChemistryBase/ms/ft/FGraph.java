@@ -1,26 +1,30 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
+import de.unijena.bioinf.ChemistryBase.chem.Charge;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TIntIntHashMap;
 
 import java.util.*;
 
@@ -29,13 +33,15 @@ public class FGraph extends AbstractFragmentationGraph {
 
     public FGraph() {
         super();
-        this.pseudoRoot = addFragment(MolecularFormula.emptyFormula());
+        this.pseudoRoot = addFragment(MolecularFormula.emptyFormula(), new Charge(0));
+        this.pseudoRoot.setColor(-1); //pseudo root must not correspond to any peak.
     }
 
     public FGraph(FGraph copy) {
         super(copy);
         this.pseudoRoot = fragments.get(0);
         assert pseudoRoot.isRoot();
+        assert pseudoRoot.getColor()==-1;
     }
 
     @Override
@@ -66,71 +72,9 @@ public class FGraph extends AbstractFragmentationGraph {
     // - for isotope peaks we have:
 
 
-    public void ensureTopologicalOrder() {
-
-    }
-
-    public void sortTopological() {
-        final FragmentAnnotation<Peak> peak = getFragmentAnnotationOrThrow(Peak.class);
-        final FragmentAnnotation<IsotopicMarker> marker = getFragmentAnnotationOrNull(IsotopicMarker.class);
-
-        final Fragment[] fs = fragments.toArray(new Fragment[fragments.size()]);
-        Arrays.sort(fs, new Comparator<Fragment>() {
-            @Override
-            public int compare(Fragment fragment, Fragment fragment2) {
-                if (fragment == pseudoRoot) return -1;
-                else if (fragment2 == pseudoRoot) return 1;
-                else return Double.compare(peak.get(fragment2).getMass(), peak.get(fragment).getMass());
-            }
-        });
-
-        fragments.clear();
-        // now assign colors to all fragments based on their mass
-        int color = 0;
-        int previousColor = -2;
-        for (Fragment f : fs) {
-            if (f.color != previousColor) {
-                previousColor = f.color;
-                ++color;
-            }
-            f.setColor(color);
-        }
-        // now reinsert fragments into the fragment list. But be careful that isotope peaks are inserted in reverse
-        // order
-        if (marker == null) {
-            fragments.addAll(Arrays.asList(fs));
-        } else {
-            final TIntIntHashMap isoBuf = new TIntIntHashMap(16,0.75f,-1,-1);
-            for (int i=0; i < fs.length; ++i) {
-                final boolean isIsotope = marker.get(fs[i])!=null;
-                if (isIsotope) {
-                    // ensure linear chain structure of isotopes
-                    if (fs[i].getOutDegree() > 1 || fs[i].getInDegree() != 1){
-                        throw new RuntimeException("Bug in MSMS isotope analysis: Isotope peak should form a chain, but has in degree of " + fs[i].getInDegree() + " and out degree of " + fs[i].getOutDegree());
-                    }
-                    final Fragment g = fs[i].getParent();
-                    if (marker.get(g)==null) {
-                        // we found monoisotopic peak
-                        isoBuf.put(g.vertexId, i);
-                    }
-                } else {
-                    fragments.add(fs[i]);
-                    if (!isoBuf.isEmpty()) {
-                        final int fi = isoBuf.get(fs[i].vertexId);
-                        if (fi >= 0) {
-                            // add isotopes below this fragment
-                            Fragment chain = fs[fi];
-                            while (true) {
-                                fragments.add(chain);
-                                if (chain.outDegree==0) break;
-                                else chain = chain.getChildren(0);
-                            }
-                            isoBuf.remove(fs[i].vertexId);
-                        }
-                    }
-                }
-            }
-        }
+    public void reorderVertices(List<Fragment> newOrder) {
+        this.fragments.clear();
+        this.fragments.addAll(newOrder);
         int id=0;
         for (Fragment f : fragments) {
             f.setVertexId(id++);
@@ -184,8 +128,8 @@ public class FGraph extends AbstractFragmentationGraph {
         return maxColor;
     }
 
-    public Fragment addFragment(MolecularFormula formula) {
-        return super.addFragment(formula);
+    public Fragment addFragment(MolecularFormula formula, Ionization ionization) {
+        return super.addFragment(formula, ionization);
     }
 
     public void deleteFragment(Fragment f) {
@@ -257,8 +201,9 @@ public class FGraph extends AbstractFragmentationGraph {
 
     }
 
-    public Fragment addRootVertex(MolecularFormula formula) {
-        final Fragment f = addFragment(formula);
+    public Fragment addRootVertex(MolecularFormula formula, Ionization ionization) {
+        final Fragment f = addFragment(formula, ionization);
+        pseudoRoot.setFormula(pseudoRoot.getFormula(), ionization);
         addLoss(pseudoRoot, f, MolecularFormula.emptyFormula());
         return f;
     }

@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ChemistryBase.fp;
 
 import com.google.common.base.Joiner;
@@ -12,7 +32,17 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
         super(fingerprintVersion);
         this.fingerprint = fingerprint.clone();
         if (fingerprint.length != fingerprintVersion.size()) throw new IllegalArgumentException("fp length does not match fingerprint version length: " + fingerprint.length + " vs. " + fingerprintVersion.size());
+    }
 
+    public ProbabilityFingerprint(FingerprintVersion fingerprintVersion, float[] fingerprint) {
+        super(fingerprintVersion);
+        this.fingerprint = new double[fingerprint.length];
+        for (int k=0; k < this.fingerprint.length; ++k) this.fingerprint[k] = fingerprint[k];
+        if (fingerprint.length != fingerprintVersion.size()) throw new IllegalArgumentException("fp length does not match fingerprint version length: " + fingerprint.length + " vs. " + fingerprintVersion.size());
+    }
+
+    public static ProbabilityFingerprint fromProbabilityArrayBinary(FingerprintVersion fingerprintVersion, byte[] binary){
+        return new ProbabilityFingerprint(fingerprintVersion, convertToDoubles(binary));
     }
 
     @Override
@@ -132,6 +162,16 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
         }
 
         @Override
+        public FPIter jumpTo(int index) {
+            int r = fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r<0) r = -r - 1;
+            --r;
+            BIterJustOnes j = new BIterJustOnes(r);
+            j.next();
+            return j;
+        }
+
+        @Override
         public FPIter clone() {
             return new BIterJustOnes(current,next);
         }
@@ -175,6 +215,13 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
         @Override
         public MolecularProperty getMolecularProperty() {
             return fingerprintVersion.getMolecularProperty(fingerprintVersion.getAbsoluteIndexOf(offset));
+        }
+
+        @Override
+        public FPIter jumpTo(int index) {
+            int r = fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r<0) r = -r - 1;
+            return new BIter(r);
         }
 
         public String toString() {
@@ -264,16 +311,42 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
         }
 
         @Override
+        public FPIter2 jumpTo(int index) {
+            int r = left.fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r < 0) r = -r - 1;
+            return new PairwiseIterator(left,right, r, r+1);
+        }
+
+        @Override
         public Iterator<FPIter2> iterator() {
             return clone();
         }
     }
 
-    private final static class PairwiseUnionIterator extends PairwiseIterator {
+    private final class PairwiseUnionIterator extends PairwiseIterator {
 
         public PairwiseUnionIterator(ProbabilityFingerprint left, ProbabilityFingerprint right, int current, int next) {
             super(left, right, current, next);
         }
+
+        @Override
+        public FPIter2 jumpTo(int index) {
+            int r = fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r<0) r = -r - 1;
+            int current = -1, next = -1;
+            for (int i=r; i < left.fingerprint.length; ++i) {
+                if (left.fingerprint[i]>=0.5 || right.fingerprint[i]>=0.5) {
+                    if (current<0) current = i;
+                    else {
+                        next = i;
+                        break;
+                    }
+                }
+            }
+            if (next < 0) next = fingerprint.length;
+            return new PairwiseUnionIterator(left,right,current,next);
+        }
+
 
         @Override
         public PairwiseUnionIterator next() {
@@ -292,10 +365,29 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
     }
 
 
-    private final static class PairwiseIntersectionIterator extends PairwiseIterator {
+    private final class PairwiseIntersectionIterator extends PairwiseIterator {
         private PairwiseIntersectionIterator(ProbabilityFingerprint left, ProbabilityFingerprint right, int current,int next) {
             super(left,right,current,next);
         }
+
+        @Override
+        public FPIter2 jumpTo(int index) {
+            int r = fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r<0) r = -r - 1;
+            int current = -1, next = -1;
+            for (int i=r; i < left.fingerprint.length; ++i) {
+                if (left.fingerprint[i]>=0.5 && right.fingerprint[i]>=0.5) {
+                    if (current<0) current = i;
+                    else {
+                        next = i;
+                        break;
+                    }
+                }
+            }
+            if (next < 0) next = fingerprint.length;
+            return new PairwiseIntersectionIterator(left,right,current,next);
+        }
+
 
         @Override
         public PairwiseIntersectionIterator next() {
@@ -354,6 +446,14 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
         @Override
         public MolecularProperty getMolecularProperty() {
             return left.getFingerprintVersion().getMolecularProperty(getIndex());
+
+        }
+
+        @Override
+        public FPIter2 jumpTo(int index) {
+            int r = left.fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r<0) r = -r - 1;
+            return new PairwiseBooleanProb(left,right,r);
         }
 
         @Override
@@ -386,6 +486,12 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
             this.left = left;
             this.right = right;
             this.offset=offset;
+        }
+        @Override
+        public FPIter2 jumpTo(int index) {
+            int r = left.fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (r<0) r = -r - 1;
+            return new PairwiseProbBoolean(left,right,r);
         }
 
         @Override

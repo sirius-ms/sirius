@@ -1,21 +1,27 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package fragtreealigner.util;
+
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -38,8 +44,8 @@ public class Sim2Dist {
 		String output2 = "/home/m3rafl/data/tandem_ms_data/10x10compounds/alignScores/OrbiNewAAOldNorm2+.csv";
 		int minimalSize = 2;
 		
-		BufferedReader br = new BufferedReader(new FileReader(input));
-		BufferedReader cpdReader = new BufferedReader(new FileReader(compoundFile));
+		BufferedReader br = FileUtils.ensureBuffering(new FileReader(input));
+		BufferedReader cpdReader = FileUtils.ensureBuffering(new FileReader(compoundFile));
 		//BufferedWriter out = new BufferedWriter(new FileWriter(output));
 		BufferedWriter out2 = new BufferedWriter(new FileWriter(output2));
 		
@@ -177,7 +183,7 @@ public class Sim2Dist {
 		String input = "/home/m3rafl/data/tandem_ms_data/AdditionalInfos/AgilentGreedyScores.csv";
 		String output = "/home/m3rafl/data/tandem_ms_data/AdditionalInfos/AgilentGreedyDist.csv";
 		
-		BufferedReader br = new BufferedReader(new FileReader(input));
+		BufferedReader br = FileUtils.ensureBuffering(new FileReader(input));
 		BufferedWriter out = new BufferedWriter(new FileWriter(output));
 		
 		List<List<Double>> matrix = new ArrayList<List<Double>>(100);

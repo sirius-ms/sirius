@@ -1,20 +1,24 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.IsotopePatternAnalysis;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
@@ -24,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGenerator;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FinestructurePatternGenerator;
 
@@ -40,8 +45,8 @@ public class Main {
     public static void main(String[] args) {
         try {
 
-            MolecularFormula f = MolecularFormula.parse("C37H55N5O8S");
-            Ionization ion = PeriodicTable.getInstance().ionByName("[M+H]+").getIonization();
+            MolecularFormula f = MolecularFormula.parseOrThrow("C37H55N5O8S");
+            Ionization ion = PeriodicTable.getInstance().ionByNameOrThrow("[M+H]+").getIonization();
             final FinestructurePatternGenerator gen = new FinestructurePatternGenerator();
             gen.setResolution(1000);
             gen.setMaximalNumberOfPeaks(4);
@@ -58,7 +63,7 @@ public class Main {
 
     public static void test() throws IOException {
         final File f = new File("/home/kaidu/data/ms/saarbruecken/spectra.txt");
-        final BufferedReader r = new BufferedReader(new FileReader(f));
+        final BufferedReader r = FileUtils.ensureBuffering(new FileReader(f));
         String line = null;
         final List<MolecularFormula> formulas = new ArrayList<MolecularFormula>();
         final List<SimpleSpectrum> spectra = new ArrayList<SimpleSpectrum>();
@@ -66,7 +71,7 @@ public class Main {
         final Normalization norm = Normalization.Sum(1d);
         while ((line = r.readLine()) != null) {
             if (line.startsWith("C")) {
-                formulas.add(MolecularFormula.parse(line.trim()));
+                formulas.add(MolecularFormula.parseOrThrow(line.trim()));
                 if (current != null) spectra.add(Spectrums.getNormalizedSpectrum(current, norm));
                 current = new SimpleMutableSpectrum();
             } else if (line.length() > 0) {
@@ -82,7 +87,7 @@ public class Main {
         gen2.setMaximalNumberOfPeaks(8);
         gen2.setMinimalProbabilityThreshold(1e-8);
         gen2.setResolution(1000);
-        final Ionization hplus = PeriodicTable.getInstance().ionByName("[M+H]+").getIonization();
+        final Ionization hplus = PeriodicTable.getInstance().ionByNameOrThrow("[M+H]+").getIonization();
 
         double[] avg1sum = new double[3];
         double[] avg2sum = new double[3];

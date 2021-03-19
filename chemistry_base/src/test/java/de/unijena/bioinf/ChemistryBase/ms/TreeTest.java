@@ -1,18 +1,11 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-
 /**
  * Created by kaidu on 06.10.2015.
  */
 public class TreeTest {
 
-    private final FTree getExampleTree() {
+    /*private final FTree getExampleTree() {
         final FTree a = new FTree(MolecularFormula.parse("C6H12O6"));
         Fragment u = a.addFragment(a.getRoot(), MolecularFormula.parse("C6H10O5"));
         Fragment v = a.addFragment(a.getRoot(), MolecularFormula.parse("C5H12O4"));
@@ -40,6 +33,6 @@ public class TreeTest {
     public void testRootSwapping2() {
         FTree x = getExampleTree();
         x.addRoot(MolecularFormula.parse("C5H14O7"));
-    }
+    }*/
 
 }

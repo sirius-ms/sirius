@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ChemistryBase.fp;
 
 public class Tanimoto {
@@ -44,6 +64,39 @@ public class Tanimoto {
         }
     }
 
+    public static double fastTanimoto(AbstractFingerprint left, AbstractFingerprint right) {
+        if (left instanceof ProbabilityFingerprint) {
+            if (right instanceof ProbabilityFingerprint) {
+                return fastProb((ProbabilityFingerprint) left, (ProbabilityFingerprint)right);
+            } else {
+                return fastProb((Fingerprint)right, (ProbabilityFingerprint) left);
+            }
+        } else {
+            if (right instanceof ProbabilityFingerprint) {
+                return fastProb((Fingerprint)left, (ProbabilityFingerprint) right);
+            } else {
+                return deterministicJaccard((Fingerprint) left, (Fingerprint) right);
+            }
+        }
+    }
+
+    private static double fastProb(ProbabilityFingerprint left, ProbabilityFingerprint right) {
+        double union = 0d, intersection = 0d;
+        for (FPIter2 f : left.foreachPair(right)) {
+            union += 1d - (1d-f.getLeftProbability())*(1d-f.getRightProbability());
+            intersection += f.getLeftProbability()*f.getRightProbability();
+        }
+        return intersection/union;
+    }
+    private static double fastProb(Fingerprint left, ProbabilityFingerprint right) {
+        double union = 0d, intersection = 0d;
+        for (FPIter2 f : left.foreachPair(right)) {
+            union += 1d - (1d-f.getLeftProbability())*(1d-f.getRightProbability());
+            intersection += f.getLeftProbability()*f.getRightProbability();
+        }
+        return intersection/union;
+    }
+
     /**
      * returns the Tanimoto/Jaccard Index of two sets of integers
      * which not necessarily have to be fingerprints
@@ -66,6 +119,7 @@ public class Tanimoto {
 
         // |A n B| = (|A| + |B|) - 2|A u B|
         final int union = as.length + bs.length - intersection;
+        if (union==0) return 0;
         return ((double)intersection)/(union);
     }
     public static double tanimoto(short[] as, short[] bs) {
@@ -83,7 +137,18 @@ public class Tanimoto {
 
         // |A n B| = (|A| + |B|) - 2|A u B|
         final int union = as.length + bs.length - intersection;
+        if (union==0) return 0;
         return ((double)intersection)/(union);
+    }
+
+    public static double tanimoto(boolean[] as, boolean[] bs) {
+        int union=0, intersection=0;
+        for (int k=0; k < as.length; ++k) {
+            if (as[k]||bs[k]) ++union;
+            if (as[k]&&bs[k]) ++intersection;
+        }
+        if (union==0) return 0d;
+        else return intersection/(double)union;
     }
 
     public static double tanimoto(AbstractFingerprint left, AbstractFingerprint right) {
@@ -107,6 +172,7 @@ public class Tanimoto {
     }
 
     private static double deterministicJaccard(AbstractFingerprint left, AbstractFingerprint right) {
+        // TODO: we might have a mor efficient implementation in fingerprint
         left.enforceCompatibility(right);
         short union=0, intersection=0;
         for (FPIter2 pairwise : left.foreachPair(right)) {
@@ -116,6 +182,7 @@ public class Tanimoto {
             if (a || b) ++union;
             if (a && b) ++intersection;
         }
+        if (union==0) return 0d;
         return ((double)intersection)/union;
     }
 
@@ -130,6 +197,7 @@ public class Tanimoto {
                 R += 1d;
             } else R += probFp.getProbability();
         }
+        if (Q==0) return 0d;
         return Q / R;
     }
 
@@ -164,6 +232,7 @@ public class Tanimoto {
                 for (int Q=0; Q <= NPOS; ++Q) {
                     final int R = 2*NPOS - Q;
                     if (R < NPOS) break;
+                    if (R >= N) continue;
                     norm += m[R-NPOS]*p[Q];
                     exp += (m[R-NPOS] * p[Q] * ((double)Q)/R);
                 }
@@ -171,6 +240,7 @@ public class Tanimoto {
                 for (int Q=0; Q <= NPOS; ++Q) {
                     final int R = 2*NPOS - Q;
                     if(R < NPOS) break;
+                    if (R >= N) continue;
                     var += (m[R-NPOS] * p[Q] * ((double)Q*Q)/((double)R*R));
                 }
                 if (norm > 0)  var /= norm;

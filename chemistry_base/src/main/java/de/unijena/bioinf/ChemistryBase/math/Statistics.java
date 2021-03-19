@@ -1,21 +1,27 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ChemistryBase.math;
+
+import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -25,6 +31,40 @@ import java.util.Random;
  * @author Kai Dührkop
  */
 public class Statistics {
+
+    public static double robustAverage(double[] xs) {
+        if (xs.length < 4) return expectation(xs);
+        final double[] ys = xs.clone();
+        Arrays.sort(ys);
+        double mean = 0d;
+        int i=(int)(ys.length*0.25), n=(int)(ys.length*0.75);
+        double sz = n-i;
+        for (; i < n; ++i) {
+            mean += ys[i];
+        }
+        mean /= sz;
+        return mean;
+    }
+
+    public static double median(double[] xs) {
+        return medianInPlace(xs.clone());
+    }
+
+    public static double median(TDoubleArrayList ys) {
+        return medianInPlace(ys.toArray());
+    }
+
+    private static double medianInPlace(final double[] xs) {
+        Arrays.sort(xs);
+        if (xs.length%2==0) {
+            double a = xs[xs.length/2 - 1], b = xs[xs.length/2];
+            return (a+b)/2d;
+        } else {
+            return xs[xs.length/2];
+        }
+    }
+
+
 
     /**
      * Computes pearson correlation coefficient between xs and ys
@@ -223,5 +263,40 @@ public class Statistics {
         shuffle(dest, dstPos, length, length);
     }
 
+    public static double geometricAverage(double[] xs, boolean useLog) {
+        if (useLog) {
+            double x = 0d;
+            for (double y : xs) x += Math.log(y);
+            return Math.exp(x/xs.length);
+        } else {
+            double x = 1d;
+            for (double y : xs) x*=y;
+            return Math.pow(x,1d/xs.length);
+        }
+    }
 
+
+    public static double robustGeometricAverage(double[] xs, boolean useLog) {
+        if (xs.length < 4) return geometricAverage(xs, useLog);
+        final double[] ys = xs.clone();
+        Arrays.sort(ys);
+        if (useLog) {
+            double geom = 0d;
+            int i=(int)(ys.length*0.25), n=(int)(ys.length*0.75);
+            double sz = n-i;
+            for (; i < n; ++i) {
+                geom += Math.log(ys[i]);
+            }
+            geom /= sz;
+            return geom;
+        } else {
+            double geom = 1d;
+            int i=(int)(ys.length*0.25), n=(int)(ys.length*0.75);
+            double sz = n-i;
+            for (; i < n; ++i) {
+                geom *= ys[i];
+            }
+            return Math.pow(geom, 1d/sz);
+        }
+    }
 }

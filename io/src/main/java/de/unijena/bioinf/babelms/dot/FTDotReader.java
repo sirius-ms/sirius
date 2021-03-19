@@ -1,25 +1,34 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.babelms.dot;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.data.DataSource;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
@@ -35,6 +44,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Deprecated //todo do we still use this? binary format does not save/read fragment ionization
 public class FTDotReader implements Parser<FTree> {
 
     private static final Pattern PEAK_PATTERN = Pattern.compile("(\\d+(?:\\.\\d*)?) Da, (\\d+(?:\\.\\d*)?) %");
@@ -45,31 +55,31 @@ public class FTDotReader implements Parser<FTree> {
     public FTree parse(BufferedReader reader, URL source) throws IOException {
         final Graph g = DotParser.parseGraph(reader);
         final FragmentPropertySet rootSet = new FragmentPropertySet(g.getRoot().getProperties());
-        final FTree tree = new FTree(rootSet.formula);
-        final FragmentAnnotation<Peak> peakAno = tree.addFragmentAnnotation(Peak.class);
-        final FragmentAnnotation<CollisionEnergy[]> cesAno = tree.addFragmentAnnotation(CollisionEnergy[].class);
-        final FragmentAnnotation<CollisionEnergy> ceAno = tree.addFragmentAnnotation(CollisionEnergy.class);
-        peakAno.set(tree.getRoot(), rootSet.peak);
-        cesAno.set(tree.getRoot(), rootSet.collisionEnergies);
-        ceAno.set(tree.getRoot(), CollisionEnergy.mergeAll(rootSet.collisionEnergies));
+        final FTree tree = new FTree(rootSet.formula, rootSet.ion);
+        final FragmentAnnotation<AnnotatedPeak> peakAno = tree.addFragmentAnnotation(AnnotatedPeak.class);
+
+        Peak peak = rootSet.peak;
+        CollisionEnergy[] energy = rootSet.collisionEnergies;
+        peakAno.set(tree.getRoot(), new AnnotatedPeak(rootSet.formula, peak.getMass(), 0d, peak.getIntensity(), rootSet.ion, new Peak[]{peak}, rootSet.collisionEnergies, null));
+
+
         new PreOrderTraversal<Vertex>(g.getRoot(), g.getTreeAdapter()).call(new PreOrderTraversal.Call<Vertex, Fragment>() {
             @Override
             public Fragment call(Fragment parentResult, Vertex node) {
                 if (parentResult == null) return tree.getRoot();
                 final FragmentPropertySet set = new FragmentPropertySet(node.getProperties());
-                final Fragment f = tree.addFragment(parentResult, set.formula);
-                peakAno.set(f, set.peak);
-                cesAno.set(f, set.collisionEnergies);
-                ceAno.set(f, CollisionEnergy.mergeAll(set.collisionEnergies));
+                final Fragment f = tree.addFragment(parentResult, set.formula, set.ion);
+                peakAno.set(f, new AnnotatedPeak(set.formula, set.peak.getMass(), 0d, set.peak.getIntensity(), set.ion, new Peak[]{set.peak}, set.collisionEnergies, null));
                 return f;
             }
         });
-        if (source != null) tree.setAnnotation(URL.class, source);
+        if (source != null) tree.setAnnotation(DataSource.class, new DataSource(source));
         return tree;
     }
 
     public static class FragmentPropertySet {
         private MolecularFormula formula;
+        private Ionization ion;
         private Peak peak;
         private CollisionEnergy[] collisionEnergies;
         private TObjectDoubleHashMap scores;
@@ -82,11 +92,13 @@ public class FTDotReader implements Parser<FTree> {
             this.scores = new TObjectDoubleHashMap();
             final String label = properties.remove("label");
             final String[] infos = label.split("\\\\n");
-            this.formula = MolecularFormula.parse(infos[0]);
+            String[] fpart = infos[0].split(" ", 2);
+            this.formula = MolecularFormula.parseOrNull(fpart[0]);
+            this.ion = PrecursorIonType.getPrecursorIonType("[M " + fpart[1].substring(0,fpart[1].length()-1) + "]" + fpart[1].charAt(fpart[1].length()-1)).getIonization();
             {
                 final Matcher m = PEAK_PATTERN.matcher(infos[1]);
                 m.find();
-                this.peak = new Peak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)) / 100d);
+                this.peak = new SimplePeak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)) / 100d);
             }
             for (int x = 2; x < infos.length; ++x) {
                 final String info = infos[x];

@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -7,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
  */
 public enum BioTransformation {
 
+    //MyCompoundID and Rogers
     C6H12N4O ("Arginine",new String[]{"Rogers"}),
     C4H6N2O2 ("Asparagine",new String[]{"Rogers"}),
     C4H5NO3 ("Aspartic Acid",new String[]{"Rogers"}),
@@ -116,7 +137,7 @@ public enum BioTransformation {
     BioTransformation(String chemName, String[] source) {
         this.source = source;
         this.chemName = chemName;
-        formula = MolecularFormula.parse(name());
+        formula = MolecularFormula.parseOrThrow(name());
         condition = MolecularFormula.emptyFormula();
         symmetric = true;
     }
@@ -124,16 +145,16 @@ public enum BioTransformation {
     BioTransformation(String chemName, String[] source,  String condition, boolean symmetric) {
         this.source = source;
         this.chemName = chemName;
-        this.formula = MolecularFormula.parse(name());
-        this.condition = MolecularFormula.parse(condition);
+        this.formula = MolecularFormula.parseOrThrow(name());
+        this.condition = MolecularFormula.parseOrThrow(condition);
         this.symmetric = symmetric;
     }
 
     BioTransformation(String chemName, String[] source, String formula, String condition, boolean symmetric) {
         this.source = source;
         this.chemName = chemName;
-        this.formula = MolecularFormula.parse(formula);
-        this.condition = MolecularFormula.parse(condition);
+        this.formula = MolecularFormula.parseOrThrow(formula);
+        this.condition = MolecularFormula.parseOrThrow(condition);
         this.symmetric = symmetric;
     }
 

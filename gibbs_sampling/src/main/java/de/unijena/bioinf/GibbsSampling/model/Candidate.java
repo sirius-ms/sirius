@@ -1,14 +1,30 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.TreeScoring;
 import gnu.trove.list.array.TDoubleArrayList;
+
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class Candidate<T> implements Comparable<Candidate> {
     protected final T candidate;
@@ -16,6 +32,7 @@ public class Candidate<T> implements Comparable<Candidate> {
     protected final Map<Class<Object>, Object> annotations;
     protected final double score;
     private final TDoubleArrayList nodeScores;
+    protected int indexInGraph = -1;
 
     public Candidate(T candidate, double score) {
         this.candidate = candidate;
@@ -80,6 +97,10 @@ public class Candidate<T> implements Comparable<Candidate> {
         this.nodeScores.add(Math.log(score));
     }
 
+    protected void addNodeLogProbabilityScore(double score) {
+        this.nodeScores.add(score);
+    }
+
     protected void clearNodeScores(){
         nodeScores.clear();
     }
@@ -90,5 +111,13 @@ public class Candidate<T> implements Comparable<Candidate> {
 
     public int compareTo(Candidate o) {
         return Double.compare(o.getScore(), this.score);
+    }
+
+    protected void setIndexInGraph(int index) {
+        this.indexInGraph = index;
+    }
+
+    public int getIndexInGraph() {
+        return indexInGraph;
     }
 }

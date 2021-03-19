@@ -1,13 +1,36 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MutableMs2Experiment implements Ms2Experiment {
 
@@ -15,21 +38,31 @@ public class MutableMs2Experiment implements Ms2Experiment {
     private List<SimpleSpectrum> ms1Spectra;
     private SimpleSpectrum mergedMs1Spectrum;
     private List<MutableMs2Spectrum> ms2Spectra;
-    private HashMap<Class<Object>, Object> annotations;
+
     private double ionMass;
     private MolecularFormula molecularFormula;
-    private URL source;
     private String name;
+
+
+    private Annotated.Annotations<Ms2ExperimentAnnotation> annotations;
+
+    @Override
+    public Annotations<Ms2ExperimentAnnotation> annotations() {
+        return annotations;
+    }
 
     public MutableMs2Experiment() {
         this.ms1Spectra = new ArrayList<>();
         this.ms2Spectra = new ArrayList<>();
-        this.annotations = new HashMap<>();
-        this.source = null;
+        this.annotations = new Annotations<>();
         this.name = "";
     }
 
     public MutableMs2Experiment(Ms2Experiment experiment) {
+        this(experiment, true);
+    }
+
+    public MutableMs2Experiment(Ms2Experiment experiment, boolean cloneAnnotations) {
         this.precursorIonType = experiment.getPrecursorIonType();
         this.ms1Spectra = new ArrayList<>();
         for (Spectrum<Peak> spec : experiment.getMs1Spectra())
@@ -43,29 +76,15 @@ public class MutableMs2Experiment implements Ms2Experiment {
             this.ms2Spectra.add(ms2);
 
         }
-        this.annotations = new HashMap<>();
-        final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();
-        while (iter.hasNext()) {
-            final Map.Entry<Class<Object>, Object> v = iter.next();
-            this.annotations.put(v.getKey(), v.getValue());
-        }
+        this.annotations = cloneAnnotations ? experiment.annotations().clone() : new Annotations<>();
         this.ionMass = experiment.getIonMass();
-//        this.moleculeNeutralMass = experiment.getMoleculeNeutralMass();
         this.molecularFormula = experiment.getMolecularFormula();
-        this.source = experiment.getSource();
         this.name = experiment.getName();
     }
 
-    public void setSource(URL source) {
-        this.source = source;
-    }
-
-    public void setSource(File source) {
-        try {
-            this.source = source.toURI().toURL();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+    @Override
+    public MutableMs2Experiment mutate() {
+        return this;
     }
 
     public void setName(String name) {
@@ -73,8 +92,33 @@ public class MutableMs2Experiment implements Ms2Experiment {
     }
 
     @Override
+    @Nullable
     public URL getSource() {
-        return source;
+        final SourceLocation s = getSourceAnnotation();
+        return s != null ? s.value : null;
+    }
+
+    @Override
+    @Nullable
+    public String getSourceString() {
+        final SourceLocation s = getSourceAnnotation();
+        return s != null ? s.toString() : null;
+    }
+
+    @Nullable
+    public SourceLocation getSourceAnnotation() {
+        if (hasAnnotation(SpectrumFileSource.class))
+            return getAnnotationOrThrow(SpectrumFileSource.class);
+        if (hasAnnotation(MsFileSource.class))
+            return getAnnotationOrThrow(MsFileSource.class);
+        return null;
+    }
+
+    public void setSource(@NotNull SourceLocation sourcelocation) {
+        if (sourcelocation instanceof SpectrumFileSource)
+            setAnnotation(SpectrumFileSource.class, (SpectrumFileSource) sourcelocation);
+        else if (sourcelocation instanceof MsFileSource)
+            setAnnotation(MsFileSource.class, (MsFileSource) sourcelocation);
     }
 
     @Override
@@ -112,11 +156,6 @@ public class MutableMs2Experiment implements Ms2Experiment {
         return molecularFormula;
     }
 
-    @Override
-    public Iterator<Map.Entry<Class<Object>, Object>> forEachAnnotation() {
-        return annotations.entrySet().iterator();
-    }
-
     public void setPrecursorIonType(PrecursorIonType precursorIonType) {
         this.precursorIonType = precursorIonType;
     }
@@ -139,65 +178,6 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
     public void setMolecularFormula(MolecularFormula molecularFormula) {
         this.molecularFormula = molecularFormula;
-    }
-
-    @Override
-    public <T> T getAnnotationOrThrow(Class<T> klass) {
-        final T val = getAnnotation(klass);
-        if (val == null) throw new NullPointerException("No annotation for key: " + klass.getName());
-        else return val;
-    }
-
-    @Override
-    public <T> T getAnnotation(Class<T> klass) {
-        return (T) annotations.get(klass);
-    }
-
-    @Override
-    public <T> T getAnnotation(Class<T> klass, T defaultValue) {
-        final T val = getAnnotation(klass);
-        if (val == null) return defaultValue;
-        else return val;
-    }
-
-    @Override
-    public <T> boolean hasAnnotation(Class<T> klass) {
-        return annotations.containsKey(klass);
-    }
-
-    @Override
-    public <T> boolean setAnnotation(Class<T> klass, T value) {
-        final T val = (T) annotations.put((Class<Object>) klass, value);
-        return val != null;
-    }
-
-    @Override
-    public <T> Object clearAnnotation(Class<T> klass) {
-        return annotations.remove(klass);
-    }
-
-    @Override
-    public void clearAllAnnotations() {
-        annotations.clear();
-    }
-
-
-    //overrides existing
-    public void setAnnotationsFrom(Ms2Experiment experiment) {
-        final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();
-        while (iter.hasNext()) {
-            final Map.Entry<Class<Object>, Object> v = iter.next();
-            this.annotations.put(v.getKey(), v.getValue());
-        }
-    }
-
-    //doe not override existing
-    public void addAnnotationsFrom(Ms2Experiment experiment) {
-        final Iterator<Map.Entry<Class<Object>, Object>> iter = experiment.forEachAnnotation();
-        while (iter.hasNext()) {
-            final Map.Entry<Class<Object>, Object> v = iter.next();
-            this.annotations.putIfAbsent(v.getKey(), v.getValue());
-        }
     }
 
     @Override

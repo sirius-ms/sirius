@@ -1,60 +1,102 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.babelms.cef.AgilentCefExperimentParser;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
+import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
+import de.unijena.bioinf.babelms.mzml.MzMlExperimentParser;
+import de.unijena.bioinf.babelms.mzml.MzXmlExperimentParser;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.HashMap;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public class MsExperimentParser {
 
-    private final HashMap<String, Class<? extends Parser<Ms2Experiment>>> knownEndings;
+    private static final Map<String, Class<? extends Parser<Ms2Experiment>>> KNOWN_ENDINGS = addKnownEndings();
+    /**
+     * This postprocessor annotates Parameter configs to the {@link Ms2Experiment}. If {@link InputFileConfig} is given
+     * this is preferred over the {@link PropertyManager#DEFAULTS} config.
+     * <p>
+     * If an input file type supports SIRIUS parameters (e.g. JenaMSParser) then it has to set this Parameters to it
+     * own {@link de.unijena.bioinf.ms.properties.ParameterConfig} and annotate this config wrapped as {@link InputFileConfig}
+     * to the experiment. This allow to keep track of where parameters come from.
+     */
+    public static final Consumer<Ms2Experiment> DEFAULTS_ANNOTATOR = exp -> exp.addAnnotationsFrom(
+            exp.getAnnotation(InputFileConfig.class).map(c -> c.config).orElse(PropertyManager.DEFAULTS), Ms2ExperimentAnnotation.class);
 
-    public MsExperimentParser() {
-        this.knownEndings = new HashMap<String, Class<? extends Parser<Ms2Experiment>>>();
-        addKnownEndings();
+
+    public GenericParser<Ms2Experiment> getParser(Path file) {
+        return getParser(file.getFileName().toString());
     }
 
-    public GenericParser<Ms2Experiment> getParser(File f) {
-        final String name = f.getName();
-        final int i = name.lastIndexOf('.');
+    public GenericParser<Ms2Experiment> getParser(File file) {
+        return getParser(file.getName());
+    }
+
+    public GenericParser<Ms2Experiment> getParser(String fileName) {
+        final int i = fileName.lastIndexOf('.');
         if (i < 0) return null; // no parser found
-        final String extName = name.substring(i).toLowerCase();
-        final Class<? extends Parser<Ms2Experiment>> pc = knownEndings.get(extName);
+        final String extName = fileName.substring(i).toLowerCase();
+        final Class<? extends Parser<Ms2Experiment>> pc = KNOWN_ENDINGS.get(extName);
         if (pc==null) return null;
         try {
-            if (pc.equals(ZippedSpectraParser.class)){
-                return (GenericParser<Ms2Experiment>)pc.newInstance();
-            }
-            return new GenericParser<Ms2Experiment>(pc.newInstance());
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
+            if (pc.equals(ZippedSpectraParser.class))
+                return (GenericParser<Ms2Experiment>) pc.getConstructor().newInstance();
+
+            return new GenericParser<>(pc.getConstructor().newInstance(), DEFAULTS_ANNOTATOR);
+        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void addKnownEndings() {
-        knownEndings.put(".ms", JenaMsParser.class);
-        knownEndings.put(".mgf", MgfParser.class);
-        knownEndings.put(".zip", ZippedSpectraParser.class);
+    public static boolean isSupportedFileName(final @NotNull String fileName) {
+        int index = fileName.lastIndexOf('.');
+        if (index < 0)
+            return false;
+        return isSupportedEnding(fileName.substring(index));
+    }
+
+    public static boolean isSupportedEnding(final @NotNull String fileEnding) {
+        return KNOWN_ENDINGS.containsKey(fileEnding.toLowerCase());
+    }
+
+    private static Map<String, Class<? extends Parser<Ms2Experiment>>> addKnownEndings() {
+        final Map<String, Class<? extends Parser<Ms2Experiment>>> endings = new ConcurrentHashMap<>(3);
+        endings.put(".ms", JenaMsParser.class);
+        endings.put(".mgf", MgfParser.class);
+        endings.put(".zip", ZippedSpectraParser.class);
+        endings.put(".mzxml", MzXmlExperimentParser.class);
+        endings.put(".mzml", MzMlExperimentParser.class);
+        endings.put(".cef", AgilentCefExperimentParser.class);
+        return endings;
     }
 }

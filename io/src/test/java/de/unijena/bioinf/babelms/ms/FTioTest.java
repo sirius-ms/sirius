@@ -6,10 +6,10 @@ package de.unijena.bioinf.babelms.ms;
  */
 
 import com.google.gson.JsonObject;
+import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.babelms.json.JSONDocumentType;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

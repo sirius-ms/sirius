@@ -1,6 +1,26 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
@@ -200,7 +220,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
 
             updateProgress(0, maxSteps+burnIn, i+1);
 //            if((i % step == 0 && i>0) || i == (burnIn+maxSteps-1)) {
-//                LOG().info("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
+//                logInfo("step "+((double)(((i+1)*100/(maxSteps+burnIn))))+"%");
 //
 //            }
         }
@@ -260,7 +280,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
                 candidates[j - min] = new Scored<>(this.graph.getPossibleFormulas1D(j).getCandidate(), freq / sum);
             }
 
-            Arrays.sort(candidates, Scored.<C>desc());
+            Arrays.sort(candidates, Comparator.reverseOrder());
             candidatesByCompound[i] = candidates;
         }
 
@@ -298,10 +318,14 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
 
             for(j = min; j <= max; ++j) {
                 freq = scoring[j];
-                candidates[j - min] = new Scored<>(this.graph.getPossibleFormulas1D(j).getCandidate(), 1.0D * (double)freq / (double)sum);
+                double score = 1.0D * (double)freq / (double)sum;
+                if (Double.isNaN(score)) {
+                    throw new IllegalStateException("ZODIAC Gibbs sampling produced NaN score for: "+this.graph.getIds()[i]);
+                }
+                candidates[j - min] = new Scored<>(this.graph.getPossibleFormulas1D(j).getCandidate(), score);
             }
 
-            Arrays.sort(candidates, Scored.<C>desc());
+            Arrays.sort(candidates, Comparator.reverseOrder());
             candidatesByCompound[i] = candidates;
         }
 
@@ -588,7 +612,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
             scoredCandidates[i-left] = new Scored(graph.getPossibleFormulas1D(i).getCandidate(), scores[i-left]/sum);
         }
 
-        Arrays.sort(scoredCandidates, Scored.<C>desc());
+        Arrays.sort(scoredCandidates, Comparator.reverseOrder());
 
         return scoredCandidates;
     }

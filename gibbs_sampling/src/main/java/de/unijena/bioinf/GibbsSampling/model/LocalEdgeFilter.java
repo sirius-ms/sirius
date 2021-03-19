@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 //
 // Source code recreated from a .class file by IntelliJ IDEA
 // (powered by Fernflower decompiler)
@@ -5,11 +25,12 @@
 
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.GibbsSampling.model.EdgeFilter;
-import de.unijena.bioinf.GibbsSampling.model.Graph;
+import de.unijena.bioinf.jjobs.MasterJJob;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.concurrent.ExecutionException;
 
 public class LocalEdgeFilter implements EdgeFilter {
     private final double alpha;
@@ -58,11 +79,11 @@ public class LocalEdgeFilter implements EdgeFilter {
     public void setThreshold(double threshold) {
     }
 
-    public int[][] postprocessCompleteGraph(Graph graph) {
+    public int[][] postprocessCompleteGraph(Graph graph, MasterJJob masterJJob) throws ExecutionException {
         throw new NoSuchMethodError("not implemented");
     }
 
-    protected class WeightedEdge implements Comparable<LocalEdgeFilter.WeightedEdge> {
+    protected static class WeightedEdge implements Comparable<LocalEdgeFilter.WeightedEdge> {
         public final int index1;
         public final int index2;
         public final double weight;

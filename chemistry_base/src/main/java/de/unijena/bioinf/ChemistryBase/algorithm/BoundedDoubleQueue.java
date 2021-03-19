@@ -1,28 +1,35 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ChemistryBase.algorithm;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * A fixed size queue of double values. Inserting a new value into a full queue will lead to a removal of the smallest element
  */
-public final class BoundedDoubleQueue {
+public final class BoundedDoubleQueue implements Iterable<Double> {
 
     private final double[] values;
     private int length;
@@ -42,10 +49,11 @@ public final class BoundedDoubleQueue {
     }
 
     public double max() {
-        return values[1];
+        return values[length-1];
     }
 
     public boolean add(double value) {
+        if (value < values[0]) return false;
         final int index = (length <= 5) ? linearSearch(value) : binarySearch(value);
         if (length < values.length) {
             if (index < length) System.arraycopy(values, index, values, index+1, length-index);
@@ -74,5 +82,15 @@ public final class BoundedDoubleQueue {
             }
         }
         return length;
+    }
+
+    @NotNull
+    @Override
+    public Iterator<Double> iterator() {
+        return Arrays.stream(values).iterator();
+    }
+
+    public double[] toArray() {
+        return values.clone();
     }
 }

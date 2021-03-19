@@ -1,21 +1,27 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package fragtreealigner.util;
+
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -51,7 +57,7 @@ public class StructureScore2Distance {
 
         try {
 
-            BufferedReader compoundsFile = new BufferedReader(new FileReader(compoundsPath));
+            BufferedReader compoundsFile = FileUtils.ensureBuffering(new FileReader(compoundsPath));
 
             String line =  "";
             List<String> compoundNames = new ArrayList<String>();
@@ -73,7 +79,7 @@ public class StructureScore2Distance {
 
 
 
-            BufferedReader file = new BufferedReader( new FileReader(path));
+            BufferedReader file = FileUtils.ensureBuffering( new FileReader(path));
 
 
             line = file.readLine(); // first line only contains names

@@ -1,21 +1,27 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ChemistryBase.chem;
+
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
 /**
  * To measure a molecule in a mass spectrometer, the molecule have to be ionized. We distinguish two different
@@ -28,7 +34,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
  *  The algorithms should compute the neutral mass spectra as early as possible. The neutral mass spectrum is a spectrum
  *  where each peak contains only the masses (not mass-to-charge ratio) of the measured molecules (without adducts).
  */
-public abstract class Ionization implements Comparable<Ionization> {
+public abstract class Ionization implements Comparable<Ionization>, DataAnnotation {
 
     /**
      * @return mass (Dalton) of the ion

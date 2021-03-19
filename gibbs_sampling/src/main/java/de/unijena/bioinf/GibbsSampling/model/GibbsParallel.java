@@ -1,18 +1,38 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<CompoundResult<C>[]> implements JobProgressEventListener {
     private int repetitions;
@@ -89,8 +109,7 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
             }
 
 
-
-            Arrays.sort(scoredCandidates, Scored.<C>desc());
+            Arrays.sort(scoredCandidates, Comparator.reverseOrder());
             array[i] = scoredCandidates;
         }
 
@@ -124,15 +143,26 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
         step = maxProgress/20;
 
         updateProgress(0, maxProgress, 0, "Sample probabilities");
+        List<BasicJJob> jobs = new ArrayList<>();
         for (final GibbsMFCorrectionNetwork gibbsNetwork : gibbsNetworks) {
+            checkForInterruption();
             gibbsNetwork.setIterationSteps(maxStepProportioned, burnIn);
-            gibbsNetwork.addPropertyChangeListener(this);
+            gibbsNetwork.addJobProgressListener(this);
+            jobs.add(gibbsNetwork);
             submitSubJob(gibbsNetwork);
         }
 
-        awaitAllSubJobs();
+        checkForInterruption();
 
+        for (BasicJJob job : jobs) {
+            job.awaitResult();
+        }
+
+        long start = System.currentTimeMillis();
         combineResults();
+        logDebug("combined all results in: "+(System.currentTimeMillis()-start)+" ms");
+
+        checkForInterruption();
 
         return createCompoundResults();
 
@@ -168,12 +198,11 @@ public class GibbsParallel<C extends Candidate<?>> extends BasicMasterJJob<Compo
 
     @Override
     public void progressChanged(JobProgressEvent progressEvent) {
-        int progress = progressEvent.getNewValue();
+        long progress = progressEvent.getNewValue().longValue();
         if (progress<=0) return;
         ++currentProgress;
-//        updateProgress(0, maxProgress, currentProgress, progressEvent.getMessage());
         if(currentProgress % step == 0) {
-            LOG().info((100*(currentProgress)/maxProgress)+"%");
+            logInfo((100*(currentProgress)/maxProgress)+"%");
         }
     }
 }

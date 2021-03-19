@@ -1,35 +1,36 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.math.HighQualityRandom;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Score;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ExponentialDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistribution;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionEstimator;
-import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistributionFix;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.jjobs.MasterJJob;
-import gnu.trove.list.TDoubleList;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
-import gnu.trove.procedure.TDoubleProcedure;
 import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.set.hash.TDoubleHashSet;
 import gnu.trove.set.hash.TIntHashSet;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.LogManager;
+import java.util.function.Consumer;
 
 public class Graph<C extends Candidate<?>> {
     protected final TIntIntHashMap[] indexMap;
@@ -63,6 +64,10 @@ public class Graph<C extends Candidate<?>> {
             this.weights[i] = new TDoubleArrayList(this.size / 100);
         }
 
+        for (int i = 0; i < possibleFormulas1D.length; i++) {
+            possibleFormulas1D[i].getCandidate().setIndexInGraph(i);
+        }
+
         this.assertInput(this);
     }
 
@@ -80,6 +85,10 @@ public class Graph<C extends Candidate<?>> {
         for(int i = 0; i < this.indexMap.length; ++i) {
             this.indexMap[i] = new TIntIntHashMap(this.size / 100, 0.75F, -1, -1);
             this.weights[i] = new TDoubleArrayList(this.size / 100);
+        }
+
+        for (int i = 0; i < possibleFormulas1D.length; i++) {
+            possibleFormulas1D[i].getCandidate().setIndexInGraph(i);
         }
 
         this.assertInput(this);
@@ -145,7 +154,13 @@ public class Graph<C extends Candidate<?>> {
         return this.indexMap[i].keys();
     }
 
+    public boolean hasLogWeightConnections(int i, int j) {
+        return this.indexMap[i].containsKey(j);
+    }
+
     public void setLogWeight(int i, int j, double weight) {
+        assert !Double.isNaN(weight);
+
         int relJ = this.indexMap[i].get(j);
         if(relJ < 0) {
             this.indexMap[i].put(j, this.weights[i].size());
@@ -249,12 +264,12 @@ public class Graph<C extends Candidate<?>> {
         return new GraphValidationMessage("", false, false);
     }
 
-    public static void validateAndThrowError(Graph graph, Logger logger) throws Exception {
+    public static void validateAndThrowError(Graph graph, Consumer<String> logWarning) {
         GraphValidationMessage validationMessage = graph.validate();
         if (validationMessage.isError()) {
-            throw new Exception(validationMessage.getMessage());
+            throw new RuntimeException(validationMessage.getMessage());
         } else if (validationMessage.isWarning()) {
-            logger.warn(validationMessage.getMessage());
+            logWarning.accept(validationMessage.getMessage());
         }
     }
 
@@ -550,7 +565,19 @@ public class Graph<C extends Candidate<?>> {
             numberOfBadlyConnected += maxCompoundConnectionsStats.get(connectionCount);
         }
 
-//        System.out.println("numberOfPeaks "+numberOfPeaks);
+
+        System.out.println("number of badly connected compounds "+ numberOfBadlyConnected);
+
+        {
+            int below5 = 0;
+            int above15 = 0;
+            for (int connectionCount : connectionCounts) {
+                if (connectionCount < 5) ++below5;
+                if (connectionCount >= 15) ++above15;
+            }
+            System.out.println("number of compounds with more than 15 neighbours "+ above15);
+        }
+
 //        for (int connectionCount : connectionCounts) {
 //            System.out.println(connectionCount+": "+maxCompoundConnectionsStats.get(connectionCount));
 //        }

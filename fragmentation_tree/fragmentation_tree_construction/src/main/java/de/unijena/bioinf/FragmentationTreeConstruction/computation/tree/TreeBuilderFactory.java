@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
 /**
  * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -5,11 +25,8 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
  * 28.09.16.
  */
 
-import de.unijena.bioinf.ChemistryBase.properties.PropertyManager;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractSolver;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.AbstractTreeBuilder;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.IlpFactory;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.*;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -24,22 +41,22 @@ public final class TreeBuilderFactory {
     public final static String GUROBI_VERSION;
     public final static String GLPK_VERSION;
     public final static String CPLEX_VERSION;
+    public final static String CLP_VERSION;
 
     public final static String ILP_VERSIONS_STRING;
 
 
     static {
-        GLPK_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
-        GUROBI_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
-        CPLEX_VERSION = PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
-        ILP_VERSIONS_STRING = "Sirius was compiled with the following ILP solvers: GLPK-v" + GLPK_VERSION + " (included), Gurobi-v" + GUROBI_VERSION + ", CPLEX-v" + CPLEX_VERSION;
+        GLPK_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.glpk_version");
+        GUROBI_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.gurobi_version");
+        CPLEX_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.cplex_version");
+        CLP_VERSION = PropertyManager.getProperty("de.unijena.bioinf.sirius.build.cpl_version");
+        ILP_VERSIONS_STRING = "Sirius was compiled with the following ILP solvers: GLPK-v" + GLPK_VERSION + " (included), Gurobi-v" + GUROBI_VERSION + ", CPLEX-v" + CPLEX_VERSION + ", COIN-OR-v" + CLP_VERSION;
     }
 
     private static TreeBuilderFactory INSTANCE = null;
 
-    public enum DefaultBuilder {GUROBI, CPLEX, GLPK}
-
-    private static DefaultBuilder[] builderPriorities = null;
+    public enum DefaultBuilder {GUROBI, CPLEX, GLPK, CLP}
 
     private TreeBuilderFactory() {
     }
@@ -49,11 +66,6 @@ public final class TreeBuilderFactory {
             INSTANCE = new TreeBuilderFactory();
         return TreeBuilderFactory.INSTANCE;
     }
-
-    public static void setBuilderPriorities(DefaultBuilder... builders) {
-        builderPriorities = builders;
-    }
-
 
     private static DefaultBuilder[] parseBuilderPriority(String builders) {
         if (builders == null) return null;
@@ -77,41 +89,28 @@ public final class TreeBuilderFactory {
         return bs.toArray(new DefaultBuilder[bs.size()]);
     }
 
-    public static boolean setBuilderPriorities(String... builders) {
-        DefaultBuilder[] b = parseBuilderPriority(builders);
-        if (b!=null && b.length>0) {
-            builderPriorities = b;
-            return true;
-        }
-
-        return false;
-    }
-
     public static DefaultBuilder[] getBuilderPriorities() {
-        if (builderPriorities != null) return builderPriorities.clone();
-        DefaultBuilder[] b = parseBuilderPriority(PropertyManager.PROPERTIES.getProperty("de.unijena.bioinf.sirius.treebuilder"));
+        final DefaultBuilder[] b = parseBuilderPriority(PropertyManager.getProperty("de.unijena.bioinf.sirius.treebuilder.solvers"));
         if (b!=null && b.length>0) return b;
         return DefaultBuilder.values();
     }
 
     public <T extends AbstractSolver> IlpFactory<T> getTreeBuilderFromClass(String className) {
         try {
-            return getTreeBuilderFromClass((Class<T>)ClassLoader.getSystemClassLoader().loadClass(className));
-        } catch (Exception e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + "! " + ILP_VERSIONS_STRING, e);
-            return null;
+            return getTreeBuilderFromClass((Class<T>) getClass().getClassLoader().loadClass(className));
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could find and load " + className + "! " + ILP_VERSIONS_STRING, e);
+            LoggerFactory.getLogger(this.getClass()).warn("Could not find and load " + className + "! " + ILP_VERSIONS_STRING + ": " + e.getMessage());
+            LoggerFactory.getLogger(this.getClass()).debug("Could not find and load " + className + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
-
     }
 
     public <T extends AbstractSolver> IlpFactory<T> getTreeBuilderFromClass(Class<T> builderClass) {
         try {
             return (IlpFactory<T>) builderClass.getDeclaredField("Factory").get(null);
         } catch (Throwable e) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING, e);
+            LoggerFactory.getLogger(this.getClass()).warn("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING + ": " + e.getMessage());
+            LoggerFactory.getLogger(this.getClass()).debug("Could not load " + builderClass.getSimpleName() + "! " + ILP_VERSIONS_STRING, e);
             return null;
         }
     }
@@ -122,26 +121,36 @@ public final class TreeBuilderFactory {
 
 
     public TreeBuilder getTreeBuilder(DefaultBuilder builder) {
-        IlpFactory factory = null;
+        IlpFactory<?> factory = null;
         switch (builder) {
             case GUROBI:
                 factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GrbSolver"); //we have to use classloader, to prevent class not found exception. because it could be possible that gurobi.jar doe not exist -> runtime dependency
                 break;
             case GLPK:
-                factory = getTreeBuilderFromClass(GLPKSolver.class); //we deliver the jar file so we can be sure that th class exists
+                factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.GLPKSolver");
                 break;
             case CPLEX:
                 factory = getTreeBuilderFromClass("de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.CPLEXSolver");
+                break;
+            case CLP:
+                factory = getTreeBuilderFromClass(CLPSolver.class); //we deliver the jar file so we can be sure that th class exists
                 break;
             default:
                 LoggerFactory.getLogger(this.getClass()).warn("TreeBuilder " + builder.toString() + " is Unknown, supported are: " + Arrays.toString(DefaultBuilder.values()), new IllegalArgumentException("Unknown BuilderType!"));
                 return null;
         }
-        if (factory == null) {
+        if (factory == null){
             return null;
-        } else {
-            return new AbstractTreeBuilder(factory);
+        } else{
+            try {
+                factory.checkSolver();
+            } catch (ILPSolverException e) {
+                LoggerFactory.getLogger(getClass()).warn("Could not load Solver '" + builder + "': " + e.getMessage());
+                LoggerFactory.getLogger(getClass()).debug("Could not load Solver '" + builder + "'", e);
+                return null;
+            }
         }
+        return new AbstractTreeBuilder<>(factory);
     }
 
     public TreeBuilder getTreeBuilder() {
@@ -150,7 +159,7 @@ public final class TreeBuilderFactory {
             if (b != null)
                 return b;
         }
-        LoggerFactory.getLogger(TreeBuilderFactory.class).error("Your system does not ship with any ILP solver. Please install either GLPK for java, Gurobi or CPLEX to use SIRIUS.");
+        LoggerFactory.getLogger(TreeBuilderFactory.class).error("Your system does not ship with any instantiatable ILP solver. Please install either CLP,  Gurobi or CPLEX to use SIRIUS.");
         return null;
     }
 }

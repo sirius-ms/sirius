@@ -1,26 +1,32 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ChemistryBase.chem.utils;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaFilter;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 
 import java.util.ArrayList;
@@ -47,10 +53,31 @@ public class FormulaFilterList implements FormulaFilter, Parameterized {
         return filters;
     }
 
+//    @Override
+//    public boolean isValid(MolecularFormula formula) {
+//        for (FormulaFilter filter : filters)
+//            if (!filter.isValid(formula)) return false;
+//        return true;
+//    }
+
     @Override
-    public boolean isValid(MolecularFormula formula) {
+    public boolean isValid(MolecularFormula measuredNeutralFormula) {
         for (FormulaFilter filter : filters)
-            if (!filter.isValid(formula)) return false;
+            if (!filter.isValid(measuredNeutralFormula)) return false;
+        return true;
+    }
+
+    @Override
+    public boolean isValid(MolecularFormula measuredNeutralFormula, Ionization ionization) {
+        for (FormulaFilter filter : filters)
+            if (!filter.isValid(measuredNeutralFormula, ionization)) return false;
+        return true;
+    }
+
+    @Override
+    public boolean isValid(MolecularFormula measuredNeutralFormula, PrecursorIonType ionType) {
+        for (FormulaFilter filter : filters)
+            if (!filter.isValid(measuredNeutralFormula, ionType)) return false;
         return true;
     }
 
@@ -71,5 +98,4 @@ public class FormulaFilterList implements FormulaFilter, Parameterized {
         }
         document.addListToDictionary(dictionary, "filters", list);
     }
-
 }

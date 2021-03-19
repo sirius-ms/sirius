@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling.model.distributions;
 
 import de.unijena.bioinf.ChemistryBase.math.MathUtils;
@@ -7,6 +27,10 @@ import gnu.trove.procedure.TDoubleProcedure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class LogNormalDistribution implements ScoreProbabilityDistribution {
@@ -17,7 +41,7 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
     private static final double MAD_SCALE_FACTOR = 1.482602218505602;
     private static final double DEFAULT_LOGMEAN = -1.8184825393688084;
     private static final double DEFAULT_LOGVAR = 0.1640657366079353;
-
+    private static final boolean DEBUG = false;
 
     public LogNormalDistribution(double logMean, double logVar) {
         this.logMean = logMean;
@@ -77,6 +101,9 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
         logVar /= (double)(l - 1);
         this.logMean = logMean;
         this.logVar = logVar;
+        if (DEBUG) {
+            System.out.println("Parameter estimate for log normal distribution: logmean: " + String.valueOf(logMean) + ", logvar: " + String.valueOf(logVar));
+        }
     }
 
     private void estimateParametersRobust(double[] exampleValues){
@@ -112,6 +139,21 @@ public class LogNormalDistribution implements ScoreProbabilityDistribution {
 
         this.logMean = logMedian;
         this.logVar = Math.pow(MAD_SCALE_FACTOR*logMAD,2);
+
+        if (DEBUG){
+            System.out.println("Robust parameter estimate for log normal distribution: logmean: "+String.valueOf(logMean)+", logvar: "+String.valueOf(logVar));
+            try {
+                BufferedWriter writer = Files.newBufferedWriter(Paths.get("lognorm_dist_estimation_train_values.csv"));
+                for (double exampleValue : exampleValues) {
+                    writer.write(String.valueOf(exampleValue));
+                    writer.newLine();
+                }
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
     }
 
     public double toPvalue(double score) {
