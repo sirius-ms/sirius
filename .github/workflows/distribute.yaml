@@ -7,7 +7,7 @@ jobs:
   gradle:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, mac-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
       # assign the environment variable env.ARTIFACTORY_TOKEN_REF with the previously configured ARTIFACTORY_TOKEN
