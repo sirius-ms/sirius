@@ -296,7 +296,9 @@ task refreshReadMe {
         String keywordEnd = null
 
         lines.each { String line ->
-            if (keyword == null) {
+            if (line.startsWith("[![Generic badge](https://img.shields.io/badge/Version-")){
+                nuLines.add("[![Generic badge](https://img.shields.io/badge/Version-${project.version.replace("-","--")}-informational.svg)](https://shields.io/)")
+            }else if (keyword == null) {
                 keywordEnd = keywords.get(line)
                 nuLines.add(line)
                 if (keywordEnd != null) {
