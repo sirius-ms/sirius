@@ -71,8 +71,9 @@ public class IonGroup {
         return isotopeSpectrum;
     }
 
-    public void addIsotopes(List<CorrelationGroup> correlatedPeaks) {
+    public void addIsotopes(List<CorrelationGroup> correlatedPeaks, SimpleMutableSpectrum spectrum) {
         this.isotopes.addAll(correlatedPeaks);
+        this.isotopeSpectrum = new SimpleSpectrum(spectrum);
     }
 
 

@@ -54,7 +54,7 @@ public class GapFilling {
         }
     }
 
-    private List<Gaps> gapFill(LCMSProccessingInstance instance, Cluster cluster, double rtError, double peakShapeError, Quality minShapeQuality, ProcessedSample sample) {
+    private  List<Gaps> gapFill(LCMSProccessingInstance instance, Cluster cluster, double rtError, double peakShapeError, Quality minShapeQuality, ProcessedSample sample) {
         final ArrayList<Gaps> gaps = new ArrayList<>();
         if (sample.storage instanceof MemoryFileStorage)
             ((MemoryFileStorage) sample.storage).keepInMemory();
@@ -188,7 +188,7 @@ public class GapFilling {
         return gaps;
     }
 
-    private Optional<DivisionPointer> splitSegment(ProcessedSample sample, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, Range<Long> rtRange) {
+    private  Optional<DivisionPointer> splitSegment(ProcessedSample sample, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, Range<Long> rtRange) {
         // search in segment for a second apex close to the expected peak.
         // Split segment into two parts
         int start = segment.getStartIndex(), ende = segment.getEndIndex();
@@ -259,7 +259,7 @@ public class GapFilling {
 
     }
 
-    private Optional<DivisionPointer> divide(ProcessedSample sample, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, int minimum, int apex, int secondApex) {
+    private  Optional<DivisionPointer> divide(ProcessedSample sample, MutableChromatographicPeak peak, ChromatographicPeak.Segment segment, int minimum, int apex, int secondApex) {
         double noiseLevel = sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(apex), peak.getMzAt(apex));
 
         double left = peak.getIntensityAt(segment.getStartIndex());

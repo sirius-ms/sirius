@@ -265,10 +265,14 @@ public class LCMSProccessingInstance {
 
     @NotNull
     public static SimpleMutableSpectrum toIsotopeSpectrum(IonGroup ion, double ionMass) {
+        return toIsotopeSpectrum(ion.getIsotopes(), ionMass);
+    }
+    @NotNull
+    public static SimpleMutableSpectrum toIsotopeSpectrum(List<CorrelationGroup> ions, double ionMass) {
         final SimpleMutableSpectrum isotope = new SimpleMutableSpectrum();
         isotope.addPeak(ionMass, 1.0d);
         eachPeak:
-        for (CorrelationGroup iso : ion.getIsotopes()) {
+        for (CorrelationGroup iso : ions) {
             final ChromatographicPeak l = iso.getLeft();
             final ChromatographicPeak r = iso.getRight();
             final ChromatographicPeak.Segment s = iso.getRightSegment();
@@ -278,7 +282,7 @@ public class LCMSProccessingInstance {
                 double rInt = r.getIntensityAt(a);
                 int iL = l.findScanNumber(r.getScanNumberAt(a));
                 if (iL < 0) {
-                    LoggerFactory.getLogger(LCMSProccessingInstance.class).warn("Strange isotope peak picked for feature " + ion);
+                    LoggerFactory.getLogger(LCMSProccessingInstance.class).warn("Strange isotope peak picked for feature " + iso.getLeft());
                     break eachPeak;
                 }
                 ratios += rInt / l.getScanPointAt(iL).getIntensity();

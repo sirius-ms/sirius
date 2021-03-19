@@ -149,7 +149,7 @@ public interface ChromatographicPeak {
         }
 
         public String toString() {
-            return "Segment(" + peak.getScanNumberAt(startIndex) + " ... " + peak.getScanNumberAt(endIndex) + "), " + (endIndex-startIndex+1) + " spans from " + (retentionTimeSpan().lowerEndpoint()/60000d) + " .. " + (retentionTimeSpan().upperEndpoint()/60000d)  +  " min over " + retentionTimeWidth()/1000d + " seconds.";
+            return "Segment(" + peak.getScanNumberAt(startIndex) + " ... " + peak.getScanNumberAt(endIndex) + "), apex = " + peak.getScanNumberAt(apex)+  ", " + (endIndex-startIndex+1) + " spans from " + (retentionTimeSpan().lowerEndpoint()/60000d) + " .. " + (retentionTimeSpan().upperEndpoint()/60000d)  +  " min over " + retentionTimeWidth()/1000d + " seconds.";
         }
 
         public long fwhm() {

@@ -22,6 +22,7 @@ package de.unijena.bioinf.model.lcms;
 
 import com.google.common.collect.Range;
 import gnu.trove.list.array.TIntArrayList;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -46,6 +47,7 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
             correlationStartPoint = cpeak.getCorrelationStartPoint();
             correlation = cpeak.getCorrelation();
         }
+        validate();
     }
 
     public MutableChromatographicPeak() {
@@ -59,23 +61,36 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         scanPoints.add(0, p);
     }
 
-    public void addSegment(int from, int apex, int to) {
+    public Segment addSegment(int from, int apex, int to) {
         Segment newSegment = new Segment(this, from, apex, to);
         // segments are not allowed to overlap
         var ceiling = segments.ceilingEntry(newSegment.apex);
         if (ceiling!=null && ceiling.getValue().startIndex < newSegment.endIndex)
-            throw new IllegalArgumentException("Segments are not allowed to overlap.");
+            throw new IllegalArgumentException("Segments are not allowed to overlap: " + newSegment + " overlaps with " + ceiling.getValue() );
         var floor = segments.floorEntry(newSegment.apex);
         if (floor != null && floor.getValue().endIndex > newSegment.startIndex)
-            throw new IllegalArgumentException("Segments are not allowed to overlap.");
+            throw new IllegalArgumentException("Segments are not allowed to overlap: " + newSegment + " overlaps with " + floor.getValue() );
 
         this.segments.put(newSegment.apex, newSegment);
+        validate();
+        return newSegment;
     }
 
     public void divideSegment(Segment segment, int minimum, int maximumLeft, int maximumRight) {
-        segments.remove(segment.apex);
-        addSegment(segment.startIndex, maximumLeft, minimum);
-        addSegment(minimum, maximumRight, segment.endIndex);
+        try {
+            final TreeMap<Integer,Segment> clone = (TreeMap<Integer, Segment>) segments.clone();
+            System.err.println("SPLIT " + segment + " AT " + getScanNumberAt(minimum) + " WITH TWO APEXES AT " + getScanNumberAt(maximumLeft) + " AND " + getScanNumberAt(maximumRight));
+            segments.remove(segment.apex);
+            Segment s = addSegment(segment.startIndex, maximumLeft, minimum);
+            System.err.println(s + " added");
+            s = addSegment(minimum, maximumRight, segment.endIndex);
+            System.err.println(s + " added");
+            validate();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            LoggerFactory.getLogger(MutableChromatographicPeak.class).error("Error while splitting segment " + segment + " into two parts: From " + maximumLeft + " to " + minimum + ", and from " + minimum + " to " + maximumRight + ".");
+            throw e;
+        }
     }
 
     public void joinSegments(Segment left, Segment right) {
@@ -86,6 +101,7 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         segments.remove(left.apex);
         segments.remove(right.apex);
         addSegment(Math.min(left.startIndex,right.startIndex),  newApex,Math.max(left.endIndex,right.endIndex));
+        validate();
     }
 
     @Override
@@ -213,6 +229,7 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
                 segments.put(t.apex, t);
             }
         }
+        validate();
     }
 
     public Optional<Segment> joinAllSegmentsWithinScanIds(int a, int b) {
@@ -225,7 +242,7 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         int minA=Integer.MAX_VALUE, maxB=0,maxApex=-1;
         double apexInt = 0f;
         for (Segment s : segments.values()) {
-            if ((a >= s.getStartScanNumber() && a <= s.getEndScanNumber()) || (b >= s.getStartScanNumber() && b <= s.getEndScanNumber()) ) {
+            if ((a <= s.getEndScanNumber() && b >= s.getEndScanNumber())) {
                 segmentsToDelete.add(s.apex);
                 minA = Math.min(minA, s.getStartIndex());
                 maxB = Math.max(maxB, s.getEndIndex());
@@ -239,7 +256,20 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         segmentsToDelete.forEach(x->{segments.remove(x); return true;});
         final Segment s = new Segment(this, minA, maxApex, maxB);
         segments.put(s.apex, s);
+        validate();
         return Optional.of(s);
+    }
+
+    public void validate() {
+        /*
+        for (Segment s : segments.values()) {
+            for (Segment t : segments.values()) {
+                if (s!=t && s.startIndex < t.endIndex && s.endIndex > t.startIndex) {
+                    throw new IllegalArgumentException("Segments are not allowed to overlap: " + s + " overlaps with " + t );
+                }
+            }
+        }
+         */
     }
 
 }
