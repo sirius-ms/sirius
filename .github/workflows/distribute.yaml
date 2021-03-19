@@ -1,5 +1,8 @@
-name: Run build on push
-on: push
+name: Ditribution build and publish
+on:
+  push:
+    branches:
+      - release-4-pre
 jobs:
   gradle:
     strategy:
@@ -19,7 +22,7 @@ jobs:
           java-version: '15' # The JDK version to make available on the path.
           java-package: jdk-fx # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
-      - name: Setup gradle build
+      - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         with:
           gradle-version: 6.8
