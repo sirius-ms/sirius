@@ -1,25 +1,34 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Basic class for molecular formulas.
@@ -38,7 +47,13 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     private static MolecularFormula Hydrogen;
 
     public static MolecularFormula getHydrogen() {
-        if (Hydrogen==null) Hydrogen = parse("H");
+        if (Hydrogen == null) {
+            try {
+                Hydrogen = parse("H");
+            } catch (UnknownElementException e) {
+                throw new RuntimeException();
+            }
+        }
         return Hydrogen;
 
     }
@@ -127,21 +142,52 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
      * creates a new molecular formula from a given string. This should be the preferred way
      * to create molecular formulas. Typical strings which are recognized are
      * "CH4", "NOH(CH2)4COOH", "CH4(C(H)2)8CH4", ""
-     * Modifiers as ions or isotopes are not recognized. For example "Fe+3" or "13C" are no valid
+     * Modifiers as iondetection or isotopes are not recognized. For example "Fe+3" or "13C" are no valid
      * molecular formulas.
      */
-    public static MolecularFormula parse(String text) {
+    public static MolecularFormula parse(String text) throws UnknownElementException {
         return parse(text, PeriodicTable.getInstance());
     }
 
-    static MolecularFormula parse(String text, PeriodicTable pt) {
+    public static MolecularFormula parseOrThrow(String text) {
+        try {
+            return parse(text);
+        } catch (UnknownElementException e) {
+            throw new RuntimeException();
+        }
+    }
+
+    public static MolecularFormula parseOrNull(@NotNull final String textFormula) {
+        try {
+            return parse(textFormula);
+        } catch (UnknownElementException e) {
+            LoggerFactory.getLogger(MolecularFormula.class).warn("Cannot parse Formula `" + textFormula + "`.", e);
+            return null;
+        }
+    }
+
+
+    /**
+     * parse and execuutes return false if parsing failed and no execution happend
+     */
+    public static boolean parseAndExecute(@NotNull final String textFormula, @Nullable Consumer<MolecularFormula> executeOrSkip) {
+        try {
+            final MolecularFormula formula = parse(textFormula);
+            if (executeOrSkip != null)
+                executeOrSkip.accept(formula);
+            return true;
+        } catch (UnknownElementException e) {
+            LoggerFactory.getLogger(MolecularFormula.class).warn("Cannot parse Formula `" + textFormula + "`. Skipping this entry!", e);
+        }
+        return false;
+    }
+
+
+    static MolecularFormula parse(String text, PeriodicTable pt) throws UnknownElementException {
         final ArrayList<Pair> pairs = new ArrayList<Pair>();
-        pt.parse(text, new FormulaVisitor<Object>() {
-            @Override
-            public Object visit(Element element, int amount) {
-                pairs.add(new Pair(element, amount));
-                return null;
-            }
+        pt.parse(text, (element, amount) -> {
+            pairs.add(new Pair(element, amount));
+            return null;
         });
         final BitSet bitset = new BitSet(pairs.size());
         for (Pair e : pairs) bitset.set(e.element.getId());
@@ -321,6 +367,9 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
 
     public boolean isCHNO() {
         return atomCount() <= numberOfCarbons() + numberOfHydrogens() + numberOfNitrogens() + numberOfOxygens();
+    }
+    public boolean isCHO() {
+        return atomCount() <= numberOfCarbons() + numberOfHydrogens() + numberOfOxygens();
     }
 
     public boolean isCHNOPS() {
@@ -530,6 +579,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
         Returns a new formula consisting of the maximum of each element of the single formulas
      */
     public MolecularFormula union(MolecularFormula other) {
+        if (other.isEmpty()) return this;
         final short[] amounts = buffer();
         final TableSelection selection = getTableSelection();
         final short[] otherAmounts = other.buffer();
@@ -620,6 +670,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
      * returns a new formula containing the atoms of both formulas
      */
     public MolecularFormula add(MolecularFormula other) {
+        if (other.isEmpty()) return this;
+        if (isEmpty()) return other;
         final short[] amounts = buffer();
         final TableSelection selection = getTableSelection();
         final short[] otherAmounts = other.buffer();
@@ -664,6 +716,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
      * the result is a subformula which appears after other is cut of from self.
      */
     public MolecularFormula subtract(MolecularFormula other) {
+        if (other.isEmpty()) return this;
         final short[] amounts = buffer();
         final TableSelection selection = getTableSelection();
         final short[] otherAmounts = other.buffer();
@@ -849,7 +902,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     public int compareTo(MolecularFormula o) {
         if (equals(o)) return 0;
         if (getMass() < o.getMass()) return -1;
-        return 1;
+        if (getMass() > o.getMass()) return 1;
+        return Integer.compare(hashCode(),o.hashCode());
     }
 
     /**

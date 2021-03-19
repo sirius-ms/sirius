@@ -1,13 +1,36 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -36,7 +59,7 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
                 File asFile = new File(entry.getName());
                 final GenericParser<Ms2Experiment> genericParser = msExperimentParser.getParser(asFile);
                 InputStream stream = zipFile.getInputStream(entry);
-                reader = new BufferedReader(new InputStreamReader(stream));
+                reader = FileUtils.ensureBuffering(new InputStreamReader(stream));
                 final URL source = file.toPath().resolve(entry.getName()).toUri().toURL();
 
                 S elem = genericParser.parse(reader,source);
@@ -61,7 +84,7 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
      */
     public <S extends Ms2Experiment> CloseableIterator<S> parseIterator(InputStream input, URL source) throws IOException {
         ZipInputStream zipInputStream = new ZipInputStream(input);
-        BufferedReader r = new BufferedReader(new InputStreamReader(zipInputStream));
+        BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(zipInputStream));
         Path sourcePath;
         try {
             sourcePath = Paths.get(source.toURI());

@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ChemistryBase.fp;
 
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +103,25 @@ public class ArrayFingerprint extends Fingerprint {
         return union;
     }
 
+
+    public double numberOfCommonBits(ArrayFingerprint other) {
+        enforceCompatibility(other);
+        final short[] as = indizes, bs=other.indizes;
+        int a=0, b=0, intersection=0;
+        while(a < as.length && b < bs.length) {
+            if (as[a]==bs[b]) {
+                ++intersection;
+                ++a; ++b;
+            } else if (as[a] > bs[b]) {
+                ++b;
+            } else {
+                ++a;
+            }
+        }
+        return intersection;
+    }
+
+
     public double plusMinusdotProduct(Fingerprint other) {
         if (other instanceof ArrayFingerprint) return plusMinusdotProduct((ArrayFingerprint)other);
         else return super.plusMinusdotProduct(other);
@@ -131,7 +170,7 @@ public class ArrayFingerprint extends Fingerprint {
 
         // |A n B| = (|A| + |B|) - |A u B|
         final int union = as.length + bs.length - intersection;
-
+        if (union==0) return 0d;
         // Jaccard := |(A n B)| / (A u B)
         return ((double)intersection)/union;
     }
@@ -253,6 +292,14 @@ public class ArrayFingerprint extends Fingerprint {
         }
 
         @Override
+        public FPIter jumpTo(int index) {
+            int R = Arrays.binarySearch(indizes, (short)index);
+            if (R < 0) R = -R - 1;
+            return new OnlySetIterator(R);
+        }
+
+
+        @Override
         public FPIter clone() {
             return new OnlySetIterator(offset);
         }
@@ -277,6 +324,17 @@ public class ArrayFingerprint extends Fingerprint {
         public ArrayIterator(int offset, int absolute) {
             this.offset = offset;
             this.relative = absolute;
+        }
+
+        @Override
+        public FPIter jumpTo(int index) {
+            int v = fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (v < 0) v = -v - 1;
+            short absV = (short)fingerprintVersion.getAbsoluteIndexOf(v);
+            int r = Arrays.binarySearch(indizes, absV);
+            if (r < 0) r = -r - 2;
+            return new ArrayIterator(r, v);
+
         }
 
         @Override
@@ -382,6 +440,18 @@ public class ArrayFingerprint extends Fingerprint {
         }
 
         @Override
+        public FPIter2 jumpTo(int index) {
+            int rel = fingerprintVersion.getClosestRelativeIndexTo(index);
+            if (rel < 0) rel = -rel -1;
+            short fpIndex = (short)fingerprintVersion.getAbsoluteIndexOf(rel);
+            int rl = Arrays.binarySearch(right.indizes, fpIndex);
+            if (rl < 0) rl = -rl - 2;
+            int ll = Arrays.binarySearch(left.indizes, fpIndex);
+            if (ll < 0) ll = -ll - 2;
+            return new PairwiseIterator(left, right, rel, ll, rl);
+        }
+
+        @Override
         public Iterator<FPIter2> iterator() {
             return clone();
         }
@@ -393,9 +463,11 @@ public class ArrayFingerprint extends Fingerprint {
         public PairwiseUnionIterator(ArrayFingerprint left, ArrayFingerprint right, int c, int l, int r) {
             this.l = l;
             this.r = r;
-            this.a = c;
             this.left = left;
             this.right = right;
+            if (c<0) {
+                a = Math.min(l<left.indizes.length ? left.indizes[l] : Short.MAX_VALUE, r<right.indizes.length ? right.indizes[r] : Short.MAX_VALUE );
+            } else a = c;
         }
 
         private void findNext() {
@@ -417,6 +489,26 @@ public class ArrayFingerprint extends Fingerprint {
                     r++;
                 }
             }
+        }
+
+        @Override
+        public FPIter2 jumpTo(int index) {
+            final PairwiseUnionIterator i;
+            int a = Arrays.binarySearch(left.indizes, (short)index);
+            if (a<0) a = -a - 1;
+            int b = Arrays.binarySearch(right.indizes, (short)index);
+            if (b<0) b = -b - 1;
+            if (left.indizes[a] < right.indizes[b]) {
+                b = Arrays.binarySearch(right.indizes, left.indizes[a]);
+                if (b<0) b = -b - 1;
+                i = new PairwiseUnionIterator(left,right,-1,a,b);
+            } else {
+                a = Arrays.binarySearch(left.indizes, right.indizes[b]);
+                if (a < 0) a = -a - 1;
+                i = new PairwiseUnionIterator(left, right, -1, a, b);
+            }
+            i.findNext();
+            return i;
         }
 
         @Override
@@ -467,6 +559,9 @@ public class ArrayFingerprint extends Fingerprint {
             throw new UnsupportedOperationException();
         }
 
+        /**
+         * TODO: kaidu: seems wrong to me
+         */
         @Override
         public boolean hasNext() {
             return l < left.indizes.length || r < right.indizes.length;
@@ -488,8 +583,11 @@ public class ArrayFingerprint extends Fingerprint {
             this.right = right;
             this.fingerprintVersion = left.fingerprintVersion;
             nl=l; nr=r;
-            absolute = c;
-            if (c<0) findNext();
+            if (c<0) {
+                if (findNext()) {
+                    absolute = left.indizes[nl];
+                }
+            } else absolute = c;
         }
 
         @Override
@@ -525,6 +623,25 @@ public class ArrayFingerprint extends Fingerprint {
         @Override
         public MolecularProperty getMolecularProperty() {
             return fingerprintVersion.getMolecularProperty(absolute);
+        }
+
+        @Override
+        public FPIter2 jumpTo(int index) {
+            final PairwiseIntersectionIterator i;
+            int a = Arrays.binarySearch(left.indizes, (short)index);
+            if (a<0) a = -a - 1;
+            int b = Arrays.binarySearch(right.indizes, (short)index);
+            if (b<0) b = -b - 1;
+            if (left.indizes[a] >= right.indizes[b]) {
+                b = Arrays.binarySearch(right.indizes, left.indizes[a]);
+                if (b<0) b = -b - 1;
+                i = new PairwiseIntersectionIterator(left,right,-1,a,b);
+            } else {
+                a = Arrays.binarySearch(left.indizes, right.indizes[b]);
+                if (a<0) a = -a - 1;
+                i = new PairwiseIntersectionIterator(left,right,-1,a,b);
+            }
+            return i;
         }
 
         private boolean findNext() {

@@ -1,8 +1,29 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ChemistryBase.fp;
 
 import gnu.trove.list.array.TShortArrayList;
 import gnu.trove.map.hash.TShortShortHashMap;
 
+import java.util.Arrays;
 import java.util.BitSet;
 
 public class MaskedFingerprintVersion extends FingerprintVersion{
@@ -29,6 +50,12 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
         }
     }
 
+    public static MaskedFingerprintVersion allowAll(FingerprintVersion v) {
+        Builder b = buildMaskFor(v);
+        b.enableAll();
+        return b.toMask();
+    }
+
     public int[] allowedIndizes() {
         return allowedIndizes.clone();
     }
@@ -45,6 +72,8 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
 
     public <T extends AbstractFingerprint> T mask(T fingerprint) {
         if (fingerprint.fingerprintVersion instanceof MaskedFingerprintVersion) {
+            if (fingerprint.fingerprintVersion == this)
+                return fingerprint;
             if (!compatible(fingerprint.fingerprintVersion)) {
                 throw new RuntimeException("Fingerprint is already masked by a fingerprint mask which is not compatible to this mask: " + toString() +  " vs " + fingerprint.fingerprintVersion.toString());
             }
@@ -131,6 +160,11 @@ public class MaskedFingerprintVersion extends FingerprintVersion{
     }
     public int getAbsoluteIndexOf(int relativeIndex) {
         return allowedIndizes[relativeIndex];
+    }
+
+    @Override
+    protected int getClosestRelativeIndexTo(int absoluteIndex) {
+        return Arrays.binarySearch(allowedIndizes, absoluteIndex);
     }
 
     @Override

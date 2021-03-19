@@ -1,20 +1,4 @@
-/*
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2015 Kai Dührkop
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
- */
+
 package de.unijena.bioinf.ChemistryBase.chem;
 
 import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaPacker;
@@ -24,7 +8,6 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 
 import static org.junit.Assert.assertEquals;
 
@@ -35,14 +18,14 @@ public class FormulaPackerTest {
 
     @Test
     public void testEncodingDecoding() {
-        final MolecularFormulaPacker packer = MolecularFormulaPacker.newPacker(ChemicalAlphabet.alphabetFor(MolecularFormula.parse("CHNOPSClBrF")));
+        final MolecularFormulaPacker packer = MolecularFormulaPacker.newPacker(ChemicalAlphabet.alphabetFor(MolecularFormula.parseOrThrow("CHNOPSClBrF")));
 
         final String[] formulas = new String[]{
                 "C6H12O6", "C3H4NOP3", "C2H4SO8", "C22H60P8S8", "C16H22F16O8", "C4H7Br"
         };
 
         for (String s : formulas) {
-            final MolecularFormula f = MolecularFormula.parse(s);
+            final MolecularFormula f = MolecularFormula.parseOrThrow(s);
             assertEquals(f, packer.decode(packer.encode(f)));
         }
     }
@@ -53,7 +36,7 @@ public class FormulaPackerTest {
                 "C6H12O6", "C3H4NOP3", "C2H4SO8", "C22H60P8S8", "C16H22F16O8", "C4H7Br50"
         };
         final MolecularFormula[] forms = new MolecularFormula[formulas.length];
-        for (int k = 0; k < formulas.length; ++k) forms[k] = MolecularFormula.parse(formulas[k]);
+        for (int k = 0; k < formulas.length; ++k) forms[k] = MolecularFormula.parseOrThrow(formulas[k]);
 
         final MolecularFormulaPacker packer = MolecularFormulaPacker.newPackerFor(forms);
 
@@ -65,9 +48,9 @@ public class FormulaPackerTest {
     @Test
     public void packerShouldBehaveLikeMolecularFormulas() {
         final MolecularFormula[] formulas = new MolecularFormula[]{
-                MolecularFormula.parse("C6H12O6"), MolecularFormula.parse("C8N2H15PS"),
-                MolecularFormula.parse("C"), MolecularFormula.parse("CBrI7"),
-                MolecularFormula.parse("C5H7Br3I3F2")
+                MolecularFormula.parseOrThrow("C6H12O6"), MolecularFormula.parseOrThrow("C8N2H15PS"),
+                MolecularFormula.parseOrThrow("C"), MolecularFormula.parseOrThrow("CBrI7"),
+                MolecularFormula.parseOrThrow("C5H7Br3I3F2")
         };
         final MolecularFormulaPacker packer = MolecularFormulaPacker.newPackerFor(formulas);
         for (MolecularFormula f : formulas) {
@@ -89,12 +72,12 @@ public class FormulaPackerTest {
             assertEquals(f.isCHNOPS(), packer.isCHNOPS(packed));
             assertEquals(f.getIntMass(), packer.getIntMass(packed));
             assertEquals(f.maybeCharged(), packer.maybeCharged(packed));
-            assertEquals(f.add(MolecularFormula.parse("C4H4O6")),
-                    packer.decode(packer.add(packed, packer.encode(MolecularFormula.parse("C4H4O6")))));
-            final MolecularFormula g = MolecularFormula.parse("C27H44N7O13P6S5Br5I9F4");
+            assertEquals(f.add(MolecularFormula.parseOrThrow("C4H4O6")),
+                    packer.decode(packer.add(packed, packer.encode(MolecularFormula.parseOrThrow("C4H4O6")))));
+            final MolecularFormula g = MolecularFormula.parseOrThrow("C27H44N7O13P6S5Br5I9F4");
             assertEquals(g.subtract(f), packer.decode(packer.subtract(packer.encode(g), packed)));
-            assertEquals(f.isSubtractable(MolecularFormula.parse("C4H2")), packer.isSubtractable(packed,
-                    packer.encode(MolecularFormula.parse("C4H2"))));
+            assertEquals(f.isSubtractable(MolecularFormula.parseOrThrow("C4H2")), packer.isSubtractable(packed,
+                    packer.encode(MolecularFormula.parseOrThrow("C4H2"))));
         }
     }
 
@@ -130,19 +113,19 @@ public class FormulaPackerTest {
     @Test
     public void testFormulaSet() throws IOException {
         final MolecularFormula[] formulas = new MolecularFormula[SAMPLE.length];
-        for (int k=0; k < formulas.length; ++k) formulas[k] = MolecularFormula.parse(SAMPLE[k]);
+        for (int k=0; k < formulas.length; ++k) formulas[k] = MolecularFormula.parseOrThrow(SAMPLE[k]);
         final MolecularFormulaSet set = new MolecularFormulaSet(ChemicalAlphabet.alphabetFor(formulas));
         for (MolecularFormula f : formulas) set.add(f);
 
         for (MolecularFormula f : formulas) assertEquals("expect " + f + " to be contained", true, set.contains(f));
-        assertEquals(false, set.contains(MolecularFormula.parse("C7H14NO7PS")));
-        assertEquals(false, set.contains(MolecularFormula.parse("C7H14F512")));
+        assertEquals(false, set.contains(MolecularFormula.parseOrThrow("C7H14NO7PS")));
+        assertEquals(false, set.contains(MolecularFormula.parseOrThrow("C7H14F512")));
         final ByteArrayOutputStream wr = new ByteArrayOutputStream(1024);
         set.store(wr);
         final ByteArrayInputStream ir = new ByteArrayInputStream(wr.toByteArray());
         final MolecularFormulaSet set2 = MolecularFormulaSet.load(ir);
         for (MolecularFormula f : formulas) assertEquals("expect " + f + " to be contained", true, set2.contains(f));
-        assertEquals(false, set2.contains(MolecularFormula.parse("C7H14NO7PS")));
-        assertEquals(false, set2.contains(MolecularFormula.parse("C7H14F512")));
+        assertEquals(false, set2.contains(MolecularFormula.parseOrThrow("C7H14NO7PS")));
+        assertEquals(false, set2.contains(MolecularFormula.parseOrThrow("C7H14F512")));
     }
 }

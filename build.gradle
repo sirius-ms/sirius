@@ -1,8 +1,10 @@
+import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-    id "com.jfrog.artifactory" version "4.3.0"
+    id "com.jfrog.artifactory" version "4.17.2"
 }
+
 
 //Global Properties
 ext {
@@ -17,27 +19,41 @@ ext {
     System.properties.putAll(props)
     logger.lifecycle('reading build properties file...')
     props = new Properties()
-    File propertiesFileIn = new File("${projectDir}/src/main/resources/sirius.build.properties")
-    propertiesFileIn.withReader("UTF8", {
+    file("${projectDir}/chemistry_base/src/main/resources/sirius.build.properties").withReader("UTF8", {
+        props.load(it)
+    })
+    file("${projectDir}/fingerid_base_oss/src/main/resources/csi_fingerid.build.properties").withReader("UTF8", {
         props.load(it)
     })
     System.properties.putAll(props)
 
 
     siriusVersion = System.getProperty('de.unijena.bioinf.sirius.version')
+    fingeridVersion = System.getProperty('de.unijena.bioinf.fingerid.version')
     //version for external libraries
-    jjobs_version = '0.9.6'
+    jjobs_version = '0.9.20-SNAPSHOT'
     slf4j_version = '1.7.25'
-    gson_version = '2.6.2'
+    gson_version = "2.8.6"//'2.6.2'
     math3_version = '3.6.1'
     glpk_version = System.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
     gurobi_version = System.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
     cplex_version = System.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
     graphUtils_version = '1.1'
-    cdk_version = "2.1.1"
+    cdk_version = "2.3"
+    jetbrains_version = "17.0.0"
 
     jewelcli_version = '0.8.9'
     //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
+    glpk_lib_version = '4.60'
+
+    commons_email_version = '1.4'
+    oshi_version = '5.2.2'
+    json_version = '1.0'
+    json_impl_version = "1.0.4"
+    psql_version = "42.2.1"
+
+    liblinear_version = "1.95"
+    libsvm_version = "3.20"
 
 
 }
@@ -47,8 +63,8 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = 11
+    targetCompatibility = 11
 
 
     version = project.siriusVersion
@@ -59,19 +75,65 @@ allprojects {
         mavenCentral()
         maven {
             url "https://bio.informatik.uni-jena.de/repository/libs-oss"
+            metadataSources {
+                mavenPom()
+                artifact()
+            }
         }
+
         maven {
-            url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
-            //url "http://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo"
+            url "https://bio.informatik.uni-jena.de/repository/libs-release-local-private/"
+            metadataSources {
+                mavenPom()
+                artifact()
+            }
+            credentials {               // Optional resolver credentials (leave out to use anonymous resolution)
+                username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
+                password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+            }
         }
+
+        maven {
+            url "https://bio.informatik.uni-jena.de/repository/libs-snapshot-local-private/"
+            metadataSources {
+                mavenPom()
+                artifact()
+            }
+            credentials {               // Optional resolver credentials (leave out to use anonymous resolution)
+                username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
+                password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+            }
+        }
+
+
         maven {
             url "https://www.xypron.de/repository" //glpk repo
         }
+        maven {
+            url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/" //mzml parser
+        }
+        maven {
+            url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
+        }
+        /*maven{
+            url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl
+            metadataSources { artifact() }
+        }*/
     }
 
     dependencies {
-        compile 'net.sf.trove4j:trove4j:3.0.3'
-        compile 'com.google.guava:guava:18.0'
+        compile "org.jetbrains:annotations:$jetbrains_version"
+        compile 'net.sf.trove4j:core:3.1.0' //switched from 'net.sf.trove4j:trove4j:3.0.3' which seems to be buggy and no longer supported
+        compile group: 'com.google.guava', name: 'guava', version: '28.1-jre'
+        compile 'org.apache.commons:commons-lang3:3.8.1'
+        compile 'commons-io:commons-io:2.6'
+        compile group: 'de.unijena.bioinf', name: 'jjobs-core', version:"$jjobs_version"
+        compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
+
+
+
+        testCompile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+        testCompile group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 
@@ -87,7 +149,6 @@ allprojects {
         from javadoc.destinationDir
     }
 
-
     publishing {
         publications {
             mavenJava(MavenPublication) {
@@ -101,8 +162,50 @@ allprojects {
                         }
                     }
                 }
-                setArtifacts([])
+//                artifacts = []
             }
+        }
+    }
+
+    sourceSets {
+        main {
+            resources {
+                srcDirs "src/main/resources", "configs"
+            }
+        }
+    }
+
+    task cleanConfig {
+        group = 'build'
+        doLast {
+            def f = file("${projectDir}/configs")
+            if (f.exists())
+                f.deleteDir()
+        }
+    }
+    clean.dependsOn cleanConfig
+}
+
+task downloadGLPK(type: Copy) {
+    def glpkURL = new URL("https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/glpk/glpk-${project.glpk_lib_version}.zip")
+    project.ext.set("glpkPath", getBuildDir().toPath().resolve('tmp/glpk/').toFile())
+
+    java.nio.file.Path dir = project.glpkPath.toPath().getParent()
+    if (!dir.resolve('glpk').toFile().exists()) {
+        copy {
+            println(dir.toString())
+            dir.resolve('glpk').toFile().deleteDir()
+            Files.createDirectories(dir)
+
+            def glpkZipFile = Paths.get('glpk.zip')
+            getLogger().lifecycle("Downloading glpk...")
+            def file = dir.resolve(glpkZipFile).newOutputStream()
+            file << glpkURL.openStream()
+            file.close()
+
+            getLogger().lifecycle("Unpacking glpk...")
+            from zipTree(dir.resolve(glpkZipFile).toFile())
+            into dir.toFile()
         }
     }
 }
@@ -117,9 +220,9 @@ configure(javaProjects()) {
             mavenJava(MavenPublication) {
 //                from project.components.java
                 if (version.toString().endsWith('-SNAPSHOT'))
-                    setArtifacts([jar, sourceJar])
+                    artifacts =  [jar, sourceJar]
                 else
-                    setArtifacts([jar, sourceJar, javadocJar])
+                    artifacts = [jar, sourceJar, javadocJar]
             }
         }
     }
@@ -135,8 +238,12 @@ artifactory {
             else
                 repoKey = 'libs-release-local'
 
-            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
-            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+            username = System.getenv("ARTIFACTORY_USERNAME") != null
+                    ? System.getenv("ARTIFACTORY_USERNAME")
+                    : System.properties['de.unijena.bioinf.build.artifactory.username']
+            password = System.getenv("ARTIFACTORY_TOKEN") != null
+                    ? System.getenv("ARTIFACTORY_TOKEN")
+                    : System.properties['de.unijena.bioinf.build.artifactory.password']
         }
         defaults {
             publications('mavenJava')

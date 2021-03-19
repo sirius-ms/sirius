@@ -1,59 +1,90 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ChemistryBase.ms.ft;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.graphUtils.tree.*;
+import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 
 import java.util.*;
 
-public class FTree extends AbstractFragmentationGraph {
+public class FTree extends AbstractFragmentationGraph implements ResultAnnotation {
 
     protected Fragment root;
 
     /**
-     * The absolute score of this tree.
-     * It is recommended to using tree.getAnnotationOrThrow(TreeScoring.class).getOverallScore() instead
-     * This score is the raw result of the underlying optimization problem and might differ from the final
-     * score (e.g. there might be orthogonal scores that are added later).
+     * The total score of the tree. This is the sum of scores of all losses plus the root score
      */
     protected double treeWeight;
 
-    public FTree(MolecularFormula rootFormula) {
-        this.root = addFragment(rootFormula);
+    /**
+     * Due to a very bad design decision, we cannot assign scores to fragments. Thus, we have to store
+     * the score of the root separately.
+     */
+    protected double rootScore;
+
+    public FTree(MolecularFormula rootFormula, Ionization ionization) {
+        this.root = addFragment(rootFormula, ionization);
+        this.rootScore = 0d;
+    }
+
+    /**
+     * Creates a new FTree, using information from rootFragment but not the object itself
+     * @param rootFragment
+     */
+    public FTree(Fragment rootFragment) {
+        this.root = addFragment(rootFragment.getFormula(), rootFragment.getIonization());
     }
 
     public FTree(FTree copy) {
         super(copy);
         this.root = fragments.get(0);
+        this.rootScore = copy.rootScore;
+        this.treeWeight = copy.treeWeight;
         assert root.isRoot();
     }
+
+    public static Comparator<FTree> orderByScoreDescending() {
+        return new Comparator<FTree>() {
+            @Override
+            public int compare(FTree o1, FTree o2) {
+                return Double.compare(o2.treeWeight, o1.treeWeight);
+            }
+        };
+    }
+
+
 
     /**
      * Add a new root to the tree and connecting it with the previous root
      * @param newRoot
      */
-    public Fragment addRoot(MolecularFormula newRoot) {
+    public Fragment addRoot(MolecularFormula newRoot, Ionization newRootIon) {
         final MolecularFormula loss = newRoot.subtract(root.getFormula());
         if (!loss.isAllPositiveOrZero()) {
             throw new IllegalArgumentException(root.getFormula().toString() + " cannot be child formula of " + newRoot.toString());
         }
-        final Fragment f = addFragment(newRoot);
+        final Fragment f = addFragment(newRoot, newRootIon);
         addLoss(f, root);
         fragments.set(0, f);
         fragments.set(f.vertexId, root);
@@ -61,6 +92,14 @@ public class FTree extends AbstractFragmentationGraph {
         f.setVertexId(0);
         root = f;
         return f;
+    }
+
+    public double getRootScore() {
+        return rootScore;
+    }
+
+    public void setRootScore(double score) {
+        this.rootScore = score;
     }
 
     public double getTreeWeight() {
@@ -136,12 +175,35 @@ public class FTree extends AbstractFragmentationGraph {
         };
     }
 
-    public Fragment addFragment(Fragment parent, MolecularFormula child) {
+    /**
+     * it is recommended to rather use addFragment(Fragment parent, Fragment child), if possible
+     * @param parent
+     * @param child
+     * @param childIon
+     * @return
+     */
+    public Fragment addFragment(Fragment parent, MolecularFormula child, Ionization childIon) {
         final MolecularFormula loss = parent.formula.subtract(child);
         if (!loss.isAllPositiveOrZero()) {
             throw new IllegalArgumentException(child.toString() + " cannot be child formula of " + parent.formula.toString());
         }
-        final Fragment f = addFragment(child);
+        final Fragment f = addFragment(child, childIon);
+        addLoss(parent, f);
+        return f;
+    }
+
+    /**
+     * Adds a new fragment to the tree and using information from child Fragment but not the object itself
+     * @param parent
+     * @param child
+     * @return
+     */
+    public Fragment addFragment(Fragment parent, Fragment child) {
+        final MolecularFormula loss = parent.formula.subtract(child.getFormula());
+        if (!loss.isAllPositiveOrZero()) {
+            throw new IllegalArgumentException(child.toString() + " cannot be child formula of " + parent.formula.toString());
+        }
+        final Fragment f = addFragment(child.getFormula(), child.getIonization());
         addLoss(parent, f);
         return f;
     }

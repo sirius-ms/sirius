@@ -1,18 +1,34 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.GibbsSampling.model;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.Scored;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
-import de.unijena.bioinf.graphUtils.tree.GraphException;
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -56,18 +72,22 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     }
 
     private void init() throws ExecutionException {
-        firstRoundCompoundsIdx = new TIntArrayList();
+        firstRoundCompoundsIdx = selectCompoundsForFirstRoundGibbsSampling();
         for (int i = 0; i < possibleFormulas.length; i++) {
             C[] poss = possibleFormulas[i];
-            if (poss.length>0 && CompoundQuality.isNotBadQuality(poss[0].getExperiment())){
-                firstRoundCompoundsIdx.add(i);
+////            if (poss.length>0 && CompoundQuality.isNotBadQuality(poss[0].getExperiment())){
+//            //todo compound quality handling has changed a lot
+//            if (poss.length>0 && poss[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new).isNotBadQuality()){
+//                firstRoundCompoundsIdx.add(i);
+//            }
+            if (cClass==null && poss.length>0){
+                cClass = (Class<C>)poss[0].getClass();
+                break;
             }
-            if (cClass==null && poss.length>0) cClass = (Class<C>)poss[0].getClass();
         }
 
 
         C[][] firstRoundPossibleFormulas;
-        String[] firstRoundIds;
         if (firstRoundCompoundsIdx.size()==possibleFormulas.length){
             firstRoundPossibleFormulas = possibleFormulas;
             firstRoundIds = ids;
@@ -79,12 +99,57 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
                 firstRoundIds[i] = ids[firstRoundCompoundsIdx.get(i)];
             }
         }
+        logInfo("Start first round with " + firstRoundCompoundsIdx.size() + " of " + possibleFormulas.length + " compounds.");
 
 
 
-        LOG().info("Running first round with "+firstRoundIds.length+" compounds.");
+
+        logInfo("ZODIAC: Graph building");
+        long start = System.currentTimeMillis();
         GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(firstRoundIds, firstRoundPossibleFormulas, nodeScorers, edgeScorers, edgeFilter, cClass);
         graph = submitSubJob(graphBuilder).awaitResult();
+        logInfo("finished building graph after: "+(System.currentTimeMillis()-start)+" ms");
+    }
+
+    /*
+    select compounds for first round of sampling based on quality.
+     */
+    private TIntArrayList selectCompoundsForFirstRoundGibbsSampling(){
+        TIntArrayList firstRoundCompoundsIdx = new TIntArrayList();
+        int totalNumber = possibleFormulas.length;
+        long numberOfGoodQualityCompounds = Arrays.stream(possibleFormulas).filter(c->c.length>0 && c[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new).isNotBadQuality()).count();
+
+        double goodRatio = 1d*numberOfGoodQualityCompounds/totalNumber;
+        boolean onlyUseGoodAndUnknownQuality;
+        if (numberOfGoodQualityCompounds<300 || goodRatio<0.33) {
+            //if we have few good quality compounds, also use some others with only bad MS1 but good MS2
+            onlyUseGoodAndUnknownQuality = false;
+        } else {
+            onlyUseGoodAndUnknownQuality = true;
+        }
+
+        for (int i = 0; i < possibleFormulas.length; i++) {
+            C[] poss = possibleFormulas[i];
+            if (onlyUseGoodAndUnknownQuality) {
+                //check if MS1 and MS2-quality is ok
+                if (poss.length>0 && poss[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new).isNotBadQuality()){
+                    firstRoundCompoundsIdx.add(i);
+                }
+            } else {
+                //check only if MS2-quality is ok
+                if (poss.length>0){
+                    CompoundQuality quality = poss[0].getExperiment().getAnnotation(CompoundQuality.class, CompoundQuality::new);
+                    if (quality.isNot(CompoundQuality.CompoundQualityFlag.FewPeaks) &&
+                            quality.isNot(CompoundQuality.CompoundQualityFlag.Chimeric) &&
+                            quality.isNot(CompoundQuality.CompoundQualityFlag.PoorlyExplained)) {
+                        firstRoundCompoundsIdx.add(i);
+                    }
+                }
+            }
+
+            if (cClass==null && poss.length>0) cClass = (Class<C>)poss[0].getClass();
+        }
+        return firstRoundCompoundsIdx;
     }
 
     private int maxSteps = -1;
@@ -98,15 +163,19 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
     @Override
     protected ZodiacResult<C> compute() throws Exception {
         if (maxSteps<0 || burnIn<0) throw new IllegalArgumentException("number of iterations steps not set.");
-
         checkForInterruption();
         init();
-        Graph.validateAndThrowError(graph, LOG());
+        checkForInterruption();
+        logInfo("Running ZODIAC with "+firstRoundIds.length+" of "+ids.length+" compounds.");
+        Graph.validateAndThrowError(graph, this::logWarn);
         gibbsParallel = new GibbsParallel<>(graph, repetitions);
         gibbsParallel.setIterationSteps(maxSteps, burnIn);
+        long start = System.currentTimeMillis();
         submitSubJob(gibbsParallel);
-
+        checkForInterruption();
         results1 = gibbsParallel.awaitResult();
+        logDebug("finished running " + repetitions + " repetitions in parallel: "+(System.currentTimeMillis()-start)+" ms");
+
         checkForInterruption();
 
         firstRoundIds = gibbsParallel.getGraph().getIds();
@@ -124,7 +193,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
 //            gibbsParallel = new GibbsParallel<>(ids, combined, nodeScorers, edgeScorers, edgeFilter, workersCount, repetitions);
 
             //changed same as in 3phase
-            LOG().info("Score "+(ids.length-results1.length)+" low quality compounds. "+ids.length+" compounds overall.");
+            logInfo("Running second round: Score "+(ids.length-results1.length)+" low quality compounds. "+ids.length+" compounds overall.");
             //todo rather sample everything and just use results of low quality compounds? may there arise problems? in principle should not as we still sample all compounds (even 'fixed')
             C[][] candidatesNewRound = combineNewAndOldAndSetFixedProbabilities(results1, firstRoundCompoundsIdx);
             //todo this stupid thing creates a complete new graph.
@@ -133,7 +202,7 @@ public class TwoPhaseGibbsSampling<C extends Candidate<?>> extends BasicMasterJJ
             GraphBuilder<C> graphBuilder = GraphBuilder.createGraphBuilder(ids, candidatesNewRound, nodeScorers, edgeScorers, edgeFilter, fixedIds, cClass);
             graph = submitSubJob(graphBuilder).awaitResult();
             checkForInterruption();
-            Graph.validateAndThrowError(graph, LOG());
+            Graph.validateAndThrowError(graph, this::logWarn);
 
             gibbsParallel = new GibbsParallel<>(graph, repetitions, fixedIds);
             gibbsParallel.setIterationSteps(maxSteps, burnIn);

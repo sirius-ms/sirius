@@ -1,20 +1,24 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.MassDecomposer;
 
 import java.util.*;
@@ -366,7 +370,7 @@ public class RangeMassDecomposer<T> extends MassDecomposer<T> {
 
         final long[][][] _ERTs_ = this.ERTs;
         //calculate the required ERTs
-        if ((1 << (ERTs.length - 1)) <= deviation) {
+        if ((1 << (_ERTs_.length - 1)) <= deviation) {
             calcERT(deviation);
         }
         final long[][][] ERTs = this.ERTs;
@@ -519,8 +523,9 @@ public class RangeMassDecomposer<T> extends MassDecomposer<T> {
         synchronized (this) {
             final long[][][] tables = this.ERTs;
             if (tables.length == currentLength) {
-                this.ERTs = Arrays.copyOf(this.ERTs, this.ERTs.length + 1);
-                this.ERTs[this.ERTs.length - 1] = nextERT;
+                final long[][][] __tmp__ = Arrays.copyOf(this.ERTs, this.ERTs.length + 1);
+                __tmp__[__tmp__.length - 1] = nextERT;
+                this.ERTs = __tmp__;
             } else {
                 // another background thread did already compute the ERT. So we don't have to do this again
             }

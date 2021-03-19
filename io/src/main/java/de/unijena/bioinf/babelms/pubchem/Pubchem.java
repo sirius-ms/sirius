@@ -1,25 +1,30 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.babelms.pubchem;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.chemdb.CompoundQuery;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -44,7 +49,7 @@ public class Pubchem implements CompoundQuery {
     public static void main(String[] args) {
         final Pubchem pubchem = new Pubchem();
         final Set<MolecularFormula> formulas = pubchem.findMolecularFormulasByMass(
-                PeriodicTable.getInstance().ionByName("[M+H]+").precursorMassToNeutralMass(314.1364), new Deviation(15, 0.0025));
+                PeriodicTable.getInstance().ionByNameOrThrow("[M+H]+").precursorMassToNeutralMass(314.1364), new Deviation(15, 0.0025));
         //formulas.addAll(new ChemSpider().findMolecularFormulasByMass(194.080376, new Deviation(5)));
         //System.out.println(formulas.size());
         //System.out.println(formulas);
@@ -98,9 +103,8 @@ public class Pubchem implements CompoundQuery {
         if (formulaIndex<0) throw new RuntimeException("Unexpected result:\n" + csv );
         for (int k=1; k < rows.length; ++k) {
             final String[] row = rows[k].split(",");
-            formulas.add(MolecularFormula.parse(row[formulaIndex].substring(1,row[formulaIndex].length()-1)));
+            MolecularFormula.parseAndExecute(row[formulaIndex].substring(1, row[formulaIndex].length() - 1), formulas::add);
         }
-        //System.err.println(); System.err.flush();
         return formulas;
     }
 
@@ -133,7 +137,7 @@ public class Pubchem implements CompoundQuery {
             try {
                 stream = connection.getInputStream();
             } catch (IOException e) {
-                final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+                final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(connection.getErrorStream()));
                 final StringBuilder buffer = new StringBuilder(256);
                 while (true) {
                     final String line = reader.readLine();
@@ -143,7 +147,7 @@ public class Pubchem implements CompoundQuery {
                 System.err.println(buffer.toString());
                 throw new RuntimeException(e);
             }
-            final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
+            final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(stream, "UTF-8"));
             final StringBuilder buffer = new StringBuilder(256);
             while (true) {
                 final String line = reader.readLine();
