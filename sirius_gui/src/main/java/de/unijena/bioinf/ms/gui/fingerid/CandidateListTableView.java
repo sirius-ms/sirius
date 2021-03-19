@@ -24,23 +24,28 @@ import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
 import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.ms.gui.table.*;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 
 /**
  * Created by fleisch on 15.05.17.
  */
-public class CandidateListTableView extends CandidateListView implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
+public class CandidateListTableView extends CandidateListView {
 
     private final ActionTable<FingerprintCandidateBean> table;
     private SortedList<FingerprintCandidateBean> sortedSource;
 
     public CandidateListTableView(final StructureList list) {
         super(list);
+
+        getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
+            if (experiment == null || experiment.stream().noneMatch(e -> e.getFingerprintResult().isPresent()))
+                showCenterCard(ActionList.ViewState.NOT_COMPUTED);
+            else if (resultElements.isEmpty())
+                showCenterCard(ActionList.ViewState.EMPTY);
+            else
+                showCenterCard(ActionList.ViewState.DATA);
+        });
 
         final CandidateTableFormat tf = new CandidateTableFormat(getSource().getBestFunc());
         this.table = new ActionTable<>(filteredSource, sortedSource, tf);
@@ -53,21 +58,14 @@ public class CandidateListTableView extends CandidateListView implements ActiveE
         table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
         LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, (LinkedSiriusTableCellRenderer.LinkCreator<PubmedLinks>) s -> s == null ? null : s.getPubmedLink());
         linkRenderer.registerToTable(table, 7);
-        this.add(
-                new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
-                BorderLayout.CENTER
-        );
+
+        addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
+        showCenterCard(ActionList.ViewState.NOT_COMPUTED);
     }
 
     @Override
     protected FilterList<FingerprintCandidateBean> configureFiltering(EventList<FingerprintCandidateBean> source) {
         sortedSource = new SortedList<>(source);
         return super.configureFiltering(sortedSource);
-    }
-
-    @Override
-    public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
-        System.out.println("CandidateListTableView Changed!");
-        //not used
     }
 }

@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -63,8 +64,9 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
         csiScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
         tanimotoStats = new DoubleListStats();
+
+        /////////// LISTENERS //////////////
         source.addActiveResultChangedListener(this);
-        resultsChanged(null, null, source.getElementList(), source.getResultListSelectionModel());
     }
 
     private JJob<Boolean> backgroundLoader = null;
@@ -81,28 +83,26 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
         try {
             backgroundLoaderLock.lock();
             final JJob<Boolean> old = backgroundLoader;
-
             backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
                 LoadMoleculeJob loadMols;
 
                 @Override
                 protected Boolean compute() throws Exception {
                     //cancel running job if not finished to not wais resources for fetching data that is not longer needed.
-
-
                     if (old != null && !old.isFinished()) {
                         old.cancel(true);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
 
                     checkForInterruption();
+
                     Jobs.runEDTAndWait(() -> {
-                        elementList.clear();
                         csiScoreStats.reset();
                         logPStats.reset();
                         tanimotoStats.reset();
-                        data = new HashSet<>();
                         loadAll.set(loadAllCandidates);
+                        data = new HashSet<>();
+//                        elementList.clear();
                     });
 
                     checkForInterruption();
@@ -137,6 +137,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
 
                             final Optional<FormulaResult> resOpt = e.getResult(FingerprintResult.class, cClass, fpClass);
                             checkForInterruption();
+
                             resOpt.ifPresent(res ->
                                     res.getAnnotation(FingerprintResult.class).ifPresent(fpRes ->
                                             res.getAnnotation(fpClass).ifPresent(fbfps ->
@@ -161,14 +162,10 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                     }
                     checkForInterruption();
 
-                    if (!emChache.isEmpty()) {
+
+                    if (refillElementsEDT(emChache))
                         loadMols = Jobs.MANAGER.submitJob(new LoadMoleculeJob(emChache));
-                        Jobs.runEDTAndWait(() -> {
-                            elementList.clear(); //todo ugly workaround to prevent double entries because I cannot find out how they come in.
-                            if (elementList.addAll(emChache))
-                                notifyListeners(data, null, elementList, getResultListSelectionModel());
-                        });
-                    }
+
                     return true;
                 }
 

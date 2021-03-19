@@ -25,16 +25,11 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
  */
 
 import ca.odell.glazedlists.swing.DefaultEventListModel;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.table.ActionListView;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -48,7 +43,7 @@ public class FormulaListCompactView extends ActionListView<FormulaList> {
         final JList<FormulaResultBean> resultListView;
         resultListView = new JList<>(new DefaultEventListModel<>(source.getElementList()));
         resultListView.setCellRenderer(new FormulaListTextCellRenderer(source.getRenderScoreFunc(),source.getBestFunc()));
-        resultListView.setSelectionModel(source.getResultListSelectionModel());
+        resultListView.setSelectionModel(source.getElementListSelectionModel());
         resultListView.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         resultListView.setVisibleRowCount(1);
         resultListView.setPrototypeCellValue(FormulaListTextCellRenderer.PROTOTYPE);
@@ -70,9 +65,10 @@ public class FormulaListCompactView extends ActionListView<FormulaList> {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
                     // Double-click detected
-                    int index = resultListView.locationToIndex(e.getPoint());
-                    resultListView.setSelectedIndex(index);
-                    SiriusActions.COMPUTE_CSI_LOCAL.getInstance().actionPerformed(new ActionEvent(resultListView, 112, SiriusActions.COMPUTE_CSI_LOCAL.name()));
+                    //todo compute csi for this compound via compute panel and preselect csi only
+//                    int index = resultListView.locationToIndex(e.getPoint());
+//                    resultListView.setSelectedIndex(index);
+//                    SiriusActions.COMPUTE_CSI_LOCAL.getInstance().actionPerformed(new ActionEvent(resultListView, 112, SiriusActions.COMPUTE_CSI_LOCAL.name()));
                 }
             }
 
@@ -95,7 +91,7 @@ public class FormulaListCompactView extends ActionListView<FormulaList> {
 
         //decorate this guy
         KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
-        resultListView.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
-        resultListView.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(),SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
+//        resultListView.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
+//        resultListView.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(),SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
     }
 }

@@ -90,7 +90,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected final JCheckboxListPanel<String> ionizationList;
     protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
     protected final JComboBox<Instrument> profileSelector;
-    protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout;
+    protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly;
     protected final JComboBox<IsotopeMs2Settings.Strategy> ms2IsotpeSetting;
     //    protected final JCheckBox restrictToOrganics;
     protected ElementsPanel elementPanel;
@@ -173,14 +173,20 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
 
         // ilp timeouts
-        final TwoColumnPanel ilpTimeouts = new TwoColumnPanel();
-        center.add(new TextHeaderBoxPanel("ILP timeouts", ilpTimeouts));
+        final TwoColumnPanel ilpOptions = new TwoColumnPanel();
+        center.add(new TextHeaderBoxPanel("ILP", ilpOptions));
 
         treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
-        ilpTimeouts.addNamed("Tree timeout", treeTimeout);
+        ilpOptions.addNamed("Tree timeout", treeTimeout);
 
         comoundTimeout = makeIntParameterSpinner("Timeout.secondsPerInstance", 0, Integer.MAX_VALUE, 1);
-        ilpTimeouts.addNamed("Compound timeout", comoundTimeout);
+        ilpOptions.addNamed("Compound timeout", comoundTimeout);
+
+        mzHeuristic = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristic", 0, 3000, 5);
+        ilpOptions.addNamed("Use heuristic above m/z", mzHeuristic);
+
+        mzHeuristicOnly = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristicOnly", 0, 3000, 5);
+        ilpOptions.addNamed("Use heuristic only above m/z", mzHeuristicOnly);
 
         refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()),true);
     }

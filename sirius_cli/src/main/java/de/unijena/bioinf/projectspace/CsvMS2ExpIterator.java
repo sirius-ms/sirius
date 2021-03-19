@@ -21,7 +21,9 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.CsvParser;
+import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,16 +39,18 @@ public class CsvMS2ExpIterator implements InstIterProvider {
     private final Iterator<InputFilesOptions.CsvInput> basIter;
     private final CsvParser parer = new CsvParser();
     private final Predicate<Ms2Experiment> filter;
+    private final JobProgressMerger prog;
 
     private Ms2Experiment next = null;
 
-    public CsvMS2ExpIterator(List<InputFilesOptions.CsvInput> basIter, Predicate<Ms2Experiment> filter) {
-        this(basIter.iterator(), filter);
+    public CsvMS2ExpIterator(List<InputFilesOptions.CsvInput> basIter, Predicate<Ms2Experiment> filter, @Nullable JobProgressMerger prog) {
+        this(basIter.iterator(), filter, prog);
     }
 
-    public CsvMS2ExpIterator(Iterator<InputFilesOptions.CsvInput> basIter, Predicate<Ms2Experiment> filter) {
+    public CsvMS2ExpIterator(Iterator<InputFilesOptions.CsvInput> basIter, Predicate<Ms2Experiment> filter, @Nullable JobProgressMerger prog) {
         this.basIter = basIter;
         this.filter = filter;
+        this.prog = prog;
     }
 
     @Override
@@ -57,6 +61,7 @@ public class CsvMS2ExpIterator implements InstIterProvider {
         if (basIter.hasNext()) {
             final InputFilesOptions.CsvInput csvInput = basIter.next();
             final Ms2Experiment exp = parer.parseSpectra(csvInput.ms1, csvInput.ms2, csvInput.parentMz, csvInput.ionType, csvInput.formula);
+            prog.increaseProgress(csvInput, csvInput.ms2.size(), "Read " + exp.getName() + "..."); //todo count spectra
             if (!filter.test(exp)) {
                 LOG.info("Skipping instance (CSV)" + csvInput.ms2.stream().map(File::getAbsolutePath).collect(Collectors.joining(",")) + " because it does not match the Filter criterion.");
                 return hasNext();

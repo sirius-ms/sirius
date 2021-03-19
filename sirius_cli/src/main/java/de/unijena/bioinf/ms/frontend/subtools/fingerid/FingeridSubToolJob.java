@@ -59,18 +59,16 @@ import java.util.stream.Collectors;
 public class FingeridSubToolJob extends InstanceJob {
 
     public static final boolean enableConfidence = PropertyManager.getBoolean("de.unijena.bioinf.fingerid.confidence", false);
-    public static final List<Class<? extends DataAnnotation>>  formulaResultComponentsToClear = new ArrayList<>(List.of(FTree.class, FBCandidates.class,  FBCandidateFingerprints.class));
+    public static final List<Class<? extends DataAnnotation>>  formulaResultComponentsToClear = new ArrayList<>(List.of(FTree.class, FBCandidates.class, FBCandidateFingerprints.class));
 
     public FingeridSubToolJob(JobSubmitter submitter) {
         super(submitter);
+        asWEBSERVICE();
     }
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer().hasResult() && inst.loadFormulaResults(FingerprintResult.class, FBCandidates.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FBCandidates.class));/*{
-            logInfo("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist or result list is empty.");
-            return;
-        }*/
+        return inst.loadCompoundContainer().hasResult() && inst.loadFormulaResults(FingerprintResult.class, FBCandidates.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(FingerprintResult.class) && c.hasAnnotation(FBCandidates.class));
     }
 
     @Override
@@ -78,12 +76,18 @@ public class FingeridSubToolJob extends InstanceJob {
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
                 inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FBCandidates.class);
 
+        checkForInterruption();
+
         if (formulaResults == null || formulaResults.isEmpty()) {
             logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are no trees computed.");
             return;
         }
 
+        checkForInterruption();
+
         if (!checkFingerprintCompatibility()) return;
+
+        checkForInterruption();
 
         // add CSIClientData to PS if it is not already there
         if (inst.getProjectSpaceManager().getProjectSpaceProperty(FingerIdDataProperty.class).isEmpty()) {
@@ -94,6 +98,9 @@ public class FingeridSubToolJob extends InstanceJob {
 
         PredictorTypeAnnotation type = inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class);
 
+        checkForInterruption();
+
+
         //todo currently there is only csi -> change if there are multiple methods
         // we need to run multiple structure elucidation jobs and need  different prediction results then.
         EnumSet<PredictorType> predictors = type.toPredictors(inst.getExperiment().getPrecursorIonType().getCharge());
@@ -103,13 +110,17 @@ public class FingeridSubToolJob extends InstanceJob {
                 formulaResults.stream().map(res -> new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class), res.getScoreObject())).collect(Collectors.toList()),
                 enableConfidence);
 
+        checkForInterruption();
+
         // do computation and await results
-        List<FingerIdResult> result = submitJob(job).awaitResult();
+        List<FingerIdResult> result = submitSubJob(job).awaitResult();
 
         final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotationOrThrow(FTree.class), SScored::getCandidate));
 
         // add new id results to projectspace and mal.
         Map<? extends IdentificationResult<?>, ? extends IdentificationResult<?>> addedResults = job.getAddedIdentificationResults();
+
+        checkForInterruption();
 
         addedResults.forEach((k, v) ->
                 inst.newFormulaResultWithUniqueId(k.getTree())
@@ -123,6 +134,8 @@ public class FingeridSubToolJob extends InstanceJob {
 
 
         assert formulaResultsMap.size() >= result.size();
+
+        checkForInterruption();
 
         //calculate and annotate tanimoto scores
         List<BasicJJob<Double>> tanimotoJobs = new ArrayList<>();
@@ -140,7 +153,11 @@ public class FingeridSubToolJob extends InstanceJob {
             );
         });
 
-        submitJobsInBatchesByThreads(tanimotoJobs, SiriusJobs.getCPUThreads()).forEach(JJob::getResult);
+        checkForInterruption();
+
+        submitSubJobsInBatchesByThreads(tanimotoJobs, SiriusJobs.getCPUThreads()).forEach(JJob::getResult);
+
+        checkForInterruption();
 
         //annotate FingerIdResults to FormulaResult
         for (FingerIdResult structRes : result) {

@@ -9,7 +9,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'edu.sc.seis.gradle:launch4j:2.4.6'
+//        classpath 'edu.sc.seis.gradle:launch4j:2.4.9'
         classpath 'commons-configuration:commons-configuration:1.10'
         classpath "com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE"
     }
@@ -23,12 +23,12 @@ plugins {
 //Global Properties
 ext {
     // version for bundeled JRE
-    jre_version = '11.0.9.1'
-    zulu_jre_version = '11.43.55'
+    jre_version = '15.0.2'
+    zulu_jre_version = '15.29.15'
 
     //version for external libraries
     slf4j_version = '1.7.25'
-    jjobs_version = '0.9.18-SNAPSHOT'
+    jjobs_version = '0.9.20-SNAPSHOT'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 
@@ -37,7 +37,7 @@ ext {
     picocli_version = '4.3.2'//'3.9.5'
 
     glpk_lib_version = '4.60'
-    clp_lib_version = '1.17.5b'
+    clp_lib_version = '2.10'
 
     //locations of runtime libraries
     //jre path relative tu app home
@@ -45,8 +45,7 @@ ext {
     lib_path = 'lib'
     native_path = 'native'
 
-    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar:${APP_HOME}/' + "${lib_path}/*"
-    libExclude = ['gurobi-*.jar', 'cplex-*.jar']
+    libExclude = ['gurobi-jar-*.jar', 'cplex-*.jar']
 
 
     jetbrains_version = "17.0.0"
@@ -63,7 +62,6 @@ ext {
         System.properties.putAll(props)
     }else {
         getLogger().lifecycle("No properties file found at '${propertiesFile.absolutePath}'. Some tasks might not work without this information.")
-
     }
 
     logger.lifecycle('reading build properties file...')
@@ -135,6 +133,7 @@ allprojects {
     }
 
     dependencies {
+
         annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
         compile 'net.sf.trove4j:core:3.1.0'
         //switched from 'net.sf.trove4j:trove4j:3.0.3' which seems to be buggy and no longer supported
@@ -142,6 +141,10 @@ allprojects {
         compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
 
         testCompile group: 'junit', name: 'junit', version: '4.12'
+
+        // intellij seems to ignore other scopes than compile so we need to have this here and remove it before distribution
+//        compile "com.gurobi:gurobi-jar:9.1.1"
+//        compile "cplex:cplex:12.7.1"
     }
 
     //there are some outdated incompatible trove dependencies in some libs.
@@ -157,7 +160,6 @@ allprojects {
 
 subprojects {
     apply plugin: 'application'
-    apply plugin: 'edu.sc.seis.launch4j'
 
 
     task listDependecies {
@@ -294,7 +296,9 @@ task refreshReadMe {
         String keywordEnd = null
 
         lines.each { String line ->
-            if (keyword == null) {
+            if (line.startsWith("[![Generic badge](https://img.shields.io/badge/Version-")){
+                nuLines.add("[![Generic badge](https://img.shields.io/badge/Version-${project.version.replace("-","--")}-informational.svg)](https://shields.io/)")
+            }else if (keyword == null) {
                 keywordEnd = keywords.get(line)
                 nuLines.add(line)
                 if (keywordEnd != null) {
@@ -325,8 +329,12 @@ artifactory {
     publish {
         repository {
             repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
-            username = System.properties['de.unijena.bioinf.build.artifactory.username']
-            password = System.properties['de.unijena.bioinf.build.artifactory.password']
+            username = System.getenv("ARTIFACTORY_USERNAME") != null
+                    ? System.getenv("ARTIFACTORY_USERNAME")
+                    : System.properties['de.unijena.bioinf.build.artifactory.username']
+            password = System.getenv("ARTIFACTORY_TOKEN") != null
+                    ? System.getenv("ARTIFACTORY_TOKEN")
+                    : System.properties['de.unijena.bioinf.build.artifactory.password']
         }
         defaults {
             //Publish every distribution to Artifactory

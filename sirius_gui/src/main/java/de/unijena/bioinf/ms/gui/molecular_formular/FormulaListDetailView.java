@@ -30,7 +30,6 @@ import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -38,7 +37,6 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
@@ -67,7 +65,7 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         filteredSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         //sync selections models
-        selectionConnection = new ConnectedSelection<>(source.getResultListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
+        selectionConnection = new ConnectedSelection<>(source.getElementListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
         //todo re-enable threshold marker
@@ -83,12 +81,13 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         table.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
+                //todo insert compute CSI option by opening batch compute
+                /*if (e.getClickCount() == 2) {
                     // Double-click detected
                     int index = table.rowAtPoint(e.getPoint());
                     table.setRowSelectionInterval(index, index);
                     SiriusActions.COMPUTE_CSI_LOCAL.getInstance().actionPerformed(new ActionEvent(table, 112, SiriusActions.COMPUTE_CSI_LOCAL.name()));
-                }
+                }*/
             }
 
             @Override
@@ -114,8 +113,8 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
 
         //decorate this guy
         KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
-        table.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
-        table.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(), SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
+//        table.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
+//        table.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(), SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
 
         this.add(
                 new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
@@ -130,9 +129,7 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
 
     @Override
     protected EventList<MatcherEditor<FormulaResultBean>> getSearchFieldMatchers() {
-        return GlazedLists.eventListOf(
-                (MatcherEditor<FormulaResultBean>) new StringMatcherEditor<>(tableFormat, searchField.textField)
-        );
+        return GlazedLists.eventListOf(new StringMatcherEditor<>(tableFormat, searchField.textField));
     }
 
     @Override

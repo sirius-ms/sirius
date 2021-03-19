@@ -36,7 +36,7 @@ public class JobLogDialog extends JDialog {
         jobContainer = source;
 
         if (source instanceof TextAreaJJobContainer)
-            add(new LoggingPanel(((TextAreaJJobContainer) source).getJobLog()));
+            add(new LoggingPanel(((TextAreaJJobContainer) source).getTextAreaLogHandler()));
         else {
             add(createOnDemandLoggingPanel());
         }
@@ -48,11 +48,11 @@ public class JobLogDialog extends JDialog {
 
     private JPanel createOnDemandLoggingPanel() {
         JTextArea area = new JTextArea();
-        onDemandHandler = new TextAreaHandler(new TextAreaOutputStream(area), Level.INFO);
+        onDemandHandler = new TextAreaHandler(area, Level.INFO);
         Logger logger = LogManager.getLogManager().getLogger(jobContainer.getSourceJob().loggerKey());
         logger.addHandler(onDemandHandler);
 
-        return new LoggingPanel(area);
+        return new LoggingPanel(onDemandHandler);
     }
 
     @Override

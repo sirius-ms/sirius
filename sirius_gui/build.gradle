@@ -1,5 +1,5 @@
-import com.github.jk1.license.render.*
-import com.github.jk1.license.filter.*
+import com.github.jk1.license.filter.LicenseBundleNormalizer
+
 plugins {
     id "com.github.kkdad.dependency-license-report" version "1.14.2"
 }
@@ -83,8 +83,12 @@ dependencies {
 
 }
 
-
-
+//this includes compileOnly dependencies like the ILP solver jars to the idea provided scope.
+idea {
+    module {
+        scopes.RUNTIME.plus += [configurations.compileOnly]
+    }
+}
 
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
@@ -95,8 +99,12 @@ artifactory {
             else
                 repoKey = 'libs-release-local'
 
-            username = System.getProperty('de.unijena.bioinf.build.artifactory.username')
-            password = System.getProperty('de.unijena.bioinf.build.artifactory.password')
+            username = System.getenv("ARTIFACTORY_USERNAME") != null
+                    ? System.getenv("ARTIFACTORY_USERNAME")
+                    : System.properties['de.unijena.bioinf.build.artifactory.username']
+            password = System.getenv("ARTIFACTORY_TOKEN") != null
+                    ? System.getenv("ARTIFACTORY_TOKEN")
+                    : System.properties['de.unijena.bioinf.build.artifactory.password']
         }
         defaults {
             publications('mavenJava')

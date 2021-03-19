@@ -24,10 +24,18 @@ import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.LinkedList;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by fleisch on 15.05.17.
@@ -35,10 +43,15 @@ import java.util.List;
 public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElements<E, D> {
     public enum DataSelectionStrategy {ALL, FIRST_SELECTED, ALL_SELECTED}
 
-    private final List<ActiveElementChangedListener<E, D>> listeners = new LinkedList<>();
+    public enum ViewState {NOT_COMPUTED, EMPTY, DATA}
+
+    private final Queue<ActiveElementChangedListener<E, D>> listeners = new ConcurrentLinkedQueue<>();
 
     protected ObservableElementList<E> elementList;
-    protected DefaultEventSelectionModel<E> selectionModel;
+    protected DefaultEventSelectionModel<E> elementListSelectionModel;
+
+    private final ArrayList<E> elementData = new ArrayList<>();
+    private final BasicEventList<E> basicElementList = new BasicEventList<>(elementData);
 
     protected D data = null;
     public final DataSelectionStrategy selectionType;
@@ -49,32 +62,57 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
 
     public ActionList(Class<E> cls, DataSelectionStrategy strategy) {
         selectionType = strategy;
-        elementList = new ObservableElementList<>(new BasicEventList<E>(), GlazedLists.beanConnector(cls));
-        selectionModel = new DefaultEventSelectionModel<>(elementList);
-        selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        elementList = new ObservableElementList<>(basicElementList, GlazedLists.beanConnector(cls));
+        elementListSelectionModel = new DefaultEventSelectionModel<>(elementList);
+        elementListSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 
-        selectionModel.addListSelectionListener(e -> {
-            if (!selectionModel.getValueIsAdjusting()) {
-                if (selectionModel.isSelectionEmpty() || elementList == null || elementList.isEmpty())
-                    notifyListeners(data, null, elementList, selectionModel);
+        elementListSelectionModel.addListSelectionListener(e -> {
+            if (!elementListSelectionModel.getValueIsAdjusting()) {
+                if (elementListSelectionModel.isSelectionEmpty() || elementList == null || elementList.isEmpty())
+                    notifyListeners(data, null, elementList, elementListSelectionModel);
                 else
-                    notifyListeners(data, elementList.get(selectionModel.getMinSelectionIndex()), elementList, selectionModel);
+                    notifyListeners(data, elementList.get(elementListSelectionModel.getMinSelectionIndex()), elementList, elementListSelectionModel);
             }
         });
 
         elementList.addListEventListener(listChanges -> {
-            if (!selectionModel.getValueIsAdjusting()) {
-                if (!selectionModel.isSelectionEmpty() && elementList != null && !elementList.isEmpty()) {
+            if (!elementListSelectionModel.getValueIsAdjusting()) {
+                if (!elementListSelectionModel.isSelectionEmpty() && elementList != null && !elementList.isEmpty()) {
                     while (listChanges.next()) {
-                        if (selectionModel.getMinSelectionIndex() == listChanges.getIndex()) {
-                            notifyListeners(data, elementList.get(selectionModel.getMinSelectionIndex()), elementList, selectionModel);
+                        if (elementListSelectionModel.getMinSelectionIndex() == listChanges.getIndex()) {
+                            notifyListeners(data, elementList.get(listChanges.getIndex()), elementList, elementListSelectionModel);
                             return;
                         }
                     }
                 }
             }
         });
+    }
+
+    protected boolean refillElementsEDT(final Collection<E> toFillIn) throws InvocationTargetException, InterruptedException {
+        AtomicBoolean ret = new AtomicBoolean();
+        Jobs.runEDTAndWait(() -> ret.set(refillElements(toFillIn)));
+        return ret.get();
+    }
+
+    protected boolean refillElements(final Collection<E> toFillIn) {
+        if (SiriusGlazedLists.refill(basicElementList, elementData, toFillIn)) {
+            notifyListeners(data, getSelectedElement(), elementList, elementListSelectionModel); //todo I do really don get wgy we need this to refresh the filter gui stuff
+            return true;
+        }
+        return false;
+//        return SiriusGlazedLists.refill(basicElementList, elementData, toFillIn);
+    }
+
+    @NotNull
+    public List<E> getSelectedElements() {
+        return elementListSelectionModel.isSelectionEmpty() ? List.of() : elementListSelectionModel.getSelected();
+    }
+
+    @Nullable
+    public E getSelectedElement() {
+        return elementListSelectionModel.isSelectionEmpty() ? null : elementList.get(elementListSelectionModel.getMinSelectionIndex());
     }
 
     public D getData() {
@@ -85,8 +123,8 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
         return elementList;
     }
 
-    public DefaultEventSelectionModel<E> getResultListSelectionModel() {
-        return selectionModel;
+    public DefaultEventSelectionModel<E> getElementListSelectionModel() {
+        return elementListSelectionModel;
     }
 
     public void addActiveResultChangedListener(ActiveElementChangedListener<E, D> listener) {

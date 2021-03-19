@@ -1,3 +1,7 @@
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Generic badge](https://img.shields.io/badge/Version-4.8.0--SNAPSHOT-informational.svg)](https://shields.io/)
+[![Build and Pubish](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml)
+
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
 methods, in whole or in part, for commercial purposes is prohibited.
 CSI:FingerID and CANOPUS web services hosted by the [Böcker group](https://bio.informatik.uni-jena.de/) are for non-commercial use only. 
@@ -22,17 +26,17 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.6.0 (2021-01-19)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.8.0-SNAPSHOT (2021-03-19)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.0/sirius-4.6.0-win64.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.0/sirius-4.6.0-win64.zip)
-- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.0/sirius-4.6.0-linux64.zip)
-- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.0/sirius-4.6.0-osx64.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.0/sirius-4.6.0-osx64.zip)
+- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-win64.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-win64.zip)
+- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-linux64.zip)
+- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-osx64.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-osx64.zip)
 
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.6.0 (2021-01-19)
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.8.0-SNAPSHOT (2021-03-19)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.0/sirius-4.6.0-win64-headless.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.0/sirius-4.6.0-win64-headless.zip)
-- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.0/sirius-4.6.0-linux64-headless.zip)
-- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.0/sirius-4.6.0-osx64-headless.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-release-local/de/unijena/bioinf/ms/sirius/4.6.0/sirius-4.6.0-osx64-headless.zip)
+- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-win64-headless.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-win64-headless.zip)
+- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-linux64-headless.zip)
+- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-osx64-headless.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-osx64-headless.zip)
 
 
 <!--end download-->
@@ -46,6 +50,8 @@ See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/ins
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius)
 - [SIRIUS library](https://github.com/boecker-lab/sirius-libs)
 
+### [Changelog](https://boecker-lab.github.io/docs.sirius.github.io/changelog/)
+
 For **SIRIUS 4.0.1** click [here](https://bio.informatik.uni-jena.de/software/sirius-4-0-1/).
 
 ### Integration of CSI:FingerID
@@ -55,8 +61,8 @@ website. Results are retrieved from the web service and can be displayed in the 
 also available for the SIRIUS command-line tool. Training structures for CSI:FingerID's predictors are available through the CSI:FingerID web API:
 <!--begin training-->
 
-- https://www.csi-fingerid.uni-jena.de/v1.4.8/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
-- https://www.csi-fingerid.uni-jena.de/v1.4.8/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
+- https://www.csi-fingerid.uni-jena.de/v2.0.0-SNAPSHOT/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
+- https://www.csi-fingerid.uni-jena.de/v2.0.0-SNAPSHOT/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
 
 <!--end training-->
 

@@ -44,6 +44,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -142,16 +143,16 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 
-        log = new LogDialog(null,false, Level.ALL);
+        log = new LogDialog(null,false, Level.INFO); //todo property
     }
 
     //if we want to add taskbar stuff we can configure this here
     private void configureTaskbar() {
-        /*if (Taskbar.isTaskbarSupported()){
-            LoggerFactory.getLogger(getClass()).info("Adding Taskbar support");
+        if (Taskbar.isTaskbarSupported()){
+            LoggerFactory.getLogger(getClass()).debug("Adding Taskbar support");
             if (Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE))
                 Taskbar.getTaskbar().setIconImage(Icons.SIRIUS_APP_IMAGE);
-        }*/
+        }
     }
 
     public void setTitlePath(String path) {
@@ -175,7 +176,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             final SiriusProjectSpace ps = makeSpace.get();
             compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
             Jobs.cancelALL();
-            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 9));
+            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
             inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
             gps.projectSpace().addProjectSpaceListener(event -> {
                 if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
@@ -221,11 +222,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         experimentListPanel.setPreferredSize(new Dimension(228, (int) experimentListPanel.getPreferredSize().getHeight()));
 
         //BUILD the MainFrame (GUI)
-//        final JTabbedPane tabbedPane = new JTabbedPane(SwingConstants.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
-//        tabbedPane.addTab("Compounds", experimentListPanel);
-//        tabbedPane.addTab("Identifications", new JPanel());
-//        tabbedPane.setEnabledAt(1, false);
-//        tabbedPane.setPreferredSize(new Dimension(218, (int) tabbedPane.getPreferredSize().getHeight()));
         mainPanel.add(experimentListPanel, BorderLayout.WEST);
         mainPanel.add(resultsPanel, BorderLayout.CENTER);
         add(toolbar, BorderLayout.NORTH);
@@ -280,7 +276,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 openNewProject = new QuestionDialog(MF, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
             if (openNewProject)
-                MF.openNewProjectSpace(inputF.msInput.projects.get(0));
+                MF.openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
             else
                 importDragAndDropFiles(inputF);
         }
@@ -292,7 +288,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         // check if unknown files contain csv files with spectra
         final CSVFormatReader csvChecker = new CSVFormatReader();
-        List<File> csvFiles = files.msInput != null ? files.msInput.unknownFiles.stream().map(Path::toFile)
+        List<File> csvFiles = files.msInput != null ? files.msInput.unknownFiles.keySet().stream().map(Path::toFile)
                 .filter(f -> csvChecker.isCompatible(f) || f.getName().toLowerCase().endsWith(".txt"))
                 .collect(Collectors.toList()) : Collections.emptyList();
 

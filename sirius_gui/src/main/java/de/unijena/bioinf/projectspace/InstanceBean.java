@@ -171,7 +171,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     public PrecursorIonType getIonization() {
-        return getMutableExperiment().getPrecursorIonType();
+        return getID().getIonType().orElseGet(() -> getMutableExperiment().getPrecursorIonType());
     }
 
     public List<FormulaResultBean> getResults() {
@@ -189,12 +189,31 @@ public class InstanceBean extends Instance implements SiriusPCS {
         return computeLock.get();
     }
 
+    public void setComputing(boolean computing, boolean noChangeEvent) {
+        if (noChangeEvent)
+            computeLock.set(computing);
+        else
+            setComputing(computing);
+    }
+
+    /*@Override
+    public synchronized void clearCompoundCache() {
+        if (!isComputing())
+            super.clearCompoundCache();
+    }
+
+    @Override
+    public synchronized void clearFormulaResultsCache() {
+        if (!isComputing())
+            super.clearFormulaResultsCache();
+    }*/
+
     public void setComputing(boolean computing) {
         pcs.firePropertyChange("computeState", computeLock.getAndSet(computing), computeLock.get());
     }
 
     private MutableMs2Experiment getMutableExperiment() {
-//        addToCache(); //todo enable if we can cache preview for compound list
+        addToCache();
         return (MutableMs2Experiment) getExperiment();
     }
 

@@ -72,7 +72,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         i.setDetectableIonTypes(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
-        final List<Path> files = input.msInput.msParserfiles.stream().sorted().collect(Collectors.toList());
+        final List<Path> files = input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList());
         updateProgress(0, files.size(), 1, "Parse LC/MS runs");
         AtomicInteger counter = new AtomicInteger(0);
         for (Path f : files) {

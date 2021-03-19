@@ -43,8 +43,8 @@ public enum SiriusActions {
     ORDER_BY_MASS(OrderCompoundByMass.class),
     ORDER_BY_NAME(OrderCompoundByName.class),
 
-    COMPUTE_CSI(ComputeCSIAction.class),
-    COMPUTE_CSI_LOCAL(ComputeCSILocalAction.class),
+//    COMPUTE_CSI(ComputeCSIAction.class),
+//    COMPUTE_CSI_LOCAL(ComputeCSILocalAction.class),
 
     IMPORT_EXP(ImportCompoundAction.class),
     IMPORT_EXP_BATCH(ImportAction.class),

@@ -57,8 +57,10 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
 
     @Override
     protected Instance compute() throws Exception {
+        checkForInterruption();
         checkInput();
         final boolean hasResults = isAlreadyComputed(input);
+        checkForInterruption();
         if (!hasResults || isRecompute(input)) {
             if (hasResults){
                 updateProgress(0, 100, 2, "Invalidate existing Results and Recompute!");
@@ -66,7 +68,9 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
             }
             updateProgress(0, 100, 99, "Start computation...");
             setRecompute(input,true); // enable recompute so that following tools will recompute if results exist.
+            checkForInterruption();
             computeAndAnnotateResult(input);
+            checkForInterruption();
             updateProgress(0, 100, 99, "DONE!");
         } else {
             updateProgress(0, 100, 99, "Skipping Job because results already Exist and recompute not requested.");
@@ -88,7 +92,7 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
 
     @Override
     public String identifier() {
-        return super.identifier() + " | Instance: " + (input != null ? input.toString() : "Awaiting Instance!");
+        return super.identifier() + " | " + (input != null ? input.toString() : "<Awaiting Instance>");
     }
 
     protected void checkInput() {

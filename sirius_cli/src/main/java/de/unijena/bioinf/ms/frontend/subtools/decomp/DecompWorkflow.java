@@ -101,7 +101,7 @@ public class DecompWorkflow implements Workflow {
         // parse input massed
         List<Double> masses = options.masses != null ? Arrays.stream(options.masses).boxed().collect(Collectors.toList()) : new ArrayList<>();
         if (input != null && input.msInput != null && input.msInput.unknownFiles != null) {
-            for (Path path : input.msInput.unknownFiles) {
+            for (Path path : input.msInput.unknownFiles.keySet().stream().sorted().collect(Collectors.toList())) {
                 try {
                     masses.addAll(Files.readAllLines(path).stream().map(Double::valueOf).collect(Collectors.toList()));
                 } catch (IOException e) {

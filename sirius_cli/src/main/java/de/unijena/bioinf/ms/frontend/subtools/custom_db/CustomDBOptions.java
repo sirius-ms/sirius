@@ -40,6 +40,7 @@ import picocli.CommandLine.Option;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -78,7 +79,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     public class CustomDBWorkflow extends BasicJJob<Boolean> implements Workflow{
         final InputFilesOptions input;
         public CustomDBWorkflow(InputFilesOptions input) {
-            super(JJob.JobType.SCHEDULER, "CustomDatabaseImporter");
+            super(JJob.JobType.SCHEDULER);
             this.input = input;
         }
 
@@ -100,7 +101,8 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             }
 
             final AtomicLong lines = new AtomicLong(0);
-            for (Path f : input.msInput.unknownFiles)
+            final List<Path> unknown = input.msInput.unknownFiles.keySet().stream().sorted().collect(Collectors.toList());
+            for (Path f : unknown)
                 lines.addAndGet(FileUtils.estimateNumOfLines(f));
 
             final AtomicInteger count = new AtomicInteger(0);
@@ -108,7 +110,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             Path loc = outputDir != null ? outputDir : SearchableDatabases.getCustomDatabaseDirectory().toPath();
             Files.createDirectories(loc);
             CustomDatabaseImporter.importDatabase(loc.resolve(dbName).toFile(),
-                    input.msInput.unknownFiles.stream().map(Path::toFile).collect(Collectors.toList()),
+                    unknown.stream().map(Path::toFile).collect(Collectors.toList()),
                     parentDBs,
                     ApplicationCore.WEB_API, writeBuffer,
                     inChI -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Importing '" + inChI.key2D() + "'")

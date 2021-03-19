@@ -25,9 +25,13 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.actions.ShowJobsDialogAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
 import javafx.application.Platform;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -39,6 +43,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class Jobs {
     public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
@@ -55,6 +60,14 @@ public class Jobs {
     }
 
     public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, String jobName, String jobCategory) {
+        return submit(new TextAreaJJobContainer<>(j, jobName, jobCategory));
+    }
+
+    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, Supplier<String> jobName) {
+        return submit(new TextAreaJJobContainer<>(j, jobName));
+    }
+
+    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, Supplier<String> jobName, Supplier<String> jobCategory) {
         return submit(new TextAreaJJobContainer<>(j, jobName, jobCategory));
     }
 
@@ -208,19 +221,23 @@ public class Jobs {
 
     //todo Singelton runs that are cancelable
 
-    public static TextAreaJJobContainer<Boolean> runWorkflow(Workflow computation, List<InstanceBean> compoundsToProcess) {
+    public static TextAreaJJobContainer<Boolean> runWorkflow(Workflow computation, List<InstanceBean> compoundsToProcess, @Nullable List<String> command, @Nullable String description) {
         //todo the run could be a job that reports progress. That would also be great for the cli
-        return submit(new ComputationJJob(computation,compoundsToProcess), String.valueOf(COMPUTATION_COUNTER.incrementAndGet()), "Computation");
+
+        return submit(new ComputationJJob(computation,compoundsToProcess, command),
+                COMPUTATION_COUNTER.incrementAndGet() + ": " + (description==null ? "" : description), "Computation");
     }
 
     private static class ComputationJJob extends BasicJJob<Boolean> {
         final Workflow computation;
         final List<InstanceBean> compoundsToProcess;
+        final String command;
 
-        private ComputationJJob(Workflow computation, List<InstanceBean> compoundsToProcess) {
+        private ComputationJJob(@NotNull Workflow computation, @NotNull List<InstanceBean> compoundsToProcess, @Nullable List<String> command) {
             super(JobType.SCHEDULER);
             this.computation = computation;
             this.compoundsToProcess = compoundsToProcess;
+            this.command = command == null ? null : "Command: `" + String.join(" ", command);
         }
 
         @Override
@@ -233,12 +250,17 @@ public class Jobs {
                 SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
             }
             checkForInterruption();
-            compoundsToProcess.forEach(i -> i.setComputing(true));
+            {
+                compoundsToProcess.forEach(c -> c.setComputing(true, true));
+                final Set<InstanceBean> upt = new HashSet<>(compoundsToProcess);
+                runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
+            }
             checkForInterruption();
             if (computation instanceof ProgressJJob)
                 ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
+            logInfo(command);
             computation.run();
-            checkForInterruption();
+            System.gc(); //hint for the gc to collect som trash after computations
             return true;
         }
 
@@ -256,7 +278,11 @@ public class Jobs {
                 SiriusActions.SUMMARY_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
                 SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
             }
-            compoundsToProcess.forEach(i -> i.setComputing(false));
+            {
+                compoundsToProcess.forEach(c -> c.setComputing(false, true));
+                final Set<InstanceBean> upt = new HashSet<>(compoundsToProcess);
+                runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
+            }
             super.cleanup();
         }
     }
