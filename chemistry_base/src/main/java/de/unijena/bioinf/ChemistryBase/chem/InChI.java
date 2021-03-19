@@ -1,54 +1,105 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import org.jetbrains.annotations.NotNull;
 
-public class InChI {
+import java.util.Objects;
+
+public class InChI implements Ms2ExperimentAnnotation {
 
     public final String in3D;
     public final String in2D;
     public final String key;
 
-    public InChI(String inchikey, String inchi) {
-        if (inchi != null && inchi.endsWith("/")) inchi = inchi.substring(0, inchi.length()-1);
-        this.in3D = inchi;
-        this.key = inchikey;
-        this.in2D = inchi==null ? null : inchi2d(inchi);
+
+    public InChI(String inChIkey, String inChI) {
+        if (inChI != null && inChI.endsWith("/"))
+            inChI = inChI.substring(0, inChI.length() - 1);
+        this.in3D = inChI;
+        this.key = inChIkey;
+        this.in2D = inChI == null ? null : InChIs.inchi2d(inChI);
     }
 
-    public MolecularFormula extractFormula() {
-        int a=0;
-        int b=0;
-        for (a=0; a < in2D.length(); ++a) {
-            if (in2D.charAt(a)=='/') break;
-        }
-        ++a;
-        for (b=a; b < in2D.length(); ++b) {
-            if (in2D.charAt(b)=='/') break;
-        }
-        return MolecularFormula.parse(in2D.substring(a, b));
+    public MolecularFormula extractFormulaOrThrow() {
+        return InChIs.extractFormulaOrThrow(in2D);
+    }
+
+    public MolecularFormula extractFormula() throws UnknownElementException {
+        return InChIs.extractFormula(in2D);
+    }
+
+    public String extractFormulaLayer() {
+        return InChIs.extractFormulaLayer(in2D);
+    }
+
+    @NotNull
+    public String extractQLayer() {
+        return InChIs.extractQLayer(in2D);
+    }
+
+    @NotNull
+    public String extractPLayer() {
+        return InChIs.extractPLayer(in2D);
+    }
+
+    public int getQCharge() {
+        return InChIs.getQCharge(in2D);
+    }
+
+    public int getPCharge() {
+        return InChIs.getPCharge(in2D);
+    }
+
+    public int getFormalCharges() {
+        return InChIs.getFormalChargeFromInChI(in2D);
     }
 
     public String key2D() {
-        return key.substring(0,14);
+        return InChIs.inChIKey2D(key);
     }
 
-    private static Pattern inchi2dPattern = Pattern.compile("/[btmrsfi]");
-    public static String inchi2d(String inchi) {
-        if (inchi.endsWith("/")) inchi = inchi.substring(0, inchi.length()-1);
-        final Matcher m = inchi2dPattern.matcher(inchi);
-        if (m.find()) {
-            return inchi.substring(0, m.start());
-        } else {
-            return inchi;
-        }
+    public boolean isStandardInchi() {
+        return InChIs.isStandardInchi(in3D);
+    }
+
+    public boolean hasIsotopes() {
+        return InChIs.hasIsotopes(in3D);
+    }
+
+    public boolean isConnected() {
+        return InChIs.isConnected(in2D);
+    }
+
+    public boolean isMultipleCharged() {
+        return InChIs.isMultipleCharged(in2D);
     }
 
     @Override
-    public String toString(){
-        if (in2D==null || key==null) {
-            if (in2D!=null) return in2D;
-            if (key==null) throw new NullPointerException();
+    public String toString() {
+        if (in2D == null || key == null) {
+            if (in2D != null) return in2D;
+            if (key == null) throw new NullPointerException();
             return key;
         } else {
             return key + " (" + in2D + ")";
@@ -61,9 +112,9 @@ public class InChI {
         if (o == null || getClass() != o.getClass()) return false;
 
         InChI inChI = (InChI) o;
-
+        if (in3D == null) return ((InChI) o).in3D == null;
         if (!in3D.equals(inChI.in3D)) return false;
-        return !(key != null ? !key.equals(inChI.key) : inChI.key != null);
+        return Objects.equals(key, inChI.key);
 
     }
 

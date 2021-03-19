@@ -1,20 +1,24 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import java.util.Comparator;
@@ -43,6 +47,8 @@ public class CollisionEnergy {
     public static CollisionEnergy fromString(String value) {
         value = value.trim().toLowerCase();
         if (value.isEmpty() || value.equals("none")) return NONE;
+        int ev =  value.indexOf("ev");
+        if (ev > 0) value = value.substring(0,ev);
         final int k = value.indexOf('-');
         if (k > 0) {
             final double x = Double.parseDouble(value.substring(0, k));
@@ -106,8 +112,8 @@ public class CollisionEnergy {
     @Override
     public String toString() {
         if (this.equals(NONE)) return "none";
-        if (minEnergy == maxEnergy) return stringify(minEnergy);
-        return stringify(minEnergy) + " - " + stringify(maxEnergy);
+        if (minEnergy == maxEnergy) return stringify(minEnergy) + " eV";
+        return stringify(minEnergy) + " - " + stringify(maxEnergy) + " eV";
     }
 
     @Override

@@ -1,20 +1,24 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.ftalign.view;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -219,7 +223,7 @@ public class AlignmentWindow extends JPanel {
                 private double align(DataElement a, DataElement b) {
                     final double value = new DPSparseTreeAlign<Fragment>(new StandardScoring(true), true, a.getTree().getRoot(),
                             b.getTree().getRoot(),
-                            FTree.treeAdapter()).compute();
+                            FTree.treeAdapterStatic()).compute();
                     return new TreeSizeNormalizer(0.5d).normalize(a.getTree(), b.getTree(), new StandardScoring(true), (float) value);
                 }
 
@@ -290,7 +294,7 @@ public class AlignmentWindow extends JPanel {
             System.out.println("START COMPUTING");
             final Scoring<Fragment> scoring = getScoring();
             final DPMultiJoin<Fragment> dp = new DPMultiJoin<Fragment>(scoring, getNumberOfJoins(),
-                    pair.getLeft().getTree().getRoot(), pair.getRight().getTree().getRoot(), FTree.treeAdapter());
+                    pair.getLeft().getTree().getRoot(), pair.getRight().getTree().getRoot(), FTree.treeAdapterStatic());
             this.score = dp.compute();
             if (params.normalize) {
                 this.score = (float) new TreeSizeNormalizer(0.5d).normalize(pair.getLeft().getTree(),
@@ -299,7 +303,7 @@ public class AlignmentWindow extends JPanel {
             if (score == 0) return getSvgFromDot("strict digraph {\nv1 [label=\"Empty Alignment\"];\n}");
             if (isCancelled()) return null;
             final ByteArrayOutputStream bout = new ByteArrayOutputStream(1024);
-            final AlignmentTreeBacktrace<Fragment> backtrace = new AlignmentTreeBacktrace<Fragment>(FTree.treeAdapter());
+            final AlignmentTreeBacktrace<Fragment> backtrace = new AlignmentTreeBacktrace<Fragment>(FTree.treeAdapterStatic());
             dp.backtrace(backtrace);
             if (isCancelled()) return null;
             final AlignmentTree<Fragment> alignment = backtrace.getAlignmentTree();

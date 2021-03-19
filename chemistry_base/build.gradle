@@ -1,14 +1,30 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
+version =  parent.siriusVersion
 dependencies {
+    annotationProcessor project(':default_properties:processor')
+    compile project(':default_properties:annotations')
+    //internal
     compile group: 'de.unijena.bioinf', name: 'GraphUtils', version:"$graphUtils_version"
-
-//    compile group: 'javax.json', name: 'javax.json-api', version:"$json_version"
-//    compile group: 'org.glassfish', name: 'javax.json', version:"$json_impl_version"
+    //external
     compile group: 'com.google.code.gson', name: 'gson', version: "$gson_version"
-    compile group: 'org.slf4j', name: 'slf4j-api', version:"$slf4j_version"
-    compile group: 'de.unijena.bioinf', name: 'jjobs-core', version:"$jjobs_version"
-    testCompile group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
-}
-
-sourceSets.main.resources {
-    srcDir rootProject.rootDir.toPath().resolve('src').resolve('main').resolve('resources').toString()
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"2.9.5"
 }

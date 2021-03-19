@@ -1,21 +1,27 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.babelms.dot;
+
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -81,7 +87,7 @@ public class DotParser<NodeType, EdgeType> {
     }
 
     private void parseIt(Reader input) throws IOException {
-        final BufferedReader r = (input instanceof BufferedReader) ? (BufferedReader) input : new BufferedReader(input);
+        final BufferedReader r = FileUtils.ensureBuffering(input);
         source = new StringBuilder();
         while (r.ready()) source.append(r.readLine()).append('\n');
         scanner = TOKENIZE.matcher(source);

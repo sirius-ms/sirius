@@ -1,3 +1,23 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -20,7 +40,7 @@ public class CriticalPathInsertionWithIsotopePeaksHeuristic extends CriticalPath
                     bestFrag = f;
                 }
             }
-            final FTree t = new FTree(bestFrag.getFormula());
+            final FTree t = new FTree(bestFrag.getFormula(), bestFrag.getIonization());
             t.setTreeWeight(bestFrag.getIncomingEdge().getWeight());
             return t;
         }
@@ -39,7 +59,8 @@ public class CriticalPathInsertionWithIsotopePeaksHeuristic extends CriticalPath
         }
 
 
-        final FTree tree = new FTree(selectedEdges.get(0).getTarget().getFormula());
+        Fragment target = selectedEdges.get(0).getTarget();
+        final FTree tree = new FTree(target.getFormula(), target.getIonization());
 
         final ArrayList<Loss> isoStack = new ArrayList<>();
         final FragmentAnnotation<IsotopicMarker> marker = graph.getFragmentAnnotationOrNull(IsotopicMarker.class);
@@ -55,8 +76,9 @@ public class CriticalPathInsertionWithIsotopePeaksHeuristic extends CriticalPath
                 continue;
             }
 
-            final Fragment f = tree.addFragment(fragmentsByFormula.get(L.getSource().getFormula()), L.getTarget().getFormula());
+            final Fragment f = tree.addFragment(fragmentsByFormula.get(L.getSource().getFormula()), L.getTarget());
             f.getIncomingEdge().setWeight(L.getWeight());
+            f.setPeakId(L.getTarget().getPeakId());
             fragmentsByFormula.put(f.getFormula(), f);
             score += L.getWeight();
         }
@@ -79,8 +101,9 @@ public class CriticalPathInsertionWithIsotopePeaksHeuristic extends CriticalPath
                 for (int i=0;i<xs.size(); ++i) {
                     double weight = xs.get(i).getWeight();
                     score += weight;
-                    init = tree.addFragment(init, MolecularFormula.emptyFormula());
+                    init = tree.addFragment(init, MolecularFormula.emptyFormula(), graph.getRoot().getIonization());
                     init.getIncomingEdge().setWeight(weight);
+                    init.setPeakId(xs.get(i).getTarget().getPeakId());
                 }
             }
         }

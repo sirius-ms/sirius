@@ -1,20 +1,24 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
@@ -23,16 +27,21 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.MolecularFormulaScorer;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.math.DensityFunction;
 import de.unijena.bioinf.ChemistryBase.math.LogNormalDistribution;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedInput;
-import de.unijena.bioinf.FragmentationTreeConstruction.model.ProcessedPeak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import de.unijena.bioinf.sirius.ProcessedInput;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.List;
 
-public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
+public class LossSizeScorer implements LossScorer, PeakPairScorer, MolecularFormulaScorer{
 
-    public static final DensityFunction LEARNED_DISTRIBUTION = LogNormalDistribution.withMeanAndSd(4.057753844479435d, 0.6386804182255676d);
-    public static final double LEARNED_NORMALIZATION = -5.860753214730718d;
+    public static final double LEARNED_MEAN = 4.022526672023266;
+    public static final double LEARNED_VARIANCE = 0.3124649410213113d;
+    public static final DensityFunction LEARNED_DISTRIBUTION = LogNormalDistribution.withMeanAndSd(LEARNED_MEAN, Math.sqrt(LEARNED_VARIANCE));
+
+    public static final double LEARNED_NORMALIZATION = -5.310349962255842d;
 
     private DensityFunction distribution;
     private double normalization;
@@ -73,7 +82,7 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
         return distribution;
     }
 
-    private final double scoring(double mass) {
+    public final double scoring(double mass) {
         return Math.log(Math.max(1e-12, distribution.getDensity(mass))) - normalization;
     }
 
@@ -125,5 +134,15 @@ public class LossSizeScorer implements PeakPairScorer, MolecularFormulaScorer{
         document.addToDictionary(dictionary, "distribution", helper.wrap(document, distribution));
         document.addToDictionary(dictionary, "normalization", normalization);
         document.addToDictionary(dictionary, "adjustNormalizationBasedOnData", adjustNormalizationBasedOnData);
+    }
+
+    @Override
+    public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
+        return null;
+    }
+
+    @Override
+    public double score(Loss loss, ProcessedInput input, Object precomputed) {
+        return score(loss.getFormula());
     }
 }

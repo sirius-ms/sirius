@@ -1,22 +1,27 @@
+
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2015 Kai Dührkop
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
+ *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+
 package fragtreealigner.util;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import fragtreealigner.algorithm.ScoringFunctionNeutralLosses;
 import fragtreealigner.algorithm.ScoringFunctionSimple;
 import fragtreealigner.algorithm.TreeAligner;
@@ -34,8 +39,8 @@ public class Macros implements Serializable {
 		AlignmentTree aTree1 = new AlignmentTree();
 		AlignmentTree aTree2 = new AlignmentTree();
 		try {
-			aTree1.readFromList(new BufferedReader(new FileReader(filename1)));
-			aTree2.readFromList(new BufferedReader(new FileReader(filename2)));
+			aTree1.readFromList(FileUtils.ensureBuffering(new FileReader(filename1)));
+			aTree2.readFromList(FileUtils.ensureBuffering(new FileReader(filename2)));
 		} catch (Exception e) {
 			System.err.println("The following error occured while reading the files:\n" + e.getMessage());
 		}
@@ -48,10 +53,10 @@ public class Macros implements Serializable {
 		ScoringFunctionNeutralLosses sFuncNL = new ScoringFunctionNeutralLosses(session);
 		FragmentationTree fTree1 = null, fTree2 = null;	
 		try {
-			if (filename1.endsWith(".dot")) fTree1 = FragmentationTree.readFromDot(new BufferedReader(new FileReader(filename1)), session);
-			else if (filename1.endsWith(".cml")) fTree1 = FragmentationTree.readFromCml(new BufferedReader(new FileReader(filename1)), session);
-			if (filename2.endsWith(".dot")) fTree2 = FragmentationTree.readFromDot(new BufferedReader(new FileReader(filename2)), session);
-			else if (filename2.endsWith(".cml")) fTree2 = FragmentationTree.readFromCml(new BufferedReader(new FileReader(filename2)), session);
+			if (filename1.endsWith(".dot")) fTree1 = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader(filename1)), session);
+			else if (filename1.endsWith(".cml")) fTree1 = FragmentationTree.readFromCml(FileUtils.ensureBuffering(new FileReader(filename1)), session);
+			if (filename2.endsWith(".dot")) fTree2 = FragmentationTree.readFromDot(FileUtils.ensureBuffering(new FileReader(filename2)), session);
+			else if (filename2.endsWith(".cml")) fTree2 = FragmentationTree.readFromCml(FileUtils.ensureBuffering(new FileReader(filename2)), session);
 		} catch (Exception e) {
 			System.err.println("The following error occured while reading the files:\n" + e.getMessage());
 		}
@@ -73,7 +78,7 @@ public class Macros implements Serializable {
 		String line;
 
 		try {
-			BufferedReader br = new BufferedReader(new FileReader(filename));			
+			BufferedReader br = FileUtils.ensureBuffering(new FileReader(filename));
 			while((line = br.readLine()) != null) {
 				strBuffer.append(line + "\n");
 			}

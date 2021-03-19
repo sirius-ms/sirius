@@ -1,16 +1,16 @@
 *.class
 
-#**/.gradle
-#**/gradle
+**/.gradle
+**/gradle
 **/gradlew
 **/gradlew.bat
+**/out
 **/build
+**/configs
 .idea
 **/*.iml
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
-
-sirius_frontend/sirius_cli/src/main/resources/Sirius.properties
 
 # Package Files #
 *.jar
