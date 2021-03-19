@@ -26,6 +26,7 @@ public interface SummaryLocations {
             STRUCTURE_CANDIDATES = "structure_candidates.tsv",
             STRUCTURE_CANDIDATES_TOP = "structure_candidates_topHits.tsv",
             FORMULA_SUMMARY = "formula_identifications.tsv",
+            FORMULA_SUMMARY_ADDUCTS = "formula_identifications_adducts.tsv",
             COMPOUND_SUMMARY = "compound_identifications.tsv",
             COMPOUND_SUMMARY_ADDUCTS = "compound_identifications_adducts.tsv",
             CANOPUS_SUMMARY = "canopus_summary.tsv";
