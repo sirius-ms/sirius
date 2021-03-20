@@ -92,7 +92,13 @@ The workflow contains of two pushes to `stable` and assumes that a **non SNAPSHO
 #### Bug fixes for releases
  * push changes to `stable` using a *SNAPSHOT version* until you are ready for a new release. Follow "**Make a Release**".
  * merge fixes back to `master` if needed.
+
 #### Major Changes
  * Merge a stable *SNAPSHOT version* from `master` into `stable`. If we are ready to release, follow "**Make a Release**".
 
 
+### Update Website
+The SIRIUS website is the [README.md](../README.md) of this Repo.
+Changes to the Website/Readme should be made on the `stable` branch of our [internal Gitlab Repo](https://git.bio.informatik.uni-jena.de/bioinf-mit/ms/sirius_frontend/-/tree/stable) 
+and will be synced automatically to GitHub. Changing only `README.md` files **will not** trigger
+the build pipelines. So no worries about side effects when just changing documentation.
