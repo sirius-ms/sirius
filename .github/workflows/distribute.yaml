@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - stable
+    paths-ignore:
+      - '**/README.md'
+      - 'sirius_doc/**/*'
 jobs:
   distCLI:
     strategy:
