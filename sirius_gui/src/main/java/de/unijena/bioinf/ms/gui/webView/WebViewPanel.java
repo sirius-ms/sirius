@@ -94,15 +94,6 @@ public abstract class WebViewPanel extends JFXPanel{
     }
 
     public void load(){
-        /*
-	    this.html_builder.append("</body></html>");
-        queueTaskInJFXThread(() -> {
-				this.webView.getEngine().setJavaScriptEnabled(true);
-				this.webView.getEngine().loadContent(html_builder.toString(),
-													 "text/html");
-			});
-        // TODO: notify the class when the loading is complete!
-         */
         load(Collections.emptyMap());
     }
 
