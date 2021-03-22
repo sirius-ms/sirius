@@ -228,18 +228,23 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             results.clear();
             final List<TreeComputationJob> jobs = new ArrayList<>(decompositions.size());
             final TreeBuilder builder = useHeuristic ? getHeuristicTreeBuilder() : analyzer.getTreeBuilder();
+            int counter = 0;
+
             for (Decomposition d : decompositions) {
-                checkForInterruption();
                 if (Double.isInfinite(d.getScore())) continue;
                 final TreeComputationJob job = new TreeComputationJob(builder, null, d);
                 submitSubJob(job);
                 jobs.add(job);
+                if (++counter % 100 == 0) {
+                    checkForInterruption();
+                    checkTimeout();
+                }
             }
-            int counter = 0;
+
             for (TreeComputationJob job : jobs) {
-                checkForInterruption();
                 results.add(job.awaitResult());
                 if (++counter % 100 == 0) {
+                    checkForInterruption();
                     checkTimeout();
                 }
             }
