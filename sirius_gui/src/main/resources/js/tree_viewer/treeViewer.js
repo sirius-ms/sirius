@@ -316,7 +316,8 @@ function reset(){
 function popupOpen(d) {
     var popupStrings = [];
     popup_annot_fields.forEach(function(a) {
-        popupStrings.push(formatAnnot(a, d.data.fragmentData[a]));
+        const str = formatAnnot(a, d.data.fragmentData[a]);
+        if (str) popupStrings.push(str);
     });
     var open_left = 0, open_above=0;
     var popup_width = parseFloat(popup_div.style('width').replace('px', ''));
@@ -336,43 +337,47 @@ function popupClose(d) {
 }
 
 function formatAnnot(id, value) {
-    switch (id) {
-    case "score":
-        return "Score: " + parseFloat(value).toFixed(4);
-    case "ion":
-        return value;
-    case "mz":
-        return parseFloat(value).toFixed(4) + ' Da';
-    case "massDeviation":
-        // example: "-5.479016320565768 ppm (-0.0035791853184719002 m/z)"
-        var number = parseFloat(value.split(' ')[0]);
-        return number.toFixed(4) + ' ppm';
-    case 'massDeviationPpm':
-        return parseFloat(value).toFixed(4) + ' ppm';
-    case 'massDeviationMz':
-        return (value>0?"+":"")+(parseFloat(value) * 1000).toFixed(4) + ' mDa';
-    case 'relativeIntensity':
-        return parseFloat(value).toFixed(4) + " rel. int.";
-    default:
-        // for showing custom (not predefined) information,
-        // that has to be present in 'data' though
-        return value;
-    }
+    if (value) {
+        switch (id) {
+        case "score":
+            return "Score: " + parseFloat(value).toFixed(4);
+        case "ion":
+            return value;
+        case "mz":
+            return parseFloat(value).toFixed(4) + ' Da';
+        case "massDeviation":
+            // example: "-5.479016320565768 ppm (-0.0035791853184719002 m/z)"
+            var number = parseFloat(value.split(' ')[0]);
+            return number.toFixed(4) + ' ppm';
+        case 'massDeviationPpm':
+            return parseFloat(value).toFixed(4) + ' ppm';
+        case 'massDeviationMz':
+            return (value>0?"+":"")+(parseFloat(value) * 1000).toFixed(4) + ' mDa';
+        case 'relativeIntensity':
+            return parseFloat(value).toFixed(4) + " rel. int.";
+        default:
+            // for showing custom (not predefined) information,
+            // that has to be present in 'data' though
+            return value;
+        }
+    } else return "";
 }
 
 // returns annotation color depending on type of annotation and value
 function getAnnotColor(id, value) {
-    value = parseFloat(value);
-    var min, max;
-    if (id == 'massDeviationMz'){
-        min = md_mz_min;
-        max = md_mz_max;
-    } else if (id == 'massDeviationPpm'){
-        min = md_ppm_min;
-        max = md_ppm_max;
-    } else
-        return 'black';
-    return interpolateBuBlRd(parseFloat(value) / Math.max(min, max) / 2 + 0.5);
+    if (value) {
+        value = parseFloat(value);
+        var min, max;
+        if (id == 'massDeviationMz'){
+            min = md_mz_min;
+            max = md_mz_max;
+        } else if (id == 'massDeviationPpm'){
+            min = md_ppm_min;
+            max = md_ppm_max;
+        } else
+            return 'black';
+        return interpolateBuBlRd(parseFloat(value) / Math.max(min, max) / 2 + 0.5);
+    } else return "white";
 }
 
 function getLossColor(loss, colorFunction=colorLossByElements){
@@ -1060,21 +1065,27 @@ function addFragmentData(data) {
     data.fragments.forEach(function(fragment) { // must not be empty!
         // Pre-processing of 'fragment' to make things simpler later
         // for display of these attributes as annotations
-        fragment['massDeviationPpm'] = fragment.massDeviation.split(' ')[0];
-        fragment['massDeviationMz'] = fragment.massDeviation.split(' ')[2].
-            substring(1);
-        // storing maxima/minima for color coding
-        var md_ppm = parseFloat(fragment.massDeviationPpm);
-        var md_mz = parseFloat(fragment.massDeviationMz);
+        if (fragment['massDeviation']) {
+            fragment['massDeviationPpm'] = fragment.massDeviation.split(' ')[0];
+            // storing maxima/minima for color coding
+            const md_ppm = parseFloat(fragment.massDeviationPpm);
+            if (md_ppm > md_ppm_max) {
+                md_ppm_max = md_ppm;
+            }
+            if (md_ppm < md_ppm_min) {
+                md_ppm_min = md_ppm;
+            }
+            fragment['massDeviationMz'] = fragment.massDeviation.split(' ')[2].substring(1);
+            const md_mz = parseFloat(fragment.massDeviationMz);
+            if (md_mz > md_mz_max) {
+                md_mz_max = md_mz;
+            }
+            if (md_mz < md_mz_min) {
+                md_mz_min = md_mz;
+            }
+        }
+        
         var rel_int = parseFloat(fragment.relativeIntensity);
-        if (md_ppm > md_ppm_max)
-            md_ppm_max = md_ppm;
-        if (md_ppm < md_ppm_min)
-            md_ppm_min = md_ppm;
-        if (md_mz > md_mz_max)
-            md_mz_max = md_mz;
-        if (md_mz < md_mz_min)
-            md_mz_min = md_mz;
         if (rel_int > rel_int_max)
             rel_int_max = rel_int;
         if (fragment.molecularFormula in node_map) {
