@@ -31,10 +31,7 @@ import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.FormulaScoring;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.ProjectWriter;
-import de.unijena.bioinf.projectspace.Summarizer;
+import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
@@ -52,8 +49,10 @@ import java.util.stream.Collectors;
 public class FormulaSummaryWriter implements Summarizer {
 
     final static List<Class<? extends FormulaScore>> RANKING_SCORES = List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class, TopCSIScore.class);
+    final static List<Class<? extends FormulaScore>> RANKING_SCORES_SELECTING_TOP1 = List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class);
     final LinkedHashMap<Class<? extends FormulaScore>, String> globalTypes = new LinkedHashMap<>();
     final Map<FormulaResult, Class<? extends FormulaScore>> globalResults = new HashMap<>();
+    final Map<FormulaResult, Class<? extends FormulaScore>> globalResultsAllAdducts = new HashMap<>();
     final Map<FormulaResult, String> prefix = new HashMap<>();
 
     @Override
@@ -72,19 +71,21 @@ public class FormulaSummaryWriter implements Summarizer {
         if (formulaResults == null || formulaResults.isEmpty())
             return;
 
-        //todo add adducts
         List<SScored<FormulaResult, ? extends FormulaScore>> results = FormulaScoring.reRankBy(formulaResults, RANKING_SCORES, true);
+        List<SScored<FormulaResult, ? extends FormulaScore>> topResultWithAdducts = extractAllTopScoringResults(results, RANKING_SCORES_SELECTING_TOP1);
 
         writer.inDirectory(exp.getId().getDirectoryName(), () -> {
             writer.textFile(SummaryLocations.FORMULA_CANDIDATES, w -> {
                 LinkedHashMap<Class<? extends FormulaScore>, String> types = new LinkedHashMap<>();
 
                 final AtomicBoolean first = new AtomicBoolean(true);
+
                 results.forEach(r -> r.getCandidate().getAnnotation(FormulaScoring.class)
                         .ifPresent(s -> {
                             if (first.getAndSet(false)) {
-                                this.globalResults.put(r.getCandidate(), r.getScoreObject().getClass());
-                                this.prefix.put(r.getCandidate(), exp.getId().getIonMass().orElse(Double.NaN) + "\t" + exp.getId().getRt().orElse(RetentionTime.NA()).getRetentionTimeInSeconds() + "\t" + exp.getId().getDirectoryName());
+                                FormulaResult bestResult = topResultWithAdducts.size()>1 ? resolveIonizationOnly(r.getCandidate()) : r.getCandidate();
+                                this.globalResults.put(bestResult, r.getScoreObject().getClass());
+                                this.prefix.put(bestResult, exp.getId().getIonMass().orElse(Double.NaN) + "\t" + exp.getId().getRt().orElse(RetentionTime.NA()).getRetentionTimeInSeconds() + "\t" + exp.getId().getDirectoryName());
                             }
                             s.annotations().forEach((key, value) -> {
                                 if (value != null && !value.isNa()) {
@@ -102,15 +103,51 @@ public class FormulaSummaryWriter implements Summarizer {
 
             return true;
         });
+
+        topResultWithAdducts.forEach(r -> {
+            this.globalResultsAllAdducts.put(r.getCandidate(), r.getScoreObject().getClass());
+            this.prefix.put(r.getCandidate(), exp.getId().getIonMass().orElse(Double.NaN) + "\t" + exp.getId().getRt().orElse(RetentionTime.NA()).getRetentionTimeInSeconds() + "\t" + exp.getId().getDirectoryName());
+        });
+    }
+
+    private FormulaResult resolveIonizationOnly(FormulaResult r) {
+        FormulaResultId rid = r.getId();
+        FormulaResultId newRid = new FormulaResultId(rid.getParentId(), rid.getPrecursorFormula(), PrecursorIonType.getPrecursorIonType(rid.getIonType().getIonization()));
+        FormulaResult newResult = new FormulaResult(newRid);
+        r.annotations().forEach((k,v)-> newResult.setAnnotation(k, v));
+        return newResult;
+    }
+
+    private List<SScored<FormulaResult, ? extends FormulaScore>> extractAllTopScoringResults(List<SScored<FormulaResult, ? extends FormulaScore>> sortedResults, List<Class<? extends FormulaScore>> rankingScores) {
+        if (sortedResults.isEmpty()) return Collections.emptyList();
+        if (sortedResults.size() == 1) return Collections.singletonList(sortedResults.get(0));
+
+        SScored<FormulaResult, ? extends FormulaScore> best = sortedResults.get(0);
+        FormulaScoring bestScore = best.getCandidate().getAnnotationOrNull(FormulaScoring.class);
+
+        Comparator<FormulaScoring> comparator = FormulaScoring.comparingMultiScore(rankingScores, true);
+
+        List<SScored<FormulaResult, ? extends FormulaScore>> topResultsWithAdducts = sortedResults.stream()
+                .takeWhile(r -> comparator.compare(bestScore, r.getCandidate().getAnnotationOrNull(FormulaScoring.class))==0)
+                .collect(Collectors.toList());
+
+        //candidates with same score should have the same adduct.
+        assert topResultsWithAdducts.stream().map(s->s.getCandidate().getId().getIonType().getIonization()).distinct().count()==1;
+        return topResultsWithAdducts;
     }
 
     @Override
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
-        final List<SScored<FormulaResult, ? extends FormulaScore>> r = FormulaScoring.rankBy(globalResults.keySet(), RANKING_SCORES, true);
         globalTypes.remove(ConfidenceScore.class);
         globalTypes.remove(TopCSIScore.class);
+
+        final List<SScored<FormulaResult, ? extends FormulaScore>> r = FormulaScoring.rankBy(globalResults.keySet(), RANKING_SCORES, true);
         writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> {
             writeCSV(w, globalTypes, r, prefix);
+        });
+        final List<SScored<FormulaResult, ? extends FormulaScore>> rAdducts = FormulaScoring.rankBy(globalResultsAllAdducts.keySet(), RANKING_SCORES, true);
+        writer.textFile(SummaryLocations.FORMULA_SUMMARY_ADDUCTS, w -> {
+            writeCSV(w, globalTypes, rAdducts, prefix);
         });
     }
 
