@@ -2,7 +2,10 @@ name: Build and Pubish
 on:
   push:
     branches:
-      - release-4-pre
+      - stable
+    paths-ignore:
+      - '**/README.md'
+      - 'sirius_doc/**/*'
 jobs:
   distCLI:
     strategy:
