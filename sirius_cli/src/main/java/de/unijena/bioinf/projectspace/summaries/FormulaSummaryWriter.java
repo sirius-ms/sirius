@@ -45,11 +45,11 @@ import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FormulaSummaryWriter implements Summarizer {
 
     final static List<Class<? extends FormulaScore>> RANKING_SCORES = List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class, TopCSIScore.class);
+    final static List<Class<? extends FormulaScore>> RANKING_SCORES_SELECTING_TOP1 = List.of(ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class);
     final LinkedHashMap<Class<? extends FormulaScore>, String> globalTypes = new LinkedHashMap<>();
     final Map<FormulaResult, Class<? extends FormulaScore>> globalResults = new HashMap<>();
     final Map<FormulaResult, Class<? extends FormulaScore>> globalResultsAllAdducts = new HashMap<>();
@@ -72,7 +72,7 @@ public class FormulaSummaryWriter implements Summarizer {
             return;
 
         List<SScored<FormulaResult, ? extends FormulaScore>> results = FormulaScoring.reRankBy(formulaResults, RANKING_SCORES, true);
-        List<SScored<FormulaResult, ? extends FormulaScore>> topResultWithAdducts = extractAllTopScoredResults(results);
+        List<SScored<FormulaResult, ? extends FormulaScore>> topResultWithAdducts = extractAllTopScoringResults(results, RANKING_SCORES_SELECTING_TOP1);
 
         writer.inDirectory(exp.getId().getDirectoryName(), () -> {
             writer.textFile(SummaryLocations.FORMULA_CANDIDATES, w -> {
@@ -118,13 +118,18 @@ public class FormulaSummaryWriter implements Summarizer {
         return newResult;
     }
 
-    private List<SScored<FormulaResult, ? extends FormulaScore>> extractAllTopScoredResults(List<SScored<FormulaResult, ? extends FormulaScore>> sortedResults) {
-        double topScore = sortedResults.stream().filter(
-                r -> r.getCandidate().getAnnotation(FormulaScoring.class).isPresent()).mapToDouble(SScored::getScore).
-                findFirst().orElse(Double.NaN);
+    private List<SScored<FormulaResult, ? extends FormulaScore>> extractAllTopScoringResults(List<SScored<FormulaResult, ? extends FormulaScore>> sortedResults, List<Class<? extends FormulaScore>> rankingScores) {
+        if (sortedResults.isEmpty()) return Collections.emptyList();
+        if (sortedResults.size() == 1) return Collections.singletonList(sortedResults.get(0));
 
-        if (Double.isNaN(topScore)) return Collections.emptyList();
-        List<SScored<FormulaResult, ? extends FormulaScore>> topResultsWithAdducts =  sortedResults.stream().takeWhile(r-> r.getScore()==topScore).collect(Collectors.toList());
+        SScored<FormulaResult, ? extends FormulaScore> best = sortedResults.get(0);
+        FormulaScoring bestScore = best.getCandidate().getAnnotationOrNull(FormulaScoring.class);
+
+        Comparator<FormulaScoring> comparator = FormulaScoring.comparingMultiScore(rankingScores, true);
+
+        List<SScored<FormulaResult, ? extends FormulaScore>> topResultsWithAdducts = sortedResults.stream()
+                .takeWhile(r -> comparator.compare(bestScore, r.getCandidate().getAnnotationOrNull(FormulaScoring.class))==0)
+                .collect(Collectors.toList());
 
         //candidates with same score should have the same adduct.
         assert topResultsWithAdducts.stream().map(s->s.getCandidate().getId().getIonType().getIonization()).distinct().count()==1;
