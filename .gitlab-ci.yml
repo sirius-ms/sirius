@@ -68,7 +68,7 @@ distCliLinux64:
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
     # from pipeline
     changes:
-      - "**/*.{java,gradle,properties,yaml,tex,png,ico,json,xml,html,csv,tsv,py}"
+      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
       - "**/src/main/java/**/*"
 
 distGuiLinux64:
@@ -92,7 +92,7 @@ distGuiLinux64:
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
     # from pipeline
     changes:
-      - "**/*.{java,gradle,properties,yaml,tex,png,ico,json,xml,html,csv,tsv,py}"
+      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
       - "**/src/main/java/**/*"
 
 #distCliWin64:
