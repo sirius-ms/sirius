@@ -67,11 +67,15 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static org.openscience.cdk.smiles.smarts.parser.SMARTSParserConstants.D;
 
 public class SimilarityMatrixWorkflow implements Workflow {
 
@@ -133,10 +137,10 @@ public class SimilarityMatrixWorkflow implements Workflow {
         final double[][] M = new double[xs.size()][xs.size()];
         J.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i, j) -> Tanimoto.fastTanimoto(fps[i], fps[j]))).takeResult();
         MatrixUtils.normalize(M);
-        writeMatrix("tanimoto", M, xs.stream().map(y -> y.getID().getCompoundName()).toArray(String[]::new));
+        writeMatrix("tanimoto", M, xs.stream().map(y -> y.getID().getCompoundName()).toArray(String[]::new), options.digits);
     }
 
-    private void writeMatrix(String name, double[][] M, String[] header) {
+    private void writeMatrix(String name, double[][] M, String[] header, int digits) {
         final File file = new File(options.outputDirectory, name + (options.numpy ? ".txt" : ".tsv"));
 
         try {
@@ -162,7 +166,12 @@ public class SimilarityMatrixWorkflow implements Workflow {
                         bw.write(header[i]);
                         for (int j = 0; j < M.length; ++j) {
                             bw.write('\t');
-                            bw.write(String.valueOf(M[i][j]));
+                            if (options.digits >= 0) {
+                                BigDecimal v = BigDecimal.valueOf(M[i][j]).setScale(digits, RoundingMode.HALF_UP);
+                                bw.write(v.toString());
+                            }else {
+                                bw.write(String.valueOf(M[i][j]));
+                            }
                         }
                         bw.newLine();
                     }
@@ -229,7 +238,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
         jobs.clear();
 
         Jobs.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i,j)->Pearson.pearson(C[i],C[j]))).takeResult();
-        writeMatrix("ftblast", M, xs.stream().map(x->x.getID().getCompoundName()).toArray(String[]::new));
+        writeMatrix("ftblast", M, xs.stream().map(x->x.getID().getCompoundName()).toArray(String[]::new), options.digits);
     }
 
     private void align(List<Instance> xs, FTree[] trees) {
@@ -243,7 +252,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
                 M[i][j] = M[i][j] / Math.sqrt(Math.min(norm[i],norm[j]));
             }
         }
-        writeMatrix("ftalign", M, xs.stream().map(x->x.getID().getCompoundName()).toArray(String[]::new));
+        writeMatrix("ftalign", M, xs.stream().map(x->x.getID().getCompoundName()).toArray(String[]::new), options.digits);
 
     }
 
@@ -256,7 +265,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
         final CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(config.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.multiply(2)));
         final double[][] M = new double[xs.size()][xs.size()];
         J.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i,j)-> cosineQueryUtils.cosineProductWithLosses(cosineQuerySpectrums[i],cosineQuerySpectrums[j]).similarity)).takeResult();
-        writeMatrix("cosine", M, xs.stream().map(x->x.getID().getCompoundName()).toArray(String[]::new));
+        writeMatrix("cosine", M, xs.stream().map(x->x.getID().getCompoundName()).toArray(String[]::new), options.digits);
     }
 
     private BasicJJob<Pair<Instance,CosineQuerySpectrum>> getSpectrum(Instance i) {
