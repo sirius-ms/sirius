@@ -24,17 +24,10 @@ package de.unijena.bioinf.babelms.json;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.data.JDKDocument;
-import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
-import de.unijena.bioinf.ChemistryBase.data.JacksonDocument;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.descriptor.Descriptor;
@@ -46,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -85,6 +77,7 @@ public class FTJsonWriter {
 
             final PrecursorIonType generalIonType = tree.getAnnotationOrNull(PrecursorIonType.class);
             final FragmentAnnotation<PrecursorIonType> ionPerFragment = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
+            final FragmentAnnotation<AnnotatedPeak> anoPeak = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
             if (generalIonType != null) {
                 final MolecularFormula formula = tree.getRoot().getFormula();
                 final PrecursorIonType fragmentIon = getFragmentIon(ionPerFragment, tree.getRoot(), generalIonType);
@@ -124,17 +117,18 @@ public class FTJsonWriter {
                 generator.writeNumberField("id", f.getVertexId());
                 generator.writeStringField("molecularFormula", f.getFormula().toString());
 
-                Deviation dev = tree.getMassError(f);
-                if (f.isRoot() && precursorMass != null && dev.equals(Deviation.NULL_DEVIATION))
-                    dev = tree.getMassErrorTo(f, precursorMass);
+                if (anoPeak.get(f).isMeasured()) {
+                    Deviation dev = tree.getMassError(f);
+                    if (f.isRoot() && precursorMass != null && dev.equals(Deviation.NULL_DEVIATION))
+                        dev = tree.getMassErrorTo(f, precursorMass);
 
-                Deviation rdev = tree.getRecalibratedMassError(f);
-                if (f.isRoot() && precursorMass != null && dev.equals(Deviation.NULL_DEVIATION))
-                    rdev = tree.getMassErrorTo(f, precursorMass);
+                    Deviation rdev = tree.getRecalibratedMassError(f);
+                    if (f.isRoot() && precursorMass != null && dev.equals(Deviation.NULL_DEVIATION))
+                        rdev = tree.getMassErrorTo(f, precursorMass);
 
-                generator.writeStringField("massDeviation", dev.toString());
-                generator.writeStringField("recalibratedMassDeviation", rdev.toString());
-
+                    generator.writeStringField("massDeviation", dev.toString());
+                    generator.writeStringField("recalibratedMassDeviation", rdev.toString());
+                }
 
                 for (FragmentAnnotation<DataAnnotation> fano : fragmentAnnotations) {
                     final Map<String,Object> fragment = jdkDocument.newDictionary();
