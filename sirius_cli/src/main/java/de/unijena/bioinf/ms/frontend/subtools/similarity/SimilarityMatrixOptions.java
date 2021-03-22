@@ -32,6 +32,10 @@ import java.io.File;
 @CommandLine.Command(name = "similarity",  description = "<STANDALONE> Computes the similarity between all compounds in the dataset and outputs a matrix of similarities.",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class SimilarityMatrixOptions implements StandaloneTool<SimilarityMatrixWorkflow> {
 
+    @CommandLine.Option(names = {"--digits","--precision","-p"},
+            description = {"Specify number of digits used for values in the distance matrix. -1 -> full length Double value."}, defaultValue="-1")
+    protected int digits;
+
     @CommandLine.Option(names = "--ftalign",
             description = {"Compute fragmentation tree alignments between all compounds in the dataset."})
     protected boolean useAlignment;

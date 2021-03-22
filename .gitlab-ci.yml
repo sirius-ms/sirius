@@ -42,7 +42,11 @@ doc:
   only:
     refs:
       - master
-      - release-4
+      - stable
+    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
+    # from pipeline
+    changes:
+      - "sirius_doc/**/*"
 
 distCliLinux64:
   variables:
@@ -62,6 +66,11 @@ distCliLinux64:
   only:
     refs:
       - master
+    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
+    # from pipeline
+    changes:
+      - "**/*.{java,gradle,properties,yaml,tex,png,ico,json,xml,html,csv,tsv,py}"
+      - "**/src/main/java/**/*"
 
 distGuiLinux64:
   variables:
@@ -81,6 +90,11 @@ distGuiLinux64:
   only:
     refs:
       - master
+    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
+    # from pipeline
+    changes:
+      - "**/*.{java,gradle,properties,yaml,tex,png,ico,json,xml,html,csv,tsv,py}"
+      - "**/src/main/java/**/*"
 
 #distCliWin64:
 #  variables:
