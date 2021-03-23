@@ -23,6 +23,7 @@ package de.unijena.bioinf.ChemistryBase.fp;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Locale;
 
 public class ClassyfireProperty extends MolecularProperty {
@@ -48,6 +49,10 @@ public class ClassyfireProperty extends MolecularProperty {
         this.priority = priority;
         this.fixedPriority=-1;
         this.level=-1;
+    }
+
+    public int getLevel() {
+        return level;
     }
 
     public int getPriority() {
@@ -125,6 +130,20 @@ public class ClassyfireProperty extends MolecularProperty {
             prop.add(node);
         }
         return prop.toArray(ClassyfireProperty[]::new);
+    }
+
+    /**
+     * Compares two compound classes based on how descriptive they are. The "larger" compound class is always the
+     * one which describes a larger structure or a more specific concept.
+     */
+    public static class CompareCompoundClassDescriptivity implements Comparator<ClassyfireProperty> {
+
+        @Override
+        public int compare(ClassyfireProperty o1, ClassyfireProperty o2) {
+            if ((o1.getFixedPriority() > o2.getFixedPriority()) || (o1.getFixedPriority() == o2.getFixedPriority() && o1.level > o2.level)) return 1;
+            if ((o2.getFixedPriority() > o1.getFixedPriority()) || (o2.getFixedPriority() == o1.getFixedPriority() && o2.level > o1.level)) return -1;
+            return 0;
+        }
     }
 
     @Override
