@@ -21,14 +21,19 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
+import de.unijena.bioinf.ChemistryBase.ms.MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.InSilicoSelectionBox;
 import de.unijena.bioinf.ms.gui.ms_viewer.InsilicoFragmenter;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
+import de.unijena.bioinf.ms.gui.ms_viewer.data.SiriusIsotopePattern;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -129,23 +134,25 @@ public class SpectraVisualizationPanel
 		SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
 
 		if (mode.contains(MS1_DISPLAY)) {
+			// Deviation standardMassDeviation = experiment.getExperiment()
+			// 		.getAnnotationOrNull(MS1MassDeviation.class).standardMassDeviation;
 			List<SimpleSpectrum> spectra1 = experiment.getMs1Spectra();
 			SimpleSpectrum spectrum = experiment.getMergedMs1Spectrum()==null ? spectra1.get(0) : experiment.getMergedMs1Spectrum(); // TODO: can there be more?
 			if (mode.equals(MS1_DISPLAY)) {
 				jsonSpectra = spectraWriter.ms1JSON(spectrum);
 			} else if (mode.equals(MS1_MIRROR_DISPLAY)) {
 				FTree ftree = sre.getFragTree().orElse(null);
-				IsotopePattern ip = ftree.getAnnotationOrNull(IsotopePattern.class);
-				jsonSpectra = spectraWriter.ms1MirrorJSON(spectrum, ip.getPattern(), ftree, experiment.getExperiment());
+				SiriusIsotopePattern siriusIsotopePattern = new SiriusIsotopePattern(ftree ,experiment.getExperiment(), spectrum);
+				jsonSpectra = spectraWriter.ms1MirrorJSON(spectrum, siriusIsotopePattern);
 			} else {
 				System.err.println("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
 				return;
 			}
 		} else if (mode.equals(MS2_DISPLAY)) {
-
+			// Deviation standardMassDeviation = experiment.getExperiment()
+			// 		.getAnnotationOrNull(MS1MassDeviation.class).standardMassDeviation;
 			if (ce.equals(MS2_MERGED_DISPLAY)){
 				jsonSpectra = spectraWriter.ms2JSON(experiment.getExperiment(), Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null));
-				debugWriteSpectra(jsonSpectra, "/tmp/test_spectra_MS2_merged.json"); // FIXME: DEBUG
 			} else {
 				MutableMs2Spectrum spectrum = experiment.getMs2Spectra().stream()
 						.filter(s -> s.getCollisionEnergy().toString().equals(ce)).findFirst().orElse(null);
@@ -154,7 +161,11 @@ public class SpectraVisualizationPanel
 						ce);
 				   return;
 				}
-				jsonSpectra = spectraWriter.ms2JSON(spectrum, Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null));
+				FTree ftree = Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null);
+				if (ftree != null)
+					jsonSpectra = spectraWriter.ms2JSON(spectrum, ftree);
+				else
+					jsonSpectra = spectraWriter.ms2JSON(spectrum);
 			}
 			// for (int i = 0; i < spectra2.size(); i++) {
 			// 	System.out.printf("MS2 spectra %d%n", i);

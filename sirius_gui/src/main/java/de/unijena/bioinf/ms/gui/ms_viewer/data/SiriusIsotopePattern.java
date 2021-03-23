@@ -58,6 +58,10 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
         return false;
     }
 
+	public SimpleSpectrum getIsotopePattern(){
+		return isotopePattern;
+	}
+
     private void annotate(FTree tree, Ms2Experiment exp) {
         final IsotopePattern pattern = tree.getAnnotationOrNull(IsotopePattern.class);
         if (pattern != null) {
