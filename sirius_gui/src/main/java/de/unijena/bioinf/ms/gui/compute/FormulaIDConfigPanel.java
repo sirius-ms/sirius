@@ -91,7 +91,11 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
     protected final JComboBox<Instrument> profileSelector;
     protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly;
-    protected final JComboBox<IsotopeMs2Settings.Strategy> ms2IsotpeSetting;
+
+    enum Strategy {IGNORE, SCORE} //todo remove if Filter is implemented
+    protected final JComboBox<Strategy> ms2IsotpeSetting;
+//    protected final JComboBox<IsotopeMs2Settings.Strategy> ms2IsotpeSetting;
+
     //    protected final JCheckBox restrictToOrganics;
     protected ElementsPanel elementPanel;
 //    protected JButton elementAutoDetect;
@@ -119,7 +123,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
         smallParameters.addNamed("Instrument", profileSelector);
 
-        ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", IsotopeMs2Settings.Strategy.class);
+        ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", Strategy.class);
         smallParameters.addNamed("MS/MS isotope scorer", ms2IsotpeSetting);
 
         ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
