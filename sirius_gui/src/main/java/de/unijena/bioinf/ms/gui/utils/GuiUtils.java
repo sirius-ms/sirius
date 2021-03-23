@@ -235,16 +235,16 @@ public class GuiUtils {
 
     public static JPanel newNoResultsComputedPanel(@Nullable String message) {
         JPanel p = new JPanel(new BorderLayout());
-        JButton button = new ToolbarButton(SiriusActions.COMPUTE.getInstance());
+//        JButton button = new ToolbarButton(SiriusActions.COMPUTE.getInstance());
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.anchor = GridBagConstraints.NORTH;
+//        GridBagConstraints gbc = new GridBagConstraints();
+//        gbc.gridwidth = GridBagConstraints.REMAINDER;
+//        gbc.anchor = GridBagConstraints.NORTH;
 
-        JPanel bp =  new JPanel(new GridBagLayout());
-        bp.add(button, gbc);
+//        JPanel bp =  new JPanel(new GridBagLayout());
+//        bp.add(button, gbc);
 
-        p.add(bp, BorderLayout.CENTER);
+//        p.add(bp, BorderLayout.CENTER);
 
         JPanel pp = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         pp.add(new JLabel(message == null ? "No results Computed!" : message));
