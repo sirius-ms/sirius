@@ -29,5 +29,6 @@ public interface SummaryLocations {
             FORMULA_SUMMARY_ADDUCTS = "formula_identifications_adducts.tsv",
             COMPOUND_SUMMARY = "compound_identifications.tsv",
             COMPOUND_SUMMARY_ADDUCTS = "compound_identifications_adducts.tsv",
-            CANOPUS_SUMMARY = "canopus_summary.tsv";
+            CANOPUS_SUMMARY = "canopus_summary.tsv",
+            CANOPUS_SUMMARY_ADDUCT = "canopus_summary_adducts.tsv";
 }
