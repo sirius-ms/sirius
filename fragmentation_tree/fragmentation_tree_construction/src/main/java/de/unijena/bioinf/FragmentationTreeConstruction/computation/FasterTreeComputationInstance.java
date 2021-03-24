@@ -22,6 +22,7 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon;
@@ -39,7 +40,6 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.annotations.DecompositionList;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
@@ -68,10 +68,12 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
     private int state = 0;
 
-    protected long startTime;
-    protected volatile int restTime;
-    protected int secondsPerInstance, secondsPerTree;
-
+    protected long startTimeMillis;
+    protected long millisPerTree;
+    protected long secsPerTree;
+    //    protected volatile int restTime;
+//    protected int secondsPerInstance, secondsPerTree;
+//    protected final Timeout timeout;
     /**
      *
      * @param analyzer
@@ -86,6 +88,10 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         this.numberOfResultsToKeep = input.getAnnotationOrDefault(NumberOfCandidates.class).value;
         this.numberOfResultsToKeepPerIonization = input.getAnnotationOrDefault(NumberOfCandidatesPerIon.class).value;
         this.ticks = new AtomicInteger(0);
+        Timeout timeout = pinput.getAnnotation(Timeout.class).orElse(Timeout.NO_TIMEOUT);
+        secsPerTree = timeout.getNumberOfSecondsPerDecomposition();
+        millisPerTree = secsPerTree * 1000L;
+        withTimeLimit(timeout.getNumberOfSecondsPerInstance() * 1000L);
     }
 
     private FasterTreeComputationInstance(FragmentationPatternAnalysis analyzer, ProcessedInput input, FTree tree) {
@@ -94,6 +100,10 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         this.pinput.setAnnotation(Whiteset.class, Whiteset.ofMeasuredFormulas(Collections.singleton(tree.getRoot().getFormula())));
         this.inputCopyForRecalibration = pinput;
         score();
+    }
+
+    private long restTimeSec() {
+        return Math.max(1, ((startTimeMillis + getTimeLimit()) - System.currentTimeMillis())/1000L);
     }
 
     private ProcessedInput score() {
@@ -145,11 +155,10 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     protected FinalResult compute() throws Exception {
         configureProgress(0, 2, 1);
         score();
-        startTime = System.currentTimeMillis();
-        final Timeout timeout = pinput.getAnnotationOrDefault(Timeout.class);
-        secondsPerInstance = timeout.getNumberOfSecondsPerInstance();
-        secondsPerTree = timeout.getNumberOfSecondsPerDecomposition();
-        restTime = Math.min(secondsPerInstance, secondsPerTree);
+        startTimeMillis = System.currentTimeMillis();
+//        secondsPerInstance = timeout.getNumberOfSecondsPerInstance();
+//        secondsPerTree = timeout.getNumberOfSecondsPerDecomposition();
+//        restTime = secondsPerInstance;//Math.min(secondsPerInstance, secondsPerTree);
         // preprocess input
         List<Decomposition> decompositions = pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions();
         // as long as we do not find good quality results
@@ -202,9 +211,9 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         if (useHeuristicOnly)
             useHeuristic = true;
 
-        final int NCPUS = jobManager.getCPUThreads();
-        final int BATCH_SIZE = Math.min(4 * NCPUS, Math.max(30, NCPUS));
-        final int MAX_GRAPH_CACHE_SIZE = Math.max(30, BATCH_SIZE);
+//        final int NCPUS = jobManager.getCPUThreads();
+//        final int BATCH_SIZE = Math.min(4 * NCPUS, Math.max(30, NCPUS));
+//        final int MAX_GRAPH_CACHE_SIZE = Math.max(30, BATCH_SIZE);
 //        final int n = Math.min(decompositions.size(), numberOfResultsToKeep);
 
         TreeSizeScorer.TreeSizeBonus treeSizeBonus;
@@ -223,30 +232,31 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
         // TREE SIZE
         while (inc <= MAX_TREESIZE_INCREASE) {
-            configureProgress(2, useHeuristic ? 50 : 90,decompositions.size());
+            configureProgress(2, useHeuristic ? 50 : 90, decompositions.size());
             if (tss != null) tss.fastReplace(pinput, new TreeSizeScorer.TreeSizeBonus(treeSize));
             results.clear();
-            final List<TreeComputationJob> jobs = new ArrayList<>(decompositions.size());
             final TreeBuilder builder = useHeuristic ? getHeuristicTreeBuilder() : analyzer.getTreeBuilder();
-            int counter = 0;
+            final List<TreeComputationJob> jobs = decompositions.stream().filter(d -> !Double.isInfinite(d.getScore())).map(d -> (TreeComputationJob) new TreeComputationJob(builder, null, d).withEndTime(getEndTime()).withTimeLimit(millisPerTree)).collect(Collectors.toList());
+            checkForInterruption();
+            submitSubJobsInBatches(jobs, SiriusJobs.getCPUThreads() * 4).forEach(JJob::takeResult);
 
-            for (Decomposition d : decompositions) {
+            /*for (Decomposition d : decompositions) {
                 if (Double.isInfinite(d.getScore())) continue;
                 final TreeComputationJob job = new TreeComputationJob(builder, null, d);
                 submitSubJob(job);
                 jobs.add(job);
-                if (++counter % 100 == 0) {
                     checkForInterruption();
                     checkTimeout();
-                }
-            }
+            }*/
 
+//            int counter = 0;
             for (TreeComputationJob job : jobs) {
                 results.add(job.awaitResult());
-                if (++counter % 100 == 0) {
+                checkForInterruption();
+                /*if (++counter % 100 == 0) {
                     checkForInterruption();
                     checkTimeout();
-                }
+                }*/
             }
             results.sort(Collections.reverseOrder());
             final int treeSizeCheck = Math.min(results.size(), MIN_NUMBER_OF_TREES_CHECK_FOR_INTENSITY);
@@ -271,24 +281,26 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         if (pinput.getAnnotationOrDefault(ForbidRecalibration.class).isForbidden()) {
             final List<BasicJJob<ExactResult>> jobs = new ArrayList<>();
             if (useHeuristic && !useHeuristicOnly) {
-                topResults.forEach((t) -> jobs.add(new ExactJob(t, analyzer.getTreeBuilder())));
+                topResults.forEach((t) -> jobs.add((ExactJob) new ExactJob(t, analyzer.getTreeBuilder()).withEndTime(getEndTime()).withTimeLimit(millisPerTree)));
             } else {
                 topResults.forEach((t) -> jobs.add(new AnnotationJob(t)));
             }
+            checkForInterruption();
             jobs.forEach(this::submitSubJob);
             LoggerFactory.getLogger(FasterTreeComputationInstance.class).warn("Recalibration is disabled!");
-            return jobs.stream().map(this::takeResultAndCheckTime).sorted(Collections.reverseOrder()).toArray(ExactResult[]::new);
+            checkForInterruption();
+            return jobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).toArray(ExactResult[]::new);
         }
         final List<RecalibrationJob> recalibrationJobs = new ArrayList<>();
         for (ExactResult r : topResults) {
             checkForInterruption();
             TreeBuilder builder = useHeuristic ? getHeuristicTreeBuilder() : analyzer.getTreeBuilder();
-            final RecalibrationJob recalibrationJob = new RecalibrationJob(r, builder,
-                    useHeuristicOnly ? builder : analyzer.getTreeBuilder());
+            final RecalibrationJob recalibrationJob = (RecalibrationJob) new RecalibrationJob(r, builder,
+                    useHeuristicOnly ? builder : analyzer.getTreeBuilder()).withEndTime(getEndTime()).withTimeLimit(millisPerTree);
             submitSubJob(recalibrationJob);
             recalibrationJobs.add(recalibrationJob);
         }
-        final ExactResult[] recalibrated = extractTopResults(recalibrationJobs.stream().map(this::takeResultAndCheckTime).sorted(Collections.reverseOrder()).collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization).toArray(ExactResult[]::new);
+        final ExactResult[] recalibrated = extractTopResults(recalibrationJobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization).toArray(ExactResult[]::new);
         final double[] originalScores = new double[recalibrated.length];
         for (int k = 0; k < recalibrated.length; ++k) originalScores[k] = recalibrated[k].score;
         final ExactJob[] beautify = new ExactJob[recalibrated.length];
@@ -396,11 +408,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         return new ExtendedCriticalPathHeuristicTreeBuilder();
     }
 
-    private ExactResult takeResultAndCheckTime(BasicJJob<ExactResult> r) {
+    /*private ExactResult takeResultAndCheckTime(BasicJJob<ExactResult> r) {
         final ExactResult result = r.takeResult();
         checkTimeout();
         return result;
-    }
+    }*/
 
     protected class ExactJob extends BasicJJob<ExactResult> {
         private final ExactResult template;
@@ -415,8 +427,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         protected ExactResult compute() throws Exception {
             final ProcessedInput input = template.input == null ? pinput : template.input;
             final FGraph graph = treeBuilder instanceof ExtendedCriticalPathHeuristicTreeBuilder ? analyzer.buildGraphWithoutReduction(pinput, template.decomposition) : analyzer.buildGraph(pinput, template.decomposition);
-            final TreeBuilder.Result tree = treeBuilder.computeTree().withMultithreading(1).withTimeLimit(Math.min(restTime, secondsPerTree))/*.withMinimalScore(template.score - 1e-3).withTemplate(template.tree)*/.solve(pinput, graph);
+            checkForInterruption();
+            final TreeBuilder.Result tree = treeBuilder.computeTree().withMultithreading(1).withTimeLimit(Math.min(restTimeSec(), secsPerTree))/*.withMinimalScore(template.score - 1e-3).withTemplate(template.tree)*/.solve(pinput, graph);
+            checkForInterruption();
             analyzer.makeTreeReleaseReady(input, graph, tree.tree, tree.mapping);
+            checkForInterruption();
             recalculateScore(input, tree.tree, "ExactJob");
             tick();
             return new ExactResult(template.input == null ? null : template.input, template.decomposition, null, tree.tree, tree.tree.getTreeWeight());
@@ -435,8 +450,10 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             FGraph graph = analyzer.buildGraph(pinput, template.decomposition);
             // TODO: we recompute the tree. Is that really a good idea?
             // Find a better solution
-            final TreeBuilder.Result r = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree))/*.withTemplate(template.tree)*/.solve(pinput, graph);
-            analyzer.makeTreeReleaseReady(pinput, graph, r.tree,r.mapping);
+            checkForInterruption();
+            final TreeBuilder.Result r = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pinput, graph);
+            checkForInterruption();
+            analyzer.makeTreeReleaseReady(pinput, graph, r.tree, r.mapping);
             tick();
             recalculateScore(pinput, r.tree, "annotation");
             return new ExactResult(template.decomposition, null, r.tree, r.tree.getTreeWeight());
@@ -459,7 +476,9 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         @Override
         protected ExactResult compute() throws Exception {
             final FGraph graph = treeBuilder instanceof ExtendedCriticalPathHeuristicTreeBuilder ? analyzer.buildGraphWithoutReduction(pinput, decomposition) : analyzer.buildGraph(pinput, decomposition);
-            final FTree tree = treeBuilder.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pinput, graph).tree;
+            checkForInterruption();
+            final FTree tree = treeBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pinput, graph).tree;
+            checkForInterruption();
             final ExactResult er = new ExactResult(decomposition, null, tree, tree.getTreeWeight());
             if (graphCache != null) {
                 double score = graphCache.getWeightLowerbound();
@@ -488,13 +507,13 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
 
 
-    private void checkTimeout() {
+    /*private void checkTimeout() {
         final long time = System.currentTimeMillis();
         final int elapsedTime = (int) ((time - startTime) / 1000);
         final int min = Math.min(restTime, secondsPerInstance - elapsedTime);
         restTime = min;
         if (restTime <= 0) throw new TimeoutException("FasterTreeComputationInstance canceled by timeout!");
-    }
+    }*/
 
     private class RecalibrationJob extends BasicJJob<ExactResult> {
         private final ExactResult r;
@@ -514,7 +533,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         }
     }
 
-    protected ExactResult recalibrate(ProcessedInput input, TreeBuilder builder, TreeBuilder finalBuilder, Decomposition decomp, FTree tree, FGraph origGraphOrNull) {
+    protected ExactResult recalibrate(ProcessedInput input, TreeBuilder builder, TreeBuilder finalBuilder, Decomposition decomp, FTree tree, FGraph origGraphOrNull) throws InterruptedException {
         final SpectralRecalibration rec = new HypothesenDrivenRecalibration().collectPeaksFromMs2(input, tree);
         final ProcessedInput pin = this.inputCopyForRecalibration.clone();
         pin.setAnnotation(PossibleAdducts.class, new PossibleAdducts(PrecursorIonType.getPrecursorIonType(decomp.getIon())));
@@ -524,18 +543,23 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         // we have to completely rescore the input...
         //final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
         //pin.setAnnotation(DecompositionList.class, l);
+        checkForInterruption();
         analyzer.performDecomposition(pin);
+        checkForInterruption();
         analyzer.performPeakScoring(pin);
         final FGraph graph = analyzer.buildGraph(pin, decomp);
         graph.addAnnotation(SpectralRecalibration.class, rec);
-        final TreeBuilder.Result recal = builder.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, graph);
+        checkForInterruption();
+        final TreeBuilder.Result recal = builder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
+        checkForInterruption();
         final TreeBuilder.Result finalTree;
         if (recal.tree.getTreeWeight() >= tree.getTreeWeight()) {
-            finalTree = builder == finalBuilder ? recal : finalBuilder.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, graph);
+            finalTree = builder == finalBuilder ? recal : finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
+            checkForInterruption();
             if (finalTree.tree == null) {
                 // TODO: why is tree score != ILP score? Or is this an error in ILP?
                 // check that
-                TreeBuilder.Result solve = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, graph);
+                TreeBuilder.Result solve = analyzer.getTreeBuilder().computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, graph);
                 throw new RuntimeException("Recalibrated tree is null for " + input.getExperimentInformation().getName() + ". Error in ILP? Without score constraint the result is = optimal = " + solve.isOptimal + ", score = " + solve.tree.getTreeWeight() + " with score of uncalibrated tree is " + recal.tree.getTreeWeight());
             }
             finalTree.tree.setAnnotation(SpectralRecalibration.class, rec);
@@ -544,10 +568,13 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             //todo we could skip recomputing heuristic tree but mapping from source tree is missing here
             pin.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             final FGraph origGraph = origGraphOrNull == null ? analyzer.buildGraph(pinput, decomp) : origGraphOrNull;
-            finalTree = finalBuilder.computeTree().withTimeLimit(Math.min(restTime, secondsPerTree)).solve(pin, origGraph);
+            checkForInterruption();
+            finalTree = finalBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pin, origGraph);
+            checkForInterruption();
             finalTree.tree.setAnnotation(SpectralRecalibration.class, SpectralRecalibration.none());
             analyzer.makeTreeReleaseReady(pin, origGraph, finalTree.tree, finalTree.mapping);
         }
+        checkForInterruption();
         recalculateScore(pin, finalTree.tree, "recalibrate");
         assert finalTree!=null;
         tick();
