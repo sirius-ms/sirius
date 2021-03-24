@@ -59,7 +59,6 @@ import uk.ac.ebi.pride.jmztab2.model.MZTabUtils;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 

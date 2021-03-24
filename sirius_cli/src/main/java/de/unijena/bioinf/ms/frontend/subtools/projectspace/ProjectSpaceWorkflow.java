@@ -46,6 +46,7 @@ import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -127,7 +128,7 @@ public class ProjectSpaceWorkflow implements Workflow {
                     //get file and and preserve extension for compression
                     final Path outputLocation = rootOptions.getOutput().getOutputProjectLocation();
                     final String fileName = outputLocation.getFileName().toString();
-                    final Path parent = Files.isDirectory(outputLocation) ? outputLocation : outputLocation.getParent();
+                    final Path parent = Files.isDirectory(outputLocation) ? outputLocation : outputLocation.getParent()!=null ? outputLocation.getParent() : new File(".").toPath();
                     int idx = fileName.lastIndexOf('.');
 
                     final String name = idx < 0 ? fileName : fileName.substring(0,idx);

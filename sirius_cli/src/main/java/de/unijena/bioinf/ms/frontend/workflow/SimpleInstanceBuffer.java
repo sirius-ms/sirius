@@ -89,8 +89,8 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                     for (InstanceJob.Factory<?> task : tasks) {
                         jobToWaitOn = task.createToolJob(jobToWaitOn);
                         submitJob(jobToWaitOn);
+                        collector.addRequiredJob(jobToWaitOn);
                     }
-                    collector.addRequiredJob(jobToWaitOn);
                     runningInstances.add(submitJob(collector));
 
                     checkForCancellation();
@@ -119,13 +119,14 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
             try {
                 it.awaitResult();
             } catch (ExecutionException e) {
+                //already logged by collector job
                 if (it.getState().equals(JJob.JobState.CANCELED))
-                    LoggerFactory.getLogger(getClass()).warn("ToolChain Job '" + it.identifier() + "' was canceled on Instance '" + it.instance.getID() + "'");
+                    LoggerFactory.getLogger(getClass()).warn("ToolChain collector Job '" + it.identifier() + "' was canceled on Instance '" + it.instance.getID() + "'");
 
                 if (it.getState().equals(JJob.JobState.FAILED))
-                    LoggerFactory.getLogger(getClass()).error("ToolChain Job '" + it.identifier() + "' FAILED on Instance '" + it.instance.getID() + "'", e);
+                    LoggerFactory.getLogger(getClass()).error("ToolChain collector Job '" + it.identifier() + "' FAILED on Instance '" + it.instance.getID() + "'", e);
 
-                LoggerFactory.getLogger(getClass()).debug("ToolChain Job '" + it.identifier() + "' finished with state '" + it.getState() + "' on instance '" + it.instance.getID() + "'", e);
+                LoggerFactory.getLogger(getClass()).debug("ToolChain collector Job '" + it.identifier() + "' finished with state '" + it.getState() + "' on instance '" + it.instance.getID() + "'", e);
             }
         });
     }
@@ -157,7 +158,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
     private class InstanceJobCollectorJob extends BasicDependentJJob<CompoundContainerId> {
         private final Instance instance;
         private final boolean invalidate;
-        Set<JJob<?>> toWaitOnCleanUp = Set.of();
+        Set<JJob<?>> toWaitOnCleanUp = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
         @Override
         public void cancel(boolean mayInterruptIfRunning) {
@@ -173,9 +174,10 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
             super.cancel(mayInterruptIfRunning);
         }
 
+
         @Override
         protected void cleanup() {
-            // this should always run because we ignore failling of reqiured jobs
+            // this should always run because we ignore failing of reqiured jobs
             //this runs if all jobs of the instance are finished
             lock.lock();
             try {
@@ -185,7 +187,20 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                 lock.unlock();
             }
 
-            toWaitOnCleanUp.forEach(JJob::getResult);
+            toWaitOnCleanUp.forEach(j -> {
+                try {
+                    j.awaitResult();
+                } catch (ExecutionException e) {
+                    if (j.getState().equals(JJob.JobState.CANCELED)) {
+                        j.logWarn("ToolChain Job canceled due to: " + e.getMessage());
+                    } else if (j.getState().equals(JJob.JobState.FAILED)) {
+                        j.logError("ToolChain Job failed due to: " + e.getMessage());
+                        j.logDebug("ToolChain Job failed: ", e);
+                    } else {
+                        LoggerFactory.getLogger(getClass()).debug("ToolChain Job Exception with state '" + j.getState() + ".", e);
+                    }
+                }
+            });
             super.cleanup();
         }
 
@@ -209,7 +224,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
 
         @Override
         public void handleFinishedRequiredJob(JJob required) {
-//            System.out.println(required.identifier() +" - " + required.getState().name());
+            toWaitOnCleanUp.add(required);
         }
     }
 
