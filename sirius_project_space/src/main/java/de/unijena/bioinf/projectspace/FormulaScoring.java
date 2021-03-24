@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -119,13 +121,17 @@ public class FormulaScoring implements Iterable<FormulaScore>, Annotated<Formula
     }
 
     public static List<SScored<FormulaResult, ? extends FormulaScore>> rankBy(@NotNull Stream<FormulaResult> dataStream, @NotNull List<Class<? extends FormulaScore>> scoreTypes, boolean descending) {
+        return rankBy(dataStream, scoreTypes, descending, formulaResult -> formulaResult.getAnnotationOrNull(FormulaScoring.class));
+    }
+
+    public static <E> List<SScored<E, ? extends FormulaScore>> rankBy(@NotNull Stream<E> dataStream, @NotNull List<Class<? extends FormulaScore>> scoreTypes, boolean descending, Function<E, FormulaScoring> conv) {
         if (scoreTypes.isEmpty())
             return dataStream.map(c -> new SScored<>(c, FormulaScore.NA(SiriusScore.class))).collect(Collectors.toList());
 
         return dataStream
-                .sorted((c1, c2) -> comparingMultiScore(scoreTypes, descending).compare(c1.getAnnotationOrNull(FormulaScoring.class), c2.getAnnotationOrNull(FormulaScoring.class)))
-                .map(c -> c.hasAnnotation(FormulaScoring.class)
-                        ? new SScored<>(c, c.getAnnotationOrThrow(FormulaScoring.class).getAnnotationOr(scoreTypes.get(0), FormulaScore::NA))
+                .sorted((c1, c2) -> comparingMultiScore(scoreTypes, descending).compare(conv.apply(c1), conv.apply(c2)))
+                .map(c -> conv.apply(c) != null
+                        ? new SScored<>(c, conv.apply(c).getAnnotationOr(scoreTypes.get(0), FormulaScore::NA))
                         : new SScored<>(c, FormulaScore.NA(scoreTypes.get(0)))).collect(Collectors.toList());
     }
 }
