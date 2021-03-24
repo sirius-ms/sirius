@@ -26,13 +26,13 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.8.0-SNAPSHOT (2021-03-19)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.8.0-SNAPSHOT (2021-03-24)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
 - for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-win64.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-win64.zip)
 - for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-linux64.zip)
 - for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-osx64.pkg) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-osx64.zip)
 
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.8.0-SNAPSHOT (2021-03-19)
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.8.0-SNAPSHOT (2021-03-24)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
 - for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-win64-headless.msi) / [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-win64-headless.zip)
 - for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/sirius/4.8.0-SNAPSHOT/sirius-4.8.0-SNAPSHOT-linux64-headless.zip)

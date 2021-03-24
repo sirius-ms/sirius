@@ -166,20 +166,6 @@ task extractRuntimeImageHeadless(type: ExtractRuntime, dependsOn: downloadRuntim
     inputArchive = downloadRuntimeImageHeadless.dest
 }
 
-/*task downloadRuntimeImageHeadlessBoot(type: Download) {
-    String fname = "sirius-zulu${zulu_jre_version}-ca-headless-boot-jdk${jre_version}-${zosName}_x64.zip"
-
-
-    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
-    dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
-    onlyIfModified true
-    overwrite false
-}
-
-task extractRuntimeImageHeadlessBoot(type: ExtractRuntime, dependsOn: downloadRuntimeImageHeadlessBoot) {
-    inputArchive = downloadRuntimeImageHeadlessBoot.dest
-}*/
-
 
 task downloadManual(type: Download, group: 'documentation') {
     String manualName = "manual-$version-manual.pdf"
