@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MassDeviation;
@@ -127,7 +128,7 @@ public class SpectraVisualizationPanel
 	}
 
 	private void drawSpectra(InstanceBean experiment, FormulaResultBean sre, String mode,
-							 String ce){
+							 int ce_index){
 		if (mode == null)
 			return;
 		String jsonSpectra = null;
@@ -151,16 +152,15 @@ public class SpectraVisualizationPanel
 		} else if (mode.equals(MS2_DISPLAY)) {
 			// Deviation standardMassDeviation = experiment.getExperiment()
 			// 		.getAnnotationOrNull(MS1MassDeviation.class).standardMassDeviation;
-			if (ce.equals(MS2_MERGED_DISPLAY)){
+			if (ce_index == -1){
 				jsonSpectra = spectraWriter.ms2JSON(experiment.getExperiment(), Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null));
 			} else {
-				MutableMs2Spectrum spectrum = experiment.getMs2Spectra().stream()
-						.filter(s -> s.getCollisionEnergy().toString().equals(ce)).findFirst().orElse(null);
-				if (spectrum == null){
-					System.err.printf("MS2 spectrum with selected collision energy (%s) not available!%n",
-						ce);
-				   return;
-				}
+				MutableMs2Spectrum spectrum = experiment.getMs2Spectra().get(ce_index);
+				// if (spectrum == null){
+				// 	System.err.printf("MS2 spectrum with selected collision energy (%s) not available!%n",
+				// 		ce);
+				//    return;
+				// }
 				FTree ftree = Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null);
 				if (ftree != null)
 					jsonSpectra = spectraWriter.ms2JSON(spectrum, ftree);
@@ -193,45 +193,24 @@ public class SpectraVisualizationPanel
 
 	@Override
 	public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
-		if ((this.experiment == null ^ experiment == null) || (this.sre == null ^ sre == null)){
+		if ((this.experiment == null ^ experiment == null) || (this.sre == null ^ sre == null)) {
 			// update modeBox elements, don't listen to these events
 			modesBox.removeItemListener(this);
 			modesBox.removeAllItems();
-			ceBox.removeItemListener(this);
-			ceBox.removeAllItems();
 			if (experiment != null) {
 				if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum()!=null)
 					modesBox.addItem(MS1_DISPLAY);
 				if (sre != null) {
 					if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum()!=null)
 						modesBox.addItem(MS1_MIRROR_DISPLAY);
-					if (experiment.getMs2Spectra().size() > 0)
-						modesBox.addItem(MS2_DISPLAY);
-					for (MutableMs2Spectrum spectrum : experiment.getMs2Spectra()){
-						ceBox.addItem(spectrum.getCollisionEnergy().toString());
-					}
-					ceBox.addItem(MS2_MERGED_DISPLAY);
-					ceBox.setSelectedItem(MS2_MERGED_DISPLAY);
-				} else {
-					if (experiment.getMs2Spectra().size() > 0)
-						modesBox.addItem(MS2_DISPLAY);
-					for (MutableMs2Spectrum spectrum : experiment.getMs2Spectra()){
-						ceBox.addItem(spectrum.getCollisionEnergy().toString());
-					}
-					ceBox.addItem(MS2_MERGED_DISPLAY);
-					ceBox.setSelectedItem(MS2_MERGED_DISPLAY);
 				}
+				if (experiment.getMs2Spectra().size() > 0)
+					modesBox.addItem(MS2_DISPLAY);
+				updateCEBox(experiment);
 			}
 			modesBox.addItemListener(this);
-			ceBox.addItemListener(this);
 		}
 		if (experiment != null){
-			FTree ftree;
-			// if (sre != null && (ftree = sre.getFragTree().orElse(null)) != null) { // debug
-			// 	JsonArray jPeaks = new SpectraJSONWriter().ms2JsonPeaks(experiment.getExperiment(), ftree);
-			// 	final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-			// 	System.out.println(gson.toJson(jPeaks));
-			// }
 			boolean preferredPossible = false; // no `contains` for combobox
 			for (int i=0; i < modesBox.getItemCount(); i++)
 				preferredPossible |= preferredMode.equals((String) modesBox.getItemAt(i));
@@ -242,8 +221,8 @@ public class SpectraVisualizationPanel
 				ceBox.setVisible(modesBox.getSelectedItem().equals(MS2_DISPLAY));
 				modesBox.addItemListener(this);
 			}
-			drawSpectra(experiment, sre, (String) modesBox.getSelectedItem(),
-						(String) ceBox.getSelectedItem());
+			updateCEBox(experiment);
+			drawSpectra(experiment, sre, (String) modesBox.getSelectedItem(), getCEIndex());
 		}
 		 else
 			browser.clear();
@@ -259,23 +238,38 @@ public class SpectraVisualizationPanel
 		}
 	}
 
-	@Override
-	public void itemStateChanged(ItemEvent e) {
-			Object sel = modesBox.getSelectedItem();
-			ceBox.setVisible(sel.equals(MS2_DISPLAY));
-			if (sel.equals(MS2_DISPLAY) || sel.equals(MS2_MERGED_DISPLAY)) {
-				anoBox.activate();
-			} else {
-				anoBox.deactivate();
-			}
-			preferredMode = (String) sel;
-			// System.out.println("Changed preferred mode to " + preferredMode);
-			if (sel != null && !(experiment == null && sre == null)){
-				drawSpectra(experiment, sre, (String) sel, (String) ceBox.getSelectedItem()
-					);
-			}
+	private void updateCEBox(InstanceBean experiment){
+		ceBox.removeItemListener(this);
+		ceBox.removeAllItems();
+		for (int i = 0; i < experiment.getMs2Spectra().size(); ++i){
+			MutableMs2Spectrum spectrum = experiment.getMs2Spectra().get(i);
+			CollisionEnergy collisionEnergy = spectrum.getCollisionEnergy();
+			ceBox.addItem(collisionEnergy.equals(CollisionEnergy.none()) ?
+						  "mode " + (i + 1) : collisionEnergy.toString());
+		}
+		ceBox.addItem(MS2_MERGED_DISPLAY);
+		ceBox.setSelectedItem(MS2_MERGED_DISPLAY);
+		ceBox.addItemListener(this);
 	}
 
+	@Override
+	public void itemStateChanged(ItemEvent e) {
+		Object sel = modesBox.getSelectedItem();
+		ceBox.setVisible(sel.equals(MS2_DISPLAY));
+		if (sel.equals(MS2_DISPLAY) || sel.equals(MS2_MERGED_DISPLAY)) {
+			anoBox.activate();
+		} else {
+			anoBox.deactivate();
+		}
+		preferredMode = (String) sel;
+		if (sel != null && !(experiment == null && sre == null)){
+			drawSpectra(experiment, sre, (String) sel, getCEIndex());
+		}
+	}
+
+	private int getCEIndex(){
+		return ceBox.getSelectedItem().equals(MS2_MERGED_DISPLAY) ? -1 : ceBox.getSelectedIndex();
+	}
 
 	public enum SpectrumMode {
 		MS1(MS1_DISPLAY, 1),
@@ -326,7 +320,7 @@ public class SpectraVisualizationPanel
 		this.insilicoResult = result;
 		System.out.println("INSILICO DONE\n" + result.getJson());
 		if (getCurrentMode().msLevel >= 2) {
-			drawSpectra(experiment, sre, getCurrentMode().label, (String)ceBox.getSelectedItem());
+			drawSpectra(experiment, sre, getCurrentMode().label, getCEIndex());
 		}
 	}
 	public void clearInsilicoResult() {
