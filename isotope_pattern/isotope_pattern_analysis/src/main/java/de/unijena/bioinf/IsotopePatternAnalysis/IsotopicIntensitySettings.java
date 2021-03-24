@@ -28,7 +28,7 @@ public class IsotopicIntensitySettings implements Ms2ExperimentAnnotation {
     /**
      * Ignore isotope peaks below this intensity.
      * This value should reflect the smallest relative intensive which is still above noise level.
-     * Obviously, this is hard to judge without having absolute values. Keeping this value around 1% is
+     * Obviously, this is hard to judge without having absolute values. Keeping this value around 1 percent is
      * fine for most settings. Set it to smaller values if you trust your small intensities.
      */
     @DefaultProperty(propertyParent = "ms1", propertyKey = "minimalIntensityToConsider")
