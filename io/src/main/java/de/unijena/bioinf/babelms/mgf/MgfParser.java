@@ -151,8 +151,15 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             } else if (keyword.equals("CHARGE")) {
                 final Matcher m = CHARGE_PATTERN.matcher(value);
                 m.find();
-                int charge = ("-".equals(m.group(2))) ? -Integer.parseInt(m.group(1)) : Integer.parseInt(m.group(1));
-                if (charge == 0) charge = 1;
+
+                int charge = Integer.parseInt(m.group(1));
+                if (charge == 0){
+                    charge = 1;
+                    LoggerFactory.getLogger(MgfParser.class).warn("Charge value of 0 found. Changing value to Single charged under consideration of the given ion mode.");
+                }
+                if("-".equals(m.group(2)))
+                    charge = -charge;
+
                 if (spec.spectrum.getIonization() == null || spec.spectrum.getIonization().getCharge() != charge)
                     spec.spectrum.setIonization(new Charge(charge));
                 if (spec.ionType == null) spec.ionType = PrecursorIonType.unknown(charge);
@@ -174,8 +181,6 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                             LoggerFactory.getLogger(this.getClass()).error("Unknown ion '" + value + "'");
                             if (!ignoreUnsupportedIonTypes) throw new IOException("Unknown ion '" + value + "'");
                             else return;
-                        } else {
-
                         }
                     } catch (MultipleChargeException | MultimereException e) {
                         LoggerFactory.getLogger(this.getClass()).warn(e.getMessage());
