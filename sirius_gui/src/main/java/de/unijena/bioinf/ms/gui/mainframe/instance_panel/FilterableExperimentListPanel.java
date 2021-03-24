@@ -24,6 +24,10 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
  * 01.02.17.
  */
 
+import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.projectspace.InstanceBean;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -32,10 +36,30 @@ import java.awt.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FilterableExperimentListPanel extends JPanel {
+    JLabel elementCounter = new JLabel("N/A");
+    private ExperimentListChangeListener sizeListener = new ExperimentListChangeListener() {
+        @Override
+        public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
+            elementCounter.setText(selection.getSelected().size() + " of " + event.getSourceList().size() + " selected");
+        }
+
+        @Override
+        public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
+            int selected = selection.getSelected().size();
+            elementCounter.setText(selected + " of " + (selection.getDeselected().size() + selected) + " selected");
+        }
+    };
+
     public FilterableExperimentListPanel(ExperimentListView view) {
         super(new BorderLayout());
-        add(view.sourceList.searchField,BorderLayout.NORTH);
-        add(view,BorderLayout.CENTER);
+        view.sourceList.addChangeListener(sizeListener);
+        add(view.sourceList.searchField, BorderLayout.NORTH);
+        add(view, BorderLayout.CENTER);
+        JPanel j = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        j.add(elementCounter);
+        add(j, BorderLayout.SOUTH);
         setBorder(new EmptyBorder(0, 0, 0, 0));
     }
+
+
 }

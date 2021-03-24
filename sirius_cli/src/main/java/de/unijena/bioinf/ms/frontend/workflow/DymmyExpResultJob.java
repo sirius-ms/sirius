@@ -91,6 +91,27 @@ public interface DymmyExpResultJob extends JJob<Instance> {
         return result();
     }
 
+    @Override
+    default JJob<Instance> withTimeLimit(long seconds) {
+        return null;
+    }
+
+    @Override
+    default JJob<Instance> withEndTime(long seconds) {
+        return null;
+    }
+
+    @Override
+    default long getTimeLimit() {
+        return Long.MAX_VALUE;
+    }
+
+    @Override
+    default long getEndTime() {
+        return Long.MAX_VALUE;
+    }
+
+
 
     @Override
     default int compareTo(@NotNull JJob o) {

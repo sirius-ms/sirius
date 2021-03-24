@@ -24,16 +24,12 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.Summarizer;
@@ -41,7 +37,6 @@ import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import gnu.trove.map.hash.TIntIntHashMap;
-import org.apache.commons.lang3.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
@@ -74,7 +69,7 @@ public class StructureSummaryWriter implements Summarizer {
                 return;
 
             final List<Hit> topHits = new ArrayList<>();
-
+//todo formularank
 
             final List<SScored<FormulaResult, ? extends FormulaScore>> results =
                     FormulaScoring.reRankBy(formulaResults, List.of(SiriusScore.class), true); //sorted by SiriusScore to detect adducts
@@ -151,7 +146,8 @@ public class StructureSummaryWriter implements Summarizer {
 
             if (!topHits.isEmpty()) {
                 compoundTopHits.add(topHits.get(0));
-                List<Hit> toadd = topHits.stream().filter(hit -> hit.formulaRank == 1).collect(Collectors.toList());
+                final int topRank = topHits.stream().mapToInt(h -> h.formulaRank).min().getAsInt();
+                List<Hit> toadd = topHits.stream().filter(hit -> hit.formulaRank == topRank).collect(Collectors.toList());
                 toadd.forEach(h -> h.numberOfAdducts = toadd.size());
                 compoundTopHitsAdducts.addAll(toadd);
             }
@@ -176,10 +172,12 @@ public class StructureSummaryWriter implements Summarizer {
     }
 
     static void write(BufferedWriter w, List<Hit> data) throws IOException {
-        w.write("rank\t" + "#adducts\t" + "#predictedFPs\t" + new ConfidenceScore(0).name() + "\t" + StructureCSVExporter.HEADER_LIST.get(0) + "\t" + new ZodiacScore(0).name() + "\t" + new SiriusScore(0).name() + "\t" + String.join("\t", StructureCSVExporter.HEADER_LIST.subList(1, StructureCSVExporter.HEADER_LIST.size())) + "\t" + "ionMass\t" + "retentionTimeInSeconds\t" + "id" + "\n");
+        w.write("rank\t" + "formulaRank\t" + "#adducts\t" + "#predictedFPs\t" + new ConfidenceScore(0).name() + "\t" + StructureCSVExporter.HEADER_LIST.get(0) + "\t" + new ZodiacScore(0).name() + "\t" + new SiriusScore(0).name() + "\t" + String.join("\t", StructureCSVExporter.HEADER_LIST.subList(1, StructureCSVExporter.HEADER_LIST.size())) + "\t" + "ionMass\t" + "retentionTimeInSeconds\t" + "id" + "\n");
         int rank = 0;
         for (Hit s : data) {
             w.write(String.valueOf(++rank));
+            w.write("\t");
+            w.write(String.valueOf(s.formulaRank));
             w.write("\t");
             w.write(String.valueOf(s.numberOfAdducts));
             w.write("\t");
