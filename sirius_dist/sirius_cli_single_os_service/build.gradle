@@ -63,11 +63,6 @@ distImage {
         } else {
             throw new RuntimeException("Could not detect OS for packaging!")
         }
-
-        copy {
-            from(installDist.outputs.files.singleFile.toPath().resolve('lib').resolve("agents-${siriusVersion}.jar"))
-            into(libsTarget)
-        }
     }
 }
 
