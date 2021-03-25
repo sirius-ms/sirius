@@ -70,7 +70,7 @@ public class PvalueScoreDiffScorerFeatures<P> implements FeatureCreator<SuperPar
 
         PvalueScoreUtils utils = new PvalueScoreUtils();
 
-        pvalueScore[0] = Math.log(utils.computePvalueScore(rankedCands,rankedCands_filtered,current));
+        pvalueScore[0] = Math.log(utils.compute_pvalue_with_KDE(rankedCands,rankedCands_filtered,current));
 
         return pvalueScore;
     }

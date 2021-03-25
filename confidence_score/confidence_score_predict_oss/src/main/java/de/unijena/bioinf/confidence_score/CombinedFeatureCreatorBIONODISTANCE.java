@@ -35,7 +35,7 @@ import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
  */
 public class CombinedFeatureCreatorBIONODISTANCE extends CombinedFeatureCreator<SuperParameters.DefaultAsNested<Parameters.FP>> {
 
-    public CombinedFeatureCreatorBIONODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, BayesnetScoring.Scorer covscore) {
+    public CombinedFeatureCreatorBIONODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, FingerblastScoring covscore) {
         super(
                 //new PlattFeatures(),
                /* new LogPvalueDistanceFeatures(scored_array,scored_array,1),

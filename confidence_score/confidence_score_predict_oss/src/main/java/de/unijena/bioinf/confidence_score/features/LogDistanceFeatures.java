@@ -74,8 +74,10 @@ public class LogDistanceFeatures implements FeatureCreator<Parameters> {
                 while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
                     additional_shift+=1;
                 }
-
-                scores[pos++] = Math.log(topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore());
+                double dist=topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore();
+                if (dist>0) {
+                    scores[pos++] = Math.log(dist);
+                }else scores[pos++]=-10;
 
 
         }

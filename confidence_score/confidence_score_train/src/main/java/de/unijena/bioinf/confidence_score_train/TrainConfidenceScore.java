@@ -53,6 +53,8 @@ double[] labels;
 ArrayList<double[][]> cvFeatureMatrix;
 ArrayList<double[]> cvLabel;
 LibLinearImpl imp;
+int[] crossvalidation;
+
 
 
 
@@ -62,6 +64,8 @@ LibLinearImpl imp;
 
 
         int folds = 10;
+        crossvalidation= new int [IDs.length];
+        sequentialCrossvalidation(folds,IDs);
 
         this.featureMatrix=featureMatrix;
         this.labels=labels;
@@ -74,26 +78,9 @@ LibLinearImpl imp;
 
         utils.standardize_features(featureMatrix,scales);
 
-       // utils.updateForNormalization(scales,featureMatrix);
-      //  utils.normalize_features(featureMatrix,scales);
-        //System.out.println("Normalizing");
-      //  for(int i=0;i<featureMatrix.length;i++){
-       //     System.out.print("Normal "+Arrays.toString(featureMatrix[i]));
-     //   }
 
-
-
-
-
-
-        List<Integer> range = IntStream.rangeClosed(0, featureMatrix.length-1)
-                .boxed().collect(Collectors.toList());
 
        // Collections.shuffle(range);
-
-
-        int start_index=0;
-        int end_index=0;
 
 
         ArrayList<Double> scores_all = new ArrayList<>();
@@ -101,9 +88,6 @@ LibLinearImpl imp;
         ArrayList<Boolean> label_all = new ArrayList<>();
 
       for(int i=0;i<folds;i++){
-
-          end_index=start_index+range.size()/folds;
-          System.out.println("in fold "+i+" - start: "+start_index+" - end: "+end_index);
 
 
           ArrayList<double[]> featuresTempTest = new ArrayList<>();
@@ -119,26 +103,26 @@ LibLinearImpl imp;
 
 
 
-          for(int x=0;x<range.size();x++){
+        for (int j=0;j<IDs.length;j++) {
+            if (crossvalidation[j]==i) {
 
-              if(x>start_index && x<end_index) {
+                featuresTempTest.add(featureMatrix[j].clone());
 
-                  featuresTempTest.add(featureMatrix[range.get(x)].clone());
+                labelsTempTest.add(labels[j]);
+                ids_Test.add(IDs[j]);
+            } else {
 
-                  labelsTempTest.add(labels[range.get(x)]);
-                  ids_Test.add(IDs[range.get(x)]);
-              }else {
+                featuresTempTrain.add(featureMatrix[j].clone());
+                ids_Train.add(IDs[j]);
+                labelsTempTrain.add(labels[j]);
+            }
 
-                  featuresTempTrain.add(featureMatrix[range.get(x)].clone());
-                  ids_Train.add(IDs[range.get(x)]);
-                  labelsTempTrain.add(labels[range.get(x)]);
-              }
+        }
 
-          }
+          System.out.println("In fold "+i+" training: "+featuresTempTrain.size()+"  test: "+featuresTempTest.size());
 
           //add synthetic features
           for(int u=0;u<synth_features.length;u++) {
-              System.out.println(Arrays.toString(synth_features[u]));
               featuresTempTrain.add(synth_features[u].clone());
               labelsTempTrain.add(synth_labels[u]);
               ids_Train.add("synth");
@@ -177,7 +161,7 @@ LibLinearImpl imp;
 
           TrainedSVM svm =  trainLinearSVM(featuresFinalTrain,labelsFinalTrain,featuresFinalTest,labelsFinalTest,feature_names,scales,String.valueOf(i),id_train_final);
 
-          writeFold(ids_Test,svm,String.valueOf(i),dist,fe);
+          writeFold(ids_Train,svm,String.valueOf(i),dist,fe);
 
           for(int h=0;h<svm.weights.length;h++){
               System.out.print(svm.weights[h]+" , ");
@@ -218,7 +202,6 @@ LibLinearImpl imp;
 
 
 
-          start_index=end_index;
 
       }
 
@@ -318,15 +301,13 @@ LibLinearImpl imp;
         System.out.println("before gridsearch");
 
         double[] c_values = new double[]{10,100,1000};
-        double[] epsilon_values=  new double[]{0.000001,0.00001,0.0001,0.001,0.01,0.1,1};
 
         double best_TPR=-1;
         double[] best_probAB = new double[2];
         LibLinearImpl.svm_model best_model=null;
 
         for(int i=0;i<c_values.length;i++) {
-            for(int r=0;r<epsilon_values.length;r++) {
-                System.out.println("Computing C: "+c_values[i]+"  Computing epsilon: "+epsilon_values[r]);
+                System.out.println("Computing C: "+c_values[i]);
 
 
                 LibLinearImpl.svm_problemImpl prob = imp.createSVM_Problem();
@@ -344,7 +325,7 @@ LibLinearImpl imp;
 
                 para.C = c_values[i];
                 para.kernel_type = 0;
-                para.eps =epsilon_values[r];
+                para.eps =0.0000000001;
                 para.weight = new double[]{1, 1};
                 para.weight_label = new int[]{-1, 1};
 
@@ -420,7 +401,7 @@ LibLinearImpl imp;
                     best_probAB = probAB;
                 }
 
-            }
+
 
         }
 
@@ -649,14 +630,14 @@ LibLinearImpl imp;
 
     }
 
-    public void writeFold(ArrayList<String> ids_test, TrainedSVM svm, String foldID,String dist,String fe){
+    public void writeFold(ArrayList<String> ids_train, TrainedSVM svm, String foldID,String dist,String fe){
         try {
             System.out.println("writing fold"+foldID);
-            File folder = new File("/vol/clusterdata/fingerid_martin/fingerid_confidence_123/cv_folds/fold"+foldID);
-            BufferedWriter write_folds = new BufferedWriter(new FileWriter(new File(folder+"/testids_"+dist+"_"+fe+"_"+foldID)));
+            File folder = new File("/vol/clusterdata/fingerid_martin/fingerid_confidence_123_release/cv_folds/fold"+foldID);
+            BufferedWriter write_folds = new BufferedWriter(new FileWriter(new File(folder+"/trainids_"+dist+"_"+fe+"_"+foldID)));
 
-            for(int i=0;i<ids_test.size();i++){
-                write_folds.write(ids_test.get(i)+"\n");
+            for(int i=0;i<ids_train.size();i++){
+                write_folds.write(ids_train.get(i)+"\n");
             }
             write_folds.close();
             svm.exportAsJSON(new File(folder+"/svm_"+dist+"_"+fe+"_"+foldID));
@@ -706,8 +687,8 @@ LibLinearImpl imp;
     public void writeScores(double[] scores, boolean[] labels){
 
 try {
-    FileWriter write_true = new FileWriter("/vol/clusterdata/fingerid_martin/fingerid_confidence_123/scores_true_tmp072020.txt");
-    FileWriter write_bogus = new FileWriter("/vol/clusterdata/fingerid_martin/fingerid_confidence_123/scores_bogus_tmp072020.txt");
+    FileWriter write_true = new FileWriter("/vol/clusterdata/fingerid_martin/fingerid_confidence_123_release/scores/scores_true_tmp072020.txt");
+    FileWriter write_bogus = new FileWriter("/vol/clusterdata/fingerid_martin/fingerid_confidence_123_release/scores/scores_bogus_tmp072020.txt");
 
 
     for(int i=0;i<scores.length;i++){
@@ -759,9 +740,60 @@ try {
 
     }
 
+    public void sequentialCrossvalidation(int folds,String[] compounds) {
+        final HashMap<String, Integer> map = new HashMap<String, Integer>();
+        int tagging = 0;
+        for (int k = 0; k < compounds.length; ++k) {
+            final String inchi = compounds[k];
+            if (map.containsKey(inchi)) {
+                crossvalidation[k] = map.get(inchi);
+            } else {
+                crossvalidation[k] = tagging++;
+                map.put(inchi, crossvalidation[k]);
+                tagging %= folds;
+            }
+        }
+    }
 
 
 
 
 
+
+}
+
+class FeatureLabelId{
+    double[] feature;
+    double label;
+    String id;
+
+    public FeatureLabelId(double[] feature,double label, String id){
+        this.feature=feature;
+        this.label=label;
+        this.id=id;
+    }
+
+    public double[] getFeature() {
+        return feature;
+    }
+
+    public void setFeature(double[] feature) {
+        this.feature = feature;
+    }
+
+    public double getLabel() {
+        return label;
+    }
+
+    public void setLabel(double label) {
+        this.label = label;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 }

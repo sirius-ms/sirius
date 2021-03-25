@@ -61,7 +61,7 @@ public class LogPvalueKDEFeatures implements FeatureCreator<Parameters> {
         pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates, rankedCandidates_filtered, rankedCandidates_filtered[0]);
 
         if (pvalue_kde == 0) {
-            return_value[0] = -20;
+            return_value[0] = Double.NaN;
         } else {
             return_value[0] = Math.log(pvalue_kde);
         }

@@ -35,7 +35,7 @@ public class FptLengthFeature implements FeatureCreator<Parameters.FP> {
 
     @Override
     public int weight_direction() {
-        return 0;
+        return 1;
     }
 
     @Override

@@ -36,7 +36,7 @@ import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 public class CombinedFeatureCreatorALL extends CombinedFeatureCreator<SuperParameters.DefaultAsNested<Parameters.FP>> {
 
     //Scorer for pubchem list (unfiltered)
-    public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, BayesnetScoring.Scorer covscore) {
+    public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, FingerblastScoring covscore) {
         super(
                 //new PlattFeatures(),
                 //  new LogPvalueDistanceFeatures(scored_array,scored_array,1),

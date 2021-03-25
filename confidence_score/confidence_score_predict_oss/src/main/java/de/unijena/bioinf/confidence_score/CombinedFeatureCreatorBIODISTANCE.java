@@ -37,7 +37,7 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator<Su
 
     //all confidence means the pubchem confidence score for this input. Has to be always computet
     // same is the tophit in pubchem the same as in the reduced db.
-    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, BayesnetScoring.Scorer covscore) {
+    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, FingerblastScoring covscore) {
         super(
                 //new PlattFeatures(),
                 //  new LogPvalueDistanceFeatures(scored_array,scored_array,1),
