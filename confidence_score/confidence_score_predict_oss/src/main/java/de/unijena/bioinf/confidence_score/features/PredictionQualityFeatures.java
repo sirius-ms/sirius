@@ -26,12 +26,12 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 
 /**
  * Created by martin on 27.06.18.
  */
-public class PredictionQualityFeatures implements FeatureCreator<Parameters.FP>{
+public class PredictionQualityFeatures implements FeatureCreator{
     public int weight_direction=1;
 
     @Override
@@ -40,8 +40,8 @@ public class PredictionQualityFeatures implements FeatureCreator<Parameters.FP>{
     }
 
     @Override
-    public double[] computeFeatures(Parameters.FP queryPara) {
-        final ProbabilityFingerprint query = queryPara.getFP();
+    public double[] computeFeatures(ParameterStore queryPara) {
+        final ProbabilityFingerprint query = queryPara.getFP().orElseThrow();
 
         double[] qualityReturn = new double[1];
 

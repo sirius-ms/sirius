@@ -27,12 +27,13 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.confidence_score.parameters.IdResult;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
+import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
  * Created by martin on 20.06.18.
  */
-public class ExplIntFeatures implements FeatureCreator<IdResult<?>> {
+public class ExplIntFeatures implements FeatureCreator {
     @Override
     public int weight_direction() {
         return weight_direction;
@@ -41,10 +42,10 @@ public class ExplIntFeatures implements FeatureCreator<IdResult<?>> {
     public int weight_direction=1;
 
     @Override
-    public double[] computeFeatures(IdResult<?> idresult) {
+    public double[] computeFeatures(ParameterStore idresultStore) {
         // double[] scores= new double[4];
         double[] scores = new double[1];
-        TreeStatistics current_tree_scores = idresult.getIdResult().getRawTree().getAnnotationOrThrow(TreeStatistics.class);
+        TreeStatistics current_tree_scores = idresultStore.get(IdentificationResult.class).orElseThrow().getRawTree().getAnnotationOrThrow(TreeStatistics.class);
         // scores[0]=current_tree_scores.getExplainedIntensityOfExplainablePeaks();
         //scores[1]= current_tree_scores.getExplainedIntensity();
         //scores[2]=current_tree_scores.getRatioOfExplainedPeaks();

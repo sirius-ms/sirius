@@ -28,13 +28,13 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 20.06.18.
  */
-public class LogPvalueKDEFeatures implements FeatureCreator<Parameters> {
+public class LogPvalueKDEFeatures implements FeatureCreator {
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
     public int weight_direction = -1;
@@ -51,7 +51,7 @@ public class LogPvalueKDEFeatures implements FeatureCreator<Parameters> {
 
 
     @Override
-    public double[] computeFeatures(@Nullable Parameters ignored) {
+    public double[] computeFeatures(@Nullable ParameterStore ignored) {
         assert rankedCandidates[0].getScore() >= rankedCandidates[rankedCandidates.length - 1].getScore();
 
         double[] return_value = new double[1];

@@ -22,9 +22,9 @@ package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 
-public class BayesnetScoringWithDynamicComputation implements FingerblastScoring<Parameters.UnpreparedScoring<BayesnetScoring, Parameters.FP>> {
+public class BayesnetScoringWithDynamicComputation implements FingerblastScoring<BayesnetScoringWithDynamicComputation.Parameters> {
 
     BayesnetScoring.Scorer innerScorer = null;
     ProbabilityFingerprint currentEstimatedFingerprint = null;
@@ -34,10 +34,15 @@ public class BayesnetScoringWithDynamicComputation implements FingerblastScoring
 
 
     @Override
-    public void prepare(Parameters.UnpreparedScoring<BayesnetScoring, Parameters.FP> scoringPara) {
-        currentEstimatedFingerprint = scoringPara.getFP();
-        innerScorer = scoringPara.getScoring().getScoring();
-        innerScorer.prepare(scoringPara.getScorerParameter());
+    public Parameters extractParameters(ParameterStore store) {
+        return Parameters.from(store);
+    }
+
+    @Override
+    public void prepare(BayesnetScoringWithDynamicComputation.Parameters scoringPara) {
+        currentEstimatedFingerprint = scoringPara.fingerprint;
+        innerScorer = scoringPara.scoring.getScoring();
+        innerScorer.prepare(currentEstimatedFingerprint);
     }
 
     @Override
@@ -66,5 +71,20 @@ public class BayesnetScoringWithDynamicComputation implements FingerblastScoring
         this.minSamples = minSamples;
     }
 
+    public static class Parameters {
+        private final BayesnetScoring scoring;
+        private final ProbabilityFingerprint fingerprint;
+
+        public Parameters(BayesnetScoring scoring, ProbabilityFingerprint fingerprint) {
+            this.scoring = scoring;
+            this.fingerprint = fingerprint;
+        }
+
+        public static Parameters from(ParameterStore store){
+            return new Parameters(
+                    store.get(BayesnetScoring.class).orElseThrow(),
+                    store.getFP().orElseThrow());
+        }
+    }
 
 }

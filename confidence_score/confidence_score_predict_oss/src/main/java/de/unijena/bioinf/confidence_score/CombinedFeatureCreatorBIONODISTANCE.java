@@ -24,18 +24,15 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.features.*;
-import de.unijena.bioinf.confidence_score.parameters.SuperParameters;
-import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 /**
  * Created by martin on 06.08.18.
  */
-public class CombinedFeatureCreatorBIONODISTANCE extends CombinedFeatureCreator<SuperParameters.DefaultAsNested<Parameters.FP>> {
+public class CombinedFeatureCreatorBIONODISTANCE extends CombinedFeatureCreator {
 
-    public CombinedFeatureCreatorBIONODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, FingerblastScoring covscore) {
+    public CombinedFeatureCreatorBIONODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, FingerblastScoring<?> covscore) {
         super(
                 //new PlattFeatures(),
                /* new LogPvalueDistanceFeatures(scored_array,scored_array,1),

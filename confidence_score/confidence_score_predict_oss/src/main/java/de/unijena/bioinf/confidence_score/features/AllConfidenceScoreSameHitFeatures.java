@@ -26,13 +26,13 @@ import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by Marcus Ludwig on 07.03.16.
  */
-public class AllConfidenceScoreSameHitFeatures implements FeatureCreator<Parameters> {
+public class AllConfidenceScoreSameHitFeatures implements FeatureCreator {
     private final String[] names;
     double conf;
     boolean same;
@@ -51,7 +51,7 @@ public class AllConfidenceScoreSameHitFeatures implements FeatureCreator<Paramet
     }
 
     @Override
-    public double[] computeFeatures(@Nullable Parameters ignored) {
+    public double[] computeFeatures(@Nullable ParameterStore ignored) {
         final double[] scores = new double[1];
         if(same)
         scores[0] = conf;

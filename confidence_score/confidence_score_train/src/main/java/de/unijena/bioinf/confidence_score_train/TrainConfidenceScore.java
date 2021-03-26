@@ -23,19 +23,18 @@ package de.unijena.bioinf.confidence_score_train;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.confidence_score.CombinedFeatureCreator;
 import de.unijena.bioinf.confidence_score.features.PvalueScoreUtils;
-import de.unijena.bioinf.confidence_score.parameters.SuperParameters;
 import de.unijena.bioinf.confidence_score.svm.*;
 import de.unijena.bioinf.confidence_score_train.svm.LibSVMImpl;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 import org.libsvm.SVM;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by martin on 27.06.18.
@@ -47,7 +46,7 @@ public class TrainConfidenceScore{
 
 
 
-CombinedFeatureCreator<SuperParameters.DefaultAsNested<Parameters.FP>> featureCreator;
+CombinedFeatureCreator featureCreator;
 double[][] featureMatrix;
 double[] labels;
 ArrayList<double[][]> cvFeatureMatrix;

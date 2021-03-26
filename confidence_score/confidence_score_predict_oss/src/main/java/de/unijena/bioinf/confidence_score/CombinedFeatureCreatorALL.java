@@ -24,19 +24,17 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.features.*;
-import de.unijena.bioinf.confidence_score.parameters.SuperParameters;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
 
 /**
  * Created by martin on 22.08.18.
  */
-public class CombinedFeatureCreatorALL extends CombinedFeatureCreator<SuperParameters.DefaultAsNested<Parameters.FP>> {
+public class CombinedFeatureCreatorALL extends CombinedFeatureCreator {
 
     //Scorer for pubchem list (unfiltered)
-    public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, FingerblastScoring covscore) {
+    public CombinedFeatureCreatorALL(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, PredictionPerformance[] performance, FingerblastScoring<?> covscore) {
         super(
                 //new PlattFeatures(),
                 //  new LogPvalueDistanceFeatures(scored_array,scored_array,1),
