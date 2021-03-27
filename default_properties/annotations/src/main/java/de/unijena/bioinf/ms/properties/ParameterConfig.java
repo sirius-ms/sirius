@@ -49,7 +49,7 @@ public final class ParameterConfig {
     private final CombinedConfiguration config;
     private final CombinedConfiguration classesConfig;
 
-    private final String localConfigName;
+    private String localConfigName;
 
     ParameterConfig(CombinedConfiguration config, CombinedConfiguration classesConfig, PropertiesConfigurationLayout layout, String localConfigName, String configRoot, String classRoot) {
         this.config = config;
@@ -155,9 +155,26 @@ public final class ParameterConfig {
         return config.removeConfiguration(name);
     }
 
+
+    public void addNewConfig(String name, InputStream input) throws ConfigurationException {
+        addNewConfig(name, SiriusConfigUtils.makeConfigFromStream(input));
+    }
+
+
+    public void addNewConfig(String name, Configuration nuLayer) {
+        List<Configuration> inner = new ArrayList<>(config.getConfigurations());
+        List<String> innerNames = new ArrayList<>(config.getConfigurationNameList());
+        innerNames.forEach(config::removeConfiguration);
+        config.addConfiguration(nuLayer, name);
+        localConfigName = name;
+        Iterator<Configuration> it = inner.iterator();
+        innerNames.forEach(n -> config.addConfiguration(it.next(),n));
+    }
+
     public void updateConfig(ParameterConfig update) {
         updateConfig(update.getLocalConfigName(), update.localConfig());
     }
+
     public void updateConfig(String name, Configuration update) {
         setOnConfig(name, update, true);
     }
