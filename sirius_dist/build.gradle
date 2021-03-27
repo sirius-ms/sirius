@@ -9,6 +9,11 @@ plugins {
 
 
 ext {
+    // version for bundeled JRE
+    jre_version = '15.0.2'
+    zulu_jre_version = '15.29.15'
+    jre_major = zulu_jre_version.split("[.]")[0]
+
     OS = DefaultNativePlatform.currentOperatingSystem
 
     if (OS.isLinux()) {
@@ -352,13 +357,6 @@ subprojects {
 
             if (OS.isWindows()) {
                 //delete exes because they are write protected
-                /*appRootTarget.listFiles(new FilenameFilter(){
-                    @Override
-                    boolean accept(File dir, String name) {
-                        return name.endsWith(".exe")
-                    }
-                }).iterator().forEachRemaining({i ->i.delete()})
-*/
                 project.delete {
                     delete fileTree(dir: appRootTarget, includes: ["*.exe"])
                 }
@@ -479,10 +477,18 @@ abstract class ExtractRuntime extends DefaultTask {
                 from project.zipTree(inputArchive)
                 into getOutputDir().getParentFile()
             }
-        } else {
+        } else if (project.OS.isLinux()) {
             project.exec { commandLine(['rm', '-rf', getOutputDir().absolutePath]) }
             project.exec { commandLine(['tar', 'zxf', inputArchive.absolutePath, '-C', getOutputDir().getParentFile().absolutePath]) }
 //            project.exec { commandLine(['unzip', '-q', inputArchive.absolutePath, '-d', getOutputDir().getParentFile().absolutePath]) }
+        }else {
+            var tmpPath= getOutputDir().getParentFile().absolutePath + "_tmp"
+            project.exec { commandLine(['rm', '-rf', getOutputDir().absolutePath]) }
+            project.exec { commandLine(['tar', 'zxf', inputArchive.absolutePath, '-C', tmpPath]) }
+            project.copy {
+                from "${tmpPath}/zulu-${jre_major}.jre/Contents/Home"
+                into getOutputDir().getParentFile().absolutePath
+            }
         }
     }
 }
