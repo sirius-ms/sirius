@@ -1,5 +1,6 @@
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
+import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.stream.Collectors
 
@@ -482,12 +483,14 @@ abstract class ExtractRuntime extends DefaultTask {
             project.exec { commandLine(['tar', 'zxf', inputArchive.absolutePath, '-C', getOutputDir().getParentFile().absolutePath]) }
 //            project.exec { commandLine(['unzip', '-q', inputArchive.absolutePath, '-d', getOutputDir().getParentFile().absolutePath]) }
         }else {
-            var tmpPath= getOutputDir().getParentFile().absolutePath + "_tmp"
-            project.exec { commandLine(['rm', '-rf', getOutputDir().absolutePath]) }
+            def tmpPath= getOutputDir().getParentFile().absolutePath + "/mac"
+            Files.createDirectories(Paths.get(tmpPath))
+            project.exec { commandLine(['rm', '-rf', tmpPath]) }
+            Files.createDirectories(Paths.get(tmpPath))
             project.exec { commandLine(['tar', 'zxf', inputArchive.absolutePath, '-C', tmpPath]) }
             project.copy {
-                from "${tmpPath}/zulu-${jre_major}.jre/Contents/Home"
-                into getOutputDir().getParentFile().absolutePath
+                from "${tmpPath}/${getOutputDir().getName()}/zulu-${project.jre_major}.jre/Contents/Home"
+                into getOutputDir()
             }
         }
     }
