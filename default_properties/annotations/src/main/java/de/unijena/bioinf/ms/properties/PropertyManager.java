@@ -100,7 +100,7 @@ public class PropertyManager {
                     null,
                     MS_CONFIGS_BASE,
                     MS_CONFIG_CLASSES_BASE
-            ).newIndependentInstance("CHANGED_DEFAULT_CONFIGS");
+            ).newIndependentInstance("RUNTIME_DEFAULT_CONFIGS");
         } catch (Throwable e) {
             System.err.println("Property Manager STATIC Block Error!");
             e.printStackTrace(System.err);
