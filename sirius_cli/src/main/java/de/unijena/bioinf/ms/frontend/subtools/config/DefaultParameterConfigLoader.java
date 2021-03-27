@@ -23,6 +23,8 @@ import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -44,11 +46,17 @@ public class DefaultParameterConfigLoader {
 
 
     public DefaultParameterConfigLoader() throws IOException {
-        this(PropertyManager.DEFAULTS);
+        this(PropertyManager.DEFAULTS, CLI_CONFIG_NAME);
     }
 
     public DefaultParameterConfigLoader(ParameterConfig baseConfig) throws IOException {
-        this.config = baseConfig.newIndependentInstance(CLI_CONFIG_NAME);
+        this(baseConfig, null);
+    }
+
+    public DefaultParameterConfigLoader(ParameterConfig baseConfig, @Nullable String modificationLayerName) throws IOException {
+        this.config = baseConfig;
+        if (modificationLayerName != null)
+            this.config.addNewConfig(modificationLayerName, SiriusConfigUtils.newConfiguration());
         options = loadDefaultParameterOptions();
     }
 

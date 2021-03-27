@@ -34,6 +34,6 @@ public class ProjectArchivedFilter extends FileFilter {
 
     @Override
     public String getDescription() {
-        return ".sirius, .zip";
+        return ".sirius, .workspace";
     }
 }
