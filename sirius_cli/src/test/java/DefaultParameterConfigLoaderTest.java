@@ -21,7 +21,7 @@ public class DefaultParameterConfigLoaderTest {
     @Test
     public void singleValueTest() throws IOException {
         {
-            String c = ApplicationCore.CITATION;
+            String c = ApplicationCore.VERSION_STRING();
             ParameterConfig p = PropertyManager.DEFAULTS;
         }
         final DefaultParameterConfigLoader builder = new DefaultParameterConfigLoader();
