@@ -297,7 +297,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
                 try {
                     final List<String> toolList = new ArrayList<>();
-                    final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+                    final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance("BATCH_COMPUTE"));
                     final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), finalComps), configOptionLoader, new GuiInstanceBufferFactory());
                     final Run computation = new Run(wfBuilder);
                     final List<String> c = makeCommand(toolList);
