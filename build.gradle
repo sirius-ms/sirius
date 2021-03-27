@@ -22,10 +22,6 @@ plugins {
 
 //Global Properties
 ext {
-    // version for bundeled JRE
-    jre_version = '15.0.2'
-    zulu_jre_version = '15.29.15'
-
     //version for external libraries
     slf4j_version = '1.7.25'
     jjobs_version = '0.9.20-SNAPSHOT'
