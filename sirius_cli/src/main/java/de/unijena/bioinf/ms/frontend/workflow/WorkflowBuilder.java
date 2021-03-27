@@ -124,13 +124,13 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
         final CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, chainToolSpecs.get(SiriusOptions.class));
 
-        final CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(),
-                Stream.concat(Stream.of(customDBOptions, lcmsAlignSpec), chainToolSpecs.values().stream()).toArray());
+        Object[] standaloneTools = standaloneTools();
 
-        rootSpec = forAnnotatedObjectWithSubCommands(
-                this.rootOptions,
-                Stream.concat(Stream.concat(Stream.of(standaloneTools()), Stream.of(configSpec, lcmsAlignSpec)),chainToolSpecs.values().stream())
-                        .toArray()
+        final CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(),
+                Stream.concat(Stream.concat(Stream.of(lcmsAlignSpec), chainToolSpecs.values().stream()), Arrays.stream(standaloneTools)).toArray());
+
+        rootSpec = forAnnotatedObjectWithSubCommands(this.rootOptions,
+                Stream.concat(Stream.concat(Stream.of(standaloneTools()), Stream.of(configSpec, lcmsAlignSpec)), chainToolSpecs.values().stream()).toArray()
         );
     }
 

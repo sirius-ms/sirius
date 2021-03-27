@@ -53,7 +53,7 @@ public class GuiInstanceBufferFactory implements InstanceBufferFactory<SimpleIns
             public <Job extends JJob<Result>, Result> Job submitJob(Job j) { //todo what do we want to show here?
                 if (j instanceof ToolChainJob) {
                     final String jobType = ((ToolChainJob<?>) j).getToolName();
-                    Jobs.submit((ProgressJJob<?>)j, () -> j.identifier(), () -> jobType);
+                    Jobs.submit((ProgressJJob<?>)j, j::identifier, () -> jobType);
                     return j;
                 } else {
                     return Jobs.MANAGER.submitJob(j);

@@ -228,9 +228,9 @@ public abstract class ApplicationCore {
                 }
             }
 
-            //overite default profiles from chemistry-base with custom profile
+            //overite default profiles from modules with custom profile
             try {
-                PropertyManager.addPropertiesFromStream(Files.newInputStream(customProfileFile), "custom_configs", PropertyManager.MS_CONFIGS_BASE);
+                PropertyManager.DEFAULTS.addNewConfig("CUSTOM_CONFIG", Files.newInputStream(customProfileFile));
             } catch (IOException | ConfigurationException e) {
                 System.err.println("Could not load custom Configs");
                 e.printStackTrace();
