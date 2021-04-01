@@ -20,11 +20,18 @@
 
 package de.unijena.bioinf.fingerid.blast.parameters;
 
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 
-public class BayesnetDynamicParameters extends AbstractUnpreparedScoringParameters<BayesnetScoring> {
-    public BayesnetDynamicParameters(ProbabilityFingerprint query, BayesnetScoring scoring) {
-        super(query, scoring);
+public class Statistics {
+    private final PredictionPerformance[] performances;
+
+    public Statistics(PredictionPerformance[] performances) {
+        this.performances = performances;
     }
+
+    public PredictionPerformance[] getPerformances() {
+        return performances;
+    }
+
+
 }
