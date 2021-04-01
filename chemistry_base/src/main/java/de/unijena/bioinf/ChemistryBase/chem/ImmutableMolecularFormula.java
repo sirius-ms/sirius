@@ -23,14 +23,14 @@ package de.unijena.bioinf.ChemistryBase.chem;
 
 import java.util.Arrays;
 
-class ImmutableMolecularFormula extends MolecularFormula {
+public class ImmutableMolecularFormula extends MolecularFormula {
 
     private final short[] amounts;
     private final TableSelection selection;
     private final double mass;
     private final int hash;
 
-    public ImmutableMolecularFormula(MolecularFormula formula) {
+    ImmutableMolecularFormula(MolecularFormula formula) {
         this(formula.getTableSelection(), formula.buffer(), formula.getMass(), formula.hashCode());
     }
 
