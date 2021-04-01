@@ -125,12 +125,13 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 		String ionizationProp = "Ionization";
 		String focMassProp = "Precursor";
 		String rtProp = "RT";
-//		String specProp = "Spectra";
+		String confProp = "COSMIC";
 
 		g2.setFont(propertyFont);
 		g2.drawString(ionizationProp, 4, 32);
 		g2.drawString(focMassProp, 4, 48);
 		g2.drawString(rtProp, 4, 64);
+		g2.drawString(confProp, 4, 80);
 
 		int xPos = Stream.of(propertyFm.stringWidth(ionizationProp), propertyFm.stringWidth(focMassProp), propertyFm.stringWidth(rtProp))
 				.max(Integer::compareTo).get() + 15;
@@ -151,9 +152,8 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
 		g2.setFont(valueFont);
 
-//		g2.drawString(specProp, 4, yPos);
-//		String msValues = ms1No + " MS   " + ms2No + " MS/MS";
-//		g2.drawString(msValues, xPos, yPos);
+		String conf =  ec.getID().getConfidenceScore().map(String::valueOf).orElse("N/A");
+		g2.drawString(conf, xPos, 80);
 
 //			yPos+=16;
 
