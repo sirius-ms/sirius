@@ -95,19 +95,19 @@ public class CSIPredictor extends AbstractStructurePredictor {
         initialized = true;
     }
 
-    private CSICovarianceConfidenceScorer makeConfidenceScorer() {
+    private CSICovarianceConfidenceScorer<?> makeConfidenceScorer() {
         try {
             final Map<String, TrainedSVM> confidenceSVMs = csiWebAPI.getTrainedConfidence(predictorType);
             if (confidenceSVMs == null || confidenceSVMs.isEmpty())
                 throw new IOException("WebAPI returned empty confidence SVMs");
 
-            final BayesnetScoring cvs = csiWebAPI.getBayesnetScoring(predictorType);
+            ScoringMethodFactory.BayesnetScoringWithDynamicComputationScoringMethod cvs = new ScoringMethodFactory.BayesnetScoringWithDynamicComputationScoringMethod();
             if(cvs == null)
                 throw new IOException(("WebAPI returned no default bayesian network."));
 
             final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(performances);
 
-            return new CSICovarianceConfidenceScorer(confidenceSVMs, cvs, csiScoring, (Class<? extends FingerblastScoringMethod<?>>) fingerblastScoring.getClass());
+            return new CSICovarianceConfidenceScorer<>(confidenceSVMs, cvs, csiScoring, (Class<? extends FingerblastScoringMethod<?>>) fingerblastScoring.getClass());
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when loading confidence SVMs or the bayesian network. Confidence SCore will not be available!");
             LoggerFactory.getLogger(getClass()).debug("Error when loading confidence SVMs or the bayesian network.", e);

@@ -86,5 +86,4 @@ public class BayesnetScoringWithDynamicComputation implements FingerblastScoring
                     store.getFP().orElseThrow());
         }
     }
-
 }

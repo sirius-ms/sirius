@@ -46,7 +46,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
 
     private final CSIPredictor predictor;
 
-    private BayesnetScoring bayesnetScoring = null;
+    protected BayesnetScoring bayesnetScoring = null;
     private RestWithCustomDatabase.CandidateResult candidates = null;
     private List<Scored<FingerprintCandidate>> scoredCandidates = null;
 
