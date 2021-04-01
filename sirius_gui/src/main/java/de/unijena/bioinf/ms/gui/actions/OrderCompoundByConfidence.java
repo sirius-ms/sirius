@@ -29,7 +29,7 @@ import java.util.Comparator;
 public class OrderCompoundByConfidence extends AbstractAction {
 
     public OrderCompoundByConfidence() {
-        super("Order by Confidence");
+        super("Order by COSMIC");
     }
 
     @Override
