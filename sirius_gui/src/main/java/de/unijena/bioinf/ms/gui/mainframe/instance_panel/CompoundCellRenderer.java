@@ -26,6 +26,8 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.stream.Stream;
 
@@ -150,9 +152,8 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 //		int yPos = 64;
 //		int yPos = 80;
 
-		g2.setFont(valueFont);
-
-		String conf =  ec.getID().getConfidenceScore().map(String::valueOf).orElse("N/A");
+		g2.setFont(propertyFont);
+		String conf =  ec.getID().getConfidenceScore().map(BigDecimal::valueOf).map(d -> d.setScale(3, RoundingMode.HALF_UP)).map(BigDecimal::toString).orElse("N/A");
 		g2.drawString(conf, xPos, 80);
 
 //			yPos+=16;

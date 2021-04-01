@@ -182,7 +182,7 @@ public class FingeridSubToolJob extends InstanceJob {
             inst.updateFormulaResult(formRes,
                     FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
         }
-        inst.getID().setConfidenceScore(maxConfidence);
+        inst.getID().setConfidenceScore(maxConfidence < 0 ? null : maxConfidence);
         inst.updateCompoundID();
     }
 
