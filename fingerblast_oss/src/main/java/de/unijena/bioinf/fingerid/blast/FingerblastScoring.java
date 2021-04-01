@@ -33,9 +33,9 @@ public interface FingerblastScoring<Parameter> {
 
     Parameter extractParameters(ParameterStore store);
 
-    default void prepare(Object... paras){
+    /*default void prepare(Object... paras){
         prepare(extractParameters(ParameterStore.of(paras)));
-    }
+    }*/
 
     default void prepare(ParameterStore store){
         prepare(extractParameters(store));
