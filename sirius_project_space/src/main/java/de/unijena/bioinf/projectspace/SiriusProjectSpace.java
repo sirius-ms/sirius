@@ -123,7 +123,9 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 final PrecursorIonType ionType = Optional.ofNullable(keyValues.get("ionType"))
                         .flatMap(PrecursorIonType::parsePrecursorIonType).orElse(null);
 
-                final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType, rt);
+                final Double confidenceScore = Optional.ofNullable(keyValues.get("confidenceScore")).map(Double::parseDouble).orElse(null);
+
+                final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType, rt, confidenceScore);
 
                 cid.setDetectedAdducts(
                         Optional.ofNullable(keyValues.get("detectedAdducts")).map(DetectedAdducts::fromString).orElse(null));
@@ -166,7 +168,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         RetentionTime rt = exp != null ? exp.getAnnotation(RetentionTime.class).orElse(null) : null;
         PrecursorIonType iontype = exp != null ? exp.getPrecursorIonType() : null;
 
-        return newUniqueCompoundId(compoundName, index2dirName, ionMass, iontype, rt)
+        return newUniqueCompoundId(compoundName, index2dirName, ionMass, iontype, rt, null)
                 .map(idd -> {
                     try {
                         idd.containerLock.lock();
@@ -188,15 +190,15 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
 
     public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName) {
-        return newUniqueCompoundId(compoundName, index2dirName, Double.NaN, null, null);
+        return newUniqueCompoundId(compoundName, index2dirName, Double.NaN, null, null, null);
     }
 
 
-    public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName, double ioMass, PrecursorIonType ionType, RetentionTime rt) {
+    public Optional<CompoundContainerId> newUniqueCompoundId(String compoundName, IntFunction<String> index2dirName, double ioMass, PrecursorIonType ionType, RetentionTime rt, Double confidence) {
         int index = compoundCounter.getAndIncrement();
         String dirName = index2dirName.apply(index);
 
-        Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, ioMass, ionType, rt);
+        Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, ioMass, ionType, rt, confidence);
         cidOpt.ifPresent(cid ->
                 fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_CREATED, cid, null, Collections.emptySet())));
         return cidOpt;
@@ -252,12 +254,12 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType, RetentionTime rt) {
+    protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType, RetentionTime rt, Double confidence) {
         if (containsCompound(directoryName)) return Optional.empty();
         synchronized (ids) {
             if (Files.exists(root.resolve(directoryName)))
                 return Optional.empty();
-            CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex, ionMass, ionType, rt);
+            CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex, ionMass, ionType, rt, confidence);
             if (ids.put(directoryName, id) != null)
                 return Optional.empty();
             try {
