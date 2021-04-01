@@ -120,6 +120,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
         smallParameters.addNamed("Instrument", profileSelector);
 
+        smallParameters.addNamed("Filter by isotope pattern", makeParameterCheckBox("IsotopeSettings.filter"));
+
         ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", Strategy.class);
         smallParameters.addNamed("MS/MS isotope scorer", ms2IsotpeSetting);
 
@@ -214,6 +216,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             ionizationList.checkBoxList.checkAll();
             ionizationList.setEnabled(enabled);
         }
+
+        detectPossibleAdducts();
     }
 
     protected void makeElementPanel(boolean multi) {
@@ -262,6 +266,28 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
                                         }
                                     }
                                     elementPanel.setSelectedElements(c);
+                                },
+                                () -> new ExceptionDialog(owner, notWorkingMessage)
+                        );
+            }).getResult();
+        } else {
+            new ExceptionDialog(owner, notWorkingMessage);
+        }
+    }
+
+    protected void detectPossibleAdducts() {
+        String notWorkingMessage = "Adduct detection requires MS1 spectrum.";
+        InstanceBean ec = ecs.get(0);
+        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
+            Jobs.runInBackgroundAndLoad(owner, "Detecting adducts...", () -> {
+                final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
+                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(),false));
+
+                pi.getAnnotation(PossibleAdducts.class).
+                        ifPresentOrElse(pa -> {
+                                    //todo do we want to add adducts?
+                                    ionizationList.checkBoxList.uncheckAll();
+                                    pa.getIonModes().stream().map(IonMode::toString).forEach(ion -> ionizationList.checkBoxList.check(ion));
                                 },
                                 () -> new ExceptionDialog(owner, notWorkingMessage)
                         );
