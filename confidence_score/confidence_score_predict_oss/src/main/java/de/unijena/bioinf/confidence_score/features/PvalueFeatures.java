@@ -25,17 +25,16 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 20.06.18.
  */
-public class PvalueFeatures implements FeatureCreator<Parameters> {
+public class PvalueFeatures implements FeatureCreator {
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
@@ -53,7 +52,7 @@ public class PvalueFeatures implements FeatureCreator<Parameters> {
 
 
     @Override
-    public double[] computeFeatures(@Nullable Parameters ignored) {
+    public double[] computeFeatures(@Nullable ParameterStore ignored) {
         PvalueScoreUtils utils= new PvalueScoreUtils();
 
         double[] return_value =  new double[1];

@@ -24,11 +24,8 @@ import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.confidence_score.CSICovarianceConfidenceScorer;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
-import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
-import de.unijena.bioinf.fingerid.blast.BayesnetScoringWithDynamicComputation;
-import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
-import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.*;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -42,7 +39,7 @@ import java.util.Map;
  * This is the API class for CSI:FingerID and Fingerblast.
  * We init a separate predictor object for positive and negative ionization
  */
-public class CSIPredictor extends AbstractStructurePredictor<Parameters.UnpreparedScoring<BayesnetScoring,Parameters.FP>> {
+public class CSIPredictor extends AbstractStructurePredictor {
     protected MaskedFingerprintVersion fpVersion;
     protected PredictionPerformance[] performances;
     protected volatile boolean initialized;
@@ -54,7 +51,7 @@ public class CSIPredictor extends AbstractStructurePredictor<Parameters.Unprepar
     }
 
     @Override
-    public FingerblastScoring<?> getPreparedFingerblastScorer(Parameters.UnpreparedScoring<BayesnetScoring,Parameters.FP> parameters) {
+    public FingerblastScoring<?> getPreparedFingerblastScorer(ParameterStore parameters) {
         /*if(!initialized) {
             initialize();
         }*/
@@ -110,7 +107,7 @@ public class CSIPredictor extends AbstractStructurePredictor<Parameters.Unprepar
 
             final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(performances);
 
-            return new CSICovarianceConfidenceScorer(confidenceSVMs, cvs, csiScoring, fingerblastScoring.getClass());
+            return new CSICovarianceConfidenceScorer(confidenceSVMs, cvs, csiScoring, (Class<? extends FingerblastScoringMethod<?>>) fingerblastScoring.getClass());
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when loading confidence SVMs or the bayesian network. Confidence SCore will not be available!");
             LoggerFactory.getLogger(getClass()).debug("Error when loading confidence SVMs or the bayesian network.", e);

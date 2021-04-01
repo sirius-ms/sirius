@@ -28,13 +28,14 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 16.07.18.
  */
-public class FptLengthFeatureHit implements FeatureCreator<Parameters> {
+public class FptLengthFeatureHit implements FeatureCreator {
 
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
@@ -48,7 +49,7 @@ public class FptLengthFeatureHit implements FeatureCreator<Parameters> {
     }
 
     @Override
-    public double[] computeFeatures(@Nullable Parameters ignored) {
+    public double[] computeFeatures(@Nullable ParameterStore ignored) {
 
         double[] length =  new double[1];
 

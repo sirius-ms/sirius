@@ -28,7 +28,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,7 +45,7 @@ computes distance features, max distance is variable, so are scorers. Top scorin
  */
 
 
-public class DistanceFeatures implements FeatureCreator<Parameters> {
+public class DistanceFeatures implements FeatureCreator {
     private int[] distances;
     private int feature_size;
     Scored<FingerprintCandidate>[] rankedCandidates;
@@ -66,7 +66,7 @@ public class DistanceFeatures implements FeatureCreator<Parameters> {
     }
 
     @Override
-    public double[] computeFeatures(@Nullable Parameters ignored) {
+    public double[] computeFeatures(@Nullable ParameterStore ignored) {
         double[] scores =  new double[feature_size];
 
         final double topHit = rankedCandidates_filtered[0].getScore();

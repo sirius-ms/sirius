@@ -24,14 +24,15 @@ import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 
 /**
  * Created by Marcus Ludwig on 07.03.16.
  */
-public interface FeatureCreator<Parameters> extends Parameterized {
+public interface FeatureCreator extends Parameterized {
     int weight_direction();
 
-    double[] computeFeatures(Parameters parameters);
+    double[] computeFeatures(ParameterStore parameters);
 
     int getFeatureSize();
 

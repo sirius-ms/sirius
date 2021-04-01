@@ -28,7 +28,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
  */
 
 
-public class LogPvalueDistanceFeatures implements FeatureCreator<Parameters> {
+public class LogPvalueDistanceFeatures implements FeatureCreator {
     private int[] distances;
     private int feature_size;
     Scored<FingerprintCandidate>[] rankedCandidates;
@@ -68,7 +68,7 @@ public class LogPvalueDistanceFeatures implements FeatureCreator<Parameters> {
     }
 
     @Override
-    public double[] computeFeatures(@Nullable Parameters ignored) {
+    public double[] computeFeatures(@Nullable ParameterStore ignored) {
 
         assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
         PvalueScoreUtils putils = new PvalueScoreUtils();

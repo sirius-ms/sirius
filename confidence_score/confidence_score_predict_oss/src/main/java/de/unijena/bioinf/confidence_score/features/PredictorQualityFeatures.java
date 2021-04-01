@@ -27,13 +27,15 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
+import de.unijena.bioinf.fingerid.blast.parameters.Statistics;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 27.06.18.
  */
-public class PredictorQualityFeatures implements FeatureCreator<Parameters.Stats> {
+public class PredictorQualityFeatures implements FeatureCreator {
 
     @Override
     public int weight_direction() {
@@ -41,8 +43,8 @@ public class PredictorQualityFeatures implements FeatureCreator<Parameters.Stats
     }
 
     @Override
-    public double[] computeFeatures(@Nullable Parameters.Stats statsPara) {
-        final PredictionPerformance[] statistics = statsPara.getStatistics();
+    public double[] computeFeatures(@NotNull ParameterStore statsPara) {
+        final PredictionPerformance[] statistics = statsPara.getStatistics().map(Statistics::getPerformances).orElseThrow();
         PredictionPerformance.averageF1(statistics);
         int f1Below33 = 0;
         int f1Below66 = 0;

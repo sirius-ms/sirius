@@ -29,13 +29,13 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 20.06.18.
  */
-public class LogDistanceFeatures implements FeatureCreator<Parameters> {
+public class LogDistanceFeatures implements FeatureCreator {
     private int[] distances;
     private int feature_size;
     private PredictionPerformance[] statistics;
@@ -60,7 +60,7 @@ public class LogDistanceFeatures implements FeatureCreator<Parameters> {
     }
 
     @Override
-    public double[] computeFeatures(@Nullable Parameters ignored) {
+    public double[] computeFeatures(@Nullable ParameterStore ignored) {
         assert  rankedCandidates[0].getScore()>=rankedCandidates[rankedCandidates.length-1].getScore();
 
         double[] scores =  new double[feature_size];
@@ -74,8 +74,10 @@ public class LogDistanceFeatures implements FeatureCreator<Parameters> {
                 while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
                     additional_shift+=1;
                 }
-
-                scores[pos++] = Math.log(topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore());
+                double dist=topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore();
+                if (dist>0) {
+                    scores[pos++] = Math.log(dist);
+                }else scores[pos++]=-10;
 
 
         }

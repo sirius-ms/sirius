@@ -28,13 +28,13 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.confidence_score.parameters.SuperParameters;
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 
 /**
  * Created by martin on 16.07.18.
  */
-public class PvalueScoreDiffScorerFeatures<P> implements FeatureCreator<SuperParameters.DefaultAsNested<P>> {
+public class PvalueScoreDiffScorerFeatures<P> implements FeatureCreator {
 
     Scored<FingerprintCandidate>[] rankedCands;
     Scored<FingerprintCandidate>[] rankedCands_filtered;
@@ -59,18 +59,18 @@ public class PvalueScoreDiffScorerFeatures<P> implements FeatureCreator<SuperPar
     }
 
     @Override
-    public double[] computeFeatures(SuperParameters.DefaultAsNested<P> para) {
+    public double[] computeFeatures(ParameterStore para) {
 
         double[] pvalueScore = new double[1];
-        scoring.prepare(para.getNested());
+        scoring.prepare(para);
 
-        double score = scoring.score(para.getFP(), best_hit_scorer.getCandidate().getFingerprint());
+        double score = scoring.score(para.getFP().orElseThrow(), best_hit_scorer.getCandidate().getFingerprint());
 
         Scored<FingerprintCandidate> current = new Scored<FingerprintCandidate>(best_hit_scorer.getCandidate(), score);
 
         PvalueScoreUtils utils = new PvalueScoreUtils();
 
-        pvalueScore[0] = Math.log(utils.computePvalueScore(rankedCands,rankedCands_filtered,current));
+        pvalueScore[0] = Math.log(utils.compute_pvalue_with_KDE(rankedCands,rankedCands_filtered,current));
 
         return pvalueScore;
     }

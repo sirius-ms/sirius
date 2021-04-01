@@ -28,7 +28,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
  */
 
 
-public class CandlistSizeFeatures implements FeatureCreator<Parameters> {
+public class CandlistSizeFeatures implements FeatureCreator {
     Scored<FingerprintCandidate>[] rankedCandidates;
 
     public CandlistSizeFeatures(Scored<FingerprintCandidate>[] rankedCandidates){
@@ -58,7 +58,7 @@ public class CandlistSizeFeatures implements FeatureCreator<Parameters> {
     }
 
     @Override
-    public double[] computeFeatures(@Nullable Parameters ignored) {
+    public double[] computeFeatures(@Nullable ParameterStore ignored) {
 
 
         double[] scores =  new double[1];

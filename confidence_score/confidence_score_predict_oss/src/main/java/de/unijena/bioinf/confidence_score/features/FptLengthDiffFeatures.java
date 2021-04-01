@@ -28,12 +28,13 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
+
 
 /**
  * Created by martin on 16.07.18.
  */
-public class FptLengthDiffFeatures implements FeatureCreator<Parameters.FP> {
+public class FptLengthDiffFeatures implements FeatureCreator {
 
     Scored<FingerprintCandidate>[] ranked_candidates;
 
@@ -47,10 +48,10 @@ public class FptLengthDiffFeatures implements FeatureCreator<Parameters.FP> {
     }
 
     @Override
-    public double[] computeFeatures(Parameters.FP query) {
+    public double[] computeFeatures(ParameterStore queryFPStore) {
         assert ranked_candidates[0].getScore() >= ranked_candidates[ranked_candidates.length - 1].getScore();
         double[] diff = new double[1];
-        diff[0] = Math.abs(ranked_candidates[0].getCandidate().getFingerprint().cardinality() - query.getFP().asDeterministic().cardinality());
+        diff[0] = Math.abs(ranked_candidates[0].getCandidate().getFingerprint().cardinality() - queryFPStore.getFP().orElseThrow().asDeterministic().cardinality());
         return diff;
     }
 
