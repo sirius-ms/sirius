@@ -25,7 +25,7 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -39,9 +39,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Scoring from @see <a href=https://academic.oup.com/bioinformatics/article/34/13/i333/5045719></a>
@@ -323,7 +321,7 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
     }
 
 
-    public class Scorer implements FingerblastScoring<Parameters.FP> {
+    public class Scorer implements FingerblastScoring<ProbabilityFingerprint> {
         protected double[][] abcdMatrixByNodeIdxAndCandidateProperties;
         protected ProbabilityFingerprint preparedProbabilityFingerprint;
         protected double[] smoothedPlatt;
@@ -371,12 +369,18 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
         int numberOfComputedContingencyTables;
         int numberOfComputedSimpleContingencyTables;
         TIntHashSet preparedProperties;
+
         @Override
-        public void prepare(Parameters.FP fpPara) {
+        public ProbabilityFingerprint extractParameters(ParameterStore store) {
+            return store.get(ProbabilityFingerprint.class).orElseThrow();
+        }
+
+        @Override
+        public void prepare(ProbabilityFingerprint fpPara) {
             numberOfComputedContingencyTables = 0;
             numberOfComputedSimpleContingencyTables =0;
             preparedProperties = new TIntHashSet();
-            preparedProbabilityFingerprint = fpPara.getFP();
+            preparedProbabilityFingerprint = fpPara;
             smoothedPlatt = getSmoothedPlatt(preparedProbabilityFingerprint);
             abcdMatrixByNodeIdxAndCandidateProperties = new double[nodeList.length][];
 

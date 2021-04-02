@@ -20,11 +20,12 @@ package de.unijena.bioinf.fingerid.blast;/*
 
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.MFandFpParameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 
 import java.io.IOException;
 
-public class BayesnetScoringWithDynamicComputationPersistent implements FingerblastScoring<Parameters.WithMFandFP> {
+public class BayesnetScoringWithDynamicComputationPersistent implements FingerblastScoring<MFandFpParameters> {
 
 
     //not used
@@ -43,7 +44,12 @@ public class BayesnetScoringWithDynamicComputationPersistent implements Fingerbl
     }
 
     @Override
-    public void prepare(Parameters.WithMFandFP inputParameter) {
+    public MFandFpParameters extractParameters(ParameterStore store) {
+        return MFandFpParameters.from(store);
+    }
+
+    @Override
+    public void prepare(MFandFpParameters inputParameter) {
         try {
             //in general, this provider should also store the scoring tree internally
             BayesnetScoring bayesnetScoring = bayesianNetworkScoringProvider.getScoringOrNull(inputParameter.getFormula());
@@ -56,7 +62,7 @@ public class BayesnetScoringWithDynamicComputationPersistent implements Fingerbl
             this.currentScoring = bayesnetScoring;
             this.innerScorer = currentScoring.getScoring();
             //prepare with fingerprint
-            this.innerScorer.prepare(inputParameter);
+            this.innerScorer.prepare(inputParameter.getFP());
         } catch (IOException e) {
             e.printStackTrace();
         }
