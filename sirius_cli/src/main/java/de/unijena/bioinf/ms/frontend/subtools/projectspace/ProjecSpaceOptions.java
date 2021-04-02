@@ -71,7 +71,7 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
         }
     }
     Long mergeCompoundsRtDiff;
-    private static Pattern TMUNIT = Pattern.compile("([0-9](?:\\.[0-9]))\\s*(ms|s|min|h)?");
+    private static Pattern TMUNIT = Pattern.compile("([0-9]+(?:\\.[0-9]+))\\s*(ms|s|min|h)?");
 
     @CommandLine.Option(names = {"--delete-by-idx", "--di", "-d"}, split = ",",
             description = {"Delete all compounds that match the given indices from the given project-space."})
