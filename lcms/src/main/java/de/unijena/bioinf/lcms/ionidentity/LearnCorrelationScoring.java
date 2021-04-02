@@ -158,7 +158,6 @@ public class LearnCorrelationScoring {
                 cosines.addAll(groups.stream().mapToDouble(x -> x.getCosine()).toArray());
                 correlations.addAll(groups.stream().mapToDouble(x -> x.getCorrelation()).toArray());
                 mls.addAll(groups.stream().mapToDouble(x -> x.score).toArray());
-                mls2.addAll(groups.stream().mapToDouble(x -> x.score2).toArray());
                 klbs.addAll(groups.stream().mapToDouble(x -> x.getKullbackLeibler()).toArray());
                 patlen.addAll(groups.stream().mapToDouble(x->x.getNumberOfCorrelatedPeaks()).toArray());
                 totalCors += groups.size();
