@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -42,10 +41,7 @@ import de.unijena.bioinf.lcms.Ms2CosineSegmenter;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.quality.AlignmentQuality;
 import de.unijena.bioinf.lcms.quality.Quality;
-import de.unijena.bioinf.model.lcms.ConsensusFeature;
-import de.unijena.bioinf.model.lcms.Feature;
-import de.unijena.bioinf.model.lcms.FragmentedIon;
-import de.unijena.bioinf.model.lcms.MergedSpectrum;
+import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
@@ -53,6 +49,7 @@ import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import gnu.trove.iterator.TLongFloatIterator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.map.hash.TIntLongHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TLongFloatHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
@@ -79,6 +76,8 @@ public class Aligner {
         final List<ConsensusFeature> consensusFeatures = new ArrayList<>();
         final AlignedFeatures[] allFeatures = cluster.features.clone();
         Arrays.sort(allFeatures, Comparator.comparingDouble(u -> u.rt));
+        // assign feature ID
+        final HashMap<AlignedFeatures, ConsensusFeature> mapper = new HashMap<>();
         int featureID = 0;
         for (AlignedFeatures f : allFeatures) {
             if (Math.abs(f.chargeState)>1)
@@ -238,6 +237,18 @@ public class Aligner {
             Spectrums.filterIsotopePeaks(ms2merged,new Deviation(10),0.2, 0.55,3,new ChemicalAlphabet(MolecularFormula.parseOrNull("CHNOPS").elementArray()),true);
             final ConsensusFeature F = new ConsensusFeature(++featureID, features.toArray(new Feature[0]),representativeSample==null ? -1 : samples.indexOf(representativeSample), allMs1Spectra.toArray(SimpleSpectrum[]::new), new SimpleSpectrum[]{new SimpleSpectrum(ms2merged)}, ionType, medianRet, new CollisionEnergy(lowestNonZero,highest),mass, totalInt,chimericPollution);
             consensusFeatures.add(F);
+            mapper.put(f, F);
+        }
+
+        // reinsert connections
+        for (AlignedFeatures a : allFeatures) {
+            ConsensusFeature f = mapper.get(a);
+            if (f!=null) {
+                for (IonConnection<AlignedFeatures> c : a.connections) {
+                    final ConsensusFeature o = mapper.get(c.getRight());
+                    if (o!=null) f.addConnection(o, c.getType(), c.getWeight());
+                }
+            }
         }
 
         return consensusFeatures.toArray(new ConsensusFeature[0]);
@@ -246,6 +257,8 @@ public class Aligner {
     public LaplaceDistribution estimateErrorLaplace(List<ProcessedSample> samples) {
         // start with the 15% percentile distance of consecutive features with same mz as initial error term
         TDoubleArrayList distances = new TDoubleArrayList();
+        final TIntObjectHashMap<ArrayList<FragmentedIon>> greedyAlignment = new TIntObjectHashMap<>();
+        final TIntLongHashMap greedyAlignmentAvg = new TIntLongHashMap();
         for (ProcessedSample s : samples) {
             // binned ions
             final TIntObjectHashMap<List<FragmentedIon>> binnedIons = new TIntObjectHashMap<>();
@@ -254,16 +267,44 @@ public class Aligner {
                 if (!binnedIons.containsKey(m)) binnedIons.put(m, new ArrayList<>());
                 binnedIons.get(m).add(f);
             }
-            binnedIons.forEachValue(x->{x.sort(Comparator.comparingDouble(y->y.getRetentionTime())); return true;});
+            binnedIons.forEachValue(x->{x.sort(Comparator.comparingDouble(FragmentedIon::getRetentionTime)); return true;});
             for (List<FragmentedIon> ionList : binnedIons.valueCollection()) {
                 for (int j=1; j < ionList.size(); ++j) {
                     distances.add(ionList.get(j).getRetentionTime()-ionList.get(j-1).getRetentionTime());
                 }
             }
+            binnedIons.forEachEntry((y,x)->{
+                if (!greedyAlignment.containsKey(y)) {
+                    greedyAlignment.put(y,new ArrayList<>());
+                    final FragmentedIon i = Collections.max(x, Comparator.comparingDouble(FragmentedIon::getIntensity));
+                    greedyAlignment.get(y).add(i);
+                    greedyAlignmentAvg.put(y, i.getRetentionTime());
+                } else {
+                    final double avg = greedyAlignmentAvg.get(y) / (double)greedyAlignment.get(y).size();
+                    final FragmentedIon i = Collections.min(x, Comparator.comparingDouble(z->Math.abs(avg-z.getRetentionTime())));
+                    greedyAlignment.get(y).add(i);
+                    greedyAlignmentAvg.put(y, greedyAlignmentAvg.get(y) + i.getRetentionTime());
+                }
+                return true;
+            });
         }
         distances.sort();
         double sigma = 0d;
-        distances.transformValues(x->Math.abs(x));
+        distances.transformValues(Math::abs);
+        final double std = distances.sum()/distances.size();
+        System.err.println("CONSECUTIVE DISTANCES: " + distances.sum()/distances.size());
+        distances.clearQuick();
+        greedyAlignment.forEachValue(ilist->{
+            for (int i=0; i < ilist.size(); ++i) {
+                for (int j=i+1; j < ilist.size(); ++j) {
+                    double dist = Math.abs(ilist.get(i).getRetentionTime()-ilist.get(j).getRetentionTime());
+                    if (dist <= std) {
+                        distances.add(dist);
+                    }
+                }
+            }
+            return true;
+        });
         return new LaplaceDistribution(0d, distances.sum()/distances.size());
     }
 
@@ -677,7 +718,7 @@ public class Aligner {
                     }
                     peakShapeScore /= n;
                     if (peakShapeScore >= 1) {
-                        peakShapeScore = (float)new NormalDistribution(1d, 0.25).getErrorProbability(peakShapeScore);
+                        peakShapeScore = (float)new de.unijena.bioinf.ChemistryBase.math.NormalDistribution(1d, 0.25).getErrorProbability(peakShapeScore);
                     } else peakShapeScore = 1f;
 
                     // peak height score

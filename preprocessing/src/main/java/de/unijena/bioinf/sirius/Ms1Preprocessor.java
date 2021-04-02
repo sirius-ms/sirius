@@ -128,7 +128,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         if (pinput.hasAnnotation(PossibleAdducts.class)) return;
 
         final DetectedAdducts detAdds = exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new);
-        if (!detAdds.containsKey(DetectedAdducts.Keys.MS1_PREPROCESSOR)) {
+        if (!detAdds.containsKey(DetectedAdducts.Keys.MS1_PREPROCESSOR) && !detAdds.containsKey(DetectedAdducts.Keys.LCMS_ALIGN))  {
             final int charge = exp.getPrecursorIonType().getCharge();
 
             final AdductSettings settings = pinput.getAnnotationOrDefault(AdductSettings.class);

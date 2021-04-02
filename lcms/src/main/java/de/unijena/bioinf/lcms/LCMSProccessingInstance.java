@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.lcms;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -47,17 +48,18 @@ import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.math3.distribution.LaplaceDistribution;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LCMSProccessingInstance {
-    public static final String POSSIBLE_ADDUCTS_KEY = "lcms-align";//LCMSProccessingInstance.class.getSimpleName();
-
     protected HashMap<ProcessedSample, SpectrumStorage> storages;
     protected List<ProcessedSample> samples;
     protected MemoryFileStorage ms2Storage;
@@ -81,6 +83,10 @@ public class LCMSProccessingInstance {
                 PrecursorIonType.fromString("[M-H2O+H]+"),
                 PrecursorIonType.fromString("[M-H4O2+H]+"),
                 PrecursorIonType.fromString("[M-H2O+Na]+"),
+                PrecursorIonType.fromString("[M + FA + H]+"),
+                PrecursorIonType.fromString("[M + ACN + H]+"),
+                PrecursorIonType.fromString("[M + ACN + Na]+"),
+                //PrecursorIonType.fromString("[M-H+Na2]+"),
                 PrecursorIonType.fromString("[M+NH3+H]+"),
                 PrecursorIonType.fromString("[M-H]-"),
                 PrecursorIonType.fromString("[M+Cl]-"),
@@ -120,32 +126,105 @@ public class LCMSProccessingInstance {
      */
     public IonNetwork detectAdductsWithGibbsSampling(Cluster alignedFeatures) {
         final IonNetwork network = new IonNetwork();
+        final CorrelatedPeakDetector detector = new CorrelatedPeakDetector(detectableIonTypes);
         for (AlignedFeatures features : alignedFeatures.getFeatures()) {
+            features.getFeatures().entrySet().forEach(x->{
+                if (!x.getValue().isAdductDetectionDone()) detector.detectCorrelatedPeaks(x.getKey(), x.getValue()) ;
+                x.getValue().setDetectedIonType(PrecursorIonType.unknown(x.getValue().getPolarity()));
+            });
             network.addNode(features);
         }
-        network.addCorrelatedEdgesForAllNodes();
+        network.addCorrelatedEdgesForAllNodes(this);
+        network.deleteSingletons();
+
+        // debugging statistics
+        TObjectIntHashMap<Ionization> selectedIonTypeCounter = new TObjectIntHashMap<>();
+        TObjectIntHashMap<PrecursorIonType> possibleIonTypeCounter = new TObjectIntHashMap<>();
+        int[] ncompounds=new int[1];
+
         final ArrayList<AlignedFeatures> features = new ArrayList<>();
-        network.gibbsSampling((feature,types,prob)->{
+        network.gibbsSampling(this, (feature,types,prob)->{
             for (FragmentedIon ion : feature.getFeatures().values()) {
                 // we only consider adducts which are at least 1/5 as likely as the most likely option
                 final double threshold = Arrays.stream(prob).max().orElse(0d)/5d;
                 final HashSet<PrecursorIonType> set = new HashSet<>();
                 boolean unknown = false;
+                final TObjectDoubleHashMap<Ionization> probForIons = new TObjectDoubleHashMap<>();
+                for (PrecursorIonType t : this.detectableIonTypes) {
+                    if (t.getCharge()==ion.getPolarity()) {
+                        probForIons.putIfAbsent(t.getIonization(), 0d);
+                    }
+                }
+                double unknownProb = 0d;
                 for (int k=0; k < types.length; ++k) {
                     if (types[k].isIonizationUnknown()) {
+                        unknownProb += prob[k];
                         if (prob[k]>=threshold)
                             unknown=true;
                     } else {
+                        if (prob[k] > 0) {
+                            probForIons.adjustOrPutValue(types[k].getIonization(), prob[k], prob[k]);
+                        }
                         if (prob[k] >= threshold) {
                             set.add(types[k]);
+                            // whenever we add an adduct, add its ionization, too
+                            // because we cannot distinguish adducts from in-source
+                            // fragments
+                            // exception: damned, for some adducts we do not want that.
+                            if (!types[k].hasMultipleIons()) {
+                                set.add(types[k].withoutAdduct());
+                                set.add(types[k].withoutInsource());
+                            }
                         }
                     }
                 }
+                final double unknownProbability = unknownProb;
+                // add ionizations for each ion type which has probability above
+                final double ionThreshold = Arrays.stream(probForIons.values()).max().orElse(0d)/5d;
+                probForIons.forEachEntry((ionKey,probability)->{
+                   if (unknownProbability + probability >= ionThreshold) {
+                       set.add(PrecursorIonType.getPrecursorIonType(ionKey));
+                   }
+                   return true;
+                });
                 ion.setPossibleAdductTypes(set);
                 if (!unknown && set.size()==1) ion.setDetectedIonType(set.iterator().next());
                 else ion.setDetectedIonType(PrecursorIonType.unknown(ion.getPolarity()));
+
+                Set<Ionization> ionizations = new HashSet<>();
+                for (PrecursorIonType type : set) {
+                    possibleIonTypeCounter.adjustOrPutValue(type, 1, 1);
+                    if (!type.isIonizationUnknown()) ionizations.add(type.getIonization());
+                }
+                if (ionizations.size()==1) {
+                    selectedIonTypeCounter.adjustOrPutValue(ionizations.iterator().next(), 1, 1);
+                }
+                ncompounds[0]++;
             }
         });
+        network.reinsertLikelyCorrelatedEdgesIntoFeatures();
+
+
+        System.out.println("############ STATISTICS ################");
+        possibleIonTypeCounter.forEachEntry((key,count)->{
+            System.out.printf("%s %d times (%.2f %%)\n", key.toString(), count, count*100.0d/ncompounds[0] );
+            return true;
+        });
+        System.out.println("--------------- SELECTED --------------------");
+        int[] other = new int[1];
+        selectedIonTypeCounter.forEachEntry((key,count)->{
+            System.out.printf("%s %d times (%.2f %%)\n", key.toString(), count, count*100.0d/ncompounds[0] );
+            other[0] += count;
+            return true;
+        });
+        System.out.printf("Multiple possibilities: %d times (%.2f %%)\n", ncompounds[0]-other[0], (ncompounds[0]-other[0]+0d)*100.0d/ncompounds[0] );
+
+        try {
+            network.writeToFile(this, new File("/home/kaidu/network.json"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return network;
     }
 
@@ -450,7 +529,7 @@ public class LCMSProccessingInstance {
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Filter data: remove ions with low quality MS/MS spectrum and MS1 peak");
         System.out.println("Start with " + numberOfUnalignedIons + " unaligned ions.");
         System.out.println("Remove features with low MS/MS quality that do not align properly");System.out.flush();
-        int deleted = manager.submitJob(new Aligner(false).prealignAndFeatureCutoff2(samples, 15*error.getScale(), 1)).takeResult();
+        int deleted = manager.submitJob(new Aligner(false).prealignAndFeatureCutoff2(samples, 4*error.getScale(), 1)).takeResult();
         System.out.println("Remove " + deleted + " features that do not align well. Keep " + (numberOfUnalignedIons-deleted) + " features." );
 
         addAllSegmentsAsPseudoIons();

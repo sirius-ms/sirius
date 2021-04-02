@@ -29,6 +29,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class ChromatogramBuilder {
 
@@ -71,6 +72,31 @@ public class ChromatogramBuilder {
         }
         if (best==null) return Optional.empty();
         return buildTrace(bestSpec, best);
+    }
+
+    public void detectWithFallback(Scan startingPoint, double mz, Consumer<ChromatographicPeak> whenTraceFound, Consumer<ScanPoint> whenPeakFound, Runnable whenNothingFound) {
+        final SimpleSpectrum spectrum = sample.storage.getScan(startingPoint);
+        int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, dev);
+        if (i>=0) {
+            Optional<ChromatographicPeak> trace = buildTrace(spectrum, new ScanPoint(startingPoint, spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
+            if (trace.isPresent()) {
+                whenTraceFound.accept(trace.get());
+            } else {
+                whenPeakFound.accept(new ScanPoint(startingPoint, spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
+            }
+        } else {
+            whenNothingFound.run();
+        }
+    }
+
+    public Optional<ScanPoint> detectSingleScanPoint(Scan startingPoint, double mz) {
+        final SimpleSpectrum spectrum = sample.storage.getScan(startingPoint);
+        int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, dev);
+        if (i>=0) {
+            return Optional.of(new ScanPoint(startingPoint, spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
+        } else {
+            return Optional.empty(); // no chromatographic peak detected
+        }
     }
 
     public Optional<ChromatographicPeak> detect(Scan startingPoint, double mz) {

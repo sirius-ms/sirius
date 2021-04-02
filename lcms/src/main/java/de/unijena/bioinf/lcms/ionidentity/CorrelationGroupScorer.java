@@ -3,6 +3,7 @@ package de.unijena.bioinf.lcms.ionidentity;
 import de.unijena.bioinf.model.lcms.ChromatographicPeak;
 import de.unijena.bioinf.model.lcms.CorrelationGroup;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.slf4j.LoggerFactory;
 
 public class CorrelationGroupScorer {
 
@@ -16,6 +17,7 @@ public class CorrelationGroupScorer {
     }
 
     public double predictProbability(CorrelationGroup ionPair) {
+        ionPair = ionPair.ensureLargeToSmall();
         TDoubleArrayList[] lists = extractArrays(ionPair);
         return predictProbability(lists[0],lists[1]);
     }
@@ -37,12 +39,28 @@ public class CorrelationGroupScorer {
     private TDoubleArrayList[] extractArrays(CorrelationGroup ionPair) {
         TDoubleArrayList a = new TDoubleArrayList(), b = new TDoubleArrayList();
         final ChromatographicPeak large = ionPair.getLeft(), small = ionPair.getRight();
-        for (int i = ionPair.getStartIndex(); i <= ionPair.getEndIndex(); ++i) {
+        int start = small.findScanNumber(ionPair.getStartScanNumber()), ende = small.findScanNumber(ionPair.getEndScanNumber());
+        if (start < 0 || ende < 0) {
+            LoggerFactory.getLogger(CorrelationGroupScorer.class).error(
+                    "Two correlated ions do not enclose each other: " +
+                            large.toString() + "\n and \n" + small.toString() +
+                            "\n with segments \n" + ionPair.getLeftSegment().toString() + "\n and \n" + ionPair.getRightSegment());
+        }
+        if (start < 0) {
+            start = 0;
+        }
+        if (ende < 0) {
+            ende = small.numberOfScans()-1;
+        }
+
+
+        for (int i = start; i <= ende; ++i) {
             int j = large.findScanNumber(small.getScanNumberAt(i));
             if (j >= 0) a.add(large.getIntensityAt(j));
             else a.add(0d);
             b.add(small.getIntensityAt(i));
         }
+
         return new TDoubleArrayList[]{a,b};
     }
 
