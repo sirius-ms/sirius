@@ -73,7 +73,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
     }
 
     private void updateInfo() {
-        final Optional<CoelutingTraceSet> trace = currentInfo.getTracesFor(activeIndex);
+        final Optional<CoelutingTraceSet> trace = activeIndex < currentInfo.length() ? currentInfo.getTracesFor(activeIndex) : Optional.empty();
         if (trace.isPresent())
             summaryPanel.set(trace.get(), currentInstance.getExperiment());
         else summaryPanel.clear();
