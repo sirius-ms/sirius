@@ -253,6 +253,8 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         this.POSITIVE_ION_MODES = new IonMode[]{
                 new IonMode(1, "[M + K]+", MolecularFormula.parseOrThrow("K")),
                 new IonMode(1, "[M + Na]+", MolecularFormula.parseOrThrow("Na")),
+                // TODO: we have to add this!
+                //new IonMode(1, "[M - H + Na2]+", MolecularFormula.parseOrThrow("Na2").subtract(MolecularFormula.parseOrThrow("H"))),
                 PROTONATION
         };
         this.NEGATIVE_ION_MODES = new IonMode[]{

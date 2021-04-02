@@ -477,6 +477,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         protected ExactResult compute() throws Exception {
             final FGraph graph = treeBuilder instanceof ExtendedCriticalPathHeuristicTreeBuilder ? analyzer.buildGraphWithoutReduction(pinput, decomposition) : analyzer.buildGraph(pinput, decomposition);
             checkForInterruption();
+            System.err.println(Objects.toString(treeBuilder));
             final FTree tree = treeBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pinput, graph).tree;
             checkForInterruption();
             final ExactResult er = new ExactResult(decomposition, null, tree, tree.getTreeWeight());

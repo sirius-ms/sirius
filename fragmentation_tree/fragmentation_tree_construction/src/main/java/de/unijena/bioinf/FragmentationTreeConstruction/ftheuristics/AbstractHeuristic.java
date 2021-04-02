@@ -21,9 +21,11 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import gnu.trove.map.hash.TIntIntHashMap;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 public abstract class AbstractHeuristic {
@@ -48,6 +50,7 @@ public abstract class AbstractHeuristic {
     }
 
     protected FTree buildSolution(boolean prune) {
+        if (prune) prune();
         if (selectedEdges.size()==0) {
             Fragment bestFrag = null;
             for (Fragment f : graph.getRoot().getChildren()) {
@@ -71,7 +74,7 @@ public abstract class AbstractHeuristic {
             mapping.mapLeftToRight(l.getTarget(), f);
             f.getIncomingEdge().setWeight(l.getWeight());
         }
-        if (prune) prune(tree, tree.getRoot());
+        //if (prune) prune(tree, tree.getRoot());
         double score = selectedEdges.get(0).getWeight();
         for (Fragment f : tree) {
             if (!f.isRoot())
@@ -79,6 +82,27 @@ public abstract class AbstractHeuristic {
         }
         tree.setTreeWeight(score);
         return tree;
+    }
+
+    protected final void prune() {
+        // iterate over all selected edges, delete an edge if it leads to a leaf with negative score
+        final TIntIntHashMap innerNodes = new TIntIntHashMap(selectedEdges.size(), 0.75f, -1, 0);
+        for (Loss l : selectedEdges) {
+            innerNodes.adjustOrPutValue(l.getSource().getVertexId(), 1, 1);
+        }
+        boolean modified;
+        do {
+            Iterator<Loss> iter = selectedEdges.iterator();
+            modified = false;
+            while (iter.hasNext()){
+                final Loss next = iter.next();
+                if (next.getWeight() <= 0 && innerNodes.get(next.getTarget().getVertexId())<=0) {
+                    innerNodes.adjustOrPutValue(next.getSource().getVertexId(), -1, 0);
+                    iter.remove();
+                    modified=true;
+                }
+            }
+        } while (modified);
     }
 
     protected final double prune(FTree tree, Fragment f) {
