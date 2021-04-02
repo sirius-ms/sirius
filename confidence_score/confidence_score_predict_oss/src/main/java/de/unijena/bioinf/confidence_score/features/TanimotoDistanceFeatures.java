@@ -29,7 +29,7 @@ import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
  */
 
 
-public class TanimotoDistanceFeatures implements FeatureCreator<Parameters> {
+public class TanimotoDistanceFeatures implements FeatureCreator {
     private int[] distances;
     private int feature_size;
     Scored<FingerprintCandidate>[] rankedCandidates;
@@ -67,7 +67,7 @@ public class TanimotoDistanceFeatures implements FeatureCreator<Parameters> {
     }
 
     @Override
-    public double[] computeFeatures(@Nullable Parameters ignored) {
+    public double[] computeFeatures(@Nullable ParameterStore ignored) {
         double[] scores =  new double[feature_size];
 
         int pos = 0;

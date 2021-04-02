@@ -21,7 +21,7 @@
 package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 
 /**
  * Created by Marcus Ludwig on 28.02.17.
@@ -137,7 +137,7 @@ public class ScoringMethodFactory {
 
     // Legacy scorers
 
-    protected abstract static class LegacyScorer implements FingerblastScoring<Parameters> {
+    protected abstract static class LegacyScorer implements FingerblastScoring<Object> {
 
         double threshold = 0.25;
         double minSamples = 25;
@@ -150,6 +150,16 @@ public class ScoringMethodFactory {
 
         protected boolean isValid(int index) {
             return performances[index].getSmallerClassSize() >= minSamples && performances[index].getF() >= threshold;
+        }
+
+        @Override
+        public Object extractParameters(ParameterStore store) {
+            return null;
+        }
+
+        @Override
+        public void prepare(Object genericInputParameter) {
+
         }
 
         @Override

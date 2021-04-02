@@ -25,7 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.confidence_score.parameters.SuperParameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,22 +33,21 @@ import java.util.stream.Collectors;
 /**
  * Created by Marcus Ludwig on 09.03.16.
  */
-public class CombinedFeatureCreator<P extends SuperParameters> implements FeatureCreator<P>{
-    public List<FeatureCreator<?>> featureCreators;
+public class CombinedFeatureCreator implements FeatureCreator {
+    public List<FeatureCreator> featureCreators;
     protected int featureCount;
     protected double[] computed_features;
 
 
-    public CombinedFeatureCreator(Collection<FeatureCreator<?>> featureCreators){
+    public CombinedFeatureCreator(Collection<FeatureCreator> featureCreators){
         this(new ArrayList<>(featureCreators));
     }
 
-    @SafeVarargs
-    public CombinedFeatureCreator(FeatureCreator<?>... featureCreators){
+    public CombinedFeatureCreator(FeatureCreator... featureCreators){
             this(Arrays.stream(featureCreators).collect(Collectors.toList()));
     }
 
-    private CombinedFeatureCreator(List<FeatureCreator<?>> featureCreators){
+    private CombinedFeatureCreator(List<FeatureCreator> featureCreators){
         this.featureCreators = featureCreators;
         this.featureCount = featureCreators.stream().mapToInt(FeatureCreator::getFeatureSize).sum();
     }
@@ -62,7 +61,7 @@ public class CombinedFeatureCreator<P extends SuperParameters> implements Featur
     }
 
     @Override
-    public double[] computeFeatures(P combinedParapeters) {
+    public double[] computeFeatures(ParameterStore combinedParapeters) {
         computed_features= new double[getFeatureSize()];
         int pos = 0;
         for (FeatureCreator featureCreator : featureCreators) {
@@ -79,7 +78,7 @@ public class CombinedFeatureCreator<P extends SuperParameters> implements Featur
 
     @Override
     public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
-        for (FeatureCreator<?> featureCreator : featureCreators) {
+        for (FeatureCreator featureCreator : featureCreators) {
             if (!featureCreator.isCompatible(query, rankedCandidates)) return false;
         }
         return true;
@@ -88,7 +87,7 @@ public class CombinedFeatureCreator<P extends SuperParameters> implements Featur
     @Override
     public int getRequiredCandidateSize() {
         int max = -1;
-        for (FeatureCreator<?> featureCreator : featureCreators) max = Math.max(max, featureCreator.getRequiredCandidateSize());
+        for (FeatureCreator featureCreator : featureCreators) max = Math.max(max, featureCreator.getRequiredCandidateSize());
         return max;
     }
 
@@ -96,7 +95,7 @@ public class CombinedFeatureCreator<P extends SuperParameters> implements Featur
     public String[] getFeatureNames() {
         String[] names = new String[getFeatureSize()];
         int pos = 0;
-        for (FeatureCreator<?> featureCreator : featureCreators) {
+        for (FeatureCreator featureCreator : featureCreators) {
             final String[] currentNames = featureCreator.getFeatureNames();
             for (String currentName : currentNames) names[pos++] = currentName;
         }
@@ -121,7 +120,7 @@ public class CombinedFeatureCreator<P extends SuperParameters> implements Featur
     @Override
     public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         L list = document.newList();
-        for (FeatureCreator<?> featureCreator : featureCreators) document.addToList(list, helper.wrap(document, featureCreator));
+        for (FeatureCreator featureCreator : featureCreators) document.addToList(list, helper.wrap(document, featureCreator));
         document.addListToDictionary(dictionary, "featureCreators", list);
     }
 

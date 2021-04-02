@@ -31,8 +31,7 @@ import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
-import de.unijena.bioinf.fingerid.blast.parameters.BayesnetDynamicParameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +46,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
 
     private final CSIPredictor predictor;
 
-    private BayesnetScoring bayesnetScoring = null;
+    protected BayesnetScoring bayesnetScoring = null;
     private RestWithCustomDatabase.CandidateResult candidates = null;
     private List<Scored<FingerprintCandidate>> scoredCandidates = null;
 
@@ -104,7 +103,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
 
         // to get a prepared FingerblastScorer, an object of BayesnetScoring that is specific to the molecular formula has to be initialized
         List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(
-                predictor.getPreparedFingerblastScorer(new BayesnetDynamicParameters(fp, bayesnetScoring)), combinedCandidates, fp);
+                predictor.getPreparedFingerblastScorer(ParameterStore.of(fp, bayesnetScoring)), combinedCandidates, fp);
         scoreJobs.forEach(this::submitSubJob);
 
         scoredCandidates = scoreJobs.stream().flatMap(r -> r.takeResult().stream()).sorted(Comparator.reverseOrder()).map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());

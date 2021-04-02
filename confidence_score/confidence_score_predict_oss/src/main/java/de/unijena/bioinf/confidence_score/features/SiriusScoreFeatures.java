@@ -27,13 +27,13 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.confidence_score.parameters.IdResult;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
  * Created by martin on 20.06.18.
  */
-public class SiriusScoreFeatures implements FeatureCreator<IdResult<?>> {
+public class SiriusScoreFeatures implements FeatureCreator {
     @Override
     public int weight_direction() {
         return weight_direction;
@@ -42,8 +42,8 @@ public class SiriusScoreFeatures implements FeatureCreator<IdResult<?>> {
     public int weight_direction = 1;
 
     @Override
-    public double[] computeFeatures(IdResult<?> idResultPara) {
-        final IdentificationResult<?> idresult = idResultPara.getIdResult();
+    public double[] computeFeatures(ParameterStore idResultPara) {
+        final IdentificationResult<?> idresult = idResultPara.get(IdentificationResult.class).orElseThrow();
 
         // double[] scores= new double[4];
         double[] scores = new double[1];

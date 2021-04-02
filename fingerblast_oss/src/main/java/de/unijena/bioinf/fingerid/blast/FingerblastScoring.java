@@ -22,13 +22,26 @@ package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 
-public interface FingerblastScoring<Parameters> {
+public interface FingerblastScoring<Parameter> {
 
     /*
      * DO NOT RENAME -> Reflection calls
      */
-    default void prepare(Parameters genericInputParameter){}
+
+
+    Parameter extractParameters(ParameterStore store);
+
+    /*default void prepare(Object... paras){
+        prepare(extractParameters(ParameterStore.of(paras)));
+    }*/
+
+    default void prepare(ParameterStore store){
+        prepare(extractParameters(store));
+    }
+
+    void prepare(Parameter genericInputParameter);
 
     double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry);
 

@@ -290,7 +290,7 @@ return null;
 
         EmpiricalDist empdist= new EmpiricalDist(scored_array);
 
-        double bandwidth= KernelDensityGen.getBaseBandwidth(empdist);
+        double bandwidth= 0.7764*KernelDensityGen.getBaseBandwidth(empdist);
 
         if (bandwidth==0){
             System.out.println("Critical bandwidth estimation error, send input to Martin");

@@ -28,7 +28,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 
 /**
  * Created by martin on 20.06.18.
@@ -40,7 +40,7 @@ import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
  */
 
 
-public class TanimotoToPredFeatures implements FeatureCreator<Parameters.FP> {
+public class TanimotoToPredFeatures implements FeatureCreator {
     private int feature_size;
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
@@ -61,9 +61,9 @@ public class TanimotoToPredFeatures implements FeatureCreator<Parameters.FP> {
     }
 
     @Override
-    public double[] computeFeatures(Parameters.FP query) {
+    public double[] computeFeatures(ParameterStore query) {
         double[] scores = new double[feature_size];
-        scores[0] = rankedCandidates_filtered[0].getCandidate().getFingerprint().tanimoto(query.getFP().asDeterministic());
+        scores[0] = rankedCandidates_filtered[0].getCandidate().getFingerprint().tanimoto(query.getFP().orElseThrow().asDeterministic());
         return scores;
     }
 

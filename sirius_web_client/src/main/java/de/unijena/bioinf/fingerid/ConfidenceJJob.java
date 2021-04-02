@@ -26,6 +26,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.ConfidenceScorer;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.jjobs.BasicDependentJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
@@ -51,6 +53,7 @@ public class ConfidenceJJob extends BasicDependentJJob<ConfidenceResult> impleme
     private List<Scored<FingerprintCandidate>> requestedScoredCandidates = null;
     private ProbabilityFingerprint predictedFpt = null;
     private RestWithCustomDatabase.CandidateResult candidates = null;
+    private BayesnetScoring bayesnetScoring;
 
 //    private FingerblastJJob searchDBJob = null;
 //    private FingerblastJJob additionalPubchemDBJob = null;
@@ -91,6 +94,7 @@ public class ConfidenceJJob extends BasicDependentJJob<ConfidenceResult> impleme
             allScoredCandidates = searchDBJob.getAllScoredCandidates();
             candidates = searchDBJob.getCandidates();
             requestedScoredCandidates = searchDBJob.result().getResults();
+            bayesnetScoring = searchDBJob.bayesnetScoring;
         }
     }
 
@@ -114,7 +118,7 @@ public class ConfidenceJJob extends BasicDependentJJob<ConfidenceResult> impleme
                 allScoredCandidates.stream().filter(sc -> set.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList())).
                 orElseThrow(() -> new IllegalArgumentException("Additional candidates Flag 'ALL' from DataSource is not Available but mandatory to compute Confidence scores!"));
 
-        final double score = scorer.computeConfidence(experiment, siriusidresult, allRestDbScoredCandidates, requestedScoredCandidates, predictedFpt);
+        final double score = scorer.computeConfidence(experiment, allRestDbScoredCandidates, requestedScoredCandidates, ParameterStore.of(predictedFpt, bayesnetScoring, siriusidresult));
 
         return new ConfidenceResult(score, requestedScoredCandidates.size() > 0 ? requestedScoredCandidates.get(0) : null);
     }
