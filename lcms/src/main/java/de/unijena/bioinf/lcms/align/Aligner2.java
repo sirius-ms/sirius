@@ -233,7 +233,7 @@ public class Aligner2 {
     }
 
     private double maxRetentionError() {
-        return 3*((LaplaceDistribution)retentionTimeErrorModel).getScale();
+        return 4*((LaplaceDistribution)retentionTimeErrorModel).getScale();
     }
 
     private double scoreIsotopes(FragmentedIon a, FragmentedIon b) {

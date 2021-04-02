@@ -34,14 +34,21 @@ class IonNode {
     private AlignedFeatures feature;
     protected double mz;
     protected boolean hasMsMs;
-
     protected IonAssignment assignment;
+
+    // gibbs sampling
+    protected int activeAssignment = 0;
+
+    protected float priorForUnknownIonType;
+    protected static final float priorForUncommonIonType = -1;
+    protected static final float priorForCommonIonType = 0;
 
     public IonNode(AlignedFeatures feature) {
         this.mz = feature.getMass();
         this.neighbours = new ArrayList<>();
         setFeature(feature);
     }
+
 
     public Set<PrecursorIonType> possibleIonTypes() {
         final HashSet<PrecursorIonType> types = new HashSet<>();
@@ -89,18 +96,17 @@ class IonNode {
 
     @Override
     public String toString() {
-        return "IonNode{" +
-                "neighbours=" + neighbours +
-                ", feature=" + feature +
-                ", mz=" + mz +
-                ", hasMsMs=" + hasMsMs +
-                '}';
+        return "[m/z = " + mz + "]";
     }
 
     public Set<PrecursorIonType> likelyIonTypes() {
+        return likelyIonTypes(0.1);
+    }
+
+    public Set<PrecursorIonType> likelyIonTypes(double threshold) {
         final HashSet<PrecursorIonType> types = new HashSet<>();
         for (int k=0; k < assignment.probabilities.length; ++k) {
-            if (assignment.probabilities[k]>=0.05) {
+            if (assignment.probabilities[k]>=threshold) {
                 types.add(assignment.ionTypes[k]);
             }
         }
@@ -122,5 +128,9 @@ class IonNode {
         }
         buf.append("}");
         return buf.toString();
+    }
+
+    public PrecursorIonType activeType() {
+        return assignment.ionTypes[activeAssignment];
     }
 }
