@@ -21,9 +21,9 @@
 package de.unijena.bioinf.fingerid.blast;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.fingerid.blast.parameters.Parameters;
+import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 
-public class MixedScoring implements FingerblastScoring<Parameters.FP> {
+public class MixedScoring implements FingerblastScoring<ProbabilityFingerprint> {
 
     private PredictionPerformance performances[];
     private double[] tp,fp,tn,fn;
@@ -69,8 +69,12 @@ public class MixedScoring implements FingerblastScoring<Parameters.FP> {
     }
 
     @Override
-    public void prepare(Parameters.FP fpPara) {
-        ProbabilityFingerprint fingerprint = fpPara.getFP();
+    public ProbabilityFingerprint extractParameters(ParameterStore store) {
+        return store.getFP().orElseThrow();
+    }
+
+    @Override
+    public void prepare(ProbabilityFingerprint fingerprint) {
         int k = 0;
         for (FPIter iter : fingerprint) {
             final double platt = laplaceSmoothing(iter.getProbability());
