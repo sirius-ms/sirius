@@ -2,7 +2,7 @@
  *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Affero General Public License
@@ -12,23 +12,20 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ *  Affero General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
@@ -159,7 +156,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations", GuiUtils.formatToolTip("Set possible ionisation for data with unknown ionization. SIRIUS will try to auto-detect adducts that can be derived from this ionizations"));
         ionizationList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
         center.add(ionizationList);
-        parameterBindings.put("AdductSettings.detectable", () -> getDerivedAdducts().toString());
+        parameterBindings.put("AdductSettings.detectable", () -> getDerivedDetectableAdducts().toString());
 
 
         // configure Element panel
@@ -297,8 +294,11 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         return getFormulaSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    public PossibleAdducts getDerivedAdducts() {
-        return ionizationList.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType)
-                .flatMap(Optional::stream).flatMap(i -> PeriodicTable.getInstance().adductsByIonisation(i).stream()).collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new));
+    public PossibleAdducts getDerivedDetectableAdducts() {
+        System.out.println(PropertyManager.DEFAULTS.getConfigValue("AdductSettings.detectable"));
+        Set<PrecursorIonType> det = new HashSet<>(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
+        Set<Ionization> keep = ionizationList.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType).flatMap(Optional::stream).map(PrecursorIonType::getIonization).collect(Collectors.toSet());
+        det.removeIf(s -> !keep.contains(s.getIonization()));
+        return new PossibleAdducts(det);
     }
 }
