@@ -118,7 +118,6 @@ public class SpectraVisualizationPanel
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println("[DEBUG] dumped JSON to " + filename);
 
 	}
 
@@ -141,7 +140,6 @@ public class SpectraVisualizationPanel
 				SiriusIsotopePattern siriusIsotopePattern = new SiriusIsotopePattern(ftree ,experiment.getExperiment(), spectrum);
 				jsonSpectra = spectraWriter.ms1MirrorJSON(spectrum, siriusIsotopePattern);
 			} else {
-				System.err.println("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
 				return;
 			}
 		} else if (mode.equals(MS2_DISPLAY)) {
@@ -301,7 +299,6 @@ public class SpectraVisualizationPanel
 				InSilicoSelectionBox.Item item = (InSilicoSelectionBox.Item)selectedItem;
 				if (item.getCandidate()!=null) {
 					fragmenter.fragment(sre,item.getCandidate());
-					System.out.println("WORKER STARTED");
 				}
 			}
 		}
