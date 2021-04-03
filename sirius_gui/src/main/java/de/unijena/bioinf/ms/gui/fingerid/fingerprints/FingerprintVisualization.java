@@ -150,8 +150,6 @@ class FingerprintVisualization {
                                     List<List<Integer>> match = queryTool.getUniqueMatchingAtoms();
                                     if (match.size()>0 && match.get(0).size()>0) {
                                         stream.print("\t" + tabs[i]);
-                                    } else {
-                                        System.err.println("WTF? Match but no atoms. For " + tabs[0] + " with " + prop.getDescription() + " and substructure " + substruct);
                                     }
                                 }
                             }
