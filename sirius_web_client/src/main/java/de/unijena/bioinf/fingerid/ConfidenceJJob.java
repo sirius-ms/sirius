@@ -90,11 +90,13 @@ public class ConfidenceJJob extends BasicDependentJJob<ConfidenceResult> impleme
     public synchronized void handleFinishedRequiredJob(JJob required) {
         if (required instanceof FingerblastJJob) {
             FingerblastJJob searchDBJob = (FingerblastJJob) required;
-            predictedFpt = searchDBJob.fp;
-            allScoredCandidates = searchDBJob.getAllScoredCandidates();
-            candidates = searchDBJob.getCandidates();
-            requestedScoredCandidates = searchDBJob.result().getResults();
-            bayesnetScoring = searchDBJob.bayesnetScoring;
+            if (searchDBJob.result() != null) {
+                predictedFpt = searchDBJob.fp;
+                allScoredCandidates = searchDBJob.getAllScoredCandidates();
+                candidates = searchDBJob.getCandidates();
+                requestedScoredCandidates = searchDBJob.result().getResults();
+                bayesnetScoring = searchDBJob.bayesnetScoring;
+            }
         }
     }
 
@@ -112,14 +114,15 @@ public class ConfidenceJJob extends BasicDependentJJob<ConfidenceResult> impleme
 
     @Override
     protected ConfidenceResult compute() throws Exception {
+        checkForInterruption();
         checkInput();
-
+        checkForInterruption();
         final List<Scored<FingerprintCandidate>> allRestDbScoredCandidates = candidates.getAllDbCandidatesInChIs().map(set ->
                 allScoredCandidates.stream().filter(sc -> set.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList())).
                 orElseThrow(() -> new IllegalArgumentException("Additional candidates Flag 'ALL' from DataSource is not Available but mandatory to compute Confidence scores!"));
-
+        checkForInterruption();
         final double score = scorer.computeConfidence(experiment, allRestDbScoredCandidates, requestedScoredCandidates, ParameterStore.of(predictedFpt, bayesnetScoring, siriusidresult));
-
+        checkForInterruption();
         return new ConfidenceResult(score, requestedScoredCandidates.size() > 0 ? requestedScoredCandidates.get(0) : null);
     }
 }
