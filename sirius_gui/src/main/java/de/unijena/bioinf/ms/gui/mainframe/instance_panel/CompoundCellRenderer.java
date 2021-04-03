@@ -104,17 +104,18 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 		
 		g2.setColor(this.foreColor);
 
+		final int maxWidth = getWidth() - 2;
 		int compoundLength = compoundFm.stringWidth(ec.getGUIName()) + 4;
 
-		boolean trigger = compoundLength + 2 > 198;
+		boolean trigger = compoundLength + 2 > maxWidth;
 
 		Paint p = g2.getPaint();
 
 		if (trigger) {
-			g2.setPaint(new GradientPaint(180, 0, foreColor, 199, 0, backColor));
+			g2.setPaint(new GradientPaint(maxWidth - 18, 0, foreColor, maxWidth - 1, 0, backColor));
 		}
 
-		g2.drawLine(2, 17, Math.min(197, 2 + compoundLength), 17);
+		g2.drawLine(2, 17, Math.min(maxWidth - 3, 2 + compoundLength), 17);
 
 		g2.setFont(compoundFont);
 		g2.drawString(ec.getGUIName(), 4, 13);
