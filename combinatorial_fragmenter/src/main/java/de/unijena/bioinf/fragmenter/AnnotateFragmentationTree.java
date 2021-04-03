@@ -48,7 +48,7 @@ public class AnnotateFragmentationTree {
                 fragmenter.acceptFragmentForFragmentation();
             if (match) {
                 if (insertBestMatching(bestMatch,formulas,f, secondBestMatch)) {
-                    System.out.println(f.getFragment().toSMILES() + "\t" + f.totalScore + "\t" + f.getBondbreaks() + "\t" + f.fragment.getFormula() + "\t" + match + "\t" + remaining);
+                    //System.out.println(f.getFragment().toSMILES() + "\t" + f.totalScore + "\t" + f.getBondbreaks() + "\t" + f.fragment.getFormula() + "\t" + match + "\t" + remaining);
                     fragmenter.acceptFragmentForFragmentation();
                     time = System.currentTimeMillis();
                 }
