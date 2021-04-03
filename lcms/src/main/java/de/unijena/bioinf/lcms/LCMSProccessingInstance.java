@@ -306,18 +306,6 @@ public class LCMSProccessingInstance {
         {
             final SimpleMutableSpectrum isotope = new SimpleMutableSpectrum(ion.getIsotopesAsSpectrum());
 
-            {
-                if (isotope.size() <= 2 && ion.getMsQuality().betterThan(Quality.DECENT)) {
-                    System.err.println("SOMETHING STRANGE IS HAPPENING WITH " + ion);
-                    System.err.println("-------------");
-                    System.out.println(ion.getIsotopes().get(0).getLeftSegment().getApexMass() + "\t"  + ion.getIsotopes().get(0).getLeftSegment().getApexIntensity());
-                    for (CorrelationGroup g : ion.getIsotopes()) {
-                        System.out.println(g.getRightSegment().getApexMass() + "\t"  + g.getRightSegment().getApexIntensity());
-                    }
-                    System.err.println("-------------");
-                }
-            }
-
             correlatedFeatures.add(new SimpleSpectrum(isotope));
             for (CorrelatedIon adduct : ion.getAdducts()) {
                 correlatedFeatures.add(adduct.ion.getIsotopesAsSpectrum());
