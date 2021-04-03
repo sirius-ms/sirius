@@ -656,6 +656,7 @@ function loadJSONData(data_spectra, data_highlight, data_svg) {
         basic_structure = null;
     }
     anno_str = [];
+    svg_str = null; // PLEASE get rid of all global variables
     if (data_highlight !== null && data_svg !== null) {
         if ((typeof data_highlight) == "string") {
             anno_str = JSON.parse(data_highlight);

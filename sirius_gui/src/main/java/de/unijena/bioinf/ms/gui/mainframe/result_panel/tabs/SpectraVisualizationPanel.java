@@ -22,14 +22,9 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.InSilicoSelectionBox;
 import de.unijena.bioinf.ms.gui.ms_viewer.InsilicoFragmenter;
@@ -184,8 +179,6 @@ public class SpectraVisualizationPanel
 			if (insilicoResult!=null) {
 				json = insilicoResult.getJson();
 				svg = insilicoResult.getSvg();
-				debugWriteSpectra(json, "/tmp/test_highlight.json");
-				debugWriteSpectra(svg, "/tmp/test_svg.xml");
 			}
 			browser.loadData(jsonSpectra, json, svg);
 		}
@@ -210,6 +203,9 @@ public class SpectraVisualizationPanel
 			}
 			modesBox.addItemListener(this);
 		}
+		if (sre != this.sre) {
+			clearInsilicoResult();
+		}
 		if (experiment != null){
 			boolean preferredPossible = false; // no `contains` for combobox
 			for (int i=0; i < modesBox.getItemCount(); i++)
@@ -223,13 +219,12 @@ public class SpectraVisualizationPanel
 			}
 			updateCEBox(experiment);
 			drawSpectra(experiment, sre, (String) modesBox.getSelectedItem(), getCEIndex());
-		}
-		 else
+		} else {
 			browser.clear();
+		}
 		// store data to switch between modes without having to switch to other results
 		this.experiment = experiment;
 		this.sre = sre;
-		clearInsilicoResult();
 		anoBox.resultsChanged(experiment,sre,resultElements,selections);
 		if (getCurrentMode().msLevel>1) {
 			anoBox.activate();
@@ -318,7 +313,6 @@ public class SpectraVisualizationPanel
 	private InsilicoFragmenter.Result insilicoResult;
 	public void setInsilicoResult(InsilicoFragmenter.Result result) {
 		this.insilicoResult = result;
-		System.out.println("INSILICO DONE\n" + result.getJson());
 		if (getCurrentMode().msLevel >= 2) {
 			drawSpectra(experiment, sre, getCurrentMode().label, getCEIndex());
 		}
