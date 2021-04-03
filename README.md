@@ -52,8 +52,6 @@ See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/ins
 
 ### [Changelog](https://boecker-lab.github.io/docs.sirius.github.io/changelog/)
 
-For **SIRIUS 4.0.1** click [here](https://bio.informatik.uni-jena.de/software/sirius-4-0-1/).
-
 ### Integration of CSI:FingerID
 
 Fragmentation trees and spectra can be directly uploaded from SIRIUS to a CSI:FingerID web service, without the need to access the (deprecated) CSI:FingerID

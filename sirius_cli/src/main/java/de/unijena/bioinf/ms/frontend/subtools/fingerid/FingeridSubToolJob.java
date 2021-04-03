@@ -2,7 +2,7 @@
  *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Affero General Public License
@@ -12,9 +12,9 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ *  Affero General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
 package de.unijena.bioinf.ms.frontend.subtools.fingerid;
@@ -160,6 +160,7 @@ public class FingeridSubToolJob extends InstanceJob {
         checkForInterruption();
 
         //annotate FingerIdResults to FormulaResult
+        double maxConfidence = -1;
         for (FingerIdResult structRes : result) {
             final FormulaResult formRes = formulaResultsMap.get(structRes.sourceTree);
             assert structRes.sourceTree == formRes.getAnnotationOrThrow(FTree.class);
@@ -175,16 +176,22 @@ public class FingeridSubToolJob extends InstanceJob {
             formRes.getAnnotationOrThrow(FormulaScoring.class)
                     .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
 
+            maxConfidence = Math.max(formRes.getAnnotationOrThrow(FormulaScoring.class).getAnnotation(ConfidenceScore.class).map(ConfidenceScore::score).orElse(-1d),maxConfidence);
+
             // write results
             inst.updateFormulaResult(formRes,
                     FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
         }
+        inst.getID().setConfidenceScore(maxConfidence < 0 ? null : maxConfidence);
+        inst.updateCompoundID();
     }
 
     @Override
     protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
         return formulaResultComponentsToClear.toArray(Class[]::new);
     }
+
+
 
     @Override
     public String getToolName() {

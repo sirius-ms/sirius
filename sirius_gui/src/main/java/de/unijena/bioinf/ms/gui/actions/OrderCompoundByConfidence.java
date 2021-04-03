@@ -17,11 +17,27 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.frontend.subtools;
+package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
-import de.unijena.bioinf.ms.properties.ParameterConfig;
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.util.Comparator;
 
-public interface PostprocessingTool<T extends PostprocessingJob<?>> {
-    T makePostprocessingJob(RootOptions<?,?,?> rootOptions, ParameterConfig config);
+public class OrderCompoundByConfidence extends AbstractAction {
+
+    public OrderCompoundByConfidence() {
+        super("Order by COSMIC");
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        MainFrame.MF.getCompoundList().orderBy(((Comparator<InstanceBean>) (o1, o2) -> {
+            return Double.compare(
+                    o1.getID().getConfidenceScore().orElse(Double.NEGATIVE_INFINITY),
+                    o2.getID().getConfidenceScore().orElse(Double.NEGATIVE_INFINITY));
+        }).reversed());
+    }
 }

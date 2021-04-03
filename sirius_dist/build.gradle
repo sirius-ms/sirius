@@ -1,5 +1,6 @@
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
+import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.stream.Collectors
 
@@ -9,6 +10,11 @@ plugins {
 
 
 ext {
+    // version for bundeled JRE
+    jre_version = '15.0.2'
+    zulu_jre_version = '15.29.15'
+    jre_major = zulu_jre_version.split("[.]")[0]
+
     OS = DefaultNativePlatform.currentOperatingSystem
 
     if (OS.isLinux()) {
@@ -141,9 +147,9 @@ task downloadCLP(type: Download) {
 
 
 task downloadRuntimeImageFX(type: Download) {
-    String fname = "zulu${zulu_jre_version}-ca-fx-jre${jre_version}-${zosName}_x64.zip"
+    String fname = "zulu${zulu_jre_version}-ca-fx-jre${jre_version}-${zosName}_x64${project.OS.isWindows() ? ".zip" : ".tar.gz"}"
 
-    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
+    src "https://cdn.azul.com/zulu/bin/${fname}"
     dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
     onlyIfModified true
     overwrite false
@@ -154,9 +160,9 @@ task extractRuntimeImageFX(type: ExtractRuntime, dependsOn: downloadRuntimeImage
 }
 
 task downloadRuntimeImageHeadless(type: Download) {
-    String fname = "zulu${zulu_jre_version}-ca-jre${jre_version}-${zosName}_x64.zip"
+    String fname = "zulu${zulu_jre_version}-ca-jre${jre_version}-${zosName}_x64${project.OS.isWindows() ? ".zip" : ".tar.gz"}"
 
-    src "https://bio.informatik.uni-jena.de/repository/list/dist-release-local/de/unijena/bioinf/jre/${zulu_jre_version}/${fname}"
+    src "https://cdn.azul.com/zulu/bin/${fname}"
     dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
     onlyIfModified true
     overwrite false
@@ -165,7 +171,6 @@ task downloadRuntimeImageHeadless(type: Download) {
 task extractRuntimeImageHeadless(type: ExtractRuntime, dependsOn: downloadRuntimeImageHeadless) {
     inputArchive = downloadRuntimeImageHeadless.dest
 }
-
 
 task downloadManual(type: Download, group: 'documentation') {
     String manualName = "manual-$version-manual.pdf"
@@ -353,13 +358,6 @@ subprojects {
 
             if (OS.isWindows()) {
                 //delete exes because they are write protected
-                /*appRootTarget.listFiles(new FilenameFilter(){
-                    @Override
-                    boolean accept(File dir, String name) {
-                        return name.endsWith(".exe")
-                    }
-                }).iterator().forEachRemaining({i ->i.delete()})
-*/
                 project.delete {
                     delete fileTree(dir: appRootTarget, includes: ["*.exe"])
                 }
@@ -467,7 +465,7 @@ abstract class ExtractRuntime extends DefaultTask {
 
     @OutputDirectory
     def getOutputDir() {
-        return new File(inputArchive.absolutePath.replace('.zip', ''))
+        return new File(inputArchive.absolutePath.replace((project.OS.isWindows() ? '.zip' : '.tar.gz'), ''))
     }
 
     @TaskAction
@@ -480,9 +478,20 @@ abstract class ExtractRuntime extends DefaultTask {
                 from project.zipTree(inputArchive)
                 into getOutputDir().getParentFile()
             }
-        } else {
+        } else if (project.OS.isLinux()) {
             project.exec { commandLine(['rm', '-rf', getOutputDir().absolutePath]) }
-            project.exec { commandLine(['unzip', '-q', inputArchive.absolutePath, '-d', getOutputDir().getParentFile().absolutePath]) }
+            project.exec { commandLine(['tar', 'zxf', inputArchive.absolutePath, '-C', getOutputDir().getParentFile().absolutePath]) }
+//            project.exec { commandLine(['unzip', '-q', inputArchive.absolutePath, '-d', getOutputDir().getParentFile().absolutePath]) }
+        }else {
+            def tmpPath= getOutputDir().getParentFile().absolutePath + "/mac"
+            Files.createDirectories(Paths.get(tmpPath))
+            project.exec { commandLine(['rm', '-rf', tmpPath]) }
+            Files.createDirectories(Paths.get(tmpPath))
+            project.exec { commandLine(['tar', 'zxf', inputArchive.absolutePath, '-C', tmpPath]) }
+            project.copy {
+                from "${tmpPath}/${getOutputDir().getName()}/zulu-${project.jre_major}.jre/Contents/Home"
+                into getOutputDir()
+            }
         }
     }
 }

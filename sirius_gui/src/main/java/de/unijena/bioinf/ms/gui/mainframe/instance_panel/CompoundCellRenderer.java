@@ -2,7 +2,7 @@
  *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Affero General Public License
@@ -12,9 +12,9 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ *  Affero General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
@@ -26,6 +26,8 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.stream.Stream;
 
@@ -125,12 +127,13 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 		String ionizationProp = "Ionization";
 		String focMassProp = "Precursor";
 		String rtProp = "RT";
-//		String specProp = "Spectra";
+		String confProp = "COSMIC";
 
 		g2.setFont(propertyFont);
 		g2.drawString(ionizationProp, 4, 32);
 		g2.drawString(focMassProp, 4, 48);
 		g2.drawString(rtProp, 4, 64);
+		g2.drawString(confProp, 4, 80);
 
 		int xPos = Stream.of(propertyFm.stringWidth(ionizationProp), propertyFm.stringWidth(focMassProp), propertyFm.stringWidth(rtProp))
 				.max(Integer::compareTo).get() + 15;
@@ -149,11 +152,9 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 //		int yPos = 64;
 //		int yPos = 80;
 
-		g2.setFont(valueFont);
-
-//		g2.drawString(specProp, 4, yPos);
-//		String msValues = ms1No + " MS   " + ms2No + " MS/MS";
-//		g2.drawString(msValues, xPos, yPos);
+		g2.setFont(propertyFont);
+		String conf =  ec.getID().getConfidenceScore().map(BigDecimal::valueOf).map(d -> d.setScale(3, RoundingMode.HALF_UP)).map(BigDecimal::toString).orElse("N/A");
+		g2.drawString(conf, xPos, 80);
 
 //			yPos+=16;
 
