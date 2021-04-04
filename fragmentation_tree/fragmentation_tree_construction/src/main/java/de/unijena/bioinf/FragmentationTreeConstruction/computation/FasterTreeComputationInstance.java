@@ -405,7 +405,12 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
     @NotNull
     private ExtendedCriticalPathHeuristicTreeBuilder getHeuristicTreeBuilder() {
-        return new ExtendedCriticalPathHeuristicTreeBuilder();
+        return new ExtendedCriticalPathHeuristicTreeBuilder(this::checkHeuristicInterruption);
+    }
+
+    private boolean checkHeuristicInterruption() throws Exception {
+        this.checkForInterruption();
+        return false;
     }
 
     /*private ExactResult takeResultAndCheckTime(BasicJJob<ExactResult> r) {
