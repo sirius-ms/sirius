@@ -23,8 +23,9 @@ package de.unijena.bioinf.FragmentationTreeConstruction.computation.tree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IntergraphMapping;
-import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.ILPSolverException;
 import de.unijena.bioinf.sirius.ProcessedInput;
+
+import java.util.concurrent.Callable;
 
 public interface TreeBuilder {
 
@@ -40,17 +41,19 @@ public interface TreeBuilder {
         private final double timeLimitsInSeconds;
         private final int numberOfCPUS;
         private final FTree template;
+        private final Callable<Boolean> check;
 
         public FluentInterface(TreeBuilder treeBuilder) {
-            this(treeBuilder, Double.NEGATIVE_INFINITY, 0, 1, null);
+            this(treeBuilder, Double.NEGATIVE_INFINITY, 0, 1, null, null);
         }
 
-        public FluentInterface(TreeBuilder treeBuilder, double minimalScore, double timeout, int numberOfCPUS, FTree template) {
+        public FluentInterface(TreeBuilder treeBuilder, double minimalScore, double timeout, int numberOfCPUS, FTree template, Callable<Boolean> check) {
             this.treeBuilder = treeBuilder;
             this.minimalScore = minimalScore;
             this.timeLimitsInSeconds = timeout;
             this.numberOfCPUS = numberOfCPUS;
             this.template = template;
+            this.check = check;
         }
 
         public double getMinimalScore() {
@@ -69,20 +72,28 @@ public interface TreeBuilder {
             return template;
         }
 
+        public Callable<Boolean> getInterruptionCheck() {
+            return check;
+        }
+
+        public FluentInterface withInterruptionCheck(Callable<Boolean> r) {
+            return new FluentInterface(treeBuilder, minimalScore, timeLimitsInSeconds, numberOfCPUS, template, r);
+        }
+
         public FluentInterface withMinimalScore(double score) {
-            return new FluentInterface(treeBuilder, score, timeLimitsInSeconds, numberOfCPUS, template);
+            return new FluentInterface(treeBuilder, score, timeLimitsInSeconds, numberOfCPUS, template, check);
         }
 
         public FluentInterface withTimeLimit(double seconds) {
-            return new FluentInterface(treeBuilder, minimalScore, seconds, numberOfCPUS, template);
+            return new FluentInterface(treeBuilder, minimalScore, seconds, numberOfCPUS, template, check);
         }
 
         public FluentInterface withMultithreading(int numberOfCPUS) {
-            return new FluentInterface(treeBuilder, minimalScore, timeLimitsInSeconds, numberOfCPUS, template);
+            return new FluentInterface(treeBuilder, minimalScore, timeLimitsInSeconds, numberOfCPUS, template, check);
         }
 
         public FluentInterface withTemplate(FTree tree) {
-            return new FluentInterface(treeBuilder, minimalScore, timeLimitsInSeconds, numberOfCPUS, tree);
+            return new FluentInterface(treeBuilder, minimalScore, timeLimitsInSeconds, numberOfCPUS, tree, check);
         }
 
         public Result solve(ProcessedInput input, FGraph graph) {
