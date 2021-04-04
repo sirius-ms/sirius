@@ -28,21 +28,35 @@ import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.CriticalPath
 import de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics.CriticalPathInsertionWithIsotopePeaksHeuristic;
 import de.unijena.bioinf.sirius.ProcessedInput;
 
+import java.util.concurrent.Callable;
+
 public class ExtendedCriticalPathHeuristicTreeBuilder implements TreeBuilder {
+
+    protected Callable<Boolean> interruptionCheck;
+
+    public ExtendedCriticalPathHeuristicTreeBuilder(Callable<Boolean> interruptionCheck) {
+        this.interruptionCheck = interruptionCheck;
+    }
 
     @Override
     public FluentInterface computeTree() {
-        return new FluentInterface(this);
+        return new FluentInterface(this).withInterruptionCheck(interruptionCheck);
     }
 
     @Override
     public Result computeTree(ProcessedInput input, FGraph graph, FluentInterface options) {
         if (graph.getFragmentAnnotationOrNull(IsotopicMarker.class)!=null) {
             CriticalPathInsertionWithIsotopePeaksHeuristic h = new CriticalPathInsertionWithIsotopePeaksHeuristic(graph);
+            if (options.getInterruptionCheck()!=null) {
+                h.setInteruptionCheck(options.getInterruptionCheck());
+            } else h.setInteruptionCheck(interruptionCheck);
             FTree t = h.solve();
             return new Result(t, false, AbortReason.COMPUTATION_CORRECT, h.getGraphMappingBuilder().done(graph,t));
         } else {
             CriticalPathInsertionHeuristic h = new CriticalPathInsertionHeuristic(graph);
+            if (options.getInterruptionCheck()!=null) {
+                h.setInteruptionCheck(options.getInterruptionCheck());
+            } else h.setInteruptionCheck(interruptionCheck);
             FTree t = h.solve();
             return new Result(t, false, AbortReason.COMPUTATION_CORRECT, h.getGraphMappingBuilder().done(graph,t));
         }
