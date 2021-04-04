@@ -27,20 +27,34 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public abstract class AbstractHeuristic {
 
     protected final FGraph graph;
     protected final List<Loss> selectedEdges;
     protected final int ncolors;
-
     protected final IntergraphMapping.Builder mapping;
+
+    protected Callable<Boolean> interuptionCheck = this::nothing;
 
     public AbstractHeuristic(FGraph graph) {
         this.ncolors = graph.maxColor()+1;
         this.graph = graph;
         this.selectedEdges = new ArrayList<>(ncolors);
         this.mapping = IntergraphMapping.build();
+    }
+
+    public Callable<Boolean> getInteruptionCheck() {
+        return interuptionCheck;
+    }
+
+    public void setInteruptionCheck(Callable<Boolean> interuptionCheck) {
+        this.interuptionCheck = interuptionCheck;
+    }
+
+    private boolean nothing() {
+        return false;
     }
 
     public abstract FTree solve();
