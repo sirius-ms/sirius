@@ -163,7 +163,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         List<Decomposition> decompositions = pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions();
         // as long as we do not find good quality results
 
-        final UseHeuristic uh = (UseHeuristic.newInstance(3000, 6500));
+        final UseHeuristic uh = pinput.getAnnotation(UseHeuristic.class).orElse(UseHeuristic.newInstance(300, 650));
         final boolean useHeuristic = pinput.getParentPeak().getMass() >= uh.mzToUseHeuristic;
         final boolean useHeuristicOny = pinput.getParentPeak().getMass() >= uh.mzToUseHeuristicOnly;
 
