@@ -30,16 +30,17 @@ import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
 import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
+import org.apache.commons.configuration2.CombinedConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
 public class AddConfigsJob extends InstanceJob {
-    private final ParameterConfig cliConfig;
+    private final ParameterConfig computeConfig;
 
-    public AddConfigsJob(ParameterConfig cliConfig) {
+    public AddConfigsJob(ParameterConfig computeConfig) {
         super(SiriusJobs.getGlobalJobManager());
-        this.cliConfig = cliConfig;
+        this.computeConfig = computeConfig;
     }
 
     @Override
@@ -61,13 +62,14 @@ public class AddConfigsJob extends InstanceJob {
         // CLI_CONFIG might already exist from previous runs and needs to be updated.
         baseConfig = psConfig
                 .map(projectSpaceConfig -> {
-                    if (projectSpaceConfig.config.containsConfiguration(cliConfig.getLocalConfigName())) {
-                        projectSpaceConfig.config.updateConfig(cliConfig);
-                        return projectSpaceConfig.config;
-                    } else {
-                        return projectSpaceConfig.config.newIndependentInstance(cliConfig, true);
+                    ParameterConfig conf = projectSpaceConfig.config;
+                    if (!computeConfig.getLocalConfigName().equals(DefaultParameterConfigLoader.CLI_CONFIG_NAME) && computeConfig.containsConfiguration(DefaultParameterConfigLoader.CLI_CONFIG_NAME)){
+                        conf = conf.newIndependentInstance(DefaultParameterConfigLoader.CLI_CONFIG_NAME);
+                        conf.updateConfig(DefaultParameterConfigLoader.CLI_CONFIG_NAME, ((CombinedConfiguration) computeConfig.getConfigs()).getConfiguration(DefaultParameterConfigLoader.CLI_CONFIG_NAME));
                     }
-                }).orElse(cliConfig);
+
+                    return conf.newIndependentInstance(computeConfig, true);
+                }).orElse(computeConfig);
 
         //remove runtime configs from previous analyses
         baseConfig.getConfigNames().stream().filter(s -> s.startsWith("RUNTIME_CONFIG")).forEach(baseConfig::removeConfig);
