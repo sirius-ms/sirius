@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.FragmentationTreeConstruction.ftheuristics;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -133,43 +132,83 @@ public class CriticalPathInsertionHeuristic extends AbstractHeuristic {
 
     public FTree solve() {
         initialize();
-        while (findCriticalPaths());
+        while (findCriticalPaths()) {
+            try {
+                if (interuptionCheck.call())
+                    return null;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        };
         return buildSolution();
     }
 
-    protected FTree buildSolution() {
-        if (usedColorList.size() <= 0) {
-            Fragment bestFrag = null;
-            for (Fragment f : graph.getRoot().getChildren()) {
-                if (bestFrag == null || bestFrag.getIncomingEdge().getWeight() < f.getIncomingEdge().getWeight()) {
-                    bestFrag = f;
-                }
-            }
-            final FTree t = new FTree(bestFrag.getFormula(), bestFrag.getIonization());
-            t.setTreeWeight(bestFrag.getIncomingEdge().getWeight());
-            mapping.mapLeftToRight(bestFrag, t.getRoot());
-            return t;
+
+    private final static ArrayList<Loss> __empty__ = new ArrayList<>(0);
+
+    FTree buildSolution() {
+        if (usedColorList.size()<=0) {
+            return solutionWithSingleRoot();
         }
         selectedEdges.addAll(color2Edge.valueCollection());
-        selectedEdges.sort(Comparator.comparingInt(a -> a.getTarget().getColor()));
-        final Fragment target = selectedEdges.get(0).getTarget();
-        final FTree tree = new FTree(target.getFormula(), target.getIonization());
-        mapping.mapLeftToRight(target, tree.getRoot());
-        final HashMap<MolecularFormula, Fragment> fragmentsByFormula = new HashMap<>();
-        fragmentsByFormula.put(tree.getRoot().getFormula(), tree.getRoot());
-        double score = selectedEdges.get(0).getWeight();
-        for (int i=1; i < selectedEdges.size(); ++i) {
-            final Loss L = selectedEdges.get(i);
-            final Fragment f = tree.addFragment(fragmentsByFormula.get(L.getSource().getFormula()), L.getTarget());
-            mapping.mapLeftToRight(L.getTarget(), f);
-            f.getIncomingEdge().setWeight(L.getWeight());
-            fragmentsByFormula.put(f.getFormula(), f);
-            f.setPeakId(L.getTarget().getPeakId());
-            f.setColor(L.getTarget().getColor());
-            score += L.getWeight();
+        final HashMap<Integer, ArrayList<Loss>> edgesPerSourceVertexId = new HashMap<>();
+        for (Loss edge : selectedEdges) {
+            edgesPerSourceVertexId.computeIfAbsent(edge.getSource().getColor(), (x)->new ArrayList<>()).add(edge);
         }
-        tree.setTreeWeight(score);
+
+        // find root
+        TIntArrayList colorsToAttach = new TIntArrayList();
+        final TIntObjectHashMap<Fragment> nodePerColor = new TIntObjectHashMap<>();
+        FTree tree = null;
+        for (int i=0; i < selectedEdges.size(); ++i) {
+            final Loss rootEdge = selectedEdges.get(i);
+            if (rootEdge.getSource()==graph.getRoot()) {
+                Fragment graphroot = rootEdge.getTarget();
+                colorsToAttach.add(graphroot.getColor());
+                tree = new FTree(graphroot.getFormula(), graphroot.getIonization());
+                tree.setTreeWeight(rootEdge.getWeight());
+                nodePerColor.put(graphroot.getColor(), tree.getRoot());
+                mapVertices(graphroot, tree.getRoot(), rootEdge, null);
+                break;
+            }
+        }
+        if (tree==null) return null;
+
+        // attach all colors
+        while (colorsToAttach.size()>0) {
+            final int color = colorsToAttach.removeAt(colorsToAttach.size()-1);
+            final Fragment node = nodePerColor.get(color);
+            // add all edges starting at this color
+            for (Loss l : edgesPerSourceVertexId.getOrDefault(color, __empty__)) {
+                Fragment treeFragment = (l.getFormula().isEmpty()) ? tree.addFragment(node, node.getFormula(), l.getTarget().getIonization()) : tree.addFragment(node, l.getTarget());
+                colorsToAttach.add(l.getTarget().getColor());
+                mapVertices(l.getTarget(), treeFragment, l, treeFragment.getIncomingEdge());
+                tree.setTreeWeight(tree.getTreeWeight() + l.getWeight());
+                nodePerColor.put(l.getTarget().getColor(), treeFragment);
+            }
+        }
         return tree;
+    }
+
+    private void mapVertices(Fragment graph, Fragment tree, Loss graphLoss, Loss treeLoss) {
+        mapping.mapLeftToRight(graph, tree);
+        tree.setColor(graph.getColor());
+        tree.setPeakId(graph.getPeakId());
+        if (treeLoss!=null) treeLoss.setWeight(graphLoss.getWeight());
+    }
+
+    private FTree solutionWithSingleRoot() {
+        Fragment bestFrag = null;
+        for (Fragment f : graph.getRoot().getChildren()) {
+            if (bestFrag==null || bestFrag.getIncomingEdge().getWeight() < f.getIncomingEdge().getWeight() ) {
+                bestFrag = f;
+            }
+        }
+        final FTree t = new FTree(bestFrag.getFormula(), bestFrag.getIonization());
+        t.setTreeWeight(bestFrag.getIncomingEdge().getWeight());
+        mapping.mapLeftToRight(bestFrag, t.getRoot());
+        return t;
     }
 
     /*
