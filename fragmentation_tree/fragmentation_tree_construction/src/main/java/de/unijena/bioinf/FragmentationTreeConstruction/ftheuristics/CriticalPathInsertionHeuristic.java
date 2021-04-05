@@ -162,12 +162,14 @@ public class CriticalPathInsertionHeuristic extends AbstractHeuristic {
         final TIntObjectHashMap<Fragment> nodePerColor = new TIntObjectHashMap<>();
         FTree tree = null;
         for (int i=0; i < selectedEdges.size(); ++i) {
-            if (selectedEdges.get(i).getSource()==graph.getRoot()) {
-                Fragment graphroot = selectedEdges.get(i).getTarget();
+            final Loss rootEdge = selectedEdges.get(i);
+            if (rootEdge.getSource()==graph.getRoot()) {
+                Fragment graphroot = rootEdge.getTarget();
                 colorsToAttach.add(graphroot.getColor());
                 tree = new FTree(graphroot.getFormula(), graphroot.getIonization());
+                tree.setTreeWeight(rootEdge.getWeight());
                 nodePerColor.put(graphroot.getColor(), tree.getRoot());
-                mapVertices(graphroot, tree.getRoot(), selectedEdges.get(i), null);
+                mapVertices(graphroot, tree.getRoot(), rootEdge, null);
                 break;
             }
         }
@@ -179,17 +181,11 @@ public class CriticalPathInsertionHeuristic extends AbstractHeuristic {
             final Fragment node = nodePerColor.get(color);
             // add all edges starting at this color
             for (Loss l : edgesPerSourceVertexId.getOrDefault(color, __empty__)) {
-                if (l.getFormula().isEmpty()) {
-                    Fragment treeFragment = tree.addFragment(node, node.getFormula(), l.getTarget().getIonization());
-                    colorsToAttach.add(l.getTarget().getColor());
-                    mapVertices(l.getTarget(), treeFragment, l, treeFragment.getIncomingEdge());
-                    nodePerColor.put(l.getTarget().getColor(), treeFragment);
-                } else {
-                    Fragment treeFragment = tree.addFragment(node, l.getTarget());
-                    colorsToAttach.add(l.getTarget().getColor());
-                    mapVertices(l.getTarget(), treeFragment, l, treeFragment.getIncomingEdge());
-                    nodePerColor.put(l.getTarget().getColor(), treeFragment);
-                }
+                Fragment treeFragment = (l.getFormula().isEmpty()) ? tree.addFragment(node, node.getFormula(), l.getTarget().getIonization()) : tree.addFragment(node, l.getTarget());
+                colorsToAttach.add(l.getTarget().getColor());
+                mapVertices(l.getTarget(), treeFragment, l, treeFragment.getIncomingEdge());
+                tree.setTreeWeight(tree.getTreeWeight() + l.getWeight());
+                nodePerColor.put(l.getTarget().getColor(), treeFragment);
             }
         }
         return tree;
