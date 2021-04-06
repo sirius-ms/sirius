@@ -23,10 +23,7 @@ package de.unijena.bioinf.lcms.ionidentity;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.lcms.align.AlignedFeatures;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class IonNode {
 
@@ -132,5 +129,32 @@ class IonNode {
 
     public PrecursorIonType activeType() {
         return assignment.ionTypes[activeAssignment];
+    }
+
+    public String typesWithScore(GibbsSampler s) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("{");
+        buf.append("\"[M+?]+\": ");
+        buf.append(String.format(Locale.US,"%.2f",priorForUnknownIonType));
+        for (int k=0; k < assignment.probabilities.length; ++k) {
+            if (!assignment.ionTypes[k].isIonizationUnknown()) {
+                buf.append(',');
+                buf.append('"');
+                buf.append(assignment.ionTypes[k].toString());
+                buf.append('"');
+                buf.append(':');
+                buf.append(' ');
+                double maxScore = 0d;
+                if (s.commonTypes.contains(assignment.ionTypes[k])) {
+                    maxScore += priorForCommonIonType;
+                } else maxScore += priorForUncommonIonType;
+                for (Edge e : neighbours) {
+                    maxScore += e.score;
+                }
+                buf.append(String.format(Locale.US, "%.2f", maxScore));
+            }
+        }
+        buf.append("}");
+        return buf.toString();
     }
 }

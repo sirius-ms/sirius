@@ -35,6 +35,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
@@ -54,6 +55,7 @@ public class IonNetwork {
     }
 
     public void writeToFile(LCMSProccessingInstance i, File file) throws IOException {
+        final GibbsSampler sampler = new GibbsSampler(i);
         final TObjectIntHashMap node2Id = new TObjectIntHashMap();
         try (final BufferedWriter w = FileUtils.getWriter(file)) {
             w.write("document.data = {\"nodes\": [\n");
@@ -64,7 +66,7 @@ public class IonNetwork {
                 String mass = String.format(Locale.US, "%.3f", node.getFeature().getMass());
                 String ret = String.format(Locale.US, "%d min, %d s", (int) (rrt / 60d), (int) (rrt % 60));
                 int type = node.getFeature().getFeatures().values().stream().anyMatch(x -> x.getMsMs() != null) ? 1 : 0;
-                w.write("\t{\"id\": " + k + ", \"type\": " + type + ", \"types\": " + node.likelyTypesWithProbs() + ", \"name\": \"m/z " + mass + "\", \"mass\": " + mass + ", \"rt\": \"" + ret + "\"},\n");
+                w.write("\t{\"id\": " + k + ", \"type\": " + type + ", \"types\": " + node.likelyTypesWithProbs() + ", \"name\": \"m/z " + mass + "\", \"mass\": " + mass + ", \"rt\": \"" + ret + "\", \"scores\": " + node.typesWithScore(sampler) +  "},\n");
             }
             w.write("],\n");
             w.write("\"links\": [");
@@ -78,6 +80,8 @@ public class IonNetwork {
                     }
                 }
             }
+            w.write("]}");
+            /*
             w.write("],\n");
             // add ion information
             w.write("\"peaks\": [\n");
@@ -99,6 +103,7 @@ public class IonNetwork {
                 w.write("],");
             }
             w.write("]}");
+             */
 
         }
     }
@@ -280,6 +285,7 @@ public class IonNetwork {
                         if (adduct.getFeatures().get(pair.left) == null) {
                             final CorAlignedIon value = new CorAlignedIon(pair.right, F.get(pair.left), Edge.Type.ADDUCT);
                             adduct.getFeatures().put(pair.left, value);
+                            LoggerFactory.getLogger(IonNetwork.class).warn("Detect ion afterwards.");
                             detector.detectCorrelatedPeaks(pair.left, value);
                         }
                     }
