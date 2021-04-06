@@ -127,11 +127,21 @@ public class LCMSProccessingInstance {
     public IonNetwork detectAdductsWithGibbsSampling(Cluster alignedFeatures) {
         final IonNetwork network = new IonNetwork();
         final CorrelatedPeakDetector detector = new CorrelatedPeakDetector(detectableIonTypes);
+        final JobManager jobManager = SiriusJobs.getGlobalJobManager();
+        final List<BasicJJob<Object>> jobs = new ArrayList<>();
         for (AlignedFeatures features : alignedFeatures.getFeatures()) {
-            features.getFeatures().entrySet().forEach(x->{
-                if (!x.getValue().isAdductDetectionDone()) detector.detectCorrelatedPeaks(x.getKey(), x.getValue()) ;
-                x.getValue().setDetectedIonType(PrecursorIonType.unknown(x.getValue().getPolarity()));
-            });
+            features.getFeatures().forEach((key, value) -> jobs.add(jobManager.submitJob(new BasicJJob<Object>() {
+                @Override
+                protected Object compute() throws Exception {
+                    if (!value.isAdductDetectionDone()) detector.detectCorrelatedPeaks(key, value);
+                    value.setDetectedIonType(PrecursorIonType.unknown(value.getPolarity()));
+                    return null;
+                }
+            })));
+        }
+        jobs.forEach(JJob::takeResult);
+        jobs.clear();
+        for (AlignedFeatures features : alignedFeatures.getFeatures()) {
             network.addNode(features);
         }
         network.addCorrelatedEdgesForAllNodes(this);
