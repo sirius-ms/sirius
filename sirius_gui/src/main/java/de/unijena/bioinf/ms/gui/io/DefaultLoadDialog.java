@@ -143,8 +143,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
         this.add(controlPanel, BorderLayout.SOUTH);
 
-        ok = new JButton("OK");
-        abort = new JButton("Abort");
+        ok = new JButton("ok");
+        abort = new JButton("cancel");
         ok.addActionListener(this);
         abort.addActionListener(this);
         controlPanel.add(ok);
@@ -155,7 +155,7 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
             KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
             KeyStroke escKey = KeyStroke.getKeyStroke("ESCAPE");
             String enterAction = "load";
-            String escAction = "abort";
+            String escAction = "cancel";
             inputMap.put(enterKey, enterAction);
             inputMap.put(escKey, escAction);
             getRootPane().getActionMap().put(enterAction, new AbstractAction() {

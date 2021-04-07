@@ -53,8 +53,8 @@ public class CollisionEnergyDialog extends JDialog implements ActionListener, Ch
 		maxEnergy.addChangeListener(this);
 		JLabel minText = new JLabel("minimal energy");
 		JLabel maxText = new JLabel("maximal energy");
-		ok = new JButton("ok");
-		abort = new JButton("abort");
+		ok = new JButton("Ok");
+		abort = new JButton("Cancel");
 		ok.addActionListener(this);
 		abort.addActionListener(this);
 		
