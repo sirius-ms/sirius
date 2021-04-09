@@ -78,28 +78,30 @@ public final class ParameterConfig {
         }
     }
 
-    public ParameterConfig newIndependentInstance(@NotNull final String name) {
-        return newIndependentInstance(name, false);
+    public ParameterConfig newIndependentInstance(@NotNull final String name, String... exclusions) {
+        return newIndependentInstance(name, false, exclusions);
     }
 
-    public ParameterConfig newIndependentInstance(@NotNull final String name, boolean overrideExisting) {
-        return newIdependendInstance(SiriusConfigUtils.newConfiguration(), name, overrideExisting);
+    public ParameterConfig newIndependentInstance(@NotNull final String name, boolean overrideExisting, String... exclusions) {
+        return newIdependendInstance(SiriusConfigUtils.newConfiguration(), name, overrideExisting, Arrays.stream(exclusions).collect(Collectors.toSet()));
     }
 
-    public ParameterConfig newIndependentInstance(@NotNull final ParameterConfig modificationLayer, boolean overrideExisting) {
+    public ParameterConfig newIndependentInstance(@NotNull final ParameterConfig modificationLayer, boolean overrideExisting, String... exclusions) {
         if (!modificationLayer.isModifiable())
             throw new IllegalArgumentException("Unmodifiable \"modificationLayer\"! Only modifiable ParameterConfigs are allowed as modification layer.");
 
-        return newIdependendInstance(modificationLayer.localConfig(), modificationLayer.localConfigName, overrideExisting);
+        return newIdependendInstance(modificationLayer.localConfig(), modificationLayer.localConfigName, overrideExisting, Arrays.stream(exclusions).collect(Collectors.toSet()));
     }
 
-    public ParameterConfig newIndependentInstance(@NotNull final InputStream streamToLoad, @NotNull final String name, boolean overrideExisting) throws ConfigurationException {
-        return newIdependendInstance(SiriusConfigUtils.makeConfigFromStream(streamToLoad), name, overrideExisting);
+    public ParameterConfig newIndependentInstance(@NotNull final InputStream streamToLoad, @NotNull final String name, boolean overrideExisting, String... exclusions) throws ConfigurationException {
+        return newIdependendInstance(SiriusConfigUtils.makeConfigFromStream(streamToLoad), name, overrideExisting, Arrays.stream(exclusions).collect(Collectors.toSet()));
     }
 
-    private ParameterConfig newIdependendInstance(@NotNull final PropertiesConfiguration modifiableLayer, @NotNull final String name, boolean overrideExisting) {
+    private ParameterConfig newIdependendInstance(@NotNull final PropertiesConfiguration modifiableLayer, @NotNull final String name, boolean overrideExisting, @NotNull Set<String> excludeConfigs) {
         if (name.isEmpty())
             throw new IllegalArgumentException("Empty name is not Allowed here");
+        if (excludeConfigs.remove(name))
+            LoggerFactory.getLogger(getClass()).warn("Exclusion List contain name of new modification layer. Cannot exclude the new layer -> Ignoring!");
 
         final CombinedConfiguration nuConfig = SiriusConfigUtils.newCombinedConfiguration();
         Configuration add = this.config.getConfiguration(name);
@@ -107,7 +109,9 @@ public final class ParameterConfig {
             add = modifiableLayer;
 
         nuConfig.addConfiguration(add, name);
-        this.config.getConfigurationNameList().stream().filter(Objects::nonNull).filter(n -> !n.equals(name)).forEach(n -> nuConfig.addConfiguration(this.config.getConfiguration(n), n));
+        this.config.getConfigurationNameList().stream()
+                .filter(Objects::nonNull).filter(n -> !n.equals(name)).filter(n -> !excludeConfigs.contains(n))
+                .forEach(n -> nuConfig.addConfiguration(this.config.getConfiguration(n), n));
 
         return new ParameterConfig(nuConfig, classesConfig, layout, name, configRoot, classRoot);
     }
@@ -191,6 +195,8 @@ public final class ParameterConfig {
         if (!containsConfiguration(name))
             throw new IllegalArgumentException("Update failed: Configuration with name '" + name + "' does not exist.");
         final Configuration toUpdate = config.getConfiguration(name);
+        if (toUpdate ==  update)
+            return;
         update.getKeys().forEachRemaining(k -> {
             if (overrideExistingKeys || !toUpdate.containsKey(k))
                 toUpdate.setProperty(k, update.getProperty(k));

@@ -19,22 +19,30 @@
  */
 
 apply plugin: "application"
-
-mainClassName = "de.unijena.bioinf.canopus.Learn"
+version =  parent.fingeridVersion
+mainClassName = "de.unijena.bioinf.canopus.Main"
 
 ext {
     runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
 }
 
 dependencies() {
-    compile project(":canopus:canopus_predict_oss")
-    compile project(":fingerprinter_oss")
-    //internal
-    compile group: "de.unijena.bioinf.ms", name: "fingerid", version: "$fingeridVersion" //todo we need to remove this dependency?
-    //external
-    compile "org.tensorflow:tensorflow:1.13.1"
-    compile group: "com.lexicalscope.jewelcli", name: "jewelcli", version: "$jewelcli_version"
+    //project
+    compile project(':sirius_project_space')
+    compile project(':fingerprinter_oss')
+    compile project(':rest_service_oss:rest_core_oss')
+    compile project(':chemistry_base')
+    compile project(':io')
+    compile project(':chemical_db_oss:chemdb_sql_oss')
 
+    // external
+    compile group: 'org.ejml', name: 'ejml-fdense', version: '0.31'
+    compile group: 'org.ejml', name: 'ejml-simple', version: '0.31'
+
+    // CDK
+    for (module in ["fingerprint", "qsarmolecular", "data", "inchi", "interfaces", "smiles", "core"]) {
+        compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
+    }
 }
 
 

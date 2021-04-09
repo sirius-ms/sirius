@@ -17,27 +17,20 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+version =  fingeridVersion
+dependencies {
+	//internal
+	compile project(':fingerblast_oss')
+	compile project(':fingerprinter_oss')
+	compile project(':chemical_db_oss')
+	compile project(':sirius_api')
 
-package de.unijena.bioinf.canopus;
 
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.MolecularProperty;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+	// external
+	compile group: "de.bwaldvogel", name: "liblinear", version: "$liblinear_version"
+	compile group: "tw.edu.ntu.csie", name: "libsvm", version: "$libsvm_version"
 
-public class DummyMolecularProperty extends MolecularProperty{
+    // https://mvnrepository.com/artifact/ca.umontreal.iro.simul/ssj
+    compile group: 'ca.umontreal.iro.simul', name: 'ssj', version: '3.1.0'
 
-    public final int absoluteIndex;
-    public final int relativeIndex;
-    public final PredictionPerformance performance;
-
-    public DummyMolecularProperty(int absoluteIndex, int relativeIndex, PredictionPerformance performance) {
-        this.absoluteIndex = absoluteIndex;
-        this.relativeIndex = relativeIndex;
-        this.performance = performance;
-    }
-
-    @Override
-    public String getDescription() {
-        return CdkFingerprintVersion.getComplete().getMolecularProperty(absoluteIndex).getDescription();
-    }
-}
+}	

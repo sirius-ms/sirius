@@ -36,7 +36,7 @@ public class ProjectSpaceConfigSerializer implements ComponentSerializer<Compoun
         if (reader.exists(SiriusLocations.COMPOUND_CONFIG)) {
             return reader.binaryFile(SiriusLocations.COMPOUND_CONFIG, s -> {
                 try {
-                    ParameterConfig c = PropertyManager.DEFAULTS.newIndependentInstance(s, "PROJECT_SPACE:" + id.getDirectoryName(),false);
+                    ParameterConfig c = PropertyManager.DEFAULTS.newIndependentInstance(s, "PROJECT_SPACE:" + id.getDirectoryName(),false, "CLI_CONFIG");
                     return new ProjectSpaceConfig(c);
                 } catch (ConfigurationException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when reading config for Compound with ID: " + id, e);
