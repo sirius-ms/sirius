@@ -188,7 +188,7 @@ public class CSVDialog extends JDialog implements ActionListener, ChangeListener
 		
 		ok = new JButton("Ok");
 		ok.addActionListener(this);
-		abort = new  JButton("Abort");
+		abort = new  JButton("Cancel");
 		abort.addActionListener(this);
 		JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
 		controlPanel.add(ok);
