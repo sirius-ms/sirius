@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,7 +147,7 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
     protected void execute() {
         try {
-            final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+            final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance("COMPUTE"));
             final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), compounds), configOptionLoader, new GuiInstanceBufferFactory());
             if (nonCompoundInput != null)
                 wfBuilder.rootOptions.setNonCompoundInput(nonCompoundInput);
