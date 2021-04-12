@@ -183,7 +183,7 @@ public class LCMSPeakInformation implements DataAnnotation, Ms2ExperimentAnnotat
         this.traceSet = substituteNames(traceSets, sampleNames,sourceReferences);
         this.sampleNames = sampleNames;
         this.sourceReferences = sourceReferences;
-        this.name2index = new TObjectIntHashMap<>();
+        this.name2index = new TObjectIntHashMap<>(sampleNames.length, 0.75f, -1);
         for (int k=0; k < sampleNames.length; ++k) name2index.put(sampleNames[k],k);
         this.quantificationTable = new QuantificationTableImpl(abundance, measure);
     }
