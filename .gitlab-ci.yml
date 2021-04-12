@@ -48,6 +48,7 @@ doc:
     changes:
       - "sirius_doc/**/*"
       - "sirius_cli/src/main/resources/sirius_frontend.build.properties"
+      - ".gitlab-ci.yml"
 
 distCliLinux64:
   variables:
