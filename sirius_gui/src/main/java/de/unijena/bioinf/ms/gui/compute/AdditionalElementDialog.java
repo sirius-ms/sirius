@@ -71,7 +71,7 @@ public class AdditionalElementDialog extends JDialog implements ActionListener{
 		JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
 		ok = new JButton("ok");
 		ok.addActionListener(this);
-		abort = new JButton("abort");
+		abort = new JButton("cancel");
 		abort.addActionListener(this);
 		southPanel.add(ok);
 		southPanel.add(abort);
