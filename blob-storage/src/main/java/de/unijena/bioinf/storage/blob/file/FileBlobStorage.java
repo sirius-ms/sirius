@@ -40,7 +40,7 @@ public class FileBlobStorage implements BlobStorage {
     }
 
     public static Compressible.Compression detectCompression(@NotNull Path root) throws IOException {
-        return FileUtils.walkAndClose(s -> s.findFirst().map(Compressible.Compression::fromPath).orElse(Compressible.Compression.NONE), root);
+        return FileUtils.walkAndClose(s -> s.filter(Files::isRegularFile).findFirst().map(Compressible.Compression::fromPath).orElse(Compressible.Compression.NONE), root);
     }
 
     protected final Path root;
