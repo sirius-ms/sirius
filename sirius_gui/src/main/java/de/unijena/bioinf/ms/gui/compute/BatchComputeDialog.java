@@ -156,7 +156,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
             JButton compute = new JButton("Compute");
             compute.addActionListener(e -> startComputing());
-            JButton abort = new JButton("Abort");
+            JButton abort = new JButton("Cancel");
             abort.addActionListener(e -> dispose());
             JButton showCommand = new JButton("Show Command");
             showCommand.addActionListener(e ->
