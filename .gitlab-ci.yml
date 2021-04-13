@@ -43,7 +43,6 @@ doc:
     refs:
       - master
       - stable
-      - insilico_viewer
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
     # from pipeline
     changes:
@@ -68,7 +67,6 @@ distCliLinux64:
   only:
     refs:
       - master
-      - insilico_viewer
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
     # from pipeline
     changes:
@@ -92,7 +90,6 @@ distGuiLinux64:
   only:
     refs:
       - master
-      - insilico_viewer
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
     # from pipeline
     changes:
@@ -120,25 +117,24 @@ distGuiLinux64:
 #      - master
 #      - release-4
 #
-distGuiWin64:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: build-gui
-  script:
-    - $env:path
-    - cd sirius_dist/sirius_gui_single_os
-    - gradle.bat clean artifactoryPublish --refresh-dependencies
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  tags:
-    - artifactory
-    - gradle
-    - windows64
-  only:
-    refs:
-      - master
-      - insilico_viewer
+#distGuiWin64:
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#  stage: build-gui
+#  script:
+#    - $env:path
+#    - cd sirius_dist/sirius_gui_single_os
+#    - gradle.bat clean artifactoryPublish --refresh-dependencies
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  tags:
+#    - artifactory
+#    - gradle
+#    - windows64
+#  only:
+#    refs:
+#      - master
 
 #distCliMacOSX:
 #  variables:
