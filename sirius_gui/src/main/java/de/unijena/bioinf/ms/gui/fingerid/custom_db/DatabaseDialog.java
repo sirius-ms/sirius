@@ -40,7 +40,9 @@ import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.ms.gui.utils.ListAction;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -395,10 +397,9 @@ public class DatabaseDialog extends JDialog {
             setVisible(true);
 
         }
-
         protected void runImportJob(@NotNull List<Path> source) {
             try {
-                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance("DB_IMPORT"));
                 final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), null), configOptionLoader, new GuiInstanceBufferFactory());
                 wfBuilder.rootOptions.setNonCompoundInput(source);
                 final Run computation = new Run(wfBuilder);
@@ -416,7 +417,10 @@ public class DatabaseDialog extends JDialog {
                 }
                 //todo else some error message with pico cli output
             } catch (Exception e) {
-                new ExceptionDialog(MF, e.getMessage());
+                LoggerFactory.getLogger(getClass()).error("Unexpected Error during Custom DB import.", e);
+                new StacktraceDialog(MF, "Unexpected Error during Custom DB import.", e);
+
+//                new ExceptionDialog(MF, e.getMessage());
             }
         }
     }

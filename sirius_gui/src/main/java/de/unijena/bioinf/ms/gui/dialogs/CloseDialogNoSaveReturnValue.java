@@ -58,7 +58,7 @@ public class CloseDialogNoSaveReturnValue extends JDialog implements ActionListe
 
         delete = new JButton("Delete compound");
         delete.addActionListener(this);
-        abort = new JButton("Abort");
+        abort = new JButton("Cancel");
         abort.addActionListener(this);
         south.add(delete);
         south.add(abort);

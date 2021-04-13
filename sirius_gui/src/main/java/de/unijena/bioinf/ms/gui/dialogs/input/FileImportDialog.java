@@ -52,7 +52,7 @@ public class FileImportDialog extends JDialog implements ActionListener{
 		bar.setValue(0);
 		
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT,5,5));
-		abort = new JButton("Abort");
+		abort = new JButton("Cancel");
 		abort.addActionListener(this);
 		buttonPanel.add(abort);
 		this.add(buttonPanel, BorderLayout.SOUTH);
