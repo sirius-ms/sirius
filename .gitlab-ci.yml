@@ -31,7 +31,7 @@ doc:
   stage: prepare
   script:
     - cd sirius_doc
-    - gradle artifactoryPublish
+    - gradle clean artifactoryPublish
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -55,7 +55,7 @@ distCliLinux64:
   stage: build-cli
   script:
     - cd sirius_dist/sirius_cli_single_os
-    - gradle artifactoryPublish --refresh-dependencies
+    - gradle clean artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -79,7 +79,7 @@ distGuiLinux64:
   stage: build-gui
   script:
     - cd sirius_dist/sirius_gui_single_os
-    - gradle artifactoryPublish --refresh-dependencies
+    - gradle clean artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -125,7 +125,7 @@ distGuiWin64:
   script:
     - $env:path
     - cd sirius_dist/sirius_gui_single_os
-    - gradle.bat artifactoryPublish --refresh-dependencies
+    - gradle.bat clean artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
