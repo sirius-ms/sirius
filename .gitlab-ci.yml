@@ -31,7 +31,7 @@ doc:
   stage: prepare
   script:
     - cd sirius_doc
-    - gradle artifactoryPublish
+    - gradle clean artifactoryPublish
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -56,7 +56,7 @@ distCliLinux64:
   stage: build-cli
   script:
     - cd sirius_dist/sirius_cli_single_os
-    - gradle artifactoryPublish --refresh-dependencies
+    - gradle clean artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -77,10 +77,9 @@ distGuiLinux64:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
   stage: build-gui
-  needs: ["doc"]
   script:
     - cd sirius_dist/sirius_gui_single_os
-    - gradle artifactoryPublish --refresh-dependencies
+    - gradle clean artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -118,25 +117,24 @@ distGuiLinux64:
 #      - master
 #      - release-4
 #
-distGuiWin64:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: build-gui
-  needs: ["doc"]
-  script:
-    - $env:path
-    - cd sirius_dist/sirius_gui_single_os
-    - gradle.bat artifactoryPublish --refresh-dependencies
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  tags:
-    - artifactory
-    - gradle
-    - windows64
-  only:
-    refs:
-      - master
+#distGuiWin64:
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#  stage: build-gui
+#  script:
+#    - $env:path
+#    - cd sirius_dist/sirius_gui_single_os
+#    - gradle.bat clean artifactoryPublish --refresh-dependencies
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  tags:
+#    - artifactory
+#    - gradle
+#    - windows64
+#  only:
+#    refs:
+#      - master
 
 #distCliMacOSX:
 #  variables:
