@@ -48,7 +48,9 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
@@ -413,9 +415,57 @@ public class SimilarityMatrixWorkflow implements Workflow {
         return Math.max(v, 1e-4);
     }
 
-    private static double unsmooth(double val) {
-        if (val > 0.99) return 1d;
-        if (val < 0.01) return 0d;
+    private static double unsmooth(double val, double clip) {
+        if (val > (1-clip)) return 1d;
+        if (val < clip) return 0d;
         return val;
     }
+    private static double unsmooth(double val) {
+        return unsmooth(val, 0.01);
+    }
+
+    public void computePValueEstimation(List<Instance> xs) {
+        final ArrayList<ProbabilityFingerprint> fingerprintValues = new ArrayList<>();
+        for (Instance x : xs) {
+            fingerprintValues.add(x.loadTopFormulaResult(rankSores, FingerprintResult.class)
+                    .map(it -> it.getAnnotationOrThrow(FingerprintResult.class).fingerprint).orElseThrow());
+        }
+
+        final ProbabilityFingerprint[] fps = fingerprintValues.toArray(ProbabilityFingerprint[]::new);
+
+        final FingerIdData data = ps.getProjectSpaceProperty(FingerIdDataProperty.class).get().getByCharge(xs.get(0).getID().getIonType().orElseGet(() -> xs.get(0).getExperiment().getPrecursorIonType()).getCharge());
+
+    }
+/*
+    public double[][] pvalueEstimation(ProbabilityFingerprint[] fingerprints, FingerIdData data) {
+        final PredictionPerformance[] performances = data.getPerformances();
+        final double[] expectedFrequencies = new double[performances.length];
+        for (int k=0; k < performances.length; ++k) {
+            expectedFrequencies[k] = performances[k].getCount()/30d;
+        }
+        for (ProbabilityFingerprint fp : fingerprints) {
+            int k=0;
+            for (FPIter x : fp) {
+                expectedFrequencies[k] += unsmooth(x.getProbability(), 0.2);
+                ++k;
+            }
+        }
+        for (int i=0; i < expectedFrequencies.length; ++i) {
+            expectedFrequencies[i] /= (performances.length/30d + fingerprints.length);
+        }
+        final double[][] missmatches = new double[fingerprints.length][fingerprints.length];
+        MatrixUtils.parallelizeSymmetricMatrixComputation(missmatches, (i, j) -> {
+           double dist = 0;
+           for (FPIter2 pair : fingerprints[i].foreachPair(fingerprints[j])) {
+               dist += pair.getLeftProbability()*(1d-pair.getRightProbability()) + pair.getRightProbability()*(1d-pair.getLeftProbability());
+           }
+           return dist;
+        }).takeResult();
+
+        final SimpleIndepDP dp = new SimpleIndepDP(expectedFrequencies);
+        for (ProbabilityFingerprint fp : fingerprints) {
+
+        }
+    }
+ */
 }
