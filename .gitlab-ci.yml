@@ -43,11 +43,13 @@ doc:
     refs:
       - master
       - stable
+      - insilico_viewer
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
     # from pipeline
     changes:
       - "sirius_doc/**/*"
       - "sirius_cli/src/main/resources/sirius_frontend.build.properties"
+      - ".gitlab-ci.yml"
 
 distCliLinux64:
   variables:
