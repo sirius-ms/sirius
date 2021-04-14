@@ -20,12 +20,16 @@
 package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
+import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 
 import javax.swing.*;
 import java.awt.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -114,6 +118,8 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         FontMetrics propertyFm = g2.getFontMetrics(this.propertyFont);
         FontMetrics rankFm = g2.getFontMetrics(this.rankFont);
 
+        final int gap = 5;
+
         g2.setColor(this.foreColor);
 
         final String formulaText = sre.getFormulaAndIonText();
@@ -132,12 +138,24 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         g2.setFont(rankFont);
         g2.drawString(Integer.toString(sre.getRank()), 2, 15);
 
-        int scoreLength = propertyFm.stringWidth("Score:");
-        g2.setFont(propertyFont);
-        g2.drawString("Score:", 10, 35);
-        g2.setFont(valueFont);
+        {
+            final String scoreLab = "SIRIUS:";
+            int scoreLength = propertyFm.stringWidth(scoreLab);
+            g2.setFont(propertyFont);
+            g2.drawString(scoreLab, 10, 35);
+            g2.setFont(valueFont);
+            g2.drawString(String.format("%.3f", scoreFunc.apply(sre)) + "%", 10 + gap + scoreLength, 35);
+        }
 
-        g2.drawString(String.format("%.3f", scoreFunc.apply(sre)) + "%", 15 + scoreLength, 35);
+        sre.getScore(ConfidenceScore.class).ifPresent(confScore -> {
+            String cosmicLab = "COSMIC:";
+            String cosmicVal = (confScore.isNa()) ? ConfidenceScore.NA() : BigDecimal.valueOf(confScore.score()).setScale(3, RoundingMode.HALF_UP).toString();
+            final int labStart = (int) getSize().getWidth() - (10 + gap + propertyFm.stringWidth(cosmicLab) + g2.getFontMetrics(valueFont).stringWidth(cosmicVal));
+            g2.setFont(propertyFont);
+            g2.drawString(cosmicLab, labStart, 35);
+            g2.setFont(valueFont);
+            g2.drawString(cosmicVal, labStart + gap + propertyFm.stringWidth(cosmicLab), 35);
+        });
     }
 
     private static class DummySiriusResult extends FormulaResultBean {
