@@ -46,6 +46,7 @@ import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -179,7 +180,7 @@ public class FingeridSubToolJob extends InstanceJob {
             inst.updateFormulaResult(formRes,
                     FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
         }
-        final Double confidence = inst.loadTopFormulaResult().flatMap(r -> r.getAnnotation(FormulaScoring.class)).flatMap(s -> s.getAnnotation(ConfidenceScore.class)).map(ConfidenceScore::score).orElse(null);
+        final Double confidence = inst.loadTopFormulaResult(List.of(TopCSIScore.class, SiriusScore.class)).flatMap(r -> r.getAnnotation(FormulaScoring.class)).flatMap(s -> s.getAnnotation(ConfidenceScore.class)).map(ConfidenceScore::score).orElse(null);
         inst.getID().setConfidenceScore(confidence);
         inst.updateCompoundID();
     }

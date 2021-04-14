@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -150,18 +151,12 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 		g2.drawString(focMass, xPos, 48);
 		g2.drawString(rtValue, xPos, 64);
 
-//		int yPos = 64;
-//		int yPos = 80;
+		ec.getID().getConfidenceScore().ifPresent(confScore -> {
+			g2.setFont(propertyFont);
+			String conf =  confScore<0|| Double.isNaN(confScore) ? ConfidenceScore.NA() : BigDecimal.valueOf(confScore).setScale(3, RoundingMode.HALF_UP).toString();
+			g2.drawString(conf, xPos, 80);
+		});
 
-		g2.setFont(propertyFont);
-		String conf =  ec.getID().getConfidenceScore().map(BigDecimal::valueOf).map(d -> d.setScale(3, RoundingMode.HALF_UP)).map(BigDecimal::toString).orElse("N/A");
-		g2.drawString(conf, xPos, 80);
-
-//			yPos+=16;
-
-//			String ms2String = ms2No==1 ? "spectrum " : "spectra";
-//			ms2String = ms2No+" MS2 "+ms2String;
-//			g2.drawString(ms2String, 4, yPos);
 
 
 		g2.setFont(statusFont);
