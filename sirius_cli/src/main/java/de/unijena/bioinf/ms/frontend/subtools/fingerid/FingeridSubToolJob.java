@@ -160,7 +160,6 @@ public class FingeridSubToolJob extends InstanceJob {
         checkForInterruption();
 
         //annotate FingerIdResults to FormulaResult
-        double maxConfidence = -1;
         for (FingerIdResult structRes : result) {
             final FormulaResult formRes = formulaResultsMap.get(structRes.sourceTree);
             assert structRes.sourceTree == formRes.getAnnotationOrThrow(FTree.class);
@@ -176,13 +175,12 @@ public class FingeridSubToolJob extends InstanceJob {
             formRes.getAnnotationOrThrow(FormulaScoring.class)
                     .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
 
-            maxConfidence = Math.max(formRes.getAnnotationOrThrow(FormulaScoring.class).getAnnotation(ConfidenceScore.class).map(ConfidenceScore::score).orElse(-1d),maxConfidence);
-
             // write results
             inst.updateFormulaResult(formRes,
                     FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
         }
-        inst.getID().setConfidenceScore(maxConfidence < 0 ? null : maxConfidence);
+        final Double confidence = inst.loadTopFormulaResult().flatMap(r -> r.getAnnotation(FormulaScoring.class)).flatMap(s -> s.getAnnotation(ConfidenceScore.class)).map(ConfidenceScore::score).orElse(null);
+        inst.getID().setConfidenceScore(confidence);
         inst.updateCompoundID();
     }
 
