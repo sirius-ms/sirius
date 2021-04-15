@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -47,11 +48,11 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 
 //    private DecimalFormat numberFormat;
 
-    private final Function<FormulaResultBean, Double> scoreFunc;
+    private final Function<FormulaResultBean, FormulaList.RenderScore> scoreFunc;
     private final Function<FormulaResultBean, Boolean> bestHitFunc;
 
 
-    public FormulaListTextCellRenderer(Function<FormulaResultBean, Double> scoreFunc, Function<FormulaResultBean,Boolean> bestHitFuction) {
+    public FormulaListTextCellRenderer(Function<FormulaResultBean, FormulaList.RenderScore> scoreFunc, Function<FormulaResultBean,Boolean> bestHitFuction) {
         this.setPreferredSize(new Dimension(250, 45));
         initColorsAndFonts();
         sre = null;
@@ -139,17 +140,17 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         g2.drawString(Integer.toString(sre.getRank()), 2, 15);
 
         {
-            final String scoreLab = "SIRIUS:";
-            int scoreLength = propertyFm.stringWidth(scoreLab);
+            FormulaList.RenderScore renderScore = scoreFunc.apply(sre);
+            int scoreLength = propertyFm.stringWidth(renderScore.name);
             g2.setFont(propertyFont);
-            g2.drawString(scoreLab, 10, 35);
+            g2.drawString(renderScore.name, 10, 35);
             g2.setFont(valueFont);
-            g2.drawString(String.format("%.3f", scoreFunc.apply(sre)) + "%", 10 + gap + scoreLength, 35);
+            g2.drawString(String.format("%.3f", renderScore.score) + "%", 10 + gap + scoreLength, 35);
         }
 
-        sre.getScore(ConfidenceScore.class).ifPresent(confScore -> {
-            String cosmicLab = "COSMIC:";
-            String cosmicVal = (confScore.isNa()) ? ConfidenceScore.NA() : BigDecimal.valueOf(confScore.score()).setScale(3, RoundingMode.HALF_UP).toString();
+        sre.getScore(TopCSIScore.class).ifPresent(score -> {
+            String cosmicLab = score.shortName();
+            String cosmicVal = (score.isNa()) ? ConfidenceScore.NA() : BigDecimal.valueOf(score.score()).setScale(3, RoundingMode.HALF_UP).toString();
             final int labStart = (int) getSize().getWidth() - (10 + gap + propertyFm.stringWidth(cosmicLab) + g2.getFontMetrics(valueFont).stringWidth(cosmicVal));
             g2.setFont(propertyFont);
             g2.drawString(cosmicLab, labStart, 35);
