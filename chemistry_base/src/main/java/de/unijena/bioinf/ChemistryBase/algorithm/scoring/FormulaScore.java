@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.ServiceLoader;
 import java.util.function.Supplier;
 
 public abstract class FormulaScore extends Score.AbstDoubleScore<FormulaScore> {
@@ -39,6 +38,10 @@ public abstract class FormulaScore extends Score.AbstDoubleScore<FormulaScore> {
 
     public enum ScoreType {
         Probabilistic, Logarithmic
+    }
+
+    public String shortName() {
+        return name().substring(0, Math.min(name().length(), 6));
     }
 
     /**

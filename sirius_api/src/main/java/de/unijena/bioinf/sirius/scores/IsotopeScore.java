@@ -37,4 +37,9 @@ public final class IsotopeScore extends FormulaScore {
     public String name() {
         return "IsotopeScore";
     }
+
+    @Override
+    public String shortName() {
+        return "Isotope";
+    }
 }
