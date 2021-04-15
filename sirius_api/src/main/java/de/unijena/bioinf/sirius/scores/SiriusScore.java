@@ -34,6 +34,11 @@ public class SiriusScore extends FormulaScore {
     }
 
     @Override
+    public String shortName() {
+        return "SIRIUS";
+    }
+
+    @Override
     public ScoreType getScoreType() {
         return ScoreType.Logarithmic;
     }
