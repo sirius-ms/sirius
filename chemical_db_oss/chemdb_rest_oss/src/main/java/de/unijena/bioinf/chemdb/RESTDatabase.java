@@ -44,6 +44,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -190,6 +191,11 @@ public class RESTDatabase implements AbstractChemicalDatabase {
             return compounds;
         }
         throw new UnsupportedOperationException();
+    }
+
+
+    public Iterable<? extends FingerprintCandidate> lookupManyFingerprintsBy2dInchis(Collection<String> inchis2d) throws ChemicalDatabaseException {
+        return lookupFingerprintsByInchis(inchis2d);
     }
 
 
