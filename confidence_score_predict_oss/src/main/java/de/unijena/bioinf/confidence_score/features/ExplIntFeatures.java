@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
@@ -45,7 +46,7 @@ public class ExplIntFeatures implements FeatureCreator {
     public double[] computeFeatures(ParameterStore idresultStore) {
         // double[] scores= new double[4];
         double[] scores = new double[1];
-        TreeStatistics current_tree_scores = idresultStore.get(IdentificationResult.class).orElseThrow().getRawTree().getAnnotationOrThrow(TreeStatistics.class);
+        TreeStatistics current_tree_scores = idresultStore.get(FTree.class).orElseThrow().getAnnotationOrThrow(TreeStatistics.class);
         // scores[0]=current_tree_scores.getExplainedIntensityOfExplainablePeaks();
         //scores[1]= current_tree_scores.getExplainedIntensity();
         //scores[2]=current_tree_scores.getRatioOfExplainedPeaks();
