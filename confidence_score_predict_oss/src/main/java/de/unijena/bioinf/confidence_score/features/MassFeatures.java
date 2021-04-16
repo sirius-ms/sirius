@@ -27,7 +27,6 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
-import de.unijena.bioinf.sirius.IdentificationResult;
 
 /**
  * Created by martin on 16.07.18.
@@ -40,11 +39,9 @@ public class MassFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ParameterStore idResultPara) {
-        final IdentificationResult<?> idresult = idResultPara.get(IdentificationResult.class).orElseThrow();
-
+    public double[] computeFeatures(ParameterStore formulaPara) {
         double[] return_vector= new double[1];
-        return_vector[0]=idresult.getMolecularFormula().getMass();
+        return_vector[0]= formulaPara.getMF().orElseThrow().getMass();
         return  return_vector;
     }
 

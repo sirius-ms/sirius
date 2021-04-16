@@ -20,40 +20,49 @@
 
 package de.unijena.bioinf.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.ConfidenceScorer;
-import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
+import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
-import de.unijena.bioinf.jjobs.BasicDependentJJob;
+import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
-import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
 /**
  * Created by martin on 08.08.18.
  */
-public class ConfidenceJJob extends BasicDependentJJob<ConfidenceResult> implements AnnotationJJob<ConfidenceResult, FingerIdResult> {
+public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> implements AnnotationJJob<ConfidenceResult, FingerIdResult> {
 
     //fina inputs
-    protected final ConfidenceScorer scorer;
+    protected final ConfidenceScorer confidenceScorer;
     protected final Ms2Experiment experiment;
-    protected final IdentificationResult<?> siriusidresult;
 
     // inputs that can be either set by a setter or from dependent jobs
-    private List<Scored<FingerprintCandidate>> allScoredCandidates = null;
-    private List<Scored<FingerprintCandidate>> requestedScoredCandidates = null;
-    private ProbabilityFingerprint predictedFpt = null;
-    private RestWithCustomDatabase.CandidateResult candidates = null;
-    private BayesnetScoring bayesnetScoring;
+//    private List<Scored<FingerprintCandidate>> allScoredCandidates = null;
+//    private List<Scored<FingerprintCandidate>> requestedScoredCandidates = null;
+//    private ProbabilityFingerprint predictedFpt = null;
+//    private RestWithCustomDatabase.CandidateResult candidates = null;
+    protected final Set<FingerblastJJob> inputInstances = new LinkedHashSet<>();
+    protected final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring;
+
+
+//    List<Scored<FingerprintCandidate>> allMergedRestDbCandidates;
+//    List<FingerblastResult> fbResults = new ArrayList<>();
+//    List<RestWithCustomDatabase.CandidateResult> fbRawResults = new ArrayList<>();
+
+//    FingerblastJJob topHitJob = null;
 
 //    private FingerblastJJob searchDBJob = null;
 //    private FingerblastJJob additionalPubchemDBJob = null;
@@ -61,7 +70,7 @@ public class ConfidenceJJob extends BasicDependentJJob<ConfidenceResult> impleme
     //INPUT
     // puchem resultlist
     // filterflag oder filtered list
-    // ConfidenceScoreComputor
+    // ConfidenceScoreComputer
     // Scorings: CovarianceScoring, CSIFingerIDScoring (reuse)
     // IdentificationResult
     // Experiment -> CollisionEnergies
@@ -70,59 +79,112 @@ public class ConfidenceJJob extends BasicDependentJJob<ConfidenceResult> impleme
     //OUTPUT
     // ConfidenceResult -> Annotate to
 
-    public ConfidenceJJob(@NotNull CSIPredictor predictor, Ms2Experiment experiment, IdentificationResult<?> siriusResult) {
-        this(predictor.getConfidenceScorer(), experiment, siriusResult);
-    }
-
-    public ConfidenceJJob(@NotNull ConfidenceScorer scorer, Ms2Experiment experiment, IdentificationResult<?> siriusResult) {
+    public ConfidenceJJob(@NotNull CSIPredictor predictor, Ms2Experiment experiment) {
         super(JobType.CPU);
-        this.scorer = scorer;
+        this.confidenceScorer = predictor.getConfidenceScorer();
+        this.csiScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(predictor.performances);
         this.experiment = experiment;
-        this.siriusidresult = siriusResult;
+
     }
 
-    protected void checkInput() {
-        if (allScoredCandidates == null || siriusidresult == null || predictedFpt == null)
-            throw new IllegalArgumentException("No Input Data found.");
-    }
 
     @Override
     public synchronized void handleFinishedRequiredJob(JJob required) {
         if (required instanceof FingerblastJJob) {
-            FingerblastJJob searchDBJob = (FingerblastJJob) required;
-            if (searchDBJob.result() != null) {
-                predictedFpt = searchDBJob.fp;
-                allScoredCandidates = searchDBJob.getAllScoredCandidates();
-                candidates = searchDBJob.getCandidates();
-                requestedScoredCandidates = searchDBJob.result().getResults();
-                bayesnetScoring = searchDBJob.bayesnetScoring;
+            final FingerblastJJob searchDBJob = (FingerblastJJob) required;
+            if (searchDBJob.result() != null && searchDBJob.result().getTopHitScore() != null) {
+                inputInstances.add(searchDBJob);
+            } else {
+                if (searchDBJob.result() == null)
+                    LoggerFactory.getLogger(getClass()).warn("Fingerblast Job '" + searchDBJob.identifier() + "' skipped because of result was null.");
             }
         }
     }
 
-    public void setAllScoredCandidates(List<Scored<FingerprintCandidate>> allScoredCandidates) {
-        this.allScoredCandidates = allScoredCandidates;
-    }
-
-    public void setCandidates(RestWithCustomDatabase.CandidateResult candidates) {
-        this.candidates = candidates;
-    }
-
-    public void setPredictedFpt(ProbabilityFingerprint predictedFpt) {
-        this.predictedFpt = predictedFpt;
-    }
 
     @Override
     protected ConfidenceResult compute() throws Exception {
+
         checkForInterruption();
-        checkInput();
+
+
+        Map<FingerblastJJob, List<JJob<List<Scored<FingerprintCandidate>>>>> csiScoreJobs = new HashMap<>();
+
+
+        final List<Scored<FingerprintCandidate>> allMergedCandidatesCov = new ArrayList<>();
+        final List<Scored<FingerprintCandidate>> allMergedCandidatesCSI = new ArrayList<>();
+        final List<Scored<FingerprintCandidate>> requestedMergedCandidatesCov = new ArrayList<>();
+        final List<Scored<FingerprintCandidate>> requestedMergedCandidatesCSI = new ArrayList<>();
+
+
+        Double topHitScore = null;
+        ProbabilityFingerprint topHitFP = null;
+        FTree topHitTree = null;
+        MolecularFormula topHitFormula = null;
+        BayesnetScoring topHitScoring = null;
+
+        for (FingerblastJJob searchDBJob : inputInstances) {
+            FingerblastResult r = searchDBJob.result();
+            final List<Scored<FingerprintCandidate>> allRestDbScoredCandidates = searchDBJob.getCandidates().getAllDbCandidatesInChIs().map(set ->
+                    searchDBJob.getAllScoredCandidates().stream().filter(sc -> set.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList())).
+                    orElseThrow(() -> new IllegalArgumentException("Additional candidates Flag 'ALL' from DataSource is not Available but mandatory to compute Confidence scores!"));
+
+
+            allMergedCandidatesCov.addAll(allRestDbScoredCandidates);
+            requestedMergedCandidatesCov.addAll(r.getResults());
+
+            if (topHitScore == null || topHitScore < r.getTopHitScore().score()) {
+                topHitScore = r.getTopHitScore().score();
+                topHitFP = searchDBJob.fp;
+                topHitTree = searchDBJob.ftree;
+                topHitFormula = searchDBJob.formula;
+                topHitScoring = searchDBJob.bayesnetScoring;
+            }
+
+            // build csi scoring jobs
+//            csiScoring.getScoring().
+            CSIFingerIdScoring scoring = csiScoring.getScoring();
+            scoring.prepare(searchDBJob.fp);
+            List<JJob<List<Scored<FingerprintCandidate>>>> j = Fingerblast.makeScoringJobs(scoring,
+                    allRestDbScoredCandidates.stream().map(SScored::getCandidate).collect(Collectors.toList()),
+                    searchDBJob.fp);
+            csiScoreJobs.put(searchDBJob, j);
+            j.forEach(this::submitSubJob);
+        }
+
         checkForInterruption();
-        final List<Scored<FingerprintCandidate>> allRestDbScoredCandidates = candidates.getAllDbCandidatesInChIs().map(set ->
-                allScoredCandidates.stream().filter(sc -> set.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList())).
-                orElseThrow(() -> new IllegalArgumentException("Additional candidates Flag 'ALL' from DataSource is not Available but mandatory to compute Confidence scores!"));
+
+        csiScoreJobs.forEach((k,v) -> {
+            Set<String> filterSet = k.result().getResults().stream().map(SScored::getCandidate).map(FingerprintCandidate::getInchiKey2D).collect(Collectors.toSet());
+            List<Scored<FingerprintCandidate>> allCSI = v.stream().map(JJob::takeResult).flatMap(Collection::stream).collect(Collectors.toList());
+            List<Scored<FingerprintCandidate>> requestCSI = allCSI.stream().filter(c -> filterSet.contains(c.getCandidate().getInchiKey2D())).collect(Collectors.toList());
+            allMergedCandidatesCSI.addAll(allCSI);
+            requestedMergedCandidatesCSI.addAll(requestCSI);
+        });
+
         checkForInterruption();
-        final double score = scorer.computeConfidence(experiment, allRestDbScoredCandidates, requestedScoredCandidates, ParameterStore.of(predictedFpt, bayesnetScoring, siriusidresult));
+
+        csiScoreJobs.clear();
+        inputInstances.clear();
+
+        allMergedCandidatesCov.sort(Comparator.reverseOrder());
+        requestedMergedCandidatesCov.sort(Comparator.reverseOrder());
+
+        allMergedCandidatesCSI.sort(Comparator.reverseOrder());
+        requestedMergedCandidatesCSI.sort(Comparator.reverseOrder());
+
+        assert  allMergedCandidatesCov.size() == allMergedCandidatesCSI.size();
+        assert  requestedMergedCandidatesCov.size() == requestedMergedCandidatesCSI.size();
+
         checkForInterruption();
-        return new ConfidenceResult(score, requestedScoredCandidates.size() > 0 ? requestedScoredCandidates.get(0) : null);
+
+        final double score = confidenceScorer.computeConfidence(experiment,
+                allMergedCandidatesCov, allMergedCandidatesCSI,
+                requestedMergedCandidatesCov, requestedMergedCandidatesCSI,
+                ParameterStore.of(topHitFP, topHitScoring, topHitTree, topHitFormula));
+
+        checkForInterruption();
+        return new ConfidenceResult(score, requestedMergedCandidatesCov.size() > 0 ? requestedMergedCandidatesCov.get(0) : null);
     }
+
 }

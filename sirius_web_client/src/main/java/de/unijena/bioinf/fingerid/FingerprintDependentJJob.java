@@ -70,9 +70,4 @@ public abstract class FingerprintDependentJJob<R extends DataAnnotation> extends
             }
         }
     }
-
-    /*protected void checkInput() {
-        if (fp == null || ftree == null || formula == null)
-            throw new IllegalArgumentException("No Input Data found in: " + LOG().getName());
-    }*/
 }

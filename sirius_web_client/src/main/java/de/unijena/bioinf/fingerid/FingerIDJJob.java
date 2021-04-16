@@ -36,6 +36,7 @@ import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.BatchJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
@@ -243,9 +244,15 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
                         fingeridInput.getPrecursorIonType(), true) //todo maybe only if confidence is "enabled"
         ).collect(Collectors.toList());
 
-        List<BatchJJob<RestWithCustomDatabase.CandidateResult>> he = submitSubJobsInBatches(formulaJobs, 4);
+        submitSubJobsInBatches(formulaJobs, PropertyManager.getNumberOfThreads());
+
         checkForInterruption();
         int i = 0;
+
+        final ConfidenceJJob confidenceJJob = (predictor.getConfidenceScorer() != null && computeConfidence)
+                ? new ConfidenceJJob(predictor, experiment)
+                : null;
+
         for (IdentificationResult<S> fingeridInput : filteredResults) {
             final FingerIdResult fres = new FingerIdResult(fingeridInput.getTree());
             // prediction job: predict fingerprint
@@ -272,22 +279,28 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
                 // given molecular formula
                 blastJob = new FingerblastJJob(predictor);
                 final CovtreeWebJJob covTreeJob = NetUtils.tryAndWait(() ->
-                        predictor.csiWebAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(),predictor.predictorType),
+                                predictor.csiWebAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType),
                         this::checkForInterruption);
                 blastJob.addRequiredJob(covTreeJob);
             }
 
             blastJob.addRequiredJob(formulaJobs.get(i++));
             blastJob.addRequiredJob(predictionJob);
+            if (confidenceJJob != null)
+                confidenceJJob.addRequiredJob(blastJob);
             annotationJJobs.put(submitSubJob(blastJob), fres);
 
-            //confidence job: calculate confidence of scored candidate list
-            if (predictor.getConfidenceScorer() != null && computeConfidence) {
-                final ConfidenceJJob confidenceJJob = new ConfidenceJJob(predictor, experiment, fingeridInput);
-                confidenceJJob.addRequiredJob(blastJob);
-                annotationJJobs.put(submitSubJob(confidenceJJob), fres);
-            }
+
         }
+
+        // confidence job: calculate confidence of scored candidate list that are MERGED among ALL
+        // IdentificationResults results with none empty candidate lists.
+        if (confidenceJJob != null)
+            submitSubJob(confidenceJJob);
+
+            //todo annotate confidence to Tophit
+
+
 
         logDebug("Searching with CSI:FingerID");
         /////////////////////////////////////////////////
@@ -299,6 +312,14 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
         // the logic if a job can fail or not is done via job dependencies (so above)
         checkForInterruption();
         annotationJJobs.forEach((k,v) -> k.takeAndAnnotateResult(v));
+
+        if (confidenceJJob != null){
+            ConfidenceResult confidenceRes = confidenceJJob.awaitResult();
+            annotationJJobs.values().stream().distinct().filter(fpr -> fpr.getFingerprintCandidates().get(0).getCandidate().equals(confidenceRes.top_hit.getCandidate()))
+                    .findFirst().ifPresentOrElse(fpr -> fpr.setAnnotation(ConfidenceResult.class, confidenceRes),
+                    () -> logWarn("No matching Candidate for Confidence Score.'" + confidenceJJob.identifier() + "'. Confidence might be lost!"));
+        }
+
 
         logDebug("CSI:FingerID Search DONE!");
         //in linked maps values() collection is not a set -> so we have to make that distinct
