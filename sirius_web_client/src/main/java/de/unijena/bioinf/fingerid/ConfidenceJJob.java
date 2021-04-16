@@ -104,9 +104,9 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> i
 
     @Override
     protected ConfidenceResult compute() throws Exception {
-
         checkForInterruption();
-
+        if (inputInstances.isEmpty())
+            return new ConfidenceResult(Double.NaN, null);
 
         Map<FingerblastJJob, List<JJob<List<Scored<FingerprintCandidate>>>>> csiScoreJobs = new HashMap<>();
 
@@ -146,7 +146,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> i
             CSIFingerIdScoring scoring = csiScoring.getScoring();
             scoring.prepare(searchDBJob.fp);
             List<JJob<List<Scored<FingerprintCandidate>>>> j = Fingerblast.makeScoringJobs(scoring,
-                    allRestDbScoredCandidates.stream().map(SScored::getCandidate).collect(Collectors.toList()),
+                    new ArrayList<>(searchDBJob.getCandidates().getCombCandidates()),
                     searchDBJob.fp);
             csiScoreJobs.put(searchDBJob, j);
             j.forEach(this::submitSubJob);
@@ -155,9 +155,11 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> i
         checkForInterruption();
 
         csiScoreJobs.forEach((k,v) -> {
-            Set<String> filterSet = k.result().getResults().stream().map(SScored::getCandidate).map(FingerprintCandidate::getInchiKey2D).collect(Collectors.toSet());
-            List<Scored<FingerprintCandidate>> allCSI = v.stream().map(JJob::takeResult).flatMap(Collection::stream).collect(Collectors.toList());
-            List<Scored<FingerprintCandidate>> requestCSI = allCSI.stream().filter(c -> filterSet.contains(c.getCandidate().getInchiKey2D())).collect(Collectors.toList());
+            List<Scored<FingerprintCandidate>> combinedAllCSI = v.stream().map(JJob::takeResult).flatMap(Collection::stream).collect(Collectors.toList());
+            Set<String> requestFilterSet = k.result().getResults().stream().map(SScored::getCandidate).map(FingerprintCandidate::getInchiKey2D).collect(Collectors.toSet());
+            Set<String> allFilterSet = k.getCandidates().getAllDbCandidatesInChIs().map(HashSet::new).orElseThrow();
+            List<Scored<FingerprintCandidate>> allCSI = combinedAllCSI.stream().filter(c -> allFilterSet.contains(c.getCandidate().getInchiKey2D())).collect(Collectors.toList());
+            List<Scored<FingerprintCandidate>> requestCSI = combinedAllCSI.stream().filter(c -> requestFilterSet.contains(c.getCandidate().getInchiKey2D())).collect(Collectors.toList());
             allMergedCandidatesCSI.addAll(allCSI);
             requestedMergedCandidatesCSI.addAll(requestCSI);
         });

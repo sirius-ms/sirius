@@ -27,14 +27,12 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.jjobs.BatchJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
@@ -301,7 +299,6 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
             //todo annotate confidence to Tophit
 
 
-
         logDebug("Searching with CSI:FingerID");
         /////////////////////////////////////////////////
         //collect results and annotate to fingerid Result
@@ -311,13 +308,25 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
         // this loop is just to ensure that we wait until all jobs are finished.
         // the logic if a job can fail or not is done via job dependencies (so above)
         checkForInterruption();
-        annotationJJobs.forEach((k,v) -> k.takeAndAnnotateResult(v));
+        annotationJJobs.forEach(AnnotationJJob::takeAndAnnotateResult);
+        checkForInterruption();
 
-        if (confidenceJJob != null){
+        if (confidenceJJob != null) {
             ConfidenceResult confidenceRes = confidenceJJob.awaitResult();
-            annotationJJobs.values().stream().distinct().filter(fpr -> fpr.getFingerprintCandidates().get(0).getCandidate().equals(confidenceRes.top_hit.getCandidate()))
-                    .findFirst().ifPresentOrElse(fpr -> fpr.setAnnotation(ConfidenceResult.class, confidenceRes),
-                    () -> logWarn("No matching Candidate for Confidence Score.'" + confidenceJJob.identifier() + "'. Confidence might be lost!"));
+            if (confidenceRes.top_hit != null) {
+                FingerIdResult topHit = annotationJJobs.values().stream().distinct()
+                        .filter(fpr -> !fpr.getFingerprintCandidates().isEmpty()).max(Comparator.comparing(fpr -> fpr.getFingerprintCandidates().get(0))).orElse(null);
+                if (topHit != null){
+                    if (topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D().equals(confidenceRes.top_hit.getCandidate().getInchiKey2D()))
+                        topHit.setAnnotation(ConfidenceResult.class, confidenceRes);
+                    else
+                        logWarn("TopHit does not Match Confidence Result TopHit!'" + confidenceRes.top_hit.getCandidate().getInchiKey2D() + "' vs '" + topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D() + "'.  Confidence might be lost!");
+                }else {
+                    logWarn("No TopHit found for. But confidence was calculated for: '" + confidenceRes.top_hit.getCandidate().getInchiKey2D() + "'.  Looks like a Bug. Confidence might be lost!");
+                }
+            }else {
+                logWarn("No Confidence computed.");
+            }
         }
 
 
