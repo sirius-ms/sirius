@@ -157,6 +157,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         ionizationList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
         center.add(ionizationList);
         parameterBindings.put("AdductSettings.detectable", () -> getDerivedDetectableAdducts().toString());
+        parameterBindings.put("AdductSettings.fallback", () -> getDerivedDetectableAdducts().toString());
 
 
         // configure Element panel
