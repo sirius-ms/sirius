@@ -44,7 +44,7 @@ public class BlobStorages {
     }
 
 
-    public static BlobStorage openDefault(@Nullable String path, Path credentials) {
+    public static BlobStorage openDefault(@Nullable String path, @Nullable Path credentials) {
         if (path != null && !path.isBlank()) {
             if (path.startsWith(GCSUtils.URL_PREFIX)) {
                 return new GCSBlobStorage(path.substring(5).split("/")[0], credentials);
@@ -92,6 +92,6 @@ public class BlobStorages {
         if (!FileBlobStorage.exists(p)) {
             return new FileBlobStorage(p);
         }
-        throw new IOException("Illegal Storage location `" + p.toString() + "`! Must either not exist or be an empty directory");
+        throw new IOException("Illegal Storage location `" + p + "`! Must either not exist or be an empty directory");
     }
 }
