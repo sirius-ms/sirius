@@ -320,7 +320,8 @@ public class BayesnetScoringBuilder {
         }
 
         for (int i : nodes.keys()) {
-            if (!fpVersion.hasProperty(i)) throw new RuntimeException("tree contains properties which are not used for fingerprints");
+            if (!fpVersion.hasProperty(i))
+                throw new RuntimeException("tree contains property " + i +" which is not part of the fingerprint " + fpVersion);
         }
 
 
