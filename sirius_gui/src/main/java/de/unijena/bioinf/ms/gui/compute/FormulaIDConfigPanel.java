@@ -322,7 +322,6 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     }
 
     public PossibleAdducts getDerivedDetectableAdducts() {
-        System.out.println(PropertyManager.DEFAULTS.getConfigValue("AdductSettings.detectable"));
         Set<PrecursorIonType> det = new HashSet<>(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
         Set<Ionization> keep = ionizationList.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType).flatMap(Optional::stream).map(PrecursorIonType::getIonization).collect(Collectors.toSet());
         det.removeIf(s -> !keep.contains(s.getIonization()));
