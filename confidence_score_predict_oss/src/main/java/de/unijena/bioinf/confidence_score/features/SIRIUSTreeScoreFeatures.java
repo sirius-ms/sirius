@@ -23,10 +23,12 @@ package de.unijena.bioinf.confidence_score.features;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonLossEdgeScorer;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
@@ -55,9 +57,10 @@ public class SIRIUSTreeScoreFeatures implements FeatureCreator {
     }
 
     @Override
-    public double[] computeFeatures(ParameterStore idResultPara) {
-        final IdentificationResult<?> idresult = idResultPara.get(IdentificationResult.class).orElseThrow();
-        FTreeMetricsHelper metricsIdRes = new FTreeMetricsHelper(idresult.getTree());
+    public double[] computeFeatures(ParameterStore mfTreePara) {
+        MolecularFormula formula =  mfTreePara.getMF().orElseThrow();
+        FTree tree =  mfTreePara.get(FTree.class).orElseThrow();
+        FTreeMetricsHelper metricsIdRes = new FTreeMetricsHelper(tree);
         FTreeMetricsHelper metrics0 = new FTreeMetricsHelper(idlist.get(0).getTree());
         FTreeMetricsHelper metrics1 = new FTreeMetricsHelper(idlist.get(1).getTree());
         FTreeMetricsHelper metrics2 = new FTreeMetricsHelper(idlist.get(2).getTree());
@@ -75,13 +78,11 @@ public class SIRIUSTreeScoreFeatures implements FeatureCreator {
                 Math.log(Math.abs(metrics0.getTreeScore() - metrics1.getTreeScore())),
                 Math.log(Math.abs(metrics0.getTreeScore() - metrics2.getTreeScore())),
                 getRareElementCounter(),
-                idresult.getMolecularFormula().getMass(),
-                idresult.getTree().numberOfVertices(),
-                idresult.getTree().numberOfEdges(),
-                idresult.getMolecularFormula().union(idlist.get(1).getMolecularFormula()).atomCount(),
+                formula.getMass(),
+                tree.numberOfVertices(),
+                tree.numberOfEdges(),
+                formula.union(idlist.get(1).getMolecularFormula()).atomCount(),
                 commonLossCounter()
-
-
         };
 
         //  System.out.println(scores.length+" - "+scores[0]+" - "+idresult.getMolecularFormula());
