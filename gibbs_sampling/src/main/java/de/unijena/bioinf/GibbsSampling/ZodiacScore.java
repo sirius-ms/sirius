@@ -34,6 +34,11 @@ public class ZodiacScore extends FormulaScore {
     }
 
     @Override
+    public String shortName() {
+        return "ZODIAC";
+    }
+
+    @Override
     public ScoreType getScoreType() {
         return ScoreType.Probabilistic;
     }
