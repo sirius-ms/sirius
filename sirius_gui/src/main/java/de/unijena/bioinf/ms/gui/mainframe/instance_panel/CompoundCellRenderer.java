@@ -20,12 +20,15 @@
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.stream.Stream;
 
@@ -102,17 +105,18 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 		
 		g2.setColor(this.foreColor);
 
+		final int maxWidth = getWidth() - 2;
 		int compoundLength = compoundFm.stringWidth(ec.getGUIName()) + 4;
 
-		boolean trigger = compoundLength + 2 > 198;
+		boolean trigger = compoundLength + 2 > maxWidth;
 
 		Paint p = g2.getPaint();
 
 		if (trigger) {
-			g2.setPaint(new GradientPaint(180, 0, foreColor, 199, 0, backColor));
+			g2.setPaint(new GradientPaint(maxWidth - 18, 0, foreColor, maxWidth - 1, 0, backColor));
 		}
 
-		g2.drawLine(2, 17, Math.min(197, 2 + compoundLength), 17);
+		g2.drawLine(2, 17, Math.min(maxWidth - 3, 2 + compoundLength), 17);
 
 		g2.setFont(compoundFont);
 		g2.drawString(ec.getGUIName(), 4, 13);
@@ -125,12 +129,13 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 		String ionizationProp = "Ionization";
 		String focMassProp = "Precursor";
 		String rtProp = "RT";
-//		String specProp = "Spectra";
+		String confProp = "COSMIC";
 
 		g2.setFont(propertyFont);
 		g2.drawString(ionizationProp, 4, 32);
 		g2.drawString(focMassProp, 4, 48);
 		g2.drawString(rtProp, 4, 64);
+		g2.drawString(confProp, 4, 80);
 
 		int xPos = Stream.of(propertyFm.stringWidth(ionizationProp), propertyFm.stringWidth(focMassProp), propertyFm.stringWidth(rtProp))
 				.max(Integer::compareTo).get() + 15;
@@ -146,20 +151,12 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 		g2.drawString(focMass, xPos, 48);
 		g2.drawString(rtValue, xPos, 64);
 
-//		int yPos = 64;
-//		int yPos = 80;
+		ec.getID().getConfidenceScore().ifPresent(confScore -> {
+			g2.setFont(propertyFont);
+			String conf =  confScore<0|| Double.isNaN(confScore) ? ConfidenceScore.NA() : BigDecimal.valueOf(confScore).setScale(3, RoundingMode.HALF_UP).toString();
+			g2.drawString(conf, xPos, 80);
+		});
 
-		g2.setFont(valueFont);
-
-//		g2.drawString(specProp, 4, yPos);
-//		String msValues = ms1No + " MS   " + ms2No + " MS/MS";
-//		g2.drawString(msValues, xPos, yPos);
-
-//			yPos+=16;
-
-//			String ms2String = ms2No==1 ? "spectrum " : "spectra";
-//			ms2String = ms2No+" MS2 "+ms2String;
-//			g2.drawString(ms2String, 4, yPos);
 
 
 		g2.setFont(statusFont);

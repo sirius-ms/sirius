@@ -335,11 +335,15 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
         if (csiConfigs != null && csiConfigs.isToolSelected()) {
             toolCommands.add(csiConfigs.content.toolCommand());
+            int i = configCommand.indexOf("--AdductSettings.fallback");
+            if (i >= 0) {
+                configCommand.remove(i);
+                configCommand.remove(i);
+            }
             configCommand.addAll(csiConfigs.asParameterList());
         }
 
         if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
-//            noNegativeCanopusWarning();
             toolCommands.add(canopusConfigPanel.content.toolCommand());
             configCommand.addAll(canopusConfigPanel.asParameterList());
         }
@@ -351,13 +355,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         command.addAll(configCommand);
         command.addAll(toolCommands);
         return command;
-    }
-
-    private void noNegativeCanopusWarning() {
-        if (compoundsToProcess.stream().anyMatch(b -> b.getIonization().isNegative()))
-            new WarningDialog(MF, GuiUtils.formatToolTip(
-                    "Note that CANOPUS is currently NOT available for negative ion mode data.",
-                    "CANOPUS step will be skipped for negative ion mode instances."));
     }
 
     private void checkConnection() {

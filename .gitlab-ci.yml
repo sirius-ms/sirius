@@ -31,7 +31,7 @@ doc:
   stage: prepare
   script:
     - cd sirius_doc
-    - gradle artifactoryPublish
+    - gradle clean artifactoryPublish
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -48,6 +48,7 @@ doc:
     changes:
       - "sirius_doc/**/*"
       - "sirius_cli/src/main/resources/sirius_frontend.build.properties"
+      - ".gitlab-ci.yml"
 
 distCliLinux64:
   variables:
@@ -55,7 +56,7 @@ distCliLinux64:
   stage: build-cli
   script:
     - cd sirius_dist/sirius_cli_single_os
-    - gradle artifactoryPublish --refresh-dependencies
+    - gradle clean artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -69,17 +70,16 @@ distCliLinux64:
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
     # from pipeline
     changes:
-      - "**/*.{java,gradle,properties,yaml,tex,png,ico,json,xml,html,csv,tsv,py}"
+      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
       - "**/src/main/java/**/*"
 
 distGuiLinux64:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
   stage: build-gui
-  needs: ["distCliLinux64"]
   script:
     - cd sirius_dist/sirius_gui_single_os
-    - gradle artifactoryPublish --refresh-dependencies
+    - gradle clean artifactoryPublish --refresh-dependencies
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -93,7 +93,7 @@ distGuiLinux64:
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
     # from pipeline
     changes:
-      - "**/*.{java,gradle,properties,yaml,tex,png,ico,json,xml,html,csv,tsv,py}"
+      - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
       - "**/src/main/java/**/*"
 
 #distCliWin64:
@@ -121,11 +121,10 @@ distGuiLinux64:
 #  variables:
 #    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 #  stage: build-gui
-#  needs: ["distCliWin64","doc"]
 #  script:
 #    - $env:path
 #    - cd sirius_dist/sirius_gui_single_os
-#    - gradle.bat artifactoryPublish --refresh-dependencies
+#    - gradle.bat clean artifactoryPublish --refresh-dependencies
 #  cache:
 #    key: "$CI_COMMIT_REF_NAME"
 #    policy: push
@@ -136,8 +135,7 @@ distGuiLinux64:
 #  only:
 #    refs:
 #      - master
-#      - release-4
-#
+
 #distCliMacOSX:
 #  variables:
 #    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/Users/ladmin/gitlab/zulu14.29.23-ca-fx-jdk14.0.2-macosx_x64"

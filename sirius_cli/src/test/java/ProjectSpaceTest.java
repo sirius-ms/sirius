@@ -24,7 +24,7 @@ public class ProjectSpaceTest {
         if (args.length > 0)
             root = new File(args[0]);
 
-        final WebAPI api = ApplicationCore.WEB_API;
+       /* final WebAPI api = ApplicationCore.WEB_API;
         final Canopus canopus = Canopus.loadFromFile(new File("/home/fleisch/work/sirius_testing/canopus/canopus_fp.data"));
 //        SiriusProjectSpace space = SiriusProjectSpaceIO.create(null, rootZip,
         SiriusProjectSpace space = SiriusProjectSpaceIO.create(rootZip, Arrays.asList(root1,root3,root2), null,
@@ -32,7 +32,7 @@ public class ProjectSpaceTest {
                 new IdentificationResultSerializer(), new FingerIdResultSerializer(api), new CanopusResultSerializer(canopus));
         space.registerSummaryWriter(new MztabSummaryWriter());
         space.writeSummaries((cur, max, mess) -> System.out.println((((((double) cur) / (double) max)) * 100d) + "% " + mess));
-        space.close();
+        space.close();*/
         System.out.println("done!");
     }
 }

@@ -13,7 +13,7 @@ ext {
     // version for bundeled JRE
     jre_version = '15.0.2'
     zulu_jre_version = '15.29.15'
-    jre_major = '15'
+    jre_major = zulu_jre_version.split("[.]")[0]
 
     OS = DefaultNativePlatform.currentOperatingSystem
 

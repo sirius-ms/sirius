@@ -105,6 +105,10 @@ public class FingerIdOptions implements ToolChainOptions<FingeridSubToolJob, Ins
                     }));
             if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
                 inst.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class));
+                inst.getID().setConfidenceScore(null);
+                inst.updateCompoundID();
+            }else if (inst.getID().getConfidenceScore().isPresent()){
+                inst.getID().setConfidenceScore(null);
                 inst.updateCompoundID();
             }
         };

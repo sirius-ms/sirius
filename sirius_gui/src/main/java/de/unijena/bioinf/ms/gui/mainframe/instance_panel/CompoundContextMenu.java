@@ -44,6 +44,7 @@ public class CompoundContextMenu extends JPopupMenu {
         add(new JMenuItem(SiriusActions.ORDER_BY_RT.getInstance()));
         add(new JMenuItem(SiriusActions.ORDER_BY_MASS.getInstance()));
         add(new JMenuItem(SiriusActions.ORDER_BY_NAME.getInstance()));
+        add(new JMenuItem(SiriusActions.ORDER_BY_CONFIDENCE.getInstance()));
 
 
     }
