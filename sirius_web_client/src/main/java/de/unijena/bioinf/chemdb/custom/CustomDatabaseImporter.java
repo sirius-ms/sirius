@@ -228,12 +228,12 @@ public class CustomDatabaseImporter {
             try {
                 final InChIGeneratorFactory icf = InChIGeneratorFactory.getInstance();
                 for (CustomDatabase.Molecule c : moleculeBuffer) {
-                    final String key;
+                    final String inchi2d;
                     try {
-                        key = icf.getInChIGenerator(c.container).getInchiKey().substring(0, 14);
-                        CustomDatabase.Comp comp = new CustomDatabase.Comp(key);
+                        inchi2d = InChIs.inchi2d(icf.getInChIGenerator(c.container).getInchi());
+                        CustomDatabase.Comp comp = new CustomDatabase.Comp(inchi2d);
                         comp.molecule = c;
-                        dict.put(key, comp);
+                        dict.put(inchi2d, comp);
                     } catch (CDKException | IllegalArgumentException e) {
                         CustomDatabase.logger.error(e.getMessage(), e);
                     }
@@ -246,9 +246,9 @@ public class CustomDatabaseImporter {
             try {
                 api.consumeRestDB(DataSource.ALL.flag(), new File("."), db -> {
                     try {
-                        for (FingerprintCandidate fc : db.lookupManyFingerprintsByInchis(dict.keySet())) {
+                        for (FingerprintCandidate fc : db.lookupManyFingerprintsBy2dInchis(dict.keySet())) {
                             CustomDatabase.logger.info(fc.getInchi().in2D + " downloaded");
-                            dict.get(fc.getInchiKey2D()).candidate = fc;
+                            dict.get(fc.getInchi().in2D).candidate = fc;
                         }
                     } catch (ChemicalDatabaseException e) {
                         CustomDatabase.logger.error(e.getMessage(), e);

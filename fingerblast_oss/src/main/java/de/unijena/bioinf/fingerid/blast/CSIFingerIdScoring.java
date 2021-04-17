@@ -48,7 +48,7 @@ public class CSIFingerIdScoring implements FingerblastScoring<ProbabilityFingerp
 
     }
 
-    public PredictionPerformance[] getPerfomances() {
+    public PredictionPerformance[] getPerformances() {
         return performances;
     }
 

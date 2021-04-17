@@ -37,4 +37,10 @@ public class ConfidenceScore extends FormulaScore {
     public String name() {
         return "ConfidenceScore";
     }
+
+    @Override
+    public String shortName() {
+        return "COSMIC";
+    }
+
 }
