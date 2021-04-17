@@ -125,7 +125,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         final CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, chainToolSpecs.get(SiriusOptions.class));
 
         Object[] standaloneTools = standaloneTools();
-        
+
         final CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(),
                 Stream.concat(Stream.concat(Stream.of(lcmsAlignSpec), chainToolSpecs.values().stream()), Arrays.stream(standaloneTools)).toArray());
 

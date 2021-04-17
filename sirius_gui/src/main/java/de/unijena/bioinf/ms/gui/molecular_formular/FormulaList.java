@@ -218,9 +218,25 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 .orElse(sre.getScoreValue(SiriusScore.class) >= siriusScoreStats.getMax());
     }
 
-    protected Function<FormulaResultBean, Double> getRenderScoreFunc() {
+    protected Function<FormulaResultBean, RenderScore> getRenderScoreFunc() {
         return sre -> sre.getScore(ZodiacScore.class)
-                .map(it -> it.score() * 100d)
-                .orElse(Math.exp(sre.getScoreValue(SiriusScore.class) - siriusScoreStats.getMax()) / siriusScoreStats.getExpScoreSum() * 100d);
+                .map(it -> RenderScore.of(it.score() * 100d, it.shortName()))
+                .orElse(RenderScore.of(
+                        Math.exp(sre.getScoreValue(SiriusScore.class) - siriusScoreStats.getMax()) / siriusScoreStats.getExpScoreSum() * 100d
+                        , sre.getScore(SiriusScore.class).map(SiriusScore::shortName).orElse("Formula Score")));
+    }
+
+    public static class RenderScore{
+        public final double score;
+        public final String name;
+
+        public RenderScore(double score, String name) {
+            this.score = score;
+            this.name = name;
+        }
+
+        public static RenderScore of(double score, String name){
+            return new RenderScore(score, name);
+        }
     }
 }
