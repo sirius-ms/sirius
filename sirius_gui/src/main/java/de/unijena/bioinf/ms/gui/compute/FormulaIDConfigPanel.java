@@ -217,7 +217,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             ionizationList.setEnabled(enabled);
         }
 
-        detectPossibleAdducts();
+        if (ecs.size() == 1 && isEnabled())
+            detectPossibleAdducts(ecs.get(0));
     }
 
     protected void makeElementPanel(boolean multi) {
@@ -275,9 +276,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         }
     }
 
-    protected void detectPossibleAdducts() {
+    protected void detectPossibleAdducts(InstanceBean ec) {
         String notWorkingMessage = "Adduct detection requires MS1 spectrum.";
-        InstanceBean ec = ecs.get(0);
         if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting adducts...", () -> {
                 final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
@@ -287,13 +287,13 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
                         ifPresentOrElse(pa -> {
                                     //todo do we want to add adducts?
                                     ionizationList.checkBoxList.uncheckAll();
-                                    pa.getIonModes().stream().map(IonMode::toString).forEach(ion -> ionizationList.checkBoxList.check(ion));
+                                    pa.getIonModes().stream().map(IonMode::toString).forEach(ionizationList.checkBoxList::check);
                                 },
-                                () -> new ExceptionDialog(owner, notWorkingMessage)
+                                () -> new ExceptionDialog(owner, "Failed to detect Adducts from MS1")
                         );
             }).getResult();
         } else {
-            new ExceptionDialog(owner, notWorkingMessage);
+            LoggerFactory.getLogger(getClass()).warn(notWorkingMessage);
         }
     }
 
