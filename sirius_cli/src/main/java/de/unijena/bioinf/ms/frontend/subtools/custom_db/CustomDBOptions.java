@@ -24,7 +24,7 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
-import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
@@ -76,8 +76,10 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     }
 
 
-    public class CustomDBWorkflow extends BasicJJob<Boolean> implements Workflow{
+    public class CustomDBWorkflow extends BasicMasterJJob<Boolean> implements Workflow {
         final InputFilesOptions input;
+        private JJob<Boolean> dbjob = null;
+
         public CustomDBWorkflow(InputFilesOptions input) {
             super(JJob.JobType.SCHEDULER);
             this.input = input;
@@ -100,6 +102,8 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 return false;
             }
 
+            checkForInterruption();
+
             final AtomicLong lines = new AtomicLong(0);
             final List<Path> unknown = input.msInput.unknownFiles.keySet().stream().sorted().collect(Collectors.toList());
             for (Path f : unknown)
@@ -109,18 +113,24 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
             Path loc = outputDir != null ? outputDir : SearchableDatabases.getCustomDatabaseDirectory().toPath();
             Files.createDirectories(loc);
-            CustomDatabaseImporter.importDatabase(loc.resolve(dbName).toFile(),
+            checkForInterruption();
+            dbjob = CustomDatabaseImporter.makeImportDatabaseJob(loc.resolve(dbName).toFile(),
                     unknown.stream().map(Path::toFile).collect(Collectors.toList()),
                     parentDBs,
                     ApplicationCore.WEB_API, writeBuffer,
                     inChI -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Importing '" + inChI.key2D() + "'")
             );
+            checkForInterruption();
+            submitJob(dbjob).awaitResult();
             logInfo("Database imported. Use 'structure --db=\"" + loc.resolve(dbName).toString() + "\"' to search in this database.");
             return true;
         }
 
         @Override
         public void cancel() {
+            if (dbjob != null)
+                dbjob.cancel();
+
             cancel(true);
         }
     }
