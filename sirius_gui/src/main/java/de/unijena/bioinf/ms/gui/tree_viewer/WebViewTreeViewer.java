@@ -20,9 +20,6 @@
 package de.unijena.bioinf.ms.gui.tree_viewer;
 
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -34,25 +31,27 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.FutureTask;
 
 /*
 NOTE: first create new WebViewTreeViewer, then add all JS resources (addJS);
 finally load() (only once!)
 */
-public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser{
+public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser {
 
-    LinkedList<FutureTask<Void>> tasks = new LinkedList<>();
+    //needs to be thread safe
+    Queue<FutureTask<Void>> tasks = new ConcurrentLinkedDeque<>();
 
-    public void queueTaskInJFXThread(Runnable runnable){
+    public void queueTaskInJFXThread(Runnable runnable) {
         FutureTask<Void> task = new FutureTask<>(runnable, null);
         tasks.add(task);
         Jobs.runJFXLater(task);
     }
 
-    public void cancelTasks(){
+    public void cancelTasks() {
         for (FutureTask<Void> task : tasks)
             task.cancel(true);
         tasks.clear();
