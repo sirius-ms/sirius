@@ -153,9 +153,12 @@ public class RestWithCustomDatabase {
         }
 
         for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).collect(Collectors.toList())) {
-            final List<FormulaCandidate> mfs = getCustomDb(cdb.name()).lookupMolecularFormulas(ionMass, deviation, ionType);
-            mfs.forEach(fc -> fc.setBitset(CustomDataSources.getSourceFromName(cdb.name()).flag())); //annotate with bitset
-            candidates.addAll(mfs);
+            Optional<ChemicalBlobDatabase<?>> optDB = getCustomDb(cdb.name());
+            if (optDB.isPresent()) {
+                final List<FormulaCandidate> mfs = optDB.get().lookupMolecularFormulas(ionMass, deviation, ionType);
+                mfs.forEach(fc -> fc.setBitset(CustomDataSources.getSourceFromName(cdb.name()).flag())); //annotate with bitset
+                candidates.addAll(mfs);
+            }
         }
 
         return candidates;
@@ -182,9 +185,11 @@ public class RestWithCustomDatabase {
                 result = new CandidateResult();
             }
 
-            for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).collect(Collectors.toList()))
-                result.addCustom(cdb.name(),
-                        getCustomDb(cdb.name()).lookupStructuresAndFingerprintsByFormula(formula), false);
+            for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).collect(Collectors.toList())) {
+                Optional<ChemicalBlobDatabase<?>> optDB = getCustomDb(cdb.name());
+                if (optDB.isPresent())
+                    result.addCustom(cdb.name(), optDB.get().lookupStructuresAndFingerprintsByFormula(formula), false);
+            }
 
             for (ChemicalBlobDatabase<?> custom : getAdditionalCustomDBs(dbs))
                 result.addCustom(custom.getName(), custom.lookupStructuresAndFingerprintsByFormula(formula), true);
@@ -196,15 +201,19 @@ public class RestWithCustomDatabase {
     }
 
     //todo at some stage we can also open this up for cloud databases
-    protected ChemicalBlobDatabase<?> getCustomDb(String dbName) throws IOException {
-        if (!customDatabases.containsKey(dbName)) {
-            Path dbDir = getCustomDBDirectory().toPath().resolve(dbName);
-            if (!Files.isDirectory(dbDir))
-                throw new IOException("Custom database '" + dbName + "' not found.");
-            customDatabases.put(dbName, new ChemicalFileDatabase(api.getCDKChemDBFingerprintVersion(), new FileBlobStorage(dbDir)));
+    protected Optional<ChemicalBlobDatabase<?>> getCustomDb(String dbName) {
+        try {
+            if (!customDatabases.containsKey(dbName)) {
+                Path dbDir = getCustomDBDirectory().toPath().resolve(dbName);
+                if (!Files.isDirectory(dbDir))
+                    throw new IOException("Custom database '" + dbName + "' not found.");
+                customDatabases.put(dbName, new ChemicalFileDatabase(api.getCDKChemDBFingerprintVersion(), new FileBlobStorage(dbDir)));
+            }
+            return Optional.of(customDatabases.get(dbName));
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).error("Could not load Custom Database '" + dbName + "'. DB seems to be corrupted and should be deleted and re-imported", e);
+            return Optional.empty();
         }
-
-        return customDatabases.get(dbName);
     }
 
 
@@ -213,7 +222,7 @@ public class RestWithCustomDatabase {
         List<ChemicalBlobDatabase<?>> fdbs = new ArrayList<>(CustomDataSources.size());
         for (CustomDataSources.Source customSource : CustomDataSources.sources()) {
             if (customSource.isCustomSource() && !customToSearch.contains(customSource.name()))
-                fdbs.add(getCustomDb(customSource.name()));
+                getCustomDb(customSource.name()).ifPresent(fdbs::add);
         }
         return fdbs;
     }

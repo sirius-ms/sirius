@@ -25,6 +25,8 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
@@ -233,7 +235,10 @@ public class CustomDatabase implements SearchableDatabase {
     }
 
     public void buildDatabase(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI api, int bufferSize) throws IOException, CDKException {
-        final CustomDatabaseImporter importer = getImporter(api, bufferSize);
+        buildDatabase(files, listener, getImporter(api, bufferSize));
+    }
+
+    public void buildDatabase(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, CustomDatabaseImporter importer) throws IOException, CDKException {
         importer.init();
         if (listener != null)
             importer.addListener(listener);
@@ -241,6 +246,23 @@ public class CustomDatabase implements SearchableDatabase {
             importer.importFrom(f);
         }
         importer.flushBuffer();
+    }
+
+    public JJob<Boolean> buildDatabaseJob(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI api, int bufferSize) {
+        final CustomDatabaseImporter importer = getImporter(api, bufferSize);
+        return new BasicJJob<Boolean>() {
+            @Override
+            protected Boolean compute() throws Exception {
+                buildDatabase(files, listener, importer);
+                return true;
+            }
+
+            @Override
+            public void cancel(boolean mayInterruptIfRunning) {
+                importer.cancel();
+                super.cancel(mayInterruptIfRunning);
+            }
+        }.asCPU();
     }
 
     static class Molecule {
