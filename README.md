@@ -1,5 +1,5 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Generic badge](https://img.shields.io/badge/Version-4.8.0-informational.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Version-4.8.1-informational.svg)](https://shields.io/)
 [![Build and Pubish](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml)
 
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
