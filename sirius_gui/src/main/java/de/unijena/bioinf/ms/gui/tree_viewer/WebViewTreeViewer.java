@@ -33,7 +33,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.FutureTask;
 
 /*
@@ -43,7 +43,7 @@ finally load() (only once!)
 public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser {
 
     //needs to be thread safe
-    Queue<FutureTask<Void>> tasks = new ConcurrentLinkedQeque<>();
+    Queue<FutureTask<Void>> tasks = new ConcurrentLinkedQueue<>();
 
     public void queueTaskInJFXThread(Runnable runnable) {
         FutureTask<Void> task = new FutureTask<>(runnable, null);
