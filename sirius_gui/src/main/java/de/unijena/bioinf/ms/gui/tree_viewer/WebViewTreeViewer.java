@@ -43,7 +43,7 @@ finally load() (only once!)
 public class WebViewTreeViewer extends JFXPanel implements TreeViewerBrowser {
 
     //needs to be thread safe
-    Queue<FutureTask<Void>> tasks = new ConcurrentLinkedDeque<>();
+    Queue<FutureTask<Void>> tasks = new ConcurrentLinkedQeque<>();
 
     public void queueTaskInJFXThread(Runnable runnable) {
         FutureTask<Void> task = new FutureTask<>(runnable, null);
