@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
@@ -187,15 +188,26 @@ public class FileUtils {
         }
     }
 
+    public static void deleteDirContentRecursively(Path rootPath) throws IOException {
+        deleteRecursively(rootPath, true);
+    }
+
     public static void deleteRecursively(Path rootPath) throws IOException {
+        deleteRecursively(rootPath, false);
+    }
+
+    public static void deleteRecursively(Path rootPath, boolean keepRoot) throws IOException {
         if (Files.notExists(rootPath))
             return;
         if (Files.isRegularFile(rootPath)) {
+            if (keepRoot)
+                return;
             Files.deleteIfExists(rootPath);
         } else {
             List<Path> files = walkAndClose(w -> w.sorted(Comparator.reverseOrder()).collect(Collectors.toList()), rootPath);
             for (Path file : files)
-                Files.deleteIfExists(file);
+                if (!keepRoot || !file.equals(rootPath))
+                    Files.deleteIfExists(file);
         }
     }
 
