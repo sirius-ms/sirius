@@ -92,7 +92,7 @@ public class DatabaseDialog extends JDialog {
         JScrollPane pane = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         box.add(pane);
         this.nameField = new PlaceholderTextField(16);
-        nameField.setPlaceholder("Enter name of custom database");
+        nameField.setPlaceholder("Enter name (no whitespaces) of custom database");
         nameField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -110,11 +110,11 @@ public class DatabaseDialog extends JDialog {
             }
 
             public void onTextChanged() {
-                addCustomDb.setEnabled(nameField.getText().length() > 0 && customDatabases.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(nameField.getText())));
+                addCustomDb.setEnabled(nameField.getText().length() > 0 && nameField.getText().replaceAll("\\s", "").equals(nameField.getText()) && customDatabases.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(nameField.getText())));
             }
         });
 
-        this.addCustomDb = Buttons.getAddButton16("create custom DB");
+        this.addCustomDb = Buttons.getAddButton16("Create custom DB");
         addCustomDb.setEnabled(false);
         final Box but = Box.createHorizontalBox();
         but.add(nameField);
@@ -132,51 +132,53 @@ public class DatabaseDialog extends JDialog {
             final int i = dbList.getSelectedIndex();
             if (i >= 0) {
                 final String s = dbList.getModel().getElementAt(i);
-                if (s.equalsIgnoreCase("pubchem"))
-                    dbView.update(s);
-                else if (customDatabases.containsKey(s))
+                if (customDatabases.containsKey(s))
                     dbView.updateContent(customDatabases.get(s));
             }
         });
 
         dbList.setSelectedIndex(0);
 
-        addCustomDb.addActionListener(e -> new ImportDatabaseDialog(nameField.getText()));
+        addCustomDb.addActionListener(e ->{
+            final  String t = nameField.getText();
+            if (t.replaceAll("\\s", "").equals(t)){
+                new ImportDatabaseDialog(nameField.getText());
+            } else {
+               new ExceptionDialog(MF,"DB name '" + t + "' must not contain white spaces.");
+            }
+        });
 
+
+        //klick on Entry ->  open import dialog
         new ListAction(dbList, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final int k = dbList.getSelectedIndex();
-                if (k > 0 && k < dbList.getModel().getSize())
+                if (k >= 0 && k < dbList.getModel().getSize())
                     new ImportDatabaseDialog(dbList.getModel().getElementAt(k));
 
             }
         });
 
+        //edit button ->  open import dialog
         dbView.edit.addActionListener(e -> {
             final int k = dbList.getSelectedIndex();
-            if (k > 0 && k < dbList.getModel().getSize())
+            if (k >= 0 && k < dbList.getModel().getSize())
                 new ImportDatabaseDialog(dbList.getModel().getElementAt(k));
         });
 
-        dbView.deleteCache.addActionListener(e -> {
+        dbView.deleteDB.addActionListener(e -> {
             final int index = dbList.getSelectedIndex();
             if (index < 0 || index >= dbList.getModel().getSize())
                 return;
             final String name = dbList.getModel().getElementAt(index);
-            final String msg = (index > 0) ?
-                    "Do you really want to delete the custom database '" + name + "'?" : "Do you really want to clear the cache of the PubChem database?";
-
+            final String msg = "Do you really want to delete the custom database '" + name + "'?";
             if (new QuestionDialog(getOwner(), msg).isSuccess()) {
-                if (index > 0) {
-                    new CustomDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name)).deleteDatabase();
-                    customDatabases.remove(name);
-                    final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
-                            .stream().map(CustomDatabase::name).toArray(String[]::new);
-                    dbList.setListData(dbs);
-                } else {
-                    new WarningDialog(getOwner(), "Cannot delete integrated PubChem copy");
-                }
+                new CustomDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name)).deleteDatabase();
+                customDatabases.remove(name);
+                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
+                        .stream().map(CustomDatabase::name).toArray(String[]::new);
+                dbList.setListData(dbs);
             }
 
         });
@@ -200,45 +202,31 @@ public class DatabaseDialog extends JDialog {
 
     protected static class DatabaseView extends JPanel {
         JLabel content;
-        JButton deleteCache, edit;
+        JButton deleteDB, edit;
 
         protected DatabaseView() {
             this.content = new JLabel("placeholder");
             content.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 4));
-            this.deleteCache = new JButton("delete cache");
+            this.deleteDB = new JButton("Delete");
             setLayout(new BorderLayout());
             add(content, BorderLayout.CENTER);
             final Box hor = Box.createHorizontalBox();
             hor.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
-            edit = new JButton("edit");
+            edit = new JButton("Edit");
             hor.add(Box.createHorizontalGlue());
             hor.add(edit);
-            hor.add(deleteCache);
+            hor.add(deleteDB);
             hor.add(Box.createHorizontalGlue());
             add(hor, BorderLayout.SOUTH);
             setPreferredSize(new Dimension(200, 240));
         }
 
-
-        protected void update(String database) {
-            if (database.equals("PubChem")) {
-                content.setText("<html>Our in-house mirror of PubChem (last update was at 1st June, 2016).<br> Compounds are requested via webservice and cached locally on your hard drive.</html>");
-                content.setMaximumSize(new Dimension(200, 240));
-                deleteCache.setText("Delete cache");
-                deleteCache.setEnabled(false);
-                edit.setEnabled(false);
-            }
-        }
-
-
         public void updateContent(CustomDatabase c) {
             if (c.getNumberOfCompounds() > 0) {
-                content.setText("<html>Custom database. Containing " + c.getNumberOfCompounds() + " compounds with " + c.getNumberOfFormulas() + " different molecular formulas. Consumes " + c.getMegabytes() + " mb on the hard drive." + ((c.isDeriveFromRestDb()) ? "<br>This database will also include all compounds from `"+ DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()) +"`." : "") + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>");
+                content.setText("<html>Custom database. Containing " + c.getNumberOfCompounds() + " compounds with " + c.getNumberOfFormulas() + " different molecular formulas. Consumes " + c.getMegabytes() + " mb on the hard drive." + ((c.isDeriveFromRestDb()) ? "<br>This database will also include all compounds from `" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()) + "`." : "") + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>");
             } else {
                 content.setText("Empty custom database.");
             }
-            deleteCache.setText("Delete database");
-            deleteCache.setEnabled(true);
             edit.setEnabled(!c.needsUpgrade());
         }
     }
@@ -332,7 +320,7 @@ public class DatabaseDialog extends JDialog {
         private String name;
 
         public ImportDatabaseDialog(String name) {
-            super(owner, "Create '" + name + "' database", false);
+            super(owner, "Import into '" + name + "' database", false);
 
             this.name = name;
             setPreferredSize(new Dimension(640, 480));
