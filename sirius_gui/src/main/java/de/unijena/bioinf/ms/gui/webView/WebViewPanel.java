@@ -34,6 +34,8 @@ import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.FutureTask;
 
 /*
@@ -42,7 +44,8 @@ import java.util.concurrent.FutureTask;
 */
 public abstract class WebViewPanel extends JFXPanel{
 
-    LinkedList<FutureTask<Void>> tasks = new LinkedList<>();
+    //should be thread safe
+    Queue<FutureTask<Void>> tasks = new ConcurrentLinkedQueue<>();
 
     public void queueTaskInJFXThread(Runnable runnable){
         FutureTask<Void> task = new FutureTask<>(runnable, null);
