@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -47,11 +48,17 @@ public class ChemicalFileDatabase extends ChemicalBlobDatabase<FileBlobStorage> 
         final List<String> fileNames = FileUtils.listAndClose(storage.getRoot(), s -> s.map(Path::getFileName).map(Path::toString)
                         .filter(p -> !p.toUpperCase().startsWith("SETTINGS")).collect(Collectors.toList()));
 
-        compression = fileNames.stream().map(Compression::fromName).findFirst().orElse(Compression.NONE);
+        if (!fileNames.isEmpty()) {
+            compression = fileNames.stream().map(Compression::fromName).findFirst().orElse(Compression.NONE);
 
-        format = fileNames.stream().map(s -> s.substring(0, s.length() - compression.ext().length()))
-                .map(Format::fromName).filter(Objects::nonNull)
-                .findFirst().orElseThrow(() -> new IOException("Could not determine Database formatQ"));
+            format = fileNames.stream().map(s -> s.substring(0, s.length() - compression.ext().length()))
+                    .map(Format::fromName).filter(Objects::nonNull)
+                    .findFirst().orElseThrow(() -> new IOException("Could not determine Database formatQ"));
+        }else {
+            compression = Compression.GZIP;
+            format = Format.JSON;
+            LoggerFactory.getLogger(getClass()).warn("Empty DB '" + storage.getName() + "'. Using default format '" + format.ext + "' with compression '" + compression.ext + "'.");
+        }
 
         this.formulas = fileNames.stream().map(n -> n.substring(0, n.length() - format.ext().length() - compression.ext().length()))
                 .map(MolecularFormula::parseOrThrow).sorted().toArray(MolecularFormula[]::new);

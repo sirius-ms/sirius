@@ -37,4 +37,9 @@ public final class TreeScore extends FormulaScore {
     public String name() {
         return "TreeScore";
     }
+
+    @Override
+    public String shortName() {
+        return "Tree";
+    }
 }
