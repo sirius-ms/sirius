@@ -38,4 +38,9 @@ public class TopCSIScore extends FormulaScore {
     public String name() {
         return "CSI:FingerIDScore";
     }
+
+    @Override
+    public String shortName() {
+        return "CSI";
+    }
 }

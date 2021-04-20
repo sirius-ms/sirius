@@ -48,23 +48,21 @@ public class ChemDBClient extends StructureSearchClient {
         super(serverUrl,cacheFpVersion);
     }
 
-
-    //todo this is against rest api convention
-    public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs, CloseableHttpClient client) throws IOException {
-        return postCompounds(inChIs, getCDKFingerprintVersion(client), client);
+    public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs2d, CloseableHttpClient client) throws IOException {
+        return postCompounds(inChIs2d, getCDKFingerprintVersion(client), client);
     }
 
-    public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs, @NotNull CdkFingerprintVersion fpVersion, CloseableHttpClient client) throws IOException {
+    public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs2d, @NotNull CdkFingerprintVersion fpVersion, CloseableHttpClient client) throws IOException {
         return execute(client,
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/compounds").build());
-                    post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(inChIs), ContentType.APPLICATION_JSON));
+                    post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(inChIs2d), ContentType.APPLICATION_JSON));
                     post.setConfig(RequestConfig.custom().setSocketTimeout(120000).setConnectTimeout(120000).setContentCompressionEnabled(true).build());
 
                     return post;
                 },
                 br -> {
-                    final List<FingerprintCandidate> compounds = new ArrayList<>(inChIs.size());
+                    final List<FingerprintCandidate> compounds = new ArrayList<>(inChIs2d.size());
                     try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(fpVersion, br)) {
                         while (fciter.hasNext())
                             compounds.add(fciter.next());

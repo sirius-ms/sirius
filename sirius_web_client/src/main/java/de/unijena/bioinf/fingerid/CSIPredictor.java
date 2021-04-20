@@ -107,7 +107,7 @@ public class CSIPredictor extends AbstractStructurePredictor {
 
             final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(performances);
 
-            return new CSICovarianceConfidenceScorer<>(confidenceSVMs, cvs, csiScoring, (Class<? extends FingerblastScoringMethod<?>>) fingerblastScoring.getClass());
+            return new CSICovarianceConfidenceScorer<>(confidenceSVMs, cvs, csiScoring);
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when loading confidence SVMs or the bayesian network. Confidence SCore will not be available!");
             LoggerFactory.getLogger(getClass()).debug("Error when loading confidence SVMs or the bayesian network.", e);
