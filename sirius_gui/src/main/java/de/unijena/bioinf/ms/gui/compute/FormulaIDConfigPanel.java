@@ -120,6 +120,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
         smallParameters.addNamed("Instrument", profileSelector);
 
+        smallParameters.addNamed("Filter by isotope pattern", makeParameterCheckBox("IsotopeSettings.filter"));
+
         ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", Strategy.class);
         smallParameters.addNamed("MS/MS isotope scorer", ms2IsotpeSetting);
 
@@ -157,6 +159,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         ionizationList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
         center.add(ionizationList);
         parameterBindings.put("AdductSettings.detectable", () -> getDerivedDetectableAdducts().toString());
+        parameterBindings.put("AdductSettings.fallback", () -> getDerivedDetectableAdducts().toString());
 
 
         // configure Element panel
@@ -213,6 +216,9 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             ionizationList.checkBoxList.checkAll();
             ionizationList.setEnabled(enabled);
         }
+
+        if (ecs.size() == 1 && isEnabled())
+            detectPossibleAdducts(ecs.get(0));
     }
 
     protected void makeElementPanel(boolean multi) {
@@ -270,6 +276,27 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         }
     }
 
+    protected void detectPossibleAdducts(InstanceBean ec) {
+        String notWorkingMessage = "Adduct detection requires MS1 spectrum.";
+        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
+            Jobs.runInBackgroundAndLoad(owner, "Detecting adducts...", () -> {
+                final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
+                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(),false));
+
+                pi.getAnnotation(PossibleAdducts.class).
+                        ifPresentOrElse(pa -> {
+                                    //todo do we want to add adducts?
+                                    ionizationList.checkBoxList.uncheckAll();
+                                    pa.getIonModes().stream().map(IonMode::toString).forEach(ionizationList.checkBoxList::check);
+                                },
+                                () -> new ExceptionDialog(owner, "Failed to detect Adducts from MS1")
+                        );
+            }).getResult();
+        } else {
+            LoggerFactory.getLogger(getClass()).warn(notWorkingMessage);
+        }
+    }
+
     public Instrument getInstrument() {
         return (Instrument) profileSelector.getSelectedItem();
     }
@@ -295,7 +322,6 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     }
 
     public PossibleAdducts getDerivedDetectableAdducts() {
-        System.out.println(PropertyManager.DEFAULTS.getConfigValue("AdductSettings.detectable"));
         Set<PrecursorIonType> det = new HashSet<>(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
         Set<Ionization> keep = ionizationList.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType).flatMap(Optional::stream).map(PrecursorIonType::getIonization).collect(Collectors.toSet());
         det.removeIf(s -> !keep.contains(s.getIonization()));

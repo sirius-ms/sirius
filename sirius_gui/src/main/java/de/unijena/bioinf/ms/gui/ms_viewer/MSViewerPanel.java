@@ -32,6 +32,9 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseListener, ComponentListener, KeyListener, MSViewerDataModelListener {
 
@@ -64,6 +67,8 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	private int pressXPos;
 
 	private final Queue<MSViewerPanelListener> listeners;
+
+	private final Lock paintLock = new ReentrantLock();
 
 	///////////////////////////////////// Variablen fuer die Darstellung //////////////////////////////////////////
 
@@ -235,14 +240,19 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	}
 
 	public void setData(MSViewerDataModel dataModel){
-		this.dataModel = dataModel;
-		this.firstVisibleIndex = 0;
-		this.lastVisibleIndex = dataModel.getSize();
-		this.setOverviewMode(false);
-		this.setVisibleIndices(0, dataModel.getSize()-1);
-		this.computeScale();
-		this.notInitialized = true;
-		this.peakArrayNotInitialized = true;
+		try {
+			paintLock.lock();
+			this.dataModel = dataModel;
+			this.firstVisibleIndex = 0;
+			this.lastVisibleIndex = dataModel.getSize();
+			this.setOverviewMode(false);
+			this.setVisibleIndices(0, dataModel.getSize()-1);
+			this.computeScale();
+			this.notInitialized = true;
+			this.peakArrayNotInitialized = true;
+		} finally {
+			paintLock.unlock();
+		}
 	}
 
 	protected boolean isOverviewModeActive(){
@@ -340,33 +350,38 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 
 	}
 
-	public MSViewerDataModel getDataModel(){
+	/*public MSViewerDataModel getDataModel(){
 		return this.dataModel;
-	}
+	}*/
 
 	@Override
 	public void paint(Graphics g){
+		try {
+			if (paintLock.tryLock()){
+				if(notInitialized){
+					this.initBasicPositionParameter(this.getSize().width, this.getSize().height);
+					computeScale();
+				}
+				if(peakArrayNotInitialized){
+					this.initPeakPositionArray();
+				}
 
-		if(notInitialized){
-			this.initBasicPositionParameter(this.getSize().width, this.getSize().height);
-            computeScale();
+				Graphics2D g2 = (Graphics2D)g;
+
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
+				this.paintBasics(g2);
+
+				if(dragged) this.paintSelectionRect(g2);
+
+				this.paintPeaks(g2);
+
+				this.paintAxes(g2);
+				if(this.peakIndex>=0 && !dragged) this.paintExtendedPeakInformation(g2);
+			}
+		} finally {
+			paintLock.unlock();
 		}
-		if(peakArrayNotInitialized){
-			this.initPeakPositionArray();
-		}
-
-		Graphics2D g2 = (Graphics2D)g;
-
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-
-		this.paintBasics(g2);
-
-		if(dragged) this.paintSelectionRect(g2);
-
-		this.paintPeaks(g2);
-
-		this.paintAxes(g2);
-		if(this.peakIndex>=0 && !dragged) this.paintExtendedPeakInformation(g2);
 
 	}
 
@@ -625,106 +640,106 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 	}
 
 	private void paintExtendedPeakInformation(Graphics2D g2){
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-		g2.setFont(detailFont);
-		FontMetrics fm = g2.getFontMetrics();
+		try {
+			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+			g2.setFont(detailFont);
+			FontMetrics fm = g2.getFontMetrics();
 
-		String mfLabel = "molecular formula:";
-		String relIntLabel = "rel. intensity:";
-		String massLabel   = "mass/charge:";
+			String mfLabel = "molecular formula:";
+			String relIntLabel = "rel. intensity:";
+			String massLabel   = "mass/charge:";
 //		String snLabel     = "signal/noise:";
-		String absIntLabel = "abs. intensity:";
-		String ionLabel   = "ionization:";
+			String absIntLabel = "abs. intensity:";
+			String ionLabel   = "ionization:";
 
-		double mass = this.dataModel.getMass(this.peakIndex);
-		double absInt = this.dataModel.getAbsoluteIntensity(this.peakIndex);
-		double relInt = this.dataModel.getRelativeIntensity(this.peakIndex);
-		String mfVal = this.dataModel.getMolecularFormula(this.peakIndex);
+			double mass = this.dataModel.getMass(this.peakIndex);
+			double absInt = this.dataModel.getAbsoluteIntensity(this.peakIndex);
+			double relInt = this.dataModel.getRelativeIntensity(this.peakIndex);
+			String mfVal = this.dataModel.getMolecularFormula(this.peakIndex);
 //		double sn = this.dataModel.getSignalNoise(this.peakIndex);
-		String ionVal = this.dataModel.getIonization(this.peakIndex);
+			String ionVal = this.dataModel.getIonization(this.peakIndex);
 
-		String relIntVal  = String.valueOf(relInt);
-		String absIntVal  = absInt > 0 ? String.valueOf(absInt) : "unknown";
-		String massVal = String.valueOf(mass);
+			String relIntVal  = String.valueOf(relInt);
+			String absIntVal  = absInt > 0 ? String.valueOf(absInt) : "unknown";
+			String massVal = String.valueOf(mass);
 //		String snVal   = sn > 0 ? String.valueOf(sn) : "unknown";
 
-		int relIntLabelLength = fm.stringWidth(relIntLabel);
-		int absIntLabelLength = fm.stringWidth(absIntLabel);
-		int massLabelLength   = fm.stringWidth(massLabel);
+			int relIntLabelLength = fm.stringWidth(relIntLabel);
+			int absIntLabelLength = fm.stringWidth(absIntLabel);
+			int massLabelLength   = fm.stringWidth(massLabel);
 //		int snLabelLength     = fm.stringWidth(snLabel);
-		int mfLabelLength     = mfVal==null ? 0 : fm.stringWidth(mfLabel);
-		int ionLabelLength	  = ionVal==null ? 0 : fm.stringWidth(ionLabel);
+			int mfLabelLength     = mfVal==null ? 0 : fm.stringWidth(mfLabel);
+			int ionLabelLength	  = ionVal==null ? 0 : fm.stringWidth(ionLabel);
 
-		int relIntValLength = fm.stringWidth(relIntVal);
-		int absIntValLength = fm.stringWidth(absIntVal);
-		int massValLength   = fm.stringWidth(massVal);
+			int relIntValLength = fm.stringWidth(relIntVal);
+			int absIntValLength = fm.stringWidth(absIntVal);
+			int massValLength   = fm.stringWidth(massVal);
 //		int snValLength     = fm.stringWidth(snVal);
-		int mfValLength     = mfVal==null ? 0 : fm.stringWidth(mfVal);
-		int ionValLength    = ionVal==null ? 0 : fm.stringWidth(ionVal);
+			int mfValLength     = mfVal==null ? 0 : fm.stringWidth(mfVal);
+			int ionValLength    = ionVal==null ? 0 : fm.stringWidth(ionVal);
 
-		int maxFirstLength  = Math.max(ionLabelLength, Math.max(absIntLabelLength,Math.max(Math.max(relIntLabelLength,massLabelLength),mfLabelLength)));
-		int maxSecondLength = Math.max(ionValLength, Math.max(absIntValLength,Math.max(Math.max(relIntValLength,massValLength),mfValLength)));
+			int maxFirstLength  = Math.max(ionLabelLength, Math.max(absIntLabelLength,Math.max(Math.max(relIntLabelLength,massLabelLength),mfLabelLength)));
+			int maxSecondLength = Math.max(ionValLength, Math.max(absIntValLength,Math.max(Math.max(relIntValLength,massValLength),mfValLength)));
 //		int maxFirstLength  = Math.max(absIntLabelLength,Math.max(Math.max(relIntLabelLength,massLabelLength),snLabelLength));
 //		int maxSecondLength = Math.max(absIntValLength,Math.max(Math.max(relIntValLength,massValLength),snValLength));
 
 
-		boolean noExtendedInfo = mfVal == null || ionVal == null;
+			boolean noExtendedInfo = mfVal == null || ionVal == null;
 
-		int totalHorizontalSize = maxFirstLength + maxSecondLength + 20;
-		int totalVerticalSize = noExtendedInfo ? 50 : 80;
+			int totalHorizontalSize = maxFirstLength + maxSecondLength + 20;
+			int totalVerticalSize = noExtendedInfo ? 50 : 80;
 
-		int leftX = 0;
-		int leftY = 0;
+			int leftX = 0;
+			int leftY = 0;
 
-		int selectedPeakX = this.getXPeakPosition(mass);
-		int selectedPeakY = this.getYPeakPosition(relInt);
+			int selectedPeakX = this.getXPeakPosition(mass);
+			int selectedPeakY = this.getYPeakPosition(relInt);
 
-		if(selectedPeakX + (totalHorizontalSize/2) + 5 >= sizeX){
-			leftX = sizeX - totalHorizontalSize - 5;
-		}else if(selectedPeakX - (totalHorizontalSize/2) - 5 <= 0){
-			leftX = 5;
-		}else{
-			leftX = selectedPeakX - (totalHorizontalSize/2);
-		}
+			if(selectedPeakX + (totalHorizontalSize/2) + 5 >= sizeX){
+				leftX = sizeX - totalHorizontalSize - 5;
+			}else if(selectedPeakX - (totalHorizontalSize/2) - 5 <= 0){
+				leftX = 5;
+			}else{
+				leftX = selectedPeakX - (totalHorizontalSize/2);
+			}
 
-		if(selectedPeakY - totalVerticalSize - 5 < yAxisVerticalStartPos){
-			leftY = yAxisVerticalStartPos;
-		}else{
-			leftY = selectedPeakY - totalVerticalSize - 5;
-		}
+			if(selectedPeakY - totalVerticalSize - 5 < yAxisVerticalStartPos){
+				leftY = yAxisVerticalStartPos;
+			}else{
+				leftY = selectedPeakY - totalVerticalSize - 5;
+			}
 
-		g2.setColor(innerBlue);
-		g2.fillRect(leftX, leftY, totalHorizontalSize, totalVerticalSize);
-		g2.setColor(outerBlue);
-		g2.drawRect(leftX, leftY, totalHorizontalSize, totalVerticalSize);
-		g2.setColor(defaultColor);
+			g2.setColor(innerBlue);
+			g2.fillRect(leftX, leftY, totalHorizontalSize, totalVerticalSize);
+			g2.setColor(outerBlue);
+			g2.drawRect(leftX, leftY, totalHorizontalSize, totalVerticalSize);
+			g2.setColor(defaultColor);
 
-		int firstColumnX = leftX + 5;
+			int firstColumnX = leftX + 5;
 
-		int secondColumnX = leftX + 15 + maxFirstLength;
+			int secondColumnX = leftX + 15 + maxFirstLength;
 
-		if (noExtendedInfo) {
-			g2.drawString(massLabel, firstColumnX, leftY + 15);
-			g2.drawString(relIntLabel, firstColumnX, leftY + 30);
-			g2.drawString(absIntLabel, firstColumnX, leftY + 45);
+			if (noExtendedInfo) {
+				g2.drawString(massLabel, firstColumnX, leftY + 15);
+				g2.drawString(relIntLabel, firstColumnX, leftY + 30);
+				g2.drawString(absIntLabel, firstColumnX, leftY + 45);
 
-			g2.drawString(massVal, secondColumnX, leftY + 15);
-			g2.drawString(relIntVal, secondColumnX, leftY + 30);
-			g2.drawString(absIntVal, secondColumnX, leftY + 45);
-		} else {
-			g2.drawString(mfLabel, firstColumnX, leftY + 15);
-			g2.drawString(massLabel, firstColumnX, leftY + 30);
-			g2.drawString(relIntLabel, firstColumnX, leftY+45);
-			g2.drawString(absIntLabel, firstColumnX, leftY+60);
-			g2.drawString(ionLabel, firstColumnX, leftY+75);
+				g2.drawString(massVal, secondColumnX, leftY + 15);
+				g2.drawString(relIntVal, secondColumnX, leftY + 30);
+				g2.drawString(absIntVal, secondColumnX, leftY + 45);
+			} else {
+				g2.drawString(mfLabel, firstColumnX, leftY + 15);
+				g2.drawString(massLabel, firstColumnX, leftY + 30);
+				g2.drawString(relIntLabel, firstColumnX, leftY+45);
+				g2.drawString(absIntLabel, firstColumnX, leftY+60);
+				g2.drawString(ionLabel, firstColumnX, leftY+75);
 
-			g2.drawString(mfVal,secondColumnX,leftY+15);
-			g2.drawString(massVal,secondColumnX,leftY+30);
-			g2.drawString(relIntVal,secondColumnX,leftY+45);
-			g2.drawString(absIntVal,secondColumnX,leftY+60);
-			g2.drawString(ionVal,secondColumnX,leftY+75);
-		}
-
+				g2.drawString(mfVal,secondColumnX,leftY+15);
+				g2.drawString(massVal,secondColumnX,leftY+30);
+				g2.drawString(relIntVal,secondColumnX,leftY+45);
+				g2.drawString(absIntVal,secondColumnX,leftY+60);
+				g2.drawString(ionVal,secondColumnX,leftY+75);
+			}
 
 
 //		g2.drawString(relIntLabel, firstColumnX, leftY+15);
@@ -738,6 +753,9 @@ public class MSViewerPanel extends JPanel implements MouseMotionListener, MouseL
 //		g2.drawString(absIntVal,secondColumnX,leftY+30);
 //		g2.drawString(massVal,secondColumnX,leftY+45);
 //		g2.drawString(snVal,secondColumnX,leftY+60);
+		} catch (Exception e) {//todo this is a hotfix to not crash the GUI when Index out of bound occurs
+			LoggerFactory.getLogger(getClass()).error("Error when painting spectrum", e);
+		}
 	}
 
 	@Override
