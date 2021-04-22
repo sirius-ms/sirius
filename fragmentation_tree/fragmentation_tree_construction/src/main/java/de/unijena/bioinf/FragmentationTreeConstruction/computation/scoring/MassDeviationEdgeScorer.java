@@ -32,7 +32,9 @@ public class MassDeviationEdgeScorer implements LossScorer<Object> {
         if (deviation==null) {
             final double ppm = input.getExperimentInformation().getAnnotationOrDefault(MS2MassDeviation.class).standardMassDeviation.getPpm();
             dev =new Deviation(ppm, 100*1e-6*ppm);
-        } else dev = deviation;
+        } else {
+            dev = deviation;
+        }
         final double sd = dev.absoluteFor(delta);
         return weight * Math.log(Erf.erfc(Math.abs(delta-theoreticalDelta)/(sd * Math.sqrt(2))));
     }

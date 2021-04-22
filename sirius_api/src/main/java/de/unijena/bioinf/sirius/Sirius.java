@@ -81,8 +81,7 @@ public class Sirius {
         this.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs2Plugin());
-
-
+        this.getMs2Analyzer().registerPlugin(new UseLossMassDeviationScoringPlugin());
         this.getMs2Analyzer().registerPlugin(new TreeMotifPlugin());
     }
 
