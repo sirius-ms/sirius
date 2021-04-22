@@ -48,6 +48,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
 
     public CandidateListView(StructureList source) {
         super(source);
+        source.setTopLevelSelectionModel(getFilteredSelectionModel());
     }
 
 

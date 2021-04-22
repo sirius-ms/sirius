@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.InSilicoSelectionBox;
 import de.unijena.bioinf.ms.gui.ms_viewer.InsilicoFragmenter;
@@ -34,7 +35,7 @@ import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import javafx.embed.swing.JFXPanel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,18 +64,21 @@ public class SpectraVisualizationPanel
 	FormulaResultBean sre = null;
 	JComboBox<String> modesBox;
 	JComboBox<String> ceBox;
-	InSilicoSelectionBox anoBox;
-	String preferredMode = MS1_DISPLAY;
-	String preferredCE = MS2_MERGED_DISPLAY;
+	final Optional<InSilicoSelectionBox> optAnoBox;
+	String preferredMode;
 
 	private InsilicoFragmenter fragmenter;
 
 	private WebViewSpectraViewer browser;
 
-	public SpectraVisualizationPanel() {
-		this.setLayout(new BorderLayout());
+	public SpectraVisualizationPanel(boolean annotationBox) {
+		this(MS1_DISPLAY, annotationBox);
+	}
 
+	public SpectraVisualizationPanel(String preferredMode, boolean annotationBox) {
+		this.setLayout(new BorderLayout());
 		this.fragmenter = new InsilicoFragmenter(this);
+		this.preferredMode = preferredMode;
 
 		JToolBar northPanel = new JToolBar();
 		northPanel.setFloatable(false);
@@ -88,10 +92,12 @@ public class SpectraVisualizationPanel
 		northPanel.add(modesBox);
 		northPanel.add(ceBox);
 
-		anoBox = new InSilicoSelectionBox(new Dimension(200,100), 5);
-		northPanel.add(anoBox);
+		optAnoBox = annotationBox ? Optional.of(new InSilicoSelectionBox(new Dimension(200, 100), 5)) : Optional.empty();
 
-		anoBox.setAction(new InsilicoFrament());
+		optAnoBox.ifPresent(anoBox -> {
+			northPanel.add(anoBox);
+			anoBox.setAction(new InsilicoFrament());
+		});
 
 		northPanel.addSeparator(new Dimension(10, 10));
 		this.add(northPanel, BorderLayout.NORTH);
@@ -101,7 +107,7 @@ public class SpectraVisualizationPanel
 		// Browser //
 		/////////////
 		this.browser = new WebViewSpectraViewer();
-		this.add((JFXPanel) this.browser, BorderLayout.CENTER);
+		this.add(this.browser, BorderLayout.CENTER);
 		this.setVisible(true);
 	}
 
@@ -172,9 +178,9 @@ public class SpectraVisualizationPanel
 			System.err.println("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
 			return;
 		}
-		if (jsonSpectra != null){
-			String json=null, svg=null;
-			if (insilicoResult!=null) {
+		if (jsonSpectra != null) {
+			String json = null, svg = null;
+			if (insilicoResult != null) {
 				json = insilicoResult.getJson();
 				svg = insilicoResult.getSvg();
 			}
@@ -184,15 +190,19 @@ public class SpectraVisualizationPanel
 
 	@Override
 	public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
+		resultsChanged(experiment, sre, null);
+	}
+
+	public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, @Nullable CompoundCandidate spectrumAno) {
 		if ((this.experiment == null ^ experiment == null) || (this.sre == null ^ sre == null)) {
 			// update modeBox elements, don't listen to these events
 			modesBox.removeItemListener(this);
 			modesBox.removeAllItems();
 			if (experiment != null) {
-				if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum()!=null)
+				if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum() != null)
 					modesBox.addItem(MS1_DISPLAY);
 				if (sre != null) {
-					if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum()!=null)
+					if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum() != null)
 						modesBox.addItem(MS1_MIRROR_DISPLAY);
 				}
 				if (experiment.getMs2Spectra().size() > 0)
@@ -203,32 +213,38 @@ public class SpectraVisualizationPanel
 		}
 		if (sre != this.sre) {
 			clearInsilicoResult();
+			if (sre != null && spectrumAno != null)
+				fragmenter.fragment(sre, spectrumAno);
 		}
-		if (experiment != null){
+		if (experiment != null) {
 			boolean preferredPossible = false; // no `contains` for combobox
-			for (int i=0; i < modesBox.getItemCount(); i++)
-				preferredPossible |= preferredMode.equals((String) modesBox.getItemAt(i));
+			for (int i = 0; i < modesBox.getItemCount(); i++)
+				preferredPossible |= preferredMode.equals(modesBox.getItemAt(i));
 			// change to preferred mode if possible, else (potentially automatic) selection
-			if (preferredPossible){
+			if (preferredPossible) {
 				modesBox.removeItemListener(this);
 				modesBox.setSelectedItem(preferredMode);
-				ceBox.setVisible(modesBox.getSelectedItem().equals(MS2_DISPLAY));
+				ceBox.setVisible(modesBox.getSelectedItem() != null && modesBox.getSelectedItem().equals(MS2_DISPLAY));
 				modesBox.addItemListener(this);
 			}
 			updateCEBox(experiment);
 			drawSpectra(experiment, sre, (String) modesBox.getSelectedItem(), getCEIndex());
+
+			optAnoBox.ifPresent(anoBox -> getCurrentMode().ifPresent(mode -> {
+				if (mode.msLevel > 1) {
+					anoBox.activate();
+				} else {
+					anoBox.deactivate();
+				}
+			}));
 		} else {
 			browser.clear();
+			optAnoBox.ifPresent(InSilicoSelectionBox::deactivate);
 		}
 		// store data to switch between modes without having to switch to other results
 		this.experiment = experiment;
 		this.sre = sre;
-		anoBox.resultsChanged(experiment,sre,resultElements,selections);
-		if (getCurrentMode().msLevel>1) {
-			anoBox.activate();
-		} else {
-			anoBox.deactivate();
-		}
+		optAnoBox.ifPresent(anoBox -> anoBox.resultsChanged(sre));
 	}
 
 	private void updateCEBox(InstanceBean experiment){
@@ -247,21 +263,25 @@ public class SpectraVisualizationPanel
 
 	@Override
 	public void itemStateChanged(ItemEvent e) {
-		Object sel = modesBox.getSelectedItem();
-		ceBox.setVisible(sel.equals(MS2_DISPLAY));
-		if (sel.equals(MS2_DISPLAY) || sel.equals(MS2_MERGED_DISPLAY)) {
-			anoBox.activate();
-		} else {
-			anoBox.deactivate();
-		}
+		final Object sel = modesBox.getSelectedItem();
+		ceBox.setVisible(sel != null && sel.equals(MS2_DISPLAY));
+
+		optAnoBox.ifPresent(anoBox -> {
+			if (sel != null && (sel.equals(MS2_DISPLAY) || sel.equals(MS2_MERGED_DISPLAY))) {
+				anoBox.activate();
+			} else {
+				anoBox.deactivate();
+			}
+		});
+
 		preferredMode = (String) sel;
-		if (sel != null && !(experiment == null && sre == null)){
+		if (sel != null && !(experiment == null && sre == null)) {
 			drawSpectra(experiment, sre, (String) sel, getCEIndex());
 		}
 	}
 
-	private int getCEIndex(){
-		return ceBox.getSelectedItem().equals(MS2_MERGED_DISPLAY) ? -1 : ceBox.getSelectedIndex();
+	private int getCEIndex() {
+		return ceBox.getSelectedItem() == null || ceBox.getSelectedItem().equals(MS2_MERGED_DISPLAY) ? -1 : ceBox.getSelectedIndex();
 	}
 
 	public enum SpectrumMode {
@@ -277,28 +297,29 @@ public class SpectraVisualizationPanel
 			this.label = label;
 			this.msLevel = msLevel;
 		}
-	};
+	}
 
-	public SpectrumMode getCurrentMode() {
+	public Optional<SpectrumMode> getCurrentMode() {
 		// we should use a variable for this!
 		// then, connect everything with listeners
 		final Object s = modesBox.getSelectedItem();
-		if (s.equals(MS1_DISPLAY)) return SpectrumMode.MS1;
-		if (s.equals(MS1_MIRROR_DISPLAY)) return SpectrumMode.MS1_MIRROR;
-		if (s.equals(MS2_MERGED_DISPLAY)) return SpectrumMode.MS2_MERGED;
-		if (s.equals(MS2_DISPLAY)) return SpectrumMode.MS2;
-		return SpectrumMode.MS1; // ?
+		if (s == null)
+			return Optional.empty();
+		if (s.equals(MS1_DISPLAY)) return Optional.of(SpectrumMode.MS1);
+		if (s.equals(MS1_MIRROR_DISPLAY)) return Optional.of(SpectrumMode.MS1_MIRROR);
+		if (s.equals(MS2_MERGED_DISPLAY)) return Optional.of(SpectrumMode.MS2_MERGED);
+		if (s.equals(MS2_DISPLAY)) return Optional.of(SpectrumMode.MS2);
+		return Optional.of(SpectrumMode.MS1); // ?
 	}
 
 	public class InsilicoFrament extends AbstractAction {
-
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			final Object selectedItem = anoBox.getSelectedItem();
-			if (selectedItem!=null && selectedItem instanceof InSilicoSelectionBox.Item) {
-				InSilicoSelectionBox.Item item = (InSilicoSelectionBox.Item)selectedItem;
-				if (item.getCandidate()!=null) {
-					fragmenter.fragment(sre,item.getCandidate());
+			final Object selectedItem = ((InSilicoSelectionBox) e.getSource()).getSelectedItem();
+			if (selectedItem != null && selectedItem instanceof InSilicoSelectionBox.Item) {
+				InSilicoSelectionBox.Item item = (InSilicoSelectionBox.Item) selectedItem;
+				if (item.getCandidate() != null) {
+					fragmenter.fragment(sre, item.getCandidate());
 				}
 			}
 		}
@@ -310,9 +331,12 @@ public class SpectraVisualizationPanel
 	private InsilicoFragmenter.Result insilicoResult;
 	public void setInsilicoResult(InsilicoFragmenter.Result result) {
 		this.insilicoResult = result;
-		if (getCurrentMode().msLevel >= 2) {
-			drawSpectra(experiment, sre, getCurrentMode().label, getCEIndex());
-		}
+		getCurrentMode().ifPresent(m -> {
+			if (m.msLevel >= 2) {
+				drawSpectra(experiment, sre, m.label, getCEIndex());
+			}
+		});
+
 	}
 	public void clearInsilicoResult() {
 		this.insilicoResult = null;

@@ -45,7 +45,7 @@ public class ResultPanel extends JTabbedPane {
     private LCMSViewerPanel lcmsPanel;
 
     private CandidateListDetailViewPanel ccv;
-    private CandidateOverviewPanel cov;
+    private EpimetheusPanel epi;
     private FingerprintPanel fpt;
     private CompoundClassPanel ccp;
 
@@ -57,11 +57,11 @@ public class ResultPanel extends JTabbedPane {
 
         rvp = new FormulaOverviewPanel(siriusResultElements);
         tvp = new TreeVisualizationPanel();
-        svp = new SpectraVisualizationPanel();
+        svp = new SpectraVisualizationPanel(true);
 
         this.lcmsPanel = new LCMSViewerPanel(siriusResultElements);
 
-        cov = new CandidateOverviewPanel(new StructureList(siriusResultElements, ActionList.DataSelectionStrategy.ALL));
+        epi = new EpimetheusPanel(new StructureList(siriusResultElements, ActionList.DataSelectionStrategy.ALL));
         ccv = new CandidateListDetailViewPanel(new StructureList(siriusResultElements));
         try {
             fpt = new FingerprintPanel(new FingerprintTable(siriusResultElements, webAPI));
@@ -73,18 +73,21 @@ public class ResultPanel extends JTabbedPane {
         ccp = new CompoundClassPanel(new CompoundClassList(siriusResultElements), siriusResultElements);
 
 
+        addTab("LC-MS", null, lcmsPanel, lcmsPanel.getDescription());
+
         addTab("Sirius Overview", null, rvp, rvp.getDescription());
         addTab("Spectra", null, new FormulaListHeaderPanel(siriusResultElements, svp), svp.getDescription());
         addTab("Trees", null, new FormulaListHeaderPanel(siriusResultElements, tvp), tvp.getDescription());
 
-        addTab("LC-MS", null, lcmsPanel, lcmsPanel.getDescription());
+        addTab("Epimetheus", null, epi, epi.getDescription());
+        addTab("CSI:FingerID", null, new FormulaListHeaderPanel(siriusResultElements, ccv), ccv.getDescription());
 
-        addTab("CSI:FingerID Overview", null, cov, cov.getDescription());
-        addTab("CSI:FingerID Details", null, new FormulaListHeaderPanel(siriusResultElements, ccv), ccv.getDescription());
         if (fpt != null)
             addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(siriusResultElements, fpt), fpt.getDescription());
         addTab("CANOPUS", null, new FormulaListHeaderPanel(siriusResultElements, ccp), ccp.getDescription());
 
         this.fl = siriusResultElements;
+
+        setSelectedIndex(1);
     }
 }
