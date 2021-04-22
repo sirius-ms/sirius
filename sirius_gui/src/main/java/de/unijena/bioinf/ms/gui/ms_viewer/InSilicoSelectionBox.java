@@ -3,11 +3,10 @@ package de.unijena.bioinf.ms.gui.ms_viewer;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.CompactComboBox;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
+import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.depict.DepictionGenerator;
 import org.openscience.cdk.exception.CDKException;
@@ -27,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class InSilicoSelectionBox extends CompactComboBox<InSilicoSelectionBox.Item> implements ListCellRenderer<InSilicoSelectionBox.Item>, ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
+public class InSilicoSelectionBox extends CompactComboBox<InSilicoSelectionBox.Item> implements ListCellRenderer<InSilicoSelectionBox.Item> {
 
     private Dimension sizePerCompound;
 
@@ -71,9 +70,7 @@ public class InSilicoSelectionBox extends CompactComboBox<InSilicoSelectionBox.I
         disableIfEmpty();
     }
 
-    @Override
-    public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
-
+    public void resultsChanged(@Nullable FormulaResultBean sre) {
         if (sre==null) {
             setCandidateSet(new ArrayList<>());
         } else {
