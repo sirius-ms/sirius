@@ -67,48 +67,46 @@ function clear() {
 };
 
 function showStructure(i) {
-    if (i === ms2Size - 1) {
-        strucArea.html("");
-        document.getElementById('str_border').innerHTML = svg_str;
-        basic_structure = strucArea.select('svg')
-            .style('height', '100%')
-            .style('width', '100%');
-        removeElementStyle("bond", "stroke");
-        removeElementStyle("atom", "fill");
+    strucArea.html("");
+    document.getElementById('str_border').innerHTML = svg_str;
+    basic_structure = strucArea.select('svg')
+        .style('height', '100%')
+        .style('width', '100%');
+    removeElementStyle("bond", "stroke");
+    removeElementStyle("atom", "fill");
+    if (i === -1) {
+        strucArea.selectAll(".bond").classed("default_bond", true);
+        strucArea.selectAll(".atom").classed("default_atom", true);
+        basic_structure.style("opacity", 1);
+    } else if (i === ms2Size - 1) {
         strucArea.selectAll(".bond").classed("highlight_bond", true);
         strucArea.selectAll(".atom").classed("highlight_atom", true);
         basic_structure.style("opacity", 1);
     } else if ("structureInformation" in data.spectra[0].peaks[i]) {
-        strucArea.html("");
-        document.getElementById('str_border').innerHTML = svg_str;
-        basic_structure = strucArea.select('svg')
-            .style('height', '100%')
-            .style('width', '100%');
         const highlight = data.spectra[0].peaks[i].structureInformation;
         highlighting(highlight.bonds, highlight.cuts, highlight.atoms);
         basic_structure.style("opacity", 1);
     } else {
-        if (basic_structure !== null) basic_structure.style("opacity", 0);
+        basic_structure.style("opacity", 0);
     }
 };
 
 function removeElementStyle(className, styleName) {
-	let elements = document.getElementsByClassName(className);
+    let elements = document.getElementsByClassName(className);
     for (let e of elements) {
-    	if (e.nodeName === 'g') {
-    		let children = e.children;
-    		for (let child of children) {
-    		    if (child.hasAttribute(styleName)) child.removeAttribute(styleName);
-    		}
-    	} else {
-    		if (e.hasAttribute(styleName)) e.removeAttribute(styleName);
-    	}
+        if (e.nodeName === 'g') {
+            let children = e.children;
+            for (let child of children) {
+                child.classList.add(className);
+                if (child.hasAttribute(styleName)) child.removeAttribute(styleName);
+            }
+        } else {
+            if (e.hasAttribute(styleName)) e.removeAttribute(styleName);
+        }
     }
 };
 
 function highlighting(bonds, cuts, atoms) {
-	removeElementStyle("bond", "stroke");
-	removeElementStyle("atom", "fill");
     let totalBond = d3.selectAll(".bond").size();
     let total = new Set(Array.from({length: totalBond}, (v, i) => i));
     let bond_set = new Set(bonds);
@@ -127,12 +125,12 @@ function highlighting(bonds, cuts, atoms) {
     let highlight_atoms = new Set(atoms);
     let paths = document.getElementsByClassName("atom");
     for (let p of paths) {
-    	let id = Number(p.id.replace("mol1atm", "")) - 1;
-    	if (highlight_atoms.has(id)) {
-    		p.setAttribute('class', "atom highlight_atom");
-    	} else {
-    		p.setAttribute('class', "atom rest_atom");
-    	}
+        let id = Number(p.id.replace("mol1atm", "")) - 1;
+        if (highlight_atoms.has(id)) {
+            p.setAttribute('class', "atom highlight_atom");
+        } else {
+            p.setAttribute('class', "atom rest_atom");
+        }
     }
 };
 
@@ -140,12 +138,12 @@ function idled() { idleTimeout = null; };
 
 // Only used in spectrumPlot: peak_1 = unannotated, peak_2 = annotate
 function resetColor(d) {
-	let precursor = data.spectra[0].peaks[ms2Size-1].formula;
-	if ("structureInformation" in d || (d.formula === precursor && svg_str !== null)) {
-		return "peak_2 peak_structInfo peak";
-	} else {
-		return ("formula" in d) ? "peak_2 peak" : "peak_1 peak";
-	}
+    let precursor = data.spectra[0].peaks[ms2Size-1].formula;
+    if ("structureInformation" in d || (d.formula === precursor && svg_str !== null)) {
+        return "peak_2 peak_structInfo peak";
+    } else {
+        return ("formula" in d) ? "peak_2 peak" : "peak_1 peak";
+    }
 };
 
 function translateHover(mouse_w, mouse_h) {
@@ -222,7 +220,7 @@ const mouseMovingFunction = function(spectrum, tolerance, xdomain, ydomain, call
                     closestPeakIndex = k;
                 }
             }
-        } 
+        }
         const selection = closestPeakIndex;
         if (selection === lastPeakSelected && lastPeakSelected === -1) callbackLeave(); // Wei: In mirror plot, somehow it never leaves...So I add this line.
         if (selection != lastPeakSelected) {
@@ -263,7 +261,7 @@ var mousedown = function(d, i) {
         tmp.classed("peak_select", false);
         document.getElementById("anno_leftClick").innerText = "Left click to choose a peak...";
         annoArea.attr("id", "nothing");
-        if (basic_structure !== null) basic_structure.style("opacity", 0);
+        showStructure(-1);
     } else { // create a new selection
         if (selected.leftClick !== null && !tmp.classed("peak_select")) { //cancel the last selection
             d3.select("#peak"+selected.leftClick).attr("class", resetColor);
@@ -305,8 +303,7 @@ function init() {
         .attr("x", -h/2)
         .text("Relative intensity");
 
-    svg.selectAll(".label")
-        .attr("visibility", "hidden");
+    svg.selectAll(".label").attr("visibility", "hidden");
     //tooltip
     tooltip = d3.select("#container")
         .append("div")
@@ -357,9 +354,6 @@ function initStructureView() {
     d3.select("#xLabel").attr("x", w/2);
 };
 
-/*
-    I think this is a bit cleaner and safer than loadHighlights
-*/
 function injectStructureInformation(spectrum) {
     const structure = anno_str; // this should not be a global variable
     const formula2nodes = {};
@@ -374,7 +368,7 @@ function injectStructureInformation(spectrum) {
     for (let struct of structure) {
         const formula = struct.formula;
         if (formula2nodes[formula]) {
-            for (let node of formula2nodes[formula]) {             
+            for (let node of formula2nodes[formula]) {
                 node.structureInformation = struct;
             }
         }
@@ -430,9 +424,9 @@ function spectrumPlot(spectrum, structureView) {
             .attr("height", function(d) { return h - y(d.intensity); });
     };
     brush = d3.brushX()
-    	.extent( [ [0,0], [w,h] ])
-    	.filter(rightClickOnly)
-    	.on("end", updateChart);
+        .extent( [ [0,0], [w,h] ])
+        .filter(rightClickOnly)
+        .on("end", updateChart);
     peakArea.select("#brushArea").call(brush);
 
     // add Peaks
@@ -468,7 +462,7 @@ function spectrumPlot(spectrum, structureView) {
                 }
                 selected.hover = i;
             }
-        }, function() { 
+        }, function() {
         //NOTE: If the distance between 2 peaks is too narrow, mouseleave might be skipped.
             if (selected.hover !== null) {
                 const lastSelected = d3.select("#peak"+selected.hover);
@@ -480,14 +474,15 @@ function spectrumPlot(spectrum, structureView) {
                 selected.hover = null;
                 hideHover();
             }
-        })) ;
+        }));
         tooltip.on("mousemove", function(){ translateHover(d3.event.clientX, d3.event.clientY); });
-        
+
         d3.select("svg").on("click", function(){
             if (selected.hover != null) {
                 mousedown.bind(document.getElementById("peak"+selected.hover))(spectrum.peaks[selected.hover], selected.hover);
             }
         });
+        showStructure(-1);
     } else {
         svg.on("mousemove", mouseMovingFunction(spectrum, TOLERANCE, x, y, function(i) {
             const node = d3.select("#peak"+i).node();
@@ -582,9 +577,9 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("height", function(d) { return y2(d.intensity); });
     };
     brush = d3.brushX()
-    	.extent( [ [0,0], [w-20, h] ])
-    	.filter(rightClickOnly)
-    	.on("end", updateChart);
+        .extent( [ [0,0], [w-20, h] ])
+        .filter(rightClickOnly)
+        .on("end", updateChart);
     peakArea.select("#brushArea").call(brush);
 
     // Peaks 1
@@ -617,7 +612,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
                 const node = d3.select("#peak"+i).node();
                 mousemoveGeneral.bind(node)(spectrum1.peaks[i],i);
             }, function() {
-            	mouseleaveGeneral();
+                mouseleaveGeneral();
             }),
             mouseMovingFunction(spectrum2, TOLERANCE, x, y2, function(i) {
                 const node = d3.select("#peak"+(i+mzs1.length)).node();
@@ -625,7 +620,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             }, function() {
                 mouseleaveGeneral();
             })
-		);
+        );
     });
     tooltip.on("mousemove", function(){ translateHover(d3.event.clientX, d3.event.clientY); });
 };
