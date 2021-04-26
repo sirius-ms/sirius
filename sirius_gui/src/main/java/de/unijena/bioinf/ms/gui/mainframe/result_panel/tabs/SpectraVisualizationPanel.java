@@ -180,7 +180,8 @@ public class SpectraVisualizationPanel
 		}
 		if (jsonSpectra != null) {
 			String json = null, svg = null;
-			if (insilicoResult != null) {
+			if (mode.equals(MS2_DISPLAY) && insilicoResult != null) {
+				// only set these when in MS2 mode
 				json = insilicoResult.getJson();
 				svg = insilicoResult.getSvg();
 			}
