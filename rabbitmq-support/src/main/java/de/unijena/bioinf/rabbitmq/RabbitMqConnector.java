@@ -20,20 +20,13 @@
 
 package de.unijena.bioinf.rabbitmq;
 
-import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.connection_pooling.ConnectionPool;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.*;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
 
 /**
  * Holds a single connection and Pools channels of this connection.
