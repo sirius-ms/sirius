@@ -1,6 +1,6 @@
 version =  parent.fingeridVersion
 dependencies {
-    compile project(":rest_service_oss:rest_core_oss")
+    compile project(":web_service_oss:web_core_oss")
     compile project(":blob-storage")
     compile group: 'org.apache.commons', name: 'commons-compress', version: "1.18"
 }

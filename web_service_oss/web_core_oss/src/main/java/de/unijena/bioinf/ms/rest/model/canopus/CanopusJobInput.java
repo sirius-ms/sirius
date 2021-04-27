@@ -18,28 +18,27 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.annotations;
+package de.unijena.bioinf.ms.rest.model.canopus;
 
-import de.unijena.bioinf.jjobs.JJob;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 
-import java.util.concurrent.ExecutionException;
+/**
+ * Class containing the input for Canopus Jobs
+ * Will be (De-)Marshaled to/from json
+ * see {@link de.unijena.bioinf.ms.rest.model.JobTable}
+ */
+public class CanopusJobInput {
+    public final String formula;
+    public final byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
+    public final PredictorType predictor;
 
-public interface AnnotationJJob<D extends DataAnnotation, A extends Annotated> extends JJob<D> {
-    default D annotate(@Nullable final D result, @NotNull final A annotateable) {
-        if (result != null) {
-            Class<D> clzz = (Class<D>) result.getClass();
-            annotateable.setAnnotation(clzz, result);
-        }
-        return result;
+    private CanopusJobInput() {
+        this(null,null, null);
     }
 
-    default D awaitAndAnnotateResult(@NotNull final A annotateable) throws ExecutionException {
-        return annotate(awaitResult(), annotateable);
-    }
-
-    default D takeAndAnnotateResult(@NotNull final A annotateable) {
-        return annotate(takeResult(), annotateable);
+    public CanopusJobInput(String formula, byte[] fingerprint, PredictorType predictor) {
+        this.fingerprint = fingerprint;
+        this.formula = formula;
+        this.predictor = predictor;
     }
 }
