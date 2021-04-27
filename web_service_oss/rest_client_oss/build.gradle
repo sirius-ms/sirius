@@ -19,11 +19,10 @@
  */
 
 dependencies {
+    compile project(':web_service_oss:web_core_oss')
+    compile project(':confidence_score_predict_oss')
+    compile group: "net.iharder", name: "base64", version: "2.3.8"
+    compile "org.apache.httpcomponents:httpclient:4.5.1"
+    compile 'com.google.cloud:google-cloud-storage:1.113.4'
 
-	//project
-    compile project(':chemical_db_oss')
-    // REST
-    compile project(":web_service_oss:rest_client_oss")
-
-//    compile "org.apache.httpcomponents:httpclient:4.5.1"
-}	
+}

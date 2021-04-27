@@ -30,7 +30,7 @@ dependencies() {
     //project
     compile project(':sirius_project_space')
     compile project(':fingerprinter_oss')
-    compile project(':rest_service_oss:rest_core_oss')
+    compile project(':web_service_oss:web_core_oss')
     compile project(':chemistry_base')
     compile project(':io')
     compile project(':chemical_db_oss:chemdb_sql_oss')
