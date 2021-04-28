@@ -26,6 +26,9 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.InSilicoSelectionBox;
 import de.unijena.bioinf.ms.gui.ms_viewer.InsilicoFragmenter;
@@ -48,6 +51,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class SpectraVisualizationPanel
 	extends JPanel implements ActionListener, ItemListener, PanelDescription,
@@ -62,6 +67,8 @@ public class SpectraVisualizationPanel
 
 	InstanceBean experiment = null;
 	FormulaResultBean sre = null;
+	CompoundCandidate annotation = null;
+
 	JComboBox<String> modesBox;
 	JComboBox<String> ceBox;
 	final Optional<InSilicoSelectionBox> optAnoBox;
@@ -77,7 +84,7 @@ public class SpectraVisualizationPanel
 
 	public SpectraVisualizationPanel(String preferredMode, boolean annotationBox) {
 		this.setLayout(new BorderLayout());
-		this.fragmenter = new InsilicoFragmenter(this);
+		this.fragmenter = new InsilicoFragmenter();
 		this.preferredMode = preferredMode;
 
 		JToolBar northPanel = new JToolBar();
@@ -194,59 +201,100 @@ public class SpectraVisualizationPanel
 		resultsChanged(experiment, sre, null);
 	}
 
-	public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, @Nullable CompoundCandidate spectrumAno) {
-		if ((this.experiment == null ^ experiment == null) || (this.sre == null ^ sre == null)) {
-			// update modeBox elements, don't listen to these events
-			modesBox.removeItemListener(this);
-			modesBox.removeAllItems();
-			if (experiment != null) {
-				if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum() != null)
-					modesBox.addItem(MS1_DISPLAY);
-				if (sre != null) {
-					if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum() != null)
-						modesBox.addItem(MS1_MIRROR_DISPLAY);
-				}
-				if (experiment.getMs2Spectra().size() > 0)
-					modesBox.addItem(MS2_DISPLAY);
-				updateCEBox(experiment);
-			}
-			modesBox.addItemListener(this);
-		}
-		if (sre != this.sre || spectrumAno != null) {
-			if (sre != null && spectrumAno != null)
-				fragmenter.fragment(sre, spectrumAno);
-			else
-				clearInsilicoResult();
-		}
-		if (experiment != null) {
-			boolean preferredPossible = false; // no `contains` for combobox
-			for (int i = 0; i < modesBox.getItemCount(); i++)
-				preferredPossible |= preferredMode.equals(modesBox.getItemAt(i));
-			// change to preferred mode if possible, else (potentially automatic) selection
-			if (preferredPossible) {
-				modesBox.removeItemListener(this);
-				modesBox.setSelectedItem(preferredMode);
-				ceBox.setVisible(modesBox.getSelectedItem() != null && modesBox.getSelectedItem().equals(MS2_DISPLAY));
-				modesBox.addItemListener(this);
-			}
-			updateCEBox(experiment);
-			drawSpectra(experiment, sre, (String) modesBox.getSelectedItem(), getCEIndex());
+	private JJob<Boolean> backgroundLoader = null;
+	private final Lock backgroundLoaderLock = new ReentrantLock();
 
-			optAnoBox.ifPresent(anoBox -> getCurrentMode().ifPresent(mode -> {
-				if (mode.msLevel > 1) {
-					anoBox.activate();
-				} else {
-					anoBox.deactivate();
+	public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, @Nullable CompoundCandidate spectrumAno) {
+		try {
+			backgroundLoaderLock.lock();
+			final JJob<Boolean> old = backgroundLoader;
+			backgroundLoader = Jobs.runInBackground(new BasicMasterJJob<>(JJob.JobType.TINY_BACKGROUND) {
+				@Override
+				protected Boolean compute() throws Exception {
+					//cancel running job if not finished to not waist resources for fetching data that is not longer needed.
+					if (old != null && !old.isFinished()) {
+						old.cancel(true);
+						old.getResult(); //await cancellation so that nothing strange can happen.
+					}
+					checkForInterruption();
+
+					if ((SpectraVisualizationPanel.this.experiment != experiment)  || (SpectraVisualizationPanel.this.sre  != sre) || (SpectraVisualizationPanel.this.annotation != spectrumAno)) {
+						Jobs.runEDTAndWait(() -> {
+							// update modeBox elements, don't listen to these events
+							modesBox.removeItemListener(SpectraVisualizationPanel.this);
+							try {
+								modesBox.removeAllItems();
+								if (experiment != null) {
+									if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum() != null)
+										modesBox.addItem(MS1_DISPLAY);
+									if (sre != null) {
+										if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum() != null)
+											modesBox.addItem(MS1_MIRROR_DISPLAY);
+									}
+									if (experiment.getMs2Spectra().size() > 0)
+										modesBox.addItem(MS2_DISPLAY);
+									updateCEBox(experiment);
+								}
+							} finally {
+								modesBox.addItemListener(SpectraVisualizationPanel.this);
+							}
+						});
+					}
+
+					checkForInterruption();
+
+					if (sre != SpectraVisualizationPanel.this.sre || spectrumAno != null) {
+						if (sre != null && spectrumAno != null) {
+							InsilicoFragmenter.Result r = submitSubJob(fragmenter.fragmentJob(sre, spectrumAno)).awaitResult();
+							checkForInterruption();
+							setInsilicoResult(r);
+						} else {
+							clearInsilicoResult();
+						}
+					}
+
+
+					if (experiment != null) {
+						Jobs.runEDTAndWait(() -> {
+							boolean preferredPossible = false; // no `contains` for combobox
+							for (int i = 0; i < modesBox.getItemCount(); i++)
+								preferredPossible |= preferredMode.equals(modesBox.getItemAt(i));
+							// change to preferred mode if possible, else (potentially automatic) selection
+							if (preferredPossible) {
+								modesBox.removeItemListener(SpectraVisualizationPanel.this);
+								modesBox.setSelectedItem(preferredMode);
+								ceBox.setVisible(modesBox.getSelectedItem() != null && modesBox.getSelectedItem().equals(MS2_DISPLAY));
+								modesBox.addItemListener(SpectraVisualizationPanel.this);
+							}
+							updateCEBox(experiment);
+							drawSpectra(experiment, sre, (String) modesBox.getSelectedItem(), getCEIndex());
+
+							optAnoBox.ifPresent(anoBox -> getCurrentMode().ifPresent(mode -> {
+								if (mode.msLevel > 1) {
+									anoBox.activate();
+								} else {
+									anoBox.deactivate();
+								}
+							}));
+						});
+					} else {
+						browser.clear();
+						Jobs.runEDTAndWait(() -> optAnoBox.ifPresent(InSilicoSelectionBox::deactivate));
+					}
+					// store data to switch between modes without having to switch to other results
+					SpectraVisualizationPanel.this.experiment = experiment;
+					SpectraVisualizationPanel.this.sre = sre;
+					SpectraVisualizationPanel.this.annotation = spectrumAno;
+
+					checkForInterruption();
+					if (spectrumAno == null) //todo hacky
+						Jobs.runEDTAndWait(() -> optAnoBox.ifPresent(anoBox -> anoBox.resultsChanged(sre)));
+					return true;
 				}
-			}));
-		} else {
-			browser.clear();
-			optAnoBox.ifPresent(InSilicoSelectionBox::deactivate);
+			});
+		} finally {
+			backgroundLoaderLock.unlock();
 		}
-		// store data to switch between modes without having to switch to other results
-		this.experiment = experiment;
-		this.sre = sre;
-		optAnoBox.ifPresent(anoBox -> anoBox.resultsChanged(sre));
 	}
 
 	private void updateCEBox(InstanceBean experiment){
@@ -321,7 +369,7 @@ public class SpectraVisualizationPanel
 			if (selectedItem != null && selectedItem instanceof InSilicoSelectionBox.Item) {
 				InSilicoSelectionBox.Item item = (InSilicoSelectionBox.Item) selectedItem;
 				if (item.getCandidate() != null) {
-					fragmenter.fragment(sre, item.getCandidate());
+					resultsChanged(experiment, sre, item.getCandidate());
 				}
 			}
 		}
