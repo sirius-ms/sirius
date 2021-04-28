@@ -120,7 +120,7 @@ public class SpectraJSONWriter{
 		JsonObject spectrum1 = spectrum2json(pattern1);
 		JsonObject spectrum2 = spectrum2json(pattern2);
 		spectrum1.addProperty("name", "MS1");
-		spectrum2.addProperty("name", "Simulated isotope pattern");
+		spectrum2.addProperty("name", "Sim. isotope pattern");
 		JsonArray spectra = new JsonArray();
 		spectra.add(spectrum1);
 		spectra.add(spectrum2);

@@ -184,7 +184,7 @@ public class TreeVisualizationPanel extends JPanel
             try {
                 backgroundLoaderLock.lock();
                 final JJob<Boolean> old = backgroundLoader;
-                backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
+                backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
 
                     @Override
                     protected Boolean compute() throws Exception {
@@ -192,6 +192,8 @@ public class TreeVisualizationPanel extends JPanel
                         if (old != null && !old.isFinished()) {
                             old.cancel(true);
                             old.getResult(); //await cancellation so that nothing strange can happen.
+                        }else if (sre != null && sre.getFragTree().orElse(null) == ftree) {
+                            return false;
                         }
                         browser.clear();
                         checkForInterruption();
