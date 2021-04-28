@@ -212,10 +212,11 @@ public class SpectraVisualizationPanel
 			}
 			modesBox.addItemListener(this);
 		}
-		if (sre != this.sre) {
-			clearInsilicoResult();
+		if (sre != this.sre || spectrumAno != null) {
 			if (sre != null && spectrumAno != null)
 				fragmenter.fragment(sre, spectrumAno);
+			else
+				clearInsilicoResult();
 		}
 		if (experiment != null) {
 			boolean preferredPossible = false; // no `contains` for combobox
