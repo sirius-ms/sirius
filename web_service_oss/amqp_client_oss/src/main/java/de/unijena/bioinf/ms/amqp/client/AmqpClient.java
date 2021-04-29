@@ -177,8 +177,8 @@ public class AmqpClient {
         protected JobMessage<?> compute() throws Exception {
             JobMessage<?> message = new ObjectMapper().readValue(body, new TypeReference<>() {
             });
-            AmqpWebJJob<?, ?, ?> job = messageJobs.get(message.getJobId());
-            assert job.getJobId().equals(message.getJobId());
+            AmqpWebJJob<?, ?, ?> job = messageJobs.get(message.getID());
+            assert job.getJobId().equals(message.getID());
             job.update(message);
             return message;
         }

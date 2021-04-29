@@ -30,7 +30,7 @@ public class JobBase {
     @NotNull
     protected final JobTable jobTable;
 
-    protected Long jobIdLocal;
+    protected Long jobId;
     protected JobState state;
     protected String errorMessage;
 
@@ -45,7 +45,7 @@ public class JobBase {
     }
 
     protected JobBase(Long jobId, JobState state, @NotNull JobTable table, String errorMessage) {
-        this.jobIdLocal = jobId;
+        this.jobId = jobId;
         this.state = state;
         this.jobTable = table;
         this.errorMessage = errorMessage;
@@ -79,15 +79,15 @@ public class JobBase {
         return jobTable;
     }
 
-    public JobId getJobId() {
-        return new JobId(jobIdLocal,jobTable);
+    public JobId getID() {
+        return new JobId(jobId,jobTable);
     }
 
-    public Long getJobIdLocal() {
-        return jobIdLocal;
+    public Long getJobId() {
+        return jobId;
     }
 
-    public void setJobIdLocal(Long jobId) {
-        this.jobIdLocal = jobId;
+    public void setJobId(Long jobId) {
+        this.jobId = jobId;
     }
 }

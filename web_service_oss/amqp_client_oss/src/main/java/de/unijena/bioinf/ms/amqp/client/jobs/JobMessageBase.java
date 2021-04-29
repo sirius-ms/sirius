@@ -54,7 +54,7 @@ public class JobMessageBase {
         this.dataType = dataType;
     }
 
-    public String getJobId() {
+    public String getID() {
         return jobID;
     }
 

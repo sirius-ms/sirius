@@ -139,11 +139,11 @@ final class WebJobWatcher {
                                 checkForInterruption();
 
                                 final RestWebJJob<?, ?, ?> job;
-                                orphanJobs.remove(up.getJobId());
-                                job = waitingJobs.get(up.getJobId());
+                                orphanJobs.remove(up.getID());
+                                job = waitingJobs.get(up.getID());
 
                                 if (job == null) {
-                                    logDebug("Job \"" + up.getJobId().toString() + "\" was found on the server but is unknown locally. Trying to match it again later!");
+                                    logDebug("Job \"" + up.getID().toString() + "\" was found on the server but is unknown locally. Trying to match it again later!");
                                     return false;
                                 }
 
@@ -166,7 +166,7 @@ final class WebJobWatcher {
 
                         checkForInterruption();
 
-                        orphanJobs.addAll(toRemove.stream().map(JobUpdate::getJobId).collect(Collectors.toSet()));
+                        orphanJobs.addAll(toRemove.stream().map(JobUpdate::getID).collect(Collectors.toSet()));
 
                         checkForInterruption();
 

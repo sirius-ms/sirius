@@ -30,7 +30,7 @@ public class JobUpdate<D> extends JobBase  implements de.unijena.bioinf.ms.webap
     public final D data;
 
     public JobUpdate(JobBase base, @Nullable D data) {
-        super(base.jobIdLocal, base.state, base.jobTable, base.errorMessage);
+        super(base.jobId, base.state, base.jobTable, base.errorMessage);
         this.data = data;
     }
 
