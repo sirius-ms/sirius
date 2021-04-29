@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IBond;
 
@@ -20,56 +21,95 @@ public class AnnotateFragmentationTree {
     private final FTree tree;
     private final MolecularGraph graph;
     private final DirectedBondTypeScoring scoring;
-    private final ArrayList<Entry> entries;
+
+    private ArrayList<Entry> entries;
 
     public AnnotateFragmentationTree(FTree tree, MolecularGraph molecule, DirectedBondTypeScoring scoring) {
         this.tree = tree;
         this.graph = molecule;
         this.scoring = scoring;
+    }
 
-        final PriorizedFragmenter fragmenter = new PriorizedFragmenter(graph, scoring.getScoringFor(graph,tree));
+    public void run() {
+        try {
+            call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        final HashMap<MolecularFormula, List<Fragment>> formulas = new HashMap<>();
-        for (Fragment f : tree.getFragmentsWithoutRoot()) formulas.computeIfAbsent(f.getFormula().withoutHydrogen(), (x)->new ArrayList<>()).add(f);
+    public ArrayList<Entry> call() throws Exception {
+        entries = new Job(tree, graph, scoring).withTimeLimit(120000).call();
+        return entries;
+    }
 
-        final HashMap<Fragment, CombinatorialNode> bestMatch = new HashMap<>();
-        final HashMap<Fragment, CombinatorialNode> secondBestMatch = new HashMap<>();
+    public Job makeJJob() {
+        return new Job(tree, graph, scoring);
+    }
 
-        entries = new ArrayList<>();
-        final LinkedHashMap<MolecularFormula, CombinatorialNode> matched = new LinkedHashMap<>();
-        long time = System.currentTimeMillis();
-        while (fragmenter.nextFragment()!=null) {
-            final int remaining = tree.numberOfVertices()-bestMatch.size()-1;
-            if (remaining==0) break;
-            CombinatorialNode f = fragmenter.currentFragment;
 
-            final boolean match = formulas.containsKey(f.fragment.getFormula());
-            if (((match || f.totalScore>=-10)) && (f.getBondbreaks()<10))
-                fragmenter.acceptFragmentForFragmentation();
-            if (match) {
-                if (insertBestMatching(bestMatch,formulas,f, secondBestMatch)) {
-                    //System.out.println(f.getFragment().toSMILES() + "\t" + f.totalScore + "\t" + f.getBondbreaks() + "\t" + f.fragment.getFormula() + "\t" + match + "\t" + remaining);
-                    fragmenter.acceptFragmentForFragmentation();
-                    time = System.currentTimeMillis();
-                }
-            } else {
-                long lastTime = System.currentTimeMillis();
-                lastTime -= time;
-                if (lastTime >= 120000) {
-                    System.out.println("Timeout");
-                    break;
-                }
-            }
+    public static class Job extends BasicJJob<ArrayList<Entry>> {
+        private final FTree tree;
+        private final MolecularGraph graph;
+        private final DirectedBondTypeScoring scoring;
+
+        public Job(FTree tree, MolecularGraph graph, DirectedBondTypeScoring scoring) {
+            this.tree = tree;
+            this.graph = graph;
+            this.scoring = scoring;
         }
 
+        @Override
+        protected ArrayList<Entry> compute() throws Exception {
+            final PriorizedFragmenter fragmenter = new PriorizedFragmenter(graph, scoring.getScoringFor(graph, tree));
 
-        for (Map.Entry<Fragment, CombinatorialNode> n : bestMatch.entrySet()) {
-            final Entry e = new Entry(graph, n.getValue(), n.getKey());
-            if (secondBestMatch.containsKey(n.getKey())) {
-                e.nextBest = new Entry(graph, secondBestMatch.get(n.getKey()), n.getKey());
+            final HashMap<MolecularFormula, List<Fragment>> formulas = new HashMap<>();
+            for (Fragment f : tree.getFragmentsWithoutRoot()) {
+                checkForInterruption();
+                formulas.computeIfAbsent(f.getFormula().withoutHydrogen(), (x) -> new ArrayList<>()).add(f);
             }
-            entries.add(e);
 
+            final HashMap<Fragment, CombinatorialNode> bestMatch = new HashMap<>();
+            final HashMap<Fragment, CombinatorialNode> secondBestMatch = new HashMap<>();
+
+            final ArrayList<Entry> entries = new ArrayList<>();
+            while (fragmenter.nextFragment() != null) {
+                checkForInterruption();
+                final int remaining = tree.numberOfVertices() - bestMatch.size() - 1;
+                if (remaining == 0) break;
+                CombinatorialNode f = fragmenter.currentFragment;
+
+                final boolean match = formulas.containsKey(f.fragment.getFormula());
+                if (((match || f.totalScore >= -10)) && (f.getBondbreaks() < 10))
+                    fragmenter.acceptFragmentForFragmentation();
+                if (match) {
+                    if (insertBestMatching(bestMatch, formulas, f, secondBestMatch)) {
+                        //System.out.println(f.getFragment().toSMILES() + "\t" + f.totalScore + "\t" + f.getBondbreaks() + "\t" + f.fragment.getFormula() + "\t" + match + "\t" + remaining);
+                        fragmenter.acceptFragmentForFragmentation();
+                    }
+                }
+            }
+
+            for (Map.Entry<Fragment, CombinatorialNode> n : bestMatch.entrySet()) {
+                checkForInterruption();
+                final Entry e = new Entry(graph, n.getValue(), n.getKey());
+                if (secondBestMatch.containsKey(n.getKey())) {
+                    e.nextBest = new Entry(graph, secondBestMatch.get(n.getKey()), n.getKey());
+                }
+                entries.add(e);
+            }
+
+            return entries;
+        }
+
+        public String getJson() {
+            final StringWriter w = new StringWriter();
+            try {
+                writeJson(tree, graph, result(), w);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return w.toString();
         }
     }
 
@@ -124,14 +164,14 @@ public class AnnotateFragmentationTree {
     public String getJson() {
         final StringWriter w = new StringWriter();
         try {
-            writeJson(w);
+            writeJson(tree, graph, entries, w);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return w.toString();
     }
 
-    public void writeJson(Writer out) throws IOException {
+    public static void writeJson(FTree tree, MolecularGraph graph, List<Entry> entries, Writer out) throws IOException {
         final JsonGenerator G = new JsonFactory().createGenerator(out);
         G.writeStartArray();
         FragmentAnnotation<AnnotatedPeak> peak = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
