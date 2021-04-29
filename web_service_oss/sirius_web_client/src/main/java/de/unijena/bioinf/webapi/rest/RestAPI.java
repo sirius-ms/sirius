@@ -230,7 +230,7 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
     public WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(CanopusJobInput input) throws IOException {
         JobUpdate<CanopusJobOutput> jobUpdate = ProxyManager.applyClient(client -> canopusClient.postJobs(input, client));
         final MaskedFingerprintVersion version = getClassifierMaskedFingerprintVersion(input.predictor.toCharge());
-        return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getJobId(), input, new CanopusWebResultConverter(version, MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()))));
+        return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getID(), input, new CanopusWebResultConverter(version, MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()))));
     }
 
     private final EnumMap<PredictorType, CanopusData> canopusData = new EnumMap<>(PredictorType.class);
@@ -252,7 +252,7 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
     public WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input) throws IOException {
         final JobUpdate<FingerprintJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postJobs(input, client));
         final MaskedFingerprintVersion version = getCDKMaskedFingerprintVersion(input.experiment.getPrecursorIonType().getCharge());
-        return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getJobId(), new FingerprintWebResultConverter(version)));
+        return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getID(), input, new FingerprintWebResultConverter(version)));
     }
 
     //caches predicors so that we do not have to download the statistics and fingerprint info every time
@@ -286,10 +286,11 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
 
     // use via predictor/scoring method
     public WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> submitCovtreeJob(@NotNull MolecularFormula formula, @NotNull PredictorType predictorType) throws IOException {
-        final JobUpdate<CovtreeJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postCovtreeJobs(new CovtreeJobInput(formula.toString(), predictorType), client));
+        final CovtreeJobInput input = new CovtreeJobInput(formula.toString(), predictorType);
+        final JobUpdate<CovtreeJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postCovtreeJobs(input,  client));
         final MaskedFingerprintVersion fpVersion = getFingerIdData(predictorType).getFingerprintVersion();
         final PredictionPerformance[] performances = getFingerIdData(predictorType).getPerformances();
-        return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getJobId(), new CovtreeWebResultConverter(fpVersion, performances)));
+        return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getID(), input, new CovtreeWebResultConverter(fpVersion, performances)));
     }
 
 

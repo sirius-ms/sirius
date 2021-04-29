@@ -30,7 +30,7 @@ public interface JobUpdate<D, ID> {
 
     D getData();
 
-    ID getJobId();
+    ID getID();
 
     default JobState getStateEnum() {
         return JobState.withId(getState());
