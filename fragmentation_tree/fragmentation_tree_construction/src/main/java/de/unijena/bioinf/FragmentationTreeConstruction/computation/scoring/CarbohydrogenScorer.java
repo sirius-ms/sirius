@@ -40,7 +40,7 @@ public abstract class CarbohydrogenScorer {
 
     public static void main(String[] args) {
         for (double p : new double[]{0.01,0.015, 0.02, 0.05,0.1,0.15, 0.2,0.5,1.0}) {
-            System.out.println(p + "\t" + (new ParetoDistribution.EstimateByMedian(0.02).extimateByMedian(0.5).getCumulativeProbability(p))*2);
+            System.out.println(p + "\t" + (new ParetoDistribution.EstimateByMedian(0.02).extimateByMedian(0.5).getCumulativeProbability(p)));
         }
     }
 
@@ -54,7 +54,7 @@ public abstract class CarbohydrogenScorer {
 
         @Override
         public double score(MolecularFormula formula, Ionization ion, ProcessedPeak peak, ProcessedInput input, Object precomputed) {
-            return formula.isCHO() ? 5 : 0d;
+            return formula.isCHO() ? 2.5 : 0d;
         }
 
         @Override
@@ -78,7 +78,7 @@ public abstract class CarbohydrogenScorer {
 
         @Override
         public double score(MolecularFormula formula, Ionization ion, ProcessedPeak peak, ProcessedInput input, ParetoDistribution precomputed) {
-            return peak.getRelativeIntensity()>0.02 && formula.isCHO() ? 2*precomputed.getCumulativeProbability(peak.getRelativeIntensity()) : 0d;
+            return peak.getRelativeIntensity()>0.02 && formula.isCHO() ? precomputed.getCumulativeProbability(peak.getRelativeIntensity()) : 0d;
         }
 
         @Override
