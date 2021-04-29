@@ -66,3 +66,5 @@ body {
 .highlight_atom { fill: #4169E1; }
 .rest_bond { stroke: #A9A9A9; }
 .rest_atom { fill: #A9A9A9; }
+.default_bond { fill: #000000; }
+.default_atom { fill: #000000; }
