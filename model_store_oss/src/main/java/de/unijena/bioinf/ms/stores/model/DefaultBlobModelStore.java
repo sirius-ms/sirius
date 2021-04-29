@@ -37,7 +37,7 @@ import java.util.Optional;
 public class DefaultBlobModelStore<Storage extends BlobStorage> extends AbstractBlobModelStore<Storage> implements CanopusDataStore, FingerIdDataStore {
 
     public DefaultBlobModelStore(@NotNull Storage blobStorage) {
-        this(blobStorage, Compressible.Compression.GZIP);
+        this(blobStorage, Compression.GZIP);
     }
     public DefaultBlobModelStore(@NotNull Storage blobStorage, @NotNull Compressible.Compression compression) {
         super(blobStorage, compression);
@@ -93,7 +93,7 @@ public class DefaultBlobModelStore<Storage extends BlobStorage> extends Abstract
 
     @Override
     public Optional<InputStream> getConfidenceSVMs(PredictorType type) throws IOException {
-        return getResource(Path.of("confidence.json"));
+        return getResource(Path.of("confidence.json"), type);
 
     }
 

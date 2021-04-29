@@ -66,12 +66,12 @@ public abstract class AbstractBlobModelStore<Storage extends BlobStorage> extend
 
     @Override
     public @Nullable InputStream getRawResource(@NotNull Path path) throws IOException {
-        return blobStorage.reader(path.getParent().resolve(path.getFileName().toString() + getCompression().ext()));
+        return blobStorage.reader(Path.of(path.toString() + getCompression().ext()));
     }
 
     @Override
     public boolean hasResource(@NotNull Path path) throws IOException {
-        return blobStorage.hasBlob(path.getParent().resolve(path.getFileName().toString() + getCompression().ext()));
+        return blobStorage.hasBlob(Path.of(path.toString() + getCompression().ext()));
     }
 
 
@@ -86,7 +86,7 @@ public abstract class AbstractBlobModelStore<Storage extends BlobStorage> extend
     }
 
     public @Nullable InputStream getRawResource(@NotNull Path path, @NotNull PredictorType predictorType, @NotNull MolecularFormula formula, @Nullable String ext) throws IOException {
-        return getRawResource(resolve(predictorType).resolve(path).resolve(makeFormulaName(formula, ext)));
+        return getRawResource(resolve(predictorType).resolve(path).resolve(makeFormulaName(formula,ext)));
     }
 
     @NotNull
@@ -110,7 +110,7 @@ public abstract class AbstractBlobModelStore<Storage extends BlobStorage> extend
     }
 
     public void writeResource(@NotNull final Path path, @NotNull IOFunctions.IOConsumer<OutputStream> streamConsumer) throws IOException {
-        blobStorage.withWriter(path.getParent().resolve(path.getFileName().toString() + getCompression().ext()), (out) ->
+        blobStorage.withWriter(Path.of(path.toString() + getCompression().ext()), (out) ->
                 Compressible.withCompression(out, getCompression(), streamConsumer));
     }
 
