@@ -5,37 +5,69 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fragmenter.AnnotateFragmentationTree;
 import de.unijena.bioinf.fragmenter.DirectedBondTypeScoring;
 import de.unijena.bioinf.fragmenter.MolecularGraph;
-import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectraVisualizationPanel;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import org.openscience.cdk.depict.DepictionGenerator;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 public class InsilicoFragmenter {
-    SpectraVisualizationPanel panel;
-    public InsilicoFragmenter(SpectraVisualizationPanel panel) {
-        this.panel = panel;
+
+    public Job fragmentJob(FormulaResultBean sre, CompoundCandidate candidate) {
+        return new Job(sre, candidate);
     }
 
-    public boolean fragment(FormulaResultBean sre, CompoundCandidate candidate) {
+    public class Job extends BasicMasterJJob<Result> {
 
-        final Optional<FTree> tree = sre.getFragTree();
-        if (tree.isEmpty()) return false;
-        if (candidate==null) return false;
-        new Worker(tree.get(), candidate).execute();
-        return true;
+        final FormulaResultBean sre;
+        final CompoundCandidate candidate;
+
+        public Job(FormulaResultBean sre, CompoundCandidate candidate) {
+            super(JobType.TINY_BACKGROUND);
+            this.sre = sre;
+            this.candidate = candidate;
+        }
+
+
+        @Override
+        protected Result compute() throws Exception {
+            final Optional<FTree> tree = sre.getFragTree();
+
+            if (tree.isEmpty()) return null;
+            if (candidate == null) return null;
+
+            checkForInterruption();
+
+            final DirectedBondTypeScoring scoring = new DirectedBondTypeScoring();
+            final MolecularGraph graph = new MolecularGraph(
+                    new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(candidate.getSmiles())
+            );
+
+            checkForInterruption();
+
+            AnnotateFragmentationTree.Job annos = new AnnotateFragmentationTree(tree.get(), graph, scoring).makeJJob();
+            submitSubJob(annos.asType(JobType.TINY_BACKGROUND)).awaitResult();
+
+            checkForInterruption();
+
+            DepictionGenerator gen = new DepictionGenerator();
+            String svg = gen.withAromaticDisplay().withAtomColors().depict(graph.getMolecule()).toSvgStr();
+
+            checkForInterruption();
+
+            return new Result(annos.result(), annos.getJson(), svg);
+        }
     }
 
     public static class Result {
-        private AnnotateFragmentationTree ano;
-        private String json, svg;
+        private final ArrayList<AnnotateFragmentationTree.Entry> ano;
+        private final String json;
+        private final String svg;
 
-        public Result(AnnotateFragmentationTree ano, String json, String svg) {
+        public Result(ArrayList<AnnotateFragmentationTree.Entry> ano, String json, String svg) {
             this.ano = ano;
             this.json = json;
             this.svg = svg;
@@ -49,42 +81,4 @@ public class InsilicoFragmenter {
             return svg;
         }
     }
-
-    protected class Worker extends SwingWorker<Result, Object> {
-        private FTree tree;
-        private CompoundCandidate candidate;
-        public Worker(FTree tree, CompoundCandidate candidate) {
-            this.tree = tree;
-            this.candidate = candidate;
-        }
-
-        @Override
-        protected void done() {
-            try {
-                final Result annotation = get();
-                panel.setInsilicoResult(annotation);
-            } catch (InterruptedException | ExecutionException e) {
-                LoggerFactory.getLogger(InsilicoFragmenter.class).error(e.getMessage(),e);
-            }
-
-        }
-
-        @Override
-        protected Result doInBackground() throws Exception {
-            // We should do this via our jobsystem, but I do not find any
-            // integration to swing?
-            final DirectedBondTypeScoring scoring = new DirectedBondTypeScoring();
-            final MolecularGraph graph = new MolecularGraph(
-                    new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(candidate.getSmiles())
-            );
-            final AnnotateFragmentationTree annotateFragmentationTree = new AnnotateFragmentationTree(tree, graph, scoring);
-            DepictionGenerator gen = new DepictionGenerator();
-            return new Result(annotateFragmentationTree,
-                    annotateFragmentationTree.getJson(),
-                    gen.withAromaticDisplay().withAtomColors().depict(graph.getMolecule()).toSvgStr()
-                    );
-
-        }
-    }
-
 }
