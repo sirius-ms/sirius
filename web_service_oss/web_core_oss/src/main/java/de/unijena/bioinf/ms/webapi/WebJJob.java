@@ -126,8 +126,8 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R
     }
 
     protected void checkIdOrThrow(@NotNull final JobUpdate<O, ID> update) {
-        if (!getJobId().equals(update.getJobId()))
-            throw new IllegalArgumentException("Update jobsId differs from jobId: " + jobId + " vs. " + update.getJobId());
+        if (!getJobId().equals(update.getID()))
+            throw new IllegalArgumentException("Update jobsId differs from jobId: " + jobId + " vs. " + update.getID());
     }
 
     public boolean updateState(@NotNull final JobUpdate<O, ID> update) {
