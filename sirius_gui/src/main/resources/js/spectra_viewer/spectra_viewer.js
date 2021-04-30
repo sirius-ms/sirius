@@ -139,10 +139,14 @@ function idled() { idleTimeout = null; };
 // Only used in spectrumPlot: peak_1 = unannotated, peak_2 = annotate
 function resetColor(d) {
     let precursor = data.spectra[0].peaks[ms2Size-1].formula;
-    if ("structureInformation" in d || (d.formula === precursor && svg_str !== null)) {
-        return "peak_2 peak_structInfo peak";
+    if (data.spectra[0].name.includes("MS1")) {
+        return (d.peakMatches !== {}) ? "peak_matched peak" : "peak_1 peak";
     } else {
-        return ("formula" in d) ? "peak_2 peak" : "peak_1 peak";
+        if ("structureInformation" in d || (d.formula === precursor && svg_str !== null)) {
+            return "peak_2 peak_structInfo peak";
+        } else {
+            return ("formula" in d) ? "peak_2 peak" : "peak_1 peak";
+        }
     }
 };
 
@@ -603,7 +607,7 @@ function mirrorPlot(spectrum1, spectrum2, view) {
             .attr("y", h/2)
             .attr("height", function(d) { return y2(d.intensity); });
 
-    function upOrDown(currentY, callbackUp, callbackDown) { (currentY <= h/2) ? callbackUp() : callbackDown(); };
+    function upOrDown(currentY, callbackUp, callbackDown) { (currentY <= margin.top+h/2) ? callbackUp() : callbackDown(); };
 
     svg.on("mousemove", function() {
         let currentY = d3.event.clientY;
