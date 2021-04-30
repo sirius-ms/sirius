@@ -41,13 +41,12 @@
 package de.unijena.bioinf.webapi.rest;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.WaiterJJob;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
-import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -57,16 +56,16 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-final class WebJobWatcher {
+final class WebJobWatcher { //todo rename to RestJobWatcher
     private static final int INIT_WAIT_TIME = 1000;
 
     private final Map<JobId, RestWebJJob<?, ?, ?>> waitingJobs = new ConcurrentHashMap<>();
-    private final WebAPI<?> api;
+    private final RestAPI api;
     private WebJobWatcherJJob job = null;
     private final AtomicBoolean isShutDown = new AtomicBoolean(false);
 
     //this is for efficient job update even with a large number of jobs on large multi core machines
-    public WebJobWatcher(WebAPI<?> api) {
+    public WebJobWatcher(RestAPI api) {
         this.api = api;
     }
 

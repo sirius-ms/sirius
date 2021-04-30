@@ -39,9 +39,7 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.StructurePredictor;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.ms.rest.model.JobId;
-import de.unijena.bioinf.ms.rest.model.JobTable;
-import de.unijena.bioinf.ms.rest.model.JobUpdate;
+import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
@@ -54,10 +52,12 @@ import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.Map;
 
 /**
  * Frontend WebAPI class, that represents the client to our backend rest api
@@ -66,8 +66,11 @@ import java.util.*;
 @ThreadSafe
 public interface WebAPI<D extends AbstractChemicalDatabase> {
 
-
-    void shutdownJobWatcher();
+    default void shutdown() throws IOException {
+        LoggerFactory.getLogger(getClass()).info("Try to delete leftover jobs on web server...");
+        deleteClientAndJobs();
+        LoggerFactory.getLogger(getClass()).info("...Job deletion Done!");
+    }
 
     //region ServerInfo
 
@@ -90,12 +93,6 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     //endregion
 
     //region Jobs
-    List<JobUpdate<?>> updateJobStates(JobTable jobTable) throws IOException;
-
-    EnumMap<JobTable, List<JobUpdate<?>>> updateJobStates(Collection<JobTable> jobTablesToCheck) throws IOException;
-
-    void deleteJobs(Collection<JobId> jobsToDelete) throws IOException;
-
     void deleteClientAndJobs() throws IOException;
     //endregion
 
@@ -111,21 +108,31 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     //endregion
 
     //region Canopus
-    WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint) throws IOException;
+    default WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint) throws IOException {
+        return submitCanopusJob(formula, fingerprint, (charge > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE));
+    }
 
-    WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type) throws IOException;
+    default WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type) throws IOException {
+        return submitCanopusJob(new CanopusJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary(), type));
+    }
+
 
     WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(CanopusJobInput input) throws IOException;
 
-    public CanopusData getCanopusdData(@NotNull PredictorType predictorType) throws IOException;
+    CanopusData getCanopusdData(@NotNull PredictorType predictorType) throws IOException;
     //endregion
 
     //region CSI:FingerID
-    WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(final Ms2Experiment experiment, final FTree ftree, @NotNull EnumSet<PredictorType> types) throws IOException;
+    default WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(final Ms2Experiment experiment, final FTree ftree, @NotNull EnumSet<PredictorType> types) throws IOException {
+        return submitFingerprintJob(new FingerprintJobInput(experiment, null, ftree, types));
+    }
 
     WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input) throws IOException;
 
-    @NotNull StructurePredictor getStructurePredictor(int charge) throws IOException;
+    @NotNull
+    default StructurePredictor getStructurePredictor(int charge) throws IOException {
+        return getStructurePredictor(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge));
+    }
 
     @NotNull StructurePredictor getStructurePredictor(@NotNull PredictorType type) throws IOException;
 
@@ -142,7 +149,9 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
      * @throws IOException if something went wrong with the web query
      */
     //uncached -> access via predictor
-    BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType) throws IOException;
+    default BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType) throws IOException{
+        return getBayesnetScoring(predictorType,null);
+    }
 
     /**
      * @param predictorType pos or neg
@@ -167,13 +176,17 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
      * @return The MaskedFingerprint used by CSI:FingerID for a given Charge
      * @throws IOException if connection error happens
      */
-    MaskedFingerprintVersion getCDKMaskedFingerprintVersion(final int charge) throws IOException;
+    default MaskedFingerprintVersion getCDKMaskedFingerprintVersion(final int charge) throws IOException {
+        return getFingerIdData(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge)).getFingerprintVersion();
+    }
 
     /**
      * @return The MaskedFingerprint version used the Canopus predictor
      * @throws IOException if connection error happens
      */
-    MaskedFingerprintVersion getClassifierMaskedFingerprintVersion(final int charge) throws IOException;
+    default MaskedFingerprintVersion getClassifierMaskedFingerprintVersion(final int charge) throws IOException {
+        return getCanopusdData(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge)).getFingerprintVersion();
+    }
 
     /**
      * @return The Fingerprint version used by the rest Database --  not really needed but for sanity checks
