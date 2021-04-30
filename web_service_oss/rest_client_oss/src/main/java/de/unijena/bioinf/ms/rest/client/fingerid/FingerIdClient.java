@@ -83,30 +83,9 @@ public class FingerIdClient extends AbstractClient {
         return executeFromJson(client,
                 () -> {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/jobs").build());
-                    final String stringMs, jsonTree;
-                    {
-                        final JenaMsWriter writer = new JenaMsWriter();
-                        final StringWriter sw = new StringWriter();
-                        try (final BufferedWriter bw = new BufferedWriter(sw)) {
-                            writer.write(bw, input.experiment);
-                        }
-                        stringMs = sw.toString();
-                    }
-                    {
-                        final FTJsonWriter writer = new FTJsonWriter();
-                        final StringWriter sw = new StringWriter();
-                        writer.writeTree(sw, input.ftree);
-                        jsonTree = sw.toString();
-                    }
-                    Map<String,String> values =  new HashMap<>();
-                    values.put("ms",stringMs);
-                    values.put("ft",jsonTree);
-                    values.put("predictors", PredictorType.getBitsAsString(input.predictors));
-                    post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(values)));
-
+                    post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(input)));
                     return post;
-                }, new TypeReference<>() {
-                }
+                }, new TypeReference<>() {}
         );
     }
 
@@ -135,8 +114,7 @@ public class FingerIdClient extends AbstractClient {
                     post.setEntity(new StringEntity(v, StandardCharsets.UTF_8));
                     post.setHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
                     return post;
-                }, new TypeReference<>() {
-                }
+                }, new TypeReference<>() {}
         );
     }
 
@@ -189,7 +167,6 @@ public class FingerIdClient extends AbstractClient {
                             } else {
                                 inChI = InChIs.newInChI(tabs[0], tabs[1]);
                             }
-
                             inchis.add(inChI);
                         } catch (JniInchiException ex) {
                             LOG.warn("Could not parse training structure InChI, skipping this entry");

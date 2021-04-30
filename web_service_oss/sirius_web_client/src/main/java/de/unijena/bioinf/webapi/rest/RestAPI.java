@@ -130,8 +130,11 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
         this(URI.create(FingerIDProperties.fingeridWebHost()));
     }
 
-    public void shutdownJobWatcher() {
+
+    @Override
+    public void shutdown() throws IOException {
         jobWatcher.shutdown();
+        WebAPI.super.shutdown();
     }
 
     //region ServerInfo
@@ -200,10 +203,6 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
     //endregion
 
     //region ChemDB
-    public RestWithCustomDatabase getChemDB(){
-            return SearchableDatabases.makeRestWithCustomDB(this);
-    }
-
     public void consumeStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOConsumer<RESTDatabase> doWithClient) throws IOException {
         try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, chemDBClient, ProxyManager.client())) {
             doWithClient.accept(restDB);
@@ -219,14 +218,6 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
     //endregion
 
     //region Canopus
-    public WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint) throws IOException {
-        return submitCanopusJob(formula, fingerprint, (charge > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE));
-    }
-
-    public WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type) throws IOException {
-        return submitCanopusJob(new CanopusJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary(), type));
-    }
-
     public WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(CanopusJobInput input) throws IOException {
         JobUpdate<CanopusJobOutput> jobUpdate = ProxyManager.applyClient(client -> canopusClient.postJobs(input, client));
         final MaskedFingerprintVersion version = getClassifierMaskedFingerprintVersion(input.predictor.toCharge());
@@ -245,10 +236,6 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
     //endregion
 
     //region CSI:FingerID
-    public WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(final Ms2Experiment experiment, final FTree ftree, @NotNull EnumSet<PredictorType> types) throws IOException {
-        return submitFingerprintJob(new FingerprintJobInput(experiment, null, ftree, types));
-    }
-
     public WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input) throws IOException {
         final JobUpdate<FingerprintJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postJobs(input, client));
         final MaskedFingerprintVersion version = getCDKMaskedFingerprintVersion(input.experiment.getPrecursorIonType().getCharge());
@@ -257,10 +244,6 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
 
     //caches predicors so that we do not have to download the statistics and fingerprint info every time
     private final EnumMap<PredictorType, StructurePredictor> fingerIdPredictors = new EnumMap<>(PredictorType.class);
-
-    public @NotNull StructurePredictor getStructurePredictor(int charge) throws IOException {
-        return getStructurePredictor(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge));
-    }
 
     public @NotNull StructurePredictor getStructurePredictor(@NotNull PredictorType type) throws IOException {
         synchronized (fingerIdPredictors) {
@@ -296,17 +279,6 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
 
     /**
      * @param predictorType pos or neg
-     * @return Default (non formula specific) {@link BayesnetScoring} for the given {@link PredictorType}
-     * @throws IOException if something went wrong with the web query
-     */
-    //uncached -> access via predictor
-    public BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType) throws IOException {
-        return getBayesnetScoring(predictorType,null);
-
-    }
-
-    /**
-     * @param predictorType pos or neg
      * @param formula Molecular formula for which the tree is requested (Default tree will be used if formula is null)
      * @return {@link BayesnetScoring} for the given {@link PredictorType} and {@link MolecularFormula}
      * @throws IOException if something went wrong with the web query
@@ -331,23 +303,6 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
     //endRegion
 
     //region FingerprintVersions
-
-    /**
-     * @return The MaskedFingerprint used by CSI:FingerID for a given Charge
-     * @throws IOException if connection error happens
-     */
-    public MaskedFingerprintVersion getCDKMaskedFingerprintVersion(final int charge) throws IOException {
-        return getFingerIdData(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge)).getFingerprintVersion();
-    }
-
-    /**
-     * @return The MaskedFingerprint version used the Canopus predictor
-     * @throws IOException if connection error happens
-     */
-    public MaskedFingerprintVersion getClassifierMaskedFingerprintVersion(final int charge) throws IOException {
-        return getCanopusdData(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge)).getFingerprintVersion();
-    }
-
     /**
      * @return The Fingerprint version used by the rest Database --  not really needed but for sanity checks
      * @throws IOException if connection error happens
@@ -355,6 +310,5 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
     public CdkFingerprintVersion getCDKChemDBFingerprintVersion() throws IOException {
         return ProxyManager.applyClient(chemDBClient::getCDKFingerprintVersion);
     }
-
     //endregion
 }

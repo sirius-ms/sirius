@@ -55,17 +55,22 @@ import de.unijena.bioinf.ms.amqp.client.jobs.AmqpWebJJob;
 import de.unijena.bioinf.ms.amqp.client.jobs.JobMessage;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.rabbitmq.RabbitMqChannelPool;
-import org.apache.http.entity.ContentType;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 public class AmqpClient {
+    protected static AtomicLong MESSAGE_COUNTER = new AtomicLong(0);
+
     public static long JOB_TIME_OUT = PropertyManager.getLong("de.unijena.bioinf.fingerid.web.job.timeout", 1000L * 60L * 60L); //default 1h
     protected static final String REGISTER_PREFIX = PropertyManager.getProperty("de.unijena.bioinf.ms.sirius.amqp.prefix.register", null, "register");
     protected static final String CLIENT_EXCHANGE = PropertyManager.getProperty("", null, "sirius.client.in");
@@ -74,18 +79,20 @@ public class AmqpClient {
     protected final String userID;
     protected final RabbitMqChannelPool channelPool;
 
-
-    protected final Map<String, AmqpWebJJob<?, ?, ?>> messageJobs = new ConcurrentHashMap<>();
-    protected final List<String> consumers = new ArrayList<>();
+    protected final List<String> consumerThreads = new ArrayList<>();
     protected final String consumerQ;
     protected final String registerRKey;
     protected final int threads;
 
-    public AmqpClient(@NotNull RabbitMqChannelPool channelPool, @NotNull String userID, @NotNull String clientID, int threads) {
+
+    protected final Map<String, AmqpWebJJob<?, ?, ?>> messageJobs = new ConcurrentHashMap<>();
+
+
+    public AmqpClient(@NotNull RabbitMqChannelPool channelPool, @NotNull String userID, @NotNull String clientID, int consumerThreads) {
         this.channelPool = channelPool;
         this.userID = userID;
         this.clientID = clientID;
-        this.threads = threads;
+        this.threads = consumerThreads;
         this.consumerQ = CLIENT_TYPE + "." + userID + "." + clientID;
         this.registerRKey = REGISTER_PREFIX + "." + CLIENT_TYPE + "." + userID + "." + clientID;
 
@@ -110,7 +117,7 @@ public class AmqpClient {
 
         LoggerFactory.getLogger(getClass()).info("Successfully created callback queue!");
 
-        consumers.add(NetUtils.tryAndWaitAsJJob(() -> {
+        consumerThreads.add(NetUtils.tryAndWaitAsJJob(() -> {
             final Channel channel = channelPool.orderConnection().connection;
             return channel.basicConsume(consumerQ, false,
                     new DefaultConsumer(channel) {
@@ -118,7 +125,8 @@ public class AmqpClient {
                         public void handleDelivery(String consumerTag, Envelope envelope,
                                                    AMQP.BasicProperties properties, byte[] body) throws IOException {
                             long deliveryTag = envelope.getDeliveryTag();
-                            //submit handling to SIRIUS Jobs System
+                            //handle Message, should be submitted to SIRIUS Jobs System to do unwrapping in parallel without
+                            // having many connection or blocking them too long
                             SiriusJobs.getGlobalJobManager().submitJob(new AMPQCallbackJJob(consumerTag, properties, body));
                             channel.basicAck(deliveryTag, false);
                         }
@@ -127,27 +135,39 @@ public class AmqpClient {
         }, timeout));
     }
 
-    //todo save publishing mechanism that tracks jobs
-
-    public  <T> void publish(@NotNull String routingPrefix, T jacksonSerializable) throws IOException {
-        publish(routingPrefix, jacksonSerializable, (body) -> new ObjectMapper().writeValueAsString(body));
+    public <T, I, O, R> AmqpWebJJob<I, O, R> publish(@NotNull String routingPrefix, T jacksonSerializable, @NotNull Function<String, AmqpWebJJob<I, O, R>> jobBuilder) throws IOException {
+        return publish(routingPrefix, jacksonSerializable, (body) -> new ObjectMapper().writeValueAsString(body), jobBuilder);
     }
 
-    public <T> void publish(@NotNull String routingPrefix, T body, IOFunctions.IOFunction<T,String> jsonizer) throws IOException {
-        publish(routingPrefix,jsonizer.apply(body));
+    public <T, I, O, R> AmqpWebJJob<I, O, R> publish(@NotNull String routingPrefix, T body, @NotNull IOFunctions.IOFunction<T, String> jsonizer, @NotNull Function<String, AmqpWebJJob<I, O, R>> jobBuilder) throws IOException {
+        return publish(routingPrefix, jsonizer.apply(body), jobBuilder);
     }
 
-    public void publish(@NotNull String routingPrefix, String jsonBody) {
-        publish(routingPrefix, jsonBody.getBytes(ContentType.APPLICATION_JSON.getCharset()));
+    public <I, O, R> AmqpWebJJob<I, O, R> publish(@NotNull String routingPrefix, String jsonBody, @NotNull Function<String, AmqpWebJJob<I, O, R>> jobBuilder) throws IOException {
+        return publish(routingPrefix, jsonBody.getBytes(StandardCharsets.UTF_8.name()), jobBuilder);
     }
 
-    public void publish(@NotNull String routingPrefix, byte[] body) {
-        NetUtils.tryAndWaitAsJJob(() -> {
-            try (PooledConnection<Channel> connection = channelPool.orderConnection()) {
-                connection.connection.basicPublish(CLIENT_EXCHANGE, decorateRoutingPrefix(routingPrefix), defaultProps().build(), body);
-                connection.connection.waitForConfirms(5000);
+    public <I, O, R> AmqpWebJJob<I, O, R> publish(@NotNull String routingPrefix, byte[] body, @NotNull Function<String, AmqpWebJJob<I, O, R>> jobBuilder) throws IOException {
+        //MessageID is used to identify the corresponding webJJob
+        //The receiving Service needs to return a JobMessage with this ID.
+        final String messageID = routingPrefix + "." + MESSAGE_COUNTER.incrementAndGet();
+        final AmqpWebJJob<I, O, R> job = jobBuilder.apply(messageID);
+        assert !messageJobs.containsKey(messageID);
+        messageJobs.put(messageID, job);
+        try (PooledConnection<Channel> connection = channelPool.orderConnection()) {
+            connection.connection.basicPublish(CLIENT_EXCHANGE, decorateRoutingPrefix(routingPrefix),
+                    defaultProps().messageId(job.getJobId()).build(), body);
+            try {
+                if (!connection.connection.waitForConfirms(5000))
+                    LoggerFactory.getLogger(getClass()).warn("Could not confirm publication of Job '" + messageID + "' Jobs might not be delivered an is likely to timeout.");
+            } catch (TimeoutException | InterruptedException e) {
+                //should
+                LoggerFactory.getLogger(getClass()).warn("Could not confirm publication of Job: " + messageID + System.lineSeparator() + e.getMessage());
             }
-        }, 30000);
+            return job;
+        } catch (InterruptedException e) {
+            throw new IOException(e);
+        }
     }
 
 
@@ -156,31 +176,33 @@ public class AmqpClient {
     }
 
     private AMQP.BasicProperties.Builder defaultProps() {
-        return new AMQP.BasicProperties.Builder().contentEncoding(ContentType.APPLICATION_JSON.getCharset().name()).contentType(ContentType.APPLICATION_JSON.getMimeType()).appId("SIRIUS");
+        return new AMQP.BasicProperties.Builder()
+                .contentEncoding(StandardCharsets.UTF_8.name())
+                .contentType("application/json")
+                .userId(userID)
+                .appId("SIRIUS");
     }
 
-
     public class AMPQCallbackJJob extends BasicJJob<JobMessage<?>> {
-
-        final AMQP.BasicProperties properties;
-        final byte[] body;
+        private final AMQP.BasicProperties properties;
+        private final byte[] body;
         private final String consumerTag;
 
         public AMPQCallbackJJob(String consumerTag, AMQP.BasicProperties properties, byte[] body) {
-            super(JobType.CPU);
-            this.consumerTag = consumerTag;
             this.properties = properties;
             this.body = body;
+            this.consumerTag = consumerTag;
         }
+
 
         @Override
         protected JobMessage<?> compute() throws Exception {
-            JobMessage<?> message = new ObjectMapper().readValue(body, new TypeReference<>() {
+            JobMessage<?> messageJob = new ObjectMapper().readValue(body, new TypeReference<>() {
             });
-            AmqpWebJJob<?, ?, ?> job = messageJobs.get(message.getID());
-            assert job.getJobId().equals(message.getID());
-            job.update(message);
-            return message;
+            AmqpWebJJob<?, ?, ?> job = messageJobs.get(messageJob.getID());
+            assert job.getJobId().equals(messageJob.getID());
+            job.update(messageJob);
+            return messageJob;
         }
     }
 }

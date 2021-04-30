@@ -1,6 +1,5 @@
 
 dependencies {
-    compile project(':web_service_oss:sirius_web_client') //maybe split to remove rest stuff
-    compile project(':web_service_oss:web_core_oss') //maybe split to remove rest stuff
+    compile project(':web_service_oss:web_core_oss')
     compile project(':rabbitmq-support')
 }
