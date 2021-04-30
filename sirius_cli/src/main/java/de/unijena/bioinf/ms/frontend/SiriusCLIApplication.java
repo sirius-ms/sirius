@@ -89,10 +89,7 @@ public class SiriusCLIApplication {
     public static Runnable shutdownWebservice() {
         return () -> {
             try {
-                ApplicationCore.WEB_API.shutdownJobWatcher();
-                ApplicationCore.DEFAULT_LOGGER.info("Try to delete leftover jobs on web server...");
-                ApplicationCore.WEB_API.deleteClientAndJobs();
-                ApplicationCore.DEFAULT_LOGGER.info("...Job deletion Done!");
+                ApplicationCore.WEB_API.shutdown();
             } catch (IOException e) {
                 e.printStackTrace();
             }
