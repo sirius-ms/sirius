@@ -73,8 +73,14 @@ public class SpectraJSONWriter{
 	}
 
 	// MS1 spectrum (single)
-	public String ms1JSON(SimpleSpectrum pattern1){
-		JsonObject spectra = jsonSpectra(pattern1, "MS1");
+	public String ms1JSON(SimpleSpectrum pattern1, SiriusIsotopePattern siriusIsotopePattern){
+        JsonObject spectra;
+        if (siriusIsotopePattern != null){
+            spectra = ms1MirrorIsotope(pattern1, siriusIsotopePattern.getIsotopePattern());
+            annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(siriusIsotopePattern));
+            spectra.get("spectra").getAsJsonArray().remove(1); // remove Isotope spectrum, peak matches are left
+        } else
+            spectra = jsonSpectra(pattern1, "MS1");
 		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		return gson.toJson(spectra);
 	}

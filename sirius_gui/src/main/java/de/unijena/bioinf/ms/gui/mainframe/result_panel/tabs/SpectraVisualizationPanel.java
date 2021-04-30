@@ -145,14 +145,21 @@ public class SpectraVisualizationPanel
 			// Deviation standardMassDeviation = experiment.getExperiment()
 			// 		.getAnnotationOrNull(MS1MassDeviation.class).standardMassDeviation;
 			List<SimpleSpectrum> spectra1 = experiment.getMs1Spectra();
-			SimpleSpectrum spectrum = experiment.getMergedMs1Spectrum()==null ? spectra1.get(0) : experiment.getMergedMs1Spectrum(); // TODO: can there be more?
-			if (mode.equals(MS1_DISPLAY)) {
-				jsonSpectra = spectraWriter.ms1JSON(spectrum);
-			} else if (mode.equals(MS1_MIRROR_DISPLAY)) {
-				FTree ftree = sre.getFragTree().orElse(null);
-				SiriusIsotopePattern siriusIsotopePattern = new SiriusIsotopePattern(ftree ,experiment.getExperiment(), spectrum);
-				jsonSpectra = spectraWriter.ms1MirrorJSON(spectrum, siriusIsotopePattern);
-			} else {
+            SimpleSpectrum spectrum = experiment.getMergedMs1Spectrum() == null ? spectra1.get(0)
+                    : experiment.getMergedMs1Spectrum();
+            SiriusIsotopePattern siriusIsotopePattern = null;
+            if (sre != null){
+                // results exists, try to get isotope pattern
+                FTree ftree = sre.getFragTree().orElse(null);
+                siriusIsotopePattern = (ftree != null)
+                    ? new SiriusIsotopePattern(ftree, experiment.getExperiment(), spectrum)
+                    : null;
+            }
+			if (mode.equals(MS1_DISPLAY))
+                jsonSpectra = spectraWriter.ms1JSON(spectrum, siriusIsotopePattern);
+            else if (mode.equals(MS1_MIRROR_DISPLAY))
+                jsonSpectra = spectraWriter.ms1MirrorJSON(spectrum, siriusIsotopePattern);
+            else {
 				return;
 			}
 		} else if (mode.equals(MS2_DISPLAY)) {
