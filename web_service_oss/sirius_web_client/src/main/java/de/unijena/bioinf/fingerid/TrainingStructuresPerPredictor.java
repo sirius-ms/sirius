@@ -47,11 +47,11 @@ public class TrainingStructuresPerPredictor {
         return singleton;
     }
 
-    private TrainingStructuresSet addAvailablePredictorTypes(PredictorType predictorType, WebAPI api) {
+    private TrainingStructuresSet addAvailablePredictorTypes(PredictorType predictorType, WebAPI<?> api) {
         synchronized (predictorTypeToInchiKeys2D) {
             if (!predictorTypeToInchiKeys2D.containsKey(predictorType)) {
                 try {
-                    InChI[] inchis = api.getTrainingStructures(predictorType);
+                    InChI[] inchis = api.getTrainingStructures(predictorType).getTrainingStructures();
                     TrainingStructuresSet trainingSet = new TrainingStructuresSet(inchis);
                     addTrainingStructuresSet(predictorType, trainingSet);
                 } catch (Exception e) {
