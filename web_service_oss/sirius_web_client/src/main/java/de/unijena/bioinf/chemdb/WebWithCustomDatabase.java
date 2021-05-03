@@ -51,22 +51,22 @@ import java.util.stream.Stream;
  * This class can be wrapped by {@link FingerblastSearchEngine} to provide compatibility with
  * the {@link SearchStructureByFormula} API.
  */
-public class RestWithCustomDatabase {
-    protected static Logger logger = LoggerFactory.getLogger(RestWithCustomDatabase.class);
+public class WebWithCustomDatabase {
+    protected static Logger logger = LoggerFactory.getLogger(WebWithCustomDatabase.class);
 
 
     protected final File directory;
-    protected final String restCacheDir;
+    protected final String webCacheDir;
     protected final String customDbDir;
     protected HashMap<String, ChemicalBlobDatabase<?>> customDatabases;
 
     protected final WebAPI<?> api;
     private VersionsInfo versionInfoCache = null;
 
-    public RestWithCustomDatabase(WebAPI<?> api, File dir, String restCacheDir, String customDbDir) {
+    public WebWithCustomDatabase(WebAPI<?> api, File dir, String webCacheDir, String customDbDir) {
         this.api = api;
         this.directory = dir;
-        this.restCacheDir = restCacheDir;
+        this.webCacheDir = webCacheDir;
         this.customDbDir = customDbDir;
         this.customDatabases = new HashMap<>();
     }
@@ -106,7 +106,7 @@ public class RestWithCustomDatabase {
 
 
     public synchronized void destroyCache() throws IOException {
-        final File all = getRestDBCacheDir();
+        final File all = getWebDBCacheDir();
         if (all.exists()) {
             for (File f : all.listFiles()) {
                 Files.deleteIfExists(f.toPath());
@@ -147,7 +147,7 @@ public class RestWithCustomDatabase {
 
         final OptionalLong requestFilterOpt = extractFilterBits(dbs);
         if (requestFilterOpt.isPresent()) {
-            api.consumeStructureDB(requestFilterOpt.getAsLong(), getRestDBCacheDir(), restDb -> {
+            api.consumeStructureDB(requestFilterOpt.getAsLong(), getWebDBCacheDir(), restDb -> {
                 candidates.addAll(restDb.lookupMolecularFormulas(ionMass, deviation, ionType));
             });
         }
@@ -178,7 +178,7 @@ public class RestWithCustomDatabase {
             final long requestFilter = extractFilterBits(dbs).orElse(-1);
             if (requestFilter >= 0 || includeRestAllDb) {
                 final long searchFilter = includeRestAllDb ? 0 : requestFilter;
-                result = api.applyStructureDB(searchFilter, getRestDBCacheDir(), restDb -> new CandidateResult(
+                result = api.applyStructureDB(searchFilter, getWebDBCacheDir(), restDb -> new CandidateResult(
                         restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
             } else {
                 logger.warn("No filter for Rest DBs found bits in DB list: '" + dbs.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) + "'. Returning empty search list from REST DB");
@@ -430,8 +430,8 @@ public class RestWithCustomDatabase {
     }
 
     @NotNull
-    public File getRestDBCacheDir() {
-        return new File(directory, restCacheDir);
+    public File getWebDBCacheDir() {
+        return new File(directory, webCacheDir);
     }
 
     @NotNull

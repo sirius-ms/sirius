@@ -315,7 +315,7 @@ public class CustomDatabaseImporter {
         List<JJob<Boolean>> jobs = formulasToSearch.stream().map(formula -> new BasicJJob<Boolean>() {
             @Override
             protected Boolean compute() throws Exception {
-                api.consumeStructureDB(DataSource.ALL.flag(), api.getChemDB().getRestDBCacheDir(), db -> {
+                api.consumeStructureDB(DataSource.ALL.flag(), api.getChemDB().getWebDBCacheDir(), db -> {
                     List<FingerprintCandidate> cans = db.lookupStructuresAndFingerprintsByFormula(formula);
                     for (FingerprintCandidate can : cans) {
                         CustomDatabase.Comp toAdd = dict.get(can.getInchi().in2D);

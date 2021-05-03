@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
+import de.unijena.bioinf.ms.amqp.client.AmqpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -43,27 +44,16 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-public class ChemicalAMQPDatabase implements AbstractChemicalDatabase {
+public class ChemicalAmqpDatabase implements AbstractChemicalDatabase {
     static {
         FingerIDProperties.fingeridVersion();
     }
 
-
-    protected File cacheDir;
-
-    protected long filter;
+    protected final AmqpClient client;
 
 
-    public static File defaultCacheDir() {
-        final String val = System.getenv("CSI_FINGERID_STORAGE");
-        if (val != null) return new File(val);
-        return new File(System.getProperty("user.home"), "csi_fingerid_cache");
-    }
-
-
-    public ChemicalAMQPDatabase(@Nullable File cacheDir, long filter) {
-        this.filter = filter;
-        this.cacheDir = cacheDir != null ? cacheDir : defaultCacheDir();
+    public ChemicalAmqpDatabase(@NotNull AmqpClient client) {
+        this.client = client;
     }
 
 
@@ -88,60 +78,6 @@ public class ChemicalAMQPDatabase implements AbstractChemicalDatabase {
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        final File stfile = new File(cacheDir, "/" + formula.toString() + ".json.gz");
-        try {
-            List<FingerprintCandidate> fpcs = new ArrayList<>();
-            if (stfile.exists()) {
-                try {
-                    final GZIPInputStream zin = new GZIPInputStream(new BufferedInputStream(new FileInputStream(stfile)));
-                    try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(zin))) {
-                        while (fciter.hasNext())
-                            fpcs.add(fciter.next());
-                    }
-                } catch (IOException | JsonException e) {
-                    LoggerFactory.getLogger(ChemicalAMQPDatabase.class).error("Error when searching for " + formula.toString() + " in file database. Deleting cache file '" + stfile.getAbsolutePath() + "' an try fetching from Server");
-                    stfile.delete();
-                    fpcs = requestFormula(stfile, formula);
-                }
-            } else {
-                fpcs = requestFormula(stfile, formula);
-            }
-
-            fingerprintCandidates.addAll(
-                    fpcs.stream().filter(ChemDBs.inFilter((it)-> it.bitset,filter)).collect(Collectors.toList()));
-            return fingerprintCandidates;
-        } catch (IOException e) {
-            throw new ChemicalDatabaseException(e);
-        }
-    }
-
-    private List<FingerprintCandidate> requestFormula(final @NotNull File output, MolecularFormula formula) throws IOException {
- /*       //get unfiltered list from server to write cache.
-        final List<FingerprintCandidate> fpcs = chemDBClient.getCompounds(formula, DataSource.ALL.flag(), client);
-
-        // write cache in background -> cache has to be unfiltered
-        SiriusJobs.runInBackground(() -> {
-            output.getParentFile().mkdirs();
-            final File tempFile = File.createTempFile("sirius_formula", ".json.gz", output.getParentFile());
-            try {
-                try (final GZIPOutputStream fout = new GZIPOutputStream(new FileOutputStream(tempFile))) {
-                    try (final BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fout))) {
-                        FingerprintCandidate.toJSONList(fpcs, br);
-                    }
-                }
-
-                // move tempFile is canonical on same fs
-                if (!output.exists())
-                    if (!tempFile.renameTo(output))
-                        tempFile.delete();
-
-                return true;
-            } finally {
-                Files.deleteIfExists(tempFile.toPath());
-            }
-        });
-
-        return fpcs;*/
         return null;
     }
 

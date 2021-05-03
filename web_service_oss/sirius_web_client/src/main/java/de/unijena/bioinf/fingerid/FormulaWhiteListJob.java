@@ -29,7 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
-import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
 
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  */
 public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
     private final List<SearchableDatabase> searchableDatabases;
-    private final RestWithCustomDatabase searchDB;
+    private final WebWithCustomDatabase searchDB;
     //job parameter
     private final boolean onlyOrganic;
     private final boolean annotate;
@@ -51,11 +51,11 @@ public class FormulaWhiteListJob extends BasicJJob<Whiteset> {
     private final Ms2Experiment experiment;
     private final Deviation massDev;
 
-    public FormulaWhiteListJob(RestWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment, boolean onlyOrganic, boolean annotateResult) {
+    public FormulaWhiteListJob(WebWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment, boolean onlyOrganic, boolean annotateResult) {
         this(searchDB, searchableDatabases, experiment, experiment.getAnnotationOrThrow(MS2MassDeviation.class).allowedMassDeviation, onlyOrganic, annotateResult);
     }
 
-    public FormulaWhiteListJob(RestWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment, Deviation massDev, boolean onlyOrganic, boolean annotateResult) {
+    public FormulaWhiteListJob(WebWithCustomDatabase searchDB, List<SearchableDatabase> searchableDatabases, Ms2Experiment experiment, Deviation massDev, boolean onlyOrganic, boolean annotateResult) {
         super(JobType.WEBSERVICE);
         this.massDev = massDev;
         this.searchableDatabases = searchableDatabases;

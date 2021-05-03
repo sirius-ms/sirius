@@ -178,12 +178,6 @@ public enum Format {
     }
 
     @Override
-    public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
-        return lookupStructuresAndFingerprintsByFormula(formula, candidates);
-    }
-
-    @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         try (final Reader blobReader = getCompoundReader(formula).orElse(null)) {
             if (blobReader != null) {
@@ -255,7 +249,6 @@ public enum Format {
     @Override
     public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         // compounds are already annotated
-        return;
     }
 
     @Override
