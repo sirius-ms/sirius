@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.webapi.amqp;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
@@ -28,10 +27,15 @@ import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.canopus.CanopusResult;
-import de.unijena.bioinf.chemdb.ChemicalAMQPDatabase;
+import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
-import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.CanopusWebResultConverter;
+import de.unijena.bioinf.fingerid.CovtreeWebResultConverter;
+import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.FingerprintWebResultConverter;
+import de.unijena.bioinf.fingerid.blast.BayesianScoringUtils;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoringBuilder;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.amqp.client.AmqpClient;
 import de.unijena.bioinf.ms.amqp.client.AmqpClients;
@@ -41,24 +45,37 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
+import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
+import de.unijena.bioinf.ms.stores.model.CanopusClientDataStore;
+import de.unijena.bioinf.ms.stores.model.FingerIdClientDataStore;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
-import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.webapi.AbstractWebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Map;
 
-public final class AmqpAPI implements WebAPI<ChemicalAMQPDatabase> {
+public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends AbstractWebAPI<WebChemDB> {
     private final AmqpClient amqpClient;
 
-    public AmqpAPI(AmqpClient amqpClient) {
+    private FingerIdClientDataStore fingeridModels;
+    private CanopusClientDataStore canopusModels;
+
+    private WebChemDB webChemDB;
+
+    public AmqpAPI(AmqpClient amqpClient, FingerIdClientDataStore fingeridModels, CanopusClientDataStore canopusModels, WebChemDB webChemDB) {
         this.amqpClient = amqpClient;
         this.amqpClient.startConsuming(30000);
+        this.webChemDB = webChemDB;
+        this.fingeridModels = fingeridModels;
+        this.canopusModels = canopusModels;
     }
 
     @Override
@@ -90,13 +107,13 @@ public final class AmqpAPI implements WebAPI<ChemicalAMQPDatabase> {
     }
 
     @Override
-    public void consumeStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOConsumer<ChemicalAMQPDatabase> doWithClient) throws IOException {
-
+    public void consumeStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOConsumer<WebChemDB> doWithClient) throws IOException {
+        doWithClient.accept(webChemDB);
     }
 
     @Override
-    public <T> T applyStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOFunction<ChemicalAMQPDatabase, T> doWithClient) throws IOException {
-        return null;
+    public <T> T applyStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOFunction<WebChemDB, T> doWithClient) throws IOException {
+        return doWithClient.apply(webChemDB);
     }
 
     @Override
@@ -108,10 +125,14 @@ public final class AmqpAPI implements WebAPI<ChemicalAMQPDatabase> {
     }
 
     @Override
-    public CanopusData getCanopusdData(@NotNull PredictorType predictorType) throws IOException {
-        return null; //todo
+    protected CanopusData getCanopusDataUncached(@NotNull PredictorType predictorType) throws IOException {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(canopusModels.getCanopusClientData(predictorType)
+                .orElseThrow(() -> new IOException("Error when fetching Canopus model Data"))))) {
+            return CanopusData.read(r);
+        }
     }
 
+    //region CSI:FingerID
     @Override
     public AmqpWebJJob<FingerprintJobInput, ?, FingerprintResult> submitFingerprintJob(FingerprintJobInput input) throws IOException {
         //check predictor compatibility
@@ -126,13 +147,12 @@ public final class AmqpAPI implements WebAPI<ChemicalAMQPDatabase> {
 
 
     @Override
-    public @NotNull StructurePredictor getStructurePredictor(@NotNull PredictorType type) throws IOException {
-        return null;
-    }
-
-    @Override
-    public FingerIdData getFingerIdData(@NotNull PredictorType predictorType) throws IOException {
-        return null;
+    protected FingerIdData getFingerIdDataUncached(@NotNull PredictorType predictorType) throws IOException {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(
+                fingeridModels.getFingerIdClientData(predictorType)
+                        .orElseThrow(() -> new IOException("Error when fetching CSI:FingerID model Data"))))) {
+            return FingerIdData.read(r);
+        }
     }
 
     @Override
@@ -144,25 +164,48 @@ public final class AmqpAPI implements WebAPI<ChemicalAMQPDatabase> {
                 input, (id) -> new AmqpWebJJob<>(id, input, new CovtreeWebResultConverter(fpVersion, performances)));
     }
 
+    /**
+     * @param predictorType pos or neg
+     * @param formula Molecular formula for which the tree is requested (Default tree will be used if formula is null)
+     * @return {@link BayesnetScoring} for the given {@link PredictorType} and {@link MolecularFormula}
+     * @throws IOException if something went wrong with the web query
+     */
     @Override
     public BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType, @Nullable MolecularFormula formula) throws IOException {
-        return null;
+        final MaskedFingerprintVersion fpVersion = getFingerIdData(predictorType).getFingerprintVersion();
+        final PredictionPerformance[] performances = getFingerIdData(predictorType).getPerformances();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(fingeridModels.getBayesnetScoringTree(predictorType, formula)
+                .orElseThrow(() -> new IOException("Error when fetching Bayesnet Scoring models"))))){
+            return BayesnetScoringBuilder.readScoring(br, fpVersion, BayesianScoringUtils.calculatePseudoCount(performances), BayesianScoringUtils.allowOnlyNegativeScores);
+        }
     }
 
-    @Override
+    //uncached -> access via predictor
     public Map<String, TrainedSVM> getTrainedConfidence(@NotNull PredictorType predictorType) throws IOException {
-        return null;
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(fingeridModels.getConfidenceSVMs(predictorType)
+                .orElseThrow(() -> new IOException("Error fetching confidence SVMs"))))){
+            return TrainedSVM.readSVMs(br);
+        }
     }
 
-    @Override
-    public InChI[] getTrainingStructures(PredictorType predictorType) throws IOException {
-        return new InChI[0];
+    //uncached -> access via predictor
+    public TrainingData getTrainingStructures(PredictorType predictorType) throws IOException {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(fingeridModels.getFingerIdTrainingStructures(predictorType)
+                .orElseThrow(() -> new IOException("Error fetching confidence SVMs"))))){
+            return TrainingData.readTrainingData(br);
+        }
     }
+    //endRegion
 
-    @Override
+    //region FingerprintVersions
+    /**
+     * @return The Fingerprint version used by the rest Database --  not really needed but for sanity checks
+     * @throws IOException if connection error happens
+     */
     public CdkFingerprintVersion getCDKChemDBFingerprintVersion() throws IOException {
-        return null;
+        return new CdkFingerprintVersion(CdkFingerprintVersion.withECFP().getUsedFingerprints()); //todo DUMMY add to amqp api
     }
+    //endregion
 
 
 }

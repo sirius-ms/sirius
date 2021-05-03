@@ -32,7 +32,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
-import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.FingerprintResult;
@@ -45,6 +45,7 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
+import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
@@ -97,8 +98,8 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     //endregion
 
     //region ChemDB
-    default RestWithCustomDatabase getChemDB() {
-        return SearchableDatabases.makeRestWithCustomDB(this);
+    default WebWithCustomDatabase getChemDB() {
+        return SearchableDatabases.makeWebWithCustomDB(this);
     }
 
     void consumeStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOConsumer<D> doWithClient) throws IOException;
@@ -167,7 +168,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     Map<String, TrainedSVM> getTrainedConfidence(@NotNull PredictorType predictorType) throws IOException;
 
     //uncached -> access via predictor
-    InChI[] getTrainingStructures(PredictorType predictorType) throws IOException;
+    TrainingData getTrainingStructures(PredictorType predictorType) throws IOException;
     //endRegion
 
     //region FingerprintVersions

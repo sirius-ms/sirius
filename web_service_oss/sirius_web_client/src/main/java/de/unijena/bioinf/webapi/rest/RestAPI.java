@@ -42,21 +42,21 @@
 
 package de.unijena.bioinf.webapi.rest;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.RESTDatabase;
-import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
-import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.CanopusWebResultConverter;
+import de.unijena.bioinf.fingerid.CovtreeWebResultConverter;
+import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.FingerprintWebResultConverter;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
@@ -76,11 +76,12 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
+import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
-import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.webapi.AbstractWebAPI;
 import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +98,7 @@ import java.util.*;
  */
 
 @ThreadSafe
-public final class RestAPI implements WebAPI<RESTDatabase> {
+public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     private static final Logger LOG = LoggerFactory.getLogger(RestAPI.class);
     public static long WEB_API_JOB_TIME_OUT = PropertyManager.getLong("de.unijena.bioinf.fingerid.web.job.timeout", 1000L * 60L * 60L); //default 1h
 
@@ -134,7 +135,7 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
     @Override
     public void shutdown() throws IOException {
         jobWatcher.shutdown();
-        WebAPI.super.shutdown();
+        super.shutdown();
     }
 
     //region ServerInfo
@@ -224,16 +225,12 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
         return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getID(), input, new CanopusWebResultConverter(version, MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()))));
     }
 
-    private final EnumMap<PredictorType, CanopusData> canopusData = new EnumMap<>(PredictorType.class);
-
-    public final CanopusData getCanopusdData(@NotNull PredictorType predictorType) throws IOException {
-        synchronized (canopusData) {
-            if (!canopusData.containsKey(predictorType))
-                canopusData.put(predictorType, ProxyManager.applyClient(client -> canopusClient.getCanopusData(predictorType, client)));
-        }
-        return canopusData.get(predictorType);
+    @Override
+    protected CanopusData getCanopusDataUncached(@NotNull PredictorType predictorType) throws IOException {
+        return ProxyManager.applyClient(client -> canopusClient.getCanopusData(predictorType, client));
     }
-    //endregion
+
+//endregion
 
     //region CSI:FingerID
     public WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input) throws IOException {
@@ -242,29 +239,9 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
         return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getID(), input, new FingerprintWebResultConverter(version)));
     }
 
-    //caches predicors so that we do not have to download the statistics and fingerprint info every time
-    private final EnumMap<PredictorType, StructurePredictor> fingerIdPredictors = new EnumMap<>(PredictorType.class);
-
-    public @NotNull StructurePredictor getStructurePredictor(@NotNull PredictorType type) throws IOException {
-        synchronized (fingerIdPredictors) {
-            if (!fingerIdPredictors.containsKey(type)) {
-                final CSIPredictor p = new CSIPredictor(type, this);
-                p.initialize();
-                fingerIdPredictors.put(type, p);
-            }
-        }
-        return fingerIdPredictors.get(type);
-    }
-
-
-    private final EnumMap<PredictorType, FingerIdData> fingerIdData = new EnumMap<>(PredictorType.class);
-
-    public FingerIdData getFingerIdData(@NotNull PredictorType predictorType) throws IOException {
-        synchronized (fingerIdData) {
-            if (!fingerIdData.containsKey(predictorType))
-                fingerIdData.put(predictorType, ProxyManager.applyClient(client -> fingerprintClient.getFingerIdData(predictorType, client)));
-        }
-        return fingerIdData.get(predictorType);
+    @Override
+    protected FingerIdData getFingerIdDataUncached(@NotNull PredictorType predictorType) throws IOException {
+        return ProxyManager.applyClient(client -> fingerprintClient.getFingerIdData(predictorType, client));
     }
 
     // use via predictor/scoring method
@@ -297,7 +274,7 @@ public final class RestAPI implements WebAPI<RESTDatabase> {
     }
 
     //uncached -> access via predictor
-    public InChI[] getTrainingStructures(PredictorType predictorType) throws IOException {
+    public TrainingData getTrainingStructures(PredictorType predictorType) throws IOException {
         return ProxyManager.applyClient(client -> fingerprintClient.getTrainingStructures(predictorType, client));
     }
     //endRegion

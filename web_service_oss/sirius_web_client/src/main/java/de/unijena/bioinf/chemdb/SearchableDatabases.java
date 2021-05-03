@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 
 public class SearchableDatabases {
     //todo should be configurable
-    public static final String REST_CACHE_DIR = "rest-cache"; //chache directory for all rest dbs
+    public static final String WEB_CACHE_DIR = "web-cache"; //cache directory for all remote (web) dbs
     public static final String CUSTOM_DB_DIR = "custom";
 
     private SearchableDatabases() {
@@ -54,8 +54,8 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static File getRESTDatabaseCacheDirectory() {
-        return new File(getDatabaseDirectory(),REST_CACHE_DIR);
+    public static File getWebDatabaseCacheDirectory() {
+        return new File(getDatabaseDirectory(), WEB_CACHE_DIR);
     }
 
     public static File getDatabaseDirectory() {
@@ -110,7 +110,7 @@ public class SearchableDatabases {
     public static Optional<? extends SearchableDatabase> getDatabaseByName(@NotNull String name) {
         final DataSource source = DataSources.getSourceFromNameOrNull(name);
         if (source != null)
-            return Optional.of(new SearchableRestDB(source.realName, source.flag()));
+            return Optional.of(new SearchableWebDB(source.realName, source.flag()));
         return getCustomDatabaseByName(name);
     }
 
@@ -132,8 +132,8 @@ public class SearchableDatabases {
         return loadCustomDatabases(up2date);
     }
 
-    public static RestWithCustomDatabase makeRestWithCustomDB(WebAPI webAPI) {
-        return new RestWithCustomDatabase(webAPI, getDatabaseDirectory(), REST_CACHE_DIR, CUSTOM_DB_DIR);
+    public static WebWithCustomDatabase makeWebWithCustomDB(WebAPI<?> webAPI) {
+        return new WebWithCustomDatabase(webAPI, getDatabaseDirectory(), WEB_CACHE_DIR, CUSTOM_DB_DIR);
     }
 
     @NotNull

@@ -1,5 +1,6 @@
 
 dependencies {
+    compile project(":web_service_oss:amqp_client_oss")
     compile project(':chemical_db_oss')
     compile project(':chemical_db_oss:chemdb_file_oss')
 }

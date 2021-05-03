@@ -27,7 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
@@ -45,7 +45,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
     private final CSIPredictor predictor;
 
     protected BayesnetScoring bayesnetScoring = null;
-    private RestWithCustomDatabase.CandidateResult candidates = null;
+    private WebWithCustomDatabase.CandidateResult candidates = null;
     private List<Scored<FingerprintCandidate>> scoredCandidates = null;
 
     public FingerblastJJob(@NotNull CSIPredictor predictor) {
@@ -88,7 +88,7 @@ public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult>
         return scoredCandidates;
     }
 
-    public RestWithCustomDatabase.CandidateResult getCandidates() {
+    public WebWithCustomDatabase.CandidateResult getCandidates() {
         return candidates;
     }
 
