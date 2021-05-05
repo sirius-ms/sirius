@@ -76,6 +76,7 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
     protected String host, username, password;
     protected Properties connectionProps;
 
+    //todo we should save the database import dat in the sql db. or is this already somewhere
 
     /**
      * initialize a chemical database connection using default values for password and username

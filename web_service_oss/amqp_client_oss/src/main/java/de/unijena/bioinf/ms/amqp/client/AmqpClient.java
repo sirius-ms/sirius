@@ -183,6 +183,11 @@ public class AmqpClient {
                 .appId("SIRIUS");
     }
 
+    public boolean isConnected() {
+        //todo send test message
+        return !consumerThreads.isEmpty();
+    }
+
     public class AMPQCallbackJJob extends BasicJJob<JobMessage<?>> {
         private final AMQP.BasicProperties properties;
         private final byte[] body;

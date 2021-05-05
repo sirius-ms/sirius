@@ -37,6 +37,7 @@ import de.unijena.bioinf.fingerid.blast.BayesianScoringUtils;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoringBuilder;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.amqp.client.AmqpClient;
 import de.unijena.bioinf.ms.amqp.client.AmqpClients;
 import de.unijena.bioinf.ms.amqp.client.jobs.AmqpWebJJob;
@@ -81,23 +82,29 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     @Override
     public @Nullable VersionsInfo getVersionInfo() {
         //todo request via data service as static file like the models?
-        return null;
+        return new VersionsInfo(FingerIDProperties.sirius_guiVersion(), getChemDbDate(), false);
+    }
+
+    @Override
+    public String getChemDbDate() {
+        return webChemDB.getChemDbDate();
     }
 
     @Override
     public int checkConnection() {
-        return 0;
+        return amqpClient.isConnected() ? 0 : 1;
     }
 
     @Override
     public WorkerList getWorkerInfo() throws IOException {
         //todo create rabbitMQ query to request workers available  ->  queue subscribers
-        return null;
+        return new WorkerList();
     }
 
     @Override
     public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {
-        return null;
+        //todo implement
+        throw new UnsupportedOperationException("Error reporting is not yet implemented!");
     }
 
 

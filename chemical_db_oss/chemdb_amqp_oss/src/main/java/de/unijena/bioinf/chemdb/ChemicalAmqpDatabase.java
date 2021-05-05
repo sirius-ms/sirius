@@ -101,6 +101,10 @@ public class ChemicalAmqpDatabase implements AbstractChemicalDatabase {
     }
 
 
+    @Override
+    public String getChemDbDate() {
+        return null; //todo get version from amqp client
+    }
 
     @Override
     public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {

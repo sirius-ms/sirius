@@ -43,6 +43,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ChemicalGCSDatabase extends ChemicalBlobDatabase<GCSBlobStorage> {
 
+    private String chemDbDate;
+
     public ChemicalGCSDatabase() throws IOException {
         this(FingerIDProperties.gcsChemDBBucketName());
     }
@@ -66,6 +68,10 @@ public class ChemicalGCSDatabase extends ChemicalBlobDatabase<GCSBlobStorage> {
 
         format = Optional.ofNullable(labels.get("chemdb-format")).map(String::toUpperCase).map(Format::valueOf)
                 .orElseThrow(() -> new IOException("Could not determine database file format."));
+        chemDbDate = labels.get("chemdb-date");
+        if (chemDbDate == null || chemDbDate.isBlank())
+            LoggerFactory.getLogger(getClass()).warn("Could not determine ChemDB Date! This might cause problems when caching this DB.");
+
         compression = Optional.ofNullable(labels.get("chemdb-compression")).map(String::toUpperCase).map(Compression::valueOf)
                 .orElseGet(() -> {
                     LoggerFactory.getLogger(getClass()).warn("Could not determine compressions type. Assuming uncompressed data!");
@@ -92,5 +98,10 @@ public class ChemicalGCSDatabase extends ChemicalBlobDatabase<GCSBlobStorage> {
             });
             Arrays.sort(this.formulas);
         }
+    }
+
+    @Override
+    public String getChemDbDate() {
+        return chemDbDate;
     }
 }

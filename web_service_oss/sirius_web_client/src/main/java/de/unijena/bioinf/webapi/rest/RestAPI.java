@@ -49,6 +49,7 @@ import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.canopus.CanopusResult;
+import de.unijena.bioinf.chemdb.DBVersion;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.CanopusWebResultConverter;
@@ -154,6 +155,12 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         return ProxyManager.doWithClient(serverInfoClient::getVersionInfo);
     }
 
+    @Override
+    public String getChemDbDate() {
+        @Nullable VersionsInfo v = getVersionInfo();
+        return v == null ? null : v.databaseDate;
+    }
+
     public int checkConnection() {
         return ProxyManager.doWithClient(client -> {
             try {
@@ -205,13 +212,13 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     //region ChemDB
     public void consumeStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOConsumer<RESTDatabase> doWithClient) throws IOException {
-        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, chemDBClient, ProxyManager.client())) {
+        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, getChemDbDate(), chemDBClient, ProxyManager.client())) {
             doWithClient.accept(restDB);
         }
     }
 
     public <T> T applyStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOFunction<RESTDatabase, T> doWithClient) throws IOException {
-        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, chemDBClient, ProxyManager.client())) {
+        try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, getChemDbDate(), chemDBClient, ProxyManager.client())) {
             return doWithClient.apply(restDB);
         }
     }

@@ -71,29 +71,13 @@ public class WebWithCustomDatabase {
         this.customDatabases = new HashMap<>();
     }
 
-
     public void checkCache() throws IOException {
         if (isOutdated())
             destroyCache();
     }
 
-    protected VersionsInfo versionInfo() {
-        if (versionInfoCache == null)
-            versionInfoCache = api.getVersionInfo();
-        return versionInfoCache;
-    }
-
     public boolean isOutdated() {
-        final File f = new File(directory, "version");
-        if (f.exists()) {
-            try {
-                final List<String> content = Files.readAllLines(f.toPath(), StandardCharsets.UTF_8);
-                if (content.size() > 0 && !versionInfo().databaseOutdated(content.get(0))) return false;
-            } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            }
-        }
-        return true;
+        return !DBVersion.newLocalVersion(directory).isChemDbValid(api.getChemDbDate());
     }
 
     public FingerblastSearchEngine makeSearchEngine(SearchableDatabase db) {
@@ -119,7 +103,7 @@ public class WebWithCustomDatabase {
         }
 
         try (BufferedWriter bw = Files.newBufferedWriter(new File(directory, "version").toPath(), StandardCharsets.UTF_8)) {
-            bw.write(versionInfo().databaseDate);
+            bw.write(api.getChemDbDate());
         }
     }
 
