@@ -162,7 +162,7 @@ public class CustomDatabase implements SearchableDatabase {
         }
     }
 
-    public CustomDatabaseImporter getImporter(@NotNull final WebAPI api, int bufferSize) {
+    public CustomDatabaseImporter getImporter(@NotNull final WebAPI<?> api, int bufferSize) {
         return new CustomDatabaseImporter(this, version, api, bufferSize);
     }
 
@@ -234,7 +234,7 @@ public class CustomDatabase implements SearchableDatabase {
         return Objects.hash(name, path);
     }
 
-    public void buildDatabase(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI api, int bufferSize) throws IOException, CDKException {
+    public void buildDatabase(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI<?> api, int bufferSize) throws IOException, CDKException {
         buildDatabase(files, listener, getImporter(api, bufferSize));
     }
 
@@ -248,7 +248,7 @@ public class CustomDatabase implements SearchableDatabase {
         importer.flushBuffer();
     }
 
-    public JJob<Boolean> buildDatabaseJob(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI api, int bufferSize) {
+    public JJob<Boolean> buildDatabaseJob(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI<?> api, int bufferSize) {
         final CustomDatabaseImporter importer = getImporter(api, bufferSize);
         return new BasicJJob<Boolean>() {
             @Override
