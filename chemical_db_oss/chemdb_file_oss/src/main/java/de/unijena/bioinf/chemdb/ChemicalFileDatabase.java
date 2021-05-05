@@ -54,6 +54,8 @@ public class ChemicalFileDatabase extends ChemicalBlobDatabase<FileBlobStorage> 
             format = fileNames.stream().map(s -> s.substring(0, s.length() - compression.ext().length()))
                     .map(Format::fromName).filter(Objects::nonNull)
                     .findFirst().orElseThrow(() -> new IOException("Could not determine Database formatQ"));
+
+
         }else {
             compression = Compression.GZIP;
             format = Format.JSON;

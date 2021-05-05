@@ -34,7 +34,7 @@ import java.util.List;
 
 public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchStructureByFormula, AnnotateStructures {
     // temporary switch
-    public static final boolean USE_EXTENDED_FINGERPRINTS = PropertyManager.getBoolean("de.unijena.bioinf.chemdb.fingerprint.extended", null, false);
+    boolean USE_EXTENDED_FINGERPRINTS = PropertyManager.getBoolean("de.unijena.bioinf.chemdb.fingerprint.extended", null, false);
 
     /**
      * Search for molecular formulas in the database
@@ -43,7 +43,7 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
      * @param ionType adduct of the ion
      * @return list of formula candidates which theoretical mass (+ adduct mass) is within the given mass window
      */
-    public abstract List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException;
+    List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException;
 
     /**
      * Search for molecular formulas in the database
@@ -59,7 +59,7 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
         return candidates;
     }
 
-    public abstract boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException;
+    boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException;
 
 
         /**
@@ -67,7 +67,7 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
          * @param formula
          * @return
          */
-    public abstract List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException;
+        List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException;
 
     /**
      * Lookup structures and corresponding fingerprints
@@ -79,13 +79,13 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
         return lookupStructuresAndFingerprintsByFormula(formula, new ArrayList<>());
     }
 
-    public abstract List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
+    List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
 
-    public abstract List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
+    List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
 
-    public abstract List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
+    List<FingerprintCandidate> lookupManyFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
 
-    public abstract List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException;
+    List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException;
 
     default Fingerprint lookupFingerprintByInChI(InChI inchi) throws ChemicalDatabaseException {
         final List<FingerprintCandidate> xs = lookupFingerprintsByInchis(Collections.singleton(inchi.key2D()));
@@ -93,6 +93,15 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
         else return null;
     }
 
-    public abstract List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException;
+    List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException;
+
+    /**
+     * Returns Date of the the represented structure database that is defined in the library.
+     * Override this method in remote database implementations to return the correct date.
+     * @return Date of the represented structure database
+     */
+    default String getChemDbDate(){
+        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date");
+    }
 
 }

@@ -54,6 +54,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     }
 
     private final CloseableHttpClient client;
+    private final String chemDBDate;
     protected StructureSearchClient chemDBClient;
     protected final ChemDBFileCache cache;
     protected long filter;
@@ -62,8 +63,9 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
 
 
-    public RESTDatabase(@Nullable File cacheDir, long filter, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
+    public RESTDatabase(@Nullable File cacheDir, long filter, String chemDBDate, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
         this.filter = filter;
+        this.chemDBDate = chemDBDate;
         this.chemDBClient = chemDBClient;
         this.client = client;
         this.cache = new ChemDBFileCache(cacheDir, new SearchStructureByFormula() {
@@ -80,28 +82,28 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         });
     }
 
-    public RESTDatabase(@NotNull File cacheDir, long filter, @Nullable URI host, @NotNull CloseableHttpClient client) {
-        this(cacheDir, filter, new ChemDBClient(host), client);
+    public RESTDatabase(@NotNull File cacheDir, long filter, String chemDBDate, @Nullable URI host, @NotNull CloseableHttpClient client) {
+        this(cacheDir, filter, chemDBDate, new ChemDBClient(host), client);
     }
 
-    public RESTDatabase(File cacheDir, long filter, String host, CloseableHttpClient client) {
-        this(cacheDir, filter, URI.create(host), client);
+    public RESTDatabase(File cacheDir, long filter, String chemDBDate, String host, CloseableHttpClient client) {
+        this(cacheDir, filter, chemDBDate, URI.create(host), client);
     }
 
-    public RESTDatabase(File cacheDir, long filter, String host) {
-        this(cacheDir, filter, host, HttpClients.createDefault());
+    public RESTDatabase(File cacheDir, long filter, String chemDBDate, String host) {
+        this(cacheDir, filter, chemDBDate, host, HttpClients.createDefault());
     }
 
-    public RESTDatabase(File cacheDir, long filter, URI host) {
-        this(cacheDir, filter, host, HttpClients.createDefault());
+    public RESTDatabase(File cacheDir, long filter, String chemDBDate, URI host) {
+        this(cacheDir, filter, chemDBDate, host, HttpClients.createDefault());
     }
 
-    public RESTDatabase(File cacheDir, long filter) {
-        this(cacheDir, filter, (URI) null);
+    public RESTDatabase(File cacheDir, long filter, String chemDBDate) {
+        this(cacheDir, filter, chemDBDate, (URI) null);
     }
 
-    public RESTDatabase(long filter) {
-        this(null, filter, (URI) null);
+    public RESTDatabase(long filter, String chemDBDate) {
+        this(null, filter, chemDBDate, (URI) null);
     }
 
     @Override
