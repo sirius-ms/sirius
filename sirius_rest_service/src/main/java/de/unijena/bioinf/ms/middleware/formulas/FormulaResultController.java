@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.middleware.formulas;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -95,17 +97,23 @@ public class FormulaResultController extends BaseApiController {
     @GetMapping(value = "/formulas/{fid}/candidates", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public String getStructureCandidates(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
         SiriusProjectSpace projectSpace = projectSpace(pid);
+        ObjectMapper mapper = new ObjectMapper();
         return this.getAnnotatedFormulaResult(projectSpace, cid, fid, FBCandidates.class).map(fr -> {
             List<String> jsons = fr.getAnnotation(FBCandidates.class).map(candidates ->
-                    candidates.getResults().stream().map(sc ->
-                            sc.getCandidate().toJSON()).collect(Collectors.toList()))
+                    candidates.getResults().stream().map(sc -> {
+                        try {
+                            return mapper.writeValueAsString(sc.getCandidate());
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }).collect(Collectors.toList()))
                     .orElse(Collections.emptyList());
             return this.JSONListToOneJSON(jsons);
         }).orElse(null);
     }
 
     @GetMapping(value = "/formulas/topHitCandidate", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public String getTopHitCandidate(@PathVariable String pid, @PathVariable String cid){
+    public String getTopHitCandidate(@PathVariable String pid, @PathVariable String cid) throws JsonProcessingException {
         SiriusProjectSpace projectSpace = projectSpace(pid);
         Stream<Optional<FormulaResult>> annotatedFResults = this.getCompound(projectSpace,cid).map(cc ->
                 cc.getResults().values().stream().map(frId -> {
@@ -135,7 +143,7 @@ public class FormulaResultController extends BaseApiController {
                 bestCandidate = topHits.get(idx);
             }
         }
-        return bestCandidate.getCandidate().toJSON();
+        return new ObjectMapper().writeValueAsString(bestCandidate.getCandidate());
     }
 
     @GetMapping(value = "formulas/{fid}/tree", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
