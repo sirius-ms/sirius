@@ -22,25 +22,31 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 
 public class ContainerEvent<ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>> {
 
     public enum EventType {
-        ID_CREATED, CREATED, UPDATED, DELETED;
+        ID_CREATED, CREATED, UPDATED, DELETED, ID_FLAG
     }
 
     protected final EventType type;
     protected final ID id;
     protected final Container container;
     protected final Set<Class<? extends DataAnnotation>> affectedComponents;
+    protected final EnumSet<CompoundContainerId.Flag> affectedIfFlags;
 
     public ContainerEvent(EventType type, ID id, Container container, Set<Class<? extends DataAnnotation>> affectedComponents) {
+        this(type, id, container, affectedComponents, EnumSet.noneOf(CompoundContainerId.Flag.class));
+    }
+    public ContainerEvent(EventType type, ID id, Container container, Set<Class<? extends DataAnnotation>> affectedComponents, EnumSet<CompoundContainerId.Flag> affectedIfFlags) {
         this.type = type;
         this.id = id;
         this.container = container;
         this.affectedComponents = affectedComponents;
+        this.affectedIfFlags = affectedIfFlags;
     }
 
     public ID getAffectedID() {
@@ -51,10 +57,21 @@ public class ContainerEvent<ID extends ProjectSpaceContainerId, Container extend
         return affectedComponents;
     }
 
+    public EnumSet<CompoundContainerId.Flag> getAffectedIfFlags() {
+        return affectedIfFlags;
+    }
+
     public boolean hasChanged(Class<? extends DataAnnotation> komponent) {
         return affectedComponents.contains(komponent);
     }
 
+    public boolean hasChanged(CompoundContainerId.Flag flag) {
+        return affectedIfFlags.contains(flag);
+    }
+
+    public boolean isFlagChange() {
+        return type == EventType.ID_FLAG;
+    }
     public boolean isUpdate() {
         return type == EventType.UPDATED;
     }
