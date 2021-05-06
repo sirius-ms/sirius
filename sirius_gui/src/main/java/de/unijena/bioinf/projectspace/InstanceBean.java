@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -52,7 +51,6 @@ import java.util.stream.IntStream;
  */
 public class InstanceBean extends Instance implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
-    public final AtomicBoolean computeLock = new AtomicBoolean(false);
 
     @Override
     public HiddenChangeSupport pcs() {
@@ -61,7 +59,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
 
     //Project-space listener
     private List<ContainerListener.Defined> listeners;
-
+    private ContainerListener.Defined computeListener;
 
     //todo best hit property change is needed.
     // e.g. if the scoring changes from sirius to zodiac
@@ -75,6 +73,7 @@ public class InstanceBean extends Instance implements SiriusPCS {
         super(compoundContainer, spaceManager);
     }
 
+    //todo these listeners should be project wide to dramatically reduce number of listeners
     private List<ContainerListener.Defined> configureListeners() {
         final List<ContainerListener.Defined> listeners = new ArrayList<>(3);
 
@@ -83,6 +82,13 @@ public class InstanceBean extends Instance implements SiriusPCS {
                 return;
             pcs.firePropertyChange("instance.ms2Experiment", null, event.getAffectedComponent(Ms2Experiment.class));
         })));
+
+        computeListener = projectSpace().defineCompoundListener().on(ContainerEvent.EventType.ID_FLAG).thenDo(event -> {
+            if (!event.getAffectedID().equals(getID()) || !event.getAffectedIfFlags().contains(CompoundContainerId.Flag.COMPUTING))
+                return;
+            boolean value = event.getAffectedID().hasFlag(CompoundContainerId.Flag.COMPUTING);
+            pcs.firePropertyChange("computeState", !value, value);
+        });
 
         listeners.add(projectSpace().defineFormulaResultListener().onCreate().thenDo((event -> {
             if (!event.getAffectedID().getParentId().equals(getID()))
@@ -185,31 +191,28 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     // Computing State
-    public boolean isComputing() {
-        return computeLock.get();
-    }
-
-    public void setComputing(boolean computing, boolean noChangeEvent) {
-        if (noChangeEvent)
-            computeLock.set(computing);
-        else
+    public void setComputing(boolean computing, boolean noNotification) {
+        if (noNotification) {
+            try {
+                computeListener.unregister();
+                setComputing(computing);
+            } finally {
+                computeListener.register();
+            }
+        } else {
             setComputing(computing);
+        }
     }
-
-    /*@Override
-    public synchronized void clearCompoundCache() {
-        if (!isComputing())
-            super.clearCompoundCache();
-    }
-
-    @Override
-    public synchronized void clearFormulaResultsCache() {
-        if (!isComputing())
-            super.clearFormulaResultsCache();
-    }*/
 
     public void setComputing(boolean computing) {
-        pcs.firePropertyChange("computeState", computeLock.getAndSet(computing), computeLock.get());
+        if (computing)
+            flag(CompoundContainerId.Flag.COMPUTING);
+        else
+            unFlag(CompoundContainerId.Flag.COMPUTING);
+    }
+
+    public boolean isComputing() {
+        return hasFlag(CompoundContainerId.Flag.COMPUTING);
     }
 
     private MutableMs2Experiment getMutableExperiment() {
