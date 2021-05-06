@@ -154,6 +154,62 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
 
+    /**
+     * Add the given flag (set to true)
+     *
+     * @param cid  compound ID to modify
+     * @param flag flag to add
+     * @return true if value has changed
+     */
+    public boolean flag(CompoundContainerId cid, CompoundContainerId.Flag flag) {
+        synchronized (cid.flags) {
+            if (cid.flags.add(flag)) {
+                fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_FLAG, cid, null, Collections.emptySet(), EnumSet.of(flag)));
+                return true;
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Remove the given flag (set to false)
+     *
+     * @param cid  compound ID to modify
+     * @param flag flag to remove
+     * @return true if value has changed
+     */
+    public boolean unFlag(CompoundContainerId cid, CompoundContainerId.Flag flag) {
+        synchronized (cid.flags) {
+            if (cid.flags.remove(flag)) {
+                fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_FLAG, cid, null, Collections.emptySet(), EnumSet.of(flag)));
+                return true;
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Flip state of the given flag
+     *
+     * @param cid  compound ID to modify
+     * @param flag flag to flip
+     * @return new Value of the given flag
+     */
+    public boolean flipFlag(CompoundContainerId cid, CompoundContainerId.Flag flag) {
+        synchronized (cid.flags) {
+            boolean r = cid.flags.add(flag);
+            if (!r)
+                cid.flags.remove(flag);
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_FLAG, cid, null, Collections.emptySet(), EnumSet.of(flag)));
+            return r;
+        }
+    }
+
+    public boolean hasFlagID(CompoundContainerId cid, CompoundContainerId.Flag flag) {
+        return cid.hasFlag(flag);
+    }
+
+
     public Optional<CompoundContainerId> findCompound(String dirName) {
         return Optional.ofNullable(ids.get(dirName));
     }
@@ -685,6 +741,5 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 return true;
             });
         }
-
     }
 }
