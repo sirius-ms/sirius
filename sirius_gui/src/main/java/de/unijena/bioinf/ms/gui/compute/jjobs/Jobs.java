@@ -250,11 +250,13 @@ public class Jobs {
                 SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
             }
             checkForInterruption();
-            {
+            /*{
                 compoundsToProcess.forEach(c -> c.setComputing(true, true));
                 final Set<InstanceBean> upt = new HashSet<>(compoundsToProcess);
                 runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
-            }
+            }*/
+            MainFrame.MF.ps().setComputing(compoundsToProcess,true);
+
             checkForInterruption();
             if (computation instanceof ProgressJJob)
                 ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
@@ -278,11 +280,12 @@ public class Jobs {
                 SiriusActions.SUMMARY_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
                 SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
             }
-            {
+            MainFrame.MF.ps().setComputing(compoundsToProcess,false);
+            /*{
                 compoundsToProcess.forEach(c -> c.setComputing(false, true));
                 final Set<InstanceBean> upt = new HashSet<>(compoundsToProcess);
                 runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
-            }
+            }*/
             super.cleanup();
         }
     }
