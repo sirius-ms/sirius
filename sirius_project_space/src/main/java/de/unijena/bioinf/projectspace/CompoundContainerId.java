@@ -38,7 +38,8 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     public static final String RANKING_KEY = "rankingScoreType";
 
     //transient fields
-    protected final transient Lock containerLock = new ReentrantLock();
+    protected final transient Lock containerLock = new ReentrantLock(); //lock for IO
+    protected final transient Lock flagsLock = new ReentrantLock(); //lock for non persistent changes
     protected final transient EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
 
     // ID defining fields

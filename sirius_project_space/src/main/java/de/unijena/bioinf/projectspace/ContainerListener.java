@@ -21,6 +21,8 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.EventListener;
@@ -32,28 +34,34 @@ public interface ContainerListener<ID extends ProjectSpaceContainerId, Container
 
     class PartiallyListeningFluentBuilder<ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>> {
         protected final ConcurrentLinkedQueue<ContainerListener<ID, Container>> queue;
+        protected ID idToListenOn;
         protected Class[] classes;
         protected EnumSet<ContainerEvent.EventType> types;
 
-        protected PartiallyListeningFluentBuilder(ConcurrentLinkedQueue queue) {
-            classes = new Class[0];
-            this.queue = queue;
-            types = null;
+        protected PartiallyListeningFluentBuilder(ConcurrentLinkedQueue<ContainerListener<ID, Container>> queue) {
+            this(queue, new Class[0], null);
         }
 
-        protected PartiallyListeningFluentBuilder(ConcurrentLinkedQueue queue, Class[] classes, EnumSet<ContainerEvent.EventType> types) {
+        protected PartiallyListeningFluentBuilder(ConcurrentLinkedQueue<ContainerListener<ID, Container>> queue, Class[] classes, EnumSet<ContainerEvent.EventType> types) {
+            this(null, queue, classes, types);
+        }
+
+        protected PartiallyListeningFluentBuilder(@Nullable ID idToListenOn, ConcurrentLinkedQueue<ContainerListener<ID, Container>> queue, Class[] classes, EnumSet<ContainerEvent.EventType> types) {
+            this.idToListenOn = idToListenOn;
             this.classes = classes;
             this.types = types;
             this.queue = queue;
         }
 
-        public PartiallyListeningFluentBuilder<ID,Container> on(ContainerEvent.EventType type) {
-            EnumSet<ContainerEvent.EventType> types = this.types==null ? EnumSet.noneOf(ContainerEvent.EventType.class) : this.types;
+
+
+        public PartiallyListeningFluentBuilder<ID, Container> on(ContainerEvent.EventType type) {
+            EnumSet<ContainerEvent.EventType> types = this.types == null ? EnumSet.noneOf(ContainerEvent.EventType.class) : this.types;
             types.add(type);
-            return new PartiallyListeningFluentBuilder(queue, classes, types);
+            return new PartiallyListeningFluentBuilder<>(queue, classes, types);
         }
 
-        public PartiallyListeningFluentBuilder<ID,Container> onCreate() {
+        public PartiallyListeningFluentBuilder<ID, Container> onCreate() {
             return on(ContainerEvent.EventType.CREATED);
         }
 
@@ -65,13 +73,17 @@ public interface ContainerListener<ID extends ProjectSpaceContainerId, Container
             return on(ContainerEvent.EventType.DELETED);
         }
 
-        public PartiallyListeningFluentBuilder onlyFor(Class<? extends DataAnnotation>... klasses) {
-            return new PartiallyListeningFluentBuilder(queue, klasses, types);
+        public PartiallyListeningFluentBuilder<ID, Container> onlyFor(ID idToListenOn) {
+            return new PartiallyListeningFluentBuilder<>(idToListenOn, queue, classes, types);
+        }
+
+        public PartiallyListeningFluentBuilder<ID,Container> onlyFor(Class<? extends DataAnnotation>... klasses) {
+            return new PartiallyListeningFluentBuilder<>(queue, klasses, types);
         }
 
         public Defined thenDo(ContainerListener<ID,Container> listener) {
             EnumSet<ContainerEvent.EventType> types = this.types==null ? EnumSet.allOf(ContainerEvent.EventType.class) : this.types;
-            return new Defined(queue, new PartiallyListeningUpdateListener<>(classes, types, listener));
+            return new Defined(queue, new PartiallyListeningUpdateListener<>(idToListenOn, classes, types, listener));
         }
 
     }
@@ -81,7 +93,7 @@ public interface ContainerListener<ID extends ProjectSpaceContainerId, Container
         private final ConcurrentLinkedQueue queue;
         protected boolean registered;
 
-        protected Defined(ConcurrentLinkedQueue queue, PartiallyListeningUpdateListener listener) {
+        protected <ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>> Defined(ConcurrentLinkedQueue<ContainerListener<ID,Container>> queue, PartiallyListeningUpdateListener<ID,Container> listener) {
             this.listener = listener;
             this.queue = queue;
             this.registered = false;
@@ -117,21 +129,26 @@ public interface ContainerListener<ID extends ProjectSpaceContainerId, Container
      */
     class PartiallyListeningUpdateListener<ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>> implements ContainerListener<ID, Container> {
 
+        protected final ID idToListenOn;
         protected final Class[] listeningClasses;
         protected final EnumSet<ContainerEvent.EventType> listenToTypes;
-
         protected final ContainerListener<ID, Container> listener;
 
-        PartiallyListeningUpdateListener(Class[] listeningClasses, EnumSet<ContainerEvent.EventType> listenToTypes, ContainerListener<ID, Container> listener) {
+        PartiallyListeningUpdateListener(@Nullable ID idToListenOn, @NotNull Class[] listeningClasses, @NotNull EnumSet<ContainerEvent.EventType> listenToTypes, @NotNull ContainerListener<ID, Container> listener) {
+            this.idToListenOn = idToListenOn;
             this.listeningClasses = listeningClasses;
             this.listenToTypes = listenToTypes;
             this.listener = listener;
         }
 
         @Override
-        public void containerChanged(ContainerEvent<ID,Container> event) {
+        public void containerChanged(ContainerEvent<ID, Container> event) {
+            if (idToListenOn != null && !idToListenOn.equals(event.getAffectedID()))
+                return;
+
             if (listenToTypes.contains(event.type)) {
-                if (listeningClasses.length==0) listener.containerChanged(event);
+                if (listeningClasses.length == 0)
+                    listener.containerChanged(event);
                 else {
                     for (Class k : listeningClasses) {
                         if (event.hasChanged(k)) {
