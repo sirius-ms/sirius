@@ -59,7 +59,6 @@ public class InstanceBean extends Instance implements SiriusPCS {
 
     //Project-space listener
     private List<ContainerListener.Defined> listeners;
-    private ContainerListener.Defined computeListener;
 
     //todo best hit property change is needed.
     // e.g. if the scoring changes from sirius to zodiac
@@ -77,18 +76,8 @@ public class InstanceBean extends Instance implements SiriusPCS {
     private List<ContainerListener.Defined> configureListeners() {
         final List<ContainerListener.Defined> listeners = new ArrayList<>(3);
 
-        listeners.add(projectSpace().defineCompoundListener().onUpdate().onlyFor(Ms2Experiment.class).thenDo((event -> {
-            if (!event.getAffectedID().equals(getID()))
-                return;
-            pcs.firePropertyChange("instance.ms2Experiment", null, event.getAffectedComponent(Ms2Experiment.class));
-        })));
-
-        computeListener = projectSpace().defineCompoundListener().on(ContainerEvent.EventType.ID_FLAG).thenDo(event -> {
-            if (!event.getAffectedID().equals(getID()) || !event.getAffectedIfFlags().contains(CompoundContainerId.Flag.COMPUTING))
-                return;
-            boolean value = event.getAffectedID().hasFlag(CompoundContainerId.Flag.COMPUTING);
-            pcs.firePropertyChange("computeState", !value, value);
-        });
+        listeners.add(projectSpace().defineCompoundListener().onUpdate().onlyFor(Ms2Experiment.class).onlyFor(getID()).thenDo((event ->
+                pcs.firePropertyChange("instance.ms2Experiment", null, event.getAffectedComponent(Ms2Experiment.class)))));
 
         listeners.add(projectSpace().defineFormulaResultListener().onCreate().thenDo((event -> {
             if (!event.getAffectedID().getParentId().equals(getID()))
@@ -190,19 +179,6 @@ public class InstanceBean extends Instance implements SiriusPCS {
         return getID().getIonMass().orElse(Double.NaN);
     }
 
-    // Computing State
-    public void setComputing(boolean computing, boolean noNotification) {
-        if (noNotification) {
-            try {
-                computeListener.unregister();
-                setComputing(computing);
-            } finally {
-                computeListener.register();
-            }
-        } else {
-            setComputing(computing);
-        }
-    }
 
     public void setComputing(boolean computing) {
         if (computing)
