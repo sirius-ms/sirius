@@ -46,7 +46,15 @@ document.onkeyup = function(e) {
             }
             selected.leftClick = new_selected;
             svg.select("#peak"+selected.leftClick).classed("peak_select", true);
-            document.getElementById("anno_leftClick").innerText = annotation(data.spectra[0].peaks[selected.leftClick]).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
+            const selectedPeak = data.spectra[0].peaks[selected.leftClick];
+            if (selectedPeak.mz < x_tmp.min || selectedPeak.mz > x_tmp.max && (x_tmp.min !== x_fix.min || x_tmp.max !== x_fix.max)) {
+                if (e.keyCode === 37) {
+                    setXdomain(selectedPeak.mz-3, x_tmp.max-3);
+                } else {
+                    setXdomain(x_tmp.min+3, selectedPeak.mz+3);
+                }
+            }
+            document.getElementById("anno_leftClick").innerText = annotation(selectedPeak).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
             showStructure(selected.leftClick);
         }
     }
@@ -301,6 +309,15 @@ function zoomedX() {
     peakArea.selectAll(".peak").transition().duration(100).attr("x", function(d) { return x(d.mz); });
     peakArea.select("#brushArea").node().__zoom = d3.zoomIdentity;
 };
+
+function setXdomain(newXmin, newXmax) {
+    x.domain([newXmin, newXmax])
+    x_tmp.min = newXmin;
+    x_tmp.max = newXmax;
+    scale_tmp.X = x;
+    xAxis.transition().duration(50).call(d3.axisBottom(scale_tmp.X));
+    peakArea.selectAll(".peak").transition().duration(50).attr("x", function(d) { return scale_tmp.X(d.mz); });
+};
 // globally used by spectrumPlot and mirrorPlot (temporarily)
 function panX() {
     var div = d3.select(this);
@@ -325,12 +342,7 @@ function panX() {
                 newXmin = x_tmp.min-d*(x_tmp.max-x_tmp.min)/pan.step;
                 newXmax = x_tmp.max-d*(x_tmp.max-x_tmp.min)/pan.step;
                 if (newXmin >= 0 && newXmax <= x_fix.max) {
-                    x.domain([newXmin, newXmax])
-                    x_tmp.min = newXmin;
-                    x_tmp.max = newXmax;
-                    scale_tmp.X = x;
-                    xAxis.transition().duration(50).call(d3.axisBottom(scale_tmp.X));
-                    peakArea.selectAll(".peak").transition().duration(50).attr("x", function(d) { return scale_tmp.X(d.mz); });
+                    setXdomain(newXmin, newXmax);
                 }
                 x0 = x1;
                 d = 0;
