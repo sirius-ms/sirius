@@ -33,11 +33,29 @@ window.addEventListener("resize", function(){
 
 document.onkeyup = function(e) {
     if (selected.leftClick !== null) {
-        var new_selected = -1;
+        var selectedPeak, new_selected = -1;
         if (e.keyCode === 37 && selected.leftClick !== 0) { // left
             new_selected = selected.leftClick - 1;
+            selectedPeak = data.spectra[0].peaks[new_selected];
+            while (!("structureInformation" in selectedPeak)) {
+                if (new_selected === 0) {
+                    new_selected = -1;
+                    break;
+                }
+                new_selected = new_selected - 1;
+                selectedPeak = data.spectra[0].peaks[new_selected];
+            }
         } else if (e.keyCode === 39 && selected.leftClick !== ms2Size-1) { // right
             new_selected = selected.leftClick + 1;
+            selectedPeak = data.spectra[0].peaks[new_selected];
+            while (!("structureInformation" in selectedPeak)) {
+                if (new_selected === ms2Size-1) {
+                    new_selected = ms2Size-1;
+                    break;
+                }
+                new_selected = new_selected + 1;
+                selectedPeak = data.spectra[0].peaks[new_selected];
+            }
         }
         if (new_selected !== -1) {
             svg.select("#peak"+selected.leftClick).attr("class", resetColor);
@@ -46,7 +64,6 @@ document.onkeyup = function(e) {
             }
             selected.leftClick = new_selected;
             svg.select("#peak"+selected.leftClick).classed("peak_select", true);
-            const selectedPeak = data.spectra[0].peaks[selected.leftClick];
             if (selectedPeak.mz < x_tmp.min || selectedPeak.mz > x_tmp.max && (x_tmp.min !== x_fix.min || x_tmp.max !== x_fix.max)) {
                 if (e.keyCode === 37) {
                     setXdomain(selectedPeak.mz-3, x_tmp.max-3);
@@ -275,22 +292,24 @@ var mouseleaveGeneral = function() {
 var mouseup = function(d, i) {
     if (!pan.mousemoveCheck) {
         let tmp = d3.select("#peak"+i);
-        if (selected.leftClick !== null && tmp.classed("peak_select")) { // cancel the selection
-            selected.leftClick = null;
-            tmp.classed("peak_select", false);
-            document.getElementById("anno_leftClick").innerText = "Left click to choose a peak...";
-            annoArea.attr("id", "nothing");
-            showStructure(-1);
-        } else { // create a new selection
-            if (selected.leftClick !== null && !tmp.classed("peak_select")) { //cancel the last selection
-                d3.select("#peak"+selected.leftClick).attr("class", resetColor);
+        if ("structureInformation" in d || i === ms2Size-1) {
+            if (selected.leftClick !== null && tmp.classed("peak_select")) { // cancel the selection
+                selected.leftClick = null;
+                tmp.classed("peak_select", false);
+                document.getElementById("anno_leftClick").innerText = "Left click to choose a purple peak...";
+                annoArea.attr("id", "nothing");
+                showStructure(-1);
+            } else { // create a new selection
+                if (selected.leftClick !== null && !tmp.classed("peak_select")) { //cancel the last selection
+                    d3.select("#peak"+selected.leftClick).attr("class", resetColor);
+                }
+                selected.leftClick = i;
+                tmp.classed("peak_select", true);
+                annoArea.attr("id", "anno_leftClick");
+                document.getElementById("anno_leftClick").innerText = annotation(d).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
+                showStructure(i);
+                hideHover();
             }
-            selected.leftClick = i;
-            tmp.classed("peak_select", true);
-            annoArea.attr("id", "anno_leftClick");
-            document.getElementById("anno_leftClick").innerText = annotation(d).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
-            showStructure(i);
-            hideHover();
         }
     }
     pan.mousedownCheck = false;
@@ -341,9 +360,7 @@ function panX() {
                 pan.mousemoveCheck = true;
                 newXmin = x_tmp.min-d*(x_tmp.max-x_tmp.min)/pan.step;
                 newXmax = x_tmp.max-d*(x_tmp.max-x_tmp.min)/pan.step;
-                if (newXmin >= 0 && newXmax <= x_fix.max) {
-                    setXdomain(newXmin, newXmax);
-                }
+                if (newXmin >= 0 && newXmax <= x_fix.max) setXdomain(newXmin, newXmax);
                 x0 = x1;
                 d = 0;
             }
@@ -444,7 +461,7 @@ function initStructureView() {
             if (selected.leftClick !== null) {
                 return annotation(data.spectra[0].peaks[selected.leftClick]).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
             } else {
-                return "Left click to choose a peak...";
+                return "Left click to choose a purple peak...";
             }});
     current.w = current.w/4*3 - 15;
     w = current.w - margin.left - margin.innerRight;
