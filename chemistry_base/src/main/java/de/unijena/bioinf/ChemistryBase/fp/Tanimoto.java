@@ -64,6 +64,74 @@ public class Tanimoto {
         }
     }
 
+    public static double expectedUnion(AbstractFingerprint left, AbstractFingerprint right) {
+        if (left instanceof ProbabilityFingerprint) {
+            if (right instanceof ProbabilityFingerprint) return expectedUnion((ProbabilityFingerprint) left, (ProbabilityFingerprint) right);
+            else return expectedUnion((ProbabilityFingerprint) left, (Fingerprint)right);
+        } else if (right instanceof ProbabilityFingerprint) {
+            return expectedUnion((ProbabilityFingerprint) right, (Fingerprint)left);
+        } else {
+            return union((Fingerprint)left,(Fingerprint)right);
+        }
+    }
+    public static double expectedUnion(ProbabilityFingerprint left, Fingerprint right) {
+        double union = 0d;
+        for (FPIter2 x : left.foreachPair(right)) {
+            if (x.isRightSet()) ++union;
+            else union += x.getLeftProbability();
+        }
+        return union;
+    }
+    public static double expectedUnion(ProbabilityFingerprint left, ProbabilityFingerprint right) {
+        double union = 0d;
+        for (FPIter2 x : left.foreachPair(right)) {
+            union += 1d - ((1-x.getLeftProbability())*(1-x.getRightProbability()));
+        }
+        return union;
+    }
+    public static double union(Fingerprint left, Fingerprint right) {
+        int union=0;
+        for (FPIter2 x : left.foreachUnion(right)) {
+            ++union;
+        }
+        return union;
+    }
+
+
+    public static double expectedIntersection(AbstractFingerprint left, AbstractFingerprint right) {
+        if (left instanceof ProbabilityFingerprint) {
+            if (right instanceof ProbabilityFingerprint) return expectedIntersection((ProbabilityFingerprint) left, (ProbabilityFingerprint) right);
+            else return expectedIntersection((ProbabilityFingerprint) left, (Fingerprint)right);
+        } else if (right instanceof ProbabilityFingerprint) {
+            return expectedIntersection((ProbabilityFingerprint) right, (Fingerprint)left);
+        } else {
+            return intersection((Fingerprint)left,(Fingerprint)right);
+        }
+    }
+    public static double expectedIntersection(ProbabilityFingerprint left, Fingerprint right) {
+        double intersection = 0d;
+        for (FPIter2 x : left.foreachPair(right)) {
+            if (x.isRightSet()) {
+                intersection += x.getLeftProbability();
+            }
+        }
+        return intersection;
+    }
+    public static double expectedIntersection(ProbabilityFingerprint left, ProbabilityFingerprint right) {
+        double intersection = 0d;
+        for (FPIter2 x : left.foreachPair(right)) {
+            intersection += (x.getLeftProbability()*x.getRightProbability());
+        }
+        return intersection;
+    }
+    public static double intersection(Fingerprint left, Fingerprint right) {
+        int intersection=0;
+        for (FPIter2 x : left.foreachIntersection(right)) {
+            ++intersection;
+        }
+        return intersection;
+    }
+
     public static double fastTanimoto(AbstractFingerprint left, AbstractFingerprint right) {
         if (left instanceof ProbabilityFingerprint) {
             if (right instanceof ProbabilityFingerprint) {
