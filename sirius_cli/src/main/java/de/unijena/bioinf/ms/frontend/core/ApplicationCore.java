@@ -20,6 +20,8 @@
 package de.unijena.bioinf.ms.frontend.core;
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
+import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
@@ -295,7 +297,8 @@ public abstract class ApplicationCore {
 
             measureTime("DONE init bug reporting, START init WebAPI");
 
-            WEB_API = new WebAPI();
+            AuthService service = AuthServices.createDefault(WORKSPACE.resolve(".rtoken"));
+            WEB_API = new WebAPI(service);
             DEFAULT_LOGGER.info("Web API initialized.");
             measureTime("DONE init  init WebAPI");
 
