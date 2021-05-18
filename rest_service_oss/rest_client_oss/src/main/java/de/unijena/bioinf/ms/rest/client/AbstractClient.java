@@ -57,9 +57,12 @@ public abstract class AbstractClient {
 
     @NotNull
     protected URI serverUrl;
+    @NotNull
+    protected final IOFunctions.IOConsumer<HttpUriRequest> requestDecorator;
 
-    protected AbstractClient(@Nullable URI serverUrl) {
+    protected AbstractClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
         this.serverUrl = Objects.requireNonNullElseGet(serverUrl, () -> URI.create(FingerIDProperties.fingeridWebHost()));
+        this.requestDecorator = requestDecorator;
     }
 
     public void setServerUrl(@NotNull URI serverUrl) {
@@ -91,6 +94,7 @@ public abstract class AbstractClient {
 
     //region http request execution API
     public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
+        requestDecorator.accept(request);
         try (CloseableHttpResponse response = client.execute(request)) {
             isSuccessful(response);
             try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {

@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
@@ -86,8 +87,11 @@ public final class WebAPI {
     public final FingerIdClient fingerprintClient;
     public final CanopusClient canopusClient;
 
+    private final AuthService authService;
 
-    public WebAPI(@NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
+
+    public WebAPI(@Nullable AuthService authService, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
+        this.authService = authService;
         this.serverInfoClient = infoClient;
         this.jobsClient = jobsClient;
         this.chemDBClient = chemDBClient;
@@ -95,16 +99,16 @@ public final class WebAPI {
         this.canopusClient = canopusClient;
     }
 
-    public WebAPI(@NotNull URI host) {
-        this(new InfoClient(host), new JobsClient(host), new ChemDBClient(host), new FingerIdClient(host), new CanopusClient(host));
+    public WebAPI(@NotNull AuthService authService, @NotNull URI host) {
+        this(authService, new InfoClient(host), new JobsClient(host, authService), new ChemDBClient(host, authService), new FingerIdClient(host, authService), new CanopusClient(host, authService));
     }
 
-    public WebAPI(@NotNull String host) {
-        this(URI.create(host));
+    public WebAPI(@NotNull AuthService authService, @NotNull String host) {
+        this(authService, URI.create(host));
     }
 
-    public WebAPI() {
-        this(URI.create(FingerIDProperties.fingeridWebHost()));
+    public WebAPI(@NotNull AuthService authService) {
+        this(authService, URI.create(FingerIDProperties.fingeridWebHost()));
     }
 
     public void shutdownJobWatcher() {

@@ -32,14 +32,12 @@ import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.json.JsonException;
 import java.io.*;
-import java.net.URI;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,8 +73,8 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         this.client = client;
     }
 
-    public RESTDatabase(@NotNull File cacheDir, long filter, @Nullable URI host, @NotNull CloseableHttpClient client) {
-        this(cacheDir, filter, new ChemDBClient(host), client);
+    /*public RESTDatabase(@NotNull File cacheDir, long filter, @Nullable URI host, @NotNull CloseableHttpClient client) {
+        this(cacheDir, filter, new ChemDBClient(host, (it) -> {}), client);
     }
 
     public RESTDatabase(File cacheDir, long filter, String host, CloseableHttpClient client) {
@@ -97,7 +95,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
     public RESTDatabase(long filter) {
         this(defaultCacheDir(), filter, (URI) null);
-    }
+    }*/
 
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
