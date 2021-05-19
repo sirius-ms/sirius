@@ -80,7 +80,7 @@ public class DatabaseDialog extends JDialog {
         setLayout(new BorderLayout());
 
         //============= NORTH (Header) =================
-        JPanel header = new DialogHaeder(Icons.DB_64);
+        JPanel header = new DialogHeader(Icons.DB_64);
         add(header, BorderLayout.NORTH);
 
 
