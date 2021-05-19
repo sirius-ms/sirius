@@ -61,6 +61,8 @@ public abstract class ApplicationCore {
     public static final Logger DEFAULT_LOGGER;
 
     public static final Path WORKSPACE;
+    public static final Path TOKEN_FILE;
+
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
     public static final WebAPI WEB_API;
     @NotNull public static final BibtexManager BIBTEX;
@@ -297,7 +299,8 @@ public abstract class ApplicationCore {
 
             measureTime("DONE init bug reporting, START init WebAPI");
 
-            AuthService service = AuthServices.createDefault(WORKSPACE.resolve(".rtoken"));
+            TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile",null,".rtoken"));
+            AuthService service = AuthServices.createDefault(TOKEN_FILE);
             WEB_API = new WebAPI(service);
             DEFAULT_LOGGER.info("Web API initialized.");
             measureTime("DONE init  init WebAPI");
