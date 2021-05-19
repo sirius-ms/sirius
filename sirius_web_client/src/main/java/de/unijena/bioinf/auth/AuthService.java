@@ -164,6 +164,17 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
         httpUriRequest.setHeader("Authorization", "Bearer " + refreshIfNeeded().getOpenIdToken());
     }
 
+    public void logout(){
+        tokenLock.writeLock().lock();
+        try {
+            token = null;
+            refreshToken = null;
+            //todo invalidate refresh token on server if possible
+        } finally {
+            tokenLock.writeLock().unlock();
+        }
+    }
+
     public int getMinLifetime() {
         return minLifetime;
     }

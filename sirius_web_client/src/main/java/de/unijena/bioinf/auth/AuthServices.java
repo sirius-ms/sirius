@@ -23,9 +23,11 @@ package de.unijena.bioinf.auth;
 import de.unijena.bioinf.auth.auth0.Auth0Api;
 import de.unijena.bioinf.babelms.utils.Base64;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -48,7 +50,7 @@ public class AuthServices {
         return new AuthService(rToken, api);
     }
 
-    public static void writeRefreshToken(AuthService service, Path refreshTokenFile) throws IOException {
+    public static void writeRefreshToken(@NotNull AuthService service, @NotNull Path refreshTokenFile) throws IOException {
         if (service.needsLogin()) {
             writeRefreshToken(service.getRefreshToken(), refreshTokenFile);
         } else {
@@ -65,6 +67,12 @@ public class AuthServices {
     }
 
     public static boolean clearRefreshToken(Path refreshTokenFile) throws IOException {
+        return clearRefreshToken(null, refreshTokenFile);
+    }
+
+    public static boolean clearRefreshToken(@Nullable AuthService toClear, @NotNull Path refreshTokenFile) throws IOException {
+        if (toClear != null)
+            toClear.logout();
         return Files.deleteIfExists(refreshTokenFile);
     }
 

@@ -111,6 +111,10 @@ public final class WebAPI {
         this(authService, URI.create(FingerIDProperties.fingeridWebHost()));
     }
 
+    public AuthService getAuthService() {
+        return authService;
+    }
+
     public void shutdownJobWatcher() {
         jobWatcher.shutdown();
     }
