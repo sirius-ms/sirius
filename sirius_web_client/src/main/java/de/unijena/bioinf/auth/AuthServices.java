@@ -25,7 +25,7 @@ import de.unijena.bioinf.babelms.utils.Base64;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -38,7 +38,7 @@ public class AuthServices {
     public static AuthService createDefault(Path refreshTokenFile) throws MalformedURLException {
         String rToken = null;
         try {
-            if (Files.isExecutable(refreshTokenFile))
+            if (Files.exists(refreshTokenFile))
                 rToken = readRefreshToken(refreshTokenFile);
         } catch (IOException e) {
             LoggerFactory.getLogger(AuthServices.class).warn("Could not read refresh token from file! (re)login might be needed!", e);
@@ -48,6 +48,14 @@ public class AuthServices {
         return new AuthService(rToken, api);
     }
 
+    public static void writeRefreshToken(AuthService service, Path refreshTokenFile) throws IOException {
+        if (service.needsLogin()) {
+            writeRefreshToken(service.getRefreshToken(), refreshTokenFile);
+        } else {
+            throw new LoginException(new IllegalStateException("Cannot save refresh token if user is not logged in."));
+        }
+    }
+
     public static void writeRefreshToken(String refreshToken, Path refreshTokenFile) throws IOException {
         Files.write(refreshTokenFile, Base64.encodeBytesToBytes(refreshToken.getBytes(StandardCharsets.UTF_8)));
     }
@@ -55,4 +63,9 @@ public class AuthServices {
     public static String readRefreshToken(Path refreshTokenFile) throws IOException {
         return new String(Base64.decode(Files.readAllBytes(refreshTokenFile)), StandardCharsets.UTF_8);
     }
+
+    public static boolean clearRefreshToken(Path refreshTokenFile) throws IOException {
+        return Files.deleteIfExists(refreshTokenFile);
+    }
+
 }

@@ -23,8 +23,11 @@ package de.unijena.bioinf.auth.auth0;
 import com.github.scribejava.apis.openid.OpenIdJsonTokenExtractor;
 import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.extractors.TokenExtractor;
+import com.github.scribejava.core.httpclient.HttpClient;
+import com.github.scribejava.core.httpclient.HttpClientConfig;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -61,5 +64,13 @@ public class Auth0Api extends DefaultApi20 {
     @Override
     public TokenExtractor<OAuth2AccessToken> getAccessTokenExtractor() {
         return OpenIdJsonTokenExtractor.instance();
+    }
+
+    @Override
+    public Auth0Service createService(String apiKey, String apiSecret, String callback, String defaultScope,
+                                      String responseType, OutputStream debugStream, String userAgent, HttpClientConfig httpClientConfig,
+                                      HttpClient httpClient) {
+        return new Auth0Service(this, apiKey, apiSecret, callback, defaultScope, responseType, debugStream,
+                userAgent, httpClientConfig, httpClient);
     }
 }

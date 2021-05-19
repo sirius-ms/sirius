@@ -40,6 +40,7 @@
 
 package de.unijena.bioinf.auth;
 
+import com.github.scribejava.apis.openid.OpenIdOAuth2AccessToken;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.model.OAuth2AccessToken;
@@ -50,7 +51,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -62,7 +62,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
 
     @Nullable
     private String refreshToken;
-    private OAuth2AccessToken token;
+    private OpenIdOAuth2AccessToken token;
 
     protected final ReadWriteLock tokenLock = new ReentrantReadWriteLock();
 
@@ -101,7 +101,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
 
         tokenLock.writeLock().lock();
         try {
-            token = service.refreshAccessToken(refreshToken);
+            token = (OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken);
         } catch (IOException | InterruptedException | ExecutionException e) {
             LoggerFactory.getLogger(getClass()).warn("Error when refreshing access_token with current refresh_token.", e);
             return false;
@@ -130,14 +130,14 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
         return token == null || token.getExpiresIn() < minLifetime;
     }
 
-    public OAuth2AccessToken refreshIfNeeded() throws LoginException {
+    public OpenIdOAuth2AccessToken refreshIfNeeded() throws LoginException {
         if (needsRefresh()) {
             tokenLock.writeLock().lock();
             try {
                 if (needsRefreshRaw()) {
                     if (refreshToken == null || refreshToken.isBlank())
                         throw new LoginException(new NullPointerException("Refresh token is null or empty!"));
-                    token = service.refreshAccessToken(refreshToken);
+                    token = (OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken);
                 }
             } catch (IOException | InterruptedException | ExecutionException e) {
                 throw new LoginException(e);
@@ -151,7 +151,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
     public void login(String username, String password) throws IOException, ExecutionException, InterruptedException {
         tokenLock.writeLock().lock();
         try {
-            token = service.getAccessTokenPasswordGrant(username, password, "offline_access"); //request token and new refresh token
+            token = (OpenIdOAuth2AccessToken) service.getAccessTokenPasswordGrant(username, password, "offline_access"); //request token and new refresh token
             refreshToken = token.getRefreshToken();
         } finally {
             tokenLock.writeLock().unlock();
@@ -170,6 +170,10 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
 
     public void setMinLifetime(int minLifetime) {
         this.minLifetime = minLifetime;
+    }
+
+    protected String getRefreshToken(){
+        return refreshToken;
     }
 
 
