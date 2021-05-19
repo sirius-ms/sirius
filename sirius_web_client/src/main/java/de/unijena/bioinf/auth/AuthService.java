@@ -161,7 +161,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
 
     @Override
     public void accept(HttpUriRequest httpUriRequest) throws IOException {
-        httpUriRequest.setHeader("Authorization", "Bearer " + refreshIfNeeded().getAccessToken());
+        httpUriRequest.setHeader("Authorization", "Bearer " + refreshIfNeeded().getOpenIdToken());
     }
 
     public int getMinLifetime() {
