@@ -104,6 +104,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
         private void showProfile(OpenIdOAuth2AccessToken token) {
             System.out.println(token.getRawResponse());
+
             //todo show information from extracted token
         }
     }
