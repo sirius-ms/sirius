@@ -79,9 +79,11 @@ public class ProxyManager {
     private ProxyManager() {
     } //prevent instantiation
 
-    public static ProxyStrategy getStrategyByName(String vlaue) {
+    public static ProxyStrategy getStrategyByName(String value) {
         try {
-            return ProxyStrategy.valueOf(vlaue);
+            if ("SYSTEM".equals(value)) //legacy
+                value = "NONE";
+            return ProxyStrategy.valueOf(value);
         } catch (IllegalArgumentException e) {
             LoggerFactory.getLogger(ProxyStrategy.class).debug("Invalid Proxy Strategy state!", e);
             return null;
