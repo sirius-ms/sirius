@@ -29,6 +29,8 @@ import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
@@ -40,9 +42,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -58,6 +58,8 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
 
     protected final InstanceBuffer ringBuffer;
     private ContainerListener.Defined createListener;
+    private ContainerListener.Defined computeListener;
+
 
     public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, int maxBufferSize) {
         this(space, new BasicEventList<>(), maxBufferSize);
@@ -86,6 +88,16 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
             final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID());
             Jobs.runEDTLater(() -> INSTANCE_LIST.add(inst));
         })).register();
+
+        computeListener = projectSpace().defineCompoundListener().on(ContainerEvent.EventType.ID_FLAG).thenDo(event -> {
+            if (event.getAffectedIDs().isEmpty() || !event.getAffectedIdFlags().contains(CompoundContainerId.Flag.COMPUTING))
+                return;
+
+            Set<CompoundContainerId> eff = new HashSet<>(event.getAffectedIDs());
+            //todo do we want an index of ID to InstanceBean
+            Set<InstanceBean> upt = INSTANCE_LIST.stream().filter(i -> eff.contains(i.getID())).collect(Collectors.toSet());
+            Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
+        }).register();
     }
 
 
@@ -257,5 +269,10 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         createListener.unregister();
         createListener = null;
         super.close();
+    }
+
+    public void setComputing(List<InstanceBean> instances, boolean computing) {
+        projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, computing,
+                instances.stream().distinct().map(Instance::getID).toArray(CompoundContainerId[]::new));
     }
 }

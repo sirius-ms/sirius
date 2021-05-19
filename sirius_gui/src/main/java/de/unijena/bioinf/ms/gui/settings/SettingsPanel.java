@@ -32,8 +32,7 @@ public interface SettingsPanel {
 
     void saveProperties();
 
-    default void reloadChanges() {
-    }
+    default void reloadChanges() {}
 
     String name();
 
