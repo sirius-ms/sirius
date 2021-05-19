@@ -49,7 +49,7 @@ public class ConnectionDialog extends JDialog implements ActionListener {
         setLayout(new BorderLayout());
 
         //header
-        JPanel header = new DialogHaeder(Icons.NET_64);
+        JPanel header = new DialogHeader(Icons.NET_64);
         add(header, BorderLayout.NORTH);
 
         connectionCheck = new ConnectionCheckPanel(state, workerList);
