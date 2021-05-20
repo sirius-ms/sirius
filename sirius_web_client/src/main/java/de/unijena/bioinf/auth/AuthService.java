@@ -46,12 +46,15 @@ import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -185,6 +188,10 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
 
     protected String getRefreshToken(){
         return refreshToken;
+    }
+
+    public String signUpURL(){
+        return service.createAuthorizationUrlBuilder().additionalParams(Map.of(/*"response_type","code",*/"screen_hint","signup","redirect_uri", FingerIDProperties.fingeridWebHost())).build();
     }
 
 
