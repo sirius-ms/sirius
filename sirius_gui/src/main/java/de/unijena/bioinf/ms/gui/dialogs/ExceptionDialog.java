@@ -30,13 +30,22 @@ public class ExceptionDialog extends JDialog implements ActionListener{
 	protected JPanel south;
 	
 	public ExceptionDialog(Frame owner, String message) {
+		this(owner, message, "Error");
+	}
+	public ExceptionDialog(Frame owner, String message, String title) {
 		super(owner,true);
+		setTitle(title);
 		initDialog(message);
 		this.setVisible(true);
 	}
 	
 	public ExceptionDialog(Dialog owner, String message) {
+		this(owner,message, "Error");
+	}
+
+	public ExceptionDialog(Dialog owner, String message, String title) {
 		super(owner,true);
+		setTitle(title);
 		initDialog(message);
 		this.setVisible(true);
 	}

@@ -24,9 +24,11 @@ package de.unijena.bioinf.ms.gui.dialogs;
  * 06.10.16.
  */
 
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.login.AccountSettingsPanel;
 import de.unijena.bioinf.ms.gui.settings.*;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +48,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private ProxySettingsPanel proxSettings;
     private GerneralSettingsPanel genSettings;
     private ErrorReportSettingsPanel errorSettings;
+    private AccountSettingsPanel accountSettings;
     //    private ILPSettings ilpSettings;
     private JTabbedPane settingsPane;
 
@@ -82,6 +85,8 @@ public class SettingsDialog extends JDialog implements ActionListener {
         errorSettings.addVerticalGlue();
         settingsPane.add(errorSettings.name(), errorSettings);
 
+        accountSettings = new AccountSettingsPanel(nuProps, ApplicationCore.WEB_API.getAuthService());
+        settingsPane.add(accountSettings.name(), accountSettings);
 
         if (activeTab >= 0 && activeTab < settingsPane.getTabCount())
             settingsPane.setSelectedIndex(activeTab);
