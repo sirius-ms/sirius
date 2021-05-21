@@ -25,6 +25,8 @@ import com.github.scribejava.core.httpclient.HttpClient;
 import com.github.scribejava.core.httpclient.HttpClientConfig;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.oauth.OAuth20Service;
+import com.github.scribejava.core.revoke.TokenTypeHint;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.OutputStream;
 
@@ -36,14 +38,20 @@ public class Auth0Service extends OAuth20Service {
 
     @Override
     protected OAuthRequest createAccessTokenPasswordGrantRequest(String username, String password, String scope) {
-        final OAuthRequest request = super.createAccessTokenPasswordGrantRequest(username, password, scope);
-        request.addParameter("client_id", getApiKey());
-        return request;
+        return withClientID(super.createAccessTokenPasswordGrantRequest(username, password, scope));
     }
 
     @Override
     protected OAuthRequest createRefreshTokenRequest(String refreshToken, String scope) {
-        final OAuthRequest request = super.createRefreshTokenRequest(refreshToken, scope);
+        return withClientID(super.createRefreshTokenRequest(refreshToken, scope));
+    }
+
+    @Override
+    protected OAuthRequest createRevokeTokenRequest(String tokenToRevoke, TokenTypeHint tokenTypeHint) {
+        return withClientID(super.createRevokeTokenRequest(tokenToRevoke, tokenTypeHint));
+    }
+
+    protected OAuthRequest withClientID(@NotNull final OAuthRequest request){
         request.addParameter("client_id", getApiKey());
         return request;
     }

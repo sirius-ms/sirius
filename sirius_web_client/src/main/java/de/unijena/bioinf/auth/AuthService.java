@@ -43,8 +43,8 @@ package de.unijena.bioinf.auth;
 import com.github.scribejava.apis.openid.OpenIdOAuth2AccessToken;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
-import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
+import com.github.scribejava.core.revoke.TokenTypeHint;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -53,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -170,9 +169,24 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
     public void logout(){
         tokenLock.writeLock().lock();
         try {
+
+            if (refreshToken != null) {
+                try {
+                    service.revokeToken(refreshToken, TokenTypeHint.REFRESH_TOKEN);
+                } catch (Throwable e) {
+                    LoggerFactory.getLogger(getClass()).warn("Error when revoking refresh token!", e);
+                }
+            }
+            if (token != null) {
+                try {
+                    service.revokeToken(token.getAccessToken(), TokenTypeHint.ACCESS_TOKEN);
+                } catch (Throwable e) {
+                    LoggerFactory.getLogger(getClass()).warn("Error when revoking access token!", e);
+                }
+            }
+
             token = null;
             refreshToken = null;
-            //todo invalidate refresh token on server if possible
         } finally {
             tokenLock.writeLock().unlock();
         }

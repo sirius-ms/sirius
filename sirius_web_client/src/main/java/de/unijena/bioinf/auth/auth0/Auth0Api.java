@@ -62,6 +62,11 @@ public class Auth0Api extends DefaultApi20 {
     }
 
     @Override
+    public String getRevokeTokenEndpoint() {
+        return localAuthProviderURL.toString() + "/oauth/revoke";
+    }
+
+    @Override
     public TokenExtractor<OAuth2AccessToken> getAccessTokenExtractor() {
         return OpenIdJsonTokenExtractor.instance();
     }
