@@ -67,6 +67,7 @@ document.onkeyup = function(e) {
                 } else {
                     setXdomain(x_tmp.min+3, selectedPeak.mz+3);
                 }
+                update_peaks(50);
             }
             document.getElementById("anno_leftClick").innerText = annotation(selectedPeak).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
             showStructure(selected.leftClick);
@@ -484,7 +485,7 @@ function spectrumPlot(spectrum, structureView) {
                 if (selected.leftClick !== null) {
                     return annotation(data.spectra[0].peaks[selected.leftClick]).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
                 } else {
-                    return "Left click to choose a green peak...";
+                    return "Left click to choose a purple peak...";
                 }});
         current.w = current.w/4*3 - 15;
         w = current.w - margin.left - margin.innerRight;
