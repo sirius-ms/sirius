@@ -43,22 +43,16 @@ package de.unijena.bioinf.ms.gui.login;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
-import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.settings.SettingsPanel;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
 
@@ -67,13 +61,13 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
     private final AuthService service;
     private JTextField webserverURL;
     private JLabel userIconLabel, userInfoLabel;
+    private JButton login;
 
     public AccountSettingsPanel(Properties properties, AuthService service) {
         super();
         this.props = properties;
         this.service = service;
         buildPanel();
-        refreshValues();
     }
 
     private void buildPanel() {
@@ -81,16 +75,41 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
         addNamed("Web service URL", webserverURL);
         addVerticalGlue();
 
-
-        JButton login = new JButton();
-//        login.setPreferredSize(new Dimension(128, login.getPreferredSize().height));
+        login = new JButton();
         userIconLabel = new JLabel();
         userInfoLabel = new JLabel();
 
+        JPanel iconPanel = new JPanel(new BorderLayout());
+        iconPanel.add(userIconLabel, BorderLayout.CENTER);
+
+        JPanel buttonContainer = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonContainer.add(login);
+        iconPanel.add(buttonContainer, BorderLayout.SOUTH);
+        add(iconPanel, userInfoLabel);
+        addVerticalGlue();
+
+        SiriusActions.SIGN_IN.getInstance().addPropertyChangeListener(evt -> reloadChanges());
+        SiriusActions.SIGN_OUT.getInstance().addPropertyChangeListener(evt -> reloadChanges());
+        reloadChanges();
+    }
+
+    private DecodedJWT getLogin() {
+        return Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), "Checking Login",
+                () -> AuthServices.getIDToken(service)).getResult();
+    }
+
+    @Override
+    public void saveProperties() {
+
+    }
+
+    @Override
+    public void reloadChanges() {
+        SettingsPanel.super.reloadChanges();
         DecodedJWT userInfo = getLogin();
         if (userInfo == null) {
             userIconLabel.setIcon(Icons.USER_128);
-            userInfoLabel.setText("Please Login!");
+            userInfoLabel.setText("Please log in!");
             login.setAction(SiriusActions.SIGN_IN.getInstance());
         } else {
             try {
@@ -102,29 +121,6 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
             userInfoLabel.setText("<html>Logged in as:<br><b>" + userInfo.getClaim("email").asString() + "</b></html>");
             login.setAction(SiriusActions.SIGN_OUT.getInstance());
         }
-
-
-        add(userIconLabel, userInfoLabel, GuiUtils.LARGE_GAP, false);
-
-//        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
-//        buttons.add(login);
-        add(login,null, GuiUtils.LARGE_GAP,true);
-        addVerticalGlue();
-
-
-        //todo register, login and clear button
-        // save and cancel via parent panel
-        // Server url, login state (Account info??) ->  user image =)
-    }
-
-    private DecodedJWT getLogin() {
-        return Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), "Checking Login",
-                () -> AuthServices.getIDToken(service)).getResult();
-    }
-
-    @Override
-    public void saveProperties() {
-
     }
 
     @Override

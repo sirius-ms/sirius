@@ -41,19 +41,21 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class SignOutAction extends AbstractAction {
 
     public SignOutAction() {
-        super("SignOut");
-//        putValue(Action.LARGE_ICON_KEY, Icons.GEAR_32);
+        super("Log out");
         putValue(Action.SHORT_DESCRIPTION, "Logout from the current account.");
     }
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        Jobs.runInBackgroundAndLoad(MF, "Logging out...", () -> {
+        boolean r = Jobs.runInBackgroundAndLoad(MF, "Logging out...", () -> {
             try {
                 AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
+                return true;
             } catch (IOException ex) {
                 LoggerFactory.getLogger(getClass()).warn("Error during logout!", ex);
+                return false;
             }
-        });
+        }).getResult();
+        firePropertyChange("logout", false, r);
     }
 }
