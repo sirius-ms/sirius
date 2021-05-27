@@ -25,14 +25,10 @@ package de.unijena.bioinf.ms.gui.actions;
  */
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.login.UserLoginDialog;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.net.URL;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -42,12 +38,13 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class SignInAction extends AbstractAction {
 
     public SignInAction() {
-        super("SignIn");
-        putValue(Action.SHORT_DESCRIPTION, "Login with your SIRIUS AccounZ.");
+        super("Log in");
+        putValue(Action.SHORT_DESCRIPTION, "Login with your SIRIUS Account.");
     }
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-       new UserLoginDialog(MF, ApplicationCore.WEB_API.getAuthService());
+        boolean r = new UserLoginDialog(MF, ApplicationCore.WEB_API.getAuthService()).hasPerformedLogin();
+        firePropertyChange("login", false, r);
     }
 }

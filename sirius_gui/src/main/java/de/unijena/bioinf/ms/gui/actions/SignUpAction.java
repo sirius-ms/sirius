@@ -26,12 +26,11 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.net.URL;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -41,7 +40,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class SignUpAction extends AbstractAction {
 
     public SignUpAction() {
-        super("SignUp");
+        super("Sign up");
 //        putValue(Action.LARGE_ICON_KEY, Icons.GEAR_32);
         putValue(Action.SHORT_DESCRIPTION, "Create a new SIRIUS Account.");
     }
@@ -49,7 +48,7 @@ public class SignUpAction extends AbstractAction {
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
         try {
-            Desktop.getDesktop().browse(new URL(ApplicationCore.WEB_API.getAuthService().signUpURL()).toURI());
+            new WebViewBrowserDialog(MF, "Sign up", ApplicationCore.WEB_API.getAuthService().signUpURL());
         } catch (Exception ex2) {
             LoggerFactory.getLogger(getClass()).error("Could not Open SignUp page in System Browser", ex2);
             new ExceptionDialog(MF, "Could not Open SignUp page in System Browser: " + ex2.getMessage());

@@ -49,12 +49,12 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
@@ -62,6 +62,11 @@ public class UserLoginDialog extends JDialog {
     private final JTextField username = new JTextField();
     private final JPasswordField password = new JPasswordField();
     private final AuthService service;
+
+    private boolean performedLogin = false;
+
+    Action signInAction;
+    Action cancelAction;
 
     public UserLoginDialog(Frame owner, AuthService service) {
         super(owner, true);
@@ -90,29 +95,41 @@ public class UserLoginDialog extends JDialog {
         add(center, BorderLayout.CENTER);
 
         //============= SOUTH =================
+        cancelAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                performedLogin = false;
+                dispose();
+            }
+        };
         final JButton cancel = new JButton("Cancel");
-        cancel.addActionListener(e -> dispose());
-        final JButton login = new JButton("SignIn");
-        login.addActionListener(e -> {
-            Jobs.runInBackgroundAndLoad(this, "Logging in...", () -> {
-                try {
-                    service.login(username.getText(), new String(password.getPassword()));
-                    AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
-                    Jobs.runEDTLater(this::dispose);
-                } catch (Throwable ex) {
-                    new ExceptionDialog(UserLoginDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
-                    try {
-                        AuthServices.clearRefreshToken(service, ApplicationCore.TOKEN_FILE);
-                    } catch (IOException ex2) {
-                        LoggerFactory.getLogger(getClass()).warn("Error when cleaning login state!", ex2);
-                    }
-                    try {
-                        Jobs.runEDTAndWait(() -> password.setText(null));
-                    } catch (InvocationTargetException | InterruptedException ignored) {}
-                }
-            });
+        cancel.addActionListener(cancelAction);
 
-        });
+        signInAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Jobs.runInBackgroundAndLoad(UserLoginDialog.this, "Logging in...", () -> {
+                    try {
+                        service.login(username.getText(), new String(password.getPassword()));
+                        AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
+                        performedLogin = true;
+                        Jobs.runEDTLater(UserLoginDialog.this::dispose);
+                    } catch (Throwable ex) {
+                        new ExceptionDialog(UserLoginDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
+                        try {
+                            AuthServices.clearRefreshToken(service, ApplicationCore.TOKEN_FILE);
+                        } catch (IOException ex2) {
+                            LoggerFactory.getLogger(getClass()).warn("Error when cleaning login state!", ex2);
+                        }
+                        try {
+                            Jobs.runEDTAndWait(() -> password.setText(null));
+                        } catch (InvocationTargetException | InterruptedException ignored) {}
+                    }
+                });
+            }
+        };
+        final JButton login = new JButton("Sign in");
+        login.addActionListener(signInAction);
 
         Box buttons = Box.createHorizontalBox();
         buttons.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
@@ -123,10 +140,26 @@ public class UserLoginDialog extends JDialog {
 
         add(buttons, BorderLayout.SOUTH);
 
+        configureActions();
+
         setMinimumSize(new Dimension(350, getMinimumSize().height));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
+    }
+
+    private void configureActions() {
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        String enterAction = "signIn";
+        String escAction = "cancel";
+        inputMap.put(KeyStroke.getKeyStroke("ENTER"), enterAction);
+        inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), escAction);
+        getRootPane().getActionMap().put(enterAction, signInAction);
+        getRootPane().getActionMap().put(escAction, cancelAction);
+    }
+
+    public boolean hasPerformedLogin() {
+        return performedLogin;
     }
 }
