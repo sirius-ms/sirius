@@ -27,10 +27,13 @@ import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
-import de.unijena.bioinf.fingerid.blast.*;
+import de.unijena.bioinf.fingerid.blast.BayesianScoringUtils;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
+import de.unijena.bioinf.fingerid.blast.BayesnetScoringBuilder;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
@@ -45,6 +48,7 @@ import net.sf.jniinchi.JniInchiOutputKey;
 import net.sf.jniinchi.JniInchiWrapper;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -69,8 +73,8 @@ import java.util.Map;
 public class FingerIdClient extends AbstractClient {
     private static final Logger LOG = LoggerFactory.getLogger(FingerIdClient.class);
 
-    public FingerIdClient(URI serverUrl) {
-        super(serverUrl);
+    public FingerIdClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
+        super(serverUrl, requestDecorator);
     }
 
     public JobUpdate<FingerprintJobOutput> postJobs(final FingerprintJobInput input, CloseableHttpClient client) throws IOException {

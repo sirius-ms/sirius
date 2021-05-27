@@ -31,13 +31,16 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,12 +57,19 @@ public abstract class AbstractClient {
     protected static final String API_ROOT = "/api";
     protected static final String CID = SecurityService.generateSecurityToken();
 
+    static {
+        if (DEBUG)
+            PropertyManager.setProperty("de.unijena.bioinf.fingerid.web.host", "http://localhost:8080");
+    }
 
     @NotNull
     protected URI serverUrl;
+    @NotNull
+    protected final IOFunctions.IOConsumer<HttpUriRequest> requestDecorator;
 
-    protected AbstractClient(@Nullable URI serverUrl) {
+    protected AbstractClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
         this.serverUrl = Objects.requireNonNullElseGet(serverUrl, () -> URI.create(FingerIDProperties.fingeridWebHost()));
+        this.requestDecorator = requestDecorator;
     }
 
     public void setServerUrl(@NotNull URI serverUrl) {
@@ -79,6 +89,21 @@ public abstract class AbstractClient {
         }
     }
 
+    public boolean testSecuredConnection(@NotNull CloseableHttpClient client) {
+        try {
+            execute(client, () -> {
+                HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/check").build());
+                final int timeoutInSeconds = 8000;
+                get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                return get;
+            });
+            return true;
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).warn("Could not reach secured api endpoint: " + e.getMessage());
+            return false;
+        }
+    }
+
     protected void isSuccessful(HttpResponse response) throws IOException {
         final StatusLine status = response.getStatusLine();
         if (status.getStatusCode() >= 400){
@@ -91,6 +116,7 @@ public abstract class AbstractClient {
 
     //region http request execution API
     public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
+        requestDecorator.accept(request);
         try (CloseableHttpResponse response = client.execute(request)) {
             isSuccessful(response);
             try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {
