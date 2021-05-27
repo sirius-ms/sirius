@@ -128,6 +128,7 @@ public final class WebAPI {
     //2 no connection to uni jena
     //1 no connection to internet (google/microft/ubuntu????)
     //0 everything is fine
+    //-1 login has permissions to this server
     public static final int MAX_STATE = 6;
 
     @Nullable
@@ -146,6 +147,8 @@ public final class WebAPI {
                 } else if (v.outdated()) {
                     return MAX_STATE;
                 } else if (serverInfoClient.testConnection()) {
+                    if (jobsClient.testSecuredConnection(client))
+                        return -1;
                     return 0;
                 } else {
                     return 5;
