@@ -49,6 +49,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +115,7 @@ public class UserLoginDialog extends JDialog {
                         AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
                         performedLogin = true;
                         Jobs.runEDTLater(UserLoginDialog.this::dispose);
+                        MainFrame.MF.CONNECTION_MONITOR().checkConnection();
                     } catch (Throwable ex) {
                         new ExceptionDialog(UserLoginDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
                         try {
