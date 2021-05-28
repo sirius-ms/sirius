@@ -18,6 +18,46 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
 package de.unijena.bioinf.auth;
 
 import com.github.scribejava.apis.openid.OpenIdOAuth2AccessToken;
@@ -56,20 +96,24 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
     }
 
     public AuthService(@Nullable String refreshToken, DefaultApi20 authAPI) {
-        this(refreshToken, new ServiceBuilder(
-                PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientID", null, null))
-//              .apiSecret(clientSecret)
-//                .defaultScope("offline_access") // replace with desired scope
-//              .callback("http://your.site.com/callback")
-                .build(authAPI));
+        this(refreshToken, buildService(authAPI));
     }
-
 
     public AuthService(@Nullable String refreshToken, OAuth20Service service) {
         this.refreshToken = refreshToken;
         this.service = service;
     }
 
+
+    private static OAuth20Service buildService(DefaultApi20 authAPI) {
+        ServiceBuilder b = new ServiceBuilder(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientID", null, null));
+        String secret = PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientSecret");
+        if (secret != null)
+            b.apiSecret(secret);
+//                .defaultScope("offline_access") // replace with desired scope
+//              .callback("http://your.site.com/callback")
+        return b.build(authAPI);
+    }
 
     /**
      * Check whether a refresh_token is available and valid.
@@ -140,13 +184,23 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
         }
     }
 
+    public void login() throws IOException, ExecutionException, InterruptedException {
+        tokenLock.writeLock().lock();
+        try {
+            token = (OpenIdOAuth2AccessToken) service.getAccessTokenClientCredentialsGrant("offline_access"); //request token and new refresh token
+            refreshToken = token.getRefreshToken();
+        } finally {
+            tokenLock.writeLock().unlock();
+        }
+    }
+
 
     @Override
     public void accept(HttpUriRequest httpUriRequest) throws IOException {
         httpUriRequest.setHeader("Authorization", "Bearer " + refreshIfNeeded().getOpenIdToken());
     }
 
-    public void logout(){
+    public void logout() {
         tokenLock.writeLock().lock();
         try {
 

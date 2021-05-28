@@ -26,12 +26,14 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -91,11 +93,11 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
     public RESTDatabase(File cacheDir, long filter) {
         this(cacheDir, filter, (URI) null);
-    }
-
-    public RESTDatabase(long filter) {
-        this(defaultCacheDir(), filter, (URI) null);
     }*/
+
+    public RESTDatabase(long filter, @NotNull AuthService authService) {
+        this(RESTDatabase.defaultCacheDir(), 0,  new ChemDBClient(null, authService) , HttpClients.createDefault());
+    }
 
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
