@@ -63,10 +63,13 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     final BooleanJlabel fingerID = new BooleanJlabel();
     final BooleanJlabel fingerID_WebAPI = new BooleanJlabel();
     final BooleanJlabel fingerID_Worker = new BooleanJlabel();
+    final BooleanJlabel auth = new BooleanJlabel();
+    final BooleanJlabel authPermission = new BooleanJlabel();
 
+    JLabel authLabel = new JLabel("Authenticated?");
     JPanel resultPanel = null;
 
-    public ConnectionCheckPanel(int state, @Nullable WorkerList workerInfoList) {
+    public ConnectionCheckPanel(int state, @Nullable WorkerList workerInfoList, String userId) {
         super(GridBagConstraints.WEST, GridBagConstraints.EAST);
 
         add(new JXTitledSeparator("Connection check:"), 15, false);
@@ -76,6 +79,8 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         add(new JLabel("Connection to CSI:FingerID Server"), fingerID, 5, false);
         add(new JLabel("Check CSI:FingerID REST API"), fingerID_WebAPI, 5, false);
         add(new JLabel("All necessary workers available?"), fingerID_Worker, 5, false);
+        add(authLabel, auth, 5, false);
+        add(new JLabel("Permission granted?"), authPermission, 5, false);
 
         addVerticalGlue();
 
@@ -83,19 +88,27 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
             refreshPanel(
                     state,
                     workerInfoList.getActiveSupportedTypes(Instant.ofEpochSecond(600)),
-                    workerInfoList.getPendingJobs()
+                    workerInfoList.getPendingJobs(), userId
             );
         } else {
-            refreshPanel(state, EnumSet.noneOf(PredictorType.class), Integer.MIN_VALUE);
+            refreshPanel(state, EnumSet.noneOf(PredictorType.class), Integer.MIN_VALUE, userId);
         }
     }
 
-    public void refreshPanel(final int state, final EnumSet<PredictorType> availableTypes, final int pendingJobs) {
-        internet.setState(state > 1 || state == 0);
-        hoster.setState(state > 2 || state == 0);
-        domain.setState(state > 3 || state == 0);
-        fingerID.setState(state > 4 || state == 0);
-        fingerID_WebAPI.setState(state == 0);
+    public void refreshPanel(final int state, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userId) {
+        internet.setState(state > 1 || state <= 0);
+        hoster.setState(state > 2 || state <= 0);
+        domain.setState(state > 3 || state <= 0);
+        fingerID.setState(state > 4 || state <= 0);
+        fingerID_WebAPI.setState(state <= 0);
+        auth.setState(userId != null);
+        authPermission.setState(state <= -1);
+
+        if (auth.isTrue()){
+            authLabel.setText(userId != null ? "Authenticated as '" + userId + "'." : "Authenticated?");
+        }else {
+            authLabel.setText("Not authenticated!");
+        }
 
         final EnumSet<PredictorType> neededTypes = PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors"));
         fingerID_Worker.setState(availableTypes.containsAll(neededTypes));
@@ -103,7 +116,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         if (resultPanel != null)
             remove(resultPanel);
 
-        resultPanel = createResultPanel(state, neededTypes, availableTypes, pendingJobs);
+        resultPanel = createResultPanel(state, neededTypes, availableTypes, pendingJobs, userId);
 
         add(resultPanel, 15, true);
 
@@ -116,13 +129,13 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     }
 
 
-    private JPanel createResultPanel(final int state, final EnumSet<PredictorType> neededTypes, final EnumSet<PredictorType> availableTypes, final int pendingJobs) {
+    private JPanel createResultPanel(final int state, final EnumSet<PredictorType> neededTypes, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userID) {
         TwoColumnPanel resultPanel = new TwoColumnPanel();
         resultPanel.setBorder(BorderFactory.createEmptyBorder());
         resultPanel.add(new JXTitledSeparator("Description"), 15, false);
 
         switch (state) {
-            case 0:
+            case -1:
                 resultPanel.add(new JLabel("<html>Connection to CSI:FingerID Server successfully established!</html>"), 5, false);
 
                 resultPanel.add(new JXTitledSeparator("Worker Information"), 15, false);
@@ -160,6 +173,22 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                 text.append("</html>");
 
                 resultPanel.add(new JLabel(text.toString()), 5, false);
+                break;
+            case 0:
+                if (userID == null){
+                    resultPanel.add(new JLabel("<html>" + " ErrorCode " + 7 + ": " +
+                            " You are not logged in.<br>" +
+                            "Without logging in with a valid user account server side features are not available." +
+                            "</html>"));
+                }else {
+                    resultPanel.add(new JLabel("<html>" + " ErrorCode " + 8 + ": " +
+                            " Your Account does not have Permissions for the configured web service.<br>" +
+                            "You may either need to configure a specific web service<br>" +
+                            "or have to use a different user account (see Network Settings).<br>" +
+                            "Without a valid user account server side features are not available." +
+                            "</html>"));
+                }
+
                 break;
             case 6:
                 resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
