@@ -238,8 +238,8 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
         return refreshToken;
     }
 
-    public String signUpURL(){
-        return service.createAuthorizationUrlBuilder().additionalParams(Map.of("screen_hint","signup","redirect_uri", FingerIDProperties.fingeridWebHost() + "/signUp")).build();
+    public String signUpURL(String redirectUrl){
+        return service.createAuthorizationUrlBuilder().additionalParams(Map.of("screen_hint","signup","redirect_uri", redirectUrl)).build();
     }
 
 
