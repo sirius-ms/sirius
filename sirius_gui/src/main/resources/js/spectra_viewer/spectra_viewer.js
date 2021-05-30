@@ -662,8 +662,7 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
                 .attr("class", "intensity_2 intensity label spectrum_legend")
                 .attr("id", function(d, i) { return "intensity"+(i+mzs1Size); })
                 .attr("x", function(d) { return x(d.mz); })
-                .attr("y", function(d) {
-                    return ((h/2+y2(d.intensity)+15)>(new_h+margin.diff_vertical)) ? (new_h+margin.diff_vertical)+15 : (h/2+y2(d.intensity)+15); })
+                .attr("y", function(d) { return y2(d.intensity)+15; })
                 .text(function(d) { return d.mz.toFixed(decimal_place).toString(); });
     };
     //difference viewer
@@ -778,12 +777,9 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
     svg.append("g").attr("id", "yAxis1").call(d3.axisLeft(y1));
     // Y axis 2
     y2 = d3.scaleLinear()
-        .domain([1, 0])
-        .range([h/2, margin_h])
-    svg.append("g")
-        .attr("id", "yAxis2")
-        .attr("transform", "translate(0," + new_h/2 + ")")
-        .call(d3.axisLeft(y2));
+        .domain([0, 1])
+        .range([h/2, h-margin_h])
+    svg.append("g").attr("id", "yAxis2").call(d3.axisLeft(y2));
     svg.selectAll(".label").attr("visibility", "visible");
     // legends: 2 spectrum names
     svg.append("text")
@@ -829,7 +825,7 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
             .attr("id", function(d, i) { return "peak"+(i+mzs1Size); })
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", h/2)
-            .attr("height", function(d) { return y2(d.intensity); });
+            .attr("height", function(d) { return y2(d.intensity)-h/2; });
     // difference and intensity viewer
     if (viewStyle === "difference") showDifference();
     if (intensityViewer) showIntensity();
