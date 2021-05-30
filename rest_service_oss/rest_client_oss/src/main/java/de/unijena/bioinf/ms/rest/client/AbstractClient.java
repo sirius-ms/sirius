@@ -159,7 +159,7 @@ public abstract class AbstractClient {
 
     //#################################################################################################################
     //region PathBuilderMethods
-    protected URIBuilder getBaseURI(@Nullable String path, final boolean versionSpecificPath) throws URISyntaxException {
+    public URIBuilder getBaseURI(@Nullable String path, final boolean versionSpecificPath) throws URISyntaxException {
         if (path == null)
             path = "";
 
@@ -171,7 +171,7 @@ public abstract class AbstractClient {
         } else {
             b = new URIBuilder(serverUrl);
             if (versionSpecificPath)
-                path = "/v" + FingerIDProperties.fingeridVersion() + path; //todo check if this works
+                path = makeVersionContext() + path;
         }
 
         if (!path.isEmpty())
@@ -209,4 +209,12 @@ public abstract class AbstractClient {
 
     //endregion
     //#################################################################################################################
+
+    protected static String makeVersionContext() {
+        final String[] versionParts = FingerIDProperties.fingeridVersion().split("[.]");
+        if (versionParts.length > 1)
+            return "/v" + versionParts[0] + "." + versionParts[1];
+        throw new IllegalArgumentException("Illegal Version String");
+    }
+
 }

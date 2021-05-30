@@ -67,7 +67,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 
 /**
@@ -115,6 +117,14 @@ public final class WebAPI {
         return authService;
     }
 
+    public String getSignUpURL() {
+        try {
+            return getAuthService().signUpURL(jobsClient.getBaseURI("/signUp", true).build().toURL().toString());
+        } catch (MalformedURLException | URISyntaxException e) {
+            throw new IllegalArgumentException("Illegal URL!", e);
+        }
+    }
+
     public void shutdownJobWatcher() {
         jobWatcher.shutdown();
     }
@@ -126,7 +136,7 @@ public final class WebAPI {
     //4 csi server not reachable
     //3 no connection to bioinf web site
     //2 no connection to uni jena
-    //1 no connection to internet (google/microft/ubuntu????)
+    //1 no connection to internet (google/microsoft/ubuntu?)
     //0 everything is fine
     //-1 login has permissions to this server
     public static final int MAX_STATE = 6;
