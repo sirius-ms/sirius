@@ -48,7 +48,7 @@ public class SignUpAction extends AbstractAction {
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
         try {
-            new WebViewBrowserDialog(MF, "Sign up", ApplicationCore.WEB_API.getAuthService().signUpURL());
+            new WebViewBrowserDialog(MF, "Sign up", ApplicationCore.WEB_API.getSignUpURL());
         } catch (Exception ex2) {
             LoggerFactory.getLogger(getClass()).error("Could not Open SignUp page in System Browser", ex2);
             new ExceptionDialog(MF, "Could not Open SignUp page in System Browser: " + ex2.getMessage());
