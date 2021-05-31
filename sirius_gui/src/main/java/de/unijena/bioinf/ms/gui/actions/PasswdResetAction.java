@@ -20,9 +20,8 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
-import org.slf4j.LoggerFactory;
+import de.unijena.bioinf.ms.gui.login.UserLoginDialog;
+import de.unijena.bioinf.ms.gui.login.UserPasswordResetDialog;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -32,21 +31,16 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SignUpAction extends AbstractAction {
+public class PasswdResetAction extends AbstractAction {
 
-    public SignUpAction() {
-        super("Sign up");
-//        putValue(Action.LARGE_ICON_KEY, Icons.GEAR_32);
-        putValue(Action.SHORT_DESCRIPTION, "Create a new SIRIUS Account.");
+    public PasswdResetAction() {
+        super("Reset Password");
+        putValue(Action.SHORT_DESCRIPTION, "Open password reset dialog.");
     }
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        try {
-            new WebViewBrowserDialog(MF, "Sign up", ApplicationCore.WEB_API.getSignUpURL());
-        } catch (Exception ex2) {
-            LoggerFactory.getLogger(getClass()).error("Could not Open SignUp page in System Browser", ex2);
-            new ExceptionDialog(MF, "Could not Open SignUp page in System Browser: " + ex2.getMessage());
-        }
+        boolean r = new UserPasswordResetDialog(MF, ApplicationCore.WEB_API.getAuthService()).hasPerformedReset();
+        firePropertyChange("pwd-reset", false, r);
     }
 }

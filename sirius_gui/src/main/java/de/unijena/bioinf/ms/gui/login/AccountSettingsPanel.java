@@ -61,7 +61,7 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
     private final AuthService service;
     private JTextField webserverURL;
     private JLabel userIconLabel, userInfoLabel;
-    private JButton login;
+    private JButton login, reset;
 
     public AccountSettingsPanel(Properties properties, AuthService service) {
         super();
@@ -79,10 +79,13 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
         userIconLabel = new JLabel();
         userInfoLabel = new JLabel();
 
+        reset = new JButton(SiriusActions.RESET_PWD.getInstance());
+
         JPanel iconPanel = new JPanel(new BorderLayout());
         iconPanel.add(userIconLabel, BorderLayout.CENTER);
 
         JPanel buttonContainer = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonContainer.add(reset);
         buttonContainer.add(login);
         iconPanel.add(buttonContainer, BorderLayout.SOUTH);
         add(iconPanel, userInfoLabel);

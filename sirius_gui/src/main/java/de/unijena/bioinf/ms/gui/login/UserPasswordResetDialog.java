@@ -42,56 +42,52 @@ package de.unijena.bioinf.ms.gui.login;
 
 import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import de.unijena.bioinf.auth.AuthService;
-import de.unijena.bioinf.auth.AuthServices;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
-public class UserLoginDialog extends JDialog {
-    private final JTextField username = new JTextField();
-    private final JPasswordField password = new JPasswordField();
+public class UserPasswordResetDialog extends JDialog {
+    private final JTextField email = new JTextField();
     private final AuthService service;
 
-    private boolean performedLogin = false;
+    private boolean performedReset = false;
 
-    Action signInAction;
+    Action resetAction;
     Action cancelAction;
 
-    public UserLoginDialog(Frame owner, AuthService service) {
+    public UserPasswordResetDialog(Frame owner, AuthService service) {
         super(owner, true);
         this.service = service;
         build();
     }
 
-    public UserLoginDialog(Dialog owner, AuthService service) {
+    public UserPasswordResetDialog(Dialog owner, AuthService service) {
         super(owner, true);
         this.service = service;
         build();
     }
 
     private void build() {
-        setTitle("Login");
+        setTitle("Reset Password");
         setLayout(new BorderLayout());
 
         //============= NORTH =================
-        add(new DialogHeader(Icons.KEY_64), BorderLayout.NORTH);
+        JPanel header = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        header.add(new JLabel("<html><div style='text-align: center;'>Enter your email address and we will send you<br>instructions to reset your password.</div></html>"));
+        add(header, BorderLayout.NORTH);
+
 
         //============= CENTER =================
         TwoColumnPanel center = new TwoColumnPanel();
-        center.addNamed("Email", username);
-        center.addNamed("Password", password);
+        center.addNamed("Email", email);
 
         add(center, BorderLayout.CENTER);
 
@@ -99,47 +95,36 @@ public class UserLoginDialog extends JDialog {
         cancelAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                performedLogin = false;
+                performedReset = false;
                 dispose();
             }
         };
         final JButton cancel = new JButton("Cancel");
         cancel.addActionListener(cancelAction);
 
-        signInAction = new AbstractAction() {
+        resetAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Jobs.runInBackgroundAndLoad(UserLoginDialog.this, "Logging in...", () -> {
+                Jobs.runInBackgroundAndLoad(UserPasswordResetDialog.this, "Sending password reset link...", () -> {
                     try {
-                        service.login(username.getText(), new String(password.getPassword()));
-                        AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
-                        performedLogin = true;
-                        Jobs.runEDTLater(UserLoginDialog.this::dispose);
-                        MainFrame.MF.CONNECTION_MONITOR().checkConnection();
+                        service.sendPasswordReset(email.getText());
+                        performedReset = true;
+                        Jobs.runEDTLater(UserPasswordResetDialog.this::dispose);
                     } catch (Throwable ex) {
                         LoggerFactory.getLogger(getClass()).error("Error during password reset.",ex);
-                        new ExceptionDialog(UserLoginDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
-                        try {
-                            AuthServices.clearRefreshToken(service, ApplicationCore.TOKEN_FILE);
-                        } catch (IOException ex2) {
-                            LoggerFactory.getLogger(getClass()).warn("Error when cleaning login state!", ex2);
-                        }
-                        try {
-                            Jobs.runEDTAndWait(() -> password.setText(null));
-                        } catch (InvocationTargetException | InterruptedException ignored) {}
+                        new ExceptionDialog(UserPasswordResetDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
+                        performedReset = false;
                     }
                 });
             }
         };
-        final JButton login = new JButton("Sign in");
-        login.addActionListener(signInAction);
+        final JButton reset = new JButton("Send email");
+        reset.setToolTipText("Send Password reset link to given email address.");
+        reset.addActionListener(resetAction);
 
-        Box buttons = Box.createHorizontalBox();
-        buttons.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
-        buttons.add(new JButton(SiriusActions.SIGN_UP.getInstance()));
-        buttons.add(Box.createHorizontalGlue());
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.add(cancel);
-        buttons.add(login);
+        buttons.add(reset);
 
         add(buttons, BorderLayout.SOUTH);
 
@@ -158,11 +143,11 @@ public class UserLoginDialog extends JDialog {
         String escAction = "cancel";
         inputMap.put(KeyStroke.getKeyStroke("ENTER"), enterAction);
         inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), escAction);
-        getRootPane().getActionMap().put(enterAction, signInAction);
+        getRootPane().getActionMap().put(enterAction, resetAction);
         getRootPane().getActionMap().put(escAction, cancelAction);
     }
 
-    public boolean hasPerformedLogin() {
-        return performedLogin;
+    public boolean hasPerformedReset() {
+        return performedReset;
     }
 }
