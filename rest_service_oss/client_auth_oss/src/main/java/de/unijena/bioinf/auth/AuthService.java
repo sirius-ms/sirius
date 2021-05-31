@@ -68,19 +68,19 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.revoke.TokenTypeHint;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.auth0.Auth0Service;
-import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
+public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Closeable {
 
     protected final OAuth20Service service;
 
@@ -251,4 +251,8 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
     }
 
 
+    @Override
+    public void close() throws IOException {
+        service.close();
+    }
 }
