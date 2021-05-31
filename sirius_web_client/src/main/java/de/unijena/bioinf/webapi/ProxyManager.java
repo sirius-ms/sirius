@@ -65,10 +65,6 @@ import java.util.function.Function;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ProxyManager {
-//    public final static boolean DEBUG = PropertyManager.getBoolean("de.unijena.bioinf.ms.rest.DEBUG",false);
-//    public static final int OK_STATE = 0;
-//    public static final ProxyStrategy DEFAULT_STRATEGY = ProxyStrategy.SYSTEM;
-
     private static final RequestConfig DEFAULT_CONFIG = RequestConfig.custom()
             .setConnectTimeout(15000)
 //                .setConnectionRequestTimeout(30000)
