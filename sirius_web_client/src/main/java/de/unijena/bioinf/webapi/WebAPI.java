@@ -129,16 +129,8 @@ public final class WebAPI {
         return ProxyManager.doWithClient(jobsClient::deleteAccount);
     }
 
-    public void shutdown() {
-        try {
+    public void shutdownJobWatcher() {
             jobWatcher.shutdown();
-        } finally {
-            try {
-                authService.close();
-            } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).error("Error when shutting down AuthService", e);
-            }
-        }
     }
 
     //region ServerInfo
