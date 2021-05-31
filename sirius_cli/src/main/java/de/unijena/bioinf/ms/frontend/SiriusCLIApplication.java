@@ -89,10 +89,15 @@ public class SiriusCLIApplication {
     public static Runnable shutdownWebservice() {
         return () -> {
             try {
-                ApplicationCore.WEB_API.shutdown();
-                ApplicationCore.DEFAULT_LOGGER.info("Try to delete leftover jobs on web server...");
-                ApplicationCore.WEB_API.deleteClientAndJobs();
-                ApplicationCore.DEFAULT_LOGGER.info("...Job deletion Done!");
+                ApplicationCore.WEB_API.shutdownJobWatcher();
+                if (!ApplicationCore.WEB_API.getAuthService().needsLogin()) {
+                    ApplicationCore.DEFAULT_LOGGER.info("Try to delete leftover jobs on web server...");
+                    ApplicationCore.WEB_API.deleteClientAndJobs();
+                    ApplicationCore.DEFAULT_LOGGER.info("...Job deletion Done!");
+                }
+                ApplicationCore.DEFAULT_LOGGER.info("Closing AuthService...");
+                ApplicationCore.WEB_API.getAuthService().close();
+                ApplicationCore.DEFAULT_LOGGER.info("AuthService closed");
             } catch (IOException e) {
                 e.printStackTrace();
             }
