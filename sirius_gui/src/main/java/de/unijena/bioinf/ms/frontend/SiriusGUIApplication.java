@@ -76,7 +76,7 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
 
                     configureShutDownHook(() -> {
                         Jobs.cancelALL();
-                        shutdownWebservice();
+                        shutdownWebservice().run();
                     });
 
                     measureTime("Start Run method");
