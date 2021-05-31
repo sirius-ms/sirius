@@ -125,6 +125,10 @@ public final class WebAPI {
         }
     }
 
+    public boolean deleteAccount(){
+        return ProxyManager.doWithClient(jobsClient::deleteAccount);
+    }
+
     public void shutdownJobWatcher() {
         jobWatcher.shutdown();
     }
