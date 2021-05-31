@@ -65,7 +65,7 @@ public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener
         add(sslValidation);
 
         useProxy = new JComboBox<>(ProxyManager.ProxyStrategy.values());
-        useProxy.setSelectedItem(ProxyManager.ProxyStrategy.valueOf(props.getProperty("de.unijena.bioinf.sirius.proxy")));
+        useProxy.setSelectedItem(ProxyManager.getStrategyByName(props.getProperty("de.unijena.bioinf.sirius.proxy")));
         useProxy.addActionListener(this);
         add(new JLabel("Use Proxy Server"),useProxy);
 
