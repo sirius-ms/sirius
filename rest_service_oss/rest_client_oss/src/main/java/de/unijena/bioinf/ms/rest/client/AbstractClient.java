@@ -33,6 +33,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
@@ -92,7 +93,7 @@ public abstract class AbstractClient {
     public boolean testSecuredConnection(@NotNull CloseableHttpClient client) {
         try {
             execute(client, () -> {
-                HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/check").build());
+                HttpGet get = new HttpGet(getBaseURI("/check", true).build());
                 final int timeoutInSeconds = 8000;
                 get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
                 return get;
@@ -104,10 +105,25 @@ public abstract class AbstractClient {
         }
     }
 
+    public boolean deleteAccount(@NotNull CloseableHttpClient client){
+        try {
+            execute(client, () -> {
+                HttpDelete delete = new HttpDelete(getBaseURI("/delete-account", true).build());
+                final int timeoutInSeconds = 8000;
+                delete.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                return delete;
+            });
+            return true;
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).warn("Error when deleting user account: " + e.getMessage());
+            return false;
+        }
+    }
+
     protected void isSuccessful(HttpResponse response) throws IOException {
         final StatusLine status = response.getStatusLine();
         if (status.getStatusCode() >= 400){
-            final String content = IOUtils.toString(getIn(response.getEntity()));
+            final String content = response.getEntity()!= null ? IOUtils.toString(getIn(response.getEntity())) : "No Content";
             throw new IOException("Error when querying REST service. Bad Response Code: "
                     + status.getStatusCode() + " | Message: " + status.getReasonPhrase() + "| Content: " + content);
         }
@@ -119,9 +135,12 @@ public abstract class AbstractClient {
         requestDecorator.accept(request);
         try (CloseableHttpResponse response = client.execute(request)) {
             isSuccessful(response);
-            try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {
-                return respHandling.apply(reader);
+            if (response.getEntity() != null) {
+                try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {
+                    return respHandling.apply(reader);
+                }
             }
+            return null;
         }
     }
 
