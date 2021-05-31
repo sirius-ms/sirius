@@ -35,15 +35,14 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class SignUpAction extends AbstractAction {
 
     public SignUpAction() {
-        super("Sign up");
-//        putValue(Action.LARGE_ICON_KEY, Icons.GEAR_32);
-        putValue(Action.SHORT_DESCRIPTION, "Create a new SIRIUS Account.");
+        super("Create Account");
+        putValue(Action.SHORT_DESCRIPTION, "Create a new SIRIUS user account.");
     }
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
         try {
-            new WebViewBrowserDialog(MF, "Sign up", ApplicationCore.WEB_API.getSignUpURL());
+            new WebViewBrowserDialog(MF, "Create Account", ApplicationCore.WEB_API.getSignUpURL());
         } catch (Exception ex2) {
             LoggerFactory.getLogger(getClass()).error("Could not Open SignUp page in System Browser", ex2);
             new ExceptionDialog(MF, "Could not Open SignUp page in System Browser: " + ex2.getMessage());
