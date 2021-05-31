@@ -63,12 +63,16 @@ package de.unijena.bioinf.auth.auth0;
 import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.httpclient.HttpClient;
 import com.github.scribejava.core.httpclient.HttpClientConfig;
-import com.github.scribejava.core.model.OAuthRequest;
+import com.github.scribejava.core.model.*;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.revoke.TokenTypeHint;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class Auth0Service extends OAuth20Service {
 
@@ -94,5 +98,18 @@ public class Auth0Service extends OAuth20Service {
     protected OAuthRequest withClientID(@NotNull final OAuthRequest request){
         request.addParameter("client_id", getApiKey());
         return request;
+    }
+
+    public OAuthRequest createPasswordResetRequest(String email){
+        final OAuthRequest request = new OAuthRequest(Verb.POST, ((Auth0Api)getApi()).getAuthProviderURL() + "/dbconnections/change_password");
+        request.addHeader("content-type", "application/json");
+        request.setPayload("{\"client_id\": \"" + getApiKey() +
+                "\",\"email\": \"" + email +
+                "\",\"connection\": \"Username-Password-Authentication\"}");
+        return request;
+    }
+
+    public Response sendPasswordResetRequest(String email) throws IOException, ExecutionException, InterruptedException {
+        return execute(createPasswordResetRequest(email));
     }
 }

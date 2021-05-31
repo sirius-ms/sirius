@@ -63,9 +63,11 @@ package de.unijena.bioinf.auth;
 import com.github.scribejava.apis.openid.OpenIdOAuth2AccessToken;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
+import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.revoke.TokenTypeHint;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.auth.auth0.Auth0Service;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -240,6 +242,12 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest> {
 
     public String signUpURL(String redirectUrl){
         return service.createAuthorizationUrlBuilder().additionalParams(Map.of("screen_hint","signup","redirect_uri", redirectUrl)).build();
+    }
+
+    public void sendPasswordReset(String email) throws IOException, ExecutionException, InterruptedException {
+        Response resp = ((Auth0Service) service).sendPasswordResetRequest(email);
+        if (!resp.isSuccessful())
+            throw new IOException("Could not initiate Password reset. Cause: " + resp.getMessage() + " | Body: " +  resp.getBody());
     }
 
 

@@ -66,25 +66,37 @@ import com.github.scribejava.core.extractors.TokenExtractor;
 import com.github.scribejava.core.httpclient.HttpClient;
 import com.github.scribejava.core.httpclient.HttpClientConfig;
 import com.github.scribejava.core.model.OAuth2AccessToken;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 public class Auth0Api extends DefaultApi20 {
-    private URL localAuthProviderURL;
-    public Auth0Api() {}
+
+    @NotNull private final URL localAuthProviderURL;
 
     public Auth0Api(String localAuthProviderURL) throws MalformedURLException {
         this(new URL(localAuthProviderURL));
     }
 
-    public Auth0Api(URL localAuthProviderURL) {
+    public Auth0Api(@NotNull URL localAuthProviderURL) {
+        super();
         this.localAuthProviderURL = localAuthProviderURL;
     }
 
     private static class InstanceHolder {
-        private static final Auth0Api INSTANCE = new Auth0Api();
+        private static final Auth0Api INSTANCE;
+        static {
+            try {
+                INSTANCE = new Auth0Api(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.authServer"));
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+                throw new IllegalArgumentException(e);
+            }
+        }
     }
 
     public static Auth0Api instance() {
@@ -104,6 +116,11 @@ public class Auth0Api extends DefaultApi20 {
     @Override
     public String getRevokeTokenEndpoint() {
         return localAuthProviderURL.toString() + "/oauth/revoke";
+    }
+
+
+    public String getAuthProviderURL(){
+        return localAuthProviderURL.toString();
     }
 
     @Override
