@@ -20,9 +20,7 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
-import org.slf4j.LoggerFactory;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -32,20 +30,17 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SignUpAction extends AbstractAction {
+public class AccountDeleteAction extends AbstractAction {
 
-    public SignUpAction() {
-        super("Create Account");
-        putValue(Action.SHORT_DESCRIPTION, "Create a new SIRIUS user account.");
+    public AccountDeleteAction() {
+        super("Delete Account");
+        putValue(Action.SHORT_DESCRIPTION, "Delete the current SIRIUS user account.");
     }
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        try {
-            new WebViewBrowserDialog(MF, "Create Account", ApplicationCore.WEB_API.getSignUpURL());
-        } catch (Exception ex2) {
-            LoggerFactory.getLogger(getClass()).error("Could not Open SignUp page in System Browser", ex2);
-            new ExceptionDialog(MF, "Could not Open SignUp page in System Browser: " + ex2.getMessage());
-        }
+        boolean r = Jobs.runInBackgroundAndLoad(MF, "Deleting Account...", ApplicationCore.WEB_API::deleteAccount).getResult();
+        if (r)
+            SiriusActions.SIGN_OUT.getInstance().actionPerformed(e);
     }
 }

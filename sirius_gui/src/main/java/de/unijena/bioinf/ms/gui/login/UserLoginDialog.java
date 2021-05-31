@@ -131,7 +131,7 @@ public class UserLoginDialog extends JDialog {
                 });
             }
         };
-        final JButton login = new JButton("Sign in");
+        final JButton login = new JButton("Log in");
         login.addActionListener(signInAction);
 
         Box buttons = Box.createHorizontalBox();
