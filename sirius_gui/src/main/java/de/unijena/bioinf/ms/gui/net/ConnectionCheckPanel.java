@@ -183,9 +183,9 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                 }else {
                     resultPanel.add(new JLabel("<html>" + " ErrorCode " + 8 + ": " +
                             " Your Account does not have Permissions for the configured web service.<br>" +
-                            "You may either need to configure a specific web service<br>" +
+                            "You may either need to configure a specific web service URL<br>" +
                             "or have to use a different user account (see Network Settings).<br>" +
-                            "Without a valid user account server side features are not available." +
+                            "More details on this error can be found in log window." +
                             "</html>"));
                 }
 

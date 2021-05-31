@@ -18,26 +18,6 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
 package de.unijena.bioinf.ms.gui.login;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -61,7 +41,7 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
     private final AuthService service;
     private JTextField webserverURL;
     private JLabel userIconLabel, userInfoLabel;
-    private JButton login;
+    private JButton login, reset, create;
 
     public AccountSettingsPanel(Properties properties, AuthService service) {
         super();
@@ -79,13 +59,20 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
         userIconLabel = new JLabel();
         userInfoLabel = new JLabel();
 
+        reset = new JButton(SiriusActions.RESET_PWD.getInstance());
+
+        create = new JButton();
+
         JPanel iconPanel = new JPanel(new BorderLayout());
         iconPanel.add(userIconLabel, BorderLayout.CENTER);
 
-        JPanel buttonContainer = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel buttonContainer = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        buttonContainer.add(reset);
+        buttonContainer.add(create);
         buttonContainer.add(login);
-        iconPanel.add(buttonContainer, BorderLayout.SOUTH);
+//        iconPanel.add(buttonContainer, BorderLayout.SOUTH);
         add(iconPanel, userInfoLabel);
+        add(buttonContainer);
         addVerticalGlue();
 
         SiriusActions.SIGN_IN.getInstance().addPropertyChangeListener(evt -> reloadChanges());
@@ -110,6 +97,7 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
         if (userInfo == null) {
             userIconLabel.setIcon(Icons.USER_128);
             userInfoLabel.setText("Please log in!");
+            create.setAction(SiriusActions.SIGN_UP.getInstance());
             login.setAction(SiriusActions.SIGN_IN.getInstance());
         } else {
             try {
@@ -119,6 +107,7 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
                 userIconLabel.setIcon(Icons.USER_128);
             }
             userInfoLabel.setText("<html>Logged in as:<br><b>" + userInfo.getClaim("email").asString() + "</b></html>");
+            create.setAction(SiriusActions.DELETE_ACCOUNT.getInstance());
             login.setAction(SiriusActions.SIGN_OUT.getInstance());
         }
     }
