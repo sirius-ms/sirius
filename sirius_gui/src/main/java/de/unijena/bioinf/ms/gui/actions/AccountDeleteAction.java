@@ -19,39 +19,28 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SignOutAction extends AbstractAction {
+public class AccountDeleteAction extends AbstractAction {
 
-    public SignOutAction() {
-        super("Log out");
-        putValue(Action.SHORT_DESCRIPTION, "Logout from the current account.");
+    public AccountDeleteAction() {
+        super("Delete Account");
+        putValue(Action.SHORT_DESCRIPTION, "Delete the current SIRIUS user account.");
     }
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = Jobs.runInBackgroundAndLoad(MF, "Logging out...", () -> {
-            try {
-                AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
-                MF.CONNECTION_MONITOR().checkConnection();
-                return true;
-            } catch (IOException ex) {
-                LoggerFactory.getLogger(getClass()).warn("Error during logout!", ex);
-                return false;
-            }
-        }).getResult();
-        firePropertyChange("logout", false, r);
+        boolean r = Jobs.runInBackgroundAndLoad(MF, "Deleting Account...", ApplicationCore.WEB_API::deleteAccount).getResult();
+        if (r)
+            SiriusActions.SIGN_OUT.getInstance().actionPerformed(e);
     }
 }
