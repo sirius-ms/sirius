@@ -70,6 +70,7 @@ public enum SiriusActions {
 
     CHECK_CONNECTION(CheckConnectionAction.class),
 
+    RESET_PWD(PasswdResetAction.class),
     SIGN_OUT(SignOutAction.class),
     SIGN_IN(SignInAction.class),
     SIGN_UP(SignUpAction.class);

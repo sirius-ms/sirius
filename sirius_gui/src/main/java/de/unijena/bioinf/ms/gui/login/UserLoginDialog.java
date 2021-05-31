@@ -117,6 +117,7 @@ public class UserLoginDialog extends JDialog {
                         Jobs.runEDTLater(UserLoginDialog.this::dispose);
                         MainFrame.MF.CONNECTION_MONITOR().checkConnection();
                     } catch (Throwable ex) {
+                        LoggerFactory.getLogger(getClass()).error("Error during password reset.",ex);
                         new ExceptionDialog(UserLoginDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
                         try {
                             AuthServices.clearRefreshToken(service, ApplicationCore.TOKEN_FILE);
