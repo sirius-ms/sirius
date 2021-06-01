@@ -6,7 +6,7 @@ current = {w, h},
 x_tmp = {min: null, max: null},
 x_fix = {min: null, max: null},
 scale_tmp = {X: null, Y: null}, //Y for future
-pan = {mousedownCheck: false, mousemoveCheck: false, tolerance: 10, step: 500},
+pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500},
 margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30},
 decimal_place = 4,
 // MS2 + structure
@@ -15,7 +15,9 @@ selected = {leftClick: null, hover: null},
 svg_str = null, basic_structure = null,
 anno_str = [],
 // Mirror Plot
-view = {style: "difference", intensity: true}; // "simple", "normal" oder "difference"
+view = {style: "difference", intensity: true}; // style="simple", "normal" oder "difference"
+// Note: The intensity viewer is only switchable under difference style now.
+// It will not be showed in simple and normal style, although "intensity=true"
 
 
 d3.select("body")
@@ -31,7 +33,7 @@ window.addEventListener("resize", function(){
     if (selected.leftClick !== null) showStructure(selected.leftClick);
 });
 
-document.onkeyup = function(e) {
+document.onkeydown = function(e) {
     if (selected.leftClick !== null) {
         var selectedPeak, new_selected = -1;
         if (e.keyCode === 37 && selected.leftClick !== 0) { // left
@@ -87,7 +89,7 @@ function clear() {
     data = null;
     x_tmp = {min: null, max: null};
     scale_tmp = {X: null, Y: null};
-    pan.mousedownCheck = false;
+    pan.mouseupCheck = false;
     pan.mousemoveCheck = false;
     selected = {leftClick: null, hover: null};
     svg_str = null;
@@ -308,7 +310,7 @@ var mouseup = function(d, i) {
             }
         }
     }
-    pan.mousedownCheck = false;
+    pan.mouseupCheck = false;
     pan.mousemoveCheck = false;
 };
 
@@ -345,12 +347,12 @@ function panX(selection, xdomain, duration, ...callbackUpdates) {
         var x0, x1, d, newXmin, newXmax;
         function mousedownPan() {
             if (div.node().id === 'brushArea') {
-                pan.mousedownCheck = true;
+                pan.mouseupCheck = true;
                 x0 = d3.event.clientX;
             }
         };
         function mousemovePan() {
-            if (pan.mousedownCheck) {
+            if (pan.mouseupCheck) {
                 x1 = d3.event.clientX;
                 d = x1 - x0;
                 if (Math.abs(d)>=pan.tolerance) {
@@ -367,7 +369,7 @@ function panX(selection, xdomain, duration, ...callbackUpdates) {
             }
         };
         function mouseupPan() {
-            if (pan.mousedownCheck && pan.mousemoveCheck) w.on("mousedown", null).on("mousemove", null).on("mouseup", null);
+            if (pan.mouseupCheck && pan.mousemoveCheck) w.on("mousedown", null).on("mousemove", null).on("mouseup", null);
         };
     }
 };
@@ -616,29 +618,18 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
             const ruler_max = mzs[mzsSize-1];
             const x_min = x.domain()[0];
             const x_max = x.domain()[1];
-            if (ruler_min>x_max || ruler_max<x_min) {
-                ruler.attr("visibility", "hidden");
-                ruler.selectAll(".diff_label").attr("visibility", "hidden");
-            } else {
-                ruler.select(".horizontal_ruler").transition().duration(duration)
-                    .attr("x1", function(d) { return (ruler_min<x_min) ? 0 : x(ruler_min); })
-                    .attr("x2", function(d) { return (ruler_max>x_max) ? w-20 : x(ruler_max); }); //w-20 for legend
-                ruler.selectAll(".vertical_ruler").transition().duration(duration)
-                    .attr("x1", function(d) { return x(d.mz); })
-                    .attr("x2", function(d) { return x(d.mz); });
-                ruler.transition().delay(duration).attr("visibility", "visible");
-                let i, x0, x1, x_text;
-                for (i = 1; i < mzsSize; i++) {
-                    x0 = mzs[i-1];
-                    x1 = mzs[i];
-                    x_text = (x1-x0)/2+x0;
-                    if (x_text>=x_min && x_text<=x_max) {
-                        ruler.select("#diff_label"+(i-1)).transition().duration(duration).attr("x", x(x_text));
-                        ruler.select("#diff_label"+(i-1)).transition().delay(duration).attr("visibility", "visible");
-                    } else {
-                        ruler.select("#diff_label"+(i-1)).attr("visibility", "hidden");
-                    }
-                }
+            ruler.select(".horizontal_ruler").transition().duration(duration)
+                .attr("x1", function(d) { return (ruler_min<x_min) ? 0 : x(ruler_min); })
+                .attr("x2", function(d) { return (ruler_max>x_max) ? w-20 : x(ruler_max); }); //w-20 for legend
+            ruler.selectAll(".vertical_ruler").transition().duration(duration)
+                .attr("x1", function(d) { return x(d.mz); })
+                .attr("x2", function(d) { return x(d.mz); });
+            let i, x0, x1, x_text;
+            for (i = 1; i < mzsSize; i++) {
+                x0 = mzs[i-1];
+                x1 = mzs[i];
+                x_text = (x1-x0)/2+x0;
+                ruler.select("#diff_label"+(i-1)).transition().duration(duration).attr("x", x(x_text));
             }
         };
         update_ruler(mzs1, "#ruler_1", duration);
@@ -662,7 +653,7 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
                 .attr("class", "intensity_2 intensity label spectrum_legend")
                 .attr("id", function(d, i) { return "intensity"+(i+mzs1Size); })
                 .attr("x", function(d) { return x(d.mz); })
-                .attr("y", function(d) { return y2(d.intensity)+15; })
+                .attr("y", function(d) { return (y2(d.intensity)+15<h/2+28) ? h/2+28 : y2(d.intensity)+15; })
                 .text(function(d) { return d.mz.toFixed(decimal_place).toString(); });
     };
     //difference viewer
@@ -740,15 +731,18 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
         x_tmp.max = x_fix.max;
     }
     // difference and intensity viewer initiation
-    if (viewStyle === 'difference' || view.intensity) {
+    if (viewStyle === 'difference') {
         new_h = h - margin.diff_vertical*2;
         margin_h = margin.diff_vertical;
-        svg.select("#clipArea")
+        svg.append("defs").append("svg:clipPath")
+            .attr("id", "diff-clip")
+            .append("svg:rect")
+            .attr("width", w-20 )
+            .attr("height", h+30 )
             .attr("x", 0)
-            .attr("y", margin_h)
-            .attr("height", new_h);
-        if (view.intensity) intensityArea = d3.select("#content").append('g').attr("id", "intensities");
-        if (viewStyle === 'difference') diffArea = d3.select("#content").append('g').attr("id", "differences");
+            .attr("y", -15);
+        if (viewStyle === 'difference') diffArea = d3.select("#content").append('g').attr("id", "differences").attr("clip-path", "url(#diff-clip)");
+        if (view.intensity) intensityArea = d3.select("#content").append('g').attr("id", "intensities").attr("clip-path", "url(#clip)");
     }
     // X axis
     x = d3.scaleLinear()
@@ -793,18 +787,34 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
     svg.selectAll(".legend")
         .attr("y", w)
         .attr("transform", "rotate(-90)");
-    // zoom and pan
-    zoom = d3.zoom().extent([[0,margin_h],[w,new_h]])
-        .on("zoom", function() { zoomedX([x_fix.min, x_fix.max], 250, update_peaks, update_rulers, update_intensities, update_diffBands);});
-    peakArea.select("#brushArea").call(zoom)
-        .on("dblclick.zoom", null)
-        .on("mousedown.zoom", function() {
+    svg.select("#clipArea").attr("width", w-20);
+    // zoom, pan and brush
+    var tmp_zoom, tmp_pan, tmp_brush;
+    if (viewStyle === "difference" && intensityViewer) {
+        tmp_zoom = function() { zoomedX([x_fix.min, x_fix.max], 250, update_peaks, update_rulers, update_intensities, update_diffBands); };
+        tmp_pan = function() {
             var selection = d3.select(this);
             panX(selection, [x_fix.min, x_fix.max], 150, update_peaks, update_rulers, update_intensities, update_diffBands);
-        });
-    // brush
-    brush = d3.brushX().extent( [ [0,0], [w-20, h] ]).filter(rightClickOnly)
-        .on("end", function() { brushendX(750, update_peaks, update_rulers, update_intensities, update_diffBands);});
+        };
+        tmp_brush = function() { brushendX(750, update_peaks, update_rulers, update_intensities, update_diffBands); };
+    } else if (viewStyle === "difference" && !intensityViewer) {
+        tmp_zoom = function() { zoomedX([x_fix.min, x_fix.max], 250, update_peaks, update_rulers, update_diffBands); };
+        tmp_pan = function() {
+            var selection = d3.select(this);
+            panX(selection, [x_fix.min, x_fix.max], 150, update_peaks, update_rulers, update_diffBands);
+        };
+        tmp_brush = function() { brushendX(750, update_peaks, update_rulers, update_diffBands); };
+    } else {
+        tmp_zoom = function() { zoomedX([x_fix.min, x_fix.max], 250, update_peaks); };
+        tmp_pan = function() {
+            var selection = d3.select(this);
+            panX(selection, [x_fix.min, x_fix.max], 150, update_peaks);
+        };
+        tmp_brush = function() { brushendX(750, update_peaks); };
+    }
+    zoom = d3.zoom().extent([[0,margin_h],[w,new_h]]).on("zoom", tmp_zoom);
+    peakArea.select("#brushArea").call(zoom).on("dblclick.zoom", null).on("mousedown.zoom", tmp_pan);
+    brush = d3.brushX().extent( [ [0,0], [w-20, h] ]).filter(rightClickOnly).on("end", tmp_brush);
     peakArea.select("#brushArea").call(brush);
     // Peaks 1
     peakArea.selectAll()
@@ -827,8 +837,10 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
             .attr("y", h/2)
             .attr("height", function(d) { return y2(d.intensity)-h/2; });
     // difference and intensity viewer
-    if (viewStyle === "difference") showDifference();
-    if (intensityViewer) showIntensity();
+    if (viewStyle === "difference") {
+        showDifference();
+        if (intensityViewer) showIntensity();
+    }
     // mouse actions
     svg.on("mousemove", function() {
         let currentY = d3.event.clientY;
@@ -873,7 +885,7 @@ function loadJSONData(data_spectra, data_highlight, data_svg) {
         d3.select("#container").html("");
         x_tmp = {min: null, max: null};
         scale_tmp = {X: null, Y: null};
-        pan.mousedownCheck = false;
+        pan.mouseupCheck = false;
         pan.mousemoveCheck = false;
         selected = {leftClick: null, hover: null};
         basic_structure = null;
