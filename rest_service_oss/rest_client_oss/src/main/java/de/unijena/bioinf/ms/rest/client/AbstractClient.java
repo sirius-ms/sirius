@@ -125,7 +125,7 @@ public abstract class AbstractClient {
         if (status.getStatusCode() >= 400){
             final String content = response.getEntity()!= null ? IOUtils.toString(getIn(response.getEntity())) : "No Content";
             throw new IOException("Error when querying REST service. Bad Response Code: "
-                    + status.getStatusCode() + " | Message: " + status.getReasonPhrase() + "| Content: " + content);
+                    + status.getStatusCode() + " | Message: " + status.getReasonPhrase() + " | " + response.getFirstHeader("WWW-Authenticate") + " | Content: " + content);
         }
     }
 
