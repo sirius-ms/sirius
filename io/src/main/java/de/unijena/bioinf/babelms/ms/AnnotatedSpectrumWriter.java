@@ -83,6 +83,7 @@ public class AnnotatedSpectrumWriter {
         final List<String> values = new ArrayList<>();
         for (Fragment f : fragments) {
             values.clear();
+            ImplicitAdduct adduct = adductsByFragment==null ? null : adductsByFragment.get(f);
             final AnnotatedPeak p = peakAno.get(f);
             if (p==null) continue;
             if (enabledFields.contains(Fields.MZ)) {
@@ -95,7 +96,11 @@ public class AnnotatedSpectrumWriter {
                 values.add(String.format(Locale.US, "%.2f", 100d*p.getRelativeIntensity()));
             }
             if (enabledFields.contains(Fields.EXACTMASS)) {
-                values.add(String.format(Locale.US, "%.6f", ion.getIonization().addToMass(f.getFormula().getMass())));
+                if (adduct!=null) {
+                    values.add(String.format(Locale.US, "%.6f", f.getIonization().addToMass(f.getFormula().add(adduct.getAdductFormula()).getMass())));
+                } else {
+                    values.add(String.format(Locale.US, "%.6f", f.getIonization().addToMass(f.getFormula().getMass())));
+                }
             }
             if (enabledFields.contains(Fields.FORMULA)) {
                 values.add(f.getFormula().toString());
@@ -104,7 +109,6 @@ public class AnnotatedSpectrumWriter {
                 values.add(f.getIonization().toString());
             }
             if (enabledFields.contains(Fields.ADDUCT)) {
-                final ImplicitAdduct adduct = adductsByFragment.get(f);
                 values.add(adduct !=  null && adduct.hasImplicitAdduct() ? adduct.getAdductFormula().toString() : "");
             }
             bw.write(String.join("\t", values));
