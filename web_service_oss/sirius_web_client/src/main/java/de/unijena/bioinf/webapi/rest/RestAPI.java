@@ -94,11 +94,10 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     public final FingerIdClient fingerprintClient;
     public final CanopusClient canopusClient;
 
-    private final AuthService authService;
 
 
     public RestAPI(@Nullable AuthService authService, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
-        this.authService = authService;
+        super(authService);
         this.serverInfoClient = infoClient;
         this.jobsClient = jobsClient;
         this.chemDBClient = chemDBClient;
@@ -110,11 +109,11 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         this(authService, new InfoClient(host), new JobsClient(host, authService), new ChemDBClient(host, authService), new FingerIdClient(host, authService), new CanopusClient(host, authService));
     }
 
-    public WebAPI(@NotNull AuthService authService, @NotNull String host) {
+    public RestAPI(@NotNull AuthService authService, @NotNull String host) {
         this(authService, URI.create(host));
     }
 
-    public WebAPI(@NotNull AuthService authService) {
+    public RestAPI(@NotNull AuthService authService) {
         this(authService, URI.create(FingerIDProperties.fingeridWebHost()));
     }
 
