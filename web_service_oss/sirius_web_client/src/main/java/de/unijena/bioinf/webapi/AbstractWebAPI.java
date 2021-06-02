@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.webapi;
 
+import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.StructurePredictor;
@@ -32,6 +33,17 @@ import java.io.IOException;
 import java.util.EnumMap;
 
 public abstract class AbstractWebAPI<D extends AbstractChemicalDatabase> implements WebAPI<D> {
+
+    protected final AuthService authService;
+
+    protected AbstractWebAPI(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @Override
+    public AuthService getAuthService() {
+        return authService;
+    }
 
 
     //caches predicors so that we do not have to download the statistics and fingerprint info every time

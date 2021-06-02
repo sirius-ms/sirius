@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
@@ -67,10 +68,22 @@ import java.util.Map;
 public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     default void shutdown() throws IOException {
-        LoggerFactory.getLogger(getClass()).info("Try to delete leftover jobs on web server...");
-        deleteClientAndJobs();
-        LoggerFactory.getLogger(getClass()).info("...Job deletion Done!");
+        if (!getAuthService().needsLogin()) {
+            LoggerFactory.getLogger(getClass()).info("Try to delete leftover jobs on web server...");
+            deleteClientAndJobs();
+            LoggerFactory.getLogger(getClass()).info("...Job deletion Done!");
+        }
+        LoggerFactory.getLogger(getClass()).info("Closing AuthService...");
+        getAuthService().close();
+        LoggerFactory.getLogger(getClass()).info("AuthService closed");
     }
+
+    AuthService getAuthService();
+
+    String getSignUpURL();
+
+    boolean deleteAccount();
+
 
     //region ServerInfo
 

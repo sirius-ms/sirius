@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
@@ -71,12 +72,23 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
 
     private WebChemDB webChemDB;
 
-    public AmqpAPI(AmqpClient amqpClient, FingerIdClientDataStore fingeridModels, CanopusClientDataStore canopusModels, WebChemDB webChemDB) {
+    public AmqpAPI(@Nullable AuthService authService, AmqpClient amqpClient, FingerIdClientDataStore fingeridModels, CanopusClientDataStore canopusModels, WebChemDB webChemDB) {
+        super(authService);
         this.amqpClient = amqpClient;
         this.amqpClient.startConsuming(30000);
         this.webChemDB = webChemDB;
         this.fingeridModels = fingeridModels;
         this.canopusModels = canopusModels;
+    }
+
+    @Override
+    public String getSignUpURL() {
+        return null;//todo implement
+    }
+
+    @Override
+    public boolean deleteAccount() {
+        return false; //todo implement
     }
 
     @Override
