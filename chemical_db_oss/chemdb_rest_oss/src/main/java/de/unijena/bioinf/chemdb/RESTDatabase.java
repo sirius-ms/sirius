@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
@@ -39,7 +40,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.json.JsonException;
 import java.io.*;
-import java.net.URI;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -68,6 +68,30 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         this.chemDBDate = chemDBDate;
         this.chemDBClient = chemDBClient;
         this.client = client;
+    }
+
+    /*public RESTDatabase(@NotNull File cacheDir, long filter, @Nullable URI host, @NotNull CloseableHttpClient client) {
+        this(cacheDir, filter, new ChemDBClient(host, (it) -> {}), client);
+    }
+
+    public RESTDatabase(File cacheDir, long filter, String host, CloseableHttpClient client) {
+        this(cacheDir, filter, URI.create(host), client);
+    }
+
+    public RESTDatabase(File cacheDir, long filter, String host) {
+        this(cacheDir, filter, host, HttpClients.createDefault());
+    }
+
+    public RESTDatabase(File cacheDir, long filter, URI host) {
+        this(cacheDir, filter, host, HttpClients.createDefault());
+    }
+
+    public RESTDatabase(File cacheDir, long filter) {
+        this(cacheDir, filter, (URI) null);
+    }*/
+
+    public RESTDatabase(long filter, @NotNull AuthService authService) {
+        this(RESTDatabase.defaultCacheDir(), 0,  new ChemDBClient(null, authService) , HttpClients.createDefault());
         this.cache = new ChemDBFileCache(cacheDir, new SearchStructureByFormula() {
             @Override
             public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {

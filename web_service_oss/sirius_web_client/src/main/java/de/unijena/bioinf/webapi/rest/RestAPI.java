@@ -4,26 +4,6 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
@@ -48,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.DBVersion;
 import de.unijena.bioinf.chemdb.RESTDatabase;
@@ -91,7 +72,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 
 /**
@@ -111,8 +94,11 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     public final FingerIdClient fingerprintClient;
     public final CanopusClient canopusClient;
 
+    private final AuthService authService;
 
-    public RestAPI(@NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
+
+    public RestAPI(@Nullable AuthService authService, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
+        this.authService = authService;
         this.serverInfoClient = infoClient;
         this.jobsClient = jobsClient;
         this.chemDBClient = chemDBClient;
@@ -120,22 +106,38 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         this.canopusClient = canopusClient;
     }
 
-    public RestAPI(@NotNull URI host) {
-        this(new InfoClient(host), new JobsClient(host), new ChemDBClient(host), new FingerIdClient(host), new CanopusClient(host));
+    public RestAPI(@NotNull AuthService authService, @NotNull URI host) {
+        this(authService, new InfoClient(host), new JobsClient(host, authService), new ChemDBClient(host, authService), new FingerIdClient(host, authService), new CanopusClient(host, authService));
     }
 
-    public RestAPI(@NotNull String host) {
-        this(URI.create(host));
+    public WebAPI(@NotNull AuthService authService, @NotNull String host) {
+        this(authService, URI.create(host));
     }
 
-    public RestAPI() {
-        this(URI.create(FingerIDProperties.fingeridWebHost()));
+    public WebAPI(@NotNull AuthService authService) {
+        this(authService, URI.create(FingerIDProperties.fingeridWebHost()));
+    }
+
+    public AuthService getAuthService() {
+        return authService;
+    }
+
+    public String getSignUpURL() {
+        try {
+            return getAuthService().signUpURL(jobsClient.getBaseURI("/signUp", true).build().toURL().toString());
+        } catch (MalformedURLException | URISyntaxException e) {
+            throw new IllegalArgumentException("Illegal URL!", e);
+        }
+    }
+
+    public boolean deleteAccount(){
+        return ProxyManager.doWithClient(jobsClient::deleteAccount);
     }
 
 
     @Override
     public void shutdown() throws IOException {
-        jobWatcher.shutdown();
+            jobWatcher.shutdown();
         super.shutdown();
     }
 
@@ -146,8 +148,9 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     //4 csi server not reachable
     //3 no connection to bioinf web site
     //2 no connection to uni jena
-    //1 no connection to internet (google/microft/ubuntu????)
+    //1 no connection to internet (google/microsoft/ubuntu?)
     //0 everything is fine
+    //-1 login has permissions to this server
     public static final int MAX_STATE = 6;
 
     @Nullable
@@ -172,6 +175,8 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
                 } else if (v.outdated()) {
                     return MAX_STATE;
                 } else if (serverInfoClient.testConnection()) {
+                    if (jobsClient.testSecuredConnection(client))
+                        return -1;
                     return 0;
                 } else {
                     return 5;

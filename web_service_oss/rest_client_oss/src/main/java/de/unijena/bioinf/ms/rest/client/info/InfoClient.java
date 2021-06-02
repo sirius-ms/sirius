@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.rest.client.info;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.info.News;
@@ -34,6 +35,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +60,11 @@ public class InfoClient extends AbstractClient {
     private static final String WEBAPI_WORKER_JSON = "/workers.json";
 
     public InfoClient(@NotNull URI serverUrl) {
-        super(serverUrl);
+        this(serverUrl, (it) -> {});
+    }
+
+    public InfoClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
+        super(serverUrl, requestDecorator);
     }
 
     @Nullable

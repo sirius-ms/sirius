@@ -22,15 +22,18 @@ package de.unijena.bioinf.ms.rest.client.chemdb;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -40,12 +43,12 @@ import java.util.List;
 public class ChemDBClient extends StructureSearchClient {
     public static final int MAX_NUM_OF_INCHIS = 1000; //todo this should be requested from server!
 
-    public ChemDBClient(URI serverUrl) {
-        super(serverUrl);
+    public ChemDBClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
+        super(serverUrl, requestDecorator);
     }
 
-    public ChemDBClient(URI serverUrl, boolean cacheFpVersion) {
-        super(serverUrl,cacheFpVersion);
+    public ChemDBClient(URI serverUrl, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
+        super(serverUrl,cacheFpVersion, requestDecorator);
     }
 
     public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs2d, CloseableHttpClient client) throws IOException {

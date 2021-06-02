@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.rest.client.canopus;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
@@ -30,9 +31,12 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -40,8 +44,8 @@ import java.nio.charset.StandardCharsets;
 
 public class CanopusClient extends AbstractClient {
 
-    public CanopusClient(URI serverUrl) {
-        super(serverUrl);
+    public CanopusClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
+        super(serverUrl, requestDecorator);
     }
 
     public CanopusData getCanopusData(PredictorType predictorType, CloseableHttpClient client) throws IOException {
