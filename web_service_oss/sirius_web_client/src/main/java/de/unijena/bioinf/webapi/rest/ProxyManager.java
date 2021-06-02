@@ -54,6 +54,8 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -61,10 +63,16 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
@@ -77,23 +85,21 @@ import java.util.function.Function;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class ProxyManager {
-//    public final static boolean DEBUG = PropertyManager.getBoolean("de.unijena.bioinf.ms.rest.DEBUG",false);
-//    public static final int OK_STATE = 0;
-//    public static final ProxyStrategy DEFAULT_STRATEGY = ProxyStrategy.SYSTEM;
-
-    private static RequestConfig DEFAULT_CONFIG = RequestConfig.custom()
+    private static final RequestConfig DEFAULT_CONFIG = RequestConfig.custom()
             .setConnectTimeout(15000)
 //                .setConnectionRequestTimeout(30000)
             .setSocketTimeout(15000).build();
 
-    public enum ProxyStrategy {SYSTEM, SIRIUS, NONE}
+    public enum ProxyStrategy {SIRIUS, NONE}
 
     private ProxyManager() {
     } //prevent instantiation
 
-    public static ProxyStrategy getStrategyByName(String vlaue) {
+    public static ProxyStrategy getStrategyByName(String value) {
         try {
-            return ProxyStrategy.valueOf(vlaue);
+            if ("SYSTEM".equals(value)) //legacy
+                value = "NONE";
+            return ProxyStrategy.valueOf(value);
         } catch (IllegalArgumentException e) {
             LoggerFactory.getLogger(ProxyStrategy.class).debug("Invalid Proxy Strategy state!", e);
             return null;
@@ -101,11 +107,7 @@ public class ProxyManager {
     }
 
     public static ProxyStrategy getProxyStrategy() {
-        return getStrategyByName(PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy", null, ProxyStrategy.SYSTEM.name()));
-    }
-
-    public static boolean useSystemProxyConfig() {
-        return getProxyStrategy() == ProxyStrategy.SYSTEM;
+        return getStrategyByName(PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy", null, ProxyStrategy.NONE.name()));
     }
 
     public static boolean useSiriusProxyConfig() {
@@ -124,10 +126,6 @@ public class ProxyManager {
     public static CloseableHttpClient getSirirusHttpClient(ProxyStrategy strategy) {
         final CloseableHttpClient client;
         switch (strategy) {
-            case SYSTEM:
-                client = getJavaDefaultProxyClient();
-                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.SYSTEM);
-                break;
             case SIRIUS:
                 client = getSiriusProxyClient();
                 LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.SIRIUS);
@@ -137,8 +135,8 @@ public class ProxyManager {
                 LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.NONE);
                 break;
             default:
-                client = getJavaDefaultProxyClient();
-                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using FALLBACK Proxy Type " + ProxyStrategy.SYSTEM);
+                client = getNoProxyClient();
+                LoggerFactory.getLogger(ProxyStrategy.class).debug("Using FALLBACK Proxy Type " + ProxyStrategy.NONE);
         }
 
         return client;
@@ -171,40 +169,46 @@ public class ProxyManager {
         return 3;
     }
 
-    private static CloseableHttpClient getJavaDefaultProxyClient() {
-        return HttpClientBuilder.create().useSystemProperties().setDefaultRequestConfig(DEFAULT_CONFIG).build();
+    private static HttpClientBuilder handleSSLValidation(@NotNull final HttpClientBuilder builder){
+        if (isSSLValidationDisabled()) {
+            try {
+                SSLContext context = new SSLContextBuilder().loadTrustMaterial(null, (TrustStrategy) (arg0, arg1) -> true).build();
+                builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                        .setSSLContext(context);
+            } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
+                LoggerFactory.getLogger(ProxyManager.class).warn("Could not create Noop SSL context. SSL Validation will NOT be disabled!");
+            }
+        }
+        return builder;
     }
 
     private static CloseableHttpClient getNoProxyClient() {
-        return HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).build();
+        return handleSSLValidation(HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG)).build();
     }
 
     private static CloseableHttpClient getSiriusProxyClient() {
         final String hostName = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.hostname");
-        final int port = Integer.valueOf(PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.port"));
+        final int port = Integer.parseInt(PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.port"));
         final String scheme = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.scheme");
 
+        final HttpClientBuilder builder;
         if (Boolean.getBoolean(PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials"))) {
-            return getClientBuilderWithProxySettings(
+            builder = getClientBuilderWithProxySettings(
                     hostName,
                     port,
                     scheme,
                     PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials.user"),
-                    PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials.pw")
-            ).build();
+                    PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials.pw"));
         } else {
-            return getClientBuilderWithProxySettings(
-                    hostName,
-                    port,
-                    scheme
-            ).build();
+            builder = getClientBuilderWithProxySettings(hostName, port, scheme);
         }
+
+        return handleSSLValidation(builder).build();
     }
 
 
     private static HttpClientBuilder getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme) {
         return getClientBuilderWithProxySettings(hostname, port, scheme, null, null);
-
     }
 
     private static HttpClientBuilder getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme, final String username, final String password) {
@@ -416,4 +420,9 @@ public class ProxyManager {
         }
     }
     //endregion
+
+
+    public static boolean isSSLValidationDisabled() {
+        return !PropertyManager.getBoolean("de.unijena.bioinf.sirius.security.sslValidation", true);
+    }
 }

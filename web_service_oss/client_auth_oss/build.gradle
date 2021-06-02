@@ -1,0 +1,11 @@
+dependencies {
+    compile project(':chemistry_base')
+    compile project(':fingerid_base_oss')
+    compile project(':io')
+
+    compile "org.apache.httpcomponents:httpclient:4.5.1"
+
+    compile 'com.github.scribejava:scribejava-apis:8.3.1'
+    compile 'com.github.scribejava:scribejava-core:8.3.1'
+    compile 'com.auth0:java-jwt:3.16.0' //jwt decoder
+}
