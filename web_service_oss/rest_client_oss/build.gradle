@@ -19,7 +19,7 @@
  */
 
 dependencies {
-    compile project(':rest_service_oss:client_auth_oss')
+    compile project(':web_service_oss:client_auth_oss')
     compile project(':web_service_oss:web_core_oss')
     compile project(':confidence_score_predict_oss')
     compile group: "net.iharder", name: "base64", version: "2.3.8"
