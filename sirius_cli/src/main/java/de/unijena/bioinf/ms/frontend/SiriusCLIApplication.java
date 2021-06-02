@@ -89,7 +89,15 @@ public class SiriusCLIApplication {
     public static Runnable shutdownWebservice() {
         return () -> {
             try {
-                ApplicationCore.WEB_API.shutdown();
+                ApplicationCore.WEB_API.shutdownJobWatcher();
+                if (!ApplicationCore.WEB_API.getAuthService().needsLogin()) {
+                    ApplicationCore.DEFAULT_LOGGER.info("Try to delete leftover jobs on web server...");
+                    ApplicationCore.WEB_API.deleteClientAndJobs();
+                    ApplicationCore.DEFAULT_LOGGER.info("...Job deletion Done!");
+                }
+                ApplicationCore.DEFAULT_LOGGER.info("Closing AuthService...");
+                ApplicationCore.WEB_API.getAuthService().close();
+                ApplicationCore.DEFAULT_LOGGER.info("AuthService closed");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -99,7 +107,7 @@ public class SiriusCLIApplication {
     public static void run(String[] args, WorkFlowSupplier supplier) {
         try {
             if (RUN != null)
-                throw new IllegalStateException("Aplication can only run Once!");
+                throw new IllegalStateException("Application can only run Once!");
             measureTime("init Run");
             RUN = new Run(supplier.make());
             measureTime("Start Parse args");

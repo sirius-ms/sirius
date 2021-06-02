@@ -68,7 +68,14 @@ public enum SiriusActions {
     SHOW_DB(ShowDBDialogAction.class),
     SHOW_LOG(OpenLogAction.class),
 
-    CHECK_CONNECTION(CheckConnectionAction.class);
+    CHECK_CONNECTION(CheckConnectionAction.class),
+
+
+    SIGN_OUT(SignOutAction.class),
+    SIGN_IN(SignInAction.class),
+    SIGN_UP(SignUpAction.class),
+    RESET_PWD(PasswdResetAction.class),
+    DELETE_ACCOUNT(AccountDeleteAction.class);
 
     public static final ActionMap ROOT_MANAGER = new ActionMap();
     public final Class<? extends Action> actionClass;

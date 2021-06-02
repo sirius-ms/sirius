@@ -62,7 +62,7 @@ public class BugReportDialog extends JDialog {
         setLayout(new BorderLayout());
 
         //============= NORTH =================
-        add(new DialogHaeder(Icons.BUG_64), BorderLayout.NORTH);
+        add(new DialogHeader(Icons.BUG_64), BorderLayout.NORTH);
 
         //============= CENTER =================
         JPanel center = new JPanel();

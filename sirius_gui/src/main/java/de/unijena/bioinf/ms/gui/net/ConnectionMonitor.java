@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.net;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
+import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -50,7 +52,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         YES, WARN, NO;
     }
 
-    private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, 0, null);
+    private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, 0, null, null);
 
     private ConnectionCheckMonitor backroundMonitorJob = null;
 
@@ -123,11 +125,11 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
             ConnectionState conState;
             @Nullable WorkerList wl = null;
-            if (connectionState == 0) {
+            if (connectionState <= 0) {
                 checkForInterruption();
                 wl = ApplicationCore.WEB_API.getWorkerInfo();
                 checkForInterruption();
-                if (wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors")))) {
+                if (connectionState == -1 && wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors")))) {
                     conState = ConnectionState.YES;
                 } else {
                     conState = ConnectionState.WARN;
@@ -136,7 +138,8 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
                 conState = ConnectionState.NO;
             }
             checkForInterruption();
-            final ConnetionCheck c = new ConnetionCheck(conState, connectionState, wl);
+            @Nullable DecodedJWT userID = AuthServices.getIDToken(ApplicationCore.WEB_API.getAuthService());
+            final ConnetionCheck c = new ConnetionCheck(conState, connectionState, wl, userID != null ? userID.getClaim("email").asString() : null);
             setResult(c);
             return c;
         }
@@ -166,19 +169,26 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         }
     }
 
-    public class ConnetionCheck {
-        @NotNull public final ConnectionState state;
+    public static class ConnetionCheck {
+        @NotNull
+        public final ConnectionState state;
         public final int errorCode;
         public final WorkerList workerInfo;
+        public final String userId; //represents if user is logged in.
 
-        public ConnetionCheck(@NotNull ConnectionState state, int errorCode, WorkerList workerInfo) {
+        public ConnetionCheck(@NotNull ConnectionState state, int errorCode, WorkerList workerInfo, @Nullable String userId) {
             this.state = state;
             this.errorCode = errorCode;
             this.workerInfo = workerInfo;
+            this.userId = userId;
+        }
+
+        public boolean isLoggedIn() {
+            return userId != null;
         }
 
         public boolean isConnected() {
-            return errorCode == 0;
+            return errorCode == -1;
         }
 
         public boolean isNotConnected() {

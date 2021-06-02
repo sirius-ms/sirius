@@ -42,7 +42,7 @@ import java.util.Properties;
  */
 public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener, SettingsPanel {
     private Properties props;
-    private JCheckBox useCredentials;
+    private JCheckBox useCredentials, sslValidation;
     private JComboBox<ProxyManager.ProxyStrategy> useProxy;
     private TwoColumnPanel cred;
     private JTextField proxyHost, proxyUser;
@@ -59,8 +59,13 @@ public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener
     }
 
     private void buildPanel() {
+        sslValidation = new JCheckBox();
+        sslValidation.setText("Enable SSL Validation:");
+        sslValidation.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.security.sslValidation","true")));
+        add(sslValidation);
+
         useProxy = new JComboBox<>(ProxyManager.ProxyStrategy.values());
-        useProxy.setSelectedItem(ProxyManager.ProxyStrategy.valueOf(props.getProperty("de.unijena.bioinf.sirius.proxy")));
+        useProxy.setSelectedItem(ProxyManager.getStrategyByName(props.getProperty("de.unijena.bioinf.sirius.proxy")));
         useProxy.addActionListener(this);
         add(new JLabel("Use Proxy Server"),useProxy);
 
@@ -92,7 +97,7 @@ public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener
         useCredentials = new JCheckBox();
         useCredentials.addActionListener(this);
         useCredentials.setText("Use Credentials:");
-        useCredentials.setSelected(Boolean.valueOf(props.getProperty("de.unijena.bioinf.sirius.proxy.credentials")));
+        useCredentials.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.proxy.credentials")));
         cred.add(useCredentials);
 
         proxyUser = new JTextField();
@@ -132,16 +137,19 @@ public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener
 
     @Override
     public void saveProperties() {
+        props.setProperty("de.unijena.bioinf.sirius.security.sslValidation", String.valueOf(sslValidation.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.proxy", String.valueOf(useProxy.getSelectedItem()));
         props.setProperty("de.unijena.bioinf.sirius.proxy.credentials", String.valueOf(useCredentials.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.proxy.hostname", String.valueOf(proxyHost.getText()).trim());
         props.setProperty("de.unijena.bioinf.sirius.proxy.port", String.valueOf(proxyPort.getValue()).trim());
         props.setProperty("de.unijena.bioinf.sirius.proxy.scheme", (String) proxyScheme.getSelectedItem());
         props.setProperty("de.unijena.bioinf.sirius.proxy.user", proxyUser.getText());
-
         PasswordCrypter.setEncryptetProp("de.unijena.bioinf.sirius.proxy.pw", String.valueOf(pw.getPassword()), props);
+    }
 
-       ProxyManager.reconnect();
+    @Override
+    public void reloadChanges() {
+        ProxyManager.reconnect();
     }
 
     @Override
