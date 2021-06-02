@@ -34,10 +34,13 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public final class CompoundContainerId extends ProjectSpaceContainerId {
+    public enum Flag {COMPUTING}
     public static final String RANKING_KEY = "rankingScoreType";
 
-
-    protected Lock containerLock;
+    //transient fields
+    protected final transient Lock containerLock = new ReentrantLock(); //lock for IO
+    protected final transient Lock flagsLock = new ReentrantLock(); //lock for non persistent changes
+    protected final transient EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
 
     // ID defining fields
     private final int compoundIndex;
@@ -57,10 +60,8 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     private List<Class<? extends FormulaScore>> rankingScores = Collections.emptyList();
     @Nullable
     private RetentionTime rt;
-
     @Nullable
     private Double confidenceScore;
-
 
     protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex) {
         this(directoryName, compoundName, compoundIndex, null, null, null, null);
@@ -70,11 +71,14 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.directoryName = directoryName;
         this.compoundName = compoundName;
         this.compoundIndex = compoundIndex;
-        this.containerLock = new ReentrantLock();
         this.ionMass = ionMass;
         this.ionType = ionType;
         this.rt = rt;
         this.confidenceScore = confidenceScore;
+    }
+
+    public boolean hasFlag(Flag flag) {
+        return flags.contains(flag);
     }
 
     public int getCompoundIndex() {

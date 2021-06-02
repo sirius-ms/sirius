@@ -31,13 +31,17 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,12 +58,19 @@ public abstract class AbstractClient {
     protected static final String API_ROOT = "/api";
     protected static final String CID = SecurityService.generateSecurityToken();
 
+    static {
+        if (DEBUG)
+            PropertyManager.setProperty("de.unijena.bioinf.fingerid.web.host", "http://localhost:8080");
+    }
 
     @NotNull
     protected URI serverUrl;
+    @NotNull
+    protected final IOFunctions.IOConsumer<HttpUriRequest> requestDecorator;
 
-    protected AbstractClient(@Nullable URI serverUrl) {
+    protected AbstractClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
         this.serverUrl = Objects.requireNonNullElseGet(serverUrl, () -> URI.create(FingerIDProperties.fingeridWebHost()));
+        this.requestDecorator = requestDecorator;
     }
 
     public void setServerUrl(@NotNull URI serverUrl) {
@@ -79,23 +90,57 @@ public abstract class AbstractClient {
         }
     }
 
+    public boolean testSecuredConnection(@NotNull CloseableHttpClient client) {
+        try {
+            execute(client, () -> {
+                HttpGet get = new HttpGet(getBaseURI("/check", true).build());
+                final int timeoutInSeconds = 8000;
+                get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                return get;
+            });
+            return true;
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).warn("Could not reach secured api endpoint: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean deleteAccount(@NotNull CloseableHttpClient client){
+        try {
+            execute(client, () -> {
+                HttpDelete delete = new HttpDelete(getBaseURI("/delete-account", true).build());
+                final int timeoutInSeconds = 8000;
+                delete.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                return delete;
+            });
+            return true;
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).warn("Error when deleting user account: " + e.getMessage());
+            return false;
+        }
+    }
+
     protected void isSuccessful(HttpResponse response) throws IOException {
         final StatusLine status = response.getStatusLine();
         if (status.getStatusCode() >= 400){
-            final String content = IOUtils.toString(getIn(response.getEntity()));
+            final String content = response.getEntity()!= null ? IOUtils.toString(getIn(response.getEntity())) : "No Content";
             throw new IOException("Error when querying REST service. Bad Response Code: "
-                    + status.getStatusCode() + " | Message: " + status.getReasonPhrase() + "| Content: " + content);
+                    + status.getStatusCode() + " | Message: " + status.getReasonPhrase() + " | " + response.getFirstHeader("WWW-Authenticate") + " | Content: " + content);
         }
     }
 
 
     //region http request execution API
     public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
+        requestDecorator.accept(request);
         try (CloseableHttpResponse response = client.execute(request)) {
             isSuccessful(response);
-            try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {
-                return respHandling.apply(reader);
+            if (response.getEntity() != null) {
+                try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {
+                    return respHandling.apply(reader);
+                }
             }
+            return null;
         }
     }
 
@@ -133,7 +178,7 @@ public abstract class AbstractClient {
 
     //#################################################################################################################
     //region PathBuilderMethods
-    protected URIBuilder getBaseURI(@Nullable String path, final boolean versionSpecificPath) throws URISyntaxException {
+    public URIBuilder getBaseURI(@Nullable String path, final boolean versionSpecificPath) throws URISyntaxException {
         if (path == null)
             path = "";
 
@@ -145,7 +190,7 @@ public abstract class AbstractClient {
         } else {
             b = new URIBuilder(serverUrl);
             if (versionSpecificPath)
-                path = "/v" + FingerIDProperties.fingeridVersion() + path; //todo check if this works
+                path = makeVersionContext() + path;
         }
 
         if (!path.isEmpty())
@@ -183,4 +228,12 @@ public abstract class AbstractClient {
 
     //endregion
     //#################################################################################################################
+
+    protected static String makeVersionContext() {
+        final String[] versionParts = FingerIDProperties.fingeridVersion().split("[.]");
+        if (versionParts.length > 1)
+            return "/v" + versionParts[0] + "." + versionParts[1];
+        throw new IllegalArgumentException("Illegal Version String");
+    }
+
 }

@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
@@ -34,6 +35,7 @@ import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,12 +52,12 @@ public class StructureSearchClient extends AbstractClient {
     protected final boolean cacheFpVersion;
 
 
-    public StructureSearchClient(URI serverUrl) {
-        this(serverUrl, true);
+    public StructureSearchClient(URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
+        this(serverUrl, true, requestDecorator);
     }
 
-    public StructureSearchClient(URI serverUrl, boolean cacheFpVersion) {
-        super(serverUrl);
+    public StructureSearchClient(URI serverUrl, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
+        super(serverUrl, requestDecorator);
         this.cacheFpVersion = cacheFpVersion;
     }
 
