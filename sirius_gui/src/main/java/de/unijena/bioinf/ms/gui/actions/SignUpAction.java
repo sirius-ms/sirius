@@ -17,26 +17,35 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.settings;/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 07.10.16.
- */
+package de.unijena.bioinf.ms.gui.actions;
+
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public interface SettingsPanel {
-    default void refreshValues() {
+public class SignUpAction extends AbstractAction {
+
+    public SignUpAction() {
+        super("Create Account");
+        putValue(Action.SHORT_DESCRIPTION, "Create a new SIRIUS user account.");
     }
 
-    void saveProperties();
-
-    default void reloadChanges() {}
-
-    String name();
-
-    default boolean restartRequired() {
-        return false;
+    @Override
+    public synchronized void actionPerformed(ActionEvent e) {
+        try {
+            new WebViewBrowserDialog(MF, "Create Account", ApplicationCore.WEB_API.getSignUpURL());
+        } catch (Exception ex2) {
+            LoggerFactory.getLogger(getClass()).error("Could not Open SignUp page in System Browser", ex2);
+            new ExceptionDialog(MF, "Could not Open SignUp page in System Browser: " + ex2.getMessage());
+        }
     }
 }

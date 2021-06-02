@@ -20,6 +20,8 @@
 package de.unijena.bioinf.ms.frontend.core;
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
+import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
@@ -60,6 +62,8 @@ public abstract class ApplicationCore {
     public static final Logger DEFAULT_LOGGER;
 
     public static final Path WORKSPACE;
+    public static final Path TOKEN_FILE;
+
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
     public static final WebAPI<?> WEB_API;
     @NotNull public static final BibtexManager BIBTEX;
@@ -295,8 +299,9 @@ public abstract class ApplicationCore {
             DEFAULT_LOGGER.info("Bug reporter initialized.");
 
             measureTime("DONE init bug reporting, START init WebAPI");
-
-            WEB_API = new RestAPI();
+            TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile",null,".rtoken"));
+            AuthService service = AuthServices.createDefault(TOKEN_FILE);
+            WEB_API = new RestAPI(service);
             DEFAULT_LOGGER.info("Web API initialized.");
             measureTime("DONE init  init WebAPI");
 
