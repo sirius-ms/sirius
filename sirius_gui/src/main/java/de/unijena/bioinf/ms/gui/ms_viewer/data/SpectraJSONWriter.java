@@ -66,7 +66,7 @@ public class SpectraJSONWriter{
 
 	// MS1 vs. simulated MS1 isotope pattern (mirror)
 	public String ms1MirrorJSON(SimpleSpectrum spectrum, SiriusIsotopePattern siriusIsotopePattern) {
-		JsonObject spectra = ms1MirrorIsotope(spectrum, siriusIsotopePattern.getIsotopePattern());
+		JsonObject spectra = ms1MirrorIsotope(spectrum, siriusIsotopePattern.simulatedPattern);
 		annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(siriusIsotopePattern));
 		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		return gson.toJson(spectra);
@@ -295,7 +295,7 @@ public class SpectraJSONWriter{
 	}
 
 	protected List<PeakMatch> matchPeaks(SiriusIsotopePattern siriusIsotopePattern){
-		SimpleSpectrum spectrum = siriusIsotopePattern.getIsotopePattern();
+		SimpleSpectrum spectrum = siriusIsotopePattern.simulatedPattern;
 		List<PeakMatch> peakMatches = new LinkedList<>();
 		for (int i = 0; i < spectrum.size(); i++) {
 			Peak p = spectrum.getPeakAt(i);
