@@ -376,13 +376,13 @@ function panX(selection, xdomain, duration, ...callbackUpdates) {
 
 function rightClickOnly() { return d3.event.button === 2; };
 
-function brushendX(duration, ...callbackUpdates) {
+function brushendX(xdomain, duration, ...callbackUpdates) {
     let extent = d3.event.selection;
     if(!extent){
         if (!idleTimeout) return idleTimeout = setTimeout(idled, 350);
-        x.domain([x_fix.min, x_fix.max])
-        x_tmp.min = x_fix.min;
-        x_tmp.max = x_fix.max;
+        x.domain([xdomain[0], xdomain[1]])
+        x_tmp.min = xdomain[0];
+        x_tmp.max = xdomain[1];
     } else {
         x_tmp.min = scale_tmp.X.invert(extent[0]);
         x_tmp.max = scale_tmp.X.invert(extent[1]);
@@ -532,7 +532,8 @@ function spectrumPlot(spectrum, structureView) {
             panX(selection, [0, x_fix.max], 50, update_peaks);
         });
     // brush
-    brush = d3.brushX().extent( [ [0,0], [w,h] ]).filter(rightClickOnly).on("end", function() { brushendX(750, update_peaks);} );
+    brush = d3.brushX().extent( [ [0,0], [w,h] ]).filter(rightClickOnly)
+        .on("end", function() { brushendX([x_fix.min, x_fix.max],750, update_peaks);} );
     peakArea.select("#brushArea").call(brush);
     // peaks
     peakArea.selectAll()
@@ -720,6 +721,7 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
     const mzs2 = spectrum2.peaks.map(d => d.mz);
     const mzs1Size = mzs1.length;
     const mzs2Size = mzs2.length;
+    const x_default = {min: d3.min(mzs2)-1, max: d3.max(mzs2)+1};
     var y1, y2, diffArea, intensityArea,
     margin_h = 0,
     new_h = h;
@@ -727,8 +729,8 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
     x_fix.min = d3.min([d3.min(mzs1), d3.min(mzs2)])-1;
     x_fix.max = d3.max([d3.max(mzs1), d3.max(mzs2)])+1;
     if (x_tmp.min === undefined || x_tmp.min === null) {
-        x_tmp.min = x_fix.min;
-        x_tmp.max = x_fix.max;
+        x_tmp.min = x_default.min;
+        x_tmp.max = x_default.max;
     }
     // difference and intensity viewer initiation
     if (viewStyle === 'difference') {
@@ -796,21 +798,21 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
             var selection = d3.select(this);
             panX(selection, [x_fix.min, x_fix.max], 150, update_peaks, update_rulers, update_intensities, update_diffBands);
         };
-        tmp_brush = function() { brushendX(750, update_peaks, update_rulers, update_intensities, update_diffBands); };
+        tmp_brush = function() { brushendX([x_default.min, x_default.max], 750, update_peaks, update_rulers, update_intensities, update_diffBands); };
     } else if (viewStyle === "difference" && !intensityViewer) {
         tmp_zoom = function() { zoomedX([x_fix.min, x_fix.max], 250, update_peaks, update_rulers, update_diffBands); };
         tmp_pan = function() {
             var selection = d3.select(this);
             panX(selection, [x_fix.min, x_fix.max], 150, update_peaks, update_rulers, update_diffBands);
         };
-        tmp_brush = function() { brushendX(750, update_peaks, update_rulers, update_diffBands); };
+        tmp_brush = function() { brushendX([x_default.min, x_default.max], 750, update_peaks, update_rulers, update_diffBands); };
     } else {
         tmp_zoom = function() { zoomedX([x_fix.min, x_fix.max], 250, update_peaks); };
         tmp_pan = function() {
             var selection = d3.select(this);
             panX(selection, [x_fix.min, x_fix.max], 150, update_peaks);
         };
-        tmp_brush = function() { brushendX(750, update_peaks); };
+        tmp_brush = function() { brushendX([x_default.min, x_default.max], 750, update_peaks); };
     }
     zoom = d3.zoom().extent([[0,margin_h],[w,new_h]]).on("zoom", tmp_zoom);
     peakArea.select("#brushArea").call(zoom).on("dblclick.zoom", null).on("mousedown.zoom", tmp_pan);
@@ -821,7 +823,7 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
         .data(spectrum1.peaks)
         .enter()
         .append("rect")
-            .attr("class", "peak_1 peak")
+            .attr("class", function(d) {return (d.peakMatches !== {}) ? "peak_matched peak" : "peak_1 peak";})
             .attr("id", function(d, i) { return "peak"+i; })
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", function(d) { return y1(d.intensity); })
