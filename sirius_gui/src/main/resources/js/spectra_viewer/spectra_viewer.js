@@ -1,11 +1,9 @@
 'use strict';
 const TOLERANCE = 40;
 // General Variables
-var svg, tooltip, peakArea, brush, zoom, idleTimeout, data, w, h, x, xAxis,
+var svg, tooltip, peakArea, brush, zoom, idleTimeout, data, w, h, x, y, xAxis, yAxis,
 current = {w, h},
-x_tmp = {min: null, max: null},
-x_fix = {min: null, max: null},
-scale_tmp = {X: null, Y: null}, //Y for future
+domain_fix = {xMin: null, xMax: null},
 pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500},
 margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30},
 decimal_place = 4,
@@ -63,11 +61,13 @@ document.onkeydown = function(e) {
             }
             selected.leftClick = new_selected;
             svg.select("#peak"+selected.leftClick).classed("peak_select", true);
-            if (selectedPeak.mz <= x_tmp.min || selectedPeak.mz >= x_tmp.max && (x_tmp.min !== x_fix.min || x_tmp.max !== x_fix.max)) {
+            let x_tmp_min = x.domain()[0];
+            let x_tmp_max = x.domain()[1];
+            if (selectedPeak.mz <= x_tmp_min || selectedPeak.mz >= x_tmp_max && (x_tmp_min !== domain_fix.xMin || x_tmp_max !== domain_fix.xMax)) {
                 if (e.keyCode === 37) {
-                    setXdomain(selectedPeak.mz-3, x_tmp.max-3);
+                    setXdomain(selectedPeak.mz-3, x_tmp_max-3);
                 } else {
-                    setXdomain(x_tmp.min+3, selectedPeak.mz+3);
+                    setXdomain(x_tmp_min+3, selectedPeak.mz+3);
                 }
                 update_peaks(50);
             }
@@ -87,8 +87,7 @@ function resize() {
 function clear() {
     d3.select("#container").html("");
     data = null;
-    x_tmp = {min: null, max: null};
-    scale_tmp = {X: null, Y: null};
+    domain_fix = {xMin: null, xMax: null};
     pan.mouseupCheck = false;
     pan.mousemoveCheck = false;
     selected = {leftClick: null, hover: null};
@@ -169,7 +168,7 @@ function idled() { idleTimeout = null; };
 function resetColor(d) {
     let precursor = data.spectra[0].peaks[ms2Size-1].formula;
     if (data.spectra[0].name.includes("MS1")) {
-        return (d.peakMatches !== {}) ? "peak_matched peak" : "peak_1 peak";
+        return (Object.keys(d.peakMatches).length !== 0) ? "peak_matched peak" : "peak_1 peak";
     } else {
         if ("structureInformation" in d || (d.formula === precursor && svg_str !== null)) {
             return "peak_2 peak_structInfo peak";
@@ -314,29 +313,40 @@ var mouseup = function(d, i) {
     pan.mousemoveCheck = false;
 };
 
-function zoomedX(xdomain, duration, ...callbackUpdates) {
-    const transform = d3.event.transform;
-    scale_tmp.X = transform.rescaleX(x);
-    const newDomain = d3.axisBottom(scale_tmp.X).scale().domain();
-    x_tmp.min = (newDomain[0] < xdomain[0]) ? xdomain[0] : newDomain[0];
-    x_tmp.max = (newDomain[1] > xdomain[1]) ? xdomain[1] : newDomain[1];
-    x.domain([x_tmp.min, x_tmp.max])
+function zoomedX(xdomain_fix, duration, ...callbackUpdates) {
+    const scale_tmp_x = d3.event.transform.rescaleX(x);
+    const newDomain = d3.axisBottom(scale_tmp_x).scale().domain();
+    const x_tmp_min = (newDomain[0] < xdomain_fix[0]) ? xdomain_fix[0] : newDomain[0];
+    const x_tmp_max = (newDomain[1] > xdomain_fix[1]) ? xdomain_fix[1] : newDomain[1];
+    x.domain([x_tmp_min, x_tmp_max])
     xAxis.transition().duration(duration).call(d3.axisBottom(x));
     peakArea.select("#brushArea").node().__zoom = d3.zoomIdentity;
     callbackUpdates.forEach(function(callback) { callback(duration); });
 };
 
-var update_peaks = function(duration) {peakArea.selectAll(".peak").transition().duration(duration).attr("x", function(d) { return x(d.mz); }); };
+function zoomedY(duration, ...callbackUpdates) {
+    const scale_tmp_y = d3.event.transform.rescaleY(y);
+    const newDomain = d3.axisBottom(scale_tmp_y).scale().domain();
+    const y_tmp_max = (newDomain[1] > 1) ? 1 : newDomain[1];
+    y.domain([0, y_tmp_max])
+    yAxis.transition().duration(duration).call(d3.axisLeft(y));
+    svg.select("#yAxis").node().__zoom = d3.zoomIdentity;
+    callbackUpdates.forEach(function(callback) { callback(duration); });
+};
+
+var update_peaks = function(duration) {
+    peakArea.selectAll(".peak").transition().duration(duration)
+        .attr("x", function(d) { return x(d.mz)})
+        .attr("y", function(d) { return y(d.intensity); })
+        .attr("height", function(d) { return h - y(d.intensity); });
+};
 
 function setXdomain(newXmin, newXmax, duration) {
     x.domain([newXmin, newXmax])
-    x_tmp.min = newXmin;
-    x_tmp.max = newXmax;
-    scale_tmp.X = x;
-    xAxis.transition().duration(duration).call(d3.axisBottom(scale_tmp.X));
+    xAxis.transition().duration(duration).call(d3.axisBottom(x));
 };
 
-function panX(selection, xdomain, duration, ...callbackUpdates) {
+function panX(selection, xdomain_fix, duration, ...callbackUpdates) {
     if (d3.event.button === 0) {
         var div = selection;
         var w = d3.select(window)
@@ -344,7 +354,7 @@ function panX(selection, xdomain, duration, ...callbackUpdates) {
             .on("mousemove", mousemovePan)
             .on("mouseup", mouseupPan);
         d3.event.preventDefault(); // disable text dragging
-        var x0, x1, d, newXmin, newXmax;
+        var x0, x1, d, newXmin, newXmax, x_tmp_min, x_tmp_max;
         function mousedownPan() {
             if (div.node().id === 'brushArea') {
                 pan.mouseupCheck = true;
@@ -357,9 +367,11 @@ function panX(selection, xdomain, duration, ...callbackUpdates) {
                 d = x1 - x0;
                 if (Math.abs(d)>=pan.tolerance) {
                     pan.mousemoveCheck = true;
-                    newXmin = x_tmp.min-d*(x_tmp.max-x_tmp.min)/pan.step;
-                    newXmax = x_tmp.max-d*(x_tmp.max-x_tmp.min)/pan.step;
-                    if (newXmin >= xdomain[0] && newXmax <= xdomain[1]) {
+                    x_tmp_min = x.domain()[0];
+                    x_tmp_max = x.domain()[1];
+                    newXmin = x_tmp_min-d*(x_tmp_max-x_tmp_min)/pan.step;
+                    newXmax = x_tmp_max-d*(x_tmp_max-x_tmp_min)/pan.step;
+                    if (newXmin >= xdomain_fix[0] && newXmax <= xdomain_fix[1]) {
                         setXdomain(newXmin, newXmax, duration);
                         callbackUpdates.forEach(function(callback) { callback(duration); });
                     }
@@ -376,21 +388,22 @@ function panX(selection, xdomain, duration, ...callbackUpdates) {
 
 function rightClickOnly() { return d3.event.button === 2; };
 
-function brushendX(xdomain, duration, ...callbackUpdates) {
+function brushendX(xdomain_fix, duration, ...callbackUpdates) {
     let extent = d3.event.selection;
     if(!extent){
         if (!idleTimeout) return idleTimeout = setTimeout(idled, 350);
-        x.domain([xdomain[0], xdomain[1]])
-        x_tmp.min = xdomain[0];
-        x_tmp.max = xdomain[1];
+        x.domain([xdomain_fix[0], xdomain_fix[1]])
+        if (y !== undefined) { //temporarily only reset in spectrumPlot
+            y.domain([0, 1])
+            yAxis.transition().duration(duration).call(d3.axisLeft(y));
+        }
     } else {
-        x_tmp.min = scale_tmp.X.invert(extent[0]);
-        x_tmp.max = scale_tmp.X.invert(extent[1]);
-        x.domain([x_tmp.min, x_tmp.max])
+        let x_tmp_min = x.invert(extent[0]);
+        let x_tmp_max = x.invert(extent[1]);
+        x.domain([x_tmp_min, x_tmp_max])
         peakArea.select("#brushArea").call(brush.move, null);
     }
     xAxis.transition().duration(duration).call(d3.axisBottom(x));
-    scale_tmp.X = x;
     callbackUpdates.forEach(function(callback) { callback(duration); });
 };
 
@@ -502,38 +515,31 @@ function spectrumPlot(spectrum, structureView) {
         initStructureView();
         injectStructureInformation(spectrum);
     }
-    x_fix.min = d3.min(mzs)-3;
-    x_fix.max = d3.max(mzs)+3;
-    if (x_tmp.min === undefined || x_tmp.min === null) {
-        x_tmp.min = x_fix.min;
-        x_tmp.max = x_fix.max;
-    }
+    domain_fix.xMin = d3.min(mzs)-3;
+    domain_fix.xMax = d3.max(mzs)+3;
     // X axis
-    x = d3.scaleLinear()
-        .range([0, w])
-        .domain([x_tmp.min, x_tmp.max]);
-    scale_tmp.X = x;
+    x = d3.scaleLinear().range([0, w]).domain([domain_fix.xMin, domain_fix.xMax]);
     xAxis = svg.append("g")
         .attr("id", "xAxis")
         .attr("transform", "translate(0," + h + ")")
         .call(d3.axisBottom(x));
     // Y axis
-    var y = d3.scaleLinear()
-        .domain([0, 1])
-        .range([h, 0]);
-    svg.append("g").attr("id", "yAxis").call(d3.axisLeft(y));
+    y = d3.scaleLinear().domain([0, 1]).range([h, 0]);
+    yAxis = svg.append("g").attr("id", "yAxis").call(d3.axisLeft(y));
     svg.selectAll(".label").attr("visibility", "visible");
     // zoom and pan
-    zoom = d3.zoom().extent([[0,0],[w,h]]).on("zoom", function() { zoomedX([0, x_fix.max], 100, update_peaks);} );
+    zoom = d3.zoom().extent([[0,0],[w,h]]).on("zoom", function() { zoomedX([0, domain_fix.xMax], 100, update_peaks); });
+    var zoomY = d3.zoom().on("zoom", function() { zoomedY(100, update_peaks); });
+    svg.select("#yAxis").call(zoomY).on("dblclick.zoom", null);
     peakArea.select("#brushArea").call(zoom)
         .on("dblclick.zoom", null)
         .on("mousedown.zoom", function() {
             var selection = d3.select(this);
-            panX(selection, [0, x_fix.max], 50, update_peaks);
+            panX(selection, [0, domain_fix.xMax], 50, update_peaks);
         });
     // brush
     brush = d3.brushX().extent( [ [0,0], [w,h] ]).filter(rightClickOnly)
-        .on("end", function() { brushendX([x_fix.min, x_fix.max],750, update_peaks);} );
+        .on("end", function() { brushendX([domain_fix.xMin, domain_fix.xMax],750, update_peaks);} );
     peakArea.select("#brushArea").call(brush);
     // peaks
     peakArea.selectAll()
@@ -603,6 +609,9 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
     function firstNChar(str, num) { return (str.length > num) ? str.slice(0, num) : str; };
 
     function upOrDown(currentY, callbackUp, callbackDown) { (currentY <= margin.top+h/2) ? callbackUp() : callbackDown(); };
+
+    var update_peaksX = function(duration) {peakArea.selectAll(".peak").transition().duration(duration).attr("x", function(d) { return x(d.mz); }); };
+
     var update_intensities = function(duration) {
         intensityArea.selectAll(".intensity").transition().duration(duration).attr("x", function(d) { return x(d.mz); }); 
     };
@@ -726,12 +735,8 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
     margin_h = 0,
     new_h = h;
 
-    x_fix.min = d3.min([d3.min(mzs1), d3.min(mzs2)])-1;
-    x_fix.max = d3.max([d3.max(mzs1), d3.max(mzs2)])+1;
-    if (x_tmp.min === undefined || x_tmp.min === null) {
-        x_tmp.min = x_default.min;
-        x_tmp.max = x_default.max;
-    }
+    domain_fix.xMin = d3.min([d3.min(mzs1), d3.min(mzs2)])-1;
+    domain_fix.xMax = d3.max([d3.max(mzs1), d3.max(mzs2)])+1;
     // difference and intensity viewer initiation
     if (viewStyle === 'difference') {
         new_h = h - margin.diff_vertical*2;
@@ -749,8 +754,7 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
     // X axis
     x = d3.scaleLinear()
         .range([0, w-20])
-        .domain([x_tmp.min, x_tmp.max])
-    scale_tmp.X = x;
+        .domain([x_default.min, x_default.max])
     if (viewStyle === "normal") {
         xAxis = svg.append("g")
             .attr("id", "xAxis")
@@ -767,14 +771,10 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
             .call(d3.axisBottom(x));
     }
     // Y axis 1
-    y1 = d3.scaleLinear()
-        .domain([0, 1])
-        .range([h/2, margin_h])
+    y1 = d3.scaleLinear().domain([0, 1]).range([h/2, margin_h])
     svg.append("g").attr("id", "yAxis1").call(d3.axisLeft(y1));
     // Y axis 2
-    y2 = d3.scaleLinear()
-        .domain([0, 1])
-        .range([h/2, h-margin_h])
+    y2 = d3.scaleLinear().domain([0, 1]).range([h/2, h-margin_h])
     svg.append("g").attr("id", "yAxis2").call(d3.axisLeft(y2));
     svg.selectAll(".label").attr("visibility", "visible");
     // legends: 2 spectrum names
@@ -793,26 +793,26 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
     // zoom, pan and brush
     var tmp_zoom, tmp_pan, tmp_brush;
     if (viewStyle === "difference" && intensityViewer) {
-        tmp_zoom = function() { zoomedX([x_fix.min, x_fix.max], 250, update_peaks, update_rulers, update_intensities, update_diffBands); };
+        tmp_zoom = function() { zoomedX([domain_fix.xMin, domain_fix.xMax], 250, update_peaksX, update_rulers, update_intensities, update_diffBands); };
         tmp_pan = function() {
             var selection = d3.select(this);
-            panX(selection, [x_fix.min, x_fix.max], 150, update_peaks, update_rulers, update_intensities, update_diffBands);
+            panX(selection, [domain_fix.xMin, domain_fix.xMax], 150, update_peaksX, update_rulers, update_intensities, update_diffBands);
         };
-        tmp_brush = function() { brushendX([x_default.min, x_default.max], 750, update_peaks, update_rulers, update_intensities, update_diffBands); };
+        tmp_brush = function() { brushendX([x_default.min, x_default.max], 750, update_peaksX, update_rulers, update_intensities, update_diffBands); };
     } else if (viewStyle === "difference" && !intensityViewer) {
-        tmp_zoom = function() { zoomedX([x_fix.min, x_fix.max], 250, update_peaks, update_rulers, update_diffBands); };
+        tmp_zoom = function() { zoomedX([domain_fix.xMin, domain_fix.xMax], 250, update_peaksX, update_rulers, update_diffBands); };
         tmp_pan = function() {
             var selection = d3.select(this);
-            panX(selection, [x_fix.min, x_fix.max], 150, update_peaks, update_rulers, update_diffBands);
+            panX(selection, [domain_fix.xMin, domain_fix.xMax], 150, update_peaksX, update_rulers, update_diffBands);
         };
-        tmp_brush = function() { brushendX([x_default.min, x_default.max], 750, update_peaks, update_rulers, update_diffBands); };
+        tmp_brush = function() { brushendX([x_default.min, x_default.max], 750, update_peaksX, update_rulers, update_diffBands); };
     } else {
-        tmp_zoom = function() { zoomedX([x_fix.min, x_fix.max], 250, update_peaks); };
+        tmp_zoom = function() { zoomedX([domain_fix.xMin, domain_fix.xMax], 250, update_peaksX); };
         tmp_pan = function() {
             var selection = d3.select(this);
-            panX(selection, [x_fix.min, x_fix.max], 150, update_peaks);
+            panX(selection, [domain_fix.xMin, domain_fix.xMax], 150, update_peaksX);
         };
-        tmp_brush = function() { brushendX([x_default.min, x_default.max], 750, update_peaks); };
+        tmp_brush = function() { brushendX([x_default.min, x_default.max], 750, update_peaksX); };
     }
     zoom = d3.zoom().extent([[0,margin_h],[w,new_h]]).on("zoom", tmp_zoom);
     peakArea.select("#brushArea").call(zoom).on("dblclick.zoom", null).on("mousedown.zoom", tmp_pan);
@@ -823,7 +823,7 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
         .data(spectrum1.peaks)
         .enter()
         .append("rect")
-            .attr("class", function(d) {return (d.peakMatches !== {}) ? "peak_matched peak" : "peak_1 peak";})
+            .attr("class", function(d) {return (Object.keys(d.peakMatches).length !== 0) ? "peak_matched peak" : "peak_1 peak";})
             .attr("id", function(d, i) { return "peak"+i; })
             .attr("x", function(d) { return x(d.mz); })
             .attr("y", function(d) { return y1(d.intensity); })
@@ -885,8 +885,7 @@ function spectraViewer(json){
 function loadJSONData(data_spectra, data_highlight, data_svg) {
     if (data !== undefined) {
         d3.select("#container").html("");
-        x_tmp = {min: null, max: null};
-        scale_tmp = {X: null, Y: null};
+        domain_fix = {xMin: null, xMax: null};
         pan.mouseupCheck = false;
         pan.mousemoveCheck = false;
         selected = {leftClick: null, hover: null};
