@@ -157,9 +157,9 @@ public class SpectraVisualizationPanel
             }
 			if (mode.equals(MS1_DISPLAY))
                 jsonSpectra = spectraWriter.ms1JSON(spectrum, siriusIsotopePattern);
-            else if (mode.equals(MS1_MIRROR_DISPLAY))
-                jsonSpectra = spectraWriter.ms1MirrorJSON(spectrum, siriusIsotopePattern);
-            else {
+            else if (mode.equals(MS1_MIRROR_DISPLAY)) {
+				jsonSpectra = spectraWriter.ms1MirrorJSON(spectrum, siriusIsotopePattern);
+			} else {
 				return;
 			}
 		} else if (mode.equals(MS2_DISPLAY)) {

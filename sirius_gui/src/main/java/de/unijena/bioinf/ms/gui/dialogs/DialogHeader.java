@@ -30,13 +30,13 @@ import java.awt.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class DialogHaeder extends JPanel {
+public class DialogHeader extends JPanel {
 
-    public DialogHaeder(Icon icon) {
+    public DialogHeader(Icon icon) {
         this(icon, null);
     }
 
-    public DialogHaeder(Icon icon, String headline) {
+    public DialogHeader(Icon icon, String headline) {
         super(new FlowLayout(FlowLayout.CENTER));
         JLabel l = new JLabel();
         l.setIcon(icon);

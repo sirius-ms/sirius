@@ -17,26 +17,30 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.settings;/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 07.10.16.
- */
+package de.unijena.bioinf.ms.gui.actions;
+
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public interface SettingsPanel {
-    default void refreshValues() {
+public class AccountDeleteAction extends AbstractAction {
+
+    public AccountDeleteAction() {
+        super("Delete Account");
+        putValue(Action.SHORT_DESCRIPTION, "Delete the current SIRIUS user account.");
     }
 
-    void saveProperties();
-
-    default void reloadChanges() {}
-
-    String name();
-
-    default boolean restartRequired() {
-        return false;
+    @Override
+    public synchronized void actionPerformed(ActionEvent e) {
+        boolean r = Jobs.runInBackgroundAndLoad(MF, "Deleting Account...", ApplicationCore.WEB_API::deleteAccount).getResult();
+        if (r)
+            SiriusActions.SIGN_OUT.getInstance().actionPerformed(e);
     }
 }

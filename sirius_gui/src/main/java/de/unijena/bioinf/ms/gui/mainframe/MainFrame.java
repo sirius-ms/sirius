@@ -51,6 +51,8 @@ import java.awt.*;
 import java.awt.dnd.*;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.net.CookieHandler;
+import java.net.CookieManager;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -60,7 +62,12 @@ import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame implements DropTargetListener {
 
+    public static final CookieManager cookieGuard = new CookieManager();
     public static final MainFrame MF = new MainFrame();
+
+    static {
+        CookieHandler.setDefault(cookieGuard);
+    }
 
     //Logging Panel
     private final LogDialog log;
