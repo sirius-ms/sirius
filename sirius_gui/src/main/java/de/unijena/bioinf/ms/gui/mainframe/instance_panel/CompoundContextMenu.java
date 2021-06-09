@@ -46,7 +46,7 @@ public class CompoundContextMenu extends JPopupMenu {
         add(new JMenuItem(SiriusActions.ORDER_BY_NAME.getInstance()));
         add(new JMenuItem(SiriusActions.ORDER_BY_CONFIDENCE.getInstance()));
         addSeparator();
-        add(new JMenuItem(SiriusActions.TOOGLE_INVERT_FILTER.getInstance()));
+        add(new JMenuItem(SiriusActions.RESET_FILTER.getInstance()));
 
 
     }

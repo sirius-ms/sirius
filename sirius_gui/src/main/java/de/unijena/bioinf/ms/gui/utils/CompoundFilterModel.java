@@ -20,20 +20,42 @@ package de.unijena.bioinf.ms.gui.utils;/*
 
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 
+/**
+ * This model stores the filter criteria for a compound list
+ */
 public class CompoundFilterModel implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
 
+    /*
+    currently selected values
+     */
     private double currentMinMz;
     private double currentMaxMz;
     private double currentMinRt;
     private double currentMaxRt;
 
+    /*
+    min/max possible values
+     */
     private final double minMz;
     private final double maxMz;
     private final double minRt;
     private final double maxRt;
 
 
+    public CompoundFilterModel() {
+        this(0, 5000d, 0, 10000d);
+    }
+
+
+    /**
+     * the filter model is initialized with the min / max possible values
+     * MAX VALUES SHOULD BE USED FOR DISPLAY ONLY. AND IF SELECTED VALUES EQUAL THE MAXIMUM, INFINITY SHOULD BE ASSUMED, see {@link CompoundFilterMatcher} and is[...]Active() methods.
+     * @param minMz
+     * @param maxMz
+     * @param minRt
+     * @param maxRt
+     */
     public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt) {
         this.currentMinMz = minMz;
         this.currentMaxMz = maxMz;
@@ -44,11 +66,10 @@ public class CompoundFilterModel implements SiriusPCS {
         this.maxMz = maxMz;
         this.minRt = minRt;
         this.maxRt = maxRt;
-
-
     }
 
     public void setCurrentMinMz(double currentMinMz) {
+        if (currentMinMz < minMz) throw new IllegalArgumentException("current value out of range: "+currentMinMz);
         double oldValue = this.currentMinMz;
         this.currentMinMz = currentMinMz;
         pcs.firePropertyChange("setMinMz", oldValue, currentMinMz);
@@ -63,6 +84,7 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void setCurrentMaxMz(double currentMaxMz) {
+        if (currentMaxMz > maxMz) throw new IllegalArgumentException("current value out of range: "+currentMaxMz);
         double oldValue = this.currentMaxMz;
         this.currentMaxMz = currentMaxMz;
         pcs.firePropertyChange("setMaxMz", oldValue, currentMaxMz);
@@ -73,6 +95,7 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void setCurrentMinRt(double currentMinRt) {
+        if (currentMinRt < minRt) throw new IllegalArgumentException("current value out of range: "+currentMinRt);
         double oldValue = this.currentMinRt;
         this.currentMinRt = currentMinRt;
         pcs.firePropertyChange("setMinRt", oldValue, currentMinRt);
@@ -84,6 +107,7 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void setCurrentMaxRt(double currentMaxRt) {
+        if (currentMaxRt > maxRt) throw new IllegalArgumentException("current value out of range: "+currentMaxRt);
         double oldValue = this.currentMaxRt;
         this.currentMaxRt = currentMaxRt;
         pcs.firePropertyChange("setMaxRt", oldValue, currentMaxRt);
@@ -107,13 +131,21 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     /**
-     * filter options are active
+     * filter options are active. that means selected values differ from absolute min/max
      * @return
      */
     public boolean isActive(){
         if (currentMinMz != minMz || currentMaxMz != maxMz ||
                 currentMinRt != minRt || currentMaxRt != maxRt) return true;
         return false;
+    }
+
+    public boolean isMaxMzFilterActive() {
+        return currentMaxMz != maxMz;
+    }
+
+    public boolean isMaxRtFilterActive() {
+        return currentMaxRt != maxRt;
     }
 
     @Override

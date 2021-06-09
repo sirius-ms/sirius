@@ -33,11 +33,13 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     public boolean matches(InstanceBean item) {
         double mz = item.getIonMass();
         double rt = item.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).orElse(Double.NaN);
-        if ((mz < filterModel.getCurrentMinMz()) || (mz > filterModel.getCurrentMaxMz())) {
+        if ((mz < filterModel.getCurrentMinMz()) ||
+                (filterModel.isMaxMzFilterActive() && mz > filterModel.getCurrentMaxMz())) {
             return false;
         }
         if (!Double.isNaN(rt)) {
-            if ((rt < filterModel.getCurrentMinRt()) || (rt > filterModel.getCurrentMaxRt())) {
+            if ((rt < filterModel.getCurrentMinRt()) ||
+                    (filterModel.isMaxRtFilterActive() && rt > filterModel.getCurrentMaxRt())) {
                 return false;
             }
         }
