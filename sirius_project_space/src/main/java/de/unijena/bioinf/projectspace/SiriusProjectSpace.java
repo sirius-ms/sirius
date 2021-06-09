@@ -65,7 +65,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     private final ConcurrentHashMap<Class<? extends ProjectSpaceProperty>, ProjectSpaceProperty> projectSpaceProperties;
 
     protected ConcurrentLinkedQueue<ProjectSpaceListener> projectSpaceListeners;
-    protected ConcurrentLinkedQueue<ContainerListener> compoundListeners, formulaResultListener;
+    protected ConcurrentLinkedQueue<ContainerListener<CompoundContainerId,CompoundContainer>> compoundListeners;
+    protected ConcurrentLinkedQueue<ContainerListener<FormulaResultId,FormulaResult>> formulaResultListener;
 
     protected SiriusProjectSpace(ProjectSpaceConfiguration configuration, Path root) {
         this.configuration = configuration;
@@ -154,6 +155,105 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
 
+    /**
+     * Add the given flag (set to true)
+     *
+     * @param cid  compound ID to modify
+     * @param flag flag to add
+     * @return true if value has changed
+     */
+    public boolean flag(CompoundContainerId cid, CompoundContainerId.Flag flag) {
+        try {
+            cid.flagsLock.lock();
+            if (cid.flags.add(flag)) {
+                fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_FLAG, cid, Collections.emptySet(), EnumSet.of(flag)));
+                return true;
+            }
+            return false;
+        } finally {
+            cid.flagsLock.unlock();
+        }
+    }
+
+    /**
+     * Remove the given flag (set to false)
+     *
+     * @param cid  compound ID to modify
+     * @param flag flag to remove
+     * @return true if value has changed
+     */
+    public boolean unFlag(CompoundContainerId cid, CompoundContainerId.Flag flag) {
+        try {
+            cid.flagsLock.lock();
+            if (cid.flags.remove(flag)) {
+                fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_FLAG, cid, Collections.emptySet(), EnumSet.of(flag)));
+                return true;
+            }
+            return false;
+        } finally {
+            cid.flagsLock.unlock();
+        }
+    }
+
+    /**
+     * Flip state of the given flag
+     *
+     * @param cid  compound ID to modify
+     * @param flag flag to flip
+     * @return new Value of the given flag
+     */
+    public boolean flipFlag(CompoundContainerId cid, CompoundContainerId.Flag flag) {
+        try {
+            cid.flagsLock.lock();
+            boolean r = flipFlagRaw(cid, flag);
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_FLAG, cid, Collections.emptySet(), EnumSet.of(flag)));
+            return r;
+        } finally {
+            cid.flagsLock.unlock();
+        }
+    }
+
+    private boolean flipFlagRaw(CompoundContainerId cid, CompoundContainerId.Flag flag) {
+        boolean r = cid.flags.add(flag);
+        if (!r) cid.flags.remove(flag);
+        return r;
+    }
+
+    public void flipFlags(CompoundContainerId.Flag flag, CompoundContainerId... cids) {
+        try {
+            for (CompoundContainerId cid : cids) {
+                cid.flagsLock.lock();
+                flipFlagRaw(cid, flag);
+            }
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_FLAG, List.of(cids), Collections.emptySet(), EnumSet.of(flag)));
+        } finally {
+            for (CompoundContainerId cid : cids)
+                cid.flagsLock.unlock();
+        }
+    }
+
+    public void setFlags(final CompoundContainerId.Flag flag, final boolean value, final CompoundContainerId... cids) {
+        try {
+            for (CompoundContainerId cid : cids) {
+                cid.flagsLock.lock();
+                if (value)
+                    cid.flags.add(flag);
+                else
+                    cid.flags.remove(flag);
+            }
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_FLAG, List.of(cids), Collections.emptySet(), EnumSet.of(flag)));
+        } finally {
+            for (CompoundContainerId cid : cids)
+                cid.flagsLock.unlock();
+        }
+    }
+
+
+    public boolean hasFlag(CompoundContainerId cid, CompoundContainerId.Flag flag) {
+        return cid.hasFlag(flag);
+    }
+
+
     public Optional<CompoundContainerId> findCompound(String dirName) {
         return Optional.ofNullable(ids.get(dirName));
     }
@@ -177,7 +277,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                             comp.setAnnotation(Ms2Experiment.class, exp);
                             updateContainer(CompoundContainer.class, comp, Ms2Experiment.class);
                         }
-                        fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.CREATED, comp.getId(), comp, Set.of(Ms2Experiment.class)));
+                        fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.CREATED, comp, Set.of(Ms2Experiment.class)));
 //                        fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, comp.getId(), comp, Set.of(Ms2Experiment.class)));
                         return comp;
                     } catch (IOException e) {
@@ -200,7 +300,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
         Optional<CompoundContainerId> cidOpt = tryCreateCompoundContainer(dirName, compoundName, index, ioMass, ionType, rt, confidence);
         cidOpt.ifPresent(cid ->
-                fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_CREATED, cid, null, Collections.emptySet())));
+                fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.ID_CREATED, cid, Collections.emptySet())));
         return cidOpt;
     }
 
@@ -228,7 +328,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             //modify input container
             container.getResults().put(r.getId().fileName(), r.getId());
 
-            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.CREATED, r.getId(), r, Collections.emptySet()));
+            fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.CREATED, r, Collections.emptySet()));
 
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Could not create FormulaResult from FTree!", e);
@@ -239,7 +339,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return Optional.of(r);
     }
 
-    private void fireContainerListeners(ConcurrentLinkedQueue<ContainerListener> formulaResultListener, ContainerEvent<CompoundContainerId, CompoundContainer> event) {
+    private <ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>> void fireContainerListeners(ConcurrentLinkedQueue<ContainerListener<ID, Container>> formulaResultListener, ContainerEvent<ID, Container> event) {
         formulaResultListener.forEach(x -> x.containerChanged(event));
     }
 
@@ -248,7 +348,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         try {
             id.containerLock.lock();
             CompoundContainer comp = getContainer(CompoundContainer.class, id);
-            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.CREATED, id, comp, Collections.emptySet()));
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.CREATED, comp, Collections.emptySet()));
         } finally {
             id.containerLock.unlock();
         }
@@ -317,11 +417,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             res.add(getFormulaResult(fid, comps.toArray(Class[]::new)));
 
         return FormulaScoring.rankBy(res,scores,true);
-
-//                res.stream().map(fr -> {
-//            T fs = fr.getAnnotation(FormulaScoring.class).map(sc -> sc.getAnnotationOr(score, FormulaScore::NA)).orElse(FormulaScore.NA(score));
-//                return new SScored<>(fr, fs);
-//        }).sorted(Collections.reverseOrder()).collect(Collectors.toList());
     }
 
     @SafeVarargs
@@ -341,7 +436,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         parentId.containerLock.lock();
         try {
             updateContainer(FormulaResult.class, result, components);
-            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.UPDATED, result.getId(), result, new HashSet<>(Arrays.asList(components))));
+            fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, result, new HashSet<>(Arrays.asList(components))));
         } finally {
             parentId.containerLock.unlock();
         }
@@ -360,7 +455,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         parentId.containerLock.lock();
         try {
             deleteFromContainer(FormulaResult.class, resultId, List.of(components));
-            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.UPDATED, resultId, null, Set.of(components)));
+            fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, resultId, Set.of(components)));
         } finally {
             parentId.containerLock.unlock();
         }
@@ -371,7 +466,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         parentId.containerLock.lock();
         try {
             deleteContainer(FormulaResult.class, resultId);
-            fireContainerListeners(formulaResultListener, new ContainerEvent(ContainerEvent.EventType.DELETED, resultId, null, Collections.emptySet()));
+            fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.DELETED, resultId, Collections.emptySet()));
         } finally {
             parentId.containerLock.unlock();
         }
@@ -394,7 +489,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         id.containerLock.lock();
         try {
             updateContainer(CompoundContainer.class, compound, components);
-            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, compound.getId(), compound, new HashSet<>(Arrays.asList(components))));
+            fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, compound, new HashSet<>(Arrays.asList(components))));
         } finally {
             id.containerLock.unlock();
         }
@@ -405,7 +500,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         try {
             if (ids.remove(cid.getDirectoryName()) != null) {
                 deleteContainer(CompoundContainer.class, cid);
-                fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, cid, null, Collections.emptySet()));
+                fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, cid, Collections.emptySet()));
                 fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
             }
         } finally {
@@ -436,7 +531,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
                 final Path file = root.resolve(newDirName);
                 if (Files.exists(file)) {
-                    return false; // rename not target directory already exists
+                    return false; // rename not possible target directory already exists
                 }
 
                 try {
@@ -685,6 +780,5 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 return true;
             });
         }
-
     }
 }

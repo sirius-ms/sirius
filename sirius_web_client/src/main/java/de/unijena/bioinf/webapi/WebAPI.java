@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
@@ -66,7 +67,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 
 /**
@@ -86,8 +89,11 @@ public final class WebAPI {
     public final FingerIdClient fingerprintClient;
     public final CanopusClient canopusClient;
 
+    private final AuthService authService;
 
-    public WebAPI(@NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
+
+    public WebAPI(@Nullable AuthService authService, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
+        this.authService = authService;
         this.serverInfoClient = infoClient;
         this.jobsClient = jobsClient;
         this.chemDBClient = chemDBClient;
@@ -95,20 +101,36 @@ public final class WebAPI {
         this.canopusClient = canopusClient;
     }
 
-    public WebAPI(@NotNull URI host) {
-        this(new InfoClient(host), new JobsClient(host), new ChemDBClient(host), new FingerIdClient(host), new CanopusClient(host));
+    public WebAPI(@NotNull AuthService authService, @NotNull URI host) {
+        this(authService, new InfoClient(host), new JobsClient(host, authService), new ChemDBClient(host, authService), new FingerIdClient(host, authService), new CanopusClient(host, authService));
     }
 
-    public WebAPI(@NotNull String host) {
-        this(URI.create(host));
+    public WebAPI(@NotNull AuthService authService, @NotNull String host) {
+        this(authService, URI.create(host));
     }
 
-    public WebAPI() {
-        this(URI.create(FingerIDProperties.fingeridWebHost()));
+    public WebAPI(@NotNull AuthService authService) {
+        this(authService, URI.create(FingerIDProperties.fingeridWebHost()));
+    }
+
+    public AuthService getAuthService() {
+        return authService;
+    }
+
+    public String getSignUpURL() {
+        try {
+            return getAuthService().signUpURL(jobsClient.getBaseURI("/signUp", true).build().toURL().toString());
+        } catch (MalformedURLException | URISyntaxException e) {
+            throw new IllegalArgumentException("Illegal URL!", e);
+        }
+    }
+
+    public boolean deleteAccount(){
+        return ProxyManager.doWithClient(jobsClient::deleteAccount);
     }
 
     public void shutdownJobWatcher() {
-        jobWatcher.shutdown();
+            jobWatcher.shutdown();
     }
 
     //region ServerInfo
@@ -118,8 +140,9 @@ public final class WebAPI {
     //4 csi server not reachable
     //3 no connection to bioinf web site
     //2 no connection to uni jena
-    //1 no connection to internet (google/microft/ubuntu????)
+    //1 no connection to internet (google/microsoft/ubuntu?)
     //0 everything is fine
+    //-1 login has permissions to this server
     public static final int MAX_STATE = 6;
 
     @Nullable
@@ -138,6 +161,8 @@ public final class WebAPI {
                 } else if (v.outdated()) {
                     return MAX_STATE;
                 } else if (serverInfoClient.testConnection()) {
+                    if (jobsClient.testSecuredConnection(client))
+                        return -1;
                     return 0;
                 } else {
                     return 5;

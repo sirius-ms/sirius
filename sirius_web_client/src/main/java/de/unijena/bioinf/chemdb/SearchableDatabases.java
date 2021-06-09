@@ -48,10 +48,12 @@ public class SearchableDatabases {
     private SearchableDatabases() {
     }
 
+    @NotNull
     public static File getCustomDatabaseDirectory(){
         return new File(getDatabaseDirectory(),CUSTOM_DB_DIR);
     }
 
+    @NotNull
     public static File getRESTDatabaseCacheDirectory() {
         return new File(getDatabaseDirectory(),REST_CACHE_DIR);
     }
