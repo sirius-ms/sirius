@@ -100,9 +100,11 @@ public class CompoundList {
 
     private void colorByActiveFilter(JButton openFilterPanelButton, CompoundFilterModel compoundFilterModel) {
         //is any filtering option active (despite the text filter which is visible all the time)
-        if (compoundFilterModel.isActive() || isFilterInverted()){
-                        openFilterPanelButton.setBackground(new Color(49, 153, 187));
-        } else {
+        if (isFilterInverted()){
+            openFilterPanelButton.setBackground(new Color(235, 94, 85));
+        } else if (compoundFilterModel.isActive()){
+            openFilterPanelButton.setBackground(new Color(49, 153, 187));
+        }else {
             openFilterPanelButton.setBackground(Color.LIGHT_GRAY);
         }
     }
