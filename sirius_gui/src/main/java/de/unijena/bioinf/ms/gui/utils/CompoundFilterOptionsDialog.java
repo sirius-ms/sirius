@@ -18,61 +18,96 @@ package de.unijena.bioinf.ms.gui.utils;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+import de.unijena.bioinf.ms.gui.actions.DeleteExperimentAction;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.stream.Collectors;
 
+/**
+ * Dialog allows to adjust filter criteria of the {@link CompoundFilterModel} which is used to filter compound list.
+ */
 public class CompoundFilterOptionsDialog extends JDialog implements ActionListener {
 
+    final SearchTextField searchField;
+    final JTextField searchFieldDialogCopy;
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner;
-    JButton discard, save, reset;
-    CompoundFilterModel filterModel;
+    JButton discard, save, reset, deleteSelection;
+    JCheckBox invertFilter;
+    final CompoundFilterModel filterModel;
+    final CompoundList compoundList;
 
-    public CompoundFilterOptionsDialog(MainFrame owner, CompoundFilterModel filterModel) {
+    public CompoundFilterOptionsDialog(MainFrame owner, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
         super(owner, "Filter options", true);
+        this.searchField = searchField;
         this.filterModel = filterModel;
+        this.compoundList = compoundList;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
-        final TwoColumnPanel smallParameters = new TwoColumnPanel();
-        add(new TextHeaderBoxPanel("Filter by:", smallParameters), BorderLayout.CENTER);
 
+        final TwoColumnPanel smallParameters = new TwoColumnPanel();
+        add(new TextHeaderBoxPanel("Select by:", smallParameters), BorderLayout.CENTER);
+
+        searchFieldDialogCopy = new JTextField(searchField.textField.getText());
+        smallParameters.addNamed("filter by text", searchFieldDialogCopy);
 
         minMzSpinner = makeSpinner(filterModel.getCurrentMinMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
         smallParameters.addNamed("minimum m/z: ", minMzSpinner);
-
         maxMzSpinner = makeSpinner(filterModel.getCurrentMaxMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
         smallParameters.addNamed("maximum m/z: ", maxMzSpinner);
+        ((JSpinner.DefaultEditor) maxMzSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel)maxMzSpinner.getModel(), filterModel.getMaxMz()));
 
         ensureCompatibleBounds(minMzSpinner, maxMzSpinner);
 
         minRtSpinner = makeSpinner(filterModel.getCurrentMinRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
         smallParameters.addNamed("minimum RT in sec: ", minRtSpinner);
-
         maxRtSpinner = makeSpinner(filterModel.getCurrentMaxRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
         smallParameters.addNamed("minimum RT in sec ", maxRtSpinner);
+        ((JSpinner.DefaultEditor) maxRtSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel)maxRtSpinner.getModel(), filterModel.getMaxRt()));
 
         ensureCompatibleBounds(minRtSpinner, maxRtSpinner);
 
+        invertFilter = new JCheckBox("select non-matching");
+        invertFilter.setSelected(compoundList.isFilterInverted());
+        JPanel invertPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        invertPanel.add(invertFilter);
+        smallParameters.add(invertPanel);
+
+        smallParameters.add(new JSeparator(SwingConstants.VERTICAL));
+
+
         reset = new JButton("Reset");
         reset.addActionListener(this);
-
         JPanel resetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         resetPanel.add(reset);
         smallParameters.add(resetPanel);
 
+        smallParameters.add(new JSeparator(SwingConstants.VERTICAL));
+
+        deleteSelection = new JButton("<html>Delete all <b>non-</b>selected compounds");
+        deleteSelection.addActionListener(this);
+        JPanel deleteSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        deleteSelectionPanel.add(deleteSelection);
+
+
         discard = new JButton("Discard");
         discard.addActionListener(this);
-        save = new JButton("Save");
+        save = new JButton("Apply filter");
         save.addActionListener(this);
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.add(discard);
         buttons.add(save);
 
-        add(buttons, BorderLayout.SOUTH);
+        add(new TwoColumnPanel(deleteSelectionPanel, buttons), BorderLayout.SOUTH);
+
+//        add(buttons, BorderLayout.SOUTH);
 
         setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
         configureActions();
@@ -109,6 +144,10 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setCurrentMaxMz(getMaxMz());
         filterModel.setCurrentMinRt(getMinRt());
         filterModel.setCurrentMaxRt(getMaxRt());
+        searchField.textField.setText(searchFieldDialogCopy.getText());
+        if (invertFilter.isSelected()!=compoundList.isFilterInverted()) {
+            compoundList.toggleInvertFilter();
+        }
     }
 
     @Override
@@ -117,15 +156,37 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             resetFilter();
             return;
         }
+        if (e.getSource() == deleteSelection) {
+            deleteSelectedCompoundsAndResetFilter();
+            return;
+        }
         if (e.getSource() == save){
             saveChanges();
         }
         this.dispose();
     }
 
+    private void deleteSelectedCompoundsAndResetFilter() {
+        saveChanges();
+        //invert selection to remove all non-selected
+        //todo currently the displayed FilterList ist used to select the compounds to remove.
+        //this makes copying necessary to make it not look strange.
+        // maybe it is better to apply the filter in a way to not change the displayed list
+        compoundList.toggleInvertFilter();
+        List<InstanceBean> toRemoveList = compoundList.getCompoundList().stream().collect(Collectors.toList());
+        compoundList.toggleInvertFilter();
+        (new DeleteExperimentAction(toRemoveList)).deleteCompounds();
+        resetFilter();
+        saveChanges();
+    }
+
+    /**
+     * only reset values in the dialog, not the actual filter model
+     */
     private void resetFilter() {
-        filterModel.resetFilter();
         resetSpinnerValues();
+        searchFieldDialogCopy.setText("");
+        invertFilter.setSelected(false);
     }
 
     private void resetSpinnerValues() {
@@ -136,19 +197,23 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     }
 
     public double getMinMz() {
-        return ((SpinnerNumberModel)minMzSpinner.getModel()).getNumber().doubleValue();
+        return getDoubleValue(minMzSpinner);
     }
 
     public double getMaxMz() {
-        return ((SpinnerNumberModel)maxMzSpinner.getModel()).getNumber().doubleValue();
+        return getDoubleValue(maxMzSpinner);
     }
 
     public double getMinRt() {
-        return ((SpinnerNumberModel)minRtSpinner.getModel()).getNumber().doubleValue();
+        return getDoubleValue(minRtSpinner);
     }
 
     public double getMaxRt() {
-        return ((SpinnerNumberModel)maxRtSpinner.getModel()).getNumber().doubleValue();
+        return getDoubleValue(maxRtSpinner);
+    }
+
+    public double getDoubleValue(JSpinner spinner) {
+        return ((SpinnerNumberModel)spinner.getModel()).getNumber().doubleValue();
     }
 
     private void ensureCompatibleBounds(JSpinner minSpinner, JSpinner maxSpinner) {

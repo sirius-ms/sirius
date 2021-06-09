@@ -63,26 +63,26 @@ public class CompoundList {
         obsevableScource = new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedScource = new SortedList<>(obsevableScource, Comparator.comparing(b -> b.getID().getCompoundIndex()));
 
+        //filters
         BasicEventList<MatcherEditor<InstanceBean>> listOfFilters = new BasicEventList<>();
+        //text filter
         listOfFilters.add(new TextComponentMatcherEditor<>(searchField.textField, (baseList, element) -> {
             baseList.add(element.getGUIName());
             baseList.add(element.getIonization().toString());
             baseList.add(String.valueOf(element.getIonMass()));
         }, true));
-
-        compoundFilterModel = new CompoundFilterModel(0, 10000, 0, 10000);
+        //additional filter based on specific parameters
+        compoundFilterModel = new CompoundFilterModel();
         listOfFilters.add(new CompoundFilterMatcherEditor(compoundFilterModel));
-
-
+        //combined filters
         CompositeMatcherEditor<InstanceBean> compositeMatcherEditor = new CompositeMatcherEditor<>(listOfFilters);
         compositeMatcherEditor.setMode(CompositeMatcherEditor.AND);
         compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
         compoundList = new FilterList(sortedScource, compoundListMatchEditor);
-
-
+        //filter dialog
         openFilterPanelButton = new JButton("...");
         openFilterPanelButton.addActionListener(e -> {
-            new CompoundFilterOptionsDialog(MainFrame.MF, compoundFilterModel);
+            new CompoundFilterOptionsDialog(MainFrame.MF, searchField, compoundFilterModel, this);
             colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
         });
 
@@ -99,9 +99,9 @@ public class CompoundList {
     }
 
     private void colorByActiveFilter(JButton openFilterPanelButton, CompoundFilterModel compoundFilterModel) {
-        if (compoundFilterModel.isActive()){
+        //is any filtering option active (despite the text filter which is visible all the time)
+        if (compoundFilterModel.isActive() || isFilterInverted()){
                         openFilterPanelButton.setBackground(new Color(49, 153, 187));
-//            openFilterPanelButton.setBackground(new Color(17, 145, 187));
         } else {
             openFilterPanelButton.setBackground(Color.LIGHT_GRAY);
         }
@@ -117,6 +117,14 @@ public class CompoundList {
 
     public void toggleInvertFilter() {
         compoundListMatchEditor.setInverted(!compoundListMatchEditor.isInverted());
+    }
+
+    public void resetFilter() {
+        //filtering consists of the text filter, the filter model and the possible inversion using the MatcherEditor
+        searchField.textField.setText("");
+        compoundFilterModel.resetFilter();
+        compoundListMatchEditor.setInverted(false);
+        colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
