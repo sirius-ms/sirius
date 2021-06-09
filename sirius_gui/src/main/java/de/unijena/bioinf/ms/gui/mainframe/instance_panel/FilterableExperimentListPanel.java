@@ -53,7 +53,10 @@ public class FilterableExperimentListPanel extends JPanel {
     public FilterableExperimentListPanel(ExperimentListView view) {
         super(new BorderLayout());
         view.sourceList.addChangeListener(sizeListener);
-        add(view.sourceList.searchField, BorderLayout.NORTH);
+        JPanel searchPanel = new JPanel(new BorderLayout());
+        searchPanel.add(view.sourceList.searchField, BorderLayout.CENTER);
+        searchPanel.add(view.sourceList.openFilterPanelButton, BorderLayout.EAST);
+        add(searchPanel, BorderLayout.NORTH);
         add(view, BorderLayout.CENTER);
         JPanel j = new JPanel(new FlowLayout(FlowLayout.CENTER));
         j.add(elementCounter);
