@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 public class Instance {
     @NotNull
     protected final ProjectSpaceManager spaceManager;
-
     private CompoundContainer compoundCache;
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
@@ -333,4 +332,40 @@ public class Instance {
             });
         }
     }
+
+    /**
+     * Add the given flag (set to true)
+     *
+     * @param flag flag to add
+     * @return true if value has changed
+     */
+    public boolean flag(@NotNull CompoundContainerId.Flag flag) {
+        return projectSpace().flag(getID(), flag);
+    }
+
+    /**
+     * Remove the given flag (set to false)
+     *
+     * @param flag flag to remove
+     * @return true if value has changed
+     */
+    public boolean unFlag(@NotNull CompoundContainerId.Flag flag) {
+        return projectSpace().unFlag(getID(), flag);
+    }
+
+    /**
+     * Flip state of the given flag
+     *
+     * @param flag flag to flip
+     * @return new Value of the given flag
+     */
+    public boolean flipFlag(@NotNull CompoundContainerId.Flag flag) {
+        return projectSpace().flipFlag(getID(), flag);
+    }
+
+    public boolean hasFlag(@NotNull CompoundContainerId.Flag flag) {
+        return getID().hasFlag(flag);
+    }
+
+
 }
