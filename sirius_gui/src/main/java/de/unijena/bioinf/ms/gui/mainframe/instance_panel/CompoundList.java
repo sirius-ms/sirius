@@ -19,18 +19,20 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
-import ca.odell.glazedlists.FilterList;
-import ca.odell.glazedlists.GlazedLists;
-import ca.odell.glazedlists.ObservableElementList;
-import ca.odell.glazedlists.SortedList;
+import ca.odell.glazedlists.*;
 import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
+import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.ms.gui.utils.SearchTextField;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.Comparator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -45,10 +47,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class CompoundList {
 
     final SearchTextField searchField;
+    final JButton openFilterPanelButton;
+    final CompoundFilterModel compoundFilterModel;
     final ObservableElementList<InstanceBean> obsevableScource;
     final SortedList<InstanceBean> sortedScource;
     final FilterList<InstanceBean> compoundList;
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
+
+    final MatcherEditorWithOptionalInvert<InstanceBean> compoundListMatchEditor;
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
@@ -56,13 +62,29 @@ public class CompoundList {
         searchField = new SearchTextField();
         obsevableScource = new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedScource = new SortedList<>(obsevableScource, Comparator.comparing(b -> b.getID().getCompoundIndex()));
-        compoundList = new FilterList<>(sortedScource,
-                new TextComponentMatcherEditor<>(searchField.textField, (baseList, element) -> {
-                    baseList.add(element.getGUIName());
-                    baseList.add(element.getIonization().toString());
-                    baseList.add(String.valueOf(element.getIonMass()));
-                }, true));
 
+        //filters
+        BasicEventList<MatcherEditor<InstanceBean>> listOfFilters = new BasicEventList<>();
+        //text filter
+        listOfFilters.add(new TextComponentMatcherEditor<>(searchField.textField, (baseList, element) -> {
+            baseList.add(element.getGUIName());
+            baseList.add(element.getIonization().toString());
+            baseList.add(String.valueOf(element.getIonMass()));
+        }, true));
+        //additional filter based on specific parameters
+        compoundFilterModel = new CompoundFilterModel();
+        listOfFilters.add(new CompoundFilterMatcherEditor(compoundFilterModel));
+        //combined filters
+        CompositeMatcherEditor<InstanceBean> compositeMatcherEditor = new CompositeMatcherEditor<>(listOfFilters);
+        compositeMatcherEditor.setMode(CompositeMatcherEditor.AND);
+        compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
+        compoundList = new FilterList(sortedScource, compoundListMatchEditor);
+        //filter dialog
+        openFilterPanelButton = new JButton("...");
+        openFilterPanelButton.addActionListener(e -> {
+            new CompoundFilterOptionsDialog(MainFrame.MF, searchField, compoundFilterModel, this);
+            colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
+        });
 
         compountListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
@@ -76,8 +98,33 @@ public class CompoundList {
         compoundList.addListEventListener(this::notifyListenerDataChange);
     }
 
+    private void colorByActiveFilter(JButton openFilterPanelButton, CompoundFilterModel compoundFilterModel) {
+        //is any filtering option active (despite the text filter which is visible all the time)
+        if (compoundFilterModel.isActive() || isFilterInverted()){
+                        openFilterPanelButton.setBackground(new Color(49, 153, 187));
+        } else {
+            openFilterPanelButton.setBackground(Color.LIGHT_GRAY);
+        }
+    }
+
     public void orderBy(@NotNull final Comparator<InstanceBean> comp) {
         sortedScource.setComparator(comp);
+    }
+
+    public boolean isFilterInverted() {
+        return compoundListMatchEditor.isInverted();
+    }
+
+    public void toggleInvertFilter() {
+        compoundListMatchEditor.setInverted(!compoundListMatchEditor.isInverted());
+    }
+
+    public void resetFilter() {
+        //filtering consists of the text filter, the filter model and the possible inversion using the MatcherEditor
+        searchField.textField.setText("");
+        compoundFilterModel.resetFilter();
+        compoundListMatchEditor.setInverted(false);
+        colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
