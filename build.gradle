@@ -10,13 +10,18 @@ plugins {
 ext {
     logger.lifecycle('reading gradle properties file...')
     File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
-    getLogger().lifecycle("Loading properties from ${propertiesFile.absolutePath}")
-    Properties props = new Properties()
+    if (propertiesFile.exists()) {
+        getLogger().lifecycle("Loading properties from ${propertiesFile.absolutePath}")
+        Properties props = new Properties()
 
-    propertiesFile.withReader("UTF8", {
-        props.load(it)
-    })
-    System.properties.putAll(props)
+        propertiesFile.withReader("UTF8", {
+            props.load(it)
+        })
+        System.properties.putAll(props)
+    }else {
+        getLogger().lifecycle("No properties file found at '${propertiesFile.absolutePath}'. Some tasks might not work without this information.")
+    }
+
     logger.lifecycle('reading build properties file...')
     props = new Properties()
     file("${projectDir}/chemistry_base/src/main/resources/sirius.build.properties").withReader("UTF8", {
