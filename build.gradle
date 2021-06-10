@@ -71,6 +71,9 @@ allprojects {
     sourceCompatibility = 11
     targetCompatibility = 11
 
+    compileJava.options.encoding = "UTF-8"
+    compileTestJava.options.encoding = "UTF-8"
+    javadoc.options.encoding = 'UTF-8'
 
     version = project.siriusVersion
     group = 'de.unijena.bioinf.ms'
@@ -141,6 +144,8 @@ allprojects {
         testCompile group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
+
+
 
     task sourceJar(type: Jar) {
         group = 'build'
