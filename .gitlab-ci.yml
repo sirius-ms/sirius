@@ -2,7 +2,8 @@
 # https://gradle.org/
 # https://github.com/gradle/gradle
 #image: gradle:alpine
-
+default:
+  image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:18.04-15.0.3-6.9
 # Disable the Gradle daemon for Continuous Integration servers as correctness
 # is usually a priority over speed in CI environments. Using a fresh
 # runtime for each build is more reliable since the runtime is completely
@@ -25,34 +26,36 @@ stages:
 #    policy: push
 #  tags:
 #    - gradle
-doc:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
-  stage: prepare
-  script:
-    - cd sirius_doc
-    - gradle clean artifactoryPublish
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: push
-  tags:
-    - artifactory
-    - gradle
-    - biber-latex
-  only:
-    refs:
-      - master
-      - stable
-    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
-    # from pipeline
-    changes:
-      - "sirius_doc/**/*"
-      - "sirius_cli/src/main/resources/sirius_frontend.build.properties"
-      - ".gitlab-ci.yml"
+
+
+#doc:
+#  variables:
+#    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
+#  stage: prepare
+#  script:
+#    - cd sirius_doc
+#    - gradle clean artifactoryPublish
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: push
+#  tags:
+#    - artifactory
+#    - gradle
+#    - biber-latex
+#  only:
+#    refs:
+#      - master
+#      - stable
+#    # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
+#    # from pipeline
+#    changes:
+#      - "sirius_doc/**/*"
+#      - "sirius_cli/src/main/resources/sirius_frontend.build.properties"
+#      - ".gitlab-ci.yml"
 
 distCliLinux64:
   variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: build-cli
   script:
     - cd sirius_dist/sirius_cli_single_os
@@ -61,9 +64,7 @@ distCliLinux64:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   tags:
-    - artifactory
-    - gradle
-    - linux64
+    - kubernetes
   only:
     refs:
       - master
@@ -75,7 +76,7 @@ distCliLinux64:
 
 distGuiLinux64:
   variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: build-gui
   script:
     - cd sirius_dist/sirius_gui_single_os
@@ -84,9 +85,7 @@ distGuiLinux64:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   tags:
-    - artifactory
-    - gradle
-    - linux64
+    - kubernetes
   only:
     refs:
       - master
