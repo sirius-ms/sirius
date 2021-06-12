@@ -27,6 +27,7 @@ buildLinux64:
   only:
     refs:
       - master
+      - stable
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
     # from pipeline
     changes:
@@ -38,3 +39,7 @@ trigger_sirius_frontend:
   trigger:
     project: bioinf-mit/ms/sirius_frontend
     strategy: depend
+  only:
+    refs:
+      - master
+      - stable
