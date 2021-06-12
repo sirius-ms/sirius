@@ -11,6 +11,7 @@ stages:
   - clean
   - prepare
   - build-publish
+  - downstream
 
 buildLinux64:
   variables:
@@ -31,3 +32,9 @@ buildLinux64:
     changes:
       - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
       - "**/src/main/java/**/*"
+
+trigger_sirius_frontend:
+  stage: build-publish
+  trigger:
+    project: bioinf-mit/ms/sirius_frontend
+    strategy: depend
