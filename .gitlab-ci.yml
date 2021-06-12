@@ -15,8 +15,7 @@ stages:
   - build-multi-cli
   - build-gui
   - publish
-variables:
-  PRIVATE_KYE:
+
 before_script:
   - eval `ssh-agent -s`
   - echo "-----BEGIN OPENSSH PRIVATE KEY-----\n${GITLAB_GITHUB_SIRIUS_PRIVATE_KEY}\n-----END OPENSSH PRIVATE KEY-----" | tr -d '\r' | ssh-add - > /dev/null # add ssh key
