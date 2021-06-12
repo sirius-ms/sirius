@@ -18,7 +18,7 @@ stages:
 
 before_script:
   - eval `ssh-agent -s`
-  - echo "-----BEGIN OPENSSH PRIVATE KEY-----\n${GITLAB_GITHUB_SIRIUS_PRIVATE_KEY}\n-----END OPENSSH PRIVATE KEY-----" | tr -d '\r' | ssh-add - > /dev/null # add ssh key
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null # add ssh key
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
   - echo "$GITLAB_GITHUB_SIRIUS_PUBLIC_KEY" >> ~/.ssh/id_ed25519.pub
