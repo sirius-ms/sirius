@@ -11,9 +11,10 @@ default:
 stages:
   - clean
   - prepare
-  - build-cli
-  - build-multi-cli
-  - build-gui
+  - build
+#  - build-cli
+#  - build-multi-cli
+#  - build-gui
   - publish
 
 before_script:
@@ -33,7 +34,7 @@ before_script:
 #  tags:
 #    - gradle
 
-
+#todo re-enable doc build
 #doc:
 #  variables:
 #    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
@@ -62,7 +63,7 @@ before_script:
 distCliLinux64:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: build-cli
+  stage: build
   script:
     - cd sirius_dist/sirius_cli_single_os
     - gradle clean artifactoryPublish --refresh-dependencies
@@ -84,7 +85,7 @@ distCliLinux64:
 distGuiLinux64:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: build-gui
+  stage: build
   script:
     - cd sirius_dist/sirius_gui_single_os
     - gradle clean artifactoryPublish --refresh-dependencies
