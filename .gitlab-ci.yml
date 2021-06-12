@@ -34,7 +34,7 @@ buildLinux64:
       - "**/src/main/java/**/*"
 
 trigger_sirius_frontend:
-  stage: build-publish
+  stage: downstream
   trigger:
     project: bioinf-mit/ms/sirius_frontend
     strategy: depend
