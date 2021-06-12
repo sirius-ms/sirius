@@ -17,6 +17,7 @@ stages:
   - publish
 
 before_script:
+  - eval `ssh-agent -s`
   - echo "${GITLAB_GITHUB_SIRIUS_PRIVATE_KEY}" | tr -d '\r' | ssh-add - > /dev/null # add ssh key
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
