@@ -1,7 +1,7 @@
 # This is the Gradle build system for JVM applications
 # https://gradle.org/
 # https://github.com/gradle/gradle
-#image: gradle:alpine
+image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:latest
 
 # Disable the Gradle daemon for Continuous Integration servers as correctness
 # is usually a priority over speed in CI environments. Using a fresh
@@ -11,10 +11,11 @@ stages:
   - clean
   - prepare
   - build-publish
+  - downstream
 
 buildLinux64:
   variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.home=/vol/software/jvm/zulu14.29.23-ca-fx-jdk14.0.2-linux_x64"
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: build-publish
   script:
     - gradle clean artifactoryPublish --refresh-dependencies
@@ -22,14 +23,23 @@ buildLinux64:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
   tags:
-    - artifactory
-    - gradle
-    - linux64
+    - kubernetes
   only:
     refs:
       - master
+      - stable
     # stupid there is no exclude if only specific type was changed, so we have to use some heuristic to exclude README only changes
     # from pipeline
     changes:
       - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
       - "**/src/main/java/**/*"
+
+trigger_sirius_frontend:
+  stage: downstream
+  trigger:
+    project: bioinf-mit/ms/sirius_frontend
+    strategy: depend
+  only:
+    refs:
+      - master
+      - stable
