@@ -159,8 +159,10 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             JButton abort = new JButton("Cancel");
             abort.addActionListener(e -> dispose());
             JButton showCommand = new JButton("Show Command");
-            showCommand.addActionListener(e ->
-                    new InfoDialog(owner, "Command:" + GuiUtils.formatToolTip(String.join(" ", makeCommand(new ArrayList<>())))));
+            showCommand.addActionListener(e -> {
+                if (warnNoMethodIsSelected()) return;
+                new InfoDialog(owner, "Command:" + GuiUtils.formatToolTip(String.join(" ", makeCommand(new ArrayList<>()))));
+            });
 
             rsouthPanel.add(showCommand);
             rsouthPanel.add(compute);
@@ -222,6 +224,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     }
 
     private void startComputing() {
+        if (warnNoMethodIsSelected()) return;
 
         if (editPanel != null && compoundsToProcess.size() == 1)
             saveEdits(compoundsToProcess.get(0));
@@ -355,6 +358,22 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         command.addAll(configCommand);
         command.addAll(toolCommands);
         return command;
+    }
+
+    private boolean warnNoMethodIsSelected() {
+        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, csiConfigs, canopusConfigPanel)){
+            new WarningDialog(this, "Please select at least one method.");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean isAnySelected(ActivatableConfigPanel... configPanels) {
+        for (ActivatableConfigPanel configPanel : configPanels) {
+            if (configPanel != null && configPanel.isToolSelected())  return true;
+        }
+        return false;
     }
 
     private void checkConnection() {
