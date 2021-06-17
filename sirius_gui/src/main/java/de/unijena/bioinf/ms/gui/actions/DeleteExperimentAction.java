@@ -46,9 +46,15 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
  */
 public class DeleteExperimentAction extends AbstractAction {
     public static final String NEVER_ASK_AGAIN_KEY = PropertyManager.PROPERTY_BASE + ".sirius.dialog.delete_experiment_action.ask_again";
+    private final List<InstanceBean> toRemove;
+
+    public DeleteExperimentAction(List<InstanceBean> toRemove) {
+        this.toRemove = toRemove;
+    }
 
     public DeleteExperimentAction() {
         super("Delete");
+        toRemove = null;
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Delete the selected data");
 
@@ -68,13 +74,18 @@ public class DeleteExperimentAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        deleteCompounds();
+    }
+
+    public void deleteCompounds() {
         if (!PropertyManager.getBoolean(NEVER_ASK_AGAIN_KEY,false)) {
             CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(MF, "When removing the selected compound(s) you will loose all computed identification results?", NEVER_ASK_AGAIN_KEY);
             CloseDialogReturnValue val = diag.getReturnValue();
             if (val == CloseDialogReturnValue.abort) return;
         }
 
-        List<InstanceBean> toRemove = new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
+        //use provided list or remove selected.
+        List<InstanceBean> toRemove = this.toRemove!=null ? new ArrayList<>(this.toRemove) : new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
         MF.getCompoundList().getCompoundListSelectionModel().clearSelection();
         MF.ps().deleteCompounds(toRemove);
     }
