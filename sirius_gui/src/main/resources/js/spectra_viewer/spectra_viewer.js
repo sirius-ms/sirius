@@ -4,6 +4,7 @@ const TOLERANCE = 40;
 var svg, tooltip, peakArea, brush, zoom, idleTimeout, data, w, h, x, y, xAxis, yAxis,
 current = {w, h},
 domain_fix = {xMin: null, xMax: null},
+domain_tmp = {xMin: null, xMax: null, yMax: null}, // need for resize
 pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500},
 margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30},
 decimal_place = 4,
@@ -59,17 +60,22 @@ document.onkeydown = function(e) {
             if (selected.leftClick === selected.hover) {
                 svg.select("#peak"+selected.leftClick).classed("peak_hover", true);
             }
+            try {
+                connector.selectionChanged(new_selected);
+            } catch (error) {
+                console.log(error);
+            }
             selected.leftClick = new_selected;
             svg.select("#peak"+selected.leftClick).classed("peak_select", true);
-            let x_tmp_min = x.domain()[0];
-            let x_tmp_max = x.domain()[1];
-            if (selectedPeak.mz <= x_tmp_min || selectedPeak.mz >= x_tmp_max && (x_tmp_min !== domain_fix.xMin || x_tmp_max !== domain_fix.xMax)) {
-                if (e.keyCode === 37) {
-                    setXdomain(selectedPeak.mz-3, x_tmp_max-3);
-                } else {
-                    setXdomain(x_tmp_min+3, selectedPeak.mz+3);
+            if (domain_tmp.xMin !== domain_fix.xMin || domain_tmp.xMax !== domain_fix.xMax) {
+                if (selectedPeak.mz <= domain_tmp.xMin || selectedPeak.mz >= domain_tmp.xMax) {
+                    if (e.keyCode === 37) {
+                        setXdomain(selectedPeak.mz-3, domain_tmp.xMax-3);
+                    } else {
+                        setXdomain(domain_tmp.xMin+3, selectedPeak.mz+3);
+                    }
+                    update_peaks(50);
                 }
-                update_peaks(50);
             }
             document.getElementById("anno_leftClick").innerText = annotation(selectedPeak).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
             showStructure(selected.leftClick);
@@ -88,12 +94,33 @@ function clear() {
     d3.select("#container").html("");
     data = null;
     domain_fix = {xMin: null, xMax: null};
+    domain_tmp = {xMin: null, xMax: null, yMax: null};
     pan.mouseupCheck = false;
     pan.mousemoveCheck = false;
     selected = {leftClick: null, hover: null};
     svg_str = null;
     basic_structure = null;
     anno_str = [];
+};
+
+function setSelection(i) {
+    const d = data.spectra[0].peaks[i];
+    if (selected.leftClick !== i && "structureInformation" in d) {
+        selectNewPeak(d, i, d3.select("#peak"+i));
+        const mz = d.mz;
+        if (domain_tmp.xMin !== domain_fix.xMin || domain_tmp.xMax !== domain_fix.xMax) {
+            const diffLeft = mz - domain_tmp.xMin;
+            const diffRight = domain_tmp.xMax - mz;
+            if (diffLeft < 0 || diffRight < 0) {
+                if (Math.abs(diffLeft) < Math.abs(diffRight)) {
+                    setXdomain(selectedPeak.mz-3, domain_tmp.xMax+diffLeft-3);
+                } else {
+                    setXdomain(domain_tmp.xMin-diffRight+3, selectedPeak.mz+3);
+                }
+                update_peaks(50);
+            }
+        }
+    }
 };
 
 function showStructure(i) {
@@ -224,6 +251,23 @@ function annotation(d) {
     return anno;
 };
 
+function selectNewPeak(d, i, newPeak) {
+    if (selected.leftClick !== -1 && selected.leftClick !== null && !newPeak.classed("peak_select")) {
+        d3.select("#peak"+selected.leftClick).attr("class", resetColor);
+    }
+    try {
+        connector.selectionChanged(i);
+    } catch (error) {
+        console.log(error);
+    }
+    selected.leftClick = i;
+    newPeak.classed("peak_select", true);
+    annoArea.attr("id", "anno_leftClick");
+    document.getElementById("anno_leftClick").innerText = annotation(d).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
+    showStructure(i);
+    hideHover();
+};
+
 /*
 takes the spectrum and the x-domain and returns a mouse event listener which
 calls the given callback with the peak index as argument whenever the
@@ -287,25 +331,22 @@ var mouseleaveGeneral = function() {
 };
 
 var mouseup = function(d, i) {
-    if (!pan.mousemoveCheck) {
-        let tmp = d3.select("#peak"+i);
+    if (!pan.mousemoveCheck) {     
         if ("structureInformation" in d || i === ms2Size-1) {
+            let tmp = d3.select("#peak"+i);
             if (selected.leftClick !== null && tmp.classed("peak_select")) { // cancel the selection
+                try {
+                    connector.selectionChanged(-1);
+                } catch (error) {
+                    console.log(error);
+                }
                 selected.leftClick = null;
                 tmp.classed("peak_select", false);
-                document.getElementById("anno_leftClick").innerText = "Left click to choose a purple peak...";
+                document.getElementById("anno_leftClick").innerText = "Left click to choose a green peak...";
                 annoArea.attr("id", "nothing");
                 showStructure(-1);
             } else { // create a new selection
-                if (selected.leftClick !== null && !tmp.classed("peak_select")) { //cancel the last selection
-                    d3.select("#peak"+selected.leftClick).attr("class", resetColor);
-                }
-                selected.leftClick = i;
-                tmp.classed("peak_select", true);
-                annoArea.attr("id", "anno_leftClick");
-                document.getElementById("anno_leftClick").innerText = annotation(d).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
-                showStructure(i);
-                hideHover();
+                selectNewPeak(d, i, tmp);
             }
         }
     }
@@ -316,19 +357,19 @@ var mouseup = function(d, i) {
 function zoomedX(xdomain_fix, duration, ...callbackUpdates) {
     const scale_tmp_x = d3.event.transform.rescaleX(x);
     const newDomain = d3.axisBottom(scale_tmp_x).scale().domain();
-    const x_tmp_min = (newDomain[0] < xdomain_fix[0]) ? xdomain_fix[0] : newDomain[0];
-    const x_tmp_max = (newDomain[1] > xdomain_fix[1]) ? xdomain_fix[1] : newDomain[1];
-    x.domain([x_tmp_min, x_tmp_max])
+    domain_tmp.xMin = (newDomain[0] < xdomain_fix[0]) ? xdomain_fix[0] : newDomain[0];
+    domain_tmp.xMax = (newDomain[1] > xdomain_fix[1]) ? xdomain_fix[1] : newDomain[1];
+    x.domain([domain_tmp.xMin, domain_tmp.xMax])
     xAxis.transition().duration(duration).call(d3.axisBottom(x));
     peakArea.select("#brushArea").node().__zoom = d3.zoomIdentity;
     callbackUpdates.forEach(function(callback) { callback(duration); });
 };
 
-function zoomedY(duration, ...callbackUpdates) {
+function zoomedY(minIntensity, duration, ...callbackUpdates) {
     const scale_tmp_y = d3.event.transform.rescaleY(y);
     const newDomain = d3.axisBottom(scale_tmp_y).scale().domain();
-    const y_tmp_max = (newDomain[1] > 1) ? 1 : newDomain[1];
-    y.domain([0, y_tmp_max])
+    domain_tmp.yMax = (newDomain[1] > 1) ? 1 : (newDomain[1] > minIntensity) ? newDomain[1] : minIntensity;
+    y.domain([0, domain_tmp.yMax])
     yAxis.transition().duration(duration).call(d3.axisLeft(y));
     svg.select("#yAxis").node().__zoom = d3.zoomIdentity;
     callbackUpdates.forEach(function(callback) { callback(duration); });
@@ -337,12 +378,14 @@ function zoomedY(duration, ...callbackUpdates) {
 var update_peaks = function(duration) {
     peakArea.selectAll(".peak").transition().duration(duration)
         .attr("x", function(d) { return x(d.mz)})
-        .attr("y", function(d) { return y(d.intensity); })
-        .attr("height", function(d) { return h - y(d.intensity); });
+        .attr("y", function(d) { return (y(d.intensity) < 0) ? 0 : y(d.intensity); })
+        .attr("height", function(d) { return (h-y(d.intensity)>=h) ? h : h-y(d.intensity); });
 };
 
 function setXdomain(newXmin, newXmax, duration) {
     x.domain([newXmin, newXmax])
+    domain_tmp.xMin = newXmin;
+    domain_tmp.xMax = newXmax;
     xAxis.transition().duration(duration).call(d3.axisBottom(x));
 };
 
@@ -354,7 +397,7 @@ function panX(selection, xdomain_fix, duration, ...callbackUpdates) {
             .on("mousemove", mousemovePan)
             .on("mouseup", mouseupPan);
         d3.event.preventDefault(); // disable text dragging
-        var x0, x1, d, newXmin, newXmax, x_tmp_min, x_tmp_max;
+        var x0, x1, d, newXmin, newXmax;
         function mousedownPan() {
             if (div.node().id === 'brushArea') {
                 pan.mouseupCheck = true;
@@ -367,10 +410,8 @@ function panX(selection, xdomain_fix, duration, ...callbackUpdates) {
                 d = x1 - x0;
                 if (Math.abs(d)>=pan.tolerance) {
                     pan.mousemoveCheck = true;
-                    x_tmp_min = x.domain()[0];
-                    x_tmp_max = x.domain()[1];
-                    newXmin = x_tmp_min-d*(x_tmp_max-x_tmp_min)/pan.step;
-                    newXmax = x_tmp_max-d*(x_tmp_max-x_tmp_min)/pan.step;
+                    newXmin = domain_tmp.xMin-d*(domain_tmp.xMax-domain_tmp.xMin)/pan.step;
+                    newXmax = domain_tmp.xMax-d*(domain_tmp.xMax-domain_tmp.xMin)/pan.step;
                     if (newXmin >= xdomain_fix[0] && newXmax <= xdomain_fix[1]) {
                         setXdomain(newXmin, newXmax, duration);
                         callbackUpdates.forEach(function(callback) { callback(duration); });
@@ -393,14 +434,17 @@ function brushendX(xdomain_fix, duration, ...callbackUpdates) {
     if(!extent){
         if (!idleTimeout) return idleTimeout = setTimeout(idled, 350);
         x.domain([xdomain_fix[0], xdomain_fix[1]])
+        domain_tmp.xMin = xdomain_fix[0];
+        domain_tmp.xMax = xdomain_fix[1];
         if (y !== undefined) { //temporarily only reset in spectrumPlot
             y.domain([0, 1])
+            domain_tmp.yMax = 1;
             yAxis.transition().duration(duration).call(d3.axisLeft(y));
         }
     } else {
-        let x_tmp_min = x.invert(extent[0]);
-        let x_tmp_max = x.invert(extent[1]);
-        x.domain([x_tmp_min, x_tmp_max])
+        domain_tmp.xMin = x.invert(extent[0]);
+        domain_tmp.xMax = x.invert(extent[1]);
+        x.domain([domain_tmp.xMin, domain_tmp.xMax])
         peakArea.select("#brushArea").call(brush.move, null);
     }
     xAxis.transition().duration(duration).call(d3.axisBottom(x));
@@ -518,18 +562,31 @@ function spectrumPlot(spectrum, structureView) {
     domain_fix.xMin = d3.min(mzs)-3;
     domain_fix.xMax = d3.max(mzs)+3;
     // X axis
-    x = d3.scaleLinear().range([0, w]).domain([domain_fix.xMin, domain_fix.xMax]);
+    if (domain_tmp.xMin === null || domain_tmp.xMax === null) {
+        x = d3.scaleLinear().range([0, w]).domain([domain_fix.xMin, domain_fix.xMax]);
+        domain_tmp.xMin = domain_fix.xMin;
+        domain_tmp.xMax = domain_fix.xMax;
+    } else {
+        x = d3.scaleLinear().range([0, w]).domain([domain_tmp.xMin, domain_tmp.xMax]);
+    }
     xAxis = svg.append("g")
         .attr("id", "xAxis")
         .attr("transform", "translate(0," + h + ")")
         .call(d3.axisBottom(x));
     // Y axis
-    y = d3.scaleLinear().domain([0, 1]).range([h, 0]);
+    if (domain_tmp.yMax === null) {
+        y = d3.scaleLinear().domain([0, 1]).range([h, 0]);
+        domain_tmp.yMax = 1; 
+    } else {
+        y = d3.scaleLinear().domain([0, domain_tmp.yMax]).range([h, 0]);
+    }
+    
     yAxis = svg.append("g").attr("id", "yAxis").call(d3.axisLeft(y));
     svg.selectAll(".label").attr("visibility", "visible");
     // zoom and pan
     zoom = d3.zoom().extent([[0,0],[w,h]]).on("zoom", function() { zoomedX([0, domain_fix.xMax], 100, update_peaks); });
-    var zoomY = d3.zoom().on("zoom", function() { zoomedY(100, update_peaks); });
+    const minIntensity = d3.min(spectrum.peaks.map(d => d.intensity));
+    var zoomY = d3.zoom().on("zoom", function() { zoomedY(minIntensity, 100, update_peaks); });
     svg.select("#yAxis").call(zoomY).on("dblclick.zoom", null);
     peakArea.select("#brushArea").call(zoom)
         .on("dblclick.zoom", null)
@@ -752,9 +809,13 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
         if (view.intensity) intensityArea = d3.select("#content").append('g').attr("id", "intensities").attr("clip-path", "url(#clip)");
     }
     // X axis
-    x = d3.scaleLinear()
-        .range([0, w-20])
-        .domain([x_default.min, x_default.max])
+    if (domain_tmp.xMin === null || domain_tmp.xMax === null) {
+        x = d3.scaleLinear().range([0, w-20]).domain([x_default.min, x_default.max]);
+        domain_tmp.xMin = x_default.min;
+        domain_tmp.xMax = x_default.max;
+    } else {
+        x = d3.scaleLinear().range([0, w-20]).domain([domain_tmp.xMin, domain_tmp.xMax]);
+    }
     if (viewStyle === "normal") {
         xAxis = svg.append("g")
             .attr("id", "xAxis")
@@ -886,6 +947,7 @@ function loadJSONData(data_spectra, data_highlight, data_svg) {
     if (data !== undefined) {
         d3.select("#container").html("");
         domain_fix = {xMin: null, xMax: null};
+        domain_tmp = {xMin: null, xMax: null, yMax: null};
         pan.mouseupCheck = false;
         pan.mousemoveCheck = false;
         selected = {leftClick: null, hover: null};
