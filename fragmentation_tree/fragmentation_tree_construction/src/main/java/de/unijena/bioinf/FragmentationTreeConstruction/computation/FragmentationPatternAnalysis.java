@@ -1281,7 +1281,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         setInitial();
         fillList(rootScorers, helper, document, dictionary, "rootScorers");
-        fillList(decompositionScorers, helper, document, dictionary, "fragmentScorers");
+        fillList(fragmentScorers, helper, document, dictionary, "fragmentScorers");
+        fillList(decompositionScorers, helper, document, dictionary, "decompositionScorers");
         fillList(fragmentPeakScorers, helper, document, dictionary, "peakScorers");
         fillList(peakPairScorers, helper, document, dictionary, "peakPairScorers");
         fillList(lossScorers, helper, document, dictionary, "lossScorers");
@@ -1303,8 +1304,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (DecompositionScorer s : rootScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "rootScorers", list);
         list = document.newList();
-        for (DecompositionScorer s : decompositionScorers) document.addToList(list, helper.wrap(document, s));
+        for (FragmentScorer s : fragmentScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "fragmentScorers", list);
+        list = document.newList();
+        for (DecompositionScorer s : decompositionScorers) document.addToList(list, helper.wrap(document, s));
+        document.addListToDictionary(dictionary, "decompositionScorers", list);
         list = document.newList();
         for (PeakScorer s : fragmentPeakScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "peakScorers", list);
