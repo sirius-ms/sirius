@@ -293,7 +293,7 @@ subprojects {
 
 
     task distImage(type: AppImage, group: 'distribution') {
-        dependsOn installDist, downloadManual, downloadCLP, downloadGLPK
+        dependsOn installDist,/* downloadManual,*/ downloadCLP, downloadGLPK
         if (OS.isWindows())
             dependsOn createAllExecutables
 
@@ -427,6 +427,7 @@ subprojects {
             f.setExecutable(true, false)
         }
     }
+    distImage.shouldRunAfter downloadManual
 
     task distImageZip(dependsOn: distImage, group: 'distribution') {
         doFirst {
