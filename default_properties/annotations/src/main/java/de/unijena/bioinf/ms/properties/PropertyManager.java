@@ -326,7 +326,7 @@ public class PropertyManager {
         try (InputStream in = Files.newInputStream(Paths.get(path))) {
             addPropertiesFromStream((b64 ? Base64.getDecoder().wrap(in) : in), path);
         } catch (IOException | ConfigurationException e) {
-            LoggerFactory.getLogger(PropertyManager.class).error("Could not load Sirius Credentials from: " + path);
+            LoggerFactory.getLogger(PropertyManager.class).error("Could not load Sirius Credentials from: " + path, e);
         }
     }
 }
