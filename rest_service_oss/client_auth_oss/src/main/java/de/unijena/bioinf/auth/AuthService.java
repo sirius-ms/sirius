@@ -90,7 +90,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
 
     protected final ReadWriteLock tokenLock = new ReentrantReadWriteLock();
 
-    private int minLifetime = 60;
+    private int minLifetime = 600;
 
 
     public AuthService(DefaultApi20 authAPI) {
