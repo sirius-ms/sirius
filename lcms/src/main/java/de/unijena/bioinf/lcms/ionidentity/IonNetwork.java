@@ -300,6 +300,9 @@ public class IonNetwork {
 
                 for (var p : lnks.entrySet()) {
                     // if we have more than 10 samples, we only add edges if we see a correlation in at least two samples
+                    if (((int)Math.round(node.mz*10) == 4872) || (int)Math.round(node.mz * 10.0D) == 5092) {
+                        System.out.println("DEBUG!");
+                    }
                     if (node.getFeature().getFeatures().keySet().size()<10 || p.getValue().size()>1) {
                         // now add the edge into the graph
                         final Edge edge = new Edge(node, link.associatedNode, Edge.Type.ADDUCT, p.getKey().getLeft(), p.getKey().getRight());

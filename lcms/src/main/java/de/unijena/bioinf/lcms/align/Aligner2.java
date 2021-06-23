@@ -20,18 +20,13 @@
 
 package de.unijena.bioinf.lcms.align;
 
-import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.ProcessedSample;
-import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
-import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
-import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
-import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -173,39 +168,9 @@ public class Aligner2 {
         if (!dev.inErrorWindow(f.getMass(),ion.getMass()) || !f.chargeStateIsNotDifferent(ion.getChargeState()) || Math.abs(f.rt - rightRt) > maxRetentionError())
             return 0f;
 
-        double peakShapeScore  = 0d;
-        double peakHeightScore = 0d;
-
-        double maxSigInt = 0d;
-        for (Map.Entry<ProcessedSample,FragmentedIon> x : f.features.entrySet()) {
-            maxSigInt+=x.getKey().ms1NoiseModel.getSignalLevel(x.getValue().getSegment().getApexScanNumber(),x.getValue().getMass());
-        }
-        maxSigInt /= f.features.size();
-        maxSigInt *= 100;
-
-        double intensityScore = 0d;
-
-        for (FragmentedIon ia : f.features.values()) {
-            peakShapeScore += ia.comparePeakWidthSmallToLarge(ion);
-            double h = Math.log(f.peakHeight / ion.getIntensity());
-            h*=h;
-            double w = Math.log(f.peakWidth / ion.getSegment().fwhm());
-            w *= w;
-            peakHeightScore += Math.max(0.05, Math.exp(-1.5*h*w));
-
-            //intensityScore += (Math.min(maxSigInt,ia.getIntensity())/maxSigInt) * (Math.min(maxSigInt,ion.getIntensity()))/maxSigInt;
-        }
-        //intensityScore /= f.features.size();
-
-        peakHeightScore /= f.features.size();
-        peakShapeScore /= f.features.size();
-        if (peakShapeScore >= 1) {
-            peakShapeScore = (float)new NormalDistribution(1d, 0.25).getErrorProbability(peakShapeScore);
-        } else peakShapeScore = 1f;
-
-        //final double gamma = 1d/(2*retentionTimeError*retentionTimeError);
-        final double retentionTimeScore = getRtScore(f.rt-rightRt);//Math.exp(-gamma * (f.rt - rightRt)*(f.rt - rightRt));
-
+        final double retentionTimeScore = getRtScore(f.rt-rightRt);
+        final double finalScore = retentionTimeScore;
+/*
         double finalScore;
         if (f.getRepresentativeIon()!=null && f.getRepresentativeIon().getMsMs()!=null && ion.getMsMs()!=null) {
             SpectralSimilarity cosineScore = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(dev)).cosineProduct(f.getRepresentativeIon().getMsMs(), ion.getMsMs());
@@ -225,6 +190,8 @@ public class Aligner2 {
         }
         if (finalScore < 1e-10) return 0f;
         //finalScore += intensityScore;
+
+ */
         return (float)finalScore;
     }
 
@@ -233,7 +200,7 @@ public class Aligner2 {
     }
 
     private double maxRetentionError() {
-        return 4*((LaplaceDistribution)retentionTimeErrorModel).getScale();
+        return 10*((LaplaceDistribution)retentionTimeErrorModel).getScale();
     }
 
     private double scoreIsotopes(FragmentedIon a, FragmentedIon b) {

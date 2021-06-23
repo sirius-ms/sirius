@@ -66,6 +66,9 @@ class GibbsSampler {
         int repetitions = 10000;
         int recordEvery = 10;
         int totalSamples = repetitions/recordEvery;
+        if (nodes.stream().anyMatch(x->(int)(10*x.mz) == 5092)) {
+            System.out.println("debug!");
+        }
         gibbsSampling(nodes, edges, posteriorCount, repetitions,recordEvery);
         // compute marginals
         for (int i=0; i < nodes.size(); ++i) {
@@ -122,6 +125,7 @@ class GibbsSampler {
         if (newType.isIonizationUnknown()) newScore += ionNode.priorForUnknownIonType;
         if (commonTypes.contains(newType)) newScore += IonNode.priorForCommonIonType;
         else newScore += IonNode.priorForUncommonIonType;
+        if (!newType.hasNeitherAdductNorInsource()) newScore += ionNode.priorForAdductsAndInsource;
         for (Edge e : ionNode.neighbours) {
             newScore += e.score *compatibilityScore(e);
         }
@@ -129,6 +133,7 @@ class GibbsSampler {
         if (oldType.isIonizationUnknown()) oldScore += ionNode.priorForUnknownIonType;
         if (commonTypes.contains(oldType)) oldScore += IonNode.priorForCommonIonType;
         else oldScore += IonNode.priorForUncommonIonType;
+        if (!oldType.hasNeitherAdductNorInsource()) oldScore += ionNode.priorForAdductsAndInsource;
         for (Edge e : ionNode.neighbours) {
             oldScore += e.score *compatibilityScore(e);
         }
@@ -151,6 +156,8 @@ class GibbsSampler {
             } else {
                 score += IonNode.priorForUncommonIonType;
             }
+            if (!ionNode.activeType().hasNeitherAdductNorInsource())
+                score += IonNode.priorForAdductsAndInsource;
         }
         // edge scores
         for (Edge e : edges) {

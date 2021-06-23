@@ -10,10 +10,15 @@ import java.util.TreeMap;
 public class AdductMassDifference {
 
     private final double mzDifference;
+    private final long key;
     private final PrecursorIonType[] leftTypes, rightTypes;
 
-    public static TreeMap<Double, AdductMassDifference> getAllDifferences(Set<PrecursorIonType> detectableIonTypes) {
-        final TreeMap<Double, AdductMassDifference> map = new TreeMap<>();
+    public static long getkey(double mzDiff) {
+        return Math.round(mzDiff*100);
+    }
+
+    public static TreeMap<Long, AdductMassDifference> getAllDifferences(Set<PrecursorIonType> detectableIonTypes) {
+        final TreeMap<Long, AdductMassDifference> map = new TreeMap<>();
         final PrecursorIonType[] types = detectableIonTypes.toArray(PrecursorIonType[]::new);
         Arrays.sort(types, Comparator.comparingDouble(PrecursorIonType::getModificationMass));
         for (int i=0; i < types.length; ++i) {
@@ -21,20 +26,25 @@ public class AdductMassDifference {
             for (int j=i+1; j < types.length; ++j) {
                 final PrecursorIonType r = types[j];
                 final double mzdiff = r.getModificationMass()-l.getModificationMass();
-                if (Math.abs(mzdiff)>0.1) {
-                    map.compute(mzdiff, (k,v)->v==null ? new AdductMassDifference(k, new PrecursorIonType[]{l}, new PrecursorIonType[]{r}) : v.extend(l,r));
+                final long key = getkey(mzdiff);
+                //
+
+
+                if (Math.abs(key)>getkey(0.1)) {
+                    map.compute(key, (k,v)->v==null ? new AdductMassDifference(mzdiff, new PrecursorIonType[]{l}, new PrecursorIonType[]{r}) : v.extend(l,r));
                 }
             }
         }
         // add inverted pairs, too
         final AdductMassDifference[] diffs = map.values().toArray(AdductMassDifference[]::new);
         for (AdductMassDifference d : diffs) {
-            map.put(-d.mzDifference, new AdductMassDifference(-d.mzDifference, d.rightTypes, d.leftTypes));
+            map.put(-d.key, new AdductMassDifference(-d.mzDifference, d.rightTypes, d.leftTypes));
         }
         return map;
     }
 
     AdductMassDifference(double mzDifference, PrecursorIonType[] leftTypes, PrecursorIonType[] rightTypes) {
+        this.key = getkey(mzDifference);
         this.mzDifference = mzDifference;
         this.leftTypes = leftTypes;
         this.rightTypes = rightTypes;
