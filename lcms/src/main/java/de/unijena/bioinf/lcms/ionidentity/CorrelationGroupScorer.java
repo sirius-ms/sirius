@@ -42,7 +42,7 @@ public class CorrelationGroupScorer {
         int start = small.findScanNumber(ionPair.getStartScanNumber()), ende = small.findScanNumber(ionPair.getEndScanNumber());
         if (start < 0 || ende < 0) {
             LoggerFactory.getLogger(CorrelationGroupScorer.class).error(
-                    "Two correlated ions do not enclose each other: " +
+                    "Two correlated ions do not enclose each other: [start = " + ionPair.getStartScanNumber() + "; end = " + ionPair.getEndScanNumber() + "]. " +
                             large.toString() + "\n and \n" + small.toString() +
                             "\n with segments \n" + ionPair.getLeftSegment().toString() + "\n and \n" + ionPair.getRightSegment());
         }

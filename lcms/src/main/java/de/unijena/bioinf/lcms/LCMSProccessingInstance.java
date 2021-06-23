@@ -20,7 +20,9 @@
 
 package de.unijena.bioinf.lcms;
 
+import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -32,6 +34,7 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
@@ -65,6 +68,9 @@ public class LCMSProccessingInstance {
     protected MemoryFileStorage ms2Storage;
     protected AtomicInteger numberOfMs2Scans = new AtomicInteger();
     protected volatile boolean centroided = true;
+    protected MassToFormulaDecomposer formulaDecomposer = new MassToFormulaDecomposer(
+            new ChemicalAlphabet(MolecularFormula.parseOrThrow("CHNOPS").elementArray())
+    );
 
     protected Set<PrecursorIonType> detectableIonTypes;
 
@@ -344,6 +350,8 @@ public class LCMSProccessingInstance {
     public static SimpleMutableSpectrum toIsotopeSpectrum(IonGroup ion, double ionMass) {
         return toIsotopeSpectrum(ion.getIsotopes(), ionMass);
     }
+
+
     @NotNull
     public static SimpleMutableSpectrum toIsotopeSpectrum(List<CorrelationGroup> ions, double ionMass) {
         final SimpleMutableSpectrum isotope = new SimpleMutableSpectrum();
@@ -540,10 +548,12 @@ public class LCMSProccessingInstance {
         clusterJob = new GapFilling().gapFillingInParallel(this, cluster.deleteRowsWithNoMsMs(), error.getScale(),cluster.estimatePeakShapeError(), Quality.GOOD);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
+
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Estimate parameters and start second alignment");
         clusterJob = new Aligner2(error).align(samples);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
+
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Recalibrate retention times");
         setPeakShapeQualities(manager, cluster);
         manager.submitJob(new Aligner(false).recalibrateRetentionTimes(samples, cluster, error.getScale())).takeResult();
@@ -554,10 +564,12 @@ public class LCMSProccessingInstance {
         clusterJob  = new Aligner2(error).align(samples);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult().deleteRowsWithNoMsMs();
+
         System.out.println("Start Gapfilling #2");System.out.flush();
         clusterJob = new GapFilling().gapFillingInParallel(this, cluster, error.getScale(), cluster.estimatePeakShapeError(), Quality.DECENT);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
+
 
         final double finalError = cluster.estimateError(true);
 
@@ -578,6 +590,7 @@ public class LCMSProccessingInstance {
         int after = cluster.getFeatures().length;
         System.out.println("Done."); System.out.flush();
         System.out.println("Total number of features is " + cluster.getFeatures().length);
+
         return cluster;
 
 
@@ -620,5 +633,9 @@ public class LCMSProccessingInstance {
 
     public SimpleSpectrum getMs2(Scan msMsScan) {
         return ms2Storage.getScan(msMsScan);
+    }
+
+    public MassToFormulaDecomposer getFormulaDecomposer() {
+        return formulaDecomposer;
     }
 }
