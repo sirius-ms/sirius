@@ -144,10 +144,21 @@ public class ChromatogramBuilder {
         if (concat.numberOfScans()<=2)
             return Optional.empty();
 
+        final TDoubleArrayList slopes = new TDoubleArrayList(concat.numberOfScans());
+        for (int k=1, n = concat.numberOfScans(); k < n; ++k) {
+            double i = concat.getIntensityAt(k), j = concat.getIntensityAt(k-1);
+            if (i>j) slopes.add(i/j);
+            else slopes.add(j/i);
+        }
+        slopes.sort();
+        final double slope66 = slopes.get((int)Math.floor(slopes.size()*0.66));
+
         // make statistics about deviations within
 
         Extrema extrema = detectExtrema(concat);
-
+        final int before = extrema.numberOfExtrema();
+        extrema.deleteExtremaOfSinglePeaks(slope66);
+        final int after = extrema.numberOfExtrema();
         for (int k=0, n=extrema.numberOfExtrema(); k < n; ++k) {
             if (!extrema.isMinimum(k)) {
                 final double intensity = extrema.extrema.get(k);

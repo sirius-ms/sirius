@@ -71,6 +71,20 @@ public class CanopusData implements FingerprintData<ClassyFireFingerprintVersion
         );
     }
 
+    public static String readString(BufferedReader br) {
+        StringBuilder buf = new StringBuilder();
+        String line = null;
+        while (true) {
+            try {
+                if (!((line=br.readLine())!=null)) break;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            buf.append(line).append('\n');
+        }
+        return buf.toString();
+    }
+
     public static void write(@NotNull Writer writer, @NotNull final CanopusData canopusData) throws IOException {
         final String[] header = new String[]{"relativeIndex", "absoluteIndex", "id", "name", "parentId", "description"};
         final String[] row = header.clone();

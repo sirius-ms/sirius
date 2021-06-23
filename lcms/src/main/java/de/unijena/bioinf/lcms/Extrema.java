@@ -275,4 +275,29 @@ public class Extrema {
         }
         return bestIndex;
     }
+
+    public void deleteExtremaOfSinglePeaks(double slopeThreshold) {
+        while (true) {
+            for (int k = 1; k < extrema.size() - 1; ++k) {
+                final double m = extrema.getQuick(k);
+                final double l = extrema.getQuick(k - 1), r = extrema.getQuick(k + 1);
+                if (m > l && m > r && ((indizes.getQuick(k + 1) - indizes.getQuick(k) <= 1 && k +2 < extrema.size() && extrema.getQuick(k+2) / m > slopeThreshold ) || (indizes.getQuick(k) - indizes.getQuick(k - 1) <= 1 && k > 1 && extrema.getQuick(k-2) / m > slopeThreshold))) {
+                    if (extrema.getQuick(k-1) < extrema.getQuick(k+1)) {
+                        extrema.removeAt(k);
+                        extrema.removeAt(k);
+                        indizes.removeAt(k);
+                        indizes.removeAt(k);
+                        k=Math.max(k-2,0);
+                    } else {
+                        extrema.removeAt(k-1);
+                        extrema.removeAt(k-1);
+                        indizes.removeAt(k-1);
+                        indizes.removeAt(k-1);
+                        k=Math.max(k-2,0);
+                    }
+                }
+            }
+            break;
+        }
+    }
 }

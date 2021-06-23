@@ -21,8 +21,6 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
-import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.canopus.Canopus;
 import de.unijena.bioinf.canopus.CanopusResult;
@@ -47,12 +45,14 @@ public class CanopusJJob extends FingerprintDependentJJob<CanopusResult> {
     protected CanopusResult compute() throws Exception {
         progressInfo("Predict compound categories for " + formula + ": \nid\tname\tprobability");
         final ProbabilityFingerprint fingerprint = canopus.predictFingerprint(formula, fp, Canopus.Predictable.ClassyFire);
+        /*
         for (FPIter category : fingerprint.iterator()) {
             if (category.getProbability() >= 0.333) {
                 ClassyfireProperty prop = ((ClassyfireProperty) category.getMolecularProperty());
                 progressInfo(prop.getChemontIdentifier() + "\t" + prop.getName() + "\t" + ((int) Math.round(100d * category.getProbability())) + " %");
             }
         }
+         */
 
         return new CanopusResult(fingerprint);
     }

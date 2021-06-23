@@ -65,7 +65,7 @@ public class CorrelatedPeakDetector {
 
 
     protected Set<PrecursorIonType> detectableIonTypes;
-    protected Map<Double, AdductMassDifference> possibleIonPairsPositive, possibleIonPairsNegative;
+    protected Map<Long, AdductMassDifference> possibleIonPairsPositive, possibleIonPairsNegative;
 
     public CorrelatedPeakDetector(Set<PrecursorIonType> detectableIonTypes) {
         this.detectableIonTypes = detectableIonTypes;
@@ -496,6 +496,7 @@ public class CorrelatedPeakDetector {
             return Optional.empty();
         }
 
+
         if (main.getIntensityAt(mainSegment.getApexIndex()) > mightBeCorrelated.getIntensityAt(otherSegment.getApexIndex())) {
             return Optional.ofNullable(correlateBiggerToSmaller(main, mainSegment, mightBeCorrelated, otherSegment));
         } else
@@ -509,12 +510,15 @@ public class CorrelatedPeakDetector {
 
         // find index that is above 25% intensity of main peak
         final Range<Integer> t25 = smallSegment.calculateFWHMMinPeaks(0.15d, 3);
-
+        // if small segment is outside boundary of large segment, the peaks do not correlate
 
         for (int i = t25.lowerEndpoint(); i <= t25.upperEndpoint(); ++i) {
             int j = large.findScanNumber(small.getScanNumberAt(i));
             if (j >= 0) a.add(large.getIntensityAt(j));
-            else a.add(0d);
+            else {
+                return null;
+                //a.add(0d);
+            }
             b.add(small.getIntensityAt(i));
         }
         if (a.size() < 3) return null;

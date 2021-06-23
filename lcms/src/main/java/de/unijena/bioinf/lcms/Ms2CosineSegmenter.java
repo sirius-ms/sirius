@@ -67,6 +67,11 @@ public class Ms2CosineSegmenter {
                         final double mz = spec.getMzAt(i)-s.getPrecursor().getMass();
                         if (mz>=17.5)
                             break; // we often see H2O gains...
+                        if (mz > 3) {
+                            if (!instance.getFormulaDecomposer().maybeDecomposable(mz-0.0004, mz+0.0004)) {
+                                continue;
+                            }
+                        }
                         maxMass = Math.max(maxMass, mz);
                         if (maxMass>10) {
                             LoggerFactory.getLogger(getClass()).debug(")/");

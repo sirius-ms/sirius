@@ -22,10 +22,7 @@ package de.unijena.bioinf.model.lcms;
 
 import com.google.common.collect.Range;
 
-import java.util.HashSet;
-import java.util.NavigableMap;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public interface ChromatographicPeak {
 
@@ -122,6 +119,19 @@ public interface ChromatographicPeak {
         protected final ChromatographicPeak peak;
         protected final int startIndex, endIndex, apex;
         protected final int fwhmStart, fwhmEnd;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Segment segment = (Segment) o;
+            return apex == segment.apex && peak.equals(segment.peak);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(peak, apex);
+        }
 
         Segment(ChromatographicPeak peak, int startIndex, int apex, int endIndex) {
             this.peak = peak;

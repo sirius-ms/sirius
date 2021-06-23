@@ -37,6 +37,20 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
     private double correlation;
     public TreeMap<Integer, Segment> segments;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MutableChromatographicPeak that = (MutableChromatographicPeak) o;
+        final ScanPoint u = scanPoints.get(apex), v = that.scanPoints.get(that.apex);
+        return u.equals(v);
+    }
+
+    @Override
+    public int hashCode() {
+        return scanPoints.get(apex).hashCode();
+    }
+
     public MutableChromatographicPeak(ChromatographicPeak peak) {
         this.scanPoints = new ArrayList<>();
         for (int i=0; i < peak.numberOfScans(); ++i) scanPoints.add(peak.getScanPointAt(i));

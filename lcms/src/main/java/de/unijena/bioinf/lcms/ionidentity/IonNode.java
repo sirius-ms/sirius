@@ -37,8 +37,9 @@ class IonNode {
     protected int activeAssignment = 0;
 
     protected float priorForUnknownIonType;
-    protected static final float priorForUncommonIonType = -1;
+    protected static final float priorForUncommonIonType = -2;
     protected static final float priorForCommonIonType = 0;
+    protected static final float priorForAdductsAndInsource = -2;
 
     public IonNode(AlignedFeatures feature) {
         this.mz = feature.getMass();
