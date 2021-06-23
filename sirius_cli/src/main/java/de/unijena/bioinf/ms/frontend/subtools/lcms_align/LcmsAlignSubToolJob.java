@@ -122,6 +122,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         updateProgress(0, 2, 0, "Assign adducts.");
         i.detectAdductsWithGibbsSampling(alignment);
         updateProgress(0, 2, 1, "Merge features.");
+        alignment = alignment.deleteDuplicateRows();
         final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(alignment);
         logInfo(consensusFeatures.length + "Feature left after merging.");
 
