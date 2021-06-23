@@ -25,21 +25,24 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.StorageOptions;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 
 public class GCSUtils {
     public static final String URL_PREFIX = "gc://";
 
     public static StorageOptions storageOptions(Path credentials) {
-        try {
-            FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(
-                    ServiceAccountCredentials.fromStream(Files.newInputStream(credentials)));
+        try (InputStream stream = Files.newInputStream(credentials)){
+            FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(ServiceAccountCredentials
+                    .fromStream((PropertyManager.isB64Credentials() ? Base64.getDecoder().wrap(stream) : stream)));
             return StorageOptions.newBuilder().setCredentials(credentialsProvider.getCredentials()).build();
         } catch (IOException e) {
-            throw new RuntimeException("Could not found google cloud credentials json at: " + credentials.toString());
+            throw new RuntimeException("Could not found google cloud credentials json at: " + credentials.toString(), e);
         }
     }
 
