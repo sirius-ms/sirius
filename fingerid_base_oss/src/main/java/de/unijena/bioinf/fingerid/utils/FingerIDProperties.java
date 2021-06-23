@@ -71,6 +71,9 @@ public class FingerIDProperties {
     }
 
     public static Path gcsChemDBCredentialsPath() {
-        return Path.of(System.getProperty("user.home")).resolve(gcsChemDBCredentials());
+        Path p = Path.of(gcsChemDBCredentials());
+        if (p.isAbsolute())
+            return p;
+        return Path.of(System.getProperty("user.home")).resolve(p);
     }
 }
