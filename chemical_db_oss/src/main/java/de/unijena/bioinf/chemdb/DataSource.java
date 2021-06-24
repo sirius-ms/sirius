@@ -104,7 +104,7 @@ public enum DataSource {
     }
 
     public static boolean isBioOnly(long flags) {
-        return flags != 0 && (flags & BIO.flag) == flags;
+        return flags != 0 && (flags & BIO.flag) != 0;
     }
 
     public boolean isBioOnly() {
