@@ -37,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Properties;
@@ -318,13 +319,16 @@ public class PropertyManager {
         return p;
     }
 
+    public static boolean isB64Credentials(){
+        return PropertyManager.getBoolean("de.unijena.bioinf.ms.credentials.base64", null, false);
+    }
+
     public static void loadSiriusCredentials() {
         final String path = getProperty("de.unijena.bioinf.ms.credentials.path", null, "$USER_HOME/sirius.credentials").replace("$USER_HOME", System.getProperty("user.home"));
-        try {
-            Path p = Paths.get(path);
-            addPropertiesFromFile(p);
+        try (InputStream in = Files.newInputStream(Paths.get(path))) {
+            addPropertiesFromStream((isB64Credentials() ? Base64.getDecoder().wrap(in) : in), path);
         } catch (IOException | ConfigurationException e) {
-            LoggerFactory.getLogger(PropertyManager.class).error("Could not load Sirius Credentials from: " + path);
+            LoggerFactory.getLogger(PropertyManager.class).error("Could not load Sirius Credentials from: " + path, e);
         }
     }
 }
