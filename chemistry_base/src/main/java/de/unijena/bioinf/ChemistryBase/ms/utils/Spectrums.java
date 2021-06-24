@@ -691,6 +691,7 @@ public class Spectrums {
      * @return
      */
     public static PrecursorIonType[] guessIonization(Spectrum<Peak> ms1, double ionMass, Deviation deviation, PrecursorIonType[] ionTypes) {
+        if (ionTypes.length==0) return ionTypes;
         SimpleMutableSpectrum spectrum = new SimpleMutableSpectrum(ms1);
         sortSpectrumByMass(spectrum);
 
