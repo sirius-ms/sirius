@@ -86,10 +86,10 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {
             props.setProperty("de.unijena.bioinf.sirius.fingerID.cache", dir.toAbsolutePath().toString());
-            Jobs.runInBackgroundAndLoad(MF, () -> {
-                //todo do we need to invalidate chache somehow
+            //todo do we need to invalidate chache somehow
+            /*Jobs.runInBackgroundAndLoad(MF, () -> {
                 System.out.println("WaRN Check if we have to do something???");
-            });
+            });*/
         } else {
             LoggerFactory.getLogger(this.getClass()).warn("Specified path is not a directory (" + dir.toString() + "). Directory not Changed!");
         }
