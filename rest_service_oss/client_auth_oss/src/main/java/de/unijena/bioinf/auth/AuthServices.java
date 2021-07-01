@@ -60,7 +60,6 @@
 
 package de.unijena.bioinf.auth;
 
-import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import de.unijena.bioinf.auth.auth0.Auth0Api;
 import de.unijena.bioinf.babelms.utils.Base64;
@@ -127,19 +126,10 @@ public class AuthServices {
     @Nullable
     public static DecodedJWT getIDToken(AuthService service)  {
         try {
-            return decode(service);
+            return service.refreshIfNeeded().getDecodedIdToken();
         } catch (LoginException e) {
             LoggerFactory.getLogger(AuthServices.class).warn("No login Found: " + e.getMessage());
             return null;
         }
     }
-
-    public static DecodedJWT decode(AuthService service) throws LoginException {
-        return decode(service.refreshIfNeeded().getOpenIdToken());
-    }
-
-    public static DecodedJWT decode(String token) {
-        return JWT.decode(token);
-    }
-
 }
