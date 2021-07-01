@@ -52,6 +52,7 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
 
     private void buildPanel() {
         webserverURL = new JTextField(props.getProperty("de.unijena.bioinf.fingerid.web.host", PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host")));
+        webserverURL.setEditable(false);
         addNamed("Web service URL", webserverURL);
         addVerticalGlue();
 
