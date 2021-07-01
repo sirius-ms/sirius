@@ -121,7 +121,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         add(resultPanel, 15, true);
 
         add(new JXTitledSeparator("Webservice registration"), 15, false);
-        add(new JLabel("<html>Registered to: <b> " + PropertyManager.getProperty("de.unijena.bioinf.sirius.registration",null,"Community Edition (Non commercial use only!)") + " </b></html>"), 5, false);
+        add(new JLabel("<html>Licensed to: <b> " + PropertyManager.getProperty("de.unijena.bioinf.sirius.registration",null,"Community Edition (Non commercial use only!)") + " </b></html>"), 5, false);
         //todo registration info has to be load from server.
 
         revalidate();
