@@ -20,9 +20,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.login;
 
-import com.github.scribejava.apis.openid.OpenIdJsonTokenExtractor;
-import com.github.scribejava.apis.openid.OpenIdOAuth2AccessToken;
-import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -31,6 +29,7 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
@@ -84,7 +83,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                         service.login(username, password);
                         AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
                         if (showProfile)
-                            showProfile(service.refreshIfNeeded());
+                            showProfile(AuthServices.getIDToken(service));
                     } catch (ExecutionException | InterruptedException | IOException e) {
                         LoggerFactory.getLogger(getClass()).error("Could not login to Authentication Server!", e);
                     }
@@ -95,17 +94,23 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             } else if (showProfile) {
                 try {
                     AuthService service = AuthServices.createDefault(ApplicationCore.TOKEN_FILE);
-                    showProfile(service.refreshIfNeeded());
+                    showProfile(AuthServices.getIDToken(service));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
         }
 
-        private void showProfile(OpenIdOAuth2AccessToken token) {
-            System.out.println(token.getRawResponse());
+        private void showProfile(@Nullable DecodedJWT decoded) {
 
-            //todo show information from extracted token
+            System.out.println("####################### Login Info #######################");
+            if (decoded != null) {
+                System.out.println("Logged in as: " + decoded.getClaim("name"));
+                System.out.println("Token expires at: " + decoded.getExpiresAt().toString());
+            }else {
+                System.out.println("Not logged in.");
+            }
+            System.out.println("##########################################################");
         }
     }
 }
