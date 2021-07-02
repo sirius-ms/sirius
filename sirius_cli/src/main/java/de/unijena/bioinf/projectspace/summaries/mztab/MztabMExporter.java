@@ -150,7 +150,10 @@ public class MztabMExporter implements Summarizer {
             mztab.addSmallMoleculeFeatureItem(smfItem);
 
 
-            final List<SpectraRef> spectraRefs = extractReferencesAnRuns(exp);
+            final List<SpectraRef> spectraRefs = extractReferencesAndRuns(exp);
+
+            if (spectraRefs == null || spectraRefs.isEmpty() || spectraRefs.contains(null))
+                System.out.println("WARNING");
 
             final SmallMoleculeEvidence smeSiriusItem = buildSiriusFormulaIDSMEItem(exp, bestHitSource, bestHitSourceRank, smfItem);
             smeSiriusItem.setSpectraRef(spectraRefs);
@@ -366,8 +369,8 @@ public class MztabMExporter implements Summarizer {
         return mtd;
     }
 
-    public List<SpectraRef> extractReferencesAnRuns(@NotNull Ms2Experiment exp) {
-        List<Spectrum> specs = new ArrayList<>(exp.getMs2Spectra().size() + exp.getMs1Spectra().size() + 1);
+    public List<SpectraRef> extractReferencesAndRuns(@NotNull Ms2Experiment exp) {
+        List<Spectrum<?>> specs = new ArrayList<>(exp.getMs2Spectra().size() + exp.getMs1Spectra().size() + 1);
         specs.add(exp.getMergedMs1Spectrum());
         specs.addAll(exp.getMs1Spectra());
         specs.addAll(exp.getMs2Spectra());
@@ -428,7 +431,7 @@ public class MztabMExporter implements Summarizer {
 
 
             return ref;
-        }).collect(Collectors.toCollection(ArrayList::new));
+        }).filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
     }
 
     protected static String makeFormulaIdentifier(Ms2Experiment ex, FormulaResult result) {
