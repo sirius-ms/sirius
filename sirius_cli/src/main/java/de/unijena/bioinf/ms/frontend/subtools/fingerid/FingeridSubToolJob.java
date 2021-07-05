@@ -146,7 +146,7 @@ public class FingeridSubToolJob extends InstanceJob {
                     tanimotoJobs.add(new BasicJJob<>() {
                         @Override
                         protected Double compute() {
-                            double t = Tanimoto.probabilisticTanimoto(fp, candidate.getFingerprint()).expectationValue();
+                            double t = Tanimoto.nonProbabilisticTanimoto(fp, candidate.getFingerprint());
                             candidate.setTanimoto(t);
                             return t;
                         }
