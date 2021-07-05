@@ -9,7 +9,7 @@ pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500},
 margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30},
 decimal_place = 4,
 // MS2 + structure
-strucArea, annoArea, ms2Size,
+strucArea, annoArea, ms2Size, mzs, mzsMap,
 selected = {leftClick: null, hover: null},
 svg_str = null, basic_structure = null,
 anno_str = [],
@@ -61,7 +61,7 @@ document.onkeydown = function(e) {
                 svg.select("#peak"+selected.leftClick).classed("peak_hover", true);
             }
 //            try {
-//                connector.selectionChanged(new_selected);
+//                connector.selectionChanged(mzs(new_selected));
 //            } catch (error) {
 //                console.log(error);
 //            }
@@ -103,9 +103,10 @@ function clear() {
     anno_str = [];
 };
 
-function setSelection(i) {
+function setSelection(mz) {
+    const i = mzsMap.get(mz);
     const d = data.spectra[0].peaks[i];
-    if (selected.leftClick !== i && "structureInformation" in d) {
+    if (d !== undefined && selected.leftClick !== i && "structureInformation" in d) {
         selectNewPeak(d, i, d3.select("#peak"+i));
         const mz = d.mz;
         if (domain_tmp.xMin !== domain_fix.xMin || domain_tmp.xMax !== domain_fix.xMax) {
@@ -256,7 +257,7 @@ function selectNewPeak(d, i, newPeak) {
         d3.select("#peak"+selected.leftClick).attr("class", resetColor);
     }
 //    try {
-//        connector.selectionChanged(i);
+//        connector.selectionChanged(mzs(i));
 //    } catch (error) {
 //        console.log(error);
 //    }
@@ -553,7 +554,8 @@ function spectrumPlot(spectrum, structureView) {
         svg.select("#clipArea").attr("width", w);
     };
 
-    let mzs = spectrum.peaks.map(d => d.mz);
+    mzs = spectrum.peaks.map(d => d.mz);
+    mzsMap = new Map(mzs.map((mz, i) => [mz, i]));
     ms2Size = mzs.length;
     if (structureView) {
         initStructureView();
