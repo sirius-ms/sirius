@@ -38,17 +38,17 @@ public class LCMSWebview extends JFXPanel {
         this.delayAfterHTMLLoading = new ArrayList<>();
         taskList.runJFXLater(()-> {
             this.webView = new WebView();
-            System.out.println("A");
+//            System.out.println("A");
             setScene(new Scene(webView));
-            System.out.println("B");
+//            System.out.println("B");
             final String htmlContent = getHTMLContent();
-            System.out.println("C");
+//            System.out.println("C");
             webView.getEngine().setJavaScriptEnabled(true);
-            System.out.println("D");
+//            System.out.println("D");
             webView.getEngine().loadContent(htmlContent,"text/html");
-            System.out.println("E");
+//            System.out.println("E");
             webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
-                System.out.println(oldState + " -> " + newState);
+//                System.out.println(oldState + " -> " + newState);
                 if (newState == Worker.State.SUCCEEDED) {
                     lock.lock();
                     ((JSObject)webView.getEngine().executeScript("window")).setMember("console", new Console());
