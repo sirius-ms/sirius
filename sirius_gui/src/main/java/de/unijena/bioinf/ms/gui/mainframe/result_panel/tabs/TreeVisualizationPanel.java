@@ -74,8 +74,9 @@ public class TreeVisualizationPanel extends JPanel
 
     //    FormulaResultBean sre;
     FTree ftree;
-    TreeViewerBrowser browser;
+    public TreeViewerBrowser browser;
     TreeViewerBridge jsBridge;
+    TreeViewerConnector jsConnector;
     JToolBar toolBar;
     public JComboBox<String> presetBox; // accessible from TreeViewerSettings
     JSlider scaleSlider;
@@ -151,6 +152,7 @@ public class TreeVisualizationPanel extends JPanel
         this.browser = new WebViewTreeViewer();
 
         this.jsBridge = new TreeViewerBridge(browser);
+        this.jsConnector = new TreeViewerConnector();
 
         browser.addJS("d3.min.js");
         browser.addJS("d3-colorbar.js");
@@ -163,7 +165,7 @@ public class TreeVisualizationPanel extends JPanel
         this.setVisible(true);
         HashMap<String, Object> bridges = new HashMap<String, Object>() {{
             put("config", localConfig);
-            put("connector", new TreeViewerConnector());
+            put("connector", jsConnector);
         }};
         browser.load(bridges);
         for (Component comp : toolBar.getComponents())
@@ -537,5 +539,9 @@ public class TreeVisualizationPanel extends JPanel
 
     public TreeConfig getLocalConfig() {
         return localConfig;
+    }
+
+    public TreeViewerConnector getConnector(){
+        return jsConnector;
     }
 }
