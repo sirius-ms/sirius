@@ -60,11 +60,11 @@ document.onkeydown = function(e) {
             if (selected.leftClick === selected.hover) {
                 svg.select("#peak"+selected.leftClick).classed("peak_hover", true);
             }
-//            try {
-//                connector.selectionChanged(mzs(new_selected));
-//            } catch (error) {
-//                console.log(error);
-//            }
+           try {
+               connector.selectionChanged(mzs[new_selected]);
+           } catch (error) {
+               console.log(error);
+           }
             selected.leftClick = new_selected;
             svg.select("#peak"+selected.leftClick).classed("peak_select", true);
             if (domain_tmp.xMin !== domain_fix.xMin || domain_tmp.xMax !== domain_fix.xMax) {
@@ -256,11 +256,11 @@ function selectNewPeak(d, i, newPeak) {
     if (selected.leftClick !== -1 && selected.leftClick !== null && !newPeak.classed("peak_select")) {
         d3.select("#peak"+selected.leftClick).attr("class", resetColor);
     }
-//    try {
-//        connector.selectionChanged(mzs(i));
-//    } catch (error) {
-//        console.log(error);
-//    }
+   try {
+       connector.selectionChanged(mzs[i]);
+   } catch (error) {
+       console.log(error);
+   }
     selected.leftClick = i;
     newPeak.classed("peak_select", true);
     annoArea.attr("id", "anno_leftClick");
@@ -336,11 +336,11 @@ var mouseup = function(d, i) {
         if ("structureInformation" in d || i === ms2Size-1) {
             let tmp = d3.select("#peak"+i);
             if (selected.leftClick !== null && tmp.classed("peak_select")) { // cancel the selection
-//                try {
-//                    connector.selectionChanged(-1);
-//                } catch (error) {
-//                    console.log(error);
-//                }
+               try {
+                   connector.selectionChanged(-1);
+               } catch (error) {
+                   console.log(error);
+               }
                 selected.leftClick = null;
                 tmp.classed("peak_select", false);
                 document.getElementById("anno_leftClick").innerText = "Left click to choose a purple peak...";
