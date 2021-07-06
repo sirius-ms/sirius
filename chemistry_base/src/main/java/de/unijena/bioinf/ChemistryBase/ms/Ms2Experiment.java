@@ -24,7 +24,7 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
-import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.AnnotatedWithDefaults;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -38,7 +38,7 @@ import java.util.Optional;
  * A Ms2Experiment is a MS/MS measurement of a *single* compound. If there are multiple compounds measured in your
  * spectrum, clean up and separate them into multiple Ms2Experiment instances, too!
  */
-public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotation>, DataAnnotation {
+public interface Ms2Experiment extends Cloneable, AnnotatedWithDefaults<Ms2ExperimentAnnotation>, DataAnnotation {
 
 
     URL getSource();
@@ -171,6 +171,4 @@ public interface Ms2Experiment extends Cloneable, Annotated<Ms2ExperimentAnnotat
      * The implementation might choose if the cloning is deep or shallow
      */
     Ms2Experiment clone();
-
-
 }
