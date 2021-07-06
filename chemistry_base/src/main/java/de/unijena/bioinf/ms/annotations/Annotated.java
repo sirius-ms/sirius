@@ -94,19 +94,6 @@ public interface Annotated<A extends DataAnnotation> {
     }
 
     /**
-     * @return annotation value for the given class/key or the  default value given {@link PropertyManager}.DEFAULTS
-     * The method will fail to provide a default value may fail if the given klass is not instantiatable via
-     * {@link ParameterConfig}
-     *
-     *
-     * TODO: only Ms2Experiment has "default" annotations. So this method should removed
-     */
-    @Deprecated
-    default <T extends A> T getAnnotationOrDefault(Class<T> klass) {
-        return getAnnotation(klass, () -> annotations().autoInstanceSupplier(klass));
-    }
-
-    /**
      * @return true if the given annotation is present
      */
     default <T extends A> boolean hasAnnotation(Class<T> klass) {
@@ -142,7 +129,7 @@ public interface Annotated<A extends DataAnnotation> {
 
     /**
      * Compute the annotation with the given key if it is absent.
-     * Return the current value otherwise //todo
+     * Return the current value otherwise.
      *
      * @return true if there was no previous value for this annotation
      */
@@ -151,15 +138,6 @@ public interface Annotated<A extends DataAnnotation> {
             T newVal = defaultValueSupplier.get();
             return fireAnnotationChange(null, newVal);
         });
-    }
-
-    /**
-     * Set the annotation with the given key //todo
-     *
-     * @return true if there was no previous value for this annotation
-     */
-    default <T extends A> T computeAnnotationIfAbsent(@NotNull final Class<T> klass) {
-        return computeAnnotationIfAbsent(klass, () -> annotations().autoInstanceSupplier(klass));
     }
 
 
@@ -330,16 +308,6 @@ public interface Annotated<A extends DataAnnotation> {
         public Annotations<Annotation> clone() {
             final Map<Class<Annotation>, Annotation> cloneMap = new ConcurrentHashMap<>(map);
             return new Annotations<>(cloneMap);
-        }
-
-        private <T extends Annotation> T autoInstanceSupplier(Class<T> klass) {
-            if (PropertyManager.DEFAULTS.isInstantiatableWithDefaults(klass))
-                return PropertyManager.DEFAULTS.createInstanceWithDefaults(klass);
-            try {
-                return klass.newInstance();
-            } catch (InstantiationException | IllegalAccessException e) {
-                throw new IllegalArgumentException(klass.getName() + " cannot be instantiated automatically");
-            }
         }
 
         @NotNull
