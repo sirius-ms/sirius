@@ -11,7 +11,7 @@ include ':fragmentation_tree'
         include ":fragmentation_tree:FastFragmentationTreeAlign:FastTreeAlign"
         include ":fragmentation_tree:FastFragmentationTreeAlign:FTAlignmentTool"
         include ":fragmentation_tree:FastFragmentationTreeAlign:FTBlast"
-        include ":fragmentation_tree:FastFragmentationTreeAlign:ClassicTreeAlign"
+//        include ":fragmentation_tree:FastFragmentationTreeAlign:ClassicTreeAlign"
         include ":fragmentation_tree:FastFragmentationTreeAlign:AlignmentViewer"
     include 'fragmentation_tree:ft_glpk'
     include 'fragmentation_tree:ft_cplex'
