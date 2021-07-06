@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.InSilicoSelectionBox;
 import de.unijena.bioinf.ms.gui.ms_viewer.InsilicoFragmenter;
+import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewerConnector;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.SiriusIsotopePattern;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
@@ -76,7 +77,7 @@ public class SpectraVisualizationPanel
 
 	private InsilicoFragmenter fragmenter;
 
-	private WebViewSpectraViewer browser;
+    public WebViewSpectraViewer browser;
 
 	public SpectraVisualizationPanel(boolean annotationBox) {
 		this(MS1_DISPLAY, annotationBox);
@@ -117,6 +118,10 @@ public class SpectraVisualizationPanel
 		this.add(this.browser, BorderLayout.CENTER);
 		this.setVisible(true);
 	}
+
+    public SpectraViewerConnector getConnector(){
+        return browser.getConnector();
+    }
 
 	@Override
 	public void actionPerformed(ActionEvent e) {

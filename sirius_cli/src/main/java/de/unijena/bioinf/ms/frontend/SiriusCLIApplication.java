@@ -99,7 +99,8 @@ public class SiriusCLIApplication {
                 ApplicationCore.WEB_API.getAuthService().close();
                 ApplicationCore.DEFAULT_LOGGER.info("AuthService closed");
             } catch (IOException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(SiriusCLIApplication.class).warn("Could not clean up Server data! " + e.getMessage());
+                LoggerFactory.getLogger(SiriusCLIApplication.class).debug("Could not clean up Server data!", e);
             }
         };
     }
