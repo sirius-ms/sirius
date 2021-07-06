@@ -619,7 +619,7 @@ public class Sirius {
             try {
                 final ProcessedInput input = preprocessForMs2Analysis(experiment);
                 if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
-                    profile.isotopePatternAnalysis.computeAndScoreIsotopePattern(input);
+                    getMs1Analyzer().computeAndScoreIsotopePattern(input);
                 final FasterTreeComputationInstance instance = getTreeComputationImplementation(getMs2Analyzer(), input);
                 instance.addPropertyChangeListener(JobProgressEvent.JOB_PROGRESS_EVENT, evt -> updateProgress(0, 105,  ((Number)evt.getNewValue()).intValue()));
                 submitSubJob(instance);
@@ -637,6 +637,13 @@ public class Sirius {
          * resolves adduct, current trees are still only based on ionizations without adducts
          */
         private List<IdentificationResult<SiriusScore>> createIdentificationResults(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
+            //clear scores for none MS/MS results
+            if (experiment.getMs2Spectra().isEmpty()){
+                logWarn("Instance has no MS/MS data. Tree score will be unreliable. Setting TreeScore to 0");
+                for (FTree ftree : fr.getResults())
+                    ftree.setTreeWeight(new FTreeMetricsHelper(ftree).getIsotopeMs1Score());
+            }
+
             List<IdentificationResult<SiriusScore>> irs = fr.getResults().stream()
                     .map(tree -> new IdentificationResult<>(tree, new SiriusScore(FTreeMetricsHelper.getSiriusScore(tree))))
                     .sorted(Comparator.reverseOrder())
@@ -646,7 +653,7 @@ public class Sirius {
 
             if (!ionType.isIonizationUnknown() && (!ionType.getAdduct().isEmpty() || ionType.isIntrinsicalCharged())) {
                 //resolve in case it has an adduct or is intrinsically charged (for the 2nd it only replaces the PrecursorIonType)
-                logDebug("Compound has set a fixed Adduct: " + ionType.toString() + ". Transforming trees to Adduct if necessary.");
+                logDebug("Instance has set a fixed Adduct: " + ionType.toString() + ". Transforming trees to Adduct if necessary.");
                 irs = irs.stream()
                         .filter(idr -> idr.getMolecularFormula().isSubtractable(ionType.getAdduct()))
                         .map(idr -> IdentificationResult.withPrecursorIonType(idr, ionType))

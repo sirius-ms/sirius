@@ -39,11 +39,20 @@ import java.util.stream.Collectors;
 
 public class JenaMsWriter implements DataWriter<Ms2Experiment> {
 
+    private final boolean anonymize;
+
+    public JenaMsWriter() {
+        this(false);
+    }
+
+    public JenaMsWriter(boolean anonymize) {
+        this.anonymize = anonymize;
+    }
 
     @Override
     public void write(BufferedWriter writer, Ms2Experiment data) throws IOException {
         writer.write(">compound ");
-        writer.write(data.getName() == null ? "unknown" : data.getName());
+        writer.write(data.getName() == null || anonymize ? "unknown" : data.getName());
         writer.newLine();
         writeIfAvailable(writer, ">formula", data.getMolecularFormula());
         writeIf(writer, ">parentmass", String.valueOf(data.getIonMass()), data.getIonMass() != 0d);
@@ -60,10 +69,14 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
         final MsInstrumentation instrumentation = data.getAnnotation(MsInstrumentation.class, () -> MsInstrumentation.Unknown);
         writer.write(">instrumentation " + instrumentation.description());
         writer.newLine();
-        writeIfAvailable(writer, ">source", data.getSource());
-        if (!data.getAnnotation(Tagging.class, Tagging::none).isEmpty()) {
-            writer.write(">tags " + data.getAnnotation(Tagging.class, Tagging::none).stream().collect(Collectors.joining(",")));
-            writer.newLine();
+
+        if (!anonymize) {
+            writeIfAvailable(writer, ">source", data.getSource());
+
+            if (!data.getAnnotation(Tagging.class, Tagging::none).isEmpty()) {
+                writer.write(">tags " + data.getAnnotation(Tagging.class, Tagging::none).stream().collect(Collectors.joining(",")));
+                writer.newLine();
+            }
         }
 
         writeIfAvailable(writer, ">quality", data.getAnnotationOrNull(CompoundQuality.class));
@@ -90,10 +103,12 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
 
         //writeIfAvailable(writer, ">noise", data.getAnnotationOrNull(NoiseInformation.class));
 
-        final Map<String, String> arbitraryKeys = data.getAnnotation(AdditionalFields.class, AdditionalFields::new);
-        for (Map.Entry<String, String> e : arbitraryKeys.entrySet()) {
-            writer.write("#" + e.getKey() + " " + e.getValue());
-            writer.newLine();
+        if (!anonymize) {
+            final Map<String, String> arbitraryKeys = data.getAnnotation(AdditionalFields.class, AdditionalFields::new);
+            for (Map.Entry<String, String> e : arbitraryKeys.entrySet()) {
+                writer.write("#" + e.getKey() + " " + e.getValue());
+                writer.newLine();
+            }
         }
         writer.newLine();
 
