@@ -11,8 +11,8 @@ plugins {
 
 ext {
     // version for bundeled JRE
-    jre_version = '15.0.2'
-    zulu_jre_version = '15.29.15'
+    jre_version = '15.0.3'
+    zulu_jre_version = '15.32.15'
     jre_major = zulu_jre_version.split("[.]")[0]
 
     OS = DefaultNativePlatform.currentOperatingSystem
@@ -293,7 +293,7 @@ subprojects {
 
 
     task distImage(type: AppImage, group: 'distribution') {
-        dependsOn installDist, downloadManual, downloadCLP, downloadGLPK
+        dependsOn installDist, downloadManual, downloadCLP/*, downloadGLPK*/
         if (OS.isWindows())
             dependsOn createAllExecutables
 
