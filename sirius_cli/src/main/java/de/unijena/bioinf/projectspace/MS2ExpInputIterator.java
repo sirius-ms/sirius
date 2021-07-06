@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -52,6 +51,7 @@ public class MS2ExpInputIterator implements InstIterProvider {
     private final Predicate<Ms2Experiment> filter;
     private final MsExperimentParser parser = new MsExperimentParser();
     private final boolean ignoreFormula;
+    private final boolean allowMS1Only;
 
     @Nullable
     private final JobProgressMerger progress;
@@ -59,15 +59,16 @@ public class MS2ExpInputIterator implements InstIterProvider {
     Path currentFile;
     Iterator<Ms2Experiment> currentExperimentIterator;
 
-    public MS2ExpInputIterator(Collection<Path> input, double maxMz, boolean ignoreFormula) {
-        this(input, (exp) -> exp.getIonMass() <= maxMz, ignoreFormula, null);
+    public MS2ExpInputIterator(Collection<Path> input, double maxMz, boolean ignoreFormula, boolean allowMS1Only) {
+        this(input, (exp) -> exp.getIonMass() <= maxMz, ignoreFormula, allowMS1Only, null);
     }
 
-    public MS2ExpInputIterator(Collection<Path> input, Predicate<Ms2Experiment> filter, boolean ignoreFormula, @Nullable JobProgressMerger progress) {
+    public MS2ExpInputIterator(Collection<Path> input, Predicate<Ms2Experiment> filter, boolean ignoreFormula, boolean allowMS1Only, @Nullable JobProgressMerger progress) {
         this.progress = progress;
         this.fileIter = input.iterator();
         this.filter = filter;
         this.ignoreFormula = ignoreFormula;
+        this.allowMS1Only = allowMS1Only;
         currentExperimentIterator = fetchNext();
     }
 
@@ -128,7 +129,7 @@ public class MS2ExpInputIterator implements InstIterProvider {
                     if (experiment.getMs2Spectra().removeIf(Spectrum::isEmpty))
                         LoggerFactory.getLogger(getClass()).warn("Removed at lease one empty MS/MS spectrum from '" + experiment.getName() + "'.");
 
-                    if (experiment.getMs2Spectra().isEmpty()) {
+                    if (!allowMS1Only && experiment.getMs2Spectra().isEmpty()) {
                         LOG.info("Skipping instance '" + experiment.getName() + "' because it does not contain any non Empty MS/MS.");
                     } else if (!filter.test(experiment)) {
                         LOG.info("Skipping instance '" + experiment.getName() + "' because it did not pass the filter setting.");
