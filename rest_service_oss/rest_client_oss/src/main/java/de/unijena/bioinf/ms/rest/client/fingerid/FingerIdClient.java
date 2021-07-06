@@ -85,7 +85,7 @@ public class FingerIdClient extends AbstractClient {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/jobs").build());
                     final String stringMs, jsonTree;
                     {
-                        final JenaMsWriter writer = new JenaMsWriter();
+                        final JenaMsWriter writer = new JenaMsWriter(true);
                         final StringWriter sw = new StringWriter();
                         try (final BufferedWriter bw = new BufferedWriter(sw)) {
                             writer.write(bw, input.experiment);
