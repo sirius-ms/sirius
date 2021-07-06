@@ -22,12 +22,10 @@ public class VisualizationPanelSynchronizer {
     }
 
     public void fragmentChanged(float new_mz) {
-        System.out.println("fragment selection changed to " + new_mz);
         svp.browser.executeJS("setSelection(" + new_mz + ")");
     }
 
     public void peakChanged(float new_mz) {
-        System.out.println("selected peak changed to " + new_mz);
         tvp.browser.executeJS("setSelection(" + new_mz + ")");
     }
 
