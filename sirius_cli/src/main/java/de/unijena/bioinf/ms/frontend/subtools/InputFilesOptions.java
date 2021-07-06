@@ -82,6 +82,13 @@ public class InputFilesOptions {
             return ignoreFormula;
         }
 
+        @CommandLine.Option(names = {"--allow-ms1-only"}, description = "Allow MS1 only data to be imported.", defaultValue = "false", order = 323)
+        private boolean allowMS1Only;
+
+        public boolean isAllowMS1Only() {
+            return allowMS1Only;
+        }
+
         public boolean hasProjectsOnly() {
             return msParserfiles.isEmpty() && unknownFiles.isEmpty() && !projects.isEmpty();
         }

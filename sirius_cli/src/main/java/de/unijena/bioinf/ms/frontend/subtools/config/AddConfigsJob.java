@@ -39,7 +39,7 @@ public class AddConfigsJob extends InstanceJob {
     private final ParameterConfig computeConfig;
 
     public AddConfigsJob(ParameterConfig computeConfig) {
-        super(SiriusJobs.getGlobalJobManager());
+        super(SiriusJobs.getGlobalJobManager(), false);
         this.computeConfig = computeConfig;
     }
 

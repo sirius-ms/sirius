@@ -9,7 +9,7 @@ pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500},
 margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30},
 decimal_place = 4,
 // MS2 + structure
-strucArea, annoArea, ms2Size,
+strucArea, annoArea, ms2Size, mzs,
 selected = {leftClick: null, hover: null},
 svg_str = null, basic_structure = null,
 anno_str = [],
@@ -60,11 +60,11 @@ document.onkeydown = function(e) {
             if (selected.leftClick === selected.hover) {
                 svg.select("#peak"+selected.leftClick).classed("peak_hover", true);
             }
-//            try {
-//                connector.selectionChanged(new_selected);
-//            } catch (error) {
-//                console.log(error);
-//            }
+           try {
+               connector.selectionChanged(mzs[new_selected]);
+           } catch (error) {
+               console.log(error);
+           }
             selected.leftClick = new_selected;
             svg.select("#peak"+selected.leftClick).classed("peak_select", true);
             if (domain_tmp.xMin !== domain_fix.xMin || domain_tmp.xMax !== domain_fix.xMax) {
@@ -103,9 +103,13 @@ function clear() {
     anno_str = [];
 };
 
-function setSelection(i) {
+function setSelection(mz) {
+    var i;
+    for (i in mzs) {
+        if (Math.abs(mzs[i]-mz) < 1e-3) break;
+    }
     const d = data.spectra[0].peaks[i];
-    if (selected.leftClick !== i && "structureInformation" in d) {
+    if (d !== undefined && selected.leftClick !== i && "structureInformation" in d) {
         selectNewPeak(d, i, d3.select("#peak"+i));
         const mz = d.mz;
         if (domain_tmp.xMin !== domain_fix.xMin || domain_tmp.xMax !== domain_fix.xMax) {
@@ -255,11 +259,11 @@ function selectNewPeak(d, i, newPeak) {
     if (selected.leftClick !== -1 && selected.leftClick !== null && !newPeak.classed("peak_select")) {
         d3.select("#peak"+selected.leftClick).attr("class", resetColor);
     }
-//    try {
-//        connector.selectionChanged(i);
-//    } catch (error) {
-//        console.log(error);
-//    }
+   try {
+       connector.selectionChanged(mzs[i]);
+   } catch (error) {
+       console.log(error);
+   }
     selected.leftClick = i;
     newPeak.classed("peak_select", true);
     annoArea.attr("id", "anno_leftClick");
@@ -335,11 +339,11 @@ var mouseup = function(d, i) {
         if ("structureInformation" in d || i === ms2Size-1) {
             let tmp = d3.select("#peak"+i);
             if (selected.leftClick !== null && tmp.classed("peak_select")) { // cancel the selection
-//                try {
-//                    connector.selectionChanged(-1);
-//                } catch (error) {
-//                    console.log(error);
-//                }
+               try {
+                   connector.selectionChanged(-1);
+               } catch (error) {
+                   console.log(error);
+               }
                 selected.leftClick = null;
                 tmp.classed("peak_select", false);
                 document.getElementById("anno_leftClick").innerText = "Left click to choose a purple peak...";
@@ -553,7 +557,7 @@ function spectrumPlot(spectrum, structureView) {
         svg.select("#clipArea").attr("width", w);
     };
 
-    let mzs = spectrum.peaks.map(d => d.mz);
+    mzs = spectrum.peaks.map(d => d.mz);
     ms2Size = mzs.length;
     if (structureView) {
         initStructureView();

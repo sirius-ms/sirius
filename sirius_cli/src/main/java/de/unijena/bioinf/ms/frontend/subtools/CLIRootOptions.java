@@ -100,7 +100,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     private int instanceBuffer = -1;
 
-    @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius", order = 30, hidden = true)
+    @Option(names = {"--workspace", "-w"}, description = "Specify sirius workspace location. This is the directory for storing Property files, logs, databases and caches.  This is NOT for the project-space that stores the results! Default is $USER_HOME/.sirius-<MINOR_VERSION>", order = 30, hidden = true)
     public Files workspace; //todo change in application core
 
     @Option(names = "--recompute", descriptionKey = "RecomputeResults", description = "Recompute results of ALL tools where results are already present. Per default already present results will be preserved and the instance will be skipped for the corresponding Task/Tool", order = 100)
@@ -115,6 +115,11 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
     @Option(names = {"--no-citations", "--noCitations", "--noCite"}, description = "Do not write summary files to the project-space", order = 299)
     private void setNoCitationInfo(boolean noCitations) throws Exception {
         PropertyManager.DEFAULTS.changeConfig("PrintCitations", String.valueOf(!noCitations)); //this is a bit hacky
+    }
+
+    @Option(names = {"--no-project-check"}, description = "Do not write summary files to the project-space", order = 300, hidden = true)
+    private void setSkipProjectCheck(boolean noProjectCheck) throws Exception {
+        PropertyManager.setProperty("de.unijena.bioinf.sirius.project-check", String.valueOf(noProjectCheck)); //this is a bit hacky
     }
     //endregion
 

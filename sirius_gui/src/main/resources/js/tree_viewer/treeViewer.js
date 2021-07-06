@@ -15,7 +15,7 @@ var md_ppm_max, md_ppm_min, md_mz_max, md_mz_min,
     rel_int_max;
 // misc
 var max_box_text;
-var nodeToMove = null, unambig_mode = 'none',
+var highlightedNode = null, nodeToMove = null, unambig_mode = 'none',
     moveModes = {};
 var brushTransition = d3.transition().duration(500),
     zeroTransition = d3.transition().duration(0);
@@ -27,11 +27,17 @@ var styles = {'elegant': {'node-rect': {'stroke' : 'transparent'},
                           'node-rect-hovered': {'stroke': 'black',
                                                 'stroke-width': 2,
                                                 'stroke-dasharray': '7,7'},
+                          'node-rect-selected': {'stroke': 'black',
+                                                'stroke-width': 4,
+                                                'stroke-dasharray': '7,7'},
                           'link-line': {'stroke-width': 2}},
               'classic': {'node-rect': {'stroke' : 'black',
                                         'stroke-width': 1},
                           'node-rect-hovered': {'stroke': 'black',
                                                 'stroke-width': 2,
+                                                'stroke-dasharray': ''},
+                          'node-rect-selected': {'stroke': 'black',
+                                                'stroke-width': 4,
                                                 'stroke-dasharray': ''},
                           'link-line': {'stroke-width': 1}}};
 var theme = 'elegant';
@@ -155,9 +161,13 @@ function handleMouseMove(){
     } else{
         changeCursor('move');
         popupClose();
+        // remove hover faces for all nodes except highlighted one
         for (var style in styles[theme]['node-rect'])
             svg.selectAll('.node rect').style(style, styles[theme]['node-rect'][
                 style]);
+        for (var style in styles[theme]['node-rect-selected'])
+            d3.select(highlightedNode).select('rect').style(
+                style, styles[theme]['node-rect-selected'][style]);
     }
     if (nodeToMove != null)
         line_coords[0] = [getTransformedCoordinate(nodeToMove.__data__.x, 'x',
@@ -200,9 +210,6 @@ function handleMouseMove(){
 
 // activate node move/swap-mode, visualize moving possibilities
 function handleClick(){
-    if (!edit_mode)
-        return;
-
     function clickedOnCollapse(){
         if (typeof(collapse_button) == 'undefined')
             return false;
@@ -224,6 +231,24 @@ function handleClick(){
     var clickedNode = getNodeByPos(
         getTransformedCoordinate(d3.event.offsetX, 'x'),
         getTransformedCoordinate(d3.event.offsetY, 'y'));
+
+    // highlighting / connector interaction
+    if (clickedNode != null){
+        highlightedNode = clickedNode;
+        // unhighlight any other node and highlight selected node
+        for (var style in styles[theme]['node-rect'])
+            svg.selectAll('.node rect').style(style, styles[theme]['node-rect'][style]);
+        for (var style in styles[theme]['node-rect-selected'])
+            d3.select(highlightedNode).select('rect').style(
+                style, styles[theme]['node-rect-selected'][style]);
+
+        // pass selected node (~> peak) to Java connector
+        selectionChanged(clickedNode.__data__.data.fragmentData.mz);
+    }
+
+    // node moving (only when edit mode is enabled)
+    if (!edit_mode)
+        return;
 
     if (clickedNode != null){
         if (nodeToMove == null){
@@ -890,6 +915,7 @@ function colorCode(variant, scheme) {
     var orig_scheme_fn = scheme_fn;
     // adapt color grading to avoid colors too light/dark
     scheme_fn = function(x){
+        if (isNaN(x)) x = 0;
         var scale = (orig_scheme_fn == d3.interpolateViridis) ? 0.6 : 0.5;
         var offset = (orig_scheme_fn == d3.interpolateViridis) ? 0.4 : 0.15;
         return orig_scheme_fn(x * scale + offset);
@@ -1084,7 +1110,7 @@ function addFragmentData(data) {
                 md_mz_min = md_mz;
             }
         }
-        
+
         var rel_int = parseFloat(fragment.relativeIntensity);
         if (rel_int > rel_int_max)
             rel_int_max = rel_int;

@@ -145,15 +145,10 @@ public class MztabMExporter implements Summarizer {
             final SmallMoleculeSummary smlItem = buildSMLItem(exp, bestHitSource, bestHit);
             mztab.addSmallMoleculeSummaryItem(smlItem);
 
-
             final SmallMoleculeFeature smfItem = buildSMFItem(exp, bestHitSource, smlItem);
             mztab.addSmallMoleculeFeatureItem(smfItem);
 
-
             final List<SpectraRef> spectraRefs = extractReferencesAndRuns(exp);
-
-            if (spectraRefs == null || spectraRefs.isEmpty() || spectraRefs.contains(null))
-                System.out.println("WARNING");
 
             final SmallMoleculeEvidence smeSiriusItem = buildSiriusFormulaIDSMEItem(exp, bestHitSource, bestHitSourceRank, smfItem);
             smeSiriusItem.setSpectraRef(spectraRefs);

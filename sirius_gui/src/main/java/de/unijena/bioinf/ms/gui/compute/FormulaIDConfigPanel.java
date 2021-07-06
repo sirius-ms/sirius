@@ -217,7 +217,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             ionizationList.setEnabled(enabled);
         }
 
-        if (ecs.size() == 1 && isEnabled())
+        if (ecs.size() == 1 && isEnabled() && !ecs.get(0).getMs2Spectra().isEmpty())
             detectPossibleAdducts(ecs.get(0));
     }
 

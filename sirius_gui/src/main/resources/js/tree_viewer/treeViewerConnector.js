@@ -21,6 +21,35 @@ function getCommonLosses(){
         return [];
 }
 
+function selectionChanged(mz){
+    try {
+       connector.selectionChanged(mz);
+   } catch (error) {
+       console.log(error);
+   }
+}
+
+function setSelection(mz){
+    highlightedNode = d3.selectAll('.node').filter((d, i) => Math.abs(d.data.fragmentData.mz - mz) < 1e-3);
+    // blinking for highlighted node
+    // TODO: not that pretty, maybe something similar?
+    // original_color = highlightedNode.select('rect').style('fill');
+    // highlightedNode.select('rect').transition()
+    //     .duration(100)
+    //     .style('fill', 'white')
+    //     .transition()
+    //     .duration(100)
+    //     .style('fill', original_color);
+    // unhighlight any other node and highlight selected node
+    for (var style in styles[theme]['node-rect'])
+        svg.selectAll('.node rect').style(style, styles[theme]['node-rect'][style]);
+    for (var style in styles[theme]['node-rect-selected'])
+        highlightedNode.select('rect').style(
+            style, styles[theme]['node-rect-selected'][style]);
+}
+
+// FUN stuff
+
 function isXmas(){
     return connector.getXmas();
 }

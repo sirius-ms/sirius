@@ -19,16 +19,22 @@
 
 package de.unijena.bioinf.ms.gui.ms_viewer;
 
+import java.util.HashMap;
+
 import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
 import netscape.javascript.JSObject;
 
 public class WebViewSpectraViewer extends WebViewPanel {
 
+    HashMap<String, Object> bridges;
+
     public WebViewSpectraViewer() {
         super();
         addJS("d3.min.js");
         addJS("spectra_viewer/spectra_viewer.js");
-        load();
+        SpectraViewerConnector svc = new SpectraViewerConnector();
+        bridges = new HashMap<String, Object>() {{put("connector", svc);}};
+        load(bridges);
     }
 
     public void loadData(String json_spectra, String json_highlight, String svg) { // TEST CODE
@@ -57,5 +63,9 @@ public class WebViewSpectraViewer extends WebViewPanel {
 	public void clear(){
 		executeJS("clear()");
 	}
+
+    public SpectraViewerConnector getConnector(){
+        return (SpectraViewerConnector) bridges.get("connector");
+    }
 
 }

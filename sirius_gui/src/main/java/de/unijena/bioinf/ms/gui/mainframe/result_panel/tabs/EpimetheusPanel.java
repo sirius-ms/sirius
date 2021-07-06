@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.VisualizationPanelSynchronizer;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
@@ -49,6 +50,10 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
         final CandidateListTableView north = new CandidateListTableView(structureList);
         final TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
         final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY, false);
+
+        // Class to synchronize selected peak/node
+        VisualizationPanelSynchronizer synchronizer = new VisualizationPanelSynchronizer(overviewTVP, overviewSVP);
+ 
 //
         north.getFilteredSelectionModel().addListSelectionListener(e -> {
             DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) e.getSource();
