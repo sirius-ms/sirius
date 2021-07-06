@@ -94,7 +94,8 @@ public class SiriusCLIApplication {
                 ApplicationCore.WEB_API.deleteClientAndJobs();
                 ApplicationCore.DEFAULT_LOGGER.info("...Job deletion Done!");
             } catch (IOException e) {
-                e.printStackTrace();
+                LoggerFactory.getLogger(SiriusCLIApplication.class).warn("Could not clean up Server data! " + e.getMessage());
+                LoggerFactory.getLogger(SiriusCLIApplication.class).debug("Could not clean up Server data!", e);
             }
         };
     }
