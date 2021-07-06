@@ -147,7 +147,7 @@ public class InstanceImporter {
             if (files == null || files.isEmpty())
                 return List.of();
 
-            final InstanceImportIteratorMS2Exp it = new MS2ExpInputIterator(files, expFilter, inputFiles.msInput.isIgnoreFormula(), prog)
+            final InstanceImportIteratorMS2Exp it = new MS2ExpInputIterator(files, expFilter, inputFiles.msInput.isIgnoreFormula(), inputFiles.msInput.isAllowMS1Only(), prog)
                     .asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
             final List<CompoundContainerId> ll = new ArrayList<>();
 

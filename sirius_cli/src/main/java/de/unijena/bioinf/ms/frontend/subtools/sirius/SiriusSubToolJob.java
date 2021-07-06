@@ -41,12 +41,12 @@ import java.util.List;
 import java.util.Optional;
 
 public class SiriusSubToolJob extends InstanceJob {
-    //todo this is only a temprary solution. parameters should be annotated to the exp
-    // we do not want to have oure hol tool management to be dependent on a cli parsing library
+    //todo this is only a temporary solution. parameters should be annotated to the exp
+    // we do not want to have the sub-tool management to be dependent on a cli parsing library
     protected final SiriusOptions cliOptions;
 
     public SiriusSubToolJob(SiriusOptions cliOptions, JobSubmitter jobSubmitter) {
-        super(jobSubmitter);
+        super(jobSubmitter, false);
         this.cliOptions = cliOptions;
     }
 
@@ -90,7 +90,6 @@ public class SiriusSubToolJob extends InstanceJob {
         List<IdentificationResult<SiriusScore>> results = submitSubJob(sirius.makeIdentificationJob(exp)).awaitResult();
 
         checkForInterruption();
-
 
         //write results to project space
         for (IdentificationResult<SiriusScore> result : results)
