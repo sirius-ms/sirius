@@ -35,6 +35,8 @@ import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
+import org.apache.commons.math3.distribution.LaplaceDistribution;
+import org.apache.commons.math3.distribution.RealDistribution;
 import org.apache.commons.math3.special.Erf;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,11 +44,13 @@ import java.util.*;
 
 public class Aligner2 {
 
-    public Aligner2(double retentionTimeError) {
-        this.retentionTimeError = retentionTimeError;
+    private RealDistribution retentionTimeErrorModel;
+
+    public Aligner2(RealDistribution error) {
+        this.retentionTimeErrorModel = error;
     }
 
-    protected double retentionTimeError;
+    //protected double retentionTimeError;
     protected Deviation dev = new Deviation(20);
 
     public BasicMasterJJob<Cluster> align(List<ProcessedSample> samples) {
@@ -79,7 +83,7 @@ public class Aligner2 {
                     xs.remove(results.index);
                     totalScore += results.score;
                 }
-                features = rejoin(this, features);
+                //features = rejoin(this, features);
                 return new Cluster(features, totalScore, null,null,new HashSet<>(samples));
             }
         };
@@ -166,7 +170,7 @@ public class Aligner2 {
 
     private float getScore(AlignedFeatures f, ProcessedSample s, FragmentedIon ion) {
         final double rightRt = s.getRecalibratedRT(ion.getRetentionTime());
-        if (!dev.inErrorWindow(f.getMass(),ion.getMass()) || !f.chargeStateIsNotDifferent(ion.getChargeState()) || Math.abs(f.rt - rightRt) > 8*retentionTimeError)
+        if (!dev.inErrorWindow(f.getMass(),ion.getMass()) || !f.chargeStateIsNotDifferent(ion.getChargeState()) || Math.abs(f.rt - rightRt) > maxRetentionError())
             return 0f;
 
         double peakShapeScore  = 0d;
@@ -189,9 +193,9 @@ public class Aligner2 {
             w *= w;
             peakHeightScore += Math.max(0.05, Math.exp(-1.5*h*w));
 
-            intensityScore += (Math.min(maxSigInt,ia.getIntensity())/maxSigInt) * (Math.min(maxSigInt,ion.getIntensity()))/maxSigInt;
+            //intensityScore += (Math.min(maxSigInt,ia.getIntensity())/maxSigInt) * (Math.min(maxSigInt,ion.getIntensity()))/maxSigInt;
         }
-        intensityScore /= f.features.size();
+        //intensityScore /= f.features.size();
 
         peakHeightScore /= f.features.size();
         peakShapeScore /= f.features.size();
@@ -199,8 +203,8 @@ public class Aligner2 {
             peakShapeScore = (float)new NormalDistribution(1d, 0.25).getErrorProbability(peakShapeScore);
         } else peakShapeScore = 1f;
 
-        final double gamma = 1d/(2*retentionTimeError*retentionTimeError);
-        final double retentionTimeScore = Math.exp(-gamma * (f.rt - rightRt)*(f.rt - rightRt));
+        //final double gamma = 1d/(2*retentionTimeError*retentionTimeError);
+        final double retentionTimeScore = getRtScore(f.rt-rightRt);//Math.exp(-gamma * (f.rt - rightRt)*(f.rt - rightRt));
 
         double finalScore;
         if (f.getRepresentativeIon()!=null && f.getRepresentativeIon().getMsMs()!=null && ion.getMsMs()!=null) {
@@ -214,14 +218,22 @@ public class Aligner2 {
                 finalScore = peakShapeScore*peakHeightScore*retentionTimeScore*0.5d;
             } else {
                 //System.out.println("REJECT ALIGNMENT OF " + f + " WITH " + ion + " WITH COSINE " + cosineScore);
-                finalScore = peakShapeScore*peakHeightScore*retentionTimeScore*retentionTimeScore*0.5d;
+                finalScore = peakShapeScore*retentionTimeScore*retentionTimeScore*0.5d;
             }
         } else {
-            finalScore = peakShapeScore*peakHeightScore*retentionTimeScore;
+            finalScore = peakShapeScore*retentionTimeScore;
         }
         if (finalScore < 1e-10) return 0f;
-        finalScore += intensityScore;
+        //finalScore += intensityScore;
         return (float)finalScore;
+    }
+
+    private double getRtScore(double diff) {
+        return 2*(1d-retentionTimeErrorModel.cumulativeProbability(Math.abs(diff)));
+    }
+
+    private double maxRetentionError() {
+        return 4*((LaplaceDistribution)retentionTimeErrorModel).getScale();
     }
 
     private double scoreIsotopes(FragmentedIon a, FragmentedIon b) {
@@ -271,7 +283,7 @@ public class Aligner2 {
             dummy.add(f);
             for (int j=i+1; j < fs.size(); ++j) {
                 AlignedFeatures g = fs.get(j);
-                if (!done.get(j) && dev.inErrorWindow(f.getMass(),g.getMass()) && Math.abs(f.rt-g.rt) < 5*retentionTimeError) {
+                if (!done.get(j) && dev.inErrorWindow(f.getMass(),g.getMass()) && Math.abs(f.rt-g.rt) < 2*maxRetentionError()) {
                     dummy.add(g);
                     done.set(j);
                 }
@@ -303,7 +315,7 @@ public class Aligner2 {
 
     private List<AlignedFeatures> tryAlign(AlignedFeatures[] xs) {
         final ArrayList<AlignedFeatures> features = new ArrayList<>();
-        final double gamma = 1d/(2*retentionTimeError*retentionTimeError);
+        //final double gamma = 1d/(2*retentionTimeError*retentionTimeError);
 
         final ArrayList<Map.Entry<ProcessedSample, FragmentedIon>> candidates = new ArrayList<>();
         for (AlignedFeatures f : xs) {
@@ -323,7 +335,7 @@ public class Aligner2 {
 
                 for (Map.Entry<ProcessedSample, FragmentedIon> e : candidates) {
                     double rt = (e.getKey().getRecalibratedRT(e.getValue().getRetentionTime()));
-                    final double rtScore = Math.exp(-gamma * (rt-bestAlign.rt)*(rt-bestAlign.rt));
+                    final double rtScore = getRtScore(rt-bestAlign.rt);//Math.exp(-gamma * (rt-bestAlign.rt)*(rt-bestAlign.rt));
                     final double intensityScore = e.getValue().getIntensity()/maxIntensity;
                     double score = rtScore*intensityScore;
                     if (score > bestScore) {

@@ -71,6 +71,10 @@ public class PrecursorIonType implements TreeAnnotation {
         else return measuredFormula.isSubtractable(adduct);
     }
 
+    public boolean hasMultipleIons() {
+        return multipleIons;
+    }
+
     protected static enum SPECIAL_TYPES {
         REGULAR, UNKNOWN, INTRINSICAL_CHARGED
     }
@@ -79,6 +83,7 @@ public class PrecursorIonType implements TreeAnnotation {
     private final MolecularFormula inSourceFragmentation;
     private final MolecularFormula adduct;
     private final String name;
+    private final boolean multipleIons;
 
 
     public boolean hasNeitherAdductNorInsource() {
@@ -131,6 +136,11 @@ public class PrecursorIonType implements TreeAnnotation {
         this.adduct = adduct == null ? MolecularFormula.emptyFormula() : adduct;
         this.special = special;
         this.name = formatToString();
+        this.multipleIons = checkForMultipleIons();
+    }
+
+    private boolean checkForMultipleIons() {
+        return (adduct.numberOf("Na")>0 || adduct.numberOf("K")>0 && adduct.numberOf("Cl")>0);
     }
 
     public String substituteName(MolecularFormula neutralFormula) {

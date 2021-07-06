@@ -1088,9 +1088,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 final FragmentScorer<Object> scorer = (FragmentScorer<Object>)fragmentScorers.get(k);
                 score += scorer.score(v, correspondingPeak, v.isRoot(), precomputedForFragmentScorer[k]);
             }
-            if (Double.isInfinite(score)) {
-                System.err.println("check");
-            }
             assert !Double.isInfinite(score);
             loss.setWeight(score);
         }

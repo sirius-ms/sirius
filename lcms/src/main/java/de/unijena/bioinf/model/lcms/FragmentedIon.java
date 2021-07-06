@@ -21,9 +21,15 @@
 package de.unijena.bioinf.model.lcms;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CompoundReport;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.Trace;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
@@ -49,6 +55,13 @@ public class FragmentedIon extends IonGroup {
     protected Polarity polarity;
     protected ArrayList<CompoundReport> additionalInfos;
 
+    protected boolean adductDetectionDone=false;
+
+    protected static final SimpleSpectrum EMPTY = new SimpleSpectrum(new double[0], new double[0]);
+    protected SimpleSpectrum adductSpectrum = EMPTY;
+
+    protected ArrayList<IonConnection<FragmentedIon>> connections;
+
     // might be useful for chimeric detection?
     protected double intensityAfterPrecursor;
 
@@ -57,8 +70,9 @@ public class FragmentedIon extends IonGroup {
 
     protected Scan[] mergedScans;
 
-    public FragmentedIon(Polarity polarity, Scan ms2Scan, CosineQuerySpectrum msms, Quality ms2Quality, ChromatographicPeak chromatographicPeak,ChromatographicPeak.Segment segment, Scan[] mergedScans) {
+    public FragmentedIon(Polarity polarity, Scan ms2Scan, CosineQuerySpectrum msms, Quality ms2Quality, MutableChromatographicPeak chromatographicPeak,ChromatographicPeak.Segment segment, Scan[] mergedScans) {
         super(chromatographicPeak, segment, new ArrayList<>());
+        this.connections = new ArrayList<>();
         this.polarity = polarity;
         this.msms = msms;
         this.ms2Scan = ms2Scan;
@@ -69,6 +83,25 @@ public class FragmentedIon extends IonGroup {
         this.chimerics = new ArrayList<>();
         this.additionalInfos = new ArrayList<>();
         this.mergedScans = mergedScans;
+    }
+
+    public void addAdductPeak(Peak adduct) {
+        final Deviation dev = new Deviation(1);
+        if (Spectrums.mostIntensivePeakWithin(adductSpectrum, adduct.getMass(), dev)<0) {
+            final SimpleMutableSpectrum buf = new SimpleMutableSpectrum(adductSpectrum);
+            buf.addPeak(adduct);
+            this.adductSpectrum = new SimpleSpectrum(buf);
+        }
+    }
+    public void addAdductPeaks(Spectrum<Peak> adducts) {
+        final Deviation dev = new Deviation(1);
+        final SimpleMutableSpectrum buf = new SimpleMutableSpectrum(adductSpectrum);
+        for (int k=0; k < adducts.size(); ++k) {
+            if (Spectrums.mostIntensivePeakWithin(adductSpectrum, adducts.getMzAt(k), dev)<0) {
+                buf.addPeak(adducts.getMzAt(k), adducts.getIntensityAt(k));
+            }
+        }
+        this.adductSpectrum = new SimpleSpectrum(buf);
     }
 
     public Scan[] getMergedScans() {
@@ -109,6 +142,10 @@ return null;
         final int detectorOffset = segment.getStartIndex();
 
 return null;
+    }
+
+    public SimpleSpectrum getAdductSpectrum() {
+        return adductSpectrum;
     }
 
     protected void setMinMaxScanIndex(int[] scanIndex, int surrounding) {
@@ -194,16 +231,16 @@ return null;
     }
 
     public double getMass() {
-        return peak.getMzAt(segment.apex);
+        return peak.getMzAt(segmentApexIndex);
     }
 
 
     public long getRetentionTime() {
-        return peak.getRetentionTimeAt(segment.apex);
+        return peak.getRetentionTimeAt(segmentApexIndex);
     }
 
     public String toString() {
-        return "MS/MS("+chargeState+") m/z = " + (msms==null ? "GAP FILLED" : ms2Scan.getPrecursor().getMass()) + ", apex = " + peak.getRetentionTimeAt(segment.getApexIndex())/60000d + " min";
+        return "MS/MS("+chargeState+") m/z = " + (msms==null ? "GAP FILLED" : ms2Scan.getPrecursor().getMass()) + ", apex = " + peak.getRetentionTimeAt(segmentApexIndex)/60000d + " min";
     }
 
     public ArrayList<CompoundReport> getAdditionalInfos() {
@@ -211,7 +248,7 @@ return null;
     }
 
     public double getIntensity() {
-        return peak.getIntensityAt(segment.apex);
+        return peak.getIntensityAt(segmentApexIndex);
     }
 
     public Quality getMsMsQuality() {
@@ -242,7 +279,19 @@ return null;
         return chimericPollution;
     }
 
+    public void addConnection(FragmentedIon other, IonConnection.ConnectionType type, float weight) {
+        connections.add(new IonConnection<FragmentedIon>(this, other, weight, type));
+    }
+
     public boolean isCompound() {
         return true;
+    }
+
+    public boolean isAdductDetectionDone() {
+        return adductDetectionDone;
+    }
+
+    public void setAdductDetectionDone(boolean adductDetectionDone) {
+        this.adductDetectionDone = adductDetectionDone;
     }
 }
