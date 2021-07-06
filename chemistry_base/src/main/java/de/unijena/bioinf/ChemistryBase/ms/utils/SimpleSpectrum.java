@@ -26,13 +26,14 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * Simple implementation of an immutable Mass Spectrum.
  * Peaks are stored ordered by mass in arrays.
  */
-public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum<Peak>{
+public class SimpleSpectrum extends BasicSpectrum<Peak> implements OrderedSpectrum<Peak>, Serializable {
 
 	private static SimpleSpectrum EMPTY = new SimpleSpectrum(new double[0], new double[0]);
 

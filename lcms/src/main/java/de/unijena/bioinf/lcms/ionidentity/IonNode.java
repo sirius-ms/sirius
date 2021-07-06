@@ -23,10 +23,7 @@ package de.unijena.bioinf.lcms.ionidentity;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.lcms.align.AlignedFeatures;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class IonNode {
 
@@ -34,14 +31,21 @@ class IonNode {
     private AlignedFeatures feature;
     protected double mz;
     protected boolean hasMsMs;
-
     protected IonAssignment assignment;
+
+    // gibbs sampling
+    protected int activeAssignment = 0;
+
+    protected float priorForUnknownIonType;
+    protected static final float priorForUncommonIonType = -1;
+    protected static final float priorForCommonIonType = 0;
 
     public IonNode(AlignedFeatures feature) {
         this.mz = feature.getMass();
         this.neighbours = new ArrayList<>();
         setFeature(feature);
     }
+
 
     public Set<PrecursorIonType> possibleIonTypes() {
         final HashSet<PrecursorIonType> types = new HashSet<>();
@@ -89,18 +93,17 @@ class IonNode {
 
     @Override
     public String toString() {
-        return "IonNode{" +
-                "neighbours=" + neighbours +
-                ", feature=" + feature +
-                ", mz=" + mz +
-                ", hasMsMs=" + hasMsMs +
-                '}';
+        return "[m/z = " + mz + "]";
     }
 
     public Set<PrecursorIonType> likelyIonTypes() {
+        return likelyIonTypes(0.1);
+    }
+
+    public Set<PrecursorIonType> likelyIonTypes(double threshold) {
         final HashSet<PrecursorIonType> types = new HashSet<>();
         for (int k=0; k < assignment.probabilities.length; ++k) {
-            if (assignment.probabilities[k]>=0.05) {
+            if (assignment.probabilities[k]>=threshold) {
                 types.add(assignment.ionTypes[k]);
             }
         }
@@ -118,6 +121,37 @@ class IonNode {
                 buf.append(':');
                 buf.append(Math.round(assignment.probabilities[k] * 100));
                 buf.append(",");
+            }
+        }
+        buf.append("}");
+        return buf.toString();
+    }
+
+    public PrecursorIonType activeType() {
+        return assignment.ionTypes[activeAssignment];
+    }
+
+    public String typesWithScore(GibbsSampler s) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("{");
+        buf.append("\"[M+?]+\": ");
+        buf.append(String.format(Locale.US,"%.2f",priorForUnknownIonType));
+        for (int k=0; k < assignment.probabilities.length; ++k) {
+            if (!assignment.ionTypes[k].isIonizationUnknown()) {
+                buf.append(',');
+                buf.append('"');
+                buf.append(assignment.ionTypes[k].toString());
+                buf.append('"');
+                buf.append(':');
+                buf.append(' ');
+                double maxScore = 0d;
+                if (s.commonTypes.contains(assignment.ionTypes[k])) {
+                    maxScore += priorForCommonIonType;
+                } else maxScore += priorForUncommonIonType;
+                for (Edge e : neighbours) {
+                    maxScore += e.score;
+                }
+                buf.append(String.format(Locale.US, "%.2f", maxScore));
             }
         }
         buf.append("}");

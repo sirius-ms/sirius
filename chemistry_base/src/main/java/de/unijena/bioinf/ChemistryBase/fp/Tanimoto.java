@@ -122,6 +122,34 @@ public class Tanimoto {
         if (union==0) return 0;
         return ((double)intersection)/(union);
     }
+
+
+    /**
+     * returns the Tanimoto/Jaccard Index of two sets of integers
+     * which not necessarily have to be fingerprints
+     * @param as
+     * @param bs
+     * @return
+     */
+    public static double tanimoto(long[] as, long[] bs) {
+        int a=0, b=0, intersection=0;
+        while(a < as.length && b < bs.length) {
+            if (as[a]==bs[b]) {
+                ++intersection;
+                ++a; ++b;
+            } else if (as[a] > bs[b]) {
+                ++b;
+            } else {
+                ++a;
+            }
+        }
+
+        // |A n B| = (|A| + |B|) - 2|A u B|
+        final int union = as.length + bs.length - intersection;
+        if (union==0) return 0;
+        return ((double)intersection)/(union);
+    }
+
     public static double tanimoto(short[] as, short[] bs) {
         int a=0, b=0, intersection=0;
         while(a < as.length && b < bs.length) {

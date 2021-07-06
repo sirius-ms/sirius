@@ -27,16 +27,12 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class ConsensusFeature implements Annotated<DataAnnotation> {
 
@@ -53,6 +49,8 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
     protected final double chimericPollution;
     protected Annotated.Annotations<DataAnnotation> annotations = new Annotated.Annotations<>();
 
+    protected ArrayList<IonConnection<ConsensusFeature>> connections = new ArrayList<>();
+
     public ConsensusFeature(int featureId, Feature[] features, int ms2RepresentativeFeature, SimpleSpectrum[] coelutedPeaks, SimpleSpectrum[] ms2, PrecursorIonType ionType,  long averageRetentionTime,CollisionEnergy collisionEnergy ,double averageMass, double totalIntensity, double chimericPollution) {
         this.featureId = featureId;
         this.features = features;
@@ -65,6 +63,14 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
         this.totalIntensity = totalIntensity;
         this.ionType = ionType;
         this.chimericPollution = chimericPollution;
+    }
+
+    public List<IonConnection<ConsensusFeature>> getConnections() {
+        return connections;
+    }
+
+    public void addConnection(ConsensusFeature feature, IonConnection.ConnectionType type, float weight) {
+        connections.add(new IonConnection<ConsensusFeature>(this, feature, weight,  type));
     }
 
     public LCMSPeakInformation getLCMSPeakInformation() {
@@ -173,7 +179,7 @@ public class ConsensusFeature implements Annotated<DataAnnotation> {
 
         final Set<PrecursorIonType> ionTypes = getPossibleAdductTypes();
 //        if (!ionTypes.isEmpty())
-            exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(LCMSProccessingInstance.POSSIBLE_ADDUCTS_KEY, new PossibleAdducts(ionTypes));
+            exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(DetectedAdducts.Keys.LCMS_ALIGN, new PossibleAdducts(ionTypes));
 
         return exp;
     }

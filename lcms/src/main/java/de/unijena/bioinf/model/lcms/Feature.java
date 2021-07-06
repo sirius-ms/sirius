@@ -28,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.Trace;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -182,7 +181,7 @@ public class Feature implements Annotated<DataAnnotation> {
         exp.setSource(new SpectrumFileSource(origin.source.getUrl()));
 
         final Set<PrecursorIonType> ionTypes = getPossibleAdductTypes();
-        exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(LCMSProccessingInstance.POSSIBLE_ADDUCTS_KEY,new PossibleAdducts(ionTypes));
+        exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(DetectedAdducts.Keys.LCMS_ALIGN,new PossibleAdducts(ionTypes));
 
         // add trace information
         exp.setAnnotation(LCMSPeakInformation.class, new LCMSPeakInformation(new CoelutingTraceSet[]{getTraceset()}));
