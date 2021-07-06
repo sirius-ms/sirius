@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.AnnotatedWithDefaults;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +71,7 @@ import java.util.*;
  *
  *
  */
-public class ProcessedInput implements Cloneable, Annotated<DataAnnotation> {
+public class ProcessedInput implements Cloneable, AnnotatedWithDefaults<DataAnnotation> {
 
     private final Ms2Experiment originalExperiment;
     private MutableMs2Experiment experiment;
