@@ -41,6 +41,7 @@ import java.util.Base64;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Properties;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.regex.Pattern;
@@ -330,5 +331,17 @@ public class PropertyManager {
         } catch (IOException | ConfigurationException e) {
             LoggerFactory.getLogger(PropertyManager.class).error("Could not load Sirius Credentials from: " + path, e);
         }
+    }
+
+    public static <T> Supplier<T> getDefaultInstanceSupplier(Class<T> klass) {
+        return () -> {
+            if (DEFAULTS.isInstantiatableWithDefaults(klass))
+                return DEFAULTS.createInstanceWithDefaults(klass);
+            try {
+                return klass.newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new IllegalArgumentException(klass.getName() + " cannot be instantiated automatically");
+            }
+        };
     }
 }
