@@ -34,6 +34,7 @@ import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.passatutto.Decoy;
@@ -248,6 +249,9 @@ public class ProjectSpaceManager implements Iterable<Instance> {
      * @throws InterruptedException if waiting for server request is interrupted
      */
     public boolean checkAndFixDataFiles(NetUtils.InterruptionCheck interrupted) throws TimeoutException, InterruptedException {
+        if (PropertyManager.getBoolean("de.unijena.bioinf.sirius.project-check", null, false))
+            return true;
+
         synchronized (dataCompatibilityCache) {
             try {
                 if (!dataCompatibilityCache.containsKey(FingerIdDataProperty.class)) {
