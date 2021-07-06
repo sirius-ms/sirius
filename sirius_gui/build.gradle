@@ -55,6 +55,9 @@ dependencies {
 //internal
     compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
 
+    // will be ported to sirius_cli later
+    compile group: "de.unijena.bioinf.ms", name: "combinatorial_fragmenter", version: "$siriusVersion"
+
 //external
     compile "net.sf.opencsv:opencsv:2.3"
     compile "org.swinglabs.swingx:swingx-all:1.6.5-1"
@@ -77,6 +80,7 @@ dependencies {
     //compile group: 'com.kitfox.svg', name: 'svg-salamander', version: '1.0'
     compile group: 'org.apache.xmlgraphics', name: 'batik-rasterizer', version: '1.13'
     compile group: 'org.apache.xmlgraphics', name: 'fop', version: '2.3'
+
 }
 
 //this includes compileOnly dependencies like the ILP solver jars to the idea provided scope.

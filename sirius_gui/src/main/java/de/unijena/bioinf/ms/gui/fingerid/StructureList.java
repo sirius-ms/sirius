@@ -28,7 +28,6 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
-import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -64,6 +63,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
         csiScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
         tanimotoStats = new DoubleListStats();
+        topLevelSelectionModel = elementListSelectionModel;
 
         /////////// LISTENERS //////////////
         source.addActiveResultChangedListener(this);
@@ -102,7 +102,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                         tanimotoStats.reset();
                         loadAll.set(loadAllCandidates);
                         data = new HashSet<>();
-//                        elementList.clear();
+                        topLevelSelectionModel.clearSelection();
                     });
 
                     checkForInterruption();
@@ -129,26 +129,28 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                     checkForInterruption();
 
                     final List<FingerprintCandidateBean> emChache = new ArrayList<>();
-                    for (FormulaResultBean e : formulasToShow) {
+                    for (FormulaResultBean formRes : formulasToShow) {
                         checkForInterruption();
-                        if (e != null) {
+                        if (formRes != null) {
                             Class<? extends FBCandidates> cClass = loadAll.get() ? FBCandidates.class : FBCandidatesGUI.class;
                             Class<? extends FBCandidateFingerprints> fpClass = loadAll.get() ? FBCandidateFingerprints.class : FBCandidateFingerprintsGUI.class;
 
-                            final Optional<FormulaResult> resOpt = e.getResult(FingerprintResult.class, cClass, fpClass);
+                            final Optional<FormulaResult> resOpt = formRes.getResult(FingerprintResult.class, cClass, fpClass);
                             checkForInterruption();
 
                             resOpt.ifPresent(res ->
                                     res.getAnnotation(FingerprintResult.class).ifPresent(fpRes ->
                                             res.getAnnotation(fpClass).ifPresent(fbfps ->
                                                     res.getAnnotation(cClass).ifPresent(fbc -> {
-                                                        data.add(e);
+                                                        data.add(formRes);
                                                         for (int j = 0; j < fbc.getResults().size(); j++) {
                                                             FingerprintCandidateBean c = new FingerprintCandidateBean(j + 1,
                                                                     fpRes.fingerprint,
                                                                     fbc.getResults().get(j),
                                                                     fbfps.getFingerprints().get(j),
-                                                                    e.getPrecursorIonType());
+                                                                    formRes.getPrecursorIonType(),
+                                                                    formRes
+                                                            );
                                                             emChache.add(c);
                                                             csiScoreStats.addValue(c.getScore());
                                                             Optional.ofNullable(c.getXLogPOrNull()).ifPresent(logPStats::addValue);
@@ -161,7 +163,6 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Set<Form
                         }
                     }
                     checkForInterruption();
-
 
                     if (refillElementsEDT(emChache))
                         loadMols = Jobs.MANAGER.submitJob(new LoadMoleculeJob(emChache));

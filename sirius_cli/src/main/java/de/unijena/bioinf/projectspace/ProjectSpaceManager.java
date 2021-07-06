@@ -37,6 +37,8 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.networks.serialization.ConnectionTable;
+import de.unijena.bioinf.networks.serialization.ConnectionTableSerializer;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
 import de.unijena.bioinf.projectspace.canopus.CanopusDataSerializer;
@@ -92,6 +94,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         config.defineProjectSpaceProperty(CanopusDataProperty.class, new CanopusDataSerializer());
         config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
 
+        config.registerComponent(CompoundContainer.class, ConnectionTable.class, new ConnectionTableSerializer());
         config.registerComponent(CompoundContainer.class, LCMSPeakInformation.class, new LCMSPeakSerializer());
 
         return config;

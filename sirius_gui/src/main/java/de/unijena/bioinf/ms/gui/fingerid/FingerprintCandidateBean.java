@@ -33,6 +33,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -103,19 +104,23 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected boolean atomCoordinatesAreComputed = false;
     protected ReentrantLock compoundLock = new ReentrantLock();
 
-    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<CompoundCandidate> scoredCandidate, Fingerprint candidatefp, PrecursorIonType adduct) {
-        this(rank, fp, new FingerprintCandidate(scoredCandidate.getCandidate(), candidatefp), scoredCandidate.getScore(), adduct);
+    protected final FormulaResultBean parent;
+
+
+    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<CompoundCandidate> scoredCandidate, Fingerprint candidatefp, PrecursorIonType adduct, FormulaResultBean parent) {
+        this(rank, fp, new FingerprintCandidate(scoredCandidate.getCandidate(), candidatefp), scoredCandidate.getScore(), adduct, parent);
     }
 
-    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<FingerprintCandidate> scoredCandidate, PrecursorIonType adduct) {
-        this(rank, fp, scoredCandidate.getCandidate(), scoredCandidate.getScore(), adduct);
+    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<FingerprintCandidate> scoredCandidate, PrecursorIonType adduct, FormulaResultBean parent) {
+        this(rank, fp, scoredCandidate.getCandidate(), scoredCandidate.getScore(), adduct, parent);
     }
 
-    private FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, FingerprintCandidate candidate, double candidateScore, PrecursorIonType adduct) {
+    private FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, FingerprintCandidate candidate, double candidateScore, PrecursorIonType adduct, FormulaResultBean parent) {
         this.rank = rank;
         this.fp = fp;
         this.score = candidateScore;
         this.candidate = candidate;
+        this.parent = parent;
         this.molecularFormulaString = candidate.getInchi().extractFormulaOrThrow().toString();
         this.adduct = adduct;
         this.relevantFps = null;
@@ -193,6 +198,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
             molecule = parseMoleculeFromSmiles();
         }
         return molecule;
+    }
+
+    public FormulaResultBean getFormulaResult() {
+        return parent;
     }
 
     public boolean canBeNeutralCharged() {
@@ -421,7 +430,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
 
         private PrototypeCompoundCandidate() {
-            super(0, null, makeSourceCandidate(), -12.22, PrecursorIonType.getPrecursorIonType("[M + C2H3N + Na]+"));
+            super(0, null, makeSourceCandidate(), -12.22, PrecursorIonType.getPrecursorIonType("[M + C2H3N + Na]+"), null);
         }
 
 

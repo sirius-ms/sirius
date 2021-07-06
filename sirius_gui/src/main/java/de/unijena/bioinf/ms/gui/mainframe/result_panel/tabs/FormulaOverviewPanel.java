@@ -25,6 +25,7 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
  */
 
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.VisualizationPanelSynchronizer;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListDetailView;
 
@@ -43,13 +44,19 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription {
 
     public FormulaOverviewPanel(FormulaList suriusResultElements) {
         super(new BorderLayout());
-        TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
-        suriusResultElements.addActiveResultChangedListener(overviewTVP);
-        SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel();
-        suriusResultElements.addActiveResultChangedListener(overviewSVP);
+
 
         final FormulaListDetailView north = new FormulaListDetailView(suriusResultElements);
 
+
+        TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
+        suriusResultElements.addActiveResultChangedListener(overviewTVP);
+        SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(true);
+        suriusResultElements.addActiveResultChangedListener(overviewSVP);
+
+        // Class to synchronize selected peak/node
+        VisualizationPanelSynchronizer synchronizer = new VisualizationPanelSynchronizer(
+            overviewTVP, overviewSVP);
 
         JSplitPane east = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, overviewSVP, overviewTVP);
         east.setDividerLocation(.5d);

@@ -3,6 +3,7 @@ dependencies {
     compile group: "info.picocli", name: "picocli", version: "$picocli_version"
     //internal
     compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
+
 //    compile group: "de.unijena.bioinf.ms", name: "zodiac_project_space", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "tree_motif_search", version: "$siriusVersion"
@@ -10,6 +11,7 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "quality_assessment", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "passatutto", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "passatutto_project_space", version: "$siriusVersion"
+    compile group: "de.unijena.bioinf.ms", name: "networks", version: "$siriusVersion"
 //    compile group: "de.unijena.bioinf.ms", name: "fingerid_db_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerprinter_oss", version: "$fingeridVersion"
     compile group: "de.unijena.bioinf.ms", name: "fingerblast_oss", version: "$fingeridVersion"

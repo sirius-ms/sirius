@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.io.lcms.CVUtils;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
@@ -34,14 +35,43 @@ import picocli.CommandLine;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@CommandLine.Command(name = "project-space", aliases = {"PS"}, description = "<STANDALONE> Modify a given project Space: Read project(s) with --input, apply modification and write the result via --output. If either onl --input or --output is give the modifications will be made in-place.",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "project-space", aliases = {"PS"}, description = "<STANDALONE> Modify a given project Space: Read project(s) with --input, apply modification and write the result via --output. If either --input or --output is given, the modifications will be made in-place.",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> {
 
     @CommandLine.Option(names = {"--repair-scores"},
-            description = "Remove CSI scores that have not Candidates anymore", hidden = true)
+            description = "Remove CSI scores that have no candidates anymore", hidden = true)
     boolean repairScores;
+
+    @CommandLine.Option(names = {"--merge-compounds-top"}, description = "Merge compounds which have the same spectra and m/z into one. For each such cluster of compounds, keep only the top k most abundant ones. The criteria for merging can be specified with --merge-compounds-cosine and --merge-compounds-rtdiff.")
+    Integer mergeCompoundsTopK;
+
+    @CommandLine.Option(names = {"--merge-compounds-cosine"}, description = "Merge compounds which have the same spectra and m/z into one. The criteria for merging can be specified with --merge-compounds-cosine and --merge-compounds-rtdiff.")
+    Double mergeCompoundsCosine;
+
+    @CommandLine.Option(names = {"--merge-compounds-rtdiff"}, description = "Merge compounds which have the same spectra and m/z into one. The criteria for merging can be specified with --merge-compounds-cosine and --merge-compounds-rtdiff. Retention time difference for merging is either specified in seconds, or by adding a unit after the number (e.g., '5 min'")
+    private void setMergeCompoundsRtDiff(String txt) {
+        Matcher m = TMUNIT.matcher(txt);
+        if (m.find()) {
+            final double rtval = Double.parseDouble(m.group(1));
+            double multiplier = 1;
+            if (m.group(2)!= null && !m.group(2).isEmpty()) {
+                for (CVUtils.TimeUnit t : CVUtils.TimeUnit.values()) {
+                    if (m.group(2).equalsIgnoreCase(t.unitName)) {
+                        multiplier = t.inSeconds;
+                        break;
+                    }
+                }
+            }
+            this.mergeCompoundsRtDiff = Math.round(rtval*multiplier);
+        } else{
+            throw new CommandLine.TypeConversionException("'" + txt + "' is not a valid value for the retention time difference. Specify the time either in seconds or by adding one of the following units: ms, s, min, h.");
+        }
+    }
+    Long mergeCompoundsRtDiff;
+    private static Pattern TMUNIT = Pattern.compile("([0-9]+(?:\\.[0-9]+))\\s*(ms|s|min|h)?");
 
     @CommandLine.Option(names = {"--delete-by-idx", "--di", "-d"}, split = ",",
             description = {"Delete all compounds that match the given indices from the given project-space."})
@@ -83,7 +113,6 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
     }
 
     Predicate<CompoundContainerId> keepIdxFilter = (c) -> true;
-
 
     @CommandLine.Option(names = {"--keep-by-mass", "--km"},
             description = {"Keep all compounds that are within the given mass window."
