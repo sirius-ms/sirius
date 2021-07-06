@@ -293,7 +293,7 @@ subprojects {
 
 
     task distImage(type: AppImage, group: 'distribution') {
-        dependsOn installDist, downloadManual, downloadCLP/*, downloadGLPK*/
+        dependsOn installDist, downloadCLP/*,downloadManual, downloadGLPK*/
         if (OS.isWindows())
             dependsOn createAllExecutables
 
