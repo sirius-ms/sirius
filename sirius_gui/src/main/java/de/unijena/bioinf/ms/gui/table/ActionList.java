@@ -49,6 +49,7 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
 
     protected ObservableElementList<E> elementList;
     protected DefaultEventSelectionModel<E> elementListSelectionModel;
+    protected DefaultEventSelectionModel<E> topLevelSelectionModel;
 
     private final ArrayList<E> elementData = new ArrayList<>();
     private final BasicEventList<E> basicElementList = new BasicEventList<>(elementData);
@@ -64,6 +65,7 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
         selectionType = strategy;
         elementList = new ObservableElementList<>(basicElementList, GlazedLists.beanConnector(cls));
         elementListSelectionModel = new DefaultEventSelectionModel<>(elementList);
+        topLevelSelectionModel = elementListSelectionModel;
         elementListSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 
@@ -92,7 +94,11 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
 
     protected boolean refillElementsEDT(final Collection<E> toFillIn) throws InvocationTargetException, InterruptedException {
         AtomicBoolean ret = new AtomicBoolean();
-        Jobs.runEDTAndWait(() -> ret.set(refillElements(toFillIn)));
+        Jobs.runEDTAndWait(() -> {
+            ret.set(refillElements(toFillIn));
+            if (!toFillIn.isEmpty())
+                topLevelSelectionModel.setSelectionInterval(0, 0);
+        });
         return ret.get();
     }
 
@@ -102,7 +108,14 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
             return true;
         }
         return false;
-//        return SiriusGlazedLists.refill(basicElementList, elementData, toFillIn);
+    }
+
+    public void setTopLevelSelectionModel(DefaultEventSelectionModel<E> topLevelSelectionModel) {
+        this.topLevelSelectionModel = topLevelSelectionModel;
+    }
+
+    public DefaultEventSelectionModel<E> getTopLevelSelectionModel() {
+        return topLevelSelectionModel;
     }
 
     @NotNull

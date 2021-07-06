@@ -19,12 +19,12 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.similarity;
 
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -51,6 +51,12 @@ public class SimilarityMatrixOptions implements StandaloneTool<SimilarityMatrixW
     @CommandLine.Option(names = "--cosine",
             description = {"Compute spectral cosine similarity between all compounds in the dataset"})
     protected boolean useCosine;
+
+    @CommandLine.Option(names = "--minpeaks",defaultValue = "0",
+            description = {"For cosine: when less than K peaks are matching, set cosine to zero."})
+    protected int useMinPeaks;
+
+
 
     @CommandLine.Option(names = {"--directory", "-d"}, defaultValue = ".", description = "Directory to store the matrices.")
     protected File outputDirectory;

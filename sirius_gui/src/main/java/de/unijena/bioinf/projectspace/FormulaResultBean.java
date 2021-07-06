@@ -130,6 +130,10 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return fid;
     }
 
+    public InstanceBean getInstance() {
+        return parent;
+    }
+
     @SafeVarargs
     public final Optional<FormulaResult> getResult(Class<? extends DataAnnotation>... components) {
         parent.addToCache();

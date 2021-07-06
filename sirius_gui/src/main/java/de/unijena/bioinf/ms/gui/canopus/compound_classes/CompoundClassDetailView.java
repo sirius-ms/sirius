@@ -146,7 +146,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
         FingerprintVersion version = classyfireFingerprint.getFingerprintVersion();
         if (version instanceof MaskedFingerprintVersion) version = ((MaskedFingerprintVersion) version).getMaskedFingerprintVersion();
         if (!(version instanceof ClassyFireFingerprintVersion)) {
-            LoggerFactory.getLogger(CompoundClassDetailView.class).error("Classyfire fingerprint has wrong versio: " + version);
+            LoggerFactory.getLogger(CompoundClassDetailView.class).error("Classyfire fingerprint has wrong version: " + version);
             clear();
             return;
         }

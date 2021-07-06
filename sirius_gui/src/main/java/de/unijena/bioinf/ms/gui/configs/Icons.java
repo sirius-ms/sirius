@@ -139,4 +139,19 @@ public abstract class Icons {
 
     public static final Icon MolecularProperty_24 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-molecularPropertyWhite-24px.png"));
 
+
+
+    public static final Icon[] TRAFFIC_LIGHT_LARGE = new Icon[]{new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/red_l.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_l.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_l.png"))};
+
+    public static final Icon[] TRAFFIC_LIGHT_MEDIUM = new Icon[]{new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/red_m.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_m.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_m.png"))};
+
+    public static final Icon[] TRAFFIC_LIGHT_SMALL = new Icon[]{new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/red_s.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_s.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_s.png"))};
+
+
 }
