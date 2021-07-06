@@ -885,6 +885,7 @@ function colorCode(variant, scheme) {
     var orig_scheme_fn = scheme_fn;
     // adapt color grading to avoid colors too light/dark
     scheme_fn = function(x){
+        if (isNaN(x)) x = 0;
         var scale = (orig_scheme_fn == d3.interpolateViridis) ? 0.6 : 0.5;
         var offset = (orig_scheme_fn == d3.interpolateViridis) ? 0.4 : 0.15;
         return orig_scheme_fn(x * scale + offset);
