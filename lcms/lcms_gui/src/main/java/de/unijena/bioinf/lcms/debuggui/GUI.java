@@ -1,15 +1,19 @@
 package de.unijena.bioinf.lcms.debuggui;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.io.lcms.MzXMLParser;
+import de.unijena.bioinf.lcms.CorrelatedPeakDetector;
 import de.unijena.bioinf.lcms.InMemoryStorage;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.ProcessedSample;
+import de.unijena.bioinf.lcms.ionidentity.CorrelationGroupScorer;
 import de.unijena.bioinf.lcms.peakshape.*;
 import de.unijena.bioinf.model.lcms.*;
+import gnu.trove.list.array.TDoubleArrayList;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -28,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Locale;
 
@@ -109,17 +114,87 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
                         groups.add(xs.get(k));
                     }
                 }
+                System.out.println("n = " + groups.size());
                 if (groups.size()<=5)
                     break;
                 // cosine
-                groups.sort((u,v)->Double.compare(u.getCosine(),v.getCosine()));
+                groups.sort(Comparator.comparingDouble(CorrelationGroup::getCosine));
                 System.out.printf("Median cosine = %f\n", groups.get(groups.size()/2).getCosine() );
+                System.out.printf("Avg cosine = %f\n", groups.stream().mapToDouble(CorrelationGroup::getCosine).average().getAsDouble() );
+
                 System.out.printf("15%% quantile = %f\n", groups.get((int)(groups.size()*0.15)).getCosine() );
                 // correlation
-                groups.sort((u,v)->Double.compare(u.getCorrelation(),v.getCorrelation()));
-                System.out.printf("Median cosine = %f\n", groups.get(groups.size()/2).getCorrelation() );
+                groups.sort(Comparator.comparingDouble(CorrelationGroup::getCorrelation));
+                System.out.printf("Median correlation = %f\n", groups.get(groups.size()/2).getCorrelation() );
+                System.out.printf("Avg correlation = %f\n", groups.stream().mapToDouble(CorrelationGroup::getCorrelation).average().getAsDouble() );
                 System.out.printf("15%% quantile = %f\n", groups.get((int)(groups.size()*0.15)).getCorrelation() );
+                // maximum likelihood
+                groups.sort(Comparator.comparingDouble(u -> u.score));
+                System.out.printf("median ML = %f\n", groups.get(groups.size()/2).score );
+                System.out.printf("Avg ML = %f\n", groups.stream().mapToDouble(x->x.score).average().getAsDouble() );
+                System.out.printf("15%% quantile = %f\n", groups.get((int)(groups.size()*0.15)).score );
+
+                // LENGTH
+                System.out.printf("Average Length = %f\n", groups.stream().mapToInt(x->x.getNumberOfCorrelatedPeaks()).average().getAsDouble());
             }
+        }
+        System.out.println("================== DECOY ===============================");
+        {
+            // compare with random correlations
+            final ArrayList<FragmentedIon> A = new ArrayList<>(sample.ions), B = new ArrayList<>(sample.ions);
+            TDoubleArrayList cosines = new TDoubleArrayList(), correlations = new TDoubleArrayList(), mls = new TDoubleArrayList();
+            double avgLen = 0d;
+            int counter = 0;
+            while (counter < 5000) {
+                Collections.shuffle(A);
+                Collections.shuffle(B);
+                for (int k = 0; k < A.size(); ++k) {
+                    final ChromatographicPeak.Segment a = A.get(k).getSegment();
+                    final ChromatographicPeak.Segment b = B.get(k).getSegment();
+                    final TDoubleArrayList as = new TDoubleArrayList(), bs = new TDoubleArrayList();
+                    final Range<Integer> l = a.calculateFWHM(0.15);
+                    final Range<Integer> r = b.calculateFWHM(0.15);
+                    int lenL = Math.min(a.getApexIndex()-l.lowerEndpoint(), b.getApexIndex()-r.lowerEndpoint());
+                    int lenR = Math.min(l.upperEndpoint()-a.getApexIndex(), r.upperEndpoint()-b.getApexIndex());
+                    if (lenL>=1 && lenR >= 1 && (lenL+lenR)>=4) {
+                        ++counter;
+                        avgLen += (lenL+lenR);
+                        as.add(a.getApexIntensity());
+                        bs.add(b.getApexIntensity());
+                        for (int x=1; x  <lenR; ++x) {
+                            as.add(a.getPeak().getIntensityAt(a.getApexIndex()+x));
+                            bs.add(b.getPeak().getIntensityAt(b.getApexIndex()+x));
+                        }
+                        for (int x=1; x  <lenL; ++x) {
+                            as.insert(0,a.getPeak().getIntensityAt(a.getApexIndex()-x));
+                            bs.insert(0, b.getPeak().getIntensityAt(b.getApexIndex()-x));
+                        }
+
+                        cosines.add(CorrelatedPeakDetector.cosine(as,bs));
+                        correlations.add(CorrelatedPeakDetector.pearson(as,bs));
+                        mls.add(new CorrelationGroupScorer().predictProbability(as,bs));
+                    }
+                }
+            }
+            avgLen /= counter;
+            // cosine
+            cosines.sort();
+            System.out.printf("Median cosine = %f\n", cosines.get(cosines.size()/2));
+            System.out.printf("Avg cosine = %f\n", cosines.sum()/cosines.size());
+            System.out.printf("15%% quantile = %f\n", cosines.get((int)(cosines.size()*0.15)));
+            // correlation
+            correlations.sort();
+            System.out.printf("Median correlation = %f\n", correlations.get(correlations.size()/2));
+            System.out.printf("Avg correlation = %f\n", correlations.sum()/correlations.size());
+            System.out.printf("15%% quantile = %f\n", correlations.get((int)(correlations.size()*0.15)));
+            // maximum likelihood
+            mls.sort();
+            System.out.printf("Median ml = %f\n", mls.get(mls.size()/2));
+            System.out.printf("Avg ml = %f\n", mls.sum()/mls.size());
+            System.out.printf("15%% quantile = %f\n", mls.get((int)(mls.size()*0.15)));
+
+            System.out.printf("Average Length = %f\n", avgLen);
+
         }
 
         setVisible(true);
@@ -401,7 +476,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
                 if (c.correlation.getAnnotation()!=null) {
                     int yyy = (int) Math.round(p.getIntensityAt(rightSegment.getApexIndex()) / deltaInt) - 16;
                     int xxx = (int) Math.round((p.getRetentionTimeAt(rightSegment.getApexIndex()) - start) / deltaRT);
-                    g.drawString(String.format(Locale.US, "%s %d %%, %d %%",c.correlation.getAnnotation() , (int)Math.round(100*c.correlation.getCorrelation()), (int)Math.round(100*c.correlation.getCosine())), xxx, 700 - yyy);
+                    g.drawString(String.format(Locale.US, "%s %d %%, %d %%",c.correlation.getAnnotation() , (int)Math.round(100*c.correlation.getCorrelation()), (int)Math.round(100*c.correlation.score)), xxx, 700 - yyy);
                 }
             }
 

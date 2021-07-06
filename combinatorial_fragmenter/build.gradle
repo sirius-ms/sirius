@@ -1,0 +1,19 @@
+version =  parent.siriusVersion
+dependencies() {
+    annotationProcessor project(':default_properties:processor')
+    compile project(':chemistry_base')
+    testCompile project(":io")
+    for (module in ["interfaces", "core", "silent", "isomorphism", "formula", "smiles"]) {
+        //todo legacy is for old SMARTS matching in FixedMaACCSFingerprinter, SmartsMapper etc. THIS should be updated in the future
+        compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
+    }
+
+    testCompile project(":sirius_api")
+
+    for (module in ["depict", "smiles"]) {
+        testCompile  group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
+    }
+
+
+}
+

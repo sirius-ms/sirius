@@ -29,6 +29,17 @@ import java.util.Arrays;
 
 public class MatrixUtils {
 
+    public static double frobeniusProduct(double[][] M, double[][] N) {
+        double prod = 0d;
+        for (int i=0; i < M.length; ++i) {
+            for (int j=0; j < M.length; ++j) {
+                prod += M[i][j]*N[i][j];
+            }
+        }
+        return prod;
+    }
+
+
     public static double frobeniusNorm(double[][] M) {
         double norm = 0d;
         for (int i=0; i < M.length; ++i) {
@@ -479,5 +490,225 @@ public class MatrixUtils {
      */
     public interface MatrixComputationFunction {
         public double compute(int i, int j);
+    }
+
+
+    ///////////////////// other primitives ///////////////////////
+
+    public static int[][] unflatVector(int[] vector, int[][] M) {
+        final int rows = M.length, cols = M.length>0 ? M[0].length : 0;
+        if (vector.length != rows*cols)
+            throw new IllegalArgumentException("matrix size differs from number of elements in vector: " + rows + " x " + cols + " != " + vector.length);
+        int offset=0;
+        for (int r=0; r < rows; ++r) {
+            System.arraycopy(vector, offset, M[r], 0, cols);
+            offset += cols;
+        }
+        return M;
+    }
+
+    public static int[][] unflatVector(int[] vector, int rows, int cols) {
+        final int[][] M = new int[rows][cols];
+        return unflatVector(vector, M);
+    }
+
+    public static int[] flatMatrix(int[][] matrix, int[] values) {
+        int offset = 0;
+        for (int[] m : matrix) {
+            System.arraycopy(m, 0, values, offset, m.length);
+            offset += m.length;
+        }
+        return values;
+    }
+
+    public static int[] flatMatrixSelectRows(int[][] matrix, int[] rowIds, int[] values) {
+        int offset = 0;
+        for (int rowId : rowIds) {
+            System.arraycopy(matrix[rowId], 0, values, offset, matrix[rowId].length);
+            offset += matrix[rowId].length;
+        }
+        if (offset != values.length) throw new RuntimeException("Vector too large: " + offset + " expected but vector has length " + values.length );
+        return values;
+    }
+
+    public static int[] flatMatrix(int[][] matrix) {
+        int count = 0;
+        for (int[] m : matrix) count += m.length;
+        final int[] values = new int[count];
+        return flatMatrix(matrix, values);
+    }
+
+    public static byte[][] unflatVector(byte[] vector, byte[][] M) {
+        final int rows = M.length, cols = M.length>0 ? M[0].length : 0;
+        if (vector.length != rows*cols)
+            throw new IllegalArgumentException("matrix size differs from number of elements in vector: " + rows + " x " + cols + " != " + vector.length);
+        int offset=0;
+        for (int r=0; r < rows; ++r) {
+            System.arraycopy(vector, offset, M[r], 0, cols);
+            offset += cols;
+        }
+        return M;
+    }
+
+    public static byte[][] unflatVector(byte[] vector, int rows, int cols) {
+        final byte[][] M = new byte[rows][cols];
+        return unflatVector(vector, M);
+    }
+
+    public static byte[] flatMatrix(byte[][] matrix, byte[] values) {
+        int offset = 0;
+        for (byte[] m : matrix) {
+            System.arraycopy(m, 0, values, offset, m.length);
+            offset += m.length;
+        }
+        return values;
+    }
+
+    public static byte[] flatMatrixSelectRows(byte[][] matrix, int[] rowIds, byte[] values) {
+        int offset = 0;
+        for (int rowId : rowIds) {
+            System.arraycopy(matrix[rowId], 0, values, offset, matrix[rowId].length);
+            offset += matrix[rowId].length;
+        }
+        if (offset != values.length) throw new RuntimeException("Vector too large: " + offset + " expected but vector has length " + values.length );
+        return values;
+    }
+
+    public static byte[] flatMatrix(byte[][] matrix) {
+        int count = 0;
+        for (byte[] m : matrix) count += m.length;
+        final byte[] values = new byte[count];
+        return flatMatrix(matrix, values);
+    }
+
+    public static short[][] unflatVector(short[] vector, short[][] M) {
+        final int rows = M.length, cols = M.length>0 ? M[0].length : 0;
+        if (vector.length != rows*cols)
+            throw new IllegalArgumentException("matrix size differs from number of elements in vector: " + rows + " x " + cols + " != " + vector.length);
+        int offset=0;
+        for (int r=0; r < rows; ++r) {
+            System.arraycopy(vector, offset, M[r], 0, cols);
+            offset += cols;
+        }
+        return M;
+    }
+
+    public static short[][] unflatVector(short[] vector, int rows, int cols) {
+        final short[][] M = new short[rows][cols];
+        return unflatVector(vector, M);
+    }
+
+    public static short[] flatMatrix(short[][] matrix, short[] values) {
+        int offset = 0;
+        for (short[] m : matrix) {
+            System.arraycopy(m, 0, values, offset, m.length);
+            offset += m.length;
+        }
+        return values;
+    }
+
+    public static short[] flatMatrixSelectRows(short[][] matrix, int[] rowIds, short[] values) {
+        int offset = 0;
+        for (int rowId : rowIds) {
+            System.arraycopy(matrix[rowId], 0, values, offset, matrix[rowId].length);
+            offset += matrix[rowId].length;
+        }
+        if (offset != values.length) throw new RuntimeException("Vector too large: " + offset + " expected but vector has length " + values.length );
+        return values;
+    }
+
+    public static short[] flatMatrix(short[][] matrix) {
+        int count = 0;
+        for (short[] m : matrix) count += m.length;
+        final short[] values = new short[count];
+        return flatMatrix(matrix, values);
+    }
+
+    public static float[][] unflatVector(float[] vector, float[][] M) {
+        final int rows = M.length, cols = M.length>0 ? M[0].length : 0;
+        if (vector.length != rows*cols)
+            throw new IllegalArgumentException("matrix size differs from number of elements in vector: " + rows + " x " + cols + " != " + vector.length);
+        int offset=0;
+        for (int r=0; r < rows; ++r) {
+            System.arraycopy(vector, offset, M[r], 0, cols);
+            offset += cols;
+        }
+        return M;
+    }
+
+    public static float[][] unflatVector(float[] vector, int rows, int cols) {
+        final float[][] M = new float[rows][cols];
+        return unflatVector(vector, M);
+    }
+
+    public static float[] flatMatrix(float[][] matrix, float[] values) {
+        int offset = 0;
+        for (float[] m : matrix) {
+            System.arraycopy(m, 0, values, offset, m.length);
+            offset += m.length;
+        }
+        return values;
+    }
+
+    public static float[] flatMatrixSelectRows(float[][] matrix, int[] rowIds, float[] values) {
+        int offset = 0;
+        for (int rowId : rowIds) {
+            System.arraycopy(matrix[rowId], 0, values, offset, matrix[rowId].length);
+            offset += matrix[rowId].length;
+        }
+        if (offset != values.length) throw new RuntimeException("Vector too large: " + offset + " expected but vector has length " + values.length );
+        return values;
+    }
+
+    public static float[] flatMatrix(float[][] matrix) {
+        int count = 0;
+        for (float[] m : matrix) count += m.length;
+        final float[] values = new float[count];
+        return flatMatrix(matrix, values);
+    }
+
+    public static boolean[][] unflatVector(boolean[] vector, int rows, int cols) {
+        final boolean[][] M = new boolean[rows][cols];
+        return unflatVector(vector, M);
+    }
+
+
+    public static boolean[][] unflatVector(boolean[] vector, boolean[][] M) {
+        final int rows = M.length, cols = M.length>0 ? M[0].length : 0;
+        if (vector.length != rows*cols)
+            throw new IllegalArgumentException("matrix size differs from number of elements in vector: " + rows + " x " + cols + " != " + vector.length);
+        int offset=0;
+        for (int r=0; r < rows; ++r) {
+            System.arraycopy(vector, offset, M[r], 0, cols);
+            offset += cols;
+        }
+        return M;
+    }
+
+
+    public static boolean[] flatMatrix(boolean[][] matrix, boolean[] values) {
+        int offset = 0;
+        for (boolean[] m : matrix) {
+            System.arraycopy(m, 0, values, offset, m.length);
+            offset += m.length;
+        }
+        return values;
+    }
+
+    public static boolean[] flatMatrixSelectRows(boolean[][] matrix, int[] rowIds, boolean[] values) {
+        int offset = 0;
+        for (int rowId : rowIds) {
+            System.arraycopy(matrix[rowId], 0, values, offset, matrix[rowId].length);
+            offset += matrix[rowId].length;
+        }
+        if (offset != values.length) throw new RuntimeException("Vector too large: " + offset + " expected but vector has length " + values.length );
+        return values;
+    }
+
+    public static boolean[] flatMatrix(boolean[][] matrix) {
+        int count = 0;
+        for (boolean[] m : matrix) count += m.length;
+        final boolean[] values = new boolean[count];
+        return flatMatrix(matrix, values);
     }
 }

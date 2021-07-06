@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.lcms;
 
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -32,6 +33,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.lcms.align.*;
@@ -46,16 +48,18 @@ import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+import org.apache.commons.math3.distribution.LaplaceDistribution;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LCMSProccessingInstance {
-    public static final String POSSIBLE_ADDUCTS_KEY = "lcms-align";//LCMSProccessingInstance.class.getSimpleName();
-
     protected HashMap<ProcessedSample, SpectrumStorage> storages;
     protected List<ProcessedSample> samples;
     protected MemoryFileStorage ms2Storage;
@@ -79,6 +83,10 @@ public class LCMSProccessingInstance {
                 PrecursorIonType.fromString("[M-H2O+H]+"),
                 PrecursorIonType.fromString("[M-H4O2+H]+"),
                 PrecursorIonType.fromString("[M-H2O+Na]+"),
+                PrecursorIonType.fromString("[M + FA + H]+"),
+                PrecursorIonType.fromString("[M + ACN + H]+"),
+                PrecursorIonType.fromString("[M + ACN + Na]+"),
+                //PrecursorIonType.fromString("[M-H+Na2]+"),
                 PrecursorIonType.fromString("[M+NH3+H]+"),
                 PrecursorIonType.fromString("[M-H]-"),
                 PrecursorIonType.fromString("[M+Cl]-"),
@@ -118,32 +126,115 @@ public class LCMSProccessingInstance {
      */
     public IonNetwork detectAdductsWithGibbsSampling(Cluster alignedFeatures) {
         final IonNetwork network = new IonNetwork();
+        final CorrelatedPeakDetector detector = new CorrelatedPeakDetector(detectableIonTypes);
+        final JobManager jobManager = SiriusJobs.getGlobalJobManager();
+        final List<BasicJJob<Object>> jobs = new ArrayList<>();
+        for (AlignedFeatures features : alignedFeatures.getFeatures()) {
+            features.getFeatures().forEach((key, value) -> jobs.add(jobManager.submitJob(new BasicJJob<Object>() {
+                @Override
+                protected Object compute() throws Exception {
+                    if (!value.isAdductDetectionDone()) detector.detectCorrelatedPeaks(key, value);
+                    value.setDetectedIonType(PrecursorIonType.unknown(value.getPolarity()));
+                    return null;
+                }
+            })));
+        }
+        jobs.forEach(JJob::takeResult);
+        jobs.clear();
         for (AlignedFeatures features : alignedFeatures.getFeatures()) {
             network.addNode(features);
         }
-        network.addCorrelatedEdgesForAllNodes();
+        network.addCorrelatedEdgesForAllNodes(this);
+        network.deleteSingletons();
+
+        // debugging statistics
+        TObjectIntHashMap<Ionization> selectedIonTypeCounter = new TObjectIntHashMap<>();
+        TObjectIntHashMap<PrecursorIonType> possibleIonTypeCounter = new TObjectIntHashMap<>();
+        int[] ncompounds=new int[1];
+
         final ArrayList<AlignedFeatures> features = new ArrayList<>();
-        network.gibbsSampling((feature,types,prob)->{
+        network.gibbsSampling(this, (feature,types,prob)->{
             for (FragmentedIon ion : feature.getFeatures().values()) {
                 // we only consider adducts which are at least 1/5 as likely as the most likely option
                 final double threshold = Arrays.stream(prob).max().orElse(0d)/5d;
                 final HashSet<PrecursorIonType> set = new HashSet<>();
                 boolean unknown = false;
+                final TObjectDoubleHashMap<Ionization> probForIons = new TObjectDoubleHashMap<>();
+                for (PrecursorIonType t : this.detectableIonTypes) {
+                    if (t.getCharge()==ion.getPolarity()) {
+                        probForIons.putIfAbsent(t.getIonization(), 0d);
+                    }
+                }
+                double unknownProb = 0d;
                 for (int k=0; k < types.length; ++k) {
                     if (types[k].isIonizationUnknown()) {
+                        unknownProb += prob[k];
                         if (prob[k]>=threshold)
                             unknown=true;
                     } else {
+                        if (prob[k] > 0) {
+                            probForIons.adjustOrPutValue(types[k].getIonization(), prob[k], prob[k]);
+                        }
                         if (prob[k] >= threshold) {
                             set.add(types[k]);
+                            // whenever we add an adduct, add its ionization, too
+                            // because we cannot distinguish adducts from in-source
+                            // fragments
+                            // exception: damned, for some adducts we do not want that.
+                            if (!types[k].hasMultipleIons()) {
+                                set.add(types[k].withoutAdduct());
+                                set.add(types[k].withoutInsource());
+                            }
                         }
                     }
                 }
+                final double unknownProbability = unknownProb;
+                // add ionizations for each ion type which has probability above
+                final double ionThreshold = Arrays.stream(probForIons.values()).max().orElse(0d)/5d;
+                probForIons.forEachEntry((ionKey,probability)->{
+                   if (unknownProbability + probability >= ionThreshold) {
+                       set.add(PrecursorIonType.getPrecursorIonType(ionKey));
+                   }
+                   return true;
+                });
                 ion.setPossibleAdductTypes(set);
                 if (!unknown && set.size()==1) ion.setDetectedIonType(set.iterator().next());
                 else ion.setDetectedIonType(PrecursorIonType.unknown(ion.getPolarity()));
+
+                Set<Ionization> ionizations = new HashSet<>();
+                for (PrecursorIonType type : set) {
+                    possibleIonTypeCounter.adjustOrPutValue(type, 1, 1);
+                    if (!type.isIonizationUnknown()) ionizations.add(type.getIonization());
+                }
+                if (ionizations.size()==1) {
+                    selectedIonTypeCounter.adjustOrPutValue(ionizations.iterator().next(), 1, 1);
+                }
+                ncompounds[0]++;
             }
         });
+        network.reinsertLikelyCorrelatedEdgesIntoFeatures();
+
+
+        System.out.println("############ STATISTICS ################");
+        possibleIonTypeCounter.forEachEntry((key,count)->{
+            System.out.printf("%s %d times (%.2f %%)\n", key.toString(), count, count*100.0d/ncompounds[0] );
+            return true;
+        });
+        System.out.println("--------------- SELECTED --------------------");
+        int[] other = new int[1];
+        selectedIonTypeCounter.forEachEntry((key,count)->{
+            System.out.printf("%s %d times (%.2f %%)\n", key.toString(), count, count*100.0d/ncompounds[0] );
+            other[0] += count;
+            return true;
+        });
+        System.out.printf("Multiple possibilities: %d times (%.2f %%)\n", ncompounds[0]-other[0], (ncompounds[0]-other[0]+0d)*100.0d/ncompounds[0] );
+
+        try {
+            network.writeToFile(this, new File("/home/kaidu/network.json"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return network;
     }
 
@@ -223,23 +314,11 @@ public class LCMSProccessingInstance {
 
         final ArrayList<SimpleSpectrum> correlatedFeatures = new ArrayList<>();
         {
-            final SimpleMutableSpectrum isotope = toIsotopeSpectrum(ion, ionMass);
-
-            {
-                if (isotope.size() <= 2 && ion.getMsQuality().betterThan(Quality.DECENT)) {
-                    System.err.println("SOMETHING STRANGE IS HAPPENING WITH " + ion);
-                    System.err.println("-------------");
-                    System.out.println(ion.getIsotopes().get(0).getLeftSegment().getApexMass() + "\t"  + ion.getIsotopes().get(0).getLeftSegment().getApexIntensity());
-                    for (CorrelationGroup g : ion.getIsotopes()) {
-                        System.out.println(g.getRightSegment().getApexMass() + "\t"  + g.getRightSegment().getApexIntensity());
-                    }
-                    System.err.println("-------------");
-                }
-            }
+            final SimpleMutableSpectrum isotope = new SimpleMutableSpectrum(ion.getIsotopesAsSpectrum());
 
             correlatedFeatures.add(new SimpleSpectrum(isotope));
             for (CorrelatedIon adduct : ion.getAdducts()) {
-                correlatedFeatures.add(new SimpleSpectrum(toIsotopeSpectrum(adduct.ion, adduct.ion.getPeak().getMzAt(adduct.ion.getPeak().findScanNumber(ion.getSegment().getApexScanNumber())))));
+                correlatedFeatures.add(adduct.ion.getIsotopesAsSpectrum());
             }
 
         }
@@ -263,10 +342,14 @@ public class LCMSProccessingInstance {
 
     @NotNull
     public static SimpleMutableSpectrum toIsotopeSpectrum(IonGroup ion, double ionMass) {
+        return toIsotopeSpectrum(ion.getIsotopes(), ionMass);
+    }
+    @NotNull
+    public static SimpleMutableSpectrum toIsotopeSpectrum(List<CorrelationGroup> ions, double ionMass) {
         final SimpleMutableSpectrum isotope = new SimpleMutableSpectrum();
         isotope.addPeak(ionMass, 1.0d);
         eachPeak:
-        for (CorrelationGroup iso : ion.getIsotopes()) {
+        for (CorrelationGroup iso : ions) {
             final ChromatographicPeak l = iso.getLeft();
             final ChromatographicPeak r = iso.getRight();
             final ChromatographicPeak.Segment s = iso.getRightSegment();
@@ -276,7 +359,7 @@ public class LCMSProccessingInstance {
                 double rInt = r.getIntensityAt(a);
                 int iL = l.findScanNumber(r.getScanNumberAt(a));
                 if (iL < 0) {
-                    LoggerFactory.getLogger(LCMSProccessingInstance.class).warn("Strange isotope peak picked for feature " + ion);
+                    LoggerFactory.getLogger(LCMSProccessingInstance.class).warn("Strange isotope peak picked for feature " + iso.getLeft());
                     break eachPeak;
                 }
                 ratios += rInt / l.getScanPointAt(iL).getIntensity();
@@ -383,7 +466,7 @@ public class LCMSProccessingInstance {
                 allSegments.add(ion.getSegment());
             }
             for (FragmentedIon ion : sample.ions) {
-                for (ChromatographicPeak.Segment s : ion.getPeak().getSegments()) {
+                for (ChromatographicPeak.Segment s : ion.getPeak().getSegments().values()) {
                     if (!allSegments.contains(s)) {
                         final GapFilledIon newIon = new GapFilledIon(Polarity.of(ion.getPolarity()), ion.getPeak(), s, ion);
                         fitPeakShape(sample, newIon);
@@ -405,6 +488,24 @@ public class LCMSProccessingInstance {
         return alignAndGapFilling(null);
     }
 
+    private void setPeakShapeQualities(JobManager manager, Cluster c) {
+        final List<BasicJJob> jobs = new ArrayList<>();
+        for (final AlignedFeatures f : c.getFeatures()) {
+            jobs.add(manager.submitJob(new BasicJJob<Object>(){
+                @Override
+                protected Object compute() throws Exception {
+                    for (var pair : f.getFeatures().entrySet()) {
+                        if (pair.getValue().getPeakShape()==null) {
+                            pair.getValue().setPeakShape(fitPeakShape(pair.getKey(),pair.getValue()));
+                        }
+                    }
+                    return null;
+                }
+            }));
+        }
+        jobs.forEach(JJob::takeResult);
+    }
+
     public Cluster alignAndGapFilling(ProgressJJob<?> jobWithProgress) {
         final int maxProgress = 7;
         int currentProgress = 0;
@@ -417,25 +518,26 @@ public class LCMSProccessingInstance {
             s.maxRT = maxRt;
             numberOfUnalignedIons += s.ions.size();
         }
-        double error = new Aligner(false).estimateErrorTerm(samples);
-        System.out.println("ERROR = " + error);
+        //double error = new Aligner(false).estimateErrorTerm(samples);
+        LaplaceDistribution error = new Aligner(false).estimateErrorLaplace(samples);
+        System.out.println("ERROR = " + error.getScale());
 
-        final double initialError = error;
+        final double initialError = error.getScale();
         int n=0;
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Filter data: remove ions with low quality MS/MS spectrum and MS1 peak");
         System.out.println("Start with " + numberOfUnalignedIons + " unaligned ions.");
         System.out.println("Remove features with low MS/MS quality that do not align properly");System.out.flush();
-        int deleted = manager.submitJob(new Aligner(false).prealignAndFeatureCutoff2(samples, 15*error, 1)).takeResult();
+        int deleted = manager.submitJob(new Aligner(false).prealignAndFeatureCutoff2(samples, 4*error.getScale(), 1)).takeResult();
         System.out.println("Remove " + deleted + " features that do not align well. Keep " + (numberOfUnalignedIons-deleted) + " features." );
 
         addAllSegmentsAsPseudoIons();
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Start first alignment ");
-        BasicJJob<Cluster> clusterJob = new Aligner2(error*5).align(samples);//new Aligner().recalibrateRetentionTimes(this.samples);
+        BasicJJob<Cluster> clusterJob = new Aligner2(error).align(samples);//new Aligner().recalibrateRetentionTimes(this.samples);
         manager.submitJob(clusterJob);
         Cluster cluster = clusterJob.takeResult();
-        error = cluster.estimateError();
-        final double errorFromClustering = error;
-        clusterJob = new GapFilling().gapFillingInParallel(this, cluster.deleteRowsWithNoMsMs(), error,cluster.estimatePeakShapeError(), true);
+        error = cluster.estimateLaplaceError();
+        final double errorFromClustering = error.getScale();
+        clusterJob = new GapFilling().gapFillingInParallel(this, cluster.deleteRowsWithNoMsMs(), error.getScale(),cluster.estimatePeakShapeError(), Quality.GOOD);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Estimate parameters and start second alignment");
@@ -443,20 +545,21 @@ public class LCMSProccessingInstance {
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Recalibrate retention times");
-        manager.submitJob(new Aligner(false).recalibrateRetentionTimes(samples, cluster, error)).takeResult();
-        error = cluster.estimateError();
-        final double errorDueToRecalibration = error;
+        setPeakShapeQualities(manager, cluster);
+        manager.submitJob(new Aligner(false).recalibrateRetentionTimes(samples, cluster, error.getScale())).takeResult();
+        error = cluster.estimateLaplaceError();
+        final double errorDueToRecalibration = error.getScale();
         addAllSegmentsAsPseudoIons();
         if (jobWithProgress!=null) jobWithProgress.updateProgress(0, maxProgress, currentProgress++, "Start third alignment");
         clusterJob  = new Aligner2(error).align(samples);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult().deleteRowsWithNoMsMs();
         System.out.println("Start Gapfilling #2");System.out.flush();
-        clusterJob = new GapFilling().gapFillingInParallel(this, cluster, error, cluster.estimatePeakShapeError(), false);
+        clusterJob = new GapFilling().gapFillingInParallel(this, cluster, error.getScale(), cluster.estimatePeakShapeError(), Quality.DECENT);
         manager.submitJob(clusterJob);
         cluster = clusterJob.takeResult();
 
-        final double finalError = cluster.estimateError();
+        final double finalError = cluster.estimateError(true);
 
         System.out.println("########################################");
         System.out.println("Initial Error: " + initialError);
