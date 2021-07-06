@@ -9,7 +9,7 @@ pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500},
 margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30},
 decimal_place = 4,
 // MS2 + structure
-strucArea, annoArea, ms2Size, mzs, mzsMap,
+strucArea, annoArea, ms2Size, mzs,
 selected = {leftClick: null, hover: null},
 svg_str = null, basic_structure = null,
 anno_str = [],
@@ -104,7 +104,10 @@ function clear() {
 };
 
 function setSelection(mz) {
-    const i = mzsMap.get(mz);
+    var i;
+    for (i in mzs) {
+        if (Math.abs(mzs[i]-mz) < 1e-3) break;
+    }
     const d = data.spectra[0].peaks[i];
     if (d !== undefined && selected.leftClick !== i && "structureInformation" in d) {
         selectNewPeak(d, i, d3.select("#peak"+i));
@@ -555,7 +558,6 @@ function spectrumPlot(spectrum, structureView) {
     };
 
     mzs = spectrum.peaks.map(d => d.mz);
-    mzsMap = new Map(mzs.map((mz, i) => [mz, i]));
     ms2Size = mzs.length;
     if (structureView) {
         initStructureView();
