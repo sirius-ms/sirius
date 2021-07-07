@@ -63,7 +63,7 @@ document.onkeydown = function(e) {
            try {
                connector.selectionChanged(mzs[new_selected]);
            } catch (error) {
-               console.log(error);
+               null;
            }
             selected.leftClick = new_selected;
             svg.select("#peak"+selected.leftClick).classed("peak_select", true);
@@ -262,7 +262,7 @@ function selectNewPeak(d, i, newPeak) {
    try {
        connector.selectionChanged(mzs[i]);
    } catch (error) {
-       console.log(error);
+       null;
    }
     selected.leftClick = i;
     newPeak.classed("peak_select", true);
@@ -342,7 +342,7 @@ var mouseup = function(d, i) {
                try {
                    connector.selectionChanged(-1);
                } catch (error) {
-                   console.log(error);
+                   null;
                }
                 selected.leftClick = null;
                 tmp.classed("peak_select", false);
