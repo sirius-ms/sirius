@@ -109,7 +109,8 @@ function setSelection(mz) {
         if (Math.abs(mzs[i]-mz) < 1e-3) break;
     }
     const d = data.spectra[0].peaks[i];
-    if (d !== undefined && selected.leftClick !== i && "structureInformation" in d) {
+    i = Number(i);
+    if (d !== undefined && selected.leftClick !== i && ("structureInformation" in d || i === ms2Size-1)) {
         selectNewPeak(d, i, d3.select("#peak"+i));
         if (mz > domain_tmp.xMax || mz < domain_tmp.xMin) {
             const diffLeft = mz - domain_tmp.xMin;
