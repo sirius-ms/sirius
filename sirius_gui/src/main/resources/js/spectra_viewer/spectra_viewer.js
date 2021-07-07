@@ -111,15 +111,14 @@ function setSelection(mz) {
     const d = data.spectra[0].peaks[i];
     if (d !== undefined && selected.leftClick !== i && "structureInformation" in d) {
         selectNewPeak(d, i, d3.select("#peak"+i));
-        const mz = d.mz;
-        if (domain_tmp.xMin !== domain_fix.xMin || domain_tmp.xMax !== domain_fix.xMax) {
+        if (mz > domain_tmp.xMax || mz < domain_tmp.xMin) {
             const diffLeft = mz - domain_tmp.xMin;
             const diffRight = domain_tmp.xMax - mz;
             if (diffLeft < 0 || diffRight < 0) {
                 if (Math.abs(diffLeft) < Math.abs(diffRight)) {
-                    setXdomain(selectedPeak.mz-3, domain_tmp.xMax+diffLeft-3);
+                    setXdomain(mz-3, domain_tmp.xMax+diffLeft-3);
                 } else {
-                    setXdomain(domain_tmp.xMin-diffRight+3, selectedPeak.mz+3);
+                    setXdomain(domain_tmp.xMin-diffRight+3, mz+3);
                 }
                 update_peaks(50);
             }
