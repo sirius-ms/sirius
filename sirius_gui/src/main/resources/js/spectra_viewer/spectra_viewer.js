@@ -63,7 +63,7 @@ document.onkeydown = function(e) {
            try {
                connector.selectionChanged(mzs[new_selected]);
            } catch (error) {
-               console.log(error);
+               null;
            }
             selected.leftClick = new_selected;
             svg.select("#peak"+selected.leftClick).classed("peak_select", true);
@@ -109,17 +109,17 @@ function setSelection(mz) {
         if (Math.abs(mzs[i]-mz) < 1e-3) break;
     }
     const d = data.spectra[0].peaks[i];
-    if (d !== undefined && selected.leftClick !== i && "structureInformation" in d) {
+    i = Number(i);
+    if (d !== undefined && selected.leftClick !== i && ("structureInformation" in d || i === ms2Size-1)) {
         selectNewPeak(d, i, d3.select("#peak"+i));
-        const mz = d.mz;
-        if (domain_tmp.xMin !== domain_fix.xMin || domain_tmp.xMax !== domain_fix.xMax) {
+        if (mz > domain_tmp.xMax || mz < domain_tmp.xMin) {
             const diffLeft = mz - domain_tmp.xMin;
             const diffRight = domain_tmp.xMax - mz;
             if (diffLeft < 0 || diffRight < 0) {
                 if (Math.abs(diffLeft) < Math.abs(diffRight)) {
-                    setXdomain(selectedPeak.mz-3, domain_tmp.xMax+diffLeft-3);
+                    setXdomain(mz-3, domain_tmp.xMax+diffLeft-3);
                 } else {
-                    setXdomain(domain_tmp.xMin-diffRight+3, selectedPeak.mz+3);
+                    setXdomain(domain_tmp.xMin-diffRight+3, mz+3);
                 }
                 update_peaks(50);
             }
@@ -262,7 +262,7 @@ function selectNewPeak(d, i, newPeak) {
    try {
        connector.selectionChanged(mzs[i]);
    } catch (error) {
-       console.log(error);
+       null;
    }
     selected.leftClick = i;
     newPeak.classed("peak_select", true);
@@ -342,7 +342,7 @@ var mouseup = function(d, i) {
                try {
                    connector.selectionChanged(-1);
                } catch (error) {
-                   console.log(error);
+                   null;
                }
                 selected.leftClick = null;
                 tmp.classed("peak_select", false);
