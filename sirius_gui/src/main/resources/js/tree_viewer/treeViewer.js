@@ -162,12 +162,7 @@ function handleMouseMove(){
         changeCursor('move');
         popupClose();
         // remove hover faces for all nodes except highlighted one
-        for (var style in styles[theme]['node-rect'])
-            svg.selectAll('.node rect').style(style, styles[theme]['node-rect'][
-                style]);
-        for (var style in styles[theme]['node-rect-selected'])
-            d3.select(highlightedNode).select('rect').style(
-                style, styles[theme]['node-rect-selected'][style]);
+        highlightNode(highlightedNode);
     }
     if (nodeToMove != null)
         line_coords[0] = [getTransformedCoordinate(nodeToMove.__data__.x, 'x',
@@ -234,14 +229,7 @@ function handleClick(){
 
     // highlighting / connector interaction
     if (clickedNode != null){
-        highlightedNode = clickedNode;
-        // unhighlight any other node and highlight selected node
-        for (var style in styles[theme]['node-rect'])
-            svg.selectAll('.node rect').style(style, styles[theme]['node-rect'][style]);
-        for (var style in styles[theme]['node-rect-selected'])
-            d3.select(highlightedNode).select('rect').style(
-                style, styles[theme]['node-rect-selected'][style]);
-
+        highlightNode(d3.select(clickedNode));
         // pass selected node (~> peak) to Java connector
         selectionChanged(clickedNode.__data__.data.fragmentData.mz);
     }
@@ -296,6 +284,17 @@ function handleClick(){
             d3.select('#collapse_button').style('opacity', 0);
         }
     }
+}
+
+function highlightNode(node) {
+    // unhighlight any other node and highlight selected node
+    for (var style in styles[theme]['node-rect'])
+        svg.selectAll('.node rect').style(style, styles[theme]['node-rect'][style]);
+    highlightedNode = node;
+    if (node != null)
+        for (var style in styles[theme]['node-rect-selected'])
+            highlightedNode.select('rect').style(
+                style, styles[theme]['node-rect-selected'][style]);
 }
 
 function changeCursor(new_cursor){
