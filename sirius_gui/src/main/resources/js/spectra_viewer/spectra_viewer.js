@@ -61,9 +61,9 @@ document.onkeydown = function(e) {
                 svg.select("#peak"+selected.leftClick).classed("peak_hover", true);
             }
             try {
-               connector.selectionChanged(mzs[new_selected]);
+                connector.selectionChanged(mzs[new_selected]);
             } catch (error) {
-               null;
+                null;
             }
             selected.leftClick = new_selected;
             svg.select("#peak"+selected.leftClick).classed("peak_select", true);
@@ -110,7 +110,7 @@ function setSelection(mz) {
         const d = data.spectra[0].peaks[i];
         i = Number(i);
         if (selected.leftClick !== i) {
-            if (!("structureInformation" in d)) cancelSelection(d3.select("#peak"+selected.leftClick));
+            if (!("structureInformation" in d) && selected.leftClick !== null) cancelSelection(d3.select("#peak"+selected.leftClick));
             if ("structureInformation" in d || i === ms2Size-1) {
                 selectNewPeak(d, i, d3.select("#peak"+i));
                 if (mz > domain_tmp.xMax || mz < domain_tmp.xMin) {
@@ -263,9 +263,9 @@ function selectNewPeak(d, i, newPeak) {
         d3.select("#peak"+selected.leftClick).attr("class", resetColor);
     }
     try {
-       connector.selectionChanged(mzs[i]);
+        connector.selectionChanged(mzs[i]);
     } catch (error) {
-       null;
+        null;
     }
     selected.leftClick = i;
     newPeak.classed("peak_select", true);
@@ -277,9 +277,9 @@ function selectNewPeak(d, i, newPeak) {
 
 function cancelSelection(peak) {
     try {
-       connector.selectionChanged(-1);
+        connector.selectionChanged(-1);
     } catch (error) {
-       null;
+        null;
     }
     selected.leftClick = null;
     peak.classed("peak_select", false);
@@ -382,7 +382,7 @@ function zoomedY(minIntensity, duration, ...callbackUpdates) {
     domain_tmp.yMax = (newDomain[1] > 1) ? 1 : (newDomain[1] > minIntensity) ? newDomain[1] : minIntensity;
     y.domain([0, domain_tmp.yMax])
     yAxis.transition().duration(duration).call(d3.axisLeft(y));
-    svg.select("#yAxis").node().__zoom = d3.zoomIdentity;
+    d3.select("#zoomAreaY").node().__zoom = d3.zoomIdentity;
     callbackUpdates.forEach(function(callback) { callback(duration); });
 };
 
@@ -591,14 +591,21 @@ function spectrumPlot(spectrum, structureView) {
     } else {
         y = d3.scaleLinear().domain([0, domain_tmp.yMax]).range([h, 0]);
     }
-    
     yAxis = svg.append("g").attr("id", "yAxis").call(d3.axisLeft(y));
     svg.selectAll(".label").attr("visibility", "visible");
     // zoom and pan
     zoom = d3.zoom().extent([[0,0],[w,h]]).on("zoom", function() { zoomedX([0, domain_fix.xMax], 100, update_peaks); });
+    var zoomAreaY = d3.select("#container")
+        .append("div")
+        .attr("id", "zoomAreaY")
+        .style("position", "absolute")
+        .style("left", 0+"px")
+        .style("top", margin.top+"px")
+        .style("width", margin.left+"px")
+        .style("height", h+"px");
     const minIntensity = d3.min(spectrum.peaks.map(d => d.intensity));
     var zoomY = d3.zoom().on("zoom", function() { zoomedY(minIntensity, 100, update_peaks); });
-    svg.select("#yAxis").call(zoomY).on("dblclick.zoom", null);
+    zoomAreaY.call(zoomY).on("dblclick.zoom", null);
     peakArea.select("#brushArea").call(zoom)
         .on("dblclick.zoom", null)
         .on("mousedown.zoom", function() {
