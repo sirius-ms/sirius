@@ -60,11 +60,11 @@ document.onkeydown = function(e) {
             if (selected.leftClick === selected.hover) {
                 svg.select("#peak"+selected.leftClick).classed("peak_hover", true);
             }
-           try {
-               connector.selectionChanged(mzs[new_selected]);
-           } catch (error) {
-               console.log(error);
-           }
+            try {
+                connector.selectionChanged(mzs[new_selected]);
+            } catch (error) {
+                null;
+            }
             selected.leftClick = new_selected;
             svg.select("#peak"+selected.leftClick).classed("peak_select", true);
             if (domain_tmp.xMin !== domain_fix.xMin || domain_tmp.xMax !== domain_fix.xMax) {
@@ -104,24 +104,27 @@ function clear() {
 };
 
 function setSelection(mz) {
-    var i;
-    for (i in mzs) {
-        if (Math.abs(mzs[i]-mz) < 1e-3) break;
-    }
-    const d = data.spectra[0].peaks[i];
-    if (d !== undefined && selected.leftClick !== i && "structureInformation" in d) {
-        selectNewPeak(d, i, d3.select("#peak"+i));
-        const mz = d.mz;
-        if (domain_tmp.xMin !== domain_fix.xMin || domain_tmp.xMax !== domain_fix.xMax) {
-            const diffLeft = mz - domain_tmp.xMin;
-            const diffRight = domain_tmp.xMax - mz;
-            if (diffLeft < 0 || diffRight < 0) {
-                if (Math.abs(diffLeft) < Math.abs(diffRight)) {
-                    setXdomain(selectedPeak.mz-3, domain_tmp.xMax+diffLeft-3);
-                } else {
-                    setXdomain(domain_tmp.xMin-diffRight+3, selectedPeak.mz+3);
+    if (svg_str !== null) {
+        var i;
+        for (i in mzs) { if (Math.abs(mzs[i]-mz) < 1e-3) break; }
+        const d = data.spectra[0].peaks[i];
+        i = Number(i);
+        if (selected.leftClick !== i) {
+            if (!("structureInformation" in d) && selected.leftClick !== null) cancelSelection(d3.select("#peak"+selected.leftClick));
+            if ("structureInformation" in d || i === ms2Size-1) {
+                selectNewPeak(d, i, d3.select("#peak"+i));
+                if (mz > domain_tmp.xMax || mz < domain_tmp.xMin) {
+                    const diffLeft = mz - domain_tmp.xMin;
+                    const diffRight = domain_tmp.xMax - mz;
+                    if (diffLeft < 0 || diffRight < 0) {
+                        if (Math.abs(diffLeft) < Math.abs(diffRight)) {
+                            setXdomain(mz-3, domain_tmp.xMax+diffLeft-3);
+                        } else {
+                            setXdomain(domain_tmp.xMin-diffRight+3, mz+3);
+                        }
+                        update_peaks(50);
+                    }
                 }
-                update_peaks(50);
             }
         }
     }
@@ -259,17 +262,30 @@ function selectNewPeak(d, i, newPeak) {
     if (selected.leftClick !== -1 && selected.leftClick !== null && !newPeak.classed("peak_select")) {
         d3.select("#peak"+selected.leftClick).attr("class", resetColor);
     }
-   try {
-       connector.selectionChanged(mzs[i]);
-   } catch (error) {
-       console.log(error);
-   }
+    try {
+        connector.selectionChanged(mzs[i]);
+    } catch (error) {
+        null;
+    }
     selected.leftClick = i;
     newPeak.classed("peak_select", true);
     annoArea.attr("id", "anno_leftClick");
     document.getElementById("anno_leftClick").innerText = annotation(d).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
     showStructure(i);
     hideHover();
+};
+
+function cancelSelection(peak) {
+    try {
+        connector.selectionChanged(-1);
+    } catch (error) {
+        null;
+    }
+    selected.leftClick = null;
+    peak.classed("peak_select", false);
+    document.getElementById("anno_leftClick").innerText = "Left click to choose a purple peak...";
+    annoArea.attr("id", "nothing");
+    showStructure(-1);
 };
 
 /*
@@ -338,18 +354,9 @@ var mouseup = function(d, i) {
     if (!pan.mousemoveCheck) {     
         if ("structureInformation" in d || i === ms2Size-1) {
             let tmp = d3.select("#peak"+i);
-            if (selected.leftClick !== null && tmp.classed("peak_select")) { // cancel the selection
-               try {
-                   connector.selectionChanged(-1);
-               } catch (error) {
-                   console.log(error);
-               }
-                selected.leftClick = null;
-                tmp.classed("peak_select", false);
-                document.getElementById("anno_leftClick").innerText = "Left click to choose a purple peak...";
-                annoArea.attr("id", "nothing");
-                showStructure(-1);
-            } else { // create a new selection
+            if (selected.leftClick !== null && tmp.classed("peak_select")) {
+            	cancelSelection(tmp);
+            } else {
                 selectNewPeak(d, i, tmp);
             }
         }
@@ -375,7 +382,7 @@ function zoomedY(minIntensity, duration, ...callbackUpdates) {
     domain_tmp.yMax = (newDomain[1] > 1) ? 1 : (newDomain[1] > minIntensity) ? newDomain[1] : minIntensity;
     y.domain([0, domain_tmp.yMax])
     yAxis.transition().duration(duration).call(d3.axisLeft(y));
-    svg.select("#yAxis").node().__zoom = d3.zoomIdentity;
+    d3.select("#zoomAreaY").node().__zoom = d3.zoomIdentity;
     callbackUpdates.forEach(function(callback) { callback(duration); });
 };
 
@@ -584,14 +591,21 @@ function spectrumPlot(spectrum, structureView) {
     } else {
         y = d3.scaleLinear().domain([0, domain_tmp.yMax]).range([h, 0]);
     }
-    
     yAxis = svg.append("g").attr("id", "yAxis").call(d3.axisLeft(y));
     svg.selectAll(".label").attr("visibility", "visible");
     // zoom and pan
     zoom = d3.zoom().extent([[0,0],[w,h]]).on("zoom", function() { zoomedX([0, domain_fix.xMax], 100, update_peaks); });
+    var zoomAreaY = d3.select("#container")
+        .append("div")
+        .attr("id", "zoomAreaY")
+        .style("position", "absolute")
+        .style("left", 0+"px")
+        .style("top", margin.top+"px")
+        .style("width", margin.left+"px")
+        .style("height", h+"px");
     const minIntensity = d3.min(spectrum.peaks.map(d => d.intensity));
     var zoomY = d3.zoom().on("zoom", function() { zoomedY(minIntensity, 100, update_peaks); });
-    svg.select("#yAxis").call(zoomY).on("dblclick.zoom", null);
+    zoomAreaY.call(zoomY).on("dblclick.zoom", null);
     peakArea.select("#brushArea").call(zoom)
         .on("dblclick.zoom", null)
         .on("mousedown.zoom", function() {
