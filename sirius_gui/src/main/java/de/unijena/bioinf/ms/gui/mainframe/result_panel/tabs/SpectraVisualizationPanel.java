@@ -280,6 +280,10 @@ public class SpectraVisualizationPanel
 							}
 							updateCEBox(experiment);
 							drawSpectra(experiment, sre, (String) modesBox.getSelectedItem(), getCEIndex());
+                            // highlight last selected peak, even when experiments were changed
+                            float peak_selection = getConnector().getCurrentSelection();
+                            if (peak_selection > -1)
+                                browser.executeJS("setSelection(" + peak_selection + ")");
 
 							optAnoBox.ifPresent(anoBox -> getCurrentMode().ifPresent(mode -> {
 								if (mode.msLevel > 1) {
