@@ -24,6 +24,7 @@ import com.google.cloud.storage.*;
 import de.unijena.bioinf.gc.GCSUtils;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
 import de.unijena.bioinf.storage.blob.gcs.GCSBlobStorage;
+import de.unijena.bioinf.storage.blob.minio.MinIoUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,12 +33,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class BlobStorages {
-
     public static boolean exists(@Nullable String path, Path credentials) throws IOException {
         if (path != null && !path.isBlank()) {
             if (path.startsWith(GCSUtils.URL_PREFIX))
-                return GCSUtils.bucketExists(path.substring(5).split("/")[0], credentials);
-
+                return GCSUtils.bucketExists(path.substring(GCSUtils.URL_PREFIX.length()).split("/")[0], credentials);
+            else if (path.startsWith(MinIoUtils.URL_PREFIX))
+                return MinIoUtils.bucketExists(path.substring(MinIoUtils.URL_PREFIX.length()).split("/")[0]);
             return FileBlobStorage.exists(Path.of(path));
         }
         throw new IOException("Unsupported Model storage location `" + path + "`.");
@@ -46,9 +47,10 @@ public class BlobStorages {
 
     public static BlobStorage openDefault(@Nullable String path, @Nullable Path credentials) {
         if (path != null && !path.isBlank()) {
-            if (path.startsWith(GCSUtils.URL_PREFIX)) {
-                return new GCSBlobStorage(path.substring(5).split("/")[0], credentials);
-            }
+            if (path.startsWith(GCSUtils.URL_PREFIX))
+                return new GCSBlobStorage(path.substring(GCSUtils.URL_PREFIX.length()).split("/")[0], credentials);
+            else if (path.startsWith(MinIoUtils.URL_PREFIX))
+                return MinIoUtils.createDefaultMinIoStorage(path.substring(MinIoUtils.URL_PREFIX.length()).split("/")[0]);
 
             if (Files.isDirectory(Path.of(path)))
                 return new FileBlobStorage(Path.of(path));
