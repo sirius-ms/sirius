@@ -93,7 +93,7 @@ public class CompoundClassTableView extends ActionListDetailView<ClassyfirePrope
             super(textComponent, (baseList, element) -> {
                 baseList.add(element.getMolecularProperty().getName());
                 baseList.add(element.getMolecularProperty().getChemontIdentifier());
-                baseList.add(element.getMolecularProperty().getParent().getChemontIdentifier());
+                if (element.getMolecularProperty().getParent()!=null) baseList.add(element.getMolecularProperty().getParent().getChemontIdentifier());
                 baseList.add(element.getMolecularProperty().getDescription());
             });
         }
