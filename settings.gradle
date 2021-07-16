@@ -60,6 +60,7 @@ include ':combinatorial_fragmenter'
 include ':agents'
 
 include ':google-cloud-support'
+include ':aws-cloud-support'
 include ':blob-storage'
 
 include ':confidence_score_predict_oss'
