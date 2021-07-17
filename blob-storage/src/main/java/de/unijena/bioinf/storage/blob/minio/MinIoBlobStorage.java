@@ -27,6 +27,7 @@ import de.unijena.bioinf.storage.blob.BlobStorage;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.StatObjectArgs;
 import io.minio.errors.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,9 +62,11 @@ public class MinIoBlobStorage implements BlobStorage {
     @Override
     public boolean hasBlob(Path relative) throws IOException {
         try {
-            return minioClient.getObject(GetObjectArgs.builder().bucket(bucketName).object(relative.toString()).build()).available() > 0;
-        } catch (ErrorResponseException | InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
-            throw new IOException("Error when Searching object", e);
+            return minioClient.statObject(StatObjectArgs.builder().bucket(bucketName).object(relative.toString()).build()) != null;
+        } catch (ErrorResponseException e) {
+            return exists(e);
+        } catch (InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            throw new IOException("Error when searching object", e);
         }
     }
 
@@ -85,7 +88,10 @@ public class MinIoBlobStorage implements BlobStorage {
                     GetObjectArgs.builder()
                             .bucket(bucketName)
                             .object(makePath(relative)).build());
-        } catch (ErrorResponseException | InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+        } catch (ErrorResponseException e) {
+            exists(e);
+            return null;
+        } catch (InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
             throw new IOException("Error when Searching Object", e);
         }
     }
@@ -96,7 +102,6 @@ public class MinIoBlobStorage implements BlobStorage {
 
     private static class BackgroundPipedOutputStream<R> extends PipedOutputStream {
         private TinyBackgroundJJob<R> readJob;
-
 
         public BackgroundPipedOutputStream() {
             super();
@@ -133,6 +138,16 @@ public class MinIoBlobStorage implements BlobStorage {
             BackgroundPipedOutputStream<R> s = new BackgroundPipedOutputStream<>();
             s.readInBackground(readSink);
             return s;
+        }
+    }
+
+    private boolean exists(ErrorResponseException e) throws IOException {
+        String code = e.errorResponse().code();
+        if (code != null && (code.equals("NoSuchKey") || code.equals("NoSuchObject"))) {
+            // Not found
+            return false;
+        } else {
+            throw new IOException("Unknown Error response when searching Object", e);
         }
     }
 }
