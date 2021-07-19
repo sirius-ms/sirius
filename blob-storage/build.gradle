@@ -1,3 +1,6 @@
 dependencies{
     compile project(':google-cloud-support')
+    compile project(':aws-cloud-support')
+    compile 'io.minio:minio:8.2.2'
+
 }
