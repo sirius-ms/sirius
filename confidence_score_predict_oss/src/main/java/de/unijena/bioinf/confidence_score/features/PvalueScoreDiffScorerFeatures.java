@@ -69,9 +69,8 @@ public class PvalueScoreDiffScorerFeatures<P> implements FeatureCreator {
         Scored<FingerprintCandidate> current = new Scored<FingerprintCandidate>(best_hit_scorer.getCandidate(), score);
 
         PvalueScoreUtils utils = new PvalueScoreUtils();
-
-        pvalueScore[0] = Math.log(utils.compute_pvalue_with_KDE(rankedCands,rankedCands_filtered,current));
-
+        double pvalue_kde= utils.compute_pvalue_with_KDE(rankedCands,rankedCands_filtered,current);
+        pvalueScore[0] = Math.log(pvalue_kde);
         return pvalueScore;
     }
 

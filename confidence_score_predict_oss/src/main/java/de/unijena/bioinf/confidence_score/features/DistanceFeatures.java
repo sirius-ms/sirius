@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  *
  *
-computes distance features, max distance is variable, so are scorers. Top scoring hit is FIXED at this point!
+ computes distance features, max distance is variable, so are scorers. Top scoring hit is FIXED at this point!
 
 
  */
@@ -73,13 +73,13 @@ public class DistanceFeatures implements FeatureCreator {
         int pos = 0;
         int additional_shift=0;
 
-            for (int j = 0; j < distances.length; j++) {
-                while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
-                    additional_shift+=1;
-                }
+        //   for (int j = 0; j < distances.length; j++) {
+        //     while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
+        //       additional_shift+=1;
+        // }
 
-                scores[pos++] = topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore();
-            }
+        scores[pos++] = topHit - rankedCandidates_filtered[1].getScore();
+        //}
 
         assert pos == scores.length;
         return scores;
