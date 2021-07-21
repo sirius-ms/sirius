@@ -69,15 +69,15 @@ public class LogDistanceFeatures implements FeatureCreator {
         int pos = 0;
 
 
-            for (int j = 0; j < distances.length; j++) {
-                int additional_shift=0;
-                while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
-                    additional_shift+=1;
-                }
-                double dist=topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore();
-                if (dist>0) {
-                    scores[pos++] = Math.log(dist);
-                }else scores[pos++]=-10;
+        for (int j = 0; j < distances.length; j++) {
+            int additional_shift=0;
+            //    while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
+            //      additional_shift+=1;
+            // }
+            double dist=topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore();
+            if (dist>0) {
+                scores[pos++] = Math.log(dist);
+            }else scores[pos++]=Math.log(1);
 
 
         }
