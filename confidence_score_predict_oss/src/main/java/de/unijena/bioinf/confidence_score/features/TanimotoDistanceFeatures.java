@@ -73,10 +73,10 @@ public class TanimotoDistanceFeatures implements FeatureCreator {
         int pos = 0;
 
         for (int j = 0; j < distances.length; j++) {
-            int additional_shift=0;
-            while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
-                additional_shift+=1;
-            }
+            //   int additional_shift=0;
+            // while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
+            //   additional_shift+=1;
+            //}
 
             scores[pos++] = rankedCandidates_filtered[0].getCandidate().getFingerprint().tanimoto(rankedCandidates_filtered[distances[j]].getCandidate().getFingerprint());
         }

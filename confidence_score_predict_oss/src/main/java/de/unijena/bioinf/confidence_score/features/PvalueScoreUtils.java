@@ -51,9 +51,9 @@ public class PvalueScoreUtils {
     public double computePvalueScore(Scored<FingerprintCandidate>[] ranked_candidates, Scored<FingerprintCandidate>[] ranked_candidates_filtered, Scored<FingerprintCandidate> current_candidate){
 
 
-       // double pvalue=compute_pvalue_with_KDE(ranked_candidates,current_candidate);
+        // double pvalue=compute_pvalue_with_KDE(ranked_candidates,current_candidate);
 
-       // return(pvalue);
+        // return(pvalue);
 
         ArrayList<Double> score_samples = new ArrayList<>();
         HashMap<String,String> dupl_map =new HashMap<>();
@@ -62,13 +62,13 @@ public class PvalueScoreUtils {
             if(!(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString().equals(current_candidate.getCandidate().getFingerprint().toOneZeroString())) && !dupl_map.containsKey(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString()))
 
                 score_samples.add(ranked_candidates[i].getScore() + score_shift);
-                dupl_map.put(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString(),"true");
+            dupl_map.put(ranked_candidates[i].getCandidate().getFingerprint().toOneZeroString(),"true");
 
 
         }
 
 
-      //  Collections.sort(score_samples);
+        //  Collections.sort(score_samples);
 
 
         //sort so lowest element is 0 element
@@ -144,59 +144,59 @@ public class PvalueScoreUtils {
         for (Scored<FingerprintCandidate> element : scores) {
 
 
-                score_samples.add(element.getScore() + score_shift);
+            score_samples.add(element.getScore() + score_shift);
 
         }
 
         Collections.sort(score_samples);
 
 
-try {
-    BufferedWriter write = new BufferedWriter(new FileWriter(new File("/vol/clusterdata/fingerid_martin/exp2/pvalue_fit_scores/"+filename.split(">")[0]+"bin")));
+        try {
+            BufferedWriter write = new BufferedWriter(new FileWriter(new File("/vol/clusterdata/fingerid_martin/exp2/pvalue_fit_scores/"+filename.split(">")[0]+"bin")));
 
 
-    int[] numbers = new int[score_samples.size()];
-    for (int i = 0; i < score_samples.size(); i++) {
-        numbers[i] = score_samples.get(i).intValue();
-    }
+            int[] numbers = new int[score_samples.size()];
+            for (int i = 0; i < score_samples.size(); i++) {
+                numbers[i] = score_samples.get(i).intValue();
+            }
 
 
-    final List<Integer> modes = new ArrayList<Integer>();
-    final Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();
+            final List<Integer> modes = new ArrayList<Integer>();
+            final Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();
 
-    int max = -1;
+            int max = -1;
 
-    for (final int n : numbers) {
-        int count = 0;
+            for (final int n : numbers) {
+                int count = 0;
 
-        if (countMap.containsKey(n)) {
-            count = countMap.get(n) + 1;
-        } else {
-            count = 1;
+                if (countMap.containsKey(n)) {
+                    count = countMap.get(n) + 1;
+                } else {
+                    count = 1;
+                }
+
+                countMap.put(n, count);
+
+                if (count > max) {
+                    max = count;
+                }
+            }
+
+
+
+            for (final Map.Entry<Integer, Integer> tuple : countMap.entrySet()) {
+                if (tuple.getValue() == max) {
+                    modes.add(tuple.getKey());
+                }
+                write.write(tuple.getKey()+" "+tuple.getValue()+"\n");
+            }
+            write.close();
+
+            return modes;
+        }catch (IOException e){
+            e.printStackTrace();
         }
-
-        countMap.put(n, count);
-
-        if (count > max) {
-            max = count;
-        }
-    }
-
-
-
-    for (final Map.Entry<Integer, Integer> tuple : countMap.entrySet()) {
-        if (tuple.getValue() == max) {
-            modes.add(tuple.getKey());
-        }
-        write.write(tuple.getKey()+" "+tuple.getValue()+"\n");
-    }
-    write.close();
-
-    return modes;
-}catch (IOException e){
-    e.printStackTrace();
-}
-return null;
+        return null;
 
     }
 
@@ -237,20 +237,20 @@ return null;
     public ParetoDistribution estimate_pareto_parameters(ArrayList<Double> scores){
 
 
-            //input list is sorted
+        //input list is sorted
 
-            double xmin = scores.get((int) (scores.size()/1.3));
-            double sum = 0;
-            double a;
+        double xmin = scores.get((int) (scores.size()/1.3));
+        double sum = 0;
+        double a;
 
-            for (int i = (int) (scores.size()/1.3); i < scores.size(); i++) {
-                sum += Math.log(scores.get(i)) - Math.log(xmin);
+        for (int i = (int) (scores.size()/1.3); i < scores.size(); i++) {
+            sum += Math.log(scores.get(i)) - Math.log(xmin);
 
-            }
+        }
 
-            a = scores.size() / sum;
+        a = scores.size() / sum;
 
-            return new ParetoDistribution(xmin, a);
+        return new ParetoDistribution(xmin, a);
 
 
 
@@ -268,15 +268,10 @@ return null;
         ArrayList<Double> tosortlist = new ArrayList<>();
 
         int dupe_counter=0;
-        HashMap<String,String> dupl_map = new HashMap<>();
 
-        for(int i=0;i<candidates.length;i++){
-            if(!(candidates[i].getCandidate().getFingerprint().toOneZeroString().equals(current.getCandidate().getFingerprint().toOneZeroString())) && !dupl_map.containsKey(candidates[i].getCandidate().getFingerprint().toOneZeroString())) {
-                tosortlist.add(Math.log(candidates[i].getScore() + score_shift));
-                dupl_map.put(candidates[i].getCandidate().getFingerprint().toOneZeroString(),"true");
-            }else {
-                dupe_counter+=1;
-            }
+        for(int i=1;i<candidates.length;i++){
+            tosortlist.add(Math.log(candidates[i].getScore() + score_shift));
+
         }
         double[] scored_array= new double[tosortlist.size()];
 
@@ -301,22 +296,27 @@ return null;
 
             NormalDistribution dist = new NormalDistribution(scored_array[i],bandwidth);
 
-            pvalue+=1-dist.cumulativeProbability(Math.log(current.getScore()+score_shift));
-
-
-
+            double cp = (dist.cumulativeProbability(Math.log(current.getScore()+score_shift)));
+            pvalue+= (cp ==1) ? Double.MIN_VALUE : (1-cp);
+          //  pvalue+=1-cp;
         }
-       // System.out.println(pvalue+" ---"+scored_array.length+" --- "+(double)scored_array.length);
+
+
+        // System.out.println(pvalue+" ---"+scored_array.length+" --- "+(double)scored_array.length);
 
         pvalue=(double)pvalue/(double)scored_array.length;
 
+        if(pvalue==0){
+            pvalue=Double.MIN_VALUE;
+        }
 
 
         //System.out.println("pvalues: "+pvalue+" --- "+(double)biosize/candidates.length*pvalue+ " --- "+ (-Math.expm1(biosize* Math.log1p(-pvalue)))+" - "+biosize);
 
+        double evalue= (biosize/candidates.length)*pvalue;
 
-
-        return ((biosize/candidates.length)*pvalue);
+        return evalue>0 ? evalue : Double.MIN_VALUE;
+        //return evalue;
         //return -Math.expm1(biosize* Math.log1p(-pvalue));
     }
 
