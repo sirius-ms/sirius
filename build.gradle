@@ -11,7 +11,8 @@ buildscript {
     dependencies {
 //        classpath 'edu.sc.seis.gradle:launch4j:2.4.9'
         classpath 'commons-configuration:commons-configuration:1.10'
-        classpath "com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE"
+        classpath 'com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE'
+        classpath 'org.yaml:snakeyaml:1.29'
     }
 }
 
@@ -346,7 +347,3 @@ artifactory {
 
 artifactoryPublish.dependsOn 'refreshDownloadLinks'
 artifactoryPublish.dependsOn 'refreshReadMe'
-
-
-
-
