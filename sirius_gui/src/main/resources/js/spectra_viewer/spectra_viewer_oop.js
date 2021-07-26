@@ -970,6 +970,8 @@ class Main {
         this.data = undefined;
     }
 
+    get spectrum() { return this.spectrum; }
+
     clear() {
         d3.select("#container").html("");
         this.spectrum = undefined;
