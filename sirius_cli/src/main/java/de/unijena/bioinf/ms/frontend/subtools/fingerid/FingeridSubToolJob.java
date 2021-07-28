@@ -126,8 +126,17 @@ public class FingeridSubToolJob extends InstanceJob {
         addedResults.forEach((k, v) ->
                 inst.newFormulaResultWithUniqueId(k.getTree())
                         .ifPresent(fr -> {
-                            fr.getAnnotationOrThrow(FormulaScoring.class).setAnnotationsFrom(
-                                    formulaResultsMap.get(v.getTree()).getAnnotationOrThrow(FormulaScoring.class));
+//                            fr.getAnnotationOrThrow(FormulaScoring.class).setAnnotationsFrom(
+//                                    formulaResultsMap.get(v.getTree()).getAnnotationOrThrow(FormulaScoring.class));
+                            //do not override but only set missing scores (may have different tree/SIRIUS score)
+                            FormulaScoring formulaScoring = fr.getAnnotationOrThrow(FormulaScoring.class);
+                            final Iterator<Map.Entry<Class<FormulaScore>, FormulaScore>> iter = formulaResultsMap.get(v.getTree()).getAnnotationOrThrow(FormulaScoring.class).annotationIterator();
+                            while (iter.hasNext()) {
+                                final Map.Entry<Class<FormulaScore>, FormulaScore> e = iter.next();
+                                if (!formulaScoring.hasAnnotation(e.getKey())){
+                                    formulaScoring.setAnnotation(e.getKey(), e.getValue());
+                                }
+                            }
                             inst.updateFormulaResult(fr, FormulaScoring.class);
 
                             formulaResultsMap.put(fr.getAnnotationOrThrow(FTree.class), fr);
