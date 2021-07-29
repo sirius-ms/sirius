@@ -33,15 +33,19 @@ public class WebViewSpectraViewer extends WebViewPanel {
         addJS("d3.min.js");
         addJS("spectra_viewer/spectra_viewer_oop.js");
         SpectraViewerConnector svc = new SpectraViewerConnector();
-        bridges = new HashMap<String, Object>() {{put("connector", svc);}};
+        bridges = new HashMap<String, Object>() {{
+                put("connector", svc);
+            }};
         load(bridges);
-        // create Main JS instance
-        System.out.println("creating spectraviewer Main");
+        // create Main instance
         queueTaskInJFXThread(() -> {
-            webView.getEngine().executeScript("document.main = new Main();");
-            System.out.println("Main: " + webView.getEngine().executeScript("main;"));
-
-        });
+                // after bridges are queued to load, we have to wait (again)
+                webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
+                        if (newState == Worker.State.SUCCEEDED) {
+                            webView.getEngine().executeScript("var main = new Main();");
+                        }
+                    });
+            });
     }
 
     public void loadData(String json_spectra, String json_highlight, String svg) { // TEST CODE
@@ -55,7 +59,7 @@ public class WebViewSpectraViewer extends WebViewPanel {
                 }
                 // load Data
                 webView.getEngine().executeScript(
-                    "document.main.loadJSONData(document.webview.spectrum, document.webview.highlight, document.webview.svg)");
+                    "main.loadJSONData(document.webview.spectrum, document.webview.highlight, document.webview.svg)");
             });
     }
 
@@ -70,7 +74,7 @@ public class WebViewSpectraViewer extends WebViewPanel {
     }
 
 	public void clear(){
-        executeJS("document.main.clear()");
+        executeJS("main.clear()");
 	}
 
     public SpectraViewerConnector getConnector(){
