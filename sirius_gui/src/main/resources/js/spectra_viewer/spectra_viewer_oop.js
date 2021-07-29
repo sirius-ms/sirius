@@ -7,25 +7,6 @@
 })();
 
 class Base {
-//    static pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500}
-//    static margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30}
-//    static decimal_place = 4
-//    static mouseMovingTolerance = 40
-//    current = {w: undefined, h: undefined}
-//    w
-//    h
-//    svg
-//    peakArea
-//    tooltip
-//    idleTimeout
-//    brush
-//    zoomX
-//    x
-//    xAxis
-//    domain_fix = {xMin: null, xMax: null}
-//    domain_tmp = {xMin: null, xMax: null, yMax: null}
-//    selected = {hover: null, leftClick: null}
-
     constructor() {
         this.pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500}
         this.margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30}
@@ -302,14 +283,6 @@ class Base {
 }
 
 class SpectrumPlot extends Base {
-//    y
-//    yAxis
-//    zoomY
-//    zoomAreaY
-//    basic_structure
-//    strucArea
-//    annoArea
-
     constructor(data, svg_str, structureView) {
         super();
         this.build();
@@ -709,12 +682,6 @@ class SpectrumPlot extends Base {
 }
 
 class MirrorPlot extends Base {
-//    margin_h = 0
-//    y1
-//    y2
-//    diffArea
-//    intensityArea
-
     constructor(spectrum1, spectrum2, viewStyle, intensityViewer) {
         super();
         this.build();
@@ -994,15 +961,12 @@ class MirrorPlot extends Base {
 }
 
 class Main {
-    //spectrum
     constructor() {
         this.svg_str = null;
         this.anno_str = [];
         this.data = undefined;
         this.spectrum = undefined;
     }
-
-//    get spectrum() { return this.spectrum; }
 
     clear() {
         d3.select("#container").html("");
@@ -1056,8 +1020,6 @@ class Main {
         return true;
     }
 }
-var debug = d3.select("body")
-    .append("div").attr("id", "debug").html("DEBUG");
+//var debug = d3.select("body")
+//    .append("div").attr("id", "debug").html("DEBUG");
 //debug.text("debug div visible?");
-// var test = new Main();
-// window.loadJSONData = test.loadJSONData

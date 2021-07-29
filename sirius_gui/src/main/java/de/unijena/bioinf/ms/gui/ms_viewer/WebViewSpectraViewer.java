@@ -20,7 +20,7 @@
 package de.unijena.bioinf.ms.gui.ms_viewer;
 
 import java.util.HashMap;
-
+import javafx.concurrent.Worker;
 import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
 import netscape.javascript.JSObject;
 
