@@ -109,7 +109,7 @@ final class WebJobWatcher {
                             this::checkForInterruption
                     );
                     List<JobUpdate<?>> toRemove = null;
-
+                    Map<JobId,Integer> countingHashes = new HashMap<>();
 
                     if (updates != null && !updates.isEmpty()) {
                         //update, find orphans and notify finished jobs
@@ -117,9 +117,13 @@ final class WebJobWatcher {
                             try {
                                 checkForInterruption();
 
+                                final JobId gid = up.getGlobalId();
                                 final WebJJob<?, ?, ?> job;
-                                orphanJobs.remove(up.getGlobalId());
-                                job = waitingJobs.get(up.getGlobalId());
+                                orphanJobs.remove(gid);
+                                job = waitingJobs.get(gid);
+                                job.getJobCountingHash().ifPresent(h -> countingHashes.put(gid, h));
+
+
 
                                 if (job == null) {
                                     logDebug("Job \"" + up.getGlobalId().toString() + "\" was found on the server but is unknown locally. Trying to match it again later!");
@@ -147,12 +151,13 @@ final class WebJobWatcher {
 
                         orphanJobs.addAll(toRemove.stream().map(JobUpdate::getGlobalId).collect(Collectors.toSet()));
 
+
                         checkForInterruption();
 
                         if (!orphanJobs.isEmpty()) {
                             orphanJobs.forEach(waitingJobs::remove);
                             // not it sync because it may take some time and is not needed since jobwatcher is single threaded
-                            NetUtils.tryAndWait(() -> api.deleteJobs(orphanJobs), this::checkForInterruption);
+                            NetUtils.tryAndWait(() -> api.deleteJobs(orphanJobs, countingHashes), this::checkForInterruption);
                         }
                     } else {
                         logWarn("Cannot fetch jobUpdates from CSI:FingerID Server. Trying again in " + waitTime + "ms.");
@@ -186,7 +191,7 @@ final class WebJobWatcher {
                 try {
                     waitingJobs.values().forEach(WaiterJJob::cancel); //this jobs are not submitted to the job manager and need no be canceled manually
                     logDebug("Try to delete leftover jobs on web server...");
-                    NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet()), () -> {
+                    NetUtils.tryAndWait(() -> api.deleteJobs(waitingJobs.keySet(), Collections.emptyMap()), () -> {
                     }, 4000);
                     logDebug("Job deletion Done!");
                 } catch (InterruptedException | TimeoutException e) {

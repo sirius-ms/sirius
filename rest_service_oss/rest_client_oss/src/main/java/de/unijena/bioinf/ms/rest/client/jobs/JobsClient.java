@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -40,6 +41,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class JobsClient extends AbstractClient {
@@ -67,11 +69,14 @@ public class JobsClient extends AbstractClient {
     }
 
 
-    public void deleteJobs(Collection<JobId> jobsToDelete, @NotNull CloseableHttpClient client) throws IOException {
+    public void deleteJobs(Collection<JobId> jobsToDelete, Map<JobId, Integer> countingHashes, @NotNull CloseableHttpClient client) throws IOException {
         execute(client,
-                () -> new HttpDelete(buildVersionSpecificWebapiURI("/jobs/" + CID)
-                        .setParameter("jobs", new ObjectMapper().writeValueAsString(jobsToDelete))
-                        .build())
-        );
+                () -> {
+                    URIBuilder builder = buildVersionSpecificWebapiURI("/jobs/" + CID)
+                            .setParameter("jobs", new ObjectMapper().writeValueAsString(jobsToDelete));
+                    if (countingHashes != null && !countingHashes.isEmpty())
+                        builder.setParameter("countingHashes", new ObjectMapper().writeValueAsString(countingHashes));
+                    return new HttpDelete(builder.build());
+                });
     }
 }

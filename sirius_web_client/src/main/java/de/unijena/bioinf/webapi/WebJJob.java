@@ -26,6 +26,8 @@ import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.OptionalInt;
+
 public abstract class WebJJob<Self extends WebJJob<Self, R, D>, R, D> extends WaiterJJob<R> {
     @NotNull
     public final JobId jobId;
@@ -87,4 +89,8 @@ public abstract class WebJJob<Self extends WebJJob<Self, R, D>, R, D> extends Wa
     }
 
     protected abstract Self updateTyped(@NotNull final JobUpdate<D> update);
+
+    protected OptionalInt getJobCountingHash(){
+        return OptionalInt.empty();
+    }
 }
