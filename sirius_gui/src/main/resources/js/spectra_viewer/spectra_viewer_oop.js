@@ -1023,7 +1023,8 @@ class Main {
         return true;
     }
 }
-//var debug = d3.select("body")
-//    .append("div").html("DEBUG");
-var test = new Main();
-window.loadJSONData = test.loadJSONData
+var debug = d3.select("body")
+    .append("div").html("DEBUG");
+debug.text('debug div visible?');
+// var test = new Main();
+// window.loadJSONData = test.loadJSONData

@@ -31,23 +31,32 @@ public class WebViewSpectraViewer extends WebViewPanel {
     public WebViewSpectraViewer() {
         super();
         addJS("d3.min.js");
-        addJS("spectra_viewer/spectra_viewer.js");
+        addJS("spectra_viewer/spectra_viewer_oop.js");
         SpectraViewerConnector svc = new SpectraViewerConnector();
         bridges = new HashMap<String, Object>() {{put("connector", svc);}};
         load(bridges);
+        // create Main JS instance
+        System.out.println("creating spectraviewer Main");
+        queueTaskInJFXThread(() -> {
+            webView.getEngine().executeScript("document.main = new Main();");
+            System.out.println("Main: " + webView.getEngine().executeScript("main;"));
+
+        });
     }
 
     public void loadData(String json_spectra, String json_highlight, String svg) { // TEST CODE
         cancelTasks();
 
         queueTaskInJFXThread(() -> {
-                    JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { \"spectrum\": " + json_spectra + ", \"highlight\": " + escapeNull(json_highlight) + ", svg: null};");
-                    if (svg!=null) {
-                        obj.setMember("svg", svg);
-                    }
-            webView.getEngine().executeScript("window.loadJSONData(document.webview.spectrum, document.webview.highlight, document.webview.svg)");
+                // set data
+                JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { \"spectrum\": " + json_spectra + ", \"highlight\": " + escapeNull(json_highlight) + ", svg: null};");
+                if (svg!=null) {
+                    obj.setMember("svg", svg);
                 }
-        );
+                // load Data
+                webView.getEngine().executeScript(
+                    "document.main.loadJSONData(document.webview.spectrum, document.webview.highlight, document.webview.svg)");
+            });
     }
 
     private String jsonString(String val) {
@@ -61,7 +70,7 @@ public class WebViewSpectraViewer extends WebViewPanel {
     }
 
 	public void clear(){
-		executeJS("clear()");
+        executeJS("document.main.clear()");
 	}
 
     public SpectraViewerConnector getConnector(){
