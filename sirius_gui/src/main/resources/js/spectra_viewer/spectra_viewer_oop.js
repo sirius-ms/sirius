@@ -49,8 +49,8 @@ class Base {
 
     resize() {
         this.current = {w: window.innerWidth, h: window.innerHeight};
-        this.w = this.current.w - Base.margin.left - Base.margin.outerRight;
-        this.h = this.current.h - Base.margin.top - Base.margin.bottom;
+        this.w = this.current.w - this.margin.left - this.margin.outerRight;
+        this.h = this.current.h - this.margin.top - this.margin.bottom;
     }
 
     build() {
@@ -63,13 +63,13 @@ class Base {
             .attr("width", this.current.w)
             .append("g")
                 .attr("id", "content")
-                .attr("transform", "translate(" + Base.margin.left + "," + Base.margin.top + ")");
+                .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
         // X label
         this.svg.append("text")
             .attr("class", "label spectrum_label")
             .attr("id", "xLabel")
             .attr("x", this.w/2)
-            .attr("y", this.h + Base.margin.top + 20)
+            .attr("y", this.h + this.margin.top + 20)
             .text("m/z");
         // Y label
         this.svg.append("text")
@@ -129,7 +129,7 @@ class Base {
         this.tooltip.html("");
     }
 
-    static annotation(d, decimal_place=Base.decimal_place) {
+    static annotation(d, decimal_place=4) {
         let anno = "";
         if ("formula" in d) {
             let sign = (d.massDeviationMz > 0) ? "+" : "";
@@ -153,7 +153,7 @@ class Base {
     Kai: takes the spectrum and the x-domain and returns a mouse event listener which calls the given callback with the peak
     index as argument whenever the mouse comes close to a peak
     */
-    static mouseMoving(spectrum, xdomain, ydomain, callbackIn, callbackLeave, tolerance=Base.mouseMovingTolerance) {
+    static mouseMoving(spectrum, xdomain, ydomain, callbackIn, callbackLeave, tolerance=40) {
         const mzvalues = spectrum.peaks.map(d => d.mz);
         var lastPeakSelected = -1;
         return function() {
@@ -263,18 +263,18 @@ class Base {
             var x0, x1, d, newXmin, newXmax;
             function mousedownPan() {
                 if (div.node().id === 'brushArea') {
-                    Base.pan.mouseupCheck = true;
+                    self.pan.mouseupCheck = true;
                     x0 = d3.event.clientX;
                 }
             };
             function mousemovePan() {
-                if (Base.pan.mouseupCheck) {
+                if (self.pan.mouseupCheck) {
                     x1 = d3.event.clientX;
                     d = x1 - x0;
-                    if (Math.abs(d)>=Base.pan.tolerance) {
-                        Base.pan.mousemoveCheck = true;
-                        newXmin = self.domain_tmp.xMin-d*(self.domain_tmp.xMax-self.domain_tmp.xMin)/Base.pan.step;
-                        newXmax = self.domain_tmp.xMax-d*(self.domain_tmp.xMax-self.domain_tmp.xMin)/Base.pan.step;
+                    if (Math.abs(d)>=self.pan.tolerance) {
+                        self.pan.mousemoveCheck = true;
+                        newXmin = self.domain_tmp.xMin-d*(self.domain_tmp.xMax-self.domain_tmp.xMin)/self.pan.step;
+                        newXmax = self.domain_tmp.xMax-d*(self.domain_tmp.xMax-self.domain_tmp.xMin)/self.pan.step;
                         if (newXmin >= xdomain_fix[0] && newXmax <= xdomain_fix[1]) {
                             Base.setXdomain(self, newXmin, newXmax, duration);
                             callbackUpdates.forEach(function(callback) { callback(self, duration); });
@@ -285,7 +285,7 @@ class Base {
                 }
             };
             function mouseupPan() {
-                if (Base.pan.mouseupCheck && Base.pan.mousemoveCheck) w.on("mousedown", null).on("mousemove", null).on("mouseup", null);
+                if (self.pan.mouseupCheck && self.pan.mousemoveCheck) w.on("mousedown", null).on("mousemove", null).on("mouseup", null);
             };
         }
     }
@@ -385,7 +385,7 @@ class SpectrumPlot extends Base {
     }
 
     static mouseup(self, d, i) {
-        if (!Base.pan.mousemoveCheck) {
+        if (!self.pan.mousemoveCheck) {
             if ("structureInformation" in d || i === self.mzsSize-1) {
                 let tmp = d3.select("#peak"+i);
                 if (self.selected.leftClick !== null && tmp.classed("peak_select")) {
@@ -395,8 +395,8 @@ class SpectrumPlot extends Base {
                 }
             }
         }
-        Base.pan.mouseupCheck = false;
-        Base.pan.mousemoveCheck = false;
+        self.pan.mouseupCheck = false;
+        self.pan.mousemoveCheck = false;
     }
 
     static keyDown(self, e) {
@@ -478,7 +478,7 @@ class SpectrumPlot extends Base {
             .attr("id", "structureView")
             .style("height", this.current.h+"px")
             .style("width", this.w/4+"px")
-            .style("right", Base.margin.outerRight+"px")
+            .style("right", this.margin.outerRight+"px")
                 .append('div')
                 .attr("id", "str_border")
                 .style("height", this.w/4+"px")
@@ -496,7 +496,7 @@ class SpectrumPlot extends Base {
                     return "Left click to choose a green peak...";
                 }});
         this.current.w = this.current.w/4*3 - 15;
-        this.w = this.current.w - Base.margin.left - Base.margin.innerRight;
+        this.w = this.current.w - this.margin.left - this.margin.innerRight;
         d3.select("#spectrumView").attr("width", this.current.w+"px");
         d3.select("#xLabel").attr("x", this.w/2);
         this.svg.select("#clipArea").attr("width", this.w);
@@ -632,8 +632,8 @@ class SpectrumPlot extends Base {
             .attr("id", "zoomAreaY")
             .style("position", "absolute")
             .style("left", 0+"px")
-            .style("top", Base.margin.top+"px")
-            .style("width", Base.margin.left+"px")
+            .style("top", this.margin.top+"px")
+            .style("width", this.margin.left+"px")
             .style("height", this.h+"px");
         const minIntensity = d3.min(this.spectrum.peaks.map(d => d.intensity));
         this.zoomY = d3.zoom().on("zoom", function() { Base.zoomedY(self, minIntensity, 100, SpectrumPlot.update_peaks); });
@@ -739,7 +739,7 @@ class MirrorPlot extends Base {
 
     static firstNChar(str, num) { return (str.length > num) ? str.slice(0, num) : str; }
 
-    upOrDown(currentY, callbackUp, callbackDown) { (currentY <= Base.margin.top+this.h/2) ? callbackUp() : callbackDown(); }
+    upOrDown(currentY, callbackUp, callbackDown) { (currentY <= this.margin.top+this.h/2) ? callbackUp() : callbackDown(); }
 
     static update_peaksX(self, duration) { self.peakArea.selectAll(".peak").transition().duration(duration).attr("x", function(d) { return self.x(d.mz); }); }
 
@@ -787,7 +787,7 @@ class MirrorPlot extends Base {
                 .attr("id", function(d, i) { return "intensity"+i; })
                 .attr("x", function(d) { return self.x(d.mz); })
                 .attr("y", function(d) { return self.y1(d.intensity)-5; })
-                .text(function(d) { return d.mz.toFixed(Base.decimal_place).toString(); });
+                .text(function(d) { return d.mz.toFixed(self.decimal_place).toString(); });
         this.intensityArea.selectAll()
             .data(this.spectrum2.peaks)
             .enter()
@@ -796,7 +796,7 @@ class MirrorPlot extends Base {
                 .attr("id", function(d, i) { return "intensity"+(i+self.mzs1Size); })
                 .attr("x", function(d) { return self.x(d.mz); })
                 .attr("y", function(d) { return (self.y2(d.intensity)+15<self.h/2+28) ? self.h/2+28 : self.y2(d.intensity)+15; })
-                .text(function(d) { return d.mz.toFixed(Base.decimal_place).toString(); });
+                .text(function(d) { return d.mz.toFixed(self.decimal_place).toString(); });
     }
     //difference viewer
     showDifference() {
@@ -834,7 +834,7 @@ class MirrorPlot extends Base {
                 x0 = mzs[i-1];
                 x1 = mzs[i];
                 x_text = (x1-x0)/2+x0;
-                diff = (x1-x0).toFixed(Base.decimal_place);
+                diff = (x1-x0).toFixed(self.decimal_place);
                 ruler.append('text')
                     .attr("class", "label diff_label spectrum_legend")
                     .attr("id", "diff_label"+(i-1))
@@ -863,8 +863,8 @@ class MirrorPlot extends Base {
         var self = this;
         // difference and intensity viewer initiation
         if (this.viewStyle === 'difference') {
-            this.new_h = this.h - Base.margin.diff_vertical*2;
-            this.margin_h = Base.margin.diff_vertical;
+            this.new_h = this.h - this.margin.diff_vertical*2;
+            this.margin_h = this.margin.diff_vertical;
             this.svg.append("defs").append("svg:clipPath")
                 .attr("id", "diff-clip")
                 .append("svg:rect")
@@ -1002,7 +1002,7 @@ class Main {
         this.spectrum = undefined;
     }
 
-    get spectrum() { return this.spectrum; }
+//    get spectrum() { return this.spectrum; }
 
     clear() {
         d3.select("#container").html("");
