@@ -22,7 +22,7 @@ public class VisualizationPanelSynchronizer {
     }
 
     public void fragmentChanged(float new_mz) {
-        svp.browser.executeJS("setSelection(" + new_mz + ")");
+        svp.browser.executeJS("document.main.spectrum.setSelection(" + new_mz + ")");
     }
 
     public void peakChanged(float new_mz) {
