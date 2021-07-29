@@ -4,29 +4,48 @@
         .attr("ondrop", "return false;")
         .append("div").attr("id", "container");
     window.addEventListener('contextmenu', event => event.preventDefault());
-}());
+})();
 
 class Base {
-    static pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500}
-    static margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30}
-    static decimal_place = 4
-    static mouseMovingTolerance = 40
-    current = {w: undefined, h: undefined}
-    w
-    h
-    svg
-    peakArea
-    tooltip
-    idleTimeout
-    brush
-    zoomX
-    x
-    xAxis
-    domain_fix = {xMin: null, xMax: null}
-    domain_tmp = {xMin: null, xMax: null, yMax: null}
-    selected = {hover: null, leftClick: null}
+//    static pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500}
+//    static margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30}
+//    static decimal_place = 4
+//    static mouseMovingTolerance = 40
+//    current = {w: undefined, h: undefined}
+//    w
+//    h
+//    svg
+//    peakArea
+//    tooltip
+//    idleTimeout
+//    brush
+//    zoomX
+//    x
+//    xAxis
+//    domain_fix = {xMin: null, xMax: null}
+//    domain_tmp = {xMin: null, xMax: null, yMax: null}
+//    selected = {hover: null, leftClick: null}
 
-    constructor() {}
+    constructor() {
+        this.pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500}
+        this.margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30}
+        this.decimal_place = 4
+        this.mouseMovingTolerance = 40
+        this.current = {w: undefined, h: undefined}
+        this.w = undefined;
+        this.h = undefined;
+        this.svg = undefined;
+        this.peakArea = undefined;
+        this.tooltip = undefined;
+        this.idleTimeout = undefined;
+        this.brush = undefined;
+        this.zoomX = undefined;
+        this.x = undefined;
+        this.xAxis = undefined;
+        this.domain_fix = {xMin: null, xMax: null}
+        this.domain_tmp = {xMin: null, xMax: null, yMax: null}
+        this.selected = {hover: null, leftClick: null}
+    }
 
     resize() {
         this.current = {w: window.innerWidth, h: window.innerHeight};
@@ -283,13 +302,13 @@ class Base {
 }
 
 class SpectrumPlot extends Base {
-    y
-    yAxis
-    zoomY
-    zoomAreaY
-    basic_structure
-    strucArea
-    annoArea
+//    y
+//    yAxis
+//    zoomY
+//    zoomAreaY
+//    basic_structure
+//    strucArea
+//    annoArea
 
     constructor(data, svg_str, structureView) {
         super();
@@ -302,6 +321,13 @@ class SpectrumPlot extends Base {
         this.mzsSize = this.mzs.length;
         this.domain_fix.xMin = d3.min(this.mzs)-3;
         this.domain_fix.xMax = d3.max(this.mzs)+3;
+        this.y = undefined;
+        this.yAxis = undefined;
+        this.zoomY = undefined;
+        this.zoomAreaY = undefined;
+        this.basic_structure = undefined;
+        this.strucArea = undefined;
+        this.annoArea = undefined;
     }
 
     get leftClickSelected() { return this.selected.leftClick; }
@@ -683,11 +709,11 @@ class SpectrumPlot extends Base {
 }
 
 class MirrorPlot extends Base {
-    margin_h = 0
-    y1
-    y2
-    diffArea
-    intensityArea
+//    margin_h = 0
+//    y1
+//    y2
+//    diffArea
+//    intensityArea
 
     constructor(spectrum1, spectrum2, viewStyle, intensityViewer) {
         super();
@@ -704,6 +730,11 @@ class MirrorPlot extends Base {
         this.x_default = {min: d3.min(this.mzs2)-1, max: d3.max(this.mzs2)+1};
         this.domain_fix.xMin = d3.min([d3.min(this.mzs1), d3.min(this.mzs2)])-1;
         this.domain_fix.xMax = d3.max([d3.max(this.mzs1), d3.max(this.mzs2)])+1;
+        this.margin_h = 0;
+        this.y1 = undefined;
+        this.y2 = undefined;
+        this.diffAra = undefined;
+        this.intensityArea = undefined;
     }
 
     static firstNChar(str, num) { return (str.length > num) ? str.slice(0, num) : str; }
@@ -963,11 +994,12 @@ class MirrorPlot extends Base {
 }
 
 class Main {
-    spectrum
+    //spectrum
     constructor() {
         this.svg_str = null;
         this.anno_str = [];
         this.data = undefined;
+        this.spectrum = undefined;
     }
 
     get spectrum() { return this.spectrum; }
@@ -1006,6 +1038,7 @@ class Main {
     }
 
     loadJSONData(data_spectra, data_highlight, data_svg) {
+        d3.select("#debug").text("debug div visible?");
         if (data_highlight !== null && data_svg !== null) {
             if ((typeof data_highlight) == "string") {
                 this.anno_str = JSON.parse(data_highlight);
@@ -1024,7 +1057,7 @@ class Main {
     }
 }
 var debug = d3.select("body")
-    .append("div").html("DEBUG");
-debug.text('debug div visible?');
+    .append("div").attr("id", "debug").html("DEBUG");
+//debug.text("debug div visible?");
 // var test = new Main();
 // window.loadJSONData = test.loadJSONData
