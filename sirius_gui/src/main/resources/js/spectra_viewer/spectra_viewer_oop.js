@@ -11,18 +11,17 @@ class Base {
         this.pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500}
         this.margin = {top: 20, outerRight: 30, innerRight: 20, bottom: 65, left: 60, diff_vertical: 30}
         this.decimal_place = 4
-        this.mouseMovingTolerance = 40
         this.current = {w: undefined, h: undefined}
-        this.w = undefined;
-        this.h = undefined;
-        this.svg = undefined;
-        this.peakArea = undefined;
-        this.tooltip = undefined;
-        this.idleTimeout = undefined;
-        this.brush = undefined;
-        this.zoomX = undefined;
-        this.x = undefined;
-        this.xAxis = undefined;
+        this.w;
+        this.h;
+        this.svg;
+        this.peakArea;
+        this.tooltip;
+        this.idleTimeout;
+        this.brush;
+        this.zoomX;
+        this.x;
+        this.xAxis;
         this.domain_fix = {xMin: null, xMax: null}
         this.domain_tmp = {xMin: null, xMax: null, yMax: null}
         this.selected = {hover: null, leftClick: null}
@@ -59,7 +58,7 @@ class Base {
             .attr("transform", "rotate(-90)")
             .attr("y", -40)
             .attr("x", -this.h/2)
-            .text("Relative intensity");
+            .text("Relative Intensity");
 
         this.svg.selectAll(".label").attr("visibility", "hidden");
         //tooltip
@@ -110,22 +109,22 @@ class Base {
         this.tooltip.html("");
     }
 
-    static annotation(d, decimal_place=4) {
+    static annotation(self, d) {
         let anno = "";
         if ("formula" in d) {
             let sign = (d.massDeviationMz > 0) ? "+" : "";
             anno = "Formula: " + d.formula.replace(" + [M", "").replace("]","") +
-                   "<br>Intensity: " + d.intensity.toFixed(decimal_place) +
-                   "<br>m/z: " + d.mz.toFixed(decimal_place);
+                   "<br>Intensity: " + d.intensity.toFixed(self.decimal_place) +
+                   "<br>m/z: " + d.mz.toFixed(self.decimal_place);
             if ("massDeviationMz" in d) {
-                anno = anno + "<br>Mass deviation: " + sign + (d.massDeviationMz*1000).toFixed(decimal_place) + " mDa<br>" +
-                       "&nbsp;".repeat(25) + "(" + sign + d.massDeviationPpm.toFixed(decimal_place) + " ppm)";
+                anno = anno + "<br>Mass deviation: " + sign + (d.massDeviationMz*1000).toFixed(self.decimal_place) + " mDa<br>" +
+                       "&nbsp;".repeat(25) + "(" + sign + d.massDeviationPpm.toFixed(self.decimal_place) + " ppm)";
             }
             if ("structureInformation" in d) {
                 anno = anno + "<br>Fragmenter Score: " + d.structureInformation.score.toFixed(2);
             }
         } else {
-            anno = "m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place);
+            anno = "m/z: " + d.mz.toFixed(self.decimal_place) + "<br>Intensity: " + d.intensity.toFixed(self.decimal_place);
         }
         return anno;
     }
@@ -174,7 +173,7 @@ class Base {
     static mousemoveGeneral(self, d, i) {
         let event = window.event;
         self.translateHover(event.clientX, event.clientY);
-        self.tooltip.html(Base.annotation(d));
+        self.tooltip.html(Base.annotation(self, d));
         self.tooltip.style("opacity", 1);
         d3.select("#peak"+i).classed("peak_hover", true);
         if (self.selected.hover !== i) {
@@ -294,19 +293,19 @@ class SpectrumPlot extends Base {
         this.mzsSize = this.mzs.length;
         this.domain_fix.xMin = d3.min(this.mzs)-3;
         this.domain_fix.xMax = d3.max(this.mzs)+3;
-        this.y = undefined;
-        this.yAxis = undefined;
-        this.zoomY = undefined;
-        this.zoomAreaY = undefined;
-        this.basic_structure = undefined;
-        this.strucArea = undefined;
-        this.annoArea = undefined;
+        this.y;
+        this.yAxis;
+        this.zoomY;
+        this.zoomAreaY;
+        this.basic_structure;
+        this.strucArea;
+        this.annoArea;
     }
 
     get leftClickSelected() { return this.selected.leftClick; }
 
     static resetColor(self, peakData) {
-        if (peakData !== undefined) { // TO CHECK: Why sometimes self.selected.hover = null?
+        if (peakData !== undefined) {
             let precursor = self.spectrum.peaks[self.mzsSize-1].formula;
             if (self.spectrum.name.includes("MS1")) {
                 return (Object.keys(peakData.peakMatches).length !== 0) ? "peak_matched peak" : "peak_1 peak";
@@ -339,7 +338,7 @@ class SpectrumPlot extends Base {
         self.selected.leftClick = i;
         newPeak.classed("peak_select", true);
         self.annoArea.attr("id", "anno_leftClick");
-        document.getElementById("anno_leftClick").innerText = Base.annotation(d).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
+        document.getElementById("anno_leftClick").innerText = Base.annotation(self, d).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
         SpectrumPlot.showStructure(self, i);
         self.hideHover();
     }
@@ -352,7 +351,7 @@ class SpectrumPlot extends Base {
         }
         self.selected.leftClick = null;
         peak.classed("peak_select", false);
-        document.getElementById("anno_leftClick").innerText = "Left click to choose a green peak...";
+        document.getElementById("anno_leftClick").innerText = "Left click to choose a purple peak...";
         self.annoArea.attr("id", "nothing");
         SpectrumPlot.showStructure(self, -1);
     }
@@ -407,17 +406,14 @@ class SpectrumPlot extends Base {
                 }
                 self.selected.leftClick = new_selected;
                 self.svg.select("#peak"+self.selected.leftClick).classed("peak_select", true);
-                if (self.domain_tmp.xMin !== self.domain_fix.xMin || self.domain_tmp.xMax !== self.domain_fix.xMax) {
-                    if (selectedPeak.mz <= self.domain_tmp.xMin || selectedPeak.mz >= self.domain_tmp.xMax) {
-                        if (e.keyCode === 37) {
-                            Base.setXdomain(self, selectedPeak.mz-3, self.domain_tmp.xMax-3);
-                        } else {
-                            Base.setXdomain(self, self.domain_tmp.xMin+3, selectedPeak.mz+3);
-                        }
-                        SpectrumPlot.update_peaks(self, 50);
-                    }
-                }
-                document.getElementById("anno_leftClick").innerText = Base.annotation(selectedPeak).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
+                if (selectedPeak.mz <= self.domain_tmp.xMin) {
+                    Base.setXdomain(self, selectedPeak.mz-3, self.domain_tmp.xMax-(self.domain_tmp.xMin-selectedPeak.mz)-3);
+                    SpectrumPlot.update_peaks(self, 50);
+                } else if (selectedPeak.mz >= self.domain_tmp.xMax){
+                    Base.setXdomain(self, self.domain_tmp.xMin+(selectedPeak.mz-self.domain_tmp.xMax)+3, selectedPeak.mz+3);
+                    SpectrumPlot.update_peaks(self, 50);
+                }  
+                document.getElementById("anno_leftClick").innerText = Base.annotation(self, selectedPeak).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
                 SpectrumPlot.showStructure(self, self.selected.leftClick);
             }
         }
@@ -464,9 +460,9 @@ class SpectrumPlot extends Base {
             .style("top", anno_top+"px")
             .text(function() {
                 if (self.selected.leftClick !== null) {
-                    return Base.annotation(self.spectrum.peaks[self.selected.leftClick]).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
+                    return Base.annotation(self, self.spectrum.peaks[self.selected.leftClick]).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
                 } else {
-                    return "Left click to choose a green peak...";
+                    return "Left click to choose a purple peak...";
                 }});
         this.current.w = this.current.w/4*3 - 15;
         this.w = this.current.w - this.margin.left - this.margin.innerRight;
@@ -635,7 +631,7 @@ class SpectrumPlot extends Base {
                     newSelected.attr("class", "peak_hover peak_select peak");
                 }
                 self.tooltip.style("opacity", 1);
-                self.tooltip.html(Base.annotation(self.spectrum.peaks[i]));
+                self.tooltip.html(Base.annotation(self, self.spectrum.peaks[i]));
                 const event = window.event;
                 self.translateHover(event.clientX, event.clientY);
                 if (self.selected.hover !== i) {
@@ -698,10 +694,10 @@ class MirrorPlot extends Base {
         this.domain_fix.xMin = d3.min([d3.min(this.mzs1), d3.min(this.mzs2)])-1;
         this.domain_fix.xMax = d3.max([d3.max(this.mzs1), d3.max(this.mzs2)])+1;
         this.margin_h = 0;
-        this.y1 = undefined;
-        this.y2 = undefined;
-        this.diffAra = undefined;
-        this.intensityArea = undefined;
+        this.y1;
+        this.y2;
+        this.diffAra;
+        this.intensityArea;
     }
 
     static firstNChar(str, num) { return (str.length > num) ? str.slice(0, num) : str; }
@@ -964,8 +960,8 @@ class Main {
     constructor() {
         this.svg_str = null;
         this.anno_str = [];
-        this.data = undefined;
-        this.spectrum = undefined;
+        this.data;
+        this.spectrum;
     }
 
     clear() {
