@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
+import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -57,6 +58,7 @@ public class ProjectSaveCopyAction extends AbstractAction {
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
         jfc.addChoosableFileFilter(new ProjectArchivedFilter());
+        jfc.addChoosableFileFilter(new ProjectDirectoryFilter());
         jfc.setApproveButtonText("Export");
 
         File selectedFile = null;
@@ -74,7 +76,8 @@ public class ProjectSaveCopyAction extends AbstractAction {
                     );
                 }
 
-                if (!selFile.getAbsolutePath().endsWith(".sirius")) {
+                if ((jfc.getFileFilter() instanceof ProjectArchivedFilter) &&
+                        !selFile.getAbsolutePath().endsWith(".sirius")) {
                     selFile = new File(selFile.getAbsolutePath() + ".sirius");
                 }
 
