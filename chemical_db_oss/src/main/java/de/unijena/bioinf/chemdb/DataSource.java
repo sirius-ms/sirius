@@ -22,11 +22,12 @@ package de.unijena.bioinf.chemdb;
 
 import java.util.Arrays;
 import java.util.Locale;
-
+// BIO FLAG IS: 4294434748
 //ATTENTION Do not use `:{}[];` in the String here because that might break parsing
 //Names: names should be descriptive and short because they have to be rendered in the GUI
 //Flags/BitSets: Every bit that is set in our postgres db should also represented as DataSource here
 public enum DataSource {
+
     ALL("All included DBs", 0, null, null, null),
     ALL_BUT_INSILICO("All but combinatorial DBs", 2|makeBIOFLAG(), null, null, null),
     PUBCHEM("PubChem", 2, "compound_id","pubchem", "https://pubchem.ncbi.nlm.nih.gov/compound/%s"),
