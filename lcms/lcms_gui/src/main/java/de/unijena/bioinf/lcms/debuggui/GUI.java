@@ -6,10 +6,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.io.lcms.MzXMLParser;
-import de.unijena.bioinf.lcms.CorrelatedPeakDetector;
-import de.unijena.bioinf.lcms.InMemoryStorage;
-import de.unijena.bioinf.lcms.LCMSProccessingInstance;
-import de.unijena.bioinf.lcms.ProcessedSample;
+import de.unijena.bioinf.lcms.*;
 import de.unijena.bioinf.lcms.ionidentity.CorrelationGroupScorer;
 import de.unijena.bioinf.lcms.peakshape.*;
 import de.unijena.bioinf.model.lcms.*;
@@ -202,7 +199,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
     public static void main(String[] args) {
 
-        final File mzxmlFile = new File("/home/kaidu/Downloads/test2/").listFiles()[0];
+        final File mzxmlFile = new File("/home/kaidu/data/raw/example").listFiles()[0];
         InMemoryStorage storage= new InMemoryStorage();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         try {
@@ -362,6 +359,22 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
             ChromatographicPeak.Segment prev = null;
             Point2D prevPoint = null;
             boolean prevWasSeg = false;
+
+            ///
+            double[] values = new double[ion.getPeak().numberOfScans()];
+            for (int k=0; k < ion.getPeak().numberOfScans(); ++k) {
+                values[k] = ion.getPeak().getIntensityAt(k);
+            }
+            //
+            final SavitzkyGolayFilter filter = smooth(values);
+            final int GAPS = filter.getNumberOfDataPointsPerSide();
+            {
+                double[] xs = new double[values.length + GAPS*2];
+                System.arraycopy(values, 0, xs, GAPS, values.length);
+                values = xs;
+            }
+            double[] smoothed = filter.apply(values);
+
             for (int k=0; k < ion.getPeak().numberOfScans(); ++k) {
                 final double xx = (ion.getPeak().getRetentionTimeAt(k)-start)/deltaRT;
                 final double yy = ion.getPeak().getIntensityAt(k)/deltaInt;
@@ -386,6 +399,30 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
                 }
                 g.fillOval((int)xx-5, 700 - ((int)yy-5), 10, 10);
             }
+
+            prevPoint=null;
+            for (int k=0; k < ion.getPeak().numberOfScans(); ++k) {
+                final int VI = k+GAPS;
+                final double xx = (ion.getPeak().getRetentionTimeAt(k)-start)/deltaRT;
+                final double yy = smoothed[VI]/deltaInt;
+                final ChromatographicPeak.Segment s = ion.getPeak().getSegmentForScanId(ion.getPeak().getScanNumberAt(k)).orElse(null);
+                Point2D dp = new Point((int)xx, 700-(int)yy);
+                g.setColor(Color.BLUE);
+                if (prevPoint!=null) {
+                    g.drawLine((int)prevPoint.getX(), (int)prevPoint.getY(), (int)dp.getX(), (int)dp.getY());
+                    if (VI > 0 && VI+1 < values.length) {
+                        double a = smoothed[VI-1],b = smoothed[VI], c=smoothed[VI+1];
+                        if (b > a && b > c && filter.getDegree()>= 2) {
+                            final double deriv = filter.computeSecondOrderDerivative(values, VI);
+                            g.drawString(String.format(Locale.US, "%.4f", deriv), (int)dp.getX(), (int)dp.getY());
+
+
+                        }
+                    }
+                }
+                prevPoint = dp;
+            }
+            g.setColor(Color.BLACK);
 
             // draw noise line
             {
@@ -503,6 +540,16 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
 
         }
+    }
+
+    private static SavitzkyGolayFilter smooth(double[] smoothedFunction) {
+        if (smoothedFunction.length < 10) {
+            return SavitzkyGolayFilter.Window1Polynomial1;
+        } else if (smoothedFunction.length < 30) {
+            return SavitzkyGolayFilter.Window2Polynomial2;
+        } else if (smoothedFunction.length < 60){
+            return SavitzkyGolayFilter.Window3Polynomial3;
+        } else return SavitzkyGolayFilter.Window4Polynomial3;
     }
 
 }

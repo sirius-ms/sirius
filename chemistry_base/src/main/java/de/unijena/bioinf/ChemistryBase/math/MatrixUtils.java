@@ -29,6 +29,85 @@ import java.util.Arrays;
 
 public class MatrixUtils {
 
+    public static double dot(double[] U, double[] V) {
+        double sum=0d;
+        for (int i=0; i < V.length; ++i) sum += U[i]*V[i];
+        return sum;
+    }
+    public static float dot(float[] U, float[] V) {
+        double sum=0d;
+        for (int i=0; i < V.length; ++i) sum += U[i]*V[i];
+        return (float)sum;
+    }
+
+    public static float[] matmul(float[][] M, float[] columnVector, float[] result) {
+        final int cols = M[0].length;
+        final int rows = M.length;
+        final int nrows = columnVector.length;
+        if (cols != nrows) throw new IllegalArgumentException("Cannot multiply an " + rows + " x " + cols + " matrix with a " + nrows +  " column vector.");
+
+        for (int row=0; row < M.length; ++row) {
+            final float[] rowvec = M[row];
+            result[row] = dot(rowvec,columnVector);
+        }
+        return result;
+    }
+
+    public static float[] matmul(float[][] M, float[] columnVector) {
+        return matmul(M,columnVector,columnVector.clone());
+    }
+
+    public static double[] matmul(double[][] M, double[] columnVector) {
+        return matmul(M,columnVector,columnVector.clone());
+    }
+
+    public static double[] matmul(double[][] M, double[] columnVector, double[] result) {
+        final int cols = M[0].length;
+        final int rows = M.length;
+        final int nrows = columnVector.length;
+        if (cols != nrows) throw new IllegalArgumentException("Cannot multiply an " + rows + " x " + cols + " matrix with a " + nrows +  " column vector.");
+        for (int row=0; row < M.length; ++row) {
+            final double[] rowvec = M[row];
+            result[row] = dot(rowvec,columnVector);
+        }
+        return result;
+    }
+
+    public static double[][] matmul(double[][] M, double[][] N) {
+        final int cols = M[0].length;
+        final int rows = M.length;
+        final int ncols = N[0].length;
+        if (N.length != cols) throw new IllegalArgumentException("Cannot multiply an " + rows + " x " + cols + " matrix with an " + N.length + " x " + ncols +  " matrix.");
+
+        final double[][] transposedN = transpose(N);
+        final double[][] target = new double[rows][N[0].length];
+        for (int row=0; row < M.length; ++row) {
+            final double[] rowvec = M[row];
+            for (int col=0; col < ncols; ++col) {
+                final double[] colvec = transposedN[col];
+                target[row][col] = dot(rowvec,colvec);
+            }
+        }
+        return target;
+    }
+    public static float[][] matmul(float[][] M, float[][] N) {
+        final int cols = M[0].length;
+        final int rows = M.length;
+        final int ncols = N[0].length;
+        if (N.length != cols) throw new IllegalArgumentException("Cannot multiply an " + rows + " x " + cols + " matrix with an " + N.length + " x " + ncols +  " matrix.");
+
+        final float[][] transposedN = transpose(N);
+        final float[][] target = new float[rows][N[0].length];
+        for (int row=0; row < M.length; ++row) {
+            final float[] rowvec = M[row];
+            for (int col=0; col < ncols; ++col) {
+                final float[] colvec = transposedN[col];
+                target[row][col] = dot(rowvec,colvec);
+            }
+        }
+        return target;
+    }
+
     public static double frobeniusProduct(double[][] M, double[][] N) {
         double prod = 0d;
         for (int i=0; i < M.length; ++i) {

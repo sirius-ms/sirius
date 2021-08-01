@@ -155,7 +155,7 @@ public class ChromatogramBuilder {
 
         // make statistics about deviations within
 
-        Extrema extrema = detectExtrema(concat);
+        Extrema extrema = detectExtremaWithSmoothing(concat);//detectExtrema(concat);
         final int before = extrema.numberOfExtrema();
         extrema.deleteExtremaOfSinglePeaks(slope66);
         final int after = extrema.numberOfExtrema();
@@ -187,7 +187,6 @@ public class ChromatogramBuilder {
         return Optional.of(concat);
     }
 
-
     /*
     - first split a chromatogram into maxima and minima
     - calculate a "noise level" which is mainly the 33% quantile of the slopes in the chromatogram
@@ -198,6 +197,69 @@ public class ChromatogramBuilder {
       more extrema we have to see larger slopes
       - all this stuff could also be solved without iteration by first sorting all extrema by their slope and then search for the "bend" (ellbow).
      */
+    private Extrema detectExtremaWithSmoothing(MutableChromatographicPeak peak) {
+        SavitzkyGolayFilter filter;
+        if (peak.numberOfScans() < 3) {
+            return detectExtrema(peak); // no smoothing
+        } else if (peak.numberOfScans() < 10) {
+            filter = SavitzkyGolayFilter.Window1Polynomial1;
+        } else if (peak.numberOfScans() < 20) {
+            filter = SavitzkyGolayFilter.Window2Polynomial2;
+        } else if (peak.numberOfScans() < 50) {
+            filter = SavitzkyGolayFilter.Window3Polynomial2;
+        } else {
+            filter = SavitzkyGolayFilter.Window4Polynomial2;
+        }
+        final int GAP = filter.getNumberOfDataPointsPerSide();
+        double[] functionValues = new double[peak.numberOfScans() + 2*GAP];
+        for (int k=0; k < peak.numberOfScans(); ++k) functionValues[k+GAP] = peak.getIntensityAt(k);
+        double[] smoothedFunction = filter.apply(functionValues);
+        {
+            double[] xs = new double[peak.numberOfScans()];
+            System.arraycopy(smoothedFunction, GAP, xs, 0, peak.numberOfScans());
+            smoothedFunction = xs;
+        }
+
+        for (int k=0; k < smoothedFunction.length; ++k) smoothedFunction[k] = Math.max(0, smoothedFunction[k]);
+        double mxm = 0d;
+        for (int i=0; i < peak.numberOfScans(); ++i) mxm = Math.max(mxm, smoothedFunction[i]);
+        final double noiseThreshold =0d;
+        final Extrema extrema = new Extrema();
+        boolean minimum = true;
+        for (int k=0; k < peak.numberOfScans()-1; ++k) {
+            final double a = ((k == 0) ? 0 : smoothedFunction[k - 1]) + (minimum ? -Float.MIN_VALUE : Float.MIN_VALUE);
+            final double b = smoothedFunction[k];
+            final double c = smoothedFunction[k + 1] + (minimum ? -Float.MIN_VALUE : Float.MIN_VALUE);
+            //final double slope = Math.min(Math.abs(b-a),Math.abs(b-c));
+            if ((b - a) < 0 && (b - c) < 0) {
+                // minimum
+                if (minimum) {
+                    if (extrema.lastExtremumIntensity() > b)
+                        extrema.replaceLastExtremum(k, b);
+                } else if (extrema.lastExtremumIntensity() - b > noiseThreshold/* || slope/extrema.lastExtremum() >= 0.25*/) {
+                    extrema.addExtremum(k, b);
+                    minimum = true;
+                }
+            } else if ((b - a) > 0 && (b - c) > 0) {
+                // maximum
+                if (minimum) {
+                    if (b - extrema.lastExtremumIntensity() > noiseThreshold /* || slope/b>=0.25*/) {
+                        extrema.addExtremum(k, b);
+                        minimum = false;
+                    }
+                } else {
+                    if (extrema.lastExtremumIntensity() < b) {
+                        extrema.replaceLastExtremum(k, b);
+                    }
+                }
+            }
+        }
+
+
+        extrema.smooth((i)->(float)this.sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(i),peak.getMzAt(0)), peak, 0.33, 5);
+        return extrema;
+    }
+
     private Extrema detectExtrema(MutableChromatographicPeak peak) {
         // if a chromatographic peak is very long, a single noise level might be problematic. We split it in
         // smaller subgroups. I would say 25 scans are enough to estimate a noise level. For each consecutive 25 scans we define a separate noise level
@@ -273,10 +335,9 @@ public class ChromatogramBuilder {
 
         }
 
-        extrema.smooth(noiseLevels, peak, 0.33, 5);
+        extrema.smooth((i)->noiseLevels[i], peak, 0.33, 5);
 
         return extrema;
-
     }
 
     private boolean tryToExtend(MutableChromatographicPeak trace, Scan scan) {

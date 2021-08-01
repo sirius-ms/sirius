@@ -107,15 +107,16 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         }
     }
 
-    public void joinSegments(Segment left, Segment right) {
+    public Segment joinSegments(Segment left, Segment right) {
         int newApex;
         if (getIntensityAt(left.apex) > getIntensityAt(right.apex))
             newApex = left.apex;
         else newApex = right.apex;
         segments.remove(left.apex);
         segments.remove(right.apex);
-        addSegment(Math.min(left.startIndex,right.startIndex),  newApex,Math.max(left.endIndex,right.endIndex));
+        Segment segment = addSegment(Math.min(left.startIndex,right.startIndex),  newApex,Math.max(left.endIndex,right.endIndex));
         validate();
+        return segment;
     }
 
     @Override

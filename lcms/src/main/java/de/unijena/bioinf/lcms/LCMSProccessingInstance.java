@@ -249,9 +249,13 @@ public class LCMSProccessingInstance {
     }
 
     public ProcessedSample addSample(LCMSRun run, SpectrumStorage storage) throws InvalidInputData {
+        return addSample(run,storage,true);
+    }
+
+    public ProcessedSample addSample(LCMSRun run, SpectrumStorage storage, boolean enforceMs2) throws InvalidInputData {
         final NoiseStatistics noiseStatisticsMs1 = new NoiseStatistics(100, 0.2, 1000)/*, noiseStatisticsMs2 = new NoiseStatistics(10, 0.85, 60)*/;
 
-        final Ms2NoiseStatistics ms2NoiseStatistics = new Ms2NoiseStatistics();
+        Ms2NoiseStatistics ms2NoiseStatistics = new Ms2NoiseStatistics();
 
         boolean hasMsMs = false;
         for (Scan s : run.getScans()) {
@@ -269,9 +273,9 @@ public class LCMSProccessingInstance {
             }
         }
 
-        if (!hasMsMs) throw new InvalidInputData("Run has no MS/MS spectra.");
+        if (enforceMs2 && !hasMsMs) throw new InvalidInputData("Run has no MS/MS spectra.");
 
-        ms2NoiseStatistics.done();
+        if (hasMsMs) ms2NoiseStatistics.done();
 
         final ProcessedSample sample = new ProcessedSample(
                 run, noiseStatisticsMs1.getLocalNoiseModel(), ms2NoiseStatistics,
@@ -378,9 +382,13 @@ public class LCMSProccessingInstance {
         }
         return isotope;
     }
-
     public void detectFeatures(ProcessedSample sample) {
         final List<FragmentedIon> ions = new Ms2CosineSegmenter().extractMsMSAndSegmentChromatograms(this, sample);
+        detectFeatures(sample,ions);
+    }
+
+
+    void detectFeatures(ProcessedSample sample, List<FragmentedIon> ions) {
         ////
         sample.ions.clear(); sample.ions.addAll(ions);
         assert checkForDuplicates(sample);
@@ -638,4 +646,8 @@ public class LCMSProccessingInstance {
     public MassToFormulaDecomposer getFormulaDecomposer() {
         return formulaDecomposer;
     }
+
+
+
+
 }
