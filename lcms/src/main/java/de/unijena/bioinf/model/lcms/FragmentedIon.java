@@ -234,7 +234,6 @@ return null;
         return peak.getMzAt(segmentApexIndex);
     }
 
-
     public long getRetentionTime() {
         return peak.getRetentionTimeAt(segmentApexIndex);
     }

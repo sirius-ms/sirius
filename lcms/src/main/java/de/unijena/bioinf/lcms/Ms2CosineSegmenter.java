@@ -42,6 +42,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -106,6 +107,7 @@ public class Ms2CosineSegmenter {
             this.chimericPollution = chimericPollution;
         }
     }
+
 
     /**
      * iterates over all MS/MS spectra in the run. Search for the corresponding MS1 feature. Outputs a list
@@ -373,7 +375,7 @@ public class Ms2CosineSegmenter {
         return rejected;
     }
 
-    private CosineQuery prepareForCosine(ProcessedSample sample, Scan scan) {
+    public CosineQuery prepareForCosine(ProcessedSample sample, Scan scan) {
         return prepareForCosine(sample, new MergedSpectrum(scan, sample.storage.getScan(scan), scan.getPrecursor(), sample.ms2NoiseModel.getNoiseLevel(scan.getIndex(),scan.getPrecursor().getMass())));
     }
     private CosineQuery prepareForCosine(ProcessedSample sample, MergedSpectrum orig) {
@@ -386,8 +388,17 @@ public class Ms2CosineSegmenter {
         final SimpleSpectrum spec = Spectrums.extractMostIntensivePeaks(buffer,6,100);
         return new CosineQuery(orig, spec);
     }
+    private CosineQuery prepareForCosine(MergedSpectrum orig) {
+        final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(orig);
+        Spectrums.cutByMassThreshold(buffer,orig.getPrecursor().getMass()-20);
+        final double noiseLevel = orig.getNoiseLevel();
+        Spectrums.applyBaseline(buffer, noiseLevel);
+        if (buffer.isEmpty()) return null;
+        final SimpleSpectrum spec = Spectrums.extractMostIntensivePeaks(buffer,6,100);
+        return new CosineQuery(orig, spec);
+    }
 
-    protected static class CosineQuery {
+    public static class CosineQuery {
         private final double selfNorm;
         private final SimpleSpectrum spectrum;
         private final MergedSpectrum originalSpectrum;
@@ -396,6 +407,10 @@ public class Ms2CosineSegmenter {
             this.spectrum = spectrum;
             this.originalSpectrum = orig;
             this.selfNorm = new IntensityWeightedSpectralAlignment(new Deviation(20)).score(spectrum,spectrum).similarity;
+        }
+
+        public MergedSpectrum getOriginalSpectrum() {
+            return originalSpectrum;
         }
 
         public SpectralSimilarity cosine(CosineQuery other) {
@@ -417,7 +432,7 @@ public class Ms2CosineSegmenter {
         return after / (before+after);
     }
 
-    public MergedSpectrum mergeViaClustering(ProcessedSample sample, CosineQuery[] cosines) {
+    public MergedSpectrum mergeViaClustering(@Nullable  ProcessedSample sample, CosineQuery[] cosines) {
 
         final double[][] matrix = new double[cosines.length][cosines.length];
         for (int i=0; i < matrix.length; ++i) {
@@ -443,7 +458,7 @@ public class Ms2CosineSegmenter {
                 break outerLoop;
             } else {
                 MergedSpectrum merged = merge(cosines[maxI].originalSpectrum, cosines[maxJ].originalSpectrum);
-                cosines[maxI] = prepareForCosine(sample, merged);
+                cosines[maxI] = sample!=null ? prepareForCosine(sample, merged) : prepareForCosine(merged);
                 --n;
                 for (int k=0; k <= n; ++k) {
                     if (indizes[k]==maxJ) {
