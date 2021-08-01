@@ -216,7 +216,7 @@ public class SpectraVisualizationPanel
 	private JJob<Boolean> backgroundLoader = null;
 	private final Lock backgroundLoaderLock = new ReentrantLock();
 
-	public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, @Nullable CompoundCandidate spectrumAno) {
+	public void resultsChanged(InstanceBean experimentParam, FormulaResultBean sre, @Nullable CompoundCandidate spectrumAno) {
 		try {
 			backgroundLoaderLock.lock();
 			final JJob<Boolean> old = backgroundLoader;
@@ -230,22 +230,22 @@ public class SpectraVisualizationPanel
 					}
 					checkForInterruption();
 
-					if ((SpectraVisualizationPanel.this.experiment != experiment)  || (SpectraVisualizationPanel.this.sre  != sre) || (SpectraVisualizationPanel.this.annotation != spectrumAno)) {
+					if ((SpectraVisualizationPanel.this.experiment != experimentParam)  || (SpectraVisualizationPanel.this.sre  != sre) || (SpectraVisualizationPanel.this.annotation != spectrumAno)) {
 						Jobs.runEDTAndWait(() -> {
 							// update modeBox elements, don't listen to these events
 							modesBox.removeItemListener(SpectraVisualizationPanel.this);
 							try {
 								modesBox.removeAllItems();
-								if (experiment != null) {
-									if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum() != null)
+								if (experimentParam != null) {
+									if (experimentParam.getMs1Spectra().size() > 0 || experimentParam.getMergedMs1Spectrum() != null)
 										modesBox.addItem(MS1_DISPLAY);
 									if (sre != null) {
-										if (experiment.getMs1Spectra().size() > 0 || experiment.getMergedMs1Spectrum() != null)
+										if (experimentParam.getMs1Spectra().size() > 0 || experimentParam.getMergedMs1Spectrum() != null)
 											modesBox.addItem(MS1_MIRROR_DISPLAY);
 									}
-									if (experiment.getMs2Spectra().size() > 0)
+									if (experimentParam.getMs2Spectra().size() > 0)
 										modesBox.addItem(MS2_DISPLAY);
-									updateCEBox(experiment);
+									updateCEBox(experimentParam);
 								}
 							} finally {
 								modesBox.addItemListener(SpectraVisualizationPanel.this);
@@ -259,6 +259,10 @@ public class SpectraVisualizationPanel
 						if (sre != null && spectrumAno != null) {
 							InsilicoFragmenter.Result r = submitSubJob(fragmenter.fragmentJob(sre, spectrumAno)).awaitResult();
 							checkForInterruption();
+							// store data to switch between modes without having to switch to other results
+							SpectraVisualizationPanel.this.experiment = experimentParam;
+							SpectraVisualizationPanel.this.sre = sre;
+							SpectraVisualizationPanel.this.annotation = spectrumAno;
 							setInsilicoResult(r);
 						} else {
 							clearInsilicoResult();
@@ -266,7 +270,7 @@ public class SpectraVisualizationPanel
 					}
 
 
-					if (experiment != null) {
+					if (experimentParam != null) {
 						Jobs.runEDTAndWait(() -> {
 							boolean preferredPossible = false; // no `contains` for combobox
 							for (int i = 0; i < modesBox.getItemCount(); i++)
@@ -278,8 +282,8 @@ public class SpectraVisualizationPanel
 								ceBox.setVisible(modesBox.getSelectedItem() != null && modesBox.getSelectedItem().equals(MS2_DISPLAY));
 								modesBox.addItemListener(SpectraVisualizationPanel.this);
 							}
-							updateCEBox(experiment);
-							drawSpectra(experiment, sre, (String) modesBox.getSelectedItem(), getCEIndex());
+							updateCEBox(experimentParam);
+							drawSpectra(experimentParam, sre, (String) modesBox.getSelectedItem(), getCEIndex());
                             // highlight last selected peak, even when experiments were changed
                             float peak_selection = getConnector().getCurrentSelection();
                             if (peak_selection > -1)
@@ -298,7 +302,7 @@ public class SpectraVisualizationPanel
 						Jobs.runEDTAndWait(() -> optAnoBox.ifPresent(InSilicoSelectionBox::deactivate));
 					}
 					// store data to switch between modes without having to switch to other results
-					SpectraVisualizationPanel.this.experiment = experiment;
+					SpectraVisualizationPanel.this.experiment = experimentParam;
 					SpectraVisualizationPanel.this.sre = sre;
 					SpectraVisualizationPanel.this.annotation = spectrumAno;
 

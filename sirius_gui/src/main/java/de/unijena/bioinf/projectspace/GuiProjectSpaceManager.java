@@ -25,6 +25,7 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
@@ -155,7 +156,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
             createListener.unregister();
             if (align) {
                 //todo would be nice to update all at once!
-                final LcmsAlignSubToolJob j = new LcmsAlignSubToolJob(input, this);
+                final LcmsAlignSubToolJob j = new LcmsAlignSubToolJob(input, this, new LcmsAlignOptions());
                 Jobs.runInBackgroundAndLoad(MF, j);
                 INSTANCE_LIST.addAll(j.getImportedCompounds().stream()
                         .map(id -> (InstanceBean) newInstanceFromCompound(id))
