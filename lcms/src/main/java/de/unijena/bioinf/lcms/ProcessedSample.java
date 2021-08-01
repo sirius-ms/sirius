@@ -44,10 +44,10 @@ import java.util.TreeMap;
 public class ProcessedSample implements Annotated<DataAnnotation> {
 
     public final LCMSRun run;
-    public final NoiseModel ms1NoiseModel, ms2NoiseModel;
+    public NoiseModel ms1NoiseModel, ms2NoiseModel;
 
     // ms2 noise model
-    public final NoiseInformation ms2NoiseInformation;
+    public NoiseInformation ms2NoiseInformation;
 
     public final ChromatogramCache chromatogramCache;
     public final SpectrumStorage storage;
@@ -80,6 +80,15 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
         this.annotations = new Annotations<>();
         this.gapFilledIons = new ArrayList<>();
         this.otherIons = new ArrayList<>();
+    }
+
+    public void setMs2NoiseModel(Ms2NoiseStatistics stats) {
+        this.ms2NoiseInformation = stats.done();
+        this.ms2NoiseModel = stats.getGlobalNoiseModel();
+    }
+    public void setMs2NoiseModel(NoiseModel model, NoiseInformation add) {
+        this.ms2NoiseInformation = add;
+        this.ms2NoiseModel = model;
     }
 
     public RealDistribution getIntensityAfterPrecursorDistribution() {

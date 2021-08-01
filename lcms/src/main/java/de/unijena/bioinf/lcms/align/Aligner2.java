@@ -31,6 +31,7 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 import org.apache.commons.math3.distribution.LaplaceDistribution;
+import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.RealDistribution;
 import org.apache.commons.math3.special.Erf;
 import org.jetbrains.annotations.NotNull;
@@ -199,8 +200,12 @@ public class Aligner2 {
         return 2*(1d-retentionTimeErrorModel.cumulativeProbability(Math.abs(diff)));
     }
 
-    private double maxRetentionError() {
-        return 10*((LaplaceDistribution)retentionTimeErrorModel).getScale();
+    public double maxRetentionError() {
+        if (retentionTimeErrorModel instanceof LaplaceDistribution)
+            return 6*((LaplaceDistribution)retentionTimeErrorModel).getScale();
+        else if (retentionTimeErrorModel instanceof NormalDistribution)
+            return 6*((NormalDistribution) retentionTimeErrorModel).getStandardDeviation();
+        else return Math.sqrt(retentionTimeErrorModel.getNumericalVariance())*5;
     }
 
     private double scoreIsotopes(FragmentedIon a, FragmentedIon b) {

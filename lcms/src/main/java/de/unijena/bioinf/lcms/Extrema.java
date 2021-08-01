@@ -25,6 +25,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.BitSet;
+import java.util.function.Function;
 
 public class Extrema {
 
@@ -160,7 +161,7 @@ public class Extrema {
      *
      * @return true, if there are more than minimumNumberExtrema after smoothing
      */
-    boolean smooth(float[] noiseLevelPerScan, ChromatographicPeak cpeak, double relativeSlopeThreshold, double noiseWeight) {
+    boolean smooth(Function<Integer,Float> noiseLevelPerScan, ChromatographicPeak cpeak, double relativeSlopeThreshold, double noiseWeight) {
         if (extrema.size()<=1) return false;
 
         final BitSet delete = new BitSet(indizes.size());
@@ -172,7 +173,7 @@ public class Extrema {
             boolean isMaximum = intensityLeft<peak || intensityRight<peak;
             double minSlope = geom(peak-intensityLeft,peak-intensityRight);//Math.min(Math.abs(peak-intensityLeft),Math.abs(peak-intensityRight));
             double relativeSlope = minSlope/Math.max(peak, Math.max(intensityLeft,intensityRight));
-            if (relativeSlope < relativeSlopeThreshold && minSlope <= noiseWeight*noiseLevelPerScan[indizes.getQuick(k)] && length <= 4){
+            if (relativeSlope < relativeSlopeThreshold && minSlope <= noiseWeight*noiseLevelPerScan.apply(indizes.getQuick(k)) && length <= 4){
                 delete.set(k);
             }
         }

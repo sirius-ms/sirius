@@ -85,7 +85,10 @@ public class Ms2NoiseStatistics {
     }
 
     public NoiseInformation done() {
-
+        if (allNoiseIntensitites.size()==0) {
+            this.noiseInformation = new NoiseInformation(0d,0d,0d,1d,null);
+            return this.noiseInformation;
+        }
         final float[] array = allNoiseIntensitites.toArray();
         signalIntensities.sort();
         this.noiseInformation = new NoiseInformation(
