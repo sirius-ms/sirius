@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.News;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
@@ -58,6 +59,7 @@ public class InfoClient extends AbstractClient {
     private static final Logger LOG = LoggerFactory.getLogger(InfoClient.class);
     private static final String WEBAPI_VERSION_JSON = "/version.json";
     private static final String WEBAPI_WORKER_JSON = "/workers.json";
+    private static final String WEBAPI_LICENSE_JSON = "/license.json";
 
     public InfoClient(@NotNull URI serverUrl) {
         this(serverUrl, (it) -> {});
@@ -136,6 +138,18 @@ public class InfoClient extends AbstractClient {
         return executeFromJson(client,
                 () -> {
                     HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_WORKER_JSON).build());
+                    final int timeoutInSeconds = 8000;
+                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                    return get;
+                }, new TypeReference<>() {}
+        );
+    }
+
+    @Nullable
+    public LicenseInfo getLicenseInfo(@NotNull CloseableHttpClient client) throws IOException {
+        return executeFromJson(client,
+                () -> {
+                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_LICENSE_JSON).build());
                     final int timeoutInSeconds = 8000;
                     get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
                     return get;
