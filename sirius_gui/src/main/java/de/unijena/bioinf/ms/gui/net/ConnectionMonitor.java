@@ -26,6 +26,7 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         YES, WARN, NO;
     }
 
-    private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, 0, null, null);
+    private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, 0, null, null, null);
 
     private ConnectionCheckMonitor backroundMonitorJob = null;
 
@@ -125,9 +126,12 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
             ConnectionState conState;
             @Nullable WorkerList wl = null;
+            @Nullable LicenseInfo ll = null;
             if (connectionState <= 0) {
                 checkForInterruption();
                 wl = ApplicationCore.WEB_API.getWorkerInfo();
+                checkForInterruption();
+                ll = ApplicationCore.WEB_API.getLicenseInfo();
                 checkForInterruption();
                 if (connectionState == -1 && wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors")))) {
                     conState = ConnectionState.YES;
@@ -139,7 +143,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             }
             checkForInterruption();
             @Nullable DecodedJWT userID = AuthServices.getIDToken(ApplicationCore.WEB_API.getAuthService());
-            final ConnetionCheck c = new ConnetionCheck(conState, connectionState, wl, userID != null ? userID.getClaim("email").asString() : null);
+            final ConnetionCheck c = new ConnetionCheck(conState, connectionState, wl, userID != null ? userID.getClaim("email").asString() : null, ll);
             setResult(c);
             return c;
         }
@@ -174,13 +178,15 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         public final ConnectionState state;
         public final int errorCode;
         public final WorkerList workerInfo;
+        public final LicenseInfo license;
         public final String userId; //represents if user is logged in.
 
-        public ConnetionCheck(@NotNull ConnectionState state, int errorCode, WorkerList workerInfo, @Nullable String userId) {
+        public ConnetionCheck(@NotNull ConnectionState state, int errorCode,  @Nullable WorkerList workerInfo, @Nullable String userId,  @Nullable  LicenseInfo license) {
             this.state = state;
             this.errorCode = errorCode;
             this.workerInfo = workerInfo;
             this.userId = userId;
+            this.license = license;
         }
 
         public boolean isLoggedIn() {
