@@ -27,7 +27,7 @@ dependencies {
     compile project(':chemical_db_oss:chemdb_utils_oss')
     compile project(':fingerprinter_oss')
     compile project(':fingerblast_oss')
-    compile project(':chemical_db_oss:chemdb_file_oss')
+    compile project(':chemical_db_oss:chemdb_blob_oss')
     compile project(':canopus_predict_oss')
     compile project (':sirius_api')
 }
