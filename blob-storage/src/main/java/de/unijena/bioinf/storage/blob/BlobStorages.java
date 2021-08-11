@@ -20,10 +20,8 @@
 
 package de.unijena.bioinf.storage.blob;
 
-import com.google.cloud.storage.*;
-import de.unijena.bioinf.gc.GCSUtils;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
-import de.unijena.bioinf.storage.blob.gcs.GCSBlobStorage;
+import de.unijena.bioinf.storage.blob.gcs.GCSUtils;
 import de.unijena.bioinf.storage.blob.minio.MinIoUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,54 +31,43 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class BlobStorages {
-    public static boolean exists(@Nullable String path, Path credentials) throws IOException {
-        if (path != null && !path.isBlank()) {
-            if (path.startsWith(GCSUtils.URL_PREFIX))
-                return GCSUtils.bucketExists(path.substring(GCSUtils.URL_PREFIX.length()).split("/")[0], credentials);
-            else if (path.startsWith(MinIoUtils.URL_PREFIX))
-                return MinIoUtils.bucketExists(path.substring(MinIoUtils.URL_PREFIX.length()).split("/")[0]);
-            return FileBlobStorage.exists(Path.of(path));
+    public static boolean exists(@Nullable String propertyPrefix, @NotNull String bucketPath) throws IOException {
+        if (!bucketPath.isBlank()) {
+            if (bucketPath.startsWith(GCSUtils.URL_PREFIX))
+                return GCSUtils.bucketExists(propertyPrefix, bucketPath.substring(GCSUtils.URL_PREFIX.length()).split("/")[0]);
+            else if (bucketPath.startsWith(MinIoUtils.URL_PREFIX))
+                return MinIoUtils.existsS3Bucket(propertyPrefix,bucketPath.substring(MinIoUtils.URL_PREFIX.length()).split("/")[0]);
+            return FileBlobStorage.exists(Path.of(bucketPath));
         }
-        throw new IOException("Unsupported Model storage location `" + path + "`.");
+        throw new IOException("Unsupported Blob storage location `" + bucketPath + "`.");
     }
 
 
-    public static BlobStorage openDefault(@Nullable String path, @Nullable Path credentials) {
-        if (path != null && !path.isBlank()) {
-            if (path.startsWith(GCSUtils.URL_PREFIX))
-                return new GCSBlobStorage(path.substring(GCSUtils.URL_PREFIX.length()).split("/")[0], credentials);
-            else if (path.startsWith(MinIoUtils.URL_PREFIX))
-                return MinIoUtils.createDefaultMinIoStorage(path.substring(MinIoUtils.URL_PREFIX.length()).split("/")[0]);
-
-            if (Files.isDirectory(Path.of(path)))
-                return new FileBlobStorage(Path.of(path));
+    public static BlobStorage openDefault(@Nullable String propertyPrefix, @NotNull String bucketPath) {
+        if (!bucketPath.isBlank()) {
+            if (bucketPath.startsWith(GCSUtils.URL_PREFIX)) {
+                return GCSUtils.openDefaultGCStorage(propertyPrefix, bucketPath.substring(GCSUtils.URL_PREFIX.length()).split("/")[0]);
+            } else if (bucketPath.startsWith(MinIoUtils.URL_PREFIX)){
+                if (propertyPrefix ==  null || propertyPrefix.isBlank())
+                    throw new IllegalArgumentException("Property prefix need to be given for generic S3 storages!");
+                return MinIoUtils.openDefaultS3Storage(propertyPrefix, bucketPath.substring(MinIoUtils.URL_PREFIX.length()).split("/")[0]);
+            }
+            if (Files.isDirectory(Path.of(bucketPath)))
+                return new FileBlobStorage(Path.of(bucketPath));
         }
-        throw new IllegalArgumentException("Unsupported Model storage location");
+        throw new IllegalArgumentException("Unsupported Blob storage location `" + bucketPath + "`.");
     }
 
 
-    public static BlobStorage createDefault(@NotNull String path, Path credentials) throws IOException {
-        if (!path.isBlank()) {
-            if (path.startsWith(GCSUtils.URL_PREFIX))
-                return createDefaultGCS(path.substring(5).split("/")[0], credentials);
-            return createDefaultFileStore(path);
+    public static BlobStorage createDefault(@Nullable String propertyPrefix, @NotNull String bucketPath) throws IOException {
+        if (!bucketPath.isBlank()) {
+            if (bucketPath.startsWith(GCSUtils.URL_PREFIX))
+                return GCSUtils.createDefaultGCS(propertyPrefix, bucketPath.substring(5).split("/")[0]);
+            else if (bucketPath.startsWith(MinIoUtils.URL_PREFIX))
+                throw new UnsupportedOperationException("S3 storage location creation not yet supported");
+            return createDefaultFileStore(bucketPath);
         }
-        throw new IOException("Unsupported Model storage location `" + path + "`.");
-    }
-
-
-    public static BlobStorage createDefaultGCS(@NotNull String name, Path credentials)
-            throws IOException {
-        try {
-            StorageOptions opts = GCSUtils.storageOptions(credentials);
-            Bucket b = opts.getService().create(BucketInfo.newBuilder(name)
-                    .setStorageClass(StorageClass.STANDARD)
-                    .setLocation("EU")
-                    .build());
-            return new GCSBlobStorage(b);
-        } catch (StorageException e) {
-            throw new IOException(e);
-        }
+        throw new IOException("Unsupported Blob storage location `" + bucketPath + "`.");
     }
 
 
