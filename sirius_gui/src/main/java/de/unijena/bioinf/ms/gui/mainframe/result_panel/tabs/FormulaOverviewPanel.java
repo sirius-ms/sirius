@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.VisualizationPanelSynchronizer;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListDetailView;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +36,6 @@ import java.awt.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-//todo this is beta state
 public class FormulaOverviewPanel extends JPanel implements PanelDescription {
     @Override
     public String getDescription() {
@@ -51,7 +51,7 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription {
 
         TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
         suriusResultElements.addActiveResultChangedListener(overviewTVP);
-        SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(true);
+        SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(PropertyManager.getBoolean("de.unijena.bioinf.spec_viewer.sirius.anopanel",false));
         suriusResultElements.addActiveResultChangedListener(overviewSVP);
 
         // Class to synchronize selected peak/node
