@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,7 @@ public class ResultPanel extends JTabbedPane {
 
         rvp = new FormulaOverviewPanel(siriusResultElements);
         tvp = new TreeVisualizationPanel();
-        svp = new SpectraVisualizationPanel(true);
+        svp = new SpectraVisualizationPanel(PropertyManager.getBoolean("de.unijena.bioinf.spec_viewer.sirius.anopanel",false));
 
         this.lcmsPanel = new LCMSViewerPanel(siriusResultElements);
 
@@ -79,8 +80,8 @@ public class ResultPanel extends JTabbedPane {
         addTab("Spectra", null, new FormulaListHeaderPanel(siriusResultElements, svp), svp.getDescription());
         addTab("Trees", null, new FormulaListHeaderPanel(siriusResultElements, tvp), tvp.getDescription());
 
-        addTab("Epimetheus", null, epi, epi.getDescription());
         addTab("CSI:FingerID", null, new FormulaListHeaderPanel(siriusResultElements, ccv), ccv.getDescription());
+        addTab("Epimetheus", null, epi, epi.getDescription());
 
         if (fpt != null)
             addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(siriusResultElements, fpt), fpt.getDescription());

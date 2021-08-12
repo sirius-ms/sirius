@@ -100,6 +100,7 @@ public class TreeVisualizationPanel extends JPanel
         toolBar = new JToolBar();
         toolBar.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
         toolBar.setFloatable(false);
+        toolBar.setPreferredSize(new Dimension(toolBar.getPreferredSize().width,32));
         presetBox = new JComboBox<>((String[]) localConfig.get("presets"));
         presetBox.addActionListener(this);
         presetBox.setSelectedItem(
