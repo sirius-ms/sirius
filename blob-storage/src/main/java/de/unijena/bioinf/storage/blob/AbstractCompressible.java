@@ -24,11 +24,10 @@ package de.unijena.bioinf.storage.blob;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractCompressible implements Compressible {
-   @NotNull
    protected Compression compression;
    protected volatile boolean decompressStreams;
 
-    protected AbstractCompressible(@NotNull Compression compression) {
+    protected AbstractCompressible(Compression compression) {
         this.compression = compression;
     }
 

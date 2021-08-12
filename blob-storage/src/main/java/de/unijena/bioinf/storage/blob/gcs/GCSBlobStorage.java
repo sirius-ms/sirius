@@ -20,10 +20,8 @@
 
 package de.unijena.bioinf.storage.blob.gcs;
 
-import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.StorageException;
-import de.unijena.bioinf.gc.GCSUtils;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +31,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class GCSBlobStorage implements BlobStorage {
@@ -66,8 +66,8 @@ public class GCSBlobStorage implements BlobStorage {
     }
 
     //API
-    protected @Nullable Blob getBlob(@NotNull Path path) throws StorageException {
-        Blob blob = bucket.get(path.toString());
+    protected com.google.cloud.storage.Blob getBlob(@NotNull Path path) throws StorageException {
+        com.google.cloud.storage.Blob blob = bucket.get(path.toString());
         if (blob == null || !blob.exists())
             return null;
         return blob;
@@ -76,7 +76,7 @@ public class GCSBlobStorage implements BlobStorage {
     @Override
     public @Nullable InputStream reader(@NotNull Path path) throws IOException {
         try {
-            Blob blob = bucket.get(path.toString());
+            com.google.cloud.storage.Blob blob = bucket.get(path.toString());
             if (blob == null || !blob.exists())
                 return null;
             return Channels.newInputStream(blob.reader());
@@ -102,10 +102,52 @@ public class GCSBlobStorage implements BlobStorage {
 
     @Override
     public OutputStream writer(Path relative) throws IOException {
-        try  {
+        try {
             return Channels.newOutputStream(bucket.create(relative.toString(), (byte[]) null).writer());
         } catch (StorageException e) {
             throw new IOException(e);
+        }
+    }
+
+    @Override
+    public Iterator<Blob> listBlobs() {
+        return new BlobIt<>(bucket.list().iterateAll(), GCSBlob::new);
+    }
+
+    @Override
+    public @NotNull Map<String, String> getTags() {
+        return bucket.getLabels();
+    }
+
+    @Override
+    public void setTags(@NotNull Map<String, String> tags) {
+        updateBucket(b -> b.setLabels(tags));
+    }
+
+    public static class GCSBlob implements Blob {
+        final com.google.cloud.storage.Blob source;
+
+        private GCSBlob(com.google.cloud.storage.Blob source) {
+            this.source = source;
+        }
+
+        @Override
+        public boolean isDirectory() {
+            return source.isDirectory();
+        }
+
+        @Override
+        public String getKey() {
+            return source.getName();
+        }
+
+        @Override
+        public long size() {
+            return source.getSize();
+        }
+
+        public static GCSBlob of(@NotNull com.google.cloud.storage.Blob source) {
+            return new GCSBlob(source);
         }
     }
 }

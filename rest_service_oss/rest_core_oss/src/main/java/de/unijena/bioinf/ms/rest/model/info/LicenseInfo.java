@@ -26,6 +26,7 @@ public class LicenseInfo {
     private String licensee;
     private boolean countQueries;
     private int compoundLimit;
+    private int countedCompounds = -1;
     private int maxRecordingTimeHoursCompoundHash;
     private int maxQueriesPerCompound;
 
@@ -68,6 +69,14 @@ public class LicenseInfo {
 
     public void setCompoundLimit(int compoundLimit) {
         this.compoundLimit = compoundLimit;
+    }
+
+    public int getCountedCompounds() {
+        return countedCompounds;
+    }
+
+    public void setCountedCompounds(int countedCompounds) {
+        this.countedCompounds = countedCompounds;
     }
 
     @JsonIgnore

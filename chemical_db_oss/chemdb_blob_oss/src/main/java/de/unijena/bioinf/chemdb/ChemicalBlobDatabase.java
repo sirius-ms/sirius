@@ -20,21 +20,27 @@
 
 package de.unijena.bioinf.chemdb;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.babelms.CloseableIterator;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.storage.blob.AbstractCompressible;
 import de.unijena.bioinf.storage.blob.BlobStorage;
+import de.unijena.bioinf.storage.blob.BlobStorages;
 import de.unijena.bioinf.storage.blob.Compressible;
 import gnu.trove.map.TObjectLongMap;
 import gnu.trove.map.hash.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,8 +48,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class ChemicalBlobDatabase<Storage extends BlobStorage> extends AbstractCompressible implements AbstractChemicalDatabase {
+public class ChemicalBlobDatabase<Storage extends BlobStorage> extends AbstractCompressible implements AbstractChemicalDatabase {
 public enum Format {
     CSV(".csv"), JSON(".json");
     public final String ext;
@@ -56,10 +63,11 @@ public enum Format {
         return ext;
     }
 
-    public static @Nullable Format fromPath(@NotNull Path p){
+    public static @Nullable Format fromPath(@NotNull Path p) {
         return fromName(p.toString());
     }
-    public static @Nullable Format fromName(@NotNull String s){
+
+    public static @Nullable Format fromName(@NotNull String s) {
         s = s.toLowerCase();
         if (s.endsWith(CSV.ext()))
             return CSV;
@@ -69,6 +77,14 @@ public enum Format {
     }
 }
 
+    public static final String TAG_FORMAT = "chemdb-format";
+    public static final String TAG_COMPRESSION = "chemdb-compression";
+    public static final String TAG_DATE = "chemdb-date";
+    public static final String TAG_FLAVOR = "chemdb-flavor";
+
+    public static final String BLOB_SETTINGS = "SETTINGS";
+    public static final String BLOB_FORMULAS = "formulas";
+
     protected final Storage storage;
     protected Format format; // csv or json
     protected CompoundReader reader;
@@ -77,8 +93,13 @@ public enum Format {
     protected FingerprintVersion version;
 
 
+
+    public ChemicalBlobDatabase(Storage storage) throws IOException {
+        this(USE_EXTENDED_FINGERPRINTS ? CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getDefault(), storage);
+    }
+
     public ChemicalBlobDatabase(FingerprintVersion version, Storage storage) throws IOException {
-        super(Compression.NONE);
+        super(null);
         this.storage = storage;
         this.version = version;
         setDecompressStreams(true);
@@ -90,8 +111,72 @@ public enum Format {
     }
 
 
-    protected abstract void init() throws IOException;
+    protected void init() throws IOException {
+        Map<String, String> tags = storage.getTags();
 
+        if (tags.containsKey(TAG_COMPRESSION) && tags.containsKey(TAG_FORMAT)) {
+            format = Optional.ofNullable(tags.get(TAG_FORMAT)).map(String::toUpperCase).map(Format::valueOf)
+                    .orElseThrow(() -> new IOException("Could not determine database file format."));
+
+
+            compression = Optional.ofNullable(tags.get(TAG_COMPRESSION)).map(String::toUpperCase).map(Compression::valueOf)
+                    .orElseGet(() -> {
+                        LoggerFactory.getLogger(getClass()).warn("Could not determine compressions type. Assuming uncompressed data!");
+                        return Compression.NONE;
+                    });
+        } else { // guess format and compression from file endings
+            Iterator<BlobStorage.Blob> it = storage.listBlobs();
+            while (it.hasNext()) {
+                BlobStorage.Blob blob = it.next();
+                String fname = blob.getFileName();
+                if (!blob.isDirectory() && !fname.toUpperCase().startsWith(BLOB_SETTINGS)) {
+                    compression = Compression.fromName(fname);
+                    format = Format.fromName(fname.substring(0, fname.length() - compression.ext().length()));
+                    break;
+                }
+            }
+            if (compression == null) {
+                compression = Compression.GZIP;
+                LoggerFactory.getLogger(getClass()).warn("Could not determine Compression of storage '" + storage.getName() + "'. Using default compression '" + compression.ext + "'.");
+            }
+            if (format == null) {
+                format = Format.JSON;
+                LoggerFactory.getLogger(getClass()).warn("Could not determine Format of storage '" + storage.getName() + "'. Using default format '" + format.ext + "'.");
+            }
+        }
+
+        this.reader = format == Format.CSV ? new CSVReader() : new JSONReader();
+
+        @NotNull Optional<Reader> optReader = getReader(BLOB_FORMULAS);
+        if (optReader.isPresent()) {
+            try (Reader r = optReader.get()) {
+                final Map<String, String> map = new ObjectMapper().readValue(r, new TypeReference<>() {
+                });
+
+                this.formulas = new MolecularFormula[map.size()];
+                final AtomicInteger i = new AtomicInteger(0);
+                formulaFlags.clear();
+                map.entrySet().stream().parallel().forEach(e -> {
+                    final MolecularFormula mf = MolecularFormula.parseOrThrow(e.getKey());
+                    final long flag = Long.parseLong(e.getValue());
+                    this.formulas[i.getAndIncrement()] = mf;
+                    synchronized (formulaFlags) {
+                        this.formulaFlags.put(mf, flag);
+                    }
+                });
+                Arrays.sort(this.formulas);
+            }
+        } else {
+            LoggerFactory.getLogger(getClass()).debug("No formula index found! Loading molecular formulas by iterating ove all blobs in storage. Might be slow...");
+            List<MolecularFormula> formulaList = new ArrayList<>();
+            storage.listBlobs().forEachRemaining(blob -> {
+                String fname = blob.getFileName();
+                formulaList.add(MolecularFormula.parseOrThrow(fname.substring(0, fname.length() - format.ext().length() - compression.ext().length())));
+            });
+            Collections.sort(formulaList);
+            formulas = formulaList.toArray(MolecularFormula[]::new);
+        }
+    }
 
     @NotNull
     public Optional<Reader> getCompoundReader(@NotNull MolecularFormula formula) throws IOException {
@@ -266,5 +351,10 @@ public enum Format {
     @Override
     public void close() throws IOException {
 
+    }
+
+
+    public static ChemicalBlobDatabase<?> defaultChemDB() throws IOException {
+       return new ChemicalBlobDatabase<>(BlobStorages.openDefault(FingerIDProperties.chemDBStorePropertyPrefix(),FingerIDProperties.defaultChemDBBucket()));
     }
 }

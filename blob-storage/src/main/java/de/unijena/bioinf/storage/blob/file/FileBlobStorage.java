@@ -32,7 +32,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.stream.Collectors;
 
+//todo implement bucket tag/label support?
 public class FileBlobStorage implements BlobStorage {
 
     public static boolean exists(@Nullable Path p) throws IOException {
@@ -78,4 +81,35 @@ public class FileBlobStorage implements BlobStorage {
         return Files.newOutputStream(target);
     }
 
+    @Override
+    public Iterator<Blob> listBlobs() throws IOException {
+        return new BlobIt<>(FileUtils.listAndClose(getRoot(), s -> s.collect(Collectors.toList())).iterator(), PathBlob::new);
+    }
+
+    public class PathBlob implements Blob {
+        final Path source;
+
+        private PathBlob(@NotNull Path source) {
+            this.source = source;
+        }
+
+        @Override
+        public boolean isDirectory() {
+            return Files.isDirectory(source);
+        }
+
+        @Override
+        public String getKey() {
+            return getRoot().relativize(source).toString();
+        }
+
+        @Override
+        public long size() {
+            try {
+                return Files.size(source);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 }

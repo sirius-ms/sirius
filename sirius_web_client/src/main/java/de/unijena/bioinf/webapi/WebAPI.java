@@ -189,6 +189,14 @@ public final class WebAPI {
     //endregion
 
     //region Jobs
+    public int getCountedJobs(boolean byMonth) throws IOException {
+        return getCountedJobs(new Date(System.currentTimeMillis()), byMonth);
+    }
+
+    public int getCountedJobs(@NotNull Date monthAndYear, boolean byMonth) throws IOException {
+        return ProxyManager.applyClient(client -> jobsClient.getCountedJobs(monthAndYear, byMonth, client));
+    }
+
     public List<JobUpdate<?>> updateJobStates(JobTable jobTable) throws IOException {
         return updateJobStates(EnumSet.of(jobTable)).get(jobTable);
     }

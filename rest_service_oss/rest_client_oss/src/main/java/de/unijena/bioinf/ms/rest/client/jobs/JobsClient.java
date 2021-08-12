@@ -91,9 +91,7 @@ public class JobsClient extends AbstractClient {
                     if (jobType != null)
                         builder.setParameter("jobType", new ObjectMapper().writeValueAsString(jobType));
 
-                    return new HttpGet(buildVersionSpecificWebapiURI("/jobs/count")
-
-                            .build());
+                    return new HttpGet(builder.build());
                 },
                 new TypeReference<>() {}
         );
