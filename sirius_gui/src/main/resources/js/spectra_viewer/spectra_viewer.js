@@ -107,7 +107,7 @@ function clear() {
 };
 
 function setSelection(mz) {
-    if (svg_str !== null) {
+    if (basic_structure !== null) {
         var i;
         for (i in mzs) { if (Math.abs(mzs[i]-mz) < 1e-3) break; }
         const d = data.spectra[0].peaks[i];
