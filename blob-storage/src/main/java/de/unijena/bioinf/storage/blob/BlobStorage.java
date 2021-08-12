@@ -20,12 +20,20 @@
 
 package de.unijena.bioinf.storage.blob;
 
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Super simple object reading/writing API
@@ -49,9 +57,99 @@ public interface BlobStorage {
 
     /**
      * Returns the raw unmodified byte stream from the store.
+     *
      * @param relative relative path from storage root
      * @return raw unmodified byte stream
      */
     InputStream reader(Path relative) throws IOException;
 
+
+    /**
+     * Returns the Tag on storage/bucket level for the given key
+     * @param key associated with the requested value
+     * @return tag corresponding to the given key or NULL if key does not exist or
+     * if the storage/bucket does not support tags.
+     */
+    @Nullable
+    default String getTag(@NotNull String key) throws IOException {
+        return getTags().get(key);
+    }
+
+    /**
+     * Get tags associated with this storage/bucket
+     * @return map containing key value pairs
+     */
+    @NotNull
+    default Map<String, String> getTags() throws IOException {
+        return Collections.emptyMap();
+    }
+
+
+    /**
+     * Set a tag with the given key to the storage/bucket
+     * Might throw {@link UnsupportedOperationException} if storage/bucket does not support tags
+     * @param key key to be associated with the tag
+     * @param value value of the tag
+     */
+    default String setTag(@NotNull String key, @Nullable String value) throws IOException {
+        @NotNull Map<String, String> tags = getTags();
+        String r = (value == null || value.isBlank()) ? tags.remove(key) : tags.put(key, value);
+        setTags(tags);
+        return r;
+    }
+
+    /**
+     * Set the tags associated with this storage/bucket
+     * Might throw {@link UnsupportedOperationException} if storage/bucket does not support tags
+     */
+    default void setTags(@NotNull Map<String, String> tags) throws IOException {
+        throw new UnsupportedOperationException("");
+    }
+
+    /**
+     * Remove a tag with the given key from the storage/bucket
+     * Might throw {@link UnsupportedOperationException} if storage/bucket does not support tags
+     * @param key key of the tag to be removed
+     */
+    default void removeTag(@NotNull String key) throws IOException {
+        setTag(key, null);
+    }
+
+    Iterator<Blob> listBlobs() throws IOException;
+
+    interface Blob {
+        boolean isDirectory();
+        String getKey();
+        default String getFileName(){
+            return Path.of(getKey()).getFileName().toString();
+        }
+        long size();
+    }
+
+    class BlobIt<S> implements Iterator<Blob>{
+        final Iterator<S> sourceIt;
+        final IOFunctions.IOFunction<S,Blob> blobConv;
+
+        public BlobIt(Iterable<S> sourceIterable, IOFunctions.IOFunction<S, Blob> blobConv) {
+            this(sourceIterable.iterator(), blobConv);
+        }
+        public BlobIt(Iterator<S> sourceIterator, IOFunctions.IOFunction<S, Blob> blobConv) {
+            this.sourceIt = sourceIterator;
+            this.blobConv = blobConv;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return sourceIt.hasNext();
+        }
+
+        @Override
+        public Blob next() {
+            try {
+                return blobConv.apply(sourceIt.next());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 }

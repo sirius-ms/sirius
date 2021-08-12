@@ -42,9 +42,6 @@ public class FingerIDProperties {
         return PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.port");
     }
 
-    public static String databaseDate() {
-        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date");
-    }
 
     public static String siriusVersion() {
         return PropertyManager.getProperty("de.unijena.bioinf.sirius.version");
@@ -54,6 +51,9 @@ public class FingerIDProperties {
         return siriusVersion();
     }
 
+    public static String databaseDate() {
+        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date");
+    }
 
     public static String gcsChemDBName() {
         return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.name");
@@ -63,17 +63,15 @@ public class FingerIDProperties {
         return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.flavor", null, "default");
     }
 
-    public static String gcsChemDBBucketName() {
-        return gcsChemDBName() + "_" + databaseDate() + "_" + gcsChemDBFlavor();
+    public static String defaultChemDBBucket(){
+        return PropertyManager.getProperty("de.unijena.bioinf.stores.chemdb.bucket");
     }
-    public static String gcsChemDBCredentials() {
-        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.credentials");
+    public static String chemDBStorePropertyPrefix(){
+        return "de.unijena.bioinf.stores.chemdb";
     }
 
-    public static Path gcsChemDBCredentialsPath() {
-        Path p = Path.of(gcsChemDBCredentials());
-        if (p.isAbsolute())
-            return p;
-        return Path.of(System.getProperty("user.home")).resolve(p);
+    public static String customDBStorePropertyPrefix(){
+        return "de.unijena.bioinf.stores.customdb";
     }
+
 }
