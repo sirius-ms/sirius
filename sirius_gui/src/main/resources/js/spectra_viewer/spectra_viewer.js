@@ -67,15 +67,12 @@ document.onkeydown = function(e) {
             }
             selected.leftClick = new_selected;
             svg.select("#peak"+selected.leftClick).classed("peak_select", true);
-            if (domain_tmp.xMin !== domain_fix.xMin || domain_tmp.xMax !== domain_fix.xMax) {
-                if (selectedPeak.mz <= domain_tmp.xMin || selectedPeak.mz >= domain_tmp.xMax) {
-                    if (e.keyCode === 37) {
-                        setXdomain(selectedPeak.mz-3, domain_tmp.xMax-3);
-                    } else {
-                        setXdomain(domain_tmp.xMin+3, selectedPeak.mz+3);
-                    }
-                    update_peaks(50);
-                }
+            if (selectedPeak.mz <= domain_tmp.xMin) {
+                setXdomain(selectedPeak.mz-3, domain_tmp.xMax-(domain_tmp.xMin-selectedPeak.mz)-3);
+                update_peaks(50);
+            } else if (selectedPeak.mz >= domain_tmp.xMax){
+                setXdomain(domain_tmp.xMin+(selectedPeak.mz-domain_tmp.xMax)+3, selectedPeak.mz+3);
+                update_peaks(50);
             }
             document.getElementById("anno_leftClick").innerText = annotation(selectedPeak).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
             showStructure(selected.leftClick);
@@ -195,8 +192,6 @@ function highlighting(bonds, cuts, atoms) {
         }
     }
 };
-
-function idled() { idleTimeout = null; };
 
 // Only used in spectrumPlot: peak_1 = unannotated, peak_2 = annotate
 function resetColor(d) {
@@ -443,7 +438,7 @@ function rightClickOnly() { return d3.event.button === 2; };
 function brushendX(xdomain_fix, duration, ...callbackUpdates) {
     let extent = d3.event.selection;
     if(!extent){
-        if (!idleTimeout) return idleTimeout = setTimeout(idled, 350);
+        if (!idleTimeout) return idleTimeout = setTimeout(function(){ idleTimeout=null; }, 350);
         x.domain([xdomain_fix[0], xdomain_fix[1]])
         domain_tmp.xMin = xdomain_fix[0];
         domain_tmp.xMax = xdomain_fix[1];
@@ -487,7 +482,7 @@ function init() {
         .attr("transform", "rotate(-90)")
         .attr("y", -40)
         .attr("x", -h/2)
-        .text("Relative intensity");
+        .text("Relative Intensity");
 
     svg.selectAll(".label").attr("visibility", "hidden");
     //tooltip
@@ -587,7 +582,7 @@ function spectrumPlot(spectrum, structureView) {
     // Y axis
     if (domain_tmp.yMax === null) {
         y = d3.scaleLinear().domain([0, 1]).range([h, 0]);
-        domain_tmp.yMax = 1; 
+        domain_tmp.yMax = 1;
     } else {
         y = d3.scaleLinear().domain([0, domain_tmp.yMax]).range([h, 0]);
     }
@@ -688,7 +683,7 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
     var update_peaksX = function(duration) {peakArea.selectAll(".peak").transition().duration(duration).attr("x", function(d) { return x(d.mz); }); };
 
     var update_intensities = function(duration) {
-        intensityArea.selectAll(".intensity").transition().duration(duration).attr("x", function(d) { return x(d.mz); }); 
+        intensityArea.selectAll(".intensity").transition().duration(duration).attr("x", function(d) { return x(d.mz); });
     };
     var update_diffBands = function(duration) {
         diffArea.selectAll(".diff_band").transition().duration(duration)
@@ -823,8 +818,8 @@ function mirrorPlot(spectrum1, spectrum2, viewStyle, intensityViewer) {
             .attr("height", h+30 )
             .attr("x", 0)
             .attr("y", -15);
-        if (viewStyle === 'difference') diffArea = d3.select("#content").append('g').attr("id", "differences").attr("clip-path", "url(#diff-clip)");
-        if (view.intensity) intensityArea = d3.select("#content").append('g').attr("id", "intensities").attr("clip-path", "url(#clip)");
+        diffArea = d3.select("#content").append('g').attr("id", "differences").attr("clip-path", "url(#diff-clip)");
+        if (intensityViewer) intensityArea = d3.select("#content").append('g').attr("id", "intensities").attr("clip-path", "url(#clip)");
     }
     // X axis
     if (domain_tmp.xMin === null || domain_tmp.xMax === null) {
