@@ -122,6 +122,7 @@ pushToGitHub:
   only:
     refs:
       - stable
+      - master
 #distCliWin64:
 #  variables:
 #    GRADLE_OPTS: "-Dorg.gradle.daemon=false"

@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - stable
+      - master
     paths-ignore:
       - '**/README.md'
       - 'sirius_doc/**/*'
