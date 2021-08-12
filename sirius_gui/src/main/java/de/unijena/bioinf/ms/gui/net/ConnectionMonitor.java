@@ -102,10 +102,15 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             this.checkResult = checkResult;
         }
 
+        firePropertyChange(new ConnectionUpdateEvent(this.checkResult));
         firePropertyChange(new ConnectionStateEvent(old, this.checkResult));
         firePropertyChange(new ErrorStateEvent(old, this.checkResult));
     }
 
+
+    public void addConnectionUpdateListener(PropertyChangeListener listener) {
+        addPropertyChangeListener(ConnectionUpdateEvent.KEY,listener);
+    }
 
     public void addConectionStateListener(PropertyChangeListener listener) {
         addPropertyChangeListener(ConnectionStateEvent.KEY, listener);
@@ -143,6 +148,11 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             }
             checkForInterruption();
             @Nullable DecodedJWT userID = AuthServices.getIDToken(ApplicationCore.WEB_API.getAuthService());
+
+            if (ll != null && ll.isCountQueries())
+                ll.setCountedCompounds(ApplicationCore.WEB_API.getCountedJobs(true));
+
+
             final ConnetionCheck c = new ConnetionCheck(conState, connectionState, wl, userID != null ? userID.getClaim("email").asString() : null, ll);
             setResult(c);
             return c;
@@ -267,6 +277,28 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
         public ConnetionCheck getConnectionCheck() {
             return newConnectionCheck;
+        }
+    }
+
+
+    public class ConnectionUpdateEvent extends PropertyChangeEvent {
+        public static final String KEY = "connection-update";
+        public ConnectionUpdateEvent(ConnetionCheck check) {
+            super(ConnectionMonitor.this, KEY, null, check);
+        }
+
+        @Override
+        public ConnetionCheck getNewValue() {
+            return (ConnetionCheck) super.getNewValue();
+        }
+
+        @Override
+        public ConnetionCheck getOldValue() {
+            return (ConnetionCheck) super.getOldValue();
+        }
+
+        public ConnetionCheck getConnectionCheck() {
+            return getNewValue();
         }
     }
 
