@@ -89,6 +89,8 @@ public class SpectraVisualizationPanel
 		this.preferredMode = preferredMode;
 
 		JToolBar northPanel = new JToolBar();
+		northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+		northPanel.setPreferredSize(new Dimension(northPanel.getPreferredSize().width,32));
 		northPanel.setFloatable(false);
 
 		JLabel l = new JLabel("Mode");
