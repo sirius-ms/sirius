@@ -544,7 +544,7 @@ class SpectrumPlot extends Base {
     }
 
     static setSelection(self, mz) {
-        if (self.svg_str !== null) {
+        if (self.structureView === true) {
             var i;
             for (i in self.mzs) { if (Math.abs(self.mzs[i]-mz) < 1e-3) break; }
             const d = self.spectrum.peaks[i];
