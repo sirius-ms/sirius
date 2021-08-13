@@ -32,6 +32,8 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
 import java.util.LinkedList;
@@ -65,22 +67,23 @@ public class SpectraJSONWriter{
 	}
 
 	// MS1 vs. simulated MS1 isotope pattern (mirror)
-	public String ms1MirrorJSON(SimpleSpectrum spectrum, SiriusIsotopePattern siriusIsotopePattern) {
+	public String ms1MirrorJSON(@NotNull SiriusIsotopePattern siriusIsotopePattern, Deviation ms1MassDiffDev) {
+		SimpleSpectrum spectrum = new SimpleSpectrum(siriusIsotopePattern.spectrum);
 		JsonObject spectra = ms1MirrorIsotope(spectrum, siriusIsotopePattern.simulatedPattern);
-		annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(siriusIsotopePattern));
+		annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(siriusIsotopePattern.simulatedPattern, spectrum, ms1MassDiffDev));
 		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		return gson.toJson(spectra);
 	}
 
 	// MS1 spectrum (single)
-	public String ms1JSON(SimpleSpectrum pattern1, SiriusIsotopePattern siriusIsotopePattern){
+	public String ms1JSON(@NotNull SimpleSpectrum spectrum, @Nullable SimpleSpectrum extractedIsotopePattern, Deviation ms1MassDiffDev){
         JsonObject spectra;
-        if (siriusIsotopePattern != null){
-            spectra = ms1MirrorIsotope(pattern1, siriusIsotopePattern.getIsotopePattern());
-            annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(siriusIsotopePattern));
+        if (extractedIsotopePattern != null && !extractedIsotopePattern.isEmpty()){
+            spectra = ms1MirrorIsotope(spectrum, extractedIsotopePattern);
+            annotatePeakMatches(spectra.get("spectra").getAsJsonArray(), matchPeaks(extractedIsotopePattern, spectrum, ms1MassDiffDev));
             spectra.get("spectra").getAsJsonArray().remove(1); // remove Isotope spectrum, peak matches are left
         } else
-            spectra = jsonSpectra(pattern1, "MS1");
+            spectra = jsonSpectra(spectrum, "MS1");
 		final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		return gson.toJson(spectra);
 	}
@@ -294,12 +297,15 @@ public class SpectraJSONWriter{
 		}
 	}
 
-	protected List<PeakMatch> matchPeaks(SiriusIsotopePattern siriusIsotopePattern){
-		SimpleSpectrum spectrum = siriusIsotopePattern.simulatedPattern;
+	/*protected List<PeakMatch> matchPeaks(SiriusIsotopePattern siriusIsotopePattern, Deviation massDiffDev){
+		return matchPeaks(siriusIsotopePattern.simulatedPattern, siriusIsotopePattern.spectrum, massDiffDev);
+	}*/
+
+	protected List<PeakMatch> matchPeaks(Spectrum<?> spectrum,  Spectrum<?> patterm, Deviation massDiffDev){
 		List<PeakMatch> peakMatches = new LinkedList<>();
 		for (int i = 0; i < spectrum.size(); i++) {
 			Peak p = spectrum.getPeakAt(i);
-			int j = siriusIsotopePattern.findIndexOfPeak(p.getMass(), 0.1);
+			int j = Spectrums.mostIntensivePeakWithin(patterm, p.getMass(), massDiffDev);
 			if (j >= 0) peakMatches.add(new PeakMatch(j, i));
 		}
 		return peakMatches;
