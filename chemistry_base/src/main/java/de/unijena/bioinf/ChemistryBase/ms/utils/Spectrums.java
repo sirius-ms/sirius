@@ -544,6 +544,15 @@ public class Spectrums {
         }
     }
 
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, Ms2Experiment exp) {
+        return extractIsotopePattern(ms1Spec, exp, true);
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum extractIsotopePattern(S ms1Spec, Ms2Experiment exp, boolean mergePeaks) {
+        return extractIsotopePattern(ms1Spec, exp.getAnnotationOrDefault(MS1MassDeviation.class), exp.getIonMass(), exp.getPrecursorIonType().getCharge(), mergePeaks);
+    }
+
+
     /**
      * extract hypothetical isotope pattern for a given mass
      *
