@@ -56,6 +56,7 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
+import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
@@ -176,6 +177,10 @@ public final class WebAPI {
 
     public WorkerList getWorkerInfo() throws IOException {
         return ProxyManager.applyClient(serverInfoClient::getWorkerInfo);
+    }
+
+    public List<Term> getTerms() throws IOException {
+        return ProxyManager.applyClient(serverInfoClient::getTerms);
     }
 
     public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {
