@@ -22,9 +22,11 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -40,6 +42,7 @@ import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -141,60 +144,48 @@ public class SpectraVisualizationPanel
 
 	}
 
-	private void drawSpectra(InstanceBean experiment, FormulaResultBean sre, String mode,
-							 int ce_index){
+	private void drawSpectra(InstanceBean experiment, FormulaResultBean sre, String mode, int ce_index) {
 		if (mode == null)
 			return;
 		String jsonSpectra = null;
 		SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
 
 		if (mode.contains(MS1_DISPLAY)) {
-			// Deviation standardMassDeviation = experiment.getExperiment()
-			// 		.getAnnotationOrNull(MS1MassDeviation.class).standardMassDeviation;
 			List<SimpleSpectrum> spectra1 = experiment.getMs1Spectra();
-            SimpleSpectrum spectrum = experiment.getMergedMs1Spectrum() == null ? spectra1.get(0)
-                    : experiment.getMergedMs1Spectrum();
-            SiriusIsotopePattern siriusIsotopePattern = null;
-            if (sre != null){
-                // results exists, try to get isotope pattern
-                FTree ftree = sre.getFragTree().orElse(null);
-                siriusIsotopePattern = (ftree != null)
-                    ? new SiriusIsotopePattern(ftree, experiment.getExperiment(), spectrum)
-                    : null;
-            }
-			if (mode.equals(MS1_DISPLAY))
-                jsonSpectra = spectraWriter.ms1JSON(spectrum, siriusIsotopePattern);
-            else if (mode.equals(MS1_MIRROR_DISPLAY)) {
-				jsonSpectra = spectraWriter.ms1MirrorJSON(spectrum, siriusIsotopePattern);
+			SimpleSpectrum spectrum = experiment.getMergedMs1Spectrum() == null ? spectra1.get(0)
+					: experiment.getMergedMs1Spectrum();
+
+			SiriusIsotopePattern siriusIsotopePattern = Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree)
+					.map(ftree -> new SiriusIsotopePattern(ftree, experiment.getExperiment(), spectrum)).orElse(null);
+
+
+			if (mode.equals(MS1_DISPLAY)) {
+				SimpleSpectrum isoPattern = siriusIsotopePattern != null ? siriusIsotopePattern.getIsotopePattern()
+						: Spectrums.extractIsotopePattern(spectrum, experiment.getExperiment());
+				jsonSpectra = spectraWriter.ms1JSON(spectrum, isoPattern,
+						experiment.getExperiment().getAnnotationOrDefault(MS1MassDeviation.class).massDifferenceDeviation);
+			} else if (mode.equals(MS1_MIRROR_DISPLAY)) {
+				if (siriusIsotopePattern != null) {
+					jsonSpectra = spectraWriter.ms1MirrorJSON(siriusIsotopePattern,
+							experiment.getExperiment().getAnnotationOrDefault(MS1MassDeviation.class).massDifferenceDeviation);
+				} else {
+					LoggerFactory.getLogger(getClass()).warn(MS1_MIRROR_DISPLAY + "was selected but no simulated pattern was available. Can not show mirror plot!");
+				}
+
 			} else {
 				return;
 			}
 		} else if (mode.equals(MS2_DISPLAY)) {
-			// Deviation standardMassDeviation = experiment.getExperiment()
-			// 		.getAnnotationOrNull(MS1MassDeviation.class).standardMassDeviation;
 			if (ce_index == -1){
 				jsonSpectra = spectraWriter.ms2JSON(experiment.getExperiment(), Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null));
 			} else {
 				MutableMs2Spectrum spectrum = experiment.getMs2Spectra().get(ce_index);
-				// if (spectrum == null){
-				// 	System.err.printf("MS2 spectrum with selected collision energy (%s) not available!%n",
-				// 		ce);
-				//    return;
-				// }
 				FTree ftree = Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null);
 				if (ftree != null)
 					jsonSpectra = spectraWriter.ms2JSON(spectrum, ftree);
 				else
 					jsonSpectra = spectraWriter.ms2JSON(spectrum);
 			}
-			// for (int i = 0; i < spectra2.size(); i++) {
-			// 	System.out.printf("MS2 spectra %d%n", i);
-			// 	jsonSpectra = spectraWriter.ms2JSON(spectra2.get(i), sre.getFragTree().orElse(null));
-			// 	debugWriteSpectra(jsonSpectra, "/tmp/test_spectra_MS2_" + i + ".json"); // FIXME: DEBUG
-			// }
-			// jsonSpectra = spectraWriter.ms2JSON(
-			// 	Spectrums.mergeSpectra(new Deviation(10, 0.1), true, false, spectra2),
-			// 	sre.getFragTree().orElse(null));
 		} else {
 			System.err.println("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
 			return;
