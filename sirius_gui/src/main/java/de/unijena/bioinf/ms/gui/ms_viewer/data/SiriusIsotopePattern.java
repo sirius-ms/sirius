@@ -28,6 +28,8 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGenerator;
 import gnu.trove.list.array.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
 
@@ -87,14 +89,14 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
 		return isotopePattern;
 	}
 
-    private SimpleSpectrum annotate(FTree tree, Ms2Experiment exp) {
-        final IsotopePattern pattern = tree.getAnnotationOrNull(IsotopePattern.class);
+    private SimpleSpectrum annotate(@Nullable FTree tree, @NotNull Ms2Experiment exp) {
+        final IsotopePattern pattern = tree != null ? tree.getAnnotationOrNull(IsotopePattern.class) : null;
         if (pattern != null) {
             isotopePattern = pattern.getPattern();
             patternFormula = pattern.getCandidate();
         } else {
             isotopePattern = Spectrums.extractIsotopePattern(spectrum, exp.getAnnotationOrDefault(MS1MassDeviation.class), exp.getIonMass(), exp.getPrecursorIonType().getCharge(), true);
-            patternFormula = tree.getRoot().getFormula();
+            patternFormula = tree != null ? tree.getRoot().getFormula() : null;
         }
         final TIntArrayList indizes = new TIntArrayList();
         // find isotope peaks in spectrum
