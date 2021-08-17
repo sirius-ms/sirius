@@ -563,7 +563,8 @@ public class SpectraVisualizationPanel
                     } else if (fff == FileFormat.pdf) {
                         final StringBuilder svg = new StringBuilder();
                         Jobs.runJFXAndWait(() -> svg.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('spectrumView'))")));
-                        WebViewIO.writePDF(fSelectedFile, svg.toString());
+                        // remove selection etc. rectangles as <rect>s without width attribute break Rasterizer
+                        WebViewIO.writePDF(fSelectedFile, svg.toString().replaceAll("<rect [^>]*class=\"(selection|handle)[^>]+>", ""));
                     } else if (fff == FileFormat.json) {
                         try (BufferedWriter bw = Files.newBufferedWriter(fSelectedFile.toPath(), Charset.defaultCharset())) {
                             bw.write(jsonSpectra);
