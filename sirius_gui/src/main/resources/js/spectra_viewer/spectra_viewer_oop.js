@@ -621,6 +621,7 @@ class SpectrumPlot extends Base {
             .append("rect")
                 .attr("x", function(d) { return self.x(d.mz); })
                 .attr("y", function(d) { return self.y(d.intensity); })
+                .attr("width", "2px")
                 .attr("height", function(d) { return self.h - self.y(d.intensity); })
                 .attr("id", function(d, i) { return "peak"+i; })
                 .attr("class", function(d, i) { return (self.selected.leftClick === i) ? "peak_select peak" : SpectrumPlot.resetColor(self, d); });
@@ -921,6 +922,7 @@ class MirrorPlot extends Base {
                 .attr("id", function(d, i) { return "peak"+i; })
                 .attr("x", function(d) { return self.x(d.mz); })
                 .attr("y", function(d) { return self.y1(d.intensity); })
+                .attr("width", "2px")
                 .attr("height", function(d) { return self.h/2 - self.y1(d.intensity); });
         // Peaks 2
         this.peakArea.selectAll()
@@ -931,6 +933,7 @@ class MirrorPlot extends Base {
                 .attr("id", function(d, i) { return "peak"+(i+self.mzs1Size); })
                 .attr("x", function(d) { return self.x(d.mz); })
                 .attr("y", self.h/2)
+                .attr("width", "2px")
                 .attr("height", function(d) { return self.y2(d.intensity)-self.h/2; });
         // difference and intensity viewer
         if (this.viewStyle === "difference") {
