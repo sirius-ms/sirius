@@ -37,6 +37,7 @@ import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.webView.WebViewIO;
 import javafx.embed.swing.JFXPanel;
 import org.slf4j.LoggerFactory;
 
@@ -478,11 +479,11 @@ public class TreeVisualizationPanel extends JPanel
                     } else if (fff == FileFormat.svg) {
                         final StringBuilder svg = new StringBuilder();
                         Jobs.runJFXAndWait(() -> svg.append(jsBridge.getSVG()));
-                        TreeViewerIO.writeSVG(fSelectedFile, svg.toString());
+                        WebViewIO.writeSVG(fSelectedFile, svg.toString());
                     } else if (fff == FileFormat.pdf) {
                         final StringBuilder svg = new StringBuilder();
                         Jobs.runJFXAndWait(() -> svg.append(jsBridge.getSVG()));
-                        TreeViewerIO.writePDF(fSelectedFile, svg.toString());
+                        WebViewIO.writePDF(fSelectedFile, svg.toString());
                     } else if (fff == FileFormat.json) {
                         new FTJsonWriter().writeTreeToFile(fSelectedFile, ftree);
                     }

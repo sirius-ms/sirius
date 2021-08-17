@@ -339,7 +339,11 @@ class SpectrumPlot extends Base {
         newPeak.classed("peak_select", true);
         self.annoArea.attr("id", "anno_leftClick");
         document.getElementById("anno_leftClick").innerText = Base.annotation(self, d).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
-        SpectrumPlot.showStructure(self, i);
+        if ("structureInformation" in d) {
+            SpectrumPlot.showStructure(self, i);
+        } else {
+            SpectrumPlot.showStructure(self, -1);
+        }
         self.hideHover();
     }
 
@@ -351,14 +355,14 @@ class SpectrumPlot extends Base {
         }
         self.selected.leftClick = null;
         peak.classed("peak_select", false);
-        document.getElementById("anno_leftClick").innerText = "Left click to choose a purple peak...";
+        document.getElementById("anno_leftClick").innerText = "Left click to choose a purple or green peak...";
         self.annoArea.attr("id", "nothing");
         SpectrumPlot.showStructure(self, -1);
     }
 
     static mouseup(self, d, i) {
         if (!self.pan.mousemoveCheck) {
-            if ("structureInformation" in d || i === self.mzsSize-1) {
+            if ("formula" in d || i === self.mzsSize-1) {
                 let tmp = d3.select("#peak"+i);
                 if (self.selected.leftClick !== null && tmp.classed("peak_select")) {
                     SpectrumPlot.cancelSelection(self, tmp);
@@ -377,7 +381,7 @@ class SpectrumPlot extends Base {
             if (e.keyCode === 37 && self.selected.leftClick !== 0) { // left
                 new_selected = self.selected.leftClick - 1;
                 selectedPeak = self.spectrum.peaks[new_selected];
-                while (!("structureInformation" in selectedPeak)) {
+                while (!("formula" in selectedPeak)) {
                     if (new_selected === 0) {
                         new_selected = -1;
                         break;
@@ -388,7 +392,7 @@ class SpectrumPlot extends Base {
             } else if (e.keyCode === 39 && self.selected.leftClick !== self.mzsSize-1) { // right
                 new_selected = self.selected.leftClick + 1;
                 selectedPeak = self.spectrum.peaks[new_selected];
-                while (!("structureInformation" in selectedPeak)) {
+                while (!("formula" in selectedPeak)) {
                     if (new_selected === self.mzsSize-1) break;
                     new_selected = new_selected + 1;
                     selectedPeak = self.spectrum.peaks[new_selected];
@@ -414,7 +418,11 @@ class SpectrumPlot extends Base {
                     SpectrumPlot.update_peaks(self, 50);
                 }  
                 document.getElementById("anno_leftClick").innerText = Base.annotation(self, selectedPeak).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
-                SpectrumPlot.showStructure(self, self.selected.leftClick);
+                if ("structureInformation" in self.spectrum.peaks[self.selected.leftClick]) {
+                    SpectrumPlot.showStructure(self, self.selected.leftClick);
+                } else {
+                    SpectrumPlot.showStructure(self, -1);
+                }
             }
         }
     }
@@ -462,7 +470,7 @@ class SpectrumPlot extends Base {
                 if (self.selected.leftClick !== null) {
                     return Base.annotation(self, self.spectrum.peaks[self.selected.leftClick]).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
                 } else {
-                    return "Left click to choose a purple peak...";
+                    return "Left click to choose a purple or green peak...";
                 }});
         this.current.w = this.current.w/4*3 - 15;
         this.w = this.current.w - this.margin.left - this.margin.innerRight;
@@ -536,26 +544,21 @@ class SpectrumPlot extends Base {
     }
 
     static setSelection(self, mz) {
-        if (self.svg_str !== null) {
+        if (self.structureView === true) {
             var i;
             for (i in self.mzs) { if (Math.abs(self.mzs[i]-mz) < 1e-3) break; }
             const d = self.spectrum.peaks[i];
             i = Number(i);
             if (self.selected.leftClick !== i) {
-                if (!("structureInformation" in d) && self.selected.leftClick !== null) SpectrumPlot.cancelSelection(d3.select("#peak"+self.selected.leftClick));
-                if ("structureInformation" in d || i === self.mzsSize-1) {
+                if (!("formula" in d) && self.selected.leftClick !== null) SpectrumPlot.cancelSelection(d3.select("#peak"+self.selected.leftClick));
+                if ("formula" in d || i === self.mzsSize-1) {
                     SpectrumPlot.selectNewPeak(self, d, i, d3.select("#peak"+i));
-                    if (mz > self.domain_tmp.xMax || mz < self.domain_tmp.xMin) {
-                        const diffLeft = mz - self.domain_tmp.xMin;
-                        const diffRight = self.domain_tmp.xMax - mz;
-                        if (diffLeft < 0 || diffRight < 0) {
-                            if (Math.abs(diffLeft) < Math.abs(diffRight)) {
-                                Base.setXdomain(mz-3, self.domain_tmp.xMax+diffLeft-3);
-                            } else {
-                                Base.setXdomain(self.domain_tmp.xMin-diffRight+3, mz+3);
-                            }
-                            SpectrumPlot.update_peaks(50);
-                        }
+                    if (mz <= self.domain_tmp.xMin) {
+                        Base.setXdomain(self, mz-3, self.domain_tmp.xMax-(self.domain_tmp.xMin-mz)-3);
+                        SpectrumPlot.update_peaks(self, 50);
+                    } else if (mz >= self.domain_tmp.xMax){
+                        Base.setXdomain(self, self.domain_tmp.xMin+(mz-self.domain_tmp.xMax)+3, mz+3);
+                        SpectrumPlot.update_peaks(self, 50);
                     }
                 }
             }
@@ -618,6 +621,7 @@ class SpectrumPlot extends Base {
             .append("rect")
                 .attr("x", function(d) { return self.x(d.mz); })
                 .attr("y", function(d) { return self.y(d.intensity); })
+                .attr("width", "2px")
                 .attr("height", function(d) { return self.h - self.y(d.intensity); })
                 .attr("id", function(d, i) { return "peak"+i; })
                 .attr("class", function(d, i) { return (self.selected.leftClick === i) ? "peak_select peak" : SpectrumPlot.resetColor(self, d); });
@@ -918,6 +922,7 @@ class MirrorPlot extends Base {
                 .attr("id", function(d, i) { return "peak"+i; })
                 .attr("x", function(d) { return self.x(d.mz); })
                 .attr("y", function(d) { return self.y1(d.intensity); })
+                .attr("width", "2px")
                 .attr("height", function(d) { return self.h/2 - self.y1(d.intensity); });
         // Peaks 2
         this.peakArea.selectAll()
@@ -928,6 +933,7 @@ class MirrorPlot extends Base {
                 .attr("id", function(d, i) { return "peak"+(i+self.mzs1Size); })
                 .attr("x", function(d) { return self.x(d.mz); })
                 .attr("y", self.h/2)
+                .attr("width", "2px")
                 .attr("height", function(d) { return self.y2(d.intensity)-self.h/2; });
         // difference and intensity viewer
         if (this.viewStyle === "difference") {
