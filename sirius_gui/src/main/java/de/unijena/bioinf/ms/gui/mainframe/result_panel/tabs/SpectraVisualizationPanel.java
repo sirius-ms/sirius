@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.ms_viewer.InSilicoSelectionBox;
 import de.unijena.bioinf.ms.gui.ms_viewer.InsilicoFragmenter;
 import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewerConnector;
@@ -61,6 +62,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
@@ -556,15 +558,38 @@ public class SpectraVisualizationPanel
             final File fSelectedFile = selectedFile;
             Jobs.runInBackgroundAndLoad(MF, "Exporting Spectra...", () -> {
                 try {
+                    // for SVG/PDF ask whether to export structure
+                    boolean exportStructure = false;
+                    if ((fff == FileFormat.svg || fff == FileFormat.pdf) && insilicoResult != null){
+                        QuestionDialog exportStructureDialog = new QuestionDialog(MF,
+                                "Do you want to export the corresponding compound structure as well?");
+                        ReturnValue rv = exportStructureDialog.getReturnValue();
+                        exportStructure = rv == ReturnValue.Success;
+                    }
+
                     if (fff == FileFormat.svg) {
-                        final StringBuilder svg = new StringBuilder();
-                        Jobs.runJFXAndWait(() -> svg.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('spectrumView'))")));
-                        WebViewIO.writeSVG(fSelectedFile, svg.toString());
+                        final StringBuilder svgSpectra = new StringBuilder();
+                        Jobs.runJFXAndWait(() -> svgSpectra.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('spectrumView'))")));
+                        WebViewIO.writeSVG(fSelectedFile, svgSpectra.toString());
+                        if (exportStructure){
+                            // second file for structure SVG
+                            final StringBuilder svgStructure = new StringBuilder();
+                            Jobs.runJFXAndWait(() -> svgStructure.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('structureView').getElementsByTagName('svg')[0])")));
+                            Path structurePath = Path.of(fSelectedFile.getParent(), fSelectedFile.getName().replaceFirst("(.[Ss][Vv][Gg])?$", "_structure.svg"));
+                            WebViewIO.writeSVG(structurePath.toFile(), svgStructure.toString());
+                        }
                     } else if (fff == FileFormat.pdf) {
                         final StringBuilder svg = new StringBuilder();
                         Jobs.runJFXAndWait(() -> svg.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('spectrumView'))")));
                         // remove selection etc. rectangles as <rect>s without width attribute break Rasterizer
                         WebViewIO.writePDF(fSelectedFile, svg.toString().replaceAll("<rect [^>]*class=\"(selection|handle)[^>]+>", ""));
+                        if (exportStructure){
+                            // second file for structure PDF
+                            final StringBuilder svgStructure = new StringBuilder();
+                            Jobs.runJFXAndWait(() -> svgStructure.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('structureView').getElementsByTagName('svg')[0])")));
+                            Path structurePath = Path.of(fSelectedFile.getParent(), fSelectedFile.getName().replaceFirst("(.[Pp][Dd][Ff])?$", "_structure.pdf"));
+                            WebViewIO.writePDF(structurePath.toFile(), svgStructure.toString());
+                        }
                     } else if (fff == FileFormat.json) {
                         try (BufferedWriter bw = Files.newBufferedWriter(fSelectedFile.toPath(), Charset.defaultCharset())) {
                             bw.write(jsonSpectra);
