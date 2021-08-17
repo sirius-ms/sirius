@@ -20,6 +20,7 @@ var highlightedNode = null, nodeToMove = null, unambig_mode = 'none',
 var brushTransition = d3.transition().duration(500),
     zeroTransition = d3.transition().duration(0);
 var colorGen, loss_colors_dict, losses;
+var lastRightClickTime = null;     // for distinguishing double right click (->reset zoom) from brushing
 // use innerWidth/Height (for renderers other than WebView)
 var window_use_inner = false;
 // theming
@@ -840,8 +841,13 @@ function zoomed() {
 // handles brush event
 function brushended() {
     var s = d3.event.selection, x, y, k;
-    if (s == null)
+    if (s == null){
+        if (d3.event.sourceEvent.type != 'end' // no successful brush call (see last line of this function calling brush.move)
+            && (performance.now() - lastRightClickTime < 300)) // AND double click
+            resetZoom();
+        lastRightClickTime = performance.now();
         return;
+    }
     // adjusting selection for current zoom transformations
     s[1][0] = getTransformedCoordinate(s[1][0], 'x');
     s[0][0] = getTransformedCoordinate(s[0][0], 'x');
@@ -858,7 +864,7 @@ function brushended() {
     zoom_base.call(zoom.transform, transform).transition(t);
     zoom_base.node().__zoom = transform;
     svg.select('.brush').node().__zoom = transform;
-    svg.select('.brush').call(brush.move, null);
+    svg.select('.brush').call(brush.move, null); // clear brush rectangle
 }
 
 
@@ -1621,7 +1627,7 @@ svg.append('svg:defs').selectAll('marker')
 zoom = d3.zoom().on('zoom', zoomed);
 brush = d3.brush().on('end', brushended);
 brush.filter(function() {
-    if (event.button == 2) {
+    if (d3.event.button == 2) {
         d3.event.preventDefault(); // no context menu
         return true;
     } else

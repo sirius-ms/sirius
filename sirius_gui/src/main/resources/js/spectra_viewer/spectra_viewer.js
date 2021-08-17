@@ -38,7 +38,7 @@ document.onkeydown = function(e) {
         if (e.keyCode === 37 && selected.leftClick !== 0) { // left
             new_selected = selected.leftClick - 1;
             selectedPeak = data.spectra[0].peaks[new_selected];
-            while (!("structureInformation" in selectedPeak)) {
+            while (!("formula" in selectedPeak)) {
                 if (new_selected === 0) {
                     new_selected = -1;
                     break;
@@ -49,7 +49,7 @@ document.onkeydown = function(e) {
         } else if (e.keyCode === 39 && selected.leftClick !== ms2Size-1) { // right
             new_selected = selected.leftClick + 1;
             selectedPeak = data.spectra[0].peaks[new_selected];
-            while (!("structureInformation" in selectedPeak)) {
+            while (!("formula" in selectedPeak)) {
                 if (new_selected === ms2Size-1) break;
                 new_selected = new_selected + 1;
                 selectedPeak = data.spectra[0].peaks[new_selected];
@@ -75,7 +75,13 @@ document.onkeydown = function(e) {
                 update_peaks(50);
             }
             document.getElementById("anno_leftClick").innerText = annotation(selectedPeak).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
-            showStructure(selected.leftClick);
+            const d = data.spectra[0].peaks[selected.leftClick];
+            if ("structureInformation" in d) {
+                showStructure(selected.leftClick);
+            } else {
+                showStructure(-1);
+            }
+            
         }
     }
 };
@@ -101,26 +107,21 @@ function clear() {
 };
 
 function setSelection(mz) {
-    if (svg_str !== null) {
+    if (basic_structure !== null) {
         var i;
         for (i in mzs) { if (Math.abs(mzs[i]-mz) < 1e-3) break; }
         const d = data.spectra[0].peaks[i];
         i = Number(i);
         if (selected.leftClick !== i) {
-            if (!("structureInformation" in d) && selected.leftClick !== null) cancelSelection(d3.select("#peak"+selected.leftClick));
-            if ("structureInformation" in d || i === ms2Size-1) {
+            if (!("formula" in d) && selected.leftClick !== null) cancelSelection(d3.select("#peak"+selected.leftClick));
+            if ("formula" in d || i === ms2Size-1) {
                 selectNewPeak(d, i, d3.select("#peak"+i));
-                if (mz > domain_tmp.xMax || mz < domain_tmp.xMin) {
-                    const diffLeft = mz - domain_tmp.xMin;
-                    const diffRight = domain_tmp.xMax - mz;
-                    if (diffLeft < 0 || diffRight < 0) {
-                        if (Math.abs(diffLeft) < Math.abs(diffRight)) {
-                            setXdomain(mz-3, domain_tmp.xMax+diffLeft-3);
-                        } else {
-                            setXdomain(domain_tmp.xMin-diffRight+3, mz+3);
-                        }
-                        update_peaks(50);
-                    }
+                if (mz <= self.domain_tmp.xMin) {
+                    Base.setXdomain(self, mz-3, self.domain_tmp.xMax-(self.domain_tmp.xMin-mz)-3);
+                    SpectrumPlot.update_peaks(self, 50);
+                } else if (mz >= self.domain_tmp.xMax){
+                    Base.setXdomain(self, self.domain_tmp.xMin+(mz-self.domain_tmp.xMax)+3, mz+3);
+                    SpectrumPlot.update_peaks(self, 50);
                 }
             }
         }
@@ -266,7 +267,11 @@ function selectNewPeak(d, i, newPeak) {
     newPeak.classed("peak_select", true);
     annoArea.attr("id", "anno_leftClick");
     document.getElementById("anno_leftClick").innerText = annotation(d).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
-    showStructure(i);
+    if ("structureInformation" in d) {
+        showStructure(i);
+    } else {
+        showStructure(-1);
+    }   
     hideHover();
 };
 
@@ -278,7 +283,7 @@ function cancelSelection(peak) {
     }
     selected.leftClick = null;
     peak.classed("peak_select", false);
-    document.getElementById("anno_leftClick").innerText = "Left click to choose a purple peak...";
+    document.getElementById("anno_leftClick").innerText = "Left click to choose a purple or green peak...";
     annoArea.attr("id", "nothing");
     showStructure(-1);
 };
@@ -346,8 +351,8 @@ var mouseleaveGeneral = function() {
 };
 
 var mouseup = function(d, i) {
-    if (!pan.mousemoveCheck) {     
-        if ("structureInformation" in d || i === ms2Size-1) {
+    if (!pan.mousemoveCheck) {
+        if ("formula" in d || i === ms2Size-1) {
             let tmp = d3.select("#peak"+i);
             if (selected.leftClick !== null && tmp.classed("peak_select")) {
             	cancelSelection(tmp);
@@ -550,7 +555,7 @@ function spectrumPlot(spectrum, structureView) {
                 if (selected.leftClick !== null) {
                     return annotation(data.spectra[0].peaks[selected.leftClick]).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
                 } else {
-                    return "Left click to choose a purple peak...";
+                    return "Left click to choose a purple or green peak...";
                 }});
         current.w = current.w/4*3 - 15;
         w = current.w - margin.left - margin.innerRight;
