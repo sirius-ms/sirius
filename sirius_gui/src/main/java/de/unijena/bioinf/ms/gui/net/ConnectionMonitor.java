@@ -26,6 +26,7 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         YES, WARN, NO;
     }
 
-    private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, 0, null, null);
+    private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, 0, null, null, null);
 
     private ConnectionCheckMonitor backroundMonitorJob = null;
 
@@ -101,10 +102,15 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             this.checkResult = checkResult;
         }
 
+        firePropertyChange(new ConnectionUpdateEvent(this.checkResult));
         firePropertyChange(new ConnectionStateEvent(old, this.checkResult));
         firePropertyChange(new ErrorStateEvent(old, this.checkResult));
     }
 
+
+    public void addConnectionUpdateListener(PropertyChangeListener listener) {
+        addPropertyChangeListener(ConnectionUpdateEvent.KEY,listener);
+    }
 
     public void addConectionStateListener(PropertyChangeListener listener) {
         addPropertyChangeListener(ConnectionStateEvent.KEY, listener);
@@ -125,9 +131,12 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
             ConnectionState conState;
             @Nullable WorkerList wl = null;
+            @Nullable LicenseInfo ll = null;
             if (connectionState <= 0) {
                 checkForInterruption();
                 wl = ApplicationCore.WEB_API.getWorkerInfo();
+                checkForInterruption();
+                ll = ApplicationCore.WEB_API.getLicenseInfo();
                 checkForInterruption();
                 if (connectionState == -1 && wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors")))) {
                     conState = ConnectionState.YES;
@@ -139,7 +148,12 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             }
             checkForInterruption();
             @Nullable DecodedJWT userID = AuthServices.getIDToken(ApplicationCore.WEB_API.getAuthService());
-            final ConnetionCheck c = new ConnetionCheck(conState, connectionState, wl, userID != null ? userID.getClaim("email").asString() : null);
+
+            if (ll != null && ll.isCountQueries())
+                ll.setCountedCompounds(ApplicationCore.WEB_API.getCountedJobs(true));
+
+
+            final ConnetionCheck c = new ConnetionCheck(conState, connectionState, wl, userID != null ? userID.getClaim("email").asString() : null, ll);
             setResult(c);
             return c;
         }
@@ -174,13 +188,15 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         public final ConnectionState state;
         public final int errorCode;
         public final WorkerList workerInfo;
+        public final LicenseInfo license;
         public final String userId; //represents if user is logged in.
 
-        public ConnetionCheck(@NotNull ConnectionState state, int errorCode, WorkerList workerInfo, @Nullable String userId) {
+        public ConnetionCheck(@NotNull ConnectionState state, int errorCode,  @Nullable WorkerList workerInfo, @Nullable String userId,  @Nullable  LicenseInfo license) {
             this.state = state;
             this.errorCode = errorCode;
             this.workerInfo = workerInfo;
             this.userId = userId;
+            this.license = license;
         }
 
         public boolean isLoggedIn() {
@@ -261,6 +277,28 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
         public ConnetionCheck getConnectionCheck() {
             return newConnectionCheck;
+        }
+    }
+
+
+    public class ConnectionUpdateEvent extends PropertyChangeEvent {
+        public static final String KEY = "connection-update";
+        public ConnectionUpdateEvent(ConnetionCheck check) {
+            super(ConnectionMonitor.this, KEY, null, check);
+        }
+
+        @Override
+        public ConnetionCheck getNewValue() {
+            return (ConnetionCheck) super.getNewValue();
+        }
+
+        @Override
+        public ConnetionCheck getOldValue() {
+            return (ConnetionCheck) super.getOldValue();
+        }
+
+        public ConnetionCheck getConnectionCheck() {
+            return getNewValue();
         }
     }
 

@@ -23,8 +23,10 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jdesktop.swingx.JXTitledSeparator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,14 +71,14 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     JLabel authLabel = new JLabel("Authenticated?");
     JPanel resultPanel = null;
 
-    public ConnectionCheckPanel(int state, @Nullable WorkerList workerInfoList, String userId) {
+    public ConnectionCheckPanel(int state, @Nullable WorkerList workerInfoList, String userId, @Nullable LicenseInfo license) {
         super(GridBagConstraints.WEST, GridBagConstraints.EAST);
 
         add(new JXTitledSeparator("Connection check:"), 15, false);
         add(new JLabel("Connection to the internet (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external") + ")"), internet, 5, false);
         add(new JLabel("Connection to domain provider"), hoster, 5, false);
         add(new JLabel("Connection to domain (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.domain") + ")"), domain, 5, false);
-        add(new JLabel("Connection to CSI:FingerID Server"), fingerID, 5, false);
+        add(new JLabel("Connection to CSI:FingerID Server (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host") + ")"), fingerID, 5, false);
         add(new JLabel("Check CSI:FingerID REST API"), fingerID_WebAPI, 5, false);
         add(new JLabel("All necessary workers available?"), fingerID_Worker, 5, false);
         add(authLabel, auth, 5, false);
@@ -84,18 +86,20 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
         addVerticalGlue();
 
+        String licensee = license == null ? "N/A" : license.getLicensee();
+
         if (workerInfoList != null) {
             refreshPanel(
                     state,
                     workerInfoList.getActiveSupportedTypes(Instant.ofEpochSecond(600)),
-                    workerInfoList.getPendingJobs(), userId
+                    workerInfoList.getPendingJobs(), userId,  licensee
             );
         } else {
-            refreshPanel(state, EnumSet.noneOf(PredictorType.class), Integer.MIN_VALUE, userId);
+            refreshPanel(state, EnumSet.noneOf(PredictorType.class), Integer.MIN_VALUE, userId, licensee);
         }
     }
 
-    public void refreshPanel(final int state, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userId) {
+    public void refreshPanel(final int state, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userId, @NotNull String licensee) {
         internet.setState(state > 1 || state <= 0);
         hoster.setState(state > 2 || state <= 0);
         domain.setState(state > 3 || state <= 0);
@@ -120,9 +124,8 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
         add(resultPanel, 15, true);
 
-        add(new JXTitledSeparator("Webservice registration"), 15, false);
-        add(new JLabel("<html>Licensed to: <b> " + PropertyManager.getProperty("de.unijena.bioinf.sirius.registration",null,"Community Edition (Non commercial use only!)") + " </b></html>"), 5, false);
-        //todo registration info has to be load from server.
+        add(new JXTitledSeparator("Webservice License"), 15, false);
+        add(new JLabel("<html>Licensed to: <b> " + licensee + " </b></html>"), 5, false);
 
         revalidate();
         repaint();

@@ -20,11 +20,13 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,19 +45,19 @@ public class ConnectionDialog extends JDialog implements ActionListener {
     private ConnectionCheckPanel connectionCheck;
 
 
-    public ConnectionDialog(Frame owner, int state, @Nullable WorkerList workerList, @Nullable String userID) {
+    public ConnectionDialog(Frame owner, int state, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license) {
         super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(state, workerList, userID);
+        initDialog(state, workerList, userID, license);
     }
 
-    private void initDialog(int state, @Nullable WorkerList workerList, @Nullable String userID) {
+    private void initDialog(int state, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license) {
         setLayout(new BorderLayout());
 
         //header
         JPanel header = new DialogHeader(Icons.NET_64);
         add(header, BorderLayout.NORTH);
 
-        connectionCheck = new ConnectionCheckPanel(state, workerList, userID);
+        connectionCheck = new ConnectionCheckPanel(state, workerList, userID, license);
         add(connectionCheck, BorderLayout.CENTER);
 
 

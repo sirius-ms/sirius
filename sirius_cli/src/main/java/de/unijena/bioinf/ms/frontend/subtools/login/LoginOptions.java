@@ -41,7 +41,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
 
     @CommandLine.Option(names = "--clear",
-            description = {"Delete stored refresh/access token (re-login required t use webservices)"})
+            description = {"Delete stored refresh/access token (re-login required to use webservices)"})
     protected boolean clearLogin;
 
     @CommandLine.Option(names = "--show",
