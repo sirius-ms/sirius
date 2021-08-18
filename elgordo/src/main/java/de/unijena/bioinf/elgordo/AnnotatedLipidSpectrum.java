@@ -54,6 +54,14 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
         this.annotatedSpecies = species;
     }
 
+    public MolecularFormula getFormula() {
+        return formula;
+    }
+
+    public PrecursorIonType getIonType() {
+        return ionType;
+    }
+
     public boolean isSpecified() {
         return !annotatedSpecies.chainsUnknown();
     }
@@ -218,6 +226,7 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
     };
     private final static double bias = -1.28458181;
     public boolean predictIsALipid() {
+        if (!isSpecified()) return false;
         final float[] vec = makeFeatureVector();
         double svmScore = bias;
         for (int k=0; k < coefficients.length; ++k) {
@@ -358,6 +367,13 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
         }
         if (c==0) {
             c = Integer.compare(peakIndizes.length, o.peakIndizes.length);
+        }
+        if (c==0) {
+            if (this.ionType.isPlainProtonationOrDeprotonation() && !o.ionType.isPlainProtonationOrDeprotonation()) {
+                return 1;
+            } else if (o.ionType.isPlainProtonationOrDeprotonation() && !this.ionType.isPlainProtonationOrDeprotonation()) {
+                return -1;
+            }
         }
         return c;
     }

@@ -42,9 +42,10 @@ public enum LipidClass {
     PC(	2,	Glycerophosphocholines, def("+").fragments("C2H5O4P").losses("C3H9N","C5H14NO4P").alkyl("","H","H2O").acyl("","H2O").plasmalogenFragment("C21H39O").
                                             def("[M+H]+").fragments("C5H13NO","C5H14NO4P").def("[M+Na]+").adductSwitch().acyl("-C3H9N","C-3H-7N-O").done()),
     LPC(	1,	Glycerophosphocholines, def("[M+H]+").fragments("C5H13NO","C5H14NO4P","C2H5O4P").losses("H2O","C5H14NO4P").acyl("","H2O").def("[M+Na]+").fragments("C5H13NO","C5H14NO4P","C2H5O4P").losses("C3H9N","C5H14NO4P").acyl("").done()),
-    PE(	2,	Glycerophosphoethanolamines, def("[M+H]+").losses("C2H8NO4P","C2H5N").acylFragments("", "-OH","-H3O2").acyl("","H2O").def("[M+Na]+").fragments("H3PO4","C2H6NO3P","C2H8NO4P").losses("C2H5N","C2H6NO3P","C2H8NO4P","C2H6NO4P").acyl("","-C2H5N").acylFragments("").done()),
+    //PE(	2,	Glycerophosphoethanolamines, def("[M+H]+").losses("C2H8NO4P","C2H5N").acylFragments("", "-OH","-H3O2", "-C2H5N").acyl("","H2O").def("[M+Na]+").fragments("H3PO4","C2H6NO3P","C2H8NO4P").losses("C2H5N","C2H6NO3P","C2H8NO4P","C2H6NO4P").acyl("","-C2H5N").acylFragments("").done()),
+    PE(	2,	Glycerophosphoethanolamines, def("+").losses("C2H5N","C2H6NO3P","C2H8NO4P","C2H6NO4P").acylFragments("", "-OH","-H3O2", "-C2H5N").acyl("","H2O","-C2H5N").fragments("H3PO4","C2H6NO3P","C2H8NO4P").def("[M+Na]+").def("[M+H]+").done()),
     LPE(	1,	Glycerophosphoethanolamines, def("[M+H]+").fragments("C3H7O5P").losses("H2O","C2H7NO","C2H8NO4P","C3H9O6P").acyl("","-C2H6NO3P").acylFragments("").def("[M+Na]+").fragments("H3PO4","C2H8NO4P","C3H7O5P","C3H9O6P").losses("C2H5N","C2H7NO","C2H6NO3P","C2H8NO4P","C2H6NO4P").acylFragments("").acyl("","H2O").done()),
-    PS(	2,	Glycerophosphoserines, def("[M+H]+").losses("C3H8NO6P").acyl("","H2O", "-C3H6NO5P").done()),
+    PS(	2,	Glycerophosphoserines, def("[M+H]+").fragments("C3H7NO3","C3H7O5P").losses("C3H8NO6P","C3H6NO6P").acyl("","H2O", "-C3H6NO5P").acylFragments("").done()),
     LPS(	1,	Glycerophosphoserines, def("[M+H]+").fragments("C3H8NO3").losses("H2O","C3H8NO6P").acyl("","H2O").done()),
     PG(	2,	Glycerophosphoglycerols, def("+").losses("H2O","C3H9O6P").acyl("","H2O").acylFragments("","-H2O").def("[M+Na]+").losses("C3H8O6P","C3H7O5P").acyl("-C3H6O2").def("[M+H]+").def("[M+NH3+H]+").done()),
     LPG(	1,	Glycerophosphoglycerols),

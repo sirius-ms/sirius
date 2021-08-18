@@ -177,4 +177,19 @@ public class LipidChain implements Comparable<LipidChain> {
         else return "(unknown-chain type)-" + chainLength + ":" + numberOfDoubleBonds;
     }
 
+    public static LipidChain fromString(String x) {
+        Type t = Type.ACYL;
+        if (x.startsWith("d")) {
+            t = Type.SPHINGOSIN;
+            x = x.substring(1);
+        } else if (x.startsWith("O-")) {
+            t = Type.ALKYL;
+            x = x.substring(2);
+        }
+        final int d = x.indexOf(':');
+        final int length = Integer.parseInt(x.substring(0, d));
+        final int doubleBonds = Integer.parseInt(x.substring(d+1));
+        return new LipidChain(t,length,doubleBonds);
+    }
+
 }

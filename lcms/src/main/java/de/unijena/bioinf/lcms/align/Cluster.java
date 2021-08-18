@@ -216,8 +216,10 @@ public class Cluster {
         for (int i=k; i < n; ++i) {
             mean += values.getQuick(i);
         }
-        System.out.println("USED " + count + " features for error estimation. Mean error is " + (mean/(n-k)));
-        return (mean/(n-k));
+        final double error = mean / (n - k);
+        System.out.println("USED " + count + " features for error estimation. Mean error is " + error);
+        if (error <= 0) return 1d;
+        return error;
     }
 
 
