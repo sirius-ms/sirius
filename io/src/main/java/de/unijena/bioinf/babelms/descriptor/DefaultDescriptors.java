@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -48,6 +49,7 @@ class DefaultDescriptors {
         registry.put(Fragment.class, Score.class, new ScoreDescriptor());
         registry.put(Fragment.class, Ionization.class, new IonizationDescriptor());
         registry.put(Fragment.class, ImplicitAdduct.class, new ImplicitAdductDescriptor());
+;       registry.put(FTree.class, LipidSpecies.class, new LipidDescriptor());
 
         registry.put(Loss.class, Score.class, new ScoreDescriptor());
         registry.put(Loss.class, LossType.class, new LossTypeDescriptor());
@@ -59,6 +61,32 @@ class DefaultDescriptors {
         registry.put(FTree.class, TreeStatistics.class, new TreeStatisticsDescriptor());
     }
 
+    private static class LipidDescriptor implements Descriptor<LipidSpecies> {
+        private final String KEY = "lipid-annotation";
+        @Override
+        public String[] getKeywords() {
+            return new String[]{KEY};
+        }
+
+        @Override
+        public Class<LipidSpecies> getAnnotationClass() {
+            return LipidSpecies.class;
+        }
+
+        @Override
+        public <G, D, L> LipidSpecies read(DataDocument<G, D, L> document, D dictionary) {
+            if (document.hasKeyInDictionary(dictionary, KEY)) {
+                return LipidSpecies.fromString(document.getStringFromDictionary(dictionary,KEY));
+            } else return null;
+        }
+
+        @Override
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, LipidSpecies annotation) {
+            if (annotation!=null) {
+                document.addToDictionary(dictionary, KEY, annotation.toString());
+            }
+        }
+    }
 
     private static class TreeStatisticsDescriptor implements Descriptor<TreeStatistics> {
 

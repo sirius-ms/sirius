@@ -83,6 +83,9 @@ public class Sirius {
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs2Plugin());
         this.getMs2Analyzer().registerPlugin(new UseLossMassDeviationScoringPlugin());
         this.getMs2Analyzer().registerPlugin(new TreeMotifPlugin());
+
+        this.getMs2Analyzer().registerPlugin(new PredefinedPeakPlugin());
+        this.getMs2Analyzer().registerPlugin(new ElGordoPlugin());
     }
 
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {
