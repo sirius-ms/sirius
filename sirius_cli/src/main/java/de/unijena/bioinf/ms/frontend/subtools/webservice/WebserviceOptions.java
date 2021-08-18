@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.frontend.subtools.login;
+package de.unijena.bioinf.ms.frontend.subtools.webservice;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import de.unijena.bioinf.auth.AuthService;
@@ -36,39 +36,35 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-@CommandLine.Command(name = "login", description = "<STANDALONE> Allows a user to login for SIRIUS Webservices (e.g. CSI:FingerID or CANOPUS) and securely store a personal access token.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
-public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> {
+
+@CommandLine.Command(name = "webservice", description = "<STANDALONE> Show info about the web service like available workers, pending jobs and personal usage stats.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+public class WebserviceOptions implements StandaloneTool<WebserviceOptions.WF> {
 
 
-    @CommandLine.Option(names = "--clear",
-            description = {"Delete stored refresh/access token (re-login required to use webservices)"})
-    protected boolean clearLogin;
+    @CommandLine.Option(names = {"-w", "--workers"},
+            description = {"Show available workers."})
+    protected boolean workerInfo;
 
-    @CommandLine.Option(names = "--show",
+    @CommandLine.Option(names = "--user-stats",
             description = {"Show profile information about the profile you are logged in with."})
-    protected boolean showProfile;
+    protected boolean userStats;
 
-    @CommandLine.Option(names = {"--user", "--email", "-u"},
-            description = {"Compute fragmentation tree alignments between all compounds in the dataset, incorporating the given fragmentation tree library. The similarity is not the raw alignment score, but the correlation of the scores."})
-    protected String username;
-
-    @CommandLine.Option(names = {"--password", "--pwd", "-p"},
-            description = {"Console password input."},
-            interactive = true)
-    protected String password;
+    @CommandLine.Option(names = {"--pending-jobs"},
+            description = {"Return  number of pending jobs in th Cloud"})
+    protected boolean jobs;
 
 
     @Override
-    public LoginWorkflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
-        return new LoginWorkflow();
+    public WF makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
+        return new WF();
     }
 
-    public class LoginWorkflow implements Workflow {
+    public class WF implements Workflow {
         @Override
         public void run() {
-            if (clearLogin) {
+            /*if (clearLogin) {
                 try {
-                    AuthServices.clearRefreshToken(ApplicationCore.TOKEN_FILE);
+                    ApplicationCore.WEB_API
                 } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when clearing refresh token.", e);
                 }
@@ -79,7 +75,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             if (username != null && password != null) {
                 try {
                     AuthService service = AuthServices.createDefault(ApplicationCore.TOKEN_FILE);
-                    try{
+                    try {
                         service.login(username, password);
                         AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
                         if (showProfile)
@@ -98,7 +94,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }
+            }*/
         }
 
         private void showProfile(@Nullable DecodedJWT decoded) {
@@ -107,10 +103,11 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             if (decoded != null) {
                 System.out.println("Logged in as: " + decoded.getClaim("name"));
                 System.out.println("Token expires at: " + decoded.getExpiresAt().toString());
-            }else {
+            } else {
                 System.out.println("Not logged in.");
             }
             System.out.println("##########################################################");
         }
     }
 }
+

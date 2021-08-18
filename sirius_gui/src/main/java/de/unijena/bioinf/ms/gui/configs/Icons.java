@@ -51,8 +51,11 @@ public abstract class Icons {
     public static final Icon FB_LOADER_STOP_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/fb_loader.png"));
 
     public static final Icon NET_NO_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-no@0.5x.png"));
+//    public static final Icon NET_NO_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-no-16px.png"));
     public static final Icon NET_YES_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-yes@0.5x.png"));
+//    public static final Icon NET_YES_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-yes-16px.png"));
     public static final Icon NET_WARN_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-warn@0.5x.png"));
+//    public static final Icon NET_WARN_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-warn-16px.png"));
     public static final Icon NET_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network@0.5x.png"));
     public static final Icon NET_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network.png"));
     public static final Icon NET_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-16px.png"));

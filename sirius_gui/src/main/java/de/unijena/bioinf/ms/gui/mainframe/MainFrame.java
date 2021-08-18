@@ -216,6 +216,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
         jobDialog = new JobDialog(this);
         // results Panel
         resultsPanel = new ResultPanel(formulaList, ApplicationCore.WEB_API);
+        JPanel resultPanelContainer = new JPanel(new BorderLayout());
+        resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
+        resultPanelContainer.add(resultsPanel,BorderLayout.CENTER);
+        if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
+            resultPanelContainer.add(new WebServiceInfoPanel(CONNECTION_MONITOR()), BorderLayout.SOUTH);
+
         // toolbar
         toolbar = new SiriusToolbar();
 
@@ -232,7 +238,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         //BUILD the MainFrame (GUI)
         mainPanel.setLeftComponent(experimentListPanel);
-        mainPanel.setRightComponent(resultsPanel);
+        mainPanel.setRightComponent(resultPanelContainer);
         add(toolbar, BorderLayout.NORTH);
 
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
