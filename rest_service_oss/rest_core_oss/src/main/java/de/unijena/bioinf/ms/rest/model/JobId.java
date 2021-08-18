@@ -21,6 +21,8 @@
 package de.unijena.bioinf.ms.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Objects;
 
@@ -55,9 +57,10 @@ public class JobId {
 
     @Override
     public String toString() {
-        return "JobId{" +
-                "jobId=" + jobId +
-                ", jobTable=" + jobTable +
-                '}';
+        try {
+            return new ObjectMapper().writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

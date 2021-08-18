@@ -57,6 +57,7 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.info.Term;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
@@ -183,12 +184,24 @@ public final class WebAPI {
         return ProxyManager.applyClient(serverInfoClient::getTerms);
     }
 
+    public LicenseInfo getLicenseInfo() throws IOException {
+        return ProxyManager.applyClient(serverInfoClient::getLicenseInfo);
+    }
+
     public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {
         return ProxyManager.applyClient(client -> serverInfoClient.reportError(report, SOFTWARE_NAME, client));
     }
     //endregion
 
     //region Jobs
+    public int getCountedJobs(boolean byMonth) throws IOException {
+        return getCountedJobs(new Date(System.currentTimeMillis()), byMonth);
+    }
+
+    public int getCountedJobs(@NotNull Date monthAndYear, boolean byMonth) throws IOException {
+        return ProxyManager.applyClient(client -> jobsClient.getCountedJobs(monthAndYear, byMonth, client));
+    }
+
     public List<JobUpdate<?>> updateJobStates(JobTable jobTable) throws IOException {
         return updateJobStates(EnumSet.of(jobTable)).get(jobTable);
     }
@@ -197,8 +210,8 @@ public final class WebAPI {
         return ProxyManager.applyClient(client -> jobsClient.getJobs(jobTablesToCheck, client));
     }
 
-    public void deleteJobs(Collection<JobId> jobsToDelete) throws IOException {
-        ProxyManager.consumeClient(client -> jobsClient.deleteJobs(jobsToDelete, client));
+    public void deleteJobs(Collection<JobId> jobsToDelete, Map<JobId, Integer> countingHashes) throws IOException {
+        ProxyManager.consumeClient(client -> jobsClient.deleteJobs(jobsToDelete, countingHashes, client));
     }
 
     public void deleteClientAndJobs() throws IOException {
@@ -226,18 +239,18 @@ public final class WebAPI {
     //endregion
 
     //region Canopus
-    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint) throws IOException {
-        return submitCanopusJob(formula, fingerprint, (charge > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE));
+    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint, int specHash) throws IOException {
+        return submitCanopusJob(formula, fingerprint, (charge > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE), specHash);
     }
 
-    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type) throws IOException {
-        return submitCanopusJob(new CanopusJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary(), type));
+    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type, int specHash) throws IOException {
+        return submitCanopusJob(new CanopusJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary(), type), specHash);
     }
 
-    public CanopusWebJJob submitCanopusJob(CanopusJobInput input) throws IOException {
+    public CanopusWebJJob submitCanopusJob(CanopusJobInput input, int specHash) throws IOException {
         JobUpdate<CanopusJobOutput> jobUpdate = ProxyManager.applyClient(client -> canopusClient.postJobs(input, client));
         final MaskedFingerprintVersion version = getClassifierMaskedFingerprintVersion(input.predictor.toCharge());
-        return jobWatcher.watchJob(new CanopusWebJJob(jobUpdate.getGlobalId(), jobUpdate.getStateEnum(), version,MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()), System.currentTimeMillis()));
+        return jobWatcher.watchJob(new CanopusWebJJob(jobUpdate.getGlobalId(), jobUpdate.getStateEnum(), version, MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()), System.currentTimeMillis(), specHash));
     }
 
     private final EnumMap<PredictorType, CanopusData> canopusData = new EnumMap<>(PredictorType.class);
