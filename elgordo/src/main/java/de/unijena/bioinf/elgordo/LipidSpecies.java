@@ -20,14 +20,33 @@
 package de.unijena.bioinf.elgordo;
 
 import com.google.common.base.Joiner;
+import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 
 import java.util.Arrays;
 import java.util.Objects;
 
-public class LipidSpecies {
+public final class LipidSpecies implements ProcessedInputAnnotation {
 
     private final LipidChain[] chains;
     private final LipidClass type;
+
+    public static LipidSpecies fromString(String lipid) {
+        LipidClass klasse = null;
+
+        for (LipidClass c : LipidClass.values()) {
+            if (lipid.startsWith(c.abbr())) {
+                klasse = c;
+                break;
+            }
+        }
+        if (klasse==null) throw new IllegalArgumentException("Unknown lipid: " + lipid);
+        int chainIndex = lipid.indexOf('(')+1;
+        String chain = lipid.substring(chainIndex, lipid.lastIndexOf(')'));
+        if (chain.isEmpty()) throw new IllegalArgumentException("Unknown lipid: " + lipid);
+        final String[] subchains = chain.split("/");
+        final LipidChain[] chains = Arrays.stream(subchains).map(x->LipidChain.fromString(x)).toArray(LipidChain[]::new);
+        return new LipidSpecies(klasse, chains);
+    }
 
     public LipidSpecies(LipidClass type, LipidChain[] chains) {
         this.chains = chains;
