@@ -53,7 +53,7 @@ public class CheckConnectionAction extends AbstractAction {
             if (!execAction.get()) {
                 ConnectionMonitor.ConnetionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
                 setIcon(check);
-                new ConnectionDialog(MainFrame.MF, check.errorCode, check.workerInfo, check.userId, check.license);
+                new ConnectionDialog(MainFrame.MF, check.errorCode, check.workerInfo, check.userId, check.license, check.terms);
             }
         });
 
@@ -69,7 +69,7 @@ public class CheckConnectionAction extends AbstractAction {
             if (r != null) {
                 setIcon(r);
 
-                new ConnectionDialog(MainFrame.MF, r.errorCode, r.workerInfo, r.userId, r.license);
+                new ConnectionDialog(MainFrame.MF, r.errorCode, r.workerInfo, r.userId, r.license, r.terms);
 
             }
         } catch (Exception e1) {
@@ -122,6 +122,9 @@ public class CheckConnectionAction extends AbstractAction {
                     putValue(Action.LARGE_ICON_KEY, Icons.NET_YES_32);
                     break;
                 case WARN:
+                    putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN_32);
+                    break;
+                case TERMS:
                     putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN_32);
                     break;
                 case NO:

@@ -78,7 +78,8 @@ public enum SiriusActions {
     SIGN_IN(SignInAction.class),
     SIGN_UP(SignUpAction.class),
     RESET_PWD(PasswdResetAction.class),
-    DELETE_ACCOUNT(AccountDeleteAction.class);
+    DELETE_ACCOUNT(AccountDeleteAction.class),
+    ACCEPT_TERMS(AcceptTermsAction.class);
 
     public static final ActionMap ROOT_MANAGER = new ActionMap();
     public final Class<? extends Action> actionClass;

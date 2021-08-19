@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.gui.mainframe;
 
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 
@@ -48,7 +47,6 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
         consumedCompounds.setToolTipText(GuiUtils.formatToolTip("Consumed compounds in billing period. (If subscription is compound based)"));
         pendingJobs = new JLabel("Jobs: ?");
         pendingJobs.setToolTipText("Number of pending jobs on web server.");
-//        SiriusActions.CHECK_CONNECTION.
 
         add(license);
         add(Box.createGlue());
@@ -56,7 +54,6 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
         add(Box.createGlue());
         add(pendingJobs);
         monitor.addConnectionUpdateListener(this);
-//        monitor.checkConnection()
     }
 
     @Override
@@ -67,7 +64,7 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
             license.setText("License: " + check.license.getLicensee());
             if (check.license.isCountQueries()) {
                 String max = check.license.hasCompoundLimit() ? String.valueOf(check.license.getCompoundLimit()) : INF;
-                String current = String.valueOf(check.license.getCountedCompounds());
+                String current = check.license.getCountedCompounds() < 0 ? "N/A" :  String.valueOf(check.license.getCountedCompounds());
                 consumedCompounds.setText("Compounds: " + current + "/" + max);
             } else {
                 consumedCompounds.setText("Compounds: 'UNLIMITED'");
