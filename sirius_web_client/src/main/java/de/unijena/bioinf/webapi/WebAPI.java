@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
@@ -135,8 +136,14 @@ public final class WebAPI {
             jobWatcher.shutdown();
     }
 
-    //region ServerInfo
+    public void acceptTermsAndRefreshToken() throws LoginException {
+        if (ProxyManager.doWithClient(jobsClient::acceptTerms));
+            authService.refreshIfNeeded(true);
+    }
 
+    //region ServerInfo
+    //8 no tos and/or pp
+    //7 no permission
     //6 csi web api for this version is not reachable because it is outdated
     //5 csi web api for this version is not reachable
     //4 csi server not reachable
@@ -144,15 +151,15 @@ public final class WebAPI {
     //2 no connection to uni jena
     //1 no connection to internet (google/microsoft/ubuntu?)
     //0 everything is fine
-    //-1 login has permissions to this server
-    public static final int MAX_STATE = 6;
+
+    public static final int MAX_STATE = 9;
 
     @Nullable
     public VersionsInfo getVersionInfo() {
         return ProxyManager.doWithClient(serverInfoClient::getVersionInfo);
     }
 
-    public int checkConnection() {
+     public int checkConnection() {
         return ProxyManager.doWithClient(client -> {
             try {
                 VersionsInfo v = serverInfoClient.getVersionInfo(client);
@@ -163,9 +170,7 @@ public final class WebAPI {
                 } else if (v.outdated()) {
                     return MAX_STATE;
                 } else if (serverInfoClient.testConnection()) {
-                    if (jobsClient.testSecuredConnection(client))
-                        return -1;
-                    return 0;
+                    return jobsClient.testSecuredConnection(client);
                 } else {
                     return 5;
                 }

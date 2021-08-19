@@ -18,46 +18,6 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
 package de.unijena.bioinf.auth;
 
 import com.auth0.jwt.JWT;
@@ -163,10 +123,13 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     }
 
     public Token refreshIfNeeded() throws LoginException {
-        if (needsRefresh()) {
+        return refreshIfNeeded(false);
+    }
+    public Token refreshIfNeeded(boolean force) throws LoginException {
+        if (force || needsRefresh()) {
             tokenLock.writeLock().lock();
             try {
-                if (needsRefreshRaw()) {
+                if (force || needsRefreshRaw()) {
                     if (refreshToken == null || refreshToken.isBlank())
                         throw new LoginException(new NullPointerException("Refresh token is null or empty!"));
                     token = new Token((OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken));

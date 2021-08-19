@@ -32,10 +32,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -90,7 +87,7 @@ public abstract class AbstractClient {
         }
     }
 
-    public boolean testSecuredConnection(@NotNull CloseableHttpClient client) {
+    public int testSecuredConnection(@NotNull CloseableHttpClient client) {
         try {
             execute(client, () -> {
                 HttpGet get = new HttpGet(getBaseURI("/check", true).build());
@@ -98,10 +95,14 @@ public abstract class AbstractClient {
                 get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
                 return get;
             });
-            return true;
+            return 0;
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).warn("Could not reach secured api endpoint: " + e.getMessage());
-            return false;
+            String[] splitMsg = e.getMessage().split(SecurityService.ERROR_CODE_SEPARATOR);
+
+            if (splitMsg.length > 1 && splitMsg[1].equals(SecurityService.TERMS_MISSING))
+                return 8;
+            return 7;
         }
     }
 
@@ -116,6 +117,21 @@ public abstract class AbstractClient {
             return true;
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).warn("Error when deleting user account: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean acceptTerms(@NotNull CloseableHttpClient client){
+        try {
+            execute(client, () -> {
+                HttpPost post = new HttpPost(getBaseURI("/accept-terms", true).build());
+                final int timeoutInSeconds = 8000;
+                post.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                return post;
+            });
+            return true;
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).warn("Error when accepting terms: " + e.getMessage());
             return false;
         }
     }

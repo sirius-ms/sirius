@@ -28,6 +28,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 public class Term {
     private String name;
@@ -87,5 +88,24 @@ public class Term {
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    public static String toLinks(Term... terms){
+        return toLinks(List.of(terms));
+    }
+
+    @Nullable
+    public static String toLinks(@Nullable List<Term> terms){
+        if (terms == null || terms.isEmpty())
+            return null;
+        StringBuilder builder = new StringBuilder()
+                .append("<a href=").append(terms.get(0).getLink())
+                .append(">").append(terms.get(0).getName()).append("</a>");
+        for (int i = 1; i < terms.size(); i++) {
+            builder.append(" and ")
+                    .append("<a href=").append(terms.get(i).getLink())
+                    .append(">").append(terms.get(i).getName()).append("</a>");
+        }
+        return builder.toString();
     }
 }
