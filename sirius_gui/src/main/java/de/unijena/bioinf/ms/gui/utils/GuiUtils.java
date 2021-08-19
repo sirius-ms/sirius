@@ -62,7 +62,9 @@ public class GuiUtils {
                 if ("Nimbus".equals(info.getName())) {
                     UIManager.setLookAndFeel(info.getClassName());
                     UIManager.put("nimbusOrange", Colors.ICON_GREEN);
-
+                    System.out.println(UIManager.getColor("nimbusBase"));
+                    System.out.println(UIManager.getColor("nimbusBlueGrey"));
+                    System.out.println(UIManager.getColor("control"));
                     try {
                         Constructor c = Class.forName("SiriusStyleFactory").getConstructor(String.class);
                         c.newInstance("mini"); // regular, mini, small or large
