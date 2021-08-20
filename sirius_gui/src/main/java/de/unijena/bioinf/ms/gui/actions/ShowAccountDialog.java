@@ -19,40 +19,28 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import org.slf4j.LoggerFactory;
+import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.login.AccountDialog;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SignOutAction extends AbstractAction {
+public class ShowAccountDialog extends AbstractAction {
 
-    public SignOutAction() {
-        super("Log out");
-        putValue(Action.SHORT_DESCRIPTION, "Logout from the current account.");
+    public ShowAccountDialog() {
+        super("Account");
+        putValue(Action.LARGE_ICON_KEY, Icons.USER_32);
+        putValue(Action.SHORT_DESCRIPTION,"Show user account information and settings.");
     }
 
     @Override
-    public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = Jobs.runInBackgroundAndLoad(MF, "Logging out...", () -> {
-            try {
-                AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
-                return true;
-            } catch (IOException ex) {
-                LoggerFactory.getLogger(getClass()).warn("Error during logout!", ex);
-                return false;
-            }finally {
-                MF.CONNECTION_MONITOR().checkConnectionInBackground();
-            }
-        }).getResult();
-        firePropertyChange("logout", null, r);
+    public void actionPerformed(ActionEvent e) {
+        new AccountDialog(MF, ApplicationCore.WEB_API.getAuthService());
     }
 }

@@ -44,13 +44,13 @@ public class AcceptTermsAction extends AbstractAction {
         boolean r = Jobs.runInBackgroundAndLoad(MF, "Accepting and Refreshing...", () -> {
             try {
                 ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
-                MF.CONNECTION_MONITOR().checkConnection();
                 return true;
             } catch (IOException ex) {
                 LoggerFactory.getLogger(getClass()).warn("Error when accepting terms.", ex);
                 return false;
+            }finally {
+                MF.CONNECTION_MONITOR().checkConnection();
             }
         }).getResult();
-        firePropertyChange("login", false, r);
     }
 }

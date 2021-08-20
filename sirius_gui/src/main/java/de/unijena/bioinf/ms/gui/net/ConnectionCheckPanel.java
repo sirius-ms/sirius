@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.net;
 
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.ms.gui.actions.ActionUtils;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
@@ -34,14 +35,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by fleisch on 06.06.17.
@@ -71,12 +68,14 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     final BooleanJlabel fingerID_Worker = new BooleanJlabel();
     final BooleanJlabel auth = new BooleanJlabel();
     final BooleanJlabel authPermission = new BooleanJlabel();
+    private final JDialog owner;
 
     JLabel authLabel = new JLabel("Authenticated?");
     JPanel resultPanel = null;
 
-    public ConnectionCheckPanel(int state, @Nullable WorkerList workerInfoList, String userId, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
+    public ConnectionCheckPanel(@Nullable JDialog owner, int state, @Nullable WorkerList workerInfoList, String userId, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
         super(GridBagConstraints.WEST, GridBagConstraints.EAST);
+        this.owner = owner;
 
         add(new JXTitledSeparator("Connection check:"), 15, false);
         add(new JLabel("Connection to the internet (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external") + ")"), internet, 5, false);
@@ -180,21 +179,28 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                 text.append("</html>");
                 resultPanel.add(new JLabel(text.toString()), 5, false);
                 break;
+            case 9:
+                addHTMLTextPanel(resultPanel, "ErrorCode " + 10 +
+                        ": Unexpected error when refreshing/validating your access_token. <br> <b>Please try to re-login:</b>");
+                resultPanel.add(new JButton(ActionUtils.deriveFrom(
+                        evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
+                        SiriusActions.SIGN_OUT.getInstance())));
+                break;
             case 8:
-                WebviewHTMLTextJPanel htmlPanel =  new WebviewHTMLTextJPanel(("ErrorCode " + 9 + ": " +
-                        Term.toLinks(terms) +
-                        " for the selected Webservice have not been accepted. <br> Click Accept to get Access:"));
-                htmlPanel.setPreferredSize(new Dimension(getPreferredSize().width,75));
-                resultPanel.add(htmlPanel);
-                resultPanel.add(new JButton(SiriusActions.ACCEPT_TERMS.getInstance()));
-                htmlPanel.load();
+                addHTMLTextPanel(resultPanel, "ErrorCode " + 9 + ": " + Term.toLinks(terms) +
+                        " for the selected Webservice have not been accepted. <br> Click Accept to get Access:");
+                resultPanel.add(new JButton(ActionUtils.deriveFrom(
+                        evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
+                        SiriusActions.ACCEPT_TERMS.getInstance())));
                 break;
             case 7:
                 if (userID == null) {
-                    resultPanel.add(new JLabel("<html>" + " ErrorCode " + 7 + ": " +
-                            " You are not logged in.<br>" +
-                            "Without logging in with a valid user account server side features are not available." +
-                            "</html>"));
+                    addHTMLTextPanel(resultPanel," ErrorCode " + 7 + ": " +
+                            " <b>You are not logged in.</b><br>" +
+                            "Please log in with a valid user account to use the web service based features." );
+                    resultPanel.add(new JButton(ActionUtils.deriveFrom(
+                            evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
+                            SiriusActions.SIGN_IN.getInstance())));
                 } else {
                     resultPanel.add(new JLabel("<html>" + " ErrorCode " + 8 + ": " +
                             " Your Account does not have Permissions for the configured web service.<br>" +
@@ -255,18 +261,14 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         return resultPanel;
     }
 
-
-    private void decorateWithLink(final JLabel website, final String URL) {
-        website.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                try {
-                    Desktop.getDesktop().browse(new URI(URL));
-                } catch (URISyntaxException | IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
+    public WebviewHTMLTextJPanel addHTMLTextPanel(@NotNull JPanel resultPanel, @NotNull String text){
+        return addHTMLTextPanel(resultPanel,text, 75);
     }
-
+    public WebviewHTMLTextJPanel addHTMLTextPanel(@NotNull JPanel resultPanel, @NotNull String text, int height){
+        WebviewHTMLTextJPanel htmlPanel = new WebviewHTMLTextJPanel(text);
+        htmlPanel.setPreferredSize(new Dimension(getPreferredSize().width, height));
+        resultPanel.add(htmlPanel);
+        htmlPanel.load();
+        return htmlPanel;
+    }
 }

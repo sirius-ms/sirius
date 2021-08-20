@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -43,19 +42,18 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class CheckConnectionAction extends AbstractAction {
 
 
-    private final AtomicBoolean execAction = new AtomicBoolean(false);
+//    private final AtomicBoolean execAction = new AtomicBoolean(false);
 
     protected CheckConnectionAction() {
         super("Webservice");
         putValue(Action.SHORT_DESCRIPTION, "Check and refresh webservice connection");
 
-        MF.CONNECTION_MONITOR().addConectionStateListener(evt -> {
-            if (!execAction.get()) {
-                ConnectionMonitor.ConnetionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
-                setIcon(check);
-                new ConnectionDialog(MainFrame.MF, check.errorCode, check.workerInfo, check.userId, check.license, check.terms);
-            }
+        MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> {
+            ConnectionMonitor.ConnetionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
+            setIcon(check);
+            ConnectionDialog.of(MainFrame.MF, check.errorCode, check.workerInfo, check.userId, check.license, check.terms);
         });
+
 
         Jobs.runInBackground(() -> setIcon(MF.CONNECTION_MONITOR().checkConnection()));
     }
@@ -63,19 +61,16 @@ public class CheckConnectionAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        execAction.set(true);
         try {
             ConnectionMonitor.ConnetionCheck r = checkConnectionAndLoad();
             if (r != null) {
                 setIcon(r);
 
-                new ConnectionDialog(MainFrame.MF, r.errorCode, r.workerInfo, r.userId, r.license, r.terms);
+                ConnectionDialog.of(MainFrame.MF, r.errorCode, r.workerInfo, r.userId, r.license, r.terms);
 
             }
         } catch (Exception e1) {
             LoggerFactory.getLogger(getClass()).error("Error when checking connection by action");
-        } finally {
-            execAction.set(false);
         }
     }
 
@@ -125,6 +120,9 @@ public class CheckConnectionAction extends AbstractAction {
                     putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN_32);
                     break;
                 case TERMS:
+                    putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN_32);
+                    break;
+                case AUTH_ERROR:
                     putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN_32);
                     break;
                 case NO:
