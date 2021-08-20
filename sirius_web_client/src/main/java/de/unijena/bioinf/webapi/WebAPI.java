@@ -57,8 +57,8 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
-import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
+import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
@@ -116,6 +116,7 @@ public final class WebAPI {
         this(authService, URI.create(FingerIDProperties.fingeridWebHost()));
     }
 
+
     public AuthService getAuthService() {
         return authService;
     }
@@ -127,6 +128,15 @@ public final class WebAPI {
             throw new IllegalArgumentException("Illegal URL!", e);
         }
     }
+
+    public void changeHost(URI host){
+        this.serverInfoClient.setServerUrl(host);
+        this.jobsClient.setServerUrl(host);
+        this.chemDBClient.setServerUrl(host);
+        this.fingerprintClient.setServerUrl(host);
+        this.canopusClient.setServerUrl(host);
+    }
+
 
     public boolean deleteAccount(){
         return ProxyManager.doWithClient(jobsClient::deleteAccount);
@@ -141,7 +151,16 @@ public final class WebAPI {
             authService.refreshIfNeeded(true);
     }
 
+
     //region ServerInfo
+    @Nullable
+    public VersionsInfo getVersionInfo() {
+        return ProxyManager.doWithClient(serverInfoClient::getVersionInfo);
+    }
+
+    public static final int MAX_STATE = 10;
+
+    //9 Authentication Server error
     //8 no tos and/or pp
     //7 no permission
     //6 csi web api for this version is not reachable because it is outdated
@@ -151,15 +170,7 @@ public final class WebAPI {
     //2 no connection to uni jena
     //1 no connection to internet (google/microsoft/ubuntu?)
     //0 everything is fine
-
-    public static final int MAX_STATE = 9;
-
-    @Nullable
-    public VersionsInfo getVersionInfo() {
-        return ProxyManager.doWithClient(serverInfoClient::getVersionInfo);
-    }
-
-     public int checkConnection() {
+    public int checkConnection() {
         return ProxyManager.doWithClient(client -> {
             try {
                 VersionsInfo v = serverInfoClient.getVersionInfo(client);
@@ -185,8 +196,14 @@ public final class WebAPI {
         return ProxyManager.applyClient(serverInfoClient::getWorkerInfo);
     }
 
-    public List<Term> getTerms() throws IOException {
-        return ProxyManager.applyClient(serverInfoClient::getTerms);
+    @Nullable
+    public List<Term> getTerms() {
+        try {
+            return ProxyManager.applyClient(serverInfoClient::getTerms);
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).error("Could not load Terms from server!", e);
+            return null;
+        }
     }
 
     public LicenseInfo getLicenseInfo() throws IOException {

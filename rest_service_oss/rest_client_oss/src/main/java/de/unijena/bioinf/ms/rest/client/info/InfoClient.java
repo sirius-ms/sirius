@@ -105,34 +105,38 @@ public class InfoClient extends AbstractClient {
     }
 
     //todo change to Jackson
+    @Nullable
     private VersionsInfo parseVersionInfo(BufferedReader reader) {
-        try (final JsonReader r = Json.createReader(reader)) {
-            JsonObject o = r.readObject();
-            JsonObject gui = o.getJsonObject("SIRIUS GUI");
+        if (reader != null) {
+            try (final JsonReader r = Json.createReader(reader)) {
+                JsonObject o = r.readObject();
+                JsonObject gui = o.getJsonObject("SIRIUS GUI");
 
-            final String version = gui.getString("version");
-            String database = o.getJsonObject("database").getString("version");
+                final String version = gui.getString("version");
+                String database = o.getJsonObject("database").getString("version");
 
-            boolean expired = true;
-            Timestamp accept = null;
-            Timestamp finish = null;
+                boolean expired = true;
+                Timestamp accept = null;
+                Timestamp finish = null;
 
-            if (o.containsKey("expiry dates")) {
-                JsonObject expiryInfo = o.getJsonObject("expiry dates");
-                expired = expiryInfo.getBoolean("isExpired");
-                if (expiryInfo.getBoolean("isAvailable")) {
-                    accept = Timestamp.valueOf(expiryInfo.getString("acceptJobs"));
-                    finish = Timestamp.valueOf(expiryInfo.getString("finishJobs"));
+                if (o.containsKey("expiry dates")) {
+                    JsonObject expiryInfo = o.getJsonObject("expiry dates");
+                    expired = expiryInfo.getBoolean("isExpired");
+                    if (expiryInfo.getBoolean("isAvailable")) {
+                        accept = Timestamp.valueOf(expiryInfo.getString("acceptJobs"));
+                        finish = Timestamp.valueOf(expiryInfo.getString("finishJobs"));
+                    }
                 }
-            }
 
-            List<News> newsList = Collections.emptyList();
-            if (o.containsKey("news")) {
-                final String newsJson = o.getJsonArray("news").toString();
-                newsList = News.parseJsonNews(newsJson);
+                List<News> newsList = Collections.emptyList();
+                if (o.containsKey("news")) {
+                    final String newsJson = o.getJsonArray("news").toString();
+                    newsList = News.parseJsonNews(newsJson);
+                }
+                return new VersionsInfo(version, database, expired, accept, finish, newsList);
             }
-            return new VersionsInfo(version, database, expired, accept, finish, newsList);
         }
+        return null;
     }
 
     @Nullable

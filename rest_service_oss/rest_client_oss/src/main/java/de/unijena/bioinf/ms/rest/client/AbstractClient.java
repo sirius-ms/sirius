@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.rest.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.scribejava.core.model.OAuthResponseException;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -74,6 +75,9 @@ public abstract class AbstractClient {
         this.serverUrl = serverUrl;
     }
 
+    public URI getServerUrl() {
+        return serverUrl;
+    }
 
     public boolean testConnection() {
         try {
@@ -103,6 +107,9 @@ public abstract class AbstractClient {
             if (splitMsg.length > 1 && splitMsg[1].equals(SecurityService.TERMS_MISSING))
                 return 8;
             return 7;
+        } catch (OAuthResponseException e){
+            LoggerFactory.getLogger(getClass()).error("Error when contacting login Server: " + e.getMessage(), e);
+            return 9;
         }
     }
 
