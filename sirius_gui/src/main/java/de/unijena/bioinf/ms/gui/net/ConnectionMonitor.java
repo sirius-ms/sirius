@@ -52,7 +52,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
     public enum ConnectionState {
-        YES, WARN, TERMS, NO
+        YES, WARN, TERMS, AUTH_ERROR, NO;
     }
 
     private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, 0, null, null, null, null);
@@ -96,6 +96,10 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         return runOrGet().getResult();
     }
 
+    public void checkConnectionInBackground() {
+        runOrGet();
+    }
+
 
     protected void setResult(final ConnetionCheck checkResult) {
         ConnetionCheck old;
@@ -114,12 +118,12 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         addPropertyChangeListener(ConnectionUpdateEvent.KEY,listener);
     }
 
-    public void addConectionStateListener(PropertyChangeListener listener) {
+    public void addConnectionStateListener(PropertyChangeListener listener) {
         addPropertyChangeListener(ConnectionStateEvent.KEY, listener);
 
     }
 
-    public void addConectionErrorListener(PropertyChangeListener listener) {
+    public void addConnectionErrorListener(PropertyChangeListener listener) {
         addPropertyChangeListener(ErrorStateEvent.KEY, listener);
     }
 
@@ -135,7 +139,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             @Nullable WorkerList wl = null;
             @Nullable LicenseInfo ll = null;
             @Nullable List<Term> tt = null;
-            if (connectionState == 0 || connectionState == 7 || connectionState == 8) {
+            if (connectionState == 0 || connectionState == 7 || connectionState == 8 || connectionState == 9) {
                 checkForInterruption();
                 wl = ApplicationCore.WEB_API.getWorkerInfo();
                 checkForInterruption();
@@ -148,15 +152,23 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
                     if (ll != null && ll.isCountQueries())
                         ll.setCountedCompounds(ApplicationCore.WEB_API.getCountedJobs(true));
                 } else if (connectionState == 8) {
-                        conState = ConnectionState.TERMS;
-                }else {
+                    conState = ConnectionState.TERMS;
+                } else if (connectionState == 9) {
+                    conState = ConnectionState.AUTH_ERROR;
+                } else {
                     conState = ConnectionState.WARN;
                 }
             } else {
                 conState = ConnectionState.NO;
             }
             checkForInterruption();
-            @Nullable DecodedJWT userID = AuthServices.getIDToken(ApplicationCore.WEB_API.getAuthService());
+            @Nullable DecodedJWT userID = null;
+            try {
+                if (connectionState != 9)
+                    userID = AuthServices.getIDToken(ApplicationCore.WEB_API.getAuthService());
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).error("Error when requesting access_token", e);
+            }
 
             final ConnetionCheck c = new ConnetionCheck(conState, connectionState, wl, userID != null ? userID.getClaim("email").asString() : null, ll, tt);
             setResult(c);

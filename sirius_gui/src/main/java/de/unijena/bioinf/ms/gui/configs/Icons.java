@@ -85,8 +85,8 @@ public abstract class Icons {
     public static final Icon KEY_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-key@0.5x.png"));
     public static final Icon KEY_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-key.png"));
 
-//    public static final Icon USER_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user@0.5x.png"));
-//    public static final Icon USER_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user.png"));
+    public static final Icon USER_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user@0.5x.png"));
+    public static final Icon USER_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user.png"));
     public static final Icon USER_128 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user@2x.png"));
 
     public static final Icon INFO_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-information@0.5x.png"));
