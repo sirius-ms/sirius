@@ -48,6 +48,7 @@ public class IonGroup {
         this.isotopes = isotopes;
         this.otherMzValues = new SimpleMutableSpectrum();
         this.segmentApexIndex = segment.apex;
+        assert peak.getSegmentWithApexId(segmentApexIndex).isPresent();
         }
 
     public void assignIsotopePeaksWithoutCorrelation(SimpleSpectrum spec) {

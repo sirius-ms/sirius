@@ -51,7 +51,7 @@ public enum LipidClass {
     LPG(	1,	Glycerophosphoglycerols),
     PI(	2,	Glycerophosphoinositols, def("[M+H]+").losses("C6H10O5","C6H12O6","C6H11O8P","C6H13O9P").acyl("","H2O").done()),
     LPI(	1,	Glycerophosphoinositols),
-    PA(	2,	Glycerophosphates),
+    PA(	2,	Glycerophosphates, def("[M+Na]+").losses("HO3P","H3O4P").acyl("","-H3O4P").acylFragments("").done()),
     LPA(	1,	Glycerophosphates),
     CL(	4,	Glycerophosphoglycerophosphoglycerols, def("[M+NH3+H]+").acyl("").acylFragments("", "C3H5").done()),
 
