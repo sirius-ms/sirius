@@ -90,6 +90,7 @@ public class Term {
         }
     }
 
+    @Nullable
     public static String toLinks(Term... terms){
         return toLinks(List.of(terms));
     }
@@ -107,5 +108,26 @@ public class Term {
                     .append(">").append(terms.get(i).getName()).append("</a>");
         }
         return builder.toString();
+    }
+
+
+    @Nullable
+    public static String toText(Term... terms) {
+        return toText(List.of(terms));
+    }
+
+    @Nullable
+    public static String toText(@Nullable List<Term> terms) {
+        if (terms != null && !terms.isEmpty()) {
+            StringBuilder builder = new StringBuilder().append(terms.get(0).getName()).append(" (").append(terms.get(0).getLink()).append(")");
+
+            for(int i = 1; i < terms.size(); ++i) {
+                builder.append(" and ").append(terms.get(i).getName()).append(" (").append(terms.get(i).getLink()).append(")");
+            }
+
+            return builder.toString();
+        } else {
+            return null;
+        }
     }
 }
