@@ -26,6 +26,8 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
+import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
+import java.util.List;
 
 @ThreadSafe
 public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCloseable {
@@ -49,10 +52,10 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
     public enum ConnectionState {
-        YES, WARN, NO;
+        YES, WARN, TERMS, AUTH_ERROR, NO;
     }
 
-    private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, 0, null, null);
+    private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, 0, null, null, null, null);
 
     private ConnectionCheckMonitor backroundMonitorJob = null;
 
@@ -93,6 +96,10 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         return runOrGet().getResult();
     }
 
+    public void checkConnectionInBackground() {
+        runOrGet();
+    }
+
 
     protected void setResult(final ConnetionCheck checkResult) {
         ConnetionCheck old;
@@ -101,17 +108,22 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             this.checkResult = checkResult;
         }
 
+        firePropertyChange(new ConnectionUpdateEvent(this.checkResult));
         firePropertyChange(new ConnectionStateEvent(old, this.checkResult));
         firePropertyChange(new ErrorStateEvent(old, this.checkResult));
     }
 
 
-    public void addConectionStateListener(PropertyChangeListener listener) {
+    public void addConnectionUpdateListener(PropertyChangeListener listener) {
+        addPropertyChangeListener(ConnectionUpdateEvent.KEY,listener);
+    }
+
+    public void addConnectionStateListener(PropertyChangeListener listener) {
         addPropertyChangeListener(ConnectionStateEvent.KEY, listener);
 
     }
 
-    public void addConectionErrorListener(PropertyChangeListener listener) {
+    public void addConnectionErrorListener(PropertyChangeListener listener) {
         addPropertyChangeListener(ErrorStateEvent.KEY, listener);
     }
 
@@ -125,12 +137,24 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
             ConnectionState conState;
             @Nullable WorkerList wl = null;
-            if (connectionState <= 0) {
+            @Nullable LicenseInfo ll = null;
+            @Nullable List<Term> tt = null;
+            if (connectionState == 0 || connectionState == 7 || connectionState == 8 || connectionState == 9) {
                 checkForInterruption();
                 wl = ApplicationCore.WEB_API.getWorkerInfo();
                 checkForInterruption();
-                if (connectionState == -1 && wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors")))) {
+                ll = ApplicationCore.WEB_API.getLicenseInfo();
+                checkForInterruption();
+                tt = ApplicationCore.WEB_API.getTerms();
+                checkForInterruption();
+                if (connectionState == 0 && wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors")))) {
                     conState = ConnectionState.YES;
+                    if (ll != null && ll.isCountQueries())
+                        ll.setCountedCompounds(ApplicationCore.WEB_API.getCountedJobs(true));
+                } else if (connectionState == 8) {
+                    conState = ConnectionState.TERMS;
+                } else if (connectionState == 9) {
+                    conState = ConnectionState.AUTH_ERROR;
                 } else {
                     conState = ConnectionState.WARN;
                 }
@@ -138,8 +162,15 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
                 conState = ConnectionState.NO;
             }
             checkForInterruption();
-            @Nullable DecodedJWT userID = AuthServices.getIDToken(ApplicationCore.WEB_API.getAuthService());
-            final ConnetionCheck c = new ConnetionCheck(conState, connectionState, wl, userID != null ? userID.getClaim("email").asString() : null);
+            @Nullable DecodedJWT userID = null;
+            try {
+                if (connectionState != 9)
+                    userID = AuthServices.getIDToken(ApplicationCore.WEB_API.getAuthService());
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).error("Error when requesting access_token", e);
+            }
+
+            final ConnetionCheck c = new ConnetionCheck(conState, connectionState, wl, userID != null ? userID.getClaim("email").asString() : null, ll, tt);
             setResult(c);
             return c;
         }
@@ -174,13 +205,17 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         public final ConnectionState state;
         public final int errorCode;
         public final WorkerList workerInfo;
+        public final LicenseInfo license;
+        public final List<Term> terms;
         public final String userId; //represents if user is logged in.
 
-        public ConnetionCheck(@NotNull ConnectionState state, int errorCode, WorkerList workerInfo, @Nullable String userId) {
+        public ConnetionCheck(@NotNull ConnectionState state, int errorCode, @Nullable WorkerList workerInfo, @Nullable String userId,  @Nullable  LicenseInfo license, @Nullable List<Term> terms) {
             this.state = state;
             this.errorCode = errorCode;
             this.workerInfo = workerInfo;
             this.userId = userId;
+            this.license = license;
+            this.terms = terms;
         }
 
         public boolean isLoggedIn() {
@@ -188,7 +223,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         }
 
         public boolean isConnected() {
-            return errorCode == -1;
+            return errorCode == 0;
         }
 
         public boolean isNotConnected() {
@@ -261,6 +296,28 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
         public ConnetionCheck getConnectionCheck() {
             return newConnectionCheck;
+        }
+    }
+
+
+    public class ConnectionUpdateEvent extends PropertyChangeEvent {
+        public static final String KEY = "connection-update";
+        public ConnectionUpdateEvent(ConnetionCheck check) {
+            super(ConnectionMonitor.this, KEY, null, check);
+        }
+
+        @Override
+        public ConnetionCheck getNewValue() {
+            return (ConnetionCheck) super.getNewValue();
+        }
+
+        @Override
+        public ConnetionCheck getOldValue() {
+            return (ConnetionCheck) super.getOldValue();
+        }
+
+        public ConnetionCheck getConnectionCheck() {
+            return getNewValue();
         }
     }
 

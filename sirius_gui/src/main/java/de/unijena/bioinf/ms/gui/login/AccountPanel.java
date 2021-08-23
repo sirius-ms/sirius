@@ -26,7 +26,6 @@ import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.settings.SettingsPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
@@ -34,50 +33,50 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
-import java.util.Properties;
 
-public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPanel {
-    private final Properties props;
+public class AccountPanel extends JPanel {
     private final AuthService service;
-    private JTextField webserverURL;
+//    private JTextField webserverURL;
     private JLabel userIconLabel, userInfoLabel;
     private JButton login, reset, create;
 
-    public AccountSettingsPanel(Properties properties, AuthService service) {
-        super();
-        this.props = properties;
+    public AccountPanel(AuthService service) {
+        super(new BorderLayout());
         this.service = service;
         buildPanel();
     }
 
     private void buildPanel() {
-        webserverURL = new JTextField(props.getProperty("de.unijena.bioinf.fingerid.web.host", PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host")));
-        webserverURL.setEditable(false);
-        addNamed("Web service URL", webserverURL);
-        addVerticalGlue();
+        TwoColumnPanel center = new TwoColumnPanel();
 
-        login = new JButton();
+//        webserverURL = new JTextField(PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host"));
+//        webserverURL.setEditable(false);
+//        center.addNamed("Web service URL", webserverURL);
+//        center.addVerticalGlue();
+
         userIconLabel = new JLabel();
         userInfoLabel = new JLabel();
-
-        reset = new JButton(SiriusActions.RESET_PWD.getInstance());
-
-        create = new JButton();
 
         JPanel iconPanel = new JPanel(new BorderLayout());
         iconPanel.add(userIconLabel, BorderLayout.CENTER);
 
-        JPanel buttonContainer = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttonContainer.add(reset);
-        buttonContainer.add(create);
-        buttonContainer.add(login);
-//        iconPanel.add(buttonContainer, BorderLayout.SOUTH);
-        add(iconPanel, userInfoLabel);
-        add(buttonContainer);
-        addVerticalGlue();
+        center.add(iconPanel, userInfoLabel);
+        center.addVerticalGlue();
+        add(center, BorderLayout.CENTER);
 
-        SiriusActions.SIGN_IN.getInstance().addPropertyChangeListener(evt -> reloadChanges());
-        SiriusActions.SIGN_OUT.getInstance().addPropertyChangeListener(evt -> reloadChanges());
+
+        //south
+        reset = new JButton(SiriusActions.RESET_PWD.getInstance());
+        create = new JButton();
+        login = new JButton();
+        Box buttons = Box.createHorizontalBox();
+        buttons.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+        buttons.add(reset);
+        buttons.add(create);
+        buttons.add(Box.createHorizontalGlue());
+        buttons.add(login);
+        add(buttons, BorderLayout.SOUTH);
+
         reloadChanges();
     }
 
@@ -86,14 +85,9 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
                 () -> AuthServices.getIDToken(service)).getResult();
     }
 
-    @Override
-    public void saveProperties() {
 
-    }
 
-    @Override
     public void reloadChanges() {
-        SettingsPanel.super.reloadChanges();
         DecodedJWT userInfo = getLogin();
         if (userInfo == null) {
             userIconLabel.setIcon(Icons.USER_128);
@@ -113,7 +107,6 @@ public class AccountSettingsPanel extends TwoColumnPanel implements SettingsPane
         }
     }
 
-    @Override
     public String name() {
         return "Account";
     }

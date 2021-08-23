@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import org.slf4j.LoggerFactory;
@@ -33,26 +32,25 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SignOutAction extends AbstractAction {
+public class AcceptTermsAction extends AbstractAction {
 
-    public SignOutAction() {
-        super("Log out");
-        putValue(Action.SHORT_DESCRIPTION, "Logout from the current account.");
+    public AcceptTermsAction() {
+        super("Accept Terms");
+        putValue(Action.SHORT_DESCRIPTION, "Accept Terms of Service and Privacy Policy of the current Webservice.");
     }
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = Jobs.runInBackgroundAndLoad(MF, "Logging out...", () -> {
+        boolean r = Jobs.runInBackgroundAndLoad(MF, "Accepting and Refreshing...", () -> {
             try {
-                AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
+                ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
                 return true;
             } catch (IOException ex) {
-                LoggerFactory.getLogger(getClass()).warn("Error during logout!", ex);
+                LoggerFactory.getLogger(getClass()).warn("Error when accepting terms.", ex);
                 return false;
             }finally {
-                MF.CONNECTION_MONITOR().checkConnectionInBackground();
+                MF.CONNECTION_MONITOR().checkConnection();
             }
         }).getResult();
-        firePropertyChange("logout", null, r);
     }
 }

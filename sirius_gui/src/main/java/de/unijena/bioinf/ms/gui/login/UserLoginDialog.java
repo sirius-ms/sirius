@@ -18,26 +18,6 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
 package de.unijena.bioinf.ms.gui.login;
 
 import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
@@ -50,7 +30,12 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.info.Term;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -58,6 +43,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 public class UserLoginDialog extends JDialog {
     private final JTextField username = new JTextField();
@@ -65,7 +51,7 @@ public class UserLoginDialog extends JDialog {
     private final AuthService service;
 
     private boolean performedLogin = false;
-
+    private final JCheckBox boxAcceptTerms = new JCheckBox();
     Action signInAction;
     Action cancelAction;
 
@@ -88,12 +74,7 @@ public class UserLoginDialog extends JDialog {
         //============= NORTH =================
         add(new DialogHeader(Icons.KEY_64), BorderLayout.NORTH);
 
-        //============= CENTER =================
-        TwoColumnPanel center = new TwoColumnPanel();
-        center.addNamed("Email", username);
-        center.addNamed("Password", password);
 
-        add(center, BorderLayout.CENTER);
 
         //============= SOUTH =================
         cancelAction = new AbstractAction() {
@@ -106,7 +87,7 @@ public class UserLoginDialog extends JDialog {
         final JButton cancel = new JButton("Cancel");
         cancel.addActionListener(cancelAction);
 
-        signInAction = new AbstractAction() {
+        signInAction = new AbstractAction("Log in") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Jobs.runInBackgroundAndLoad(UserLoginDialog.this, "Logging in...", () -> {
@@ -115,7 +96,8 @@ public class UserLoginDialog extends JDialog {
                         AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
                         performedLogin = true;
                         Jobs.runEDTLater(UserLoginDialog.this::dispose);
-                        MainFrame.MF.CONNECTION_MONITOR().checkConnection();
+                        if (boxAcceptTerms.isSelected())
+                            ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
                     } catch (Throwable ex) {
                         LoggerFactory.getLogger(getClass()).error("Error during password reset.",ex);
                         new ExceptionDialog(UserLoginDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
@@ -127,12 +109,13 @@ public class UserLoginDialog extends JDialog {
                         try {
                             Jobs.runEDTAndWait(() -> password.setText(null));
                         } catch (InvocationTargetException | InterruptedException ignored) {}
+                    }finally {
+                        MainFrame.MF.CONNECTION_MONITOR().checkConnection();
                     }
                 });
             }
         };
-        final JButton login = new JButton("Log in");
-        login.addActionListener(signInAction);
+        final JButton login = new JButton(signInAction);
 
         Box buttons = Box.createHorizontalBox();
         buttons.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
@@ -143,12 +126,24 @@ public class UserLoginDialog extends JDialog {
 
         add(buttons, BorderLayout.SOUTH);
 
+        //============= CENTER =================
+        TwoColumnPanel center = new TwoColumnPanel();
+        center.addNamed("Email", username);
+        center.addNamed("Password", password);
+
+        if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.login.terms",false))
+            addTermsPanel(center);
+
+        add(center, BorderLayout.CENTER);
+
+
         configureActions();
 
-        setMinimumSize(new Dimension(350, getMinimumSize().height));
+        setMinimumSize(new Dimension(400, getMinimumSize().height));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
         setLocationRelativeTo(getParent());
+        setResizable(false);
         setVisible(true);
     }
 
@@ -164,5 +159,19 @@ public class UserLoginDialog extends JDialog {
 
     public boolean hasPerformedLogin() {
         return performedLogin;
+    }
+
+    public void addTermsPanel(@NotNull TwoColumnPanel center) {
+        List<Term> terms = Jobs.runInBackgroundAndLoad(MainFrame.MF, "Loading Terms", ApplicationCore.WEB_API::getTerms).getResult();
+        if (terms != null && !terms.isEmpty()) {
+            boxAcceptTerms.setSelected(false);
+            signInAction.setEnabled(false);
+            boxAcceptTerms.addActionListener(evt -> signInAction.setEnabled(((JCheckBox)evt.getSource()).isSelected()));
+
+            WebviewHTMLTextJPanel htmlPanel = new WebviewHTMLTextJPanel("I accept " + Term.toLinks(terms) + ".");
+            htmlPanel.setPreferredSize(new Dimension(getPreferredSize().width, 40));
+            center.add(boxAcceptTerms, htmlPanel, GuiUtils.MEDIUM_GAP, false);
+            htmlPanel.load();
+        }
     }
 }

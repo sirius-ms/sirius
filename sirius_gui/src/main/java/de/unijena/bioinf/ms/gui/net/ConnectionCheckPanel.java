@@ -20,22 +20,25 @@
 package de.unijena.bioinf.ms.gui.net;
 
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.ms.gui.actions.ActionUtils;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
+import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jdesktop.swingx.JXTitledSeparator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by fleisch on 06.06.17.
@@ -65,18 +68,20 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     final BooleanJlabel fingerID_Worker = new BooleanJlabel();
     final BooleanJlabel auth = new BooleanJlabel();
     final BooleanJlabel authPermission = new BooleanJlabel();
+    private final JDialog owner;
 
     JLabel authLabel = new JLabel("Authenticated?");
     JPanel resultPanel = null;
 
-    public ConnectionCheckPanel(int state, @Nullable WorkerList workerInfoList, String userId) {
+    public ConnectionCheckPanel(@Nullable JDialog owner, int state, @Nullable WorkerList workerInfoList, String userId, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
         super(GridBagConstraints.WEST, GridBagConstraints.EAST);
+        this.owner = owner;
 
         add(new JXTitledSeparator("Connection check:"), 15, false);
         add(new JLabel("Connection to the internet (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external") + ")"), internet, 5, false);
         add(new JLabel("Connection to domain provider"), hoster, 5, false);
         add(new JLabel("Connection to domain (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.domain") + ")"), domain, 5, false);
-        add(new JLabel("Connection to CSI:FingerID Server"), fingerID, 5, false);
+        add(new JLabel("Connection to CSI:FingerID Server (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host") + ")"), fingerID, 5, false);
         add(new JLabel("Check CSI:FingerID REST API"), fingerID_WebAPI, 5, false);
         add(new JLabel("All necessary workers available?"), fingerID_Worker, 5, false);
         add(authLabel, auth, 5, false);
@@ -84,25 +89,27 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
         addVerticalGlue();
 
+        String licensee = license == null ? "N/A" : license.getLicensee();
+
         if (workerInfoList != null) {
             refreshPanel(
                     state,
                     workerInfoList.getActiveSupportedTypes(Instant.ofEpochSecond(600)),
-                    workerInfoList.getPendingJobs(), userId
+                    workerInfoList.getPendingJobs(), userId,  licensee, terms
             );
         } else {
-            refreshPanel(state, EnumSet.noneOf(PredictorType.class), Integer.MIN_VALUE, userId);
+            refreshPanel(state, EnumSet.noneOf(PredictorType.class), Integer.MIN_VALUE, userId, licensee, terms);
         }
     }
 
-    public void refreshPanel(final int state, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userId) {
+    public void refreshPanel(final int state, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userId, @NotNull String licensee, @Nullable List<Term> terms) {
         internet.setState(state > 1 || state <= 0);
         hoster.setState(state > 2 || state <= 0);
         domain.setState(state > 3 || state <= 0);
         fingerID.setState(state > 4 || state <= 0);
-        fingerID_WebAPI.setState(state <= 0);
+        fingerID_WebAPI.setState(state > 6 || state <= 0);
         auth.setState(userId != null);
-        authPermission.setState(state <= -1);
+        authPermission.setState(state == 0);
 
         if (auth.isTrue()){
             authLabel.setText(userId != null ? "Authenticated as '" + userId + "'." : "Authenticated?");
@@ -116,26 +123,25 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         if (resultPanel != null)
             remove(resultPanel);
 
-        resultPanel = createResultPanel(state, neededTypes, availableTypes, pendingJobs, userId);
+        resultPanel = createResultPanel(state, neededTypes, availableTypes, pendingJobs, userId, terms);
 
         add(resultPanel, 15, true);
 
-        add(new JXTitledSeparator("Webservice registration"), 15, false);
-        add(new JLabel("<html>Licensed to: <b> " + PropertyManager.getProperty("de.unijena.bioinf.sirius.registration",null,"Community Edition (Non commercial use only!)") + " </b></html>"), 5, false);
-        //todo registration info has to be load from server.
+        add(new JXTitledSeparator("Webservice License"), 15, false);
+        add(new JLabel("<html>Licensed to: <b> " + licensee + " </b></html>"), 5, false);
 
         revalidate();
         repaint();
     }
 
 
-    private JPanel createResultPanel(final int state, final EnumSet<PredictorType> neededTypes, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userID) {
+    private JPanel createResultPanel(final int state, final EnumSet<PredictorType> neededTypes, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userID, @Nullable List<Term> terms) {
         TwoColumnPanel resultPanel = new TwoColumnPanel();
         resultPanel.setBorder(BorderFactory.createEmptyBorder());
         resultPanel.add(new JXTitledSeparator("Description"), 15, false);
 
         switch (state) {
-            case -1:
+            case 0:
                 resultPanel.add(new JLabel("<html>Connection to CSI:FingerID Server successfully established!</html>"), 5, false);
 
                 resultPanel.add(new JXTitledSeparator("Worker Information"), 15, false);
@@ -171,16 +177,31 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                 }
 
                 text.append("</html>");
-
                 resultPanel.add(new JLabel(text.toString()), 5, false);
                 break;
-            case 0:
-                if (userID == null){
-                    resultPanel.add(new JLabel("<html>" + " ErrorCode " + 7 + ": " +
-                            " You are not logged in.<br>" +
-                            "Without logging in with a valid user account server side features are not available." +
-                            "</html>"));
-                }else {
+            case 9:
+                addHTMLTextPanel(resultPanel, "ErrorCode " + 10 +
+                        ": Unexpected error when refreshing/validating your access_token. <br> <b>Please try to re-login:</b>");
+                resultPanel.add(new JButton(ActionUtils.deriveFrom(
+                        evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
+                        SiriusActions.SIGN_OUT.getInstance())));
+                break;
+            case 8:
+                addHTMLTextPanel(resultPanel, "ErrorCode " + 9 + ": " + Term.toLinks(terms) +
+                        " for the selected Webservice have not been accepted. <br> Click Accept to get Access:");
+                resultPanel.add(new JButton(ActionUtils.deriveFrom(
+                        evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
+                        SiriusActions.ACCEPT_TERMS.getInstance())));
+                break;
+            case 7:
+                if (userID == null) {
+                    addHTMLTextPanel(resultPanel," ErrorCode " + 7 + ": " +
+                            " <b>You are not logged in.</b><br>" +
+                            "Please log in with a valid user account to use the web service based features." );
+                    resultPanel.add(new JButton(ActionUtils.deriveFrom(
+                            evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
+                            SiriusActions.SIGN_IN.getInstance())));
+                } else {
                     resultPanel.add(new JLabel("<html>" + " ErrorCode " + 8 + ": " +
                             " Your Account does not have Permissions for the configured web service.<br>" +
                             "You may either need to configure a specific web service URL<br>" +
@@ -188,7 +209,6 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                             "More details on this error can be found in log window." +
                             "</html>"));
                 }
-
                 break;
             case 6:
                 resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
@@ -241,18 +261,14 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         return resultPanel;
     }
 
-
-    private void decorateWithLink(final JLabel website, final String URL) {
-        website.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                try {
-                    Desktop.getDesktop().browse(new URI(URL));
-                } catch (URISyntaxException | IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
+    public WebviewHTMLTextJPanel addHTMLTextPanel(@NotNull JPanel resultPanel, @NotNull String text){
+        return addHTMLTextPanel(resultPanel,text, 75);
     }
-
+    public WebviewHTMLTextJPanel addHTMLTextPanel(@NotNull JPanel resultPanel, @NotNull String text, int height){
+        WebviewHTMLTextJPanel htmlPanel = new WebviewHTMLTextJPanel(text);
+        htmlPanel.setPreferredSize(new Dimension(getPreferredSize().width, height));
+        resultPanel.add(htmlPanel);
+        htmlPanel.load();
+        return htmlPanel;
+    }
 }

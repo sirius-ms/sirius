@@ -91,16 +91,16 @@ public class TwoColumnPanel extends JPanel {
     }
 
 
-    public void addNamed(String name, JComponent rightComp) {
+    public void addNamed(String name, Component rightComp) {
         add(new JLabel(name), rightComp);
     }
 
-    public void add(JComponent leftComp, JComponent rightComp) {
+    public void add(Component leftComp, Component rightComp) {
 
         add(leftComp, rightComp, 0, false);
     }
 
-    public void add(JComponent leftComp, JComponent rightComp, int gap, boolean verticalResize) {
+    public void add(Component leftComp, Component rightComp, int gap, boolean verticalResize) {
         if (verticalResize) {
             left.fill = GridBagConstraints.VERTICAL;
             left.weighty = 1;
@@ -132,11 +132,13 @@ public class TwoColumnPanel extends JPanel {
         both.gridy++;
     }
 
-    public void add(JComponent comp){
+    @Override
+    public Component add(Component comp){
         add(comp,0,false);
+        return comp;
     }
 
-    public void add(JComponent comp, int gap, boolean verticalResize) {
+    public void add(Component comp, int gap, boolean verticalResize) {
         if (verticalResize){
             both.fill = GridBagConstraints.BOTH;
             both.weighty = 1;
