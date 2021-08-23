@@ -113,7 +113,7 @@ public class Ms1Ms2Pairing {
         for (Target t : targetQueue) {
             if (!t.merged) {
                 final List<Target> similarTargets = allTargets.retrieveAll(t.mz, new Deviation(10));
-                similarTargets.removeIf(x-> !x.correspondingFeature.equals(t.correspondingFeature));
+                similarTargets.removeIf(x-> x==t || !x.correspondingFeature.equals(t.correspondingFeature));
                 if (similarTargets.size()>1) {
                     for (Target s : similarTargets) {
                         t.spectrum = Ms2CosineSegmenter.merge(t.spectrum, s.spectrum);
@@ -222,6 +222,7 @@ public class Ms1Ms2Pairing {
             }
         }
         // check if we can merge two segments
+        /*
         for (ChromatographicPeak pk : allPeaks) {
             final List<ChromatographicPeak.Segment> segments = new ArrayList<>(pk.getSegments().values());
             outerLoop:
@@ -231,6 +232,9 @@ public class Ms1Ms2Pairing {
                     final ChromatographicPeak.Segment right = segments.get(k+1);
                     if (byPeaks.containsKey(left) && byPeaks.containsKey(right) && !areDistinctSegments(left, right)) {
                         ChromatographicPeak.Segment s = pk.mutate().joinSegments(left, right);
+                        byPeaks.get(left).forEach(x->x.correspondingFeature = s);
+                        byPeaks.get(right).forEach(x->x.correspondingFeature = s);
+
                         byPeaks.computeIfAbsent(s, y->new ArrayList<>()).addAll(byPeaks.remove(left));
                         byPeaks.computeIfAbsent(s, y->new ArrayList<>()).addAll(byPeaks.remove(right));
                         continue outerLoop;
@@ -239,6 +243,7 @@ public class Ms1Ms2Pairing {
                 break;
             }
         }
+         */
         if (byPeaks.size()==1) {
             return null; // no need for merging!
         }
@@ -301,7 +306,7 @@ public class Ms1Ms2Pairing {
 
     private List<Target> extractTargets(ProcessedSample msms) {
         final List<Target> targets = new ArrayList<>();
-        final long retentionTimeThreshold = (long)Math.ceil(msms.run.retentionTimeRange().upperEndpoint()*0.05);
+        final long retentionTimeThreshold = 10000;//(long)Math.ceil(msms.run.retentionTimeRange().upperEndpoint()*0.01);
         final Ms2CosineSegmenter cosiner = new Ms2CosineSegmenter();
         final MassMap<Scan> map = new MassMap<>(100);
         PriorityQueue<Scan> scans = new PriorityQueue<>(Comparator.comparingDouble(x->-x.getTIC()));
@@ -312,27 +317,28 @@ public class Ms1Ms2Pairing {
             }
         }
         final TIntHashSet done = new TIntHashSet();
+        final TIntHashSet merged = new TIntHashSet();
         // merge all scans
         for (Scan s : scans) {
             if (done.add(s.getIndex())) {
-                final Ms2CosineSegmenter.CosineQuery[] tomerge = map.retrieveAll(s.getPrecursor().getMass(), new Deviation(10)).stream().filter(x->Math.abs(x.getRetentionTime()-s.getRetentionTime())<retentionTimeThreshold).map(x->cosiner.prepareForCosine(msms, x)).filter(Objects::nonNull).toArray(Ms2CosineSegmenter.CosineQuery[]::new);
+                final Ms2CosineSegmenter.CosineQuery[] tomerge = map.retrieveAll(s.getPrecursor().getMass(), new Deviation(10)).stream().filter(x->Math.abs(x.getRetentionTime()-s.getRetentionTime())<retentionTimeThreshold).filter(x->x==s || !done.contains(x.getIndex())).map(x->cosiner.prepareForCosine(msms, x)).filter(Objects::nonNull).toArray(Ms2CosineSegmenter.CosineQuery[]::new);
                 // this can happen if the MS/MS spectrum is empty
                 if (tomerge.length==0) continue;
-                final MergedSpectrum mergedPeaks = tomerge.length>1 ? cosiner.mergeViaClustering(msms, tomerge) : tomerge[0].getOriginalSpectrum();
-                final List<Ms2CosineSegmenter.CosineQuery> merged = new ArrayList<>();
+                final MergedSpectrum mergedPeaks = tomerge.length>1 ? cosiner.mergeViaClustering(msms, tomerge.clone()) : tomerge[0].getOriginalSpectrum();
+                merged.clear();
+
                 for (Ms2CosineSegmenter.CosineQuery q : tomerge) {
-                    if (!done.contains(q.getOriginalSpectrum().getScans().get(0).getIndex())) merged.add(q);
+                    for (Scan t : q.getOriginalSpectrum().getScans()) {
+                        merged.add(t.getIndex());
+                    }
                 }
-                for (Scan scan : mergedPeaks.getScans()) {
-                    done.add(scan.getIndex());
-                }
-                merged.removeIf(x->!done.contains(x.getOriginalSpectrum().getScans().get(0).getIndex()));
+                done.addAll(merged);
                 final long ret = mergedPeaks.getScans().stream().sorted(Comparator.comparingDouble(x -> -x.getPrecursor().getIntensity())).findFirst().stream().mapToLong(Scan::getRetentionTime).findFirst().orElse(s.getRetentionTime());
                 targets.add(new Target(
                         mergedPeaks.getPrecursor().getMass(),
                         ret,
                         mergedPeaks,
-                        merged.toArray(Ms2CosineSegmenter.CosineQuery[]::new)
+                        Arrays.stream(tomerge).filter(x->merged.contains(x.getOriginalSpectrum().getScans().get(0).getIndex())).toArray(Ms2CosineSegmenter.CosineQuery[]::new)
                 ));
             }
         }
@@ -354,6 +360,23 @@ public class Ms1Ms2Pairing {
             this.rtOrig = rt;
             this.spectrum = spectrum;
             this.scans = scans;
+            assert scansAreDifferent();
+        }
+
+        private boolean scansAreDifferent() {
+            final TIntHashSet left = new TIntHashSet();
+            for (int i=0; i < scans.length; ++i) {
+                left.clear();
+                left.addAll(scans[i].getOriginalSpectrum().getScans().stream().mapToInt(Scan::getIndex).toArray());
+                for (int j=i+1; j < scans.length; ++j) {
+                    for (Scan s : scans[j].getOriginalSpectrum().getScans()) {
+                        if (left.contains(s.getIndex())) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
         }
 
         public List<Target> split() {
@@ -387,6 +410,7 @@ public class Ms1Ms2Pairing {
                 }
             }
             this.correspondingFeature = best;
+            assert best==null || peak.getSegmentWithApexId(correspondingFeature.getApexIndex()).isPresent();
         }
     }
 

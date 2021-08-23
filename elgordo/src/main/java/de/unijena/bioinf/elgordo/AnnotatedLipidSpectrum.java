@@ -356,7 +356,7 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
 
     @Override
     public String toString() {
-        return String.format(Locale.US, "%s, %d peaks annotated (%.2f %% intensity)", annotatedSpecies.toString(), peakIndizes.length, explainedIntensityOfNontrivialPeaks()*100d);
+        return String.format(Locale.US, "%s, %d peaks annotated (%.2f %% intensity)", annotatedSpecies.toString(), numberOfAnnotatedPeaks(), explainedIntensityOfNontrivialPeaks()*100d);
     }
 
     @Override
