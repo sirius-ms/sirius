@@ -20,63 +20,72 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
+import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 /**
  * Created by Marcus Ludwig on 17.11.16.
  */
-public class ConnectionDialog extends JDialog implements ActionListener {
+public final class ConnectionDialog extends JDialog implements ActionListener {
     private final static String name = "Webservice Connection";
-    private JButton proxy;
+    private JButton network;
     private JButton account;
-    private JButton login;
     private ConnectionCheckPanel connectionCheck;
 
 
-    public ConnectionDialog(Frame owner, int state, @Nullable WorkerList workerList, @Nullable String userID) {
-        super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(state, workerList, userID);
+    private static ConnectionDialog instance;
+
+    public static synchronized ConnectionDialog of(Frame owner, int state, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
+        if (instance != null)
+            instance.dispose();
+        instance = new ConnectionDialog(owner, state, workerList, userID, license, terms);
+        return instance;
     }
 
-    private void initDialog(int state, @Nullable WorkerList workerList, @Nullable String userID) {
+    private ConnectionDialog(Frame owner, int state, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
+        super(owner, name, ModalityType.APPLICATION_MODAL);
+        initDialog(state, workerList, userID, license, terms);
+    }
+
+    private void initDialog(int state, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
         setLayout(new BorderLayout());
 
         //header
         JPanel header = new DialogHeader(Icons.NET_64);
         add(header, BorderLayout.NORTH);
 
-        connectionCheck = new ConnectionCheckPanel(state, workerList, userID);
+        connectionCheck = new ConnectionCheckPanel(this, state, workerList, userID, license, terms);
         add(connectionCheck, BorderLayout.CENTER);
 
 
         //south
-        proxy = new JButton("Proxy settings");
-        proxy.addActionListener(this);
+        network = new JButton("Network Settings");
+        network.addActionListener(this);
 
-        account = new JButton("Account settings");
+        account = new JButton("Account");
         account.addActionListener(this);
 
-        login = new JButton("Log in");
-        login.addActionListener(this);
-        login.setEnabled(userID == null);
-
-        JButton ok = new JButton("Ok");
+        JButton ok = new JButton("Close");
         ok.addActionListener(this);
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttons.add(login);
+        Box buttons = Box.createHorizontalBox();
+        buttons.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
         buttons.add(account);
-        buttons.add(proxy);
+        buttons.add(network);
+        buttons.add(Box.createHorizontalGlue());
         buttons.add(ok);
 
         add(buttons, BorderLayout.SOUTH);
@@ -96,15 +105,19 @@ public class ConnectionDialog extends JDialog implements ActionListener {
             }
     }
 
+    @Override
+    public void dispose() {
+        if (instance == this)
+            instance = null;
+        super.dispose();
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         this.dispose();
-        if (e.getSource().equals(proxy))
-            new SettingsDialog(MainFrame.MF, 2);
+        if (e.getSource().equals(network))
+            Jobs.runEDTLater(() -> new SettingsDialog(MainFrame.MF, 2));
         if (e.getSource().equals(account))
-            new SettingsDialog(MainFrame.MF, 4);
-        if (e.getSource().equals(login))
-            SiriusActions.SIGN_IN.getInstance().actionPerformed(e);
+            Jobs.runEDTLater(() -> SiriusActions.SHOW_ACCOUNT.getInstance().actionPerformed(e));
     }
 }
