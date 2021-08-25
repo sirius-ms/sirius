@@ -17,44 +17,59 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.frontend.subtools.passatutto;
+package de.unijena.bioinf.ms.frontend.subtools.fingerprint;
 
+import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
+import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
-import de.unijena.bioinf.passatutto.Decoy;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
 import java.util.List;
 import java.util.function.Consumer;
 
-@CommandLine.Command(name = "passatutto", aliases = {"P"}, description = "<COMPOUND_TOOL> Compute a decoy spectra based on the fragmentation trees of the given input spectra. If no molecular formula is provided in the input, the top scoring computed formula is used.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
-public class PassatuttoOptions implements ToolChainOptions<PassatuttoSubToolJob, InstanceJob.Factory<PassatuttoSubToolJob>> {
-
+/**
+ * This is for CSI:FingerID (fingerprint prediction) specific parameters.
+ * <p>
+ * They may be annotated to the MS2 Experiment
+ *
+ * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ */
+@CommandLine.Command(name = "fingerprint", aliases = {"T"}, description = "<COMPOUND_TOOL> Predict molecular fingerprint from MS/MS and fragmentation trees for each compound Individually using CSI:FingerID fingerprint prediction.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+public class FingerprintOptions implements ToolChainOptions<FingerprintSubToolJob, InstanceJob.Factory<FingerprintSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
-    public PassatuttoOptions(DefaultParameterConfigLoader defaultConfigOptions) {
+    public FingerprintOptions(DefaultParameterConfigLoader defaultConfigOptions) {
         this.defaultConfigOptions = defaultConfigOptions;
     }
 
+    @Option(names = {"--no-threshold"},
+            description = "Disable score threshold for formula candidates. CSI:FingerID fingerprints will be predicted for all formula candidates")
+    public void setNoThreshold(boolean noThreshold) throws Exception {
+        defaultConfigOptions.changeOption("FormulaResultThreshold", !noThreshold);
+    }
+
     @Override
-    public InstanceJob.Factory<PassatuttoSubToolJob> call() {
+    public InstanceJob.Factory<FingerprintSubToolJob> call() throws Exception {
         return new InstanceJob.Factory<>(
-                PassatuttoSubToolJob::new,
+                FingerprintSubToolJob::new,
                 getInvalidator()
         );
     }
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return inst -> inst.deleteFromFormulaResults(Decoy.class);
+        //todo remove added formula results
+        return inst -> inst.deleteFromFormulaResults(FingerprintResult.class);
     }
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
-        return List.of(FingerprintOptions.class);
+        return List.of(FingerblastOptions.class, CanopusOptions.class);
     }
 }

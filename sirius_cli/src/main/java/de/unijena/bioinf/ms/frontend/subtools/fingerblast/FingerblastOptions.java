@@ -17,11 +17,10 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.frontend.subtools.fingerid;
+package de.unijena.bioinf.ms.frontend.subtools.fingerblast;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
-import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
@@ -42,24 +41,19 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * This is for CSI:FingerID specific parameters.
+ * This is for CSI:FingerID (structure database search) specific parameters.
  * <p>
  * They may be annotated to the MS2 Experiment
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "structure", aliases = {"fingerid", "S"}, description = "<COMPOUND_TOOL> Identify molecular structure for each compound Individually using CSI:FingerID.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
-public class FingerIdOptions implements ToolChainOptions<FingeridSubToolJob, InstanceJob.Factory<FingeridSubToolJob>> {
+@CommandLine.Command(name = "structure", aliases = {"search-structure-db", "S"}, description = "<COMPOUND_TOOL> Search in molecular structure db for each compound Individually using CSI:FingerID structure database search.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJob, InstanceJob.Factory<FingerblastSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
-    public FingerIdOptions(DefaultParameterConfigLoader defaultConfigOptions) {
+    public FingerblastOptions(DefaultParameterConfigLoader defaultConfigOptions) {
         this.defaultConfigOptions = defaultConfigOptions;
     }
-
-
-    // todo Print info about webservice and quit (like help)
-    @Option(names = {"--info", "--webservice-info"}, hidden = true, description = "Information about connection of CSI:FingerID Webservice")
-    public boolean fingeridInfo;
 
     @Option(names = {"-d", "--database", "--db"}, descriptionKey = "StructureSearchDB", paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
             description = {"Search structure in the union of the given databases. If no database is given 'ALL' internal databases are used.", DataSourceCandidates.VALID_DATA_STRING})
@@ -80,16 +74,11 @@ public class FingerIdOptions implements ToolChainOptions<FingeridSubToolJob, Ins
         defaultConfigOptions.changeOption("StructurePredictors", predictors);
     }
 
-    @Option(names = {"--no-threshold"},
-            description = "Disable score threshold for formula candidates. CSI:FingerID will be computed for all formula candidates")
-    public void setNoThreshold(boolean noThreshold) throws Exception {
-        defaultConfigOptions.changeOption("FormulaResultThreshold", !noThreshold);
-    }
 
     @Override
-    public InstanceJob.Factory<FingeridSubToolJob> call() throws Exception {
+    public InstanceJob.Factory<FingerblastSubToolJob> call() throws Exception {
         return new InstanceJob.Factory<>(
-                FingeridSubToolJob::new,
+                FingerblastSubToolJob::new,
                 getInvalidator()
         );
     }
@@ -97,7 +86,7 @@ public class FingerIdOptions implements ToolChainOptions<FingeridSubToolJob, Ins
     @Override
     public Consumer<Instance> getInvalidator() {
         return inst -> {
-            inst.deleteFromFormulaResults(FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
+            inst.deleteFromFormulaResults(FBCandidates.class, FBCandidateFingerprints.class);
             inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
                     .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
                         if (z.removeAnnotation(TopCSIScore.class) != null || z.removeAnnotation(ConfidenceScore.class) != null)

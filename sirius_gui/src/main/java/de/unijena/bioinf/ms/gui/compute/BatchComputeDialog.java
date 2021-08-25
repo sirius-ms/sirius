@@ -74,7 +74,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     // tool configurations
     private final ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
     private final ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
-    private final ActFingerIDConfigPanel csiConfigs; //FingerID configs
+    private final ActFingerprintConfigPanel csiPredictConfigs; //CSI:FingerID predict configs
+    private final ActFingerblastConfigPanel csiSearchConfigs; //CSI:FingerID search configs
     private final ActCanopusConfigPanel canopusConfigPanel; //Canopus configs
 
     // compounds on which the configured Run will be executed
@@ -129,9 +130,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             if (compoundsToProcess.size() > 1)
                 addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
 
+            csiPredictConfigs = new ActFingerprintConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList);
+            addConfigPanel("CSI:FingerID - Fingerprint Prediction", csiPredictConfigs);
 
-            csiConfigs = new ActFingerIDConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList, formulaIDConfigPanel.content.searchDBList.checkBoxList);
-            addConfigPanel("CSI:FingerID - Structure Elucidation", csiConfigs);
+            csiSearchConfigs = new ActFingerblastConfigPanel(formulaIDConfigPanel.content.searchDBList.checkBoxList);
+            addConfigPanel("CSI:FingerID - Structure DB Search", csiSearchConfigs);
 
             canopusConfigPanel = new ActCanopusConfigPanel();
             addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel);
@@ -336,14 +339,20 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             configCommand.addAll(zodiacConfigs.asParameterList());
         }
 
-        if (csiConfigs != null && csiConfigs.isToolSelected()) {
-            toolCommands.add(csiConfigs.content.toolCommand());
+        if (csiPredictConfigs != null && csiPredictConfigs.isToolSelected()) {
+            toolCommands.add(csiPredictConfigs.content.toolCommand());
             int i = configCommand.indexOf("--AdductSettings.fallback");
             if (i >= 0) {
                 configCommand.remove(i);
                 configCommand.remove(i);
             }
-            configCommand.addAll(csiConfigs.asParameterList());
+            configCommand.addAll(csiPredictConfigs.asParameterList());
+        }
+
+
+        if (csiSearchConfigs != null && csiSearchConfigs.isToolSelected()) {
+            toolCommands.add(csiSearchConfigs.content.toolCommand());
+            configCommand.addAll(csiSearchConfigs.asParameterList());
         }
 
         if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
@@ -361,7 +370,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     }
 
     private boolean warnNoMethodIsSelected() {
-        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, csiConfigs, canopusConfigPanel)){
+        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, csiPredictConfigs, csiSearchConfigs, canopusConfigPanel)) {
             new WarningDialog(this, "Please select at least one method.");
             return true;
         } else {
@@ -381,7 +390,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
         if (cc != null) {
             if (cc.isConnected()) {
-                if (csiConfigs.isToolSelected() && cc.hasWorkerWarning()) {
+                if ((csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected()) && cc.hasWorkerWarning()) {
                     if (cc.workerInfo == null ||
                             (!cc.workerInfo.supportsAllPredictorTypes(EnumSet.of(PredictorType.CSI_FINGERID_NEGATIVE))
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isNegative())) ||
@@ -440,14 +449,14 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
         formulaIDConfigPanel.addEnableChangeListener((c, e) -> c.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()), e));
 
-        csiConfigs.content.adductOptions.checkBoxList.addPropertyChangeListener("refresh", evt -> {
+        csiPredictConfigs.content.adductOptions.checkBoxList.addPropertyChangeListener("refresh", evt -> {
             PrecursorIonType ionType = editPanel.getSelectedIonization();
             if (ionType.hasNeitherAdductNorInsource() && !ionType.isIntrinsicalCharged()) {
-                csiConfigs.content.adductOptions.setEnabled(csiConfigs.isToolSelected());
+                csiPredictConfigs.content.adductOptions.setEnabled(csiPredictConfigs.isToolSelected());
             } else {
-                csiConfigs.content.adductOptions.checkBoxList.replaceElements(List.of(ionType.toString()));
-                csiConfigs.content.adductOptions.checkBoxList.checkAll();
-                csiConfigs.content.adductOptions.setEnabled(false);
+                csiPredictConfigs.content.adductOptions.checkBoxList.replaceElements(List.of(ionType.toString()));
+                csiPredictConfigs.content.adductOptions.checkBoxList.checkAll();
+                csiPredictConfigs.content.adductOptions.setEnabled(false);
             }
         });
 

@@ -27,7 +27,8 @@ import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.decomp.DecompOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.mgf.MgfExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.trees.FTreeExporterOptions;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
@@ -104,7 +105,8 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
                 SiriusOptions.class, new SiriusOptions(configOptionLoader),
                 ZodiacOptions.class, new ZodiacOptions(configOptionLoader),
                 PassatuttoOptions.class, new PassatuttoOptions(configOptionLoader),
-                FingerIdOptions.class, new FingerIdOptions(configOptionLoader),
+                FingerprintOptions.class, new FingerprintOptions(configOptionLoader),
+                FingerblastOptions.class, new FingerblastOptions(configOptionLoader),
                 CanopusOptions.class, new CanopusOptions(configOptionLoader)
         );
 

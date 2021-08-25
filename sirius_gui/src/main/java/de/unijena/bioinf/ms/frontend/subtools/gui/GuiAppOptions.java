@@ -30,7 +30,7 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingeridSubToolJob;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -86,8 +86,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
         @Override
         public void run() {
             // modify fingerid subtool so that it works with reduced GUI candidate list.
-            FingeridSubToolJob.formulaResultComponentsToClear.add(FBCandidatesGUI.class);
-            FingeridSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsGUI.class);
+            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesGUI.class);
+            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsGUI.class);
             //todo minor: cancellation handling
 
             // NOTE: we do not want to run ConfigJob here because we want to set
