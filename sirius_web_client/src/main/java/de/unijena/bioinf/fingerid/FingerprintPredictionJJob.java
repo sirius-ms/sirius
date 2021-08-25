@@ -25,15 +25,18 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.fp.AbstractFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.webapi.WebJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
+import de.unijena.bioinf.webapi.WebJJob;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Predict a Fingerprint ({@link FingerprintResult}) for a given IdentificationResult ({@link FingerprintJobInput}) via the CSI:FingerId Webservice
+ */
 public class FingerprintPredictionJJob extends WebJJob<FingerprintPredictionJJob, FingerprintResult, FingerprintJobOutput> implements AnnotationJJob<FingerprintResult, FingerIdResult> {
 
     protected final String name;

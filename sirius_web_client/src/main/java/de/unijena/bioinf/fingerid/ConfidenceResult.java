@@ -34,16 +34,16 @@ public class ConfidenceResult implements ResultAnnotation {
     // bio confidence
     // pubchem confidence
     public final ConfidenceScore score;
-    public Scored<FingerprintCandidate> top_hit;
+    public Scored<FingerprintCandidate> topHit;
 
 
     public ConfidenceResult(ConfidenceScore score) {
         this.score = score;
     }
 
-    public ConfidenceResult(double confidence, Scored<FingerprintCandidate> top_hit){
+    public ConfidenceResult(double confidence, Scored<FingerprintCandidate> topHit){
         //this is just to supress the warning
         this.score = Double.isNaN(confidence) ? FormulaScore.NA(ConfidenceScore.class) : new ConfidenceScore(confidence);
-        this.top_hit=top_hit;
+        this.topHit = topHit;
     }
 }

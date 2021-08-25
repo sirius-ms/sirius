@@ -288,7 +288,7 @@ public final class WebAPI {
 
     //region CSI:FingerID
     public FingerprintPredictionJJob submitFingerprintJob(final Ms2Experiment experiment, final FTree ftree, @NotNull EnumSet<PredictorType> types) throws IOException {
-        return submitFingerprintJob(new FingerprintJobInput(experiment, null, ftree, types));
+        return submitFingerprintJob(new FingerprintJobInput(experiment, ftree, types));
     }
 
     public FingerprintPredictionJJob submitFingerprintJob(FingerprintJobInput input) throws IOException {

@@ -20,108 +20,174 @@
 
 package de.unijena.bioinf.fingerid;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
-import de.unijena.bioinf.fingerid.blast.Fingerblast;
-import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
-import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-public class FingerblastJJob extends FingerprintDependentJJob<FingerblastResult> implements AnnotationJJob<FingerblastResult, FingerIdResult> {
-
+// FingerID Scheduler job does not manage dependencies between different  tools.
+// this is done by the respective subtooljobs in the frontend
+public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
+    // scoring provider
     private final CSIPredictor predictor;
-
-    protected BayesnetScoring bayesnetScoring = null;
-    private RestWithCustomDatabase.CandidateResult candidates = null;
-    private List<Scored<FingerprintCandidate>> scoredCandidates = null;
+    // input data
+    private Ms2Experiment experiment;
+    private List<FingerIdResult> idResult;
 
     public FingerblastJJob(@NotNull CSIPredictor predictor) {
-        this(predictor, null, null, null);
+        this(predictor, null);
     }
 
-    public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull BayesnetScoring bayesnetScoring){
-        this(predictor);
-        this.bayesnetScoring = bayesnetScoring;
+    public FingerblastJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment) {
+        this(predictor, experiment, null);
     }
 
-    public FingerblastJJob(@NotNull CSIPredictor predictor, FTree tree, ProbabilityFingerprint fp, MolecularFormula formula) {
-        super(JobType.CPU, fp, formula, tree);
+    public FingerblastJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @Nullable List<FingerIdResult> idResult) {
+        super(JobType.SCHEDULER);
         this.predictor = predictor;
+        this.experiment = experiment;
+        this.idResult = idResult;
+    }
+
+    public void setInput(Ms2Experiment experiment, List<FingerIdResult> idResult) {
+        notSubmittedOrThrow();
+        this.experiment = experiment;
+        this.idResult = idResult;
     }
 
 
-    protected void checkInput() {
-        if (candidates == null)
-            throw new IllegalArgumentException("No Input Data found.");
+    public void setFingerIdResults(List<FingerIdResult> results) {
+        notSubmittedOrThrow();
+        this.idResult = results;
     }
 
-    @Override
-    public synchronized void handleFinishedRequiredJob(JJob required) {
-        super.handleFinishedRequiredJob(required);
-        if (candidates == null) {
-            if (required instanceof FormulaJob) {
-                FormulaJob job = ((FormulaJob) required);
-                candidates = job.result();
-            }
-        }
-        if(bayesnetScoring == null){
-            if(required instanceof CovtreeWebJJob){
-                CovtreeWebJJob job = (CovtreeWebJJob) required;
-                bayesnetScoring = job.result();
-            }
-        }
+    public void setExperiment(Ms2Experiment experiment) {
+        notSubmittedOrThrow();
+        this.experiment = experiment;
     }
 
-    public List<Scored<FingerprintCandidate>> getAllScoredCandidates() {
-        return scoredCandidates;
-    }
-
-    public RestWithCustomDatabase.CandidateResult getCandidates() {
-        return candidates;
+    public Ms2Experiment getExperiment() {
+        return experiment;
     }
 
     @Override
-    protected FingerblastResult compute() {
-        checkInput();
-        //we want to score all available candidates and may create subsets later.
-        final Set<FingerprintCandidate> combinedCandidates = candidates.getCombCandidates();
+    protected List<FingerIdResult> compute() throws Exception {
+        logDebug("Instance '" + experiment.getName() + "': Starting CSI:FingerID Computation.");
+        if ((experiment.getPrecursorIonType().getCharge() > 0) != (predictor.predictorType.isPositive()))
+            throw new IllegalArgumentException("Charges of predictor and instance are not equal");
 
-        // to get a prepared FingerblastScorer, an object of BayesnetScoring that is specific to the molecular formula has to be initialized
-        List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(
-                predictor.getPreparedFingerblastScorer(ParameterStore.of(fp, bayesnetScoring)), combinedCandidates, fp);
-        scoreJobs.forEach(this::submitSubJob);
+        if (this.idResult == null || this.idResult.isEmpty()) {
+            logWarn("No suitable input fingerprints found.");
+            return List.of();
+        }
 
-        scoredCandidates = scoreJobs.stream().flatMap(r -> r.takeResult().stream()).sorted(Comparator.reverseOrder()).map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
-        scoredCandidates.forEach(sc -> postprocessCandidate(sc.getCandidate()));
+        final StructureSearchDB searchDB = experiment.getAnnotationOrThrow(StructureSearchDB.class);
 
-        //create filtered result for FingerblastResult result
-        Set<String> requestedCandidatesInChIs = candidates.getReqCandidatesInChIs();
-        final List<Scored<FingerprintCandidate>> cds = scoredCandidates.stream().
-                filter(sc -> requestedCandidatesInChIs.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList());
+        logDebug("Preparing CSI:FingerID structure db search jobs.");
+        ////////////////////////////////////////
+        //submit jobs for db search
+        ///////////////////////////////////////
+        final Map<AnnotationJJob<?, FingerIdResult>, FingerIdResult> annotationJJobs = new LinkedHashMap<>(idResult.size());
 
-        return new FingerblastResult(cds);
+        // formula job: retrieve fingerprint candidates for specific MF;
+        // no SubmitSubJob needed because ist is not a CPU or IO job
+        final List<FormulaJob> formulaJobs = idResult.stream().map(fingeridInput ->
+                new FormulaJob(
+                        fingeridInput.getMolecularFormula(),
+                        predictor.database,
+                        searchDB.searchDBs,
+                        fingeridInput.getPrecursorIonType(), true)
+        ).collect(Collectors.toList());
+
+        submitSubJobsInBatches(formulaJobs, PropertyManager.getNumberOfThreads());
+
+        checkForInterruption();
+
+        final ConfidenceJJob confidenceJJob = (predictor.getConfidenceScorer() != null)
+                ? new ConfidenceJJob(predictor, experiment)
+                : null;
+
+        for (int i = 0; i < idResult.size(); i++) {
+            final FingerIdResult fingeridInput = idResult.get(i);
+
+            // fingerblast job: score candidate fingerprints against predicted fingerprint
+            final BayesnetScoring bayesnetScoring = NetUtils.tryAndWait(() ->
+                            predictor.csiWebAPI.getBayesnetScoring(predictor.predictorType, fingeridInput.getMolecularFormula()),
+                    this::checkForInterruption);
+
+
+            final FingerblastSearchJJob blastJob;
+            if (bayesnetScoring != null) {
+                blastJob = FingerblastSearchJJob.of(predictor, bayesnetScoring, fingeridInput);
+            } else {
+                // bayesnetScoring is null --> make a prepare job which computes the bayessian network (covTree) for the
+                // given molecular formula
+                blastJob = FingerblastSearchJJob.of(predictor, fingeridInput);
+                final CovtreeWebJJob covTreeJob = NetUtils.tryAndWait(() ->
+                                predictor.csiWebAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType),
+                        this::checkForInterruption);
+                blastJob.addRequiredJob(covTreeJob);
+            }
+
+            blastJob.addRequiredJob(formulaJobs.get(i));
+            if (confidenceJJob != null)
+                confidenceJJob.addRequiredJob(blastJob);
+            annotationJJobs.put(submitSubJob(blastJob), fingeridInput);
+        }
+
+        // confidence job: calculate confidence of scored candidate list that are MERGED among ALL
+        // IdentificationResults results with none empty candidate lists.
+        if (confidenceJJob != null)
+            submitSubJob(confidenceJJob);
+
+        logDebug("Searching structure DB with CSI:FingerID");
+        /////////////////////////////////////////////////
+        //collect results and annotate to CSI:FingerID Result
+        /////////////////////////////////////////////////
+        // Sub Jobs should also be usable without annotation stuff -> So we annotate outside the subjobs compute methods
+        // this loop is just to ensure that we wait until all jobs are finished.
+        // the logic if a job can fail or not is done via job dependencies (see above)
+        checkForInterruption();
+        annotationJJobs.forEach(AnnotationJJob::takeAndAnnotateResult);
+        checkForInterruption();
+
+        if (confidenceJJob != null) {
+            ConfidenceResult confidenceRes = confidenceJJob.awaitResult();
+            if (confidenceRes.topHit != null) {
+                FingerIdResult topHit = annotationJJobs.values().stream().distinct()
+                        .filter(fpr -> !fpr.getFingerprintCandidates().isEmpty()).max(Comparator.comparing(fpr -> fpr.getFingerprintCandidates().get(0))).orElse(null);
+                if (topHit != null) {
+                    if (topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D().equals(confidenceRes.topHit.getCandidate().getInchiKey2D()))
+                        topHit.setAnnotation(ConfidenceResult.class, confidenceRes);
+                    else
+                        logWarn("TopHit does not Match Confidence Result TopHit!'" + confidenceRes.topHit.getCandidate().getInchiKey2D() + "' vs '" + topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D() + "'.  Confidence might be lost!");
+                } else {
+                    logWarn("No TopHit found for. But confidence was calculated for: '" + confidenceRes.topHit.getCandidate().getInchiKey2D() + "'.  Looks like a Bug. Confidence might be lost!");
+                }
+            } else {
+                logWarn("No Confidence computed.");
+            }
+        }
+
+
+        logDebug("CSI:FingerID structure DB Search DONE!");
+        //in linked maps values() collection is not a set -> so we have to make that distinct
+        return annotationJJobs.values().stream().distinct().collect(Collectors.toList());
     }
 
-    protected void postprocessCandidate(CompoundCandidate candidate) {
-        //annotate training compounds;
-        if (predictor.getTrainingStructures().isInTrainingData(candidate.getInchi())){
-            long flags = candidate.getBitset();
-            candidate.setBitset(flags | DataSource.TRAIN.flag);
-        }
+    @Override
+    public String identifier() {
+        return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z";
     }
 }

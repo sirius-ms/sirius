@@ -62,7 +62,7 @@ public abstract class FingerprintDependentJJob<R extends DataAnnotation> extends
         if (fp == null) {
             if (required instanceof FingerprintPredictionJJob) {
                 FingerprintPredictionJJob job = ((FingerprintPredictionJJob) required);
-                if (job.input.identificationResult != null && job.result() != null) {
+                if (job.input.ftree != null && job.result() != null) {
                     fp = job.result().fingerprint;
                     ftree = job.input.ftree;
                     formula = job.input.ftree.getRoot().getFormula();
