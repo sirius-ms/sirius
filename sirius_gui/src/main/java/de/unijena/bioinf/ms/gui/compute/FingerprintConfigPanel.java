@@ -21,19 +21,15 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -42,21 +38,12 @@ import java.util.stream.Collectors;
  */
 
 //here we can show fingerid options. If it becomes to much, we can change this to a setting like tabbed pane
-public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
-    //todo sync db selection with sirius panel
-
-    protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
+public class FingerprintConfigPanel extends SubToolConfigPanel<FingerprintOptions> {
     public final JCheckboxListPanel<String> adductOptions;
     protected final JToggleButton enforceAdducts;
 
-    public FingerIDConfigPanel(final JCheckBoxList<String> sourceIonization, @Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
-        super(FingerIdOptions.class);
-
-        // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Search in DBs:");
-        GuiUtils.assignParameterToolTip(searchDBList, "StructureSearchDB");
-        parameterBindings.put("StructureSearchDB", () -> searchDBList.checkBoxList.getCheckedItems().isEmpty() ? null : String.join(",", getStructureSearchDBStrings()));
-        add(searchDBList);
+    public FingerprintConfigPanel(@NotNull final JCheckBoxList<String> sourceIonization) {
+        super(FingerprintOptions.class);
 
         adductOptions = new JCheckboxListPanel<>(new AdductSelectionList(sourceIonization), "Fallback Adducts");
         GuiUtils.assignParameterToolTip(adductOptions, "AdductSettings.fallback");
@@ -70,30 +57,11 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
         final TwoColumnPanel additionalOptions = new TwoColumnPanel();
         additionalOptions.addNamed("Formula score threshold", makeParameterCheckBox("FormulaResultThreshold"));
 
-        add(new TextHeaderBoxPanel("Additional Options", additionalOptions));
-
-        searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.realName()));
-
-        if (syncSource != null)
-            syncSource.addListSelectionListener(e -> {
-                searchDBList.checkBoxList.uncheckAll();
-                if (syncSource.getCheckedItems().isEmpty())
-                    searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.realName()));
-                else
-                    searchDBList.checkBoxList.checkAll(syncSource.getCheckedItems());
-            });
+        add(new TextHeaderBoxPanel("General", additionalOptions));
     }
 
     public PossibleAdducts getSelectedAdducts() {
         return adductOptions.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType)
                 .flatMap(Optional::stream).collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new));
-    }
-
-    public List<CustomDataSources.Source> getStructureSearchDBs() {
-        return searchDBList.checkBoxList.getCheckedItems();
-    }
-
-    public List<String> getStructureSearchDBStrings() {
-        return getStructureSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

@@ -26,7 +26,7 @@ import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
@@ -182,6 +182,6 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
-        return List.of(PassatuttoOptions.class, FingerIdOptions.class);
+        return List.of(PassatuttoOptions.class, FingerprintOptions.class);
     }
 }

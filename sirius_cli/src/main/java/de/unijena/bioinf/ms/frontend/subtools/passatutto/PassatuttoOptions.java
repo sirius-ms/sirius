@@ -23,7 +23,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
@@ -55,6 +55,6 @@ public class PassatuttoOptions implements ToolChainOptions<PassatuttoSubToolJob,
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
-        return List.of(FingerIdOptions.class);
+        return List.of(FingerprintOptions.class);
     }
 }
