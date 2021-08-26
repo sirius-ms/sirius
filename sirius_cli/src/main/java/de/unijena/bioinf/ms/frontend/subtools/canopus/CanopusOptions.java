@@ -59,7 +59,7 @@ public class CanopusOptions implements ToolChainOptions<CanopusSubToolJob, Insta
     }
 
     @Override
-    public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
+    public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
         return List.of();
     }
 }

@@ -96,7 +96,7 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
                 inst.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class));
                 inst.getID().setConfidenceScore(null);
                 inst.updateCompoundID();
-            }else if (inst.getID().getConfidenceScore().isPresent()){
+            } else if (inst.getID().getConfidenceScore().isPresent()) {
                 inst.getID().setConfidenceScore(null);
                 inst.updateCompoundID();
             }
@@ -104,7 +104,12 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
     }
 
     @Override
-    public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
+    public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
+        return List.of();
+    }
+
+    @Override
+    public List<Class<? extends ToolChainOptions<?, ?>>> getFollowupSubCommands() {
         return List.of(CanopusOptions.class);
     }
 }

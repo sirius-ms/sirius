@@ -181,7 +181,7 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
     }
 
     @Override
-    public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
+    public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
         return List.of(PassatuttoOptions.class, FingerprintOptions.class);
     }
 }
