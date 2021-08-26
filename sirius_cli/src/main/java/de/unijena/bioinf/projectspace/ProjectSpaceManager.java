@@ -44,7 +44,6 @@ import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
 import de.unijena.bioinf.projectspace.canopus.CanopusDataSerializer;
 import de.unijena.bioinf.projectspace.canopus.CanopusSerializer;
 import de.unijena.bioinf.projectspace.fingerid.*;
-import de.unijena.bioinf.projectspace.sirius.*;
 import de.unijena.bioinf.projectspace.summaries.CanopusSummaryWriter;
 import de.unijena.bioinf.projectspace.summaries.FormulaSummaryWriter;
 import de.unijena.bioinf.projectspace.summaries.StructureSummaryWriter;

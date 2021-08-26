@@ -46,7 +46,7 @@ import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
+import de.unijena.bioinf.projectspace.CompoundContainer;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 import org.slf4j.LoggerFactory;
 

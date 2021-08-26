@@ -29,14 +29,15 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -101,25 +102,29 @@ public class InstanceBean extends Instance implements SiriusPCS {
 
 
     @Override
-    public synchronized void deleteFormulaResults() {
+    public synchronized void deleteFormulaResults(@Nullable Collection<FormulaResultId> ridToRemove) {
         List<ContainerListener.Defined> changed = List.of();
         try {
             changed = unregisterProjectSpaceListeners();
-            List<FormulaResultId> old = getResults().stream().map(FormulaResultBean::getID).collect(Collectors.toList());
-            List<FormulaResultId> nu = List.of();
-
             //load contain methods to ensure that it is available
             final CompoundContainer ccache = loadCompoundContainer();
-            List<FormulaResultId> rid = List.copyOf(ccache.getResults().values());
 
-            ccache.getResults().clear();
+            List<FormulaResultId> old = getResults().stream().map(FormulaResultBean::getID).collect(Collectors.toList());
+            List<FormulaResultId> nu = new ArrayList<>(old);
+            ArrayList<FormulaResultId> remove = new ArrayList<>(old);
+            if (ridToRemove != null){
+                remove.retainAll(new HashSet<>(ridToRemove));
+                nu.removeAll(ridToRemove);
+            }
+
+//            remove.forEach(ccache::removeResult);
             clearFormulaResultsCache();
 
             pcs.firePropertyChange("instance.clearFormulaResults", old.isEmpty() ? nu : old, nu);
 
-            rid.forEach(v -> {
+            remove.forEach(v -> {
                 try {
-                    projectSpace().deleteFormulaResult(v);
+                    projectSpace().deleteFormulaResult(ccache, v);
                 } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
                 }
@@ -128,7 +133,6 @@ public class InstanceBean extends Instance implements SiriusPCS {
             changed.forEach(ContainerListener.Defined::register);
         }
     }
-
 
 
     public List<ContainerListener.Defined> registerProjectSpaceListeners() {

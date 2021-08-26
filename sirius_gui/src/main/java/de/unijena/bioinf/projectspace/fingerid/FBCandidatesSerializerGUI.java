@@ -45,8 +45,7 @@ import de.unijena.bioinf.projectspace.ComponentSerializer;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.ProjectReader;
 import de.unijena.bioinf.projectspace.ProjectWriter;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import org.slf4j.LoggerFactory;
+import de.unijena.bioinf.projectspace.FormulaResult;
 
 import java.io.IOException;
 import java.util.ArrayList;
