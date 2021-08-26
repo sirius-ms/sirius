@@ -200,7 +200,8 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         //todo manipulate adduct lists for marcus?????
     }
 
-    @Option(names = {"--mostintense-ms2"}, description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).", hidden = true)
+    @Option(names = {"--mostintense-ms2"}, hidden = true,
+            description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).")
     public boolean mostIntenseMs2;
 
     @Option(names = "--disable-fast-mode", hidden = true)
@@ -222,7 +223,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     @Override
-    public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
+    public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
         return List.of(PassatuttoOptions.class, ZodiacOptions.class, FingerprintOptions.class);
     }
 }

@@ -54,7 +54,12 @@ public class PassatuttoOptions implements ToolChainOptions<PassatuttoSubToolJob,
     }
 
     @Override
-    public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
+    public List<Class<? extends ToolChainOptions<?, ?>>> getFollowupSubCommands() {
         return List.of(FingerprintOptions.class);
+    }
+
+    @Override
+    public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
+        return List.of();
     }
 }
