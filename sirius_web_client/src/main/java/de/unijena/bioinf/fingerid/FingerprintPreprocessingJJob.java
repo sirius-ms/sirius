@@ -48,8 +48,8 @@ import java.util.*;
 public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJJob<List<IdentificationResult<S>>> {
     // input data
     private Ms2Experiment experiment;
-    private List<IdentificationResult<S>> idResult = null;
-    protected Map<IdentificationResult<S>, IdentificationResult<S>> addedIdentificationResults = new HashMap<>();
+    private List<IdentificationResult<S>> idResult;
+    protected Map<IdentificationResult<S>, IdentificationResult<S>> addedIdentificationResults = Map.of();
 
     public FingerprintPreprocessingJJob() {
         this(null);
@@ -125,6 +125,7 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
                         if (!ionType.equals(ir.getTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getTree(), ionType)) {
                             try {
                                 IdentificationResult<S> newIr = IdentificationResult.withPrecursorIonType(ir, ionType);
+                                newIr.getTree().setAnnotation(IonTreeUtils.ExpandedAdduct.class, IonTreeUtils.ExpandedAdduct.EXPANDED);
                                 if (newIr.getTree().numberOfVertices() >= 3 && (neutralFormulas.add(newIr.getMolecularFormula())))
                                     ionTypes.put(newIr, ir);
                             } catch (IllegalArgumentException e) {

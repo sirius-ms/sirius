@@ -18,17 +18,13 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace.sirius;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
-import de.unijena.bioinf.projectspace.ComponentSerializer;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.ProjectReader;
-import de.unijena.bioinf.projectspace.ProjectWriter;
 
 import java.io.IOException;
 import java.nio.file.Path;

@@ -40,6 +40,11 @@ import java.util.List;
  */
 public class IonTreeUtils {
     public enum Type implements TreeAnnotation  {RAW, RESOLVED, IONIZED}
+    /**
+     * Annotation to mark if a {@link FTree} represents an adduct taht was automatically expanded from an
+     * {@link de.unijena.bioinf.ChemistryBase.chem.Ionization}
+     */
+    public enum ExpandedAdduct implements TreeAnnotation {RAW, EXPANDED}
 
     public boolean isResolvable(FTree tree, PrecursorIonType ionType) {
         return (tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization().equals(ionType.getIonization()) && tree.getRoot().getFormula().isSubtractable(ionType.getAdduct()));

@@ -18,23 +18,31 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace.sirius;
+package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.Location;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
-public interface SiriusLocations {
+public final class FormulaResult extends ProjectSpaceContainer<FormulaResultId> {
 
-    String
-            MS2_EXPERIMENT = "spectrum.ms",
-            COMPOUND_INFO = "compound.info",
-            COMPOUND_CONFIG = "compound.config",
-//            LCMS_TRACES = "lcms.binary",
-            LCMS_JSON = "lcms.json.gz";
+    private final Annotations<DataAnnotation> annotations;
+    private final FormulaResultId formulaResultId;
 
-    Location
-            SPECTRA = new Location("spectra", "tsv", FormulaResultId::fileName),
-            TREES = new Location("trees", "json", FormulaResultId::fileName),
-            SCORES = new Location("scores", "info", FormulaResultId::fileName),
-            DECOYS = new Location("decoys", "tsv", FormulaResultId::fileName);
+    public FormulaResult(FormulaResultId id) {
+        this.annotations = new Annotations<>();
+        this.formulaResultId = id;
+    }
+
+    public String toString() {
+        return formulaResultId.toString();
+    }
+
+    @Override
+    public Annotations<DataAnnotation> annotations() {
+        return annotations;
+    }
+
+    @Override
+    public FormulaResultId getId() {
+        return formulaResultId;
+    }
 }

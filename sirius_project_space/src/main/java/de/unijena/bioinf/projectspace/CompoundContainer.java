@@ -18,13 +18,10 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace.sirius;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.ProjectSpaceContainer;
-
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +30,7 @@ public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId
 
     private final Annotations<DataAnnotation> annotations;
 
-    protected final Map<String, FormulaResultId> results;
+    final Map<String, FormulaResultId> results;
     private final CompoundContainerId id;
 
     public CompoundContainer(CompoundContainerId id/*, Class<? extends FormulaScore> resultScore*/) {
@@ -42,16 +39,27 @@ public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId
         this.id = id;
     }
 
-    public Map<String, FormulaResultId> getResults() {
-        return results;
+    /**
+     * @return read only results map
+     */
+    public Map<String, FormulaResultId> getResultsRO() {
+        return Collections.unmodifiableMap(results);
     }
 
-    public boolean hasResult() {
-        return !getResults().isEmpty();
+    public boolean hasResults() {
+        return !getResultsRO().isEmpty();
     }
 
-    public boolean containsResult(FormulaResultId id) {
-        return id != null && id == (results.get(id.fileName()));
+    public boolean containsResult(FormulaResultId fid) {
+        if (!fid.getParentId().getDirectoryName().equals(getId().getDirectoryName()))
+            return false;
+        return results.containsKey(fid.fileName());
+    }
+
+    boolean removeResult(FormulaResultId fid) {
+        if (containsResult(fid))
+            return results.remove(fid.fileName()) != null;
+        return false;
     }
 
     public Optional<FormulaResultId> findResult(String id) {
@@ -66,11 +74,5 @@ public class CompoundContainer extends ProjectSpaceContainer<CompoundContainerId
     @Override
     public Annotations<DataAnnotation> annotations() {
         return annotations;
-    }
-
-    public boolean contains(FormulaResultId fid) {
-        if (!fid.getParentId().getDirectoryName().equals(getId().getDirectoryName()))
-            return false;
-        return results.containsKey(fid.fileName());
     }
 }

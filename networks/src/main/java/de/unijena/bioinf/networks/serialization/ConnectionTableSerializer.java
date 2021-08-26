@@ -5,7 +5,7 @@ import de.unijena.bioinf.projectspace.ComponentSerializer;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.ProjectReader;
 import de.unijena.bioinf.projectspace.ProjectWriter;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
+import de.unijena.bioinf.projectspace.CompoundContainer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;

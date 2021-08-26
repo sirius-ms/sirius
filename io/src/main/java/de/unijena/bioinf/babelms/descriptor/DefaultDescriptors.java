@@ -54,6 +54,7 @@ class DefaultDescriptors {
         registry.put(Loss.class, ImplicitAdduct.class, new ImplicitAdductDescriptor());
 
         registry.put(FTree.class, IonTreeUtils.Type.class, new IonTypeDescriptor());
+        registry.put(FTree.class, IonTreeUtils.ExpandedAdduct.class, new ExpandedAdductDescritor());
 
         registry.put(FTree.class, UnconsideredCandidatesUpperBound.class, new UnregardedCandidatesUpperBoundDescriptor());
         registry.put(FTree.class, TreeStatistics.class, new TreeStatisticsDescriptor());
@@ -739,13 +740,41 @@ class DefaultDescriptors {
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, IonTreeUtils.Type annotation) {
             String value;
             switch (annotation) {
-            case IONIZED: value = "ionized"; break;
+                case IONIZED: value = "ionized"; break;
                 case RESOLVED: value = "neutralized"; break;
                 case RAW: value = "raw"; break;
                 default: value = "raw";
             }
             document.addToDictionary(dictionary, TOK, value);
 
+        }
+    }
+
+    private static class ExpandedAdductDescritor implements Descriptor<IonTreeUtils.ExpandedAdduct> {
+        private final static String TOK = "expandedAdduct";
+        @Override
+        public String[] getKeywords() {
+            return new String[]{TOK};
+        }
+
+        @Override
+        public Class<IonTreeUtils.ExpandedAdduct> getAnnotationClass() {
+            return IonTreeUtils.ExpandedAdduct.class;
+        }
+
+        @Override
+        public <G, D, L> IonTreeUtils.ExpandedAdduct read(DataDocument<G, D, L> document, D dictionary) {
+            final String val = document.getStringFromDictionary(dictionary, TOK);
+            try {
+                return IonTreeUtils.ExpandedAdduct.valueOf(val.toUpperCase());
+            } catch (IllegalArgumentException | NullPointerException e) {
+                throw new IllegalArgumentException("Unknown expandedAdduct \"" + val + "\"", e);
+            }
+        }
+
+        @Override
+        public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, IonTreeUtils.ExpandedAdduct annotation) {
+            document.addToDictionary(dictionary, TOK, annotation.name().toLowerCase());
         }
     }
 
