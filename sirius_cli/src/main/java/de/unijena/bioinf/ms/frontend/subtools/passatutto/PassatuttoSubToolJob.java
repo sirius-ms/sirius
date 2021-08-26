@@ -30,7 +30,7 @@ import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.passatutto.Passatutto;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +44,7 @@ public class PassatuttoSubToolJob extends InstanceJob {
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
         // We do not have to invalidate results because there is no method that builds on top of Passatutto
-        return inst.loadCompoundContainer().hasResult() && inst.loadFormulaResults(Decoy.class).stream().anyMatch(it -> it.getCandidate().hasAnnotation(Decoy.class));
+        return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(Decoy.class).stream().anyMatch(it -> it.getCandidate().hasAnnotation(Decoy.class));
 //            logInfo("Skipping CSI:FingerID for Instance \"" + inst.getExperiment().getName() + "\" because results already exist.");
     }
 

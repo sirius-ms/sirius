@@ -32,8 +32,8 @@ import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.CompoundContainer;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -87,7 +87,6 @@ public class FormulaSummaryWriter implements Summarizer {
                             if (first.getAndSet(false)) {
                                 FormulaResult bestResult = topResultWithAdducts.size()>1 ? resolveIonizationOnly(r.getCandidate()) : r.getCandidate();
                                 this.globalResults.add(ResultEntry.of(bestResult,exp));
-//                                this.prefix.put(bestResult, exp.getId().getIonMass().orElse(Double.NaN) + "\t" + exp.getId().getRt().orElse(RetentionTime.NA()).getRetentionTimeInSeconds() + "\t" + exp.getId().getDirectoryName());
                             }
                             s.annotations().forEach((key, value) -> {
                                 if (value != null && !value.isNa()) {

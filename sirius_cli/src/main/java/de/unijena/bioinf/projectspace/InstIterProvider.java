@@ -20,8 +20,6 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-
 import java.util.Iterator;
 import java.util.function.Predicate;
 

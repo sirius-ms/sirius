@@ -34,7 +34,7 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,7 @@ public class FingerprintSubToolJob extends InstanceJob {
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer().hasResult() && inst.loadFormulaResults(FingerprintResult.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(FingerprintResult.class));
+        return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(FingerprintResult.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(FingerprintResult.class));
     }
 
     @Override
@@ -116,7 +116,6 @@ public class FingerprintSubToolJob extends InstanceJob {
 
         // add new id results to project-space.
         addedResults.forEach((k, v) ->
-                //todo mark added results
                 inst.newFormulaResultWithUniqueId(k.getTree())
                         .ifPresent(fr -> {
                             fr.getAnnotationOrThrow(FormulaScoring.class).setAnnotationsFrom(
@@ -140,8 +139,6 @@ public class FingerprintSubToolJob extends InstanceJob {
             formRes.setAnnotation(FingerprintResult.class, res.getAnnotationOrThrow(FingerprintResult.class));
             inst.updateFormulaResult(formRes, FingerprintResult.class);
         }
-
-        //todo add "added idresults" to info file
         inst.updateCompoundID();
     }
 

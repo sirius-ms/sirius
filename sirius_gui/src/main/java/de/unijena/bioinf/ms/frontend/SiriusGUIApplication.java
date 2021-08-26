@@ -38,7 +38,7 @@ import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintSerializerG
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesSerializerGUI;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

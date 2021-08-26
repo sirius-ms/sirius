@@ -215,7 +215,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     @Override
     public Consumer<Instance> getInvalidator() {
         return inst -> {
-            inst.deleteFormulaResults(); //this step creates the result so we have to delete them before recompute
+            inst.deleteFormulaResults(); //this step creates the results, so we have to delete them before recompute
             inst.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
             inst.getID().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
             inst.updateCompoundID();

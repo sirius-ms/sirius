@@ -52,7 +52,7 @@ public class FingerprintConfigPanel extends SubToolConfigPanel<FingerprintOption
         enforceAdducts =  new JToggleButton("enforce", false);
         enforceAdducts.setToolTipText(GuiUtils.formatToolTip("Enforce the selected adducts instead of using them only as fallback."));
         adductOptions.buttons.add(enforceAdducts);
-        parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString() : null);
+        parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString() : PossibleAdducts.empty().toString());
 
         final TwoColumnPanel additionalOptions = new TwoColumnPanel();
         additionalOptions.addNamed("Formula score threshold", makeParameterCheckBox("FormulaResultThreshold"));
