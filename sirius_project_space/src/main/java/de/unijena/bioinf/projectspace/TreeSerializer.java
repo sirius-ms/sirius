@@ -18,22 +18,18 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace.sirius;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.babelms.ms.AnnotatedSpectrumWriter;
-import de.unijena.bioinf.projectspace.ComponentSerializer;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.ProjectReader;
-import de.unijena.bioinf.projectspace.ProjectWriter;
 
 import java.io.IOException;
 import java.util.Optional;
 
-import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.SPECTRA;
-import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.TREES;
+import static de.unijena.bioinf.projectspace.SiriusLocations.SPECTRA;
+import static de.unijena.bioinf.projectspace.SiriusLocations.TREES;
 
 public class TreeSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FTree> {
     @Override

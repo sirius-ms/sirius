@@ -18,16 +18,14 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace.sirius;
+package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.projectspace.*;
-
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.TREES;
+import static de.unijena.bioinf.projectspace.SiriusLocations.TREES;
 
 public class CompoundContainerSerializer implements ContainerSerializer<CompoundContainerId, CompoundContainer> {
 
