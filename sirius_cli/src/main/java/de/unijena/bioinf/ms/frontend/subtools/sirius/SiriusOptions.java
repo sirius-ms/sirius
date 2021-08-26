@@ -18,7 +18,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
@@ -47,7 +46,6 @@ import java.util.function.Consumer;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 
-//todo got descriprions from defaultConfigOptions
 @Command(name = "formula", aliases = {"tree", "sirius", "F"}, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, InstanceJob.Factory<SiriusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
@@ -118,10 +116,9 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     @Option(names = {"-f", "--formulas"}, description = "Specify a list of candidate formulas the method should use. Omit this option if you want to consider all possible molecular formulas")
-    public void setFormulaWhiteList(List<String> formulaWhiteList) {
-        formulaWhiteSet = Whiteset.of(formulaWhiteList);
+    public void setCandidateFormulas(DefaultParameter formulas) throws Exception {
+        defaultConfigOptions.changeOption("CandidateFormulas", formulas);
     }
-    public Whiteset formulaWhiteSet =  null;
 
 
     @Option(names = {"--no-isotope-filter"}, description = "Disable molecular formula filter. When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.")
@@ -148,7 +145,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
 
-    //heuristic threshods
+    //heuristic thresholds
     @Option(names = {"--heuristic"}, descriptionKey ="UseHeuristic.mzToUseHeuristic" , description = "Enable heuristic preprocessing for compounds >= the specified m/z.")
     public void setMzToUseHeuristic(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("UseHeuristic.mzToUseHeuristic", value);
@@ -211,10 +208,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
 
     @Override
     public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
-        return new InstanceJob.Factory<>(
-                sub -> new SiriusSubToolJob(this, sub),
-                getInvalidator()
-        );
+        return new InstanceJob.Factory<>(SiriusSubToolJob::new, getInvalidator());
     }
 
     @Override
