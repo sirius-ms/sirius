@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
@@ -41,15 +42,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class SiriusSubToolJob extends InstanceJob {
-    //todo this is only a temporary solution. parameters should be annotated to the exp
-    // we do not want to have the sub-tool management to be dependent on a cli parsing library
-    protected final SiriusOptions cliOptions;
-
-    public SiriusSubToolJob(SiriusOptions cliOptions, JobSubmitter jobSubmitter) {
+    public SiriusSubToolJob(JobSubmitter jobSubmitter) {
         super(jobSubmitter, false);
-        this.cliOptions = cliOptions;
     }
-
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
@@ -62,27 +57,29 @@ public class SiriusSubToolJob extends InstanceJob {
         // set whiteSet or merge with whiteSet from db search if available
         Whiteset wSet = null;
 
-        checkForInterruption();
+        {
+            checkForInterruption();
 
-        // create WhiteSet from DB if necessary
-        //todo do we really want to restrict to organic even if the db is user selected
-        final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
-        if (searchDB.isPresent() && searchDB.get().containsDBs())
-            wSet = submitSubJob(new FormulaWhiteListJob(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp, true, false))
-                    .awaitResult();
+            // create WhiteSet from DB if necessary
+            //todo do we really want to restrict to organic even if the db is user selected
+            final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
+            if (searchDB.isPresent() && searchDB.get().containsDBs())
+                wSet = submitSubJob(new FormulaWhiteListJob(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp, true, false))
+                        .awaitResult();
 
-        checkForInterruption();
+            checkForInterruption();
 
 
-        // todo this should be moved to annotations at some point.
-        // so that the cli parser dependency can be removed
-        if (cliOptions.formulaWhiteSet != null) {
-            if (wSet != null)
-                wSet = wSet.add(cliOptions.formulaWhiteSet);
-            else
-                wSet = cliOptions.formulaWhiteSet;
+            // so that the cli parser dependency can be removed
+            if (exp.getAnnotation(CandidateFormulas.class).map(CandidateFormulas::formulas).map(Whiteset::notEmpty).orElse(false)) {
+                final Whiteset userFormulas = exp.getAnnotation(CandidateFormulas.class).map(CandidateFormulas::formulas).orElseThrow();
+                if (wSet != null)
+                    wSet = wSet.add(userFormulas);
+                else
+                    wSet = userFormulas;
+            }
+            exp.setAnnotation(Whiteset.class, wSet);
         }
-        exp.setAnnotation(Whiteset.class, wSet);
 
         checkForInterruption();
 
