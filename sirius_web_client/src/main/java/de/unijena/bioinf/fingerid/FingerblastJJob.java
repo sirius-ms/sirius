@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 // FingerID Scheduler job does not manage dependencies between different  tools.
 // this is done by the respective subtooljobs in the frontend
 public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
+//    public static final boolean enableConfidence = PropertyManager.getBoolean("de.unijena.bioinf.fingerid.confidence", false);
+
     // scoring provider
     private final CSIPredictor predictor;
     // input data
