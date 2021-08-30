@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ActFingerprintConfigPanel extends ActivatableConfigPanel<FingerprintConfigPanel> {
     public ActFingerprintConfigPanel(@NotNull final JCheckBoxList<String> sourceIonization) {
-        super("FP Prediction", Icons.FINGER_32, true, () -> new FingerprintConfigPanel(sourceIonization));
+        super("Predict FPs", Icons.FINGER_32, true, () -> new FingerprintConfigPanel(sourceIonization));
     }
 
     @Override

@@ -39,7 +39,11 @@ import java.awt.*;
 public class FormulaOverviewPanel extends JPanel implements PanelDescription {
     @Override
     public String getDescription() {
-        return "Overview about your Experiment and Results of the Formula Identification with Sirius";
+        return "<html>"
+                +"<b>SIRIUS - Molecular Formulas Identification</b>"
+                +"<br>"
+                + "Overview about your Experiment and Results of the Formula Identification with SIRIUS."
+                + "</html>";
     }
 
     public FormulaOverviewPanel(FormulaList suriusResultElements) {

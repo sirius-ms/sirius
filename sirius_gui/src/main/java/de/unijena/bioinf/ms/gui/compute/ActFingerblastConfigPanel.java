@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ActFingerblastConfigPanel extends ActivatableConfigPanel<FingerblastConfigPanel> {
     public ActFingerblastConfigPanel(@Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
-        super("Structure Search", Icons.FINGER_32, true, () -> new FingerblastConfigPanel(syncSource));
+        super("Search DBs", Icons.DB_LENS_32, true, () -> new FingerblastConfigPanel(syncSource));
         //todo change icon
     }
 

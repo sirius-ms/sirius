@@ -76,16 +76,16 @@ public class ResultPanel extends JTabbedPane {
 
         addTab("LC-MS", null, lcmsPanel, lcmsPanel.getDescription());
 
-        addTab("Sirius Overview", null, rvp, rvp.getDescription());
+        addTab("Formulas"/*""Sirius Overview"*/, null, rvp, rvp.getDescription());
         addTab("Spectra", null, new FormulaListHeaderPanel(siriusResultElements, svp), svp.getDescription());
         addTab("Trees", null, new FormulaListHeaderPanel(siriusResultElements, tvp), tvp.getDescription());
 
-        addTab("CSI:FingerID", null, new FormulaListHeaderPanel(siriusResultElements, ccv), ccv.getDescription());
-        addTab("Epimetheus", null, epi, epi.getDescription());
+        addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(siriusResultElements, fpt), fpt.getDescription());
 
-        if (fpt != null)
-            addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(siriusResultElements, fpt), fpt.getDescription());
-        addTab("CANOPUS", null, new FormulaListHeaderPanel(siriusResultElements, ccp), ccp.getDescription());
+        addTab("Structures", null, new FormulaListHeaderPanel(siriusResultElements, ccv), ccv.getDescription());
+        addTab("Structure Annotation", null, epi, epi.getDescription());
+
+        addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, ccp), ccp.getDescription());
 
         this.fl = siriusResultElements;
 

@@ -71,6 +71,9 @@ public abstract class Icons {
     public static final Icon DB_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db@0.5x.png"));
     public static final Icon DB_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db.png"));
 
+    public static final Icon DB_LENS_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens@0.5x.png"));
+    public static final Icon DB_LENS_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens.png"));
+
     public static final Icon GEAR_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear@0.5x.png"));
     public static final Icon GEAR_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear.png"));
 

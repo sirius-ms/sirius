@@ -143,8 +143,8 @@ public class DefaultLoadDialog extends JDialog implements LoadDialog, ActionList
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
         this.add(controlPanel, BorderLayout.SOUTH);
 
-        ok = new JButton("ok");
-        abort = new JButton("cancel");
+        ok = new JButton("Import");
+        abort = new JButton("Cancel");
         ok.addActionListener(this);
         abort.addActionListener(this);
         controlPanel.add(ok);
