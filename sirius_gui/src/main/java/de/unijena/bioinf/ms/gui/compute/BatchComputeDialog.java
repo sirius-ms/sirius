@@ -42,6 +42,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
+import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +83,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     private final List<InstanceBean> compoundsToProcess;
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
-        super(owner, "compute", true);
+        super(owner, "Compute", true);
 
         this.compoundsToProcess = compoundsToProcess;
 
@@ -90,7 +91,9 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         setLayout(new BorderLayout());
 
         mainPanel = Box.createVerticalBox();
+        mainPanel.setBorder(BorderFactory.createEmptyBorder());
         final JScrollPane mainSP = new JScrollPane(mainPanel);
+        mainSP.setBorder(BorderFactory.createEtchedBorder());
         mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         mainSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         mainSP.getVerticalScrollBar().setUnitIncrement(16);
@@ -131,10 +134,10 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
 
             csiPredictConfigs = new ActFingerprintConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList);
-            addConfigPanel("CSI:FingerID - Fingerprint Prediction", csiPredictConfigs);
+            JPanel csi = addConfigPanel("CSI:FingerID - Fingerprint Prediction", csiPredictConfigs);
 
             csiSearchConfigs = new ActFingerblastConfigPanel(formulaIDConfigPanel.content.searchDBList.checkBoxList);
-            addConfigPanel("CSI:FingerID - Structure DB Search", csiSearchConfigs);
+            addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs, csi);
 
             canopusConfigPanel = new ActCanopusConfigPanel();
             addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel);
@@ -187,12 +190,23 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         setVisible(true);
     }
 
-    private void addConfigPanel(String header, JPanel configPanel) {
+    private JPanel addConfigPanel(String header, JPanel configPanel, JPanel appendHorizontally) {
         JPanel stack = new JPanel();
         stack.setLayout(new BorderLayout());
-        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), header));
+        JXTitledSeparator title = new JXTitledSeparator(header);
+        title.setBorder(BorderFactory.createEmptyBorder(GuiUtils.MEDIUM_GAP, 0, GuiUtils.MEDIUM_GAP, GuiUtils.SMALL_GAP));
+        stack.add(title, BorderLayout.NORTH);
         stack.add(configPanel, BorderLayout.CENTER);
-        mainPanel.add(stack);
+        appendHorizontally.add(stack);
+        return appendHorizontally;
+    }
+
+    private JPanel addConfigPanel(String header, JPanel configPanel) {
+        JPanel flowContainer = new JPanel(new FlowLayout(FlowLayout.LEFT, GuiUtils.LARGE_GAP, GuiUtils.SMALL_GAP));
+        flowContainer.setBorder(BorderFactory.createEmptyBorder());
+        addConfigPanel(header, configPanel, flowContainer);
+        mainPanel.add(flowContainer);
+        return flowContainer;
     }
 
     private void configureActions() {
@@ -414,11 +428,12 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
     public void initSingleExperimentDialog() {
         JPanel north = new JPanel(new BorderLayout());
+        north.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP,0,GuiUtils.SMALL_GAP,0));
 
         InstanceBean ec = compoundsToProcess.get(0);
         editPanel = new ExperimentEditPanel(false);
         editPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Edit Input Data"));
-        north.add(editPanel, BorderLayout.NORTH);
+        north.add(editPanel, BorderLayout.CENTER);
 
         //todo beging ugly hack --> we want to manage this by the edit panel instead and fire edit panel events
         editPanel.formulaTF.getDocument().addDocumentListener(new DocumentListener() {

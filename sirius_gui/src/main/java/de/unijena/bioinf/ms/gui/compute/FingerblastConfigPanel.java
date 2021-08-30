@@ -19,8 +19,6 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
@@ -28,11 +26,8 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -47,7 +42,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
         super(FingerblastOptions.class);
 
         // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Search in DBs:");
+        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Search DBs");
         GuiUtils.assignParameterToolTip(searchDBList, "StructureSearchDB");
         parameterBindings.put("StructureSearchDB", () -> searchDBList.checkBoxList.getCheckedItems().isEmpty() ? null : String.join(",", getStructureSearchDBStrings()));
         add(searchDBList);

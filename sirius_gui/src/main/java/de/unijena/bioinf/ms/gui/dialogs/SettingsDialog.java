@@ -46,8 +46,6 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private NetworkSettingsPanel proxSettings;
     private GerneralSettingsPanel genSettings;
     private ErrorReportSettingsPanel errorSettings;
-//    private AccountSettingsPanel accountSettings;
-    //    private ILPSettings ilpSettings;
     private JTabbedPane settingsPane;
 
     public SettingsDialog(Frame owner) {
@@ -98,8 +96,8 @@ public class SettingsDialog extends JDialog implements ActionListener {
         save.addActionListener(this);
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttons.add(discard);
         buttons.add(save);
+        buttons.add(discard);
 
         add(buttons, BorderLayout.SOUTH);
 

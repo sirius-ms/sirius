@@ -38,9 +38,11 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
-                + "CSI:FingerID results with  Epimetheus annotations for all molecular formulas that had been searched."
+                +"<b>EPIMETHEUS - Sub-stucture annotations</b>"
+                +"<br>"
+                + "CSI:FingerID db search results with Epimetheus sub-structure annotations for all molecular formulas that had been searched."
                 + "<br>"
-                + "For the selected candidate structure, the bottom panel shows the spectrum with Epimetheus substructure annotation and corresponding fragmentation tree."
+                + "For the selected candidate structure, the bottom panel shows the spectrum with Epimetheus substructure annotations."/* and corresponding fragmentation tree*/
                 + "</html>";
     }
 
@@ -48,11 +50,11 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
         super(new BorderLayout());
 
         final CandidateListTableView north = new CandidateListTableView(structureList);
-        final TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
+//        final TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
         final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY, false);
 
         // Class to synchronize selected peak/node
-        VisualizationPanelSynchronizer synchronizer = new VisualizationPanelSynchronizer(overviewTVP, overviewSVP);
+//        VisualizationPanelSynchronizer synchronizer = new VisualizationPanelSynchronizer(overviewTVP, overviewSVP);
  
 //
         north.getFilteredSelectionModel().addListSelectionListener(e -> {
@@ -60,14 +62,14 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
             FingerprintCandidateBean sre = selections.getSelected().stream().findFirst().orElse(null);
             FormulaResultBean form = sre != null ? sre.getFormulaResult() : null;
             InstanceBean inst = form != null ? form.getInstance() : null;
-            overviewTVP.resultsChanged(inst, form, null, null);
+//            overviewTVP.resultsChanged(inst, form, null, null);
             overviewSVP.resultsChanged(inst, form, sre != null ? sre.getFingerprintCandidate() : null);
         });
 
-        JSplitPane south = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, overviewSVP, overviewTVP);
-        south.setDividerLocation(.5d);
-        south.setResizeWeight(.5d);
-        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, north, south);
+//        JSplitPane south = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, overviewSVP, overviewTVP);
+//        south.setDividerLocation(.5d);
+//        south.setResizeWeight(.5d);
+        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, north, overviewSVP);
         major.setDividerLocation(250);
         add(major, BorderLayout.CENTER);
     }

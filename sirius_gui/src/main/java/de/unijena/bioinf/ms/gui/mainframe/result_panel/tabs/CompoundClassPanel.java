@@ -34,7 +34,11 @@ public class CompoundClassPanel extends JPanel implements PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
-                + "Detailed information about the PREDICTED Classyfire compound classes of the selected molecular formula."
+                +"<b>CANOPUS - Compound Class Prediction</b>"
+                +"<br>"
+                + "Detailed information about the PREDICTED <b>Classyfire</b> and <b>Natural Product</b> "
+                +"<br>"
+                + "compound classes of the selected molecular formula."
 //                +"<br>"
 //                + "Example structures for a selected molecular property are shown in the bottom panel."
                 + "</html>";
