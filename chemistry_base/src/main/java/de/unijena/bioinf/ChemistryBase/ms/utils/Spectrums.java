@@ -47,6 +47,9 @@ public class Spectrums {
     public static Spectrum<Peak> wrap(float[] mz, float[] intensities) {
         return new ArrayWrapperSpectrum.Float(mz, intensities);
     }
+    public static Spectrum<Peak> wrap(double[] mz, float[] intensities) {
+        return new ArrayWrapperSpectrum.DoubleFloat(mz, intensities);
+    }
 
     public static <P extends Peak> Spectrum<P> wrap(final List<P> peaks) {
         return new Spectrum<P>() {
