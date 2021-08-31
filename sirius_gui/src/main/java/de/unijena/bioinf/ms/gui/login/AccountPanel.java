@@ -27,7 +27,6 @@ import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -101,7 +100,11 @@ public class AccountPanel extends JPanel {
                 LoggerFactory.getLogger(getClass()).warn("Could not load profile image: " + e.getMessage());
                 userIconLabel.setIcon(Icons.USER_128);
             }
-            userInfoLabel.setText("<html>Logged in as:<br><b>" + userInfo.getClaim("email").asString() + "</b></html>");
+            userInfoLabel.setText("<html>Logged in as:<br><b>"
+                    + userInfo.getClaim("email").asString() + "</b>"
+                    + "<br>"
+                    + "(" + userInfo.getClaim("sub").asString() + ")"
+                    + "</html>");
             create.setAction(SiriusActions.DELETE_ACCOUNT.getInstance());
             login.setAction(SiriusActions.SIGN_OUT.getInstance());
         }
