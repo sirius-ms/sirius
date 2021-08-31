@@ -28,6 +28,7 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -113,6 +114,18 @@ public abstract class AbstractClient {
         }
     }
 
+    @Nullable
+    public LicenseInfo getLicenseInfo(@NotNull CloseableHttpClient client) throws IOException {
+        return executeFromJson(client,
+                () -> {
+                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/license.json").build());
+                    final int timeoutInSeconds = 8000;
+                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                    return get;
+                }, new TypeReference<>() {}
+        );
+    }
+
     public boolean deleteAccount(@NotNull CloseableHttpClient client){
         try {
             execute(client, () -> {
@@ -184,11 +197,11 @@ public abstract class AbstractClient {
     }
 
     public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, R tr) throws IOException {
-        return execute(client, request, r -> new ObjectMapper().readValue(r, tr));
+        return execute(client, request, r -> r != null && r.ready() ? new ObjectMapper().readValue(r, tr) : null);
     }
 
     public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest,  R tr) throws IOException {
-        return execute(client, makeRequest, r -> new ObjectMapper().readValue(r, tr));
+        return execute(client, makeRequest, r -> r != null && r.ready() ? new ObjectMapper().readValue(r, tr) : null);
     }
 
     @NotNull

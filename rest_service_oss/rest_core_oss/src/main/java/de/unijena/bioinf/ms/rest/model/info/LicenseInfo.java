@@ -21,15 +21,20 @@
 package de.unijena.bioinf.ms.rest.model.info;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.sql.Date;
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LicenseInfo {
     private String licensee;
+    private String description;
+    private String groupID;
+    private Date expirationDate;
     private boolean countQueries;
     private int compoundLimit;
     private int countedCompounds = -1;
-    private int maxRecordingTimeHoursCompoundHash;
+    private int compoundHashRecordingTime;
     private int maxQueriesPerCompound;
-
 
     public String getLicensee() {
         return licensee;
@@ -47,12 +52,12 @@ public class LicenseInfo {
         this.countQueries = countQueries;
     }
 
-    public int getMaxRecordingTimeHoursCompoundHash() {
-        return maxRecordingTimeHoursCompoundHash;
+    public int getCompoundHashRecordingTime() {
+        return compoundHashRecordingTime;
     }
 
-    public void setMaxRecordingTimeHoursCompoundHash(int maxRecordingTimeHoursCompoundHash) {
-        this.maxRecordingTimeHoursCompoundHash = maxRecordingTimeHoursCompoundHash;
+    public void setCompoundHashRecordingTime(int timeInHours) {
+        this.compoundHashRecordingTime = timeInHours;
     }
 
     public int getMaxQueriesPerCompound() {
@@ -79,8 +84,70 @@ public class LicenseInfo {
         this.countedCompounds = countedCompounds;
     }
 
+    public String getGroupID() {
+        return groupID;
+    }
+
+    public void setGroupID(String groupID) {
+        this.groupID = groupID;
+    }
+
+    public Date getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(Date expirationDate) {
+        this.expirationDate = expirationDate;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    @JsonIgnore
+    public boolean hasExpirationTime(){
+        return getExpirationDate() != null;
+    }
+
+    @JsonIgnore
+    public boolean isExpired() {
+        if (!hasExpirationTime())
+            return false;
+        return getExpirationDate().getTime() < System.currentTimeMillis();
+    }
+
+    @JsonIgnore
+    public long getExpirationTime() {
+        if (expirationDate == null)
+            return -1;
+        return expirationDate.getTime();
+    }
+
+    @JsonIgnore
+    public void setExpirationTime(long expirationDate) {
+        this.expirationDate = new Date(expirationDate);
+    }
+
+
     @JsonIgnore
     public boolean hasCompoundLimit() {
         return getCompoundLimit() > 0;
+    }
+
+    @JsonIgnore
+    public LicenseInfo copyWithCounted(int countedCompounds){
+        LicenseInfo nu  = new LicenseInfo();
+        nu.setCountedCompounds(countedCompounds);
+        nu.setLicensee(getLicensee());
+        nu.setCountQueries(isCountQueries());
+        nu.setCompoundHashRecordingTime(getCompoundHashRecordingTime());
+        nu.setMaxQueriesPerCompound(getMaxQueriesPerCompound());
+        nu.setGroupID(getGroupID());
+        nu.setExpirationDate(getExpirationDate());
+        return nu;
     }
 }

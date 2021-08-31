@@ -207,7 +207,7 @@ public final class WebAPI {
     }
 
     public LicenseInfo getLicenseInfo() throws IOException {
-        return ProxyManager.applyClient(serverInfoClient::getLicenseInfo);
+        return ProxyManager.applyClient(jobsClient::getLicenseInfo);
     }
 
     public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {

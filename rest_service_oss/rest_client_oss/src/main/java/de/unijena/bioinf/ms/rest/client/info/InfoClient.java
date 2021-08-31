@@ -26,7 +26,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.News;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
@@ -60,7 +59,6 @@ public class InfoClient extends AbstractClient {
     private static final Logger LOG = LoggerFactory.getLogger(InfoClient.class);
     private static final String WEBAPI_VERSION_JSON = "/version.json";
     private static final String WEBAPI_WORKER_JSON = "/workers.json";
-    private static final String WEBAPI_LICENSE_JSON = "/license.json";
     private static final String WEBAPI_TERMS_JSON = "/terms.json";
 
     public InfoClient(@NotNull URI serverUrl) {
@@ -163,17 +161,6 @@ public class InfoClient extends AbstractClient {
         );
     }
 
-    @Nullable
-    public LicenseInfo getLicenseInfo(@NotNull CloseableHttpClient client) throws IOException {
-        return executeFromJson(client,
-                () -> {
-                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_LICENSE_JSON).build());
-                    final int timeoutInSeconds = 8000;
-                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
-                    return get;
-                }, new TypeReference<>() {}
-        );
-    }
 
     public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME, @NotNull CloseableHttpClient client) throws IOException {
         return execute(client,

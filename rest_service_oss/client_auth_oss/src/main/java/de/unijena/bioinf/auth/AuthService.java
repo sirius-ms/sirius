@@ -98,7 +98,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
             LoggerFactory.getLogger(getClass()).warn("Error when refreshing access_token with current refresh_token.", e);
             return false;
         } finally {
-            tokenLock.writeLock().lock();
+            tokenLock.writeLock().unlock();
         }
         return true;
     }
