@@ -80,9 +80,13 @@ public class TableSelection implements Cloneable {
     }
 
     public TableSelection(PeriodicTable pt, Collection<Element> elements) {
+        this(pt,elements,false);
+    }
+
+    public TableSelection(PeriodicTable pt, Collection<Element> elements, boolean enforceOrder) {
         this.pt = pt;
         entries = elements.toArray(new Element[elements.size()]);
-        Arrays.sort(entries);
+        if (!enforceOrder) Arrays.sort(entries);
         element2Index = new short[pt.numberOfElements()];
         Arrays.fill(element2Index, (short)-1);
         for (int i=0; i < entries.length; ++i) {
@@ -106,6 +110,24 @@ public class TableSelection implements Cloneable {
     @Override
     public TableSelection clone() {
     	return new TableSelection(this);
+    }
+
+    public boolean isSubsetOf(TableSelection superset) {
+        for (int k=0; k < entries.length; ++k) {
+            if (!superset.get(k).equals(entries[k])) return false;
+        }
+        return true;
+    }
+
+    public void replace(TableSelection superset) {
+        if (!isSubsetOf(superset)) throw new IllegalArgumentException("Cannot replace table selection " + this + " with " + superset);
+        this.entries = superset.entries;
+        this.element2Index = superset.element2Index;
+        this.bitmask = superset.bitmask;
+        this.carbonIndex = superset.carbonIndex;
+        this.hydrogenIndex = superset.hydrogenIndex;
+        this.oxygenIndex = superset.oxygenIndex;
+        this.nitrogenIndex = superset.nitrogenIndex;
     }
 
     public boolean extendElements(Element... elems) {
@@ -238,6 +260,10 @@ public class TableSelection implements Cloneable {
         final int id = element2Index[character.getId()];
         if (id < 0) throw new NoSuchElementException("Selection " + this + " does not contain element '" + character + "'" );
         return id;
+    }
+
+    public static int formulaBufferSize(MolecularFormula formula) {
+        return formula.buffer().length;
     }
 
     public short[] makeCompomer() {

@@ -111,6 +111,24 @@ class TableSelectionCache {
 			this.optimal = optimal;
 		}
 	}
+
+	TableSelection addToCache(TableSelection selection) {
+		lock.writeLock().lock();
+		++modificationCount;
+		TableSelection best;
+		try {
+			final SearchResult result = searchForSelection(selection.bitmask);
+			if (result.selection.isSubsetOf(selection)) {
+				result.selection.replace(selection);
+				return result.selection;
+			} else {
+				cache.add(selection);
+				return selection;
+			}
+		} finally {
+			lock.writeLock().unlock();
+		}
+	}
 	
 	private TableSelection addToCache(BitSet bitset) {
         final boolean commonPt = !(Arrays.asList(table.getAllByName(START_SET_ARRAY)).contains(null));
