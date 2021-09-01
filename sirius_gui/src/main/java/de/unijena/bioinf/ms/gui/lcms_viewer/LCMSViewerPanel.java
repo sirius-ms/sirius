@@ -41,8 +41,15 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
     }
 
     public String getDescription() {
-        return "Chromatographic Peak of the ion in LC-MS.";
-
+        return "<html>"
+                +"<b>LC-MS and Data Quality Viewer</b>"
+                +"<br>"
+                + "Shows the chromatographic peak of the ion in LC-MS on the left panel"
+                +"<br>"
+                + "Shows data quality information on the right panel"
+                +"<br>"
+                + "Note: Only available if feature finding was performed by SIRIUS (mzml/mzXML)"
+                + "</html>";
     }
 
     @Override

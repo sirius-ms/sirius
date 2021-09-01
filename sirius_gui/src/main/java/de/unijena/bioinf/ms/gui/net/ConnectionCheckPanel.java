@@ -90,19 +90,20 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         addVerticalGlue();
 
         String licensee = license == null ? "N/A" : license.getLicensee();
+        String description = license == null ? null : license.getDescription();
 
         if (workerInfoList != null) {
             refreshPanel(
                     state,
                     workerInfoList.getActiveSupportedTypes(Instant.ofEpochSecond(600)),
-                    workerInfoList.getPendingJobs(), userId,  licensee, terms
+                    workerInfoList.getPendingJobs(), userId,  licensee, description, terms
             );
         } else {
-            refreshPanel(state, EnumSet.noneOf(PredictorType.class), Integer.MIN_VALUE, userId, licensee, terms);
+            refreshPanel(state, EnumSet.noneOf(PredictorType.class), Integer.MIN_VALUE, userId, licensee, description, terms);
         }
     }
 
-    public void refreshPanel(final int state, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userId, @NotNull String licensee, @Nullable List<Term> terms) {
+    public void refreshPanel(final int state, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userId, @NotNull String licensee, @Nullable String description, @Nullable List<Term> terms) {
         internet.setState(state > 1 || state <= 0);
         hoster.setState(state > 2 || state <= 0);
         domain.setState(state > 3 || state <= 0);
@@ -111,7 +112,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         auth.setState(userId != null);
         authPermission.setState(state == 0);
 
-        if (auth.isTrue()){
+        if (auth.isTrue()) {
             authLabel.setText(userId != null ? "Authenticated as '" + userId + "'." : "Authenticated?");
         }else {
             authLabel.setText("Not authenticated!");
@@ -127,8 +128,10 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
         add(resultPanel, 15, true);
 
-        add(new JXTitledSeparator("Webservice License"), 15, false);
-        add(new JLabel("<html>Licensed to: <b> " + licensee + " </b></html>"), 5, false);
+        add(new JXTitledSeparator("License"), 15, false);
+        add(new JLabel("<html>Licensed to: <b> " + licensee
+                + (description != null ? " (" + description + ")" : "")
+                + "</b></html>"), 5, false);
 
         revalidate();
         repaint();
