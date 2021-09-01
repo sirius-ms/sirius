@@ -150,7 +150,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
                     checkForInterruption();
                     ll = ApplicationCore.WEB_API.getLicenseInfo();
                     if (ll != null && ll.isCountQueries())
-                        ll.setCountedCompounds(ApplicationCore.WEB_API.getCountedJobs(true));
+                        ll.setCountedCompounds(ApplicationCore.WEB_API.getCountedJobs(!ll.hasCompoundLimit())); //yearly if there is compound limit
                 } else if (connectionState == 8) {
                     conState = ConnectionState.TERMS;
                 } else if (connectionState == 9) {

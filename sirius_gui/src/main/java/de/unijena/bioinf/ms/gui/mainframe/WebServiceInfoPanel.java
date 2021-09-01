@@ -61,13 +61,13 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
         final ConnectionMonitor.ConnectionUpdateEvent cevt = (ConnectionMonitor.ConnectionUpdateEvent) evt;
         ConnectionMonitor.ConnetionCheck check = cevt.getConnectionCheck();
         if (check.license != null) {
-            license.setText("License: " + check.license.getLicensee() + (check.license.getDescription() == null ? "" : " (" + check.license.getDescription() + ")"));
+            license.setText("<html>License: <b>" + check.license.getLicensee() + "</b>" + (check.license.getDescription() == null ? "" : " (" + check.license.getDescription() + ")</html>"));
             if (check.license.isCountQueries()) {
                 String max = check.license.hasCompoundLimit() ? String.valueOf(check.license.getCompoundLimit()) : INF;
                 String current = check.license.getCountedCompounds() < 0 ? "N/A" :  String.valueOf(check.license.getCountedCompounds());
-                consumedCompounds.setText("Compounds: " + current + "/" + max);
+                consumedCompounds.setText("<html>Compounds: <b>" + current + "/" + max + "</b> (per " + (check.license.hasCompoundLimit() ? "Year" : "Month") + ")</html>");
             } else {
-                consumedCompounds.setText("Compounds: 'UNLIMITED'");
+                consumedCompounds.setText("<html>Compounds: <b>UNLIMITED</b></html>");
             }
         } else {
             license.setText("License: '?'");
@@ -75,7 +75,7 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
         }
 
         if (check.workerInfo != null) {
-            pendingJobs.setText("Jobs: " + check.workerInfo.getPendingJobs());
+            pendingJobs.setText("<html>Jobs: <b>" + check.workerInfo.getPendingJobs() + "</b></html>");
         } else {
             pendingJobs.setText("Jobs: ?");
         }
