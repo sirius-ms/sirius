@@ -44,9 +44,9 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         return "<html>"
                 +"<b>LC-MS and Data Quality Viewer</b>"
                 +"<br>"
-                + "Shows the chromatographic peak of the ion in LC-MS on the left panel"
+                + "Shows the chromatographic peak of the ion in LC-MS (left panel)"
                 +"<br>"
-                + "Shows data quality information on the right panel"
+                + "Shows data quality information (right panel)"
                 +"<br>"
                 + "Note: Only available if feature finding was performed by SIRIUS (mzml/mzXML)"
                 + "</html>";
