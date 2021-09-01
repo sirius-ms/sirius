@@ -68,9 +68,13 @@ public class TreeVisualizationPanel extends JPanel
         dot, json, jpg, png, gif, svg, pdf, none
     }
 
+    @Override
     public String getDescription() {
-        return "Visualization of the Fragmentation tree " +
-                "for the selected molecular formula (JS)";
+        return "<html>"
+                +"<b>Fragmentation Tree Viewer</b>"
+                +"<br>"
+                + "Interactive visualization of the Fragmentation tree for the selected molecular formula."
+                + "</html>";
     }
 
     //    FormulaResultBean sre;

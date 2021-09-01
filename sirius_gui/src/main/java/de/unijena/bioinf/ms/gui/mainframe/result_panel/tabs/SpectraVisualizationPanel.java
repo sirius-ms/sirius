@@ -77,7 +77,15 @@ public class SpectraVisualizationPanel
 				   ActiveElementChangedListener<FormulaResultBean, InstanceBean>{
 	@Override
 	public String getDescription() {
-		return "Spectra visualisation. Peaks that are explained by the Fragmentation tree of the selected molecular formula are highlighted in red";
+		return "<html>"
+				+ "<b>Spectra Viewer</b>"
+				+ "<br>"
+				+ "Shows MS1, MS1 vs Simulated Isotope Pattern and MS/MS spectra."
+				+ "<br>"
+				+ "MS1: Isotope pattern highlighted in blue."
+				+ "<br>"
+				+ "MS/MS: Peaks that are explained by the Fragmentation tree of the selected molecular formula are highlighted in green."
+				+ "</html>";
 	}
 
 	public static final String MS1_DISPLAY = "MS1", MS1_MIRROR_DISPLAY = "MS1 mirror-plot", MS2_DISPLAY = "MS2",

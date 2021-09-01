@@ -31,7 +31,9 @@ import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -55,6 +57,11 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
     @CommandLine.Option(names = "--show",
             description = {"Show profile information about the profile you are logged in with."})
     protected boolean showProfile;
+
+    //SHOW License info
+    @CommandLine.Option(names = {"--license", "--limits"},
+            description = {"Show license information and compound limits."})
+    protected boolean showLicense;
 
 
     //SET Account
@@ -114,6 +121,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
                         List<Term> terms = ApplicationCore.WEB_API.getTerms();
 
+                        System.out.println();
                         System.out.println("###################### Accept Terms ######################");
                         System.out.println("I agree to the ");
                         System.out.println(Term.toText(terms));
@@ -130,6 +138,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                             AuthServices.clearRefreshToken(ApplicationCore.TOKEN_FILE);
                             return;
                         }
+                        System.out.println();
 
                     }
 
@@ -150,17 +159,54 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                     throw new RuntimeException(e);
                 }
             }
+
+            if (showLicense)
+                try {
+                    showLicense();
+                } catch (IOException e) {
+                    throw new RuntimeException("Error when requesting license information.", e);
+                }
+
+
         }
 
         private void showProfile(@Nullable DecodedJWT decoded) {
+            System.out.println();
             System.out.println("####################### Login Info #######################");
             if (decoded != null) {
-                System.out.println("Logged in as: " + decoded.getClaim("name"));
+                System.out.println("Logged in as: " + decoded.getClaim("name").asString());
+                System.out.println("User ID: " + decoded.getClaim("sub").asString());
                 System.out.println("Token expires at: " + decoded.getExpiresAt().toString());
-            }else {
+            } else {
                 System.out.println("Not logged in.");
             }
             System.out.println("##########################################################");
+            System.out.println();
+        }
+
+        private void showLicense() throws IOException {
+            WebAPI api = ApplicationCore.WEB_API;
+            final LicenseInfo licenseInfo = api.getLicenseInfo();
+
+            System.out.println();
+            System.out.println("###################### License Info ######################");
+            if (licenseInfo != null) {
+                System.out.println("Licensed to: " + licenseInfo.getLicensee() + " (" + licenseInfo.getDescription() + ")");
+                System.out.println("Expires at: " + (licenseInfo.hasExpirationTime() ? licenseInfo.getExpirationDate().toString() : "NEVER"));
+                if (licenseInfo.isCountQueries()) {
+                    if (licenseInfo.hasCompoundLimit()) {
+                        int year = api.getCountedJobs(false);
+                        System.out.println("Compounds Computed (Yearly): " + year + " of " + licenseInfo.getCompoundLimit());
+                    } else {
+                        int month = api.getCountedJobs(true);
+                        System.out.println("Compounds Computed (Monthly): " + month);
+                    }
+                }
+            } else {
+                System.out.println("Not License information found.");
+            }
+            System.out.println("##########################################################");
+            System.out.println();
         }
     }
 }
