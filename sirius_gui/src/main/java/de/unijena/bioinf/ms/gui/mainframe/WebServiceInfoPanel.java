@@ -61,7 +61,7 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
         final ConnectionMonitor.ConnectionUpdateEvent cevt = (ConnectionMonitor.ConnectionUpdateEvent) evt;
         ConnectionMonitor.ConnetionCheck check = cevt.getConnectionCheck();
         if (check.license != null) {
-            license.setText("License: " + check.license.getLicensee() + " (" + check.license.getDescription() + ")");
+            license.setText("License: " + check.license.getLicensee() + (check.license.getDescription() == null ? "" : " (" + check.license.getDescription() + ")"));
             if (check.license.isCountQueries()) {
                 String max = check.license.hasCompoundLimit() ? String.valueOf(check.license.getCompoundLimit()) : INF;
                 String current = check.license.getCountedCompounds() < 0 ? "N/A" :  String.valueOf(check.license.getCountedCompounds());
