@@ -28,11 +28,11 @@ jobs:
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
       - name: Load Build properties
-        uses: madhead/read-java-properties@latest
-        id: props
+        id: sirius_version
+        uses: christian-draeger/read-properties@1.0.1
         with:
-          file: sirius_cli/src/main/resources/sirius_frontend.build.properties
-          all: true
+          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
+          property: 'de.values.unijena.bioinf.siriusFrontend.version'
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         with:
@@ -42,7 +42,7 @@ jobs:
       - name: Upload Distributions
         uses: actions/upload-artifact@v2
         with:
-          name: "sirius-${{ steps.props.de.values.unijena.bioinf.siriusFrontend.version }}-${{ runner.os }}64-headless.zip"
+          name: "sirius-${{ steps.read_sirius_version.outputs.value }}-${{ runner.os }}64-headless.zip"
           path: sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip
 #  distGUI:
 #    strategy:
