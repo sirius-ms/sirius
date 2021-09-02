@@ -29,10 +29,10 @@ jobs:
           architecture: x64 # (x64 or x86) - defaults to x64
       - name: Load Build properties
         id: sirius_version
-        uses: christian-draeger/read-properties@1.0.1
+        uses: Reedyuk/read-properties@v1.0.1
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
-          property: 'de.values.unijena.bioinf.siriusFrontend.version'
+          property: 'de.unijena.bioinf.siriusFrontend.version'
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         with:
