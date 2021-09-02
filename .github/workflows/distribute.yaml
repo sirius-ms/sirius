@@ -37,9 +37,9 @@ jobs:
         with:
 #          name: my-artifact
           path: |
-          sirius_dist/sirius_cli_single_os/build/distributions/*.zip
-          sirius_dist/sirius_cli_single_os/build/distributions/*.msi
-          sirius_dist/sirius_cli_single_os/build/distributions/*.pkg
+            sirius_dist/sirius_cli_single_os/build/distributions/*.zip
+            sirius_dist/sirius_cli_single_os/build/distributions/*.msi
+            sirius_dist/sirius_cli_single_os/build/distributions/*.pkg
   distGUI:
     strategy:
       matrix:
