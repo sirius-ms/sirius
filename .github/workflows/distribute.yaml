@@ -31,7 +31,7 @@ jobs:
         with:
           gradle-version: 6.8
           build-root-directory: sirius_dist/sirius_cli_single_os
-          arguments: clean artifactoryPublish
+          arguments: clean distribution
       - name: Upload Distributions
         uses: actions/upload-artifact@v2
         with:
