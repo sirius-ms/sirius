@@ -110,6 +110,7 @@ task downloadGLPK(type: Download) {
     dest getBuildDir().toPath().resolve('tmp').resolve(fname).toFile()
     onlyIfModified true
     overwrite false
+    retries 2
     doLast {
         if (!state.getUpToDate()) {
             copy {
@@ -131,6 +132,7 @@ task downloadCLP(type: Download) {
     dest getBuildDir().toPath().resolve('tmp').resolve(fname).toFile()
     onlyIfModified true
     overwrite false
+    retries 2
     doLast {
         if (!state.getUpToDate()) {
             copy {
