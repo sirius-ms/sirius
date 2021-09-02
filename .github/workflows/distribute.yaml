@@ -82,9 +82,9 @@ jobs:
         with:
           name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64.zip"
           path: |
-            sirius_dist/sirius_cli_single_os/build/distributions/*.zip
-            sirius_dist/sirius_cli_single_os/build/distributions/*.msi
-            sirius_dist/sirius_cli_single_os/build/distributions/*.pkg
+            sirius_dist/sirius_gui_single_os/build/distributions/*.zip
+            sirius_dist/sirius_gui_single_os/build/distributions/*.msi
+            sirius_dist/sirius_gui_single_os/build/distributions/*.pkg
 #  distMulti:
 #    needs: distCLI
 #    runs-on: ubuntu-latest
