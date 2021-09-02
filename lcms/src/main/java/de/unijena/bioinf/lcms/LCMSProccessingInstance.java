@@ -229,11 +229,11 @@ public class LCMSProccessingInstance {
         });
         System.out.printf("Multiple possibilities: %d times (%.2f %%)\n", ncompounds[0]-other[0], (ncompounds[0]-other[0]+0d)*100.0d/ncompounds[0] );
 
-        try {
+        /*try {
             network.writeToFile(this, new File("/home/kaidu/network.json"));
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
 
         return network;
     }
