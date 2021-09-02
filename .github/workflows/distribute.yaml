@@ -42,43 +42,49 @@ jobs:
       - name: Upload Zip Distributions
         uses: actions/upload-artifact@v2
         with:
-          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}x86-64-headless.zip"
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64-headless.zip"
           path: |
             sirius_dist/sirius_cli_single_os/build/distributions/*.zip
             sirius_dist/sirius_cli_single_os/build/distributions/*.msi
             sirius_dist/sirius_cli_single_os/build/distributions/*.pkg
-#  distGUI:
-#    strategy:
-#      matrix:
-#        os: [ubuntu-latest, windows-latest, macos-latest]
-#    runs-on: ${{ matrix.os }}
-#    env:
-#      # assign the environment variable env.ARTIFACTORY_TOKEN_REF with the previously configured ARTIFACTORY_TOKEN
-#      ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
-#      # assign the environment variable env.ARTIFACTORY_USERNAME_REF with the previously configured ARTIFACTORY_USERNAME
-#      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Set up Zulu JDK-FX 15
-#        uses: actions/setup-java@v1
-#        with:
-#          java-version: '15' # The JDK version to make available on the path.
-#          java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
-#          architecture: x64 # (x64 or x86) - defaults to x64
-#      - name: Gradle Build
-#        uses: eskatos/gradle-command-action@v1
-#        with:
-#          gradle-version: 6.8
-#          build-root-directory: sirius_dist/sirius_gui_single_os
-#          arguments: clean distribution
-#      - name: Upload Distributions
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: "sirius-cli-$RUNNER_OS"
-#          path: |
-#            sirius_dist/sirius_cli_single_os/build/distributions/*.zip
-#            sirius_dist/sirius_cli_single_os/build/distributions/*.msi
-#            sirius_dist/sirius_cli_single_os/build/distributions/*.pkg
+  distGUI:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      # assign the environment variable env.ARTIFACTORY_TOKEN_REF with the previously configured ARTIFACTORY_TOKEN
+      ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
+      # assign the environment variable env.ARTIFACTORY_USERNAME_REF with the previously configured ARTIFACTORY_USERNAME
+      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Zulu JDK-FX 15
+        uses: actions/setup-java@v1
+        with:
+          java-version: '15' # The JDK version to make available on the path.
+          java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+      - name: Load Build properties
+        id: sirius_version
+        uses: Reedyuk/read-properties@v1.0.1
+        with:
+          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
+          property: 'de.unijena.bioinf.siriusFrontend.version'
+      - name: Gradle Build
+        uses: eskatos/gradle-command-action@v1
+        with:
+          gradle-version: 6.8
+          build-root-directory: sirius_dist/sirius_gui_single_os
+          arguments: clean distribution
+      - name: Upload Zip Distributions
+        uses: actions/upload-artifact@v2
+        with:
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64.zip"
+          path: |
+            sirius_dist/sirius_cli_single_os/build/distributions/*.zip
+            sirius_dist/sirius_cli_single_os/build/distributions/*.msi
+            sirius_dist/sirius_cli_single_os/build/distributions/*.pkg
 #  distMulti:
 #    needs: distCLI
 #    runs-on: ubuntu-latest
