@@ -27,6 +27,12 @@ jobs:
           java-version: '15' # The JDK version to make available on the path.
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
+      - name: Load Build properties
+        uses: madhead/read-java-properties@latest
+        id: props
+        with:
+          file: sirius_cli/src/main/resources/sirius_frontend.build.properties
+          all: true
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         with:
@@ -36,11 +42,8 @@ jobs:
       - name: Upload Distributions
         uses: actions/upload-artifact@v2
         with:
-#          name: my-artifact
-          path: |
-            sirius_dist/sirius_cli_single_os/build/distributions/*.zip
-            sirius_dist/sirius_cli_single_os/build/distributions/*.msi
-            sirius_dist/sirius_cli_single_os/build/distributions/*.pkg
+          name: "sirius-${{ steps.props.de.values.unijena.bioinf.siriusFrontend.version }}-${{ runner.os }}64-headless.zip"
+          path: sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip
 #  distGUI:
 #    strategy:
 #      matrix:
@@ -64,7 +67,15 @@ jobs:
 #        with:
 #          gradle-version: 6.8
 #          build-root-directory: sirius_dist/sirius_gui_single_os
-#          arguments: clean artifactoryPublish
+#          arguments: clean distribution
+#      - name: Upload Distributions
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: "sirius-cli-$RUNNER_OS"
+#          path: |
+#            sirius_dist/sirius_cli_single_os/build/distributions/*.zip
+#            sirius_dist/sirius_cli_single_os/build/distributions/*.msi
+#            sirius_dist/sirius_cli_single_os/build/distributions/*.pkg
 #  distMulti:
 #    needs: distCLI
 #    runs-on: ubuntu-latest
@@ -86,4 +97,9 @@ jobs:
 #        with:
 #          gradle-version: 6.8
 #          build-root-directory: sirius_dist/sirius_cli_multi_os
-#          arguments: clean artifactoryPublish
+#          arguments: clean distribution
+#      - name: Upload Distributions
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: "sirius-cli-multiOS.zip"
+#          path: sirius_dist/sirius_cli_single_os/build/distributions/sirius_cli_multi_os.zip

@@ -197,3 +197,4 @@ publishing {
         }
     }
 }
+publishSiriusPublicationToMavenLocal.dependsOn 'distribution'
