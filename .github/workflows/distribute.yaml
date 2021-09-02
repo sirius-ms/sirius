@@ -36,10 +36,8 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
 #          name: my-artifact
-          path: |
-            sirius_dist/sirius_cli_single_os/build/distributions/*.zip
-            sirius_dist/sirius_cli_single_os/build/distributions/*.msi
-            sirius_dist/sirius_cli_single_os/build/distributions/*.pkg
+          path: sirius_dist/sirius_cli_single_os/build/distributions/*.zip
+
   distGUI:
     strategy:
       matrix:
