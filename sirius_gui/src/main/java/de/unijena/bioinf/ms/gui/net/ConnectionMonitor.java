@@ -145,8 +145,12 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
                 checkForInterruption();
                 tt = ApplicationCore.WEB_API.getTerms();
                 checkForInterruption();
-                if (connectionState == 0 && wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors")))) {
-                    conState = ConnectionState.YES;
+                if (connectionState == 0) {
+                    if (wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors"))))
+                        conState = ConnectionState.YES;
+                    else
+                        conState = ConnectionState.WARN;
+
                     checkForInterruption();
                     ll = ApplicationCore.WEB_API.getLicenseInfo();
                     if (ll != null && ll.isCountQueries())
