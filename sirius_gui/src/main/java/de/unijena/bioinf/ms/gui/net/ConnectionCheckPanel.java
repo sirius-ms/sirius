@@ -70,7 +70,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     final BooleanJlabel authPermission = new BooleanJlabel();
     private final JDialog owner;
 
-    JLabel authLabel = new JLabel("Authenticated?");
+    JLabel authLabel = new JLabel("Authenticated ?  ");
     JPanel resultPanel = null;
 
     public ConnectionCheckPanel(@Nullable JDialog owner, int state, @Nullable WorkerList workerInfoList, String userId, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
@@ -78,10 +78,10 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         this.owner = owner;
 
         add(new JXTitledSeparator("Connection check:"), 15, false);
-        add(new JLabel("Connection to the internet (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external") + ")"), internet, 5, false);
+        add(new JLabel("Connection to the internet (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external") + ")  "), internet, 5, false);
         add(new JLabel("Connection to domain provider"), hoster, 5, false);
-        add(new JLabel("Connection to domain (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.domain") + ")"), domain, 5, false);
-        add(new JLabel("Connection to CSI:FingerID Server (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host") + ")"), fingerID, 5, false);
+        add(new JLabel("Connection to domain (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.domain") + ")  "), domain, 5, false);
+        add(new JLabel("Connection to CSI:FingerID Server (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host") + ")  "), fingerID, 5, false);
         add(new JLabel("Check CSI:FingerID REST API"), fingerID_WebAPI, 5, false);
         add(new JLabel("All necessary workers available?"), fingerID_Worker, 5, false);
         add(authLabel, auth, 5, false);
@@ -113,9 +113,9 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         authPermission.setState(state == 0);
 
         if (auth.isTrue()) {
-            authLabel.setText(userId != null ? "Authenticated as '" + userId + "'." : "Authenticated?");
+            authLabel.setText(userId != null ? "Authenticated as '" + userId + "'  " : "Authenticated ?  ");
         }else {
-            authLabel.setText("Not authenticated!");
+            authLabel.setText("Not authenticated!  ");
         }
 
         final EnumSet<PredictorType> neededTypes = PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors"));
