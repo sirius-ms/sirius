@@ -39,11 +39,14 @@ jobs:
           gradle-version: 6.8
           build-root-directory: sirius_dist/sirius_cli_single_os
           arguments: clean distribution
-      - name: Upload Distributions
+      - name: Upload Zip Distributions
         uses: actions/upload-artifact@v2
         with:
-          name: "sirius-${{ steps.read_sirius_version.outputs.value }}-${{ runner.os }}64-headless.zip"
-          path: sirius_dist/sirius_cli_single_os/build/distributions/sirius.zip
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}x86-64-headless.zip"
+          path: |
+            sirius_dist/sirius_cli_single_os/build/distributions/*.zip
+            sirius_dist/sirius_cli_single_os/build/distributions/*.msi
+            sirius_dist/sirius_cli_single_os/build/distributions/*.pkg
 #  distGUI:
 #    strategy:
 #      matrix:
