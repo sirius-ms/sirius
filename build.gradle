@@ -45,7 +45,7 @@ ext {
     libExclude = ['gurobi-jar-*.jar', 'cplex-*.jar']
 
 
-    jetbrains_version = "17.0.0"
+    jetbrains_version = "22.0.0"
 
     logger.lifecycle('reading gradle properties file...')
     File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
