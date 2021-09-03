@@ -110,6 +110,7 @@ task downloadGLPK(type: Download) {
     dest getBuildDir().toPath().resolve('tmp').resolve(fname).toFile()
     onlyIfModified true
     overwrite false
+    retries 2
     doLast {
         if (!state.getUpToDate()) {
             copy {
@@ -131,6 +132,7 @@ task downloadCLP(type: Download) {
     dest getBuildDir().toPath().resolve('tmp').resolve(fname).toFile()
     onlyIfModified true
     overwrite false
+    retries 2
     doLast {
         if (!state.getUpToDate()) {
             copy {
@@ -543,7 +545,7 @@ abstract class AppImage extends DefaultTask {
 
     def buildCommand(String[] parameters) {
         if (project.OS.isWindows()) {
-            //todo windows command line sucks!
+            //because windows command line sucks!
             List<String> c = parameters as List
             c.add(0, "\"${jpackagerBin.absolutePath}\"")
             return c.toArray()
@@ -622,37 +624,6 @@ abstract class AppInstaller extends DefaultTask {
     /*--linux-deb-maintainer <email address>
           Maintainer for .deb package*/
     String debPackageMaintaner = null
-
-
-    /*
-   --linux-package-name <package name>
-          Name for Linux package, defaults to the application name
-  --linux-rpm-license-type <type string>
-          Type of the license ("License: <value>" of the RPM .spec)
-  --linux-app-release <release value>
-          Release value of the RPM <name>.spec file or
-          Debian revision value of the DEB control file.
-  --linux-app-category <category value>
-          Group value of the RPM <name>.spec file or
-          Section value of DEB control file.
-    * */
-    /*
---mac-package-identifier ID string
-An identifier that uniquely identifies the application for macOSX.
-Defaults to the the main class name.
-May only use alphanumeric (A-Z,a-z,0-9), hyphen (-), and period (.) characters.
-
---mac-bundle-signing-prefix prefix string
-When signing the application bundle, this value is prefixed to all components that need to be signed that don't have an existing bundle identifier.
---mac-sign
-Request that the bundle be signed.
---mac-signing-keychain file path
-Path of the keychain to search for the signing identity (absolute path or relative to the current directory).
-If not specified, the standard keychains are used.
---mac-signing-key-user-name team name
-Team name portion in Apple signing identities' names.
-For example "Developer ID Application: "
-**/
 
     @TaskAction
     def execute() {

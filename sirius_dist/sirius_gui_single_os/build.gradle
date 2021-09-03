@@ -34,7 +34,6 @@ distImage {
     if (!OS.isWindows()) { //additional windows launchers are handled by launch4j
         launchers = ["sirius-gui": file("${rootDir}/scripts/${OS.isMacOsX() ? "sirius-gui.zsh" : "sirius-gui.sh"}")]
     }
-
 }
 
 distInstaller {
@@ -42,7 +41,8 @@ distInstaller {
 }
 
 distribution.dependsOn 'distImageZip'
-distribution.dependsOn 'distInstaller'
+if (!OS.isLinux())
+    distribution.dependsOn 'distInstaller'
 
 publishing {
     publications {
@@ -55,3 +55,4 @@ publishing {
         }
     }
 }
+publishSiriusPublicationToMavenLocal.dependsOn 'distribution'
