@@ -22,8 +22,8 @@ jobs:
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
       - name: Load Build properties
-        id: sirius_version
         uses: Reedyuk/read-properties@v1.0.1
+        id: sirius_version
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
@@ -63,8 +63,8 @@ jobs:
           java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
       - name: Load Build properties
-        id: sirius_version
         uses: Reedyuk/read-properties@v1.0.1
+        id: sirius_version
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
@@ -104,6 +104,7 @@ jobs:
       - name: Download img artifacts as build source
         uses: marcofaggian/action-download-multiple-artifacts@v3.0.7
         with:
+          workflow: distribute.yml
           names: sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
           paths: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
       - name: Display downloaded artifact files
@@ -138,8 +139,8 @@ jobs:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - name: Load Build properties
-        id: sirius_version
         uses: Reedyuk/read-properties@v1.0.1
+        id: sirius_version
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
