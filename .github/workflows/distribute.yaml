@@ -148,7 +148,7 @@ jobs:
         with:
           name: "sirius-${{ steps.sirius_version.outputs.value }}-multiOS-x86-64-headless"
           path: sirius_dist/sirius_cli_multi_os/build/distributions/sirius_cli_multi_os/
-      - name Delete img artifacts
+      - name: Delete img artifacts
         uses: geekyeggo/delete-artifact@v1
         with:
           name: |
@@ -156,7 +156,7 @@ jobs:
             sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
             sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
 
-  istMulti:
+  release:
     needs: [distCLI, distGUI, distMulti]
     runs-on: ubuntu-latest
     steps:
