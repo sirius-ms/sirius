@@ -20,7 +20,8 @@ distImage {
 }
 
 distribution.dependsOn 'distImageZip'
-distribution.dependsOn 'distInstaller'
+if (!OS.isLinux())
+    distribution.dependsOn 'distInstaller'
 
 publishing {
     publications {
