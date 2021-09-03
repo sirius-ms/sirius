@@ -171,6 +171,6 @@ jobs:
           tag: "v${{ steps.sirius_version.outputs.value }}"
           prerelease: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
           allowUpdates: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
-          draft: ${{ GITHUB_REF##*/ != stable && 'true' || 'false' }}
+          draft: ${{ ${GITHUB_REF##*/} != stable && 'true' || 'false' }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
