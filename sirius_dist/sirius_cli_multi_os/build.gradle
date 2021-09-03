@@ -55,9 +55,9 @@ task win64Dist(type: Download, group: 'download') {
 task multiOSImage(group: 'distribution') {
 //    dependsOn("linux64Dist", "osx64Dist", "win64Dist")
     inputs.files(
-            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").resolve("sirius").toFile(),
-            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Windows-x86-64-headless-img").resolve("sirius").toFile(),
-            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").resolve("sirius.app").toFile()
+            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").toFile(),
+            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Windows-x86-64-headless-img").toFile(),
+            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").toFile()
     )
     outputs.file(getBuildDir().toPath().resolve("distributions").resolve(project.name))
 
@@ -65,7 +65,7 @@ task multiOSImage(group: 'distribution') {
 
         //build windows directory
         copy {
-            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Windows-x86-64-headless-img").resolve("sirius").toFile()) {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Windows-x86-64-headless-img").toFile()) {
                 exclude 'sirius.exe'
                 exclude 'sirius-gui.exe'
                 exclude "manual-$version-manual.pdf"
@@ -76,7 +76,7 @@ task multiOSImage(group: 'distribution') {
 
         // build Linux directory
         copy {
-            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").resolve("sirius").toFile()) {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").toFile()) {
                 exclude "manual-$version-manual.pdf"
                 exclude "lib/app"
             }
@@ -85,7 +85,7 @@ task multiOSImage(group: 'distribution') {
 
         //build Mac directory
         copy {
-            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").resolve("sirius.app").resolve("Contents").toFile()) {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").resolve("Contents").toFile()) {
                 exclude "app"
                 exclude "Resources"
                 exclude 'MacOS'
@@ -97,13 +97,13 @@ task multiOSImage(group: 'distribution') {
         }
 
         copy {
-            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").resolve('/sirius.app/Contents/MacOS/sirius').toFile())
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").resolve('Contents/MacOS/sirius').toFile())
             into  outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius').resolve("bin")
         }
 
         //build All directory
         copy {
-            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").resolve("sirius").toFile()) {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").toFile()) {
                 include 'COPYING.txt'
                 include 'LICENSE.txt'
                 include "manual-$version-manual.pdf"
@@ -111,7 +111,7 @@ task multiOSImage(group: 'distribution') {
             into outputs.files.singleFile.toPath().resolve('All').resolve('Sirius')
         }
         copy {
-            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").resolve('sirius/lib/app').toFile()) {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").resolve('lib/app').toFile()) {
                 exclude '.jpackage.xml'
                 exclude 'sirius-gui.cfg'
             }
