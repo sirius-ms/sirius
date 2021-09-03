@@ -101,12 +101,19 @@ jobs:
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
-      - name: Download img artifacts as build source
-        uses: marcofaggian/action-download-multiple-artifacts@v3.0.7
+
+      - uses: actions/download-artifact@v2
         with:
-          workflow: distribute.yml
-          names: sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
-          paths: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img"
+          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img
+      - uses: actions/download-artifact@v2
+        with:
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img"
+          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
+      - uses: actions/download-artifact@v2
+        with:
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img"
+          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
       - name: Display downloaded artifact files
         run: ls -lah
         working-directory: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/
