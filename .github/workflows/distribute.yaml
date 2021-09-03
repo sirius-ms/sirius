@@ -151,6 +151,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
       - name: Load Build properties
         id: sirius_version
         uses: Reedyuk/read-properties@v1.0.1
@@ -171,6 +173,6 @@ jobs:
           tag: "v${{ steps.sirius_version.outputs.value }}"
           prerelease: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
           allowUpdates: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
-          draft: ${{ ${GITHUB_REF##*/} != stable && 'true' || 'false' }}
+          draft: ${{ env.GITHUB_REF_SLUG == 'stable' && 'false' || 'true' }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
