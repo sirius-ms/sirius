@@ -11,14 +11,8 @@ jobs:
   distCLI:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-10.15]
-#        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    env:
-      # assign the environment variable env.ARTIFACTORY_TOKEN_REF with the previously configured ARTIFACTORY_TOKEN
-      ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
-      # assign the environment variable env.ARTIFACTORY_USERNAME_REF with the previously configured ARTIFACTORY_USERNAME
-      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Zulu JDK 15
@@ -60,11 +54,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    env:
-      # assign the environment variable env.ARTIFACTORY_TOKEN_REF with the previously configured ARTIFACTORY_TOKEN
-      ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
-      # assign the environment variable env.ARTIFACTORY_USERNAME_REF with the previously configured ARTIFACTORY_USERNAME
-      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Zulu JDK-FX 15
@@ -98,11 +87,6 @@ jobs:
   distMulti:
     needs: distCLI
     runs-on: ubuntu-latest
-    env:
-      # assign the environment variable env.ARTIFACTORY_TOKEN_REF with the previously configured ARTIFACTORY_TOKEN
-      ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
-      # assign the environment variable env.ARTIFACTORY_USERNAME_REF with the previously configured ARTIFACTORY_USERNAME
-      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Zulu JDK 15
