@@ -54,15 +54,15 @@ task win64Dist(type: Download, group: 'download') {
 
 task multiOSImage(group: 'distribution') {
 //    dependsOn("linux64Dist", "osx64Dist", "win64Dist")
-    inputs.files(
-            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").toFile(),
-            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Windows-x86-64-headless-img").toFile(),
-            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").toFile()
-    )
+//    inputs.files(
+//            ,
+//            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Windows-x86-64-headless-img").toFile(),
+//            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").toFile()
+//    )
     outputs.file(getBuildDir().toPath().resolve("distributions").resolve(project.name))
 
     doFirst {
-
+        println buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").toFile()
         //build windows directory
         copy {
             from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Windows-x86-64-headless-img").toFile()) {
@@ -117,7 +117,7 @@ task multiOSImage(group: 'distribution') {
             }
             into outputs.files.singleFile.toPath().resolve('All').resolve('Sirius').resolve('app')
         }
-
+        
 
         //modify windows script
         def lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve('Windows').resolve('64bit').resolve('Sirius').resolve('sirius.bat'))
