@@ -137,7 +137,7 @@ jobs:
         with:
           retention-days: 1
           name: "sirius-${{ steps.sirius_version.outputs.value }}-multiOS-x86-64-headless"
-          path: sirius_dist/sirius_cli_multi_os/build/distributions/sirius_cli_multi_os/
+          path: ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
       - name: Delete img artifacts
         uses: geekyeggo/delete-artifact@v1
         with:
