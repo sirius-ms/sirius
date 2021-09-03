@@ -96,8 +96,8 @@ jobs:
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
       - name: Load Build properties
-        id: sirius_version
         uses: Reedyuk/read-properties@v1.0.1
+        id: sirius_version
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
