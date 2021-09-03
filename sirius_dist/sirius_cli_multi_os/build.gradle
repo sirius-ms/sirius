@@ -2,10 +2,10 @@ import java.nio.file.Files
 
 dependencies {
     compile project(':sirius_cli')
-//    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
+/*
 task linux64Dist(type: Download, group: 'download') {
     String distName = "sirius-$version-linux64-headless"
     src "https://bio.informatik.uni-jena.de/repository/${version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}/de/unijena/bioinf/ms/sirius/$version/${distName}.zip"
@@ -50,17 +50,22 @@ task win64Dist(type: Download, group: 'download') {
         }
     }
 }
+*/
 
 task multiOSImage(group: 'distribution') {
-    dependsOn("linux64Dist", "osx64Dist", "win64Dist")
-    inputs.files(osx64Dist.outputs.files.singleFile.toString().replace(".zip", ""), linux64Dist.outputs.files.singleFile.toString().replace(".zip", ""))
+//    dependsOn("linux64Dist", "osx64Dist", "win64Dist")
+    inputs.files(
+            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").resolve("sirius").toFile(),
+            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Windows-x86-64-headless-img").resolve("sirius").toFile(),
+            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").resolve("sirius.app").toFile()
+    )
     outputs.file(getBuildDir().toPath().resolve("distributions").resolve(project.name))
 
     doFirst {
 
         //build windows directory
         copy {
-            from(win64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Windows-x86-64-headless-img").resolve("sirius").toFile()) {
                 exclude 'sirius.exe'
                 exclude 'sirius-gui.exe'
                 exclude "manual-$version-manual.pdf"
@@ -71,7 +76,7 @@ task multiOSImage(group: 'distribution') {
 
         // build Linux directory
         copy {
-            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").resolve("sirius").toFile()) {
                 exclude "manual-$version-manual.pdf"
                 exclude "lib/app"
             }
@@ -80,7 +85,7 @@ task multiOSImage(group: 'distribution') {
 
         //build Mac directory
         copy {
-            from(osx64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius.app/Contents') {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").resolve("sirius.app").resolve("Contents").toFile()) {
                 exclude "app"
                 exclude "Resources"
                 exclude 'MacOS'
@@ -92,13 +97,13 @@ task multiOSImage(group: 'distribution') {
         }
 
         copy {
-            from(osx64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius.app/Contents/MacOS/sirius')
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").resolve('/sirius.app/Contents/MacOS/sirius').toFile())
             into  outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius').resolve("bin")
         }
 
         //build All directory
         copy {
-            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").resolve("sirius").toFile()) {
                 include 'COPYING.txt'
                 include 'LICENSE.txt'
                 include "manual-$version-manual.pdf"
@@ -106,7 +111,7 @@ task multiOSImage(group: 'distribution') {
             into outputs.files.singleFile.toPath().resolve('All').resolve('Sirius')
         }
         copy {
-            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius/lib/app') {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").resolve('sirius/lib/app').toFile()) {
                 exclude '.jpackage.xml'
                 exclude 'sirius-gui.cfg'
             }
