@@ -115,21 +115,26 @@ jobs:
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
-
-      - uses: actions/download-artifact@v2
+      - name: Download multiple artifacts
+        uses: marcofaggian/action-download-multiple-artifacts@v1
         with:
-          name: "sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img"
-          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img
-      - uses: actions/download-artifact@v2
-        with:
-          name: "sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img"
-          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
-      - uses: actions/download-artifact@v2
-        with:
-          name: "sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img"
-          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
+          names: sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
+          paths: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
+#
+#      - uses: actions/download-artifact@v2
+#        with:
+#          name: "sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img"
+#          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img
+#      - uses: actions/download-artifact@v2
+#        with:
+#          name: "sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img"
+#          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
+#      - uses: actions/download-artifact@v2
+#        with:
+#          name: "sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img"
+#          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
       - name: Display downloaded artifact files
-        run: ls -R
+        run: ls -lah
         working-directory: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/
 
       - name: Gradle Build
@@ -143,3 +148,28 @@ jobs:
         with:
           name: "sirius-${{ steps.sirius_version.outputs.value }}-multiOS-x86-64-headless"
           path: sirius_dist/sirius_cli_multi_os/build/distributions/sirius_cli_multi_os/
+      - name Delete img artifacts
+        uses: geekyeggo/delete-artifact@v1
+        with:
+          name: |
+            sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img
+            sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
+            sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
+
+  istMulti:
+    needs: [distCLI, distGUI, distMulti]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Load Build properties
+        id: sirius_version
+        uses: Reedyuk/read-properties@v1.0.1
+        with:
+          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
+          property: 'de.unijena.bioinf.siriusFrontend.version'
+      - uses: actions/download-artifact@v2
+        with:
+          path: sirius_dist/build/tmp/artifacts/
+      - name: Display downloaded artifact files
+        run: ls -lah
+        working-directory: sirius_dist/build/tmp/artifacts/
