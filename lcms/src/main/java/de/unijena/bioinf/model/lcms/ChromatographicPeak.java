@@ -55,6 +55,8 @@ public interface ChromatographicPeak {
         return apex;
     }
 
+    public int findClosestIndexByRt(long rt);
+
     public Optional<Segment> getSegmentWithApexId(int apexId);
 
     public ScanPoint getScanPointForScanId(int scanId);
