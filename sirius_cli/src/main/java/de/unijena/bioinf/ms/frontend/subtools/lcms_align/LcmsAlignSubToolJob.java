@@ -25,18 +25,17 @@ import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MultipleSources;
 import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.LCMSWorkflow;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.MixedWorkflow;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.PooledMs2Workflow;
+import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.io.lcms.LCMSParsing;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.lcms.LCMSProccessingInstance;
-import de.unijena.bioinf.lcms.MemoryFileStorage;
-import de.unijena.bioinf.lcms.Ms1Ms2Pairing;
-import de.unijena.bioinf.lcms.ProcessedSample;
+import de.unijena.bioinf.lcms.*;
 import de.unijena.bioinf.lcms.align.Aligner;
 import de.unijena.bioinf.lcms.align.Aligner2;
 import de.unijena.bioinf.lcms.align.Cluster;
@@ -45,6 +44,7 @@ import de.unijena.bioinf.model.lcms.IonConnection;
 import de.unijena.bioinf.model.lcms.LCMSRun;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.networks.Correlation;
 import de.unijena.bioinf.networks.MolecularNetwork;
 import de.unijena.bioinf.networks.NetworkNode;
@@ -68,12 +68,14 @@ import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
     protected final InputFilesOptions input;
+    protected final ParameterConfig config;
     protected final ProjectSpaceManager space;
     protected final LcmsAlignOptions options;
     protected final List<CompoundContainerId> importedCompounds = new ArrayList<>();
 
-    public LcmsAlignSubToolJob(InputFilesOptions input, ProjectSpaceManager space, LcmsAlignOptions options) {
+    public LcmsAlignSubToolJob(InputFilesOptions input, ProjectSpaceManager space, ParameterConfig config, LcmsAlignOptions options) {
         super();
+        this.config = config;
         this.input = input;
         this.space = space;
         this.options = options;
@@ -176,7 +178,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         instance.detectAdductsWithGibbsSampling(cluster);
         cluster=cluster.deleteDuplicateRows();
         System.out.println("Done.");
-        final MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(Arrays.stream(lcmsWorkflow.getPooledMs2()).map(x->new File(x)).toArray(File[]::new));
+        final MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(Arrays.stream(lcmsWorkflow.getPooledMs2()).map(File::new).toArray(File[]::new));
         return importIntoProjectSpace(instance, cluster, sourcelocation);
     }
 
@@ -196,6 +198,29 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
                 LoggerFactory.getLogger(getClass()).warn("Skipping invalid experiment '" + experiment.getName() + "'.");
                 continue;
             }
+            final LCMSPeakInformation lcmsPeakInformation = feature.getLCMSPeakInformation();
+            // set quality flags
+            {
+                // just look at the top 5 most intensive samples
+                List<Integer> indizes = new ArrayList<>();
+                for (int k=0; k < lcmsPeakInformation.length(); ++k) {
+                    if (lcmsPeakInformation.getTracesFor(k).isPresent()) indizes.add(k);
+                }
+                indizes.sort(Comparator.comparingDouble(lcmsPeakInformation::getIntensityOf));
+                Collections.reverse(indizes);
+                boolean badPeakShape = true;
+                for (int k=0; k < Math.min(indizes.size(),5); ++k) {
+                    final CoelutingTraceSet traceSet = lcmsPeakInformation.getTracesFor(k).get();
+                    LCMSCompoundSummary summary = new LCMSCompoundSummary(traceSet, traceSet.getIonTrace(), experiment);
+                    if (summary.peakQuality.ordinal() > LCMSCompoundSummary.Quality.LOW.ordinal()) {
+                        badPeakShape = false;
+                        break;
+                    }
+                }
+                if (badPeakShape) {
+                    experiment.setAnnotation(CompoundQuality.class, experiment.getAnnotation(CompoundQuality.class).orElse(new CompoundQuality()).updateQuality(CompoundQuality.CompoundQualityFlag.BadPeakShape));
+                }
+            }
             ++totalFeatures;
             if (experiment.getAnnotation(CompoundQuality.class, CompoundQuality::new).isNotBadQuality()) {
                 ++goodFeatures;
@@ -203,11 +228,15 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
             // set name to common prefix
             // kaidu: this is super slow, so we just ignore the filename
             experiment.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(sourcelocation.value));
+
+            materializeProperties(experiment);
+
             final Instance compound = space.newCompoundWithUniqueId(experiment);
             importedCompounds.add(compound.getID());
             final CompoundContainer compoundContainer = compound.loadCompoundContainer(LCMSPeakInformation.class);
-            compoundContainer.setAnnotation(LCMSPeakInformation.class, feature.getLCMSPeakInformation());
+            compoundContainer.setAnnotation(LCMSPeakInformation.class, lcmsPeakInformation);
             compound.updateCompound(compoundContainer,LCMSPeakInformation.class);
+
             feature2compoundId.put(feature, compound.getID());
             updateProgress(0, consensusFeatures.length, ++progress, "Write project space.");
         }
@@ -275,6 +304,18 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
                 }
             }
         };
+    }
+
+    protected void materializeProperties(Ms2Experiment experiment) {
+        // TODO: @Markus: what can we do if config is null??
+        if (config==null)  {
+
+        } else {
+            final ParameterConfig parameterConfig = config.newIndependentInstance("LCMS-ALIGN", true);
+            parameterConfig.changeConfig("CompoundQuality", experiment.getAnnotation(CompoundQuality.class).orElse(new CompoundQuality()).toString());
+            // TODO: MsInstrumentation is missing
+            experiment.setAnnotation(InputFileConfig.class, new InputFileConfig(parameterConfig));
+        }
     }
 
     public List<CompoundContainerId> getImportedCompounds() {

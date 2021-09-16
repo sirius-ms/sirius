@@ -156,7 +156,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
             createListener.unregister();
             if (align) {
                 //todo would be nice to update all at once!
-                final LcmsAlignSubToolJob j = new LcmsAlignSubToolJob(input, this, new LcmsAlignOptions());
+                final LcmsAlignSubToolJob j = new LcmsAlignSubToolJob(input, this, null, new LcmsAlignOptions());
                 Jobs.runInBackgroundAndLoad(MF, j);
                 INSTANCE_LIST.addAll(j.getImportedCompounds().stream()
                         .map(id -> (InstanceBean) newInstanceFromCompound(id))

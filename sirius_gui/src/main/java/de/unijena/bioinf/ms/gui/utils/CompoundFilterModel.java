@@ -18,7 +18,10 @@ package de.unijena.bioinf.ms.gui.utils;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+
+import java.util.Arrays;
 
 /**
  * This model stores the filter criteria for a compound list
@@ -33,6 +36,9 @@ public class CompoundFilterModel implements SiriusPCS {
     private double currentMaxMz;
     private double currentMinRt;
     private double currentMaxRt;
+
+    //
+    private boolean[] peakShapeQualities = new boolean[]{true,true,true};
 
     /*
     min/max possible values
@@ -66,6 +72,30 @@ public class CompoundFilterModel implements SiriusPCS {
         this.maxMz = maxMz;
         this.minRt = minRt;
         this.maxRt = maxRt;
+    }
+
+    public boolean isPeakShapeFilterEnabled() {
+        for (boolean val : peakShapeQualities) {
+            if (!val) return true;
+        }
+        return false;
+    }
+
+    public void setPeakShapeQuality(LCMSCompoundSummary.Quality quality, boolean value) {
+        boolean oldValue = peakShapeQualities[quality.ordinal()];
+        peakShapeQualities[quality.ordinal()] = value;
+        pcs.firePropertyChange("setPeakShapeQuality", oldValue, value);
+    }
+    public void setPeakShapeQuality(int quality, boolean value) {
+        boolean oldValue = peakShapeQualities[quality];
+        peakShapeQualities[quality] = value;
+        pcs.firePropertyChange("setPeakShapeQuality", oldValue, value);
+    }
+    public boolean getPeakShapeQuality(LCMSCompoundSummary.Quality quality) {
+        return peakShapeQualities[quality.ordinal()];
+    }
+    public boolean getPeakShapeQuality(int quality) {
+        return peakShapeQualities[quality];
     }
 
     public void setCurrentMinMz(double currentMinMz) {
@@ -159,5 +189,6 @@ public class CompoundFilterModel implements SiriusPCS {
         setCurrentMaxMz(maxMz);
         setCurrentMinRt(minRt);
         setCurrentMaxRt(maxRt);
+        Arrays.fill(peakShapeQualities,true);
     }
 }

@@ -43,6 +43,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final CompoundFilterModel filterModel;
     final CompoundList compoundList;
 
+    JCheckBox[] peakShape;
+
     public CompoundFilterOptionsDialog(MainFrame owner, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
         super(owner, "Filter options", true);
         this.searchField = searchField;
@@ -72,6 +74,28 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         ((JSpinner.DefaultEditor) maxRtSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel)maxRtSpinner.getModel(), filterModel.getMaxRt()));
 
         ensureCompatibleBounds(minRtSpinner, maxRtSpinner);
+
+        {
+            peakShape = new JCheckBox[]{
+                    new JCheckBox("Low"),
+                    new JCheckBox("Medium"),
+                    new JCheckBox("High"),
+            };
+            final JPanel group = new JPanel();
+            final BoxLayout groupLayout = new BoxLayout(group, BoxLayout.X_AXIS);
+            group.setLayout(groupLayout);
+            group.add(new JLabel("Peak shape quality: "));
+            for (JCheckBox box : peakShape) {
+                group.add(Box.createHorizontalStrut(12));
+                group.add(box);
+            }
+            for (int i=0; i < peakShape.length; ++i) {
+                peakShape[i].setSelected(filterModel.getPeakShapeQuality(i));
+            }
+            smallParameters.add(group);
+
+
+        }
 
         invertFilter = new JCheckBox("select non-matching");
         invertFilter.setSelected(compoundList.isFilterInverted());
@@ -147,6 +171,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         searchField.textField.setText(searchFieldDialogCopy.getText());
         if (invertFilter.isSelected()!=compoundList.isFilterInverted()) {
             compoundList.toggleInvertFilter();
+        }
+        for (int k=0; k < peakShape.length; ++k) {
+            filterModel.setPeakShapeQuality(k, peakShape[k].isSelected());
         }
     }
 
