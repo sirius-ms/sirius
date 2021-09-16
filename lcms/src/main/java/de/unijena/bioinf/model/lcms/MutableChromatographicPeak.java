@@ -90,6 +90,49 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         return newSegment;
     }
 
+    /**
+     * Split the segment such that left is on the left side and right is on the right side. Return the two segments if this is possible.
+     */
+    public Optional<Segment[]> tryToDivideSegment(Segment segment, int leftIndex, int rightIndex) {
+        if (segment.peak!=this) throw new IllegalArgumentException("Can only split segments that are owned by this peak");
+        final double a = getIntensityAt(leftIndex);
+        final double b = getIntensityAt(rightIndex);
+        // find minimum in between
+        double minimum = Math.min(a,b);
+        int mindex = -1;
+        for (int k=leftIndex+1; k < rightIndex; ++k) {
+            if (getIntensityAt(k) < minimum) {
+                minimum = getIntensityAt(k);
+                mindex = k;
+            }
+        }
+        if (mindex<0) {
+            return Optional.empty();
+        }
+        // find maximum left and right
+        double maxLeft = 0d, maxRight = 0d;
+        int mxL=-1,mxR=-1;
+        for (int k=segment.getStartIndex(); k < mindex; ++k) {
+            if (maxLeft < getIntensityAt(k)) {
+                maxLeft = getIntensityAt(k);
+                mxL = k;
+            }
+        }
+        for (int k=mindex+1; k < segment.getEndIndex(); ++k) {
+            if (maxRight < getIntensityAt(k)) {
+                maxRight = getIntensityAt(k);
+                mxR = k;
+            }
+        }
+        if (mxL<0 || mxR<0) {
+            return Optional.empty();
+        }
+        divideSegment(segment, mindex, mxL, mxR);
+        return Optional.of(new Segment[]{
+           getSegmentWithApexId(mxL).get(), getSegmentWithApexId(mxR).get()
+        });
+    }
+
     public void divideSegment(Segment segment, int minimum, int maximumLeft, int maximumRight) {
         try {
             final TreeMap<Integer,Segment> clone = (TreeMap<Integer, Segment>) segments.clone();
@@ -159,6 +202,23 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
     @Override
     public ScanPoint getScanPointAt(int k) {
         return scanPoints.get(k);
+    }
+
+    @Override
+    public int findClosestIndexByRt(long rt) {
+        int insertionPoint = binarySearch(scanPoints, new ScanPoint(0, rt, 0, 0), Comparator.comparingLong(ScanPoint::getRetentionTime));
+        if (insertionPoint>=0) return insertionPoint;
+        final int indexA = -(insertionPoint+1);
+        final int indexB = indexA-1;
+        long delta = Long.MAX_VALUE;
+        if (indexA < scanPoints.size()) {
+            delta = Math.abs(scanPoints.get(indexA).getRetentionTime() - rt);
+        }
+        if (indexB >= 0) {
+            long d2=Math.abs(scanPoints.get(indexB).getRetentionTime() - rt);
+            if (d2 < delta) return indexB;
+        }
+        return indexA;
     }
 
     @Override
