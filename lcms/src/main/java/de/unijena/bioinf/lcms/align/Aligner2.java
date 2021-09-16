@@ -202,10 +202,10 @@ public class Aligner2 {
 
     public double maxRetentionError() {
         if (retentionTimeErrorModel instanceof LaplaceDistribution)
-            return 6*((LaplaceDistribution)retentionTimeErrorModel).getScale();
+            return 3*((LaplaceDistribution)retentionTimeErrorModel).getScale();
         else if (retentionTimeErrorModel instanceof NormalDistribution)
-            return 6*((NormalDistribution) retentionTimeErrorModel).getStandardDeviation();
-        else return Math.sqrt(retentionTimeErrorModel.getNumericalVariance())*5;
+            return 3*((NormalDistribution) retentionTimeErrorModel).getStandardDeviation();
+        else return Math.sqrt(retentionTimeErrorModel.getNumericalVariance())*3;
     }
 
     private double scoreIsotopes(FragmentedIon a, FragmentedIon b) {

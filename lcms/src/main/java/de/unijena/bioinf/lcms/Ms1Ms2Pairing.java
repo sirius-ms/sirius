@@ -15,6 +15,7 @@ import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.RealDistribution;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Function;
@@ -95,11 +96,14 @@ public class Ms1Ms2Pairing {
             final List<Target> targets = extractTargets(msms);
             // now search for the targets in the MS1 run
             searchMs1(ms1, targets);
+            checkForDuplicates(targets);
             recalibrate(targets, (values)->MzRecalibration.getMedianLinearRecalibration(values[0], values[1]), msms.run.getIdentifier() + "_linear");
             searchMs1(ms1, targets);
+            checkForDuplicates(targets);
             recalibrate(targets, (values)->new LoessInterpolator(0.3, 2).interpolate(values[0], values[1]),msms.run.getIdentifier() + "_loess");
             // and search again
             searchMs1(ms1, targets);
+            checkForDuplicates(targets);
             //
             for (Target t : targets) {
                 if (t.correspondingFeature!=null) {
@@ -125,6 +129,57 @@ public class Ms1Ms2Pairing {
         }
         update(instance, ms1, finalList);
         instance.getSamples().removeAll(Arrays.asList(msmsRuns));
+    }
+
+    private void checkForDuplicates(List<Target> targets) {
+        final HashMap<ChromatographicPeak.Segment, Target> mapping = new HashMap<>();
+        final Iterator<Target> iter = targets.iterator();
+        while (iter.hasNext()) {
+            final Target t = iter.next();
+            if (t.correspondingFeature!=null) {
+                if (mapping.containsKey(t.correspondingFeature)) {
+                    final Target s = mapping.get(t.correspondingFeature);
+                    double cosine = 0d;
+                    int n=0;
+                    for (Ms2CosineSegmenter.CosineQuery a : t.scans) {
+                        for (Ms2CosineSegmenter.CosineQuery b : s.scans) {
+                            cosine += a.cosine(b).similarity;
+                            ++n;
+                        }
+                    }
+                    cosine /= n;
+                    if (cosine >= 0.5) {
+                        // merge
+                        iter.remove();
+                        final int k = s.scans.length;
+                        s.scans = Arrays.copyOf(s.scans, k +t.scans.length);
+                        System.arraycopy(t.scans,0, s.scans,k, t.scans.length);
+
+                    } else {
+                        long leftRt = Math.min(s.rtOrig, t.rtOrig);
+                        long rightRt = Math.max(s.rtOrig, t.rtOrig);
+                        int leftIndex = s.correspondingFeature.getPeak().findClosestIndexByRt(leftRt);
+                        int rightIndex = s.correspondingFeature.getPeak().findClosestIndexByRt(rightRt);
+                        final Optional<ChromatographicPeak.Segment[]> segments = s.correspondingFeature.getPeak().mutate().tryToDivideSegment(s.correspondingFeature, leftIndex, rightIndex);
+                        if (segments.isEmpty()) {
+                            LoggerFactory.getLogger(Ms1Ms2Pairing.class).warn("Two MS/MS spectra at the same peak with low cosine at " + s );
+                            t.correspondingFeature = null;
+                        } else {
+                            if (s.rtOrig<t.rtOrig) {
+                                s.correspondingFeature = segments.get()[0];
+                                t.correspondingFeature = segments.get()[1];
+                            } else {
+                                t.correspondingFeature = segments.get()[0];
+                                s.correspondingFeature = segments.get()[1];
+                            }
+                        }
+
+                    }
+                } else {
+                    mapping.put(t.correspondingFeature, t);
+                }
+            }
+        }
     }
 
     private void update(LCMSProccessingInstance instance, ProcessedSample ms1, List<Target> targets) {
@@ -353,6 +408,11 @@ public class Ms1Ms2Pairing {
         private FragmentedIon ion;
         private ChromatographicPeak.Segment correspondingFeature;
         private boolean merged = false;
+
+        @Override
+        public String toString() {
+            return String.format(Locale.US, "<m/z = %.4f, rt = %.4f>", mz, rtOrig/60000d);
+        }
 
         public Target(double mz, long rt, MergedSpectrum spectrum, Ms2CosineSegmenter.CosineQuery... scans) {
             this.mz = mz;
