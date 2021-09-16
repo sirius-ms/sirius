@@ -20,7 +20,13 @@ package de.unijena.bioinf.ms.gui.utils;/*
 
 import ca.odell.glazedlists.matchers.Matcher;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
+
+import java.util.Optional;
 
 public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     final CompoundFilterModel filterModel;
@@ -43,7 +49,28 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
                 return false;
             }
         }
+        if (filterModel.isPeakShapeFilterEnabled()) {
+            return filterByPeakShape(item, filterModel);
+        }
         return true;
 
+    }
+
+    private boolean filterByPeakShape(InstanceBean item, CompoundFilterModel filterModel) {
+        final CompoundContainer compoundContainer = item.loadCompoundContainer(LCMSPeakInformation.class);
+        final Optional<LCMSPeakInformation> annotation = compoundContainer.getAnnotation(LCMSPeakInformation.class);
+        if (annotation.isEmpty()) return false;
+        final LCMSPeakInformation lcmsPeakInformation = annotation.get();
+        for (int k=0; k < lcmsPeakInformation.length(); ++k) {
+            final Optional<CoelutingTraceSet> tracesFor = lcmsPeakInformation.getTracesFor(k);
+            if (tracesFor.isPresent()) {
+                final CoelutingTraceSet coelutingTraceSet = tracesFor.get();
+                LCMSCompoundSummary sum = new LCMSCompoundSummary(coelutingTraceSet,coelutingTraceSet.getIonTrace(), item.getExperiment());
+                if (filterModel.getPeakShapeQuality(sum.peakQuality)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

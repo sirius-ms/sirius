@@ -13,6 +13,7 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
+import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 
 import javax.swing.*;
