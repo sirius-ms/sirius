@@ -86,12 +86,19 @@ public class CsvParser extends SpectralParser {
         exp.setIonMass(precursorMass);
         exp.setPrecursorIonType(ionType);
         exp.setMolecularFormula(formula);
-        exp.setMs1Spectra(
-                parseSpectra(ms1).stream().map(SimpleSpectrum::new)
-                        .collect(Collectors.toList()));
-        exp.setMs2Spectra(
+        if (ms1 != null && !ms1.isEmpty()) {
+            exp.setMs1Spectra(
+                    parseSpectra(ms1).stream().map(SimpleSpectrum::new)
+                            .collect(Collectors.toList()));
+        }
+
+        if (ms2 != null && !ms2.isEmpty()) {
+            exp.setMs2Spectra(
                 parseSpectra(ms2).stream().map(s -> new MutableMs2Spectrum(s, precursorMass, null, 2))
                         .collect(Collectors.toList()));
+        }else {
+            LoggerFactory.getLogger(getClass()).warn("No MS/MS spectrum given in CSV data input!");
+        }
         return exp;
     }
 
