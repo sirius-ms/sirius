@@ -27,10 +27,11 @@ import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,19 +64,20 @@ public class JobsClient extends AbstractClient {
      * Unregisters Client and deletes all its jobs on server
      */
     public void deleteAllJobs(@NotNull CloseableHttpClient client) throws IOException {
-        execute(client, () -> new HttpDelete(buildVersionSpecificWebapiURI("/jobs/" + CID).build()));
+        execute(client, () -> new HttpPatch(buildVersionSpecificWebapiURI("/jobs/" + CID + "/delete").build()));
     }
 
 
     public void deleteJobs(Collection<JobId> jobsToDelete, Map<JobId, Integer> countingHashes, @NotNull CloseableHttpClient client) throws IOException {
-        execute(client,
-                () -> {
-                    URIBuilder builder = buildVersionSpecificWebapiURI("/jobs/" + CID)
-                            .setParameter("jobs", new ObjectMapper().writeValueAsString(jobsToDelete));
-                    if (countingHashes != null && !countingHashes.isEmpty()) //add client sided counting has if available
-                        builder.setParameter("countingHashes", new ObjectMapper().writeValueAsString(countingHashes));
-                    return new HttpDelete(builder.build());
-                });
+        execute(client, () -> {
+            Map<String, String> body = new HashMap<>();
+            body.put("jobs", new ObjectMapper().writeValueAsString(jobsToDelete));
+            if (countingHashes != null && !countingHashes.isEmpty()) //add client sided counting if available
+                body.put("countingHashes", new ObjectMapper().writeValueAsString(countingHashes));
+            HttpPatch patch = new HttpPatch(buildVersionSpecificWebapiURI("/jobs/" + CID + "/delete").build());
+            patch.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(body)));
+            return patch;
+        });
     }
 
     public int getCountedJobs(@NotNull Date monthAndYear, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
