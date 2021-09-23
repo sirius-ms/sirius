@@ -26,8 +26,9 @@ import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -35,9 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class JobsClient extends AbstractClient {
@@ -60,15 +59,17 @@ public class JobsClient extends AbstractClient {
      * Unregisters Client and deletes all its jobs on server
      */
     public void deleteAllJobs(@NotNull CloseableHttpClient client) throws IOException {
-        execute(client, () -> new HttpDelete(buildVersionSpecificWebapiURI("/jobs/" + CID).build()));
+        execute(client, () -> new HttpPatch(buildVersionSpecificWebapiURI("/jobs/" + CID + "/delete").build()));
     }
 
 
     public void deleteJobs(Collection<JobId> jobsToDelete, @NotNull CloseableHttpClient client) throws IOException {
-        execute(client,
-                () -> new HttpDelete(buildVersionSpecificWebapiURI("/jobs/" + CID)
-                        .setParameter("jobs", new ObjectMapper().writeValueAsString(jobsToDelete))
-                        .build())
-        );
+        execute(client, () -> {
+            Map<String, String> body = new HashMap<>();
+            body.put("jobs", new ObjectMapper().writeValueAsString(jobsToDelete));
+            HttpPatch patch = new HttpPatch(buildVersionSpecificWebapiURI("/jobs/" + CID + "/delete").build());
+            patch.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(body)));
+            return patch;
+        });
     }
 }
