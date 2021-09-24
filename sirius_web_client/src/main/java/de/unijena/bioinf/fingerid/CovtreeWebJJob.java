@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Optional;
 
 public class CovtreeWebJJob extends WebJJob<CovtreeWebJJob, BayesnetScoring, CovtreeJobOutput> {
 
@@ -56,16 +57,19 @@ public class CovtreeWebJJob extends WebJJob<CovtreeWebJJob, BayesnetScoring, Cov
     @Override
     protected synchronized CovtreeWebJJob updateTyped(@NotNull JobUpdate<CovtreeJobOutput> update) {
         if (updateState(update)) {
-            if (update.data != null)
-                update.data.getCovtreeOpt().ifPresent(ct -> {
-                    try{
-                        BufferedReader bf = new BufferedReader(new StringReader(ct));
-                        covtree =  BayesnetScoringBuilder.readScoring(bf, fpVersion, BayesianScoringUtils.calculatePseudoCount(performances),BayesianScoringUtils.allowOnlyNegativeScores);
+            if (update.data != null) {
+                @NotNull Optional<String> optRes = update.data.getCovtreeOpt();
+                if (optRes.isPresent()){
+                    try {
+                        BufferedReader bf = new BufferedReader(new StringReader(optRes.get()));
+                        covtree = BayesnetScoringBuilder.readScoring(bf, fpVersion, BayesianScoringUtils.calculatePseudoCount(performances), BayesianScoringUtils.allowOnlyNegativeScores);
                     } catch (IOException e) {
-                        // todo @Markus: log this exception and handle it
-                        covtree = null; // Is there a better error handling?
+                        logError("Could Not read Covtree from Job Update");
+                        covtree = null;
+                        throw new RuntimeException("Unexpected Error in Job '" + identifier() + "'.", e);
                     }
-                });
+                }
+            }
         }
 
         checkForTimeout();
