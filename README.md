@@ -177,4 +177,6 @@ Starting with version 4.4.27, SIRIUS is licensed under the [GNU Affero General
 Public License (GPL)](https://www.gnu.org/licenses/agpl-3.0.txt). If you integrate SIRIUS into other software, we
 strongly encourage you to make the usage of SIRIUS as well as the literature to cite transparent to the user.
 
-
+## Acknowledgements
+#### Thanks for supporting the development of SIRIUS!
+[![MSCJ Logo](https://www.mscj.uni-jena.de/wp-content/uploads/2015/05/logo-svg-text-horizontal.svg)](https://www.mscj.uni-jena.de)
