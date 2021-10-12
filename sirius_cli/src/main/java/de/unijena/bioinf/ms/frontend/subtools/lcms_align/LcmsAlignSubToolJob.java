@@ -30,6 +30,7 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.LCMSWorkflow;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.MixedWorkflow;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.PooledMs2Workflow;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.RemappingWorkflow;
 import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.io.lcms.LCMSParsing;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -143,9 +144,11 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
 
     private ProjectSpaceManager computeWorkflow(LCMSWorkflow lcmsWorkflow) {
         if (lcmsWorkflow instanceof PooledMs2Workflow) {
-            return computePooledWorkflow((PooledMs2Workflow)lcmsWorkflow);
+            return computePooledWorkflow((PooledMs2Workflow) lcmsWorkflow);
         } else if (lcmsWorkflow instanceof MixedWorkflow) {
-            return computeMixedWorkflow((MixedWorkflow)lcmsWorkflow);
+            return computeMixedWorkflow((MixedWorkflow) lcmsWorkflow);
+        } else if (lcmsWorkflow instanceof RemappingWorkflow) {
+            return computeRemappingWorkflow((RemappingWorkflow) lcmsWorkflow);
         } else throw new IllegalArgumentException("Unknown workflow: " + lcmsWorkflow.getClass().getName());
     }
 
@@ -180,6 +183,38 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         System.out.println("Done.");
         final MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(Arrays.stream(lcmsWorkflow.getPooledMs2()).map(File::new).toArray(File[]::new));
         return importIntoProjectSpace(instance, cluster, sourcelocation);
+    }
+
+
+    private ProjectSpaceManager computeRemappingWorkflow(RemappingWorkflow lcmsWorkflow) {
+        final LCMSProccessingInstance instance = new LCMSProccessingInstance();
+        // read all files
+        final JobManager jm = SiriusJobs.getGlobalJobManager();
+        final ProcessedSample[] ms1Samples = Arrays.stream(lcmsWorkflow.getFiles()).map(filename->jm.submitJob(processRunJob(instance,filename))).collect(Collectors.toList()).stream().map(JJob::takeResult).toArray(ProcessedSample[]::new);
+        final Iterator<CompoundContainer> compoundContainerIterator = space.projectSpace().compoundIterator(LCMSPeakInformation.class, Ms2Experiment.class);
+        final List<Ms2Experiment> exps = new ArrayList<>();
+        final List<LCMSPeakInformation> peaks = new ArrayList<>();
+        final List<CompoundContainerId> ids = new ArrayList<>();
+        while (compoundContainerIterator.hasNext()) {
+            final CompoundContainer next = compoundContainerIterator.next();
+            if (next.getAnnotation(Ms2Experiment.class).isEmpty() || next.getAnnotation(LCMSPeakInformation.class).isEmpty()) continue;
+            exps.add(next.getAnnotation(Ms2Experiment.class).get());
+            peaks.add(next.getAnnotation(LCMSPeakInformation.class).get());
+            ids.add(next.getId());
+        }
+        LCMSPeakInformation[] replaced = Ms1Remapping.remapMS1(instance, ms1Samples, peaks.toArray(LCMSPeakInformation[]::new), exps.toArray(Ms2Experiment[]::new), true);
+        for (int i=0; i < ids.size(); ++i) {
+            final CompoundContainerId compoundContainerId = ids.get(i);
+            final CompoundContainer compound;
+            try {
+                compound = space.projectSpace().getCompound(compoundContainerId, Ms2Experiment.class, LCMSPeakInformation.class);
+                compound.setAnnotation(LCMSPeakInformation.class, replaced[i]);
+                space.projectSpace().updateCompound(compound, LCMSPeakInformation.class);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return space;
     }
 
     private ProjectSpaceManager importIntoProjectSpace(LCMSProccessingInstance i, Cluster alignment, MultipleSources sourcelocation) {
