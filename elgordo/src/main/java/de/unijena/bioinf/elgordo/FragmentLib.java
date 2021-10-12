@@ -36,6 +36,17 @@ public class FragmentLib {
         return Optional.ofNullable(library.get(ionType));
     }
 
+    public boolean detectableInPositiveMode() {
+        for (PrecursorIonType ionType : library.keySet()) {
+            if (ionType.getCharge()>0) return true;
+        }
+        return false;
+    }
+
+    public Set<PrecursorIonType> getDetectableModes() {
+        return Collections.unmodifiableSet(library.keySet());
+    }
+
     public boolean hasSphingosin() {
         for (FragmentSet set : library.values()) {
             if (set.sphingosinLosses.length>0 || set.sphingosinFragments.length>0)

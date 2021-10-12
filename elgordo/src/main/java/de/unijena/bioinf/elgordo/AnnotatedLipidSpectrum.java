@@ -147,7 +147,7 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
             "C6H14O2"
     }).map(MolecularFormula::parseOrThrow).toArray(MolecularFormula[]::new);
     private final static MolecularFormula[] steroidFragments = Arrays.stream(new String[]{
-            "19H24",
+            "C19H24",
             "C16H16O",
             "C13H12O",
             "C12H10O",
@@ -267,7 +267,7 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
     }
     public int numberOfSpecificHeadGroupAnnotations() {
         return (int)Arrays.stream(annotationsPerPeak).filter(x->x instanceof HeadGroupFragmentAnnotation
-        && !BORING.contains(x.getFormula())).count();
+        && !BORING.contains(x.getUnderlyingFormula())).count();
     }
     public int numberOfChainAnnotations() {
         return (int)Arrays.stream(annotationsPerPeak).filter(x->x instanceof ChainAnnotation).count();
@@ -333,7 +333,7 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
                     precursorMz = spectrum.getMzAt(peak);
                 } else {
                     if (a.getTarget()== LipidAnnotation.Target.LOSS) {
-                        if (a.getFormula().isEmpty() || a.getFormula().equals(H2O) || a.getFormula().equals(NH3)) {
+                        if (a.getUnderlyingFormula().isEmpty() || a.getUnderlyingFormula().equals(H2O) || a.getUnderlyingFormula().equals(NH3)) {
                             trivialIntensity += spectrum.getIntensityAt(peak);
                         }
                     }

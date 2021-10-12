@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import gnu.trove.list.array.TIntArrayList;
@@ -65,25 +66,25 @@ public class MassToLipid {
         FragmentLib.FragmentSet set = candidate.getFragmentSet();
         for (MolecularFormula f : set.fragments) {
             search(annotations, indizes, spectrum, candidate.ionType.addIonAndAdduct(f.getMass()), () -> new HeadGroupFragmentAnnotation(
-                    LipidAnnotation.Target.FRAGMENT, f, candidate.ionType, candidate.possibleClass.headgroup
+                    LipidAnnotation.Target.FRAGMENT, f, f.add(candidate.ionType.getAdduct()), candidate.ionType, candidate.possibleClass.headgroup
             ));
             if (!candidate.ionType.isPlainProtonationOrDeprotonation()) {
                 // consider adduct switch
                 search(annotations, indizes, spectrum, adductSwitch(candidate,candidate.ionType.addIonAndAdduct(f.getMass()),false), () -> new HeadGroupFragmentAnnotation(
-                        LipidAnnotation.Target.FRAGMENT, f, adductSwitch(candidate.ionType), candidate.possibleClass.headgroup
+                        LipidAnnotation.Target.FRAGMENT, f, adductSwitch(candidate, f, false).getCandidate(), adductSwitch(candidate.ionType), candidate.possibleClass.headgroup
                 ));
             }
         }
         for (MolecularFormula f : set.losses) {
             if (!f.isEmpty()) {
                 search(annotations, indizes, spectrum, candidate.ionMass - f.getMass(), () -> new HeadGroupFragmentAnnotation(
-                        LipidAnnotation.Target.LOSS, f, candidate.ionType, candidate.possibleClass.headgroup
+                        LipidAnnotation.Target.LOSS, f, candidate.ionType.getAdduct().add(candidate.lipidFormula.subtract(f)), candidate.ionType, candidate.possibleClass.headgroup
                 ));
             }
             if (!candidate.ionType.isPlainProtonationOrDeprotonation()) {
                 // consider adduct switch
                 search(annotations, indizes, spectrum, adductSwitch(candidate,candidate.ionMass - f.getMass(),true), () -> new HeadGroupFragmentAnnotation(
-                        LipidAnnotation.Target.LOSS, f, adductSwitch(candidate.ionType), candidate.possibleClass.headgroup
+                        LipidAnnotation.Target.LOSS, f, candidate.lipidFormula.subtract(f), adductSwitch(candidate.ionType), candidate.possibleClass.headgroup
                 ));
             }
         }
@@ -95,7 +96,7 @@ public class MassToLipid {
                 final int i = indizes.get(k);
                 final LipidAnnotation a = annotations.get(k);
                 final IndexedPeak e = new IndexedPeak(i, spectrum.getMzAt(i), spectrum.getIntensityAt(i),
-                        a.getTarget()== LipidAnnotation.Target.LOSS ? candidate.lipidFormula.subtract(a.getFormula()) : a.getFormula(),
+                        a.getMeasuredPeakFormula(),
                         annotations.get(k)
                         );
                 peaks.add(e);
@@ -160,7 +161,7 @@ public class MassToLipid {
                     if (f.numberOfHydrogens() % 2 != 0) continue;
                     for (LipidChain c : lipidChainCandidate.chains) {
                         if (c.getFormula().isSubtractable(f) && LipidChain.fromFormula(f).map(x -> x.numberOfDoubleBonds).orElse(Integer.MAX_VALUE) <= c.numberOfDoubleBonds) {
-                            annotations.add(new ChainFragmentAnnotation(LipidAnnotation.Target.FRAGMENT, f, candidate.ionType));
+                            annotations.add(new ChainFragmentAnnotation(LipidAnnotation.Target.FRAGMENT, f, f, candidate.ionType));
                             indizes.add(k);
                             continue nextPeak;
                         }
@@ -187,7 +188,7 @@ public class MassToLipid {
                     if (f.numberOfHydrogens() % 2 != 0) continue;
                     for (LipidChain c : chains) {
                         if (c.getFormula().isSubtractable(f) && LipidChain.fromFormula(f).map(x -> x.numberOfDoubleBonds).orElse(Integer.MAX_VALUE) <= c.numberOfDoubleBonds) {
-                            final IndexedPeak p = new IndexedPeak(k, spectrum.getMzAt(k), spectrum.getIntensityAt(k), f, new ChainFragmentAnnotation(LipidAnnotation.Target.FRAGMENT, f, candidate.ionType));
+                            final IndexedPeak p = new IndexedPeak(k, spectrum.getMzAt(k), spectrum.getIntensityAt(k), f, new ChainFragmentAnnotation(LipidAnnotation.Target.FRAGMENT, f, f, candidate.ionType));
                             continue nextPeak;
                         }
                     }
@@ -324,7 +325,8 @@ public class MassToLipid {
                     final int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, deviation);
                     if (i >= 0) {
                         C.peakIndizes.add(i);
-                        C.annotations.add(new ChainAnnotation(LipidAnnotation.Target.LOSS, chain.getFormula().add(formula), candidate.ionType, chain));
+                        final MolecularFormula loss = chain.getFormula().add(formula);
+                        C.annotations.add(new ChainAnnotation(LipidAnnotation.Target.LOSS, loss, aswitch ? adductSwitch(candidate, loss, true).getCandidate() : candidate.lipidFormula.subtract(loss), aswitch ? adductSwitch(candidate.ionType) : candidate.ionType, chain));
                     }
                 }
             }
@@ -339,7 +341,8 @@ public class MassToLipid {
                     final int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, deviation);
                     if (i >= 0) {
                         C.peakIndizes.add(i);
-                        C.annotations.add(new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, chain.getFormula().add(formula), candidate.ionType, chain));
+                        final MolecularFormula loss = chain.getFormula().add(formula);
+                        C.annotations.add(new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, loss, aswitch ? adductSwitch(candidate,loss, true).getCandidate() : candidate.lipidFormula.subtract(loss), aswitch ? adductSwitch(candidate.ionType) : candidate.ionType, chain));
                     }
                 }
             }
@@ -421,6 +424,20 @@ public class MassToLipid {
         } else if (!candidate.ionType.getAdduct().isEmpty()) {
             return mz - candidate.ionType.getAdduct().getMass();
         } else return mz;
+    }
+    private Decomposition adductSwitch(LipidCandidate candidate, MolecularFormula formula, boolean isLoss) {
+        if (isLoss) {
+               if (candidate.ionType.getAdduct().isEmpty()) {
+                   return new Decomposition(candidate.lipidFormula.subtract(formula), candidate.ionType.equals(Sodium) ? PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization() : candidate.ionType.getIonization(), 0d);
+               } else {
+                   return new Decomposition(candidate.lipidFormula.subtract(formula.add(candidate.ionType.getAdduct())), candidate.ionType.getIonization(), 0d);
+               }
+        }
+            if (candidate.ionType.equals(Sodium)) {
+                return new Decomposition(formula, PrecursorIonType.getPrecursorIonType("[M+H]+").getIonization(), 0d);
+            } else if (!candidate.ionType.getAdduct().isEmpty()) {
+                return new Decomposition(formula.subtract(candidate.ionType.getAdduct()), candidate.ionType.getIonization(), 0d);
+            } else return new Decomposition(formula, candidate.ionType.getIonization(), 0d);
     }
 
     private <T extends Spectrum<Peak>> void search(ArrayList<LipidAnnotation> annotations, TIntArrayList indizes, T spectrum, double peakMass, Supplier<LipidAnnotation> supl) {
@@ -608,12 +625,12 @@ public class MassToLipid {
                 final Optional<IndexedPeak> any = root.peaks.stream().filter(x -> x.annotation.getTarget() == LipidAnnotation.Target.LOSS).findAny();
                 if (any.isPresent()) {
                     final IndexedPeak q = any.get();
-                    p = new IndexedPeak(q.index, q.getMass(), q.getIntensity(), chain.get().formula, new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, chain.get().formula, q.annotation.getIonType(), chain.get()));
+                    p = new IndexedPeak(q.index, q.getMass(), q.getIntensity(), chain.get().formula, new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, chain.get().formula, q.formula, q.annotation.getIonType(), chain.get()));
                 } else {
                     final Optional<IndexedPeak> any2 = root.peaks.stream().filter(x -> x.annotation.getTarget() == LipidAnnotation.Target.FRAGMENT).findAny();
                     if (any2.isPresent()) {
                         final IndexedPeak q = any2.get();
-                        p = new IndexedPeak(q.index, q.getMass(), q.getIntensity(), any2.get().formula, new ChainAnnotation(LipidAnnotation.Target.LOSS, chain.get().formula, q.annotation.getIonType(), chain.get()));
+                        p = new IndexedPeak(q.index, q.getMass(), q.getIntensity(), any2.get().formula, new ChainAnnotation(LipidAnnotation.Target.LOSS, chain.get().formula,q.formula, q.annotation.getIonType(), chain.get()));
                     }
                 }
                 OpenChains c = root.openChains.decrement(chain.get());
@@ -653,7 +670,7 @@ public class MassToLipid {
                                 if (chain.isPresent() && chain.get().type.equals(type)) {
                                     // add node
                                     final LipidTreeNode node = nodes.computeIfAbsent(chain.get(), (x)->new LipidTreeNode(chain.get(), root.remainingChainFormula.subtract(chain.get().formula), root.depth+1, root.openChains.decrement(chain.get())));
-                                    final IndexedPeak peak = new IndexedPeak(k,spectrum.getMzAt(k),spectrum.getIntensityAt(k), peakFormulas[i], new ChainAnnotation(LipidAnnotation.Target.LOSS, finalFormula, ionType, chain.get()));
+                                    final IndexedPeak peak = new IndexedPeak(k,spectrum.getMzAt(k),spectrum.getIntensityAt(k), peakFormulas[i], new ChainAnnotation(LipidAnnotation.Target.LOSS, finalFormula,peakFormulas[i], ionType, chain.get()));
                                     node.peaks.add(peak);
 
                                 }
@@ -669,7 +686,7 @@ public class MassToLipid {
                                         // add node
                                         final LipidTreeNode node = nodes.computeIfAbsent(chain.get(), (x)->new LipidTreeNode(chain.get(),root.remainingChainFormula.subtract(chain.get().formula), root.depth+1,root.openChains.decrement(chain.get())));
                                         final IndexedPeak peak = new IndexedPeak(k,spectrum.getMzAt(k),spectrum.getIntensityAt(k),
-                                        peakFormulas[i],new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, finalFormula, ionType, chain.get()));
+                                        peakFormulas[i],new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, finalFormula,peakFormulas[i], ionType, chain.get()));
                                         node.peaks.add(peak);
                                     }
                                 }
@@ -932,7 +949,7 @@ public class MassToLipid {
                         if (LipidChain.validFormulaForAcylChains(remain, 1)) {
                             final LipidChain lipidChain = LipidChain.fromFormula(finalFormula).get();
                             indicators.computeIfAbsent(lipidChain, (x)->new ArrayList<>()).add(new IndexedPeak(
-                                    k, spectrum.getMzAt(k), spectrum.getIntensityAt(k),f, new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, f, map.ionTypesPerPeak[k][j], lipidChain)));
+                                    k, spectrum.getMzAt(k), spectrum.getIntensityAt(k),f, new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, f,f, map.ionTypesPerPeak[k][j], lipidChain)));
                         }
                     }
                 }
@@ -943,7 +960,7 @@ public class MassToLipid {
                         if (LipidChain.validFormulaForAcylChains(remain, 1)) {
                             final LipidChain lipidChain = LipidChain.fromFormula(finalFormula).get();
                             indicators.computeIfAbsent(lipidChain, (x)->new ArrayList<>()).add(new IndexedPeak(
-                                    k, spectrum.getMzAt(k), spectrum.getIntensityAt(k),f, new ChainAnnotation(LipidAnnotation.Target.LOSS, finalFormula.add(modification), map.ionTypesPerPeak[k][j], lipidChain)));
+                                    k, spectrum.getMzAt(k), spectrum.getIntensityAt(k),f, new ChainAnnotation(LipidAnnotation.Target.LOSS, finalFormula.add(modification),f, map.ionTypesPerPeak[k][j], lipidChain)));
                         }
                     }
                 }
