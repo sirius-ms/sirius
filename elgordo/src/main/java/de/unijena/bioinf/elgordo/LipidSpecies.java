@@ -43,7 +43,7 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
         int chainIndex = lipid.indexOf('(')+1;
         String chain = lipid.substring(chainIndex, lipid.lastIndexOf(')'));
         if (chain.isEmpty()) throw new IllegalArgumentException("Unknown lipid: " + lipid);
-        final String[] subchains = chain.split("/");
+        final String[] subchains = chain.split("_");
         final LipidChain[] chains = Arrays.stream(subchains).map(x->LipidChain.fromString(x)).toArray(LipidChain[]::new);
         return new LipidSpecies(klasse, chains);
     }
@@ -91,6 +91,6 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
 
     @Override
     public String toString() {
-        return type.abbr() + "("+ (chains.length>0 ? Joiner.on('/').join(chains) : "?")  + ")";
+        return type.abbr() + "("+ (chains.length>0 ? Joiner.on('_').join(chains) : "?")  + ")";
     }
 }

@@ -108,6 +108,7 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
             }
             if (a!=null && !rt.contains(s.getRetentionTime())) {
                 b = s;
+                break;
             }
         }
         if (b == null) b = run.getScanByNumber(run.scanRange().upperEndpoint()).get();
