@@ -290,7 +290,7 @@ public class ChromatogramBuilder {
         }
 
 
-        extrema.smooth((i)->(float)this.sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(i),peak.getMzAt(0)), peak, 0.33, 5);
+        //extrema.smooth((i)->(float)this.sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(i),peak.getMzAt(0)), peak, 0.33, 5);
         return extrema;
     }
 

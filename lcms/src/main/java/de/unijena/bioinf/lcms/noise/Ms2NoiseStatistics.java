@@ -54,6 +54,7 @@ public class Ms2NoiseStatistics {
         ionType = PrecursorIonType.getPrecursorIonType("[M+H]+");
     }
 
+    // TODO: prüfen ob die Spektren wenig Peaks enthalten. Dann wurden die nämlich schon entnoised.
     public void add(Scan scan, SimpleSpectrum spectrum) {
         final double right = scan.getPrecursor().getMass() + 20;
         buffer.clearQuick();
@@ -91,10 +92,20 @@ public class Ms2NoiseStatistics {
         }
         final float[] array = allNoiseIntensitites.toArray();
         signalIntensities.sort();
+        double signalLevel = signalIntensities.getQuick((int)(signalIntensities.size()*0.15));
+        double x = 0.5;
+        double noiselevel = Double.POSITIVE_INFINITY;
+        while (x >= 0.1 && (signalLevel < 3*noiselevel) ) {
+            noiselevel = Quickselect.quickselectInplace(array, 0, array.length, (int) (array.length * x));
+            x -= 0.1;
+        }
+        if (signalLevel < 2*noiselevel) {
+            noiselevel = signalLevel/2d;
+        }
+
         this.noiseInformation = new NoiseInformation(
                 allNoiseIntensitites.sum()/allNoiseIntensitites.size(),
-                Quickselect.quickselectInplace(array, 0,array.length, (int)(array.length*0.5)),
-                Quickselect.quickselectInplace(array, 0, array.length, (int)(array.length*0.5)), signalIntensities.getQuick((int)(signalIntensities.size()*0.15)) , ParetoDistribution.learnFromData((float)Quickselect.quickselectInplace(array, 0,array.length, (int)(array.length*0.15)), array)
+                noiselevel, noiselevel, signalLevel, ParetoDistribution.learnFromData((float)Quickselect.quickselectInplace(array, 0,array.length, (int)(array.length*0.15)), array)
 
         );
         return noiseInformation;

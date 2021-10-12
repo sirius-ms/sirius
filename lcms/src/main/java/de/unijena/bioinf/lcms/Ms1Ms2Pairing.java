@@ -11,7 +11,6 @@ import de.unijena.bioinf.recal.MzRecalibration;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 import org.apache.commons.math3.analysis.UnivariateFunction;
-import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.RealDistribution;
@@ -99,10 +98,10 @@ public class Ms1Ms2Pairing {
             checkForDuplicates(targets);
             recalibrate(targets, (values)->MzRecalibration.getMedianLinearRecalibration(values[0], values[1]), msms.run.getIdentifier() + "_linear");
             searchMs1(ms1, targets);
-            checkForDuplicates(targets);
-            recalibrate(targets, (values)->new LoessInterpolator(0.3, 2).interpolate(values[0], values[1]),msms.run.getIdentifier() + "_loess");
+            //checkForDuplicates(targets);
+            //recalibrate(targets, (values)->new LoessInterpolator(0.3, 2).interpolate(values[0], values[1]),msms.run.getIdentifier() + "_loess");
             // and search again
-            searchMs1(ms1, targets);
+            //searchMs1(ms1, targets);
             checkForDuplicates(targets);
             //
             for (Target t : targets) {
@@ -223,7 +222,7 @@ public class Ms1Ms2Pairing {
                 if (!(((PolynomialSplineFunction) f).isValidPoint(t.rt)))
                     continue;
             }
-            t.rt = Math.round(f.value(t.rt));
+            t.rt = Math.round(f.value(t.rtOrig));
         }
     }
 
