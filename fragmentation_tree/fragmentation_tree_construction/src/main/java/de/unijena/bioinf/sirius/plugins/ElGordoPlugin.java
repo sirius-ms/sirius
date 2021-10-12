@@ -19,23 +19,27 @@
 
 package de.unijena.bioinf.sirius.plugins;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Called;
+import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.IntergraphMapping;
+import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.SiriusPlugin;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonFragmentsScore;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.CommonLossEdgeScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossScorer;
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.LossSizeScorer;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.PredefinedPeak;
-import de.unijena.bioinf.elgordo.AnnotatedLipidSpectrum;
-import de.unijena.bioinf.elgordo.LipidAnnotation;
-import de.unijena.bioinf.elgordo.LipidSpecies;
-import de.unijena.bioinf.elgordo.MassToLipid;
+import de.unijena.bioinf.elgordo.*;
 import de.unijena.bioinf.sirius.PeakAnnotation;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
@@ -49,7 +53,79 @@ public class ElGordoPlugin extends SiriusPlugin  {
 
     @Override
     public void initializePlugin(PluginInitializer initializer) {
+        final HashSet<MolecularFormula> commonFragments = new HashSet<>();
+        final HashSet<MolecularFormula> commonLosses = new HashSet<>();
+        for (LipidClass c : LipidClass.values()) {
+            if (c.fragmentLib!=null) {
+                for (PrecursorIonType ionType : c.fragmentLib.getDetectableModes()) {
+                    final FragmentLib.FragmentSet fragmentSet = c.fragmentLib.getFor(ionType).get();
+                    commonFragments.addAll(Arrays.asList(fragmentSet.fragments));
+                    commonLosses.addAll(Arrays.asList(fragmentSet.losses));
+                }
+            }
+        }
+        final LossSizeScorer lossSizeScorer = FragmentationPatternAnalysis.getByClassName(LossSizeScorer.class, initializer.getAnalysis().getPeakPairScorers());
+        final CommonLossEdgeScorer commonLossEdgeScorer = FragmentationPatternAnalysis.getByClassName(CommonLossEdgeScorer.class, initializer.getAnalysis().getLossScorers());
+        if (lossSizeScorer!=null && commonLossEdgeScorer!=null) {
+            initializer.addLossScorer(new FattyAcidChainScorer(lossSizeScorer));
+            for (MolecularFormula f : commonLosses) {
+                if (!commonLossEdgeScorer.isCommonLoss(f)) {
+                    final double penalty = lossSizeScorer.score(f);
+                    if (penalty < 0) {
+                        commonLossEdgeScorer.addCommonLoss(f, -penalty * 0.66);
+                    }
+                }
+            }
+        }
 
+        final CommonFragmentsScore commonFragmentsScore = FragmentationPatternAnalysis.getByClassName(CommonFragmentsScore.class, initializer.getAnalysis().getDecompositionScorers());
+        if (commonFragmentsScore!=null) {
+            for (MolecularFormula f : commonFragments) {
+                if (commonFragmentsScore.score(f) < 1) {
+                    commonFragmentsScore.addCommonFragment(f, 1);
+                }
+            }
+        }
+    }
+    @Called("FattyAcidChainScore")
+    public class FattyAcidChainScorer implements LossScorer<Object> {
+        LossSizeScorer lossSizeScorer;
+
+        public FattyAcidChainScorer(LossSizeScorer lossSizeScorer) {
+            this.lossSizeScorer = lossSizeScorer;
+        }
+
+        @Override
+        public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+
+        }
+
+        @Override
+        public <G, D, L> void exportParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
+
+        }
+
+        @Override
+        public Object prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
+            return null;
+        }
+
+        @Override
+        public double score(Loss loss, ProcessedInput input, Object precomputed) {
+            final Optional<LipidChain> c = LipidChain.fromFormula(loss.getFormula());
+            if (c.isPresent()) {
+                final int chainLength = c.get().getChainLength();
+                if (chainLength < 6 || chainLength > 36) return 0d;
+                final int doubleBonds = c.get().getNumberOfDoubleBonds();
+                if (doubleBonds > 6) return 0d;
+                final double penalty = lossSizeScorer.score(loss.getFormula());
+                if (penalty < 0) {
+                    double score = -penalty * Math.pow(0.95, doubleBonds*doubleBonds)*0.5;
+                    return score;
+                }
+            }
+            return 0d;
+        }
     }
 
     @Override
@@ -94,9 +170,11 @@ public class ElGordoPlugin extends SiriusPlugin  {
             final TIntObjectHashMap<PredefinedPeak> elgordoScoreMap = new TIntObjectHashMap<>();
             for (int k=0, n=ano.numberOfAnnotatedPeaks(); k < n; ++k) {
                 final LipidAnnotation annotation = ano.getAnnotationAt(k);
-                final int i = Spectrums.mostIntensivePeakWithin(peaklist, ms2.getMzAt(ano.getPeakIndexAt(k)), ms2dev);
+                final int j = ano.getPeakIndexAt(k);
+                if (j < 0) continue;
+                final int i = Spectrums.mostIntensivePeakWithin(peaklist, ms2.getMzAt(j), ms2dev);
                 if (i>=0) {
-                    final MolecularFormula formula = annotation.getTarget()== LipidAnnotation.Target.LOSS ? ano.getFormula().subtract(annotation.getFormula()) : annotation.getFormula();
+                    final MolecularFormula formula = annotation.getMeasuredPeakFormula();
                     ProcessedPeak pk = input.getMergedPeaks().get(i);
                     final PredefinedPeak obj = new PredefinedPeak(formula, annotation.getIonType(), "el Gordo: " + annotation.toString());
                     pa.set(pk, obj);

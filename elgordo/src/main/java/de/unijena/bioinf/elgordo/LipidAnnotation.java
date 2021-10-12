@@ -31,12 +31,13 @@ public abstract class LipidAnnotation {
     }
 
     private final Target target;
-    private final MolecularFormula formula;
+    private final MolecularFormula underlyingFormula, measuredPeakFormula;
     private final PrecursorIonType ionType;
 
-    public LipidAnnotation(Target target, MolecularFormula formula, PrecursorIonType ionType) {
+    public LipidAnnotation(Target target, MolecularFormula underlyingFormula, MolecularFormula measuredFormula, PrecursorIonType ionType) {
         this.target = target;
-        this.formula = formula;
+        this.underlyingFormula = underlyingFormula;
+        this.measuredPeakFormula = measuredFormula;
         this.ionType = ionType;
     }
 
@@ -44,8 +45,12 @@ public abstract class LipidAnnotation {
         return target;
     }
 
-    public MolecularFormula getFormula() {
-        return formula;
+    public MolecularFormula getMeasuredPeakFormula() {
+        return measuredPeakFormula;
+    }
+
+    public MolecularFormula getUnderlyingFormula() {
+        return underlyingFormula;
     }
 
     public PrecursorIonType getIonType() {
@@ -57,16 +62,16 @@ public abstract class LipidAnnotation {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LipidAnnotation that = (LipidAnnotation) o;
-        return target == that.target && formula.equals(that.formula) && ionType.equals(that.ionType);
+        return target == that.target && measuredPeakFormula.equals(that.measuredPeakFormula) && ionType.equals(that.ionType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(target, formula, ionType);
+        return Objects.hash(target, measuredPeakFormula, ionType);
     }
 
     @Override
     public String toString() {
-        return (target == Target.FRAGMENT ? "" : "loss of ") + formula.toString() + " (" + ionType.toString() + ")";
+        return (target == Target.FRAGMENT ? "" : "loss of ") + underlyingFormula.toString() + " (" + ionType.toString() + "), peak formula is " + measuredPeakFormula;
     }
 }

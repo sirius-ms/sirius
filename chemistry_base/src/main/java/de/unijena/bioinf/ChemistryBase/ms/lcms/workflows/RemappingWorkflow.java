@@ -17,13 +17,34 @@
  * You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.elgordo;
+package de.unijena.bioinf.ChemistryBase.ms.lcms.workflows;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
-public class PrecursorAnnotation extends LipidAnnotation{
-    public PrecursorAnnotation(MolecularFormula formula, PrecursorIonType ionType) {
-        super(Target.FRAGMENT, formula,formula, ionType);
+/**
+ * map an existing project space to LC/MS files
+ */
+@JsonTypeName("map")
+public class RemappingWorkflow extends LCMSWorkflow{
+
+    private final String[] files;
+    private final boolean dropExistingAssignments;
+
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public RemappingWorkflow(
+            @JsonProperty("files") String[] files,
+            @JsonProperty("drop-existing") boolean dropExistingAssignments) {
+        this.files = files;
+        this.dropExistingAssignments = dropExistingAssignments;
+    }
+
+    public String[] getFiles() {
+        return files;
+    }
+
+    public boolean isDropExistingAssignments() {
+        return dropExistingAssignments;
     }
 }

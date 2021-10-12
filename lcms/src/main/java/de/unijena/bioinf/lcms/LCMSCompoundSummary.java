@@ -259,25 +259,39 @@ public class LCMSCompoundSummary {
         // 1. apex is larger than variance
         double variance = 0d;
         int l=0;
+        int apexIndex = t.getAbsoluteIndexApex()-t.getIndexOffset();
         for (int i=t.getDetectedFeatureOffset(), n = t.getDetectedFeatureOffset()+t.getDetectedFeatureLength(); i < n; ++i) {
-            if (i>0) {
-                variance += Math.pow(t.getIntensities()[i]- t.getIntensities()[i-1],2);
-                ++l;
-            }
-            if (i+1 < t.getIntensities().length) {
-                variance += Math.pow(t.getIntensities()[i]- t.getIntensities()[i+1],2);
-                ++l;
+            if (i>0 && i+1 < n) {
+                if (i != apexIndex && t.getIntensities()[i-1] < t.getIntensities()[i] && t.getIntensities()[i+1] < t.getIntensities()[i]) {
+                    variance += Math.min(Math.pow(t.getIntensities()[i] - t.getIntensities()[i - 1], 2),Math.pow(t.getIntensities()[i] - t.getIntensities()[i + 1], 2));
+                    l++;
+                }
             }
         }
-        variance /= l;
-        variance = Math.sqrt(variance);
-        double peak = t.getApexIntensity() - Math.max(t.getLeftEdgeIntensity(),t.getRightEdgeIntensity());
+        double v2 = 0d;
+        if (l!=0) {
+            v2 = Math.sqrt(variance/Math.sqrt(l));
+            variance /= l;
+            variance = Math.sqrt(variance);
+        }
+        double stp = Math.max(t.getLeftEdgeIntensity(),t.getRightEdgeIntensity());
+        double peak = t.getApexIntensity() - stp;
 
-        if (peak > 8*variance) {
-            peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined apex."));
-        } else if (peak > 4*variance) {
-            peakCheck.add(new Check(Quality.MEDIUM, "The apex of the chromatographic peak has a low intensity compared to the variance of the surrounding peaks."));
-        } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has no clearly defined apex."));
+        if (l==0) {
+            double m = peak/stp;
+            if (m > 8) {
+                peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined apex."));
+            } else if (m > 4) {
+                peakCheck.add(new Check(Quality.MEDIUM, "The apex of the chromatographic peak has a low slope."));
+            } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has no clearly defined apex."));
+
+        } else {
+            if (peak > 10*v2) {
+                peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined apex."));
+            } else if (peak > 5*v2) {
+                peakCheck.add(new Check(Quality.MEDIUM, "The apex of the chromatographic peak has a low intensity compared to the variance of the surrounding peaks."));
+            } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has no clearly defined apex."));
+        }
 
         // has a clearly defined start point
         float apex = t.getApexIntensity();
@@ -308,7 +322,12 @@ public class LCMSCompoundSummary {
         boolean absoluteBegin = begin <= traceSet.getNoiseLevels()[t.absoluteIndexLeft()]*20;
 
         boolean relativeEnd = ende/apex <= 0.2;
+        boolean clearlyRelativeEnd = ende/apex < 0.05;
+        boolean clearlyRelativeBegin = begin/apex < 0.05;
         boolean absoluteEnd = ende <= traceSet.getNoiseLevels()[t.absoluteIndexRight()]*20;
+
+        absoluteBegin = absoluteBegin || clearlyRelativeBegin;
+        absoluteEnd = absoluteEnd || clearlyRelativeEnd;
 
         boolean slopeLeft = (apex-begin)/apex >= 0.2;
         boolean slopeRight = (apex-ende)/apex >= 0.2;
@@ -319,7 +338,7 @@ public class LCMSCompoundSummary {
         leftNeighbour &= slopeLeft;
         rightNeighbour &= slopeRight;
 
-        if (relativeBegin&&absoluteBegin && relativeEnd&&absoluteEnd) {
+        if (relativeBegin&&absoluteBegin && (relativeEnd&&absoluteEnd || clearlyRelativeEnd)) {
             peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined start and end points."));
         } else {
             if (relativeBegin&&(absoluteBegin||leftNeighbour)) {

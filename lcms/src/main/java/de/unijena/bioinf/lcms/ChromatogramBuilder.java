@@ -54,6 +54,40 @@ public class ChromatogramBuilder {
         }
     }
 
+    public Optional<ChromatographicPeak> detectFirst(Range<Integer> scanRange, int middle, double mz) {
+        // pick most intensive peak in scan range
+        int left = middle;
+        int right = middle+1;
+        while (scanRange.contains(left) || scanRange.contains(right)) {
+            if (scanRange.contains(left)) {
+                final Optional<Scan> t = sample.run.getScanByNumber(left);
+                if (t.isPresent() && !t.get().isMsMs()) {
+                    final SimpleSpectrum spectrum = sample.storage.getScan(t.get());
+                    int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, dev);
+                    if (i>=0) {
+                        Optional<ChromatographicPeak> peak = buildTrace(spectrum, new ScanPoint(t.get(), spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
+                        if (peak.isPresent()) return peak;
+                    }
+                }
+                --left;
+            }
+            if (scanRange.contains(right)) {
+                final Optional<Scan> t = sample.run.getScanByNumber(right);
+                if (t.isPresent() && !t.get().isMsMs()) {
+                    final SimpleSpectrum spectrum = sample.storage.getScan(t.get());
+                    int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, dev);
+                    if (i>=0) {
+                        Optional<ChromatographicPeak> peak = buildTrace(spectrum, new ScanPoint(t.get(), spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
+                        if (peak.isPresent()) return peak;
+                    }
+                }
+                ++right;
+            }
+
+        }
+        return Optional.empty();
+    }
+
     public Optional<ChromatographicPeak> detect(Range<Integer> scanRange, double mz) {
         // pick most intensive peak in scan range
         ScanPoint best = null;
