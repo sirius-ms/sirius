@@ -20,8 +20,11 @@
 package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.io.lcms.CVUtils;
+import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
@@ -32,8 +35,7 @@ import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -80,6 +82,10 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
     }
 
     Predicate<CompoundContainerId> deleteIdxFilter = (c) -> true;
+
+    @CommandLine.Option(names = {"--delete-low-peak-quality"},
+            description = {"Delete all compounds which peak shape has a low (red) quality."})
+    boolean deleteLowPeakShape;
 
 
     @CommandLine.Option(names = {"--delete-by-mass", "--dm"},
@@ -149,9 +155,49 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
 
     Predicate<Instance> keepConfidenceFilter = null;
 
+    private Predicate<Instance> getLowPeakShapeFilter() {
+        Predicate<Instance> peakShape = (instance)->{
+            final Optional<LCMSPeakInformation> annotation = instance.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class);
+            if (annotation.isPresent()) {
+                final LCMSPeakInformation lcmsPeakInformation = annotation.get();
+                CoelutingTraceSet[] traces = new CoelutingTraceSet[lcmsPeakInformation.length()];
+                int j=0;
+                for (int i=0, n = lcmsPeakInformation.length(); i < n; ++i) {
+                    if (lcmsPeakInformation.getTracesFor(i).isPresent()) {
+                        traces[j++] = lcmsPeakInformation.getTracesFor(i).get();
+                    }
+                }
+                traces = Arrays.copyOf(traces, j);
+                Arrays.sort(traces, Comparator.comparingDouble(x->-x.getIonTrace().getMonoisotopicPeak().getApexIntensity()));
+                // delete everything with intensity below 50% of the best
+                double best = traces[0].getIonTrace().getMonoisotopicPeak().getApexIntensity()*0.5;
+                for (j=0; j < traces.length; ++j) {
+                    if (traces[j].getIonTrace().getMonoisotopicPeak().getApexIntensity()<best) break;
+                }
+                traces = Arrays.copyOf(traces, j);
+                // take top 10% or top 5
+                int thr = Math.max(Math.min(traces.length,5), (int)(traces.length*0.1));
+                int mingood = Math.max(1, (int)(traces.length*0.025));
+                for (int i=0; i < thr; ++i) {
+                    LCMSCompoundSummary sum = new LCMSCompoundSummary(traces[i], traces[i].getIonTrace(), null);
+                    if (sum.peakQuality.compareTo(LCMSCompoundSummary.Quality.LOW) > 0) {
+                        --mingood;
+                        if (mingood<=0) return true;
+                    }
+                }
+                return false;
+            } else return true;
+        };
+        return peakShape;
+    }
+
     @Nullable
     public Predicate<Instance> getCombinedInstanceilter() {
         Predicate<Instance> it = keepConfidenceFilter;
+        if (deleteLowPeakShape) {
+            Predicate<Instance> it2 = getLowPeakShapeFilter();
+            if (it!=null) it = it.and(it2); else it=it2;
+        }
         // combine
 //        if (deleteConfidenceFilter != null)
 //            it = it.and(deleteConfidenceFilter);
