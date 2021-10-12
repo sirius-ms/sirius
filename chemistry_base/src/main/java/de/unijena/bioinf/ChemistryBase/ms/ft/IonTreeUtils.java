@@ -47,7 +47,10 @@ public class IonTreeUtils {
     public enum ExpandedAdduct implements TreeAnnotation {RAW, EXPANDED}
 
     public boolean isResolvable(FTree tree, PrecursorIonType ionType) {
-        return (tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization().equals(ionType.getIonization()) && tree.getRoot().getFormula().isSubtractable(ionType.getAdduct()));
+        return (tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization().equals(ionType.getIonization())
+                && tree.getRoot().getFormula().isSubtractable(ionType.getAdduct())
+                && !tree.getRoot().getFormula().equals(ionType.getAdduct()) //root MF should not be the same as adduct, else no compound remains after subtracting adduct
+        );
     }
 
     /**
