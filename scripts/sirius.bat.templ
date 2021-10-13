@@ -48,8 +48,8 @@ echo ERROR: Inlcuded java.exe could not be found. Please report this bug!
 goto fail
 
 :execute
-@rem Setup the command line
-
+@rem Setup the command line and add APP_HOME to user Path
+set Path=%APP_HOME%;%Path%
 set CLASSPATH=#classPath#
 
 set GUROBI_JAR=#gurobiJar#
