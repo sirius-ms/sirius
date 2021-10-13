@@ -167,8 +167,10 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     @Override
     public void reloadChanges() {
-        ApplicationCore.WEB_API.changeHost(URI.create(props.getProperty("de.unijena.bioinf.fingerid.web.host")));
         ProxyManager.reconnect();
+        ApplicationCore.WEB_API.getAuthService().reconnectService(ProxyManager.getSirirusHttpAsyncClient()); //load new proxy data from service.
+        ProxyManager.enforceGlobalProxySetting(); //update global proxy stuff for Webview.
+        ApplicationCore.WEB_API.changeHost(URI.create(props.getProperty("de.unijena.bioinf.fingerid.web.host")));
         MF.CONNECTION_MONITOR().checkConnectionInBackground();
     }
 

@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import de.unijena.bioinf.sirius.SiriusFactory;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
+import de.unijena.bioinf.webapi.ProxyManager;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -300,7 +301,7 @@ public abstract class ApplicationCore {
             measureTime("DONE init bug reporting, START init WebAPI");
 
             TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile",null,".rtoken"));
-            AuthService service = AuthServices.createDefault(TOKEN_FILE);
+            AuthService service = AuthServices.createDefault(TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
             WEB_API = new WebAPI(service);
             DEFAULT_LOGGER.info("Web API initialized.");
             measureTime("DONE init  init WebAPI");

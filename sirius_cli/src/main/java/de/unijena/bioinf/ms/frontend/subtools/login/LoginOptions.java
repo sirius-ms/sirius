@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
+import de.unijena.bioinf.webapi.ProxyManager;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -153,7 +154,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 }
             } else if (showProfile) {
                 try {
-                    AuthService service = AuthServices.createDefault(ApplicationCore.TOKEN_FILE);
+                    AuthService service = AuthServices.createDefault(ApplicationCore.TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
                     showProfile(AuthServices.getIDToken(service));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
