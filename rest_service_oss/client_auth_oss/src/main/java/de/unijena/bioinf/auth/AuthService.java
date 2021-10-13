@@ -28,10 +28,12 @@ import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.revoke.TokenTypeHint;
+import com.github.scribejava.httpclient.apache.ApacheHttpClient;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.auth0.Auth0Service;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +47,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Closeable {
 
-    protected final OAuth20Service service;
+    private OAuth20Service service;
 
     @Nullable
     private String refreshToken;
@@ -58,11 +60,19 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
 
 
     public AuthService(DefaultApi20 authAPI) {
-        this(null, authAPI);
+        this(authAPI, null);
+    }
+
+    public AuthService(DefaultApi20 authAPI, @Nullable CloseableHttpAsyncClient client) {
+        this(null, authAPI, client);
     }
 
     public AuthService(@Nullable String refreshToken, DefaultApi20 authAPI) {
-        this(refreshToken, buildService(authAPI));
+        this(refreshToken, authAPI, null);
+    }
+
+    public AuthService(@Nullable String refreshToken, DefaultApi20 authAPI, @Nullable CloseableHttpAsyncClient client) {
+        this(refreshToken, buildService(authAPI, client));
     }
 
     public AuthService(@Nullable String refreshToken, OAuth20Service service) {
@@ -71,14 +81,25 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     }
 
 
-    private static OAuth20Service buildService(DefaultApi20 authAPI) {
+    private static OAuth20Service buildService(DefaultApi20 authAPI, @Nullable CloseableHttpAsyncClient client) {
         ServiceBuilder b = new ServiceBuilder(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientID", null, null));
+        if (client != null)
+            b.httpClient(new ApacheHttpClient(client));
         String secret = PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientSecret");
         if (secret != null)
             b.apiSecret(secret);
 //                .defaultScope("offline_access") // replace with desired scope
 //              .callback("http://your.site.com/callback")
         return b.build(authAPI);
+    }
+
+    public void reconnectService(@Nullable CloseableHttpAsyncClient client){
+        tokenLock.writeLock().lock();
+        try {
+            this.service = buildService(service.getApi(), client);
+        }finally {
+            tokenLock.writeLock().unlock();
+        }
     }
 
     /**

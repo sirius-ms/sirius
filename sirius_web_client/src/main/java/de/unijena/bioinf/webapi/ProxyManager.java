@@ -41,6 +41,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
@@ -104,18 +107,30 @@ public class ProxyManager {
     }
 
     public static CloseableHttpClient getSirirusHttpClient(ProxyStrategy strategy) {
-        final CloseableHttpClient client;
+        return (CloseableHttpClient) getSirirusHttpClient(strategy, false);
+    }
+
+    public static CloseableHttpAsyncClient getSirirusHttpAsyncClient() {
+        return getSirirusHttpAsyncClient(getProxyStrategy());
+    }
+
+    public static CloseableHttpAsyncClient getSirirusHttpAsyncClient(ProxyStrategy strategy) {
+        return (CloseableHttpAsyncClient) getSirirusHttpClient(strategy, true);
+    }
+
+    private static Object getSirirusHttpClient(ProxyStrategy strategy, boolean async) {
+        final Object client;
         switch (strategy) {
             case SIRIUS:
-                client = getSiriusProxyClient();
+                client = getSiriusProxyClient(async);
                 LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.SIRIUS);
                 break;
             case NONE:
-                client = getNoProxyClient();
+                client = getNoProxyClient(async);
                 LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.NONE);
                 break;
             default:
-                client = getNoProxyClient();
+                client = getNoProxyClient(async);
                 LoggerFactory.getLogger(ProxyStrategy.class).debug("Using FALLBACK Proxy Type " + ProxyStrategy.NONE);
         }
 
@@ -149,12 +164,16 @@ public class ProxyManager {
         return 3;
     }
 
-    private static HttpClientBuilder handleSSLValidation(@NotNull final HttpClientBuilder builder){
+    private static <B> B handleSSLValidation(@NotNull final B builder) {
         if (isSSLValidationDisabled()) {
             try {
                 SSLContext context = new SSLContextBuilder().loadTrustMaterial(null, (TrustStrategy) (arg0, arg1) -> true).build();
-                builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
-                        .setSSLContext(context);
+                if (builder instanceof HttpAsyncClientBuilder)
+                    ((HttpAsyncClientBuilder) builder).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).setSSLContext(context);
+                else if (builder instanceof HttpClientBuilder)
+                    ((HttpClientBuilder) builder).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).setSSLContext(context);
+                else
+                    throw new IllegalArgumentException("Only HttpAsyncClientBuilder and  HttpClientBuilder are supported");
             } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
                 LoggerFactory.getLogger(ProxyManager.class).warn("Could not create Noop SSL context. SSL Validation will NOT be disabled!");
             }
@@ -162,39 +181,49 @@ public class ProxyManager {
         return builder;
     }
 
-    private static CloseableHttpClient getNoProxyClient() {
-        return handleSSLValidation(HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG)).build();
+    private static Object getNoProxyClient(boolean async) {
+        return handleSSLValidation(async
+                ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).build()
+                : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).build());
     }
 
-    private static CloseableHttpClient getSiriusProxyClient() {
+    private static Object getSiriusProxyClient(boolean async) {
         final String hostName = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.hostname");
         final int port = Integer.parseInt(PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.port"));
         final String scheme = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.scheme");
 
-        final HttpClientBuilder builder;
+        final Object builder;
+
+
         if (Boolean.getBoolean(PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials"))) {
             builder = getClientBuilderWithProxySettings(
                     hostName,
                     port,
                     scheme,
                     PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials.user"),
-                    PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials.pw"));
+                    PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials.pw"),
+                    async
+            );
         } else {
-            builder = getClientBuilderWithProxySettings(hostName, port, scheme);
+            builder = getClientBuilderWithProxySettings(hostName, port, scheme, null, null, async);
         }
 
-        return handleSSLValidation(builder).build();
+        handleSSLValidation(builder);
+
+        return async ? ((HttpAsyncClientBuilder) builder).build() : ((HttpClientBuilder) builder).build();
+
     }
 
-
-    private static HttpClientBuilder getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme) {
-        return getClientBuilderWithProxySettings(hostname, port, scheme, null, null);
+    private static Object getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme, final String username, final String password, boolean async) {
+        return decorateClientBuilderWithProxySettings(
+                async
+                        ? HttpAsyncClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG)
+                        : HttpClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG),
+                hostname, port, scheme, username, password);
     }
 
-    private static HttpClientBuilder getClientBuilderWithProxySettings(final String hostname, final int port, final String scheme, final String username, final String password) {
-        HttpClientBuilder clientBuilder = HttpClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG);
+    private static <B> B decorateClientBuilderWithProxySettings(final B builder, final String hostname, final int port, final String scheme, final String username, final String password) {
         BasicCredentialsProvider clientCredentials = new BasicCredentialsProvider();
-        clientBuilder.setDefaultCredentialsProvider(clientCredentials);
 
         HttpHost proxy = new HttpHost(
                 hostname,
@@ -203,20 +232,71 @@ public class ProxyManager {
         );
 
         DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
-        clientBuilder.setRoutePlanner(routePlanner);
 
-        if (username != null && password != null) {
+        if (username != null && password != null)
             clientCredentials.setCredentials(new AuthScope(proxy), new UsernamePasswordCredentials(username, password));
+
+        if (builder instanceof HttpAsyncClientBuilder) {
+            final HttpAsyncClientBuilder clientBuilder = (HttpAsyncClientBuilder) builder;
+            clientBuilder.setDefaultCredentialsProvider(clientCredentials);
+            clientBuilder.setRoutePlanner(routePlanner);
+        } else if (builder instanceof HttpClientBuilder) {
+            final HttpClientBuilder clientBuilder = (HttpClientBuilder) builder;
+            clientBuilder.setDefaultCredentialsProvider(clientCredentials);
+            clientBuilder.setRoutePlanner(routePlanner);
+        } else {
+            throw new IllegalArgumentException("Only HttpAsyncClientBuilder and  HttpClientBuilder are supported");
         }
-        return clientBuilder;
+
+        return builder;
     }
 
+    public static void enforceGlobalProxySetting() {
+        enforceGlobalProxySetting(getProxyStrategy());
+    }
+
+    public static void enforceGlobalProxySetting(ProxyStrategy strategy) {
+        if (strategy == ProxyStrategy.SIRIUS) {
+            final String hostName = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.hostname");
+            final String port = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.port");
+            System.setProperty("http.proxyHost", hostName);
+            System.setProperty("http.proxyPort", port);
+            System.setProperty("https.proxyHost", hostName);
+            System.setProperty("https.proxyPort", port);
+
+            if (Boolean.getBoolean(PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials"))) {
+                String user = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials.user");
+                String pw = PropertyManager.getProperty("de.unijena.bioinf.sirius.proxy.credentials.pw");
+                System.setProperty("http.proxyUser", user);
+                System.setProperty("http.proxyPassword", pw);
+                System.setProperty("https.proxyUser", user);
+                System.setProperty("https.proxyPassword", pw);
+            } else {
+                System.getProperties().remove("http.proxyUser");
+                System.getProperties().remove("http.proxyPassword");
+                System.getProperties().remove("https.proxyUser");
+                System.getProperties().remove("https.proxyPassword");
+            }
+        } else {
+            System.getProperties().remove("http.proxyHost");
+            System.getProperties().remove("http.proxyPort");
+            System.getProperties().remove("http.proxyUser");
+            System.getProperties().remove("http.proxyPassword");
+
+            System.getProperties().remove("https.proxyHost");
+            System.getProperties().remove("https.proxyPort");
+            System.getProperties().remove("https.proxyUser");
+            System.getProperties().remove("https.proxyPassword");
+        }
+    }
+
+
     public static boolean checkExternal(HttpClient proxy) {
-        return checkConnectionToUrl(proxy, PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external",null,"http://www.google.de/"));
+        return checkConnectionToUrl(proxy, PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external", null, "http://www.google.de/"));
     }
 
     public static boolean checkHoster(HttpClient proxy) {
-        return checkConnectionToUrl(proxy,  PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.hoster",null,"https://www.uni-jena.de/"));
+        return checkConnectionToUrl(proxy, PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.hoster", null, "https://www.uni-jena.de/"));
     }
 
     public static boolean checkDomain(HttpClient proxy) {
