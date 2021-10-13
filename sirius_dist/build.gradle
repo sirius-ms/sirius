@@ -278,7 +278,8 @@ subprojects {
 //                '-Xmx4G',
                 '-XX:MaxRAMPercentage=85',
                 '-XX:+UseG1GC',
-                '-XX:+UseStringDeduplication'
+                '-XX:+UseStringDeduplication',
+                '-Djava.library.path=.\\'
         ]
 
         dontWrapJar = true
