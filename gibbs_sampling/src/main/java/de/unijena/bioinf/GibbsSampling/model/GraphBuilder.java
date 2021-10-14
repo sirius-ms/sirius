@@ -331,7 +331,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
                 edgeFilter.filterEdgesAndSetThreshold(graph, idx, scores.toArray());
 
                 ++computedEdges;
-                if (computedEdges%edgesPerPercentagePoint==0) {
+                if (computedEdges%edgesPerPercentagePoint==0 && totalEdges>0) {
                     logInfo(String.format("%d / %d (%d %%)", computedEdges, totalEdges, (computedEdges*100)/totalEdges));
                 }
                 //progess is always fired if job done
