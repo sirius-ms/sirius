@@ -138,7 +138,7 @@ public class FingerIDJJob<S extends FormulaScore> extends BasicMasterJJob<List<F
                     for (PrecursorIonType ionType : adducts) {
                         if (!ionType.equals(ir.getTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getTree(), ionType)) {
                             try {
-                                IdentificationResult<S> newIr = IdentificationResult.withPrecursorIonType(ir, ionType);
+                                IdentificationResult<S> newIr = IdentificationResult.withPrecursorIonType(ir, ionType, false);
                                 if (newIr.getTree().numberOfVertices() >= 3 && (neutralFormulas.add(newIr.getMolecularFormula())))
                                     ionTypes.put(newIr, ir);
                             } catch (IllegalArgumentException e) {
