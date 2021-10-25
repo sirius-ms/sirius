@@ -1,5 +1,5 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Generic badge](https://img.shields.io/badge/Version-4.9.6-informational.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Version-4.9.7-informational.svg)](https://shields.io/)
 [![Build and Pubish](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml)
 
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
@@ -25,17 +25,17 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 4.9.6 (2021-10-19)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 4.9.7 (2021-10-25)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v4.9.6/sirius-4.9.6-win64.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.6/sirius-4.9.6-win64.zip)
-- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.6/sirius-4.9.6-linux64.zip)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v4.9.6/sirius-4.9.6-osx64.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.6/sirius-4.9.6-osx64.zip)
+- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v4.9.7/sirius-4.9.7-win64.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.7/sirius-4.9.7-win64.zip)
+- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.7/sirius-4.9.7-linux64.zip)
+- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v4.9.7/sirius-4.9.7-osx64.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.7/sirius-4.9.7-osx64.zip)
 
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.9.6 (2021-10-19)
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 4.9.7 (2021-10-25)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v4.9.6/sirius-4.9.6-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.6/sirius-4.9.6-win64-headless.zip)
-- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.6/sirius-4.9.6-linux64-headless.zip)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v4.9.6/sirius-4.9.6-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.6/sirius-4.9.6-osx64-headless.zip)
+- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v4.9.7/sirius-4.9.7-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.7/sirius-4.9.7-win64-headless.zip)
+- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.7/sirius-4.9.7-linux64-headless.zip)
+- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v4.9.7/sirius-4.9.7-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v4.9.7/sirius-4.9.7-osx64-headless.zip)
 
 
 <!--end download-->
@@ -97,8 +97,8 @@ Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V.
 
 ---
 Martin A. Hoffmann and Louis-Félix Nothias and Marcus Ludwig and Markus Fleischauer and Emily C. Gentry and Michael Witting and Pieter C. Dorrestein and Kai Dührkop and Sebastian Böcker
-[Assigning confidence to structural annotations from mass spectra with COSMIC](https://doi.org/10.1101/2021.03.18.435634)
-bioRxiv, 2021. (Cite if you are using: *CSI:FingerID*, *COSMIC*)
+[High-confidence structural annotation of metabolites absent from spectral libraries](https://doi.org/10.1038/s41587-021-01045-9)
+*Nat Biotechnology*, 2021. (Cite if you are using: *CSI:FingerID* with *COSMIC*)
 
 Kai Dührkop, Louis-Félix Nothias, Markus Fleischauer, Raphael Reher, Marcus Ludwig, Martin A. Hoffmann, Daniel Petras, William H. Gerwick, Juho Rousu, Pieter C. Dorrestein and Sebastian Böcker.
 [Systematic classification of unknown metabolites using high-resolution fragmentation mass spectra.](https://doi.org/10.1038/s41587-020-0740-8)
