@@ -51,57 +51,59 @@ import java.util.function.Supplier;
 public class SiriusGUIApplication extends SiriusCLIApplication {
 
     public static void main(String[] args) {
-        final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
-        ProjectSpaceManager.DEFAULT_CONFIG = () -> {
-            final ProjectSpaceConfiguration config = dc.get();
-            config.registerComponent(FormulaResult.class, FBCandidatesGUI.class, new FBCandidatesSerializerGUI());
-            config.registerComponent(FormulaResult.class, FBCandidateFingerprintsGUI.class, new FBCandidateFingerprintSerializerGUI());
-            return config;
-        };
-
         final Splash splash = Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("gui")) ? new Splash() : null;
-        if (TIME)
-            t1 = System.currentTimeMillis();
-
-        try {
-            TinyBackgroundJJob<Object> j = new TinyBackgroundJJob<>() {
-                @Override
-                protected Object compute() throws Exception {
-                    ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
-                    updateProgress(0, 7, 1, "Starting Application Core...");
-                    measureTime("Init Swing Job Manager");
-                    SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(Math.min(defaultThreadNumber(), cpuThreads), 1));
-                    ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
-                    updateProgress(0, 7, 2, "Configure shutdown hooks...");
-
-                    configureShutDownHook(() -> {
-                        Jobs.cancelALL();
-                        shutdownWebservice().run();
-                    });
-
-                    measureTime("Start Run method");
-                    updateProgress(0, 7, 3, "Configure Workflows... ");
-                    run(args, () -> {
-                        final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                        CLIRootOptions rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
-                        updateProgress(0, 7, 4, "Firing up SIRIUS... ");
-                        if (splash != null)
-                            removePropertyChangeListener(splash);
-                        return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, new GuiInstanceBufferFactory(), splash);
-                    });
-                    return null;
-                }
+        if (splash == null) {
+            SiriusCLIApplication.main(args);
+        } else {
+            final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
+            ProjectSpaceManager.DEFAULT_CONFIG = () -> {
+                final ProjectSpaceConfiguration config = dc.get();
+                config.registerComponent(FormulaResult.class, FBCandidatesGUI.class, new FBCandidatesSerializerGUI());
+                config.registerComponent(FormulaResult.class, FBCandidateFingerprintsGUI.class, new FBCandidateFingerprintSerializerGUI());
+                return config;
             };
 
-            if (splash != null)
+            if (TIME)
+                t1 = System.currentTimeMillis();
+
+            try {
+                TinyBackgroundJJob<Object> j = new TinyBackgroundJJob<>() {
+                    @Override
+                    protected Object compute() throws Exception {
+                        ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
+                        updateProgress(0, 7, 1, "Starting Application Core...");
+                        measureTime("Init Swing Job Manager");
+                        SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(Math.min(defaultThreadNumber(), cpuThreads), 1));
+                        ApplicationCore.DEFAULT_LOGGER.info("Swing Job MANAGER initialized! " + SiriusJobs.getGlobalJobManager().getCPUThreads() + " : " + SiriusJobs.getGlobalJobManager().getIOThreads());
+                        updateProgress(0, 7, 2, "Configure shutdown hooks...");
+
+                        configureShutDownHook(() -> {
+                            Jobs.cancelALL();
+                            shutdownWebservice().run();
+                        });
+
+                        measureTime("Start Run method");
+                        updateProgress(0, 7, 3, "Configure Workflows... ");
+                        run(args, () -> {
+                            final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
+                            CLIRootOptions rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
+                            updateProgress(0, 7, 4, "Firing up SIRIUS... ");
+                            removePropertyChangeListener(splash);
+                            return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, new GuiInstanceBufferFactory(), splash);
+                        });
+                        return null;
+                    }
+                };
+
                 j.addPropertyChangeListener(splash);
-            j.call();
-        } catch (Exception e){
-            e.printStackTrace();
-            System.exit(0);
-        }finally {
-            if (! (RUN.getFlow() instanceof GuiAppOptions.Flow))
+                j.call();
+            } catch (Exception e){
+                e.printStackTrace();
                 System.exit(0);
+            }finally {
+                if (! (RUN.getFlow() instanceof GuiAppOptions.Flow))
+                    System.exit(0);
+            }
         }
     }
 
