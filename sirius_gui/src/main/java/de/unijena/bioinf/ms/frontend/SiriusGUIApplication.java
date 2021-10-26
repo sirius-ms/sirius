@@ -88,16 +88,14 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
                             CLIRootOptions rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
                             updateProgress(0, 7, 4, "Firing up SIRIUS... ");
-                            if (splash != null)
-                                removePropertyChangeListener(splash);
+                            removePropertyChangeListener(splash);
                             return new GuiWorkflowBuilder<>(rootOptions, configOptionLoader, new GuiInstanceBufferFactory(), splash);
                         });
                         return null;
                     }
                 };
 
-                if (splash != null)
-                    j.addPropertyChangeListener(splash);
+                j.addPropertyChangeListener(splash);
                 j.call();
             } catch (Exception e){
                 e.printStackTrace();
