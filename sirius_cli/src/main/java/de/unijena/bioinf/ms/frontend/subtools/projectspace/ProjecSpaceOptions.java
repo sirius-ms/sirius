@@ -19,7 +19,9 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.io.lcms.CVUtils;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
@@ -29,10 +31,12 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -149,12 +153,35 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
 
     Predicate<Instance> keepConfidenceFilter = null;
 
+
+    @CommandLine.Option(names = {"--keep-by-tree-size", "--kts"},
+            description = {"Keep all compounds that have at least one fragmentation tree with number of fragments (including precursor) greater or equal than the given minimum."})
+    private void makeKeepTreeSizeFilter(double minTreeSize) {
+        keepTreeSizeFilter = (inst) -> inst.loadFormulaResults(FTree.class).stream().map(SScored::getCandidate).map(res ->  res.getAnnotation(FTree.class))
+                .filter(Optional::isPresent).map(Optional::get).mapToDouble(FTree::numberOfVertices).anyMatch(n->n>=minTreeSize);
+    }
+
+    Predicate<Instance> keepTreeSizeFilter = null;
+
+    @CommandLine.Option(names = {"--keep-by-explained-intensity", "--kei"},
+            description = {"Keep all compounds that have at least one fragmentation tree that explains at least a minimum total intensity of the spectrum. Value between 0 to 1."})
+    private void makeKeepExplainedIntensityFilter(double minIntensityRatio) {
+        keepExplainedIntensityFilter = (inst) -> inst.loadFormulaResults(FTree.class).stream().map(SScored::getCandidate).map(res ->  res.getAnnotation(FTree.class))
+                .filter(Optional::isPresent).map(Optional::get).mapToDouble(FTreeMetricsHelper::getExplainedIntensityRatio).anyMatch(r->r>=minIntensityRatio);
+    }
+
+    Predicate<Instance> keepExplainedIntensityFilter = null;
+
     @Nullable
     public Predicate<Instance> getCombinedInstanceilter() {
-        Predicate<Instance> it = keepConfidenceFilter;
+        Predicate<Instance> it = (inst) -> true; //always true as a start
         // combine
-//        if (deleteConfidenceFilter != null)
-//            it = it.and(deleteConfidenceFilter);
+        if (keepConfidenceFilter != null)
+            it = it.and(keepConfidenceFilter);
+        if (keepTreeSizeFilter != null)
+            it = it.and(keepTreeSizeFilter);
+        if (keepExplainedIntensityFilter != null)
+            it = it.and(keepExplainedIntensityFilter);
         return it;
     }
 
