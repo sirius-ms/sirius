@@ -67,7 +67,7 @@ public class LCMSWebview extends JFXPanel {
         lcmsView(f->{
             try {
                 final String json = objectMapper.writeValueAsString(peakInformation);
-                System.err.println(json);
+//                System.err.println(json);
                 f.call("bindStringData", json);
             } catch (Throwable e) {
                 e.printStackTrace();
