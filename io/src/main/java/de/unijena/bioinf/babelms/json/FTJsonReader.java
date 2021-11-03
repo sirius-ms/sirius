@@ -35,6 +35,7 @@ import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -85,12 +86,17 @@ public class FTJsonReader implements Parser<FTree> {
     }
 
     public FTree treeFromJson(Reader reader, URL source) throws IOException {
-        final DescriptorRegistry registry = DescriptorRegistry.getInstance();
         final JacksonDocument json = new JacksonDocument();
         final JsonNode docRoot = json.fromReader(reader);
+        return treeFromJson(docRoot, json, source);
+    }
+
+    public FTree treeFromJson(@NotNull final JsonNode docRoot, @NotNull final JacksonDocument json, @Nullable URL source) throws IOException {
+        final DescriptorRegistry registry = DescriptorRegistry.getInstance();
         double score = 0d;
         double scoreBoost = 0d;
-        final JsonNode fragments = json.getFromDictionary(docRoot,"fragments");
+
+        final JsonNode fragments = json.getFromDictionary(docRoot, "fragments");
         final HashMap<MolecularFormula, FragmentInfo> fragmentByFormulaMap = new HashMap<>(fragments.size());
         final TIntObjectHashMap<FragmentInfo> fragmentByIdMap = new TIntObjectHashMap<>();
 //        final TObjectIntHashMap<Fragment> treeFragmentToIdMap = new TObjectIntHashMap<>();
