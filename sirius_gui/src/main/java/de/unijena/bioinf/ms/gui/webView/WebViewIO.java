@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.tree_viewer;
+package de.unijena.bioinf.ms.gui.webView;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -34,7 +34,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.fop.svg.PDFTranscoder;
 // import org.apache.batik.transcoder.wmf.tosvg.WMFTranscoder;
 
-public class TreeViewerIO {
+public class WebViewIO {
 
     public static void writeSVG(File file, String svg){
         try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {

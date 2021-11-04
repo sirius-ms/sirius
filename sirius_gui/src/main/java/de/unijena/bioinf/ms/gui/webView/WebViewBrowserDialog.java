@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.webView;
 
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.webapi.ProxyManager;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
@@ -43,6 +44,7 @@ public class WebViewBrowserDialog extends JDialog {
     }
 
     private void build(String url) {
+        ProxyManager.enforceGlobalProxySetting();
         setLayout(new BorderLayout());
         JFXPanel jfxP = new JFXPanel();
         add(jfxP, BorderLayout.CENTER);

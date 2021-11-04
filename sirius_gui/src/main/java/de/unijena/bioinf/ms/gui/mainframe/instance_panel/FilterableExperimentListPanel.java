@@ -36,7 +36,7 @@ import java.awt.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FilterableExperimentListPanel extends JPanel {
-    JLabel elementCounter = new JLabel("N/A");
+    final JLabel elementCounter = new JLabel("N/A");
     private ExperimentListChangeListener sizeListener = new ExperimentListChangeListener() {
         @Override
         public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
@@ -58,11 +58,11 @@ public class FilterableExperimentListPanel extends JPanel {
         searchPanel.add(view.sourceList.openFilterPanelButton, BorderLayout.EAST);
         add(searchPanel, BorderLayout.NORTH);
         add(view, BorderLayout.CENTER);
-        JPanel j = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel j = new JPanel(new GridBagLayout());
+        j.setBorder(BorderFactory.createEmptyBorder(0,0,0,0));
+        j.setPreferredSize(new Dimension(getPreferredSize().width,16));
         j.add(elementCounter);
         add(j, BorderLayout.SOUTH);
-        setBorder(new EmptyBorder(0, 0, 0, 0));
+        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
     }
-
-
 }

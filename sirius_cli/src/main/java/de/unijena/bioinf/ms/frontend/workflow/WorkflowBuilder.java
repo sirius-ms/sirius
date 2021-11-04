@@ -27,7 +27,8 @@ import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.decomp.DecompOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.mgf.MgfExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.trees.FTreeExporterOptions;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
@@ -62,7 +63,7 @@ import java.util.stream.Stream;
  */
 
 // todo In general a lot of the configuration here could be done on compile time.
-//  but on the other hand I do not think it is a performance critical thing.
+//  On the other hand I do not think it is performance critical.
 
 public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
@@ -104,7 +105,8 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
                 SiriusOptions.class, new SiriusOptions(configOptionLoader),
                 ZodiacOptions.class, new ZodiacOptions(configOptionLoader),
                 PassatuttoOptions.class, new PassatuttoOptions(configOptionLoader),
-                FingerIdOptions.class, new FingerIdOptions(configOptionLoader),
+                FingerprintOptions.class, new FingerprintOptions(configOptionLoader),
+                FingerblastOptions.class, new FingerblastOptions(configOptionLoader),
                 CanopusOptions.class, new CanopusOptions(configOptionLoader)
         );
 
@@ -243,19 +245,12 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
             Object command = parsed.getCommand();
             if (command instanceof ToolChainOptions) {
                 try {
-                    // create a JobFactory (Task) an configures it invalidation behavior based on its
-                    // possible SubTools.
-                    ToolChainOptions<?, ?> toolChainOptions = (ToolChainOptions<?, ?>) command;
-                    ToolChainJob.Factory<?> task = toolChainOptions.call();
+                    // create a JobFactory (Task) and configures it invalidation behavior based on its subtools.
+                    final ToolChainOptions<?, ?> toolChainOptions = (ToolChainOptions<?, ?>) command;
+                    final ToolChainJob.Factory<?> task = toolChainOptions.call();
 
-                    final Set<Class<? extends ToolChainOptions<?, ?>>> reachable = new LinkedHashSet<>();
-                    Set<Class<? extends ToolChainOptions<?, ?>>> tmp = Set.copyOf(toolChainOptions.getSubCommands());
-                    while (tmp != null && !tmp.isEmpty()) {
-                        reachable.addAll(tmp);
-                        tmp = tmp.stream().map(toolChainTools::get).map(ToolChainOptions::getSubCommands)
-                                .flatMap(Collection::stream).collect(Collectors.toSet());
-                    }
-                    reachable.stream().map(toolChainTools::get).forEach(sub -> task.addInvalidator(sub.getInvalidator()));
+                    // detect tool dependencies and configure invalidators
+                    configureInvalidator(toolChainOptions, task);
 
                     executionResult.add(task);
                 } catch (CommandLine.ParameterException | CommandLine.ExecutionException ex) {
@@ -287,5 +282,16 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         protected ParseResultHandler self() {
             return this;
         }
+    }
+
+    private void configureInvalidator(ToolChainOptions<?, ?> toolChainOptions, ToolChainJob.Factory<?> task) {
+        final Set<Class<? extends ToolChainOptions<?, ?>>> reachable = new LinkedHashSet<>();
+        Set<Class<? extends ToolChainOptions<?, ?>>> tmp = Set.copyOf(toolChainOptions.getDependentSubCommands());
+        while (tmp != null && !tmp.isEmpty()) {
+            reachable.addAll(tmp);
+            tmp = tmp.stream().map(toolChainTools::get).map(ToolChainOptions::getDependentSubCommands)
+                    .flatMap(Collection::stream).collect(Collectors.toSet());
+        }
+        reachable.stream().map(toolChainTools::get).forEach(sub -> task.addInvalidator(sub.getInvalidator()));
     }
 }

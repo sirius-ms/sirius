@@ -27,15 +27,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
 public class FingerprintPanel extends JPanel implements PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
-                + "Detailed information about the PREDICTED fingerprint of the selected molecular formula."
+                +"<b>CSI:FingerID - Fingerprint Prediction</b>"
+                +"<br>"
+                + "Detailed information about the PREDICTED CSI:FingerID fingerprint of the selected molecular formula."
                 +"<br>"
                 + "Example structures for a selected molecular property are shown in the bottom panel."
                 + "</html>";

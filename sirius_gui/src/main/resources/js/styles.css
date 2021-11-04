@@ -46,11 +46,11 @@ body {
 .spectrum_legend { fill: #808080; }
 
 .peak { width: 2px;}
-.peak_1 { fill: #000000; }
-.peak_2 { fill: #32CD32; }
-.peak_matched { fill: #045FB4; }
-.peak_structInfo { fill: #af7ac5; }
-.peak_hover { fill: red; }
+.peak_1 { fill: #000000; width: 2px; }
+.peak_2 { fill: #32CD32; width: 2px; }
+.peak_matched { fill: #045FB4; width: 2px; }
+.peak_structInfo { fill: #af7ac5; width: 2px; }
+.peak_hover { fill: red; width: 2px; }
 .peak_select {
     fill: #4169E1;
     width: 3px;

@@ -51,8 +51,11 @@ public abstract class Icons {
     public static final Icon FB_LOADER_STOP_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/fb_loader.png"));
 
     public static final Icon NET_NO_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-no@0.5x.png"));
+//    public static final Icon NET_NO_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-no-16px.png"));
     public static final Icon NET_YES_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-yes@0.5x.png"));
+//    public static final Icon NET_YES_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-yes-16px.png"));
     public static final Icon NET_WARN_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-warn@0.5x.png"));
+//    public static final Icon NET_WARN_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-warn-16px.png"));
     public static final Icon NET_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network@0.5x.png"));
     public static final Icon NET_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network.png"));
     public static final Icon NET_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-16px.png"));
@@ -68,6 +71,9 @@ public abstract class Icons {
     public static final Icon DB_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db@0.5x.png"));
     public static final Icon DB_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db.png"));
 
+    public static final Icon DB_LENS_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens@0.5x.png"));
+    public static final Icon DB_LENS_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens.png"));
+
     public static final Icon GEAR_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear@0.5x.png"));
     public static final Icon GEAR_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear.png"));
 
@@ -82,8 +88,8 @@ public abstract class Icons {
     public static final Icon KEY_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-key@0.5x.png"));
     public static final Icon KEY_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-key.png"));
 
-//    public static final Icon USER_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user@0.5x.png"));
-//    public static final Icon USER_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user.png"));
+    public static final Icon USER_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user@0.5x.png"));
+    public static final Icon USER_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user.png"));
     public static final Icon USER_128 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user@2x.png"));
 
     public static final Icon INFO_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-information@0.5x.png"));

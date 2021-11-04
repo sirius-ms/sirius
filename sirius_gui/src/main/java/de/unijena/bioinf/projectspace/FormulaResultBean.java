@@ -31,7 +31,6 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 
 import java.util.ArrayList;

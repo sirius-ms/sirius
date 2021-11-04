@@ -17,28 +17,30 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.compute;
+package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
-import org.jetbrains.annotations.Nullable;
+import de.unijena.bioinf.ms.gui.login.AccountDialog;
 
-public class ActFingerIDConfigPanel extends ActivatableConfigPanel<FingerIDConfigPanel> {
-    public ActFingerIDConfigPanel(final JCheckBoxList<String> sourceIonization, @Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
-        super("CSI:FingerID", Icons.FINGER_32, true, () -> new FingerIDConfigPanel(sourceIonization, syncSource));
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
+
+/**
+ * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ */
+public class ShowAccountDialog extends AbstractAction {
+
+    public ShowAccountDialog() {
+        super("Account");
+        putValue(Action.LARGE_ICON_KEY, Icons.USER_32);
+        putValue(Action.SHORT_DESCRIPTION,"Show user account information and settings.");
     }
 
     @Override
-    protected void setComponentsEnabled(final boolean enabled) {
-        super.setComponentsEnabled(enabled);
-        content.searchDBList.setEnabled(enabled);
-        content.adductOptions.setEnabled(enabled);
-    }
-
-    @Override
-    protected void setButtonEnabled(boolean enabled) {
-        setButtonEnabled(enabled, enabled ? "Enable CSI:FingerID search" : "Can't connect to CSI:FingerID server!");
+    public void actionPerformed(ActionEvent e) {
+        new AccountDialog(MF, ApplicationCore.WEB_API.getAuthService());
     }
 }

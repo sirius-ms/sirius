@@ -42,6 +42,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
+import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -74,14 +75,15 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     // tool configurations
     private final ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
     private final ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
-    private final ActFingerIDConfigPanel csiConfigs; //FingerID configs
+    private final ActFingerprintConfigPanel csiPredictConfigs; //CSI:FingerID predict configs
+    private final ActFingerblastConfigPanel csiSearchConfigs; //CSI:FingerID search configs
     private final ActCanopusConfigPanel canopusConfigPanel; //Canopus configs
 
     // compounds on which the configured Run will be executed
     private final List<InstanceBean> compoundsToProcess;
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
-        super(owner, "compute", true);
+        super(owner, "Compute", true);
 
         this.compoundsToProcess = compoundsToProcess;
 
@@ -89,7 +91,9 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         setLayout(new BorderLayout());
 
         mainPanel = Box.createVerticalBox();
+        mainPanel.setBorder(BorderFactory.createEmptyBorder());
         final JScrollPane mainSP = new JScrollPane(mainPanel);
+        mainSP.setBorder(BorderFactory.createEtchedBorder());
         mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         mainSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         mainSP.getVerticalScrollBar().setUnitIncrement(16);
@@ -129,9 +133,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             if (compoundsToProcess.size() > 1)
                 addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
 
+            csiPredictConfigs = new ActFingerprintConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList);
+            JPanel csi = addConfigPanel("CSI:FingerID - Fingerprint Prediction", csiPredictConfigs);
 
-            csiConfigs = new ActFingerIDConfigPanel(formulaIDConfigPanel.content.ionizationList.checkBoxList, formulaIDConfigPanel.content.searchDBList.checkBoxList);
-            addConfigPanel("CSI:FingerID - Structure Elucidation", csiConfigs);
+            csiSearchConfigs = new ActFingerblastConfigPanel(formulaIDConfigPanel.content.searchDBList.checkBoxList);
+            addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs, csi);
 
             canopusConfigPanel = new ActCanopusConfigPanel();
             addConfigPanel("CANOPUS - Compound Class Prediction", canopusConfigPanel);
@@ -184,12 +190,23 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         setVisible(true);
     }
 
-    private void addConfigPanel(String header, JPanel configPanel) {
+    private JPanel addConfigPanel(String header, JPanel configPanel, JPanel appendHorizontally) {
         JPanel stack = new JPanel();
         stack.setLayout(new BorderLayout());
-        stack.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), header));
+        JXTitledSeparator title = new JXTitledSeparator(header);
+        title.setBorder(BorderFactory.createEmptyBorder(GuiUtils.MEDIUM_GAP, 0, GuiUtils.MEDIUM_GAP, GuiUtils.SMALL_GAP));
+        stack.add(title, BorderLayout.NORTH);
         stack.add(configPanel, BorderLayout.CENTER);
-        mainPanel.add(stack);
+        appendHorizontally.add(stack);
+        return appendHorizontally;
+    }
+
+    private JPanel addConfigPanel(String header, JPanel configPanel) {
+        JPanel flowContainer = new JPanel(new FlowLayout(FlowLayout.LEFT, GuiUtils.LARGE_GAP, GuiUtils.SMALL_GAP));
+        flowContainer.setBorder(BorderFactory.createEmptyBorder());
+        addConfigPanel(header, configPanel, flowContainer);
+        mainPanel.add(flowContainer);
+        return flowContainer;
     }
 
     private void configureActions() {
@@ -336,14 +353,20 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             configCommand.addAll(zodiacConfigs.asParameterList());
         }
 
-        if (csiConfigs != null && csiConfigs.isToolSelected()) {
-            toolCommands.add(csiConfigs.content.toolCommand());
+        if (csiPredictConfigs != null && csiPredictConfigs.isToolSelected()) {
+            toolCommands.add(csiPredictConfigs.content.toolCommand());
             int i = configCommand.indexOf("--AdductSettings.fallback");
             if (i >= 0) {
                 configCommand.remove(i);
                 configCommand.remove(i);
             }
-            configCommand.addAll(csiConfigs.asParameterList());
+            configCommand.addAll(csiPredictConfigs.asParameterList());
+        }
+
+
+        if (csiSearchConfigs != null && csiSearchConfigs.isToolSelected()) {
+            toolCommands.add(csiSearchConfigs.content.toolCommand());
+            configCommand.addAll(csiSearchConfigs.asParameterList());
         }
 
         if (canopusConfigPanel != null && canopusConfigPanel.isToolSelected()) {
@@ -361,7 +384,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     }
 
     private boolean warnNoMethodIsSelected() {
-        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, csiConfigs, canopusConfigPanel)){
+        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, csiPredictConfigs, csiSearchConfigs, canopusConfigPanel)) {
             new WarningDialog(this, "Please select at least one method.");
             return true;
         } else {
@@ -381,7 +404,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
         if (cc != null) {
             if (cc.isConnected()) {
-                if (csiConfigs.isToolSelected() && cc.hasWorkerWarning()) {
+                if ((csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected()) && cc.hasWorkerWarning()) {
                     if (cc.workerInfo == null ||
                             (!cc.workerInfo.supportsAllPredictorTypes(EnumSet.of(PredictorType.CSI_FINGERID_NEGATIVE))
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isNegative())) ||
@@ -405,11 +428,12 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
     public void initSingleExperimentDialog() {
         JPanel north = new JPanel(new BorderLayout());
+        north.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP,0,GuiUtils.SMALL_GAP,0));
 
         InstanceBean ec = compoundsToProcess.get(0);
         editPanel = new ExperimentEditPanel(false);
         editPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Edit Input Data"));
-        north.add(editPanel, BorderLayout.NORTH);
+        north.add(editPanel, BorderLayout.CENTER);
 
         //todo beging ugly hack --> we want to manage this by the edit panel instead and fire edit panel events
         editPanel.formulaTF.getDocument().addDocumentListener(new DocumentListener() {
@@ -440,14 +464,14 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
         formulaIDConfigPanel.addEnableChangeListener((c, e) -> c.refreshPossibleIonizations(Collections.singleton(editPanel.getSelectedIonization().getIonization().getName()), e));
 
-        csiConfigs.content.adductOptions.checkBoxList.addPropertyChangeListener("refresh", evt -> {
+        csiPredictConfigs.content.adductOptions.checkBoxList.addPropertyChangeListener("refresh", evt -> {
             PrecursorIonType ionType = editPanel.getSelectedIonization();
             if (ionType.hasNeitherAdductNorInsource() && !ionType.isIntrinsicalCharged()) {
-                csiConfigs.content.adductOptions.setEnabled(csiConfigs.isToolSelected());
+                csiPredictConfigs.content.adductOptions.setEnabled(csiPredictConfigs.isToolSelected());
             } else {
-                csiConfigs.content.adductOptions.checkBoxList.replaceElements(List.of(ionType.toString()));
-                csiConfigs.content.adductOptions.checkBoxList.checkAll();
-                csiConfigs.content.adductOptions.setEnabled(false);
+                csiPredictConfigs.content.adductOptions.checkBoxList.replaceElements(List.of(ionType.toString()));
+                csiPredictConfigs.content.adductOptions.checkBoxList.checkAll();
+                csiPredictConfigs.content.adductOptions.setEnabled(false);
             }
         });
 

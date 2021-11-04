@@ -2,65 +2,22 @@ import java.nio.file.Files
 
 dependencies {
     compile project(':sirius_cli')
-//    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
-task linux64Dist(type: Download, group: 'download') {
-    String distName = "sirius-$version-linux64-headless"
-    src "https://bio.informatik.uni-jena.de/repository/${version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}/de/unijena/bioinf/ms/sirius/$version/${distName}.zip"
-    dest buildDir.toPath().resolve("tmp/source-dists/${distName}.zip").toFile()
-    onlyIfModified true
-    overwrite false
-
-    doLast {
-        copy {
-            from zipTree(dest)
-            into buildDir.toPath().resolve("tmp/source-dists").resolve(distName).toFile()
-        }
-    }
-}
-
-task osx64Dist(type: Download, group: 'download') {
-    String distName = "sirius-$version-osx64-headless"
-    src "https://bio.informatik.uni-jena.de/repository/${version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}/de/unijena/bioinf/ms/sirius/$version/${distName}.zip"
-    dest buildDir.toPath().resolve("tmp/source-dists/${distName}.zip").toFile()
-    onlyIfModified true
-    overwrite false
-
-    doLast {
-        copy {
-            from zipTree(dest)
-            into buildDir.toPath().resolve("tmp/source-dists").resolve(distName).toFile()
-        }
-    }
-}
-
-task win64Dist(type: Download, group: 'download') {
-    String distName = "sirius-$version-win64-headless"
-    src "https://bio.informatik.uni-jena.de/repository/${version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}/de/unijena/bioinf/ms/sirius/$version/${distName}.zip"
-    dest buildDir.toPath().resolve("tmp/source-dists/${distName}.zip").toFile()
-    onlyIfModified true
-    overwrite false
-
-    doLast {
-        copy {
-            from zipTree(dest)
-            into buildDir.toPath().resolve("tmp/source-dists").resolve(distName).toFile()
-        }
-    }
-}
-
 task multiOSImage(group: 'distribution') {
-    dependsOn("linux64Dist", "osx64Dist", "win64Dist")
-    inputs.files(osx64Dist.outputs.files.singleFile.toString().replace(".zip", ""), linux64Dist.outputs.files.singleFile.toString().replace(".zip", ""))
+    inputs.files(
+            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").toFile(),
+            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Windows-x86-64-headless-img").toFile(),
+            buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").toFile()
+    )
     outputs.file(getBuildDir().toPath().resolve("distributions").resolve(project.name))
 
     doFirst {
-
+        println buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").toFile()
         //build windows directory
         copy {
-            from(win64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Windows-x86-64-headless-img").toFile()) {
                 exclude 'sirius.exe'
                 exclude 'sirius-gui.exe'
                 exclude "manual-$version-manual.pdf"
@@ -71,7 +28,7 @@ task multiOSImage(group: 'distribution') {
 
         // build Linux directory
         copy {
-            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").toFile()) {
                 exclude "manual-$version-manual.pdf"
                 exclude "lib/app"
             }
@@ -80,7 +37,7 @@ task multiOSImage(group: 'distribution') {
 
         //build Mac directory
         copy {
-            from(osx64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius.app/Contents') {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").resolve("Contents").toFile()) {
                 exclude "app"
                 exclude "Resources"
                 exclude 'MacOS'
@@ -92,13 +49,13 @@ task multiOSImage(group: 'distribution') {
         }
 
         copy {
-            from(osx64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius.app/Contents/MacOS/sirius')
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-macOS-x86-64-headless-img").resolve('Contents/MacOS/sirius').toFile())
             into  outputs.files.singleFile.toPath().resolve('MacOS').resolve('64bit').resolve('Sirius').resolve("bin")
         }
 
         //build All directory
         copy {
-            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius') {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").toFile()) {
                 include 'COPYING.txt'
                 include 'LICENSE.txt'
                 include "manual-$version-manual.pdf"
@@ -106,13 +63,13 @@ task multiOSImage(group: 'distribution') {
             into outputs.files.singleFile.toPath().resolve('All').resolve('Sirius')
         }
         copy {
-            from(linux64Dist.outputs.files.singleFile.toString().replace(".zip", "") + '/sirius/lib/app') {
+            from(buildDir.toPath().resolve("tmp/artifacts").resolve("sirius-$version-Linux-x86-64-headless-img").resolve('lib/app').toFile()) {
                 exclude '.jpackage.xml'
                 exclude 'sirius-gui.cfg'
             }
             into outputs.files.singleFile.toPath().resolve('All').resolve('Sirius').resolve('app')
         }
-
+        
 
         //modify windows script
         def lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve('Windows').resolve('64bit').resolve('Sirius').resolve('sirius.bat'))
@@ -197,3 +154,4 @@ publishing {
         }
     }
 }
+publishSiriusPublicationToMavenLocal.dependsOn 'distribution'

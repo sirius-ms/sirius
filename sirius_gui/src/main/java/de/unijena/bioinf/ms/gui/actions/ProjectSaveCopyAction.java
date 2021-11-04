@@ -41,7 +41,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class ProjectSaveCopyAction extends AbstractAction {
 
     public ProjectSaveCopyAction() {
-        super("SaveCopy");
+        super("Save Copy");
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_FILE_32);
         putValue(Action.SHORT_DESCRIPTION, "Save a copy of the current project. (current location stays active)");
         setEnabled(true);
@@ -59,12 +59,12 @@ public class ProjectSaveCopyAction extends AbstractAction {
         jfc.setAcceptAllFileFilterUsed(false);
         jfc.addChoosableFileFilter(new ProjectArchivedFilter());
         jfc.addChoosableFileFilter(new ProjectDirectoryFilter());
-        jfc.setApproveButtonText("Export");
+//        jfc.setApproveButtonText("Export");
 
         File selectedFile = null;
 
         while (selectedFile == null) {
-            int returnval = jfc.showDialog(MF,"SaveCopy");
+            int returnval = jfc.showDialog(MF,"Save Copy");
             if (returnval == JFileChooser.APPROVE_OPTION) {
                 File selFile = jfc.getSelectedFile();
 

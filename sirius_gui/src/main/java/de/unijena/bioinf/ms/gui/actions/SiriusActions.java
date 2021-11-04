@@ -28,6 +28,7 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -74,11 +75,13 @@ public enum SiriusActions {
     CHECK_CONNECTION(CheckConnectionAction.class),
 
 
+    SHOW_ACCOUNT(ShowAccountDialog.class),
     SIGN_OUT(SignOutAction.class),
     SIGN_IN(SignInAction.class),
     SIGN_UP(SignUpAction.class),
     RESET_PWD(PasswdResetAction.class),
-    DELETE_ACCOUNT(AccountDeleteAction.class);
+    DELETE_ACCOUNT(AccountDeleteAction.class),
+    ACCEPT_TERMS(AcceptTermsAction.class);
 
     public static final ActionMap ROOT_MANAGER = new ActionMap();
     public final Class<? extends Action> actionClass;
@@ -87,9 +90,9 @@ public enum SiriusActions {
         Action a = map.get(name());
         if (a == null && createIfNull) {
             try {
-                a = actionClass.newInstance();
+                a = actionClass.getDeclaredConstructor().newInstance();
                 map.put(name(), a);
-            } catch (InstantiationException | IllegalAccessException e) {
+            } catch ( InstantiationException | IllegalAccessException |NoSuchMethodException | InvocationTargetException e) {
                 LoggerFactory.getLogger(this.getClass()).error("Could not load following Sirius Action: " + name(), e);
             }
         }
@@ -107,20 +110,6 @@ public enum SiriusActions {
     public Action getInstance() {
         return getInstance(true, ROOT_MANAGER);
     }
-
-    /*public static void initRootManager() {
-        for (SiriusActions action : values()) {
-            try {
-                if (ROOT_MANAGER.get(action.name()) == null) {
-                    Action actionInstance = action.actionClass.newInstance();
-                    ROOT_MANAGER.put(action.name(), actionInstance);
-                }
-            } catch (InstantiationException | IllegalAccessException e) {
-                LoggerFactory.getLogger(SiriusActions.class).error("Could not load following Sirius Action: " + action.name(), e);
-            }
-        }
-    }
-*/
 
     SiriusActions(Class<? extends Action> action) {
         this.actionClass = action;
@@ -145,6 +134,4 @@ public enum SiriusActions {
             return true;
         return selection.getSelected().get(0).isComputing();
     }
-
-
 }

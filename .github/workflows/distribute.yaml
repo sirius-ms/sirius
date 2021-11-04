@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - stable
+      - master
     paths-ignore:
       - '**/README.md'
       - 'sirius_doc/**/*'
@@ -10,13 +11,8 @@ jobs:
   distCLI:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-10.15]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    env:
-      # assign the environment variable env.ARTIFACTORY_TOKEN_REF with the previously configured ARTIFACTORY_TOKEN
-      ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
-      # assign the environment variable env.ARTIFACTORY_USERNAME_REF with the previously configured ARTIFACTORY_USERNAME
-      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Zulu JDK 15
@@ -25,22 +21,39 @@ jobs:
           java-version: '15' # The JDK version to make available on the path.
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
+      - name: Load Build properties
+        uses: Reedyuk/read-properties@v1.0.1
+        id: sirius_version
+        with:
+          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
+          property: 'de.unijena.bioinf.siriusFrontend.version'
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         with:
           gradle-version: 6.8
           build-root-directory: sirius_dist/sirius_cli_single_os
-          arguments: clean artifactoryPublish
+          arguments: clean publishSiriusPublicationToMavenLocal
+      - name: Upload multiOS Source
+        uses: actions/upload-artifact@v2
+        with:
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64-headless-img"
+          path: sirius_dist/sirius_cli_single_os/build/distributions/${{ runner.os == 'macOS' && 'sirius.app' || 'sirius' }}/
+
+      - name: Upload Distributions
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 1
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64-headless"
+          path: |
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.msi
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
   distGUI:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    env:
-      # assign the environment variable env.ARTIFACTORY_TOKEN_REF with the previously configured ARTIFACTORY_TOKEN
-      ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
-      # assign the environment variable env.ARTIFACTORY_USERNAME_REF with the previously configured ARTIFACTORY_USERNAME
-      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Zulu JDK-FX 15
@@ -49,20 +62,31 @@ jobs:
           java-version: '15' # The JDK version to make available on the path.
           java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
+      - name: Load Build properties
+        uses: Reedyuk/read-properties@v1.0.1
+        id: sirius_version
+        with:
+          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
+          property: 'de.unijena.bioinf.siriusFrontend.version'
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         with:
           gradle-version: 6.8
           build-root-directory: sirius_dist/sirius_gui_single_os
-          arguments: clean artifactoryPublish
+          arguments: clean publishSiriusPublicationToMavenLocal
+      - name: Upload Zip Distributions
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 1
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64"
+          path: |
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.msi
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
   distMulti:
     needs: distCLI
     runs-on: ubuntu-latest
-    env:
-      # assign the environment variable env.ARTIFACTORY_TOKEN_REF with the previously configured ARTIFACTORY_TOKEN
-      ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
-      # assign the environment variable env.ARTIFACTORY_USERNAME_REF with the previously configured ARTIFACTORY_USERNAME
-      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Zulu JDK 15
@@ -71,9 +95,76 @@ jobs:
           java-version: '15' # The JDK version to make available on the path.
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
+      - name: Load Build properties
+        uses: Reedyuk/read-properties@v1.0.1
+        id: sirius_version
+        with:
+          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
+          property: 'de.unijena.bioinf.siriusFrontend.version'
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img"
+          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img
+      - uses: actions/download-artifact@v2
+        with:
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img"
+          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
+      - uses: actions/download-artifact@v2
+        with:
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img"
+          path: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
+      - name: Display downloaded artifact files
+        run: ls -lah
+        working-directory: sirius_dist/sirius_cli_multi_os/build/tmp/artifacts/
+
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         with:
           gradle-version: 6.8
           build-root-directory: sirius_dist/sirius_cli_multi_os
-          arguments: clean artifactoryPublish
+          arguments: publishSiriusPublicationToMavenLocal
+      - name: Upload Distributions
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 1
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-multiOS-x86-64-headless"
+          path: ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
+      - name: Delete img artifacts
+        uses: geekyeggo/delete-artifact@v1
+        with:
+          name: |
+            sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64-headless-img
+            sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
+            sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
+
+  release:
+    needs: [distCLI, distGUI, distMulti]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+      - name: Load Build properties
+        uses: Reedyuk/read-properties@v1.0.1
+        id: sirius_version
+        with:
+          path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
+          property: 'de.unijena.bioinf.siriusFrontend.version'
+      - uses: actions/download-artifact@v2
+        with:
+          path: sirius_dist/build/tmp/artifacts/
+      - name: Display downloaded artifact files
+        run: ls -lah
+        working-directory: sirius_dist/build/tmp/artifacts/
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "sirius_dist/build/tmp/artifacts/*/*"
+          body: "Prebuilt SIRIUS releases for all supported platforms."
+          name: "SIRIUS v${{ steps.sirius_version.outputs.value }}"
+          tag: "v${{ steps.sirius_version.outputs.value }}"
+          prerelease: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
+          allowUpdates: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
+          draft: ${{ env.GITHUB_REF_SLUG == 'stable' && 'false' || 'true' }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+

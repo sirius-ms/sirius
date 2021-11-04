@@ -40,6 +40,6 @@ public class SignInAction extends AbstractAction {
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
         boolean r = new UserLoginDialog(MF, ApplicationCore.WEB_API.getAuthService()).hasPerformedLogin();
-        firePropertyChange("login", false, r);
+        firePropertyChange("login", null, r);
     }
 }

@@ -22,14 +22,21 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
+import de.unijena.bioinf.ms.gui.configs.Buttons;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.ms_viewer.InSilicoSelectionBox;
 import de.unijena.bioinf.ms.gui.ms_viewer.InsilicoFragmenter;
 import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewerConnector;
@@ -37,43 +44,68 @@ import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.SiriusIsotopePattern;
 import de.unijena.bioinf.ms.gui.ms_viewer.data.SpectraJSONWriter;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
+import de.unijena.bioinf.ms.gui.webView.WebViewIO;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class SpectraVisualizationPanel
 	extends JPanel implements ActionListener, ItemListener, PanelDescription,
 				   ActiveElementChangedListener<FormulaResultBean, InstanceBean>{
 	@Override
 	public String getDescription() {
-		return "Spectra visualisation. Peaks that are explained by the Fragmentation tree of the selected molecular formula are highlighted in red";
+		return "<html>"
+				+ "<b>Spectra Viewer</b>"
+				+ "<br>"
+				+ "Shows MS1, MS1 vs Simulated Isotope Pattern and MS/MS spectra."
+				+ "<br>"
+				+ "MS1: Isotope pattern highlighted in blue."
+				+ "<br>"
+				+ "MS/MS: Peaks that are explained by the Fragmentation tree of the selected molecular formula are highlighted in green."
+				+ "</html>";
 	}
 
 	public static final String MS1_DISPLAY = "MS1", MS1_MIRROR_DISPLAY = "MS1 mirror-plot", MS2_DISPLAY = "MS2",
 			MS2_MERGED_DISPLAY = "merged";
 
+    public enum FileFormat {
+        svg, pdf, json, none
+    }
+
 	InstanceBean experiment = null;
 	FormulaResultBean sre = null;
 	CompoundCandidate annotation = null;
+    String jsonSpectra = null;
 
 	JComboBox<String> modesBox;
 	JComboBox<String> ceBox;
 	final Optional<InSilicoSelectionBox> optAnoBox;
 	String preferredMode;
+
+    JButton saveButton;
 
 	private InsilicoFragmenter fragmenter;
 
@@ -89,6 +121,8 @@ public class SpectraVisualizationPanel
 		this.preferredMode = preferredMode;
 
 		JToolBar northPanel = new JToolBar();
+		northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+		northPanel.setPreferredSize(new Dimension(northPanel.getPreferredSize().width,32));
 		northPanel.setFloatable(false);
 
 		JLabel l = new JLabel("Mode");
@@ -106,6 +140,12 @@ public class SpectraVisualizationPanel
 			northPanel.add(anoBox);
 			anoBox.setAction(new InsilicoFrament());
 		});
+
+        northPanel.addSeparator(new Dimension(10, 10));
+        saveButton = Buttons.getExportButton24("Export spectra");
+        saveButton.addActionListener(this);
+        saveButton.setToolTipText("Export the current view to various formats");
+        northPanel.add(saveButton);
 
 		northPanel.addSeparator(new Dimension(10, 10));
 		this.add(northPanel, BorderLayout.NORTH);
@@ -125,74 +165,53 @@ public class SpectraVisualizationPanel
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == saveButton) {
+            saveSpectra(); //todo which thread do we need here? Swing EDT but with loader for the IO conversion!
+        }
 	}
 
-	@Deprecated
-	private void debugWriteSpectra(String jsonstring, String filename){
-		try {
-			BufferedWriter bw = new BufferedWriter(new FileWriter(filename));
-			bw.write(jsonstring);
-			bw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	private void drawSpectra(InstanceBean experiment, FormulaResultBean sre, String mode,
-							 int ce_index){
+	private void drawSpectra(InstanceBean experiment, FormulaResultBean sre, String mode, int ce_index) {
 		if (mode == null)
 			return;
-		String jsonSpectra = null;
+        jsonSpectra = null;
 		SpectraJSONWriter spectraWriter = new SpectraJSONWriter();
 
 		if (mode.contains(MS1_DISPLAY)) {
-			// Deviation standardMassDeviation = experiment.getExperiment()
-			// 		.getAnnotationOrNull(MS1MassDeviation.class).standardMassDeviation;
 			List<SimpleSpectrum> spectra1 = experiment.getMs1Spectra();
-            SimpleSpectrum spectrum = experiment.getMergedMs1Spectrum() == null ? spectra1.get(0)
-                    : experiment.getMergedMs1Spectrum();
-            SiriusIsotopePattern siriusIsotopePattern = null;
-            if (sre != null){
-                // results exists, try to get isotope pattern
-                FTree ftree = sre.getFragTree().orElse(null);
-                siriusIsotopePattern = (ftree != null)
-                    ? new SiriusIsotopePattern(ftree, experiment.getExperiment(), spectrum)
-                    : null;
-            }
-			if (mode.equals(MS1_DISPLAY))
-                jsonSpectra = spectraWriter.ms1JSON(spectrum, siriusIsotopePattern);
-            else if (mode.equals(MS1_MIRROR_DISPLAY)) {
-				jsonSpectra = spectraWriter.ms1MirrorJSON(spectrum, siriusIsotopePattern);
+			SimpleSpectrum spectrum = experiment.getMergedMs1Spectrum() == null ? spectra1.get(0)
+					: experiment.getMergedMs1Spectrum();
+
+			SiriusIsotopePattern siriusIsotopePattern = Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree)
+					.map(ftree -> new SiriusIsotopePattern(ftree, experiment.getExperiment(), spectrum)).orElse(null);
+
+
+			if (mode.equals(MS1_DISPLAY)) {
+				SimpleSpectrum isoPattern = siriusIsotopePattern != null ? siriusIsotopePattern.getIsotopePattern()
+						: Spectrums.extractIsotopePattern(spectrum, experiment.getExperiment());
+				jsonSpectra = spectraWriter.ms1JSON(spectrum, isoPattern,
+						experiment.getExperiment().getAnnotationOrDefault(MS1MassDeviation.class).massDifferenceDeviation);
+			} else if (mode.equals(MS1_MIRROR_DISPLAY)) {
+				if (siriusIsotopePattern != null) {
+					jsonSpectra = spectraWriter.ms1MirrorJSON(siriusIsotopePattern,
+							experiment.getExperiment().getAnnotationOrDefault(MS1MassDeviation.class).massDifferenceDeviation);
+				} else {
+					LoggerFactory.getLogger(getClass()).warn(MS1_MIRROR_DISPLAY + "was selected but no simulated pattern was available. Can not show mirror plot!");
+				}
+
 			} else {
 				return;
 			}
 		} else if (mode.equals(MS2_DISPLAY)) {
-			// Deviation standardMassDeviation = experiment.getExperiment()
-			// 		.getAnnotationOrNull(MS1MassDeviation.class).standardMassDeviation;
 			if (ce_index == -1){
 				jsonSpectra = spectraWriter.ms2JSON(experiment.getExperiment(), Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null));
 			} else {
 				MutableMs2Spectrum spectrum = experiment.getMs2Spectra().get(ce_index);
-				// if (spectrum == null){
-				// 	System.err.printf("MS2 spectrum with selected collision energy (%s) not available!%n",
-				// 		ce);
-				//    return;
-				// }
 				FTree ftree = Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null);
 				if (ftree != null)
 					jsonSpectra = spectraWriter.ms2JSON(spectrum, ftree);
 				else
 					jsonSpectra = spectraWriter.ms2JSON(spectrum);
 			}
-			// for (int i = 0; i < spectra2.size(); i++) {
-			// 	System.out.printf("MS2 spectra %d%n", i);
-			// 	jsonSpectra = spectraWriter.ms2JSON(spectra2.get(i), sre.getFragTree().orElse(null));
-			// 	debugWriteSpectra(jsonSpectra, "/tmp/test_spectra_MS2_" + i + ".json"); // FIXME: DEBUG
-			// }
-			// jsonSpectra = spectraWriter.ms2JSON(
-			// 	Spectrums.mergeSpectra(new Deviation(10, 0.1), true, false, spectra2),
-			// 	sre.getFragTree().orElse(null));
 		} else {
 			System.err.println("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
 			return;
@@ -287,7 +306,7 @@ public class SpectraVisualizationPanel
                             // highlight last selected peak, even when experiments were changed
                             float peak_selection = getConnector().getCurrentSelection();
                             if (peak_selection > -1)
-                                browser.executeJS("setSelection(" + peak_selection + ")");
+                                browser.executeJS("SpectrumPlot.setSelection(main.spectrum, " + peak_selection + ")");
 
 							optAnoBox.ifPresent(anoBox -> getCurrentMode().ifPresent(mode -> {
 								if (mode.msLevel > 1) {
@@ -411,4 +430,179 @@ public class SpectraVisualizationPanel
 	public void clearInsilicoResult() {
 		this.insilicoResult = null;
 	}
+
+    public void saveSpectra() {
+        // adapted from
+        // de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.TreeVisualizationPanel
+        abstract class SpectraFilter extends FileFilter {
+
+            private String fileSuffix, description;
+
+            public SpectraFilter(String fileSuffix, String description) {
+                this.fileSuffix = fileSuffix;
+                this.description = description;
+            }
+
+            @Override
+            public boolean accept(File f) {
+                if (f.isDirectory()) return true;
+                String name = f.getName();
+                return name.endsWith(fileSuffix);
+            }
+
+            @Override
+            public String getDescription() {
+                return description;
+            }
+
+        }
+
+        class SpectraSVGFilter extends SpectraFilter {
+
+            public SpectraSVGFilter() {
+                super(".svg", "SVG");
+            }
+
+        }
+
+        class SpectraPDFFilter extends SpectraFilter {
+
+            public SpectraPDFFilter() {
+                super(".pdf", "PDF");
+            }
+
+        }
+
+        class SpectraJSONFilter extends SpectraFilter {
+
+            public SpectraJSONFilter() {
+                super(".json", "JSON");
+            }
+        }
+
+        JFileChooser jfc = new JFileChooser();
+        jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_TREE_EXPORT_PATH));
+        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        jfc.setAcceptAllFileFilterUsed(false);
+
+        FileFilter svgFilter = new SpectraSVGFilter();
+        FileFilter pdfFilter = new SpectraPDFFilter();
+        FileFilter jsonFilter = new SpectraJSONFilter();
+
+
+        jfc.addChoosableFileFilter(svgFilter);
+        jfc.addChoosableFileFilter(pdfFilter);
+        jfc.addChoosableFileFilter(jsonFilter);
+
+        jfc.setFileFilter(svgFilter);
+
+        File selectedFile = null;
+        FileFormat ff = FileFormat.none;
+
+        while (selectedFile == null) {
+            int returnval = jfc.showSaveDialog(this);
+            if (returnval == JFileChooser.APPROVE_OPTION) {
+                File selFile = jfc.getSelectedFile();
+
+                {
+                    final String path = selFile.getParentFile().getAbsolutePath();
+                    Jobs.runInBackground(() ->
+                            SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                                    setAndStoreProperty(SiriusProperties.DEFAULT_TREE_EXPORT_PATH, path)
+                        );
+                }
+
+
+                if (jfc.getFileFilter() == svgFilter) {
+                    ff = FileFormat.svg;
+                    if (!selFile.getAbsolutePath().endsWith(".svg")) {
+                        selFile = new File(selFile.getAbsolutePath() + ".svg");
+                    }
+                } else if (jfc.getFileFilter() == pdfFilter) {
+                    ff = FileFormat.pdf;
+                    if (!selFile.getAbsolutePath().endsWith(".pdf")) {
+                        selFile = new File(selFile.getAbsolutePath() + ".pdf");
+                    }
+                } else if (jfc.getFileFilter() == jsonFilter) {
+                    ff = FileFormat.json;
+                    if (!selFile.getAbsolutePath().endsWith(".json")) {
+                        selFile = new File(selFile.getAbsolutePath() + ".json");
+                    }
+                } else {
+                    throw new RuntimeException(jfc.getFileFilter().getClass().getName());
+                }
+
+                if (selFile.exists()) {
+                    FilePresentDialog fpd = new FilePresentDialog(MF, selFile.getName());
+                    ReturnValue rv = fpd.getReturnValue();
+                    if (rv == ReturnValue.Success) {
+                        selectedFile = selFile;
+                    }
+                } else {
+                    selectedFile = selFile;
+                }
+            } else {
+                break;
+            }
+        }
+
+        if (ff != FileFormat.none) {
+            final String name = ff.name();
+            Jobs.runInBackground(() ->
+                    SiriusProperties.SIRIUS_PROPERTIES_FILE().
+                            setAndStoreProperty(SiriusProperties.DEFAULT_TREE_FILE_FORMAT, name)
+                );
+        }
+
+
+        if (selectedFile != null && ff != FileFormat.none) {
+            final FileFormat fff = ff;
+            final File fSelectedFile = selectedFile;
+            Jobs.runInBackgroundAndLoad(MF, "Exporting Spectra...", () -> {
+                try {
+                    // for SVG/PDF ask whether to export structure
+                    boolean exportStructure = false;
+                    if ((fff == FileFormat.svg || fff == FileFormat.pdf) && insilicoResult != null){
+                        QuestionDialog exportStructureDialog = new QuestionDialog(MF,
+                                "Do you want to export the corresponding compound structure as well?");
+                        ReturnValue rv = exportStructureDialog.getReturnValue();
+                        exportStructure = rv == ReturnValue.Success;
+                    }
+
+                    if (fff == FileFormat.svg) {
+                        final StringBuilder svgSpectra = new StringBuilder();
+                        Jobs.runJFXAndWait(() -> svgSpectra.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('spectrumView'))")));
+                        WebViewIO.writeSVG(fSelectedFile, svgSpectra.toString());
+                        if (exportStructure){
+                            // second file for structure SVG
+                            final StringBuilder svgStructure = new StringBuilder();
+                            Jobs.runJFXAndWait(() -> svgStructure.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('structureView').getElementsByTagName('svg')[0])")));
+                            Path structurePath = Path.of(fSelectedFile.getParent(), fSelectedFile.getName().replaceFirst("(.[Ss][Vv][Gg])?$", "_structure.svg"));
+                            WebViewIO.writeSVG(structurePath.toFile(), svgStructure.toString());
+                        }
+                    } else if (fff == FileFormat.pdf) {
+                        final StringBuilder svg = new StringBuilder();
+                        Jobs.runJFXAndWait(() -> svg.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('spectrumView'))")));
+                        // remove selection etc. rectangles as <rect>s without width attribute break Rasterizer
+                        WebViewIO.writePDF(fSelectedFile, svg.toString().replaceAll("<rect [^>]*class=\"(selection|handle)[^>]+>", ""));
+                        if (exportStructure){
+                            // second file for structure PDF
+                            final StringBuilder svgStructure = new StringBuilder();
+                            Jobs.runJFXAndWait(() -> svgStructure.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('structureView').getElementsByTagName('svg')[0])")));
+                            Path structurePath = Path.of(fSelectedFile.getParent(), fSelectedFile.getName().replaceFirst("(.[Pp][Dd][Ff])?$", "_structure.pdf"));
+                            WebViewIO.writePDF(structurePath.toFile(), svgStructure.toString());
+                        }
+                    } else if (fff == FileFormat.json) {
+                        try (BufferedWriter bw = Files.newBufferedWriter(fSelectedFile.toPath(), Charset.defaultCharset())) {
+                            bw.write(jsonSpectra);
+                            bw.close();
+                        }
+                    }
+                } catch (Exception e2) {
+                    new ErrorReportDialog(MF, e2.getMessage());
+                    LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);
+                }
+            });
+        }
+    }
 }

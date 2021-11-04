@@ -32,7 +32,9 @@ public class CandidateListDetailViewPanel extends JPanel implements /* ActiveEle
     @Override
     public String getDescription() {
         return "<html>"
-                + "CSI:FingerID results for all selected molecular formulas that have been searched."
+                +"<b>CSI:FingerID - Structure Database Search</b>"
+                +"<br>"
+                + "Structure DB search results for all selected molecular formulas with a predicted fingerprint that have been searched."
                 + "<br>"
                 + "For each candidate structure all present molecular properties are represented by squares."
                 + "<br>"
