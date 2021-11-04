@@ -285,7 +285,7 @@ public class ScoringMethodFactory {
             return new LegacyScorer(performances) {
                 @Override
                 public double score(ProbabilityFingerprint fingerprint, Fingerprint databaseEntry) {
-                    return Tanimoto.probabilisticTanimoto(fingerprint, databaseEntry).expectationValue();
+                    return Tanimoto.fastTanimoto(fingerprint, databaseEntry);//Tanimoto.probabilisticTanimoto(fingerprint, databaseEntry).expectationValue();
                 }
             };
         }

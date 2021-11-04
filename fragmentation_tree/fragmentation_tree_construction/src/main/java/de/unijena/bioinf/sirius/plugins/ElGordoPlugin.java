@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -167,6 +168,7 @@ public class ElGordoPlugin extends SiriusPlugin  {
             input.getOrCreatePeakAnnotation(DecompositionList.class).set(input.getParentPeak(), DecompositionList.fromFormulas(Arrays.asList(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula())), ano.getIonType().getIonization()));
             PeakAnnotation<PredefinedPeak> pa = input.getOrCreatePeakAnnotation(PredefinedPeak.class);
             input.setAnnotation(LipidSpecies.class, species);
+            input.setAnnotation(ForbidRecalibration.class, ForbidRecalibration.FORBIDDEN);
             final TIntObjectHashMap<PredefinedPeak> elgordoScoreMap = new TIntObjectHashMap<>();
             for (int k=0, n=ano.numberOfAnnotatedPeaks(); k < n; ++k) {
                 final LipidAnnotation annotation = ano.getAnnotationAt(k);

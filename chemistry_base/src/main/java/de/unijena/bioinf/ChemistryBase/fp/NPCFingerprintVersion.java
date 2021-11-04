@@ -70,7 +70,7 @@ public class NPCFingerprintVersion extends FingerprintVersion {
     }
 
     @Override
-    public MolecularProperty getMolecularProperty(int index) {
+    public NPCProperty getMolecularProperty(int index) {
         return properties[index];
     }
 
