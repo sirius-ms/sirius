@@ -35,6 +35,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
+import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ftalign.StandardScoring;
@@ -116,6 +117,8 @@ public class SimilarityMatrixWorkflow implements Workflow {
                 ftblast(xs, trees);
             if (options.useTanimoto)
                 tanimoto(xs);
+            if (options.useCanopus)
+                tanimotoCanopus(xs);
         } catch (ExecutionException e) {
             LoggerFactory.getLogger(this.getClass()).error("Error when parsing project space");
         }
@@ -144,6 +147,32 @@ public class SimilarityMatrixWorkflow implements Workflow {
         jobManager.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i, j) -> fpcos(fps[i],fps[j]))).takeResult();
         //MatrixUtils.normalize(M);
         writeMatrix("tanimoto", M, xs.stream().map(y -> y.getID().getCompoundName()).toArray(String[]::new), options.digits);
+    }
+
+
+    private void tanimotoCanopus(List<Instance> xs) {
+        final JobManager jobManager = SiriusJobs.getGlobalJobManager();
+        xs.removeIf(x -> x.loadTopFormulaResult(rankSores, CanopusResult.class).filter(y -> y.hasAnnotation(CanopusResult.class)).isEmpty());
+
+        if (xs.isEmpty()){
+            LoggerFactory.getLogger(getClass()).warn("No Compounds with predicted Fingerprints found! You might want to run CSI:FingerID first. Skipping tanimoto computation!");
+            return;
+        }
+        final ArrayList<ProbabilityFingerprint> fingerprintValues = new ArrayList<>();
+        for (Instance x : xs) {
+            fingerprintValues.add(x.loadTopFormulaResult(rankSores, CanopusResult.class)
+                    .map(it -> it.getAnnotationOrThrow(CanopusResult.class).getCanopusFingerprint()).orElseThrow());
+        }
+
+        final ProbabilityFingerprint[] fps = fingerprintValues.toArray(ProbabilityFingerprint[]::new);
+        final double[][] M = new double[xs.size()][xs.size()];
+        final TIntHashSet pubchemMaccs = new TIntHashSet();
+        for (int index : CdkFingerprintVersion.getDefault().getMaskFor(CdkFingerprintVersion.USED_FINGERPRINTS.PUBCHEM, CdkFingerprintVersion.USED_FINGERPRINTS.MACCS).allowedIndizes()) {
+            pubchemMaccs.add(index);
+        }
+        jobManager.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i, j) -> fps[i].asDeterministic().tanimoto(fps[j].asDeterministic()))).takeResult();
+        //MatrixUtils.normalize(M);
+        writeMatrix("canopus", M, xs.stream().map(y -> y.getID().getCompoundName()).toArray(String[]::new), options.digits);
     }
 
     private static double specialTanimoto(ProbabilityFingerprint left, ProbabilityFingerprint right, double varianceLeft, double varianceRight) {
