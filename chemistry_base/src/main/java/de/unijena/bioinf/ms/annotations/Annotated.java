@@ -21,9 +21,7 @@
 package de.unijena.bioinf.ms.annotations;
 
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
-
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Iterator;

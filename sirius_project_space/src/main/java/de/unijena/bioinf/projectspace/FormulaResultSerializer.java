@@ -18,12 +18,7 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace.sirius;
-
-import de.unijena.bioinf.projectspace.ContainerSerializer;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.ProjectReader;
-import de.unijena.bioinf.projectspace.ProjectWriter;
+package de.unijena.bioinf.projectspace;
 
 import java.io.IOException;
 
