@@ -37,6 +37,7 @@ import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.webView.WebViewIO;
 import javafx.embed.swing.JFXPanel;
 import org.slf4j.LoggerFactory;
 
@@ -67,9 +68,13 @@ public class TreeVisualizationPanel extends JPanel
         dot, json, jpg, png, gif, svg, pdf, none
     }
 
+    @Override
     public String getDescription() {
-        return "Visualization of the Fragmentation tree " +
-                "for the selected molecular formula (JS)";
+        return "<html>"
+                +"<b>Fragmentation Tree Viewer</b>"
+                +"<br>"
+                + "Interactive visualization of the Fragmentation tree for the selected molecular formula."
+                + "</html>";
     }
 
     //    FormulaResultBean sre;
@@ -100,6 +105,7 @@ public class TreeVisualizationPanel extends JPanel
         toolBar = new JToolBar();
         toolBar.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
         toolBar.setFloatable(false);
+        toolBar.setPreferredSize(new Dimension(toolBar.getPreferredSize().width,32));
         presetBox = new JComboBox<>((String[]) localConfig.get("presets"));
         presetBox.addActionListener(this);
         presetBox.setSelectedItem(
@@ -477,11 +483,11 @@ public class TreeVisualizationPanel extends JPanel
                     } else if (fff == FileFormat.svg) {
                         final StringBuilder svg = new StringBuilder();
                         Jobs.runJFXAndWait(() -> svg.append(jsBridge.getSVG()));
-                        TreeViewerIO.writeSVG(fSelectedFile, svg.toString());
+                        WebViewIO.writeSVG(fSelectedFile, svg.toString());
                     } else if (fff == FileFormat.pdf) {
                         final StringBuilder svg = new StringBuilder();
                         Jobs.runJFXAndWait(() -> svg.append(jsBridge.getSVG()));
-                        TreeViewerIO.writePDF(fSelectedFile, svg.toString());
+                        WebViewIO.writePDF(fSelectedFile, svg.toString());
                     } else if (fff == FileFormat.json) {
                         new FTJsonWriter().writeTreeToFile(fSelectedFile, ftree);
                     }

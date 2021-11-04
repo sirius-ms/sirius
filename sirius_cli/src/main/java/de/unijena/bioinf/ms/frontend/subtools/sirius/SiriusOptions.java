@@ -1,23 +1,4 @@
 /*
- *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schiller University.
- *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Affero General Public License
- *  as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Affero General Public License for more details.
- *
- *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
- */
-
-/*
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2015 Kai Dührkop
@@ -37,7 +18,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
@@ -46,7 +26,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.projectspace.Instance;
@@ -66,7 +46,6 @@ import java.util.function.Consumer;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 
-//todo got descriprions from defaultConfigOptions
 @Command(name = "formula", aliases = {"tree", "sirius", "F"}, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, InstanceJob.Factory<SiriusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
@@ -137,10 +116,9 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     @Option(names = {"-f", "--formulas"}, description = "Specify a list of candidate formulas the method should use. Omit this option if you want to consider all possible molecular formulas")
-    public void setFormulaWhiteList(List<String> formulaWhiteList) {
-        formulaWhiteSet = Whiteset.of(formulaWhiteList);
+    public void setCandidateFormulas(DefaultParameter formulas) throws Exception {
+        defaultConfigOptions.changeOption("CandidateFormulas", formulas);
     }
-    public Whiteset formulaWhiteSet =  null;
 
 
     @Option(names = {"--no-isotope-filter"}, description = "Disable molecular formula filter. When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.")
@@ -167,7 +145,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
 
-    //heuristic threshods
+    //heuristic thresholds
     @Option(names = {"--heuristic"}, descriptionKey ="UseHeuristic.mzToUseHeuristic" , description = "Enable heuristic preprocessing for compounds >= the specified m/z.")
     public void setMzToUseHeuristic(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("UseHeuristic.mzToUseHeuristic", value);
@@ -222,7 +200,8 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         //todo manipulate adduct lists for marcus?????
     }
 
-    @Option(names = {"--mostintense-ms2"}, description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).", hidden = true)
+    @Option(names = {"--mostintense-ms2"}, hidden = true,
+            description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).")
     public boolean mostIntenseMs2;
 
     @Option(names = "--disable-fast-mode", hidden = true)
@@ -230,16 +209,13 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
 
     @Override
     public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
-        return new InstanceJob.Factory<>(
-                sub -> new SiriusSubToolJob(this, sub),
-                getInvalidator()
-        );
+        return new InstanceJob.Factory<>(SiriusSubToolJob::new, getInvalidator());
     }
 
     @Override
     public Consumer<Instance> getInvalidator() {
         return inst -> {
-            inst.deleteFormulaResults(); //this step creates the result so we have to delete them before recompute
+            inst.deleteFormulaResults(); //this step creates the results, so we have to delete them before recompute
             inst.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
             inst.getID().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
             inst.updateCompoundID();
@@ -247,7 +223,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     @Override
-    public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
-        return List.of(PassatuttoOptions.class, ZodiacOptions.class, FingerIdOptions.class);
+    public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
+        return List.of(PassatuttoOptions.class, ZodiacOptions.class, FingerprintOptions.class);
     }
 }

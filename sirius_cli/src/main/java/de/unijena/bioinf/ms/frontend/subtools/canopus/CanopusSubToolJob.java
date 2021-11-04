@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.frontend.subtools.canopus;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.CanopusWebJJob;
 import de.unijena.bioinf.fingerid.FingerprintResult;
@@ -34,7 +35,7 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +53,7 @@ public class CanopusSubToolJob extends InstanceJob {
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer().hasResult() && inst.loadFormulaResults(CanopusResult.class).stream().anyMatch((it -> it.getCandidate().hasAnnotation(CanopusResult.class)));
+        return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(CanopusResult.class).stream().anyMatch((it -> it.getCandidate().hasAnnotation(CanopusResult.class)));
     }
 
     @Override
@@ -85,9 +86,10 @@ public class CanopusSubToolJob extends InstanceJob {
         }
 
         checkForInterruption();
-
+        // spec has to count compounds
+        final int specHash = Spectrums.mergeSpectra(inst.getExperiment().getMs2Spectra()).hashCode();
         // submit canopus jobs for Identification results that contain CSI:FingerID results
-        Map<FormulaResult, CanopusWebJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, this::buildAndSubmitRemote));
+        Map<FormulaResult, CanopusWebJJob> jobs = res.stream().collect(Collectors.toMap(r -> r, ir -> buildAndSubmitRemote(ir, specHash)));
 
         checkForInterruption();
 
@@ -99,10 +101,11 @@ public class CanopusSubToolJob extends InstanceJob {
             inst.updateFormulaResult(r, CanopusResult.class);
     }
 
-    private CanopusWebJJob buildAndSubmitRemote(@NotNull final FormulaResult ir) {
+    private CanopusWebJJob buildAndSubmitRemote(@NotNull final FormulaResult ir, int specHash) {
         try {
             return NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.submitCanopusJob(
-                    ir.getId().getMolecularFormula(), ir.getId().getIonType().getCharge(), ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint
+                    ir.getId().getMolecularFormula(), ir.getId().getIonType().getCharge(),
+                    ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint, specHash
                     ), this::checkForInterruption
             );
         } catch (TimeoutException | InterruptedException e) {

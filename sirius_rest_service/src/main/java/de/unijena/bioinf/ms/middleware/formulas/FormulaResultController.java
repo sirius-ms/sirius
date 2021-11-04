@@ -32,8 +32,8 @@ import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.CompoundContainer;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -59,7 +59,7 @@ public class FormulaResultController extends BaseApiController {
     public List<FormulaId> getFormulaIds(@PathVariable String pid, @PathVariable String cid, @RequestParam(required = false) boolean includeFormulaScores) {
         SiriusProjectSpace space = projectSpace(pid);
         LoggerFactory.getLogger(FormulaResultController.class).info("Started collecting formulas...");
-        return getCompound(space ,cid).map(con -> con.getResults().values().stream().map(frId -> {
+        return getCompound(space ,cid).map(con -> con.getResultsRO().values().stream().map(frId -> {
             try{
                 return space.getFormulaResult(frId, FormulaScoring.class);
             } catch (IOException e) {
@@ -116,7 +116,7 @@ public class FormulaResultController extends BaseApiController {
     public String getTopHitCandidate(@PathVariable String pid, @PathVariable String cid) throws JsonProcessingException {
         SiriusProjectSpace projectSpace = projectSpace(pid);
         Stream<Optional<FormulaResult>> annotatedFResults = this.getCompound(projectSpace,cid).map(cc ->
-                cc.getResults().values().stream().map(frId -> {
+                cc.getResultsRO().values().stream().map(frId -> {
                     try {
                         return Optional.of(projectSpace.getFormulaResult(frId, FBCandidates.class));
                     } catch (IOException e) {

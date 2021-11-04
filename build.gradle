@@ -25,7 +25,7 @@ plugins {
 ext {
     //version for external libraries
     slf4j_version = '1.7.25'
-    jjobs_version = '0.9.22-SNAPSHOT'
+    jjobs_version = '0.9.24'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 
@@ -45,7 +45,7 @@ ext {
     libExclude = ['gurobi-jar-*.jar', 'cplex-*.jar']
 
 
-    jetbrains_version = "17.0.0"
+    jetbrains_version = "22.0.0"
 
     logger.lifecycle('reading gradle properties file...')
     File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
@@ -235,19 +235,19 @@ task refreshDownloadLinks {
         List<String> lines = [
                 "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.msi) / " +
-                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64.zip)",
-                "- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64.zip)",
-                "- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.pkg) / " +
-                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64.zip)",
+                "- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-win64.msi) / " +
+                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-win64.zip)",
+                "- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-linux64.zip)",
+                "- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-osx64.pkg) / " +
+                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-osx64.zip)",
                 "",
                 "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $version (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.msi) / " +
-                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-win64-headless.zip)",
-                "- for Linux (64bit): [zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-linux64-headless.zip)",
-                "- for Mac (64bit): [pkg](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.pkg) / " +
-                        "[zip](https://bio.informatik.uni-jena.de/repository/${repoKey}/de/unijena/bioinf/ms/sirius/$version/sirius-$version-osx64-headless.zip)",
+                "- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-win64-headless.msi) / " +
+                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-win64-headless.zip)",
+                "- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-linux64-headless.zip)",
+                "- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-osx64-headless.pkg) / " +
+                        "[zip](https://github.com/boecker-lab/sirius/releases/download/v$version/sirius-$version-osx64-headless.zip)",
                 ""
         ] as List
 

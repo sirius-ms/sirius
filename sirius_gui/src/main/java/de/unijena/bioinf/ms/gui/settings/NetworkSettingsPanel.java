@@ -18,16 +18,16 @@
  */
 
 package de.unijena.bioinf.ms.gui.settings;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 06.10.16.
- */
 
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.PasswordCrypter;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.webapi.ProxyManager;
+import org.jdesktop.swingx.JXTitledSeparator;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -35,12 +35,16 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Properties;
+
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener, SettingsPanel {
+public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListener, SettingsPanel {
     private Properties props;
     private JCheckBox useCredentials, sslValidation;
     private JComboBox<ProxyManager.ProxyStrategy> useProxy;
@@ -50,8 +54,9 @@ public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener
     private JComboBox<String> proxyScheme;
     private JPasswordField pw;
 
+    private JTextField webserverURL;
 
-    public ProxySettingsPanel(Properties properties) {
+    public NetworkSettingsPanel(Properties properties) {
         super();
         this.props = properties;
         buildPanel();
@@ -59,11 +64,16 @@ public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener
     }
 
     private void buildPanel() {
+//        add(new JXTitledSeparator("Webservice"));
+        webserverURL = new JTextField(props.getProperty("de.unijena.bioinf.fingerid.web.host", PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host")));
+        addNamed("Web service URL", webserverURL);
+
         sslValidation = new JCheckBox();
         sslValidation.setText("Enable SSL Validation:");
-        sslValidation.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.security.sslValidation","true")));
+        sslValidation.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.security.sslValidation", "true")));
         add(sslValidation);
 
+        add(new JXTitledSeparator("Proxy Configuration"));
         useProxy = new JComboBox<>(ProxyManager.ProxyStrategy.values());
         useProxy.setSelectedItem(ProxyManager.getStrategyByName(props.getProperty("de.unijena.bioinf.sirius.proxy")));
         useProxy.addActionListener(this);
@@ -137,6 +147,14 @@ public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener
 
     @Override
     public void saveProperties() {
+        try {
+            URI uri = new URI(webserverURL.getText());
+            props.setProperty("de.unijena.bioinf.fingerid.web.host", uri.toString());
+        } catch (URISyntaxException e) {
+            LoggerFactory.getLogger(getClass()).warn("Invalid host URI. Host not changed");
+            new WarningDialog(MF, "Invalid web service URI. Web service host not changed.");
+        }
+
         props.setProperty("de.unijena.bioinf.sirius.security.sslValidation", String.valueOf(sslValidation.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.proxy", String.valueOf(useProxy.getSelectedItem()));
         props.setProperty("de.unijena.bioinf.sirius.proxy.credentials", String.valueOf(useCredentials.isSelected()));
@@ -150,11 +168,15 @@ public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener
     @Override
     public void reloadChanges() {
         ProxyManager.reconnect();
+        ApplicationCore.WEB_API.getAuthService().reconnectService(ProxyManager.getSirirusHttpAsyncClient()); //load new proxy data from service.
+        ProxyManager.enforceGlobalProxySetting(); //update global proxy stuff for Webview.
+        ApplicationCore.WEB_API.changeHost(URI.create(props.getProperty("de.unijena.bioinf.fingerid.web.host")));
+        MF.CONNECTION_MONITOR().checkConnectionInBackground();
     }
 
     @Override
     public String name() {
-        return "Proxy";
+        return "Network";
     }
 
 
@@ -170,7 +192,7 @@ public class ProxySettingsPanel extends TwoColumnPanel implements ActionListener
 
                 JFrame frame = new JFrame("Testing");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.add(new ProxySettingsPanel(SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties()));
+                frame.add(new NetworkSettingsPanel(SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties()));
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);

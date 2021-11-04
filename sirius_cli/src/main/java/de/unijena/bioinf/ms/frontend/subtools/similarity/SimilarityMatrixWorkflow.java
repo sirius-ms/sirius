@@ -52,7 +52,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -105,7 +105,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
             if (options.useCosine)
                 cosine(xs, options.useMinPeaks);
             //filter all instances without a single fragTree
-            xs = xs.stream().filter(i -> !i.loadCompoundContainer().getResults().isEmpty())
+            xs = xs.stream().filter(i -> i.loadCompoundContainer().hasResults())
                 .filter(x-> x.loadTopFormulaResult(rankSores, FTree.class).map(y->y.hasAnnotation(FTree.class)).orElse(false))
                     .collect(Collectors.toList());
             FTree[] trees = xs.stream().map(x->x.loadTopFormulaResult(rankSores, FTree.class).get().getAnnotationOrThrow(FTree.class))

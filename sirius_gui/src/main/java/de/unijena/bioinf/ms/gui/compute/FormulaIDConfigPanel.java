@@ -149,8 +149,8 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         });
 
         // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Consider only formulas in DBs:");
-        GuiUtils.assignParameterToolTip(searchDBList, "FormulaSearchDB");
+        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Use DB formulas only");
+        GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
         center.add(searchDBList);
         parameterBindings.put("FormulaSearchDB", () -> String.join(",", getFormulaSearchDBStrings()));
 

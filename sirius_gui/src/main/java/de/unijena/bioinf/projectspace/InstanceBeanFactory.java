@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceBeanFactory implements InstanceFactory<InstanceBean> {

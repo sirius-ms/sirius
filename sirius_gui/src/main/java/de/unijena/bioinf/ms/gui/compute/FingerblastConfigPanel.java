@@ -19,22 +19,15 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
-import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -42,35 +35,17 @@ import java.util.stream.Collectors;
  */
 
 //here we can show fingerid options. If it becomes to much, we can change this to a setting like tabbed pane
-public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
-    //todo sync db selection with sirius panel
-
+public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOptions> {
     protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
-    public final JCheckboxListPanel<String> adductOptions;
-    protected final JToggleButton enforceAdducts;
 
-    public FingerIDConfigPanel(final JCheckBoxList<String> sourceIonization, @Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
-        super(FingerIdOptions.class);
+    public FingerblastConfigPanel(@Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
+        super(FingerblastOptions.class);
 
         // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Search in DBs:");
+        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Search DBs");
         GuiUtils.assignParameterToolTip(searchDBList, "StructureSearchDB");
         parameterBindings.put("StructureSearchDB", () -> searchDBList.checkBoxList.getCheckedItems().isEmpty() ? null : String.join(",", getStructureSearchDBStrings()));
         add(searchDBList);
-
-        adductOptions = new JCheckboxListPanel<>(new AdductSelectionList(sourceIonization), "Fallback Adducts");
-        GuiUtils.assignParameterToolTip(adductOptions, "AdductSettings.fallback");
-        parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
-        add(adductOptions);
-        enforceAdducts =  new JToggleButton("enforce", false);
-        enforceAdducts.setToolTipText(GuiUtils.formatToolTip("Enforce the selected adducts instead of using them only as fallback."));
-        adductOptions.buttons.add(enforceAdducts);
-        parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString() : null);
-
-        final TwoColumnPanel additionalOptions = new TwoColumnPanel();
-        additionalOptions.addNamed("Formula score threshold", makeParameterCheckBox("FormulaResultThreshold"));
-
-        add(new TextHeaderBoxPanel("Additional Options", additionalOptions));
 
         searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.realName()));
 
@@ -82,11 +57,6 @@ public class FingerIDConfigPanel extends SubToolConfigPanel<FingerIdOptions> {
                 else
                     searchDBList.checkBoxList.checkAll(syncSource.getCheckedItems());
             });
-    }
-
-    public PossibleAdducts getSelectedAdducts() {
-        return adductOptions.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType)
-                .flatMap(Optional::stream).collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new));
     }
 
     public List<CustomDataSources.Source> getStructureSearchDBs() {

@@ -45,8 +45,8 @@ import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.Summarizer;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdLocations;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.CompoundContainer;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -62,8 +62,8 @@ import java.io.Writer;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.SPECTRA;
-import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.TREES;
+import static de.unijena.bioinf.projectspace.SiriusLocations.SPECTRA;
+import static de.unijena.bioinf.projectspace.SiriusLocations.TREES;
 import static de.unijena.bioinf.projectspace.summaries.mztab.JenaMSAdditionalKeys.*;
 
 public class MztabMExporter implements Summarizer {

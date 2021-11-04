@@ -87,9 +87,8 @@ public class AboutDialog extends JDialog {
             dontAsk.setText("Do not show dialog again.");
             dontAsk.setSelected(PropertyManager.getBoolean(PROPERTY_KEY, false));
             south.add(dontAsk);
+            south.add(Box.createHorizontalGlue());
         }
-
-        south.add(Box.createHorizontalGlue());
 
         close = new JButton();
         bibtex = new JButton();
@@ -114,7 +113,7 @@ public class AboutDialog extends JDialog {
     }
 
     private void defineActions() {
-        final Action closeA = new AbstractAction("close") {
+        final Action closeA = new AbstractAction("Close") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (dontAsk != null)
@@ -122,13 +121,13 @@ public class AboutDialog extends JDialog {
                 AboutDialog.this.dispose();
             }
         };
-        final Action copyBibTexA = new AbstractAction("copy BibTex") {
+        final Action copyBibTexA = new AbstractAction("Copy as BibTex") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 copyBibTex();
             }
         };
-        final Action copyPlainA = new AbstractAction("copy plain text") {
+        final Action copyPlainA = new AbstractAction("Copy as text") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 copyPlainText();

@@ -22,7 +22,6 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Quantification;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 

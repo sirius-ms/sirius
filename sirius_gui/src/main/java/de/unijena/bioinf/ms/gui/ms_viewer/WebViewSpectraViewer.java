@@ -20,7 +20,7 @@
 package de.unijena.bioinf.ms.gui.ms_viewer;
 
 import java.util.HashMap;
-
+import javafx.concurrent.Worker;
 import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
 import netscape.javascript.JSObject;
 
@@ -31,23 +31,37 @@ public class WebViewSpectraViewer extends WebViewPanel {
     public WebViewSpectraViewer() {
         super();
         addJS("d3.min.js");
-        addJS("spectra_viewer/spectra_viewer.js");
+        addJS("svg-export.js");
+        addJS("spectra_viewer/spectra_viewer_oop.js");
         SpectraViewerConnector svc = new SpectraViewerConnector();
-        bridges = new HashMap<String, Object>() {{put("connector", svc);}};
+        bridges = new HashMap<String, Object>() {{
+                put("connector", svc);
+            }};
         load(bridges);
+        // create Main instance
+        queueTaskInJFXThread(() -> {
+                // after bridges are queued to load, we have to wait (again)
+                webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
+                        if (newState == Worker.State.SUCCEEDED) {
+                            webView.getEngine().executeScript("var main = new Main();");
+                        }
+                    });
+            });
     }
 
     public void loadData(String json_spectra, String json_highlight, String svg) { // TEST CODE
         cancelTasks();
 
         queueTaskInJFXThread(() -> {
-                    JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { \"spectrum\": " + json_spectra + ", \"highlight\": " + escapeNull(json_highlight) + ", svg: null};");
-                    if (svg!=null) {
-                        obj.setMember("svg", svg);
-                    }
-            webView.getEngine().executeScript("window.loadJSONData(document.webview.spectrum, document.webview.highlight, document.webview.svg)");
+                // set data
+                JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { \"spectrum\": " + json_spectra + ", \"highlight\": " + escapeNull(json_highlight) + ", svg: null};");
+                if (svg!=null) {
+                    obj.setMember("svg", svg);
                 }
-        );
+                // load Data
+                webView.getEngine().executeScript(
+                    "main.loadJSONData(document.webview.spectrum, document.webview.highlight, document.webview.svg)");
+            });
     }
 
     private String jsonString(String val) {
@@ -61,7 +75,7 @@ public class WebViewSpectraViewer extends WebViewPanel {
     }
 
 	public void clear(){
-		executeJS("clear()");
+        executeJS("main.clear()");
 	}
 
     public SpectraViewerConnector getConnector(){
