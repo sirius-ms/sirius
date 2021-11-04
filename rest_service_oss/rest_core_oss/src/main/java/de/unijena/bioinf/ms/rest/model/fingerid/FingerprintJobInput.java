@@ -20,29 +20,47 @@
 
 package de.unijena.bioinf.ms.rest.model.fingerid;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
-import de.unijena.bioinf.sirius.IdentificationResult;
 
+import java.io.IOException;
 import java.util.EnumSet;
 
+@JsonSerialize(using = FingerprintJobInput.Serializer.class)
 public class FingerprintJobInput {
     public final Ms2Experiment experiment;
+
     public final FTree ftree;
-    public final IdentificationResult<?> identificationResult;
     public final EnumSet<PredictorType> predictors;
 
 
-    public FingerprintJobInput(final Ms2Experiment experiment, final IdentificationResult<?> result, final FTree ftree, EnumSet<PredictorType> predictors) {
+    public FingerprintJobInput(final Ms2Experiment experiment, final FTree ftree, EnumSet<PredictorType> predictors) {
         this.experiment = experiment;
         this.ftree = ftree;
-        this.identificationResult = result;
 
         if (predictors == null || predictors.isEmpty())
             this.predictors = EnumSet.of(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(experiment.getPrecursorIonType()));
         else
             this.predictors = predictors;
+    }
+
+    public static class Serializer extends JsonSerializer<FingerprintJobInput> {
+
+        @Override
+        public void serialize(FingerprintJobInput value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeStartObject();
+            gen.writeStringField("msData",  new JenaMsWriter(true).writeToString(value.experiment));
+            gen.writeStringField("ftJson",  new FTJsonWriter().treeToJsonString(value.ftree).replaceAll("\\s+",""));
+            gen.writeNumberField("predictors", PredictorType.getBits(value.predictors));
+            gen.writeEndObject();
+        }
     }
 }

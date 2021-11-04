@@ -171,4 +171,8 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return measuredFormulas.isEmpty() && neutralFormulas.isEmpty();
     }
 
+    public boolean notEmpty() {
+        return !isEmpty();
+    }
+
 }

@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.chemdb.RESTDatabase;
 import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
@@ -56,15 +57,17 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
+import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
-import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -113,6 +116,7 @@ public final class WebAPI {
         this(authService, URI.create(FingerIDProperties.fingeridWebHost()));
     }
 
+
     public AuthService getAuthService() {
         return authService;
     }
@@ -125,6 +129,15 @@ public final class WebAPI {
         }
     }
 
+    public void changeHost(URI host){
+        this.serverInfoClient.setServerUrl(host);
+        this.jobsClient.setServerUrl(host);
+        this.chemDBClient.setServerUrl(host);
+        this.fingerprintClient.setServerUrl(host);
+        this.canopusClient.setServerUrl(host);
+    }
+
+
     public boolean deleteAccount(){
         return ProxyManager.doWithClient(jobsClient::deleteAccount);
     }
@@ -133,8 +146,23 @@ public final class WebAPI {
             jobWatcher.shutdown();
     }
 
-    //region ServerInfo
+    public void acceptTermsAndRefreshToken() throws LoginException {
+        if (ProxyManager.doWithClient(jobsClient::acceptTerms));
+            authService.refreshIfNeeded(true);
+    }
 
+
+    //region ServerInfo
+    @Nullable
+    public VersionsInfo getVersionInfo() {
+        return ProxyManager.doWithClient(serverInfoClient::getVersionInfo);
+    }
+
+    public static final int MAX_STATE = 10;
+
+    //9 Authentication Server error
+    //8 no tos and/or pp
+    //7 no permission
     //6 csi web api for this version is not reachable because it is outdated
     //5 csi web api for this version is not reachable
     //4 csi server not reachable
@@ -142,14 +170,6 @@ public final class WebAPI {
     //2 no connection to uni jena
     //1 no connection to internet (google/microsoft/ubuntu?)
     //0 everything is fine
-    //-1 login has permissions to this server
-    public static final int MAX_STATE = 6;
-
-    @Nullable
-    public VersionsInfo getVersionInfo() {
-        return ProxyManager.doWithClient(serverInfoClient::getVersionInfo);
-    }
-
     public int checkConnection() {
         return ProxyManager.doWithClient(client -> {
             try {
@@ -161,9 +181,7 @@ public final class WebAPI {
                 } else if (v.outdated()) {
                     return MAX_STATE;
                 } else if (serverInfoClient.testConnection()) {
-                    if (jobsClient.testSecuredConnection(client))
-                        return -1;
-                    return 0;
+                    return jobsClient.testSecuredConnection(client);
                 } else {
                     return 5;
                 }
@@ -178,12 +196,34 @@ public final class WebAPI {
         return ProxyManager.applyClient(serverInfoClient::getWorkerInfo);
     }
 
+    @Nullable
+    public List<Term> getTerms() {
+        try {
+            return ProxyManager.applyClient(serverInfoClient::getTerms);
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).error("Could not load Terms from server!", e);
+            return null;
+        }
+    }
+
+    public LicenseInfo getLicenseInfo() throws IOException {
+        return ProxyManager.applyClient(jobsClient::getLicenseInfo);
+    }
+
     public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {
         return ProxyManager.applyClient(client -> serverInfoClient.reportError(report, SOFTWARE_NAME, client));
     }
     //endregion
 
     //region Jobs
+    public int getCountedJobs(boolean byMonth) throws IOException {
+        return getCountedJobs(new Date(System.currentTimeMillis()), byMonth);
+    }
+
+    public int getCountedJobs(@NotNull Date monthAndYear, boolean byMonth) throws IOException {
+        return ProxyManager.applyClient(client -> jobsClient.getCountedJobs(monthAndYear, byMonth, client));
+    }
+
     public List<JobUpdate<?>> updateJobStates(JobTable jobTable) throws IOException {
         return updateJobStates(EnumSet.of(jobTable)).get(jobTable);
     }
@@ -192,8 +232,8 @@ public final class WebAPI {
         return ProxyManager.applyClient(client -> jobsClient.getJobs(jobTablesToCheck, client));
     }
 
-    public void deleteJobs(Collection<JobId> jobsToDelete) throws IOException {
-        ProxyManager.consumeClient(client -> jobsClient.deleteJobs(jobsToDelete, client));
+    public void deleteJobs(Collection<JobId> jobsToDelete, Map<JobId, Integer> countingHashes) throws IOException {
+        ProxyManager.consumeClient(client -> jobsClient.deleteJobs(jobsToDelete, countingHashes, client));
     }
 
     public void deleteClientAndJobs() throws IOException {
@@ -221,18 +261,18 @@ public final class WebAPI {
     //endregion
 
     //region Canopus
-    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint) throws IOException {
-        return submitCanopusJob(formula, fingerprint, (charge > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE));
+    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint, int specHash) throws IOException {
+        return submitCanopusJob(formula, fingerprint, (charge > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE), specHash);
     }
 
-    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type) throws IOException {
-        return submitCanopusJob(new CanopusJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary(), type));
+    public CanopusWebJJob submitCanopusJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type, int specHash) throws IOException {
+        return submitCanopusJob(new CanopusJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary(), type), specHash);
     }
 
-    public CanopusWebJJob submitCanopusJob(CanopusJobInput input) throws IOException {
+    public CanopusWebJJob submitCanopusJob(CanopusJobInput input, int specHash) throws IOException {
         JobUpdate<CanopusJobOutput> jobUpdate = ProxyManager.applyClient(client -> canopusClient.postJobs(input, client));
         final MaskedFingerprintVersion version = getClassifierMaskedFingerprintVersion(input.predictor.toCharge());
-        return jobWatcher.watchJob(new CanopusWebJJob(jobUpdate.getGlobalId(), jobUpdate.getStateEnum(), version,MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()), System.currentTimeMillis()));
+        return jobWatcher.watchJob(new CanopusWebJJob(jobUpdate.getGlobalId(), jobUpdate.getStateEnum(), version, MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()), System.currentTimeMillis(), specHash));
     }
 
     private final EnumMap<PredictorType, CanopusData> canopusData = new EnumMap<>(PredictorType.class);
@@ -248,7 +288,7 @@ public final class WebAPI {
 
     //region CSI:FingerID
     public FingerprintPredictionJJob submitFingerprintJob(final Ms2Experiment experiment, final FTree ftree, @NotNull EnumSet<PredictorType> types) throws IOException {
-        return submitFingerprintJob(new FingerprintJobInput(experiment, null, ftree, types));
+        return submitFingerprintJob(new FingerprintJobInput(experiment, ftree, types));
     }
 
     public FingerprintPredictionJJob submitFingerprintJob(FingerprintJobInput input) throws IOException {

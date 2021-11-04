@@ -22,20 +22,19 @@ package de.unijena.bioinf.ms.rest.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.scribejava.core.model.OAuthResponseException;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -77,6 +76,9 @@ public abstract class AbstractClient {
         this.serverUrl = serverUrl;
     }
 
+    public URI getServerUrl() {
+        return serverUrl;
+    }
 
     public boolean testConnection() {
         try {
@@ -90,7 +92,7 @@ public abstract class AbstractClient {
         }
     }
 
-    public boolean testSecuredConnection(@NotNull CloseableHttpClient client) {
+    public int testSecuredConnection(@NotNull CloseableHttpClient client) {
         try {
             execute(client, () -> {
                 HttpGet get = new HttpGet(getBaseURI("/check", true).build());
@@ -98,11 +100,30 @@ public abstract class AbstractClient {
                 get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
                 return get;
             });
-            return true;
+            return 0;
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).warn("Could not reach secured api endpoint: " + e.getMessage());
-            return false;
+            String[] splitMsg = e.getMessage().split(SecurityService.ERROR_CODE_SEPARATOR);
+
+            if (splitMsg.length > 1 && splitMsg[1].equals(SecurityService.TERMS_MISSING))
+                return 8;
+            return 7;
+        } catch (OAuthResponseException e){
+            LoggerFactory.getLogger(getClass()).error("Error when contacting login Server: " + e.getMessage(), e);
+            return 9;
         }
+    }
+
+    @Nullable
+    public LicenseInfo getLicenseInfo(@NotNull CloseableHttpClient client) throws IOException {
+        return executeFromJson(client,
+                () -> {
+                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/license.json").build());
+                    final int timeoutInSeconds = 8000;
+                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                    return get;
+                }, new TypeReference<>() {}
+        );
     }
 
     public boolean deleteAccount(@NotNull CloseableHttpClient client){
@@ -116,6 +137,21 @@ public abstract class AbstractClient {
             return true;
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).warn("Error when deleting user account: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean acceptTerms(@NotNull CloseableHttpClient client){
+        try {
+            execute(client, () -> {
+                HttpPost post = new HttpPost(getBaseURI("/accept-terms", true).build());
+                final int timeoutInSeconds = 8000;
+                post.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                return post;
+            });
+            return true;
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).warn("Error when accepting terms: " + e.getMessage());
             return false;
         }
     }
@@ -161,11 +197,11 @@ public abstract class AbstractClient {
     }
 
     public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, R tr) throws IOException {
-        return execute(client, request, r -> new ObjectMapper().readValue(r, tr));
+        return execute(client, request, r -> r != null && r.ready() ? new ObjectMapper().readValue(r, tr) : null);
     }
 
     public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest,  R tr) throws IOException {
-        return execute(client, makeRequest, r -> new ObjectMapper().readValue(r, tr));
+        return execute(client, makeRequest, r -> r != null && r.ready() ? new ObjectMapper().readValue(r, tr) : null);
     }
 
     @NotNull

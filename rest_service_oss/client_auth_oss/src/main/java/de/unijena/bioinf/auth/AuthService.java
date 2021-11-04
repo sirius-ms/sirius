@@ -18,46 +18,6 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
 package de.unijena.bioinf.auth;
 
 import com.auth0.jwt.JWT;
@@ -68,10 +28,12 @@ import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.revoke.TokenTypeHint;
+import com.github.scribejava.httpclient.apache.ApacheHttpClient;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.auth0.Auth0Service;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +47,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Closeable {
 
-    protected final OAuth20Service service;
+    private OAuth20Service service;
 
     @Nullable
     private String refreshToken;
@@ -98,11 +60,19 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
 
 
     public AuthService(DefaultApi20 authAPI) {
-        this(null, authAPI);
+        this(authAPI, null);
+    }
+
+    public AuthService(DefaultApi20 authAPI, @Nullable CloseableHttpAsyncClient client) {
+        this(null, authAPI, client);
     }
 
     public AuthService(@Nullable String refreshToken, DefaultApi20 authAPI) {
-        this(refreshToken, buildService(authAPI));
+        this(refreshToken, authAPI, null);
+    }
+
+    public AuthService(@Nullable String refreshToken, DefaultApi20 authAPI, @Nullable CloseableHttpAsyncClient client) {
+        this(refreshToken, buildService(authAPI, client));
     }
 
     public AuthService(@Nullable String refreshToken, OAuth20Service service) {
@@ -111,14 +81,25 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     }
 
 
-    private static OAuth20Service buildService(DefaultApi20 authAPI) {
+    private static OAuth20Service buildService(DefaultApi20 authAPI, @Nullable CloseableHttpAsyncClient client) {
         ServiceBuilder b = new ServiceBuilder(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientID", null, null));
+        if (client != null)
+            b.httpClient(new ApacheHttpClient(client));
         String secret = PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientSecret");
         if (secret != null)
             b.apiSecret(secret);
 //                .defaultScope("offline_access") // replace with desired scope
 //              .callback("http://your.site.com/callback")
         return b.build(authAPI);
+    }
+
+    public void reconnectService(@Nullable CloseableHttpAsyncClient client){
+        tokenLock.writeLock().lock();
+        try {
+            this.service = buildService(service.getApi(), client);
+        }finally {
+            tokenLock.writeLock().unlock();
+        }
     }
 
     /**
@@ -138,7 +119,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
             LoggerFactory.getLogger(getClass()).warn("Error when refreshing access_token with current refresh_token.", e);
             return false;
         } finally {
-            tokenLock.writeLock().lock();
+            tokenLock.writeLock().unlock();
         }
         return true;
     }
@@ -163,10 +144,13 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     }
 
     public Token refreshIfNeeded() throws LoginException {
-        if (needsRefresh()) {
+        return refreshIfNeeded(false);
+    }
+    public Token refreshIfNeeded(boolean force) throws LoginException {
+        if (force || needsRefresh()) {
             tokenLock.writeLock().lock();
             try {
-                if (needsRefreshRaw()) {
+                if (force || needsRefreshRaw()) {
                     if (refreshToken == null || refreshToken.isBlank())
                         throw new LoginException(new NullPointerException("Refresh token is null or empty!"));
                     token = new Token((OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken));

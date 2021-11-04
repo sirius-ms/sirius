@@ -22,7 +22,6 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -30,7 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.SCORES;
+import static de.unijena.bioinf.projectspace.SiriusLocations.SCORES;
 
 public class FormulaScoringSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FormulaScoring> {
     @Override

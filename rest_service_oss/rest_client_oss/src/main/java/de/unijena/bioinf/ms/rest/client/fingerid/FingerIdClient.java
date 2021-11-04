@@ -86,27 +86,10 @@ public class FingerIdClient extends AbstractClient {
 
         return executeFromJson(client,
                 () -> {
-                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/jobs").build());
-                    final String stringMs, jsonTree;
-                    {
-                        final JenaMsWriter writer = new JenaMsWriter(true);
-                        final StringWriter sw = new StringWriter();
-                        try (final BufferedWriter bw = new BufferedWriter(sw)) {
-                            writer.write(bw, input.experiment);
-                        }
-                        stringMs = sw.toString();
-                    }
-                    {
-                        final FTJsonWriter writer = new FTJsonWriter();
-                        final StringWriter sw = new StringWriter();
-                        writer.writeTree(sw, input.ftree);
-                        jsonTree = sw.toString();
-                    }
-                    Map<String,String> values =  new HashMap<>();
-                    values.put("ms",stringMs);
-                    values.put("ft",jsonTree);
-                    values.put("predictors", PredictorType.getBitsAsString(input.predictors));
-                    post.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(values)));
+                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/fp-jobs").build());
+                    String entity = new ObjectMapper().writeValueAsString(input);
+                    post.setEntity(new StringEntity(entity, StandardCharsets.UTF_8));
+                    post.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
 
                     return post;
                 }, new TypeReference<>() {
@@ -137,7 +120,7 @@ public class FingerIdClient extends AbstractClient {
                     final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/fingerid/" + CID + "/covtree-jobs").build());
                     String v = new ObjectMapper().writeValueAsString(input);
                     post.setEntity(new StringEntity(v, StandardCharsets.UTF_8));
-                    post.setHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
+                    post.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
                     return post;
                 }, new TypeReference<>() {
                 }

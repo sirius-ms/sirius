@@ -54,7 +54,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> i
 //    private List<Scored<FingerprintCandidate>> requestedScoredCandidates = null;
 //    private ProbabilityFingerprint predictedFpt = null;
 //    private RestWithCustomDatabase.CandidateResult candidates = null;
-    protected final Set<FingerblastJJob> inputInstances = new LinkedHashSet<>();
+    protected final Set<FingerblastSearchJJob> inputInstances = new LinkedHashSet<>();
     protected final ScoringMethodFactory.CSIFingerIdScoringMethod csiScoring;
 
 
@@ -90,8 +90,8 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> i
 
     @Override
     public synchronized void handleFinishedRequiredJob(JJob required) {
-        if (required instanceof FingerblastJJob) {
-            final FingerblastJJob searchDBJob = (FingerblastJJob) required;
+        if (required instanceof FingerblastSearchJJob) {
+            final FingerblastSearchJJob searchDBJob = (FingerblastSearchJJob) required;
             if (searchDBJob.result() != null && searchDBJob.result().getTopHitScore() != null) {
                 inputInstances.add(searchDBJob);
             } else {
@@ -108,7 +108,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> i
         if (inputInstances.isEmpty())
             return new ConfidenceResult(Double.NaN, null);
 
-        Map<FingerblastJJob, List<JJob<List<Scored<FingerprintCandidate>>>>> csiScoreJobs = new HashMap<>();
+        Map<FingerblastSearchJJob, List<JJob<List<Scored<FingerprintCandidate>>>>> csiScoreJobs = new HashMap<>();
 
 
         final List<Scored<FingerprintCandidate>> allMergedCandidatesCov = new ArrayList<>();
@@ -123,7 +123,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> i
         MolecularFormula topHitFormula = null;
         BayesnetScoring topHitScoring = null;
 
-        for (FingerblastJJob searchDBJob : inputInstances) {
+        for (FingerblastSearchJJob searchDBJob : inputInstances) {
             FingerblastResult r = searchDBJob.result();
             final List<Scored<FingerprintCandidate>> allRestDbScoredCandidates = searchDBJob.getCandidates().getAllDbCandidatesInChIs().map(set ->
                     searchDBJob.getAllScoredCandidates().stream().filter(sc -> set.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList())).

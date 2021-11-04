@@ -26,7 +26,11 @@ package de.unijena.bioinf.utils.errorReport;
  */
 
 
-import com.google.gson.*;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.unijena.bioinf.utils.io.Compress;
 import de.unijena.bioinf.utils.mailService.Mail;
 import de.unijena.bioinf.utils.systemInfo.SystemInformation;
@@ -43,6 +47,8 @@ import java.util.Map;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
+@JsonDeserialize(using = ErrorReport.ReportDeSerializer.class)
+@JsonSerialize(using = ErrorReport.ReportSerializer.class)
 public class ErrorReport {
     public final static String[] TYPES =  {"Error Report","Bug Report", "Feature Request"};
     public final static String NO_USER_MAIL = "none"; //this is to make json happy, because not every parser likes null values
@@ -200,7 +206,7 @@ public class ErrorReport {
         this.compessedAdditionalFiles = bytes;
     }
 
-    protected static <T extends ErrorReport> Gson getGson(Class<T> clas) {
+/*    protected static <T extends ErrorReport> Gson getGson(Class<T> clas) {
         return new GsonBuilder().registerTypeAdapter(clas, new ReportSerializer<T>()).registerTypeAdapter(clas, new ReportDeSerializer<T>()).create();
     }
 
@@ -211,53 +217,45 @@ public class ErrorReport {
     public static <T extends ErrorReport> T fromJson(String json, Class<T> clas) {
         Gson gson = getGson(clas);
         return gson.fromJson(json, clas);
-    }
+    }*/
 
-    protected static class ReportSerializer<T extends ErrorReport> implements JsonSerializer<T> {
+    protected static class ReportSerializer extends JsonSerializer<ErrorReport> {
+        @Override
+        public void serialize(ErrorReport report, JsonGenerator result, SerializerProvider serializers) throws IOException {
+            result.writeBooleanField("sendSystemInfo", (report.isSendSystemInfo()));
+            result.writeBooleanField("sendReportToUser", (report.isSendReportToUser()));
 
-        public JsonElement serialize(final T report, final Type type, final JsonSerializationContext context) {
-            JsonObject result = new JsonObject();
-            result.add("sendSystemInfo", new JsonPrimitive((report.isSendSystemInfo())));
-            result.add("sendReportToUser", new JsonPrimitive((report.isSendReportToUser())));
-
-            result.add("identifier", new JsonPrimitive(report.getIdentifier()));
-            result.add("type", new JsonPrimitive(report.getType()));
-            result.add("version", new JsonPrimitive(report.getVersion()));
-            result.add("subject", new JsonPrimitive(report.getSubject()));
-            result.add("userMessage", new JsonPrimitive(report.getUserMessage()));
-            result.add("userMail", new JsonPrimitive(report.getUserEmail()));
+            result.writeStringField("identifier", report.getIdentifier());
+            result.writeStringField("type", report.getType());
+            result.writeStringField("version", report.getVersion());
+            result.writeStringField("subject", report.getSubject());
+            result.writeStringField("userMessage", report.getUserMessage());
+            result.writeStringField("userMail", report.getUserEmail());
 
             String encoded = Base64.getEncoder().encodeToString(report.getAdditionalFilesAsCompressedBytes());
-            result.add("attachment", new JsonPrimitive(encoded));
-            return result;
+            result.writeStringField("attachment", encoded);
         }
     }
 
-    protected static class ReportDeSerializer<T extends ErrorReport> implements JsonDeserializer<T> {
+    protected static class ReportDeSerializer extends JsonDeserializer<ErrorReport> {
         @Override
-        public T deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            try {
-                T report = ((Class<T>) typeOfT).newInstance();
+        public ErrorReport deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
+            JsonNode j = jp.getCodec().readTree(jp);
+//            T report = ((Class<T>) typeOfT).newInstance();
+            ErrorReport report = new ErrorReport();
+            report.setSendSystemInfo(j.get("sendSystemInfo").asBoolean());
+            report.setSendReportToUser(j.get("sendReportToUser").asBoolean());
 
-                JsonObject j = json.getAsJsonObject();
+            report.setSubject(j.get("subject").asText());
+            report.setIdentifier(j.get("identifier").asText());
+            report.setType(j.get("type").asText());
+            report.setVersion(j.get("version").asText());
+            report.setUserMessage(j.get("userMessage").asText());
+            report.setUserEmail(j.get("userMail").asText());
 
-                report.setSendSystemInfo(j.get("sendSystemInfo").getAsBoolean());
-                report.setSendReportToUser(j.get("sendReportToUser").getAsBoolean());
-
-                report.setSubject(j.get("subject").getAsString());
-                report.setIdentifier(j.get("identifier").getAsString());
-                report.setType(j.get("type").getAsString());
-                report.setVersion(j.get("version").getAsString());
-                report.setUserMessage(j.get("userMessage").getAsString());
-                report.setUserEmail(j.get("userMail").getAsString());
-
-                String decoded = j.get("attachment").getAsString();
-                report.setCompessedAdditionalFiles(Base64.getDecoder().decode(decoded));
-                return report;
-            } catch (InstantiationException | IllegalAccessException e) {
-                LoggerFactory.getLogger(this.getClass()).error("Could not deserialize logger from Json", e);
-            }
-            return null;
+            String decoded = j.get("attachment").asText();
+            report.setCompessedAdditionalFiles(Base64.getDecoder().decode(decoded));
+            return report;
         }
 
         private static final String TYPE_NAME_PREFIX = "class ";
@@ -290,5 +288,7 @@ public class ErrorReport {
             }
             return clazz.newInstance();
         }
+
+
     }
 }

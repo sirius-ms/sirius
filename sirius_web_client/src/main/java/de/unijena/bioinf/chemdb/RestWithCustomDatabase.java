@@ -25,7 +25,10 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.storage.blob.BlobStorage;
+import de.unijena.bioinf.storage.blob.BlobStorages;
 import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
@@ -202,24 +205,22 @@ public class RestWithCustomDatabase {
 
 
     protected Optional<ChemicalBlobDatabase<?>> getInternalCustomDb(String dbName) {
-        return getCustomDb(dbName, getCustomDBDirectory().toPath().resolve(dbName));
+        return getCustomDb(dbName, getCustomDBDirectory().toPath().resolve(dbName).toString());
     }
 
     protected Optional<ChemicalBlobDatabase<?>> getCustomDb(Path dbDir) {
-        return getCustomDb(dbDir.getFileName().toString(), dbDir);
+        return getCustomDb(dbDir.getFileName().toString(), dbDir.toString());
     }
 
     protected Optional<ChemicalBlobDatabase<?>> getCustomDb(@NotNull CustomDatabase cdb) {
-        return getCustomDb(cdb.name(), cdb.getDatabasePath().toPath());
+        return getCustomDb(cdb.name(), cdb.getDatabasePath().toString());
     }
 
-    //todo at some stage we can also open this up for cloud databases
-    protected Optional<ChemicalBlobDatabase<?>> getCustomDb(@NotNull String dbName, @NotNull Path dbDir) {
+    protected Optional<ChemicalBlobDatabase<?>> getCustomDb(@NotNull String dbName, @NotNull String dbLocation) {
         try {
             if (!customDatabases.containsKey(dbName)) {
-                if (!Files.isDirectory(dbDir))
-                    throw new IOException("Custom database '" + dbName + "' not found.");
-                customDatabases.put(dbName, new ChemicalFileDatabase(api.getCDKChemDBFingerprintVersion(), new FileBlobStorage(dbDir)));
+                BlobStorage storage = BlobStorages.openDefault(FingerIDProperties.customDBStorePropertyPrefix(), dbLocation);
+                customDatabases.put(dbName, new ChemicalBlobDatabase<>(api.getCDKChemDBFingerprintVersion(), storage));
             }
             return Optional.of(customDatabases.get(dbName));
         } catch (IOException e) {
@@ -450,9 +451,4 @@ public class RestWithCustomDatabase {
     public File getCustomDBDirectory() {
         return new File(directory, customDbDir);
     }
-
-
-
-
-
 }

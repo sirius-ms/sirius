@@ -31,10 +31,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
-import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -315,7 +311,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         final MolecularFormula f = tree.getRoot().getFormula().add(ionType.getAdduct()).subtract(ionType.getInSourceFragmentation()); //get precursor formula
         final FormulaResultId fid = new FormulaResultId(container.getId(), f, ionType);
 
-        if (container.contains(fid))
+        if (container.containsResult(fid))
             throw new IllegalArgumentException("FormulaResult '" + fid + "' does already exist for compound '" + container.getId() + "' " + container.getId());
 
         final FormulaResult r = new FormulaResult(fid);
@@ -326,7 +322,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             container.getId().containerLock.lock();
             updateContainer(FormulaResult.class, r, FTree.class, FormulaScoring.class);
             //modify input container
-            container.getResults().put(r.getId().fileName(), r.getId());
+            container.results.put(r.getId().fileName(), r.getId());
 
             fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.CREATED, r, Collections.emptySet()));
 
@@ -401,7 +397,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     // shorthand methods
     @SafeVarargs
     public final List<SScored<FormulaResult, ? extends FormulaScore>> getFormulaResultsOrderedBy(CompoundContainerId cid, List<Class<? extends FormulaScore>> scores, Class<? extends DataAnnotation>... components) throws IOException {
-        return getFormulaResultsOrderedBy(getCompound(cid).getResults().values(), scores, components);
+        return getFormulaResultsOrderedBy(getCompound(cid).getResultsRO().values(), scores, components);
     }
 
     @SafeVarargs
@@ -461,15 +457,27 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public final void deleteFormulaResult(FormulaResultId resultId) throws IOException {
+    public final void deleteFormulaResult(@Nullable final CompoundContainer container, @NotNull final FormulaResultId resultId) throws IOException {
+        if (container != null && !container.getId().equals(resultId.getParentId()))
+            throw new IllegalArgumentException("Compound id does not match parent id of FormulaResult! " + container.getId() + " vs. " + resultId.getParentId());
+
         CompoundContainerId parentId = resultId.getParentId();
+        if (!containsCompound(parentId))
+            throw new IllegalArgumentException("Compound is not part of the project Space! ID: " + parentId);
+
         parentId.containerLock.lock();
         try {
             deleteContainer(FormulaResult.class, resultId);
+            if (container != null)
+                container.removeResult(resultId);
             fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.DELETED, resultId, Collections.emptySet()));
         } finally {
             parentId.containerLock.unlock();
         }
+    }
+
+    public final void deleteFormulaResult(final @NotNull FormulaResultId resultId) throws IOException {
+        deleteFormulaResult(null, resultId);
     }
 
 

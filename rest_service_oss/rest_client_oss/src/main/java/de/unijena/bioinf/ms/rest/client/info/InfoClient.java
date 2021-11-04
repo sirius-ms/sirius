@@ -27,17 +27,17 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.info.News;
+import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -49,8 +49,8 @@ import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,6 +58,7 @@ public class InfoClient extends AbstractClient {
     private static final Logger LOG = LoggerFactory.getLogger(InfoClient.class);
     private static final String WEBAPI_VERSION_JSON = "/version.json";
     private static final String WEBAPI_WORKER_JSON = "/workers.json";
+    private static final String WEBAPI_TERMS_JSON = "/terms.json";
 
     public InfoClient(@NotNull URI serverUrl) {
         this(serverUrl, (it) -> {});
@@ -101,34 +102,50 @@ public class InfoClient extends AbstractClient {
     }
 
     //todo change to Jackson
+    @Nullable
     private VersionsInfo parseVersionInfo(BufferedReader reader) {
-        try (final JsonReader r = Json.createReader(reader)) {
-            JsonObject o = r.readObject();
-            JsonObject gui = o.getJsonObject("SIRIUS GUI");
+        if (reader != null) {
+            try (final JsonReader r = Json.createReader(reader)) {
+                JsonObject o = r.readObject();
+                JsonObject gui = o.getJsonObject("SIRIUS GUI");
 
-            final String version = gui.getString("version");
-            String database = o.getJsonObject("database").getString("version");
+                final String version = gui.getString("version");
+                String database = o.getJsonObject("database").getString("version");
 
-            boolean expired = true;
-            Timestamp accept = null;
-            Timestamp finish = null;
+                boolean expired = true;
+                Timestamp accept = null;
+                Timestamp finish = null;
 
-            if (o.containsKey("expiry dates")) {
-                JsonObject expiryInfo = o.getJsonObject("expiry dates");
-                expired = expiryInfo.getBoolean("isExpired");
-                if (expiryInfo.getBoolean("isAvailable")) {
-                    accept = Timestamp.valueOf(expiryInfo.getString("acceptJobs"));
-                    finish = Timestamp.valueOf(expiryInfo.getString("finishJobs"));
+                if (o.containsKey("expiry dates")) {
+                    JsonObject expiryInfo = o.getJsonObject("expiry dates");
+                    expired = expiryInfo.getBoolean("isExpired");
+                    if (expiryInfo.getBoolean("isAvailable")) {
+                        accept = Timestamp.valueOf(expiryInfo.getString("acceptJobs"));
+                        finish = Timestamp.valueOf(expiryInfo.getString("finishJobs"));
+                    }
                 }
-            }
 
-            List<News> newsList = Collections.emptyList();
-            if (o.containsKey("news")) {
-                final String newsJson = o.getJsonArray("news").toString();
-                newsList = News.parseJsonNews(newsJson);
+                List<News> newsList = Collections.emptyList();
+                if (o.containsKey("news")) {
+                    final String newsJson = o.getJsonArray("news").toString();
+                    newsList = News.parseJsonNews(newsJson);
+                }
+                return new VersionsInfo(version, database, expired, accept, finish, newsList);
             }
-            return new VersionsInfo(version, database, expired, accept, finish, newsList);
         }
+        return null;
+    }
+
+    @Nullable
+    public List<Term> getTerms(@NotNull CloseableHttpClient client) throws IOException {
+        return executeFromJson(client,
+                () -> {
+                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_TERMS_JSON).build());
+                    final int timeoutInSeconds = 8000;
+                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                    return get;
+                }, new TypeReference<>() {}
+        );
     }
 
     @Nullable
@@ -143,16 +160,15 @@ public class InfoClient extends AbstractClient {
         );
     }
 
-    public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME, @NotNull CloseableHttpClient client) throws IOException {
+
+    public <T extends ErrorReport> String reportError(ErrorReport report, String SOFTWARE_NAME, @NotNull CloseableHttpClient client) throws IOException {
         return execute(client,
                 () -> {
-                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/report.json").build());
-                    final String json = ErrorReport.toJson(report);
-
-                    final NameValuePair reportValue = new BasicNameValuePair("report", json);
-                    final NameValuePair softwareName = new BasicNameValuePair("name", SOFTWARE_NAME);
-                    final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(reportValue, softwareName));
-                    post.setEntity(params);
+                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/report.json")
+                            .addParameter("name", SOFTWARE_NAME).build());
+                    final String json = new ObjectMapper().writeValueAsString(report);
+                    post.setEntity(new StringEntity(json, StandardCharsets.UTF_8));
+                    post.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
                     return post;
                 },
                 reader -> {

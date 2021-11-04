@@ -50,7 +50,7 @@ public class CanopusClient extends AbstractClient {
 
     public CanopusData getCanopusData(PredictorType predictorType, CloseableHttpClient client) throws IOException {
         return execute(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/canopus/data.csv")
+                () -> new HttpGet(buildVersionSpecificWebapiURI("/canopus/data")
                         .setParameter("predictor", predictorType.toBitsAsString())
                         .build()),
                 CanopusData::read

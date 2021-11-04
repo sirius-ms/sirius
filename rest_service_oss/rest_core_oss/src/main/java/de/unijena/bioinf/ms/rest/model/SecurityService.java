@@ -29,6 +29,9 @@ import java.security.SecureRandom;
 
 public class SecurityService {
 
+    public static final String ERROR_CODE_SEPARATOR = ":;:";
+    public static final String TERMS_MISSING =  "terms_missing";
+
     public static String generateSecurityToken() {
         final SecureRandom rand = new SecureRandom();
         final byte[] bytes = new byte[48];
@@ -39,5 +42,4 @@ public class SecurityService {
             throw new RuntimeException(e); // should never happen
         }
     }
-
 }

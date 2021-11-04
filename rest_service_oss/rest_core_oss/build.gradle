@@ -3,6 +3,7 @@ dependencies {
     compile project(':fingerid_base_oss')
     compile project(':error_reporter_oss')
     compile project(':sirius_api')
+    compile project(':io')
 
     // maven version number parsing
     compile group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'

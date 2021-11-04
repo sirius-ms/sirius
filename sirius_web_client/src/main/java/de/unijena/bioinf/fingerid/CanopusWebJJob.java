@@ -29,16 +29,20 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
 import de.unijena.bioinf.webapi.WebJJob;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.OptionalInt;
+
 public class CanopusWebJJob extends WebJJob<CanopusWebJJob, CanopusResult, CanopusJobOutput> {
 
     protected final MaskedFingerprintVersion classyfireVersion, npcVersion;
     protected ProbabilityFingerprint compoundClasses = null;
     protected ProbabilityFingerprint npcClasses = null;
+    protected int countingHash;
 
-    public CanopusWebJJob(@NotNull JobId jobId, de.unijena.bioinf.ms.rest.model.JobState serverState, MaskedFingerprintVersion classyfireVersion, MaskedFingerprintVersion npcVersion, long submissionTime) {
+    public CanopusWebJJob(@NotNull JobId jobId, de.unijena.bioinf.ms.rest.model.JobState serverState, MaskedFingerprintVersion classyfireVersion, MaskedFingerprintVersion npcVersion, long submissionTime, int countingHash) {
         super(jobId, serverState, submissionTime);
         this.classyfireVersion = classyfireVersion;
         this.npcVersion = npcVersion;
+        this.countingHash = countingHash;
     }
 
     @Override
@@ -72,5 +76,10 @@ public class CanopusWebJJob extends WebJJob<CanopusWebJJob, CanopusResult, Canop
                 ProbabilityFingerprint.fromProbabilityArrayBinary(classyfireVersion, buf1),
                 ProbabilityFingerprint.fromProbabilityArrayBinary(npcVersion, buf2)
         };
+    }
+
+    @Override
+    protected OptionalInt getJobCountingHash() {
+        return OptionalInt.of(countingHash);
     }
 }

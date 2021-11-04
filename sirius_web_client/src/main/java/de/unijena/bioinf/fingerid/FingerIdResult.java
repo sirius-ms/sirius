@@ -21,12 +21,15 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
+import de.unijena.bioinf.sirius.IdentificationResult;
 
 import java.util.List;
 
@@ -39,9 +42,25 @@ public class FingerIdResult implements Annotated<ResultAnnotation> {
         return annotations;
     }
 
+    public FingerIdResult(IdentificationResult<?> formulaResult) {
+        this(formulaResult.getTree());
+    }
+
     public FingerIdResult(FTree sourceTree) {
         this.annotations = new Annotations<>();
         this.sourceTree = sourceTree;
+    }
+
+    public FTree getSourceTree() {
+        return sourceTree;
+    }
+
+    public MolecularFormula getMolecularFormula() {
+        return sourceTree.getRoot().getFormula();
+    }
+
+    public PrecursorIonType getPrecursorIonType() {
+        return sourceTree.getAnnotationOrThrow(PrecursorIonType.class);
     }
 
     public ConfidenceScore getConfidence() {

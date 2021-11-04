@@ -30,26 +30,27 @@ import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
+//todo add create bucket feature
 public class MinIoUtils {
 
-    public static final String URL_PREFIX = "mio://";
+    public static final String URL_PREFIX = "s3://";
 
-    public static MinIoBlobStorage createDefaultMinIoStorage(@NotNull String bucketName) {
-        String accessKey = PropertyManager.getProperty("de.unijena.bioinf.ms.stores.model.s3.accessKey");
-        String secretKey = PropertyManager.getProperty("de.unijena.bioinf.ms.stores.model.s3.secretKey");
-        return createDefaultMinIoStorage(bucketName, accessKey, secretKey);
+    public static MinIoS3BlobStorage openDefaultS3Storage(@NotNull String propertyPrefix, @NotNull String bucketName) {
+        String accessKey = PropertyManager.getProperty(propertyPrefix + ".s3.accessKey");
+        String secretKey = PropertyManager.getProperty(propertyPrefix + ".s3.secretKey");
+        return openDefaultS3Storage(propertyPrefix, bucketName, accessKey, secretKey);
     }
 
-    public static MinIoBlobStorage createDefaultMinIoStorage(@NotNull String bucketName, @NotNull String accessKey, @NotNull String secretKey) {
-        String domain = PropertyManager.getProperty("de.unijena.bioinf.ms.stores.model.s3.host");
-        return createDefaultMinIoStorage(bucketName, domain, accessKey, secretKey);
+    public static MinIoS3BlobStorage openDefaultS3Storage(@NotNull String propertyPrefix, @NotNull String bucketName, @NotNull String accessKey, @NotNull String secretKey) {
+        String domain = PropertyManager.getProperty(propertyPrefix + ".s3.host");
+        return openS3Storage(bucketName, domain, accessKey, secretKey);
     }
 
-    public static MinIoBlobStorage createDefaultMinIoStorage(@NotNull String bucketName, @NotNull String domain, @NotNull String accessKey, @NotNull String secretKey) {
-        return new MinIoBlobStorage(bucketName, createClient(domain, accessKey, secretKey));
+    public static MinIoS3BlobStorage openS3Storage(@NotNull String bucketName, @NotNull String domain, @NotNull String accessKey, @NotNull String secretKey) {
+        return new MinIoS3BlobStorage(bucketName, createS3Client(domain, accessKey, secretKey));
     }
 
-    public static MinioClient createClient(@NotNull String url, @NotNull String accessKey, @NotNull String secretKey) {
+    public static MinioClient createS3Client(@NotNull String url, @NotNull String accessKey, @NotNull String secretKey) {
         MinioClient client = MinioClient.builder()
                 .endpoint(url)
                 .credentials(accessKey, secretKey)
@@ -58,14 +59,14 @@ public class MinIoUtils {
         return client;
     }
 
-    public static boolean bucketExists(@NotNull String bucketName) {
-        return bucketExists(bucketName, createClient(
-                PropertyManager.getProperty("de.unijena.bioinf.ms.stores.model.s3.host"),
-                PropertyManager.getProperty("de.unijena.bioinf.ms.stores.model.s3.accessKey"),
-                PropertyManager.getProperty("de.unijena.bioinf.ms.stores.model.s3.secretKey"))
+    public static boolean existsS3Bucket(@NotNull String propertyPrefix, @NotNull String bucketName) {
+        return existsS3Bucket(bucketName, createS3Client(
+                PropertyManager.getProperty(propertyPrefix + ".s3.host"),
+                PropertyManager.getProperty(propertyPrefix + ".s3.accessKey"),
+                PropertyManager.getProperty(propertyPrefix + ".s3.secretKey"))
         );
     }
-    public static boolean bucketExists(@NotNull String bucketName, @NotNull MinioClient minioClient) {
+    public static boolean existsS3Bucket(@NotNull String bucketName, @NotNull MinioClient minioClient) {
         try {
             return minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
         } catch (ErrorResponseException | InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {

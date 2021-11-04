@@ -29,8 +29,8 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.webapi.WebAPI;
 
 public abstract class AbstractStructurePredictor implements StructurePredictor {
-    protected final PredictorType predictorType;
-    protected final WebAPI csiWebAPI;
+    public final PredictorType predictorType;
+    public final WebAPI csiWebAPI;
     protected RestWithCustomDatabase database;
     protected FingerblastScoringMethod<?> fingerblastScoring;
     protected ConfidenceScorer confidenceScorer;
