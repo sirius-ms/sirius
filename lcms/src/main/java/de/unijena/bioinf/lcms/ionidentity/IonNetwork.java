@@ -229,7 +229,7 @@ public class IonNetwork {
         final IonNode[] todo = nodes.toArray(IonNode[]::new);
         for (IonNode node : todo) {
             final NavigableMap<Double, Link> links = new TreeMap<>();
-            final Deviation dev = new Deviation(40);
+            final Deviation dev = new Deviation(10);
             Map<ProcessedSample, FragmentedIon> F = node.getFeature().getFeatures();
             for (Map.Entry<ProcessedSample, FragmentedIon> entry : F.entrySet()) {
                 for (CorrelatedIon correlatedIon : entry.getValue().getAdducts()) {

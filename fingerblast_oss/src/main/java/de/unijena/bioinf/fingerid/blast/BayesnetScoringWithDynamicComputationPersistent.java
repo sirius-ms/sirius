@@ -52,13 +52,8 @@ public class BayesnetScoringWithDynamicComputationPersistent implements Fingerbl
     public void prepare(MFandFpParameters inputParameter) {
         try {
             //in general, this provider should also store the scoring tree internally
-            BayesnetScoring bayesnetScoring = bayesianNetworkScoringProvider.getScoringOrNull(inputParameter.getFormula());
-            if (bayesnetScoring == null) {
-                bayesnetScoring = bayesianNetworkScoringProvider.getDefaultScoring();
-                isDefaultScoring = true;
-            } else {
-                isDefaultScoring = false;
-            }
+            BayesnetScoring bayesnetScoring = bayesianNetworkScoringProvider.getScoringOrDefault(inputParameter.getFormula());
+            isDefaultScoring = bayesianNetworkScoringProvider.isDefaultScoring(bayesnetScoring);
             this.currentScoring = bayesnetScoring;
             this.innerScorer = currentScoring.getScoring();
             //prepare with fingerprint
