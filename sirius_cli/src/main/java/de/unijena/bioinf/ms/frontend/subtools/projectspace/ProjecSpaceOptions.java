@@ -134,7 +134,6 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
     Predicate<CompoundContainerId> keepMassFilter = (c) -> true;
     Predicate<Ms2Experiment> keepMassFilterExp = (c) -> true;
 
-
     @CommandLine.Option(names = {"--keep-by-name", "--kn"},
             description = "Keep all compounds where the 'identifier' (Dir name, ID) matches the given regex (JAVA).")
     private void makeKeepNameFilter(String regex) {

@@ -48,6 +48,10 @@ public class SimilarityMatrixOptions implements StandaloneTool<SimilarityMatrixW
             description = {"compute fingerprint similarity between all compounds in the dataset"})
     protected boolean useTanimoto;
 
+    @CommandLine.Option(names = "--tanimoto-canopus",
+            description = {"compute canopus fingerprint similarity between all compounds in the dataset"})
+    protected boolean useCanopus;
+
     @CommandLine.Option(names = "--cosine",
             description = {"Compute spectral cosine similarity between all compounds in the dataset"})
     protected boolean useCosine;
