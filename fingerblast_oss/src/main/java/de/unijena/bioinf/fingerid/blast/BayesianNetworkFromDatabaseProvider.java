@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 
 import java.io.IOException;
 
+@Deprecated
 public class BayesianNetworkFromDatabaseProvider implements BayesianNetworkScoringProvider {
 
     @Override
@@ -44,6 +45,11 @@ public class BayesianNetworkFromDatabaseProvider implements BayesianNetworkScori
     @Override
     public BayesnetScoring getDefaultScoring() throws IOException {
         return null;
+    }
+
+    @Override
+    public boolean isDefaultScoring(BayesnetScoring scoring) {
+        return false;
     }
 
     @Override

@@ -31,4 +31,6 @@ public interface BayesianNetworkFactory {
     public BayesnetScoring getScoringOrDefault(MolecularFormula formula) throws IOException;
 
     public BayesnetScoring getDefaultScoring() throws IOException;
+
+    public boolean isDefaultScoring(BayesnetScoring scoring);
 }

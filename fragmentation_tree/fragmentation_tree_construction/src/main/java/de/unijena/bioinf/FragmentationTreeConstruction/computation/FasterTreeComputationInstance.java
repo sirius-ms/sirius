@@ -545,6 +545,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         pin.setAnnotation(PossibleAdducts.class, new PossibleAdducts(PrecursorIonType.getPrecursorIonType(decomp.getIon())));
         pin.setAnnotation(SpectralRecalibration.class, rec);
         pin.setAnnotation(Whiteset.class, Whiteset.ofMeasuredFormulas(Collections.singleton(tree.getRoot().getFormula()))); // TODO: check if this works for adducts
+        pin.getExperimentInformation().setPrecursorIonType(tree.getAnnotation(PrecursorIonType.class).orElse(pin.getExperimentInformation().getPrecursorIonType()));
         pin.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, pinput.getAnnotationOrNull(TreeSizeScorer.TreeSizeBonus.class));
         // we have to completely rescore the input...
         //final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
