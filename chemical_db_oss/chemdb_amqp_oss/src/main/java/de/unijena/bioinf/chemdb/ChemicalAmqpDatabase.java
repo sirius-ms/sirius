@@ -23,74 +23,49 @@ package de.unijena.bioinf.chemdb;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
-import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
-import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import de.unijena.bioinf.ms.amqp.client.AmqpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
+import javax.json.JsonException;
+import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-public class RESTDatabase implements AbstractChemicalDatabase {
+public class ChemicalAmqpDatabase implements AbstractChemicalDatabase {
     static {
         FingerIDProperties.fingeridVersion();
     }
 
-    private final CloseableHttpClient client;
-    protected StructureSearchClient chemDBClient;
-    protected final ChemDBFileCache cache;
-    protected long filter;
+    protected final AmqpClient client;
 
 
-    public static File defaultCacheDir() {
-        final String val = System.getenv("CSI_FINGERID_STORAGE");
-        if (val != null) return new File(val);
-        return new File(System.getProperty("user.home"), "csi_fingerid_cache");
-    }
-
-    @Override
-    public String getChemDbDate() {
-        throw new RuntimeException("NOT IMPLEMENTED ->  GET DB date from server");
-    }
-
-    public RESTDatabase(@Nullable File cacheDir, long filter, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
-        this.filter = filter;
-        this.chemDBClient = chemDBClient;
+    public ChemicalAmqpDatabase(@NotNull AmqpClient client) {
         this.client = client;
-        this.cache = new ChemDBFileCache(cacheDir, new SearchStructureByFormula() {
-            @Override
-            public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-                try {
-                    //get unfiltered list from server to write cache.
-                    fingerprintCandidates.addAll(chemDBClient.getCompounds(formula, DataSource.ALL.flag(), client));
-                    return fingerprintCandidates;
-                } catch (IOException e) {
-                    throw new ChemicalDatabaseException(e);
-                }
-            }
-        });
     }
 
-    public RESTDatabase(long filter, @NotNull AuthService authService) {
-        this(RESTDatabase.defaultCacheDir(), filter, new ChemDBClient(null, authService) , HttpClients.createDefault());
-    }
+
 
     @Override
     public List<FormulaCandidate> lookupMolecularFormulas(double mass, Deviation deviation, PrecursorIonType ionType) throws ChemicalDatabaseException {
-        try {
+       /* try {
             return chemDBClient.getFormulas(mass, deviation, ionType, filter, client);
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
-        }
+        }*/
+        return null;
     }
 
     @Override
@@ -103,15 +78,13 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        fingerprintCandidates.addAll(cache.lookupStructuresAndFingerprintsByFormula(formula,filter));
-        return fingerprintCandidates;
+        return null;
     }
-
 
 
     @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        if (chemDBClient instanceof ChemDBClient) {
+        /*if (chemDBClient instanceof ChemDBClient) {
             final Partition<String> keyParts = Partition.ofSize(inchi_keys, ChemDBClient.MAX_NUM_OF_INCHIS);
             final ArrayList<FingerprintCandidate> compounds = new ArrayList<>(keyParts.numberOfElements());
 
@@ -123,15 +96,15 @@ public class RESTDatabase implements AbstractChemicalDatabase {
             }
             return compounds;
         }
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException();*/
+        return null;
     }
 
 
-    public Iterable<? extends FingerprintCandidate> lookupManyFingerprintsBy2dInchis(Collection<String> inchis2d) throws ChemicalDatabaseException {
-        return lookupFingerprintsByInchis(inchis2d);
+    @Override
+    public String getChemDbDate() {
+        return null; //todo get version from amqp client
     }
-
-
 
     @Override
     public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
@@ -165,6 +138,6 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
     @Override
     public void close() throws IOException {
-        client.close();
+//        client.close();
     }
 }

@@ -47,17 +47,18 @@ include ':chemical_db_oss:chemdb_sql_oss'
 include ':chemical_db_oss:chemdb_blob_oss'
 include ':chemical_db_oss:chemdb_utils_oss'
 include ':chemical_db_oss:chemdb_rest_oss'
+include ':chemical_db_oss:chemdb_amqp_oss'
 
 include ':error_reporter_oss'
 include ':ml_utils'
 
-include ':rest_service_oss:rest_core_oss'
-include ':rest_service_oss:rest_client_oss'
-include ':rest_service_oss:client_auth_oss'
+//include ':web_service_oss:web_core_oss'
+//include ':web_service_oss:rest_client_oss'
+//include ':web_service_oss:client_auth_oss'
 
 include ':combinatorial_fragmenter'
 include ':agents'
-
+include ':rabbitmq-support'
 include ':blob-storage'
 
 include ':confidence_score_predict_oss'
@@ -66,4 +67,9 @@ include ':canopus_predict_oss'
 include ':fingerid_project_space_oss'
 include ':sirius_web_client'
 
-
+include ':web_service_oss'
+    include ':web_service_oss:sirius_web_client'
+    include ':web_service_oss:amqp_client_oss'
+    include ':web_service_oss:web_core_oss'
+    include ':web_service_oss:rest_client_oss'
+    include ':web_service_oss:client_auth_oss'

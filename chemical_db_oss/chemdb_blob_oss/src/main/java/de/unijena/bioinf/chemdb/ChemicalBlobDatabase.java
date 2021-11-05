@@ -110,6 +110,14 @@ public enum Format {
         return storage.getName();
     }
 
+    @Override
+    public String getChemDbDate() throws ChemicalDatabaseException {
+        try {
+            return storage.getTag(TAG_DATE);
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException("Error when requesting ChemDbDate via Storage Tag '" + TAG_DATE +"'." ,e);
+        }
+    }
 
     protected void init() throws IOException {
         Map<String, String> tags = storage.getTags();
@@ -340,7 +348,6 @@ public enum Format {
     @Override
     public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         // compounds are already annotated
-        return;
     }
 
     @Override
