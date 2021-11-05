@@ -27,15 +27,31 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
+import de.unijena.bioinf.sirius.scores.TreeScore;
 
 //this is basically just a scored tree
 public final class IdentificationResult<S extends FormulaScore> extends SScored<FTree, S> implements Cloneable {
 
-    public static <S extends FormulaScore> IdentificationResult<S> withPrecursorIonType(IdentificationResult<S> ir, PrecursorIonType ionType) {
+    public static <S extends FormulaScore> IdentificationResult<S> withPrecursorIonType(IdentificationResult<S> ir, PrecursorIonType ionType, boolean preserveOriginalTreeScore) {
 
         PrecursorIonType adduct = ir.getTree().getAnnotationOrNull(PrecursorIonType.class);
-        if (adduct==null || !adduct.equals(ionType))
-            return new IdentificationResult<>(new IonTreeUtils().treeToNeutralTree(ir.getCandidate(), ionType), ir.getScoreObject());
+        if (adduct==null || !adduct.equals(ionType)) {
+            FTree newTree = new IonTreeUtils().treeToNeutralTree(ir.getCandidate(), ionType, preserveOriginalTreeScore);
+            S scoredObject = ir.getScoreObject();
+            S s;
+            if (!preserveOriginalTreeScore){
+                if (scoredObject instanceof SiriusScore) {
+                    s = (S)new SiriusScore(FTreeMetricsHelper.getSiriusScore(newTree));
+                } else if (scoredObject instanceof TreeScore) {
+                    s = (S)new TreeScore(new FTreeMetricsHelper(newTree).getTreeScore());
+                } else {
+                    s = scoredObject;
+                }
+            } else s = scoredObject;
+            return new IdentificationResult<>(newTree, s);
+        }
+
         else return ir;
     }
 
