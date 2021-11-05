@@ -28,10 +28,10 @@ import java.util.List;
 
 public class FingerblastSearchEngine implements SearchStructureByFormula, AnnotateStructures{
 
-    protected final RestWithCustomDatabase underlyingDatabase;
+    protected final WebWithCustomDatabase underlyingDatabase;
     protected final Collection<SearchableDatabase> queryDBs;
 
-    FingerblastSearchEngine(RestWithCustomDatabase underlyingDatabase, Collection<SearchableDatabase> queryDBs) {
+    FingerblastSearchEngine(WebWithCustomDatabase underlyingDatabase, Collection<SearchableDatabase> queryDBs) {
         this.underlyingDatabase = underlyingDatabase;
         this.queryDBs = queryDBs;
     }

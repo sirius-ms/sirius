@@ -2,6 +2,26 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
@@ -18,7 +38,7 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.webapi;
+package de.unijena.bioinf.webapi.rest;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -39,17 +59,17 @@ import java.util.stream.Collectors;
 final class WebJobWatcher {
     private static final int INIT_WAIT_TIME = 1000;
 
-    private final Map<JobId, WebJJob<?, ?, ?>> waitingJobs = new ConcurrentHashMap<>();
-    private final WebAPI api;
+    private final Map<JobId, RestWebJJob<?, ?, ?>> waitingJobs = new ConcurrentHashMap<>();
+    private final RestAPI api;
     private WebJobWatcherJJob job = null;
     private final AtomicBoolean isShutDown = new AtomicBoolean(false);
 
     //this is for efficient job update even with a large number of jobs on large multi core machines
-    public WebJobWatcher(WebAPI api) {
+    public WebJobWatcher(RestAPI api) {
         this.api = api;
     }
 
-    public <J extends WebJJob<?, ?, ?>> J watchJob(@NotNull final J jobToWatch) {
+    public <J extends RestWebJJob<?, ?, ?>> J watchJob(@NotNull final J jobToWatch) {
         checkWatcherJob();
 
         synchronized (waitingJobs) {
@@ -118,7 +138,7 @@ final class WebJobWatcher {
                                 checkForInterruption();
 
                                 final JobId gid = up.getGlobalId();
-                                final WebJJob<?, ?, ?> job;
+                                final RestWebJJob<?, ?, ?> job;
                                 orphanJobs.remove(gid);
                                 job = waitingJobs.get(gid);
                                 job.getJobCountingHash().ifPresent(h -> countingHashes.put(gid, h));
