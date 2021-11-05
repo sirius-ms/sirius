@@ -4,6 +4,26 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
@@ -20,7 +40,7 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.webapi;
+package de.unijena.bioinf.webapi.rest;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -31,7 +51,7 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.chemdb.RESTDatabase;
-import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.*;
@@ -80,8 +100,8 @@ import java.util.*;
  */
 
 @ThreadSafe
-public final class WebAPI {
-    private static final Logger LOG = LoggerFactory.getLogger(WebAPI.class);
+public final class RestAPI {
+    private static final Logger LOG = LoggerFactory.getLogger(RestAPI.class);
     public static long WEB_API_JOB_TIME_OUT = PropertyManager.getLong("de.unijena.bioinf.fingerid.web.job.timeout", 1000L * 60L * 60L); //default 1h
 
     private final WebJobWatcher jobWatcher = new WebJobWatcher(this);
@@ -95,7 +115,7 @@ public final class WebAPI {
     private final AuthService authService;
 
 
-    public WebAPI(@Nullable AuthService authService, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
+    public RestAPI(@Nullable AuthService authService, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
         this.authService = authService;
         this.serverInfoClient = infoClient;
         this.jobsClient = jobsClient;
@@ -104,15 +124,15 @@ public final class WebAPI {
         this.canopusClient = canopusClient;
     }
 
-    public WebAPI(@NotNull AuthService authService, @NotNull URI host) {
+    public RestAPI(@NotNull AuthService authService, @NotNull URI host) {
         this(authService, new InfoClient(host), new JobsClient(host, authService), new ChemDBClient(host, authService), new FingerIdClient(host, authService), new CanopusClient(host, authService));
     }
 
-    public WebAPI(@NotNull AuthService authService, @NotNull String host) {
+    public RestAPI(@NotNull AuthService authService, @NotNull String host) {
         this(authService, URI.create(host));
     }
 
-    public WebAPI(@NotNull AuthService authService) {
+    public RestAPI(@NotNull AuthService authService) {
         this(authService, URI.create(FingerIDProperties.fingeridWebHost()));
     }
 
@@ -242,7 +262,7 @@ public final class WebAPI {
     //endregion
 
     //region ChemDB
-    public RestWithCustomDatabase getChemDB(){
+    public WebWithCustomDatabase getChemDB(){
             return SearchableDatabases.makeRestWithCustomDB(this);
     }
 

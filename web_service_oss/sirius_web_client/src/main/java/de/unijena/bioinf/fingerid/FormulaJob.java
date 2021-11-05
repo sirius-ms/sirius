@@ -23,7 +23,7 @@ package de.unijena.bioinf.fingerid;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.RestWithCustomDatabase;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
@@ -33,16 +33,16 @@ import java.util.List;
 /**
  * retrieves {@link FingerprintCandidate}s for a given {@link MolecularFormula}
  */
-public class FormulaJob extends BasicJJob<RestWithCustomDatabase.CandidateResult> {
+public class FormulaJob extends BasicJJob<WebWithCustomDatabase.CandidateResult> {
 
     protected final MolecularFormula formula;
-    protected final RestWithCustomDatabase searchDatabase;
+    protected final WebWithCustomDatabase searchDatabase;
     protected final List<SearchableDatabase> dbs;
     protected final PrecursorIonType ionType;
     protected final boolean includeRestAllDb;
 
 
-    public FormulaJob(MolecularFormula formula, RestWithCustomDatabase searchDatabase, List<SearchableDatabase> dbs, PrecursorIonType precursorIonType, boolean includeRestAllDb) {
+    public FormulaJob(MolecularFormula formula, WebWithCustomDatabase searchDatabase, List<SearchableDatabase> dbs, PrecursorIonType precursorIonType, boolean includeRestAllDb) {
         super(JobType.WEBSERVICE);
         this.formula = formula;
         this.searchDatabase = searchDatabase;
@@ -52,9 +52,9 @@ public class FormulaJob extends BasicJJob<RestWithCustomDatabase.CandidateResult
     }
 
     @Override
-    protected RestWithCustomDatabase.CandidateResult compute() throws Exception {
+    protected WebWithCustomDatabase.CandidateResult compute() throws Exception {
         return NetUtils.tryAndWait(() -> {
-            final RestWithCustomDatabase.CandidateResult result = searchDatabase.loadCompoundsByFormula(formula, dbs, includeRestAllDb);
+            final WebWithCustomDatabase.CandidateResult result = searchDatabase.loadCompoundsByFormula(formula, dbs, includeRestAllDb);
             return result;
         }, this::checkForInterruption);
     }

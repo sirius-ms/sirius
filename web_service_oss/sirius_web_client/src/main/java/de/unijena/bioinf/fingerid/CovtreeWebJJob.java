@@ -28,14 +28,14 @@ import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoringBuilder;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
-import de.unijena.bioinf.webapi.WebJJob;
+import de.unijena.bioinf.webapi.rest.RestWebJJob;
 import org.jetbrains.annotations.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Optional;
 
-public class CovtreeWebJJob extends WebJJob<CovtreeWebJJob, BayesnetScoring, CovtreeJobOutput> {
+public class CovtreeWebJJob extends RestWebJJob<CovtreeWebJJob, BayesnetScoring, CovtreeJobOutput> {
 
     protected final PredictionPerformance[] performances;
     protected final FingerprintVersion fpVersion;
