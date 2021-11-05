@@ -1,0 +1,128 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
+package de.unijena.bioinf.fingerid;
+
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
+import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
+import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * Executing {@link FingerprintPredictionJJob}s for a given set of
+ * {@link IdentificationResult}s/{@link FingerIdResult}s from a given {@link Ms2Experiment}.
+ *
+ * This Job is just a Scheduler do wrap all predictions jobs of a single experiment into one single job.
+ */
+//todo can be easily be connected to preprocessing job if needed
+public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
+    // structure Elucidator
+    private final CSIPredictor predictor;
+
+    // input data
+    private Ms2Experiment experiment;
+    private List<FingerIdResult> idResult;
+
+    public FingerprintJJob(@NotNull CSIPredictor predictor) {
+        this(predictor, null);
+    }
+
+    public FingerprintJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment) {
+        this(predictor, experiment, null);
+    }
+
+    public FingerprintJJob(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @Nullable List<FingerIdResult> preprocessed) {
+        super(JobType.WEBSERVICE);
+        this.predictor = predictor;
+        this.experiment = experiment;
+        this.idResult = preprocessed;
+    }
+
+    public void setInput(Ms2Experiment experiment, List<FingerIdResult> formulaIDResults) {
+        notSubmittedOrThrow();
+        this.experiment = experiment;
+        this.idResult = formulaIDResults;
+    }
+
+    
+    public void setFingerIdResultInput(List<FingerIdResult> results) {
+        notSubmittedOrThrow();
+        this.idResult = results;
+    }
+
+    public void setExperimentInput(Ms2Experiment experiment) {
+        notSubmittedOrThrow();
+        this.experiment = experiment;
+    }
+
+    @Override
+    protected List<FingerIdResult> compute() throws Exception {
+        logDebug("Instance '" + experiment.getName() + "': Starting CSI:FingerID fingerprint prediction.");
+        if ((experiment.getPrecursorIonType().getCharge() > 0) != (predictor.predictorType.isPositive()))
+            throw new IllegalArgumentException("Charges of predictor and instance are not equal");
+
+        if (this.idResult == null || this.idResult.isEmpty()) {
+            logWarn("No suitable input trees found.");
+            return List.of();
+        }
+
+        checkForInterruption();
+
+        logDebug("Submitting CSI:FingerID fingerprint prediction jobs.");
+        final PredictorTypeAnnotation predictors = experiment.getAnnotationOrThrow(PredictorTypeAnnotation.class);
+        final Map<FingerprintPredictionJJob, FingerIdResult> predictionJobs = new LinkedHashMap<>(idResult.size());
+
+        checkForInterruption();
+
+        for (FingerIdResult fingeridInput : idResult) {
+            // prediction job: predict fingerprint
+            predictionJobs.put(NetUtils.tryAndWait(() -> predictor.csiWebAPI.submitFingerprintJob(
+                            new FingerprintJobInput(experiment, fingeridInput.getSourceTree(),
+                                    UserDefineablePredictorType.toPredictorTypes(experiment.getPrecursorIonType(), predictors.value))),
+                    this::checkForInterruption), new FingerIdResult(fingeridInput.getSourceTree()));
+        }
+
+        checkForInterruption();
+
+        logDebug("CSI:FingerID fingerprint predictions DONE!");
+        predictionJobs.forEach(FingerprintPredictionJJob::takeAndAnnotateResult);
+        //in linked maps values() collection is not a set -> so we have to make that distinct
+        return predictionJobs.values().stream().distinct().collect(Collectors.toList());
+    }
+
+    @Override
+    public String identifier() {
+        return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z";
+    }
+
+    public static FingerprintJJob of(@NotNull CSIPredictor predictor, @Nullable Ms2Experiment experiment, @NotNull List<? extends IdentificationResult<?>> formulaResults){
+        return new FingerprintJJob(predictor, experiment, formulaResults.stream().map(FingerIdResult::new).collect(Collectors.toList()));
+    }
+}

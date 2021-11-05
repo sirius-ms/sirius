@@ -23,11 +23,8 @@ package de.unijena.bioinf.chemdb;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.auth.AuthService;
-import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
@@ -36,28 +33,21 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
-import javax.json.JsonException;
-import java.io.*;
-import java.nio.file.Files;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 public class RESTDatabase implements AbstractChemicalDatabase {
     static {
         FingerIDProperties.fingeridVersion();
     }
 
-
     private final CloseableHttpClient client;
     protected StructureSearchClient chemDBClient;
-    protected File cacheDir;
-
+    protected final ChemDBFileCache cache;
     protected long filter;
 
 
@@ -67,16 +57,31 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         return new File(System.getProperty("user.home"), "csi_fingerid_cache");
     }
 
+    @Override
+    public String getChemDbDate() {
+        throw new RuntimeException("NOT IMPLEMENTED ->  GET DB date from server");
+    }
 
     public RESTDatabase(@Nullable File cacheDir, long filter, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
         this.filter = filter;
-        this.cacheDir = cacheDir != null ? cacheDir : defaultCacheDir();
         this.chemDBClient = chemDBClient;
         this.client = client;
+        this.cache = new ChemDBFileCache(cacheDir, new SearchStructureByFormula() {
+            @Override
+            public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
+                try {
+                    //get unfiltered list from server to write cache.
+                    fingerprintCandidates.addAll(chemDBClient.getCompounds(formula, DataSource.ALL.flag(), client));
+                    return fingerprintCandidates;
+                } catch (IOException e) {
+                    throw new ChemicalDatabaseException(e);
+                }
+            }
+        });
     }
 
     public RESTDatabase(long filter, @NotNull AuthService authService) {
-        this(RESTDatabase.defaultCacheDir(), filter,  new ChemDBClient(null, authService) , HttpClients.createDefault());
+        this(RESTDatabase.defaultCacheDir(), filter, new ChemDBClient(null, authService) , HttpClients.createDefault());
     }
 
     @Override
@@ -98,60 +103,10 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        final File stfile = new File(cacheDir, "/" + formula.toString() + ".json.gz");
-        try {
-            List<FingerprintCandidate> fpcs = new ArrayList<>();
-            if (stfile.exists()) {
-                try {
-                    final GZIPInputStream zin = new GZIPInputStream(new BufferedInputStream(new FileInputStream(stfile)));
-                    try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(zin))) {
-                        while (fciter.hasNext())
-                            fpcs.add(fciter.next());
-                    }
-                } catch (IOException | JsonException e) {
-                    LoggerFactory.getLogger(RESTDatabase.class).error("Error when searching for " + formula.toString() + " in file database. Deleting cache file '" + stfile.getAbsolutePath() + "' an try fetching from Server");
-                    stfile.delete();
-                    fpcs = requestFormula(stfile, formula);
-                }
-            } else {
-                fpcs = requestFormula(stfile, formula);
-            }
-
-            fingerprintCandidates.addAll(
-                    fpcs.stream().filter(ChemDBs.inFilter((it)-> it.bitset,filter)).collect(Collectors.toList()));
-            return fingerprintCandidates;
-        } catch (IOException e) {
-            throw new ChemicalDatabaseException(e);
-        }
+        fingerprintCandidates.addAll(cache.lookupStructuresAndFingerprintsByFormula(formula,filter));
+        return fingerprintCandidates;
     }
 
-    private List<FingerprintCandidate> requestFormula(final @NotNull File output, MolecularFormula formula) throws IOException {
-        //get unfiltered list from server to write cache.
-        final List<FingerprintCandidate> fpcs = chemDBClient.getCompounds(formula, DataSource.ALL.flag(), client);
-
-        // write cache in background -> cache has to be unfiltered
-        SiriusJobs.runInBackground(() -> {
-            output.getParentFile().mkdirs();
-            final File tempFile = File.createTempFile("sirius_formula", ".json.gz", output.getParentFile());
-            try {
-                try (final GZIPOutputStream fout = new GZIPOutputStream(new FileOutputStream(tempFile))) {
-                    try (final BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fout))) {
-                        FingerprintCandidate.toJSONList(fpcs, br);
-                    }
-                }
-
-                // move tempFile is canonical on same fs
-                if (output.exists() || !tempFile.renameTo(output))
-                    tempFile.delete();
-
-                return true;
-            } finally {
-                Files.deleteIfExists(tempFile.toPath());
-            }
-        });
-
-        return fpcs;
-    }
 
 
     @Override
