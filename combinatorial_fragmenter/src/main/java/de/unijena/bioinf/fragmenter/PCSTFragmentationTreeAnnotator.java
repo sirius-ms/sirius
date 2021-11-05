@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Function;
 
 public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnnotator{
 
@@ -12,11 +13,10 @@ public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnn
 
     public PCSTFragmentationTreeAnnotator(FTree fTree, MolecularGraph molecule, CombinatorialFragmenterScoring scoring){
         super(fTree, molecule, scoring);
-
     }
 
     @Override
-    public HashMap<Fragment, List<CombinatorialNode>> computeMapping() {
+    public HashMap<Fragment, List<CombinatorialFragment>> computeMapping() {
         return null;
     }
 }

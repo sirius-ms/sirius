@@ -8,8 +8,27 @@ public class CombinatorialNode {
 
     protected CombinatorialFragment fragment;
     protected List<CombinatorialEdge> incomingEdges, outgoingEdges;
-    protected short depth, bondbreaks;
-    protected float score, totalScore;
+
+    /**
+     * The depth of this node; i.e. the minimal number of edges from this node to the root.
+     */
+    protected short depth;
+    /**
+     * The minimal number of bonds which have to break in order to get this fragment.
+     */
+    protected short bondbreaks;
+    /**
+     * This score refers to {@link CombinatorialNode#totalScore}.
+     * It is the sum of the fragment score plus the score of the edge which belongs to the most profitable path
+     * from this node to the root.
+     */
+    protected float score;
+    /**
+     * This is the score of the path from root to this node which has the maximal score or "profit".
+     * The score of a path is equal to the sum of scores of its contained fragments and edges.
+     */
+    protected float totalScore;
+
     protected byte state;
 
     public CombinatorialNode(CombinatorialFragment fragment) {
@@ -18,8 +37,9 @@ public class CombinatorialNode {
         this.outgoingEdges = new ArrayList<>();
         this.depth = Short.MAX_VALUE;
         this.bondbreaks = Short.MAX_VALUE;
-        score=0f; totalScore=0f;
-        state=0;
+        this.score=0f;
+        this.totalScore=0f;
+        this.state=0;
     }
 
     public List<CombinatorialEdge> getOptimalPathToRoot() {

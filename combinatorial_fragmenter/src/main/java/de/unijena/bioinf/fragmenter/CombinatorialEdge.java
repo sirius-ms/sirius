@@ -4,9 +4,9 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IBond;
 
 public class CombinatorialEdge {
-    IBond cut1, cut2;
-    byte direction;
-    CombinatorialNode source, target;
+    protected IBond cut1, cut2;
+    protected byte direction;
+    protected CombinatorialNode source, target;
 
     public CombinatorialEdge(CombinatorialNode source, CombinatorialNode target, IBond cut1, boolean leftToRight) {
         this(source,target,cut1,null, leftToRight, false);

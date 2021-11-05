@@ -6,7 +6,7 @@ import java.util.*;
 
 public class CombinatorialGraph {
 
-    protected final List<CombinatorialNode> nodes;
+    protected final List<CombinatorialNode> nodes; //alle Knoten außer der Wurzel
     protected final CombinatorialNode root;
     protected final HashMap<BitSet, CombinatorialNode> bitset2node;
 
@@ -20,78 +20,49 @@ public class CombinatorialGraph {
         bitset2node.put(root.fragment.bitset, root);
     }
 
-    public CombinatorialNode addReturnNovel(CombinatorialNode parent, CombinatorialFragment fragment, IBond firstBond, IBond secondBond) {
-        return addReturnNovel(parent,fragment,firstBond,secondBond,EMPTY_SCORING);
-    }
-    private static CombinatorialFragmenterScoring EMPTY_SCORING = new CombinatorialFragmenterScoring() {
-        @Override
-        public double scoreBond(IBond bond, boolean direction) {
-            return -1d;
-        }
-
-        @Override
-        public double scoreFragment(CombinatorialFragment fragment) {
-            return 0;
-        }
-    };
-
     public CombinatorialNode addReturnNovel(CombinatorialNode parent, CombinatorialFragment fragment, IBond firstBond, IBond secondBond, CombinatorialFragmenterScoring scoring) {
-        boolean novel = false;
-        CombinatorialNode node = bitset2node.get(fragment.bitset);
-        if (node == null) {
-            node = new CombinatorialNode(fragment);
-            bitset2node.put(fragment.bitset,node);
-            nodes.add(node);
-            novel = true;
-            node.score = Float.NEGATIVE_INFINITY;
-            node.totalScore = Float.NEGATIVE_INFINITY;
-
+        boolean novel = (bitset2node.get(fragment.bitset) == null);
+        CombinatorialNode node = this.addReturnAlways(parent, fragment,firstBond,secondBond,scoring,null);
+        if(novel){
+            return node;
+        }else{
+            return null;
         }
-        node.depth = (short)Math.min(node.depth, parent.depth+1);
-        node.bondbreaks = (short)Math.min(node.bondbreaks, parent.bondbreaks + (secondBond==null ? 1 : 2));
-
-        boolean cut1Direction =  ( fragment.bitset.get(firstBond.getAtom(0).getIndex()));
-        boolean cut2Direction = secondBond != null && (fragment.bitset.get(secondBond.getAtom(0).getIndex()));
-
-        float score = (float)(scoring.scoreBond(firstBond,cut1Direction)+ (secondBond!=null ? scoring.scoreBond(secondBond,cut2Direction) : 0f) + scoring.scoreFragment(node.fragment));
-        float bestScore = (parent.totalScore + score);
-        if (bestScore > node.totalScore) {
-            node.totalScore = bestScore;
-            node.score = score;
-        }
-        CombinatorialEdge edge = new CombinatorialEdge(parent, node, firstBond, secondBond, cut1Direction,cut2Direction);
-        node.incomingEdges.add(edge);
-        parent.outgoingEdges.add(edge);
-        if (novel) return node;
-        else return null;
     }
+
     public CombinatorialNode addReturnAlways(CombinatorialNode parent, CombinatorialFragment fragment, IBond firstBond, IBond secondBond, CombinatorialFragmenterScoring scoring, boolean[] updateFlag) {
-        boolean novel = false;
         CombinatorialNode node = bitset2node.get(fragment.bitset);
         if (node == null) {
             node = new CombinatorialNode(fragment);
             bitset2node.put(fragment.bitset,node);
             nodes.add(node);
-            novel = true;
             node.score = Float.NEGATIVE_INFINITY;
             node.totalScore = Float.NEGATIVE_INFINITY;
-
         }
+
         node.depth = (short)Math.min(node.depth, parent.depth+1);
         node.bondbreaks = (short)Math.min(node.bondbreaks, parent.bondbreaks + (secondBond==null ? 1 : 2));
+
         boolean cut1Direction =  ( fragment.bitset.get(firstBond.getAtom(0).getIndex()));
         boolean cut2Direction = secondBond != null && (fragment.bitset.get(secondBond.getAtom(0).getIndex()));
-        float score = (float)(scoring.scoreBond(firstBond,cut1Direction)+(secondBond!=null ? scoring.scoreBond(secondBond,cut2Direction) : 0f) + scoring.scoreFragment(node.fragment));
+
+        float edgeScore = (float) (scoring.scoreBond(firstBond,cut1Direction)+(secondBond!=null ? scoring.scoreBond(secondBond,cut2Direction) : 0f));
+        float fragmentScore = (float) scoring.scoreFragment(node.fragment);
+        float score = fragmentScore + edgeScore;
         float bestScore = (parent.totalScore + score);
+
         if (bestScore > node.totalScore) {
             node.totalScore = bestScore;
             node.score = score;
-            updateFlag[0] = true;
-        } else updateFlag[0] = false;
+            if(updateFlag != null && updateFlag.length > 0) updateFlag[0] = true;
+        } else {
+            if(updateFlag != null && updateFlag.length > 0) updateFlag[0] = false;
+        }
 
-        CombinatorialEdge edge = new CombinatorialEdge(parent, node, firstBond, secondBond,cut1Direction,cut2Direction);
+        CombinatorialEdge edge = new  CombinatorialEdge(parent, node, firstBond, secondBond,cut1Direction,cut2Direction);
         node.incomingEdges.add(edge);
         parent.outgoingEdges.add(edge);
+
         return node;
     }
 
