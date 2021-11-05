@@ -30,6 +30,7 @@ import de.unijena.bioinf.sirius.SiriusFactory;
 import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import de.unijena.bioinf.webapi.ProxyManager;
 import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.log4j.Level;
@@ -65,7 +66,7 @@ public abstract class ApplicationCore {
     public static final Path TOKEN_FILE;
 
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
-    public static final WebAPI WEB_API;
+    public static final WebAPI<?> WEB_API;
     @NotNull public static final BibtexManager BIBTEX;
 
     private static final boolean TIME = false;
@@ -299,10 +300,9 @@ public abstract class ApplicationCore {
             DEFAULT_LOGGER.info("Bug reporter initialized.");
 
             measureTime("DONE init bug reporting, START init WebAPI");
-
             TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile",null,".rtoken"));
             AuthService service = AuthServices.createDefault(TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
-            WEB_API = new WebAPI(service);
+            WEB_API = new RestAPI(service);
             DEFAULT_LOGGER.info("Web API initialized.");
             measureTime("DONE init  init WebAPI");
 

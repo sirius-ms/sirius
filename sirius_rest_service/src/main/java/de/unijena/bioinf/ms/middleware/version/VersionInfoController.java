@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.middleware.version;
 
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
