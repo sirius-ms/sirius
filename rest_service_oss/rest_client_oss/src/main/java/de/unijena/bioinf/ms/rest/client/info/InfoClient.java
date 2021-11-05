@@ -31,14 +31,13 @@ import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -50,8 +49,8 @@ import javax.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -162,16 +161,14 @@ public class InfoClient extends AbstractClient {
     }
 
 
-    public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME, @NotNull CloseableHttpClient client) throws IOException {
+    public <T extends ErrorReport> String reportError(ErrorReport report, String SOFTWARE_NAME, @NotNull CloseableHttpClient client) throws IOException {
         return execute(client,
                 () -> {
-                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/report.json").build());
-                    final String json = ErrorReport.toJson(report);
-
-                    final NameValuePair reportValue = new BasicNameValuePair("report", json);
-                    final NameValuePair softwareName = new BasicNameValuePair("name", SOFTWARE_NAME);
-                    final UrlEncodedFormEntity params = new UrlEncodedFormEntity(Arrays.asList(reportValue, softwareName));
-                    post.setEntity(params);
+                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/report.json")
+                            .addParameter("name", SOFTWARE_NAME).build());
+                    final String json = new ObjectMapper().writeValueAsString(report);
+                    post.setEntity(new StringEntity(json, StandardCharsets.UTF_8));
+                    post.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
                     return post;
                 },
                 reader -> {

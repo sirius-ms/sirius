@@ -124,7 +124,7 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
                     for (PrecursorIonType ionType : adducts) {
                         if (!ionType.equals(ir.getTree().getAnnotationOrThrow(PrecursorIonType.class)) && new IonTreeUtils().isResolvable(ir.getTree(), ionType)) {
                             try {
-                                IdentificationResult<S> newIr = IdentificationResult.withPrecursorIonType(ir, ionType);
+                                IdentificationResult<S> newIr = IdentificationResult.withPrecursorIonType(ir, ionType, false);
                                 newIr.getTree().setAnnotation(IonTreeUtils.ExpandedAdduct.class, IonTreeUtils.ExpandedAdduct.EXPANDED);
                                 if (newIr.getTree().numberOfVertices() >= 3 && (neutralFormulas.add(newIr.getMolecularFormula())))
                                     ionTypes.put(newIr, ir);

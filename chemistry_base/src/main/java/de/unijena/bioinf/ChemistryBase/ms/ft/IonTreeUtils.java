@@ -26,12 +26,14 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.graphUtils.tree.PostOrderTraversal;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  *     //todo this whole class must be adjusted to adduct switches
@@ -47,7 +49,10 @@ public class IonTreeUtils {
     public enum ExpandedAdduct implements TreeAnnotation {RAW, EXPANDED}
 
     public boolean isResolvable(FTree tree, PrecursorIonType ionType) {
-        return (tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization().equals(ionType.getIonization()) && tree.getRoot().getFormula().isSubtractable(ionType.getAdduct()));
+        return (tree.getAnnotationOrThrow(PrecursorIonType.class).getIonization().equals(ionType.getIonization())
+                && tree.getRoot().getFormula().isSubtractable(ionType.getAdduct())
+                && !tree.getRoot().getFormula().equals(ionType.getAdduct()) //root MF should not be the same as adduct, else no compound remains after subtracting adduct
+        );
     }
 
     /**
@@ -56,6 +61,17 @@ public class IonTreeUtils {
      * the adduct and ionization. Annotates each vertex with a PrecursorIonType.
      */
     public FTree treeToNeutralTree(FTree tree, PrecursorIonType ionType) {
+        return treeToNeutralTree(tree, ionType, false);
+    }
+
+    /**
+     * Takes a computed tree as input. Creates a copy of this tree and resolve the PrecursorIonType, such that insource
+     * fragmentations are reflected in the tree and all vertices in the tree have a neutral molecular formula excluding
+     * the adduct and ionization. Annotates each vertex with a PrecursorIonType.
+     *
+     * @param preserveOriginalTreeScore reducing the tree may remove nodes. If true, the total tree score is preserved by adding an adductSubstitution to the parent node of removed tree nodes.
+     */
+    public FTree treeToNeutralTree(FTree tree, PrecursorIonType ionType, boolean preserveOriginalTreeScore) {
         if (tree.getAnnotationOrNull(Type.class) == Type.RESOLVED) {
             throw new IllegalArgumentException("Cannot neutralize an already neutral tree");
         }
@@ -75,6 +91,19 @@ public class IonTreeUtils {
      * This modifications might be in-place. So the caller have to ensure to copy the tree if he do not want to change it.
      */
     public FTree treeToNeutralTree(FTree tree) {
+        return treeToNeutralTree(tree, false);
+    }
+
+    /**
+     * Takes a computed tree as input with a certain PrecursorIonType. Resolve the PrecursorIonType, such that insource
+     * fragmentations are reflected in the tree and all vertices in the tree have a neutral molecular formula excluding
+     * the adduct and ionization. Annotates each vertex with a PrecursorIonType.
+     *
+     * This modifications might be in-place. So the caller have to ensure to copy the tree if he do not want to change it.
+     *
+     * @param preserveOriginalTreeScore reducing the tree may remove nodes. If true, the total tree score is preserved by adding an adductSubstitution to the parent node of removed tree nodes.
+     */
+    public FTree treeToNeutralTree(FTree tree, boolean preserveOriginalTreeScore) {
         if (tree.getAnnotationOrNull(Type.class)==Type.RESOLVED) {
             return tree;
         } else if (tree.getAnnotationOrNull(Type.class) == Type.IONIZED) {
@@ -93,7 +122,7 @@ public class IonTreeUtils {
         }
         if (ion.getAdduct().atomCount() > 0) {
             // remove the adduct from all fragments
-            reduceTree(tree, ion, ion.getAdduct());
+            reduceTree(tree, ion, ion.getAdduct(), preserveOriginalTreeScore);
         } else {
             setIonizationAsPrecursorIonTypeToEachNode(tree, tree.getRoot());
         }
@@ -144,15 +173,27 @@ public class IonTreeUtils {
         return tree;
     }
 
-    private void reduceTree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct) {
+    /**
+     *
+     * @param tree
+     * @param iontype
+     * @param adduct
+     * @param preserveOriginalTreeScore reducing the tree may remove nodes. If true, the total tree score is preserved by adding an adductSubstitution to the parent node of removed tree nodes.
+     */
+    private void reduceTree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct, final boolean preserveOriginalTreeScore) {
+        StatsForNonRootNonArtificialPeaks peakStatsBefore = countNumberOfFragmentsAndIntensityWithoutArtificialOrRoot(tree);
 
         final Score.ScoreAdder scoreAdd = Score.extendWith("adductSubstitution");
         final Score.ScoreAdder fragAdd = Score.extendWith("adductSubstitution");
         final ImplicitAdduct implicitAdduct = new ImplicitAdduct(adduct);
-        reduceSubtree(tree, iontype, adduct, tree.getRoot(), scoreAdd, fragAdd, implicitAdduct);
+        reduceSubtree(tree, iontype, adduct, tree.getRoot(), scoreAdd, fragAdd, implicitAdduct, preserveOriginalTreeScore);
+
+        if (!preserveOriginalTreeScore) recalculateTreeWeight(tree);
+        updateTreeStatistics(tree, peakStatsBefore);
+
     }
 
-    private void reduceSubtree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct, Fragment vertex, Score.ScoreAdder lossAdder, Score.ScoreAdder fragAdder, ImplicitAdduct implicitAdduct) {
+    private void reduceSubtree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct, Fragment vertex, Score.ScoreAdder lossAdder, Score.ScoreAdder fragAdder, ImplicitAdduct implicitAdduct, boolean preserveOriginalTreeScore) {
         final FragmentAnnotation<PrecursorIonType> fa = tree.getOrCreateFragmentAnnotation(PrecursorIonType.class);
         final FragmentAnnotation<AnnotatedPeak> peakAno = tree.getOrCreateFragmentAnnotation(AnnotatedPeak.class);
         final FragmentAnnotation<Score> scoreFrag = tree.getOrCreateFragmentAnnotation(Score.class);
@@ -160,7 +201,6 @@ public class IonTreeUtils {
         final LossAnnotation<LossType> lossType = tree.getOrCreateLossAnnotation(LossType.class);
 
         //todo can there arise problems with PrecursorIonType.SPECIAL_TYPES?
-//        final PrecursorIonType newIonType = PrecursorIonType.getPrecursorIonType(vertex.getIonization()).substituteInsource(iontype.getInSourceFragmentation());
         final PrecursorIonType newIonType = PrecursorIonType.getPrecursorIonType(vertex.getIonization()).substituteInsource(iontype.getInSourceFragmentation());
         // if adduct is lost: contract loss
         if (vertex.getInDegree() > 0 && vertex.getIncomingEdge().getFormula().equals(adduct)) {
@@ -180,7 +220,7 @@ public class IonTreeUtils {
                 }
             }
 
-            scoreFrag.set(vertex.getParent(), fragAdder.add(scoreFrag.get(vertex.getParent()), scoreFrag.get(vertex).sum() + lossAno.get(vertex.getIncomingEdge()).sum()));
+            if (preserveOriginalTreeScore) scoreFrag.set(vertex.getParent(), fragAdder.add(scoreFrag.get(vertex.getParent()), scoreFrag.get(vertex).sum() + lossAno.get(vertex.getIncomingEdge()).sum()));
             tree.deleteVertex(vertex);
             fa.set(vertex, newIonType);
             for (Fragment f : children) {
@@ -203,7 +243,7 @@ public class IonTreeUtils {
             fa.set(vertex, newIonType);
             final ArrayList<Fragment> childs = new ArrayList<Fragment>(vertex.getChildren());
             for (Fragment g : childs) {
-                reduceSubtree(tree, iontype, adduct, g, lossAdder, fragAdder, implicitAdduct);
+                reduceSubtree(tree, iontype, adduct, g, lossAdder, fragAdder, implicitAdduct, preserveOriginalTreeScore);
             }
         } else if (vertex.getInDegree()>0){
             // if adduct is part of the loss, remove it from loss
@@ -218,7 +258,7 @@ public class IonTreeUtils {
                 final double subtreeScore = scoreSubtree(vertex, scoreFrag, lossAno);
                 final Fragment parent = vertex.getParent();
                 tree.deleteSubtree(vertex);
-                scoreFrag.set(parent, fragAdder.add(scoreFrag.get(parent), subtreeScore));
+                if (preserveOriginalTreeScore) scoreFrag.set(parent, fragAdder.add(scoreFrag.get(parent), subtreeScore));
             }
         } else {
             logger.warn("Cannot remove adduct from ion formula: " + vertex.getFormula() + " with adduct " + iontype.toString() + " in tree " + tree.getRoot().getFormula());
@@ -231,6 +271,48 @@ public class IonTreeUtils {
             sum += scoreSubtree(g, f, l);
         }
         return sum;
+    }
+
+
+    private void updateTreeStatistics(FTree tree, StatsForNonRootNonArtificialPeaks peakStatsBefore) {
+        //todo explainedIntensityOfExplainablePeaks might be incorrect because we cannot find out what the number of explainable peaks for adduct was?
+
+        Optional<TreeStatistics> optional = tree.getAnnotation(TreeStatistics.class);
+        if (!optional.isPresent()) return;
+
+        TreeStatistics ts = optional.get();
+        StatsForNonRootNonArtificialPeaks peakStatsAfter = countNumberOfFragmentsAndIntensityWithoutArtificialOrRoot(tree);
+
+        double explainedInt = ts.explainedIntensity * peakStatsAfter.totalIntensity / peakStatsBefore.totalIntensity;
+        double explainedIntExplainable = ts.explainedIntensityOfExplainablePeaks * peakStatsAfter.totalIntensity / peakStatsBefore.totalIntensity;
+        double ratioExplainedPeaks = ts.ratioOfExplainedPeaks * peakStatsAfter.numberOfFragments / peakStatsBefore.numberOfFragments;
+        TreeStatistics newTreeStatistics = new TreeStatistics(explainedInt, explainedIntExplainable, ratioExplainedPeaks);
+
+        tree.setAnnotation(TreeStatistics.class, newTreeStatistics);
+    }
+
+    private StatsForNonRootNonArtificialPeaks countNumberOfFragmentsAndIntensityWithoutArtificialOrRoot(FTree tree) {
+        final FragmentAnnotation<AnnotatedPeak> ano = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
+        int numberOfExplainedPeaks = 0;
+        double treeIntensity = 0d;
+        for (Fragment f : tree) {
+            if (ano.get(f).isArtificial()) continue;
+            if (f.isRoot()) continue;
+            numberOfExplainedPeaks += 1;
+            treeIntensity += ano.get(f).getRelativeIntensity();
+        }
+        return new StatsForNonRootNonArtificialPeaks(numberOfExplainedPeaks, treeIntensity);
+    }
+
+    private void recalculateTreeWeight(FTree tree) {
+        double scoreSum = 0d;
+        for (Loss l : tree.losses()) {
+            scoreSum += l.getWeight();
+        }
+        scoreSum += tree.getRootScore();
+
+        tree.setTreeWeight(scoreSum);
+
     }
 
     protected static Logger logger = LoggerFactory.getLogger(IonTreeUtils.class);
@@ -282,5 +364,16 @@ public class IonTreeUtils {
                 ia.set(vertex, vertex.getIonization());
             }
         });
+    }
+
+
+    private class StatsForNonRootNonArtificialPeaks implements DataAnnotation {
+        private final int numberOfFragments;
+        private final double totalIntensity;
+
+        public StatsForNonRootNonArtificialPeaks(int numberOfFragments, double totalIntensity) {
+            this.numberOfFragments = numberOfFragments;
+            this.totalIntensity = totalIntensity;
+        }
     }
 }

@@ -24,6 +24,7 @@ package de.unijena.bioinf.babelms.cef;
 import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.CollapsedStringAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 
@@ -84,7 +85,7 @@ public class Spectrum {
     @XmlSchemaType(name = "NCName")
     protected String cpdAlgo;
     @XmlAttribute(name = "satLimit", required = true)
-    protected BigInteger satLimit;
+    protected BigDecimal satLimit;
     @XmlAttribute(name = "scans")
     protected BigInteger scans;
     @XmlAttribute(name = "type", required = true)
@@ -265,10 +266,10 @@ public class Spectrum {
      * 
      * @return
      *     possible object is
-     *     {@link BigInteger }
+     *     {@link BigDecimal }
      *     
      */
-    public BigInteger getSatLimit() {
+    public BigDecimal getSatLimit() {
         return satLimit;
     }
 
@@ -277,10 +278,10 @@ public class Spectrum {
      * 
      * @param value
      *     allowed object is
-     *     {@link BigInteger }
+     *     {@link BigDecimal }
      *     
      */
-    public void setSatLimit(BigInteger value) {
+    public void setSatLimit(BigDecimal value) {
         this.satLimit = value;
     }
 

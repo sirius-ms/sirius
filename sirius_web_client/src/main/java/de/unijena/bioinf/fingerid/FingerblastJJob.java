@@ -29,17 +29,26 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 // FingerID Scheduler job does not manage dependencies between different  tools.
 // this is done by the respective subtooljobs in the frontend
 public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
-//    public static final boolean enableConfidence = PropertyManager.getBoolean("de.unijena.bioinf.fingerid.confidence", false);
+    public static final boolean enableConfidence = useConfidenceScore();
+
+    private static boolean useConfidenceScore() {
+        boolean useIt = PropertyManager.getBoolean("de.unijena.bioinf.fingerid.confidence", true);
+        if (!useIt)
+            LoggerFactory.getLogger(FingerblastJJob.class).warn("===> CONFIDENCE SCORE IS DISABLED VIA PROPERTY! <===");
+        return useIt;
+    }
 
     // scoring provider
     private final CSIPredictor predictor;
@@ -116,7 +125,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
         checkForInterruption();
 
-        final ConfidenceJJob confidenceJJob = (predictor.getConfidenceScorer() != null)
+        final ConfidenceJJob confidenceJJob = (predictor.getConfidenceScorer() != null) && enableConfidence
                 ? new ConfidenceJJob(predictor, experiment)
                 : null;
 
@@ -165,20 +174,24 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         checkForInterruption();
 
         if (confidenceJJob != null) {
-            ConfidenceResult confidenceRes = confidenceJJob.awaitResult();
-            if (confidenceRes.topHit != null) {
-                FingerIdResult topHit = annotationJJobs.values().stream().distinct()
-                        .filter(fpr -> !fpr.getFingerprintCandidates().isEmpty()).max(Comparator.comparing(fpr -> fpr.getFingerprintCandidates().get(0))).orElse(null);
-                if (topHit != null) {
-                    if (topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D().equals(confidenceRes.topHit.getCandidate().getInchiKey2D()))
-                        topHit.setAnnotation(ConfidenceResult.class, confidenceRes);
-                    else
-                        logWarn("TopHit does not Match Confidence Result TopHit!'" + confidenceRes.topHit.getCandidate().getInchiKey2D() + "' vs '" + topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D() + "'.  Confidence might be lost!");
+            try {
+                ConfidenceResult confidenceRes = confidenceJJob.awaitResult();
+                if (confidenceRes.topHit != null) {
+                    FingerIdResult topHit = annotationJJobs.values().stream().distinct()
+                            .filter(fpr -> !fpr.getFingerprintCandidates().isEmpty()).max(Comparator.comparing(fpr -> fpr.getFingerprintCandidates().get(0))).orElse(null);
+                    if (topHit != null) {
+                        if (topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D().equals(confidenceRes.topHit.getCandidate().getInchiKey2D()))
+                            topHit.setAnnotation(ConfidenceResult.class, confidenceRes);
+                        else
+                            logWarn("TopHit does not Match Confidence Result TopHit!'" + confidenceRes.topHit.getCandidate().getInchiKey2D() + "' vs '" + topHit.getFingerprintCandidates().get(0).getCandidate().getInchiKey2D() + "'.  Confidence might be lost!");
+                    } else {
+                        logWarn("No TopHit found for. But confidence was calculated for: '" + confidenceRes.topHit.getCandidate().getInchiKey2D() + "'.  Looks like a Bug. Confidence might be lost!");
+                    }
                 } else {
-                    logWarn("No TopHit found for. But confidence was calculated for: '" + confidenceRes.topHit.getCandidate().getInchiKey2D() + "'.  Looks like a Bug. Confidence might be lost!");
+                    logWarn("No Confidence computed.");
                 }
-            } else {
-                logWarn("No Confidence computed.");
+            } catch (ExecutionException e) {
+                logWarn("Could not compute confidence, due to and Error!", e);
             }
         }
 
