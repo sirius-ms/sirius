@@ -33,7 +33,7 @@ import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
-import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
@@ -80,9 +80,9 @@ public class CustomDatabaseImporter {
     protected SmilesGenerator smilesGen;
     protected SmilesParser smilesParser;
     protected CdkFingerprintVersion fingerprintVersion;
-    protected final WebAPI api;
+    protected final RestAPI api;
 
-    protected CustomDatabaseImporter(CustomDatabase database, CdkFingerprintVersion version, WebAPI api, int bufferSize) {
+    protected CustomDatabaseImporter(CustomDatabase database, CdkFingerprintVersion version, RestAPI api, int bufferSize) {
         this.api = api;
         this.database = database;
         this.fingerprintVersion = version;
@@ -499,23 +499,23 @@ public class CustomDatabaseImporter {
         }
     }
 
-    public static void importDatabaseFromStrings(String dbPath, List<String> files, WebAPI api, int bufferSize) {
+    public static void importDatabaseFromStrings(String dbPath, List<String> files, RestAPI api, int bufferSize) {
         importDatabase(dbPath, files.stream().map(File::new).collect(Collectors.toList()), api, bufferSize);
     }
 
-    public static void importDatabase(String dbPath, List<File> files, WebAPI api, int bufferSize) {
+    public static void importDatabase(String dbPath, List<File> files, RestAPI api, int bufferSize) {
         importDatabase(new File(dbPath), files, api, bufferSize);
     }
 
-    public static void importDatabase(File dbPath, List<File> files, WebAPI api, int bufferSize) {
+    public static void importDatabase(File dbPath, List<File> files, RestAPI api, int bufferSize) {
         importDatabase(dbPath, files, null, api, bufferSize);
     }
 
-    public static void importDatabase(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, WebAPI api, int bufferSize) {
+    public static void importDatabase(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, RestAPI api, int bufferSize) {
         final Logger log = LoggerFactory.getLogger(CustomDatabaseImporter.class);
         importDatabase(dbPath, files, deriveFrom, api, bufferSize, inchi -> log.debug(inchi.in2D + " imported"));
     }
-    public static void importDatabase(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, WebAPI api, int bufferSize, Listener listener) {
+    public static void importDatabase(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, RestAPI api, int bufferSize, Listener listener) {
         try {
             final CustomDatabase db = CustomDatabase.createNewDatabase(dbPath.getName(), dbPath, api.getCDKChemDBFingerprintVersion());
             if (deriveFrom != null && !deriveFrom.isEmpty()) {
@@ -528,7 +528,7 @@ public class CustomDatabaseImporter {
         }
     }
 
-    public static JJob<Boolean> makeImportDatabaseJob(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, WebAPI api, int bufferSize, Listener listener) throws IOException {
+    public static JJob<Boolean> makeImportDatabaseJob(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, RestAPI api, int bufferSize, Listener listener) throws IOException {
             final CustomDatabase db = CustomDatabase.createNewDatabase(dbPath.getName(), dbPath, api.getCDKChemDBFingerprintVersion());
             if (deriveFrom != null && !deriveFrom.isEmpty()) {
                 db.setDeriveFromRestDb(true);

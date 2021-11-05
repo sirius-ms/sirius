@@ -20,12 +20,12 @@
 
 package de.unijena.bioinf.chemdb;
 
-public class SearchableRestDB implements SearchableDatabase {
+public class SearchableWebDB implements SearchableDatabase {
 
     protected final String name;
     protected final long filter;
 
-    public SearchableRestDB(String name, long filterFlag) {
+    public SearchableWebDB(String name, long filterFlag) {
         this.name = name;
         this.filter = filterFlag;
     }

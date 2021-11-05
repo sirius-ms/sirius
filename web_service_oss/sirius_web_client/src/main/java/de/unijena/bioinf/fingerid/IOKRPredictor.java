@@ -22,7 +22,7 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.fingerid.blast.FingerblastScoring;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
-import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.webapi.rest.RestAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ import java.io.IOException;
  */
 public class IOKRPredictor extends AbstractStructurePredictor {
 
-    protected IOKRPredictor(PredictorType predictorType, WebAPI api) {
+    protected IOKRPredictor(PredictorType predictorType, RestAPI api) {
         super(predictorType, api);
     }
 

@@ -2,6 +2,26 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
@@ -18,7 +38,7 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.webapi;
+package de.unijena.bioinf.webapi.rest;
 
 import de.unijena.bioinf.jjobs.WaiterJJob;
 import de.unijena.bioinf.jjobs.exceptions.TimeoutException;
@@ -28,7 +48,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.OptionalInt;
 
-public abstract class WebJJob<Self extends WebJJob<Self, R, D>, R, D> extends WaiterJJob<R> {
+public abstract class RestWebJJob<Self extends RestWebJJob<Self, R, D>, R, D> extends WaiterJJob<R> {
     @NotNull
     public final JobId jobId;
     protected final long submissionTime;
@@ -36,7 +56,7 @@ public abstract class WebJJob<Self extends WebJJob<Self, R, D>, R, D> extends Wa
     private volatile de.unijena.bioinf.ms.rest.model.JobState serverState;
 
 
-    protected WebJJob(@NotNull JobId jobId, de.unijena.bioinf.ms.rest.model.JobState serverState, long submissionTime) {
+    protected RestWebJJob(@NotNull JobId jobId, de.unijena.bioinf.ms.rest.model.JobState serverState, long submissionTime) {
         this.jobId = jobId;
         this.serverState = serverState;
         this.submissionTime = submissionTime;
@@ -76,8 +96,8 @@ public abstract class WebJJob<Self extends WebJJob<Self, R, D>, R, D> extends Wa
     }
 
     protected void checkForTimeout() {
-        if (System.currentTimeMillis() - submissionTime > WebAPI.WEB_API_JOB_TIME_OUT) {
-            errorMessage = "Prediction canceled by client timeout. A timout of \"" + WebAPI.WEB_API_JOB_TIME_OUT + "ms\" was reached.";
+        if (System.currentTimeMillis() - submissionTime > RestAPI.WEB_API_JOB_TIME_OUT) {
+            errorMessage = "Prediction canceled by client timeout. A timout of \"" + RestAPI.WEB_API_JOB_TIME_OUT + "ms\" was reached.";
             crash(new TimeoutException(errorMessage));
         }
     }

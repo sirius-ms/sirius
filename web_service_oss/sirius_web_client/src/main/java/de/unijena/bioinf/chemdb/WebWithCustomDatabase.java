@@ -29,8 +29,7 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.BlobStorages;
-import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
-import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,8 +53,8 @@ import java.util.stream.Stream;
  * This class can be wrapped by {@link FingerblastSearchEngine} to provide compatibility with
  * the {@link SearchStructureByFormula} API.
  */
-public class RestWithCustomDatabase {
-    protected static Logger logger = LoggerFactory.getLogger(RestWithCustomDatabase.class);
+public class WebWithCustomDatabase {
+    protected static Logger logger = LoggerFactory.getLogger(WebWithCustomDatabase.class);
 
 
     protected final File directory;
@@ -63,10 +62,10 @@ public class RestWithCustomDatabase {
     protected final String customDbDir;
     protected HashMap<String, ChemicalBlobDatabase<?>> customDatabases;
 
-    protected final WebAPI api;
+    protected final RestAPI api;
     private VersionsInfo versionInfoCache = null;
 
-    public RestWithCustomDatabase(WebAPI api, File dir, String restCacheDir, String customDbDir) {
+    public WebWithCustomDatabase(RestAPI api, File dir, String restCacheDir, String customDbDir) {
         this.api = api;
         this.directory = dir;
         this.restCacheDir = restCacheDir;

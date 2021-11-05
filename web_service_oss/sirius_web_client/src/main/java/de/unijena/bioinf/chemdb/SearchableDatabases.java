@@ -24,7 +24,7 @@ import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.OutdatedDBExeption;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
-import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -110,7 +110,7 @@ public class SearchableDatabases {
     public static Optional<? extends SearchableDatabase> getDatabaseByName(@NotNull String name) {
         final DataSource source = DataSources.getSourceFromNameOrNull(name);
         if (source != null)
-            return Optional.of(new SearchableRestDB(source.realName, source.flag()));
+            return Optional.of(new SearchableWebDB(source.realName, source.flag()));
         return getCustomDatabaseByName(name);
     }
 
@@ -132,8 +132,8 @@ public class SearchableDatabases {
         return loadCustomDatabases(up2date);
     }
 
-    public static RestWithCustomDatabase makeRestWithCustomDB(WebAPI webAPI) {
-        return new RestWithCustomDatabase(webAPI, getDatabaseDirectory(), REST_CACHE_DIR, CUSTOM_DB_DIR);
+    public static WebWithCustomDatabase makeRestWithCustomDB(RestAPI webAPI) {
+        return new WebWithCustomDatabase(webAPI, getDatabaseDirectory(), REST_CACHE_DIR, CUSTOM_DB_DIR);
     }
 
     @NotNull

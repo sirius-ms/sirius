@@ -26,12 +26,12 @@ import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
-import de.unijena.bioinf.webapi.WebJJob;
+import de.unijena.bioinf.webapi.rest.RestWebJJob;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.OptionalInt;
 
-public class CanopusWebJJob extends WebJJob<CanopusWebJJob, CanopusResult, CanopusJobOutput> {
+public class CanopusWebJJob extends RestWebJJob<CanopusWebJJob, CanopusResult, CanopusJobOutput> {
 
     protected final MaskedFingerprintVersion classyfireVersion, npcVersion;
     protected ProbabilityFingerprint compoundClasses = null;

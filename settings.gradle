@@ -42,6 +42,7 @@ include ':fingerprinter_oss'
 include ':fingerprint_pvalues_oss'
 include ':fingerblast_oss'
 include ':fingerid_base_oss'
+
 include ':chemical_db_oss'
 include ':chemical_db_oss:chemdb_sql_oss'
 include ':chemical_db_oss:chemdb_blob_oss'
@@ -65,7 +66,6 @@ include ':confidence_score_predict_oss'
 include ':canopus_predict_oss'
 
 include ':fingerid_project_space_oss'
-include ':sirius_web_client'
 
 include ':web_service_oss'
     include ':web_service_oss:sirius_web_client'

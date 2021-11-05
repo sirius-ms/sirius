@@ -21,7 +21,7 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.webapi.rest.RestAPI;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +47,7 @@ public class TrainingStructuresPerPredictor {
         return singleton;
     }
 
-    private TrainingStructuresSet addAvailablePredictorTypes(PredictorType predictorType, WebAPI api) {
+    private TrainingStructuresSet addAvailablePredictorTypes(PredictorType predictorType, RestAPI api) {
         synchronized (predictorTypeToInchiKeys2D) {
             if (!predictorTypeToInchiKeys2D.containsKey(predictorType)) {
                 try {
@@ -70,7 +70,7 @@ public class TrainingStructuresPerPredictor {
         return predictorTypeToInchiKeys2D.get(predictorType);
     }
 
-    public TrainingStructuresSet getTrainingStructuresSet(PredictorType predictorType, @Nullable WebAPI api) {
+    public TrainingStructuresSet getTrainingStructuresSet(PredictorType predictorType, @Nullable RestAPI api) {
         if (api == null)
             return getTrainingStructuresSet(predictorType);
         else
