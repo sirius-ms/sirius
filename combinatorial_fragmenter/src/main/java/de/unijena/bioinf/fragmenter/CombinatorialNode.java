@@ -18,6 +18,10 @@ public class CombinatorialNode {
      */
     protected short bondbreaks;
     /**
+     * This is the score or profit of the corresponding fragment.
+     */
+    protected float fragmentScore;
+    /**
      * This score refers to {@link CombinatorialNode#totalScore}.
      * It is the sum of the fragment score plus the score of the edge which belongs to the most profitable path
      * from this node to the root.
@@ -37,6 +41,7 @@ public class CombinatorialNode {
         this.outgoingEdges = new ArrayList<>();
         this.depth = Short.MAX_VALUE;
         this.bondbreaks = Short.MAX_VALUE;
+        this.fragmentScore = 0f;
         this.score=0f;
         this.totalScore=0f;
         this.state=0;
@@ -84,6 +89,10 @@ public class CombinatorialNode {
     @Override
     public String toString() {
         return fragment.getFormula() + " (" + bondbreaks + " bond breaks)";
+    }
+
+    public float getFragmentScore(){
+        return this.fragmentScore;
     }
 
     public float getScore() {
