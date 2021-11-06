@@ -7,6 +7,10 @@ public class CombinatorialEdge {
     protected IBond cut1, cut2;
     protected byte direction;
     protected CombinatorialNode source, target;
+    /**
+     * This is the score or profit of this edge.
+     */
+    protected float score;
 
     public CombinatorialEdge(CombinatorialNode source, CombinatorialNode target, IBond cut1, boolean leftToRight) {
         this(source,target,cut1,null, leftToRight, false);
@@ -18,6 +22,7 @@ public class CombinatorialEdge {
         this.cut1 = cut1;
         this.cut2 = cut2;
         this.direction = (byte)((direction1 ? 2 : 0) | (direction2  ? 4 : 0));
+        this.score = 0f;
     }
 
     public IAtom getAtomOfFragment() {
@@ -69,5 +74,9 @@ public class CombinatorialEdge {
 
     public CombinatorialNode getTarget() {
         return target;
+    }
+
+    public float getScore(){
+        return this.score;
     }
 }
