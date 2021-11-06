@@ -36,6 +36,7 @@ public class CombinatorialGraph {
             node = new CombinatorialNode(fragment);
             bitset2node.put(fragment.bitset,node);
             nodes.add(node);
+            node.fragmentScore = Float.NEGATIVE_INFINITY;
             node.score = Float.NEGATIVE_INFINITY;
             node.totalScore = Float.NEGATIVE_INFINITY;
         }
@@ -46,9 +47,13 @@ public class CombinatorialGraph {
         boolean cut1Direction =  ( fragment.bitset.get(firstBond.getAtom(0).getIndex()));
         boolean cut2Direction = secondBond != null && (fragment.bitset.get(secondBond.getAtom(0).getIndex()));
 
-        float edgeScore = (float) (scoring.scoreBond(firstBond,cut1Direction)+(secondBond!=null ? scoring.scoreBond(secondBond,cut2Direction) : 0f));
-        float fragmentScore = (float) scoring.scoreFragment(node.fragment);
-        float score = fragmentScore + edgeScore;
+        CombinatorialEdge edge = new  CombinatorialEdge(parent, node, firstBond, secondBond,cut1Direction,cut2Direction);
+        node.incomingEdges.add(edge);
+        parent.outgoingEdges.add(edge);
+
+        edge.score = (float) scoring.scoreEdge(edge);
+        node.fragmentScore = (float) scoring.scoreFragment(node);
+        float score = node.fragmentScore + edge.score;
         float bestScore = (parent.totalScore + score);
 
         if (bestScore > node.totalScore) {
@@ -58,11 +63,6 @@ public class CombinatorialGraph {
         } else {
             if(updateFlag != null && updateFlag.length > 0) updateFlag[0] = false;
         }
-
-        CombinatorialEdge edge = new  CombinatorialEdge(parent, node, firstBond, secondBond,cut1Direction,cut2Direction);
-        node.incomingEdges.add(edge);
-        parent.outgoingEdges.add(edge);
-
         return node;
     }
 

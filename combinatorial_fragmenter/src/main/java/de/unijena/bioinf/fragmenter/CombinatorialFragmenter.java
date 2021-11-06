@@ -20,8 +20,13 @@ public class CombinatorialFragmenter {
         }
 
         @Override
-        public double scoreFragment(CombinatorialFragment fragment) {
+        public double scoreFragment(CombinatorialNode fragment) {
             return 0;
+        }
+
+        @Override
+        public double scoreEdge(CombinatorialEdge edge){
+            return scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) + (edge.getCut2() != null ? scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) : 0);
         }
     };
 
