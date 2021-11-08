@@ -32,7 +32,6 @@ import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,7 @@ import java.util.stream.Collectors;
 /**
  * Created by martin on 08.08.18.
  */
-public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> implements AnnotationJJob<ConfidenceResult, FingerIdResult> {
+public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
 
     //fina inputs
     protected final ConfidenceScorer confidenceScorer;

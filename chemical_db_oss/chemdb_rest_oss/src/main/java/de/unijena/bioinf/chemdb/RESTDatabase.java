@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -46,6 +47,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     }
 
     private final CloseableHttpClient client;
+    private final String chemDbDate;
     protected StructureSearchClient chemDBClient;
     protected final ChemDBFileCache cache;
     protected long filter;
@@ -59,11 +61,12 @@ public class RESTDatabase implements AbstractChemicalDatabase {
 
     @Override
     public String getChemDbDate() {
-        throw new RuntimeException("NOT IMPLEMENTED ->  GET DB date from server");
+        return chemDbDate;
     }
 
-    public RESTDatabase(@Nullable File cacheDir, long filter, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
+    public RESTDatabase(@Nullable File cacheDir, long filter, String chemDbDate, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
         this.filter = filter;
+        this.chemDbDate = chemDbDate;
         this.chemDBClient = chemDBClient;
         this.client = client;
         this.cache = new ChemDBFileCache(cacheDir, new SearchStructureByFormula() {
@@ -80,8 +83,8 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         });
     }
 
-    public RESTDatabase(long filter, @NotNull AuthService authService) {
-        this(RESTDatabase.defaultCacheDir(), filter, new ChemDBClient(null, authService) , HttpClients.createDefault());
+    public RESTDatabase(long filter, String chemDbDate, @NotNull AuthService authService) {
+        this(RESTDatabase.defaultCacheDir(), filter, chemDbDate, new ChemDBClient(null, authService) , HttpClients.createDefault());
     }
 
     @Override

@@ -34,6 +34,7 @@ import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
+import de.unijena.bioinf.ms.webapi.WebJJob;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,10 +79,12 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
                 candidates = job.result();
             }
         }
+
         if (bayesnetScoring == null) {
-            if (required instanceof CovtreeWebJJob) {
-                CovtreeWebJJob job = (CovtreeWebJJob) required;
-                bayesnetScoring = job.result();
+            if (required instanceof WebJJob) {
+                Object r = required.result();
+                if (r instanceof BayesnetScoring)
+                    bayesnetScoring = (BayesnetScoring) r;
             }
         }
     }

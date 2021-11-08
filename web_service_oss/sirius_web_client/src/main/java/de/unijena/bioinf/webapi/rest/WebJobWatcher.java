@@ -2,26 +2,6 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
@@ -41,12 +21,12 @@
 package de.unijena.bioinf.webapi.rest;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.WaiterJJob;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -56,7 +36,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-final class WebJobWatcher {
+final class WebJobWatcher { //todo rename to RestJobWatcher
     private static final int INIT_WAIT_TIME = 1000;
 
     private final Map<JobId, RestWebJJob<?, ?, ?>> waitingJobs = new ConcurrentHashMap<>();
@@ -69,11 +49,11 @@ final class WebJobWatcher {
         this.api = api;
     }
 
-    public <J extends RestWebJJob<?, ?, ?>> J watchJob(@NotNull final J jobToWatch) {
+    public <I, D, O, J extends RestWebJJob<I, D, O>> J watchJob(@NotNull final J jobToWatch) {
         checkWatcherJob();
 
         synchronized (waitingJobs) {
-            waitingJobs.put(jobToWatch.jobId, jobToWatch);
+            waitingJobs.put(jobToWatch.getJobId(), jobToWatch);
             waitingJobs.notifyAll();
         }
 
@@ -141,7 +121,7 @@ final class WebJobWatcher {
                                 final RestWebJJob<?, ?, ?> job;
                                 orphanJobs.remove(gid);
                                 job = waitingJobs.get(gid);
-                                job.getJobCountingHash().ifPresent(h -> countingHashes.put(gid, h));
+                                up.getJobCountingHash().ifPresent(h -> countingHashes.put(gid, h));
 
 
 

@@ -29,6 +29,7 @@ import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +45,7 @@ public class CSIPredictor extends AbstractStructurePredictor {
     protected PredictionPerformance[] performances;
     protected volatile boolean initialized;
 
-    public CSIPredictor(PredictorType predictorType, RestAPI api) {
+    public CSIPredictor(PredictorType predictorType, WebAPI api) {
         super(predictorType, api);
         if (!UserDefineablePredictorType.CSI_FINGERID.contains(predictorType))
             throw new IllegalArgumentException("Illegal Predicortype for this object. CSI:FingerID positive and negative only.");

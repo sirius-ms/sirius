@@ -29,7 +29,7 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.BlobStorages;
-import de.unijena.bioinf.webapi.rest.RestAPI;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,44 +58,28 @@ public class WebWithCustomDatabase {
 
 
     protected final File directory;
-    protected final String restCacheDir;
+    protected final String webCacheDir;
     protected final String customDbDir;
     protected HashMap<String, ChemicalBlobDatabase<?>> customDatabases;
 
-    protected final RestAPI api;
+    protected final WebAPI<?> api;
     private VersionsInfo versionInfoCache = null;
 
-    public WebWithCustomDatabase(RestAPI api, File dir, String restCacheDir, String customDbDir) {
+    public WebWithCustomDatabase(WebAPI<?> api, File dir, String webCacheDir, String customDbDir) {
         this.api = api;
         this.directory = dir;
-        this.restCacheDir = restCacheDir;
+        this.webCacheDir = webCacheDir;
         this.customDbDir = customDbDir;
         this.customDatabases = new HashMap<>();
     }
-
 
     public void checkCache() throws IOException {
         if (isOutdated())
             destroyCache();
     }
 
-    protected VersionsInfo versionInfo() {
-        if (versionInfoCache == null)
-            versionInfoCache = api.getVersionInfo();
-        return versionInfoCache;
-    }
-
     public boolean isOutdated() {
-        final File f = new File(directory, "version");
-        if (f.exists()) {
-            try {
-                final List<String> content = Files.readAllLines(f.toPath(), StandardCharsets.UTF_8);
-                if (content.size() > 0 && !versionInfo().databaseOutdated(content.get(0))) return false;
-            } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            }
-        }
-        return true;
+        return !DBVersion.newLocalVersion(directory).isChemDbValid(api.getChemDbDate());
     }
 
     public FingerblastSearchEngine makeSearchEngine(SearchableDatabase db) {
@@ -108,7 +92,7 @@ public class WebWithCustomDatabase {
 
 
     public synchronized void destroyCache() throws IOException {
-        final File all = getRestDBCacheDir();
+        final File all = getWebDBCacheDir();
         if (all.exists()) {
             for (File f : all.listFiles()) {
                 Files.deleteIfExists(f.toPath());
@@ -121,7 +105,7 @@ public class WebWithCustomDatabase {
         }
 
         try (BufferedWriter bw = Files.newBufferedWriter(new File(directory, "version").toPath(), StandardCharsets.UTF_8)) {
-            bw.write(versionInfo().databaseDate);
+            bw.write(api.getChemDbDate());
         }
     }
 
@@ -149,7 +133,7 @@ public class WebWithCustomDatabase {
 
         final OptionalLong requestFilterOpt = extractFilterBits(dbs);
         if (requestFilterOpt.isPresent()) {
-            api.consumeRestDB(requestFilterOpt.getAsLong(), getRestDBCacheDir(), restDb -> {
+            api.consumeStructureDB(requestFilterOpt.getAsLong(), getWebDBCacheDir(), restDb -> {
                 candidates.addAll(restDb.lookupMolecularFormulas(ionMass, deviation, ionType));
             });
         }
@@ -180,7 +164,7 @@ public class WebWithCustomDatabase {
             final long requestFilter = extractFilterBits(dbs).orElse(-1);
             if (requestFilter >= 0 || includeRestAllDb) {
                 final long searchFilter = includeRestAllDb ? 0 : requestFilter;
-                result = api.applyRestDB(searchFilter, getRestDBCacheDir(), restDb -> new CandidateResult(
+                result = api.applyStructureDB(searchFilter, getWebDBCacheDir(), restDb -> new CandidateResult(
                         restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
             } else {
                 logger.warn("No filter for Rest DBs found bits in DB list: '" + dbs.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) + "'. Returning empty search list from REST DB");
@@ -442,8 +426,8 @@ public class WebWithCustomDatabase {
     }
 
     @NotNull
-    public File getRestDBCacheDir() {
-        return new File(directory, restCacheDir);
+    public File getWebDBCacheDir() {
+        return new File(directory, webCacheDir);
     }
 
     @NotNull
