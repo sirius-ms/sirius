@@ -75,8 +75,12 @@ public class JobBase {
         this.errorMessage = errorMessage;
     }
 
-    public JobTable getJobTable() {
+    public @NotNull JobTable getJobTable() {
         return jobTable;
+    }
+
+    public JobId getID() {
+        return new JobId(jobId,jobTable);
     }
 
     public Long getJobId() {

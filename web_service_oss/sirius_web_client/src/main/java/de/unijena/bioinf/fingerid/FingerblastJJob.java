@@ -27,6 +27,8 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
+import de.unijena.bioinf.ms.webapi.WebJJob;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -145,7 +147,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 // bayesnetScoring is null --> make a prepare job which computes the bayessian network (covTree) for the
                 // given molecular formula
                 blastJob = FingerblastSearchJJob.of(predictor, fingeridInput);
-                final CovtreeWebJJob covTreeJob = NetUtils.tryAndWait(() ->
+                WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob = NetUtils.tryAndWait(() ->
                                 predictor.csiWebAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType),
                         this::checkForInterruption);
                 blastJob.addRequiredJob(covTreeJob);

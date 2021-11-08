@@ -24,7 +24,7 @@ import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.OutdatedDBExeption;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
-import de.unijena.bioinf.webapi.rest.RestAPI;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 
 public class SearchableDatabases {
     //todo should be configurable
-    public static final String REST_CACHE_DIR = "rest-cache"; //chache directory for all rest dbs
+    public static final String WEB_CACHE_DIR = "web-cache"; //cache directory for all remote (web) dbs
     public static final String CUSTOM_DB_DIR = "custom";
 
     private SearchableDatabases() {
@@ -54,8 +54,8 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static File getRESTDatabaseCacheDirectory() {
-        return new File(getDatabaseDirectory(),REST_CACHE_DIR);
+    public static File getWebDatabaseCacheDirectory() {
+        return new File(getDatabaseDirectory(), WEB_CACHE_DIR);
     }
 
     public static File getDatabaseDirectory() {
@@ -132,8 +132,8 @@ public class SearchableDatabases {
         return loadCustomDatabases(up2date);
     }
 
-    public static WebWithCustomDatabase makeRestWithCustomDB(RestAPI webAPI) {
-        return new WebWithCustomDatabase(webAPI, getDatabaseDirectory(), REST_CACHE_DIR, CUSTOM_DB_DIR);
+    public static WebWithCustomDatabase makeWebWithCustomDB(WebAPI<?> webAPI) {
+        return new WebWithCustomDatabase(webAPI, getDatabaseDirectory(), WEB_CACHE_DIR, CUSTOM_DB_DIR);
     }
 
     @NotNull

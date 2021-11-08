@@ -44,6 +44,7 @@ import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -82,7 +83,11 @@ public class PropertyManager {
             PROPERTIES.addConfiguration(PERSISTENT_PROPERTIES, "PERSISTENT_PROPERTIES");
             PERSISTENT_PROPERTIES.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
             CHANGED_PROPERTIES = loadDefaultProperties();
-            Reflections.log.ifPresent(l -> LogManager.getLogManager().getLogger(l.getName()).setLevel(Level.SEVERE));
+            Reflections.log.ifPresent(l -> {
+                Logger logger = LogManager.getLogManager().getLogger(l.getName());
+                if (logger != null)
+                    logger.setLevel(Level.SEVERE);
+            });
             final Reflections reflections = new Reflections("de.unijena.bioinf.ms.defaults", new ResourcesScanner());
             DEFAULTS_LAYOUT = new PropertiesConfigurationLayout();
 
