@@ -113,6 +113,13 @@ public interface Compressible {
         return new ByteArrayInputStream(buffer);
     }
 
+    static void withCompression(@NotNull OutputStream toCompress, @NotNull Compression compression, @NotNull IOFunctions.IOConsumer<OutputStream> withCompressed) throws IOException {
+        try (OutputStream compressed = Compressible.compress(toCompress, compression)) {
+            withCompressed.accept(compressed);
+        }
+    }
+
+
     static OutputStream compress(@NotNull OutputStream out, @NotNull Compression compression) throws IOException {
         switch (compression) {
             case GZIP:

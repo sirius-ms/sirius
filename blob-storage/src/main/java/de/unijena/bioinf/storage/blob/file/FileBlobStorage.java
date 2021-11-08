@@ -22,6 +22,7 @@
 package de.unijena.bioinf.storage.blob.file;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
@@ -74,11 +75,15 @@ public class FileBlobStorage implements BlobStorage {
         return !Files.isRegularFile(root.resolve(path));
     }
 
-    @Override
-    public OutputStream writer(Path relative) throws IOException {
+    protected OutputStream writer(Path relative) throws IOException {
         @NotNull Path target = root.resolve(relative);
         Files.createDirectories(target.getParent());
         return Files.newOutputStream(target);
+    }
+
+    @Override
+    public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
+        withStream.accept(writer(relative));
     }
 
     @Override

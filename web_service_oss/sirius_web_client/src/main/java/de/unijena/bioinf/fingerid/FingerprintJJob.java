@@ -25,6 +25,7 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
+import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Executing {@link FingerprintPredictionJJob}s for a given set of
+ * Executing {@link WebJJob}s for a given set of
  * {@link IdentificationResult}s/{@link FingerIdResult}s from a given {@link Ms2Experiment}.
  *
  * This Job is just a Scheduler do wrap all predictions jobs of a single experiment into one single job.
@@ -97,7 +98,7 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
 
         logDebug("Submitting CSI:FingerID fingerprint prediction jobs.");
         final PredictorTypeAnnotation predictors = experiment.getAnnotationOrThrow(PredictorTypeAnnotation.class);
-        final Map<FingerprintPredictionJJob, FingerIdResult> predictionJobs = new LinkedHashMap<>(idResult.size());
+        final Map<WebJJob<FingerprintJobInput, ?, FingerprintResult, ?>, FingerIdResult> predictionJobs = new LinkedHashMap<>(idResult.size());
 
         checkForInterruption();
 
@@ -112,7 +113,8 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
         checkForInterruption();
 
         logDebug("CSI:FingerID fingerprint predictions DONE!");
-        predictionJobs.forEach(FingerprintPredictionJJob::takeAndAnnotateResult);
+        predictionJobs.forEach((k,v) -> v.takeAndAnnotate(k));
+
         //in linked maps values() collection is not a set -> so we have to make that distinct
         return predictionJobs.values().stream().distinct().collect(Collectors.toList());
     }

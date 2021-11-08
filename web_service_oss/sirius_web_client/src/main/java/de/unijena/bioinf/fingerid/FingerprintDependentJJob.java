@@ -24,8 +24,10 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
+import de.unijena.bioinf.jjobs.InputJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 
 public abstract class FingerprintDependentJJob<R extends DataAnnotation> extends BasicDependentMasterJJob<R> {
     protected ProbabilityFingerprint fp;
@@ -60,12 +62,15 @@ public abstract class FingerprintDependentJJob<R extends DataAnnotation> extends
     @Override
     public synchronized void handleFinishedRequiredJob(JJob required) {
         if (fp == null) {
-            if (required instanceof FingerprintPredictionJJob) {
-                FingerprintPredictionJJob job = ((FingerprintPredictionJJob) required);
-                if (job.input.ftree != null && job.result() != null) {
-                    fp = job.result().fingerprint;
-                    ftree = job.input.ftree;
-                    formula = job.input.ftree.getRoot().getFormula();
+            if (required.result() instanceof FingerprintResult) {
+                fp = ((FingerprintResult) required.result()).fingerprint;
+                if (required instanceof InputJJob) {
+                    InputJJob<FingerprintJobInput, FingerprintResult> job = ((InputJJob) required);
+                    if (job.getInput().ftree != null && job.result() != null) {
+                        fp = job.result().fingerprint;
+                        ftree = job.getInput().ftree;
+                        formula = job.getInput().ftree.getRoot().getFormula();
+                    }
                 }
             }
         }

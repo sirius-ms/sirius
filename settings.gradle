@@ -53,14 +53,11 @@ include ':chemical_db_oss:chemdb_amqp_oss'
 include ':error_reporter_oss'
 include ':ml_utils'
 
-//include ':web_service_oss:web_core_oss'
-//include ':web_service_oss:rest_client_oss'
-//include ':web_service_oss:client_auth_oss'
-
 include ':combinatorial_fragmenter'
 include ':agents'
 include ':rabbitmq-support'
 include ':blob-storage'
+include ':model_store_oss'
 
 include ':confidence_score_predict_oss'
 include ':canopus_predict_oss'
