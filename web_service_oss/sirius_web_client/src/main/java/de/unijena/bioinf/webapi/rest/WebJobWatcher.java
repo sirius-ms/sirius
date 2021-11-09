@@ -121,15 +121,13 @@ final class WebJobWatcher { //todo rename to RestJobWatcher
                                 final RestWebJJob<?, ?, ?> job;
                                 orphanJobs.remove(gid);
                                 job = waitingJobs.get(gid);
-                                up.getJobCountingHash().ifPresent(h -> countingHashes.put(gid, h));
-
-
 
                                 if (job == null) {
                                     logDebug("Job \"" + up.getGlobalId().toString() + "\" was found on the server but is unknown locally. Trying to match it again later!");
                                     return false;
                                 }
 
+                                job.getJobCountingHash().ifPresent(h -> countingHashes.put(gid, h));
                                 return job.update(up).isFinished();
                             } catch (Exception e) {
                                 logWarn("Could not update Job", e);
