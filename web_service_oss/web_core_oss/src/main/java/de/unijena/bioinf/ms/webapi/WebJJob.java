@@ -49,7 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.OptionalInt;
+import java.util.Optional;
 
 public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R> {
     public static long WEB_API_JOB_TIME_OUT = PropertyManager.getLong("de.unijena.bioinf.fingerid.web.job.timeout", 1000L * 60L * 60L); //default 1h
@@ -62,6 +62,8 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R
     protected volatile long submissionTime;
     protected volatile String errorMessage;
 
+    @Nullable
+    public Integer countingHash;
 
     public WebJJob(@NotNull ID jobId, @NotNull IOFunctions.IOFunction<O, R> outputConverter) {
         this(jobId, null, outputConverter);
@@ -144,5 +146,13 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I,R
 
     protected synchronized void setServerState(de.unijena.bioinf.ms.rest.model.JobState state) {
         this.serverState = state;
+    }
+
+    public void setCountingHash(Integer countingHash) {
+        this.countingHash = countingHash;
+    }
+
+    public Optional<Integer> getJobCountingHash(){
+        return Optional.ofNullable(countingHash);
     }
 }

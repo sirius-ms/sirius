@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
@@ -45,10 +46,13 @@ import de.unijena.bioinf.ms.amqp.client.AmqpClients;
 import de.unijena.bioinf.ms.amqp.client.jobs.AmqpWebJJob;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
+import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.stores.model.CanopusClientDataStore;
@@ -64,6 +68,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends AbstractWebAPI<WebChemDB> {
@@ -91,6 +98,28 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     @Override
     public boolean deleteAccount() {
         return false; //todo implement
+    }
+
+    @Override
+    public void acceptTermsAndRefreshToken() throws LoginException {
+//todo implement
+    }
+
+    @Override
+    public void changeHost(URI host) {
+//todo implement
+    }
+
+    @Override
+    public @Nullable List<Term> getTerms() {
+        //todo implement
+        return null;
+    }
+
+    @Override
+    public LicenseInfo getLicenseInfo() throws IOException {
+        //todo implement
+        return null;
     }
 
     @Override
@@ -134,6 +163,18 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
+    public int getCountedJobs(boolean byMonth) throws IOException {
+        //todo implement
+        return 0;
+    }
+
+    @Override
+    public int getCountedJobs(@NotNull Date monthAndYear, boolean byMonth) throws IOException {
+        //todo implement
+        return 0;
+    }
+
+    @Override
     public void consumeStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOConsumer<WebChemDB> doWithClient) throws IOException {
         doWithClient.accept(webChemDB);
     }
@@ -144,11 +185,13 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    public AmqpWebJJob<CanopusJobInput, ?, CanopusResult> submitCanopusJob(CanopusJobInput input) throws IOException {
+    public AmqpWebJJob<CanopusJobInput, ?, CanopusResult> submitCanopusJob(CanopusJobInput input, @Nullable Integer countingHash) throws IOException {
+        System.out.println("TODO: handle counting hash when using AMQP protocol!!!!!!!!!!!!!!!!!!");
         final MaskedFingerprintVersion version = getClassifierMaskedFingerprintVersion(input.predictor.toCharge());
-        return amqpClient.publish(AmqpClients.jobRoutePrefix("canopus", input.predictor.isPositive()),
+        AmqpWebJJob<CanopusJobInput, CanopusJobOutput, CanopusResult> job = amqpClient.publish(AmqpClients.jobRoutePrefix("canopus", input.predictor.isPositive()),
                 input, (id) -> new AmqpWebJJob<>(id, input, new CanopusWebResultConverter(version, MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()))));
-
+        job.setCountingHash(countingHash);
+        return job;
     }
 
     @Override

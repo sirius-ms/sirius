@@ -31,10 +31,7 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.canopus.CanopusResult;
-import de.unijena.bioinf.chemdb.DBVersion;
 import de.unijena.bioinf.chemdb.RESTDatabase;
-import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.CanopusWebResultConverter;
 import de.unijena.bioinf.fingerid.CovtreeWebResultConverter;
@@ -43,7 +40,6 @@ import de.unijena.bioinf.fingerid.FingerprintWebResultConverter;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
@@ -61,9 +57,9 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
+import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
-import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
@@ -89,7 +85,6 @@ import java.util.*;
 @ThreadSafe
 public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     private static final Logger LOG = LoggerFactory.getLogger(RestAPI.class);
-    public static long WEB_API_JOB_TIME_OUT = PropertyManager.getLong("de.unijena.bioinf.fingerid.web.job.timeout", 1000L * 60L * 60L); //default 1h
 
     private final WebJobWatcher jobWatcher = new WebJobWatcher(this);
 
@@ -135,6 +130,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         }
     }
 
+    @Override
     public void changeHost(URI host){
         this.serverInfoClient.setServerUrl(host);
         this.jobsClient.setServerUrl(host);
@@ -144,6 +140,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     }
 
 
+    @Override
     public boolean deleteAccount(){
         return ProxyManager.doWithClient(jobsClient::deleteAccount);
     }
@@ -155,6 +152,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         super.shutdown();
     }
 
+    @Override
     public void acceptTermsAndRefreshToken() throws LoginException {
         if (ProxyManager.doWithClient(jobsClient::acceptTerms));
             authService.refreshIfNeeded(true);
@@ -173,18 +171,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         return v == null ? null : v.databaseDate;
     }
 
-    public static final int MAX_STATE = 10;
-
-    //9 Authentication Server error
-    //8 no tos and/or pp
-    //7 no permission
-    //6 csi web api for this version is not reachable because it is outdated
-    //5 csi web api for this version is not reachable
-    //4 csi server not reachable
-    //3 no connection to bioinf web site
-    //2 no connection to uni jena
-    //1 no connection to internet (google/microsoft/ubuntu?)
-    //0 everything is fine
+    @Override
     public int checkConnection() {
         return ProxyManager.doWithClient(client -> {
             try {
@@ -272,10 +259,13 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     //endregion
 
     //region Canopus
-    public WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(CanopusJobInput input) throws IOException {
+    @Override
+    public WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(CanopusJobInput input, @Nullable Integer countingHash) throws IOException {
         JobUpdate<CanopusJobOutput> jobUpdate = ProxyManager.applyClient(client -> canopusClient.postJobs(input, client));
         final MaskedFingerprintVersion version = getClassifierMaskedFingerprintVersion(input.predictor.toCharge());
-        return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getID(), input, new CanopusWebResultConverter(version, MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()))));
+        RestWebJJob<CanopusJobInput, CanopusJobOutput, CanopusResult> job = new RestWebJJob<>(jobUpdate.getID(), input, new CanopusWebResultConverter(version, MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get())));
+        job.setCountingHash(countingHash);
+        return jobWatcher.watchJob(job);
     }
 
     @Override
