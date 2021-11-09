@@ -24,33 +24,19 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
-import java.util.OptionalInt;
-
 @JsonDeserialize(using = JobUpdateDeserializer.class)
 public class JobUpdate<D> extends JobBase  implements de.unijena.bioinf.ms.webapi.JobUpdate<D, JobId> {
     @Nullable
     public final D data;
-    @Nullable
-    public final Integer countingHash;
 
     public JobUpdate(JobBase base, @Nullable D data) {
-        this(base, data, null);
-    }
-    public JobUpdate(JobBase base, @Nullable D data, @Nullable Integer countingHash) {
         super(base.jobId, base.state, base.jobTable, base.errorMessage);
         this.data = data;
-        this.countingHash = countingHash;
     }
 
     public JobUpdate(Long jobId, JobState state, @NotNull JobTable table, String errorMessage, @Nullable D data) {
-        this(jobId, state, table, errorMessage, data, null);
-
-    }
-    public JobUpdate(Long jobId, JobState state, @NotNull JobTable table, String errorMessage, @Nullable D data, @Nullable Integer countingHash) {
         super(jobId, state, table, errorMessage);
         this.data = data;
-        this.countingHash = countingHash;
     }
 
     public JobUpdate(Long id, JobState state, @NotNull JobTable table, @Nullable D data) {
@@ -73,9 +59,5 @@ public class JobUpdate<D> extends JobBase  implements de.unijena.bioinf.ms.webap
 
     public JobId getGlobalId() {
         return new JobId(jobId, jobTable);
-    }
-
-    public Optional<Integer> getJobCountingHash(){
-        return Optional.ofNullable(countingHash);
     }
 }

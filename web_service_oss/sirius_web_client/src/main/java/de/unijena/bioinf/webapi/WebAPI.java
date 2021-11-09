@@ -30,6 +30,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
@@ -46,6 +47,8 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
+import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
@@ -57,7 +60,10 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.util.Date;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -84,18 +90,34 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     boolean deleteAccount();
 
+    void acceptTermsAndRefreshToken() throws LoginException;
+
+    void changeHost(URI host);
 
     //region ServerInfo
 
-    //6 csi web api for this version is not reachable because it is outdated
-    //5 csi web api for this version is not reachable
-    //4 csi server not reachable
-    //3 no connection to bioinf web site
-    //2 no connection to uni jena
-    //1 no connection to internet (google/microft/ubuntu????)
-    //0 everything is fine
-    int MAX_STATE = 6;
+    @Nullable List<Term> getTerms();
 
+    LicenseInfo getLicenseInfo() throws IOException;
+
+    int MAX_STATE = 10;
+
+    /**
+     *
+     *
+     *  9 Authentication Server error
+     *  8 no tos and/or pp
+     *  7 no permission
+     *  6 csi web api for this version is not reachable because it is outdated
+     *  5 csi web api for this version is not reachable
+     *  4 csi server not reachable
+     *  3 no connection to Doamin e.g. www.csi-fingerid.uni-jena.de
+     *  2 no connection to Domain Provider e.g. uni-jena.de
+     *  1 no connection to internet (google/microsoft/ubuntu?)
+     *  0 everything is fine
+     *
+     * @return version and connectivity information of the webserver
+     */
     @Nullable VersionsInfo getVersionInfo();
 
     int checkConnection();
@@ -107,6 +129,10 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     //region Jobs
     void deleteClientAndJobs() throws IOException;
+
+    int getCountedJobs(boolean byMonth) throws IOException;
+
+    int getCountedJobs(@NotNull Date monthAndYear, boolean byMonth) throws IOException;
     //endregion
 
     //region ChemDB
@@ -121,16 +147,16 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     //endregion
 
     //region Canopus
-    default WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint) throws IOException {
-        return submitCanopusJob(formula, fingerprint, (charge > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE));
+    default WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(MolecularFormula formula, int charge, ProbabilityFingerprint fingerprint, @Nullable Integer countingHash) throws IOException {
+        return submitCanopusJob(formula, fingerprint, (charge > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_NEGATIVE), countingHash);
     }
 
-    default WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type) throws IOException {
-        return submitCanopusJob(new CanopusJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary(), type));
+    default WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(MolecularFormula formula, ProbabilityFingerprint fingerprint, PredictorType type, @Nullable Integer countingHash) throws IOException {
+        return submitCanopusJob(new CanopusJobInput(formula.toString(), fingerprint.toProbabilityArrayBinary(), type), countingHash);
     }
 
 
-    WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(CanopusJobInput input) throws IOException;
+    WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(CanopusJobInput input, @Nullable Integer countingHash) throws IOException;
 
     CanopusData getCanopusdData(@NotNull PredictorType predictorType) throws IOException;
     //endregion
