@@ -33,8 +33,8 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
-import de.unijena.bioinf.webapi.ProxyManager;
 import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.webapi.rest.ProxyManager;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -167,8 +167,6 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 } catch (IOException e) {
                     throw new RuntimeException("Error when requesting license information.", e);
                 }
-
-
         }
 
         private void showProfile(@Nullable DecodedJWT decoded) {
