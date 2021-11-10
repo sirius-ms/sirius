@@ -26,7 +26,6 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
