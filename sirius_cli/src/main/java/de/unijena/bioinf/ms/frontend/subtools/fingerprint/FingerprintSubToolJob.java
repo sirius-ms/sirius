@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.frontend.subtools.fingerprint;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
@@ -36,7 +37,6 @@ import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
