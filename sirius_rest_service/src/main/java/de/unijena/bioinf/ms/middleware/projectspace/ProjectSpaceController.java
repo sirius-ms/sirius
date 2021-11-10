@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.middleware.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
