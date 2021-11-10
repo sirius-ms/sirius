@@ -22,6 +22,7 @@ package de.unijena.bioinf.storage.blob.gcs;
 
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.StorageException;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,13 +101,17 @@ public class GCSBlobStorage implements BlobStorage {
     }
 
 
-    @Override
-    public OutputStream writer(Path relative) throws IOException {
-        try {
+    protected OutputStream writer(Path relative) throws IOException {
+        try  {
             return Channels.newOutputStream(bucket.create(relative.toString(), (byte[]) null).writer());
         } catch (StorageException e) {
             throw new IOException(e);
         }
+    }
+
+    @Override
+    public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
+        withStream.accept(writer(relative));
     }
 
     @Override

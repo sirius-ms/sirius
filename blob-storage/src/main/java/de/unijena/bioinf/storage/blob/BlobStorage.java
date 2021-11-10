@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.storage.blob;
 
+import java.io.Closeable;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,12 @@ import java.util.function.Function;
  * Super simple object reading/writing API
  */
 
-public interface BlobStorage {
+public interface BlobStorage extends Closeable, AutoCloseable {
+
+    @Override
+    default void close() throws IOException {
+
+    }
 
     default Charset getCharset() {
         return StandardCharsets.UTF_8;
@@ -51,9 +57,13 @@ public interface BlobStorage {
 
     /**
      * returns a writer for the given path
-     * @param relative elative path from storage root
+     *
+     * @param relative   relative path from storage root
+     * @param withStream consume OutputStream to write data
      */
-    OutputStream writer(Path relative) throws IOException;
+
+    void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException;
+
 
     /**
      * Returns the raw unmodified byte stream from the store.
@@ -62,7 +72,6 @@ public interface BlobStorage {
      * @return raw unmodified byte stream
      */
     InputStream reader(Path relative) throws IOException;
-
 
     /**
      * Returns the Tag on storage/bucket level for the given key
