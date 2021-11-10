@@ -23,8 +23,8 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
+import de.unijena.bioinf.projectspace.CompoundContainer;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 
 import java.util.Optional;
 
