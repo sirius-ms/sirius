@@ -24,10 +24,9 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.json.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by martin on 27.06.18.
@@ -170,5 +169,15 @@ public class TrainedSVM {
         scales = new SVMScales(medians, devs, mins, maxs);
     }
 
+    // todo change json unmarshalling to jackson
+    public static Map<String, TrainedSVM> readSVMs(BufferedReader br){
+        final Map<String, TrainedSVM> svmMap = new HashMap<>();
+        final JsonReader jsonReader = Json.createReader(br);
+        JsonObject svms = jsonReader.readObject();
+        svms.keySet().forEach(key -> {
+            svmMap.put(key, new TrainedSVM(svms.getJsonObject(key)));
+        });
+        return svmMap;
 
+    }
 }
