@@ -73,6 +73,10 @@ public class MinIoS3BlobStorage implements BlobStorage {
     }
 
     @Override
+    public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
+        withStream.accept(writer(relative));
+    }
+
     public OutputStream writer(Path relative) throws IOException {
         return BackgroundPipedOutputStream.createAndRead((in) -> {
             try {
