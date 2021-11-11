@@ -33,6 +33,14 @@ import java.util.Optional;
 
 public interface FingerIdDataStore extends FingerIdClientDataStore {
     /**
+     * Get fingerid-fast.data file for the given predictor
+     *
+     * @param type Positive or negative predictor type
+     * @return fingerid-fast.data in binary format
+     */
+    Optional<InputStream> getFingerIdFastData(PredictorType type) throws IOException;
+
+    /**
      * Get fingerid.data file for the given predictor
      *
      * @param type Positive or negative predictor type

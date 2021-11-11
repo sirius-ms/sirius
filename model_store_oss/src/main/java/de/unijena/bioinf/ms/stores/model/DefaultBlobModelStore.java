@@ -59,6 +59,11 @@ public class DefaultBlobModelStore<Storage extends BlobStorage> extends Abstract
     }
 
     @Override
+    public Optional<InputStream> getFingerIdFastData(PredictorType type) throws IOException {
+        return getResource(Path.of("fingerid-fast.data"), type);
+    }
+
+    @Override
     public Optional<InputStream> getFingerIdClientData(PredictorType type) throws IOException {
         return getResource(Path.of("fingeridClientData.tsv"), type);
     }
