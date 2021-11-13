@@ -118,7 +118,7 @@ class TableSelectionCache {
 		TableSelection best;
 		try {
 			final SearchResult result = searchForSelection(selection.bitmask);
-			if (result.selection.isSubsetOf(selection)) {
+			if (result.selection!=null && result.selection.isSubsetOf(selection)) {
 				result.selection.replace(selection);
 				return result.selection;
 			} else {
