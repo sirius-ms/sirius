@@ -14,6 +14,6 @@ dependencies() {
         testCompile  group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
     }
 
-
+    compile "com.gurobi:gurobi-jar:$gurobi_version"
 }
 
