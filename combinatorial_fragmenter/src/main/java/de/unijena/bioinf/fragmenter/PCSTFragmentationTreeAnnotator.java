@@ -18,6 +18,7 @@ public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnn
     private int[] optSubtree;
     private HashMap<CombinatorialEdge, Integer> edgeIndices;
     private CombinatorialGraph graph;
+    private boolean isInitialized;
 
 
     public PCSTFragmentationTreeAnnotator(FTree fTree, MolecularGraph molecule, CombinatorialFragmenterScoring scoring, CombinatorialFragmenter.Callback2 furtherFragmentation){
@@ -25,6 +26,24 @@ public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnn
         this.furtherFragmentation = furtherFragmentation;
         this.isComputed = false;
         this.score = Double.NEGATIVE_INFINITY;
+        this.isInitialized = false;
+    }
+
+    public void initialize(){
+        // 1.: Creation of the combinatorial fragmentation graph:
+        CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, this.scoring);
+        this.graph = fragmenter.createCombinatorialFragmentationGraph(this.furtherFragmentation);
+
+        // 2.: Compute a hash map which assigns each edge in the graph an index.
+        this.edgeIndices = new HashMap<>();
+        int idx = 0;
+        for(CombinatorialNode node : this.graph.getNodes()){
+            for(CombinatorialEdge edge : node.incomingEdges){
+                this.edgeIndices.put(edge, idx);
+                idx++;
+            }
+        }
+        this.isInitialized = true;
     }
 
     /* Now: we want to compute the most profitable rooted subtree in this graph.
@@ -42,31 +61,21 @@ public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnn
 
     @Override
     public HashMap<Fragment, ArrayList<CombinatorialFragment>> computeMapping() throws GRBException{
-        // 1.: Creation of the combinatorial fragmentation graph:
-        CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, this.scoring);
-        this.graph = fragmenter.createCombinatorialFragmentationGraph(this.furtherFragmentation);
+        if(this.isInitialized) {
+            // During the initialisation the input molecule was fragmented and a CombinatorialFragmentationGraph was
+            // constructed. Also a mapping was created which assigns each edge of this graph a specific position
+            // in the variable array.
+            // 1.: Construct a ILP solver to solve the PCSTP:
+            this.optSubtree = this.createAndSolveILP();
 
-        // 2.: Computing the most profitable subtree in this graph using an ILP solver.
-        // For each edge there exists a binary variable which tells if the edge is part of the subtree.
+            // 2..: Calculate the mapping with the computed solution of the ILP.
+            this.mapping = this.calculateMapping();
 
-        // 2.1.: Compute a hash map which maps each edge of the graph to its index in the variable array.
-        this.edgeIndices = new HashMap<>();
-        int idx = 0;
-        for(CombinatorialNode node : this.graph.getNodes()){
-            for(CombinatorialEdge edge : node.incomingEdges){
-                this.edgeIndices.put(edge, idx);
-                idx++;
-            }
+            this.isComputed = true;
+            return this.mapping;
+        }else{
+            throw new IllegalStateException("Before calling this method, this annotator has to be initialised first.");
         }
-        // idx is now equal to the number of edges - instead we use edge.Indices.keys() for readability
-        // 2.2: Construct a ILP solver:
-        this.optSubtree = this.createAndSolveILP();
-
-        // 3.: Calculate the mapping with the computed solution of the ILP.
-        this.mapping = this.calculateMapping();
-
-        this.isComputed = true;
-        return this.mapping;
     }
 
     private int[] createAndSolveILP() throws GRBException{
@@ -170,7 +179,7 @@ public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnn
     }
 
     public HashMap<Fragment, ArrayList<CombinatorialFragment>> getMapping(){
-        if(isComputed){
+        if(this.isComputed){
             return this.mapping;
         }else{
             return null;
