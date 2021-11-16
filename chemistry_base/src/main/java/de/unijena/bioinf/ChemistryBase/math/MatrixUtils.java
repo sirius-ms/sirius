@@ -348,9 +348,49 @@ public class MatrixUtils {
         }
         return submatrix;
     }
+    public static double[][] selectColumns(double[][] matrix, int[] colIndizes) {
+        return Arrays.stream(matrix).map(x->MatrixUtils.selectGrid(x, colIndizes)).toArray(double[][]::new);
+    }
 
     public static double[][] selectSubmatrix(double[][] matrix, int[] rowIndizes, int[] colIndizes) {
         final double[][] submatrix = new double[rowIndizes.length][colIndizes.length];
+        int i=0,j=0;
+        for (int rowIndex : rowIndizes) {
+            j=0;
+            for (int colIndex : colIndizes) {
+                submatrix[i][j++] = matrix[rowIndex][colIndex];
+            }
+            ++i;
+        }
+        return submatrix;
+    }
+
+
+    public static float[][] selectGrid(float[][] matrix, int[] indizes) {
+        return selectSubmatrix(matrix,indizes,indizes);
+    }
+
+    public static float[] selectGrid(float[] vector, int[] indizes) {
+        final float[] vec = new float[indizes.length];
+        int k=0;
+        for (int index : indizes) vec[k++] = vector[index];
+        return vec;
+    }
+
+    public static float[][] selectRows(float[][] matrix, int[] rowIndizes) {
+        final float[][] submatrix = new float[rowIndizes.length][];
+        int k=0;
+        for (int rowIndex : rowIndizes) {
+            submatrix[k++] = matrix[rowIndex];
+        }
+        return submatrix;
+    }
+    public static float[][] selectColumns(float[][] matrix, int[] colIndizes) {
+        return Arrays.stream(matrix).map(x->MatrixUtils.selectGrid(x, colIndizes)).toArray(float[][]::new);
+    }
+
+    public static float[][] selectSubmatrix(float[][] matrix, int[] rowIndizes, int[] colIndizes) {
+        final float[][] submatrix = new float[rowIndizes.length][colIndizes.length];
         int i=0,j=0;
         for (int rowIndex : rowIndizes) {
             j=0;
@@ -744,6 +784,27 @@ public class MatrixUtils {
         for (float[] m : matrix) count += m.length;
         final float[] values = new float[count];
         return flatMatrix(matrix, values);
+    }
+
+    public static int[] flatTensor(int[][][] tensor) {
+        int count = 0;
+        for (int[][] m : tensor) {
+            for (int [] n : m) {
+                count += n.length;
+            }
+        }
+        final int[] values = new int[count];
+        return flatTensor(tensor, values);
+    }
+    public static int[] flatTensor(int[][][] tensor, int[] target) {
+        int offset=0;
+        for (int[][] submatrix : tensor) {
+            for (int[] subvec : submatrix) {
+                System.arraycopy(subvec, 0, target, offset, subvec.length);
+                offset += subvec.length;
+            }
+        }
+        return target;
     }
 
     public static boolean[][] unflatVector(boolean[] vector, int rows, int cols) {
