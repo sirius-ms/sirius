@@ -113,6 +113,7 @@ public class TableSelection implements Cloneable {
     }
 
     public boolean isSubsetOf(TableSelection superset) {
+        if (superset.size()<entries.length) return false;
         for (int k=0; k < entries.length; ++k) {
             if (!superset.get(k).equals(entries[k])) return false;
         }
