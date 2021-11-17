@@ -34,4 +34,11 @@ public interface CanopusDataStore extends CanopusClientDataStore {
      * @return canopus.data in binary format
      */
     Optional<InputStream> getCanopusData(PredictorType type) throws IOException;
+
+    /**
+     * Get canopus-fast.data file for the given predictor
+     * @param type Positive or negative predictor type
+     * @return canopus-fast.data in binary format
+     */
+    Optional<InputStream> getCanopusFastData(PredictorType type) throws IOException;
 }
