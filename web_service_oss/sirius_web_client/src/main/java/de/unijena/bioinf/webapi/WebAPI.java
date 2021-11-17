@@ -41,8 +41,9 @@ import de.unijena.bioinf.fingerid.StructurePredictor;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
@@ -158,7 +159,9 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     WebJJob<CanopusJobInput, ?, CanopusResult, ?> submitCanopusJob(CanopusJobInput input, @Nullable Integer countingHash) throws IOException;
 
-    CanopusData getCanopusdData(@NotNull PredictorType predictorType) throws IOException;
+    CanopusCfData getCanopusCfData(@NotNull PredictorType predictorType) throws IOException;
+
+    CanopusNpcData getCanopusNpcData(@NotNull PredictorType predictorType) throws IOException;
     //endregion
 
     //region CSI:FingerID
@@ -224,7 +227,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
      * @throws IOException if connection error happens
      */
     default MaskedFingerprintVersion getClassifierMaskedFingerprintVersion(final int charge) throws IOException {
-        return getCanopusdData(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge)).getFingerprintVersion();
+        return getCanopusCfData(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(charge)).getFingerprintVersion();
     }
 
     /**

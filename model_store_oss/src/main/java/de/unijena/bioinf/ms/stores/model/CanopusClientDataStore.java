@@ -30,9 +30,16 @@ import java.util.Optional;
 public interface CanopusClientDataStore extends Compressible {
 
     /**
-     * Get CANOPUS client data aka statistics.tsv for the given predictor
+     * Get CANOPUS ClassyFire client data (fingerprint definition/version) for the given predictor
      * @param type Positive or negative predictor type
-     * @return CANOPUS client data is tsv format
+     * @return CANOPUS ClassyFire client data in tsv format
      */
-    Optional<InputStream> getCanopusClientData(PredictorType type) throws IOException;
+    Optional<InputStream> getCanopusCfClientData(PredictorType type) throws IOException;
+    /**
+     * Get CANOPUS NPC client data (fingerprint definition/version) for the given predictor
+     * @param type Positive or negative predictor type
+     * @return CANOPUS NPC client data in tsv format
+     */
+    Optional<InputStream> getCanopusNpcClientData(PredictorType type) throws IOException;
+
 }

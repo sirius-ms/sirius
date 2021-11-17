@@ -26,9 +26,10 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -38,6 +39,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -48,12 +50,20 @@ public class CanopusClient extends AbstractClient {
         super(serverUrl, requestDecorator);
     }
 
-    public CanopusData getCanopusData(PredictorType predictorType, CloseableHttpClient client) throws IOException {
+    public CanopusCfData getCfData(PredictorType predictorType, CloseableHttpClient client) throws IOException {
+        return executeDataRequest(predictorType, client, "/canopus/cf-data", CanopusCfData::read);
+    }
+
+    public CanopusNpcData getNpcData(PredictorType predictorType, CloseableHttpClient client) throws IOException {
+        return executeDataRequest(predictorType, client, "/canopus/npc-data", CanopusNpcData::read);
+    }
+
+    private <T> T executeDataRequest(PredictorType predictorType, CloseableHttpClient client, String path, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
         return execute(client,
-                () -> new HttpGet(buildVersionSpecificWebapiURI("/canopus/data")
+                () -> new HttpGet(buildVersionSpecificWebapiURI(path)
                         .setParameter("predictor", predictorType.toBitsAsString())
                         .build()),
-                CanopusData::read
+                respHandling
         );
     }
 

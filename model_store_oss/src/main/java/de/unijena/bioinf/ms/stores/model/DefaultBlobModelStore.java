@@ -49,8 +49,18 @@ public class DefaultBlobModelStore<Storage extends BlobStorage> extends Abstract
     }
 
     @Override
-    public Optional<InputStream> getCanopusClientData(PredictorType type) throws IOException {
-        return getResource(Path.of("canopusClientData.tsv"), type);
+    public Optional<InputStream> getCanopusFastData(PredictorType type) throws IOException {
+        return getResource(Path.of("canopus-fast.data"), type);
+    }
+
+    @Override
+    public Optional<InputStream> getCanopusCfClientData(PredictorType type) throws IOException {
+        return getResource(Path.of("canopusCfClientData.tsv"), type);
+    }
+
+    @Override
+    public Optional<InputStream> getCanopusNpcClientData(PredictorType type) throws IOException {
+        return getResource(Path.of("canopusNpcClientData.tsv"), type);
     }
 
     @Override

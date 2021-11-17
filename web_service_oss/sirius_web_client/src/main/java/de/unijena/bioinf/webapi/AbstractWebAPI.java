@@ -25,7 +25,8 @@ import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.StructurePredictor;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,17 +74,28 @@ public abstract class AbstractWebAPI<D extends AbstractChemicalDatabase> impleme
     protected abstract FingerIdData getFingerIdDataUncached(@NotNull PredictorType predictorType) throws IOException;
 
 
+    private final EnumMap<PredictorType, CanopusCfData> cfData = new EnumMap<>(PredictorType.class);
 
-    private final EnumMap<PredictorType, CanopusData> canopusData = new EnumMap<>(PredictorType.class);
-
-    public final CanopusData getCanopusdData(@NotNull PredictorType predictorType) throws IOException {
-        synchronized (canopusData) {
-            if (!canopusData.containsKey(predictorType))
-                canopusData.put(predictorType, getCanopusDataUncached(predictorType));
+    public final CanopusCfData getCanopusCfData(@NotNull PredictorType predictorType) throws IOException {
+        synchronized (cfData) {
+            if (!cfData.containsKey(predictorType))
+                cfData.put(predictorType, getCanopusCfDataUncached(predictorType));
         }
-        return canopusData.get(predictorType);
+        return cfData.get(predictorType);
     }
 
-    protected abstract CanopusData getCanopusDataUncached(@NotNull PredictorType predictorType) throws IOException;
+    protected abstract CanopusCfData getCanopusCfDataUncached(@NotNull PredictorType predictorType) throws IOException;
+
+    private final EnumMap<PredictorType, CanopusNpcData> npcData = new EnumMap<>(PredictorType.class);
+
+    public final CanopusNpcData getCanopusNpcData(@NotNull PredictorType predictorType) throws IOException {
+        synchronized (npcData) {
+            if (!npcData.containsKey(predictorType))
+                npcData.put(predictorType, getCanopusNpcDataUncached(predictorType));
+        }
+        return npcData.get(predictorType);
+    }
+
+    protected abstract CanopusNpcData getCanopusNpcDataUncached(@NotNull PredictorType predictorType) throws IOException;
 
 }

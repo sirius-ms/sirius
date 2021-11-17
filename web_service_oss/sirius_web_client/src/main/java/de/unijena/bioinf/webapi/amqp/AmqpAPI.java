@@ -44,9 +44,10 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.amqp.client.AmqpClient;
 import de.unijena.bioinf.ms.amqp.client.AmqpClients;
 import de.unijena.bioinf.ms.amqp.client.jobs.AmqpWebJJob;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
@@ -195,10 +196,18 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    protected CanopusData getCanopusDataUncached(@NotNull PredictorType predictorType) throws IOException {
-        try (BufferedReader r = new BufferedReader(new InputStreamReader(canopusModels.getCanopusClientData(predictorType)
-                .orElseThrow(() -> new IOException("Error when fetching Canopus model Data"))))) {
-            return CanopusData.read(r);
+    protected CanopusCfData getCanopusCfDataUncached(@NotNull PredictorType predictorType) throws IOException {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(canopusModels.getCanopusCfClientData(predictorType)
+                .orElseThrow(() -> new IOException("Error when fetching Canopus ClassyFire model Data"))))) {
+            return CanopusCfData.read(r);
+        }
+    }
+
+    @Override
+    protected CanopusNpcData getCanopusNpcDataUncached(@NotNull PredictorType predictorType) throws IOException {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(canopusModels.getCanopusNpcClientData(predictorType)
+                .orElseThrow(() -> new IOException("Error when fetching Canopus ClassyFire model Data"))))) {
+            return CanopusNpcData.read(r);
         }
     }
 

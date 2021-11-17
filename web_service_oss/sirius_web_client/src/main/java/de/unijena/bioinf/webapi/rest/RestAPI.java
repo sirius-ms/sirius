@@ -49,9 +49,10 @@ import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -269,8 +270,13 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     }
 
     @Override
-    protected CanopusData getCanopusDataUncached(@NotNull PredictorType predictorType) throws IOException {
-        return ProxyManager.applyClient(client -> canopusClient.getCanopusData(predictorType, client));
+    protected CanopusCfData getCanopusCfDataUncached(@NotNull PredictorType predictorType) throws IOException {
+        return ProxyManager.applyClient(client -> canopusClient.getCfData(predictorType, client));
+    }
+
+    @Override
+    protected CanopusNpcData getCanopusNpcDataUncached(@NotNull PredictorType predictorType) throws IOException {
+        return ProxyManager.applyClient(client -> canopusClient.getNpcData(predictorType, client));
     }
     //endregion
 
