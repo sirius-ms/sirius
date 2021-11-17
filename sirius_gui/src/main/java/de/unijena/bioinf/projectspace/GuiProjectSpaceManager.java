@@ -34,7 +34,8 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
+import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
+import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -239,8 +240,10 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                 //remove Fingerprint data
                 updateProgress(0, max, progress.getAndIncrement(), "delete CSI:FinerID Data");
                 deleteProjectSpaceProperty(FingerIdDataProperty.class);
-                updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS Data");
-                deleteProjectSpaceProperty(CanopusDataProperty.class);
+                updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS ClassyFire Data");
+                deleteProjectSpaceProperty(CanopusCfDataProperty.class);
+                updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS NPC Data");
+                deleteProjectSpaceProperty(CanopusNpcDataProperty.class);
                 updateProgress(0, max, progress.get(), "DONE!");
                 return true;
             }
