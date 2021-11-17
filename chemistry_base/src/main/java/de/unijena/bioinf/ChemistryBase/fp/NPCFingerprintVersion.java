@@ -114,6 +114,18 @@ public class NPCFingerprintVersion extends FingerprintVersion {
             return level.name + ": " + name;
         }
 
+        public String getName() {
+            return name;
+        }
+
+        public NPCLevel getLevel() {
+            return level;
+        }
+
+        public int getNpcIndex() {
+            return npcIndex;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;

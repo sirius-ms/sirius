@@ -22,8 +22,8 @@ package de.unijena.bioinf.ms.rest.model.canopus;
 
 import de.unijena.bioinf.ChemistryBase.fp.ClassyFireFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,60 +32,22 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
 
-public class CanopusData implements FingerprintData<ClassyFireFingerprintVersion> {
+public class CanopusCfData extends StandardFingerprintData<ClassyFireFingerprintVersion> {
 
-    protected final MaskedFingerprintVersion maskedFingerprintVersion;
-    protected final ClassyFireFingerprintVersion classyFireFingerprintVersion;
 
-    public CanopusData(@NotNull MaskedFingerprintVersion maskedFingerprintVersion) {
-        this.maskedFingerprintVersion = maskedFingerprintVersion;
-        this.classyFireFingerprintVersion = (ClassyFireFingerprintVersion) maskedFingerprintVersion.getMaskedFingerprintVersion();
-    }
-
-    public MaskedFingerprintVersion getFingerprintVersion() {
-        return maskedFingerprintVersion;
+    public CanopusCfData(@NotNull MaskedFingerprintVersion maskedFingerprintVersion) {
+        super(maskedFingerprintVersion);
     }
 
     public ClassyFireFingerprintVersion getClassyFireFingerprintVersion() {
-        return classyFireFingerprintVersion;
+        return getBaseFingerprintVersion();
     }
 
-    @Override
-    public ClassyFireFingerprintVersion getBaseFingerprintVersion() {
-        return getClassyFireFingerprintVersion();
+    public static CanopusCfData read(BufferedReader reader) throws IOException {
+        return readMask(reader, CanopusCfData::new);
     }
 
-    public static CanopusData read(BufferedReader reader) throws IOException {
-        final ClassyFireFingerprintVersion V = ClassyFireFingerprintVersion.getDefault();
-        final MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(V);
-        builder.disableAll();
-
-
-        FileUtils.readTable(reader, true, (row) -> {
-            final int abs = Integer.parseInt(row[1]);
-            builder.enable(abs);
-        });
-
-        return new CanopusData(
-                builder.toMask()
-        );
-    }
-
-    public static String readString(BufferedReader br) {
-        StringBuilder buf = new StringBuilder();
-        String line = null;
-        while (true) {
-            try {
-                if (!((line=br.readLine())!=null)) break;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            buf.append(line).append('\n');
-        }
-        return buf.toString();
-    }
-
-    public static void write(@NotNull Writer writer, @NotNull final CanopusData canopusData) throws IOException {
+    public static void write(@NotNull Writer writer, @NotNull final CanopusCfData canopusData) throws IOException {
         final String[] header = new String[]{"relativeIndex", "absoluteIndex", "id", "name", "parentId", "description"};
         final String[] row = header.clone();
 
