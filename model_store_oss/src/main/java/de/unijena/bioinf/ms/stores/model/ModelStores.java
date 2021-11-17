@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ModelStores {
@@ -63,7 +64,7 @@ public class ModelStores {
     public static DefaultBlobModelStore<?> createDefaultStore(@NotNull String path, @NotNull Compressible.Compression compression) throws IOException {
         BlobStorage s = BlobStorages.createDefault(PROPERTY_PREFIX, path);
 
-        final Map<String, String> tags = s.getTags();
+        final Map<String, String> tags = new HashMap<>(s.getTags());
         tags.put("modelstore-name", s.getName());
         tags.put("modelstore-compression", compression.name().toLowerCase());
         s.setTags(tags);

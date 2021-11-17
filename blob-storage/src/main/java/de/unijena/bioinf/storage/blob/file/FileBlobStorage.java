@@ -27,13 +27,17 @@ import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 //todo implement bucket tag/label support?
@@ -49,6 +53,8 @@ public class FileBlobStorage implements BlobStorage {
 
     protected final Path root;
 
+    protected Map<String,String> tags = new HashMap<>();
+
     public FileBlobStorage(Path root) {
         this.root = root;
     }
@@ -63,6 +69,17 @@ public class FileBlobStorage implements BlobStorage {
         if (!Files.isRegularFile(blob))
             return null;
         return Files.newInputStream(blob);
+    }
+
+    @Override
+    public @NotNull Map<String, String> getTags() throws IOException {
+        return Collections.unmodifiableMap(tags);
+    }
+
+    @Override
+    public void setTags(@NotNull Map<String, String> tags) throws IOException {
+        this.tags = tags;
+        LoggerFactory.getLogger(getClass()).warn("TAGS ARE NOT CURRENTLY STORED PERSISTENTLY IN FILE BASED STORAGES!");
     }
 
     @Override
