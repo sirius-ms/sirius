@@ -20,9 +20,12 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
@@ -36,13 +39,14 @@ import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.networks.serialization.ConnectionTable;
 import de.unijena.bioinf.networks.serialization.ConnectionTableSerializer;
 import de.unijena.bioinf.passatutto.Decoy;
-import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
-import de.unijena.bioinf.projectspace.canopus.CanopusDataSerializer;
+import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
+import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import de.unijena.bioinf.projectspace.canopus.CanopusSerializer;
 import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.projectspace.summaries.CanopusSummaryWriter;
@@ -57,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
@@ -90,7 +95,8 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         config.registerComponent(FormulaResult.class, FBCandidates.class, new FBCandidatesSerializer());
         config.registerComponent(FormulaResult.class, FBCandidateFingerprints.class, new FBCandidateFingerprintSerializer());
         //canopus
-        config.defineProjectSpaceProperty(CanopusDataProperty.class, new CanopusDataSerializer());
+        config.defineProjectSpaceProperty(CanopusCfDataProperty.class, new CanopusCfDataProperty.Serializer());
+        config.defineProjectSpaceProperty(CanopusNpcDataProperty.class, new CanopusNpcDataProperty.Serializer());
         config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
 
         config.registerComponent(CompoundContainer.class, ConnectionTable.class, new ConnectionTableSerializer());
@@ -153,6 +159,10 @@ public class ProjectSpaceManager implements Iterable<Instance> {
 
     public <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
         return projectSpace().getProjectSpaceProperty(key);
+    }
+
+    public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(T value) {
+        return setProjectSpaceProperty((Class<T>) value.getClass(), value);
     }
 
     public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
@@ -256,61 +266,11 @@ public class ProjectSpaceManager implements Iterable<Instance> {
 
         synchronized (dataCompatibilityCache) {
             try {
-                if (!dataCompatibilityCache.containsKey(FingerIdDataProperty.class)) {
-                    final FingerIdDataProperty fd = getProjectSpaceProperty(FingerIdDataProperty.class).orElse(null);
-                    if (fd != null) {
-                        dataCompatibilityCache.put(FingerIdDataProperty.class, true);
-                        final FingerIdData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
-                        final FingerIdData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted);
-                        if (fd.getPositive() != null) {
-                            if (!fd.getPositive().compatible(pos)) {
-                                dataCompatibilityCache.put(FingerIdDataProperty.class, false);
-                            } else if (fd.getNegative() == null) {
-                                LoggerFactory.getLogger(InstanceImporter.class).warn("Negative FingerIdData missing in project. Try to repair by reloading from webservice.");
-                                setProjectSpaceProperty(FingerIdDataProperty.class,
-                                        new FingerIdDataProperty(fd.getPositive(), neg));
-                            }
-                        }
 
-                        if (fd.getNegative() != null) {
-                            if (!fd.getNegative().compatible(neg)) {
-                                dataCompatibilityCache.put(FingerIdDataProperty.class, false);
-                            } else if (fd.getPositive() == null) {
-                                LoggerFactory.getLogger(InstanceImporter.class).warn("Positive FingerIdData missing in project. Try to repair by reloading from webservice.");
-                                setProjectSpaceProperty(FingerIdDataProperty.class,
-                                        new FingerIdDataProperty(pos, fd.getNegative()));
-                            }
-                        }
-                    }
-                }
+                checkFingerprintData(FingerIdDataProperty.class, FingerIdData.class, ApplicationCore.WEB_API::getFingerIdData, interrupted);
+                checkFingerprintData(CanopusCfDataProperty.class, CanopusCfData.class, ApplicationCore.WEB_API::getCanopusCfData, interrupted);
+                checkFingerprintData(CanopusNpcDataProperty.class, CanopusNpcData.class, ApplicationCore.WEB_API::getCanopusNpcData, interrupted);
 
-                if (!dataCompatibilityCache.containsKey(CanopusDataProperty.class)) {
-                    final CanopusDataProperty cd = getProjectSpaceProperty(CanopusDataProperty.class).orElse(null);
-                    if (cd != null) {
-                        dataCompatibilityCache.put(CanopusDataProperty.class, true);
-                        final CanopusData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
-                        final CanopusData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted);
-                        if (cd.getPositive() != null) {
-                            if (!cd.getPositive().compatible(pos)) {
-                                dataCompatibilityCache.put(CanopusDataProperty.class, false);
-                            } else if (cd.getNegative() == null) {
-                                LoggerFactory.getLogger(InstanceImporter.class).warn("Negative CanopusData missing in project. Try to repair by reloading from webservice.");
-                                setProjectSpaceProperty(CanopusDataProperty.class,
-                                        new CanopusDataProperty(cd.getPositive(), neg));
-                            }
-                        }
-
-                        if (cd.getNegative() != null) {
-                            if (!cd.getNegative().compatible(neg)) {
-                                dataCompatibilityCache.put(CanopusDataProperty.class, false);
-                            } else if (cd.getPositive() == null) {
-                                LoggerFactory.getLogger(InstanceImporter.class).warn("Positive CanopusData missing in project. Try to repair by reloading from webservice.");
-                                setProjectSpaceProperty(CanopusDataProperty.class,
-                                        new CanopusDataProperty(neg, cd.getNegative()));
-                            }
-                        }
-                    }
-                }
                 boolean out = dataCompatibilityCache.values().stream().reduce((a, b) -> a && b).orElse(true);
                 if (!out) writeIncompatibleLog();
                 return out;
@@ -319,6 +279,43 @@ public class ProjectSpaceManager implements Iterable<Instance> {
                 LoggerFactory.getLogger(getClass()).warn("Could not retrieve FingerprintData from server! \n" + e.getMessage());
                 throw e;
             }
+        }
+    }
+
+    private <F extends FingerprintVersion, D extends FingerprintData<F>, P extends PosNegFpProperty<F, D>> void checkFingerprintData(
+            Class<P> propClz, Class<D> propDataClz, IOFunctions.IOFunction<PredictorType, D> dataLoader, NetUtils.InterruptionCheck interrupted)
+            throws InterruptedException, TimeoutException {
+        try {
+            if (!dataCompatibilityCache.containsKey(propClz)) {
+                final P cd = getProjectSpaceProperty(propClz).orElse(null);
+                if (cd != null) {
+                    dataCompatibilityCache.put(propClz, true);
+                    final D pos = NetUtils.tryAndWait(() -> dataLoader.apply(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
+                    final D neg = NetUtils.tryAndWait(() -> dataLoader.apply(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
+                    if (cd.getPositive() != null) {
+                        if (!cd.getPositive().compatible(pos)) {
+                            dataCompatibilityCache.put(propClz, false);
+                        } else if (cd.getNegative() == null) {
+                            LoggerFactory.getLogger(InstanceImporter.class).warn("Negative '" + propDataClz.getName() + "' file missing in project. Try to repair by reloading from webservice.");
+
+                            setProjectSpaceProperty(propClz,
+                                    propClz.getConstructor(propDataClz, propDataClz).newInstance(cd.getPositive(), neg));
+                        }
+                    }
+
+                    if (cd.getNegative() != null) {
+                        if (!cd.getNegative().compatible(neg)) {
+                            dataCompatibilityCache.put(propClz, false);
+                        } else if (cd.getPositive() == null) {
+                            LoggerFactory.getLogger(InstanceImporter.class).warn("Positive '" + propDataClz.getName() + "' file missing in project. Try to repair by reloading from webservice.");
+                            setProjectSpaceProperty(propClz,
+                                    propClz.getConstructor(propDataClz, propDataClz).newInstance(neg, cd.getNegative()));
+                        }
+                    }
+                }
+            }
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException("Error during java reflection Object instantiation of '" + propClz.getName() + "'.", e);
         }
     }
 

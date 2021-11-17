@@ -21,6 +21,7 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
@@ -35,10 +36,12 @@ import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
+import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
 import de.unijena.bioinf.projectspace.canopus.CanopusLocations;
+import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdLocations;
 import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
@@ -300,19 +303,21 @@ public class InstanceImporter {
     }
 
 
-    private final static Predicate<String> DATA_FILES_TO_SKIP = n -> !n.equals(FingerIdLocations.FINGERID_CLIENT_DATA) && !n.equals(FingerIdLocations.FINGERID_CLIENT_DATA_NEG)
-            && !n.equals(CanopusLocations.CANOPUS_CLIENT_DATA) && !n.equals(CanopusLocations.CANOPUS_CLIENT_DATA_NEG);
+    private final static Predicate<String> DATA_FILES_TO_SKIP = n ->
+            !n.equals(FingerIdLocations.FINGERID_CLIENT_DATA) && !n.equals(FingerIdLocations.FINGERID_CLIENT_DATA_NEG)
+                    && !n.equals(CanopusLocations.CF_CLIENT_DATA) && !n.equals(CanopusLocations.CF_CLIENT_DATA_NEG)
+                    && !n.equals(CanopusLocations.NPC_CLIENT_DATA) && !n.equals(CanopusLocations.NPC_CLIENT_DATA_NEG);
 
-    private final static Predicate<String> RESULTS_TO_SKIP = n -> !n.equals(SummaryLocations.STRUCTURE_CANDIDATES) && !n.equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP)
-            && !n.equals(FingerIdLocations.FINGERBLAST.relDir()) && !n.equals(FingerIdLocations.FINGERBLAST_FPs.relDir()) && !n.equals(FingerIdLocations.FINGERPRINTS.relDir())
-            && !n.equals(CanopusLocations.CANOPUS.relDir()) && !n.equals(CanopusLocations.NPC.relDir());
+    private final static Predicate<String> RESULTS_TO_SKIP = n ->
+            !n.equals(SummaryLocations.STRUCTURE_CANDIDATES) && !n.equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP)
+                    && !n.equals(FingerIdLocations.FINGERBLAST.relDir()) && !n.equals(FingerIdLocations.FINGERBLAST_FPs.relDir()) && !n.equals(FingerIdLocations.FINGERPRINTS.relDir())
+                    && !n.equals(CanopusLocations.CF.relDir()) && !n.equals(CanopusLocations.NPC.relDir());
 
     private static <D extends FingerprintData<?>> D checkAnReadData(Path inputFile, IOFunctions.IOFunction<BufferedReader, D> read) throws IOException {
         if (Files.exists(inputFile)) {
             try (BufferedReader r = Files.newBufferedReader(inputFile)) {
                 return read.apply(r);
             }
-
         }
         return null;
     }
@@ -322,13 +327,26 @@ public class InstanceImporter {
         try {
             if (FileUtils.isZipArchive(toImportPath))
                 toImportPath = FileUtils.asZipFS(toImportPath, false);
+
             FingerIdData fdPos = checkAnReadData(toImportPath.resolve(FingerIdLocations.FINGERID_CLIENT_DATA), FingerIdData::read);
             FingerIdData fdNeg = checkAnReadData(toImportPath.resolve(FingerIdLocations.FINGERID_CLIENT_DATA_NEG), FingerIdData::read);
-            CanopusData cdPos = checkAnReadData(toImportPath.resolve(CanopusLocations.CANOPUS_CLIENT_DATA), CanopusData::read);
-            CanopusData cdNeg = checkAnReadData(toImportPath.resolve(CanopusLocations.CANOPUS_CLIENT_DATA_NEG), CanopusData::read);
-            return checkDataCompatibility(
-                    (fdNeg != null || fdPos != null) ? new FingerIdDataProperty(fdPos, fdNeg) : null,
-                    (cdNeg != null || cdPos != null) ? new CanopusDataProperty(cdPos, cdNeg) : null, importTarget, interrupted);
+            CanopusCfData cdPos = checkAnReadData(toImportPath.resolve(CanopusLocations.CF_CLIENT_DATA), CanopusCfData::read);
+            CanopusCfData cdNeg = checkAnReadData(toImportPath.resolve(CanopusLocations.CF_CLIENT_DATA_NEG), CanopusCfData::read);
+            CanopusNpcData npcPos = checkAnReadData(toImportPath.resolve(CanopusLocations.NPC_CLIENT_DATA), CanopusNpcData::read);
+            CanopusNpcData npcNeg = checkAnReadData(toImportPath.resolve(CanopusLocations.NPC_CLIENT_DATA_NEG), CanopusNpcData::read);
+
+            Predicate<String> r;
+            r = checkDataCompatibility((fdNeg != null || fdPos != null) ? new FingerIdDataProperty(fdPos, fdNeg) : null,
+                    FingerIdData.class, ApplicationCore.WEB_API::getFingerIdData, importTarget, interrupted);
+            if (r != null) return r;
+
+            r = checkDataCompatibility((cdNeg != null || cdPos != null) ? new CanopusCfDataProperty(cdPos, cdNeg) : null,
+                    CanopusCfData.class, ApplicationCore.WEB_API::getCanopusCfData, importTarget, interrupted);
+            if (r != null) return r;
+
+            r = checkDataCompatibility((npcNeg != null || npcPos != null) ? new CanopusNpcDataProperty(npcPos, npcNeg) : null,
+                    CanopusNpcData.class, ApplicationCore.WEB_API::getCanopusNpcData, importTarget, interrupted);
+            return r;
         } finally {
             FileUtils.closeIfNotDefaultFS(toImportPath);
         }
@@ -344,8 +362,16 @@ public class InstanceImporter {
      * @return null if compatible, predicate checking for paths to be skipped during import.
      */
     public static Predicate<String> checkDataCompatibility(@NotNull SiriusProjectSpace toImport, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) {
-        return checkDataCompatibility(toImport.getProjectSpaceProperty(FingerIdDataProperty.class).orElse(null),
-                toImport.getProjectSpaceProperty(CanopusDataProperty.class).orElse(null), importTarget, interrupted);
+        Predicate<String> r;
+        r = checkDataCompatibility(toImport.getProjectSpaceProperty(FingerIdDataProperty.class).orElse(null),
+                FingerIdData.class, ApplicationCore.WEB_API::getFingerIdData, importTarget, interrupted);
+        if (r != null) return r;
+        r = checkDataCompatibility(toImport.getProjectSpaceProperty(CanopusCfDataProperty.class).orElse(null),
+                CanopusCfData.class, ApplicationCore.WEB_API::getCanopusCfData, importTarget, interrupted);
+        if (r != null) return r;
+        r = checkDataCompatibility(toImport.getProjectSpaceProperty(CanopusNpcDataProperty.class).orElse(null),
+                CanopusNpcData.class, ApplicationCore.WEB_API::getCanopusNpcData, importTarget, interrupted);
+        return r;
     }
 
     public static Predicate<String> checkDataCompatibility(@NotNull SiriusProjectSpace toImport, NetUtils.InterruptionCheck interrupted) {
@@ -353,30 +379,20 @@ public class InstanceImporter {
     }
 
 
-    public static Predicate<String> checkDataCompatibility(@Nullable final FingerIdDataProperty importFd, @Nullable final CanopusDataProperty importCd, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) {
+    public static <F extends FingerprintVersion, D extends FingerprintData<F>, P extends PosNegFpProperty<F, D>>
+    Predicate<String> checkDataCompatibility(@Nullable P importFd, Class<D> dataClz, @NotNull IOFunctions.IOFunction<PredictorType, D> dataLoader, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) {
         try {
-            //check finerid
+            //check prop
             if (importFd != null) {
-                FingerIdDataProperty targetFd = importTarget != null ? importTarget.getProjectSpaceProperty(FingerIdDataProperty.class).orElse(null) : null;
+                P targetFd = importTarget != null ? (P) importTarget.getProjectSpaceProperty(importFd.getClass()).orElse(null) : null;
                 if (targetFd == null)
-                    targetFd = new FingerIdDataProperty(
-                            NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted),
-                            NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted));
+                    targetFd = (P) importFd.getClass().getConstructor(dataClz, dataClz).newInstance(
+                            NetUtils.tryAndWait(() -> dataLoader.apply(PredictorType.CSI_FINGERID_POSITIVE), interrupted),
+                            NetUtils.tryAndWait(() -> dataLoader.apply(PredictorType.CSI_FINGERID_NEGATIVE), interrupted)
+                    );
 
                 if (!importFd.compatible(targetFd))
                     return RESULTS_TO_SKIP;
-
-                //check canopus
-                if (importCd != null) {
-                    CanopusDataProperty targetCd = importTarget != null ? importTarget.getProjectSpaceProperty(CanopusDataProperty.class).orElse(null) : null;
-                    if (targetCd == null)
-                        targetCd = new CanopusDataProperty(
-                                NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_POSITIVE), interrupted),
-                                NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE), interrupted));
-
-                    if (!importCd.compatible(targetCd))
-                        return RESULTS_TO_SKIP;
-                }
             }
             return null;
         } catch (Exception e) {

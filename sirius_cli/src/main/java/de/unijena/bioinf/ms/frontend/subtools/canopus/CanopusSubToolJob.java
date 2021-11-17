@@ -31,13 +31,15 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.canopus.CanopusDataProperty;
+import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
+import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -79,11 +81,20 @@ public class CanopusSubToolJob extends InstanceJob {
 
         checkForInterruption();
 
-        // write Canopus client data
-        if (inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusDataProperty.class).isEmpty()) {
-            final CanopusData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
-            final CanopusData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
-            inst.getProjectSpaceManager().setProjectSpaceProperty(CanopusDataProperty.class, new CanopusDataProperty(pos, neg));
+        //todo we might need a generic solution here because CANOPUS will predict many more stuff in the future.
+
+        // write ClassyFire client data
+        if (inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusCfDataProperty.class).isEmpty()) {
+            final CanopusCfData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusCfData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
+            final CanopusCfData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusCfData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
+            inst.getProjectSpaceManager().setProjectSpaceProperty(new CanopusCfDataProperty(pos, neg));
+        }
+
+        // write NPC client data
+        if (inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusNpcDataProperty.class).isEmpty()) {
+            final CanopusNpcData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusNpcData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
+            final CanopusNpcData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getCanopusNpcData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
+            inst.getProjectSpaceManager().setProjectSpaceProperty(new CanopusNpcDataProperty(pos, neg));
         }
 
         checkForInterruption();
