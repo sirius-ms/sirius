@@ -114,6 +114,16 @@ public class RabbitMqBlobStorage implements BlobStorage {
     }
 
     @Override
+    public @NotNull Map<String, String> getTags() throws IOException {
+        throw new UnsupportedOperationException("Tags are not yet supported");
+    }
+
+    @Override
+    public void setTags(@NotNull Map<String, String> tags) throws IOException {
+        throw new UnsupportedOperationException("Tags are not yet supported");
+    }
+
+    @Override
     public Iterator<Blob> listBlobs() throws IOException {
         throw new NotImplementedException("TOOD: implement Endpoint to list blobs"); //TODO implement list blobs
     }

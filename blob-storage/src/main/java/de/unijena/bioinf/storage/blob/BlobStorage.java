@@ -20,21 +20,19 @@
 
 package de.unijena.bioinf.storage.blob;
 
-import java.io.Closeable;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Super simple object reading/writing API
@@ -89,9 +87,7 @@ public interface BlobStorage extends Closeable, AutoCloseable {
      * @return map containing key value pairs
      */
     @NotNull
-    default Map<String, String> getTags() throws IOException {
-        return Collections.emptyMap();
-    }
+    Map<String, String> getTags() throws IOException;
 
 
     /**
@@ -111,9 +107,7 @@ public interface BlobStorage extends Closeable, AutoCloseable {
      * Set the tags associated with this storage/bucket
      * Might throw {@link UnsupportedOperationException} if storage/bucket does not support tags
      */
-    default void setTags(@NotNull Map<String, String> tags) throws IOException {
-        throw new UnsupportedOperationException("");
-    }
+    void setTags(@NotNull Map<String, String> tags) throws IOException;
 
     /**
      * Remove a tag with the given key from the storage/bucket
