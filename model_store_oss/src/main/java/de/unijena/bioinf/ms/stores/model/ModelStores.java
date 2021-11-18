@@ -53,7 +53,7 @@ public class ModelStores {
             return new DefaultBlobModelStore<>(storage, FileBlobStorage.detectCompression(((FileBlobStorage) storage).getRoot()));
 
         String c = storage.getTag(TAG_COMPRESSION);
-        return new DefaultBlobModelStore<>(storage, c != null ? Compressible.Compression.valueOf(c.toUpperCase()) : Compressible.Compression.NONE);
+        return new DefaultBlobModelStore<>(storage, c != null ? Compressible.Compression.valueOf(c.toUpperCase()) : Compressible.Compression.GZIP);
     }
 
 
