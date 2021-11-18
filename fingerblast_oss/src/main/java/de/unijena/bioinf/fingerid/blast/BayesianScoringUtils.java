@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.fingerid.blast;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
 import de.unijena.bioinf.ChemistryBase.fp.*;
@@ -438,24 +439,30 @@ public class BayesianScoringUtils {
 
 
     private List<FingerprintCandidate> getFingerprints(long mask, ChemicalDatabase sqlChemDB) throws ChemicalDatabaseException {
-        final Set<String> keys;
+        final List<FingerprintCandidate> keys;
         try {
             keys = sqlChemDB.useConnection(connection -> {
-                            final Set<String> k = new HashSet<>();
-                            try (PreparedStatement st = connection.connection.prepareStatement(String.format("SELECT inchi_key_1, inchi FROM structures  WHERE flags&%d>0", mask))) {
-                                try (ResultSet set = st.executeQuery()) {
-                                    while (set.next()) k.add(set.getString(1));
-                                }
-                            }
-                            return k;
-                        });
-            Log.debug("Number of structures for estimating Bayesian scoring tree topology: "+keys.size());
+                connection.connection.setNetworkTimeout(Runnable::run,300000);
+                final List<FingerprintCandidate> k = new ArrayList<>();
+                try (PreparedStatement st = connection.connection.prepareStatement(String.format("SELECT s.inchi_key_1, s.inchi, f.fingerprint FROM structures s INNER JOIN fingerprints f ON s.inchi_key_1=f.inchi_key_1 AND s.flags&%d>0 AND f.fp_id=%s", mask, ChemicalDatabase.FINGERPRINT_ID))) {
+                    try (ResultSet set = st.executeQuery()) {
+                        while (set.next()) {
+                            k.add(new FingerprintCandidate(
+                                    InChIs.newInChI(set.getString(1), set.getString(2)),
+                                    ChemicalDatabase.parseFingerprint(set, 3))
+                            );
+                        }
+                    }
+                }
+                return k;
+            });
+            Log.debug("Number of structures for estimating Bayesian scoring tree topology: " + keys.size());
         } catch (IOException | SQLException | InterruptedException e) {
             e.printStackTrace();
             throw new ChemicalDatabaseException(e.getMessage());
         }
 
-        return sqlChemDB.lookupManyFingerprintsByInchis(keys);
+        return keys;
     }
 
 
