@@ -709,13 +709,13 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
     }
 
 
-    private Fingerprint parseFingerprint(ResultSet result, int index) throws SQLException {
+    public static Fingerprint parseFingerprint(ResultSet result, int index) throws SQLException {
         try (final ResultSet fp = result.getArray(index).getResultSet()) {
             return parseFingerprint(fp);
         }
     }
 
-    private Fingerprint parseFingerprint(ResultSet fp) throws SQLException {
+    public static Fingerprint parseFingerprint(ResultSet fp) throws SQLException {
         TShortArrayList shorts = new TShortArrayList();
         while (fp.next()) {
             final short s = fp.getShort(2);
