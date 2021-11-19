@@ -202,7 +202,9 @@ public class ExperimentContainerDataModel implements MSViewerDataModel {
         } else {
             if (currentResult != null && currentResult.getFragTree().isPresent()) {
                 if (spec.getMsLevel() == 1) {
-                    underlyingModel = new SiriusIsotopePattern(currentResult.getFragTree().get(), ec.getExperiment(), spec);
+                    underlyingModel = SiriusIsotopePattern.create(currentResult.getFragTree().get(), ec.getExperiment(), spec);
+                    if (underlyingModel == null )
+                        underlyingModel = new SiriusSingleSpectrumModel(spec);
                 } else {
                     underlyingModel = new SiriusSingleSpectrumAnnotated(currentResult.getFragTree().get(), spec, minMz, maxMz);
                 }
