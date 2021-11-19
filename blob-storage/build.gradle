@@ -1,6 +1,6 @@
 dependencies{
     compile project(':chemistry_base')
-    compile 'io.minio:minio:8.3.3'
+    compile 'io.minio:minio:8.2.2'
     compile 'com.google.cloud:google-cloud-storage:1.118.0'
     compile project(':rabbitmq-support')
 }
