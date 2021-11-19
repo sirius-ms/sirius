@@ -165,13 +165,17 @@ public class BayesianNetworkFromDirectoryProvider implements BayesianNetworkScor
     @Override
     public void storeScoring(MolecularFormula formula, BayesnetScoring scoring, boolean override) throws IOException {
         Path scoringPath = getScoringPath(formula);
+        lock.writeLock().lock();
         scoring.writeTreeWithCovToFile(scoringPath);
+        lock.writeLock().unlock();
     }
 
     @Override
     public void storeDefaultScoring(BayesnetScoring scoring, boolean override) throws IOException {
         Path scoringPath = getDefaultScoringPath();
+        lock.writeLock().lock();
         scoring.writeTreeWithCovToFile(scoringPath);
+        lock.writeLock().unlock();
     }
 
     private Path getDefaultScoringPath() {
