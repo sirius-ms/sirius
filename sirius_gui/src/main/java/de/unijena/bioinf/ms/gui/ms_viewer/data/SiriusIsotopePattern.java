@@ -38,10 +38,24 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
     protected SimpleSpectrum simulatedPattern;
     protected int[] indizes;
 
-    public SiriusIsotopePattern(FTree tree, Ms2Experiment exp, Spectrum<? extends Peak> spectrum) {
+    @Nullable
+    public static SiriusIsotopePattern create(@Nullable FTree tree, @Nullable Ms2Experiment exp, @Nullable Spectrum<? extends Peak> spectrum){
+        if (spectrum == null)
+            return null;
+        if (tree == null)
+            return null;
+        SiriusIsotopePattern it = new SiriusIsotopePattern(spectrum);
+        it.annotate(tree, exp);
+        if (it.isotopePattern == null)
+            return null;
+        it.simulate(exp, tree);
+        if (it.simulatedPattern == null)
+            return null;
+        return it;
+    }
+
+    protected SiriusIsotopePattern(Spectrum<? extends Peak> spectrum) {
         super(spectrum);
-        annotate(tree, exp);
-        simulate(exp, tree, isotopePattern);
     }
 
     @Override
@@ -54,11 +68,11 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
         return Math.max(simulatedPattern.getMzAt(simulatedPattern.size()-1), isotopePattern.getMzAt(isotopePattern.size()-1));
     }
 
-    private void simulate(Ms2Experiment exp, FTree tree, SimpleSpectrum measuredPattern) {
+    private void simulate(Ms2Experiment exp, FTree tree) {
         final MolecularFormula formula = getPrecursorFormula(exp, tree);
         final FastIsotopePatternGenerator gen = new FastIsotopePatternGenerator(Normalization.Max);
-        gen.setMinimalProbabilityThreshold(Math.min(0.005, Spectrums.getMinimalIntensity(measuredPattern)));
-        gen.setMaximalNumberOfPeaks(Math.max(4, measuredPattern.size()));
+        gen.setMinimalProbabilityThreshold(Math.min(0.005, Spectrums.getMinimalIntensity(isotopePattern)));
+        gen.setMaximalNumberOfPeaks(Math.max(4, isotopePattern.size()));
         this.simulatedPattern = gen.simulatePattern(formula, tree.getAnnotation(PrecursorIonType.class).orElse(exp.getPrecursorIonType()).getIonization());
     }
 
