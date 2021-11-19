@@ -43,7 +43,7 @@ public class CanopusNpcData extends StandardFingerprintData<NPCFingerprintVersio
     }
 
     public static CanopusNpcData read(BufferedReader reader) throws IOException {
-        return readMask(reader, CanopusNpcData::new);
+        return readMask(reader, NPCFingerprintVersion.get(), CanopusNpcData::new);
     }
 
 

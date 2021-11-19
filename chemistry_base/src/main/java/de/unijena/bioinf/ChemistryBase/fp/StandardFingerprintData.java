@@ -45,9 +45,8 @@ public abstract class StandardFingerprintData<FP extends FingerprintVersion> imp
         return specificBaseFingerprintVersion;
     }
 
-    protected static <Data extends StandardFingerprintData<?>> Data readMask(@NotNull BufferedReader reader, @NotNull Function<MaskedFingerprintVersion, Data> dataBuilder) throws IOException {
-        final ClassyFireFingerprintVersion V = ClassyFireFingerprintVersion.getDefault();
-        final MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(V);
+    protected static <FP extends FingerprintVersion, Data extends StandardFingerprintData<?>> Data readMask(@NotNull BufferedReader reader, @NotNull FP basePrint, @NotNull Function<MaskedFingerprintVersion, Data> dataBuilder) throws IOException {
+        final MaskedFingerprintVersion.Builder builder = MaskedFingerprintVersion.buildMaskFor(basePrint);
         builder.disableAll();
 
         FileUtils.readTable(reader, true, (row) -> {
