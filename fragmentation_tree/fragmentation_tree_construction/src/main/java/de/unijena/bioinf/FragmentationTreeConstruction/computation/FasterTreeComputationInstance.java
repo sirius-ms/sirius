@@ -287,7 +287,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             }
             checkForInterruption();
             jobs.forEach(this::submitSubJob);
-            LoggerFactory.getLogger(FasterTreeComputationInstance.class).warn("Recalibration is disabled!");
+            LoggerFactory.getLogger(FasterTreeComputationInstance.class).debug("Recalibration is disabled!");
             checkForInterruption();
             return jobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).toArray(ExactResult[]::new);
         }
