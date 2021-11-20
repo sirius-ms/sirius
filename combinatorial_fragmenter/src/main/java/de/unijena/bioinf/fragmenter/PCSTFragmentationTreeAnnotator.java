@@ -6,9 +6,6 @@ import gurobi.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.function.Function;
 
 public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnnotator{
 
@@ -87,7 +84,7 @@ public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnn
         // Create the ILP Model:
         GRBModel model = new GRBModel(env);
 
-        // Add all variables and the objecive function to this model:
+        // Add all variables and the objective function to this model:
         GRBVar[] vars = new GRBVar[this.edgeIndices.size()];
         GRBLinExpr objFunc = new GRBLinExpr();
 
@@ -176,6 +173,10 @@ public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnn
 
     public boolean isComputed(){
         return this.isComputed;
+    }
+
+    public int[] getSolution(){
+        return this.optSubtree;
     }
 
     public HashMap<Fragment, ArrayList<CombinatorialFragment>> getMapping(){
