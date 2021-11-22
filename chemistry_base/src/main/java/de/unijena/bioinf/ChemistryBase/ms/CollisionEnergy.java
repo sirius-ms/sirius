@@ -21,6 +21,9 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
+
 import java.util.Comparator;
 
 public class CollisionEnergy {
@@ -44,18 +47,48 @@ public class CollisionEnergy {
         return new CollisionEnergy(min, max);
     }
 
+    @Nullable
+    public static CollisionEnergy fromStringOrNull(String value) {
+        try {
+            return fromString(value);
+        } catch (NumberFormatException e) {
+            LoggerFactory.getLogger(CollisionEnergy.class).error("Could not parse Collision Energy '" + value + "'. Try ignoring...");
+            return null;
+        }
+    }
+
+    private static final String[] PREFIXES = new String[]{"ramp", "ce"};
+    private static final String[] SUFFIXES = new String[]{"ev", "(nce)", "nce", "cid", "hcd", "v", "(nominal)"};
+
     public static CollisionEnergy fromString(String value) {
-        value = value.trim().toLowerCase();
+        value = value.trim().toLowerCase().replaceAll("\\s+", "");
+
         if (value.isEmpty() || value.equals("none")) return NONE;
-        int ev =  value.indexOf("ev");
-        if (ev > 0) value = value.substring(0,ev);
-        final int k = value.indexOf('-');
+
+
+        //eliminate prefixes
+        if (!Character.isDigit(value.charAt(0))) {
+            for (String ext : PREFIXES) {
+                if (value.startsWith(ext))
+                    value = value.substring(ext.length());
+            }
+        }
+
+        //eliminate suffixes
+        if (!Character.isDigit(value.charAt(value.length() - 1))) {
+            for (String ext : SUFFIXES) {
+                if (value.endsWith(ext))
+                    value = value.substring(0, value.length() - ext.length());
+            }
+        }
+
+        int k = value.indexOf('-');
         if (k > 0) {
-            final double x = Double.parseDouble(value.substring(0, k));
-            final double y = Double.parseDouble(value.substring(k + 1));
+            final double x = Double.parseDouble(value.substring(0, k).replace(",", "."));
+            final double y = Double.parseDouble(value.substring(k + 1).replace(">", "").replace(",", "."));
             return new CollisionEnergy(x, y);
         } else {
-            final double x = Double.parseDouble(value);
+            final double x = Double.parseDouble(value.replace(",", "."));
             return new CollisionEnergy(x, x);
         }
     }
