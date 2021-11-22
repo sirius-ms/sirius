@@ -24,6 +24,10 @@ class LCMSViewer {
         }
     }
 
+    clear() {
+        this.data = {traceSets: [], sampleNames: [], abundance: []};
+    }
+
     bindStringData(data) {
         this.bind(JSON.parse(data));
     }
