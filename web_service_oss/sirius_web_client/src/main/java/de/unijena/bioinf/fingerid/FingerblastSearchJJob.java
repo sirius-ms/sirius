@@ -21,26 +21,35 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
+import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
+import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.inchi.InChIGenerator;
+import org.openscience.cdk.inchi.InChIGeneratorFactory;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.qsar.descriptors.molecular.XLogPDescriptor;
+import org.openscience.cdk.qsar.result.DoubleResult;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesParser;
+import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastResult> implements AnnotationJJob<FingerblastResult, FingerIdResult> {
@@ -102,6 +111,12 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
         checkInput();
         //we want to score all available candidates and may create subsets later.
         final Set<FingerprintCandidate> combinedCandidates = candidates.getCombCandidates();
+        if (this.ftree!=null) {
+            final Optional<LipidSpecies> annotation = ftree.getAnnotation(LipidSpecies.class);
+            if (annotation.isPresent()) {
+                annotation.map(this::lipid2candidate).ifPresent(x->addOrReplace(combinedCandidates,x));
+            }
+        }
 
         // to get a prepared FingerblastScorer, an object of BayesnetScoring that is specific to the molecular formula has to be initialized
         List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(
@@ -117,6 +132,46 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
                 filter(sc -> requestedCandidatesInChIs.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList());
 
         return new FingerblastResult(cds);
+    }
+
+    private void addOrReplace(Set<FingerprintCandidate> combinedCandidates, FingerprintCandidate x) {
+        Iterator<FingerprintCandidate> iter = combinedCandidates.iterator();
+        while (iter.hasNext()) {
+            FingerprintCandidate fc = iter.next();
+            if (fc.getInchi().key2D().equals(x.getInchiKey2D())) {
+                if (fc.getName()==null) fc.setName(x.getName());
+                fc.mergeBits(x.getBitset());
+            }
+            return;
+        }
+        combinedCandidates.add(x);
+    }
+
+    private FingerprintCandidate lipid2candidate(LipidSpecies lipid) {
+        final Optional<String> smiles = lipid.generateHypotheticalStructure();
+        return smiles.map(str->{
+            try {
+                final IAtomContainer molecule = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(str);
+                ArrayFingerprint fp = new FixedFingerprinter(CdkFingerprintVersion.getDefault()).computeFingerprintFromSMILES(str);
+                final InChIGenerator gen = InChIGeneratorFactory.getInstance().getInChIGenerator(molecule);
+                System.out.println("GENERATE STRUCTURE: " + str);
+                return new FingerprintCandidate(new CompoundCandidate(
+                        new InChI(gen.getInchiKey(), gen.getInchi()),
+                        lipid.toString(),
+                        str,
+                        0,
+                        0,
+                        ((DoubleResult)(new XLogPDescriptor().calculate(molecule).getValue())).doubleValue(),
+                        null,
+                        DataSource.BIO.flag,
+                        new DBLink[0],
+                        new PubmedLinks()
+                ), fp);
+            } catch (CDKException e) {
+                LoggerFactory.getLogger(FingerblastSearchJJob.class).error("Error when parsing lipid SMILES " + str, e);
+                return null;
+            }
+        }).orElse(null);
     }
 
     protected void postprocessCandidate(CompoundCandidate candidate) {

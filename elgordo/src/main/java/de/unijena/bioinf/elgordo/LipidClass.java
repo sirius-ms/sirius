@@ -19,10 +19,7 @@
 
 package de.unijena.bioinf.elgordo;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static de.unijena.bioinf.elgordo.FragmentLib.def;
 import static de.unijena.bioinf.elgordo.HeadGroup.*;
@@ -34,7 +31,7 @@ public enum LipidClass {
                               def("[M+Na]+").losses("H2O").adductSwitch().acyl("").acylFragments("","-O").done()),
     TG(3,	Glycerol, def("[M+NH3+H]+").losses("","OH", "H2O","H3O2").acyl("","H2O","C3H5O").acylFragments("-OH","-H3O2","C3H5O").def("[M+Na]+").adductSwitch().acyl("","H2O").acylFragments("-OH","-H3O2").done()),
     DGTS(	2,	Glyceroltrimethylhomoserin, def("+").fragments("C10H21NO5","C7H13NO2").acyl("","H2O").def("[M+H]+").done()),
-    LDGTS(	1,	Glyceroltrimethylhomoserin, def("+").fragments("C10H21NO5","C7H13NO2").losses("H2O").acyl("").def("[M+H]+").done()),
+    LDGTS(	1,	Glyceroltrimethylhomoserin, def("+").fragments("C10H21NO5","C7H13NO2").losses("H2O").acyl("").def("[M+H]+").done(), "[C@](COCCC(C(=O)[O-])[N+](C)(C)C)([H])(O)COC(R1)=O", "MGTS"),
     MGDG(	2,	Galactosylglycerol, def("+").losses("C6H11O6","C6H13O7").acyl("","-C6H11O6","C3H5O").def("[M+NH3+H]+").def("[M+Na]+").done()),
     DGDG(	2,	Digalactosyldiacylglycerol,def("+").losses("C12H21O11","C12H23O12").acyl("","H2O","C3H5O").def("[M+NH3+H]+").def("[M+Na]+").done()),
     SQDG(	2,	Sulfoquinovosylglycerols,def("+").losses("C6H10O7S","C6H12O8S").acyl("","H2O","C3H5O").acylFragments("").def("[M+NH3+H]+").done()),
@@ -60,7 +57,6 @@ public enum LipidClass {
 
 
     protected static HashMap<HeadGroup, List<LipidClass>> group2classes;
-    protected final boolean sphingolipid;
 
     static {
         group2classes = new HashMap<>();
@@ -81,21 +77,38 @@ public enum LipidClass {
         this.headgroup = headgroup;
         this.chains = chains;
         this.fragmentLib = null;
-        this.sphingolipid=false;
+        this.sphingolipid = false;
+        this.smiles = null;
+        this.abbreviation = null;
     }
     private LipidClass(int chains, HeadGroup headgroup, FragmentLib lib) {
+        this(chains, headgroup, lib, null, null);
+    }
+    private LipidClass(int chains, HeadGroup headgroup, FragmentLib lib, String smiles) {
+        this(chains, headgroup, lib, smiles, null);
+    }
+    private LipidClass(int chains, HeadGroup headgroup, FragmentLib lib, String smiles, String abbrev) {
         this.headgroup = headgroup;
         this.chains = chains;
         this.fragmentLib = lib;
         this.sphingolipid = lib.hasSphingosin();
+        this.smiles = smiles;
+        this.abbreviation = abbrev;
     }
+
 
     public final HeadGroup headgroup;
     public final int chains;
     public final FragmentLib fragmentLib;
+    protected final boolean sphingolipid;
+    private final String smiles, abbreviation;
+
+    public Optional<String> getSmiles() {
+        return Optional.ofNullable(smiles);
+    }
 
     public String abbr() {
-        return name();
+        return abbreviation==null ? name() : abbreviation;
     }
 
     public boolean isSphingolipid() {

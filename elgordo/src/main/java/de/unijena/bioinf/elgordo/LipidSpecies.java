@@ -24,17 +24,37 @@ import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 public final class LipidSpecies implements ProcessedInputAnnotation {
 
     private final LipidChain[] chains;
     private final LipidClass type;
 
+    public Optional<String> generateHypotheticalStructure() {
+        return type.getSmiles().map(smiles-> {
+            for (int i=0; i < chains.length; ++i) {
+                int dboffset = ((chains[i].chainLength/2 - chains[i].numberOfDoubleBonds)/2) * 2;
+                StringBuilder chainBuilder = new StringBuilder();
+                int bondsToAdd = chains[i].numberOfDoubleBonds;
+                for (int j=0, n = chains[i].chainLength-1; j < n; ++j) {
+                    chainBuilder.append('C');
+                    if (bondsToAdd > 0 && j>=dboffset && j % 2 == 0) {
+                        chainBuilder.append('=');
+                        --bondsToAdd;
+                    }
+                }
+                smiles = smiles.replace("R" + (i+1),chainBuilder.toString());
+            }
+            return smiles;
+        });
+    }
+
     public static LipidSpecies fromString(String lipid) {
         LipidClass klasse = null;
 
         for (LipidClass c : LipidClass.values()) {
-            if (lipid.startsWith(c.abbr())) {
+            if (lipid.startsWith(c.abbr()) || lipid.startsWith(c.name())) {
                 klasse = c;
                 break;
             }
