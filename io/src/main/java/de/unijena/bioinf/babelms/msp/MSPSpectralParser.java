@@ -1,24 +1,3 @@
-
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
 /*
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
@@ -84,13 +63,17 @@ public class MSPSpectralParser extends SpectralParser {
             if (line.toLowerCase().startsWith(START.toLowerCase())) {
                 peaks = Integer.parseInt(line.substring(line.indexOf(':') + 1).strip());
             } else {
-                int split = line.indexOf(':');
-                if (split >= 0 && split < line.length() - 1) {
-                    metaInfo.put(
-                            line.substring(0, split).toLowerCase().strip(),
-                            line.substring(split + 1).strip());
+                if (line.startsWith(SYNONYME_KEY)) {
+                    metaInfo.put(line.substring(0, 11), line.substring(11));
                 } else {
-                    LoggerFactory.getLogger("Meta data key '" + line.substring(0, split) + "' does not have any value. Skipping...");
+                    int split = line.indexOf(':');
+                    if (split >= 0 && split < line.length() - 1) {
+                        metaInfo.put(
+                                line.substring(0, split).strip(),
+                                line.substring(split + 1).strip());
+                    } else {
+                        LoggerFactory.getLogger("Meta data key '" + line.substring(0, split) + "' does not have any value. Skipping...");
+                    }
                 }
             }
         }
@@ -118,13 +101,13 @@ public class MSPSpectralParser extends SpectralParser {
                 LoggerFactory.getLogger(getClass()).error("0 Peaks found in current Block, Returning empty spectrum with meta data");
         }
 
-        String msLevel = metaInfo.getOrDefault(SPEC_TYPE, "MS");
-        if (!(msLevel.equalsIgnoreCase("MS") || msLevel.equalsIgnoreCase("MS1"))) { // we have MSn
+        String msLevel = metaInfo.get(SPEC_TYPE);
+        if (metaInfo.containsKey(PRECURSOR_MZ) || metaInfo.containsKey(SYN_PRECURSOR_MZ) || !("MS".equalsIgnoreCase(msLevel) || "MS1".equalsIgnoreCase(msLevel))) { // we have MSn
             spectrum = new MutableMs2Spectrum(
                     spectrum,
                     MSP.parsePrecursorMZ(metaInfo).orElseThrow(() -> new IOException("Could neither parse '" + PRECURSOR_MZ + "' nor '" + EXACT_MASS + "'!")),
-                    metaInfo.getField(COL_ENERGY).map(CollisionEnergy::fromStringOrNull).orElse(null),
-                    metaInfo.getField(SPEC_TYPE).map(s -> s.substring(2)).map(Integer::parseInt).orElseThrow(() -> new IOException("Could not parse '" + SPEC_TYPE + "'!"))
+                    MSP.parseCollisionEnergy(metaInfo).orElse(null),
+                    msLevel == null ? 2 : Character.getNumericValue(msLevel.charAt(msLevel.indexOf("MS") + 2))
             );
 
             ((MutableMs2Spectrum) spectrum).setIonization(MSP.parsePrecursorIonType(metaInfo)

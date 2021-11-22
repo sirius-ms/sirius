@@ -21,13 +21,14 @@
 package de.unijena.bioinf.babelms.msp;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
 /*
-MONA *.msp format III:
+
+MONA *.msp format III (also Massbank):
 ----------------
 http://mona.fiehnlab.ucdavis.edu/downloads
 Name: CLC_301.1468_14.3
@@ -77,13 +78,52 @@ Num Peaks: 7
 183.0805 3.771867
 201.0466 100.000000
 */
+/*
+* NIST
+Name: TKPR/-1
+Synon: p-Aminophenylacetyl Tuftsin
+Synon: $:04632.3525
+Synon: $:03[M-H]-
+Synon: $:0515
+Synon: $:16150
+Synon: $:07Agilent QTOF 6530
+Synon: $:06Q-TOF
+Synon: $:09direct flow injection
+Synon: $:10ESI
+Synon: $:12N2
+Synon: $:17micromol/L in water/methanol/formic acid (50/50/0.1) Peptide_VID=A_80-0-26 Peptide_QTOF_id_2012=7979 Spec=Consensus Nreps=14/16 Mz_diff=-0.0081
+Synon: $:11N
+Formula: C29H47N9O7
+MW: 633.359844
+PrecursorMZ: 632.3525
+CASNO: 0
+Comment: Mods=1/0,T,Aminophenylacetyl NIST Mass Spectrometry Data Center
+Num peaks: 11
+228.124 18.68 "y2-42/-0.0112 4/14"
+270.153 31.97 "y2/-0.0041 9/14"
+546.316 15.48 "p-C2H4O-42/0.0114 5/14"
+588.302 39.36 "p-C2H4O/-0.0249;p-44/-0.0612 4/14"
+588.320 178.72 "p-C2H4O/-0.0063;p-44/-0.0426 11/14"
+588.353 58.14 "p-44/-0.0093;p-C2H4O/0.0270 9/14"
+631.976 11.49 "? 4/14"
+632.343 999.00 "p/-0.0099 14/14"
+633.343 18.68 "pi/0.9900 5/14"
+633.375 12.69 "?i 4/14"
+633.579 10.09 "?i 4/14"
+*/
+
 public class MSP {
-    public final static String PRECURSOR_MZ = "PrecursorMZ";
-    public final static String SPEC_TYPE = "Spectrum_type";
-    public final static String COL_ENERGY = "Collision_energy";
-    public final static String PRECURSOR_ION_TYPE = "Precursor_type";
-    public final static String NAME = "Name";
     public final static String SYNONYME = "Synon"; //multiple times possible
+    public final static String SYNONYME_KEY = "Synon: $:"; //multiple times possible
+    public final static String PRECURSOR_MZ = "PrecursorMZ";
+    public final static String SYN_PRECURSOR_MZ = SYNONYME_KEY + "04";
+
+    public final static String SPEC_TYPE = "Spectrum_type";
+    public final static String COL_ENERGY = "05";
+    public final static String SYN_COL_ENERGY = SYNONYME_KEY + "Collision_energy";
+    public final static String PRECURSOR_ION_TYPE = "Precursor_type";
+    public final static String SYN_PRECURSOR_ION_TYPE = SYNONYME_KEY + "03";
+    public final static String NAME = "Name";
     public final static String DB_ID = "DB#";
     public final static String INCHI_KEY = "InChIKey";
     public final static String INCHI = "InChI";
@@ -105,6 +145,10 @@ public class MSP {
         if (value != null)
             return Optional.of(PrecursorIonType.fromString(value));
 
+        value = metaInfo.get(SYN_PRECURSOR_ION_TYPE);
+        if (value != null)
+            return Optional.of(PrecursorIonType.fromString(value));
+
         value = metaInfo.get(CHARGE);
         if (value != null) {
             return Optional.of(value.toLowerCase().charAt(0) == 'n' ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
@@ -119,10 +163,30 @@ public class MSP {
             return Optional.of(Double.parseDouble(arr[arr.length - 1]));
         }
 
+        value = metaInfo.get(SYN_PRECURSOR_MZ);
+        if (value != null) {
+            String[] arr = value.split("/");
+            return Optional.of(Double.parseDouble(arr[arr.length - 1]));
+        }
+
         value = metaInfo.get(EXACT_MASS);
         if (value != null)
             return Optional.of(Double.parseDouble(value));
 
         return Optional.empty();
+    }
+
+    public static Optional<CollisionEnergy> parseCollisionEnergy(Map<String, String> metaInfo) {
+        String value = metaInfo.get(COL_ENERGY);
+        CollisionEnergy e = null;
+        if (value != null) {
+            e = CollisionEnergy.fromStringOrNull(value);
+            if (e != null) {
+                value = metaInfo.get(SYN_COL_ENERGY);
+                if (value != null)
+                    e = CollisionEnergy.fromStringOrNull(value);
+            }
+        }
+        return Optional.ofNullable(e);
     }
 }
