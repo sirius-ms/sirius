@@ -64,6 +64,10 @@ public class LCMSToolbar extends JToolBar {
         }
     }
 
+    public void reset() {
+        box.removeAllItems();
+    }
+
     protected static class Entry {
         private String name;
         private float intensity;

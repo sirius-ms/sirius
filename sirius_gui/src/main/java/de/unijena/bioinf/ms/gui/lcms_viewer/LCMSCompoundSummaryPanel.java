@@ -30,7 +30,7 @@ public class LCMSCompoundSummaryPanel extends JPanel {
         setPreferredSize(new Dimension(512,1024));
     }
 
-    public void clear() {
+    public void reset() {
         this.traceSet = null;
         updateContent();
     }
@@ -80,5 +80,4 @@ public class LCMSCompoundSummaryPanel extends JPanel {
             peakPanel.add(c);
         }
     }
-
 }

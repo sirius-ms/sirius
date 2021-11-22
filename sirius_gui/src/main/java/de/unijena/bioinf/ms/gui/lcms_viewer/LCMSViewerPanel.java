@@ -40,6 +40,12 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         siriusResultElements.addActiveResultChangedListener(this);
     }
 
+    public void reset() {
+        lcmsWebview.reset();
+        summaryPanel.reset();
+        toolbar.reset();
+    }
+
     public String getDescription() {
         return "<html>"
                 +"<b>LC-MS and Data Quality Viewer</b>"
@@ -63,6 +69,10 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
     }
 
     private void updateContent() {
+        if (currentInstance==null) {
+            reset();
+            return;
+        }
         final LCMSPeakInformation peakInformation = currentInstance.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
         currentInfo = peakInformation;
         lcmsWebview.setInstance(peakInformation);
@@ -83,6 +93,6 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         final Optional<CoelutingTraceSet> trace = activeIndex < currentInfo.length() ? currentInfo.getTracesFor(activeIndex) : Optional.empty();
         if (trace.isPresent())
             summaryPanel.set(trace.get(), currentInstance.getExperiment());
-        else summaryPanel.clear();
+        else summaryPanel.reset();
     }
 }

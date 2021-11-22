@@ -113,6 +113,17 @@ public class LCMSWebview extends JFXPanel {
         lcmsView(x->x.call("setSample", activeIndex));
     }
 
+    public void reset() {
+        lcmsView(f->{
+            try {
+                f.call("clear");
+            } catch (Throwable e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     private static class Console {
 
         public void log(String msg) {
