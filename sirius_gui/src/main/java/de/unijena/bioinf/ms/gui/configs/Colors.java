@@ -53,6 +53,7 @@ public abstract class Colors {
     public final static Color DB_CUSTOM = ICON_YELLOW;
     public final static Color DB_TRAINING = Color.BLACK;
     public final static Color DB_UNKNOWN = new Color(178,34,34);
+    public final static Color DB_ELGORDO = ICON_BLUE;
 
     public final static Color CLASSIFIER_MAIN = new Color(0xe5f5e0);
     public final static Color CLASSIFIER_OTHER = new Color(0xdeebf7);

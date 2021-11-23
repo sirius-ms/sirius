@@ -74,6 +74,10 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
         defaultConfigOptions.changeOption("StructurePredictors", predictors);
     }
 
+    @Option(names = {"-i", "--inject-elgordo"}, descriptionKey = "InjectElGordoCompounds", description = {"Inject El-Gordo Lipid Species into CSI:FingerID candidate list."})
+    public void setInjectElGordoCompounds(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("InjectElGordoCompounds", value);
+    }
 
     @Override
     public InstanceJob.Factory<FingerblastSubToolJob> call() throws Exception {

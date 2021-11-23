@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -172,7 +173,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                         return;
                     try {
                         if (s.URI.contains("%s")) {
-                            Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(entry.getValue(), "UTF-8"))));
+                            Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))));
                         } else {
                             Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(entry.getValue()))));
                         }
@@ -261,7 +262,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 for (String id : label.values) {
                     if (id == null) continue;
                     if (s.URI.contains("%s")) {
-                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(id, "UTF-8"))));
+                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(id, StandardCharsets.UTF_8))));
                     } else {
                         Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(id))));
                     }

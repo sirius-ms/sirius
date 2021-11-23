@@ -137,10 +137,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                     if (value != null)
                         cleaned.add(value);
                 }
-                labels.add(new DatabaseLabel(key, cleaned.toArray(new String[cleaned.size()]), new Rectangle(0, 0, 0, 0)));
+                labels.add(new DatabaseLabel(key, cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
             }
             Collections.sort(labels);
-            this.labels = labels.toArray(new DatabaseLabel[labels.size()]);
+            this.labels = labels.toArray(DatabaseLabel[]::new);
         }
     }
 
