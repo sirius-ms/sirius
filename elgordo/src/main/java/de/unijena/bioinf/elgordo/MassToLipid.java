@@ -30,6 +30,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.*;
@@ -66,7 +67,7 @@ public class MassToLipid {
         FragmentLib.FragmentSet set = candidate.getFragmentSet();
         for (MolecularFormula f : set.fragments) {
             search(annotations, indizes, spectrum, candidate.ionType.addIonAndAdduct(f.getMass()), () -> new HeadGroupFragmentAnnotation(
-                    LipidAnnotation.Target.FRAGMENT, f, f.add(candidate.ionType.getAdduct()), candidate.ionType, candidate.possibleClass.headgroup
+                    LipidAnnotation.Target.FRAGMENT, f, f, candidate.ionType, candidate.possibleClass.headgroup
             ));
             if (!candidate.ionType.isPlainProtonationOrDeprotonation()) {
                 // consider adduct switch
@@ -78,7 +79,7 @@ public class MassToLipid {
         for (MolecularFormula f : set.losses) {
             if (!f.isEmpty()) {
                 search(annotations, indizes, spectrum, candidate.ionMass - f.getMass(), () -> new HeadGroupFragmentAnnotation(
-                        LipidAnnotation.Target.LOSS, f, candidate.ionType.getAdduct().add(candidate.lipidFormula.subtract(f)), candidate.ionType, candidate.possibleClass.headgroup
+                        LipidAnnotation.Target.LOSS, f, candidate.lipidFormula.subtract(f), candidate.ionType, candidate.possibleClass.headgroup
                 ));
             }
             if (!candidate.ionType.isPlainProtonationOrDeprotonation()) {
@@ -125,20 +126,27 @@ public class MassToLipid {
                 }
             }
             final IndexedPeak[] sorted = peaks.stream().sorted(Comparator.comparingInt(x->x.index)).toArray(IndexedPeak[]::new);
+            final int[] peakindizes = new TIntHashSet(Arrays.stream(sorted).mapToInt(x->x.index).toArray()).toArray();
+            Arrays.sort(peakindizes);
+            LipidAnnotation[][] finalAnnotations = new LipidAnnotation[peakindizes.length][];
+            {
+                final TIntIntHashMap indexmap = new TIntIntHashMap();
+                for (int i=0; i < peakindizes.length; ++i) indexmap.put(peakindizes[i], i);
+                int[] lengths = new int[peakindizes.length];
+                for (IndexedPeak p : sorted) ++lengths[indexmap.get(p.index)];
+                for (int i=0; i < finalAnnotations.length; ++i) finalAnnotations[i] = new LipidAnnotation[lengths[i]];
+                Arrays.fill(lengths, 0);
+                for (int i=0; i < sorted.length; ++i) {
+                    final int index = indexmap.get(sorted[i].index);
+                    finalAnnotations[index][lengths[index]++] = sorted[i].annotation;
+                }
+            }
+
             return new AnnotatedLipidSpectrum<>(spectrum, candidate.lipidFormula, candidate.ionMass,candidate.ionType, new LipidSpecies(candidate.possibleClass,
                     bestChains.stream().map(x->x.get(0).candidate).toArray(LipidChain[]::new)),
-                    Arrays.stream(sorted).map(x->x.annotation).toArray(LipidAnnotation[]::new), Arrays.stream(sorted).mapToInt(x->x.index).toArray()
+                    finalAnnotations, peakindizes
                     );
         }
-        /*
-        final LipidChainCandidate lipidChainCandidate = searchChains(spectrum, candidate, set);
-        if (lipidChainCandidate==null) return null;
-        annotations.addAll(lipidChainCandidate.annotations);
-        indizes.addAll(lipidChainCandidate.peakIndizes);
-        annotateCarboHydrogens(spectrum, candidate, lipidChainCandidate, annotations, indizes);
-        return new AnnotatedLipidSpectrum<T>(spectrum, new LipidSpecies(candidate.possibleClass, lipidChainCandidate.chains.toArray(LipidChain[]::new)), annotations.toArray(LipidAnnotation[]::new), indizes.toArray());
-
-         */
     }
 
     private PrecursorIonType adductSwitch(PrecursorIonType ionType) {

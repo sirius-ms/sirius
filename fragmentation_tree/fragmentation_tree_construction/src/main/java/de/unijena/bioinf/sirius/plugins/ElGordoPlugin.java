@@ -169,6 +169,7 @@ public class ElGordoPlugin extends SiriusPlugin  {
             PeakAnnotation<PredefinedPeak> pa = input.getOrCreatePeakAnnotation(PredefinedPeak.class);
             input.setAnnotation(LipidSpecies.class, species);
             input.setAnnotation(ForbidRecalibration.class, ForbidRecalibration.FORBIDDEN);
+            input.getExperimentInformation().setPrecursorIonType(ano.getIonType());
             final TIntObjectHashMap<PredefinedPeak> elgordoScoreMap = new TIntObjectHashMap<>();
             for (int k=0, n=ano.numberOfAnnotatedPeaks(); k < n; ++k) {
                 final LipidAnnotation annotation = ano.getAnnotationAt(k);
