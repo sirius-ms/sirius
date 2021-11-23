@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DBSelectionList extends JCheckBoxList<CustomDataSources.Source> {
-    public final static Set<String> BLACK_LIST = Set.of(/*DataSource.ADDITIONAL.realName,*/ DataSource.TRAIN.realName,
+    public final static Set<String> BLACK_LIST = Set.of(DataSource.ADDITIONAL.realName, DataSource.TRAIN.realName, DataSource.ELGORDO.realName(), DataSource.ALL.realName, DataSource.ALL_BUT_INSILICO.realName,
             DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
             DataSource.SUPERNATURAL.realName
     );
@@ -44,7 +44,7 @@ public class DBSelectionList extends JCheckBoxList<CustomDataSources.Source> {
         this(true);
     }
     public DBSelectionList( boolean includeCustom) {
-        this((String) null,includeCustom);
+        this(null,includeCustom);
     }
 
     public DBSelectionList(@Nullable String descriptionKey, boolean includeCustom) {

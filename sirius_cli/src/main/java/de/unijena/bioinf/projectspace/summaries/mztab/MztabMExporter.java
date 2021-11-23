@@ -165,7 +165,7 @@ public class MztabMExporter implements Summarizer {
                 smlItem.setBestIdConfidenceValue(smeFingerIDItem.getIdConfidenceMeasure().get(0));
 
 
-                List<String> ids = Arrays.stream(bestHit.getCandidate().getLinks())
+                List<String> ids = bestHit.getCandidate().getLinks().stream()
                         .filter(dbLink -> dbLink.name.equals(DataSource.PUBCHEM.realName)).map(dbLink -> dbLink.id).collect(Collectors.toList());
 
                 smlItem.setDatabaseIdentifier(

@@ -26,6 +26,9 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -38,13 +41,19 @@ import java.util.stream.Collectors;
 public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOptions> {
     protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
 
+
     public FingerblastConfigPanel(@Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
         super(FingerblastOptions.class);
 
         // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Search DBs");
+        DBSelectionList innerList = new DBSelectionList();
+        searchDBList = new JCheckboxListPanel<>(innerList, "Search DBs");
         GuiUtils.assignParameterToolTip(searchDBList, "StructureSearchDB");
         parameterBindings.put("StructureSearchDB", () -> searchDBList.checkBoxList.getCheckedItems().isEmpty() ? null : String.join(",", getStructureSearchDBStrings()));
+        JButton allBut = new JButton("non in silico");
+        allBut.setToolTipText(GuiUtils.formatToolTip("Select all but combinatorial databases."));
+        allBut.addActionListener(c -> innerList.checkAll(allButInsilico()));
+        searchDBList.buttons.add(allBut);
         add(searchDBList);
 
         searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.realName()));
@@ -65,5 +74,16 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
     public List<String> getStructureSearchDBStrings() {
         return getStructureSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    List<CustomDataSources.Source> allButInsilico = null;
+    private List<CustomDataSources.Source> allButInsilico(){
+       if (allButInsilico == null){
+           allButInsilico = CustomDataSources.getSourcesFromNames(
+                   Arrays.stream(DataSource.valuesNoALLNoMINES()).map(DataSource::realName)
+                           .filter(s -> !DBSelectionList.BLACK_LIST.contains(s)).collect(Collectors.toList()));
+       }
+       return allButInsilico;
+
     }
 }

@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,8 +52,17 @@ public class GuiUtils {
     public final static int SMALL_GAP = 5;
     public final static int MEDIUM_GAP = 10;
     public final static int LARGE_GAP = 20;
+    public final static FontMetrics TOOL_TIP_FONT_METRIC = makeToolTipMetric();
 
 
+
+    public static FontMetrics makeToolTipMetric() {
+        UIDefaults uidefs=UIManager.getLookAndFeelDefaults();
+        Font font=uidefs.getFont("ToolTip.font");
+        GraphicsEnvironment ge=GraphicsEnvironment.getLocalGraphicsEnvironment();
+        Graphics2D g2d=ge.createGraphics(new BufferedImage(1,1,1));
+        return g2d.getFontMetrics(font);
+    }
     public static void initUI() {
         //load nimbus look and feel, before mainframe is built
         try {
@@ -63,9 +73,10 @@ public class GuiUtils {
                 if ("Nimbus".equals(info.getName())) {
                     UIManager.setLookAndFeel(info.getClassName());
                     UIManager.put("nimbusOrange", Colors.ICON_GREEN);
-                    System.out.println(UIManager.getColor("nimbusBase"));
-                    System.out.println(UIManager.getColor("nimbusBlueGrey"));
-                    System.out.println(UIManager.getColor("control"));
+//                    System.out.println(UIManager.getColor("nimbusBase"));
+//                    System.out.println(UIManager.getColor("nimbusBlueGrey"));
+//                    System.out.println(UIManager.getColor("control"));
+
                     try {
                         Constructor c = Class.forName("SiriusStyleFactory").getConstructor(String.class);
                         c.newInstance("mini"); // regular, mini, small or large
@@ -215,6 +226,7 @@ public class GuiUtils {
     public static String formatToolTip(int width, java.util.List<String> lines) {
         if (lines == null || lines.isEmpty())
             return null;
+        width = Math.min(width, lines.stream().mapToInt(TOOL_TIP_FONT_METRIC::stringWidth).max().orElse(width));
         return "<html><p width=\"" + width + "\">"
                 + lines.stream().map(it -> it.replace("\n", "<br>")).collect(Collectors.joining("<br>"))
                 + "</p></html>";
