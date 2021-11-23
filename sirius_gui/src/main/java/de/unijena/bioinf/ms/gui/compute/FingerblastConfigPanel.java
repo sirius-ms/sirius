@@ -23,6 +23,8 @@ import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +57,11 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
         allBut.addActionListener(c -> innerList.checkAll(allButInsilico()));
         searchDBList.buttons.add(allBut);
         add(searchDBList);
+
+        final TwoColumnPanel additionalOptions = new TwoColumnPanel();
+        additionalOptions.addNamed("Inject Lipids", makeParameterCheckBox("InjectElGordoCompounds"));
+
+        add(new TextHeaderBoxPanel("General", additionalOptions));
 
         searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.realName()));
 
