@@ -58,7 +58,9 @@ public enum DataSource {
     PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, 0, false),
     PUBCHEMANNOTATIONFOOD("PubChem class - food", 134217728,  null,null,null, 0, false),
 
-    //everything with flags greater equal to 2**32 are databases of artificial structures.
+    ELGORDO("El-Gordo", 4294967296L, null, null, "https://www.lipidmaps.org/rest/compound/abbrev/%s/all/txt"), //flag for  el-gordo candidates
+
+    //everything with flags greater equal to 2**33 are databases of artificial structures.
     KEGGMINE("KEGG Mine", 8589934592L, null,null, null, 8589934592L | 256L, true),
     ECOCYCMINE("EcoCyc Mine", 17179869184L, null,null, null, 17179869184L | 2048L, true),
     YMDBMINE("YMDB Mine", 34359738368L, null,null, null, 34359738368L | 65536L, true);

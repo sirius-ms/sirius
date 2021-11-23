@@ -38,10 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CompoundCandidate {
@@ -56,12 +54,16 @@ public class CompoundCandidate {
 
     //database info
     protected long bitset;
-    protected DBLink[] links;
+    protected ArrayList<DBLink> links;
 
     //citation info
     protected PubmedLinks pubmedIDs = null;
 
     public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, DBLink[] links, PubmedLinks pubmedIDs) {
+        this(inchi, name, smiles, pLayer, qLayer, xlogp, tanimoto, bitset, new ArrayList<>(List.of(links)), pubmedIDs);
+    }
+
+    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, ArrayList<DBLink> links, PubmedLinks pubmedIDs) {
         this.inchi = inchi;
         this.name = name;
         this.smiles = smiles;
@@ -116,18 +118,23 @@ public class CompoundCandidate {
         this.bitset = bitset;
     }
 
-    public DBLink[] getLinks() {
+    public List<DBLink> getMutableLinks() {
         return links;
     }
 
-    public void setLinks(DBLink[] links) {
-        this.links = links;
+    public List<DBLink> getLinks() {
+        return links == null ? null
+                : Collections.unmodifiableList(links);
+    }
+
+    public void setLinks(Collection<DBLink> links) {
+        if (links instanceof ArrayList)
+            this.links = (ArrayList<DBLink>) links;
+        else this.links = new ArrayList<>(links);
     }
 
     public @NotNull Multimap<String, String> getLinkedDatabases() {
-//        if (linkedDatabases == null)
         return DataSources.getLinkedDataSources(this);
-//        return linkedDatabases;
     }
 
     public String getSmiles() {
@@ -215,8 +222,8 @@ public class CompoundCandidate {
         return getInchiKey2D() + " (dbflags=" + bitset + ")";
     }
 
-    public void mergeDBLinks(DBLink[] links){
-        this.links = Stream.concat(Arrays.stream(this.links),Arrays.stream(links)).distinct().toArray(DBLink[]::new);
+    public void mergeDBLinks(List<DBLink> links) {
+        this.links = (ArrayList<DBLink>) Stream.concat(this.links.stream(), links.stream()).distinct().collect(Collectors.toList());
     }
 
     public void mergeBits(long bitset) {
@@ -229,22 +236,22 @@ public class CompoundCandidate {
             gen.writeStartObject();
             gen.writeStringField("name", value.name);
             gen.writeStringField("inchi", value.inchi.in3D);
-            gen.writeStringField("inchikey",value.getInchiKey2D());
-            if (value.pLayer!=0) gen.writeNumberField("pLayer",value.pLayer);
-            if (value.qLayer!=0) gen.writeNumberField("qLayer",value.qLayer);
-            gen.writeNumberField("xlogp",value.xlogp);
+            gen.writeStringField("inchikey", value.getInchiKey2D());
+            if (value.pLayer != 0) gen.writeNumberField("pLayer", value.pLayer);
+            if (value.qLayer != 0) gen.writeNumberField("qLayer", value.qLayer);
+            gen.writeNumberField("xlogp", value.xlogp);
             gen.writeStringField("smiles", value.smiles);
             gen.writeNumberField("bitset", value.bitset);
             gen.writeObjectFieldStart("links");
             final Set<String> set = new HashSet<>(3);
-            for (int k=0; k < value.links.length; ++k) {
-                final DBLink link = value.links[k];
+            for (int k = 0; k < value.links.size(); ++k) {
+                final DBLink link = value.links.get(k);
                 if (set.add(link.name)) {
                     gen.writeArrayFieldStart(link.name);
                     gen.writeString(link.id);
-                    for (int j=k+1; j < value.links.length; ++j) {
-                        if (value.links[j].name.equals(link.name)) {
-                            gen.writeString(value.links[j].id);
+                    for (int j = k + 1; j < value.links.size(); ++j) {
+                        if (value.links.get(j).name.equals(link.name)) {
+                            gen.writeString(value.links.get(j).id);
                         }
                     }
                     gen.writeEndArray();
