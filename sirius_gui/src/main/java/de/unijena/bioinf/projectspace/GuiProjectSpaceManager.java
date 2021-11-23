@@ -194,8 +194,8 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                         },
                         x -> true, false, updateIfNeeded
                 );
-                List<InstanceBean> imported = Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...",  importer.makeImportJJob(input))
-                        .getResult().stream().map(id -> (InstanceBean) newInstanceFromCompound(id)).collect(Collectors.toList());
+                List<InstanceBean> imported = Optional.ofNullable(Jobs.runInBackgroundAndLoad(MF, "Auto-Importing supported Files...",  importer.makeImportJJob(input))
+                        .getResult()).map(c -> c.stream().map(id -> (InstanceBean) newInstanceFromCompound(id)).collect(Collectors.toList())).orElse(List.of());
 
                 Jobs.runInBackgroundAndLoad(MF, "Showing imported data...",
                         () -> Jobs.runEDTLater(() -> INSTANCE_LIST.addAll(imported)));
