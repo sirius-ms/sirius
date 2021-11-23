@@ -374,7 +374,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
             final JPanel b1 = new JPanel(new BorderLayout());
 
-            final JLabel dbl = new JLabel("Databases");
+            final JLabel dbl = new JLabel("Sources/Tags");
             dbl.setFont(nameFont.deriveFont(map));
             scoreL = new ScoreLabel();
             b1.setOpaque(false);
