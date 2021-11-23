@@ -55,7 +55,7 @@ public class FingerprintConfigPanel extends SubToolConfigPanel<FingerprintOption
         parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString() : PossibleAdducts.empty().toString());
 
         final TwoColumnPanel additionalOptions = new TwoColumnPanel();
-        additionalOptions.addNamed("Formula score threshold", makeParameterCheckBox("FormulaResultThreshold"));
+        additionalOptions.addNamed("Score threshold", makeParameterCheckBox("FormulaResultThreshold"));
 
         add(new TextHeaderBoxPanel("General", additionalOptions));
     }
