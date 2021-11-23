@@ -24,10 +24,10 @@ import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 /**
- * El-Gordo Lipid species is added to CSI:FingerID candidate list of available.
- * The lipid species is only available if El-Gordo predicts that the MS/MS is a lipid spectrum.
- * If  False El-Gordo will still be executed and e.g. improve the fragmentation tree,
- * but the resulting candidate will not be added to the candidates.
+ * El-Gordo lipid species is added to CSI:FingerID candidate list if available.
+ * The lipid species will only be available if El-Gordo predicts that the MS/MS is a lipid spectrum.
+ * If this parameter is set to 'false' El-Gordo will still be executed and e.g. improve the fragmentation
+ * tree, but the computed lipid species will not be added to the list of candidates.
  */
 public class InjectElGordoCompounds implements Ms2ExperimentAnnotation {
     public static final InjectElGordoCompounds TRUE = new InjectElGordoCompounds(true);
