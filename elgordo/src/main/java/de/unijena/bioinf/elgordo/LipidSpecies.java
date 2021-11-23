@@ -37,7 +37,12 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
                 int dboffset = ((chains[i].chainLength/2 - chains[i].numberOfDoubleBonds)/2) * 2;
                 StringBuilder chainBuilder = new StringBuilder();
                 int bondsToAdd = chains[i].numberOfDoubleBonds;
-                for (int j=0, n = chains[i].chainLength-1; j < n; ++j) {
+                if (chains[i].type == LipidChain.Type.ACYL) {
+                    chainBuilder.append("C(=O)");
+                } else if (chains[i].type == LipidChain.Type.ALKYL) {
+                    chainBuilder.append("C");
+                } else return null; // Sphingosin is not implemented yet
+                for (int j=1, n = chains[i].chainLength; j < n; ++j) {
                     chainBuilder.append('C');
                     if (bondsToAdd > 0 && j>=dboffset && j % 2 == 0) {
                         chainBuilder.append('=');
