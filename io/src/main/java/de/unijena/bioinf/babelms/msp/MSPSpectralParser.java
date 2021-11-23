@@ -20,7 +20,10 @@
 
 package de.unijena.bioinf.babelms.msp;
 
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.SpectralParser;
@@ -102,7 +105,8 @@ public class MSPSpectralParser extends SpectralParser {
         }
 
         String msLevel = metaInfo.get(SPEC_TYPE);
-        if (metaInfo.containsKey(PRECURSOR_MZ) || metaInfo.containsKey(SYN_PRECURSOR_MZ) || !("MS".equalsIgnoreCase(msLevel) || "MS1".equalsIgnoreCase(msLevel))) { // we have MSn
+        if ((msLevel == null && (metaInfo.containsKey(PRECURSOR_MZ) || (metaInfo.containsKey(SYN_PRECURSOR_MZ))) ||
+                (msLevel != null && !("MS".equalsIgnoreCase(msLevel) || "MS1".equalsIgnoreCase(msLevel))))) { // we have MSn
             spectrum = new MutableMs2Spectrum(
                     spectrum,
                     MSP.parsePrecursorMZ(metaInfo).orElseThrow(() -> new IOException("Could neither parse '" + PRECURSOR_MZ + "' nor '" + EXACT_MASS + "'!")),
@@ -152,5 +156,4 @@ public class MSPSpectralParser extends SpectralParser {
                 reader.close();
         }
     }
-
 }
