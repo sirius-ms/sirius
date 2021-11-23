@@ -41,10 +41,10 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
     private final double precursorMz;
     private final PrecursorIonType ionType;
     private final LipidSpecies annotatedSpecies;
-    private final LipidAnnotation[] annotationsPerPeak;
+    private final LipidAnnotation[][] annotationsPerPeak;
     private final int[] peakIndizes;
 
-    public AnnotatedLipidSpectrum(T spectrum, MolecularFormula formula, double precursorMz, PrecursorIonType ionType, LipidSpecies species, LipidAnnotation[] annotationsPerPeak, int[] indizes) {
+    public AnnotatedLipidSpectrum(T spectrum, MolecularFormula formula, double precursorMz, PrecursorIonType ionType, LipidSpecies species, LipidAnnotation[][] annotationsPerPeak, int[] indizes) {
         this.spectrum = spectrum;
         this.formula = formula;
         this.precursorMz = precursorMz;
@@ -113,8 +113,8 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
                 // might be imbalanced
                 strangeDifference = 0;
             } else {
-                // everything below 12 is uncommon:
-                uncommonSmallChainLength = Math.max(0, 12 - chainLengths.getMin());
+                // everything below 8 is uncommon:
+                uncommonSmallChainLength = Math.max(0, 8 - chainLengths.getMin());
                 // everything above 22 is uncommon
                 uncommonLargeChainLength = Math.max(0, chainLengths.getMax() - 22);
                 // each chain should be more than halve the largest chain
@@ -263,14 +263,14 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
     }
 
     public int numberOfHeadGroupAnnotations() {
-        return (int)Arrays.stream(annotationsPerPeak).filter(x->x instanceof HeadGroupFragmentAnnotation).count();
+        return (int)Arrays.stream(annotationsPerPeak).filter(x-> Arrays.stream(x).anyMatch(y->y instanceof HeadGroupFragmentAnnotation)).count();
     }
     public int numberOfSpecificHeadGroupAnnotations() {
-        return (int)Arrays.stream(annotationsPerPeak).filter(x->x instanceof HeadGroupFragmentAnnotation
-        && !BORING.contains(x.getUnderlyingFormula())).count();
+        return (int)Arrays.stream(annotationsPerPeak).filter(x->Arrays.stream(x).anyMatch(y -> y instanceof HeadGroupFragmentAnnotation
+        && !BORING.contains(y.getUnderlyingFormula()))).count();
     }
     public int numberOfChainAnnotations() {
-        return (int)Arrays.stream(annotationsPerPeak).filter(x->x instanceof ChainAnnotation).count();
+        return (int)Arrays.stream(annotationsPerPeak).filter(x->Arrays.stream(x).anyMatch(y -> y instanceof ChainAnnotation)).count();
     }
 
     public int numberOfAnnotatedPeaks() {
@@ -300,7 +300,7 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
     }
 
     public LipidAnnotation getAnnotationAt(int k) {
-        return annotationsPerPeak[k];
+        return annotationsPerPeak[k][0];
     }
 
     public int getPeakIndexAt(int k) {
@@ -328,7 +328,7 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
             if (peak==dup) {
             } else if (peak >= 0) {
                 dup=peak;
-                final LipidAnnotation a = annotationsPerPeak[j];
+                final LipidAnnotation a = annotationsPerPeak[j][0];
                 if (a instanceof PrecursorAnnotation) {
                     precursorMz = spectrum.getMzAt(peak);
                 } else {
