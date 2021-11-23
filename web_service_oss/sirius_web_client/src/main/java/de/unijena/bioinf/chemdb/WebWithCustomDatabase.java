@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.chemdb;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.BitsetOps;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -321,8 +322,20 @@ public class WebWithCustomDatabase {
         final HashMap<String, FingerprintCandidate> cs = new HashMap<>();
         final HashMap<String, Set<FingerprintCandidate>> customInChIs = new HashMap<>();
         final Set<FingerprintCandidate> restDbInChIs;
-        final long requestFilter;
+        private long requestFilter;
         final long restFilter;
+
+        public long getRequestFilter() {
+            return requestFilter;
+        }
+
+        public void setRequestFilter(long requestFilter) {
+            this.requestFilter = requestFilter;
+        }
+
+        public void addToRequestFilter(long bitsToAdd) {
+            setRequestFilter(requestFilter | bitsToAdd);
+        }
 
         private CandidateResult() {
             restDbInChIs = Collections.emptySet();

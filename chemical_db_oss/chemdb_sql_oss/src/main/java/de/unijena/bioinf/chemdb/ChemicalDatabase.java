@@ -562,7 +562,7 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
                         }
                     }
                 }
-                candidate.setLinks(buffer.toArray(new DBLink[buffer.size()]));
+                candidate.setLinks(buffer);
                 buffer.clear();
             }
 

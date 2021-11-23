@@ -112,10 +112,10 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
         //we want to score all available candidates and may create subsets later.
         final Set<FingerprintCandidate> combinedCandidates = candidates.getCombCandidates();
         if (this.ftree!=null) {
-            final Optional<LipidSpecies> annotation = ftree.getAnnotation(LipidSpecies.class);
-            if (annotation.isPresent()) {
-                annotation.map(this::lipid2candidate).ifPresent(x->addOrReplace(combinedCandidates,x));
-            }
+            ftree.getAnnotation(LipidSpecies.class)
+                    .map(this::lipid2candidate)
+                    .ifPresent(x -> addOrReplace(combinedCandidates, x));
+
         }
 
         // to get a prepared FingerblastScorer, an object of BayesnetScoring that is specific to the molecular formula has to be initialized
@@ -135,16 +135,15 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
     }
 
     private void addOrReplace(Set<FingerprintCandidate> combinedCandidates, FingerprintCandidate x) {
-        Iterator<FingerprintCandidate> iter = combinedCandidates.iterator();
-        while (iter.hasNext()) {
-            FingerprintCandidate fc = iter.next();
+        for (FingerprintCandidate fc : combinedCandidates) {
             if (fc.getInchi().key2D().equals(x.getInchiKey2D())) {
-                if (fc.getName()==null) fc.setName(x.getName());
+                if (fc.getName() == null || fc.getName().isBlank()) fc.setName(x.getName());
                 fc.mergeBits(x.getBitset());
+                fc.mergeDBLinks(x.getLinks());
+                return; // is already in list
             }
-            return;
         }
-        combinedCandidates.add(x);
+        combinedCandidates.add(x); //add new candidate
     }
 
     private FingerprintCandidate lipid2candidate(LipidSpecies lipid) {
@@ -154,7 +153,6 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
                 final IAtomContainer molecule = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(str);
                 ArrayFingerprint fp = new FixedFingerprinter(CdkFingerprintVersion.getDefault()).computeFingerprintFromSMILES(str);
                 final InChIGenerator gen = InChIGeneratorFactory.getInstance().getInChIGenerator(molecule);
-                System.out.println("GENERATE STRUCTURE: " + str);
                 return new FingerprintCandidate(new CompoundCandidate(
                         new InChI(gen.getInchiKey(), gen.getInchi()),
                         lipid.toString(),
@@ -163,8 +161,8 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
                         0,
                         ((DoubleResult)(new XLogPDescriptor().calculate(molecule).getValue())).doubleValue(),
                         null,
-                        DataSource.BIO.flag,
-                        new DBLink[0],
+                        DataSource.ELGORDO.flag,
+                        new DBLink[]{new DBLink("El-Gordo", lipid.toString())},
                         new PubmedLinks()
                 ), fp);
             } catch (CDKException e) {

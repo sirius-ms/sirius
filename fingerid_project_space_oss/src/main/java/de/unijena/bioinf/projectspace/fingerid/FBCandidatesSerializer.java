@@ -78,12 +78,12 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
                     Matcher matcher = dblinkPat.matcher(db);
                     db = db.trim();
                     if (matcher.matches()) {
-                        String[] split = matcher.group().split(":");
+                        String[] split = matcher.group().split(":\\(");
 
                         final String dbName = split[0].trim();
                         final String ids = split[1].trim();
                         if (!ids.isBlank())
-                            for (String dbId : ids.substring(1, ids.length() - 1).split(","))
+                            for (String dbId : ids.substring(0, ids.length() - 1).split(","))
                                 links.add(new DBLink(dbName,
                                         dbId.isBlank() || dbId.equalsIgnoreCase("null") || dbId.equalsIgnoreCase("na") || dbId.equalsIgnoreCase("n/a")
                                                 ? null : dbId.trim()));
@@ -97,7 +97,7 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
                 }
 
                 candidate.setBitset(CustomDataSources.getDBFlagsFromNames(importedNames));
-                candidate.setLinks(links.toArray(DBLink[]::new));
+                candidate.setLinks(links);
             }
 
             if (row.length > 10 && row[10] != null && !row[10].isBlank() && !row[10].equals("N/A")) {

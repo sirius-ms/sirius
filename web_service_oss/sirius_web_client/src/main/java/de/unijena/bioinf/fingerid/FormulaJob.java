@@ -22,11 +22,11 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
+import de.unijena.bioinf.jjobs.BasicJJob;
 
 import java.util.List;
 
@@ -40,21 +40,28 @@ public class FormulaJob extends BasicJJob<WebWithCustomDatabase.CandidateResult>
     protected final List<SearchableDatabase> dbs;
     protected final PrecursorIonType ionType;
     protected final boolean includeRestAllDb;
+    protected final long fakeFilterBits;
 
 
     public FormulaJob(MolecularFormula formula, WebWithCustomDatabase searchDatabase, List<SearchableDatabase> dbs, PrecursorIonType precursorIonType, boolean includeRestAllDb) {
+        this(formula, searchDatabase, dbs, precursorIonType, includeRestAllDb, 0);
+    }
+
+    public FormulaJob(MolecularFormula formula, WebWithCustomDatabase searchDatabase, List<SearchableDatabase> dbs, PrecursorIonType precursorIonType, boolean includeRestAllDb, long fakeFilterBits) {
         super(JobType.WEBSERVICE);
         this.formula = formula;
         this.searchDatabase = searchDatabase;
         this.dbs = dbs;
         this.ionType = precursorIonType;
         this.includeRestAllDb = includeRestAllDb;
+        this.fakeFilterBits = fakeFilterBits;
     }
 
     @Override
     protected WebWithCustomDatabase.CandidateResult compute() throws Exception {
         return NetUtils.tryAndWait(() -> {
             final WebWithCustomDatabase.CandidateResult result = searchDatabase.loadCompoundsByFormula(formula, dbs, includeRestAllDb);
+            result.addToRequestFilter(fakeFilterBits);
             return result;
         }, this::checkForInterruption);
     }

@@ -21,12 +21,14 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
+import de.unijena.bioinf.elgordo.InjectElGordoCompounds;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import org.jetbrains.annotations.NotNull;
@@ -120,7 +122,10 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                         fingeridInput.getMolecularFormula(),
                         predictor.database,
                         searchDB.searchDBs,
-                        fingeridInput.getPrecursorIonType(), true)
+                        fingeridInput.getPrecursorIonType(),
+                        true,
+                        experiment.getAnnotation(InjectElGordoCompounds.class)
+                                .orElse(InjectElGordoCompounds.TRUE).value ? DataSource.ELGORDO.flag : 0)
         ).collect(Collectors.toList());
 
         submitSubJobsInBatches(formulaJobs, PropertyManager.getNumberOfThreads());
