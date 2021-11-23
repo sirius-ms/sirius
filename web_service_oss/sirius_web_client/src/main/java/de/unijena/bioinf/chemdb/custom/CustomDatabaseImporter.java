@@ -379,7 +379,7 @@ public class CustomDatabaseImporter {
                 return computeCompound(molecule);
 
             if (fc.getLinks() == null)
-                fc.setLinks(new DBLink[0]);
+                fc.setLinks(new ArrayList<>(0));
 
             if (fc.getName() == null || fc.getName().isEmpty()) {
                 if (molecule.name != null)
@@ -389,13 +389,9 @@ public class CustomDatabaseImporter {
             if (molecule.id != null) {
                 if (fc.getName() == null || fc.getName().isEmpty())
                     fc.setName(molecule.id);
-                DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length + 1);
-                ls[ls.length - 1] = new DBLink(dbname, molecule.id);
-                fc.setLinks(ls);
+                fc.getMutableLinks().add(new DBLink(dbname, molecule.id));
             } else {
-                DBLink[] ls = Arrays.copyOf(fc.getLinks(), fc.getLinks().length + 1);
-                ls[ls.length - 1] = new DBLink(dbname, "");
-                fc.setLinks(ls);
+                fc.getMutableLinks().add(new DBLink(dbname, ""));
             }
             fc.setBitset(fc.getBitset() | CustomDataSources.getSourceFromName(dbname).flag());
             return fc;
@@ -423,11 +419,11 @@ public class CustomDatabaseImporter {
                 fc.setName(molecule.name);
 
             if (molecule.id != null) {
-                fc.setLinks(new DBLink[]{new DBLink(dbname, molecule.id)});
+                fc.setLinks(List.of(new DBLink(dbname, molecule.id)));
                 if (fc.getName() == null || fc.getName().isEmpty())
                     fc.setName(molecule.id);//set id as name if no name was set
             } else {
-                fc.setLinks(new DBLink[0]);
+                fc.setLinks(new ArrayList<>());
             }
             // compute XLOGP
             fc.setXlogp(logPEstimator.prepareMolAndComputeLogP(molecule.container));
