@@ -39,53 +39,55 @@ public class ResultPanel extends JTabbedPane {
 
     protected static final Logger logger = LoggerFactory.getLogger(ResultPanel.class);
 
-    private FormulaOverviewPanel rvp;
-    private TreeVisualizationPanel tvp;
-    private SpectraVisualizationPanel svp;
+    public final FormulaOverviewPanel formulasTab;
+    public final TreeVisualizationPanel treeTab;
+    public final SpectraVisualizationPanel spectrumTab;
 
-    private LCMSViewerPanel lcmsPanel;
+    public final LCMSViewerPanel lcmsTab;
 
-    private CandidateListDetailViewPanel ccv;
-    private EpimetheusPanel epi;
-    private FingerprintPanel fpt;
-    private CompoundClassPanel ccp;
+    public final CandidateListDetailViewPanel structuresTab;
+    public final EpimetheusPanel structureAnnoTab;
+    public final FingerprintPanel fpTab;
+    public final CompoundClassPanel canopusTab;
 
-    private FormulaList fl;
+    private final FormulaList fl;
 
     public ResultPanel(final FormulaList siriusResultElements, WebAPI webAPI) {
         super();
         this.setToolTipText("Results");
 
-        rvp = new FormulaOverviewPanel(siriusResultElements);
-        tvp = new TreeVisualizationPanel();
-        svp = new SpectraVisualizationPanel(PropertyManager.getBoolean("de.unijena.bioinf.spec_viewer.sirius.anopanel",false));
+        formulasTab = new FormulaOverviewPanel(siriusResultElements);
+        treeTab = new TreeVisualizationPanel();
+        spectrumTab = new SpectraVisualizationPanel(PropertyManager.getBoolean("de.unijena.bioinf.spec_viewer.sirius.anopanel", false));
 
-        this.lcmsPanel = new LCMSViewerPanel(siriusResultElements);
+        this.lcmsTab = new LCMSViewerPanel(siriusResultElements);
 
-        epi = new EpimetheusPanel(new StructureList(siriusResultElements, ActionList.DataSelectionStrategy.ALL));
-        ccv = new CandidateListDetailViewPanel(new StructureList(siriusResultElements));
+        structureAnnoTab = new EpimetheusPanel(new StructureList(siriusResultElements, ActionList.DataSelectionStrategy.ALL));
+        structuresTab = new CandidateListDetailViewPanel(new StructureList(siriusResultElements));
+        FingerprintPanel fpTabTmp;
         try {
-            fpt = new FingerprintPanel(new FingerprintTable(siriusResultElements, webAPI));
+            fpTabTmp = new FingerprintPanel(new FingerprintTable(siriusResultElements, webAPI));
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
-            fpt = null;
+            fpTabTmp = null;
         }
 
-        ccp = new CompoundClassPanel(new CompoundClassList(siriusResultElements), siriusResultElements);
+        fpTab = fpTabTmp;
+        canopusTab = new CompoundClassPanel(new CompoundClassList(siriusResultElements), siriusResultElements);
 
 
-        addTab("LC-MS", null, lcmsPanel, lcmsPanel.getDescription());
+        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription());
 
-        addTab("Formulas"/*""Sirius Overview"*/, null, rvp, rvp.getDescription());
-        addTab("Spectra", null, new FormulaListHeaderPanel(siriusResultElements, svp), svp.getDescription());
-        addTab("Trees", null, new FormulaListHeaderPanel(siriusResultElements, tvp), tvp.getDescription());
+        addTab("Formulas"/*""Sirius Overview"*/, null, formulasTab, formulasTab.getDescription());
+        addTab("Spectra", null, new FormulaListHeaderPanel(siriusResultElements, spectrumTab), spectrumTab.getDescription());
+        addTab("Trees", null, new FormulaListHeaderPanel(siriusResultElements, treeTab), treeTab.getDescription());
 
-        addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(siriusResultElements, fpt), fpt.getDescription());
+        addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(siriusResultElements, fpTab), fpTab.getDescription());
 
-        addTab("Structures", null, new FormulaListHeaderPanel(siriusResultElements, ccv), ccv.getDescription());
-        addTab("Structure Annotation", null, epi, epi.getDescription());
+        addTab("Structures", null, new FormulaListHeaderPanel(siriusResultElements, structuresTab), structuresTab.getDescription());
+        addTab("Structure Annotation", null, structureAnnoTab, structureAnnoTab.getDescription());
 
-        addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, ccp), ccp.getDescription());
+        addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
 
         this.fl = siriusResultElements;
 

@@ -25,9 +25,12 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.chemdb.DataSources;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
@@ -63,7 +66,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected Thread structureSearcherThread;
 
 
-    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight;
+    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum;
     protected JPopupMenu popupMenu;
 
     protected int highlightAgree = -1;
@@ -109,16 +112,19 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         OpenInBrowser1 = new JMenuItem("Open in PubChem");
         OpenInBrowser2 = new JMenuItem("Open in all databases");
         highlight = new JMenuItem("Highlight matching substructures");
+        annotateSpectrum = new JMenuItem("Show annotated spectrum");
         CopyInchi.addActionListener(this);
         CopyInchiKey.addActionListener(this);
         OpenInBrowser1.addActionListener(this);
         OpenInBrowser2.addActionListener(this);
         highlight.addActionListener(this);
+        annotateSpectrum.addActionListener(this);
         popupMenu.add(CopyInchiKey);
         popupMenu.add(CopyInchi);
         popupMenu.add(OpenInBrowser1);
         popupMenu.add(OpenInBrowser2);
         popupMenu.add(highlight);
+        popupMenu.add(annotateSpectrum);
         setVisible(true);
     }
 
@@ -182,33 +188,35 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                     }
                 });
             }
-        } else if (c!=null && e.getSource() == this.highlight) {
-            SwingWorker w = new SwingWorker<>() {
-
-                @Override
-                protected Object doInBackground() throws Exception {
-                    try {
-                        c.highlightInBackground();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+        } else if (c != null && e.getSource() == this.highlight) {
+            Jobs.runInBackground(() -> {
+                c.highlightInBackground();
+                Jobs.runEDTLater(() -> {
+                    final CompoundMatchHighlighter h;
+                    synchronized (c) {
+                        h = c.highlighter;
                     }
-                    return c;
-                }
+                    h.hightlight(c);
+                    source.getElementList().elementChanged(c);
+                });
+            });
 
-                @Override
-                protected void done() {
-                    super.done();
-                    if (getState() == StateValue.DONE) {
-                        final CompoundMatchHighlighter h;
-                        synchronized (c) {
-                            h = c.highlighter;
-                        }
-                        h.hightlight(c);
-                        source.getElementList().elementChanged(c);
-                    }
+        } else if (c != null && e.getSource() == this.annotateSpectrum) {
+            final ResultPanel rp = MainFrame.MF.getResultsPanel();
+            final int idx = Jobs.runInBackgroundAndLoad(MainFrame.MF, () -> {
+                int i = 0;
+                for (FingerprintCandidateBean fpc : rp.structureAnnoTab.getCandidateTable().getFilteredSource()) {
+                    if (fpc.getInChiKey().equals(c.getInChiKey()))
+                        return i;
+                    i++;
                 }
-            };
-            w.execute();
+                return 0;
+            }).getResult();
+
+            Jobs.runEDTLater(() -> {
+                rp.setSelectedComponent(MainFrame.MF.getResultsPanel().structureAnnoTab);
+                rp.structureAnnoTab.getStructureList().getTopLevelSelectionModel().setSelectionInterval(idx, idx);
+            });
         }
     }
 
