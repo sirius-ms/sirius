@@ -91,7 +91,7 @@ public enum LipidClass {
         this.headgroup = headgroup;
         this.chains = chains;
         this.fragmentLib = lib;
-        this.sphingolipid = lib.hasSphingosin();
+        this.sphingolipid = lib != null && lib.hasSphingosin();
         this.smiles = smiles;
         this.abbreviation = abbrev;
     }
