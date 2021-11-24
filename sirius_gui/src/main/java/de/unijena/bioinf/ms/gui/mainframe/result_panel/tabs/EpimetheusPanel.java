@@ -24,7 +24,6 @@ import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
-import de.unijena.bioinf.ms.gui.mainframe.result_panel.VisualizationPanelSynchronizer;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
@@ -46,18 +45,21 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
                 + "</html>";
     }
 
+    protected final StructureList structureList;
+    protected final CandidateListTableView candidateTable;
     public EpimetheusPanel(final StructureList structureList) {
         super(new BorderLayout());
-
-        final CandidateListTableView north = new CandidateListTableView(structureList);
+        this.structureList = structureList;
+        this.candidateTable = new CandidateListTableView(structureList);
 //        final TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
         final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY, false);
+        this.structureList.getTopLevelSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         // Class to synchronize selected peak/node
 //        VisualizationPanelSynchronizer synchronizer = new VisualizationPanelSynchronizer(overviewTVP, overviewSVP);
  
 //
-        north.getFilteredSelectionModel().addListSelectionListener(e -> {
+        candidateTable.getFilteredSelectionModel().addListSelectionListener(e -> {
             DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) e.getSource();
             FingerprintCandidateBean sre = selections.getSelected().stream().findFirst().orElse(null);
             FormulaResultBean form = sre != null ? sre.getFormulaResult() : null;
@@ -69,9 +71,16 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
 //        JSplitPane south = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, overviewSVP, overviewTVP);
 //        south.setDividerLocation(.5d);
 //        south.setResizeWeight(.5d);
-        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, north, overviewSVP);
+        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, candidateTable, overviewSVP);
         major.setDividerLocation(250);
         add(major, BorderLayout.CENTER);
     }
 
+    public StructureList getStructureList() {
+        return structureList;
+    }
+
+    public CandidateListTableView getCandidateTable() {
+        return candidateTable;
+    }
 }
