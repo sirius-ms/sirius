@@ -111,7 +111,9 @@ public class GCSBlobStorage implements BlobStorage {
 
     @Override
     public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
-        withStream.accept(writer(relative));
+        try (OutputStream w = writer(relative)) {
+            withStream.accept(w);
+        }
     }
 
     @Override

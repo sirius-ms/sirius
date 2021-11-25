@@ -74,7 +74,9 @@ public class MinIoS3BlobStorage implements BlobStorage {
 
     @Override
     public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
-        withStream.accept(writer(relative));
+        try (OutputStream w = writer(relative)) {
+            withStream.accept(w);
+        }
     }
 
     public OutputStream writer(Path relative) throws IOException {
@@ -223,8 +225,6 @@ public class MinIoS3BlobStorage implements BlobStorage {
             } catch (ErrorResponseException | InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
                 throw new IOException("Error when writing Tags", e);
             }
-
-
         }
     }
 }

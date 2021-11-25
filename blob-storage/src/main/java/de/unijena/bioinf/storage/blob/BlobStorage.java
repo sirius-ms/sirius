@@ -54,7 +54,8 @@ public interface BlobStorage extends Closeable, AutoCloseable {
     boolean hasBlob(Path relative) throws IOException;
 
     /**
-     * returns a writer for the given path
+     * Applies given function to a writer for the given path
+     * in the store and closes it after writing
      *
      * @param relative   relative path from storage root
      * @param withStream consume OutputStream to write data
@@ -73,6 +74,7 @@ public interface BlobStorage extends Closeable, AutoCloseable {
 
     /**
      * Returns the Tag on storage/bucket level for the given key
+     *
      * @param key associated with the requested value
      * @return tag corresponding to the given key or NULL if key does not exist or
      * if the storage/bucket does not support tags.
