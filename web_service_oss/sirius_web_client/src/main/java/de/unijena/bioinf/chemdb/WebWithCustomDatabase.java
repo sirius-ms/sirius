@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.chemdb;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.BitsetOps;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;

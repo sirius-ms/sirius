@@ -21,13 +21,14 @@
 
 package de.unijena.bioinf.storage.blob.file;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,10 +39,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 //todo implement bucket tag/label support?
 public class FileBlobStorage implements BlobStorage {
+    public static final String BLOB_TAGS = ".tags";
 
     public static boolean exists(@Nullable Path p) throws IOException {
         return p != null && Files.isDirectory(p) && Files.list(p).count() > 0;
@@ -51,9 +55,11 @@ public class FileBlobStorage implements BlobStorage {
         return FileUtils.walkAndClose(s -> s.filter(Files::isRegularFile).findFirst().map(Compressible.Compression::fromPath).orElse(Compressible.Compression.NONE), root);
     }
 
+
     protected final Path root;
 
-    protected Map<String,String> tags = new HashMap<>();
+    private Map<String, String> tags = new HashMap<>();
+    private final ReadWriteLock tagLock = new ReentrantReadWriteLock();
 
     public FileBlobStorage(Path root) {
         this.root = root;
@@ -73,13 +79,33 @@ public class FileBlobStorage implements BlobStorage {
 
     @Override
     public @NotNull Map<String, String> getTags() throws IOException {
-        return Collections.unmodifiableMap(tags);
+        if (tags == null) {
+            tagLock.writeLock().lock();
+            try (InputStream r = reader(Path.of(BLOB_TAGS))) {
+                this.tags = new ObjectMapper().readValue(r, new TypeReference<>() {
+                });
+            } finally {
+                tagLock.writeLock().unlock();
+            }
+        }
+        tagLock.readLock().lock();
+        try {
+            return Collections.unmodifiableMap(tags);
+        } finally {
+            tagLock.readLock().unlock();
+        }
     }
 
     @Override
     public void setTags(@NotNull Map<String, String> tags) throws IOException {
-        this.tags = tags;
-        LoggerFactory.getLogger(getClass()).warn("TAGS ARE NOT CURRENTLY STORED PERSISTENTLY IN FILE BASED STORAGES!");
+        tagLock.writeLock().lock();
+        try {
+            this.tags = tags;
+            withWriter(Path.of(BLOB_TAGS), o -> new ObjectMapper().writeValue(o, tags));
+        } finally {
+            tagLock.writeLock().unlock();
+        }
+
     }
 
     @Override
@@ -100,12 +126,14 @@ public class FileBlobStorage implements BlobStorage {
 
     @Override
     public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
-        withStream.accept(writer(relative));
+        try (OutputStream w = writer(relative)) {
+            withStream.accept(w);
+        }
     }
 
     @Override
     public Iterator<Blob> listBlobs() throws IOException {
-        return new BlobIt<>(FileUtils.listAndClose(getRoot(), s -> s.collect(Collectors.toList())).iterator(), PathBlob::new);
+        return new BlobIt<>(FileUtils.listAndClose(getRoot(), s -> s.filter(p -> !p.getFileName().toString().equals(BLOB_TAGS)).collect(Collectors.toList())).iterator(), PathBlob::new);
     }
 
     public class PathBlob implements Blob {
