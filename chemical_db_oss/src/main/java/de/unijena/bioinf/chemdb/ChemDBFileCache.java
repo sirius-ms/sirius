@@ -66,7 +66,7 @@ public class ChemDBFileCache {
             if (stfile.exists()) {
                 try {
                     final GZIPInputStream zin = new GZIPInputStream(new BufferedInputStream(new FileInputStream(stfile)));
-                    try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), new InputStreamReader(zin))) {
+                    try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), zin)) {
                         while (fciter.hasNext())
                             fpcs.add(fciter.next());
                     }
@@ -95,9 +95,7 @@ public class ChemDBFileCache {
             final File tempFile = File.createTempFile("sirius_formula", ".json.gz", output.getParentFile());
             try {
                 try (final GZIPOutputStream fout = new GZIPOutputStream(new FileOutputStream(tempFile))) {
-                    try (final BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fout))) {
-                        FingerprintCandidate.toJSONList(fpcs, br);
-                    }
+                        FingerprintCandidate.toJSONList(fpcs, fout);
                 }
 
                 // move tempFile is canonical on same fs
@@ -112,8 +110,6 @@ public class ChemDBFileCache {
 
         return fpcs;
     }
-
-
 }
 
 

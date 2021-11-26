@@ -62,6 +62,11 @@ public class MinIoS3BlobStorage implements BlobStorage {
     }
 
     @Override
+    public String getBucketLocation() {
+        return MinIoUtils.URL_PREFIX + getName();
+    }
+
+    @Override
     public boolean hasBlob(Path relative) throws IOException {
         try {
             return minioClient.statObject(StatObjectArgs.builder().bucket(bucketName).object(relative.toString()).build()) != null;
@@ -188,6 +193,16 @@ public class MinIoS3BlobStorage implements BlobStorage {
     public Iterator<Blob> listBlobs() {
         Iterator<Result<Item>> it = minioClient.listObjects(ListObjectsArgs.builder().bucket(bucketName).build()).iterator();
         return new BlobIt<>(it, MinIoBlob::of);
+    }
+
+    @Override
+    public void deleteBucket() throws IOException {
+        try {
+            minioClient.removeBucket(RemoveBucketArgs.builder().bucket(bucketName).build());
+            close();
+        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException | InvalidResponseException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            throw new IOException("Error when deleting Bucket", e);
+        }
     }
 
     public static class MinIoBlob implements Blob {

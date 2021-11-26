@@ -31,10 +31,7 @@ import de.unijena.bioinf.babelms.CloseableIterator;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 public class FingerprintCandidate extends CompoundCandidate {
 
@@ -45,7 +42,8 @@ public class FingerprintCandidate extends CompoundCandidate {
      *
      * @return number of newly added candidates
      */
-    public static int mergeFromJsonToJson(FingerprintVersion version, List<FingerprintCandidate> candidates, File file) throws IOException {
+
+  /*  public static int mergeFromJsonToJson(FingerprintVersion version, List<FingerprintCandidate> candidates, BobS) throws IOException {
         int sizeDiff = 0;
         final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion) version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
         final HashMap<String, FingerprintCandidate> compoundPerInchiKey = new HashMap<>();
@@ -91,9 +89,9 @@ public class FingerprintCandidate extends CompoundCandidate {
     private static void mergeInto(FingerprintCandidate a, FingerprintCandidate b) {
         a.setpLayer(a.getpLayer() | b.getpLayer());
         a.setqLayer(a.getqLayer() | b.getqLayer());
-        // TODO: links...?
-    }
-
+        a.mergeDBLinks(b.getLinks());
+        a.mergeBits(b.bitset);
+    }*/
     public FingerprintCandidate(CompoundCandidate c, Fingerprint fp) {
         super(c);
         this.fingerprint = fp;
@@ -104,18 +102,39 @@ public class FingerprintCandidate extends CompoundCandidate {
         this.fingerprint = fingerprint;
     }
 
-    public static void toJSONList(List<FingerprintCandidate> fpcs, Writer br) throws IOException {
-        final CompoundCandidate.CompoundCandidateSerializer serializer = new CompoundCandidateSerializer();
-        try (final com.fasterxml.jackson.core.JsonGenerator generator =new JsonFactory().createGenerator(br)) {
-            generator.writeStartObject();
-            generator.writeArrayFieldStart("compounds");
-            for (FingerprintCandidate fc : fpcs) {
-                serializer.serialize(fc, generator);
-            }
-            generator.writeEndArray();
-            generator.writeEndObject();
-        }
+
+    public static void toJSONList(List<FingerprintCandidate> fpcs, Writer out) throws IOException {
+        toJSONList(fpcs,new JsonFactory().createGenerator(out));
     }
+
+    public static void toJSONList(List<FingerprintCandidate> fpcs, OutputStream out) throws IOException {
+        toJSONList(fpcs,new JsonFactory().createGenerator(out));
+    }
+
+    public static void toJSONList(List<FingerprintCandidate> fpcs, com.fasterxml.jackson.core.JsonGenerator generator) throws IOException {
+        final CompoundCandidate.CompoundCandidateSerializer serializer = new CompoundCandidateSerializer();
+
+        generator.writeStartObject();
+        generator.writeArrayFieldStart("compounds");
+        for (FingerprintCandidate fc : fpcs) {
+            serializer.serialize(fc, generator);
+        }
+        generator.writeEndArray();
+        generator.writeEndObject();
+    }
+
+
+    public static List<FingerprintCandidate> fromJSONList(FingerprintVersion version, InputStream in) throws IOException {
+        final List<FingerprintCandidate> compounds = new ArrayList<>();
+        final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion) version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
+        try (final CloseableIterator<FingerprintCandidate> reader = new JSONReader().readFingerprints(mv, in)) {
+            while (reader.hasNext()) {
+                compounds.add(reader.next());
+            }
+        }
+        return compounds;
+    }
+
 
     public Fingerprint getFingerprint() {
         return fingerprint;

@@ -84,6 +84,7 @@ public class StructureSearchClient extends AbstractClient {
                         .build()),
                 br -> {
                     final ArrayList<FormulaCandidate> candidates = new ArrayList<>();
+                    //todo replace with jackson
                     JsonParser parser = new JsonParser();
                     JsonElement elem = parser.parse(br);
                     for (Map.Entry<String, JsonElement> pair : elem.getAsJsonObject().entrySet())

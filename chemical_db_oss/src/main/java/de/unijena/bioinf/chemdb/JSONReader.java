@@ -26,18 +26,28 @@ import com.fasterxml.jackson.core.JsonToken;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.babelms.CloseableIterator;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 
 public class JSONReader extends CompoundReader {
 
     @Override
-    public CloseableIterator<CompoundCandidate> readCompounds(Reader reader) throws IOException {
+    public CloseableIterator<CompoundCandidate> readCompounds(InputStream reader) throws IOException {
+        return new READCMP(reader);
+
+    }
+
+    public CloseableIterator<CompoundCandidate> readCompounds(BufferedReader reader) throws IOException {
         return new READCMP(reader);
     }
 
     @Override
-    public CloseableIterator<FingerprintCandidate> readFingerprints(FingerprintVersion version, Reader reader) throws IOException {
+    public CloseableIterator<FingerprintCandidate> readFingerprints(FingerprintVersion version, InputStream reader) throws IOException {
+        return new READFP(version, reader);
+    }
+
+    public CloseableIterator<FingerprintCandidate> readFingerprints(FingerprintVersion version, BufferedReader reader) throws IOException {
         return new READFP(version, reader);
     }
 
@@ -47,17 +57,25 @@ public class JSONReader extends CompoundReader {
 
         protected CompoundCandidate candidate;
 
-        protected READ(Reader breader, FingerprintVersion version) throws IOException {
-            parser = new JsonFactory().createParser(breader);
+        protected READ(InputStream in, FingerprintVersion version) throws IOException {
+            this(new JsonFactory().createParser(in), version);
+        }
+
+        protected READ(BufferedReader in, FingerprintVersion version) throws IOException {
+            this(new JsonFactory().createParser(in), version);
+        }
+
+        protected READ(JsonParser parser, FingerprintVersion version) throws IOException {
+            this.parser = parser;
             deserializer = new CompoundCandidate.CompoundCandidateDeserializer(version);
             // read boilerplate
             while (true) {
                 final JsonToken jsonToken = parser.nextToken();
-                if (jsonToken==JsonToken.FIELD_NAME && parser.currentName().equals("compounds")) {
+                if (jsonToken == JsonToken.FIELD_NAME && parser.currentName().equals("compounds")) {
                     break;
                 }
             }
-            if (parser.nextToken()!=JsonToken.START_ARRAY)
+            if (parser.nextToken() != JsonToken.START_ARRAY)
                 throw new IOException("expected array of compounds");
             fetch();
 
@@ -96,19 +114,28 @@ public class JSONReader extends CompoundReader {
 
         protected FingerprintVersion version;
 
-        protected READFP(FingerprintVersion version, Reader breader) throws IOException {
-            super(breader, version);
+        protected READFP(FingerprintVersion version, BufferedReader in) throws IOException {
+            super(in, version);
+        }
+
+        protected READFP(FingerprintVersion version, InputStream in) throws IOException {
+            super(in, version);
         }
 
         @Override
         public FingerprintCandidate next() {
-                return (FingerprintCandidate)super.next();
+            return (FingerprintCandidate) super.next();
         }
     }
+
     private static class READCMP extends READ implements CloseableIterator<CompoundCandidate> {
 
-        protected READCMP(Reader breader) throws IOException {
-            super(breader,null);
+        protected READCMP(BufferedReader in) throws IOException {
+            super(in, null);
+        }
+
+        protected READCMP(InputStream in) throws IOException {
+            super(in, null);
         }
 
         @Override

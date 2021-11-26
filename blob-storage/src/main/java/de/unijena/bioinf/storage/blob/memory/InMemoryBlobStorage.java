@@ -48,6 +48,11 @@ public class InMemoryBlobStorage implements BlobStorage {
     }
 
     @Override
+    public String getBucketLocation() {
+        return getName();
+    }
+
+    @Override
     public boolean hasBlob(Path relative) throws IOException {
         return blobs.containsKey(relative.toString());
     }
@@ -81,6 +86,12 @@ public class InMemoryBlobStorage implements BlobStorage {
     @Override
     public Iterator<Blob> listBlobs() {
         return new BlobIt<>(blobs.keySet().iterator(), MemBlob::new);
+    }
+
+    @Override
+    public void deleteBucket() {
+        blobs.clear();
+        tags.clear();
     }
 
     public class MemBlob implements Blob {

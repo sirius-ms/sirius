@@ -92,6 +92,11 @@ public class GCSBlobStorage implements BlobStorage {
     }
 
     @Override
+    public String getBucketLocation() {
+        return GCSUtils.URL_PREFIX + getName();
+    }
+
+    @Override
     public boolean hasBlob(@NotNull Path path) throws IOException {
         try {
             return getBlob(path) != null;
@@ -119,6 +124,12 @@ public class GCSBlobStorage implements BlobStorage {
     @Override
     public Iterator<Blob> listBlobs() {
         return new BlobIt<>(bucket.list().iterateAll(), GCSBlob::new);
+    }
+
+    @Override
+    public void deleteBucket() throws IOException {
+        bucket.delete();
+        close();
     }
 
     @Override
