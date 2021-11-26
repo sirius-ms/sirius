@@ -35,6 +35,8 @@ import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 
 public interface Compressible {
+    String TAG_COMPRESSION="compression";
+
     enum Compression {
         NONE(""), GZIP(".gz"), XZ(".xz");
         public final String ext;

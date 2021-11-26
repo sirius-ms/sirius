@@ -72,6 +72,11 @@ public class RabbitMqBlobStorage implements BlobStorage {
     }
 
     @Override
+    public String getBucketLocation() {
+        return null;
+    }
+
+    @Override
     public boolean hasBlob(Path relative) throws IOException {
         RpcClient.Response resp = rpcRequest(relative, ResourceRequest.EXISTS);
         if (resp.getProperties().getBodySize() == 0)
@@ -126,6 +131,11 @@ public class RabbitMqBlobStorage implements BlobStorage {
     @Override
     public Iterator<Blob> listBlobs() throws IOException {
         throw new NotImplementedException("TOOD: implement Endpoint to list blobs"); //TODO implement list blobs
+    }
+
+    @Override
+    public void deleteBucket() throws IOException {
+
     }
 
     @Override

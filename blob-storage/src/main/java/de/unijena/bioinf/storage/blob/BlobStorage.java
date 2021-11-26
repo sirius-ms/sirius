@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Super simple object reading/writing API
@@ -50,6 +51,17 @@ public interface BlobStorage extends Closeable, AutoCloseable {
     }
 
     String getName();
+
+    String getBucketLocation();
+
+    default long size() throws IOException {
+        AtomicLong size = new AtomicLong(size());
+        listBlobs().forEachRemaining(blob -> {
+            if (!blob.isDirectory())
+                size.addAndGet(blob.size());
+        });
+        return size.get();
+    }
 
     boolean hasBlob(Path relative) throws IOException;
 
@@ -122,12 +134,20 @@ public interface BlobStorage extends Closeable, AutoCloseable {
 
     Iterator<Blob> listBlobs() throws IOException;
 
+    /**
+     * delete bucket and close client if necessary
+     */
+    void deleteBucket() throws IOException;
+
     interface Blob {
         boolean isDirectory();
+
         String getKey();
-        default String getFileName(){
+
+        default String getFileName() {
             return Path.of(getKey()).getFileName().toString();
         }
+
         long size();
     }
 

@@ -20,177 +20,144 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
-import de.unijena.bioinf.ChemistryBase.chem.Smiles;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.ChemicalBlobDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.storage.blob.BlobStorage;
+import de.unijena.bioinf.storage.blob.BlobStorages;
+import de.unijena.bioinf.storage.blob.Compressible;
+import de.unijena.bioinf.storage.blob.CompressibleBlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.interfaces.IAtomContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.json.*;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.ArrayList;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
-public class CustomDatabase implements SearchableDatabase {
+import static de.unijena.bioinf.storage.blob.Compressible.TAG_COMPRESSION;
+
+public class CustomDatabase<Storage extends BlobStorage> implements SearchableDatabase {
     protected static Logger logger = LoggerFactory.getLogger(CustomDatabase.class);
+    public static final String PROPERTY_PREFIX = "de.unijena.bioinf.stores.custom";
 
-    protected final String name;
-    protected final File path;
-
-    // statistics
-    protected long numberOfCompounds, numberOfFormulas, megabytes;
-
-    public void deleteDatabase() {
-        synchronized (this) {
-            if (path.exists()) {
-                for (File f : path.listFiles()) {
-                    f.delete();
-                }
-                path.delete();
-                CustomDataSources.removeCustomSource(name);
-            }
+    public synchronized void deleteDatabase() {
+        try {
+            storage.deleteBucket();
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).error("Error when deleting data storage bucked. Please remove manually at your storage provider. ");
+        } finally {
+            CustomDataSources.removeCustomSource(storage.getName());
         }
     }
 
 
-    protected boolean deriveFromRestDb = false;
-    protected long restDbFilter = DataSource.ALL.flag();
-    protected CdkFingerprintVersion version;
-    protected int databaseVersion;
+    protected final CompressibleBlobStorage<Storage> storage;
+    protected CustomDatabaseSettings settings;
 
-    public static CustomDatabase createNewDatabase(String name, File path, CdkFingerprintVersion version) {
-        CustomDatabase db = new CustomDatabase(name, path);
-        db.databaseVersion = VersionsInfo.CUSTOM_DATABASE_SCHEMA;
-        db.version = version;
+
+    public static CustomDatabase<?> createAndImportDatabase(
+            String bucketLocation,
+            Compressible.Compression compression,
+            CustomDatabaseSettings config,
+            List<File> files,
+            @Nullable CustomDatabaseImporter.Listener listener,
+            @NotNull WebAPI<?> api,
+            int bufferSize) throws IOException {
+        CustomDatabase<?> db = createNewDatabase(bucketLocation, compression, config);
+
+        try {
+            db.importToDatabase(files, listener, api, bufferSize);
+        } catch (CDKException e) {
+            throw new IOException("Error when loading CDK features during database import.", e);
+        }
         return db;
     }
 
-    public CustomDatabase(String name, File path) {
-        this.name = name;
-        this.path = path;
-        CustomDataSources.addCustomSourceIfAbsent(this.name);
+    public static CustomDatabase<?> createNewDatabase(String bucketLocation, Compressible.Compression compression, CustomDatabaseSettings config) throws IOException {
+        BlobStorage bs = BlobStorages.createDefault(PROPERTY_PREFIX, bucketLocation);
+        bs.setTags(Map.of(TAG_COMPRESSION, compression.name()));
+        CustomDatabase<?> db = new CustomDatabase<>(CompressibleBlobStorage.of(bs));
+        db.writeSettings(config);
+        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.storageLocation());
+        return db;
+    }
+
+    public static CustomDatabase<?> openDatabase(String bucketLocation) throws IOException {
+        CustomDatabase<?> db = new CustomDatabase<>(CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, bucketLocation)));
+        db.readSettings();
+        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.storageLocation());
+        return db;
+    }
+
+
+    private CustomDatabase(CompressibleBlobStorage<Storage> storage) {
+        this.storage = storage;
     }
 
     public int getDatabaseVersion() {
-        return databaseVersion;
+        return settings.getSchemaVersion();
     }
 
     public boolean needsUpgrade() {
-        return databaseVersion != VersionsInfo.CUSTOM_DATABASE_SCHEMA;
+        return settings.getSchemaVersion() != VersionsInfo.CUSTOM_DATABASE_SCHEMA;
     }
 
-    public void inheritMetadata(File otherDb) throws IOException {
-        // should be done automatically
-    }
-
-    public boolean isDeriveFromRestDb() {
-        return deriveFromRestDb;
-    }
-
-    public void setDeriveFromRestDb(boolean deriveFromRestDb) {
-        this.deriveFromRestDb = deriveFromRestDb;
-    }
-
-    public void readSettings() throws IOException {
-        synchronized (this) {
-            if (settingsFile().exists()) {
-                deriveFromRestDb = false;
-                restDbFilter = 0;
-                try (FileReader r = new FileReader(settingsFile())) {
-                    JsonObject o = Json.createReader(r).readObject();
-                    if (o.containsKey("inheritance"))
-                        deriveFromRestDb = o.getBoolean("inheritance");
-                    if (o.containsKey("filter"))
-                        restDbFilter = o.getJsonNumber("filter").longValue();
-                    JsonArray fpAry = o.getJsonArray("fingerprintVersion");
-                    if (fpAry == null) {
-                        this.version = CdkFingerprintVersion.getDefault();
-                    } else {
-                        final List<CdkFingerprintVersion.USED_FINGERPRINTS> usedFingerprints = new ArrayList<>();
-                        for (JsonValue v : fpAry) {
-                            if (v instanceof JsonString) {
-                                try {
-                                    usedFingerprints.add(CdkFingerprintVersion.USED_FINGERPRINTS.valueOf(((JsonString) v).getString().toUpperCase()));
-                                } catch (IllegalArgumentException e) {
-                                    throw new RuntimeException("Unknown fingerprint type '" + ((JsonString) v).getString() + "'");
-                                }
-                            }
-                        }
-                        this.version = new CdkFingerprintVersion(usedFingerprints.toArray(new CdkFingerprintVersion.USED_FINGERPRINTS[usedFingerprints.size()]));
-                    }
-                    JsonNumber num = o.getJsonNumber("schemaVersion");
-                    if (num == null) {
-                        this.databaseVersion = 0;
-                    } else {
-                        this.databaseVersion = num.intValue();
-                    }
-                    JsonObject stats = o.getJsonObject("statistics");
-                    if (stats != null) {
-                        JsonNumber nc = stats.getJsonNumber("compounds");
-                        if (nc != null)
-                            this.numberOfCompounds = nc.intValue();
-                    }
-                }
-                // number of formulas and file size
-                long filesize = 0;
-                int ncompounds = 0;
-                if (getDatabasePath().exists()) {
-                    for (File f : getDatabasePath().listFiles()) {
-                        filesize += Files.size(f.toPath());
-                        ncompounds += 1;
-                    }
-                    --ncompounds;
-                }
-                this.megabytes = Math.round((filesize / 1024d) / 1024d);
-                this.numberOfFormulas = ncompounds;
+    protected synchronized void readSettings() throws IOException {
+        if (storage.hasBlob(settingsBlob())) {
+            try (InputStream r = storage.reader(settingsBlob())) {
+                setSettings(new ObjectMapper().readValue(r, CustomDatabaseSettings.class));
             }
         }
+        throw new IOException("Custom DB settings file not found! Please reimport.");
     }
 
-    public CustomDatabaseImporter getImporter(@NotNull final WebAPI<?> api, int bufferSize) {
-        return new CustomDatabaseImporter(this, version, api, bufferSize);
+    protected synchronized void writeSettings(CustomDatabaseSettings settings) throws IOException {
+        setSettings(settings);
+        storage.withWriter(settingsBlob(), w -> new ObjectMapper().writeValue(w, settings));
     }
 
-    protected File settingsFile() {
-        return new File(path, "settings.json");
+    protected synchronized void writeSettings() throws IOException {
+        storage.withWriter(settingsBlob(), w -> new ObjectMapper().writeValue(w, settings));
     }
 
-    public void setFingerprintVersion(CdkFingerprintVersion version) {
-        this.version = version;
+    private synchronized void setSettings(CustomDatabaseSettings config) {
+        settings = config;
+    }
+
+    protected Path settingsBlob() {
+        return Path.of(ChemicalBlobDatabase.BLOB_SETTINGS);
     }
 
     @Override
     public String name() {
-        return name;
+        return storage.getName();
+    }
+
+    public String storageLocation() {
+        return storage.getBucketLocation();
     }
 
     @Override
     public boolean isRestDb() {
-        return deriveFromRestDb;
+        return settings.isInheritance();
     }
 
     @Override
     public long getFilterFlag() {
-        return restDbFilter;
-    }
-
-    public void setFilterFlag(long restDbFilter) {
-        this.restDbFilter = restDbFilter;
+        return settings.getFilter();
     }
 
     @Override
@@ -198,48 +165,51 @@ public class CustomDatabase implements SearchableDatabase {
         return true;
     }
 
-//    @Override
-    public File getDatabasePath() {
-        return path;
-    }
-
     @Override
     public String toString() {
-        return name;
+        return name();
     }
 
-    public long getNumberOfCompounds() {
-        return numberOfCompounds;
+
+    public CustomDatabaseSettings getSettings() {
+        return settings;
     }
 
-    public long getNumberOfFormulas() {
-        return numberOfFormulas;
-    }
-
-    public long getMegabytes() {
-        return megabytes;
+    public CustomDatabaseSettings.Statistics getStatistics() {
+        return settings.getStatistics();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof CustomDatabase)) return false;
-        CustomDatabase that = (CustomDatabase) o;
-        return name.equals(that.name) &&
-                Objects.equals(path, that.path);
+        CustomDatabase<?> that = (CustomDatabase<?>) o;
+        return storage.equals(that.storage);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, path);
+        return Objects.hash(storage);
     }
 
-    public void buildDatabase(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI<?> api, int bufferSize) throws IOException, CDKException {
-        buildDatabase(files, listener, getImporter(api, bufferSize));
+    public ChemicalBlobDatabase<Storage> toChemDBOrThrow(CdkFingerprintVersion version) throws IOException {
+        return new ChemicalBlobDatabase<>(version, storage.getRawStorage());
     }
 
-    public void buildDatabase(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, CustomDatabaseImporter importer) throws IOException, CDKException {
-        importer.init();
+    public Optional<ChemicalBlobDatabase<Storage>> toChemDB(CdkFingerprintVersion version) {
+        try {
+            return Optional.of(toChemDBOrThrow(version));
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).error("Could not create ChemDB from Custom database'" + name() + "'", e);
+            return Optional.empty();
+        }
+    }
+
+    public void importToDatabase(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI<?> api, int bufferSize) throws IOException, CDKException {
+        importToDatabase(files, listener, new CustomDatabaseImporter(this, api.getCDKChemDBFingerprintVersion(), api, bufferSize));
+    }
+
+    public void importToDatabase(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, CustomDatabaseImporter importer) throws IOException, CDKException {
         if (listener != null)
             importer.addListener(listener);
         for (File f : files) {
@@ -248,46 +218,23 @@ public class CustomDatabase implements SearchableDatabase {
         importer.flushBuffer();
     }
 
-    public JJob<Boolean> buildDatabaseJob(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI<?> api, int bufferSize) {
-        final CustomDatabaseImporter importer = getImporter(api, bufferSize);
+    public JJob<Boolean> importToDatabaseJob(List<File> files, @Nullable CustomDatabaseImporter.Listener listener, @NotNull WebAPI<?> api, int bufferSize) {
         return new BasicJJob<Boolean>() {
+            CustomDatabaseImporter importer;
+
             @Override
             protected Boolean compute() throws Exception {
-                buildDatabase(files, listener, importer);
+                importer = new CustomDatabaseImporter(CustomDatabase.this, api.getCDKChemDBFingerprintVersion(), api, bufferSize);
+                importToDatabase(files, listener, importer);
                 return true;
             }
 
             @Override
             public void cancel(boolean mayInterruptIfRunning) {
-                importer.cancel();
+                if (importer != null)
+                    importer.cancel();
                 super.cancel(mayInterruptIfRunning);
             }
         }.asCPU();
-    }
-
-    static class Molecule {
-        Smiles smiles = null;
-        String id = null;
-        String name = null;
-        @NotNull IAtomContainer container;
-
-        Molecule(Smiles smiles, @NotNull AtomContainer container) {
-            this.smiles = smiles;
-            this.container = container;
-        }
-
-        Molecule(@NotNull IAtomContainer container) {
-            this.container = container;
-        }
-    }
-
-    static class Comp {
-        String inchikey;
-        Molecule molecule;
-        FingerprintCandidate candidate;
-
-        Comp(String inchikey) {
-            this.inchikey = inchikey;
-        }
     }
 }
