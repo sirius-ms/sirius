@@ -78,7 +78,7 @@ public enum Format {
 }
 
     public static final String TAG_FORMAT = "chemdb-format";
-    public static final String TAG_COMPRESSION = "chemdb-compression";
+//    public static final String TAG_COMPRESSION = "chemdb-compression";
     public static final String TAG_DATE = "chemdb-date";
     public static final String TAG_FLAVOR = "chemdb-flavor";
 
@@ -196,13 +196,19 @@ public enum Format {
         return getStream(name).map(inputStream -> new InputStreamReader(inputStream, storage.getCharset()));
     }
 
-    /**
-     * Returns stream for the requested filename and handles decompression if needed
-     *
-     * @param name resource name
-     * @return Stream of the resource
-     * @throws IOException if IO goes wrong
-     */
+    @NotNull
+    public Optional<InputStream> getCompoundStream(@NotNull MolecularFormula formula) throws IOException {
+        return getStream(formula.toString());
+    }
+
+
+        /**
+         * Returns stream for the requested filename and handles decompression if needed
+         *
+         * @param name resource name
+         * @return Stream of the resource
+         * @throws IOException if IO goes wrong
+         */
     @NotNull
     public Optional<InputStream> getStream(@NotNull String name) throws IOException {
         return Compressible.decompressRawStream(storage.reader(Path.of(name + format.ext() + getCompression().ext())), getCompression(), isDecompressStreams());
@@ -258,7 +264,7 @@ public enum Format {
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         final ArrayList<CompoundCandidate> candidates = new ArrayList<>();
 
-        try (final Reader blobReader = getCompoundReader(formula).orElse(null)) {
+        try (final InputStream blobReader = getCompoundStream(formula).orElse(null)) {
             if (blobReader != null) {
                 try (final CloseableIterator<CompoundCandidate> iter = reader.readCompounds(blobReader)) {
                     iter.forEachRemaining(candidates::add);
@@ -272,7 +278,7 @@ public enum Format {
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
-        try (final Reader blobReader = getCompoundReader(formula).orElse(null)) {
+        try (final InputStream blobReader = getCompoundStream(formula).orElse(null)) {
             if (blobReader != null) {
                 try (final CloseableIterator<FingerprintCandidate> iter = reader.readFingerprints(version, blobReader)) {
                     iter.forEachRemaining(fingerprintCandidates::add);

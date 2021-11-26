@@ -22,7 +22,6 @@ package de.unijena.bioinf.chemdb.custom;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.google.gson.stream.JsonWriter;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
@@ -32,9 +31,12 @@ import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.storage.blob.BlobStorage;
+import de.unijena.bioinf.storage.blob.Compressible;
 import de.unijena.bioinf.webapi.WebAPI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
@@ -52,6 +54,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.json.JsonException;
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,8 +64,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class CustomDatabaseImporter {
-    final CustomDatabase database;
-    File currentPath;
+    final CustomDatabase<?> database;
     Queue<Listener> listeners = new ConcurrentLinkedQueue<>();
 
     // fingerprint buffer
@@ -72,7 +74,7 @@ public class CustomDatabaseImporter {
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     // molecule buffer
-    private final List<CustomDatabase.Molecule> moleculeBuffer;
+    private final List<Molecule> moleculeBuffer;
     private static final int molBufferSize = 1000;
 
     final protected ConcurrentLinkedQueue<FingerprintCalculator> freeFingerprinter = new ConcurrentLinkedQueue<>();
@@ -82,15 +84,13 @@ public class CustomDatabaseImporter {
     protected CdkFingerprintVersion fingerprintVersion;
     protected final WebAPI<?> api;
 
-    protected CustomDatabaseImporter(CustomDatabase database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
+    protected CustomDatabaseImporter(@NotNull CustomDatabase<?> database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
         this.api = api;
         this.database = database;
         this.fingerprintVersion = version;
         this.bufferSize = bufferSize;
         this.buffer = new ArrayList<>((int) (this.bufferSize * 1.25));
         this.moleculeBuffer = new ArrayList<>((int) (molBufferSize * 1.25));
-        this.currentPath = database.path;
-        if (currentPath == null) throw new NullPointerException();
         try {
             inChIGeneratorFactory = InChIGeneratorFactory.getInstance();
             smilesGen = SmilesGenerator.generic().aromatic();
@@ -101,7 +101,7 @@ public class CustomDatabaseImporter {
         }
     }
 
-    public void cancel(){
+    public void cancel() {
         shutdown.set(true);
     }
 
@@ -113,31 +113,14 @@ public class CustomDatabaseImporter {
         listeners.remove(listener);
     }
 
-    public void init() {
-        if (!currentPath.exists()) {
-            currentPath.mkdirs();
-            try {
-                writeSettings();
-            } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            }
-        } else {
-            try {
-                database.readSettings();
-            } catch (IOException e) {
-                LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
-            }
-        }
-    }
-
     public void importFromString(String str) throws IOException, CDKException {
         importFromString(str, null, null);
     }
 
     public void importFromString(String str, String id, String name) throws IOException, CDKException {
-        final CustomDatabase.Molecule molecule;
+        final Molecule molecule;
         if (InChIs.isInchi(str)) {
-            if (!InChIs.isConnected(str)){
+            if (!InChIs.isConnected(str)) {
                 LoggerFactory.getLogger(getClass()).warn(
                         String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
                 return;
@@ -150,10 +133,9 @@ public class CustomDatabaseImporter {
             }
 
 
-
-            molecule = new CustomDatabase.Molecule(inChIGeneratorFactory.getInChIToStructure(str, SilentChemObjectBuilder.getInstance()).getAtomContainer());
+            molecule = new Molecule(inChIGeneratorFactory.getInChIToStructure(str, SilentChemObjectBuilder.getInstance()).getAtomContainer());
         } else {
-            if (!SmilesU.isConnected(str)){
+            if (!SmilesU.isConnected(str)) {
                 LoggerFactory.getLogger(getClass()).warn(
                         String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
                 return;
@@ -165,17 +147,12 @@ public class CustomDatabaseImporter {
                 return;
             }
 
-            molecule = new CustomDatabase.Molecule(smilesParser.parseSmiles(str));
+            molecule = new Molecule(smilesParser.parseSmiles(str));
             molecule.smiles = new Smiles(str);
         }
         molecule.id = id;
         molecule.name = name;
         addMolecule(molecule);
-    }
-
-    private void checkCancellation(){
-        if (shutdown.get())
-            throw new CancellationException("Import Cancelled");
     }
 
     public void importFrom(File file) throws IOException {
@@ -194,7 +171,7 @@ public class CustomDatabaseImporter {
                         for (IChemModel m : s.chemModels()) {
                             for (IAtomContainer c : m.getMoleculeSet().atomContainers()) {
                                 checkCancellation();
-                                addMolecule(new CustomDatabase.Molecule(c));
+                                addMolecule(new Molecule(c));
                             }
                         }
                     }
@@ -228,7 +205,7 @@ public class CustomDatabaseImporter {
     }
 
 
-    protected void addMolecule(CustomDatabase.Molecule mol) throws IOException {
+    protected void addMolecule(Molecule mol) throws IOException {
         synchronized (moleculeBuffer) {
             moleculeBuffer.add(mol);
             for (Listener l : listeners) l.newMoleculeBufferSize(moleculeBuffer.size());
@@ -241,15 +218,15 @@ public class CustomDatabaseImporter {
     private void flushMoleculeBuffer() throws IOException {
         // start downloading
         if (moleculeBuffer.size() > 0) {
-            final ConcurrentHashMap<String, CustomDatabase.Comp> dict = new ConcurrentHashMap<>(moleculeBuffer.size());
+            final ConcurrentHashMap<String, Comp> dict = new ConcurrentHashMap<>(moleculeBuffer.size());
             try {
                 final InChIGeneratorFactory icf = InChIGeneratorFactory.getInstance();
-                for (CustomDatabase.Molecule c : moleculeBuffer) {
+                for (Molecule c : moleculeBuffer) {
                     checkCancellation();
                     final String inchi2d;
                     try {
                         inchi2d = InChIs.inchi2d(icf.getInChIGenerator(c.container).getInchi());
-                        CustomDatabase.Comp comp = new CustomDatabase.Comp(inchi2d);
+                        Comp comp = new Comp(inchi2d);
                         comp.molecule = c;
                         dict.put(inchi2d, comp);
                     } catch (CDKException | IllegalArgumentException e) {
@@ -287,7 +264,7 @@ public class CustomDatabaseImporter {
 
             jobs.forEach(j -> {
                 try {
-                    if (shutdown.get()){
+                    if (shutdown.get()) {
                         batches.forEach(JJob::cancel);
                         checkCancellation();
                     }
@@ -301,7 +278,7 @@ public class CustomDatabaseImporter {
         }
     }
 
-    private void lookupAndAnnotateFingerprints(final ConcurrentHashMap<String, CustomDatabase.Comp> dict) throws IOException {
+    private void lookupAndAnnotateFingerprints(final ConcurrentHashMap<String, Comp> dict) throws IOException {
         Set<MolecularFormula> formulasToSearch = new HashSet<>();
         checkCancellation();
         try {
@@ -318,7 +295,7 @@ public class CustomDatabaseImporter {
                 api.consumeStructureDB(DataSource.ALL.flag(), api.getChemDB().getWebDBCacheDir(), db -> {
                     List<FingerprintCandidate> cans = db.lookupStructuresAndFingerprintsByFormula(formula);
                     for (FingerprintCandidate can : cans) {
-                        CustomDatabase.Comp toAdd = dict.get(can.getInchi().in2D);
+                        Comp toAdd = dict.get(can.getInchi().in2D);
                         if (toAdd != null) {
                             toAdd.candidate = can;
                             CustomDatabase.logger.info(toAdd.candidate.getInchi().in2D + " downloaded");
@@ -333,7 +310,7 @@ public class CustomDatabaseImporter {
 
         jobs.forEach(j -> {
             try {
-                if (shutdown.get()){
+                if (shutdown.get()) {
                     batches.forEach(JJob::cancel);
                     checkCancellation();
                 }
@@ -347,7 +324,7 @@ public class CustomDatabaseImporter {
     private FingerprintCalculator getFingerprintCalculator() {
         FingerprintCalculator calc = freeFingerprinter.poll();
         if (calc == null)
-            calc = new FingerprintCalculator(database.name, fingerprintVersion);
+            calc = new FingerprintCalculator(database.name(), fingerprintVersion);
         return calc;
     }
 
@@ -363,6 +340,76 @@ public class CustomDatabaseImporter {
         }
     }
 
+    public void flushBuffer() throws IOException {
+        flushMoleculeBuffer();
+        final ArrayList<FingerprintCandidate> candidates;
+        synchronized (buffer) {
+            candidates = new ArrayList<>(buffer);
+            buffer.clear();
+        }
+        synchronized (database) {
+            final Multimap<MolecularFormula, FingerprintCandidate> candidatePerFormula = ArrayListMultimap.create();
+            for (FingerprintCandidate fc : candidates) {
+                candidatePerFormula.put(fc.getInchi().extractFormulaOrThrow(), fc);
+            }
+            for (Map.Entry<MolecularFormula, Collection<FingerprintCandidate>> entry : candidatePerFormula.asMap().entrySet()) {
+                mergeCompounds(entry.getKey(), entry.getValue());
+            }
+            for (Listener l : listeners) l.newFingerprintBufferSize(buffer.size());
+            database.writeSettings();
+        }
+
+    }
+
+    private void mergeCompounds(MolecularFormula key, Collection<FingerprintCandidate> value) throws IOException {
+        Path path = Path.of(key.toString() + ".json)");
+        try {
+            synchronized (database) {
+                List<FingerprintCandidate> candidates = new ArrayList<>(value);
+                try (InputStream in = database.storage.reader(path)) {
+                    candidates.addAll(FingerprintCandidate.fromJSONList(fingerprintVersion, in));
+                }
+                candidates = WebWithCustomDatabase.mergeCompounds(candidates);
+                database.getStatistics().compounds().addAndGet(candidates.size() - value.size());
+            }
+        } catch (IOException | JsonException e) {
+            throw new IOException("Error while merging into: " + path, e);
+        }
+    }
+
+    private void checkCancellation() {
+        if (shutdown.get())
+            throw new CancellationException("Import Cancelled");
+    }
+
+
+    // INNER CLASSES
+    static class Molecule {
+        Smiles smiles = null;
+        String id = null;
+        String name = null;
+        @NotNull IAtomContainer container;
+
+        Molecule(Smiles smiles, @NotNull AtomContainer container) {
+            this.smiles = smiles;
+            this.container = container;
+        }
+
+        Molecule(@NotNull IAtomContainer container) {
+            this.container = container;
+        }
+    }
+
+    static class Comp {
+        String inchikey;
+        Molecule molecule;
+        FingerprintCandidate candidate;
+
+        Comp(String inchikey) {
+            this.inchikey = inchikey;
+        }
+    }
+
     private class FingerprintCalculator {
         private final String dbname;
         private final FixedFingerprinter fingerprinter;
@@ -374,7 +421,7 @@ public class CustomDatabaseImporter {
             this.logPEstimator = new LogPEstimator();
         }
 
-        protected FingerprintCandidate computeCompound(CustomDatabase.Molecule molecule, FingerprintCandidate fc) throws CDKException, IOException {
+        protected FingerprintCandidate computeCompound(Molecule molecule, FingerprintCandidate fc) throws CDKException, IOException {
             if (fc == null)
                 return computeCompound(molecule);
 
@@ -397,7 +444,7 @@ public class CustomDatabaseImporter {
             return fc;
         }
 
-        protected FingerprintCandidate computeCompound(CustomDatabase.Molecule molecule) throws CDKException, IllegalArgumentException {
+        protected FingerprintCandidate computeCompound(Molecule molecule) throws CDKException, IllegalArgumentException {
             InChIGenerator gen = inChIGeneratorFactory.getInChIGenerator(molecule.container);
             final InChI inchi = InChIs.newInChI(gen.getInchiKey(), gen.getInchi());
 
@@ -431,106 +478,6 @@ public class CustomDatabaseImporter {
         }
 
 
-    }
-
-    public void flushBuffer() throws IOException {
-        flushMoleculeBuffer();
-        final ArrayList<FingerprintCandidate> candidates;
-        synchronized (buffer) {
-            candidates = new ArrayList<>(buffer);
-            buffer.clear();
-        }
-        synchronized (database) {
-            final Multimap<MolecularFormula, FingerprintCandidate> candidatePerFormula = ArrayListMultimap.create();
-            for (FingerprintCandidate fc : candidates) {
-                candidatePerFormula.put(fc.getInchi().extractFormulaOrThrow(), fc);
-            }
-            for (Map.Entry<MolecularFormula, Collection<FingerprintCandidate>> entry : candidatePerFormula.asMap().entrySet()) {
-                mergeCompounds(entry.getKey(), entry.getValue());
-            }
-            for (Listener l : listeners) l.newFingerprintBufferSize(buffer.size());
-            writeSettings();
-        }
-
-    }
-
-    private void mergeCompounds(MolecularFormula key, Collection<FingerprintCandidate> value) throws IOException {
-        final File file = new File(database.path, key.toString() + ".json.gz");
-        try {
-            List<FingerprintCandidate> candidates = new ArrayList<>();
-            candidates.addAll(value);
-            synchronized (database) {
-                database.numberOfCompounds += FingerprintCandidate.mergeFromJsonToJson(fingerprintVersion, candidates, file);
-            }
-        } catch (IOException | JsonException e) {
-            throw new IOException("Error while merging into " + file, e);
-        }
-    }
-
-
-    public void writeSettings() throws IOException {
-        synchronized (database) {
-            try (final JsonWriter writer = new JsonWriter(new FileWriter(database.settingsFile()))) {
-                writer.beginObject();
-                writer.name("inheritance");
-                writer.value(database.deriveFromRestDb);
-                writer.name("filter");
-                writer.value(database.restDbFilter);
-                writer.name("fingerprintVersion");
-                writer.beginArray();
-                for (int t = 0; t < fingerprintVersion.numberOfFingerprintTypesInUse(); ++t) {
-                    writer.value(fingerprintVersion.getFingerprintTypeAt(t).name());
-                }
-                writer.endArray();
-
-                writer.name("schemaVersion");
-                writer.value(VersionsInfo.CUSTOM_DATABASE_SCHEMA);
-                writer.name("statistics");
-                writer.beginObject();
-                writer.name("compounds");
-                writer.value(database.numberOfCompounds);
-                writer.endObject();
-                writer.endObject();
-            }
-        }
-    }
-
-    public static void importDatabaseFromStrings(String dbPath, List<String> files, WebAPI api, int bufferSize) {
-        importDatabase(dbPath, files.stream().map(File::new).collect(Collectors.toList()), api, bufferSize);
-    }
-
-    public static void importDatabase(String dbPath, List<File> files, WebAPI api, int bufferSize) {
-        importDatabase(new File(dbPath), files, api, bufferSize);
-    }
-
-    public static void importDatabase(File dbPath, List<File> files, WebAPI api, int bufferSize) {
-        importDatabase(dbPath, files, null, api, bufferSize);
-    }
-
-    public static void importDatabase(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, WebAPI api, int bufferSize) {
-        final Logger log = LoggerFactory.getLogger(CustomDatabaseImporter.class);
-        importDatabase(dbPath, files, deriveFrom, api, bufferSize, inchi -> log.debug(inchi.in2D + " imported"));
-    }
-    public static void importDatabase(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, WebAPI api, int bufferSize, Listener listener) {
-        try {
-            final CustomDatabase db = CustomDatabase.createNewDatabase(dbPath.getName(), dbPath, api.getCDKChemDBFingerprintVersion());
-            if (deriveFrom != null && !deriveFrom.isEmpty()) {
-                db.setDeriveFromRestDb(true);
-                db.setFilterFlag(DataSources.getDBFlag(deriveFrom));
-            }
-            db.buildDatabase(files, listener, api, bufferSize);
-        } catch (IOException | CDKException e) {
-            LoggerFactory.getLogger(CustomDatabaseImporter.class).error("Error during database import!", e);
-        }
-    }
-
-    public static JJob<Boolean> makeImportDatabaseJob(File dbPath, List<File> files, @Nullable EnumSet<DataSource> deriveFrom, WebAPI api, int bufferSize, Listener listener) throws IOException {
-            final CustomDatabase db = CustomDatabase.createNewDatabase(dbPath.getName(), dbPath, api.getCDKChemDBFingerprintVersion());
-            if (deriveFrom != null && !deriveFrom.isEmpty()) {
-                db.setDeriveFromRestDb(true);
-                db.setFilterFlag(DataSources.getDBFlag(deriveFrom));
-            }
-            return db.buildDatabaseJob(files, listener, api, bufferSize);
     }
 
     @FunctionalInterface

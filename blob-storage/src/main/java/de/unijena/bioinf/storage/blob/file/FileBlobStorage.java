@@ -43,7 +43,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-//todo implement bucket tag/label support?
 public class FileBlobStorage implements BlobStorage {
     public static final String BLOB_TAGS = ".tags";
 
@@ -70,11 +69,18 @@ public class FileBlobStorage implements BlobStorage {
     }
 
     @Override
-    public @Nullable InputStream reader(@NotNull Path relative) throws IOException {
-        Path blob = root.resolve(relative);
-        if (!Files.isRegularFile(blob))
-            return null;
-        return Files.newInputStream(blob);
+    public String getName() {
+        return root.getFileName().toString();
+    }
+
+    @Override
+    public String getBucketLocation() { //should we use "file://" prefix for consistency
+        return root.toAbsolutePath().toString();
+    }
+
+    @Override
+    public long size() throws IOException {
+        return FileUtils.getFolderSize(root);
     }
 
     @Override
@@ -109,31 +115,13 @@ public class FileBlobStorage implements BlobStorage {
     }
 
     @Override
-    public String getName() {
-        return root.getFileName().toString();
-    }
-
-    @Override
     public boolean hasBlob(@NotNull Path path) {
         return !Files.isRegularFile(root.resolve(path));
     }
 
-    protected OutputStream writer(Path relative) throws IOException {
-        @NotNull Path target = root.resolve(relative);
-        Files.createDirectories(target.getParent());
-        return Files.newOutputStream(target);
-    }
-
-    @Override
-    public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
-        try (OutputStream w = writer(relative)) {
-            withStream.accept(w);
-        }
-    }
-
     @Override
     public Iterator<Blob> listBlobs() throws IOException {
-        return new BlobIt<>(FileUtils.listAndClose(getRoot(), s -> s.filter(p -> !p.getFileName().toString().equals(BLOB_TAGS)).collect(Collectors.toList())).iterator(), PathBlob::new);
+        return new BlobIt<>(FileUtils.walkAndClose(s -> s.filter(p -> !p.getFileName().toString().equals(BLOB_TAGS)).collect(Collectors.toList()), getRoot()).iterator(), PathBlob::new);
     }
 
     public class PathBlob implements Blob {
@@ -162,4 +150,35 @@ public class FileBlobStorage implements BlobStorage {
             }
         }
     }
+
+    @Override
+    public void deleteBucket() throws IOException {
+        try {
+            FileUtils.deleteRecursively(root);
+        } finally {
+            close();
+        }
+    }
+
+    @Override
+    public @Nullable InputStream reader(@NotNull Path relative) throws IOException {
+        Path blob = root.resolve(relative);
+        if (!Files.isRegularFile(blob))
+            return null;
+        return Files.newInputStream(blob);
+    }
+
+    protected OutputStream writer(Path relative) throws IOException {
+        @NotNull Path target = root.resolve(relative);
+        Files.createDirectories(target.getParent());
+        return Files.newOutputStream(target);
+    }
+
+    @Override
+    public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
+        try (OutputStream w = writer(relative)) {
+            withStream.accept(w);
+        }
+    }
+
 }

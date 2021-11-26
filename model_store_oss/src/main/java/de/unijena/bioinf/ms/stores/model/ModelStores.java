@@ -32,10 +32,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static de.unijena.bioinf.storage.blob.Compressible.TAG_COMPRESSION;
+
 public class ModelStores {
     public static final String PROPERTY_PREFIX = "de.unijena.bioinf.stores.model";
-
-    public static final String TAG_COMPRESSION = "modelstore-compression";
 
     public static DefaultBlobModelStore<?> openDefaultStore() throws IOException {
         return openDefaultStore((String) null);
@@ -65,8 +65,7 @@ public class ModelStores {
         BlobStorage s = BlobStorages.createDefault(PROPERTY_PREFIX, path);
 
         final Map<String, String> tags = new HashMap<>(s.getTags());
-        tags.put("modelstore-name", s.getName());
-        tags.put("modelstore-compression", compression.name().toLowerCase());
+        tags.put(TAG_COMPRESSION, compression.name().toLowerCase());
         s.setTags(tags);
 
         return new DefaultBlobModelStore<>(s, compression);

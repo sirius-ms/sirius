@@ -18,104 +18,87 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.storage.blob.memory;
+package de.unijena.bioinf.storage.blob;
 
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.storage.blob.BlobStorage;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class InMemoryBlobStorage implements BlobStorage {
+public class CompressibleBlobStorage<Storage extends BlobStorage> extends AbstractCompressible implements BlobStorage {
 
-    private final String name;
-    private final Map<String, byte[]> blobs = new ConcurrentHashMap<>();
-    private Map<String, String> tags = new ConcurrentHashMap<>();
+    protected final Storage rawStorage;
 
-    public InMemoryBlobStorage(String name) {
-        this.name = name;
+
+    public static <S extends BlobStorage> CompressibleBlobStorage<S> of(S rawStorage) {
+        try {
+            return of(rawStorage, Compression.fromName(rawStorage.getTags().get(TAG_COMPRESSION)));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
+    public static <S extends BlobStorage> CompressibleBlobStorage<S> of(S rawStorage, Compression compression) {
+        return new CompressibleBlobStorage<>(rawStorage, compression);
+    }
+
+    protected CompressibleBlobStorage(Storage rawStorage, Compression compression) {
+        super(compression);
+        this.rawStorage = rawStorage;
+    }
 
     @Override
     public String getName() {
-        return name;
+        return rawStorage.getName();
     }
 
     @Override
     public String getBucketLocation() {
-        return getName();
+        return rawStorage.getBucketLocation();
     }
 
     @Override
     public boolean hasBlob(Path relative) throws IOException {
-        return blobs.containsKey(relative.toString());
+        return rawStorage.hasBlob(addExt(relative));
     }
 
     @Override
     public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
-        try (ByteArrayOutputStream w = new ByteArrayOutputStream()) {
-            withStream.accept(w);
-            blobs.put(relative.toString(), w.toByteArray());
-        }
+        rawStorage.withWriter(addExt(relative), (out) ->
+                Compressible.withCompression(out, getCompression(), withStream));
     }
 
     @Override
     public InputStream reader(Path relative) throws IOException {
-        byte[] blob = blobs.get(relative.toString());
-        if (blob == null)
-            throw new IOException("Path '" + relative + "' does not exist in InMemory BlobStorage '" + getName() + "'!");
-        return new ByteArrayInputStream(blob);
+        return Compressible.decompressRawStream(rawStorage.reader(addExt(relative)), compression, decompressStreams).orElseThrow(() -> new IOException("No resource found for given path."));
     }
 
     @Override
     public @NotNull Map<String, String> getTags() throws IOException {
-        return Collections.unmodifiableMap(tags);
+        return rawStorage.getTags();
     }
 
     @Override
     public void setTags(@NotNull Map<String, String> tags) throws IOException {
-        this.tags = new ConcurrentHashMap<>(tags);
+        rawStorage.setTags(tags);
     }
 
     @Override
-    public Iterator<Blob> listBlobs() {
-        return new BlobIt<>(blobs.keySet().iterator(), MemBlob::new);
+    public Iterator<Blob> listBlobs() throws IOException {
+        return rawStorage.listBlobs();
     }
 
     @Override
-    public void deleteBucket() {
-        blobs.clear();
-        tags.clear();
+    public void deleteBucket() throws IOException {
+        rawStorage.deleteBucket();
     }
 
-    public class MemBlob implements Blob {
-        final String key;
-
-        private MemBlob(@NotNull String key) {
-            this.key = key;
-        }
-
-        @Override
-        public boolean isDirectory() {
-            return false;
-        }
-
-        @Override
-        public String getKey() {
-            return key;
-        }
-
-        @Override
-        public long size() {
-            return blobs.get(key).length;
-        }
+    public Storage getRawStorage() {
+        return rawStorage;
     }
-
-
 }

@@ -44,6 +44,7 @@ public class SearchableDatabases {
     //todo should be configurable
     public static final String WEB_CACHE_DIR = "web-cache"; //cache directory for all remote (web) dbs
     public static final String CUSTOM_DB_DIR = "custom";
+    private static final String PROP_KEY = "de.unijena.bioinf.chemdb.custom.source";
 
     private SearchableDatabases() {
     }
@@ -63,22 +64,22 @@ public class SearchableDatabases {
         return Paths.get(val).toFile();
     }
 
-    public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name) {
+    public static CustomDatabase<?> getCustomDatabaseByNameOrThrow(@NotNull String name) {
         return getCustomDatabaseByName(name).
                 orElseThrow(() -> new IllegalArgumentException("Database with name: " + name + " does not exist!"));
     }
 
     @NotNull
-    public static Optional<CustomDatabase> getCustomDatabaseByName(@NotNull String name) {
-        @NotNull List<CustomDatabase> custom = getCustomDatabases();
-        for (CustomDatabase customDatabase : custom)
+    public static Optional<CustomDatabase<?>> getCustomDatabaseByName(@NotNull String name) {
+        @NotNull List<CustomDatabase<?>> custom = getCustomDatabases();
+        for (CustomDatabase<?> customDatabase : custom)
             if (customDatabase.name().equalsIgnoreCase(name))
                 return Optional.of(customDatabase);
         return Optional.empty();
     }
 
     @NotNull
-    public static Optional<CustomDatabase> getCustomDatabaseByPath(@NotNull Path dbDir) {
+    public static Optional<CustomDatabase<?>> getCustomDatabaseByPath(@NotNull Path dbDir) {
         if (!Files.isDirectory(dbDir))
             return Optional.empty();
 
@@ -91,9 +92,9 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir) {
+    public static CustomDatabase<?> getCustomDatabaseByPathOrThrow(@NotNull Path dbDir) {
         try {
-            return loadCustomDatabaseFromLocation(dbDir.toFile(), true);
+            return loadCustomDatabaseFromLocation(dbDir.toAbsolutePath().toString(), true);
         } catch (IOException e) {
             throw new RuntimeException("Could not load DB from path: " + dbDir.toString(), e);
         }
@@ -123,12 +124,12 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static List<CustomDatabase> getCustomDatabases() {
+    public static List<CustomDatabase<?>> getCustomDatabases() {
         return getCustomDatabases(true);
     }
 
     @NotNull
-    public static List<CustomDatabase> getCustomDatabases(final boolean up2date) {
+    public static List<CustomDatabase<?>> getCustomDatabases(final boolean up2date) {
         return loadCustomDatabases(up2date);
     }
 
@@ -145,33 +146,38 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static List<CustomDatabase> loadCustomDatabases(boolean up2date) {
-        final List<CustomDatabase> databases = new ArrayList<>();
+    public static List<CustomDatabase<?>> loadCustomDatabases(boolean up2date) {
+        final List<CustomDatabase<?>> databases = new ArrayList<>();
         final File custom = getCustomDatabaseDirectory();
-        if (!custom.exists()) {
+        if (!custom.exists())
             return databases;
-        }
-        for (File subDir : custom.listFiles()) {
-            try {
-                final CustomDatabase db = loadCustomDatabaseFromLocation(subDir, up2date);
-                databases.add(db);
-            } catch (IOException e) {
-                LoggerFactory.getLogger(CustomDatabase.class).error(e.getMessage(), e);
+
+        String customDBs = PropertyManager.getProperty(PROP_KEY);
+        if (customDBs != null && !customDBs.isBlank()) {
+            for (String bucketLocation : customDBs.split("\\s*,\\s*")) {
+                if (!bucketLocation.contains("/"))
+                    bucketLocation = SearchableDatabases.getCustomDatabaseDirectory().toPath().resolve(bucketLocation).toAbsolutePath().toString();
+
+                try {
+                    final CustomDatabase<?> db = CustomDatabase.openDatabase(bucketLocation);//new CustomDatabase(dbDir.getName(), dbDir);
+                    if (!up2date || !db.needsUpgrade())
+                        databases.add(db);
+
+                    throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
+                } catch (IOException e) {
+                    LoggerFactory.getLogger(CustomDatabase.class).error(e.getMessage(), e);
+                }
             }
         }
         return databases;
     }
 
     @NotNull
-    public static CustomDatabase loadCustomDatabaseFromLocation(File dbDir, boolean up2date) throws IOException {
-        if (dbDir.isDirectory()) {
-            final CustomDatabase db = new CustomDatabase(dbDir.getName(), dbDir);
-            db.readSettings();
-            if (!up2date || !db.needsUpgrade())
-                return db;
-            throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
-        }
-        throw new IOException("Illegal DB location '" + dbDir.getAbsolutePath() + "'. DB location needs to be a directory.");
+    public static CustomDatabase<?> loadCustomDatabaseFromLocation(String bucketLocation, boolean up2date) throws IOException {
+        final CustomDatabase<?> db = CustomDatabase.openDatabase(bucketLocation);//new CustomDatabase(dbDir.getName(), dbDir);
+        if (!up2date || !db.needsUpgrade())
+            return db;
+        throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
     }
 
     public static SearchableDatabase getAllDb() {
