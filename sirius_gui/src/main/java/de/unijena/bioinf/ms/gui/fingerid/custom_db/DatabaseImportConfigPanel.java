@@ -34,9 +34,9 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         name.setMinimumSize(new Dimension(150, name.getMinimumSize().height));
         name.setPreferredSize(new Dimension(150, name.getPreferredSize().height));
         name.setEnabled(dbName == null);
-        getOptionDescriptionByName("name").ifPresent(it -> name.setToolTipText(GuiUtils.formatToolTip(it)));
+        getOptionDescriptionByName("location").ifPresent(it -> name.setToolTipText(GuiUtils.formatToolTip(it)));
         smalls.addNamed("Name", name);
-        parameterBindings.put("name", name::getText);
+        parameterBindings.put("location", name::getText);
 
         final String buf = "buffer";
         bufferSize = makeGenericOptionSpinner(buf,
