@@ -84,7 +84,7 @@ public class DatabaseDialog extends JDialog {
         add(header, BorderLayout.NORTH);
 
 
-        this.customDatabases = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
+        this.customDatabases = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase<?>>>) SearchableDatabases::getCustomDatabases).getResult()
                 .stream().collect(Collectors.toMap(CustomDatabase::name, k -> k));
         this.dbList = new DatabaseList(customDatabases.keySet().stream().sorted().collect(Collectors.toList()));
         final Box box = Box.createVerticalBox();
@@ -174,9 +174,9 @@ public class DatabaseDialog extends JDialog {
             final String name = dbList.getModel().getElementAt(index);
             final String msg = "Do you really want to delete the custom database '" + name + "'?";
             if (new QuestionDialog(getOwner(), msg).isSuccess()) {
-                new CustomDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name)).deleteDatabase();
+//                CustomDatabase.openDatabase(name).deleteDatabase();;
                 customDatabases.remove(name);
-                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
+                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase<?>>>) SearchableDatabases::getCustomDatabases).getResult()
                         .stream().map(CustomDatabase::name).toArray(String[]::new);
                 dbList.setListData(dbs);
             }
@@ -221,9 +221,13 @@ public class DatabaseDialog extends JDialog {
             setPreferredSize(new Dimension(200, 240));
         }
 
-        public void updateContent(CustomDatabase c) {
-            if (c.getNumberOfCompounds() > 0) {
-                content.setText("<html>Custom database. Containing " + c.getNumberOfCompounds() + " compounds with " + c.getNumberOfFormulas() + " different molecular formulas. Consumes " + c.getMegabytes() + " mb on the hard drive." + ((c.isDeriveFromRestDb()) ? "<br>This database will also include all compounds from `" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()) + "`." : "") + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>");
+        public void updateContent(CustomDatabase<?> c) {
+            if (c.getStatistics().getCompounds() > 0) {
+                content.setText("<html>Custom database. Containing "
+                        + c.getStatistics().getCompounds() + " compounds with " + c.getStatistics().getFormulas()
+                        + " different molecular formulas." +
+                        ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from `" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()) + "`." : "")
+                                + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>"));
             } else {
                 content.setText("Empty custom database.");
             }
