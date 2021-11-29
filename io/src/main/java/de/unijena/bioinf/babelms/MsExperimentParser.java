@@ -23,6 +23,7 @@ package de.unijena.bioinf.babelms;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.cef.AgilentCefExperimentParser;
+import de.unijena.bioinf.babelms.massbank.MassbankExperimentParser;
 import de.unijena.bioinf.babelms.mgf.MgfParser;
 import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.babelms.ms.JenaMsParser;
@@ -99,6 +100,7 @@ public class MsExperimentParser {
         endings.put(".mzml", MzMlExperimentParser.class);
         endings.put(".cef", AgilentCefExperimentParser.class);
         endings.put(".msp", MSPExperimentParser.class);
+        endings.put(".txt", MassbankExperimentParser.class); //Too bad that Massbank format has no unique file extension
         return endings;
     }
 }
