@@ -24,11 +24,11 @@ import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.OutdatedDBExeption;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,18 +50,27 @@ public class SearchableDatabases {
     }
 
     @NotNull
-    public static File getCustomDatabaseDirectory(){
-        return new File(getDatabaseDirectory(),CUSTOM_DB_DIR);
+    public static Path getCustomDatabaseDirectory(){
+        return getDatabaseDirectory().resolve(CUSTOM_DB_DIR);
     }
 
     @NotNull
-    public static File getWebDatabaseCacheDirectory() {
-        return new File(getDatabaseDirectory(), WEB_CACHE_DIR);
+    public static Path getWebDatabaseCacheDirectory() {
+        return getDatabaseDirectory().resolve(WEB_CACHE_DIR);
     }
 
-    public static File getDatabaseDirectory() {
+    public static FileBlobStorage getWebDatabaseCacheStorage() {
+        try {
+            Files.createDirectories(getWebDatabaseCacheDirectory());
+            return new FileBlobStorage(getWebDatabaseCacheDirectory());
+        } catch (IOException e) {
+            throw new RuntimeException("Could not create cache directories!", e);
+        }
+    }
+
+    public static Path getDatabaseDirectory() {
         final String val = PropertyManager.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
-        return Paths.get(val).toFile();
+        return Paths.get(val);
     }
 
     public static CustomDatabase<?> getCustomDatabaseByNameOrThrow(@NotNull String name) {
@@ -134,7 +143,7 @@ public class SearchableDatabases {
     }
 
     public static WebWithCustomDatabase makeWebWithCustomDB(WebAPI<?> webAPI) {
-        return new WebWithCustomDatabase(webAPI, getDatabaseDirectory(), WEB_CACHE_DIR, CUSTOM_DB_DIR);
+        return new WebWithCustomDatabase(webAPI, getDatabaseDirectory(), getWebDatabaseCacheStorage());
     }
 
     @NotNull
@@ -148,15 +157,16 @@ public class SearchableDatabases {
     @NotNull
     public static List<CustomDatabase<?>> loadCustomDatabases(boolean up2date) {
         final List<CustomDatabase<?>> databases = new ArrayList<>();
-        final File custom = getCustomDatabaseDirectory();
-        if (!custom.exists())
+        final Path custom = getCustomDatabaseDirectory();
+
+        if (Files.notExists(custom))
             return databases;
 
         String customDBs = PropertyManager.getProperty(PROP_KEY);
         if (customDBs != null && !customDBs.isBlank()) {
             for (String bucketLocation : customDBs.split("\\s*,\\s*")) {
                 if (!bucketLocation.contains("/"))
-                    bucketLocation = SearchableDatabases.getCustomDatabaseDirectory().toPath().resolve(bucketLocation).toAbsolutePath().toString();
+                    bucketLocation = custom.resolve(bucketLocation).toAbsolutePath().toString();
 
                 try {
                     final CustomDatabase<?> db = CustomDatabase.openDatabase(bucketLocation);//new CustomDatabase(dbDir.getName(), dbDir);

@@ -59,6 +59,7 @@ import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.stores.model.CanopusClientDataStore;
 import de.unijena.bioinf.ms.stores.model.FingerIdClientDataStore;
 import de.unijena.bioinf.ms.webapi.WebJJob;
+import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
 import org.jetbrains.annotations.NotNull;
@@ -176,12 +177,12 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    public void consumeStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOConsumer<WebChemDB> doWithClient) throws IOException {
+    public void consumeStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOConsumer<WebChemDB> doWithClient) throws IOException {
         doWithClient.accept(webChemDB);
     }
 
     @Override
-    public <T> T applyStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOFunction<WebChemDB, T> doWithClient) throws IOException {
+    public <T> T applyStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOFunction<WebChemDB, T> doWithClient) throws IOException {
         return doWithClient.apply(webChemDB);
     }
 

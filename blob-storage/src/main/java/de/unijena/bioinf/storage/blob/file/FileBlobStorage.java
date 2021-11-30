@@ -30,9 +30,7 @@ import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -116,7 +114,7 @@ public class FileBlobStorage implements BlobStorage {
 
     @Override
     public boolean hasBlob(@NotNull Path path) {
-        return !Files.isRegularFile(root.resolve(path));
+        return Files.isRegularFile(root.resolve(path));
     }
 
     @Override
@@ -152,6 +150,11 @@ public class FileBlobStorage implements BlobStorage {
     }
 
     @Override
+    public boolean deleteBlob(Path relative) throws IOException {
+        return Files.deleteIfExists(root.resolve(relative));
+    }
+
+    @Override
     public void deleteBucket() throws IOException {
         try {
             FileUtils.deleteRecursively(root);
@@ -165,13 +168,18 @@ public class FileBlobStorage implements BlobStorage {
         Path blob = root.resolve(relative);
         if (!Files.isRegularFile(blob))
             return null;
-        return Files.newInputStream(blob);
+        final FileInputStream stream = new FileInputStream(blob.toFile());
+        stream.getChannel().lock(0, Long.MAX_VALUE, true);
+
+        return stream;
     }
 
     protected OutputStream writer(Path relative) throws IOException {
         @NotNull Path target = root.resolve(relative);
         Files.createDirectories(target.getParent());
-        return Files.newOutputStream(target);
+        FileOutputStream w = new FileOutputStream(target.toFile());
+        w.getChannel().lock();
+        return w;
     }
 
     @Override
@@ -180,5 +188,4 @@ public class FileBlobStorage implements BlobStorage {
             withStream.accept(w);
         }
     }
-
 }
