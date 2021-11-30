@@ -697,6 +697,8 @@ public class Sirius {
                 if (adductSettings != null && possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
                     //todo check if it makes sense to use the detectables
                     usedIonTypes = adductSettings.getDetectable(possibleAdducts.getIonModes());
+                    usedIonTypes.addAll(adductSettings.getEnforced(possibleAdducts.getIonModes()));
+                    usedIonTypes.addAll(adductSettings.getFallback(possibleAdducts.getIonModes()));
                 } else {
                     //there seem to be some information from the preprocessing
                     usedIonTypes = possibleAdducts.getAdducts();
