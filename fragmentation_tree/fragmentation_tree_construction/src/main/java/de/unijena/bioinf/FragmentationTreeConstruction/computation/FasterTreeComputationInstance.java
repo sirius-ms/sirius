@@ -155,6 +155,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     protected FinalResult compute() throws Exception {
         configureProgress(0, 2, 1);
         score();
+
         startTimeMillis = System.currentTimeMillis();
 //        secondsPerInstance = timeout.getNumberOfSecondsPerInstance();
 //        secondsPerTree = timeout.getNumberOfSecondsPerDecomposition();
