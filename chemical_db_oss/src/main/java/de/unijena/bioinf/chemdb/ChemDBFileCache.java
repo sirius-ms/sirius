@@ -24,59 +24,63 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.CloseableIterator;
+import de.unijena.bioinf.storage.blob.AbstractCompressible;
+import de.unijena.bioinf.storage.blob.BlobStorage;
+import de.unijena.bioinf.storage.blob.Compressible;
+import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
+import de.unijena.bioinf.storage.blob.memory.InMemoryBlobStorage;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.json.JsonException;
-import java.io.*;
-import java.nio.file.Files;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
-//todo it would be nice if this would use the FileBasedChemDB API
-public class ChemDBFileCache {
+/**
+ * Class to read-cache any kind of {@link SearchStructureByFormula} using a {@link BlobStorage}.
+ * Using a local {@link FileBlobStorage} or an {@link InMemoryBlobStorage} as cache is recommended
+ * to ensure that the cache is faster enough to have positive impact on performance compared to the  actual resource.
+ */
+public class ChemDBFileCache extends AbstractCompressible {
 
-    protected final File cacheDir;
+    protected final BlobStorage cacheStorage;
     protected final SearchStructureByFormula structureProvider;
 
-    public ChemDBFileCache(@Nullable File cacheDir, @NotNull SearchStructureByFormula structureProvider1) {
-        this.cacheDir = cacheDir != null ? cacheDir : defaultCacheDir();
+    public ChemDBFileCache(@NotNull BlobStorage cacheStorage, @NotNull SearchStructureByFormula structureProvider1) {
+        this(cacheStorage, structureProvider1, Compression.GZIP);
+    }
+
+    public ChemDBFileCache(@NotNull BlobStorage cacheStorage, @NotNull SearchStructureByFormula structureProvider1, Compression compression) {
+        super(compression);
+        this.cacheStorage = cacheStorage;
         this.structureProvider = structureProvider1;
     }
-
-    public static File defaultCacheDir() {
-        final String val = System.getenv("CSI_FINGERID_STORAGE");
-        if (val != null) return new File(val);
-        return new File(System.getProperty("user.home"), "csi_fingerid_cache");
-    }
-
 
     public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, long filter) throws ChemicalDatabaseException {
         return lookupStructuresAndFingerprintsByFormula(formula).stream().filter(ChemDBs.inFilter((it) -> it.bitset, filter)).collect(Collectors.toList());
     }
 
     public List<FingerprintCandidate> lookupStructuresAndFingerprintsByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
-        final File stfile = new File(cacheDir, "/" + formula.toString() + ".json.gz");
+        Path blobKey = Path.of(formula.toString() + ".json.gz");
+
         try {
             List<FingerprintCandidate> fpcs = new ArrayList<>();
-            if (stfile.exists()) {
+            if (cacheStorage.hasBlob(blobKey)) {
                 try {
-                    final GZIPInputStream zin = new GZIPInputStream(new BufferedInputStream(new FileInputStream(stfile)));
-                    try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(), zin)) {
+                    try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(),
+                            Compressible.decompressRawStream(cacheStorage.reader(blobKey), getCompression()).get())) {
                         while (fciter.hasNext())
                             fpcs.add(fciter.next());
                     }
                 } catch (IOException | JsonException e) {
-                    LoggerFactory.getLogger(getClass()).error("Error when searching for " + formula + " in file database. Deleting cache file '" + stfile.getAbsolutePath() + "' an try fetching from Server");
-                    stfile.delete();
-                    fpcs = requestFormulaAndCache(stfile, formula);
+                    LoggerFactory.getLogger(getClass()).error("Error when searching for " + formula + " in file database. Deleting cache file '" + blobKey + "' an try fetching from Server");
+                    fpcs = requestFormulaAndCache(blobKey, formula);
                 }
             } else {
-                fpcs = requestFormulaAndCache(stfile, formula);
+                fpcs = requestFormulaAndCache(blobKey, formula);
             }
 
             return fpcs;
@@ -85,28 +89,13 @@ public class ChemDBFileCache {
         }
     }
 
-    private List<FingerprintCandidate> requestFormulaAndCache(final @NotNull File output, MolecularFormula formula) throws IOException {
+    private List<FingerprintCandidate> requestFormulaAndCache(final @NotNull Path relative, MolecularFormula formula) throws IOException {
         //get unfiltered list from server to write cache.
         final List<FingerprintCandidate> fpcs = structureProvider.lookupStructuresAndFingerprintsByFormula(formula);
 
         // write cache in background -> cache has to be unfiltered
-        SiriusJobs.runInBackground(() -> {
-            output.getParentFile().mkdirs();
-            final File tempFile = File.createTempFile("sirius_formula", ".json.gz", output.getParentFile());
-            try {
-                try (final GZIPOutputStream fout = new GZIPOutputStream(new FileOutputStream(tempFile))) {
-                        FingerprintCandidate.toJSONList(fpcs, fout);
-                }
-
-                // move tempFile is canonical on same fs
-                if (output.exists() || !tempFile.renameTo(output))
-                    tempFile.delete();
-
-                return true;
-            } finally {
-                Files.deleteIfExists(tempFile.toPath());
-            }
-        });
+        SiriusJobs.runInBackgroundIO(() ->
+                cacheStorage.withWriter(relative, w -> Compressible.withCompression(w, getCompression(), cw -> FingerprintCandidate.toJSONList(fpcs, cw))));
 
         return fpcs;
     }

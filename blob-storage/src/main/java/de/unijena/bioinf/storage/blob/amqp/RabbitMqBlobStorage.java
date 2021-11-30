@@ -85,6 +85,11 @@ public class RabbitMqBlobStorage implements BlobStorage {
         return Boolean.parseBoolean(new String(resp.getBody(), Charset.forName(resp.getProperties().getContentEncoding())));
     }
 
+    @Override
+    public boolean deleteBlob(Path relative) throws IOException {
+        return false;
+    }
+
     protected RpcClient.Response rpcRequest(@NotNull Path relative, @NotNull ResourceRequest requestType) throws IOException {
         return rpcRequest(relative, requestType, null);
     }

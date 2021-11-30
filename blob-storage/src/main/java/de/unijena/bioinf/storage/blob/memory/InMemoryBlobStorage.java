@@ -89,6 +89,11 @@ public class InMemoryBlobStorage implements BlobStorage {
     }
 
     @Override
+    public boolean deleteBlob(Path relative) {
+        return blobs.remove(relative.toString()) != null;
+    }
+
+    @Override
     public void deleteBucket() {
         blobs.clear();
         tags.clear();

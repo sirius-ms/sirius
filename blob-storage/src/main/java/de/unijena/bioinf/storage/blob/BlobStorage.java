@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Super simple object reading/writing API
  */
-
 public interface BlobStorage extends Closeable, AutoCloseable {
 
     @Override
@@ -64,6 +63,14 @@ public interface BlobStorage extends Closeable, AutoCloseable {
     }
 
     boolean hasBlob(Path relative) throws IOException;
+
+    boolean deleteBlob(Path relative) throws IOException;
+
+    default void clear() throws IOException {
+        Iterator<Blob> it = listBlobs();
+        while (it.hasNext())
+            deleteBlob(Path.of(it.next().getKey()));
+    }
 
     /**
      * Applies given function to a writer for the given path

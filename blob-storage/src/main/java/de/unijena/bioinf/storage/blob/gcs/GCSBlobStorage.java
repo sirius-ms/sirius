@@ -126,6 +126,15 @@ public class GCSBlobStorage implements BlobStorage {
         return new BlobIt<>(bucket.list().iterateAll(), GCSBlob::new);
     }
 
+
+    @Override
+    public boolean deleteBlob(Path relative) {
+        com.google.cloud.storage.Blob b = getBlob(relative);
+        if (b == null)
+            return false;
+        return b.delete();
+    }
+
     @Override
     public void deleteBucket() throws IOException {
         bucket.delete();

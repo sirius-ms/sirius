@@ -29,13 +29,15 @@ import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
+import de.unijena.bioinf.storage.blob.BlobStorage;
+import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -52,10 +54,10 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     protected long filter;
 
 
-    public static File defaultCacheDir() {
+    public static BlobStorage defaultCacheDir() {
         final String val = System.getenv("CSI_FINGERID_STORAGE");
-        if (val != null) return new File(val);
-        return new File(System.getProperty("user.home"), "csi_fingerid_cache");
+        if (val != null) return new FileBlobStorage(Path.of(val));
+        return new FileBlobStorage(Path.of(System.getProperty("user.home"), "csi_fingerid_cache"));
     }
 
     @Override
@@ -63,12 +65,12 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         return chemDbDate;
     }
 
-    public RESTDatabase(@Nullable File cacheDir, long filter, String chemDbDate, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
+    public RESTDatabase(@Nullable BlobStorage cacheDir, long filter, String chemDbDate, @NotNull StructureSearchClient chemDBClient, @NotNull CloseableHttpClient client) {
         this.filter = filter;
         this.chemDbDate = chemDbDate;
         this.chemDBClient = chemDBClient;
         this.client = client;
-        this.cache = new ChemDBFileCache(cacheDir, new SearchStructureByFormula() {
+        this.cache = new ChemDBFileCache(cacheDir != null ? cacheDir : defaultCacheDir(), new SearchStructureByFormula() {
             @Override
             public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
                 try {

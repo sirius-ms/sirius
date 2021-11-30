@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ChemistryBase.jobs;
 
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.ProgressJJob;
@@ -28,6 +29,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 public class SiriusJobs {
@@ -105,5 +107,14 @@ public class SiriusJobs {
         });
     }
 
-
+    public static TinyBackgroundJJob<Boolean> runInBackgroundIO(IOFunctions.IORunnable task) {
+        final TinyBackgroundJJob<Boolean> t = new TinyBackgroundJJob<>() {
+            @Override
+            protected Boolean compute() throws IOException {
+                task.run();
+                return true;
+            }
+        };
+        return getGlobalJobManager().submitJob(t);
+    }
 }

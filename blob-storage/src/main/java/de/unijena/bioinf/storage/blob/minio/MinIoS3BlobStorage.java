@@ -26,6 +26,7 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import io.minio.*;
 import io.minio.errors.*;
+import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -193,6 +194,22 @@ public class MinIoS3BlobStorage implements BlobStorage {
     public Iterator<Blob> listBlobs() {
         Iterator<Result<Item>> it = minioClient.listObjects(ListObjectsArgs.builder().bucket(bucketName).build()).iterator();
         return new BlobIt<>(it, MinIoBlob::of);
+    }
+
+    @Override
+    public boolean deleteBlob(Path relative) throws IOException {
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(makePath(relative)).build());
+            return true;
+        } catch (ErrorResponseException e) {
+            exists(e);
+            return false;
+        } catch (InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            throw new IOException("Error when Searching Object", e);
+        }
     }
 
     @Override

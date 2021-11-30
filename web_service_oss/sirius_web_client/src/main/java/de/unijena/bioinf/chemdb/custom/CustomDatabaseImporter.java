@@ -31,11 +31,9 @@ import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.storage.blob.BlobStorage;
-import de.unijena.bioinf.storage.blob.Compressible;
+import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
@@ -49,7 +47,6 @@ import org.openscience.cdk.io.ReaderFactory;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.json.JsonException;
@@ -292,7 +289,7 @@ public class CustomDatabaseImporter {
         List<JJob<Boolean>> jobs = formulasToSearch.stream().map(formula -> new BasicJJob<Boolean>() {
             @Override
             protected Boolean compute() throws Exception {
-                api.consumeStructureDB(DataSource.ALL.flag(), api.getChemDB().getWebDBCacheDir(), db -> {
+                api.consumeStructureDB(DataSource.ALL.flag(), new FileBlobStorage(SearchableDatabases.getWebDatabaseCacheDirectory()), db -> {
                     List<FingerprintCandidate> cans = db.lookupStructuresAndFingerprintsByFormula(formula);
                     for (FingerprintCandidate can : cans) {
                         Comp toAdd = dict.get(can.getInchi().in2D);
@@ -367,7 +364,7 @@ public class CustomDatabaseImporter {
             synchronized (database) {
                 List<FingerprintCandidate> candidates = new ArrayList<>(value);
                 try (InputStream in = database.storage.reader(path)) {
-                    candidates.addAll(FingerprintCandidate.fromJSONList(fingerprintVersion, in));
+                    candidates.addAll(JSONReader.fromJSONList(fingerprintVersion, in));
                 }
                 candidates = WebWithCustomDatabase.mergeCompounds(candidates);
                 database.getStatistics().compounds().addAndGet(candidates.size() - value.size());
