@@ -25,17 +25,17 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -53,19 +53,16 @@ public class WebWithCustomDatabase {
     protected static Logger logger = LoggerFactory.getLogger(WebWithCustomDatabase.class);
 
 
-    protected final File directory;
-    protected final String webCacheDir;
-    protected final String customDbDir;
+    protected final Path directory;
     protected HashMap<String, ChemicalBlobDatabase<?>> customDatabases;
+    protected BlobStorage restCache;
 
     protected final WebAPI<?> api;
-    private VersionsInfo versionInfoCache = null;
 
-    public WebWithCustomDatabase(WebAPI<?> api, File dir, String webCacheDir, String customDbDir) {
+    public WebWithCustomDatabase(WebAPI<?> api, Path dir, BlobStorage dbCache) {
         this.api = api;
         this.directory = dir;
-        this.webCacheDir = webCacheDir;
-        this.customDbDir = customDbDir;
+        this.restCache = dbCache;
         this.customDatabases = new HashMap<>();
     }
 
@@ -88,19 +85,11 @@ public class WebWithCustomDatabase {
 
 
     public synchronized void destroyCache() throws IOException {
-        final File all = getWebDBCacheDir();
-        if (all.exists()) {
-            for (File f : all.listFiles()) {
-                Files.deleteIfExists(f.toPath());
-            }
-        }
+        Files.createDirectories(directory);
 
-        if (!directory.exists()) {
-            directory.mkdirs();
-            all.mkdirs();
-        }
+        restCache.clear();
 
-        try (BufferedWriter bw = Files.newBufferedWriter(new File(directory, "version").toPath(), StandardCharsets.UTF_8)) {
+        try (BufferedWriter bw = Files.newBufferedWriter(directory.resolve("version"), StandardCharsets.UTF_8)) {
             bw.write(api.getChemDbDate());
         }
     }
@@ -129,7 +118,7 @@ public class WebWithCustomDatabase {
 
         final OptionalLong requestFilterOpt = extractFilterBits(dbs);
         if (requestFilterOpt.isPresent()) {
-            api.consumeStructureDB(requestFilterOpt.getAsLong(), getWebDBCacheDir(), restDb -> {
+            api.consumeStructureDB(requestFilterOpt.getAsLong(), restCache, restDb -> {
                 candidates.addAll(restDb.lookupMolecularFormulas(ionMass, deviation, ionType));
             });
         }
@@ -162,7 +151,7 @@ public class WebWithCustomDatabase {
             final long requestFilter = extractFilterBits(dbs).orElse(-1);
             if (requestFilter >= 0 || includeRestAllDb) {
                 final long searchFilter = includeRestAllDb ? 0 : requestFilter;
-                result = api.applyStructureDB(searchFilter, getWebDBCacheDir(), restDb -> new CandidateResult(
+                result = api.applyStructureDB(searchFilter, restCache, restDb -> new CandidateResult(
                         restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
             } else {
                 logger.warn("No filter for Rest DBs found bits in DB list: '" + dbs.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) + "'. Returning empty search list from REST DB");
@@ -407,15 +396,5 @@ public class WebWithCustomDatabase {
             restDbInChIs.addAll(mergeCompounds(other.restDbInChIs, cs));
             other.customInChIs.forEach((k, v) -> customInChIs.get(k).addAll(mergeCompounds(v, cs)));
         }
-    }
-
-    @NotNull
-    public File getWebDBCacheDir() {
-        return new File(directory, webCacheDir);
-    }
-
-    @NotNull
-    public File getCustomDBDirectory() {
-        return new File(directory, customDbDir);
     }
 }

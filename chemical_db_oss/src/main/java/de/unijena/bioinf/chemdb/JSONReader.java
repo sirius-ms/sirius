@@ -22,15 +22,38 @@ package de.unijena.bioinf.chemdb;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
+import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.babelms.CloseableIterator;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TShortArrayList;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JSONReader extends CompoundReader {
+    public static List<FingerprintCandidate> fromJSONList(FingerprintVersion version, InputStream in) throws IOException {
+        final List<FingerprintCandidate> compounds = new ArrayList<>();
+        final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion) version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
+        try (final CloseableIterator<FingerprintCandidate> reader = new JSONReader().readFingerprints(mv, in)) {
+            while (reader.hasNext()) {
+                compounds.add(reader.next());
+            }
+        }
+        return compounds;
+    }
+
 
     @Override
     public CloseableIterator<CompoundCandidate> readCompounds(InputStream reader) throws IOException {
@@ -53,7 +76,7 @@ public class JSONReader extends CompoundReader {
 
     private static class READ {
         protected JsonParser parser;
-        protected CompoundCandidate.CompoundCandidateDeserializer deserializer;
+        protected CompoundCandidateDeserializer deserializer;
 
         protected CompoundCandidate candidate;
 
@@ -67,7 +90,7 @@ public class JSONReader extends CompoundReader {
 
         protected READ(JsonParser parser, FingerprintVersion version) throws IOException {
             this.parser = parser;
-            deserializer = new CompoundCandidate.CompoundCandidateDeserializer(version);
+            deserializer = new CompoundCandidateDeserializer(version);
             // read boilerplate
             while (true) {
                 final JsonToken jsonToken = parser.nextToken();
@@ -141,6 +164,127 @@ public class JSONReader extends CompoundReader {
         @Override
         public CompoundCandidate next() {
             return super.next();
+        }
+    }
+
+
+    // already prepared for generic jackson unmarshalling
+    public static class CompoundCandidateDeserializer<C extends CompoundCandidate> extends JsonDeserializer<C> {
+
+        private final FingerprintVersion version;
+
+        protected CompoundCandidateDeserializer() {
+            this(CdkFingerprintVersion.getDefault());
+        }
+
+        protected CompoundCandidateDeserializer(FingerprintVersion version) {
+            this.version = version;
+        }
+
+        @Override
+        public C deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+            return (C) deserialize(p);
+        }
+
+
+        public CompoundCandidate deserialize(JsonParser p) throws IOException {
+            String inchi = null, inchikey = null, smiles=null,name=null;
+            int player=0,qlayer=0;
+            long bitset=0;
+            double xlogp=0;
+            TShortArrayList indizes = null;
+            TIntArrayList pubmedIds= null;
+            JsonToken jsonToken = p.nextToken();
+            ArrayList<DBLink> links = new ArrayList<>();
+            while (true) {
+                if (jsonToken.isStructEnd()) break;
+
+                // expect field name
+
+                final String fieldName = p.currentName();
+                switch (fieldName) {
+                    case "inchi":
+                        inchi = p.nextTextValue();
+                        break;
+                    case "inchikey":
+                        inchikey = p.nextTextValue();
+                        break;
+                    case "name":
+                        name = p.nextTextValue();
+                        break;
+                    case "pLayer":
+                        player = p.nextIntValue(0);
+                        break;
+                    case "qLayer":
+                        qlayer = p.nextIntValue(0);
+                        break;
+                    case "xlogp":
+                        if (p.nextToken().isNumeric()) {
+                            xlogp = p.getNumberValue().doubleValue();
+                        } else {
+                            LoggerFactory.getLogger("Warning: xlogp is invalid value for " + String.valueOf(inchikey) );
+                        }
+                        break;
+                    case "smiles":
+                        smiles = p.nextTextValue();
+                        break;
+                    case "bitset":
+                        bitset = p.nextLongValue(0L);
+                        break;
+                    case "links":
+                        if (p.nextToken() != JsonToken.START_OBJECT)
+                            throw new IOException("malformed json. expected object"); // array start
+                        do {
+                            jsonToken = p.nextToken();
+                            if (jsonToken == JsonToken.END_OBJECT) break;
+                            else {
+                                String linkName = p.currentName();
+                                if (p.nextToken() != JsonToken.START_ARRAY)
+                                    throw new IOException("malformed json. expected array"); // array start
+                                do {
+                                    jsonToken = p.nextToken();
+                                    if (jsonToken == JsonToken.END_ARRAY) break;
+                                    else links.add(new DBLink(linkName, p.getText()));
+                                } while (true);
+                            }
+                        } while (true);
+                        break;
+                    case "pubmedIDs":
+                        pubmedIds = new TIntArrayList();
+                        if (p.nextToken() != JsonToken.START_ARRAY)
+                            throw new IOException("malformed json. expected array"); // array start
+                        do {
+                            jsonToken = p.nextToken();
+                            if (jsonToken == JsonToken.END_ARRAY) break;
+                            else pubmedIds.add(Integer.parseInt(p.getText()));
+                        } while (true);
+                        break;
+                    case "fingerprint":
+                        indizes = new TShortArrayList();
+                        if (p.nextToken() != JsonToken.START_ARRAY)
+                            throw new IOException("malformed json. expected array"); // array start
+                        do {
+                            jsonToken = p.nextToken();
+                            if (jsonToken == JsonToken.END_ARRAY) break;
+                            else indizes.add(Short.parseShort(p.getText()));
+                        } while (true);
+
+                        break;
+                    default:
+                        p.nextToken();
+                        break;
+                }
+                jsonToken = p.nextToken();
+            }
+            final CompoundCandidate C = new CompoundCandidate(
+                    new InChI(inchikey, inchi), name, smiles, player,qlayer,xlogp,null,bitset,links.toArray(DBLink[]::new),
+                    pubmedIds==null ? null : new PubmedLinks(pubmedIds.toArray())
+            );
+            if (indizes==null) {
+                return C;
+            } else {
+                return new FingerprintCandidate(C, new ArrayFingerprint(version,indizes.toArray()));
+            }
         }
     }
 }
