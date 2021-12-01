@@ -9,6 +9,7 @@ import java.util.List;
 
 public class CombinatorialSubtree {
 
+    private float score; // Summe der Kanten- und Knotenscores
     private final CombinatorialNode root;
     private final ArrayList<CombinatorialNode> nodes; // um Verwirrung zu vermeiden, sind auch hier alle Knoten ausser der Wurzel enthalten
     private final HashMap<BitSet, CombinatorialNode> bitset2Node;
@@ -17,6 +18,7 @@ public class CombinatorialSubtree {
         this.root = new CombinatorialNode(molecule.asFragment());
         this.root.depth = 0;
         this.root.bondbreaks = 0;
+        this.score = 0;
         this.nodes = new ArrayList<>();
         this.bitset2Node = new HashMap<>();
         this.bitset2Node.put(this.root.fragment.bitset, this.root);
@@ -27,7 +29,7 @@ public class CombinatorialSubtree {
         if(node == null && this.bitset2Node.get(parent.fragment.bitset) == parent){
             node = new CombinatorialNode(fragment);
             node.depth = (short) (parent.depth + 1);
-            node.bondbreaks = (short) (parent.bondbreaks + ((secondBond == null) ? 1 : 2) );
+            node.bondbreaks = (short) (parent.bondbreaks + ((secondBond == null) ? 1 : 2));
             node.fragmentScore = fragmentScore;
             node.score = fragmentScore + edgeScore;
             node.totalScore = parent.totalScore + node.score;
@@ -40,6 +42,7 @@ public class CombinatorialSubtree {
             node.incomingEdges.add(edge);
             parent.outgoingEdges.add(edge);
 
+            this.score = this.score + node.fragmentScore + edge.score;
             this.nodes.add(node);
             this.bitset2Node.put(node.fragment.bitset, node);
 
@@ -47,6 +50,10 @@ public class CombinatorialSubtree {
         }else {
             return null;
         }
+    }
+
+    public float getScore(){
+        return this.score;
     }
 
     public CombinatorialNode getNode(BitSet fragment){
