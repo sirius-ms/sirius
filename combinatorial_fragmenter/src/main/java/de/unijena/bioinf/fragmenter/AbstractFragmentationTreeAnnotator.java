@@ -5,20 +5,21 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public abstract class AbstractFragmentationTreeAnnotator {
 
     protected final FTree fTree;
     protected final MolecularGraph molecule;
     protected final CombinatorialFragmenterScoring scoring;
-    protected HashMap<Fragment, ArrayList<CombinatorialFragment>> mapping;
+
+    protected final HashMap<Fragment, ArrayList<CombinatorialFragment>> mapping;
 
 
     public AbstractFragmentationTreeAnnotator(FTree fTree, MolecularGraph molecule, CombinatorialFragmenterScoring scoring){
         this.fTree = fTree;
         this.molecule = molecule;
         this.scoring = scoring;
+        this.mapping = new HashMap<>();
     }
 
     public abstract HashMap<Fragment, ArrayList<CombinatorialFragment>> computeMapping() throws Exception;
