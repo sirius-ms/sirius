@@ -23,7 +23,11 @@ package de.unijena.bioinf.storage.blob;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
+import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorOutputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +42,7 @@ public interface Compressible {
     String TAG_COMPRESSION="compression";
 
     enum Compression {
-        NONE(""), GZIP(".gz"), XZ(".xz");
+        NONE(""), GZIP(".gz"), XZ(".xz"), LZ4(".lz4"), BZIP2(".bz2");
         public final String ext;
 
         Compression(@NotNull String ext) {
@@ -62,6 +66,10 @@ public interface Compressible {
                 return GZIP;
             if (s.endsWith(XZ.ext()))
                 return XZ;
+            if (s.endsWith(LZ4.ext()))
+                return LZ4;
+            if (s.endsWith(BZIP2.ext()))
+                return BZIP2;
             return NONE;
         }
     }
@@ -101,6 +109,10 @@ public interface Compressible {
                 return wrap(rawStream, GZIPInputStream::new);
             case XZ:
                 return wrap(rawStream, XZCompressorInputStream::new);
+            case LZ4:
+                return wrap(rawStream, FramedLZ4CompressorInputStream::new);
+            case BZIP2:
+                return wrap(rawStream, BZip2CompressorInputStream::new);
             default:
                 return Optional.ofNullable(rawStream);
         }
@@ -128,6 +140,10 @@ public interface Compressible {
                 return new GzipCompressorOutputStream(out);
             case XZ:
                 return new XZCompressorOutputStream(out);
+            case LZ4:
+                return new FramedLZ4CompressorOutputStream(out);
+            case BZIP2:
+                return new BZip2CompressorOutputStream(out);
             default:
                 return out;
         }

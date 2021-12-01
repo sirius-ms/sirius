@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
 public class CustomDatabaseSettings {
     private final boolean inheritance;
     private final long filter;
@@ -60,10 +59,12 @@ public class CustomDatabaseSettings {
             this.formulas = formulas;
         }
 
+        @JsonIgnore
         protected AtomicLong compounds() {
             return compounds;
         }
 
+        @JsonIgnore
         protected AtomicLong formulas() {
             return formulas;
         }
