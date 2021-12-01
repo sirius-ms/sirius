@@ -59,6 +59,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CustomDatabaseImporter {
     final CustomDatabase<?> database;
@@ -350,7 +351,7 @@ public class CustomDatabaseImporter {
                 candidatePerFormula.put(fc.getInchi().extractFormulaOrThrow(), fc);
             }
             for (Map.Entry<MolecularFormula, Collection<FingerprintCandidate>> entry : candidatePerFormula.asMap().entrySet()) {
-                mergeCompounds(entry.getKey(), entry.getValue());
+                mergeAndWriteCompounds(entry.getKey(), entry.getValue());
             }
             for (Listener l : listeners) l.newFingerprintBufferSize(buffer.size());
             database.writeSettings();
@@ -358,16 +359,22 @@ public class CustomDatabaseImporter {
 
     }
 
-    private void mergeCompounds(MolecularFormula key, Collection<FingerprintCandidate> value) throws IOException {
-        Path path = Path.of(key.toString() + ".json)");
+    private void mergeAndWriteCompounds(MolecularFormula key, final Collection<FingerprintCandidate> value) throws IOException {
+        Path path = Path.of(key.toString() + ".json");
         try {
             synchronized (database) {
-                List<FingerprintCandidate> candidates = new ArrayList<>(value);
+                final List<FingerprintCandidate> alreadyExisting = new ArrayList<>();
                 try (InputStream in = database.storage.reader(path)) {
-                    candidates.addAll(JSONReader.fromJSONList(fingerprintVersion, in));
+                    if (in != null)
+                        alreadyExisting.addAll(JSONReader.fromJSONList(fingerprintVersion, in));
                 }
-                candidates = WebWithCustomDatabase.mergeCompounds(candidates);
-                database.getStatistics().compounds().addAndGet(candidates.size() - value.size());
+                final List<FingerprintCandidate> finalList = WebWithCustomDatabase.mergeCompounds(
+                        Stream.concat(alreadyExisting.stream(), value.stream()).collect(Collectors.toList()));
+
+                database.storage.withWriter(path, w -> CompoundCandidate.toJSONList(finalList, w));
+                database.getStatistics().compounds().addAndGet(finalList.size() - alreadyExisting.size());
+                if (alreadyExisting.isEmpty() && !finalList.isEmpty())
+                    database.getStatistics().formulas().incrementAndGet();
             }
         } catch (IOException | JsonException e) {
             throw new IOException("Error while merging into: " + path, e);
