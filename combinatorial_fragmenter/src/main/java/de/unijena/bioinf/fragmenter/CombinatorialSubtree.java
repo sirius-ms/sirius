@@ -2,12 +2,9 @@ package de.unijena.bioinf.fragmenter;
 
 import org.openscience.cdk.interfaces.IBond;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
-public class CombinatorialSubtree {
+public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
 
     private float score; // Summe der Kanten- und Knotenscores
     private final CombinatorialNode root;
@@ -66,6 +63,32 @@ public class CombinatorialSubtree {
 
     public CombinatorialNode getRoot(){
         return this.root;
+    }
+
+    @Override
+    public Iterator<CombinatorialNode> iterator(){
+        return new Iterator<CombinatorialNode>() {
+            private int k = 0; // k=0 ist Wurzel, und k > 0 entspricht Index des Knotes in Liste nodes (von 1 aus gezählt)
+
+            @Override
+            public boolean hasNext() {
+                return k <= nodes.size();
+            }
+
+            @Override
+            public CombinatorialNode next() {
+                if(!hasNext()) throw new NoSuchElementException();
+
+                CombinatorialNode node;
+                if(k == 0){
+                    node = root;
+                }else{
+                    node = nodes.get(k-1);
+                }
+                k++;
+                return node;
+            }
+        };
     }
 
     @Override
