@@ -117,7 +117,7 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
 
     protected synchronized void readSettings() throws IOException {
         if (storage.hasBlob(settingsBlob())) {
-            try (InputStream r = storage.reader(settingsBlob())) {
+            try (InputStream r = storage.rawReader(settingsBlob())) {
                 setSettings(new ObjectMapper().readValue(r, CustomDatabaseSettings.class));
             }
         }
@@ -126,7 +126,7 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
 
     protected synchronized void writeSettings(CustomDatabaseSettings settings) throws IOException {
         setSettings(settings);
-        storage.withWriter(settingsBlob(), w -> new ObjectMapper().writeValue(w, settings));
+        storage.withRawWriter(settingsBlob(), w -> new ObjectMapper().writeValue(w, settings));
     }
 
     protected synchronized void writeSettings() throws IOException {

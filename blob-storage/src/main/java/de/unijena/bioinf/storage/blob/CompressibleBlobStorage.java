@@ -78,9 +78,17 @@ public class CompressibleBlobStorage<Storage extends BlobStorage> extends Abstra
                 Compressible.withCompression(out, getCompression(), withStream));
     }
 
+    public void withRawWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
+        rawStorage.withWriter(relative, withStream);
+    }
+
     @Override
     public InputStream reader(Path relative) throws IOException {
         return Compressible.decompressRawStream(rawStorage.reader(addExt(relative)), compression, decompressStreams).orElse(null);
+    }
+
+    public InputStream rawReader(Path relative) throws IOException {
+        return rawStorage.reader(relative);
     }
 
     @Override
