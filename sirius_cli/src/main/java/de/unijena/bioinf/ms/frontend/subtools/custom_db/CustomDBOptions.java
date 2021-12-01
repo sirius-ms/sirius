@@ -71,7 +71,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
     @Option(names = {"--derive-from"}, split = ",",
             description = {"The resulting custom-db will be the Union of the given parent database and the imported structures."})
-    public EnumSet<DataSource> parentDBs = null;
+    public EnumSet<DataSource> parentDBs = EnumSet.noneOf(DataSource.class);
 
 
     @Option(names = {"--compression", "-c"}, description = {"Specify compression mode."}, defaultValue = "GZIP")

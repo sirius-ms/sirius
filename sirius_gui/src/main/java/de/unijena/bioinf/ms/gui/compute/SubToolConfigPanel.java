@@ -25,6 +25,7 @@ import picocli.CommandLine;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -102,5 +103,21 @@ public abstract class SubToolConfigPanel<C> extends ConfigPanel {
         JSpinner spinner = makeBindedSpinner(name, value, minimum, maximum, stepSize, result);
         getOptionDescriptionByName(name).ifPresent(des -> spinner.setToolTipText(GuiUtils.formatToolTip(des)));
         return spinner;
+    }
+
+    public <T extends Enum<T>> JComboBox<T> makeGenericOptionComboBox(@NotNull String name, Class<T> enumType) {
+        return makeParameterComboBox(name, java.util.List.copyOf(EnumSet.allOf(enumType)), Enum::name);
+    }
+
+    public <T> JComboBox<T> makeGenericOptionComboBox(@NotNull String name, java.util.List<T> values, Function<T, String> result) {
+        JComboBox<T> box = new JComboBox<>();
+        values.forEach(box::addItem);
+
+
+        getOptionDescriptionByName(name).ifPresent(des -> box.setToolTipText(GuiUtils.formatToolTip(des)));
+        getOptionDefaultByName(name).ifPresent(box::setSelectedItem);
+
+        parameterBindings.put(name, () -> result.apply((T) box.getSelectedItem()));
+        return box;
     }
 }
