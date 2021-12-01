@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
@@ -7,6 +8,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -15,7 +17,8 @@ import java.awt.*;
 
 public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOptions> {
 
-    JCheckboxListPanel parentDBList;
+    private final JCheckboxListPanel<CustomDataSources.Source> parentDBList;
+    JComboBox<Compressible.Compression> compression;
     JSpinner bufferSize;
     JTextField name;
 
@@ -44,7 +47,8 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 1, Integer.MAX_VALUE, 1,
                 (v) -> String.valueOf(v.getNumber().intValue()));
         smalls.addNamed("Buffer Size", bufferSize);
-
+        compression = makeGenericOptionComboBox("compression", Compressible.Compression.class);
+        smalls.addNamed("Compression", compression);
 
 
         // configure database to derive from
