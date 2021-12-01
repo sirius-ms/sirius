@@ -37,7 +37,7 @@ public class CompressibleBlobStorage<Storage extends BlobStorage> extends Abstra
 
     public static <S extends BlobStorage> CompressibleBlobStorage<S> of(S rawStorage) {
         try {
-            return of(rawStorage, Compression.fromName(rawStorage.getTags().get(TAG_COMPRESSION)));
+            return of(rawStorage, Compression.valueOf(rawStorage.getTags().get(TAG_COMPRESSION)));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -80,7 +80,7 @@ public class CompressibleBlobStorage<Storage extends BlobStorage> extends Abstra
 
     @Override
     public InputStream reader(Path relative) throws IOException {
-        return Compressible.decompressRawStream(rawStorage.reader(addExt(relative)), compression, decompressStreams).orElseThrow(() -> new IOException("No resource found for given path."));
+        return Compressible.decompressRawStream(rawStorage.reader(addExt(relative)), compression, decompressStreams).orElse(null);
     }
 
     @Override
