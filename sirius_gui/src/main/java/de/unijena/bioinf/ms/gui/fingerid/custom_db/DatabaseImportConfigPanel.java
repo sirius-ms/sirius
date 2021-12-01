@@ -5,6 +5,7 @@ import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
@@ -12,15 +13,14 @@ import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 
 public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOptions> {
 
     private final JCheckboxListPanel<CustomDataSources.Source> parentDBList;
+    public final PlaceholderTextField nameField;
     JComboBox<Compressible.Compression> compression;
     JSpinner bufferSize;
-    JTextField name;
 
     public DatabaseImportConfigPanel() {
         this(null);
@@ -29,17 +29,22 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     public DatabaseImportConfigPanel(@Nullable String dbName) {
         super(CustomDBOptions.class);
 
-
         final TwoColumnPanel smalls = new TwoColumnPanel();
         add(new TextHeaderBoxPanel("Parameters", smalls));
 
-        name = new JTextField(dbName != null ? dbName : "");
-        name.setMinimumSize(new Dimension(150, name.getMinimumSize().height));
-        name.setPreferredSize(new Dimension(150, name.getPreferredSize().height));
-        name.setEnabled(dbName == null);
-        getOptionDescriptionByName("location").ifPresent(it -> name.setToolTipText(GuiUtils.formatToolTip(it)));
-        smalls.addNamed("Name", name);
-        parameterBindings.put("location", name::getText);
+        this.nameField = new PlaceholderTextField(20);
+        if (dbName == null){
+            nameField.setPlaceholder("Enter name (no whitespaces)");
+        }else {
+            nameField.setText(dbName);
+
+        }
+        nameField.setEnabled(dbName == null);
+
+
+        getOptionDescriptionByName("location").ifPresent(it -> nameField.setToolTipText(GuiUtils.formatToolTip(it)));
+        smalls.addNamed("Location", nameField);
+        parameterBindings.put("location", nameField::getText);
 
         final String buf = "buffer";
         bufferSize = makeGenericOptionSpinner(buf,

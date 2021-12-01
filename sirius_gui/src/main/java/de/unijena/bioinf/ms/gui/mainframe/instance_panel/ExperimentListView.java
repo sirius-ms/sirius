@@ -18,14 +18,10 @@
  */
 
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 01.02.17.
- */
 
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
+import de.unijena.bioinf.ms.gui.utils.JListDropImage;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
@@ -39,7 +35,7 @@ import java.awt.event.MouseListener;
 public class ExperimentListView extends JScrollPane {
 
     final CompoundList sourceList;
-    final JList<InstanceBean> compoundListView;
+    final JListDropImage<InstanceBean> compoundListView;
     final JPopupMenu expPopMenu;
 
     public ExperimentListView(CompoundList sourceList) {
@@ -47,11 +43,10 @@ public class ExperimentListView extends JScrollPane {
         this.sourceList = sourceList;
 
         //todo move texfield and filter funktion here
-        compoundListView = new JList<>(new DefaultEventListModel<>(sourceList.compoundList));
+        compoundListView = new JListDropImage<>(new DefaultEventListModel<>(sourceList.compoundList));
         compoundListView.setSelectionModel(sourceList.compountListSelectionModel);
         compoundListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         compoundListView.setCellRenderer(new CompoundCellRenderer());
-
         this.expPopMenu = new CompoundContextMenu();
 
         compoundListView.addMouseListener(new MouseListener() {
@@ -119,4 +114,5 @@ public class ExperimentListView extends JScrollPane {
     public JPopupMenu getExpPopMenu() {
         return expPopMenu;
     }
+
 }

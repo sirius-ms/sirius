@@ -18,17 +18,16 @@
  */
 
 package de.unijena.bioinf.ms.gui.configs;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 11.10.16.
- */
 
 import de.unijena.bioinf.ms.gui.dialogs.AboutDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -126,6 +125,7 @@ public abstract class Icons {
     public static final Icon CANCEL_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-no-16px.png"));
     public static final Icon CANCEL_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-no@0.5x.png"));
     public static final Icon LIST_ADD_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-list-add-16px.png"));
+    public static final Icon LIST_EDIT_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-list-edit-16px.png"));
     public static final Icon LIST_REMOVE_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-list-remove-16px.png"));
     public static final Icon Zoom_In_24 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-magnify-plus-24px.png"));
     public static final Icon Zoom_In_20 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-magnify-plus-20px.png"));
@@ -139,9 +139,19 @@ public abstract class Icons {
     public static final Icon FINGER_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fingerprint@0.5x.png"));
     public static final Icon FINGER_64 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fingerprint.png"));
 
+    public static final Icon DRAG_N_DROP_256 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-dragndrop@4x.png"));
+
     public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.jpg"));
     public static final Icon SIRIUS_APP_ICON = new ImageIcon(Icons.class.getResource("/icons/sirius_icon.png"));
     public static final Image SIRIUS_APP_IMAGE = Toolkit.getDefaultToolkit().createImage(Icons.class.getResource("/icons/sirius_icon.png"));
+    public static BufferedImage DRAG_N_DROP_IMAGE_160() {
+        try {
+            return ImageIO.read(Icons.class.getResource("/icons/circular-icons/c-dragNdrop-160px.png"));
+        } catch (IOException e) {
+            LoggerFactory.getLogger(Icons.class).error("Could not read image!", e);
+            return null;
+        }
+    }
 
     public static final Icon MolecularProperty_24 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-molecularPropertyWhite-24px.png"));
 
