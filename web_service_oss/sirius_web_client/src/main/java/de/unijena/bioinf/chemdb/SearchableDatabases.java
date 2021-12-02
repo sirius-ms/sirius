@@ -44,7 +44,7 @@ public class SearchableDatabases {
     //todo should be configurable
     public static final String WEB_CACHE_DIR = "web-cache"; //cache directory for all remote (web) dbs
     public static final String CUSTOM_DB_DIR = "custom";
-    private static final String PROP_KEY = "de.unijena.bioinf.chemdb.custom.source";
+    public static final String PROP_KEY = "de.unijena.bioinf.chemdb.custom.source";
 
     private SearchableDatabases() {
     }
@@ -159,8 +159,8 @@ public class SearchableDatabases {
         final List<CustomDatabase<?>> databases = new ArrayList<>();
         final Path custom = getCustomDatabaseDirectory();
 
-        if (Files.notExists(custom))
-            return databases;
+//        if (Files.notExists(custom))
+//            return databases;
 
         String customDBs = PropertyManager.getProperty(PROP_KEY);
         if (customDBs != null && !customDBs.isBlank()) {
@@ -170,10 +170,10 @@ public class SearchableDatabases {
 
                 try {
                     final CustomDatabase<?> db = CustomDatabase.openDatabase(bucketLocation);//new CustomDatabase(dbDir.getName(), dbDir);
-                    if (!up2date || !db.needsUpgrade())
-                        databases.add(db);
+                    if (up2date && db.needsUpgrade())
+                        throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
 
-                    throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
+                    databases.add(db);
                 } catch (IOException e) {
                     LoggerFactory.getLogger(CustomDatabase.class).error(e.getMessage(), e);
                 }
