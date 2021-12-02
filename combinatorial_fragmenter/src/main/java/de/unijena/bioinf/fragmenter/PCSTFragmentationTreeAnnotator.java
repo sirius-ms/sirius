@@ -1,20 +1,18 @@
 package de.unijena.bioinf.fragmenter;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import gurobi.*;
 
-import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
 
-public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnnotator{
+public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculator{
 
     private final CombinatorialFragmenter.Callback2 furtherFragmentation;
-    private boolean isComputed;
-    private double score;
-    private int[] optSubtree;
-    private HashMap<CombinatorialEdge, Integer> edgeIndices;
     private CombinatorialGraph graph;
+
+    private HashMap<CombinatorialEdge, Integer> edgeIndices;
+    private boolean isComputed;
     private boolean isInitialized;
 
 
@@ -22,11 +20,12 @@ public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnn
         super(fTree, molecule, scoring);
         this.furtherFragmentation = furtherFragmentation;
         this.isComputed = false;
-        this.score = Double.NEGATIVE_INFINITY;
         this.isInitialized = false;
     }
 
     public void initialize(){
+        if(this.isInitialized) throw new IllegalStateException("This object is already initialized.");
+
         // 1.: Creation of the combinatorial fragmentation graph:
         CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, this.scoring);
         this.graph = fragmenter.createCombinatorialFragmentationGraph(this.furtherFragmentation);
@@ -57,28 +56,26 @@ public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnn
      */
 
     @Override
-    public HashMap<Fragment, ArrayList<CombinatorialFragment>> computeMapping() throws GRBException{
-        if(this.isInitialized) {
-            // During the initialisation the input molecule was fragmented and a CombinatorialFragmentationGraph was
-            // constructed. Also a mapping was created which assigns each edge of this graph a specific position
-            // in the variable array.
-            // 1.: Construct a ILP solver to solve the PCSTP:
-            this.optSubtree = this.createAndSolveILP();
+    public CombinatorialSubtree computeSubtree() throws GRBException{
+        if(!this.isInitialized) this.initialize();
 
-            // 2..: Calculate the mapping with the computed solution of the ILP.
-            this.mapping = this.calculateMapping();
+        // During the initialisation the input molecule was fragmented and a CombinatorialFragmentationGraph was
+        // constructed. Also a mapping was created which assigns each edge of this graph a specific position
+        // in the variable array.
+        // 1.: Construct an ILP solver to solve the PCSTP:
+        double[] solution = this.createAndSolveILP();
 
-            this.isComputed = true;
-            return this.mapping;
-        }else{
-            throw new IllegalStateException("Before calling this method, this annotator has to be initialised first.");
-        }
+        // 2.: Build the subtree with the computed solution of the ILP.
+        this.buildSubtree(solution, this.graph.root);
+
+        this.isComputed = true;
+
+        return this.subtree;
     }
 
-    private int[] createAndSolveILP() throws GRBException{
+    private double[] createAndSolveILP() throws GRBException{
         // Initialisation of the gurobi environment:
         GRBEnv env = new GRBEnv(true);
-        env.set("logFile", "pcst.log");
         env.start();
 
         // Create the ILP Model:
@@ -119,7 +116,7 @@ public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnn
                     int idx2 = this.edgeIndices.get(uv);
                     expr.addTerm(1, vars[idx2]);
                 }
-                model.addConstr(expr,GRB.LESS_EQUAL,vars[idx], "c2_"+i);
+                model.addConstr(expr,GRB.GREATER_EQUAL,vars[idx], "c2_"+i);
                 i++;
             }
         }
@@ -133,57 +130,28 @@ public class PCSTFragmentationTreeAnnotator extends AbstractFragmentationTreeAnn
         model.dispose();
         env.dispose();
 
-        // transform the double array into an integer array
-        int[] intSolution = new int[solution.length];
-        for(int j = 0; j < solution.length; j++){
-            intSolution[j] = (solution[j] == 1) ? 1 : 0;
-        }
-        return intSolution;
+        return solution;
     }
 
-    private HashMap<Fragment, ArrayList<CombinatorialFragment>> calculateMapping(){
-        // Construct a hash map which maps each molecular formula (as string) to the respective FT-node.
-        // And:
-        // Initialize the hash map 'mapping' which maps each FT-fragment to the list of CombinatorialFragments, which
-        // have the same molecular formula as the fragment and are contained in the prize-collecting steiner tree.
-        HashMap<String, Fragment> mfToFtFrag = new HashMap<>();
-        HashMap<Fragment, ArrayList<CombinatorialFragment>> mapping = new HashMap<>();
-        for (Fragment fragment : this.fTree) {
-            mfToFtFrag.put(fragment.getFormula().toString(), fragment);
-            mapping.put(fragment, new ArrayList<>());
-        }
-
-        // Add the CombinatorialFragments of the solution to the respective lists:
-        for(CombinatorialEdge edge : this.edgeIndices.keySet()){
+    // rekursive Methode: diese Methode traversiert den CombinatorialGraph und
+    // betrachtet dabei nur Kanten, die in solution den Wert Eins haben
+    // Achtung: currentNode ist Zeiger auf den momentan Knoten IM COMBINATORIALGRAPH!
+    private void buildSubtree(double[] solution, CombinatorialNode currentNode){
+        for(CombinatorialEdge edge : currentNode.outgoingEdges){
             int idx = this.edgeIndices.get(edge);
-            if(this.optSubtree[idx] == 1){
-                Fragment fragment = mfToFtFrag.get(edge.target.fragment.getFormula().toString());
-                if(fragment != null){
-                    mapping.get(fragment).add(edge.target.fragment);
-                }
+            if(solution[idx] == 1){
+                BitSet currentNodeBitSet = currentNode.fragment.bitset;
+                CombinatorialNode subtreeNode = this.subtree.getNode(currentNodeBitSet);
+                this.subtree.addFragment(subtreeNode, edge.target.fragment, edge.cut1, edge.cut2, edge.target.fragmentScore, edge.score);
+
+                CombinatorialNode nextNode = edge.target;
+                buildSubtree(solution, nextNode);
             }
         }
-
-        return mapping;
-    }
-
-    public double getScoreOfSolution(){
-        return this.score;
     }
 
     public boolean isComputed(){
         return this.isComputed;
     }
 
-    public int[] getSolution(){
-        return this.optSubtree;
-    }
-
-    public HashMap<Fragment, ArrayList<CombinatorialFragment>> getMapping(){
-        if(this.isComputed){
-            return this.mapping;
-        }else{
-            return null;
-        }
-    }
 }
