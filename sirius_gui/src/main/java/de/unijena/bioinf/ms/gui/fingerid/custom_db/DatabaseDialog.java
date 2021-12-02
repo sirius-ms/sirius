@@ -24,7 +24,6 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -46,6 +45,7 @@ import de.unijena.bioinf.ms.gui.utils.JTextAreaDropImage;
 import de.unijena.bioinf.ms.gui.utils.ListAction;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -98,10 +98,6 @@ public class DatabaseDialog extends JDialog {
         TextHeaderBoxPanel pane = new TextHeaderBoxPanel("Custom Databases", scroll);
         pane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP,0,0));
 
-//        final Box box = Box.createVerticalBox();
-//        box.add(pane);
-
-
         addCustomDb = Buttons.getAddButton16("Create custom DB");
         deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
         editDB = Buttons.getEditButton16("Edit Custom Database");
@@ -148,8 +144,11 @@ public class DatabaseDialog extends JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final int k = dbList.getSelectedIndex();
-                if (k >= 0 && k < dbList.getModel().getSize())
-                    new ImportDatabaseDialog(dbList.getModel().getElementAt(k));
+                if (k >= 0 && k < dbList.getModel().getSize()){
+                    String key = dbList.getModel().getElementAt(k);
+                    CustomDatabase<?> db = customDatabases.get(key);
+                    new ImportDatabaseDialog(db.name(),db.compression());
+                }
 
             }
         });
@@ -157,8 +156,11 @@ public class DatabaseDialog extends JDialog {
         //edit button ->  open import dialog
         editDB.addActionListener(e -> {
             final int k = dbList.getSelectedIndex();
-            if (k >= 0 && k < dbList.getModel().getSize())
-                new ImportDatabaseDialog(dbList.getModel().getElementAt(k));
+            if (k >= 0 && k < dbList.getModel().getSize()){
+                String key = dbList.getModel().getElementAt(k);
+                CustomDatabase<?> db = customDatabases.get(key);
+                new ImportDatabaseDialog(db.name(),db.compression());
+            }
         });
 
         deleteDB.addActionListener(e -> {
@@ -258,7 +260,7 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
-    protected class ImportCompoundsDialog extends JDialog {
+/*    protected class ImportCompoundsDialog extends JDialog {
         protected JLabel statusText;
         protected JProgressBar progressBar;
         protected JTextArea details;
@@ -299,17 +301,17 @@ public class DatabaseDialog extends JDialog {
         public void dispose() {
             super.dispose();
         }
-    }
+    }*/
 
     protected class ImportDatabaseDialog extends JDialog {
         protected JButton importButton;
         protected DatabaseImportConfigPanel configPanel;
 
         public ImportDatabaseDialog() {
-            this(null);
+            this(null, null);
         }
 
-        public ImportDatabaseDialog(@Nullable String name) {
+        public ImportDatabaseDialog(@Nullable String name, @Nullable Compressible.Compression compression) {
             super(owner, name != null ? "Import into '" + name + "' database" : "Create custom database", false);
 
             setPreferredSize(new Dimension(640, 480));
@@ -338,7 +340,7 @@ public class DatabaseDialog extends JDialog {
             importButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
             importButton.setEnabled(name != null && !name.isBlank());
 
-            configPanel = new DatabaseImportConfigPanel(name);
+            configPanel = new DatabaseImportConfigPanel(name, compression);
             configPanel.nameField.getDocument().addDocumentListener(new DocumentListener() {
                 @Override
                 public void insertUpdate(DocumentEvent e) {
@@ -417,8 +419,6 @@ public class DatabaseDialog extends JDialog {
             } catch (Exception e) {
                 LoggerFactory.getLogger(getClass()).error("Unexpected Error during Custom DB import.", e);
                 new StacktraceDialog(MF, "Unexpected Error during Custom DB import.", e);
-
-//                new ExceptionDialog(MF, e.getMessage());
             }
         }
     }

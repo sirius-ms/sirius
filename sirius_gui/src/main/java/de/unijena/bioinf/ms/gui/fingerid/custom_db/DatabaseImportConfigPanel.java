@@ -19,14 +19,14 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
     private final JCheckboxListPanel<CustomDataSources.Source> parentDBList;
     public final PlaceholderTextField nameField;
-    JComboBox<Compressible.Compression> compression;
+    public final JComboBox<Compressible.Compression> compression;
     JSpinner bufferSize;
 
     public DatabaseImportConfigPanel() {
-        this(null);
+        this(null, null);
     }
 
-    public DatabaseImportConfigPanel(@Nullable String dbName) {
+    public DatabaseImportConfigPanel(@Nullable String dbName, @Nullable Compressible.Compression compressionType) {
         super(CustomDBOptions.class);
 
         final TwoColumnPanel smalls = new TwoColumnPanel();
@@ -34,7 +34,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
         this.nameField = new PlaceholderTextField(20);
         if (dbName == null){
-            nameField.setPlaceholder("Enter name (no whitespaces)");
+            nameField.setPlaceholder("Enter location (no whitespaces)");
         }else {
             nameField.setText(dbName);
 
@@ -54,7 +54,8 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         smalls.addNamed("Buffer Size", bufferSize);
         compression = makeGenericOptionComboBox("compression", Compressible.Compression.class);
         smalls.addNamed("Compression", compression);
-
+        compression.setSelectedItem(compressionType == null ? Compressible.Compression.GZIP : compression);
+        compression.setEnabled(dbName == null);
 
         // configure database to derive from
         parentDBList = new JCheckboxListPanel<>(new DBSelectionList(false), "Derive DB from:");

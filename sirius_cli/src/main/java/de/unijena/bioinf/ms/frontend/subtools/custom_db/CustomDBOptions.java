@@ -23,12 +23,14 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseSettings;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
@@ -118,14 +120,17 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
             final AtomicInteger count = new AtomicInteger(0);
 
-//            Path loc = outputDir != null ? outputDir : SearchableDatabases.getCustomDatabaseDirectory().toPath();
-//            Files.createDirectories(loc);
             checkForInterruption();
 
             CustomDatabaseSettings settings = new CustomDatabaseSettings(!parentDBs.isEmpty(), DataSources.getDBFlag(parentDBs),
                     List.of(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion().getUsedFingerprints()), VersionsInfo.CUSTOM_DATABASE_SCHEMA, null);
 
             CustomDatabase<?> db = CustomDatabase.createNewDatabase(location, compression, settings);
+            List<CustomDatabase<?>> customs = SearchableDatabases.getCustomDatabases();
+            customs.add(db);
+
+            SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SearchableDatabases.PROP_KEY, customs.stream().map(CustomDatabase::storageLocation).collect(Collectors.joining(",")));
+
             dbjob = db.importToDatabaseJob(
                     unknown.stream().map(Path::toFile).collect(Collectors.toList()),
                     inChI -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Importing '" + inChI.key2D() + "'"),
