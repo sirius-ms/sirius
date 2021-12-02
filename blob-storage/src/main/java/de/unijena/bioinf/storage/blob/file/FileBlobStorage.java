@@ -55,7 +55,7 @@ public class FileBlobStorage implements BlobStorage {
 
     protected final Path root;
 
-    private Map<String, String> tags = new HashMap<>();
+    private Map<String, String> tags = null;
     private final ReadWriteLock tagLock = new ReentrantReadWriteLock();
 
     public FileBlobStorage(Path root) {

@@ -120,8 +120,9 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
             try (InputStream r = storage.rawReader(settingsBlob())) {
                 setSettings(new ObjectMapper().readValue(r, CustomDatabaseSettings.class));
             }
+        } else {
+            throw new IOException("Custom DB settings file not found! Please reimport.");
         }
-        throw new IOException("Custom DB settings file not found! Please reimport.");
     }
 
     protected synchronized void writeSettings(CustomDatabaseSettings settings) throws IOException {
@@ -130,7 +131,7 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
     }
 
     protected synchronized void writeSettings() throws IOException {
-        storage.withWriter(settingsBlob(), w -> new ObjectMapper().writeValue(w, settings));
+        writeSettings(settings);
     }
 
     private synchronized void setSettings(CustomDatabaseSettings config) {
@@ -144,6 +145,10 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
     @Override
     public String name() {
         return storage.getName();
+    }
+
+    public Compressible.Compression compression() {
+        return storage.getCompression();
     }
 
     public String storageLocation() {

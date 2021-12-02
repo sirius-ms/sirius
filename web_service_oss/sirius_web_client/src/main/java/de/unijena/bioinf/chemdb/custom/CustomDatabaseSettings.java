@@ -45,10 +45,19 @@ public class CustomDatabaseSettings {
         this.statistics = statistics == null ? new Statistics(0, 0) : statistics;
     }
 
+    //json constructor
+    private CustomDatabaseSettings() {
+        this(false,0,null,0,null);
+    }
 
     public static class Statistics {
         private final AtomicLong compounds;
         private final AtomicLong formulas;
+
+        //json constructor
+        private Statistics() {
+            this(0,0);
+        }
 
         public Statistics(int compounds, int formulas) {
             this(new AtomicLong(compounds),new AtomicLong(formulas));
