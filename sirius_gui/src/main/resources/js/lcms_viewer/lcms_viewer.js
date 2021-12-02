@@ -100,6 +100,7 @@ class SampleViewer {
     }
 
     reload() {
+        const self = this;
         this.trace = this.lcms.data.traceSets[this.index];
         if (!this.trace) {
             d3.select(this.lcms.svgId).html("");
@@ -122,7 +123,10 @@ class SampleViewer {
 
         const intensityDomain = this.calculateIntensityDomain(traces);
 
-        const x = d3.scaleLinear().domain([retentionTimes[0], retentionTimes[retentionTimes.length - 1]]).nice().range([margin.left, width - margin.right])
+        //const x = d3.scaleLinear().domain([retentionTimes[0], retentionTimes[retentionTimes.length - 1]]).nice().range([margin.left, width - margin.right])
+
+        const x = d3.scaleLinear().domain([self.rt(retentionTimes[0]),self.rt(retentionTimes[retentionTimes.length - 1])]).nice().range([margin.left, width - margin.right])
+
         const y = d3.scaleLinear().domain([intensityDomain.min, intensityDomain.max]).nice().range([height - margin.bottom, margin.top]);
 
         const yAxis = g => g.attr("transform", `translate(${margin.left},0)`)
@@ -132,7 +136,7 @@ class SampleViewer {
             .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0));
 
 
-        const line = d3.line().x((d, i) => x(d.time))
+        const line = d3.line().x((d, i) => x(self.rt(d.time)))
             .y(d => y(d.intensity));
 
         const svg = d3.select(this.lcms.svgId).html("")
@@ -203,9 +207,9 @@ class SampleViewer {
             .selectAll("line")
             .data(ms2Markers)
             .join("line")
-            .attr("x1", d=>d.orig(x,y)[0])
+            .attr("x1", d=>self.rt(d.orig(x,y)[0]))
             .attr("y1", d=>d.orig(x,y)[1])
-            .attr("x2", d=>d.tx(x))
+            .attr("x2", d=>self.rt(d.tx(x)))
             .attr("y2", d=>d.ty(y))
             .attr("stroke","black")
             .attr("marker-end","url(#arrowhead)");
@@ -213,7 +217,7 @@ class SampleViewer {
         // add marker for average and median
         svg.append("g").attr("stroke-width", 1).attr("id","median_avg").selectAll("line")
             .data([this.weightedRetentionTime,this.medianRetentionTime])
-            .join("line").attr("x1",d=>x(d)).attr("x2",d=>x(d))
+            .join("line").attr("x1",d=>x(self.rt(d))).attr("x2",d=>x(self.rt(d)))
             .attr("y1",d=>y(0)).attr("y2",d=>y(intensityDomain.max)).attr("stroke","lightgray")
             .attr("stroke-dasharray","1, 2")
 
@@ -239,13 +243,13 @@ class SampleViewer {
                     left();
                     return;
                 } else entered();
-                const xm = x.invert(pointer[0]);
+                const xm = self.rtinv(x.invert(pointer[0]));
                 const ym = y.invert(pointer[1]);
 
                 const i = d3.bisectCenter(retentionTimes, xm);
                 const inf = 1.0/0.0;
-                const s = d3.least(traces, d => 
-                    (i >= d.trace.indexOffset && (i-d.trace.indexOffset)<d.trace.masses.length) 
+                const s = d3.least(traces, d =>
+                    (i >= d.trace.indexOffset && (i-d.trace.indexOffset)<d.trace.masses.length)
                     ? Math.abs(d.values[i-d.trace.indexOffset].intensity - ym)
                     : inf);
                 const K = i - s.trace.indexOffset;
@@ -257,13 +261,13 @@ class SampleViewer {
                         if (((marker.timePoint >= retentionTimes[i]) &&  ((i+1 >= retentionTimes.length) ||
                             marker.timePoint < retentionTimes[i+1])) ||
                             (marker.timePoint <= retentionTimes[i] && (i==0 || marker.timePoint > retentionTimes[i-1]))) {
-                            ms2Text.attr("transform", `translate(${x(marker.timePoint)},${y(marker.intensity)})`).attr("display", null);
+                            ms2Text.attr("transform", `translate(${x(self.rt(marker.timePoint))},${y(marker.intensity)})`).attr("display", null);
                             ms2Text.select("text").text("MS/MS scan");
                         }
                     }
                 }
                 path.attr("stroke", d => d.color(d===s || d.main===s || s.main === d, noone)).filter(d => d === s).raise();
-                dot.attr("transform", `translate(${x(retentionTimes[i])},${y(s.values[i-s.trace.indexOffset].intensity)})`);
+                dot.attr("transform", `translate(${x(self.rt(retentionTimes[i]))},${y(s.values[i-s.trace.indexOffset].intensity)})`);
                 dot.select("text").text(s.description(K));
             }
 
@@ -300,6 +304,14 @@ class SampleViewer {
         svg.call(hover, path);
 
         return svg.node();
+    }
+
+    // convert retention time in seconds t retention time in milliseconds
+    rt(value) {
+        return value/60000.0;
+    }
+    rtinv(value) {
+        return value*60000.0;
     }
 
     calculateIntensityDomain(traces) {
