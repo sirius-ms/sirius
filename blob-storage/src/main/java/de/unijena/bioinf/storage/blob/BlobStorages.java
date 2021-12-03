@@ -43,19 +43,19 @@ public class BlobStorages {
     }
 
 
-    public static BlobStorage openDefault(@Nullable String propertyPrefix, @NotNull String bucketPath) {
+    public static BlobStorage openDefault(@Nullable String propertyPrefix, @NotNull String bucketPath) throws IOException  {
         if (!bucketPath.isBlank()) {
             if (bucketPath.startsWith(GCSUtils.URL_PREFIX)) {
                 return GCSUtils.openDefaultGCStorage(propertyPrefix, bucketPath.substring(GCSUtils.URL_PREFIX.length()).split("/")[0]);
             } else if (bucketPath.startsWith(MinIoUtils.URL_PREFIX)){
                 if (propertyPrefix ==  null || propertyPrefix.isBlank())
-                    throw new IllegalArgumentException("Property prefix need to be given for generic S3 storages!");
+                    throw new IOException("Property prefix need to be given for generic S3 storages!");
                 return MinIoUtils.openDefaultS3Storage(propertyPrefix, bucketPath.substring(MinIoUtils.URL_PREFIX.length()).split("/")[0]);
             }
             if (Files.isDirectory(Path.of(bucketPath)))
                 return new FileBlobStorage(Path.of(bucketPath));
         }
-        throw new IllegalArgumentException("Unsupported Blob storage location `" + bucketPath + "`.");
+        throw new IOException("Unsupported Blob storage location or location does not exist: '" + bucketPath + "'.");
     }
 
 

@@ -23,9 +23,11 @@ package de.unijena.bioinf.chemdb.custom;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.chemdb.DataSources;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -95,6 +97,11 @@ public class CustomDatabaseSettings {
 
     public long getFilter() {
         return filter;
+    }
+
+    @JsonIgnore
+    public Set<String> getInheritedDBs() {
+        return DataSources.getDataSourcesFromBitFlags(getFilter());
     }
 
     public List<CdkFingerprintVersion.USED_FINGERPRINTS> getFingerprintVersion() {

@@ -159,9 +159,6 @@ public class SearchableDatabases {
         final List<CustomDatabase<?>> databases = new ArrayList<>();
         final Path custom = getCustomDatabaseDirectory();
 
-//        if (Files.notExists(custom))
-//            return databases;
-
         String customDBs = PropertyManager.getProperty(PROP_KEY);
         if (customDBs != null && !customDBs.isBlank()) {
             for (String bucketLocation : customDBs.split("\\s*,\\s*")) {
@@ -169,7 +166,7 @@ public class SearchableDatabases {
                     bucketLocation = custom.resolve(bucketLocation).toAbsolutePath().toString();
 
                 try {
-                    final CustomDatabase<?> db = CustomDatabase.openDatabase(bucketLocation);//new CustomDatabase(dbDir.getName(), dbDir);
+                    final CustomDatabase<?> db = CustomDatabase.open(bucketLocation);//new CustomDatabase(dbDir.getName(), dbDir);
                     if (up2date && db.needsUpgrade())
                         throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
 
@@ -179,12 +176,12 @@ public class SearchableDatabases {
                 }
             }
         }
-        return databases;
+        return databases.stream().distinct().collect(Collectors.toList());
     }
 
     @NotNull
     public static CustomDatabase<?> loadCustomDatabaseFromLocation(String bucketLocation, boolean up2date) throws IOException {
-        final CustomDatabase<?> db = CustomDatabase.openDatabase(bucketLocation);//new CustomDatabase(dbDir.getName(), dbDir);
+        final CustomDatabase<?> db = CustomDatabase.open(bucketLocation);
         if (!up2date || !db.needsUpgrade())
             return db;
         throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
