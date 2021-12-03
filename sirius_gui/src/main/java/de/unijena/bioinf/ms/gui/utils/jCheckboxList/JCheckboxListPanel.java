@@ -60,6 +60,8 @@ public class JCheckboxListPanel<E> extends TextHeaderBoxPanel {
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         checkBoxList.setEnabled(enabled);
-
+        buttons.setEnabled(enabled);
+        for (Component c : buttons.getComponents())
+            c.setEnabled(enabled);
     }
 }

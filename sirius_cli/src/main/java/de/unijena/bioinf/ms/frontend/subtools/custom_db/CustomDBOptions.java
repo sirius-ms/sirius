@@ -44,6 +44,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -125,9 +126,11 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             CustomDatabaseSettings settings = new CustomDatabaseSettings(!parentDBs.isEmpty(), DataSources.getDBFlag(parentDBs),
                     List.of(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion().getUsedFingerprints()), VersionsInfo.CUSTOM_DATABASE_SCHEMA, null);
 
-            CustomDatabase<?> db = CustomDatabase.createNewDatabase(location, compression, settings);
+            CustomDatabase<?> db = CustomDatabase.createOrOpen(location, compression, settings);
+
             List<CustomDatabase<?>> customs = SearchableDatabases.getCustomDatabases();
             customs.add(db);
+            customs = customs.stream().distinct().sorted(Comparator.comparing(CustomDatabase::name)).collect(Collectors.toList());
 
             SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SearchableDatabases.PROP_KEY, customs.stream().map(CustomDatabase::storageLocation).collect(Collectors.joining(",")));
 
