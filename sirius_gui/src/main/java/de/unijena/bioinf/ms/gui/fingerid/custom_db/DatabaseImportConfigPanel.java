@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
@@ -23,23 +24,23 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     JSpinner bufferSize;
 
     public DatabaseImportConfigPanel() {
-        this(null, null);
+        this(null);
     }
 
-    public DatabaseImportConfigPanel(@Nullable String dbName, @Nullable Compressible.Compression compressionType) {
+    public DatabaseImportConfigPanel(@Nullable CustomDatabase<?> db) {
         super(CustomDBOptions.class);
 
         final TwoColumnPanel smalls = new TwoColumnPanel();
         add(new TextHeaderBoxPanel("Parameters", smalls));
 
         this.nameField = new PlaceholderTextField(20);
-        if (dbName == null){
+        if (db == null) {
             nameField.setPlaceholder("Enter location (no whitespaces)");
-        }else {
-            nameField.setText(dbName);
+        } else {
+            nameField.setText(db.name());
 
         }
-        nameField.setEnabled(dbName == null);
+        nameField.setEnabled(db == null);
 
 
         getOptionDescriptionByName("location").ifPresent(it -> nameField.setToolTipText(GuiUtils.formatToolTip(it)));
@@ -54,13 +55,16 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         smalls.addNamed("Buffer Size", bufferSize);
         compression = makeGenericOptionComboBox("compression", Compressible.Compression.class);
         smalls.addNamed("Compression", compression);
-        compression.setSelectedItem(compressionType == null ? Compressible.Compression.GZIP : compression);
-        compression.setEnabled(dbName == null);
+        compression.setSelectedItem(db == null ? Compressible.Compression.GZIP : db.compression());
+        compression.setEnabled(db == null);
 
         // configure database to derive from
         parentDBList = new JCheckboxListPanel<>(new DBSelectionList(false), "Derive DB from:");
         getOptionDescriptionByName("derive-from").ifPresent(it -> parentDBList.setToolTipText(GuiUtils.formatToolTip(it)));
         add(parentDBList);
         parameterBindings.put("derive-from", () -> parentDBList.checkBoxList.getCheckedItems().isEmpty() ? null : String.join(",", ((DBSelectionList) parentDBList.checkBoxList).getSelectedFormulaSearchDBStrings()));
+        if (db != null)
+            db.getSettings().getInheritedDBs().stream().map(CustomDataSources::getSourceFromName).forEach(parentDBList.checkBoxList::check);
+        parentDBList.setEnabled(db == null);
     }
 }

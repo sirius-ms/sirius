@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
+import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
@@ -45,7 +46,6 @@ import de.unijena.bioinf.ms.gui.utils.JTextAreaDropImage;
 import de.unijena.bioinf.ms.gui.utils.ListAction;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -71,8 +71,6 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class DatabaseDialog extends JDialog {
 
     //todo: we should separate the Dialog from the Database Managing part.
-    //todo: we should use the import mechanisms from cli or library so that we do not nee
-    //todo: prptected acces to th importer classes
     protected JList<String> dbList;
     protected Map<String, CustomDatabase<?>> customDatabases;
 
@@ -147,7 +145,7 @@ public class DatabaseDialog extends JDialog {
                 if (k >= 0 && k < dbList.getModel().getSize()){
                     String key = dbList.getModel().getElementAt(k);
                     CustomDatabase<?> db = customDatabases.get(key);
-                    new ImportDatabaseDialog(db.name(),db.compression());
+                    new ImportDatabaseDialog(db);
                 }
 
             }
@@ -159,7 +157,7 @@ public class DatabaseDialog extends JDialog {
             if (k >= 0 && k < dbList.getModel().getSize()){
                 String key = dbList.getModel().getElementAt(k);
                 CustomDatabase<?> db = customDatabases.get(key);
-                new ImportDatabaseDialog(db.name(),db.compression());
+                new ImportDatabaseDialog(db);
             }
         });
 
@@ -213,7 +211,7 @@ public class DatabaseDialog extends JDialog {
                 content.setText("<html>Custom database. Containing "
                         + c.getStatistics().getCompounds() + " compounds with " + c.getStatistics().getFormulas()
                         + " different molecular formulas." +
-                        ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from `" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()) + "`." : "")
+                        ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from '" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()).stream().filter(n -> !DBSelectionList.BLACK_LIST.contains(n)).collect(Collectors.joining("', '")) + "'." : "")
                                 + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>"));
             } else {
                 content.setText("Empty custom database.");
@@ -260,64 +258,21 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
-/*    protected class ImportCompoundsDialog extends JDialog {
-        protected JLabel statusText;
-        protected JProgressBar progressBar;
-        protected JTextArea details;
-        protected CustomDatabaseImporter importer;
-        protected JButton close;
-
-        public ImportCompoundsDialog(CustomDatabaseImporter importer) {
-            super(owner, "Import compounds", false);
-            this.importer = importer;
-            JPanel panel = new JPanel();
-            panel.setLayout(new BorderLayout());
-            panel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
-            panel.setPreferredSize(new Dimension(375, 320));
-            add(panel);
-            JPanel inner = new JPanel();
-            inner.setLayout(new BorderLayout());
-            progressBar = new JProgressBar();
-            statusText = new JLabel();
-            statusText.setHorizontalAlignment(SwingConstants.CENTER);
-            panel.add(statusText, BorderLayout.NORTH);
-            panel.add(inner, BorderLayout.CENTER);
-            inner.add(progressBar, BorderLayout.NORTH);
-            details = new JTextArea();
-            details.setEditable(false);
-            details.setMinimumSize(new Dimension(200, 200));
-            JScrollPane pane = new JScrollPane(details, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            inner.add(pane, BorderLayout.CENTER);
-            close = new JButton("close");
-            inner.add(close, BorderLayout.SOUTH);
-            close.setEnabled(false);
-            close.addActionListener(e -> dispose());
-
-            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-            setLocationRelativeTo(getParent());
-        }
-
-        @Override
-        public void dispose() {
-            super.dispose();
-        }
-    }*/
-
     protected class ImportDatabaseDialog extends JDialog {
         protected JButton importButton;
         protected DatabaseImportConfigPanel configPanel;
 
         public ImportDatabaseDialog() {
-            this(null, null);
+            this(null);
         }
 
-        public ImportDatabaseDialog(@Nullable String name, @Nullable Compressible.Compression compression) {
-            super(owner, name != null ? "Import into '" + name + "' database" : "Create custom database", false);
+        public ImportDatabaseDialog(@Nullable CustomDatabase<?> db) {
+            super(owner, db != null ? "Import into '" + db.name() + "' database" : "Create custom database", false);
 
             setPreferredSize(new Dimension(640, 480));
             setLayout(new BorderLayout());
 
-            final JLabel explain = new JLabel("<html>You can inherit compounds from PubChem or our biological database. If you do so, all compounds in these databases are implicitly added to your custom database.");
+            final JLabel explain = new JLabel("<html>You can inherit compounds from PubChem or our biological databases. If you do so, all compounds in these databases are implicitly added to your custom database.");
             final Box hbox = Box.createHorizontalBox();
             hbox.add(explain);
             final Box vbox = Box.createVerticalBox();
@@ -338,9 +293,9 @@ public class DatabaseDialog extends JDialog {
 
             importButton = new JButton("Import compounds");
             importButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
-            importButton.setEnabled(name != null && !name.isBlank());
 
-            configPanel = new DatabaseImportConfigPanel(name, compression);
+            configPanel = new DatabaseImportConfigPanel(db);
+            importButton.setEnabled(db != null && ! configPanel.nameField.getText().isBlank());
             configPanel.nameField.getDocument().addDocumentListener(new DocumentListener() {
                 @Override
                 public void insertUpdate(DocumentEvent e) {
