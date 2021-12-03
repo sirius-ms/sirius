@@ -76,7 +76,7 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
             @Nullable CustomDatabaseImporter.Listener listener,
             @NotNull WebAPI<?> api,
             int bufferSize) throws IOException {
-        CustomDatabase<?> db = createNewDatabase(bucketLocation, compression, config);
+        CustomDatabase<?> db = create(bucketLocation, compression, config);
 
         try {
             db.importToDatabase(files, listener, api, bufferSize);
@@ -86,7 +86,7 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
         return db;
     }
 
-    public static CustomDatabase<?> createNewDatabase(String bucketLocation, Compressible.Compression compression, CustomDatabaseSettings config) throws IOException {
+    public static CustomDatabase<?> create(String bucketLocation, Compressible.Compression compression, CustomDatabaseSettings config) throws IOException {
         BlobStorage bs = BlobStorages.createDefault(PROPERTY_PREFIX, bucketLocation);
         bs.setTags(Map.of(TAG_COMPRESSION, compression.name()));
         CustomDatabase<?> db = new CustomDatabase<>(CompressibleBlobStorage.of(bs));
@@ -95,11 +95,18 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
         return db;
     }
 
-    public static CustomDatabase<?> openDatabase(String bucketLocation) throws IOException {
+    public static CustomDatabase<?> open(String bucketLocation) throws IOException {
         CustomDatabase<?> db = new CustomDatabase<>(CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, bucketLocation)));
         db.readSettings();
         CustomDataSources.addCustomSourceIfAbsent(db.name(), db.storageLocation());
         return db;
+    }
+
+    public static CustomDatabase<?> createOrOpen(String bucketLocation, Compressible.Compression compression, CustomDatabaseSettings config) throws IOException {
+        if (BlobStorages.exists(PROPERTY_PREFIX, bucketLocation)) {
+            return open(bucketLocation);
+        }
+        return create(bucketLocation, compression, config);
     }
 
 
@@ -116,7 +123,7 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
     }
 
     protected synchronized void readSettings() throws IOException {
-        if (storage.hasBlob(settingsBlob())) {
+        if (storage.hasRawBlob(settingsBlob())) {
             try (InputStream r = storage.rawReader(settingsBlob())) {
                 setSettings(new ObjectMapper().readValue(r, CustomDatabaseSettings.class));
             }
@@ -189,12 +196,12 @@ public class CustomDatabase<Storage extends BlobStorage> implements SearchableDa
         if (this == o) return true;
         if (!(o instanceof CustomDatabase)) return false;
         CustomDatabase<?> that = (CustomDatabase<?>) o;
-        return storage.equals(that.storage);
+        return storageLocation().equals(that.storageLocation());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(storage);
+        return Objects.hash(storageLocation());
     }
 
     public ChemicalBlobDatabase<Storage> toChemDBOrThrow(CdkFingerprintVersion version) throws IOException {
