@@ -49,6 +49,7 @@ public class CompressibleBlobStorage<Storage extends BlobStorage> extends Abstra
 
     protected CompressibleBlobStorage(Storage rawStorage, Compression compression) {
         super(compression);
+        setDecompressStreams(true);
         this.rawStorage = rawStorage;
     }
 
@@ -65,6 +66,10 @@ public class CompressibleBlobStorage<Storage extends BlobStorage> extends Abstra
     @Override
     public boolean hasBlob(Path relative) throws IOException {
         return rawStorage.hasBlob(addExt(relative));
+    }
+
+    public boolean hasRawBlob(Path relative) throws IOException {
+        return rawStorage.hasBlob(relative);
     }
 
     @Override
