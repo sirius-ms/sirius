@@ -88,7 +88,7 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
         for(CombinatorialEdge edge : this.edgeIndices.keySet()){
             int idx = this.edgeIndices.get(edge);
             double objCoeff = edge.target.fragmentScore + edge.score;
-            vars[idx] = model.addVar(0.0, 1.0, 0.0, GRB.BINARY, "x"+idx);
+            vars[idx] = model.addVar(0.0, 1.0, objCoeff, GRB.BINARY, "x"+idx);
             objFunc.addTerm(objCoeff, vars[idx]);
         }
         model.setObjective(objFunc, GRB.MAXIMIZE);
