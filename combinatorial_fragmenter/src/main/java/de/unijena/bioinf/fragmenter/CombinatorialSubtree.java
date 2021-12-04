@@ -91,9 +91,39 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         };
     }
 
+    private String nodeString(CombinatorialNode node){
+        if(node == this.root){
+            return node.fragment.toSMILES()+"[0,"+node.fragmentScore+",0]";
+        }else{
+            CombinatorialEdge edge = node.incomingEdges.get(0);
+            return node.fragment.toSMILES()+"["+edge.score+","+node.fragmentScore+","+node.bondbreaks+"]";
+        }
+    }
+
+    public String toNewickString(CombinatorialNode currentNode){
+        StringBuilder strBuilder = new StringBuilder();
+        strBuilder.append(this.nodeString(currentNode));
+
+        for(int i = 0; i < currentNode.outgoingEdges.size(); i++){
+            if(i == 0){
+                strBuilder.append("(");
+            }
+
+            CombinatorialNode node = currentNode.outgoingEdges.get(i).target;
+            strBuilder.append(this.toNewickString(node));
+
+            if(i < currentNode.outgoingEdges.size()-1){
+                strBuilder.append(",");
+            }else{
+                strBuilder.append(")");
+            }
+        }
+
+        return strBuilder.toString();
+    }
+
     @Override
     public String toString(){
-        // todo
-        return null;
+        return this.toNewickString(this.root);
     }
 }
