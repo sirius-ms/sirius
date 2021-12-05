@@ -93,7 +93,7 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
 
     private String nodeString(CombinatorialNode node){
         if(node == this.root){
-            return node.fragment.toSMILES()+"[0,"+node.fragmentScore+",0]";
+            return node.fragment.toSMILES()+"[0,"+node.fragmentScore+",0];";
         }else{
             CombinatorialEdge edge = node.incomingEdges.get(0);
             return node.fragment.toSMILES()+"["+edge.score+","+node.fragmentScore+","+node.bondbreaks+"]";
@@ -102,7 +102,6 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
 
     public String toNewickString(CombinatorialNode currentNode){
         StringBuilder strBuilder = new StringBuilder();
-        strBuilder.append(this.nodeString(currentNode));
 
         for(int i = 0; i < currentNode.outgoingEdges.size(); i++){
             if(i == 0){
@@ -119,6 +118,7 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
             }
         }
 
+        strBuilder.append(this.nodeString(currentNode));
         return strBuilder.toString();
     }
 

@@ -2,9 +2,11 @@ package de.unijena.bioinf.fragmenter;
 
 import gurobi.GRBException;
 import org.openscience.cdk.exception.InvalidSmilesException;
+import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 public class PCSTFragmentationTreeAnnotatorTest {
 
@@ -12,7 +14,9 @@ public class PCSTFragmentationTreeAnnotatorTest {
         try {
             String smiles = "C1CC1";
             SmilesParser parser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-            MolecularGraph molecule = new MolecularGraph(parser.parseSmiles(smiles));
+            IAtomContainer molContainer = parser.parseSmiles(smiles);
+            AtomContainerManipulator.convertImplicitToExplicitHydrogens(molContainer);
+            MolecularGraph molecule = new MolecularGraph(molContainer);
 
             CombinatorialFragmenterScoring scoring = new CombinatorialFragmenterScoring() {
                 @Override
