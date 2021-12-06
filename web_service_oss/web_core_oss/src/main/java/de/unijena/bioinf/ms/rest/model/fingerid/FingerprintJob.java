@@ -25,26 +25,40 @@ package de.unijena.bioinf.ms.rest.model.fingerid;
 import de.unijena.bioinf.ms.rest.model.JobState;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
+import org.jetbrains.annotations.NotNull;
 
-public class SiriusPredictionJob extends JobWithPredictor<FingerprintJobOutput> {
-    protected String ms, jsonTree;
+public class FingerprintJob extends JobWithPredictor<FingerprintJobOutput> {
+    protected String ms, tree;
     protected byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
     protected byte[] iokrVector; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
 
-    public SiriusPredictionJob() {
-        this(null, null, null, null);
+
+    public FingerprintJob() {
+        this(null, null, null);
     }
 
-    public SiriusPredictionJob(String workerPrefix, Long predictors, Long lockedByWorker) {
-        this(workerPrefix, null, null, predictors);
+    public FingerprintJob(String workerPrefix, String userID, String cid, @NotNull String ms, @NotNull String jsonTree, long predictorBits) {
+        this(workerPrefix, JobState.SUBMITTED);
+        setUserID(userID);
+        setCid(cid);
+        setMs(ms);
+        setTree(jsonTree);
+        setPredictors(predictorBits);
+    }
+
+    //worker Constructor
+    public FingerprintJob(String workerPrefix, long lockedByWorker) {
+        this(workerPrefix, null);
         setLockedByWorker(lockedByWorker);
     }
 
-    public SiriusPredictionJob(String workerPrefix, Long jobId, JobState state, Long predictors) {
-        super(workerPrefix, jobId, state, JobTable.JOBS_FINGERID);
-        this.predictors = predictors;
+    public FingerprintJob(String workerPrefix, JobState state) {
+        this(workerPrefix, null, state);
     }
 
+    public FingerprintJob(String workerPrefix, Long jobId, JobState state) {
+        super(workerPrefix, jobId, state, JobTable.JOBS_FINGERID);
+    }
 
     public byte[] getFingerprint() {
         return fingerprint;
@@ -70,12 +84,12 @@ public class SiriusPredictionJob extends JobWithPredictor<FingerprintJobOutput> 
         this.ms = ms;
     }
 
-    public String getJsonTree() {
-        return jsonTree;
+    public String getTree() {
+        return tree;
     }
 
-    public void setJsonTree(String jsonTree) {
-        this.jsonTree = jsonTree;
+    public void setTree(String jsonTree) {
+        this.tree = jsonTree;
     }
 
     @Override

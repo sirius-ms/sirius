@@ -28,10 +28,10 @@ import java.sql.Timestamp;
 
 public abstract class Job<O> extends JobBase {
     protected String workerPrefix;
-    protected String ip;
     protected Timestamp submissionTime;
     protected Long lockedByWorker;
     protected String cid;
+    protected String userID;
     protected String version;
 
     protected Job(String workerPrefix, JobState state, JobTable table) {
@@ -52,14 +52,6 @@ public abstract class Job<O> extends JobBase {
         this.workerPrefix = workerPrefix;
     }
 
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
     public Timestamp getSubmissionTime() {
         return submissionTime;
     }
@@ -78,6 +70,14 @@ public abstract class Job<O> extends JobBase {
 
     public void setLockedByWorker(Long lockedByWorker) {
         this.lockedByWorker = lockedByWorker;
+    }
+
+    public String getUserID() {
+        return userID;
+    }
+
+    public void setUserID(String userID) {
+        this.userID = userID;
     }
 
     public String getCid() {
@@ -102,10 +102,4 @@ public abstract class Job<O> extends JobBase {
     public JobUpdate<O> asUpdate() {
         return new JobUpdate<>(this, extractOutput());
     }
-/*
-    public abstract void setOutput(O output);
-    public abstract I asInput();
-    public abstract void setIntput(I output);*/
-
-
 }
