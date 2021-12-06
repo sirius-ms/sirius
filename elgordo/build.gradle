@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 dependencies {
-    annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
+    annotationProcessor project(':default_properties:processor')
     compile project(':chemistry_base')
     compile project(':mass_decomposition:mass_decomposer')
 }
