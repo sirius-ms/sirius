@@ -36,9 +36,9 @@ public class CovtreeJob extends JobWithPredictor<CovtreeJobOutput> {
         this(null, null, null);
     }
 
-    public CovtreeJob(String workerPrefix, String ip, String cid, @NotNull CovtreeJobInput input) {
+    public CovtreeJob(String workerPrefix, String userID, String cid, @NotNull CovtreeJobInput input) {
         this(workerPrefix, JobState.SUBMITTED);
-        setIp(ip);
+        setUserID(userID);
         setCid(cid);
         setFormula(input.formula);
         setPredictors(input.predictor.toBits());
