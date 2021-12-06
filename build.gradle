@@ -2,7 +2,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 plugins {
-    id "com.jfrog.artifactory" version "4.17.2"
+    id "com.jfrog.artifactory" version "4.25.1"
 }
 
 
@@ -37,7 +37,7 @@ ext {
     fingeridVersion = System.getProperty('de.unijena.bioinf.fingerid.version')
     //version for external libraries
     jjobs_version = '0.9.24'
-    slf4j_version = '1.7.25'
+    slf4j_version = '1.7.32'
     gson_version = "2.8.6"//'2.6.2'
     math3_version = '3.6.1'
     glpk_version = System.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
