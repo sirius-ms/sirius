@@ -36,9 +36,9 @@ public class CanopusJob extends JobWithPredictor<CanopusJobOutput> {
         this(null, null, null);
     }
 
-    public CanopusJob(String workerPrefix, String ip, String cid, @NotNull CanopusJobInput input) {
+    public CanopusJob(String workerPrefix, String userID, String cid, @NotNull CanopusJobInput input) {
         this(workerPrefix, JobState.SUBMITTED);
-        setIp(ip);
+        setUserID(userID);
         setCid(cid);
         setFingerprint(input.fingerprint);
         setFormula(input.formula);
