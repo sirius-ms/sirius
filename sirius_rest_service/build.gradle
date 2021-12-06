@@ -64,8 +64,7 @@ dependencies {
     // expose operational information about the running application via /actuator
     compile("org.springframework.boot:spring-boot-starter-actuator")
 
-//    compile "info.picocli:picocli-spring-boot-starter:4.0.1"
-    compile 'it.unimi.dsi:fastutil:8.3.0' //replaces old spring version
+    compile 'it.unimi.dsi:fastutil:8.5.6' //replaces old spring version
     ////////////////////////////////////////////////////
 
 
