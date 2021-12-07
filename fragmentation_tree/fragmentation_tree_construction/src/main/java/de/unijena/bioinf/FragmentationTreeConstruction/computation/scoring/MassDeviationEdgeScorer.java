@@ -39,9 +39,11 @@ public class MassDeviationEdgeScorer implements LossScorer<Object> {
         }
         final double sd = dev.absoluteFor(delta);
         double score = weight * Math.log(Erf.erfc(Math.abs(delta-theoreticalDelta)/(sd * Math.sqrt(2))));
-        if (score < -100) {
-            LoggerFactory.getLogger(MassDeviationVertexScorer.class).warn("Edge " + delta + " has a too large mass deviation of " + Math.abs(delta-theoreticalDelta) + " for molecular formula " + loss.getFormula() );
-            score = -100;
+        if (score < -10 || !Double.isFinite(score)) {
+            if (Math.abs(delta-theoreticalDelta) < 3*sd) {
+                LoggerFactory.getLogger(MassDeviationVertexScorer.class).warn(input.getExperimentInformation().getSourceString() + "\nEdge " + delta + " has a too large mass deviation of " + Math.abs(delta - theoreticalDelta) + " for molecular formula " + loss.getFormula());
+            }
+            score = -10;
         }
         return score;
     }
