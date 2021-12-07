@@ -175,4 +175,11 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return !isEmpty();
     }
 
+    @Override
+    public String toString() {
+        return "Whiteset{" +
+                "neutralFormulas=" + neutralFormulas +
+                ", measuredFormulas=" + measuredFormulas +
+                '}';
+    }
 }

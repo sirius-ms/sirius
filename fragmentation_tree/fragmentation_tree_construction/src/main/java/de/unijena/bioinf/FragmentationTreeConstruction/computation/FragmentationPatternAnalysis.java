@@ -405,7 +405,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 for (DecompositionScorer<?> scorer : rootScorers) {
                     score += ((DecompositionScorer<Object>) scorer).score(f.getCandidate(),f.getIon(), input.getParentPeak(), input, preparations.get(k++));
                     if (!Double.isFinite(score)) {
-                        throw new RuntimeException(score + " is not finite.");
+                        throw new RuntimeException(score + " is not finite. For root " + f.getCandidate() + " with m/z = " + input.getParentPeak().getMass() + ".\nWhiteset = " + input.getAnnotation(Whiteset.class, Whiteset::empty).toString());
                     }
                 }
                 scored.set(j, new Decomposition(scored.get(j).getCandidate(), scored.get(j).getIon(), score));
