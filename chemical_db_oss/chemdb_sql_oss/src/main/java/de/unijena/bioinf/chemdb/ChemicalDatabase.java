@@ -308,7 +308,9 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
                 final long flag = set.getLong(2);
                 if (!ChemDBs.inFilter(flag, filter)) continue;
                 final FormulaCandidate fc = new FormulaCandidate(MolecularFormula.parseOrThrow(set.getString(1)), ionType, set.getLong(2));
-                list.add(fc);
+                if (ionType.isApplicableToNeutralFormula(fc.formula)) {
+                    list.add(fc);
+                }
             }
         } catch (SQLException e) {
             throw new ChemicalDatabaseException(e);
