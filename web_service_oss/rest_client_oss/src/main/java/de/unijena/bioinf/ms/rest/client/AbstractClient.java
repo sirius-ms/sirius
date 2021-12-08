@@ -45,10 +45,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -200,8 +202,46 @@ public abstract class AbstractClient {
         return execute(client, request, r -> r != null && r.ready() ? new ObjectMapper().readValue(r, tr) : null);
     }
 
-    public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest,  R tr) throws IOException {
+    public <T, R extends TypeReference<T>> T executeFromJson(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, R tr) throws IOException {
         return execute(client, makeRequest, r -> r != null && r.ready() ? new ObjectMapper().readValue(r, tr) : null);
+    }
+
+    public <T> T executeFromStream(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
+        try {
+            return executeFromStream(client, makeRequest.get(), respHandling);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public <T> T executeFromStream(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
+        requestDecorator.accept(request);
+        try (CloseableHttpResponse response = client.execute(request)) {
+            isSuccessful(response);
+            if (response.getEntity() != null) {
+                try (final InputStream stream = response.getEntity().getContent()) {
+                    return respHandling.apply(stream);
+                }
+            }
+            return null;
+        }
+    }
+
+    public <T> T executeFromByteBuffer(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<ByteBuffer, T> respHandling, int bufferSize) throws IOException {
+        try {
+            return executeFromByteBuffer(client, makeRequest.get(), respHandling, bufferSize);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public <T> T executeFromByteBuffer(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<ByteBuffer, T> respHandling, int bufferSize) throws IOException {
+        return executeFromStream(client, request, inputStream -> {
+            final ByteBuffer byteBuffer = ByteBuffer.allocate(bufferSize);
+            byteBuffer.put(inputStream.readAllBytes());
+            byteBuffer.flip();
+            return respHandling.apply(byteBuffer);
+        });
     }
 
     @NotNull
