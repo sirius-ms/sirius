@@ -345,6 +345,11 @@ public class ProxyManager {
         return false;
     }
 
+
+    public static boolean isSSLValidationDisabled() {
+        return !PropertyManager.getBoolean("de.unijena.bioinf.sirius.security.sslValidation", true);
+    }
+
     //region HTTPClientManagement
     public static void disconnect() {
         closingContainers.add(clientContainer);
@@ -391,7 +396,7 @@ public class ProxyManager {
     }
 
 
-    private static final Set<GentlyHttpClientCloser> closingContainers = Collections.newSetFromMap(new ConcurrentHashMap());
+    private static final Set<GentlyHttpClientCloser> closingContainers = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static GentlyHttpClientCloser clientContainer = new GentlyHttpClientCloser(getSirirusHttpClient());
 
     private static class GentlyHttpClientCloser {
@@ -500,9 +505,4 @@ public class ProxyManager {
         }
     }
     //endregion
-
-
-    public static boolean isSSLValidationDisabled() {
-        return !PropertyManager.getBoolean("de.unijena.bioinf.sirius.security.sslValidation", true);
-    }
 }
