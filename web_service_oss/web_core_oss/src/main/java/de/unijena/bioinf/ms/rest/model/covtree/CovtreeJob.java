@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.rest.model.covtree;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ms.rest.model.JobState;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
@@ -76,6 +77,7 @@ public class CovtreeJob extends JobWithPredictor<CovtreeJobOutput> {
 
     @Nullable
     @Override
+    @JsonIgnore
     public CovtreeJobOutput extractOutput() {
         return new CovtreeJobOutput(covtree);
     }

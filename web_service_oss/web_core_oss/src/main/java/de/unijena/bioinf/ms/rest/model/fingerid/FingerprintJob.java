@@ -22,6 +22,7 @@
 
 package de.unijena.bioinf.ms.rest.model.fingerid;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ms.rest.model.JobState;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
@@ -93,6 +94,7 @@ public class FingerprintJob extends JobWithPredictor<FingerprintJobOutput> {
     }
 
     @Override
+    @JsonIgnore
     public FingerprintJobOutput extractOutput() {
         return new FingerprintJobOutput(fingerprint, iokrVector);
     }

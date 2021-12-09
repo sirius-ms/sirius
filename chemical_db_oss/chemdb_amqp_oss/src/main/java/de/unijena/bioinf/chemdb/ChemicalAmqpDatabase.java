@@ -23,30 +23,19 @@ package de.unijena.bioinf.chemdb;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.amqp.client.AmqpClient;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
-import javax.json.JsonException;
-import java.io.*;
-import java.nio.file.Files;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 public class ChemicalAmqpDatabase implements AbstractChemicalDatabase {
     static {
-        FingerIDProperties.fingeridVersion();
+        FingerIDProperties.fingeridFullVersion();
     }
 
     protected final AmqpClient client;

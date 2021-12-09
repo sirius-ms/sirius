@@ -27,7 +27,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.jjobs.Partition;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -43,7 +42,7 @@ import java.util.List;
 
 public class RESTDatabase implements AbstractChemicalDatabase {
     static {
-        FingerIDProperties.fingeridVersion();
+        FingerIDProperties.fingeridFullVersion();
     }
 
     private final CloseableHttpClient client;

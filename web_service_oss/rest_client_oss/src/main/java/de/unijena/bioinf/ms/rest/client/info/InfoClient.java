@@ -74,7 +74,7 @@ public class InfoClient extends AbstractClient {
         try {
             v = execute(client,
                     () -> {
-                        HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
+                        HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
                         get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
                         return get;
                     },
@@ -87,7 +87,7 @@ public class InfoClient extends AbstractClient {
             try {
                 v = execute(client,
                         () -> {
-                            HttpGet get = new HttpGet(buildVersionLessWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
+                            HttpGet get = new HttpGet(buildVersionLessWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
                             get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
                             return get;
                         },
