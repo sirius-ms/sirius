@@ -306,10 +306,7 @@ public abstract class AbstractClient {
     //#################################################################################################################
 
     protected static String makeVersionContext() {
-        final String[] versionParts = FingerIDProperties.fingeridVersion().split("[.]");
-        if (versionParts.length > 1)
-            return "/v" + versionParts[0] + "." + versionParts[1];
-        throw new IllegalArgumentException("Illegal Version String");
+            return "/v" + FingerIDProperties.fingeridMinorVersion();
     }
 
 }

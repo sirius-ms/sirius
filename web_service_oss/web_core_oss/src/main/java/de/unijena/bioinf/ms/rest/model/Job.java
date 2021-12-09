@@ -21,6 +21,7 @@
 
 package de.unijena.bioinf.ms.rest.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public abstract class Job<O> extends JobBase {
     protected Job(String workerPrefix, Long jobId, JobState state,  JobTable table) {
         super(jobId, state, table);
         this.workerPrefix = workerPrefix;
-        this.version = FingerIDProperties.fingeridVersion();
+        this.version = FingerIDProperties.fingeridMinorVersion();
     }
 
     public String getWorkerPrefix() {
@@ -60,6 +61,7 @@ public abstract class Job<O> extends JobBase {
         this.submissionTime = submissionTime;
     }
 
+    @JsonIgnore
     public void setSubmissionTime(long submissionTime) {
         this.submissionTime = new Timestamp(submissionTime);
     }
@@ -97,8 +99,10 @@ public abstract class Job<O> extends JobBase {
     }
 
     @Nullable
+    @JsonIgnore
     public abstract O extractOutput();
 
+    @JsonIgnore
     public JobUpdate<O> asUpdate() {
         return new JobUpdate<>(this, extractOutput());
     }
