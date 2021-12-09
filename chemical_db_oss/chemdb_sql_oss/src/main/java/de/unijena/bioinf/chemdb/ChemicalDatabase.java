@@ -69,7 +69,7 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
     protected static final Logger log = LoggerFactory.getLogger(ChemicalDatabase.class);
 
     static {
-        FingerIDProperties.fingeridVersion();//just to load the props
+        FingerIDProperties.fingeridFullVersion();//just to load the props
     }
 
     protected final ConnectionPool<Connection> connection;

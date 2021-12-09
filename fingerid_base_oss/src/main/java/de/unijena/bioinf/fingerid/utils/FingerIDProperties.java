@@ -23,15 +23,22 @@ package de.unijena.bioinf.fingerid.utils;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
-import java.nio.file.Path;
-
 /**
  * All version numbers are directly taken from the build. So there is no more redundant data. Note that version a.b.c-SNAPSHOT lower than a.b.c
  */
 public class FingerIDProperties {
 
-    public static String fingeridVersion() {
+    public static String fingeridFullVersion() {
         return PropertyManager.getProperty("de.unijena.bioinf.fingerid.version");
+    }
+
+    public static String fingeridMinorVersion() {
+        String[] splits = fingeridFullVersion().split("[.]");
+        return splits[0] + "." + splits[1];
+    }
+
+    public static String fingeridMajorVersion() {
+        return fingeridFullVersion().split("[.]")[0];
     }
 
     public static String fingeridWebHost() {

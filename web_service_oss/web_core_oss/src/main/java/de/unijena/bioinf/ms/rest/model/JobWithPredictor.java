@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.rest.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 
 public abstract class JobWithPredictor<O> extends Job<O> {
@@ -42,6 +43,7 @@ public abstract class JobWithPredictor<O> extends Job<O> {
         this.predictors = predictors;
     }
 
+    @JsonIgnore
     public boolean containsPredictor(PredictorType predictor) {
         //proof if coresponding bit is set
         return predictor.isBitSet(predictors);

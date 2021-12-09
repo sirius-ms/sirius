@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.rest.model.canopus;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ms.rest.model.JobState;
 import de.unijena.bioinf.ms.rest.model.JobTable;
@@ -83,12 +84,16 @@ public class CanopusJob extends JobWithPredictor<CanopusJobOutput> {
         this.formula = formula;
     }
 
+    @JsonIgnore
     public MolecularFormula getMolecularFormula() {
+        if (getFormula() == null)
+            return null;
         return MolecularFormula.parseOrThrow(getFormula());
     }
 
     @Override
     @Nullable
+    @JsonIgnore
     public CanopusJobOutput extractOutput() {
         return compoundClasses != null ? new CanopusJobOutput(compoundClasses) : null;
     }

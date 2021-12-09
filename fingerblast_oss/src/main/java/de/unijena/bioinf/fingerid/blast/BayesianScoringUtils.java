@@ -304,7 +304,7 @@ public class BayesianScoringUtils {
     private List<int[]> computeTreeTopologyParallel(MolecularFormula formula, int minNumInformativeProperties, @NotNull AbstractChemicalDatabase chemdb, MasterJJob masterJJob, int numThreads) throws ChemicalDatabaseException, InsufficientDataException, ExecutionException {
         long startTime = System.currentTimeMillis();
         List<FingerprintCandidate> candidates = new ArrayList<>();
-        masterJJob.submitSubJob(new LookupStructuresAndFingerprintsByFormulaJob(chemdb, formula, candidates)).awaitResult();
+        masterJJob.submitJob(new LookupStructuresAndFingerprintsByFormulaJob(chemdb, formula, candidates)).awaitResult();
         long endTime = System.currentTimeMillis();
         Log.debug("retrieving candidates took "+(endTime-startTime)/1000+" seconds");
 
@@ -324,7 +324,7 @@ public class BayesianScoringUtils {
             Set<MolecularFormula> transformationMFs = applyBioTransformations(formula, false);
             List<FingerprintCandidate> transformationCandidates = new ArrayList<>();
             for (MolecularFormula transformationMF : transformationMFs) {
-                masterJJob.submitSubJob(new LookupStructuresAndFingerprintsByFormulaJob(chemdb, transformationMF, transformationCandidates)).awaitResult();
+                masterJJob.submitJob(new LookupStructuresAndFingerprintsByFormulaJob(chemdb, transformationMF, transformationCandidates)).awaitResult();
             }
             endTime = System.currentTimeMillis();
             Log.debug("retrieving candidates with biotransformations took "+(endTime-startTime)/1000+" seconds");
@@ -1033,7 +1033,7 @@ public class BayesianScoringUtils {
         }
     }
 
-    protected class LookupStructuresAndFingerprintsByFormulaJob extends BasicJJob {
+    protected static class LookupStructuresAndFingerprintsByFormulaJob extends BasicJJob<Object> {
 
         final AbstractChemicalDatabase chemdb;
         final MolecularFormula formula;

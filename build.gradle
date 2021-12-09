@@ -46,6 +46,7 @@ ext {
     graphUtils_version = '1.1'
     cdk_version = "2.3"
     jetbrains_version = "17.0.0"
+    httpclient_version = "4.5.13"
 
     jewelcli_version = '0.8.9'
     //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
