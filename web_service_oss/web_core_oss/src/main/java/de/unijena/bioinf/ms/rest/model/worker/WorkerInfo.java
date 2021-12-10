@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.rest.model.worker;
 
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import org.jetbrains.annotations.NotNull;
@@ -30,16 +31,19 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.stream.Collectors;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkerInfo {
 
-    private int id;
+    private long id;
     private WorkerType type;
     private EnumSet<PredictorType> supportedPredictors;
     private String version;
     private String host;
+    private String prefix;
 
     // heartbeat of the worker/ last request of the worker
     private long alive;
@@ -47,22 +51,28 @@ public class WorkerInfo {
     public WorkerInfo() {
     }
 
-    public WorkerInfo(int id, @NotNull WorkerType type, @NotNull EnumSet<PredictorType> supportedPredictors, @NotNull String version, String host, long alive) {
+    public WorkerInfo(long id, @NotNull WorkerType type, @NotNull EnumSet<PredictorType> supportedPredictors, @NotNull String version, String host, String prefix, long alive) {
         this.id = id;
         this.type = type;
         this.supportedPredictors = supportedPredictors;
         this.version = version;
         this.host = host;
         this.alive = alive;
+        this.prefix = prefix;
     }
 
-    public WorkerInfo(int id, @NotNull String type, @NotNull String supportedPredictors, @NotNull String version, String host, long alive) {
+    public WorkerInfo(long id, @NotNull String type, @NotNull String supportedPredictors, @NotNull String version, String host, long alive) {
+        this(id, type, supportedPredictors, version, host, null, alive);
+    }
+
+    public WorkerInfo(long id, @NotNull String type, @NotNull String supportedPredictors, @NotNull String version, String host, String prefix, long alive) {
         this(
                 id,
                 WorkerType.parse(type).iterator().next(),
                 PredictorType.parse(supportedPredictors),
                 version,
                 host,
+                prefix,
                 alive
         );
     }
@@ -101,11 +111,11 @@ public class WorkerInfo {
         this.alive = alive.getTime();
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -118,7 +128,7 @@ public class WorkerInfo {
     }
 
     public String getSupportedPredictors() {
-        return getPredictorsAsEnums() != null ? PredictorType.getBitsAsString(getPredictorsAsEnums()) : null;
+        return getPredictorsAsEnums() != null ? getPredictorsAsEnums().stream().map(PredictorType::name).collect(Collectors.joining(",")) : null;
     }
 
     public void setSupportedPredictors(String supportedPredictors) {
@@ -140,5 +150,14 @@ public class WorkerInfo {
     public void setHost(String host) {
         this.host = host;
     }
+
+    public String getPrefix() {
+        return prefix;
+    }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
     //endregion
 }
