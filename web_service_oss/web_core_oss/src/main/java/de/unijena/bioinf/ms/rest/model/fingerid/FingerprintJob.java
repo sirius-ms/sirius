@@ -1,5 +1,3 @@
-
-
 /*
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
@@ -25,6 +23,7 @@ package de.unijena.bioinf.ms.rest.model.fingerid;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ms.rest.model.JobState;
 import de.unijena.bioinf.ms.rest.model.JobTable;
+import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +44,14 @@ public class FingerprintJob extends JobWithPredictor<FingerprintJobOutput> {
         setMs(ms);
         setTree(jsonTree);
         setPredictors(predictorBits);
+    }
+
+    public FingerprintJob(@NotNull JobUpdate<FingerprintJobOutput> update) {
+        this(null, update.getStateEnum());
+        setJobId(update.getJobId());
+        setErrorMessage(update.getErrorMessage());
+        setFingerprint(update.getData().fingerprint);
+        setIokrVector(update.getData().iokrVector);
     }
 
     //worker Constructor

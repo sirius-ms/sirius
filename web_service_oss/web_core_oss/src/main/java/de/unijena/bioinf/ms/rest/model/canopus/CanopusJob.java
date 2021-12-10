@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ms.rest.model.JobState;
 import de.unijena.bioinf.ms.rest.model.JobTable;
+import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,13 @@ public class CanopusJob extends JobWithPredictor<CanopusJobOutput> {
 
     public CanopusJob() {
         this(null, null, null);
+    }
+
+    public CanopusJob(@NotNull JobUpdate<CanopusJobOutput> update) {
+        this(null, update.getStateEnum());
+        setJobId(update.getJobId());
+        setErrorMessage(update.getErrorMessage());
+        setCompoundClasses(update.getData().compoundClasses);
     }
 
     public CanopusJob(String workerPrefix, String userID, String cid, @NotNull CanopusJobInput input) {

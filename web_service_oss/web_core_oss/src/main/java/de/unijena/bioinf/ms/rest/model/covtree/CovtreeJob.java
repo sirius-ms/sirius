@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.rest.model.covtree;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ms.rest.model.JobState;
 import de.unijena.bioinf.ms.rest.model.JobTable;
+import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,13 @@ public class CovtreeJob extends JobWithPredictor<CovtreeJobOutput> {
         setCid(cid);
         setFormula(input.formula);
         setPredictors(input.predictor.toBits());
+    }
+
+    public CovtreeJob(@NotNull JobUpdate<CovtreeJobOutput> update) {
+        this(null, update.getStateEnum());
+        setJobId(update.getJobId());
+        setErrorMessage(update.getErrorMessage());
+        setCovtree(update.getData().getCovtree());
     }
 
     public CovtreeJob(String workerPrefix, long lockedByWorker) {
