@@ -8,7 +8,6 @@ import java.util.HashMap;
 
 public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculator{
 
-    private final CombinatorialFragmenter.Callback2 furtherFragmentation;
     private CombinatorialGraph graph;
 
     private HashMap<CombinatorialEdge, Integer> edgeIndices;
@@ -16,19 +15,18 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
     private boolean isInitialized;
 
 
-    public PCSTFragmentationTreeAnnotator(FTree fTree, MolecularGraph molecule, CombinatorialFragmenterScoring scoring, CombinatorialFragmenter.Callback2 furtherFragmentation){
+    public PCSTFragmentationTreeAnnotator(FTree fTree, MolecularGraph molecule, CombinatorialFragmenterScoring scoring){
         super(fTree, molecule, scoring);
-        this.furtherFragmentation = furtherFragmentation;
         this.isComputed = false;
         this.isInitialized = false;
     }
 
-    public void initialize(){
+    public void initialize(CombinatorialFragmenter.Callback2 furtherFragmentation){
         if(this.isInitialized) throw new IllegalStateException("This object is already initialized.");
 
         // 1.: Creation of the combinatorial fragmentation graph:
         CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, this.scoring);
-        this.graph = fragmenter.createCombinatorialFragmentationGraph(this.furtherFragmentation);
+        this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
 
         // 2.: Compute a hash map which assigns each edge in the graph an index.
         this.edgeIndices = new HashMap<>();
@@ -57,8 +55,6 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
 
     @Override
     public CombinatorialSubtree computeSubtree() throws GRBException{
-        if(!this.isInitialized) this.initialize();
-
         // During the initialisation the input molecule was fragmented and a CombinatorialFragmentationGraph was
         // constructed. Also a mapping was created which assigns each edge of this graph a specific position
         // in the variable array.

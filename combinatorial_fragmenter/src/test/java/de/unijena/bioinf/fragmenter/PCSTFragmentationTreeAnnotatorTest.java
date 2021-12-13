@@ -35,8 +35,8 @@ public class PCSTFragmentationTreeAnnotatorTest {
                 }
             };
 
-            PCSTFragmentationTreeAnnotator annotator = new PCSTFragmentationTreeAnnotator(null, molecule, scoring, n -> true);
-            annotator.initialize();
+            PCSTFragmentationTreeAnnotator annotator = new PCSTFragmentationTreeAnnotator(null, molecule, scoring);
+            annotator.initialize(n -> true);
             CombinatorialSubtree subtree = annotator.computeSubtree();
             System.out.println(subtree.toString());
             System.out.println(subtree.getScore());
