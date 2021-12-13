@@ -53,6 +53,10 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         return this.score;
     }
 
+    public boolean contains(CombinatorialFragment fragment){
+        return this.bitset2Node.get(fragment.bitset) != null;
+    }
+
     public CombinatorialNode getNode(BitSet fragment){
         return this.bitset2Node.get(fragment);
     }
