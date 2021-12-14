@@ -37,11 +37,11 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
-                +"<b>EPIMETHEUS - Sub-stucture annotations</b>"
+                +"<b>EPIMETHEUS - Substructure annotations</b>"
                 +"<br>"
-                + "CSI:FingerID db search results with Epimetheus sub-structure annotations for all molecular formulas that had been searched."
+                + "CSI:FingerID db search results with Epimetheus substructure annotations for all molecular formulas that had been searched."
                 + "<br>"
-                + "For the selected candidate structure, the bottom panel shows the spectrum with Epimetheus substructure annotations."/* and corresponding fragmentation tree*/
+                + "For the selected candidate structure in the upper panel, the bottom panel shows the spectrum with Epimetheus substructure annotations."
                 + "</html>";
     }
 
