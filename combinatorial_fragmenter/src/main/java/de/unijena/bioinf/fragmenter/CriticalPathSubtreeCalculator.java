@@ -82,6 +82,7 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
             maxScoreNodeIdx = this.vertexIndices.get(maxScoreNode);
         }
 
+        this.score = this.subtree.getScore();
         return this.subtree;
     }
 
