@@ -42,9 +42,9 @@ public class CombinatorialGraph {
         }
 
         node.depth = (short)Math.min(node.depth, parent.depth+1);
-        node.bondbreaks = (short)Math.min(node.bondbreaks, parent.bondbreaks + (secondBond==null ? 1 : 2));
+        node.bondbreaks = (short)Math.min(node.bondbreaks, parent.bondbreaks + (firstBond != null ? 1 : 0) + (secondBond !=null ? 1 : 0));
 
-        boolean cut1Direction =  ( fragment.bitset.get(firstBond.getAtom(0).getIndex()));
+        boolean cut1Direction = firstBond != null && (fragment.bitset.get(firstBond.getAtom(0).getIndex()));
         boolean cut2Direction = secondBond != null && (fragment.bitset.get(secondBond.getAtom(0).getIndex()));
 
         CombinatorialEdge edge = new  CombinatorialEdge(parent, node, firstBond, secondBond,cut1Direction,cut2Direction);
@@ -76,6 +76,7 @@ public class CombinatorialGraph {
         }
     }
 
+    /*
     public CombinatorialEdge addBondCut(CombinatorialNode parent, CombinatorialFragment fragment, IBond firstBond) {
         return addRingCut(parent,fragment,firstBond,null);
     }
@@ -96,6 +97,7 @@ public class CombinatorialGraph {
         parent.outgoingEdges.add(edge);
         return edge;
     }
+    */
 
     public List<CombinatorialNode> getNodes() {
         return nodes;
