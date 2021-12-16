@@ -26,12 +26,12 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         if(node == null && this.bitset2Node.get(parent.fragment.bitset) == parent){
             node = new CombinatorialNode(fragment);
             node.depth = (short) (parent.depth + 1);
-            node.bondbreaks = (short) (parent.bondbreaks + ((secondBond == null) ? 1 : 2));
+            node.bondbreaks = (short) (parent.bondbreaks + (firstBond != null ? 1 :0) + (secondBond != null ? 1 : 0));
             node.fragmentScore = fragmentScore;
             node.score = fragmentScore + edgeScore;
             node.totalScore = parent.totalScore + node.score;
 
-            boolean cut1Direction = fragment.bitset.get(firstBond.getAtom(0).getIndex());
+            boolean cut1Direction = (firstBond != null) && fragment.bitset.get(firstBond.getAtom(0).getIndex());
             boolean cut2Direction = (secondBond != null) && fragment.bitset.get(secondBond.getAtom(0).getIndex());
 
             CombinatorialEdge edge = new CombinatorialEdge(parent, node, firstBond, secondBond, cut1Direction, cut2Direction);
@@ -95,12 +95,21 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         };
     }
 
+    // todo
     private String nodeString(CombinatorialNode node){
         if(node == this.root){
             return node.fragment.toSMILES()+"[0,"+node.fragmentScore+",0];";
-        }else{
-            CombinatorialEdge edge = node.incomingEdges.get(0);
-            return node.fragment.toSMILES()+"["+edge.score+","+node.fragmentScore+","+node.bondbreaks+"]";
+        }else {
+            if (node.fragment.bitset.length() <= this.root.fragment.bitset.length()) { //node.fragment is a real fragment of this.root
+                CombinatorialEdge edge = node.incomingEdges.get(0);
+                return node.fragment.toSMILES() + "[" + edge.score + "," + node.fragmentScore + "," + node.bondbreaks + "]";
+            }else{
+                // in this case, node is an artificially added CombinatorialNode --> terminal node
+                // all nodes that are connected to this terminal node share the same molecular formula
+                CombinatorialEdge edge = node.incomingEdges.get(0);
+                CombinatorialNode parentNode = edge.source;
+                return parentNode.fragment.getFormula().toString() + "[" + edge.score + "," + node.fragmentScore + "," + node.bondbreaks + "]";
+            }
         }
     }
 

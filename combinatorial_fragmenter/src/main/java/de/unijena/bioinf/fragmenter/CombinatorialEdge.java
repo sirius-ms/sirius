@@ -12,6 +12,10 @@ public class CombinatorialEdge {
      */
     protected float score;
 
+    public CombinatorialEdge(CombinatorialNode source, CombinatorialNode target){
+        this(source, target, null, null, false, false);
+    }
+
     public CombinatorialEdge(CombinatorialNode source, CombinatorialNode target, IBond cut1, boolean leftToRight) {
         this(source,target,cut1,null, leftToRight, false);
     }
@@ -25,31 +29,32 @@ public class CombinatorialEdge {
         this.score = 0f;
     }
 
-    public IAtom getAtomOfFragment() {
-        if (getDirectionOfFirstCut()) return cut1.getAtom(0);
-        else return cut1.getAtom(1);
-    }
-    public IAtom getAtomOfLoss() {
-        if (getDirectionOfFirstCut()) return cut1.getAtom(1);
-        else return cut1.getAtom(0);
-    }
     public IAtom[] getAtomsOfFragment() {
-        IAtom[] atoms = (cut2==null ? new IAtom[1] : new IAtom[2] );
-        if (getDirectionOfFirstCut()) atoms[0] = cut1.getAtom(0);
-        else atoms[0] = cut1.getAtom(1);
-        if (cut2==null) return atoms;
-        if (getDirectionOfSecondCut()) atoms[1] = cut2.getAtom(0);
-        else atoms[1] = cut2.getAtom(1);
-        return atoms;
+        if(cut1 != null) {
+            IAtom[] atoms = (cut2 == null ? new IAtom[1] : new IAtom[2]);
+            if (getDirectionOfFirstCut()) atoms[0] = cut1.getAtom(0);
+            else atoms[0] = cut1.getAtom(1);
+            if (cut2 == null) return atoms;
+            if (getDirectionOfSecondCut()) atoms[1] = cut2.getAtom(0);
+            else atoms[1] = cut2.getAtom(1);
+            return atoms;
+        }else{
+            return null;
+        }
     }
+
     public IAtom[] getAtomsOfLoss() {
-        IAtom[] atoms = (cut2==null ? new IAtom[1] : new IAtom[2] );
-        if (getDirectionOfFirstCut()) atoms[0] = cut1.getAtom(1);
-        else atoms[0] = cut1.getAtom(0);
-        if (cut2==null) return atoms;
-        if (getDirectionOfSecondCut()) atoms[1] = cut2.getAtom(1);
-        else atoms[1] = cut2.getAtom(0);
-        return atoms;
+        if(cut1 != null) {
+            IAtom[] atoms = (cut2 == null ? new IAtom[1] : new IAtom[2]);
+            if (getDirectionOfFirstCut()) atoms[0] = cut1.getAtom(1);
+            else atoms[0] = cut1.getAtom(0);
+            if (cut2 == null) return atoms;
+            if (getDirectionOfSecondCut()) atoms[1] = cut2.getAtom(1);
+            else atoms[1] = cut2.getAtom(0);
+            return atoms;
+        }else{
+            return null;
+        }
     }
 
     public boolean getDirectionOfFirstCut() {
