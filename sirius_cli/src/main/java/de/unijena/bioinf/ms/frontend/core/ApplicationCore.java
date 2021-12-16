@@ -29,7 +29,6 @@ import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.log4j.Level;
 import org.jbibtex.BibTeXDatabase;
 import org.jbibtex.BibTeXParser;
 import org.jetbrains.annotations.NotNull;
@@ -81,13 +80,6 @@ public abstract class ApplicationCore {
             t1 = System.currentTimeMillis();
         measureTime("Start AppCore");
         try {
-//            System.setProperty("de.unijena.bioinf.jjobs.DEBUG", "true");
-
-//            System.out.println("LD ==> " + System.getProperty("java.library.path"));
-            System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
-            org.apache.log4j.Logger.getLogger("net.sf.jnati").setLevel(Level.WARN);
-
-
             System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
 
             final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
