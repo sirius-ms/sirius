@@ -6,8 +6,8 @@ import java.util.List;
 
 public class CombinatorialNode {
 
-    protected CombinatorialFragment fragment;
-    protected List<CombinatorialEdge> incomingEdges, outgoingEdges;
+    protected final CombinatorialFragment fragment;
+    protected final List<CombinatorialEdge> incomingEdges, outgoingEdges;
 
     /**
      * The depth of this node; i.e. the minimal number of edges from this node to the root.
