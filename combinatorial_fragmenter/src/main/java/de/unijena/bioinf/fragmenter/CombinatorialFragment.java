@@ -7,6 +7,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
@@ -18,15 +19,18 @@ public class CombinatorialFragment {
     protected final BitSet bitset;
     protected final BitSet disconnectedRings;
     protected MolecularFormula formula;
+    protected final boolean isRealFragment;
 
     public CombinatorialFragment(MolecularGraph parent, BitSet bitset, BitSet disconnectedRings) {
         this.parent = parent;
         this.bitset = bitset;
         this.formula = null;
         this.disconnectedRings = disconnectedRings;
+        this.isRealFragment = bitset.length() <= parent.natoms;
     }
 
     public IAtom[] getAtoms() {
+        if(!this.isRealFragment) return new IAtom[0];
         IAtom[] atoms = new IAtom[bitset.cardinality()];
         int k=0;
         for (int b = bitset.nextSetBit(0); b>=0; b = bitset.nextSetBit(b+1)) {
@@ -36,6 +40,7 @@ public class CombinatorialFragment {
     }
 
     public IAtomContainer toMolecule() {
+        if(!this.isRealFragment) return new AtomContainer();
         final int cardinality = bitset.cardinality();
         if (cardinality==parent.natoms) return parent.molecule;
         int[] indizes = new int[cardinality];
@@ -74,6 +79,7 @@ public class CombinatorialFragment {
     }
 
     public int numberOfHydrogens() {
+        if(!this.isRealFragment) return 0;
         int count=0;
         for (int b = bitset.nextSetBit(0); b>=0; b = bitset.nextSetBit(b+1)) {
             count += parent.hydrogens[b];
@@ -96,16 +102,21 @@ public class CombinatorialFragment {
     }
 
     private void determineFormula() {
-        final TableSelection sel = parent.getTableSelectionOfFormula();
-        short[] buffer = sel.makeCompomer();
-        int[] labels = parent.getAtomLabels();
-        for (int node=bitset.nextSetBit(0); node >= 0; node=bitset.nextSetBit(node+1) ) {
-            ++buffer[labels[node]];
+        if(this.isRealFragment) {
+            final TableSelection sel = parent.getTableSelectionOfFormula();
+            short[] buffer = sel.makeCompomer();
+            int[] labels = parent.getAtomLabels();
+            for (int node = bitset.nextSetBit(0); node >= 0; node = bitset.nextSetBit(node + 1)) {
+                ++buffer[labels[node]];
+            }
+            this.formula = MolecularFormula.fromCompomer(sel, buffer);
+        }else{
+            this.formula = MolecularFormula.emptyFormula();
         }
-        this.formula = MolecularFormula.fromCompomer(sel, buffer);
     }
 
     public TIntArrayList bonds() {
+        if(!this.isRealFragment) return new TIntArrayList();
         final int[][] adj = parent.getAdjacencyList();
         final int[][] bondj = parent.bondList;
         final TIntArrayList bonds = new TIntArrayList();
@@ -121,10 +132,10 @@ public class CombinatorialFragment {
     }
 
     public boolean stillContains(IBond b) {
-        return bitset.get(b.getAtom(0).getIndex()) && bitset.get(b.getAtom(1).getIndex());
+        return this.isRealFragment && bitset.get(b.getAtom(0).getIndex()) && bitset.get(b.getAtom(1).getIndex());
     }
     public boolean stillContains(IAtom a) {
-        return bitset.get(a.getIndex());
+        return this.isRealFragment && bitset.get(a.getIndex());
     }
 
     public String toSMILES() {
@@ -133,5 +144,9 @@ public class CombinatorialFragment {
         } catch (CDKException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public boolean isRealFragment(){
+        return this.isRealFragment;
     }
 }
