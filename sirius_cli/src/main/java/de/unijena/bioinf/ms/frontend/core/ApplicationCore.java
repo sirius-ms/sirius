@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.frontend.core;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
+import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
@@ -43,6 +44,7 @@ import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -301,8 +303,9 @@ public abstract class ApplicationCore {
 
             measureTime("DONE init bug reporting, START init WebAPI");
             TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile",null,".rtoken"));
-            AuthService service = AuthServices.createDefault(TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
-            WEB_API = new RestAPI(service);
+            URI webserviceHost = URI.create(FingerIDProperties.fingeridWebHost());
+            AuthService service = AuthServices.createDefault(webserviceHost, TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
+            WEB_API = new RestAPI(service, webserviceHost);
             DEFAULT_LOGGER.info("Web API initialized.");
             measureTime("DONE init  init WebAPI");
 

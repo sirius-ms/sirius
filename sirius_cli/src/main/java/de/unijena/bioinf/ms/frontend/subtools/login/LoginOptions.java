@@ -154,7 +154,10 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 }
             } else if (showProfile) {
                 try {
-                    AuthService service = AuthServices.createDefault(ApplicationCore.TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
+                    AuthService service = AuthServices.createDefault(
+                            URI.create(SiriusProperties.getProperty("de.unijena.bioinf.fingerid.web.host")),
+                            ApplicationCore.TOKEN_FILE,
+                            ProxyManager.getSirirusHttpAsyncClient());
                     showProfile(AuthServices.getIDToken(service));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -184,7 +187,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
         }
 
         private void showLicense() throws IOException {
-            WebAPI api = ApplicationCore.WEB_API;
+            WebAPI<?> api = ApplicationCore.WEB_API;
             final LicenseInfo licenseInfo = api.getLicenseInfo();
 
             System.out.println();
