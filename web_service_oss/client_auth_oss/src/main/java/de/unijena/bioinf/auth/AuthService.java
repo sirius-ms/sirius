@@ -22,6 +22,7 @@ package de.unijena.bioinf.auth;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.github.scribejava.apis.auth0.Auth0Service;
 import com.github.scribejava.apis.openid.OpenIdOAuth2AccessToken;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
@@ -30,10 +31,9 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.revoke.TokenTypeHint;
 import com.github.scribejava.httpclient.apache.ApacheHttpClient;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.auth.auth0.Auth0Service;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -59,47 +59,64 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     private int minLifetime = 900000;
 
 
-    public AuthService(DefaultApi20 authAPI) {
-        this(authAPI, null);
+    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID) {
+        this(authAPI, clientID, null);
     }
 
-    public AuthService(DefaultApi20 authAPI, @Nullable CloseableHttpAsyncClient client) {
-        this(null, authAPI, client);
+    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable CloseableHttpAsyncClient client) {
+        this(authAPI, clientID, null, null, client);
     }
 
-    public AuthService(@Nullable String refreshToken, DefaultApi20 authAPI) {
-        this(refreshToken, authAPI, null);
+    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable String refreshToken) {
+        this(authAPI, clientID, clientSecret, refreshToken, null);
     }
 
-    public AuthService(@Nullable String refreshToken, DefaultApi20 authAPI, @Nullable CloseableHttpAsyncClient client) {
-        this(refreshToken, buildService(authAPI, client));
+    public AuthService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable String refreshToken, @Nullable CloseableHttpAsyncClient client) {
+        this(buildService(authAPI, clientID, clientSecret, client), refreshToken);
     }
 
-    public AuthService(@Nullable String refreshToken, OAuth20Service service) {
+    public AuthService(@NotNull OAuth20Service service, @Nullable String refreshToken) {
         this.refreshToken = refreshToken;
         this.service = service;
     }
 
 
-    private static OAuth20Service buildService(DefaultApi20 authAPI, @Nullable CloseableHttpAsyncClient client) {
-        ServiceBuilder b = new ServiceBuilder(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientID", null, null));
+    private static OAuth20Service buildService(@NotNull DefaultApi20 authAPI, @NotNull String clientID, @Nullable String clientSecret, @Nullable CloseableHttpAsyncClient client) {
+        ServiceBuilder b = new ServiceBuilder(clientID);
         if (client != null)
             b.httpClient(new ApacheHttpClient(client));
-        String secret = PropertyManager.getProperty("de.unijena.bioinf.sirius.security.clientSecret");
-        if (secret != null)
-            b.apiSecret(secret);
-//                .defaultScope("offline_access") // replace with desired scope
-//              .callback("http://your.site.com/callback")
+        if (clientSecret != null)
+            b.apiSecret(clientSecret);
         return b.build(authAPI);
     }
 
-    public void reconnectService(@Nullable CloseableHttpAsyncClient client){
+    public void reconnectService(@Nullable CloseableHttpAsyncClient client) {
+        reconnectService(null, client);
+    }
+
+    public void reconnectService(@Nullable DefaultApi20 authAPI, @Nullable CloseableHttpAsyncClient client) {
+        reconnectService(buildService(authAPI == null ? service.getApi() : authAPI, service.getApiKey(), service.getApiSecret(), client));
+    }
+
+    public void reconnectService(@NotNull OAuth20Service service) {
         tokenLock.writeLock().lock();
         try {
-            this.service = buildService(service.getApi(), client);
-        }finally {
+            this.service = service;
+        } finally {
             tokenLock.writeLock().unlock();
         }
+    }
+
+    protected Token requestAccessTokenClientFlow() throws IOException, ExecutionException, InterruptedException {
+        return new Token((OpenIdOAuth2AccessToken) service.getAccessTokenClientCredentialsGrant());
+    }
+
+    protected Token requestAccessTokenRefreshFlow() throws IOException, ExecutionException, InterruptedException {
+        return new Token((OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken));
+    }
+
+    protected Token requestAccessTokenPasswordFlow(String username, String password) throws IOException, ExecutionException, InterruptedException {
+        return new Token((OpenIdOAuth2AccessToken) service.getAccessTokenPasswordGrant(username, password, "offline_access openid")); //request token and new refresh token
     }
 
     /**
@@ -114,7 +131,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
 
         tokenLock.writeLock().lock();
         try {
-            token = new Token((OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken));
+            token = requestAccessTokenRefreshFlow();
         } catch (IOException | InterruptedException | ExecutionException e) {
             LoggerFactory.getLogger(getClass()).warn("Error when refreshing access_token with current refresh_token.", e);
             return false;
@@ -124,9 +141,21 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
         return true;
     }
 
+    /**
+     * @return true if a client secret is configured for this service
+     */
+    protected boolean hasClientSecret() {
+        return service.getApiSecret() != null;
+    }
+
     public boolean needsLogin() {
+        //check access token
         if (!needsRefresh())
-            return true;
+            return false;
+        //check if client secret flow is configured
+        if (hasClientSecret())
+            return false;
+        //check if refresh token flow is working
         return !isRefreshTokenValid();
     }
 
@@ -151,9 +180,13 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
             tokenLock.writeLock().lock();
             try {
                 if (force || needsRefreshRaw()) {
-                    if (refreshToken == null || refreshToken.isBlank())
-                        throw new LoginException(new NullPointerException("Refresh token is null or empty!"));
-                    token = new Token((OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken));
+                    if (hasClientSecret()) {
+                        token = requestAccessTokenClientFlow(); //todo add email or openID scope?
+                    } else {
+                        if (refreshToken == null || refreshToken.isBlank())
+                            throw new LoginException(new NullPointerException("Refresh token is null or empty!"));
+                        token = requestAccessTokenRefreshFlow();
+                    }
                 }
             } catch (IOException | InterruptedException | ExecutionException e) {
                 throw new LoginException(e);
@@ -167,27 +200,16 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     public void login(String username, String password) throws IOException, ExecutionException, InterruptedException {
         tokenLock.writeLock().lock();
         try {
-            token = new Token((OpenIdOAuth2AccessToken) service.getAccessTokenPasswordGrant(username, password, "offline_access")); //request token and new refresh token
+            token = requestAccessTokenPasswordFlow(username, password);
             refreshToken = token.getSource().getRefreshToken();
         } finally {
             tokenLock.writeLock().unlock();
         }
     }
-
-    public void login() throws IOException, ExecutionException, InterruptedException {
-        tokenLock.writeLock().lock();
-        try {
-            token = new Token((OpenIdOAuth2AccessToken) service.getAccessTokenClientCredentialsGrant("offline_access")); //request token and new refresh token
-            refreshToken = token.getSource().getRefreshToken();
-        } finally {
-            tokenLock.writeLock().unlock();
-        }
-    }
-
 
     @Override
     public void accept(HttpUriRequest httpUriRequest) throws IOException {
-        httpUriRequest.setHeader("Authorization", "Bearer " + refreshIfNeeded().getOpenIdToken());
+        httpUriRequest.setHeader("Authorization", "Bearer " + refreshIfNeeded().getAccessToken());
     }
 
     public void logout() {
@@ -250,7 +272,7 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
 
         private Token(OpenIdOAuth2AccessToken source) {
             this.source = source;
-            expTime = JWT.decode(source.getOpenIdToken()).getExpiresAt();
+            expTime = JWT.decode(source.getAccessToken()).getExpiresAt();
         }
 
 
@@ -266,8 +288,12 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
             return source.getOpenIdToken();
         }
 
-        public DecodedJWT getDecodedIdToken (){
+        public DecodedJWT getDecodedIdToken() {
             return JWT.decode(getOpenIdToken());
+        }
+
+        public DecodedJWT getDecodedAccessToken() {
+            return JWT.decode(getAccessToken());
         }
 
         public OpenIdOAuth2AccessToken getSource() {

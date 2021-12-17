@@ -58,36 +58,42 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.auth.auth0;
+package com.github.scribejava.apis.auth0;
 
-import com.github.scribejava.core.builder.api.DefaultApi20;
+import com.github.scribejava.apis.Auth0Api;
 import com.github.scribejava.core.httpclient.HttpClient;
 import com.github.scribejava.core.httpclient.HttpClientConfig;
-import com.github.scribejava.core.model.*;
+import com.github.scribejava.core.model.OAuthRequest;
+import com.github.scribejava.core.model.Response;
+import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.github.scribejava.core.revoke.TokenTypeHint;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public class Auth0Service extends OAuth20Service {
 
-    public Auth0Service(DefaultApi20 api, String apiKey, String apiSecret, String callback, String defaultScope, String responseType, OutputStream debugStream, String userAgent, HttpClientConfig httpClientConfig, HttpClient httpClient) {
+    public Auth0Service(Auth0Api api, String apiKey, String apiSecret, String callback, String defaultScope, String responseType, OutputStream debugStream, String userAgent, HttpClientConfig httpClientConfig, HttpClient httpClient) {
         super(api, apiKey, apiSecret, callback, defaultScope, responseType, debugStream, userAgent, httpClientConfig, httpClient);
     }
 
     @Override
     protected OAuthRequest createAccessTokenPasswordGrantRequest(String username, String password, String scope) {
-        return withClientID(super.createAccessTokenPasswordGrantRequest(username, password, scope));
+        return withAudience(withClientID(super.createAccessTokenPasswordGrantRequest(username, password, scope)));
     }
 
     @Override
     protected OAuthRequest createRefreshTokenRequest(String refreshToken, String scope) {
-        return withClientID(super.createRefreshTokenRequest(refreshToken, scope));
+        // we want this to be audience independent so that we can request access tokens for multiple audiences
+        return withAudience(withClientID(super.createRefreshTokenRequest(refreshToken, scope)));
+    }
+
+    @Override
+    protected OAuthRequest createAccessTokenClientCredentialsGrantRequest(String scope) {
+        return withAudience(super.createAccessTokenClientCredentialsGrantRequest(scope));
     }
 
     @Override
@@ -97,6 +103,11 @@ public class Auth0Service extends OAuth20Service {
 
     protected OAuthRequest withClientID(@NotNull final OAuthRequest request){
         request.addParameter("client_id", getApiKey());
+        return request;
+    }
+
+    protected OAuthRequest withAudience(@NotNull final OAuthRequest request){
+        request.addParameter("audience", ((Auth0Api)getApi()).getAudience());
         return request;
     }
 
