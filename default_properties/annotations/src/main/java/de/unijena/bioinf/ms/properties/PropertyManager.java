@@ -142,7 +142,8 @@ public class PropertyManager {
         CombinedConfiguration configToAdd = SiriusConfigUtils.newCombinedConfiguration();
         PropertiesConfiguration changeable = SiriusConfigUtils.newConfiguration();
         configToAdd.addConfiguration(changeable, "CHANGED_DEFAULT_PROPERTIES");
-        SiriusConfigUtils.makeConfigFromResources(configToAdd, SiriusConfigUtils.parseResourcesLocation(System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), DEFAULT_PROPERTY_SOURCE), null);
+        SiriusConfigUtils.makeConfigFromResources(configToAdd, SiriusConfigUtils.parseResourcesLocation(
+                System.getProperties().getProperty(PROPERTY_LOCATIONS_KEY), DEFAULT_PROPERTY_SOURCE), null);
         addConfiguration(configToAdd, null, "PROPERTIES");
         return changeable;
     }
@@ -153,7 +154,12 @@ public class PropertyManager {
         return config;
     }
 
-    public static PersistentProperties addPersistentPropertiesFile(File propertiesFile, PropertiesConfiguration baseProps, boolean watchFile) {
+    public static PersistentProperties addPersistentPropertiesFile(File propertiesFile, @NotNull String basePropsName, boolean watchFile) {
+        PropertiesConfiguration basProps = (PropertiesConfiguration) PROPERTIES.getConfiguration(basePropsName);
+        return addPersistentPropertiesFile(propertiesFile, basProps, watchFile);
+    }
+
+    public static PersistentProperties addPersistentPropertiesFile(File propertiesFile, @NotNull PropertiesConfiguration baseProps, boolean watchFile) {
         PersistentProperties persProps = new PersistentProperties(propertiesFile, baseProps, watchFile);
         PERSISTENT_PROPERTIES.addConfiguration(persProps.config, persProps.propertiesFile.getAbsolutePath());
         return persProps;
@@ -165,13 +171,11 @@ public class PropertyManager {
         }
     }
 
-
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream input, @Nullable String name, @Nullable String prefixToAdd) throws ConfigurationException {
         final PropertiesConfiguration config = loadConfigurationFromStream(input);
         PROPERTIES.addConfiguration(config, name, prefixToAdd);
         return config;
     }
-
 
     public static PropertiesConfiguration addPropertiesFromStream(@NotNull InputStream stream, @NotNull PropertiesConfiguration config, @Nullable String name) throws ConfigurationException {
         new FileHandler(config).load(stream);
@@ -187,12 +191,10 @@ public class PropertyManager {
         return addPropertiesFromStream(stream, null);
     }
 
-
     //this reads and merges read only properties from within jar resources
     public static CombinedConfiguration addPropertiesFromResources(@Nullable final String locations, @Nullable final String defaultLocation, @Nullable final String prefixToAdd, @Nullable String name) {
         return addPropertiesFromResources(SiriusConfigUtils.parseResourcesLocation(locations, defaultLocation), prefixToAdd, name);
     }
-
 
     public static CombinedConfiguration addPropertiesFromResources(@NotNull final LinkedHashSet<String> resources, @Nullable String prefixToAdd, @Nullable String name) {
         if (resources.isEmpty())
