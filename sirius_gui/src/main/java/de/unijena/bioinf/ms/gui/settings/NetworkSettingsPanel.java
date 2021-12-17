@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.settings;
 
+import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.PasswordCrypter;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
@@ -167,10 +168,11 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     @Override
     public void reloadChanges() {
+        URI host = URI.create(props.getProperty("de.unijena.bioinf.fingerid.web.host"));
         ProxyManager.reconnect();
-        ApplicationCore.WEB_API.getAuthService().reconnectService(ProxyManager.getSirirusHttpAsyncClient()); //load new proxy data from service.
+        ApplicationCore.WEB_API.getAuthService().reconnectService(AuthServices.createDefaultApi(host), ProxyManager.getSirirusHttpAsyncClient()); //load new proxy data from service.
         ProxyManager.enforceGlobalProxySetting(); //update global proxy stuff for Webview.
-        ApplicationCore.WEB_API.changeHost(URI.create(props.getProperty("de.unijena.bioinf.fingerid.web.host")));
+        ApplicationCore.WEB_API.changeHost(host);
         MF.CONNECTION_MONITOR().checkConnectionInBackground();
     }
 
