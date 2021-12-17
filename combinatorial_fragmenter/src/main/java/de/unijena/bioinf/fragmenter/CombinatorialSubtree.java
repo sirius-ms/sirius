@@ -100,7 +100,7 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         if(node == this.root){
             return node.fragment.toSMILES()+"[0,"+node.fragmentScore+",0];";
         }else {
-            if (node.fragment.bitset.length() <= this.root.fragment.bitset.length()) { //node.fragment is a real fragment of this.root
+            if(node.fragment.isRealFragment) {
                 CombinatorialEdge edge = node.incomingEdges.get(0);
                 return node.fragment.toSMILES() + "[" + edge.score + "," + node.fragmentScore + "," + node.bondbreaks + "]";
             }else{
