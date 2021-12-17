@@ -58,7 +58,7 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.auth.auth0;
+package com.github.scribejava.apis;
 
 import com.github.scribejava.apis.openid.OpenIdJsonTokenExtractor;
 import com.github.scribejava.core.builder.api.DefaultApi20;
@@ -66,41 +66,53 @@ import com.github.scribejava.core.extractors.TokenExtractor;
 import com.github.scribejava.core.httpclient.HttpClient;
 import com.github.scribejava.core.httpclient.HttpClientConfig;
 import com.github.scribejava.core.model.OAuth2AccessToken;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import org.apache.http.impl.client.CloseableHttpClient;
+import com.github.scribejava.apis.auth0.Auth0Service;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class Auth0Api extends DefaultApi20 {
+    private static final ConcurrentMap<String, Auth0Api> INSTANCES = new ConcurrentHashMap<>();
 
-    @NotNull private final URL localAuthProviderURL;
+    @NotNull
+    private final URL localAuthProviderURL;
 
-    public Auth0Api(String localAuthProviderURL) throws MalformedURLException {
-        this(new URL(localAuthProviderURL));
+    public URL getLocalAuthProviderURL() {
+        return localAuthProviderURL;
     }
 
-    public Auth0Api(@NotNull URL localAuthProviderURL) {
+    @NotNull
+    private String audience;
+
+    public String getAudience() {
+        return audience;
+    }
+
+    public Auth0Api(@NotNull URL localAuthProviderURL, @NotNull String audience) {
         super();
         this.localAuthProviderURL = localAuthProviderURL;
+        this.audience = audience;
     }
 
-    private static class InstanceHolder {
-        private static final Auth0Api INSTANCE;
-        static {
-            try {
-                INSTANCE = new Auth0Api(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.authServer"));
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                throw new IllegalArgumentException(e);
-            }
+    public static Auth0Api instance(@NotNull String localAuthProviderURL, @NotNull String audience) {
+        try {
+            final String defaultBaseUrlWithRealm = composeBaseUrlWithAudience(localAuthProviderURL, audience);
+            final URL url = new URL(localAuthProviderURL);
+            return  INSTANCES.computeIfAbsent(defaultBaseUrlWithRealm, k -> new Auth0Api(url, audience));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException(e);
         }
+
+
     }
 
-    public static Auth0Api instance() {
-        return InstanceHolder.INSTANCE;
+    protected static String composeBaseUrlWithAudience(String baseUrl, String audience) {
+        return baseUrl + (baseUrl.endsWith("/") ? "" : "/")  + audience;
     }
 
     @Override
