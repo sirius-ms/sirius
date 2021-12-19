@@ -27,6 +27,7 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
         // 1.: Creation of the combinatorial fragmentation graph:
         CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, this.scoring);
         this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
+        CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
 
         // 2.: Compute a hash map which assigns each edge in the graph an index.
         this.edgeIndices = new HashMap<>();
