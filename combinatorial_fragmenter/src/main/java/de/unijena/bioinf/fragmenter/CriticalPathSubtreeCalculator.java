@@ -28,6 +28,7 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
         // 1. Create a CombinatorialFragmentationGraph:
         CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule,scoring);
         this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
+        CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
 
         // 2. Determine a hashmap which assigns each CombinatorialNode in this.graph a specific integer index.
         this.vertexIndices = new TObjectIntHashMap<>();
