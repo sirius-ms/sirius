@@ -49,6 +49,37 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         }
     }
 
+    public boolean removeSubtree(CombinatorialFragment fragment){
+        CombinatorialNode node = this.bitset2Node.get(fragment.bitset);
+        if(node != null && node != this.root){
+            // because node != root, there is one incoming edge
+            CombinatorialEdge edge = node.incomingEdges.get(0);
+            CombinatorialNode parent = edge.source;
+            parent.outgoingEdges.remove(edge);
+            node.incomingEdges.remove(edge);
+
+            float subtreeScore = node.fragmentScore;
+            ArrayList<CombinatorialNode> subtreeNodes = new ArrayList<>();
+            subtreeNodes.add(node);
+            while(!subtreeNodes.isEmpty()){
+                CombinatorialNode currentNode = subtreeNodes.remove(0);
+                this.nodes.remove(currentNode);
+                this.bitset2Node.remove(currentNode.fragment.bitset, currentNode);
+
+                for(CombinatorialEdge e : currentNode.outgoingEdges){
+                    CombinatorialNode child = e.target;
+                    subtreeNodes.add(child);
+                    subtreeScore = subtreeScore + e.score + child.fragmentScore;
+                }
+            }
+
+            this.score = this.score - subtreeScore;
+            return true;
+        }else{
+            return false;
+        }
+    }
+
     public float getScore(){
         return this.score;
     }

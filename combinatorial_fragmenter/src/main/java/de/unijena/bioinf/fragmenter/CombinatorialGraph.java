@@ -66,6 +66,39 @@ public class CombinatorialGraph {
         return node;
     }
 
+    public CombinatorialEdge deleteEdge(CombinatorialNode source, CombinatorialNode target){
+        CombinatorialEdge edge = null;
+        for(CombinatorialEdge e : source.outgoingEdges){
+            if(e.target == target){
+                edge = e;
+                break;
+            }
+        }
+        if(edge == null || target.incomingEdges.size() == 1) return null;
+
+        source.outgoingEdges.remove(edge);
+        target.incomingEdges.remove(edge);
+
+        // the scores of 'source' haven't changed, but maybe for 'target'
+        target.bondbreaks = Short.MAX_VALUE;
+        target.depth = Short.MAX_VALUE;
+        target.totalScore = Float.NEGATIVE_INFINITY;
+
+        for(CombinatorialEdge e : target.incomingEdges){
+            target.bondbreaks = (short) Math.min(target.bondbreaks, e.source.bondbreaks + (e.cut1 != null ? 1 : 0) + (e.cut2 != null ? 1 : 0));
+            target.depth = (short) Math.min(target.depth, e.source.depth +1);
+
+            float score = target.fragmentScore + e.score;
+            float bestScore = e.source.totalScore + score;
+            if(bestScore > target.totalScore){
+                target.totalScore = bestScore;
+                target.score = score;
+            }
+        }
+
+        return edge;
+    }
+
     /**
      * for each node, allow only paths back to root which have minimal distance
      */
@@ -98,6 +131,14 @@ public class CombinatorialGraph {
         return edge;
     }
     */
+
+    public boolean contains(CombinatorialFragment fragment){
+        return this.bitset2node.get(fragment.bitset) != null;
+    }
+
+    public CombinatorialNode getNode(BitSet fragment){
+        return this.bitset2node.get(fragment);
+    }
 
     public List<CombinatorialNode> getNodes() {
         return nodes;
