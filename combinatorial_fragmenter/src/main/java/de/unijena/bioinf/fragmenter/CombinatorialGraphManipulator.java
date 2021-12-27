@@ -62,4 +62,9 @@ public class CombinatorialGraphManipulator {
             }
         }
     }
+
+    public static double[][] calculateNodeDistances(CombinatorialGraph graph){
+        return null;
+    }
+
 }
