@@ -73,7 +73,7 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
                 }
             }
 
-            this.score = this.score - subtreeScore;
+            this.score = this.score - subtreeScore - edge.score;
             return true;
         }else{
             return false;
