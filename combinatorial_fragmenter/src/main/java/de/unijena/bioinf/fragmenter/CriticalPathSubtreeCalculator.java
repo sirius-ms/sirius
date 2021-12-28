@@ -48,6 +48,7 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
 
     @Override
     public CombinatorialSubtree computeSubtree(){
+        if(this.isComputed) return this.subtree;
         /* At this moment:
          * - the initial subtree is already initialised --> it contains only the root
          * - the array of critical path scores is initialised with NaN values
@@ -83,6 +84,7 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
             maxScoreNodeIdx = this.vertexIndices.get(maxScoreNode);
         }
 
+        this.isComputed = true;
         this.score = this.subtree.getScore();
         return this.subtree;
     }
@@ -142,5 +144,13 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
                 }
             }
         }
+    }
+
+    public boolean isInitialized(){
+        return this.isInitialized;
+    }
+
+    public boolean isComputed(){
+        return this.isComputed;
     }
 }

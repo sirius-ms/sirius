@@ -56,6 +56,7 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
 
     @Override
     public CombinatorialSubtree computeSubtree() throws GRBException{
+        if(this.isComputed) return this.subtree;
         // During the initialisation the input molecule was fragmented and a CombinatorialFragmentationGraph was
         // constructed. Also a mapping was created which assigns each edge of this graph a specific position
         // in the variable array.
@@ -145,6 +146,10 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
                 buildSubtree(solution, nextNode);
             }
         }
+    }
+
+    public boolean isInitialized(){
+        return this.isInitialized;
     }
 
     public boolean isComputed(){
