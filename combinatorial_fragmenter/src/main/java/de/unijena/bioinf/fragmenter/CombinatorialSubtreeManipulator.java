@@ -2,6 +2,8 @@ package de.unijena.bioinf.fragmenter;
 
 import gnu.trove.map.hash.TObjectIntHashMap;
 
+import java.util.ArrayList;
+
 public class CombinatorialSubtreeManipulator {
 
     public static double removeDanglingSubtrees(CombinatorialSubtree tree){
@@ -18,7 +20,9 @@ public class CombinatorialSubtreeManipulator {
 
     private static double getBestSubtreeScore(CombinatorialNode currentNode, CombinatorialSubtree tree, TObjectIntHashMap<CombinatorialNode> indices){
         double score = 0;
-        for(CombinatorialEdge edge : currentNode.getOutgoingEdges()){
+        ArrayList<CombinatorialEdge> outgoingEdges = new ArrayList<>(currentNode.getOutgoingEdges());
+
+        for(CombinatorialEdge edge : outgoingEdges){
             CombinatorialNode child = edge.target;
             double childScore = getBestSubtreeScore(child, tree, indices) + child.fragmentScore + edge.score;
 
