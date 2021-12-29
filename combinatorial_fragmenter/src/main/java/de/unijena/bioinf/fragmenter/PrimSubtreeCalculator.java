@@ -104,7 +104,8 @@ public class PrimSubtreeCalculator extends CombinatorialSubtreeCalculator {
         }
     }
 
-    public CombinatorialGraph getGraph(){
+    @Override
+    public CombinatorialGraph getCombinatorialGraph(){
         return this.graph;
     }
 
