@@ -148,6 +148,11 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
         }
     }
 
+    @Override
+    public CombinatorialGraph getCombinatorialGraph(){
+        return this.graph;
+    }
+
     public boolean isInitialized(){
         return this.isInitialized;
     }

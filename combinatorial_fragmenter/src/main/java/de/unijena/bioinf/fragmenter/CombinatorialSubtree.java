@@ -100,6 +100,10 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         return this.root;
     }
 
+    public int numberOfNodes(){
+        return this.nodes.size() + 1;
+    }
+
     @Override
     public Iterator<CombinatorialNode> iterator(){
         return new Iterator<CombinatorialNode>() {

@@ -147,4 +147,8 @@ public class CombinatorialGraph {
     public CombinatorialNode getRoot() {
         return root;
     }
+
+    public int numberOfNodes(){
+        return this.nodes.size() + 1;
+    }
 }
