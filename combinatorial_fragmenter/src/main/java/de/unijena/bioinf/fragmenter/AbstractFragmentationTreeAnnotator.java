@@ -39,4 +39,6 @@ public abstract class AbstractFragmentationTreeAnnotator {
     public HashMap<Fragment,ArrayList<CombinatorialFragment>> getMapping(){
         return this.mapping;
     }
+
+    public abstract CombinatorialGraph getCombinatorialGraph();
 }

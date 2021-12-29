@@ -146,6 +146,11 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
         }
     }
 
+    @Override
+    public CombinatorialGraph getCombinatorialGraph(){
+        return this.graph;
+    }
+
     public boolean isInitialized(){
         return this.isInitialized;
     }
