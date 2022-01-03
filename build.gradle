@@ -47,6 +47,11 @@ ext {
 
     jetbrains_version = "22.0.0"
 
+    // mainly for IDE execution, ilp libs are not shipped with distributions anyways
+    cplex_version = '12.7.1'
+//    cplex_version = '20.1.0'
+    gurobi_version = '9.1.1'
+
     logger.lifecycle('reading gradle properties file...')
     File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
     if (propertiesFile.exists()) {

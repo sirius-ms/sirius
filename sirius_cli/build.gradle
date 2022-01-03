@@ -5,7 +5,11 @@ dependencies {
     compile group: "de.unijena.bioinf.ms", name: "gibbs_sampling", version: "$siriusVersion"
 
 //    compile group: "de.unijena.bioinf.ms", name: "zodiac_project_space", version: "$siriusVersion"
-    compile group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+    compile (group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"){
+        exclude group: "cplex", module: "cplex"
+        exclude group: "com.gurobi", module: "gurobi-jar"
+    }
+
     compile group: "de.unijena.bioinf.ms", name: "tree_motif_search", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "sirius_project_space", version: "$siriusVersion"
     compile group: "de.unijena.bioinf.ms", name: "quality_assessment", version: "$siriusVersion"
@@ -34,8 +38,17 @@ dependencies {
 
     compile group: 'org.jbibtex', name: 'jbibtex', version: '1.0.17'
 
-    compile "de.unijena.bioinf.ms:ft_cplex:$siriusVersion"
-    compile "de.unijena.bioinf.ms:ft_gurobi:$siriusVersion"
+    compile ("de.unijena.bioinf.ms:ft_cplex:$siriusVersion"){
+        exclude group: "cplex", module: "cplex"
+    }
+    //specify cplex version to use with IDE (has not effect on distributed version.)
+    compile group: 'cplex', name: 'cplex', version: "$cplex_version"
+
+    compile ("de.unijena.bioinf.ms:ft_gurobi:$siriusVersion"){
+        exclude group: "com.gurobi", module: "gurobi-jar"
+    }
+    compile "com.gurobi:gurobi-jar:$gurobi_version"
+
 }
 
 artifactory {
