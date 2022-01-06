@@ -80,6 +80,42 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         }
     }
 
+    public boolean replaceSubtree(CombinatorialFragment parent, CombinatorialFragment fragment, IBond firstBond, IBond secondBond, float edgeScore){
+        CombinatorialNode subtreeNode = this.bitset2Node.get(fragment.bitset);
+        CombinatorialNode attachNode = this.bitset2Node.get(parent.bitset);
+        if(subtreeNode != null && subtreeNode != this.root && attachNode != null){
+            // Delete the edge that connects subtreeNode with root and update this.score:
+            CombinatorialEdge edge = subtreeNode.incomingEdges.get(0);
+            subtreeNode.incomingEdges.remove(edge);
+            edge.source.outgoingEdges.remove(edge);
+            this.score = this.score - edge.score;
+
+            // Attach subtreeNode to attachNode and update this.score:
+            boolean cut1direction = firstBond != null && fragment.bitset.get(firstBond.getAtom(0).getIndex());
+            boolean cut2direction = secondBond != null && fragment.bitset.get(secondBond.getAtom(0).getIndex());
+            CombinatorialEdge newEdge = new CombinatorialEdge(attachNode, subtreeNode, firstBond, secondBond, cut1direction, cut2direction);
+            newEdge.score = edgeScore;
+
+            attachNode.outgoingEdges.add(newEdge);
+            subtreeNode.incomingEdges.add(newEdge);
+            this.score = this.score + newEdge.score;
+
+            // Update 'totalScore' for each node in the replaced subtree:
+            subtreeNode.score = subtreeNode.fragmentScore + newEdge.score;
+            ArrayList<CombinatorialNode> queue = new ArrayList<>();
+            queue.add(subtreeNode);
+            while(!queue.isEmpty()){
+                CombinatorialNode node = queue.remove(0);
+                node.totalScore = node.incomingEdges.get(0).source.totalScore + node.score;
+                for(CombinatorialEdge e : node.outgoingEdges) queue.add(e.target);
+            }
+
+            return true;
+        }else{
+            return false;
+        }
+    }
+
     public float getScore(){
         return this.score;
     }
