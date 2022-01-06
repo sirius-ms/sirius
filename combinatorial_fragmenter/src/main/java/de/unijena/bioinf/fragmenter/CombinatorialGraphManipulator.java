@@ -27,6 +27,7 @@ public class CombinatorialGraphManipulator {
         return bitset;
     }
 
+    // TODO: maybe remove hydrogen atoms from the molecular formulas
     public static void addTerminalNodes(CombinatorialGraph graph, CombinatorialFragmenterScoring scoring, FTree fTree){
         MolecularGraph molecule = graph.root.fragment.parent;
 

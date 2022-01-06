@@ -25,6 +25,7 @@ public abstract class CombinatorialSubtreeCalculator extends AbstractFragmentati
      * If there is a molecular fragment in the subtree with a molecular formula which is also contained in the FTree,
      * this fragment is added to the corresponding FTree node list.
      */
+    // TODO: maybe remove hydrogen atoms from the molecular formulas
     @Override
     public HashMap<Fragment, ArrayList<CombinatorialFragment>> computeMapping(){
         // 1.) Compute a HashMap which maps each Molecular Formula the corresponding Fragment of the FTree.
