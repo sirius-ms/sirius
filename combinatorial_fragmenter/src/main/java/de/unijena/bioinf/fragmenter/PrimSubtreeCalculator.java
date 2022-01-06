@@ -8,7 +8,6 @@ import java.util.PriorityQueue;
 
 public class PrimSubtreeCalculator extends CombinatorialSubtreeCalculator {
 
-    private CombinatorialGraph graph;
     private TObjectIntHashMap<CombinatorialNode> nodeIndices;
     private double[] nodeScores;
     private boolean isInitialized, isComputed;
@@ -19,13 +18,21 @@ public class PrimSubtreeCalculator extends CombinatorialSubtreeCalculator {
         this.isComputed = false;
     }
 
+    public PrimSubtreeCalculator(FTree fTree, CombinatorialGraph graph, CombinatorialFragmenterScoring scoring){
+        super(fTree, graph, scoring);
+        this.isInitialized = false;
+        this.isComputed = false;
+    }
+
     public void initialize(CombinatorialFragmenter.Callback2 furtherFragmentation){
         if(this.isInitialized) throw new IllegalStateException("This object has been already initialised.");
 
-        // 1.) Create fragmentation graph and add the terminal nodes:
-        CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule,scoring);
-        this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
-        CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
+        // 1.) Create fragmentation graph and add the terminal nodes - if it hasn't been done before:
+        if(this.graph == null) {
+            CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, scoring);
+            this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
+            CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
+        }
 
         // 2.) Assign each node of this graph - except the root - a unique index:
         this.nodeIndices = new TObjectIntHashMap<>(this.graph.nodes.size());

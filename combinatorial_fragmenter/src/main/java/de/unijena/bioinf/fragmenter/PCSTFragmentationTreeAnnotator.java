@@ -8,8 +8,6 @@ import java.util.HashMap;
 
 public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculator{
 
-    private CombinatorialGraph graph;
-
     private HashMap<CombinatorialEdge, Integer> edgeIndices;
     private boolean isComputed;
     private boolean isInitialized;
@@ -21,13 +19,21 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
         this.isInitialized = false;
     }
 
+    public PCSTFragmentationTreeAnnotator(FTree fTree, CombinatorialGraph graph, CombinatorialFragmenterScoring scoring){
+        super(fTree, graph, scoring);
+        this.isComputed = false;
+        this.isInitialized = false;
+    }
+
     public void initialize(CombinatorialFragmenter.Callback2 furtherFragmentation){
         if(this.isInitialized) throw new IllegalStateException("This object is already initialized.");
 
-        // 1.: Creation of the combinatorial fragmentation graph:
-        CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, this.scoring);
-        this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
-        CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
+        // 1.: Creation of the combinatorial fragmentation graph - if it hasn't been computed yet:
+        if(this.graph == null) {
+            CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, this.scoring);
+            this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
+            CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
+        }
 
         // 2.: Compute a hash map which assigns each edge in the graph an index.
         this.edgeIndices = new HashMap<>();
@@ -146,11 +152,6 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
                 buildSubtree(solution, nextNode);
             }
         }
-    }
-
-    @Override
-    public CombinatorialGraph getCombinatorialGraph(){
-        return this.graph;
     }
 
     public boolean isInitialized(){
