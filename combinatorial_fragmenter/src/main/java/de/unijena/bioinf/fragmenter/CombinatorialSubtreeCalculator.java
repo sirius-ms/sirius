@@ -17,6 +17,12 @@ public abstract class CombinatorialSubtreeCalculator extends AbstractFragmentati
         this.subtree = new CombinatorialSubtree(molecule);
     }
 
+    public CombinatorialSubtreeCalculator(FTree fTree, CombinatorialGraph graph, CombinatorialFragmenterScoring scoring){
+        super(fTree, graph, scoring);
+        this.score = Double.NEGATIVE_INFINITY;
+        this.subtree = new CombinatorialSubtree(this.getMolecule());
+    }
+
     public abstract CombinatorialSubtree computeSubtree() throws Exception;
 
     /*
