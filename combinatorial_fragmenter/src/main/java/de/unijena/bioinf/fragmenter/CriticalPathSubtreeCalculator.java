@@ -9,7 +9,6 @@ import java.util.List;
 public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculator{
 
     private boolean isInitialized, isComputed;
-    private CombinatorialGraph graph;
     private TObjectIntHashMap<CombinatorialNode> vertexIndices;
     private double[] criticalPathScores;
 
@@ -22,13 +21,22 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
         this.addCompletePath = addCompletePath;
     }
 
+    public CriticalPathSubtreeCalculator(FTree fTree, CombinatorialGraph graph, CombinatorialFragmenterScoring scoring, boolean addCompletePath){
+        super(fTree, graph, scoring);
+        this.isInitialized = false;
+        this.isComputed = false;
+        this.addCompletePath = addCompletePath;
+    }
+
     public void initialize(CombinatorialFragmenter.Callback2 furtherFragmentation){
         if(this.isInitialized) throw new IllegalStateException("This object is already initialised.");
 
-        // 1. Create a CombinatorialFragmentationGraph:
-        CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule,scoring);
-        this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
-        CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
+        // 1. Create a CombinatorialFragmentationGraph - if it hasn't been computed yet:
+        if(this.graph == null) {
+            CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule, scoring);
+            this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
+            CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
+        }
 
         // 2. Determine a hashmap which assigns each CombinatorialNode in this.graph a specific integer index.
         this.vertexIndices = new TObjectIntHashMap<>();

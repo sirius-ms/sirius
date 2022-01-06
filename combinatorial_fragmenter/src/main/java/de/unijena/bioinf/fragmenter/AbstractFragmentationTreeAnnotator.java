@@ -11,6 +11,7 @@ public abstract class AbstractFragmentationTreeAnnotator {
     protected final FTree fTree;
     protected final MolecularGraph molecule;
     protected final CombinatorialFragmenterScoring scoring;
+    protected CombinatorialGraph graph;
 
     protected final HashMap<Fragment, ArrayList<CombinatorialFragment>> mapping;
 
@@ -20,6 +21,11 @@ public abstract class AbstractFragmentationTreeAnnotator {
         this.molecule = molecule;
         this.scoring = scoring;
         this.mapping = new HashMap<>();
+    }
+
+    public AbstractFragmentationTreeAnnotator(FTree fTree, CombinatorialGraph graph, CombinatorialFragmenterScoring scoring){
+        this(fTree, graph.root.fragment.parent, scoring);
+        this.graph = graph;
     }
 
     public abstract HashMap<Fragment, ArrayList<CombinatorialFragment>> computeMapping() throws Exception;
@@ -40,5 +46,7 @@ public abstract class AbstractFragmentationTreeAnnotator {
         return this.mapping;
     }
 
-    public abstract CombinatorialGraph getCombinatorialGraph();
+    public CombinatorialGraph getCombinatorialGraph(){
+        return this.graph;
+    }
 }
