@@ -44,6 +44,7 @@ public class WorkerInfo {
     private String version;
     private String host;
     private String prefix;
+    private int state;
 
     // heartbeat of the worker/ last request of the worker
     private long alive;
@@ -51,7 +52,7 @@ public class WorkerInfo {
     public WorkerInfo() {
     }
 
-    public WorkerInfo(long id, @NotNull WorkerType type, @NotNull EnumSet<PredictorType> supportedPredictors, @NotNull String version, String host, String prefix, long alive) {
+    public WorkerInfo(long id, @NotNull WorkerType type, @NotNull EnumSet<PredictorType> supportedPredictors, @NotNull String version, String host, String prefix, int state, long alive) {
         this.id = id;
         this.type = type;
         this.supportedPredictors = supportedPredictors;
@@ -59,13 +60,14 @@ public class WorkerInfo {
         this.host = host;
         this.alive = alive;
         this.prefix = prefix;
+        this.state = state;
     }
 
     public WorkerInfo(long id, @NotNull String type, @NotNull String supportedPredictors, @NotNull String version, String host, long alive) {
-        this(id, type, supportedPredictors, version, host, null, alive);
+        this(id, type, supportedPredictors, version, host, null, 1, alive);
     }
 
-    public WorkerInfo(long id, @NotNull String type, @NotNull String supportedPredictors, @NotNull String version, String host, String prefix, long alive) {
+    public WorkerInfo(long id, @NotNull String type, @NotNull String supportedPredictors, @NotNull String version, String host, String prefix, int state, long alive) {
         this(
                 id,
                 WorkerType.parse(type).iterator().next(),
@@ -73,6 +75,7 @@ public class WorkerInfo {
                 version,
                 host,
                 prefix,
+                state,
                 alive
         );
     }
@@ -157,6 +160,14 @@ public class WorkerInfo {
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
+    }
+
+    public int getState() {
+        return state;
+    }
+
+    public void setState(int state) {
+        this.state = state;
     }
 
     //endregion
