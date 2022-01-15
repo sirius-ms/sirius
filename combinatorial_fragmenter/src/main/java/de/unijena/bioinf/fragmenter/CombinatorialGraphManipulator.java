@@ -27,7 +27,10 @@ public class CombinatorialGraphManipulator {
         return bitset;
     }
 
-    // TODO: maybe remove hydrogen atoms from the molecular formulas
+    /* TODO: fragmentation without hydrogens but mapping and adding terminal nodes with hydrogens
+             --> because removing hydrogens causes a potential lose in information
+             --> e.g. C2H6 for ethan and C2H4 for ethen
+     */
     public static void addTerminalNodes(CombinatorialGraph graph, CombinatorialFragmenterScoring scoring, FTree fTree){
         MolecularGraph molecule = graph.root.fragment.parent;
 
