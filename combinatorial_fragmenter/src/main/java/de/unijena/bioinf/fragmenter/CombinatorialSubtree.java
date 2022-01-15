@@ -210,4 +210,8 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
     public String toString(){
         return this.toNewickString(this.root);
     }
+
+    public int[] toBinaryArray(CombinatorialGraph graph){
+        throw new UnsupportedOperationException();
+    }
 }
