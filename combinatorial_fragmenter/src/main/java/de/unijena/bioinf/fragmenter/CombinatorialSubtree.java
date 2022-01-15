@@ -120,6 +120,8 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
             CombinatorialEdge edge = subtreeRoot.incomingEdges.get(0);
             subtreeRoot.score = subtreeRoot.fragmentScore + edge.score;
             subtreeRoot.totalScore = edge.source.totalScore + subtreeRoot.score;
+            subtreeRoot.depth = (short) (edge.source.depth + 1);
+            subtreeRoot.bondbreaks = (short) (edge.source.bondbreaks + ((edge.cut1 != null) ? 1 : 0) + ((edge.cut2 != null) ? 1 : 0));
         }
         ArrayList<CombinatorialNode> queue = new ArrayList<>();
         for(CombinatorialEdge e : subtreeRoot.outgoingEdges) queue.add(e.target);
@@ -130,6 +132,8 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
 
             node.score = edge.score + node.fragmentScore;
             node.totalScore = edge.source.totalScore + node.score;
+            node.depth = (short) (edge.source.depth + 1);
+            node.bondbreaks = (short) (edge.source.bondbreaks + (edge.cut1 != null ? 1 : 0) + (edge.cut2 != null ? 1 : 0));
 
             for(CombinatorialEdge e : node.outgoingEdges) queue.add(e.target);
         }
