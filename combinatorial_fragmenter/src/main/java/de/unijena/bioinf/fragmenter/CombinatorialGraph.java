@@ -36,7 +36,6 @@ public class CombinatorialGraph {
             node = new CombinatorialNode(fragment);
             bitset2node.put(fragment.bitset,node);
             nodes.add(node);
-            node.fragmentScore = Float.NEGATIVE_INFINITY;
             node.score = Float.NEGATIVE_INFINITY;
             node.totalScore = Float.NEGATIVE_INFINITY;
         }
