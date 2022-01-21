@@ -18,13 +18,17 @@ public class CombinatorialFragment {
     protected final MolecularGraph parent;
     protected final BitSet bitset;
     protected final BitSet disconnectedRings;
-    protected MolecularFormula formula;
+    protected MolecularFormula formula; // --> in general, with hydrogens!!
     protected final boolean isRealFragment;
 
-    public CombinatorialFragment(MolecularGraph parent, BitSet bitset, BitSet disconnectedRings) {
+    public CombinatorialFragment(MolecularGraph parent, BitSet bitset, BitSet disconnectedRings){
+        this(parent, bitset, null, disconnectedRings);
+    }
+
+    public CombinatorialFragment(MolecularGraph parent, BitSet bitset, MolecularFormula formula, BitSet disconnectedRings) {
         this.parent = parent;
         this.bitset = bitset;
-        this.formula = null;
+        this.formula = formula;
         this.disconnectedRings = disconnectedRings;
         this.isRealFragment = bitset.length() <= parent.natoms;
     }
@@ -50,6 +54,8 @@ public class CombinatorialFragment {
         }
         try {
             return AtomContainerManipulator.extractSubstructure(parent.molecule, indizes);
+            // Atom objects in the resulting IAtomContainer are copies of the Atom objects in parent.molecule
+            // --> the number of implicit hydrogen atoms remains
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
@@ -78,11 +84,18 @@ public class CombinatorialFragment {
         return found;
     }
 
+    // now: number of all hydrogen atoms - explicit and implicit
     public int numberOfHydrogens() {
         if(!this.isRealFragment) return 0;
+        TableSelection sel = parent.getTableSelectionOfFormula();
+        int[] atomLabels = parent.getAtomLabels();
         int count=0;
         for (int b = bitset.nextSetBit(0); b>=0; b = bitset.nextSetBit(b+1)) {
-            count += parent.hydrogens[b];
+            if(atomLabels[b] == sel.hydrogenIndex()){
+                count++;
+            }else {
+                count += parent.hydrogens[b];
+            }
         }
         return count;
     }
@@ -102,17 +115,14 @@ public class CombinatorialFragment {
     }
 
     private void determineFormula() {
-        if(this.isRealFragment) {
-            final TableSelection sel = parent.getTableSelectionOfFormula();
-            short[] buffer = sel.makeCompomer();
-            int[] labels = parent.getAtomLabels();
-            for (int node = bitset.nextSetBit(0); node >= 0; node = bitset.nextSetBit(node + 1)) {
-                ++buffer[labels[node]];
-            }
-            this.formula = MolecularFormula.fromCompomer(sel, buffer);
-        }else{
-            this.formula = MolecularFormula.emptyFormula();
+        final TableSelection sel = parent.getTableSelectionOfFormula();
+        short[] buffer = sel.makeCompomer();
+        int[] labels = parent.getAtomLabels();
+        for (int node = bitset.nextSetBit(0); node >= 0; node = bitset.nextSetBit(node + 1)) {
+            ++buffer[labels[node]];
         }
+        buffer[sel.hydrogenIndex()] = (short) this.numberOfHydrogens();
+        this.formula = MolecularFormula.fromCompomer(sel, buffer);
     }
 
     public TIntArrayList bonds() {
