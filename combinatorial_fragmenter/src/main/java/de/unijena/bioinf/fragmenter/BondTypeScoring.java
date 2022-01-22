@@ -106,7 +106,7 @@ public class BondTypeScoring {
 
         @Override
         public double scoreFragment(CombinatorialNode fragment) {
-            return fragmentScores.get(fragment.fragment.getFormula());
+            return fragmentScores.get(fragment.fragment.getFormula().withoutHydrogen());
         }
 
         public double scoreEdge(CombinatorialEdge edge){

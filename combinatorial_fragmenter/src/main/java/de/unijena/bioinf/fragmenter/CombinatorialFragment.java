@@ -84,7 +84,13 @@ public class CombinatorialFragment {
         return found;
     }
 
-    // now: number of all hydrogen atoms - explicit and implicit
+    /**
+     * Returns the number of all hydrogen atoms (explicit and implicit) in this fragment.<br>
+     *
+     * If this object is not a real fragment, this method returns 0.
+     *
+     * @return number of explicit and implicit hydrogen atoms in this fragment
+     */
     public int numberOfHydrogens() {
         if(!this.isRealFragment) return 0;
         TableSelection sel = parent.getTableSelectionOfFormula();
@@ -100,20 +106,37 @@ public class CombinatorialFragment {
         return count;
     }
 
+    /**
+     * Returns the number of hydrogen atoms by which the given molecular formula and the molecular formula of this
+     * fragment differ.
+     *
+     * @param matcher another {@link MolecularFormula} object
+     * @return difference of hydrogen atoms
+     * @throws IllegalArgumentException if the given {@link MolecularFormula} differs not only in the number of hydrogen atoms
+     */
     public int hydrogenRearrangements(MolecularFormula matcher) {
-        MolecularFormula f = getFormula();
+        MolecularFormula f = this.getFormula().withoutHydrogen();
         final MolecularFormula hydrogens = matcher.subtract(f);
         if (hydrogens.numberOfHydrogens()!=hydrogens.atomCount()) {
-            throw new IllegalArgumentException("Molecular formulas do not match");
+            throw new IllegalArgumentException("The given molecular formula differs not only " +
+                    "in the number of hydrogen atoms");
         }
-        return numberOfHydrogens() - hydrogens.numberOfHydrogens();
+        return this.numberOfHydrogens() - hydrogens.numberOfHydrogens();
     }
 
+    /**
+     * In general, this method returns the molecular formula of this fragment including the hydrogen atoms.
+     *
+     * @return {@link MolecularFormula} object that represents the molecular formula of this fragment
+     */
     public MolecularFormula getFormula() {
         if(formula==null) determineFormula();
         return formula;
     }
 
+    /**
+     * This method computes the molecular formula of this fragment including the hydrogen atom.
+     */
     private void determineFormula() {
         final TableSelection sel = parent.getTableSelectionOfFormula();
         short[] buffer = sel.makeCompomer();
