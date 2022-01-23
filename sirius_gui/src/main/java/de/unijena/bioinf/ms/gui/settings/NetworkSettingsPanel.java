@@ -46,7 +46,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
  */
 public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListener, SettingsPanel {
     private Properties props;
-    private JCheckBox useCredentials, sslValidation;
+    private JCheckBox useCredentials, sslValidation, systemBrowser;
     private JComboBox<ProxyManager.ProxyStrategy> useProxy;
     private TwoColumnPanel cred;
     private JTextField proxyHost, proxyUser;
@@ -68,10 +68,17 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
         webserverURL = new JTextField(props.getProperty("de.unijena.bioinf.fingerid.web.host", PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host")));
         addNamed("Web service URL", webserverURL);
 
+
+
         sslValidation = new JCheckBox();
         sslValidation.setText("Enable SSL Validation:");
         sslValidation.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.security.sslValidation", "true")));
         add(sslValidation);
+
+        systemBrowser = new JCheckBox();
+        systemBrowser.setText("Use System Browser for SignUp:");
+        systemBrowser.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.ui.signUp.systemBrowser", "false")));
+        add(systemBrowser);
 
         add(new JXTitledSeparator("Proxy Configuration"));
         useProxy = new JComboBox<>(ProxyManager.ProxyStrategy.values());
@@ -156,6 +163,7 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
         }
 
         props.setProperty("de.unijena.bioinf.sirius.security.sslValidation", String.valueOf(sslValidation.isSelected()));
+        props.setProperty("de.unijena.bioinf.sirius.ui.signUp.systemBrowser", String.valueOf(systemBrowser.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.proxy", String.valueOf(useProxy.getSelectedItem()));
         props.setProperty("de.unijena.bioinf.sirius.proxy.credentials", String.valueOf(useCredentials.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.proxy.hostname", String.valueOf(proxyHost.getText()).trim());

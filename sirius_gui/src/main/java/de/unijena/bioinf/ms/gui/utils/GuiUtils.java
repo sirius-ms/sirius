@@ -24,11 +24,11 @@ package de.unijena.bioinf.ms.gui.utils;
  * 06.10.16.
  */
 
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,10 +37,14 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 
 /**
@@ -267,6 +271,34 @@ public class GuiUtils {
         pp.add(new JLabel(message == null ? "No results found!" : message));
         p.add(pp, BorderLayout.SOUTH);
         return p;
+    }
 
+    public static void openURL(URI url) throws IOException {
+        openURL(url, true);
+    }
+
+    public static void openURL(URI url, boolean useSystemBrowser) throws IOException {
+        openURL(url, null, useSystemBrowser);
+    }
+
+    public static void openURL(URI url, @Nullable String title, boolean useSystemBrowser) throws IOException {
+        openURL(MF, url, title, useSystemBrowser);
+    }
+
+    public static void openURL(@NotNull JFrame owner, @NotNull URI url, String title, boolean useSystemBrowser) throws IOException {
+        if (url == null)
+            new ErrorReportDialog(owner, "Cannot open empty URL!");
+
+        if (useSystemBrowser) {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(url);
+                return;
+            } else {
+                String message = "Could not Open URL in System Browser. Trying SIRIUS WebView or Please visit Page Manually" + url;
+                LoggerFactory.getLogger(GuiUtils.class).error(message);
+            }
+        }
+
+        new WebViewBrowserDialog(owner, title == null ? "SIRIUS WebView" : title, url);
     }
 }
