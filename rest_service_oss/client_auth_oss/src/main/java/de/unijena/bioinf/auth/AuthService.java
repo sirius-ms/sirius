@@ -229,7 +229,10 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     }
 
     public String signUpURL(String redirectUrl){
-        return service.createAuthorizationUrlBuilder().additionalParams(Map.of("screen_hint","signup","redirect_uri", redirectUrl)).build();
+        return service.createAuthorizationUrlBuilder().additionalParams(Map.of(
+                "screen_hint","signup",
+                "prompt","login",
+                "redirect_uri", redirectUrl)).build();
     }
 
     public void sendPasswordReset(String email) throws IOException, ExecutionException, InterruptedException {
