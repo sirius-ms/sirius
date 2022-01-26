@@ -100,8 +100,8 @@ public class MolecularGraph {
 
     public CombinatorialFragment asFragment() {
         BitSet bitset = new BitSet();
-        for (int i=0; i < natoms; ++i) bitset.set(i);;
-        return new CombinatorialFragment(this, bitset, new BitSet(bondsOfRings.length));
+        for (int i=0; i < natoms; ++i) bitset.set(i);
+        return new CombinatorialFragment(this, bitset, formula, new BitSet(bondsOfRings.length));
     }
 
     public IAtomContainer getMolecule() {
