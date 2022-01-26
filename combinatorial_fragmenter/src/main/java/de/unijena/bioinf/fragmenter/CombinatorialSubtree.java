@@ -189,7 +189,7 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         };
     }
 
-    // todo
+    // todo --> terminal nodes will also have an own MolecularFormula object
     private String nodeString(CombinatorialNode node){
         if(node == this.root){
             return node.fragment.toSMILES()+"[0,"+node.fragmentScore+",0];";
