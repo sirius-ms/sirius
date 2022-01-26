@@ -65,8 +65,8 @@ public class CombinatorialGraphManipulator {
             if(lst != null){
                 // in this case, there are nodes in 'graph' (and 'lst') with the same molecular formula base
                 BitSet terminalNodeBitSet = toBitSet(count);
-                terminalNodeBitSet.set(molecule.natoms);
-                CombinatorialFragment terminalFragment = new CombinatorialFragment(molecule,terminalNodeBitSet, new BitSet());
+                terminalNodeBitSet.set(molecule.natoms); // terminal nodes are not real fragment --> this bit characterises them
+                CombinatorialFragment terminalFragment = new CombinatorialFragment(molecule,terminalNodeBitSet,ftFrag.getFormula(),new BitSet());
 
                 for(CombinatorialNode node : lst){
                     graph.addReturnAlways(node, terminalFragment, null, null, scoring, null);
