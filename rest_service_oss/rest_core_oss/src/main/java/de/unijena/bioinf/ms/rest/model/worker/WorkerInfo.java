@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.rest.model.worker;
 
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,7 @@ import java.util.EnumSet;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkerInfo {
 
     private int id;
@@ -41,8 +43,10 @@ public class WorkerInfo {
     private String version;
     private String host;
 
-    // heartbeat of the worker/ last request of the worker
+    // heartbeat of the worker/last request of the worker
     private long alive;
+    // We should be able to compare against server time because client/user systems time can be wrong
+    private long serverTime = System.currentTimeMillis();
 
     public WorkerInfo() {
     }
@@ -139,6 +143,22 @@ public class WorkerInfo {
 
     public void setHost(String host) {
         this.host = host;
+    }
+
+    public long getServerTime() {
+        return serverTime;
+    }
+
+    public void setServerTime(long serverTime) {
+        this.serverTime = serverTime;
+    }
+
+    public boolean isAlive(long aliveDifference){
+        return serverTime - alive < aliveDifference;
+    }
+
+    public WorkerWithCharge asWorkerWithCharge(){
+        return WorkerWithCharge.of(this);
     }
     //endregion
 }
