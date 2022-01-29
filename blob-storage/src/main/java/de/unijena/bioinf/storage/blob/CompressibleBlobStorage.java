@@ -78,11 +78,6 @@ public class CompressibleBlobStorage<Storage extends BlobStorage> extends Abstra
     }
 
     @Override
-    public boolean deleteBlob(Path relative) throws IOException {
-        return rawStorage.deleteBlob(relative);
-    }
-
-    @Override
     public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
         rawStorage.withWriter(addExt(relative), (out) ->
                 Compressible.withCompression(out, getCompression(), withStream));
