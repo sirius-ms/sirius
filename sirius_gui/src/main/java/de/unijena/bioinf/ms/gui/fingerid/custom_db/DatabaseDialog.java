@@ -281,7 +281,8 @@ public class DatabaseDialog extends JDialog {
 
             final Box box = Box.createVerticalBox();
             box.setAlignmentX(Component.LEFT_ALIGNMENT);
-            final JLabel label = new JLabel("<html>Please insert the compounds of your custom database here (one compound per line). You can use SMILES and InChI to describe your compounds. It is also possible to drag and drop files with InChI, SMILES or in other molecule formats (e.g. MDL) into this text field.");
+            final JLabel label = new JLabel(
+                    "<html>Please insert the compounds of your custom database as SMILES here (one compound per line). It is also possible to drag and drop files with SMILES into this text field.");
             label.setAlignmentX(Component.LEFT_ALIGNMENT);
             box.add(label);
             final JTextArea textArea = new JTextAreaDropImage();
