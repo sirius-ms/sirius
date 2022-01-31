@@ -30,11 +30,11 @@ import de.unijena.bioinf.fingerid.blast.ScoringMethodFactory;
 /**
  * Created by martin on 06.08.18.
  */
-public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
+public class CombinedFeatureCreatorBIODISTANCE2TO5 extends CombinedFeatureCreator {
 
     //all confidence means the pubchem confidence score for this input. Has to be always computet
     // same is the tophit in pubchem the same as in the reduced db.
-    public CombinedFeatureCreatorBIODISTANCE(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, FingerblastScoring<?> covscore) {
+    public CombinedFeatureCreatorBIODISTANCE2TO5(Scored<FingerprintCandidate>[] scored_array, Scored<FingerprintCandidate>[] scored_array_covscore, Scored<FingerprintCandidate>[] scored_array_filtered, Scored<FingerprintCandidate>[] scored_array_covscore_filtered, PredictionPerformance[] performance, FingerblastScoring<?> covscore) {
         super(
                 //new PlattFeatures(),
                 //  new LogPvalueDistanceFeatures(scored_array,scored_array,1),
@@ -48,12 +48,12 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
                 //new ScoreFeatures(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array_covscore,scored_array_covscore),
 
                 //  new LogDistanceFeatures(scored_array,scored_array,1),
-               // new LogDistanceFeatures(scored_array_covscore,scored_array_covscore,1),
+                // new LogDistanceFeatures(scored_array_covscore,scored_array_covscore,1),
 
-               // new LogPvalueFeatures(scored_array,scored_array),
-              //  new LogPvalueFeatures(scored_array_covscore,scored_array_covscore),
+                // new LogPvalueFeatures(scored_array,scored_array),
+                //  new LogPvalueFeatures(scored_array_covscore,scored_array_covscore),
 
-               // new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore,scored_array[0],covscore),
+                // new PvalueScoreDiffScorerFeatures(scored_array_covscore,scored_array_covscore,scored_array[0],covscore),
 
                 //new ScoreFeaturesNonBio(covscore,scored_array_covscore,scored_array_covscore),
                 new ScoreFeaturesNonBio<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
@@ -71,7 +71,7 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
                 //these are bio features and can have a filtered list as input
                 new FptLengthFeatureHit(scored_array_covscore_filtered),
 
-                 new CandlistSizeFeatures(scored_array_covscore_filtered),
+                new CandlistSizeFeatures(scored_array_covscore_filtered),
 
                 //new AllConfidenceScoreSameHitFeatures(all_confidence,same),
                 //new AllConfidenceScoreDiffHitFeatures(all_confidence,same),
@@ -96,5 +96,11 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
                 new TanimotoDistanceFeatures(scored_array, scored_array_filtered, 1),
                 new TanimotoToPredFeatures(scored_array, scored_array_filtered)
         );
+
+        for (FeatureCreator creator : featureCreators){
+            if (creator instanceof LogDistanceFeatures) creator.setMaxQuartil(50);
+            if (creator instanceof  DistanceFeatures) creator.setMaxQuartil(50);
+
+        }
     }
 }

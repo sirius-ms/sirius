@@ -46,6 +46,8 @@ import java.util.function.Predicate;
  */
 public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> implements ConfidenceScorer {
     public static final String NO_DISTANCE_ID = "Nodist";
+    public static final String DISTANCE_2_5_ID = "dist2";
+    public static final String DISTANCE_6_10_ID = "dist6";
     public static final String DISTANCE_ID = "dist";
 
     public static final String DB_ALL_ID = "All";
@@ -53,7 +55,8 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
 
     public static final String CE_LOW = "feLow";
     public static final String CE_MED = "feMed";
-    public static final String CE_HIGH = "feHi";
+    public static final String CE_HIGH = "feHigh";
+    public static final String CE_vHIGH = "fevHigh";
     public static final String CE_RAMP = "feRAMP";
 
 
@@ -119,11 +122,20 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
             comb = new CombinedFeatureCreatorALL(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, csiPerformances, covarianceScoring);
             distanceType = null;
             dbType = DB_ALL_ID;
-        } else if (moreThanOneUniqueFPs(rankedSearchDBCandidatesCov)) { //calculate score for filtered lists
+        } else if (rankedSearchDBCandidatesCov.length > 10) { //calculate score for filtered lists
             comb = new CombinedFeatureCreatorBIODISTANCE(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring);
             distanceType = DISTANCE_ID;
             dbType = DB_BIO_ID;
-        } else {
+        } else if (rankedSearchDBCandidatesCov.length > 1 && rankedSearchDBCandidatesCov.length < 6){
+            comb = new CombinedFeatureCreatorBIODISTANCE2TO5(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring);
+            distanceType = DISTANCE_2_5_ID;
+            dbType = DB_BIO_ID;
+        } else if (rankedSearchDBCandidatesCov.length > 5 && rankedSearchDBCandidatesCov.length < 11) {
+            comb = new CombinedFeatureCreatorBIODISTANCE6TO10(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring);
+            distanceType = DISTANCE_6_10_ID;
+            dbType = DB_BIO_ID;
+        }
+        else {
             comb = new CombinedFeatureCreatorBIONODISTANCE(rankedPubchemCandidatesCSI, rankedPubchemCandidatesCov, rankedSearchDBCandidatesCSI, rankedSearchDBCandidatesCov, csiPerformances, covarianceScoring);
             distanceType = NO_DISTANCE_ID;
             dbType = DB_BIO_ID;
@@ -132,15 +144,6 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
         return calculateConfidence(features, dbType, distanceType, ce);
     }
 
-    private boolean moreThanOneUniqueFPs(Scored<FingerprintCandidate>[] candidates) {
-        if (candidates.length < 2)
-            return false;
-        short[] first = candidates[0].getCandidate().getFingerprint().toIndizesArray();
-        for (int i = 1; i < candidates.length; i++)
-            if (!Arrays.equals(first, candidates[i].getCandidate().getFingerprint().toIndizesArray()))
-                return true;
-        return false;
-    }
 
     private double calculateConfidence(double[] feature, @NotNull String dbType, @Nullable String distanceType, @NotNull String collisionEnergy) {
         final String id = distanceType != null ? collisionEnergy + "_" + dbType + distanceType + ".svm" : collisionEnergy + "_" + dbType + ".svm";
@@ -164,6 +167,7 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
             ceMin = Math.min(ceMin, ce.getMinEnergy());
             if (ceMin != ceMax) return CE_RAMP;
         }
+        //TODO: Markus: We need Instrument information here
 
         if (ceMin <= 15) //10
             return CE_LOW;

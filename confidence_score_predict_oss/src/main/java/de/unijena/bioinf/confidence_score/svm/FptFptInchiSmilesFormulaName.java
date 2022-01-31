@@ -36,6 +36,7 @@ public class FptFptInchiSmilesFormulaName {
     String name;
     Fingerprint true_fpt;
     String smiles;
+    String top_hit_inchikey;
 
     public FptFptInchiSmilesFormulaName(ProbabilityFingerprint fpt, Fingerprint true_fpt,String inchikey,String smiles, MolecularFormula formula, String name){
 
@@ -65,5 +66,13 @@ public class FptFptInchiSmilesFormulaName {
 
     public String getInchikey() {
         return inchikey;
+    }
+
+    public String getTop_hit_inchikey() {
+        return top_hit_inchikey;
+    }
+
+    public void setTop_hit_inchikey(String key){
+        this.top_hit_inchikey=key;
     }
 }

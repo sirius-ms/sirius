@@ -36,6 +36,8 @@ public class AllConfidenceScoreSameHitFeatures implements FeatureCreator {
     private final String[] names;
     double conf;
     boolean same;
+    int min_quartil=1;
+    int max_quartil=99;
     public AllConfidenceScoreSameHitFeatures(double conf, boolean same){
         names = new String[]{"AllConfScoreSameHit"};
         this.conf=conf;
@@ -51,6 +53,16 @@ public class AllConfidenceScoreSameHitFeatures implements FeatureCreator {
     }
 
     @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
+    }
+
+    @Override
     public double[] computeFeatures(@Nullable ParameterStore ignored) {
         final double[] scores = new double[1];
         if(same)
@@ -63,6 +75,17 @@ public class AllConfidenceScoreSameHitFeatures implements FeatureCreator {
     public int getFeatureSize() {
         return 1;
     }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+    max_quartil=quartil;
+    }
+
 
     @Override
     public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {

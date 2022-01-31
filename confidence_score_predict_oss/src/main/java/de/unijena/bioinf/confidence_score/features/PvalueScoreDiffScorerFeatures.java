@@ -37,6 +37,8 @@ import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 public class PvalueScoreDiffScorerFeatures<P> implements FeatureCreator {
 
     Scored<FingerprintCandidate>[] rankedCands;
+    int min_quartil=1;
+    int max_quartil=99;
     Scored<FingerprintCandidate>[] rankedCands_filtered;
     Scored<FingerprintCandidate> best_hit_scorer;
 
@@ -59,6 +61,16 @@ public class PvalueScoreDiffScorerFeatures<P> implements FeatureCreator {
     }
 
     @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
+    }
+
+    @Override
     public double[] computeFeatures(ParameterStore para) {
 
         double[] pvalueScore = new double[1];
@@ -77,6 +89,16 @@ public class PvalueScoreDiffScorerFeatures<P> implements FeatureCreator {
     @Override
     public int getFeatureSize() {
         return 1;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+        max_quartil=quartil;
     }
 
     @Override

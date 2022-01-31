@@ -21,22 +21,26 @@
 package de.unijena.bioinf.confidence_score.features;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.CompoundWithAbstractFP;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.confidence_score.FeatureCreator;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
-import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by martin on 20.06.18.
  */
-public class SiriusScoreFeatures implements FeatureCreator {
-
+public class Sqrt3PvalueKDEFeatures implements FeatureCreator {
+    Scored<FingerprintCandidate>[] rankedCandidates;
+    Scored<FingerprintCandidate>[] rankedCandidates_filtered;
+    public int weight_direction = -1;
     int min_quartil=1;
     int max_quartil=99;
+
     @Override
     public int weight_direction() {
         return weight_direction;
@@ -52,23 +56,23 @@ public class SiriusScoreFeatures implements FeatureCreator {
         return max_quartil;
     }
 
-    public int weight_direction = 1;
+    public Sqrt3PvalueKDEFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered){
+        this.rankedCandidates=rankedCandidates;
+        this.rankedCandidates_filtered=rankedCandidates_filtered;
+    }
+
 
     @Override
-    public double[] computeFeatures(ParameterStore treePara) {
-        final FTree tree = treePara.get(FTree.class).orElseThrow();
+    public double[] computeFeatures(@Nullable ParameterStore ignored) {
+        assert rankedCandidates[0].getScore() >= rankedCandidates[rankedCandidates.length - 1].getScore();
 
-        // double[] scores= new double[4];
-        double[] scores = new double[1];
-//        TreeStatistics current_tree_scores = idresult.getRawTree().getAnnotationOrThrow(TreeStatistics.class);
-        // scores[0]=current_tree_scores.getExplainedIntensityOfExplainablePeaks();
-        //scores[1]= current_tree_scores.getExplainedIntensity();
-        //scores[2]=current_tree_scores.getRatioOfExplainedPeaks();
-        //scores[3]= idresult.getRawTree().getTreeWeight();
-        scores[0] = new FTreeMetricsHelper(tree).getSiriusScore();
+        double[] return_value = new double[1];
 
-        return scores;
-
+        PvalueScoreUtils utils = new PvalueScoreUtils();
+        double pvalue_kde;
+        pvalue_kde = utils.compute_pvalue_with_KDE(rankedCandidates, rankedCandidates_filtered, rankedCandidates_filtered[0]);
+        return_value[0] = Math.pow(pvalue_kde,(1d/3d));
+        return return_value;
     }
 
     @Override
@@ -98,16 +102,9 @@ public class SiriusScoreFeatures implements FeatureCreator {
 
     @Override
     public String[] getFeatureNames() {
-        String[] names = new String[getFeatureSize()];
-      //  names[0] = "explIntExplPeaks";
-       // names[1] = "explInt";
-       // names[2] = "ratioExplPeaks";
-       // names[3] = "score";
-        names[0] = "sirius score";
-
-
-        return names;
-
+        String[] name = new String[1];
+        name[0]="Sqrt3PvalueScoreKDE";
+        return name;
     }
 
     @Override
