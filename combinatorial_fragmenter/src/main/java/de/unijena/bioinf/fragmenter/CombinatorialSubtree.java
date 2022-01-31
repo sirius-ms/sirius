@@ -1,5 +1,6 @@
 package de.unijena.bioinf.fragmenter;
 
+import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.interfaces.IBond;
 
 import java.util.*;
@@ -58,7 +59,7 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
             parent.outgoingEdges.remove(edge);
             node.incomingEdges.remove(edge);
 
-            float subtreeScore = node.fragmentScore;
+            double subtreeScore = node.fragmentScore;
             ArrayList<CombinatorialNode> subtreeNodes = new ArrayList<>();
             subtreeNodes.add(node);
             while(!subtreeNodes.isEmpty()){
@@ -73,7 +74,7 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
                 }
             }
 
-            this.score = this.score - subtreeScore - edge.score;
+            this.score = (float) (this.score - subtreeScore - edge.score);
             return true;
         }else{
             return false;
@@ -139,6 +140,46 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         }
     }
 
+    /**
+     * Returns an {@link ArrayList} containing all nodes in this graph which are sorted
+     * regarding to their {@link BitSet} object. In this case, the {@link BitSet} represents a binary number.
+     *
+     * @return a list contained all nodes sorted regarding to their {@link BitSet}
+     */
+    public ArrayList<CombinatorialNode> getSortedNodeList(){
+        ArrayList<CombinatorialNode> sortedList = new ArrayList<>(this.nodes);
+        sortedList.add(this.root);
+        sortedList.sort((n1, n2) -> {
+            int num1 = 0, num2 = 0;
+            for (int i = 0; i <= this.root.fragment.parent.natoms; i++) {
+                num1 = num1 + (n1.fragment.bitset.get(i) ? (int) Math.pow(2, i) : 0);
+                num2 = num2 + (n2.fragment.bitset.get(i) ? (int) Math.pow(2, i) : 0);
+            }
+            return num1 - num2;
+        });
+        return sortedList;
+    }
+
+    public double[][] getAdjacencyMatrix(){
+        ArrayList<CombinatorialNode> sortedNodeList = this.getSortedNodeList();
+        TObjectIntHashMap<CombinatorialNode> nodeIndices = new TObjectIntHashMap<>(this.numberOfNodes());
+        for(int i = 0; i < this.numberOfNodes(); i++) nodeIndices.put(sortedNodeList.get(i), i);
+
+        double[][] adjMatrix = new double[this.numberOfNodes()][this.numberOfNodes()];
+        for(double[] row : adjMatrix) Arrays.fill(row, Double.NEGATIVE_INFINITY);
+
+        for(int i = 0; i < this.numberOfNodes(); i++){
+            CombinatorialNode node = sortedNodeList.get(i);
+            for(CombinatorialEdge edge : node.outgoingEdges){
+                CombinatorialNode adjNode = edge.target;
+                int adjNodeIdx = nodeIndices.get(adjNode);
+                adjMatrix[i][adjNodeIdx] = edge.score + adjNode.fragmentScore;
+            }
+        }
+
+        return adjMatrix;
+    }
+
     public float getScore(){
         return this.score;
     }
@@ -189,20 +230,16 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         };
     }
 
-    // todo --> terminal nodes will also have an own MolecularFormula object
+    // todo
     private String nodeString(CombinatorialNode node){
         if(node == this.root){
             return node.fragment.toSMILES()+"[0,"+node.fragmentScore+",0];";
         }else {
+            CombinatorialEdge edge = node.incomingEdges.get(0);
             if(node.fragment.isRealFragment) {
-                CombinatorialEdge edge = node.incomingEdges.get(0);
                 return node.fragment.toSMILES() + "[" + edge.score + "," + node.fragmentScore + "," + node.bondbreaks + "]";
             }else{
-                // in this case, node is an artificially added CombinatorialNode --> terminal node
-                // all nodes that are connected to this terminal node share the same molecular formula
-                CombinatorialEdge edge = node.incomingEdges.get(0);
-                CombinatorialNode parentNode = edge.source;
-                return parentNode.fragment.getFormula().toString() + "[" + edge.score + "," + node.fragmentScore + "," + node.bondbreaks + "]";
+                return node.fragment.getFormula() + "[" + edge.score + "," + node.fragmentScore + "," + node.bondbreaks + "]";
             }
         }
     }
