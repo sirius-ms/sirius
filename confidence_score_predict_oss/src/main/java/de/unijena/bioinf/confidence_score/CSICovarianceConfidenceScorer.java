@@ -167,13 +167,13 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
             ceMin = Math.min(ceMin, ce.getMinEnergy());
             if (ceMin != ceMax) return CE_RAMP;
         }
-        //TODO: Markus: We need Instrument information here
 
-        if (ceMin <= 15) //10
+        if (ceMin <= 20) //10
             return CE_LOW;
-        else if (ceMin < 30) //20
+        else if (ceMin <= 40) //20
             return CE_MED;
-        else
+        else if (ceMin <=60)
             return CE_HIGH; //40
+        else return CE_vHIGH;
     }
 }
