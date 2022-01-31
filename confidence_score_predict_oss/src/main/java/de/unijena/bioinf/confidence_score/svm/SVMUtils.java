@@ -23,6 +23,11 @@ package de.unijena.bioinf.confidence_score.svm;
 
 
 
+import de.unijena.bioinf.confidence_score.CombinedFeatureCreator;
+import de.unijena.bioinf.confidence_score.CombinedFeatureCreatorBIODISTANCE2TO5;
+import de.unijena.bioinf.confidence_score.CombinedFeatureCreatorBIODISTANCE6TO10;
+import de.unijena.bioinf.confidence_score.FeatureCreator;
+
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
@@ -57,10 +62,13 @@ public class SVMUtils {
     }
 
 
-    public static SVMScales calculateScales(double[][] features) {
+    public static SVMScales calculateScales(double[][] features, CombinedFeatureCreator comb) {
 
 
         //Normalisation
+
+        ArrayList<FeatureCreator> creator_list = comb.featureCreators;
+
 
         double[] max_values_for_feature = new double[features[0].length];
         double[] min_values_for_feature = new double[features[0].length];
@@ -69,19 +77,28 @@ public class SVMUtils {
             min_values_for_feature[i] = Double.MAX_VALUE;
         }
 
-
         for (int i = 0; i < features[0].length; i++) {
+            ArrayList<Double> value_list = new ArrayList<>();
 
             for (int j = 0; j < features.length; j++) {
+                value_list.add(features[j][i]);
 
-                if (features[j][i] > max_values_for_feature[i]) {
-                    max_values_for_feature[i] = features[j][i];
-                }
-                if (features[j][i] < min_values_for_feature[i]) {
-                    min_values_for_feature[i] = features[j][i];
-                }
+               // if (features[j][i] > max_values_for_feature[i]) {
+                 //   max_values_for_feature[i] = features[j][i];
+              //  }
+                //if (features[j][i] < min_values_for_feature[i]) {
+                  //  min_values_for_feature[i] = features[j][i];
+               // }
 
             }
+            Collections.sort(value_list);
+            int min_quartile = creator_list.get(i).min_quartil();
+            int max_quartile = creator_list.get(i).max_quartil();
+            int index_min = (int) Math.ceil(((double)min_quartile/100d)*value_list.size());
+            int index_max= (int) Math.ceil(((double)max_quartile/100d)*value_list.size());
+            min_values_for_feature[i]=value_list.get(index_min);
+            max_values_for_feature[i]=value_list.get(index_max);
+            System.out.println(min_quartile+ " "+max_quartile+" "+index_min+" "+index_max+" "+min_values_for_feature[i]+" "+max_values_for_feature[i]);
 
 
         }
@@ -96,9 +113,6 @@ public class SVMUtils {
         ArrayList<Double>[] value_lists = new ArrayList[feature_amount];
         for (int i = 0; i < value_lists.length; i++) value_lists[i] = new ArrayList<>();
 
-        ArrayList<Double>[] mAD_lists = new ArrayList[feature_amount];
-        for (int i = 0; i < mAD_lists.length; i++) mAD_lists[i] = new ArrayList<>();
-
         double[] medians = new double[feature_amount];
         double[] stddevs = new double[feature_amount];
         double[] stddevs_mean = new double[feature_amount];
@@ -108,23 +122,25 @@ public class SVMUtils {
 
             for (int j = 0; j < features.length; j++) {
 
-                value_lists[i].add(features[j][i]);
+                if(features[j][i]<min_values_for_feature[i])value_lists[i].add(min_values_for_feature[i]);
+                else if( features[j][i]>max_values_for_feature[i])value_lists[i].add(max_values_for_feature[i]);
+                else  value_lists[i].add(features[j][i]);
 
             }
 
 
         }
 
-        /**
+       /**
          *
          * collect medians
          */
-
+/*
         for (int i = 0; i < value_lists.length; i++) {
 
             Collections.sort(value_lists[i]);
             medians[i] = value_lists[i].get(value_lists[i].size() / 2);
-        }
+        }*/
 
         /**
          *
@@ -142,23 +158,6 @@ public class SVMUtils {
         }
 
 
-        for (int i = 0; i < feature_amount; i++) {
-
-            for (int j = 0; j < features.length; j++) {
-
-                mAD_lists[i].add(Math.abs(medians[i] - features[j][i]));
-
-            }
-
-        }
-
-
-        for (int i = 0; i < mAD_lists.length; i++) {
-
-            Collections.sort(mAD_lists[i]);
-            stddevs[i] = 1.462 * mAD_lists[i].get(mAD_lists[i].size() / 2);
-
-        }
 
         for (int i = 0; i < value_lists.length; i++) {
             double sum = 0;
