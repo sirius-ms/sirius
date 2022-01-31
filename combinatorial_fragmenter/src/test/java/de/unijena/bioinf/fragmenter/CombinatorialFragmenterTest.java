@@ -129,61 +129,47 @@ public class CombinatorialFragmenterTest {
     }
 
     @Test
-    public void testCreateCombinatorialGraph(){
+    public void testCreateCombinatorialGraphWithoutFragmentationConstraint(){
         try{
             String smiles = "C1CC1";
             SmilesParser parser = new SmilesParser(SilentChemObjectBuilder.getInstance());
             MolecularGraph mol = new MolecularGraph(parser.parseSmiles(smiles));
-
             CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(mol);
             CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(n -> true);
 
-            assertEquals(6,graph.getNodes().size());
+            assertEquals(7,graph.numberOfNodes());
 
-            CombinatorialNode root = graph.getRoot();
-            assertEquals(0f, root.fragmentScore, 0);
-            assertEquals(0, root.incomingEdges.size());
-            assertEquals(6, root.outgoingEdges.size());
-
-
-            BitSet first = new BitSet(3); first.set(0);
-            BitSet second = new BitSet(3); second.set(1);
-            BitSet third = new BitSet(3); third.set(2);
-            BitSet fstScnd = new BitSet(3); fstScnd.set(0,2);
-            BitSet fstThrd = new BitSet(3); fstThrd.set(0); fstThrd.set(2);
-            BitSet scndThrd = new BitSet(3); scndThrd.set(1,3);
-
-            for(CombinatorialEdge edge : root.outgoingEdges){
-                CombinatorialNode node = edge.target;
-                BitSet fragBitSet = node.fragment.bitset;
-
-                assertEquals(-2, edge.score, 0);
-                assertEquals(0, node.fragmentScore, 0);
-                assertEquals(-2d, node.score, 0);
-                assertEquals(-2d, node.totalScore, 0);
-
-                if(fragBitSet.equals(first) || fragBitSet.equals(second) || fragBitSet.equals(third)){
-                    assertEquals(0, node.outgoingEdges.size());
-                    assertEquals(3, node.incomingEdges.size());
-                }else if(fragBitSet.equals(fstScnd) || fragBitSet.equals(fstThrd) || fragBitSet.equals(scndThrd)){
-                    assertEquals(1, node.incomingEdges.size());
-                    assertEquals(2, node.outgoingEdges.size());
-
-                    for(CombinatorialEdge edge2 : node.outgoingEdges) {
-                        String fragStr = edge2.target.fragment.bitset.toString();
-                        assertEquals(-1d, edge2.score, 0);
-
-                        if (fragBitSet.equals(fstScnd)) {
-                            assertTrue(fragStr.equals("{0}") || fragStr.equals("{1}"));
-                        } else if (fragBitSet.equals(fstThrd)) {
-                            assertTrue(fragStr.equals("{0}") || fragStr.equals("{2}"));
-                        } else {
-                            assertTrue(fragStr.equals("{1}") || fragStr.equals("{2}"));
-                        }
-                    }
-                }else{
-                    fail("The graph contains another fragment.");
+            // Convert the sorted node list into an integer array - each bitset is seen as a binary number:
+            ArrayList<CombinatorialNode> sortedNodeList = graph.getSortedNodeList();
+            int[] numList = sortedNodeList.stream().mapToInt(n -> {
+                int num = 0;
+                for(int i = 0; i < mol.natoms; i++){
+                    num = num + (n.fragment.bitset.get(i) ? (int) Math.pow(2,i) : 0);
                 }
+                return num;
+            }).toArray();
+            int[] bondbreaks = sortedNodeList.stream().mapToInt(n -> n.bondbreaks).toArray();
+            int[] depths = sortedNodeList.stream().mapToInt(n -> n.depth).toArray();
+
+            assertArrayEquals(new int[]{1,2,3,4,5,6,7}, numList);
+            assertArrayEquals(new int[]{1,1,1,1,1,1,0}, depths);
+            assertArrayEquals(new int[]{2,2,2,2,2,2,0}, bondbreaks);
+
+            // Compare the adjacency matrix for topology and edge+fragment scores:
+            double[][] adjMatrix = graph.getAdjacencyMatrix();
+
+            double minusInf = Double.NEGATIVE_INFINITY;
+            double[][] expectedAdjMatrix = new double[][]{
+                    {minusInf, minusInf, minusInf, minusInf, minusInf,minusInf,minusInf},
+                    {minusInf, minusInf, minusInf, minusInf, minusInf,minusInf,minusInf},
+                    {-1, -1, minusInf, minusInf, minusInf, minusInf, minusInf},
+                    {minusInf, minusInf, minusInf, minusInf, minusInf,minusInf,minusInf},
+                    {-1, minusInf, minusInf, -1, minusInf,minusInf,minusInf},
+                    {minusInf, -1, minusInf, -1, minusInf,minusInf,minusInf},
+                    {-2,-2,-2,-2,-2,-2, minusInf}};
+
+            for(int i = 0; i < graph.numberOfNodes(); i++){
+                assertArrayEquals(expectedAdjMatrix[i], adjMatrix[i], 0.0);
             }
 
         } catch (InvalidSmilesException e) {

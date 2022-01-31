@@ -26,7 +26,7 @@ public class CombinatorialFragmenter {
 
         @Override
         public double scoreEdge(CombinatorialEdge edge){
-            return scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) + (edge.getCut2() != null ? scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) : 0);
+            return (edge.getCut1() != null ? scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) : 0) + (edge.getCut2() != null ? scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) : 0);
         }
     };
 
