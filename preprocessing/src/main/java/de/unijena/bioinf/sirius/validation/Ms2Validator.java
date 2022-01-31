@@ -32,6 +32,7 @@ import de.unijena.bioinf.ChemistryBase.ms.inputValidators.InvalidException;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -53,6 +54,7 @@ public class Ms2Validator extends Ms1Validator {
         checkIonization(warn, repair, input);
         checkMergedMs1(warn, repair, input);
         checkIonMass(warn, repair, input);
+        correctCollisionEnergy(warn, repair, input);
         return true;
     }
 
@@ -79,6 +81,33 @@ public class Ms2Validator extends Ms1Validator {
                 }
             }
 
+
+        }
+    }
+
+    private void correctCollisionEnergy(Warning warn,boolean repair, MutableMs2Experiment input) {
+        HashMap<String, Pair<Double,Double>> instrumentCorrection = new HashMap<>(); //Map saves correction values for min and max energy separatly
+        instrumentCorrection.put("Bruker Q-ToF (LCMS)", new Pair<>(5d,5d));
+        instrumentCorrection.put("Q-ToF (LCMS)", new Pair<>(5d,5d));
+        instrumentCorrection.put("Tripple-Quadrupole", new Pair<>(5d,5d));
+
+        String instrumentType = input.getAnnotationOrNull(MsInstrumentation.class).description();
+
+        for (MutableMs2Spectrum spectrum : input.getMs2Spectra()) {
+            if (Double.isNaN(spectrum.getCollisionEnergy().getMinEnergySource())) {
+                if (instrumentCorrection.containsKey(instrumentType) && !spectrum.getCollisionEnergy().equals(CollisionEnergy.none())) {
+
+                    spectrum.getCollisionEnergy().setMinEnergySource(spectrum.getCollisionEnergy().getMinEnergy());
+                    spectrum.getCollisionEnergy().setMaxEnergySource(spectrum.getCollisionEnergy().getMaxEnergy());
+
+                    spectrum.getCollisionEnergy().setMinEnergy(spectrum.getCollisionEnergy().getMinEnergy() + instrumentCorrection.get(instrumentType).getFirst());
+                    spectrum.getCollisionEnergy().setMaxEnergy(spectrum.getCollisionEnergy().getMaxEnergy() + instrumentCorrection.get(instrumentType).getSecond());
+
+                }else{
+                    spectrum.getCollisionEnergy().setMinEnergySource(spectrum.getCollisionEnergy().getMinEnergy());
+                    spectrum.getCollisionEnergy().setMaxEnergySource(spectrum.getCollisionEnergy().getMaxEnergy());
+                }
+            }
 
         }
     }
