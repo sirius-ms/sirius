@@ -36,6 +36,8 @@ public class AllConfidenceScoreDiffHitFeatures implements FeatureCreator {
     private final String[] names;
     double conf;
     boolean same;
+    int min_quartil=1;
+    int max_quartil=99;
     public AllConfidenceScoreDiffHitFeatures(double conf, boolean same){
         names = new String[]{"AllConfScoreDiffHit"};
         this.conf=conf;
@@ -48,6 +50,16 @@ public class AllConfidenceScoreDiffHitFeatures implements FeatureCreator {
     @Override
     public int weight_direction() {
         return -1;
+    }
+
+    @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
     }
 
     @Override
@@ -65,6 +77,17 @@ public class AllConfidenceScoreDiffHitFeatures implements FeatureCreator {
     public int getFeatureSize() {
         return 1;
     }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+        max_quartil=quartil;
+    }
+
 
     @Override
     public boolean isCompatible(ProbabilityFingerprint query, CompoundWithAbstractFP<Fingerprint>[] rankedCandidates) {
