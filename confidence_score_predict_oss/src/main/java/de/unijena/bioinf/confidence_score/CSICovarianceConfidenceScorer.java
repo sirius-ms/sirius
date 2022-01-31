@@ -162,7 +162,7 @@ public class CSICovarianceConfidenceScorer<S extends FingerblastScoring<?>> impl
         double ceMax = Double.MIN_VALUE;
         for (Ms2Spectrum<?> spec : spectra) {
             CollisionEnergy ce = spec.getCollisionEnergy();
-            if (ce == null) return CE_RAMP;
+            if (ce.equals(CollisionEnergy.none())) return CE_RAMP;
             ceMax = Math.max(ceMax, ce.getMaxEnergy());
             ceMin = Math.min(ceMin, ce.getMinEnergy());
             if (ceMin != ceMax) return CE_RAMP;
