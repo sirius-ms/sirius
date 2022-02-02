@@ -150,10 +150,14 @@ public class CombinatorialFragmenterTest {
             }).toArray();
             int[] bondbreaks = sortedNodeList.stream().mapToInt(n -> n.bondbreaks).toArray();
             int[] depths = sortedNodeList.stream().mapToInt(n -> n.depth).toArray();
+            double[] totalScores = sortedNodeList.stream().mapToDouble(n -> n.totalScore).toArray();
+            double[] scores = sortedNodeList.stream().mapToDouble(n -> n.score).toArray();
 
             assertArrayEquals(new int[]{1,2,3,4,5,6,7}, numList);
             assertArrayEquals(new int[]{1,1,1,1,1,1,0}, depths);
             assertArrayEquals(new int[]{2,2,2,2,2,2,0}, bondbreaks);
+            assertArrayEquals(new double[]{-2.0,-2.0,-2.0,-2.0,-2.0,-2.0,0.0}, totalScores, 0.0);
+            assertArrayEquals(new double[]{-2.0,-2.0,-2.0,-2.0,-2.0,-2.0,0.0}, scores, 0.0);
 
             // Compare the adjacency matrix for topology and edge+fragment scores:
             double[][] adjMatrix = graph.getAdjacencyMatrix();
@@ -175,6 +179,59 @@ public class CombinatorialFragmenterTest {
         } catch (InvalidSmilesException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void testCreateCombinatorialGraphWithFragmentationConstraint(){
+        try{
+            String smiles = "C1CC1";
+            SmilesParser smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+            MolecularGraph molecule = new MolecularGraph(smilesParser.parseSmiles(smiles));
+
+            CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule);
+            CombinatorialGraph graph = fragmenter.createCombinatorialFragmentationGraph(n -> n.fragment.bitset.cardinality() > 2);
+
+            // Convert the sorted node list into an integer array - each bitset is seen as a binary number:
+            ArrayList<CombinatorialNode> sortedNodeList = graph.getSortedNodeList();
+            int[] numList = sortedNodeList.stream().mapToInt(n -> {
+                int num = 0;
+                for(int i = 0; i < molecule.natoms; i++){
+                    num = num + (n.fragment.bitset.get(i) ? (int) Math.pow(2,i) : 0);
+                }
+                return num;
+            }).toArray();
+            int[] bondbreaks = sortedNodeList.stream().mapToInt(n -> n.bondbreaks).toArray();
+            int[] depths = sortedNodeList.stream().mapToInt(n -> n.depth).toArray();
+            double[] totalScores = sortedNodeList.stream().mapToDouble(n -> n.totalScore).toArray();
+            double[] scores = sortedNodeList.stream().mapToDouble(n -> n.score).toArray();
+
+            assertArrayEquals(new int[]{1,2,3,4,5,6,7}, numList);
+            assertArrayEquals(new int[]{1,1,1,1,1,1,0}, depths);
+            assertArrayEquals(new int[]{2,2,2,2,2,2,0}, bondbreaks);
+            assertArrayEquals(new double[]{-2.0,-2.0,-2.0,-2.0,-2.0,-2.0,0.0}, totalScores, 0.0);
+            assertArrayEquals(new double[]{-2.0,-2.0,-2.0,-2.0,-2.0,-2.0,0.0}, scores, 0.0);
+
+            // Check the adjacency matrix:
+            double minusInf = Double.NEGATIVE_INFINITY;
+            double[][] adjMatrix = graph.getAdjacencyMatrix();
+            double[][] expAdjMatrix = new double[][]{
+                    {minusInf, minusInf, minusInf, minusInf, minusInf, minusInf, minusInf},
+                    {minusInf, minusInf, minusInf, minusInf, minusInf, minusInf, minusInf},
+                    {minusInf, minusInf, minusInf, minusInf, minusInf, minusInf, minusInf},
+                    {minusInf, minusInf, minusInf, minusInf, minusInf, minusInf, minusInf},
+                    {minusInf, minusInf, minusInf, minusInf, minusInf, minusInf, minusInf},
+                    {minusInf, minusInf, minusInf, minusInf, minusInf, minusInf, minusInf},
+                    {-2,-2,-2,-2,-2,-2, minusInf}
+            };
+
+            for(int i = 0; i < graph.numberOfNodes(); i++){
+                assertArrayEquals(expAdjMatrix[i], adjMatrix[i], 0.0);
+            }
+
+        } catch (InvalidSmilesException e) {
+            e.printStackTrace();
+        }
+
     }
 
 }
