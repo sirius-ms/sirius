@@ -49,7 +49,7 @@ public class IsolationWindow {
 
     public static IsolationWindow fromOffsets(double lowerOffset, double higherOffset) {
         double width = lowerOffset + higherOffset;
-        double offset = higherOffset - lowerOffset;
+        double offset = (higherOffset - lowerOffset) / 2d;
         return new IsolationWindow(offset, width);
     }
 
