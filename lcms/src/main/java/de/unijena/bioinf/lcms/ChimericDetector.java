@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.model.lcms.ChromatographicPeak;
 import de.unijena.bioinf.model.lcms.Precursor;
 import de.unijena.bioinf.model.lcms.Scan;
+import de.unijena.bioinf.model.lcms.ScanPoint;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -63,22 +64,31 @@ public class ChimericDetector {
             throw new IllegalArgumentException("MS1 feature does not contain MS1 scan");
         }
         SimpleSpectrum scan = sample.storage.getScan(ms1Scan);
-        final double window = isolationWindow.getWindowWidth();
+        final double windowOneSide = isolationWindow.getWindowWidth() / 2d; //todo I think this should be window /2
         final double offset = isolationWindow.getWindowOffset();
-        final double from = precursor.getMass()+offset-window;
-        final double to = precursor.getMass()+offset+window;
+        final double from = precursor.getMass()+offset-windowOneSide;
+        final double to = precursor.getMass()+offset+windowOneSide;
         int bgindex=Spectrums.indexOfFirstPeakWithin(scan, from,to);
-        int mostIntensive=-1;
-        for (int m=1; m < 5; ++m) {
-            final Deviation dev = sample.builder.getAllowedMassDeviation().multiply(m);
-            for (int k=bgindex; k < scan.size() && scan.getMzAt(k) <= to; ++k) {
-                if ((mostIntensive<0 || scan.getIntensityAt(k)>scan.getIntensityAt(mostIntensive)) && dev.inErrorWindow(precursor.getMass(),scan.getMzAt(k))) {
-                    mostIntensive=k;
+
+        ScanPoint scanPoint = ms1Feature.getScanPointForScanId(ms1Scan.getIndex());
+
+        int mostIntensive=-1;   //todo why search again for the most intense peak? the ChromatographicPeak ms1Feature has already decided what the intended peak is.
+        if (scanPoint != null) {
+            //todo the found peak should exactly match the scanPoint mass. alternatively, ScanPoint could just store index
+             mostIntensive = Spectrums.indexOfPeakClosestToMassWithin(scan, scanPoint.getMass(), sample.builder.getAllowedMassDeviation());
+        } else {
+            for (int m=1; m < 5; ++m) {
+                final Deviation dev = sample.builder.getAllowedMassDeviation().multiply(m);
+                for (int k=bgindex; k < scan.size() && scan.getMzAt(k) <= to; ++k) {
+                    if ((mostIntensive<0 || scan.getIntensityAt(k)>scan.getIntensityAt(mostIntensive)) && dev.inErrorWindow(precursor.getMass(),scan.getMzAt(k))) {
+                        mostIntensive=k;
+                    }
                 }
+                if (mostIntensive>=0)
+                    break;
             }
-            if (mostIntensive>=0)
-                break;
         }
+
         if (mostIntensive<0) {
             LoggerFactory.getLogger(ChimericDetector.class).warn("Do not find precursor ion in MS1 scan.");
             return Collections.emptyList();
@@ -88,7 +98,8 @@ public class ChimericDetector {
         // now add all other peaks as chimerics
         final ArrayList<Chimeric> chimerics = new ArrayList<>();
         final double signalLevel = scan.getIntensityAt(mostIntensive)*0.25;
-        final double norm = guessedFilter.getDensity(offset);
+        //normalize relative to intensity of ms1Feature signal
+        final double norm = guessedFilter.getDensity(offset + (ms1Mass - precursor.getMass())); //todo shouldn't this be relative to ms1Mass (the precursor peak might not be isolated directly at offset)
         for (int k=bgindex; k < scan.size() && scan.getMzAt(k) <= to; ++k) {
             final double mzdiff = scan.getMzAt(k)-ms1Mass;
             final double possInt = scan.getIntensityAt(k)*guessedFilter.getDensity(mzdiff)/norm;
