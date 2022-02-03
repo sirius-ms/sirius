@@ -1171,6 +1171,46 @@ public class Spectrums {
         } else return -1;
     }
 
+    public static <S extends Spectrum<P>, P extends Peak> int indexOfPeakClosestToMassWithin(S spectrum, double mz, Deviation dev) {
+        return (spectrum instanceof OrderedSpectrum) ? indexOfPeakClosestToMassWithinBinarySearch(spectrum, mz, dev)
+                : indexOfPeakClosestToMassWithinLinear(spectrum, mz, dev);
+    }
+
+    public static <S extends Spectrum<P>, P extends Peak> int indexOfPeakClosestToMassWithinBinarySearch(S spectrum, double mz, Deviation dev) {
+        final double a = dev.absoluteFor(mz);
+        int k = indexOfFirstPeakWithin(spectrum, mz - a, mz + a);
+        if (k < 0) return k;
+        final double end = mz + a;
+        double mzDiff = Math.abs(spectrum.getMzAt(k) - mz);
+        for (int j = k + 1; j < spectrum.size(); ++j) {
+            if (spectrum.getMzAt(j) > end)
+                break;
+            final double currentMzDiff = Math.abs(spectrum.getMzAt(j) - mz);
+            if (currentMzDiff < mz) {
+                k = j;
+                mz = spectrum.getIntensityAt(j);
+            }
+        }
+        return k;
+    }
+
+    public static <S extends Spectrum<P>, P extends Peak> int indexOfPeakClosestToMassWithinLinear(S spectrum, double mz, Deviation dev) {
+        if (spectrum.size() <= 0) return -1;
+        double mzDiff = Double.POSITIVE_INFINITY;
+        final double diff = dev.absoluteFor(mz);
+        final double a = mz - diff, b = mz + diff;
+        int opt = -1;
+        for (int k = 0; k < spectrum.size(); ++k) {
+            final double m = spectrum.getMzAt(k);
+            final double currentMzDiff = Math.abs(m - mz);
+            if (m >= a && m <= b && currentMzDiff < mzDiff) {
+                mzDiff = currentMzDiff;
+                opt = k;
+            }
+        }
+        return opt;
+    }
+
 
     /**
      * Binary Search algorithm to find the given the mz value with the lowest distance to the
