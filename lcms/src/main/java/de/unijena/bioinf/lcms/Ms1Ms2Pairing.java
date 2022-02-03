@@ -338,7 +338,7 @@ public class Ms1Ms2Pairing {
             progress=false;
             if (forward < rts.length && rts[forward] < rightBorder) {
                 final Scan scan = scans.get(forward);
-                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz);
+                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, ms1.getDefaultMs2IsolationWindow());
                 if (feature.isPresent() && feature.get().numberOfScans()>=5) {
                     return feature;
                 }
@@ -347,7 +347,7 @@ public class Ms1Ms2Pairing {
             }
             if (backward >= 0 && rts[backward] > leftBorder) {
                 final Scan scan = scans.get(backward);
-                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz);
+                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, ms1.getDefaultMs2IsolationWindow());
                 if (feature.isPresent()) {
                     return feature;
                 }
