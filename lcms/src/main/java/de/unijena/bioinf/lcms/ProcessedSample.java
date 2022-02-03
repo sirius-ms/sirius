@@ -22,6 +22,7 @@ package de.unijena.bioinf.lcms;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
+import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.NoiseInformation;
 import de.unijena.bioinf.lcms.noise.Ms2NoiseStatistics;
 import de.unijena.bioinf.lcms.noise.NoiseModel;
@@ -66,6 +67,9 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
     // can be used for multiple charge detection
     protected RealDistribution intensityAfterPrecursorDistribution;
 
+    //the runs window to use (may be estimated), if an MS2 scan does not specify a window
+    protected IsolationWindow defaultMs2IsolationWindow;
+
     ProcessedSample(LCMSRun run, NoiseModel ms1NoiseModel, Ms2NoiseStatistics ms2NoiseModel, ChromatogramCache chromatogramCache, SpectrumStorage storage) {
         this.run = run;
         this.ms1NoiseModel = ms1NoiseModel;
@@ -97,6 +101,14 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
 
     public void setIntensityAfterPrecursorDistribution(RealDistribution intensityAfterPrecursorDistribution) {
         this.intensityAfterPrecursorDistribution = intensityAfterPrecursorDistribution;
+    }
+
+    public IsolationWindow getDefaultMs2IsolationWindow() {
+        return defaultMs2IsolationWindow;
+    }
+
+    public void setDefaultMs2IsolationWindow(IsolationWindow defaultMs2IsolationWindow) {
+        this.defaultMs2IsolationWindow = defaultMs2IsolationWindow;
     }
 
     public NavigableMap<Integer,Scan> findScansByRT(Range<Long> rt) {
