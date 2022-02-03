@@ -22,6 +22,7 @@ package de.unijena.bioinf.lcms;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.model.lcms.*;
@@ -133,9 +134,20 @@ public class ChromatogramBuilder {
         }
     }
 
-    public Optional<ChromatographicPeak> detect(Scan startingPoint, double mz) {
+    public Optional<ChromatographicPeak> detect(Scan startingPoint, double isolationTargetMz, IsolationWindow window) {
+        if (window != null) {
+            //search in the middle 75% (0.5*0.75) of the window
+            final double absDev = window.getWindowWidth()*0.375;
+            //todo for windows that isolate the whole isotope pattern a monoisotopic peak detection would be good (to not select the +1 peak with some uncommon elements)
+            return detect(startingPoint, isolationTargetMz + window.getWindowOffset(), new Deviation(0, absDev));
+        } else {
+            return detect(startingPoint, isolationTargetMz, dev);
+        }
+    }
+
+    public Optional<ChromatographicPeak> detect(Scan startingPoint, double mz, Deviation window) {
         final SimpleSpectrum spectrum = sample.storage.getScan(startingPoint);
-        int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, dev);
+        int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, window);
         if (i>=0) {
             return buildTrace(spectrum, new ScanPoint(startingPoint, spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
         } else {
