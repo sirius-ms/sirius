@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.rest.model.worker;
 
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
@@ -34,7 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE)
-public class WorkerList /*extends AbstractList<WorkerInfo>*/ {
+public class WorkerList {
     private int pendingJobs = Integer.MIN_VALUE;
     private final ArrayList<WorkerInfo> workerList;
 
@@ -70,8 +69,7 @@ public class WorkerList /*extends AbstractList<WorkerInfo>*/ {
     }
 
     public Stream<WorkerInfo> getWorkerActiveWithinAsStrean(Instant slot) {
-        final long time = System.currentTimeMillis();
-        return workerList.stream().filter((w) -> w.getPulseAsLong() + slot.toEpochMilli() >= time);
+        return workerList.stream().filter((w) -> w.isAlive(slot.toEpochMilli()));
     }
 
     public List<WorkerInfo> getWorkerActiveWithin(Instant slot) {
@@ -82,19 +80,19 @@ public class WorkerList /*extends AbstractList<WorkerInfo>*/ {
         return getWorkerActiveWithinAsStrean(slot).count();
     }
 
-    public EnumSet<PredictorType> getSupportedTypes() {
-        return workerList.stream().map(WorkerInfo::getPredictorsAsEnums).flatMap(Collection::stream).collect(Collectors.toCollection(() -> EnumSet.noneOf(PredictorType.class)));
+    public Set<WorkerWithCharge> getSupportedTypes() {
+        return workerList.stream().map(WorkerInfo::asWorkerWithCharge).collect(Collectors.toSet());
     }
 
-    public EnumSet<PredictorType> getActiveSupportedTypes(Instant slot) {
-        return getWorkerActiveWithinAsStrean(slot).map(WorkerInfo::getPredictorsAsEnums).flatMap(Collection::stream).collect(Collectors.toCollection(() -> EnumSet.noneOf(PredictorType.class)));
+    public Set<WorkerWithCharge> getActiveSupportedTypes(Instant slot) {
+        return getWorkerActiveWithinAsStrean(slot).map(WorkerInfo::asWorkerWithCharge).collect(Collectors.toSet());
     }
 
-    public boolean supportsAllPredictorTypes(EnumSet<PredictorType> neededTypes, Instant activeWithin) {
+    public boolean supportsAllPredictorTypes(Set<WorkerWithCharge> neededTypes, Instant activeWithin) {
         return getActiveSupportedTypes(activeWithin).containsAll(neededTypes);
     }
 
-    public boolean supportsAllPredictorTypes(EnumSet<PredictorType> neededTypes) {
+    public boolean supportsAllPredictorTypes(Set<WorkerWithCharge> neededTypes) {
         return getActiveSupportedTypes(Instant.ofEpochSecond(600/*10 min*/)).containsAll(neededTypes);
     }
 
