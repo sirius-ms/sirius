@@ -42,6 +42,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.PrivateKey;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -753,7 +754,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
 
     public class SummarizerJob extends TinyBackgroundJJob<Boolean> {
-
+        private Path root;
         private final Summarizer[] summarizers;
 
         protected SummarizerJob(Summarizer... summarizers) {
@@ -764,7 +765,15 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         protected Boolean compute() throws IOException, InterruptedException {
             int max = ids.size() + summarizers.length + 1;
             AtomicInteger p = new AtomicInteger(0);
-            updateProgress(0, max, p.get(), "Collection Summary data...");
+            if (this.root == null) {
+                this.root = SiriusProjectSpace.this.root;
+            } else if(Files.notExists(root)) {
+                updateProgress(0, max, p.get(), "Storing Summaries outside the Project-Space at: '" + root.toString() + "'");
+                Files.createDirectories(root);
+            }
+
+
+            updateProgress(1, max, p.get(), "Collection Summary data...");
             checkForInterruption();
             return withAllLockedDoRaw(() -> {
                 Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
@@ -773,12 +782,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                     checkForInterruption();
                     final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
                     final List<SScored<FormulaResult, ? extends FormulaScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), annotations);
+                    // write compound summaries
                     for (Summarizer sim : summarizers)
                         sim.addWriteCompoundSummary(new FileBasedProjectSpaceWriter(root, SiriusProjectSpace.this::getProjectSpaceProperty), c, results);
                     checkForInterruption();
                 }
                 checkForInterruption();
-                //write summaries to project space
+                // write project summaries
                 for (Summarizer summarizer : summarizers) {
                     checkForInterruption();
                     updateProgress(0, max, p.incrementAndGet(), "Writing Summary '" + summarizer.getClass().getSimpleName() + "'...");
@@ -787,6 +797,14 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 updateProgress(0, max, max, "DONE!");
                 return true;
             });
+        }
+
+        public Path getRoot() {
+            return root;
+        }
+
+        public void setRoot(Path root) {
+            this.root = root;
         }
     }
 }
