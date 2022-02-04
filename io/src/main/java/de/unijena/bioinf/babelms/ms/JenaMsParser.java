@@ -367,14 +367,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 else {
                     final Matcher m = COLLISION_PATTERN.matcher(value);
                     if (m.find()) {
-                        if (m.group(1) != null) {
-                            final double val = Double.parseDouble(m.group(1));
-                            currentEnergy = new CollisionEnergy(val, val);
-                        } else {
-                            assert m.group(2) != null;
-                            final String[] range = m.group(2).split("\\s*-\\s*", 2);
-                            this.currentEnergy = new CollisionEnergy(Double.parseDouble(range[0]), Double.parseDouble(range[1]));
-                        }
+                        this.currentEnergy = CollisionEnergy.fromString(value);
                     } else {
                         error("Cannot parse collision '" + value + "'");
                     }
