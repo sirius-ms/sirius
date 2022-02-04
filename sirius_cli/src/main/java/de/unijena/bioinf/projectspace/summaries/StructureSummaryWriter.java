@@ -77,7 +77,7 @@ public class StructureSummaryWriter implements Summarizer {
             if (results.stream().anyMatch(c -> c.getCandidate().hasAnnotation(FBCandidates.class))) {
                 writer.inDirectory(exp.getId().getDirectoryName(), () -> {
                     writer.textFile(SummaryLocations.STRUCTURE_CANDIDATES, fileWriter -> {
-                        fileWriter.write("rank\tformulaRank\t");
+                        fileWriter.write("rank\tformulaRank\t" + new ConfidenceScore(0).name() + "\t");
                         fileWriter.write(StructureCSVExporter.HEADER);
 
                         int formulaRank = 0;
@@ -112,6 +112,10 @@ public class StructureSummaryWriter implements Summarizer {
                                             fileWriter.write(String.valueOf(rank));
                                             fileWriter.write("\t");
                                             fileWriter.write(String.valueOf(formulaRank));
+                                            fileWriter.write("\t");
+                                            fileWriter.write(result.getCandidate().getAnnotation(FormulaScoring.class).
+                                                    map(s -> s.getAnnotationOr(ConfidenceScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ConfidenceScore.class)).toString()
+                                            );
                                             fileWriter.write("\t");
                                             fileWriter.write(String.join("\t", line));
                                             if (rank < lines.size())
