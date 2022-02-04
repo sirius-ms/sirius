@@ -3,6 +3,7 @@ package de.unijena.bioinf.lcms;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.MassMap;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
@@ -338,7 +339,7 @@ public class Ms1Ms2Pairing {
             progress=false;
             if (forward < rts.length && rts[forward] < rightBorder) {
                 final Scan scan = scans.get(forward);
-                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, ms1.getDefaultMs2IsolationWindow());
+                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, getIsolationWindow(scan, ms1).orElse(null));
                 if (feature.isPresent() && feature.get().numberOfScans()>=5) {
                     return feature;
                 }
@@ -347,7 +348,7 @@ public class Ms1Ms2Pairing {
             }
             if (backward >= 0 && rts[backward] > leftBorder) {
                 final Scan scan = scans.get(backward);
-                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, ms1.getDefaultMs2IsolationWindow());
+                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, getIsolationWindow(scan, ms1).orElse(null));
                 if (feature.isPresent()) {
                     return feature;
                 }
@@ -356,6 +357,17 @@ public class Ms1Ms2Pairing {
             }
         }
         return Optional.empty();
+    }
+
+    private Optional<IsolationWindow> getIsolationWindow(Scan scan, ProcessedSample sample) {
+        if (scan.getPrecursor().getIsolationWindow().isUndefined()) {
+            if (sample.getDefaultMs2IsolationWindow() != null){
+                LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("No isolation window defined.");
+            }
+            return Optional.ofNullable(sample.getDefaultMs2IsolationWindow());
+        } else {
+            return Optional.of(scan.getPrecursor().getIsolationWindow());
+        }
     }
 
     private List<Target> extractTargets(ProcessedSample msms) {
