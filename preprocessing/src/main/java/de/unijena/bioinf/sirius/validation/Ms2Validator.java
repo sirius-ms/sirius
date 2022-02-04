@@ -94,20 +94,13 @@ public class Ms2Validator extends Ms1Validator {
         String instrumentType = input.getAnnotationOrNull(MsInstrumentation.class).description();
 
         for (MutableMs2Spectrum spectrum : input.getMs2Spectra()) {
-            if (Double.isNaN(spectrum.getCollisionEnergy().getMinEnergySource())) {
-                spectrum.getCollisionEnergy().setMinEnergySource(-1); //This is to not throw the unset Warning when we get the CE
-                spectrum.getCollisionEnergy().setMaxEnergySource(-1);
+            if (!spectrum.getCollisionEnergy().isCorrected()) {
                 if (instrumentCorrection.containsKey(instrumentType) && !spectrum.getCollisionEnergy().equals(CollisionEnergy.none())) {
-
-                    spectrum.getCollisionEnergy().setMinEnergySource(spectrum.getCollisionEnergy().getMinEnergy());
-                    spectrum.getCollisionEnergy().setMaxEnergySource(spectrum.getCollisionEnergy().getMaxEnergy());
-
-                    spectrum.getCollisionEnergy().setMinEnergy(spectrum.getCollisionEnergy().getMinEnergy() + instrumentCorrection.get(instrumentType).getFirst());
-                    spectrum.getCollisionEnergy().setMaxEnergy(spectrum.getCollisionEnergy().getMaxEnergy() + instrumentCorrection.get(instrumentType).getSecond());
-
+                    spectrum.getCollisionEnergy().setMinEnergy(spectrum.getCollisionEnergy().minEnergySource() + instrumentCorrection.get(instrumentType).getFirst());
+                    spectrum.getCollisionEnergy().setMaxEnergy(spectrum.getCollisionEnergy().maxEnergySource() + instrumentCorrection.get(instrumentType).getSecond());
                 }else{
-                    spectrum.getCollisionEnergy().setMinEnergySource(spectrum.getCollisionEnergy().getMinEnergy());
-                    spectrum.getCollisionEnergy().setMaxEnergySource(spectrum.getCollisionEnergy().getMaxEnergy());
+                    spectrum.getCollisionEnergy().setMinEnergy(spectrum.getCollisionEnergy().minEnergySource());
+                    spectrum.getCollisionEnergy().setMaxEnergy(spectrum.getCollisionEnergy().maxEnergySource());
                 }
             }
 
