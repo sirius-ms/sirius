@@ -229,7 +229,7 @@ public class Ms2CosineSegmenter {
                     }
                     scans.add(s);
                 } else {
-                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan outside of an segment of an chromatographic peak");
+                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("MS2 scan outside of an segment of an chromatographic peak");
                     ++numberOfScansOutside;
                 }
             }
