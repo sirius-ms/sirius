@@ -185,9 +185,8 @@ public class Feature implements Annotated<DataAnnotation> {
 
         // add trace information
         exp.setAnnotation(LCMSPeakInformation.class, new LCMSPeakInformation(new CoelutingTraceSet[]{getTraceset()}));
-
+        // add instrument annotation
+        exp.setAnnotation(MsInstrumentation.class, origin.instrument);
         return exp;
     }
-
-
 }
