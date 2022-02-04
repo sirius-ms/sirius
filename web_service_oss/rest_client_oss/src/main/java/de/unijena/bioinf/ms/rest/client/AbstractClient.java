@@ -41,11 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -216,7 +211,7 @@ public abstract class AbstractClient {
     public <T> T executeFromStream(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
         requestDecorator.accept(request);
         try (CloseableHttpResponse response = client.execute(request)) {
-            isSuccessful(response);
+            isSuccessful(response, request);
             if (response.getEntity() != null) {
                 try (final InputStream stream = response.getEntity().getContent()) {
                     return respHandling.apply(stream);
