@@ -183,13 +183,13 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
                     else return 4;
                 } else if (v.outdated()) {
                     return MAX_STATE;
-                } else if (serverInfoClient.testConnection()) {
+                } else if (serverInfoClient.testConnection(client)) {
                     return jobsClient.testSecuredConnection(client);
                 } else {
                     return 5;
                 }
             } catch (Exception e) {
-                LOG.error("Error during connection check", e);
+                LOG.error("Error during connection check!", e);
                 return MAX_STATE;
             }
         });

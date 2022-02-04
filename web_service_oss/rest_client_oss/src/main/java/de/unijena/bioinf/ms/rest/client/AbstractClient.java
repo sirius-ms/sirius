@@ -31,9 +31,7 @@ import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
+import org.apache.http.*;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
@@ -48,6 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -56,6 +55,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 public abstract class AbstractClient {
+    public static final boolean DEBUG_CONNECTION = PropertyManager.getBoolean("de.unijena.bioinf.webapi.DEBUG_CONNECTION", false);
+    public final static boolean DEBUG = PropertyManager.getBoolean("de.unijena.bioinf.ms.rest.DEBUG", false);
     protected static final String API_ROOT = "/api";
     protected static final String CID = SecurityService.generateSecurityToken();
 
@@ -82,16 +83,9 @@ public abstract class AbstractClient {
         return serverUrl;
     }
 
-    public boolean testConnection() {
-        try {
-            URIBuilder builder = getBaseURI("/actuator/health", true);
-            HttpURLConnection urlConn = (HttpURLConnection) builder.build().toURL().openConnection();
-            urlConn.connect();
-
-            return HttpURLConnection.HTTP_OK == urlConn.getResponseCode();
-        } catch (IOException | URISyntaxException e) {
-            return false;
-        }
+    public boolean testConnection(@NotNull CloseableHttpClient client) throws IOException {
+        execute(client, () -> new HttpGet(getBaseURI("/actuator/health", true).build()));
+        return true;
     }
 
     public int testSecuredConnection(@NotNull CloseableHttpClient client) {
@@ -158,10 +152,11 @@ public abstract class AbstractClient {
         }
     }
 
-    protected void isSuccessful(HttpResponse response) throws IOException {
+    protected void isSuccessful(HttpResponse response, HttpRequest sourceRequest) throws IOException {
         final StatusLine status = response.getStatusLine();
-        if (status.getStatusCode() >= 400){
-            final String content = response.getEntity()!= null ? IOUtils.toString(getIn(response.getEntity())) : "No Content";
+
+        if (status.getStatusCode() >= 400) {
+            final String content = response.getEntity() != null ? IOUtils.toString(getIn(response, sourceRequest)) : "No Content";
             throw new IOException("Error when querying REST service. Bad Response Code: "
                     + status.getStatusCode() + " | Message: " + status.getReasonPhrase() + " | " + response.getFirstHeader("WWW-Authenticate") + " | Content: " + content);
         }
@@ -172,11 +167,15 @@ public abstract class AbstractClient {
     public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
         requestDecorator.accept(request);
         try (CloseableHttpResponse response = client.execute(request)) {
-            isSuccessful(response);
+            isSuccessful(response, request);
             if (response.getEntity() != null) {
-                try (final BufferedReader reader = new BufferedReader(getIn(response.getEntity()))) {
+                try (final BufferedReader reader = new BufferedReader(getIn(response, request))) {
                     return respHandling.apply(reader);
                 }
+            }
+            if (DEBUG_CONNECTION) {
+                LoggerFactory.getLogger(getClass()).warn("Entity return value was NULL: ");
+                getIn(response, request).close();
             }
             return null;
         }
@@ -245,9 +244,42 @@ public abstract class AbstractClient {
     }
 
     @NotNull
-    protected InputStreamReader getIn(HttpEntity entity) throws IOException {
-        final Charset charset = ContentType.getOrDefault(entity).getCharset();
-        return new InputStreamReader(entity.getContent(), charset == null ? StandardCharsets.UTF_8 : charset);
+    protected Reader getIn(HttpResponse response, HttpRequest sourceRequest) throws IOException {
+        final HttpEntity entity = response.getEntity();
+        Charset charset = ContentType.getOrDefault(entity).getCharset();
+        charset = charset == null ? StandardCharsets.UTF_8 : charset;
+        if (!DEBUG_CONNECTION) {
+            return new InputStreamReader(entity.getContent(), charset);
+        } else {
+            final String content = entity.getContent() == null ? null : IOUtils.toString(new InputStreamReader(entity.getContent(), charset));
+            System.out.println("##### Request DEBUG information #####S");
+            System.out.println("----- Source Request");
+            System.out.println("Request URL: '" + sourceRequest.getRequestLine().getUri() + "'");
+            for (Header header : sourceRequest.getAllHeaders())
+                System.out.println("Request Header: '" + header.getName() + "':'" + header.getValue() + "'");
+
+            System.out.println("----- Response");
+            System.out.println("Content encoding: '" + charset + "'");
+            System.out.println("Used Content encoding: '" + entity.getContentEncoding() + "'");
+            System.out.println("Content Type: '" + entity.getContentType() + "'");
+            System.out.println("Response Return Code: '" + response.getStatusLine().getStatusCode() + "'");
+            System.out.println("Response Reason Phrase: '" + response.getStatusLine().getReasonPhrase() + "'");
+            System.out.println("Response Protocol Version: '" + response.getStatusLine().getProtocolVersion().toString() + "'");
+            System.out.println("Response Locale: '" + response.getLocale().toString() + "'");
+            for (Header header : response.getAllHeaders())
+                System.out.println("Request Header: '" + header.getName() + "':'" + header.getValue() + "'");
+            System.out.println("----- Content");
+            if (content == null || content.isBlank())
+                System.out.println("<NO CONTENT>");
+            else
+                System.out.println(content);
+
+            System.out.println("#####################################");
+
+            return content == null ? new StringReader("") : new StringReader(content);
+        }
+
+
     }
     //endregion
 
