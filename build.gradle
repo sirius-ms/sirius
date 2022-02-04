@@ -142,15 +142,27 @@ allprojects {
 
         annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
         compile 'net.sf.trove4j:core:3.1.0'
-        //switched from 'net.sf.trove4j:trove4j:3.0.3' which seems to be buggy and no longer supported
+
         compile "org.jetbrains:annotations:$jetbrains_version"
-        compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
+
+        compile "org.slf4j:log4j-over-slf4j:$slf4j_version"
+        compile "org.slf4j:jcl-over-slf4j:$slf4j_version"
+        compile "org.slf4j:slf4j-api:$slf4j_version"
 
         testCompile group: 'junit', name: 'junit', version: '4.12'
 
         // intellij seems to ignore other scopes than compile so we need to have this here and remove it before distribution
 //        compile "com.gurobi:gurobi-jar:9.1.1"
 //        compile "cplex:cplex:12.7.1"
+    }
+
+    configurations {
+        //replaced by log4j-over-slf4j
+        runtime.exclude group: "log4j", module: "log4j"
+        compile.exclude group: "log4j", module: "log4j"
+        //replaced by jcl-over-slf4j
+        runtime.exclude group: "commons-logging", module: "commons-logging"
+        compile.exclude group: "commons-logging", module: "commons-logging"
     }
 
     //there are some outdated incompatible trove dependencies in some libs.

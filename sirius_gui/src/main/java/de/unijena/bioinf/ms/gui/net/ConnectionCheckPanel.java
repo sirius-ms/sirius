@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.gui.net;
 
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.gui.actions.ActionUtils;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
@@ -29,6 +28,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
+import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +36,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.time.Instant;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.ms.gui.net.ConnectionMonitor.neededTypes;
 
 /**
  * Created by fleisch on 06.06.17.
@@ -93,17 +96,16 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         String description = license == null ? null : license.getDescription();
 
         if (workerInfoList != null) {
-            refreshPanel(
-                    state,
+            refreshPanel(state,
                     workerInfoList.getActiveSupportedTypes(Instant.ofEpochSecond(600)),
-                    workerInfoList.getPendingJobs(), userId,  licensee, description, terms
+                    workerInfoList.getPendingJobs(), userId, licensee, description, terms
             );
         } else {
-            refreshPanel(state, EnumSet.noneOf(PredictorType.class), Integer.MIN_VALUE, userId, licensee, description, terms);
+            refreshPanel(state, Set.of(), Integer.MIN_VALUE, userId, licensee, description, terms);
         }
     }
 
-    public void refreshPanel(final int state, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userId, @NotNull String licensee, @Nullable String description, @Nullable List<Term> terms) {
+    public void refreshPanel(final int state, final Set<WorkerWithCharge> availableTypes, final int pendingJobs, @Nullable String userId, @NotNull String licensee, @Nullable String description, @Nullable List<Term> terms) {
         internet.setState(state > 1 || state <= 0);
         hoster.setState(state > 2 || state <= 0);
         domain.setState(state > 3 || state <= 0);
@@ -118,7 +120,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
             authLabel.setText("Not authenticated!  ");
         }
 
-        final EnumSet<PredictorType> neededTypes = PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors"));
+
         fingerID_Worker.setState(availableTypes.containsAll(neededTypes));
 
         if (resultPanel != null)
@@ -138,7 +140,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     }
 
 
-    private JPanel createResultPanel(final int state, final EnumSet<PredictorType> neededTypes, final EnumSet<PredictorType> availableTypes, final int pendingJobs, @Nullable String userID, @Nullable List<Term> terms) {
+    private JPanel createResultPanel(final int state, final Set<WorkerWithCharge> neededTypes, final Set<WorkerWithCharge> availableTypes, final int pendingJobs, @Nullable String userID, @Nullable List<Term> terms) {
         TwoColumnPanel resultPanel = new TwoColumnPanel();
         resultPanel.setBorder(BorderFactory.createEmptyBorder());
         resultPanel.add(new JXTitledSeparator("Description"), 15, false);
@@ -149,19 +151,17 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
                 resultPanel.add(new JXTitledSeparator("Worker Information"), 15, false);
 
-                StringBuilder text = new StringBuilder("<html>");
+                StringBuilder text = new StringBuilder("<html><p width=\"" + 350 + "\">");
                 if (pendingJobs >= 0) {
                     neededTypes.removeAll(availableTypes);
 
-                    String on = availableTypes.toString();
-                    on = on.substring(1, on.length() - 1);
+                    String on = availableTypes.stream().sorted().map(WorkerWithCharge::toString).collect(Collectors.joining(", "));
 
                     String off;
                     if (neededTypes.isEmpty()) {
                         off = "<font color='green'>none</font>";
                     } else {
-                        off = neededTypes.toString();
-                        off = off.substring(1, off.length() - 1);
+                        off = neededTypes.stream().sorted().map(WorkerWithCharge::toString).collect(Collectors.joining(", "));
                     }
 
                     text.append("<font color='green'>Worker instances available for:<br>")
@@ -179,7 +179,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                     text.append(WORKER_INFO_MISSING_MESSAGE);
                 }
 
-                text.append("</html>");
+                text.append("</p></html>");
                 resultPanel.add(new JLabel(text.toString()), 5, false);
                 break;
             case 9:

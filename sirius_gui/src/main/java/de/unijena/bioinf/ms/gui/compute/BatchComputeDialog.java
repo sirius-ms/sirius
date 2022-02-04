@@ -40,6 +40,7 @@ import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.ExperimentEditPanel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -406,9 +407,9 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             if (cc.isConnected()) {
                 if ((csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected()) && cc.hasWorkerWarning()) {
                     if (cc.workerInfo == null ||
-                            (!cc.workerInfo.supportsAllPredictorTypes(EnumSet.of(PredictorType.CSI_FINGERID_NEGATIVE))
+                            (!cc.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isNegative).collect(Collectors.toSet()))
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isNegative())) ||
-                            (!cc.workerInfo.supportsAllPredictorTypes(EnumSet.of(PredictorType.CSI_FINGERID_POSITIVE))
+                            (!cc.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isPositive).collect(Collectors.toSet()))
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isPositive()))
                     ) new WorkerWarningDialog(MF, cc.workerInfo == null);
                 }
