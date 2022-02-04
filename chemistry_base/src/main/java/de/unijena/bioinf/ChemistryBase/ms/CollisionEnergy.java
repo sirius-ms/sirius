@@ -24,42 +24,54 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Comparator;
 
 public class CollisionEnergy {
 
 
-    private double minEnergy, maxEnergy, minEnergySource, maxEnergySource;
+    /**
+     * These are immutable uncorrected energies as imported from the data source
+     */
+    private final double minEnergySource, maxEnergySource;
 
-    public CollisionEnergy(double min, double max) {
-        if (min > max) throw new IllegalArgumentException("minimal energy have to be smaller than maximum energy");
-        this.minEnergy = min;
-        this.maxEnergy = max;
-        this.minEnergySource=Double.NaN;
-        this.maxEnergySource=Double.NaN;
+    /**
+     * These are the energies to use within algorithms (corrected energies).
+     * Fallback to source energies if corrected NaN.
+     */
+    private double minEnergy, maxEnergy;
+
+    public CollisionEnergy(double minSource, double maxSource) {
+        if (minSource > maxSource)
+            throw new IllegalArgumentException("minimal energy have to be smaller than maximum energy");
+        this.minEnergy = Double.NaN;
+        this.maxEnergy = Double.NaN;
+        this.minEnergySource = minSource;
+        this.maxEnergySource = minSource;
     }
 
-    public CollisionEnergy(double min, double max,double minSource, double maxSource) {
+    public CollisionEnergy(double min, double max, double minSource, double maxSource) {
         if (min > max) throw new IllegalArgumentException("minimal energy have to be smaller than maximum energy");
         this.minEnergy = min;
         this.maxEnergy = max;
-        this.minEnergySource=minSource;
-        this.maxEnergySource=maxSource;
+        this.minEnergySource = minSource;
+        this.maxEnergySource = maxSource;
     }
 
     public static CollisionEnergy mergeAll(CollisionEnergy... others) {
         if (others == null || others.length == 0) return new CollisionEnergy(0, 0);
-        double min = Double.POSITIVE_INFINITY;
-        double max = Double.NEGATIVE_INFINITY;
-        double minSource = Double.POSITIVE_INFINITY;
-        double maxSource = Double.NEGATIVE_INFINITY;
-        for (int k = 0; k < others.length; ++k) {
-            min = Math.min(min, others[k].minEnergy);
-            max = Math.max(max, others[k].maxEnergy);
-            minSource=Math.min(minSource,others[k].minEnergySource);
-            maxSource=Math.max(maxSource,others[k].maxEnergySource);
-        }
-        return new CollisionEnergy(min, max,minSource,maxSource);
+        double minSource = Arrays.stream(others).mapToDouble(CollisionEnergy::minEnergySource).min().orElse(Double.NaN);
+        double maxSource = Arrays.stream(others).mapToDouble(CollisionEnergy::maxEnergySource).max().orElse(Double.NaN);
+        double min = Double.NaN;
+        double max = Double.NaN;
+
+        if (!Arrays.stream(others).mapToDouble(CollisionEnergy::maxEnergy).allMatch(Double::isNaN))
+            max = Arrays.stream(others).mapToDouble(CollisionEnergy::getMaxEnergy).max().orElse(Double.NaN);
+
+        if (!Arrays.stream(others).mapToDouble(CollisionEnergy::minEnergy).allMatch(Double::isNaN))
+            min = Arrays.stream(others).mapToDouble(CollisionEnergy::getMinEnergy).min().orElse(Double.NaN);
+
+        return new CollisionEnergy(min, max, minSource, maxSource);
     }
 
     @Nullable
@@ -80,7 +92,20 @@ public class CollisionEnergy {
 
         if (value.isEmpty() || value.equals("none")) return NONE;
 
+        final String corr = "(corrected";
+        int split = value.indexOf(corr);
+        if (split >= 0 && value.endsWith(")")) {
+            double[] sourceCes = parseCE(value.substring(0, split));
+            double[] correctedCes = parseCE(value.substring(split + corr.length(), value.length() - 1));
+            return new CollisionEnergy(correctedCes[0], correctedCes[1],sourceCes[0], sourceCes[1]);
+        } else {
+            double[] ces = parseCE(value);
+            return new CollisionEnergy(ces[0], ces[1]);
+        }
 
+    }
+
+    private static double[] parseCE(String value) {
         //eliminate prefixes
         if (!Character.isDigit(value.charAt(0))) {
             for (String ext : PREFIXES) {
@@ -97,14 +122,15 @@ public class CollisionEnergy {
             }
         }
 
+
         int k = value.indexOf('-');
         if (k > 0) {
             final double x = Double.parseDouble(value.substring(0, k).replace(",", "."));
             final double y = Double.parseDouble(value.substring(k + 1).replace(">", "").replace(",", "."));
-            return new CollisionEnergy(x, y);
+            return new double[]{x, y};
         } else {
             final double x = Double.parseDouble(value.replace(",", "."));
-            return new CollisionEnergy(x, x);
+            return new double[]{x, x};
         }
     }
 
@@ -114,27 +140,37 @@ public class CollisionEnergy {
     }
 
     public static Comparator<CollisionEnergy> getMinEnergyComparator() {
-        return new Comparator<CollisionEnergy>() {
-            @Override
-            public int compare(CollisionEnergy o1, CollisionEnergy o2) {
-                return Double.compare(o1.minEnergy, o2.minEnergy);
-            }
-        };
+        return Comparator.comparingDouble(CollisionEnergy::getMinEnergy);
     }
 
     public boolean isOverlapping(CollisionEnergy other) {
-        if(Double.isNaN(minEnergySource))LoggerFactory.getLogger(CollisionEnergy.class).warn("Collision energy is not corrected by MS2 Input Validator");
-        return minEnergy <= other.maxEnergy && maxEnergy >= other.minEnergy;
+        return getMinEnergy() <= other.getMaxEnergy() && getMaxEnergy() >= other.getMinEnergy();
     }
 
-    public double getMinEnergy() {
 
-        if(Double.isNaN(minEnergySource))LoggerFactory.getLogger(CollisionEnergy.class).warn("Collision energy is not corrected by MS2 Input Validator");
+    public double getMinEnergy() {
+        return getMinEnergy(true);
+    }
+
+    public double getMinEnergy(final boolean log) {
+        if (Double.isNaN(minEnergy)) {
+            if (log)
+                LoggerFactory.getLogger(CollisionEnergy.class).debug("Collision energy '" + this + "' is not corrected by MS2 Input Validator ('minEnergy' field not set), falling back to 'minEnergySource'");
+            return minEnergySource;
+        }
         return minEnergy;
     }
 
     public double getMaxEnergy() {
-        if(Double.isNaN(maxEnergySource))LoggerFactory.getLogger(CollisionEnergy.class).warn("Collision energy is not corrected by MS2 Input Validator");
+        return getMaxEnergy(true);
+    }
+
+    public double getMaxEnergy(final boolean log) {
+        if (Double.isNaN(maxEnergy)) {
+            if (log)
+                LoggerFactory.getLogger(CollisionEnergy.class).debug("Collision energy '" + this + "' is not corrected by MS2 Input Validator ('maxEnergy' field not set), falling back to 'maxEnergySource'");
+            return maxEnergySource;
+        }
         return maxEnergy;
     }
 
@@ -147,35 +183,35 @@ public class CollisionEnergy {
     }
 
 
-    public double getMinEnergySource() {
+    public double minEnergySource() {
         return minEnergySource;
     }
 
-    public void setMinEnergySource(double minEnergySource) {
-        this.minEnergySource = minEnergySource;
-    }
-
-    public double getMaxEnergySource() {
+    public double maxEnergySource() {
         return maxEnergySource;
     }
 
-    public void setMaxEnergySource(double maxEnergySource) {
-        this.maxEnergySource = maxEnergySource;
+    protected double minEnergy() {
+        return maxEnergy;
     }
 
+    protected double maxEnergy() {
+        return maxEnergySource;
+    }
+
+    public boolean isCorrected() {
+        return !Double.isNaN(minEnergy()) && !Double.isNaN(maxEnergy());
+    }
 
     public boolean lowerThan(CollisionEnergy o) {
-        if(Double.isNaN(minEnergySource))LoggerFactory.getLogger(CollisionEnergy.class).warn("Collision energy is not corrected by MS2 Input Validator");
-        return maxEnergy < o.minEnergy;
+        return getMaxEnergy() < o.getMinEnergy();
     }
 
     public boolean greaterThan(CollisionEnergy o) {
-        if(Double.isNaN(minEnergySource))LoggerFactory.getLogger(CollisionEnergy.class).warn("Collision energy is not corrected by MS2 Input Validator");
-        return minEnergy > o.maxEnergy;
+        return getMinEnergy() > o.getMaxEnergy();
     }
 
     public CollisionEnergy merge(CollisionEnergy other) {
-        if(Double.isNaN(minEnergySource))LoggerFactory.getLogger(CollisionEnergy.class).warn("Collision energy is not corrected by MS2 Input Validator");
         return new CollisionEnergy(Math.min(minEnergy, other.minEnergy), Math.max(maxEnergy, other.maxEnergy),Math.min(minEnergySource,other.minEnergySource),Math.max(maxEnergySource,other.maxEnergySource));
     }
 
@@ -186,33 +222,34 @@ public class CollisionEnergy {
     }
 
     public boolean equals(CollisionEnergy obj) {
-        if (this == obj) return true;
-        if(Double.isNaN(minEnergySource))LoggerFactory.getLogger(CollisionEnergy.class).warn("Collision energy is not corrected by MS2 Input Validator");
-        return Math.abs(minEnergy - obj.minEnergy) < 1e-12 && Math.abs(maxEnergy - obj.maxEnergy) < 1e-12;
+        return Math.abs(getMinEnergy() - obj.getMinEnergy()) < 1e-12 && Math.abs(getMaxEnergy() - obj.getMaxEnergy()) < 1e-12;
     }
 
     @Override
     public String toString() {
-        if(Double.isNaN(minEnergySource))LoggerFactory.getLogger(CollisionEnergy.class).warn("Collision energy is not corrected by MS2 Input Validator");
-        if (this.equals(NONE)) return "none";
-        if (minEnergy == maxEnergy && minEnergySource == maxEnergySource) return stringify(minEnergy) + " eV (corrected "+stringify(minEnergySource) + " eV)";
-        if (minEnergy == maxEnergy && minEnergySource != maxEnergySource) return stringify(minEnergy) + " eV (corrected "+stringify(minEnergySource) + " - " +stringify(maxEnergySource)+ " eV)";
+        if (minEnergy == maxEnergy && minEnergySource == maxEnergySource)
+            return stringify(minEnergySource) + " eV" +
+                    (Double.isNaN(minEnergy) ? "" : " (corrected " + stringify(minEnergy) + " eV)");
+        if (minEnergy != maxEnergy && minEnergySource == maxEnergySource)
+            return stringify(minEnergySource) + " eV" +
+                    (Double.isNaN(minEnergy) && Double.isNaN(maxEnergy) ? "" : " (corrected " + stringify(minEnergy) + " - " + stringify(maxEnergy) + " eV)");
 
-        return stringify(minEnergy) + " - " + stringify(maxEnergy) + " eV (corrected "+stringify(minEnergySource) + " - " +stringify(maxEnergySource)+ " eV)";
+        return stringify(minEnergySource) + " - " + stringify(maxEnergySource) + " eV" +
+                (Double.isNaN(minEnergy) && Double.isNaN(maxEnergy) ? "" : " (corrected " + stringify(minEnergy) + " - " + stringify(maxEnergy) + " eV)");
     }
 
     @Override
     public int hashCode() {
         int result;
         long temp;
-        temp = Double.doubleToLongBits(minEnergy);
+        temp = Double.doubleToLongBits(getMinEnergy());
         result = (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(maxEnergy);
+        temp = Double.doubleToLongBits(getMaxEnergy());
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
 
-    private static CollisionEnergy NONE = new CollisionEnergy(-1,-1);
+    private static final CollisionEnergy NONE = new CollisionEnergy(-1, -1, -1, -1);
 
     public static CollisionEnergy none() {
         return NONE;
