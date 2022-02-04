@@ -49,6 +49,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
@@ -91,7 +92,9 @@ public class ProxyManager {
     private static final RequestConfig DEFAULT_CONFIG = RequestConfig.custom()
             .setConnectTimeout(15000)
 //                .setConnectionRequestTimeout(30000)
-            .setSocketTimeout(15000).build();
+            .setSocketTimeout(15000)
+            .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
+            .build();
 
     public enum ProxyStrategy {SIRIUS, NONE}
 
@@ -153,7 +156,6 @@ public class ProxyManager {
                 client = getNoProxyClient(async);
                 LoggerFactory.getLogger(ProxyStrategy.class).debug("Using FALLBACK Proxy Type " + ProxyStrategy.NONE);
         }
-
         return client;
     }
 
