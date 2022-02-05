@@ -1,7 +1,5 @@
 package de.unijena.bioinf.fragmenter;
 
-import gnu.trove.map.hash.TObjectIntHashMap;
-
 import java.util.ArrayList;
 
 public class CombinatorialSubtreeManipulator {

@@ -76,8 +76,7 @@ public class PrimSubtreeCalculator extends CombinatorialSubtreeCalculator {
             this.addBestNodeAndEdge(bestNode, heap);
             this.updateNodeScoresAndHeap(bestNode, heap);
         }
-        CombinatorialSubtreeManipulator.removeDanglingSubtrees(this.subtree);
-        this.score = this.subtree.getScore();
+        this.score = CombinatorialSubtreeManipulator.removeDanglingSubtrees(this.subtree);;
         this.isComputed = true;
 
         return this.subtree;
