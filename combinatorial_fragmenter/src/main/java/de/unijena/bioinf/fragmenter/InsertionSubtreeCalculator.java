@@ -91,9 +91,8 @@ public class InsertionSubtreeCalculator extends CombinatorialSubtreeCalculator{
             this.relocateAndUpdate(bestNode);
         }
         this.subtree.update();
-        CombinatorialSubtreeManipulator.removeDanglingSubtrees(this.subtree);
 
-        this.score = this.subtree.getScore();
+        this.score = CombinatorialSubtreeManipulator.removeDanglingSubtrees(this.subtree);
         this.isComputed = true;
         return this.subtree;
     }
