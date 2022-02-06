@@ -37,7 +37,7 @@ public class CriticalPathSubtreeCalculatorTest {
     };
 
     @Test
-    public void testCriticalPath1(){
+    public void testCriticalPath1OnCyclobutadien(){
         try{
             String smiles = "C1=CC=C1";
             SmilesParser parser = new SmilesParser(SilentChemObjectBuilder.getInstance());
@@ -59,7 +59,7 @@ public class CriticalPathSubtreeCalculatorTest {
     }
 
     @Test
-    public void testCriticalPath2(){
+    public void testCriticalPath2OnCyclobutadien(){
         try{
             String smiles = "C1=CC=C1";
             SmilesParser parser = new SmilesParser(SilentChemObjectBuilder.getInstance());
