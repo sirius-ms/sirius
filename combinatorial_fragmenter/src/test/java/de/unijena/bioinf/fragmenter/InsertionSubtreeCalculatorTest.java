@@ -13,7 +13,7 @@ import org.openscience.cdk.smiles.SmilesParser;
 
 import static org.junit.Assert.assertEquals;
 
-public class CriticalPathSubtreeCalculatorTest {
+public class InsertionSubtreeCalculatorTest {
 
     private static CombinatorialFragmenterScoring DEFAULT_SCORING = new CombinatorialFragmenterScoring() {
         @Override
@@ -37,7 +37,7 @@ public class CriticalPathSubtreeCalculatorTest {
     };
 
     @Test
-    public void testCriticalPath1OnCyclobutadien(){
+    public void testCyclobutadien(){
         try{
             String smiles = "C1=CC=C1";
             SmilesParser parser = new SmilesParser(SilentChemObjectBuilder.getInstance());
@@ -47,35 +47,13 @@ public class CriticalPathSubtreeCalculatorTest {
             fTree.addFragment(fTree.getRoot(), new Fragment(1, MolecularFormula.parse("C2H2"), new ElectronIonization()));
             fTree.addFragment(fTree.getRoot(), new Fragment(2, MolecularFormula.parse("CH2"), new ElectronIonization()));
 
-            CriticalPathSubtreeCalculator subtreeCalc = new CriticalPathSubtreeCalculator(fTree, molecule, DEFAULT_SCORING, true);
+            InsertionSubtreeCalculator subtreeCalc = new InsertionSubtreeCalculator(fTree, molecule, DEFAULT_SCORING);
             subtreeCalc.initialize(n -> true);
             CombinatorialSubtree subtree = subtreeCalc.computeSubtree();
 
-            assertEquals(26.0, subtreeCalc.getScore(), 0.0);
-            assertEquals(26.0, subtreeCalc.getScore(), 0.0);
-        }catch(UnknownElementException | InvalidSmilesException e){
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    public void testCriticalPath2OnCyclobutadien(){
-        try{
-            String smiles = "C1=CC=C1";
-            SmilesParser parser = new SmilesParser(SilentChemObjectBuilder.getInstance());
-            MolecularGraph molecule = new MolecularGraph(parser.parseSmiles(smiles));
-
-            FTree fTree = new FTree(MolecularFormula.parse("C4H4"), new ElectronIonization());
-            fTree.addFragment(fTree.getRoot(), new Fragment(1, MolecularFormula.parse("C2H2"), new ElectronIonization()));
-            fTree.addFragment(fTree.getRoot(), new Fragment(2, MolecularFormula.parse("CH2"), new ElectronIonization()));
-
-            CriticalPathSubtreeCalculator subtreeCalc = new CriticalPathSubtreeCalculator(fTree, molecule, DEFAULT_SCORING, false);
-            subtreeCalc.initialize(n -> true);
-            CombinatorialSubtree subtree = subtreeCalc.computeSubtree();
-
-            assertEquals(26.0, subtreeCalc.getScore(), 0.0);
-            assertEquals(26.0, subtree.getScore(), 0.0);
-        }catch(UnknownElementException | InvalidSmilesException e){
+            assertEquals(25.0, subtreeCalc.getScore(), 0.0);
+            assertEquals(25.0, subtree.getScore(),0.0);
+        } catch (InvalidSmilesException | UnknownElementException e) {
             e.printStackTrace();
         }
     }
