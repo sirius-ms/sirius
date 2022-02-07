@@ -32,6 +32,10 @@ public class PrintCitations implements Ms2ExperimentAnnotation {
         this.value = value;
     }
 
+    public boolean value() {
+        return value;
+    }
+
     @DefaultInstanceProvider
     public static PrintCitations newInstance(@DefaultProperty boolean value){
         return value ? TRUE : FALSE;

@@ -68,13 +68,14 @@ public class FormulaSummaryWriter implements Summarizer {
 
     @Override
     public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults) throws IOException {
-        if (!writer.exists(exp.getId().getDirectoryName()))
-            return;
         if (formulaResults == null || formulaResults.isEmpty())
             return;
 
         List<SScored<FormulaResult, ? extends FormulaScore>> results = FormulaScoring.reRankBy(formulaResults, RANKING_SCORES, true);
         List<SScored<FormulaResult, ? extends FormulaScore>> topResultWithAdducts = extractAllTopScoringResults(results, RANKING_SCORES_SELECTING_TOP1);
+
+        if (results.isEmpty())
+            return;
 
         writer.inDirectory(exp.getId().getDirectoryName(), () -> {
             writer.textFile(SummaryLocations.FORMULA_CANDIDATES, w -> {

@@ -30,11 +30,7 @@ import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.FormulaScoring;
-import de.unijena.bioinf.projectspace.ProjectWriter;
-import de.unijena.bioinf.projectspace.Summarizer;
-import de.unijena.bioinf.projectspace.CompoundContainer;
-import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -63,13 +59,10 @@ public class StructureSummaryWriter implements Summarizer {
     @Override
     public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults) throws IOException {
         try {
-            if (!writer.exists(exp.getId().getDirectoryName()))
-                return;
             if (formulaResults == null || formulaResults.isEmpty())
                 return;
 
             final List<Hit> topHits = new ArrayList<>();
-//todo formularank
 
             final List<SScored<FormulaResult, ? extends FormulaScore>> results =
                     FormulaScoring.reRankBy(formulaResults, List.of(SiriusScore.class), true); //sorted by SiriusScore to detect adducts
@@ -113,8 +106,10 @@ public class StructureSummaryWriter implements Summarizer {
                                             fileWriter.write("\t");
                                             fileWriter.write(String.valueOf(formulaRank));
                                             fileWriter.write("\t");
-                                            fileWriter.write(result.getCandidate().getAnnotation(FormulaScoring.class).
-                                                    map(s -> s.getAnnotationOr(ConfidenceScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ConfidenceScore.class)).toString()
+                                            fileWriter.write(
+                                                    rank != 1 ? FormulaScore.NA()
+                                                            : result.getCandidate().getAnnotation(FormulaScoring.class).
+                                                            map(s -> s.getAnnotationOr(ConfidenceScore.class, FormulaScore::NA)).orElse(FormulaScore.NA(ConfidenceScore.class)).toString()
                                             );
                                             fileWriter.write("\t");
                                             fileWriter.write(String.join("\t", line));
