@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.frontend.subtools;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.annotations.SummaryLocation;
 import de.unijena.bioinf.ms.annotations.WriteSummaries;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -34,6 +35,7 @@ import picocli.CommandLine.Option;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.ConsoleHandler;
@@ -126,11 +128,15 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
 
     // region Options: INPUT/OUTPUT
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    @Option(names = {"--no-summaries", "--noSummaries"}, description = "Do not write summary files to the project-space", order = 298)
+    @Option(names = {"--no-summaries", "--noSummaries"}, description = "Do not write summary files to the project-space.", order = 298)
     private void setNoSummaries(boolean noSummaries) throws Exception {
         defaultConfigOptions.changeOption("WriteSummaries", !noSummaries);
     }
 
+    @Option(names = {"--summary-location", "--summaryLocation"}, description = "Specify location (outside the project) for writing summary files. Per default summaries are written to the project-space", order = 299)
+    private void setSummaryLocation(Path summaryLocation) throws Exception {
+        defaultConfigOptions.changeOption("SummaryLocation", summaryLocation.toAbsolutePath().toString());
+    }
 
     @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Specify OUTPUT Project-Space: %n|@", order = 200)
     private OutputOptions psOpts = new OutputOptions();
@@ -259,7 +265,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                     //use all experiments in workspace to create summaries
                     if (defaultConfigOptions.config.createInstanceWithDefaults(WriteSummaries.class).value) {
                         LOG.info("Writing summary files...");
-                        project.updateSummaries(ProjectSpaceManager.defaultSummarizer());
+                        project.updateSummaries(defaultConfigOptions.config.createInstanceWithDefaults(SummaryLocation.class).asPath(), ProjectSpaceManager.defaultSummarizer());
                         LOG.info("Project-Space summaries successfully written!");
                     }
                     return true;

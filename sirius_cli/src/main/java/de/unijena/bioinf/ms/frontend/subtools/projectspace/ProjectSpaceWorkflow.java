@@ -32,6 +32,7 @@ import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.Partition;
+import de.unijena.bioinf.ms.annotations.SummaryLocation;
 import de.unijena.bioinf.ms.annotations.WriteSummaries;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
@@ -146,7 +147,7 @@ public class ProjectSpaceWorkflow implements Workflow {
 
                             if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
                                 LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of Batch '" + batchSpace.projectSpace().getLocation().toString());
-                                batchSpace.updateSummaries(ProjectSpaceManager.defaultSummarizer());
+                                batchSpace.updateSummaries(config.createInstanceWithDefaults(SummaryLocation.class).asPath(), ProjectSpaceManager.defaultSummarizer());
                             }
                         } finally {
                             if (batchSpace != null)
@@ -211,7 +212,7 @@ public class ProjectSpaceWorkflow implements Workflow {
 
                     if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
                         LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of '" + space.projectSpace().getLocation().toString());
-                        space.updateSummaries(ProjectSpaceManager.defaultSummarizer());
+                        space.updateSummaries(config.createInstanceWithDefaults(SummaryLocation.class).asPath(), ProjectSpaceManager.defaultSummarizer());
                     }
                 } catch (ExecutionException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when filtering Project(s)!", e);

@@ -62,6 +62,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
@@ -232,9 +233,8 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         return space.containsCompound(id);
     }
 
-
-    public void updateSummaries(Summarizer... summarizers) throws IOException {
-        space.updateSummaries(summarizers);
+    public void updateSummaries(@Nullable Path summaryLocation, @NotNull Summarizer... summarizers) throws IOException {
+        space.updateSummaries(summaryLocation, summarizers);
     }
 
     public void close() throws IOException {
