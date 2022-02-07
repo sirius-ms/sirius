@@ -64,9 +64,10 @@ public class FileUtils {
 
 
     public static Path asZipFS(Path zipFile, boolean createNew) throws IOException {
-        final Map<String, String> option = new HashMap<>();
+        final Map<String, Object> option = new HashMap<>();
+        option.put("useTempFile", Boolean.TRUE);
         if (createNew)
-            option.put("create", "true");
+            option.put("create","true");
         FileSystem zipFS = FileSystems.newFileSystem(URI.create("jar:file:" + zipFile.toUri().getPath()), option);
         return zipFS.getPath(zipFS.getSeparator());
     }
