@@ -42,7 +42,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.PrivateKey;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -741,15 +740,23 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     public void updateSummaries(Summarizer... summarizers) throws IOException {
+        updateSummaries(null, summarizers);
+    }
+
+    public void updateSummaries(@Nullable Path summaryLocation, Summarizer... summarizers) throws IOException {
         try {
-            makeSummarizerJob(summarizers).compute();
+            makeSummarizerJob(summaryLocation, summarizers).compute();
         } catch (InterruptedException e) {
-            throw new IOException(e); //bit ugly but will not happen anyways
+            throw new IOException(e); //a bit ugly but will not happen anyway.
         }
     }
 
     public SummarizerJob makeSummarizerJob(Summarizer... summarizers) {
-        return new SummarizerJob(summarizers);
+        return makeSummarizerJob(null, summarizers);
+    }
+
+    public SummarizerJob makeSummarizerJob(@Nullable Path summaryLocation, Summarizer... summarizers) {
+        return new SummarizerJob(summaryLocation, summarizers);
     }
 
 
@@ -758,7 +765,12 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         private final Summarizer[] summarizers;
 
         protected SummarizerJob(Summarizer... summarizers) {
+            this(null, summarizers);
+        }
+
+        protected SummarizerJob(@Nullable Path summaryLocation, Summarizer... summarizers) {
             this.summarizers = summarizers;
+            this.root = summaryLocation;
         }
 
         @Override
@@ -767,9 +779,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             AtomicInteger p = new AtomicInteger(0);
             if (this.root == null) {
                 this.root = SiriusProjectSpace.this.root;
-            } else if(Files.notExists(root)) {
+            } else {
                 updateProgress(0, max, p.get(), "Storing Summaries outside the Project-Space at: '" + root.toString() + "'");
-                Files.createDirectories(root);
+                if (Files.notExists(root))
+                    Files.createDirectories(root);
             }
 
 
