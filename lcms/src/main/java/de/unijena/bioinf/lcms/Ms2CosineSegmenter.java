@@ -54,43 +54,6 @@ public class Ms2CosineSegmenter {
         cosine = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20)));
     }
 
-    public IsolationWindow learnIsolationWindow(LCMSProccessingInstance instance, ProcessedSample sample) {
-        final TDoubleArrayList widths = new TDoubleArrayList();
-        for (Scan s : sample.run.getScans()) {
-            if (s.getPrecursor()!=null) {
-                // check how many intensive peaks we see after the precursor
-                final SimpleSpectrum spec = sample.storage.getScan(s);
-                int K = Spectrums.getFirstPeakGreaterOrEqualThan(spec, s.getPrecursor().getMass());
-                double noiseLevel = sample.ms2NoiseModel.getSignalLevel(s.getIndex(), s.getPrecursor().getMass())/2d;
-                double maxMass = 0d;
-                for (int i=K; i < spec.size(); ++i) {
-                    if (spec.getIntensityAt(i)>noiseLevel) {
-                        final double mz = spec.getMzAt(i)-s.getPrecursor().getMass();
-                        if (mz>=17.5)
-                            break; // we often see H2O gains...
-                        if (mz > 3) {
-                            if (!instance.getFormulaDecomposer().maybeDecomposable(mz-0.0004, mz+0.0004)) {
-                                continue;
-                            }
-                        }
-                        maxMass = Math.max(maxMass, mz);
-                        if (maxMass>10) {
-                            LoggerFactory.getLogger(getClass()).debug(")/");
-//                            System.err.println(")/");
-                        }
-                    }
-                }
-                if (maxMass>0.5) {
-                    widths.add(maxMass);
-                }
-            }
-        }
-        widths.sort();
-        if (widths.size()>3) {
-            return new IsolationWindow(0d, widths.get((int)(widths.size()*0.9)));
-        } else return new IsolationWindow(0,0.5d);
-    }
-
     protected static class Ms2Scan {
         protected double precursorIntensity;
         protected Scan ms1Scan, ms2Scan;
@@ -121,7 +84,6 @@ public class Ms2CosineSegmenter {
         final ArrayList<FragmentedIon> ions = new ArrayList<>();
         // group all MSMS scans into chromatographic peaks
         final HashMap<MutableChromatographicPeak, ArrayList<Ms2Scan>> scansPerPeak = new HashMap<>();
-        IsolationWindow isolationWindow = null;
         Scan lastMs1 = null;
         // go over each MS/MS scan and pick the preceeding MS scan
         for (Scan s : sample.run) {
@@ -134,21 +96,15 @@ public class Ms2CosineSegmenter {
                     LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan without preceeding MS1 scan is not supported yet.");
                     continue;
                 }
+
+                final IsolationWindow window = sample.getMs2IsolationWindowOrLearnDefault(s, instance);
+
                 // now do feature detection at the expected mass of the precursor in the MS1 scan
-                Optional<ChromatographicPeak> detectedFeature = sample.builder.detect(lastMs1, s.getPrecursor().getMass());
-                final IsolationWindow window;
+                Optional<ChromatographicPeak> detectedFeature = sample.builder.detect(lastMs1, s.getPrecursor().getMass(), window);
                 if (detectedFeature.isEmpty()) {
                     LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("No MS1 feature belonging to MS/MS " + s);
                 } else {
                     final MutableChromatographicPeak F = detectedFeature.get().mutate();
-                    if (s.getPrecursor().getIsolationWindow().isUndefined()) {
-                        if (isolationWindow == null) {
-                            LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("No isolation window defined. We have to estimate it from data.");
-                            isolationWindow = learnIsolationWindow(instance, sample);
-                            LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("Estimate isolation window: " + isolationWindow);
-                        }
-                        window = isolationWindow;
-                    } else window = s.getPrecursor().getIsolationWindow();
                     // we might also see chimerics. So let us check that now
                     List<ChimericDetector.Chimeric> chromatographicPeaks = new ChimericDetector(window).searchChimerics(sample, lastMs1, s.getPrecursor(), F);
                     // calculate how much percent of the intensity which is gonna fragment is chimeric
