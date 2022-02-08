@@ -48,11 +48,7 @@ public class ChromatogramBuilder {
     public Optional<ChromatographicPeak> detectExact(Scan startingPoint, double mz) {
         final SimpleSpectrum spectrum = sample.storage.getScan(startingPoint);
         int i = Spectrums.binarySearch(spectrum, mz, dev);
-        if (i>=0) {
-            return buildTrace(spectrum, new ScanPoint(startingPoint, spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
-        } else {
-            return Optional.empty(); // no chromatographic peak detected
-        }
+        return buildTraceOrReturnEmpty(i, spectrum, startingPoint);
     }
 
     public Optional<ChromatographicPeak> detectFirst(Range<Integer> scanRange, int middle, double mz) {
@@ -136,22 +132,37 @@ public class ChromatogramBuilder {
 
     public Optional<ChromatographicPeak> detect(Scan startingPoint, double isolationTargetMz, IsolationWindow window) {
         if (window != null) {
-            //search in the middle 75% (0.5*0.75) of the window
-            final double absDev = window.getWindowWidth()*0.375;
+            //search in the middle 33% of the window
+            final Deviation leftAbsDev = new Deviation(0, window.getLeftOffset() * 0.33);
+            final Deviation rightAbsDev = new Deviation(0, window.getRightOffset() * 0.33);
             //todo for windows that isolate the whole isotope pattern a monoisotopic peak detection would be good (to not select the +1 peak with some uncommon elements)
-            return detect(startingPoint, isolationTargetMz + window.getWindowOffset(), new Deviation(0, absDev));
+            return detect(startingPoint, isolationTargetMz, leftAbsDev, rightAbsDev); //todo may assuming a normal distribution be better?
         } else {
             return detect(startingPoint, isolationTargetMz, dev);
         }
     }
 
+    public Optional<ChromatographicPeak> detect(Scan startingPoint, double mz, Deviation leftWindow, Deviation rightWindow) {
+        final SimpleSpectrum spectrum = sample.storage.getScan(startingPoint);
+
+        double begin = mz - leftWindow.absoluteFor(mz);
+        double end = mz + rightWindow.absoluteFor(mz);
+        int i = Spectrums.mostIntensivePeakWithin(spectrum, begin, end);
+
+        return buildTraceOrReturnEmpty(i, spectrum, startingPoint);
+    }
+
     public Optional<ChromatographicPeak> detect(Scan startingPoint, double mz, Deviation window) {
         final SimpleSpectrum spectrum = sample.storage.getScan(startingPoint);
         int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, window);
-        if (i>=0) {
+        return buildTraceOrReturnEmpty(i, spectrum, startingPoint);
+    }
+
+    private Optional<ChromatographicPeak> buildTraceOrReturnEmpty(int i, SimpleSpectrum spectrum, Scan startingPoint) {
+        if (i >=0) {
             return buildTrace(spectrum, new ScanPoint(startingPoint, spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
         } else {
-            return Optional.empty(); // no chromatographic peak detected
+            return Optional.empty();
         }
     }
 

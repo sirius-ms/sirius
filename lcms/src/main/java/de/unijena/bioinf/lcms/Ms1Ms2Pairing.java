@@ -40,7 +40,7 @@ public class Ms1Ms2Pairing {
     }
 
     // returns the error distribution of alignments
-    public RealDistribution attachRemainingMs1(ProcessedSample... ms1runs) {
+    public RealDistribution attachRemainingMs1(LCMSProccessingInstance instance, ProcessedSample... ms1runs) {
         TDoubleArrayList errors = new TDoubleArrayList();
         final ArrayList<Target> allTargets = new ArrayList<>();
         final JobManager jm = SiriusJobs.getGlobalJobManager();
@@ -53,10 +53,10 @@ public class Ms1Ms2Pairing {
                 @Override
                 protected List<Target> compute() throws Exception {
                     List<Target> tgs = allTargets.stream().map(x->new Target(x.ion)).collect(Collectors.toList());
-                    searchMs1(s, tgs);
+                    searchMs1(s, tgs, instance);
                     tgs.sort(Comparator.comparingLong(x->x.rt));
                     recalibrate(tgs, (values)->MzRecalibration.getMedianLinearRecalibration(values[0], values[1]), s.run.getIdentifier() + "_linear");
-                    searchMs1(s, tgs);
+                    searchMs1(s, tgs, instance);
                     /*
                     recalibrate(tgs, (values)->new LoessInterpolator(0.3, 2).interpolate(values[0], values[1]), s.run.getIdentifier() + "loess");
                     // and search again
@@ -95,10 +95,10 @@ public class Ms1Ms2Pairing {
         for (ProcessedSample msms : msmsRuns) {
             final List<Target> targets = extractTargets(msms);
             // now search for the targets in the MS1 run
-            searchMs1(ms1, targets);
+            searchMs1(ms1, targets, instance);
             checkForDuplicates(targets);
             recalibrate(targets, (values)->MzRecalibration.getMedianLinearRecalibration(values[0], values[1]), msms.run.getIdentifier() + "_linear");
-            searchMs1(ms1, targets);
+            searchMs1(ms1, targets, instance);
             //checkForDuplicates(targets);
             //recalibrate(targets, (values)->new LoessInterpolator(0.3, 2).interpolate(values[0], values[1]),msms.run.getIdentifier() + "_loess");
             // and search again
@@ -232,7 +232,7 @@ public class Ms1Ms2Pairing {
     }
 
 
-    private void searchMs1(ProcessedSample ms1, List<Target> targets) {
+    private void searchMs1(ProcessedSample ms1, List<Target> targets, LCMSProccessingInstance instance) {
         final ArrayList<Scan> scans = new ArrayList<>(ms1.run.getScans());
         Collections.sort(scans, Comparator.comparingLong(Scan::getRetentionTime));
         final long[] rts = scans.stream().mapToLong(Scan::getRetentionTime).toArray();
@@ -246,7 +246,7 @@ public class Ms1Ms2Pairing {
             // if an MS/MS feature consists of multiple scans, we check if theese scans might belong to distinct peaks
             if (target.scans.length>1) {
                 final List<Target> tgs = target.split();
-                List<Optional<ChromatographicPeak>> peaks = tgs.stream().map(x->findTarget(ms1, scans, rts, maxRtDistance, x )).collect(Collectors.toList());
+                List<Optional<ChromatographicPeak>> peaks = tgs.stream().map(x->findTarget(ms1, scans, rts, maxRtDistance, x , instance)).collect(Collectors.toList());
                 List<Target> newTargets = mergeMs2AndAssign(tgs, peaks);
                 if (newTargets==null) {
                     // no need for merging
@@ -255,7 +255,7 @@ public class Ms1Ms2Pairing {
                     additionalTargets.addAll(newTargets);
                 }
             } else {
-                findTarget(ms1, scans, rts, maxRtDistance, target).ifPresent(target::assignFeature);
+                findTarget(ms1, scans, rts, maxRtDistance, target, instance).ifPresent(target::assignFeature);
             }
         }
         targets.removeAll(removeableTargets);
@@ -326,7 +326,7 @@ public class Ms1Ms2Pairing {
         return (right.getApexRt()-left.getApexRt()) > width;
     }
 
-    private Optional<ChromatographicPeak> findTarget(ProcessedSample ms1, ArrayList<Scan> scans, long[] rts, long maxRtDistance, Target target) {
+    private Optional<ChromatographicPeak> findTarget(ProcessedSample ms1, ArrayList<Scan> scans, long[] rts, long maxRtDistance, Target target, LCMSProccessingInstance instance) {
         int bestMatch = Arrays.binarySearch(rts, target.rt);
         if (bestMatch<0) {
             bestMatch=-bestMatch - 1;
@@ -339,7 +339,7 @@ public class Ms1Ms2Pairing {
             progress=false;
             if (forward < rts.length && rts[forward] < rightBorder) {
                 final Scan scan = scans.get(forward);
-                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, getIsolationWindow(scan, ms1).orElse(null));
+                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, ms1.getMs2IsolationWindowOrLearnDefault(scan, instance));
                 if (feature.isPresent() && feature.get().numberOfScans()>=5) {
                     return feature;
                 }
@@ -348,7 +348,7 @@ public class Ms1Ms2Pairing {
             }
             if (backward >= 0 && rts[backward] > leftBorder) {
                 final Scan scan = scans.get(backward);
-                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, getIsolationWindow(scan, ms1).orElse(null));
+                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, ms1.getMs2IsolationWindowOrLearnDefault(scan, instance));
                 if (feature.isPresent()) {
                     return feature;
                 }
@@ -357,17 +357,6 @@ public class Ms1Ms2Pairing {
             }
         }
         return Optional.empty();
-    }
-
-    private Optional<IsolationWindow> getIsolationWindow(Scan scan, ProcessedSample sample) {
-        if (scan.getPrecursor().getIsolationWindow().isUndefined()) {
-            if (sample.getDefaultMs2IsolationWindow() != null){
-                LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("No isolation window defined.");
-            }
-            return Optional.ofNullable(sample.getDefaultMs2IsolationWindow());
-        } else {
-            return Optional.of(scan.getPrecursor().getIsolationWindow());
-        }
     }
 
     private List<Target> extractTargets(ProcessedSample msms) {

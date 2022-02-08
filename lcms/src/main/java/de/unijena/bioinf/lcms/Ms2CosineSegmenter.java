@@ -54,92 +54,6 @@ public class Ms2CosineSegmenter {
         cosine = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20)));
     }
 
-    public IsolationWindow learnIsolationWindow(LCMSProccessingInstance instance, ProcessedSample sample) {
-        final TDoubleArrayList widths = new TDoubleArrayList();
-        for (Scan s : sample.run.getScans()) {
-            if (s.isMsMs()) {
-                if (isMultipleCharged(s, sample)){
-                    //multiple charged compounds will produce single-charged fragments with mass greater precursor
-                    continue;
-                }
-                // check how many intensive peaks we see after the precursor
-                final SimpleSpectrum spec = sample.storage.getScan(s);
-                int K = Spectrums.getFirstPeakGreaterOrEqualThan(spec, s.getPrecursor().getMass());
-                double noiseLevel = sample.ms2NoiseModel.getSignalLevel(s.getIndex(), s.getPrecursor().getMass())/2d;
-                double maxMass = 0d;
-                for (int i=K; i < spec.size(); ++i) {
-                    if (spec.getIntensityAt(i)>noiseLevel) {
-                        final double mz = spec.getMzAt(i)-s.getPrecursor().getMass();
-                        if (mz>=17.5)
-                            break; // we often see H2O gains...
-                        if (mz > 3) {
-                            if (!instance.getFormulaDecomposer().maybeDecomposable(mz-0.0004, mz+0.0004)) {
-                                continue;
-                            }
-                        }
-                        maxMass = Math.max(maxMass, mz);
-                        if (maxMass>10) {
-                            LoggerFactory.getLogger(getClass()).debug(")/");
-//                            System.err.println(")/");
-                        }
-                    }
-                }
-                if (maxMass>0.5) {
-                    widths.add(maxMass);
-                }
-            }
-        }
-        widths.sort();
-        if (widths.size()>3) {
-            //todo this only considers the right side of the window. that means:
-            // 1. the window may be actually twice the size (however, multiplying it by 2 will probably over-estimate the window, because
-            // 2. windows of 2-5 m/z are often shifted to isolated the whole isotope pattern.
-            // for estimating the window more precisely the left side has to be considered for which we probably may want to include MS1 information
-            // to make sure that signals are precursor signals and not fragment peaks
-            double estimatedWidthRight = widths.get((int)(widths.size()*0.9));
-
-
-            if (estimatedWidthRight > 2) {
-                //larger windows are usually shifted to cover the isotope pattern, assume left side of window is 50% of right side (estimatedWidthRight)
-                double estimatedWidth = 1.5 * estimatedWidthRight;
-                double offset = estimatedWidthRight*0.25;
-                if (estimatedWidthRight > 5) {
-                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("The isolation window was estimated to be very large: " + estimatedWidth + " m/z. SIRIUS does not support DIA data.");
-                } else {
-                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("Larger isolation window width estimated: "+estimatedWidth+" m/z. Larger windows favor chimeric compounds which will be removed from analysis.");
-                }
-                return new IsolationWindow(offset, estimatedWidth);
-            } else {
-                return new IsolationWindow(0d, 2*estimatedWidthRight);
-            }
-
-        } else return new IsolationWindow(0,0.5d);
-    }
-
-
-    /**
-     * detect multiple charges solely based on peaks that are larger than the precursor. This should be safer than relying on seeing an isotope peak.
-     * This method should just filter obvious multiple charged compounds that hinder isolation window estimation.
-     */
-    private boolean isMultipleCharged(Scan s, ProcessedSample sample) {
-        final SimpleSpectrum spec = sample.storage.getScan(s);
-        double noiseLevel = sample.ms2NoiseModel.getSignalLevel(s.getIndex(), s.getPrecursor().getMass())/2d;
-        int numberOfLargePeaks = 0;
-        for (int i = spec.size() - 1; i >= 0; i--) {
-            final double mz = spec.getMzAt(i)-s.getPrecursor().getMass();
-            if (mz<50){ //some arbitrary constant
-                return false;
-            }
-            if (spec.getIntensityAt(i)>noiseLevel) {
-                ++numberOfLargePeaks;
-                if (numberOfLargePeaks>=3){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     protected static class Ms2Scan {
         protected double precursorIntensity;
         protected Scan ms1Scan, ms2Scan;
@@ -170,7 +84,6 @@ public class Ms2CosineSegmenter {
         final ArrayList<FragmentedIon> ions = new ArrayList<>();
         // group all MSMS scans into chromatographic peaks
         final HashMap<MutableChromatographicPeak, ArrayList<Ms2Scan>> scansPerPeak = new HashMap<>();
-        IsolationWindow isolationWindow = sample.getDefaultMs2IsolationWindow();
         Scan lastMs1 = null;
         // go over each MS/MS scan and pick the preceeding MS scan
         for (Scan s : sample.run) {
@@ -184,16 +97,7 @@ public class Ms2CosineSegmenter {
                     continue;
                 }
 
-                final IsolationWindow window;
-                if (s.getPrecursor().getIsolationWindow().isUndefined()) {
-                    if (isolationWindow == null) {
-                        LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("No isolation window defined. We have to estimate it from data.");
-                        isolationWindow = learnIsolationWindow(instance, sample);
-                        sample.setDefaultMs2IsolationWindow(isolationWindow);
-                        LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("Estimate isolation window: " + isolationWindow);
-                    }
-                    window = isolationWindow;
-                } else window = s.getPrecursor().getIsolationWindow();
+                final IsolationWindow window = sample.getMs2IsolationWindowOrLearnDefault(s, instance);
 
                 // now do feature detection at the expected mass of the precursor in the MS1 scan
                 Optional<ChromatographicPeak> detectedFeature = sample.builder.detect(lastMs1, s.getPrecursor().getMass(), window);

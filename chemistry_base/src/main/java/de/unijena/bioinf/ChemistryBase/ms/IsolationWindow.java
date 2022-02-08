@@ -43,6 +43,14 @@ public class IsolationWindow {
         return windowWidth;
     }
 
+    public double getLeftOffset() {
+        return (windowWidth/2d  - windowOffset);
+    }
+
+    public double getRightOffset() {
+        return (windowWidth/2d  + windowOffset);
+    }
+
     public Range<Double> getWindowFor(double peak) {
         return Range.closed(peak+windowOffset-windowWidth/2d, peak+windowOffset+windowWidth/2d);
     }
