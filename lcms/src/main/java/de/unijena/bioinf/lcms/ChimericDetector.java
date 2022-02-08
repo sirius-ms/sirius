@@ -21,13 +21,14 @@
 package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.model.lcms.ChromatographicPeak;
 import de.unijena.bioinf.model.lcms.Precursor;
 import de.unijena.bioinf.model.lcms.Scan;
+import de.unijena.bioinf.model.lcms.ScanPoint;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -38,13 +39,13 @@ import java.util.Optional;
 public class ChimericDetector {
 
     protected IsolationWindow isolationWindow;
-    protected NormalDistribution guessedFilter;
+    protected RealDistribution guessedFilter;
 
     public ChimericDetector(IsolationWindow isolationWindow) {
         this.isolationWindow = isolationWindow;
-        final double window = isolationWindow.getWindowWidth();
-        final double offset = isolationWindow.getWindowOffset();
-        this.guessedFilter = new NormalDistribution(offset,(window*0.5)*(window*0.5));
+        final double leftOffset = isolationWindow.getLeftOffset();
+        final double rightOffset = isolationWindow.getRightOffset();
+        this.guessedFilter = new SplitNormalDistribution(0d,leftOffset*leftOffset, rightOffset*rightOffset);
     }
 
     public static class Chimeric {
@@ -63,36 +64,30 @@ public class ChimericDetector {
             throw new IllegalArgumentException("MS1 feature does not contain MS1 scan");
         }
         SimpleSpectrum scan = sample.storage.getScan(ms1Scan);
-        final double window = isolationWindow.getWindowWidth();
-        final double offset = isolationWindow.getWindowOffset();
-        final double from = precursor.getMass()+offset-window;
-        final double to = precursor.getMass()+offset+window;
+        final double from = precursor.getMass() - isolationWindow.getLeftOffset();
+        final double to = precursor.getMass() + isolationWindow.getRightOffset();
         int bgindex=Spectrums.indexOfFirstPeakWithin(scan, from,to);
-        int mostIntensive=-1;
-        for (int m=1; m < 5; ++m) {
-            final Deviation dev = sample.builder.getAllowedMassDeviation().multiply(m);
-            for (int k=bgindex; k < scan.size() && scan.getMzAt(k) <= to; ++k) {
-                if ((mostIntensive<0 || scan.getIntensityAt(k)>scan.getIntensityAt(mostIntensive)) && dev.inErrorWindow(precursor.getMass(),scan.getMzAt(k))) {
-                    mostIntensive=k;
-                }
-            }
-            if (mostIntensive>=0)
-                break;
-        }
-        if (mostIntensive<0) {
+
+        ScanPoint scanPoint = ms1Feature.getScanPointForScanId(ms1Scan.getIndex());
+
+        //todo ScanPoint could also just directly store idx of peak
+        int precursorPeakIdx = Spectrums.indexOfPeakClosestToMassWithin(scan, scanPoint.getMass(), sample.builder.getAllowedMassDeviation());
+
+        if (precursorPeakIdx<0) {
             LoggerFactory.getLogger(ChimericDetector.class).warn("Do not find precursor ion in MS1 scan.");
             return Collections.emptyList();
         }
-        final double ms1Mass = scan.getMzAt(mostIntensive);
+        final double ms1Mass = scan.getMzAt(precursorPeakIdx);
         final CorrelatedPeakDetector detector = new CorrelatedPeakDetector(Collections.emptySet());
         // now add all other peaks as chimerics
         final ArrayList<Chimeric> chimerics = new ArrayList<>();
-        final double signalLevel = scan.getIntensityAt(mostIntensive)*0.25;
-        final double norm = guessedFilter.getDensity(offset);
+        final double signalLevel = scan.getIntensityAt(precursorPeakIdx)*0.25;
+        //normalize relative to intensity of ms1Feature signal
+        final double norm = guessedFilter.getDensity((ms1Mass - precursor.getMass()));
         for (int k=bgindex; k < scan.size() && scan.getMzAt(k) <= to; ++k) {
             final double mzdiff = scan.getMzAt(k)-ms1Mass;
             final double possInt = scan.getIntensityAt(k)*guessedFilter.getDensity(mzdiff)/norm;
-            if (k!=mostIntensive && possInt>signalLevel) {
+            if (k!=precursorPeakIdx && possInt>signalLevel) {
                 // build a mass trace
                 Optional<ChromatographicPeak> chim = sample.builder.detectExact(ms1Scan, scan.getMzAt(k));
                 if (chim.isPresent()) {
@@ -111,6 +106,54 @@ public class ChimericDetector {
             }
         }
         return chimerics;
+    }
+
+    protected class SplitNormalDistribution extends RealDistribution {
+        private final double mean;
+        private final NormalDistribution leftNormal;
+        private final NormalDistribution rightNormal;
+        //adjust the density to make distributions same height at mean
+        private final double scaleRight;
+
+        protected SplitNormalDistribution(double mean, double leftVariance, double rightVariance) {
+            this.mean = mean;
+            this.leftNormal = new NormalDistribution(mean, leftVariance);
+            this.rightNormal = new NormalDistribution(mean, rightVariance);
+            this.scaleRight = leftNormal.getDensity(mean) / rightNormal.getDensity(mean);
+        }
+
+        @Override
+        public double getDensity(double x) {
+            if (x <= mean) return leftNormal.getDensity(x);
+            else return rightNormal.getDensity(x) * scaleRight;
+        }
+
+        @Override
+        public double getProbability(double begin, double end) {
+            throw new UnsupportedOperationException("not implemented");
+        }
+
+        @Override
+        public double getCumulativeProbability(double x) {
+            throw new UnsupportedOperationException("not implemented");
+        }
+
+        @Override
+        public double getLogDensity(double x) {
+            if (x <= mean) return leftNormal.getLogDensity(x);
+            else return rightNormal.getLogDensity(x);
+        }
+
+
+        @Override
+        public double getVariance() {
+            throw new UnsupportedOperationException("not implemented");
+        }
+
+        @Override
+        public double getMean() {
+            return mean;
+        }
     }
 
 }
