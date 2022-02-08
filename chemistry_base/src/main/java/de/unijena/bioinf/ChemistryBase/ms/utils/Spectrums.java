@@ -1118,19 +1118,26 @@ public class Spectrums {
     }
 
     public static <S extends Spectrum<P>, P extends Peak> int mostIntensivePeakWithin(S spectrum, double mz, Deviation dev) {
-        return (spectrum instanceof OrderedSpectrum) ? mostIntensivePeakWithinBinarySearch(spectrum, mz, dev)
-                : mostIntensivePeakWithinLinearSearch(spectrum, mz, dev);
-    }
-
-    private static <S extends Spectrum<P>, P extends Peak> int mostIntensivePeakWithinLinearSearch(S spectrum, double mz, Deviation dev) {
-        if (spectrum.size() <= 0) return -1;
-        double intensity = Double.NEGATIVE_INFINITY;
         final double diff = dev.absoluteFor(mz);
         final double a = mz - diff, b = mz + diff;
+
+        return (spectrum instanceof OrderedSpectrum) ? mostIntensivePeakWithinBinarySearch(spectrum, a, b)
+                : mostIntensivePeakWithinLinearSearch(spectrum, a, b);
+    }
+
+    public static <S extends Spectrum<P>, P extends Peak> int mostIntensivePeakWithin(S spectrum, double begin, double end) {
+        return (spectrum instanceof OrderedSpectrum) ? mostIntensivePeakWithinBinarySearch(spectrum, begin, end)
+                : mostIntensivePeakWithinLinearSearch(spectrum, begin, end);
+    }
+
+
+    private static <S extends Spectrum<P>, P extends Peak> int mostIntensivePeakWithinLinearSearch(S spectrum, double begin, double end) {
+        if (spectrum.size() <= 0) return -1;
+        double intensity = Double.NEGATIVE_INFINITY;
         int opt = -1;
         for (int k = 0; k < spectrum.size(); ++k) {
             final double m = spectrum.getMzAt(k);
-            if (m >= a && m <= b && spectrum.getIntensityAt(k) > intensity) {
+            if (m >= begin && m <= end && spectrum.getIntensityAt(k) > intensity) {
                 intensity = spectrum.getIntensityAt(k);
                 opt = k;
             }
@@ -1138,11 +1145,9 @@ public class Spectrums {
         return opt;
     }
 
-    private static <S extends Spectrum<P>, P extends Peak> int mostIntensivePeakWithinBinarySearch(S spectrum, double mz, Deviation dev) {
-        final double a = dev.absoluteFor(mz);
-        int k = indexOfFirstPeakWithin(spectrum, mz - a, mz + a);
+    private static <S extends Spectrum<P>, P extends Peak> int mostIntensivePeakWithinBinarySearch(S spectrum,  double begin, double end) {
+        int k = indexOfFirstPeakWithin(spectrum, begin, end);
         if (k < 0) return k;
-        final double end = mz + a;
         double intensity = spectrum.getIntensityAt(k);
         for (int j = k + 1; j < spectrum.size(); ++j) {
             if (spectrum.getMzAt(j) > end)
