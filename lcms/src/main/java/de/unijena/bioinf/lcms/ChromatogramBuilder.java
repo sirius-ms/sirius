@@ -162,7 +162,7 @@ public class ChromatogramBuilder {
         if (i >=0) {
             return buildTrace(spectrum, new ScanPoint(startingPoint, spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
         } else {
-            return Optional.empty();
+            return Optional.empty(); // no chromatographic peak detected
         }
     }
 
