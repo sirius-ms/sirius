@@ -171,7 +171,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         final Ms1Ms2Pairing ms1Ms2Pairing = new Ms1Ms2Pairing(ms1Samples[0], ms2Samples);
         ms1Ms2Pairing.run(instance);
         // attach remaining ms1
-        RealDistribution error = ms1Ms2Pairing.attachRemainingMs1(remainingSamples);
+        RealDistribution error = ms1Ms2Pairing.attachRemainingMs1(instance, remainingSamples);
         // start alignment
         if (error instanceof NormalDistribution)
         System.out.println("Error: " + ((NormalDistribution)error).getStandardDeviation());
