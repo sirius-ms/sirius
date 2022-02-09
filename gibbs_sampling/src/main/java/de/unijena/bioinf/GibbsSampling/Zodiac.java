@@ -335,8 +335,14 @@ public class Zodiac {
                 trees.add(identificationResult.getResolvedTree()); //todo use rawTree or resolvedTree?!
             }*/
 
+            List<FragmentsCandidate> candidates;
+            try {
+                 candidates = FragmentsCandidate.createAllCandidateInstances(trees, experiment);
+            } catch (Exception e){
+                Log.error("Error in ZODIAC processing: Could not create FragmentsCandidate object for compound {} from source {}", experiment.getName(), experiment.getSourceString());
+                throw e;
+            }
 
-            List<FragmentsCandidate> candidates = FragmentsCandidate.createAllCandidateInstances(trees, experiment);
 
             Collections.sort(candidates);
             if (candidates.size() > 0) candidatesMap.put(getUniqueExperimentId(experiment), candidates);
