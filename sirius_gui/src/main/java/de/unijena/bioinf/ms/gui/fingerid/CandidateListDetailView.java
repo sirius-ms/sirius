@@ -79,6 +79,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
     public CandidateListDetailView(StructureList sourceList) {
         super(sourceList);
+
         getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
             if (experiment == null || experiment.stream().noneMatch(e -> e.getFingerprintResult().isPresent()))
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);

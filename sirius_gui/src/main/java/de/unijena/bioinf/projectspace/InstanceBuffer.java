@@ -25,7 +25,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class InstanceBuffer {
-    Lock lock = new ReentrantLock();
+    private final Lock lock = new ReentrantLock();
     private final int maxSize;
     private final LinkedHashSet<InstanceBean> buffer;
 
@@ -50,7 +50,6 @@ public class InstanceBuffer {
         lock.lock();
         try {
             if (buffer.remove(toRemove)) {
-//                System.out.println("+++++++ Removing from cache: " + toRemove.toString());
                 if (!toRemove.isComputing()) {
                     toRemove.clearFormulaResultsCache();
                     toRemove.clearCompoundCache();
