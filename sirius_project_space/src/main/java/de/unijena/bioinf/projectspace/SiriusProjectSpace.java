@@ -31,7 +31,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -96,11 +95,8 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         ids.clear();
         int maxIndex = -1;
         final ProjectReader reader = ioProvider.newReader(this::getProjectSpaceProperty);
-        StopWatch w = new StopWatch(); w.start();
         for (String dir : reader.listDirs("*")) {
-//            final Path expInfo = dir.resolve(SiriusLocations.COMPOUND_INFO);
             int idx = reader.inDirectory(dir, () -> {
-                System.out.println("Reading " + dir);
                 if (reader.exists(SiriusLocations.COMPOUND_INFO)) {
                     final Map<String, String> keyValues = reader.keyValues(SiriusLocations.COMPOUND_INFO);
                     final int index = Integer.parseInt(keyValues.getOrDefault("index", "-1"));
@@ -133,9 +129,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             maxIndex = Math.max(idx, maxIndex);
 
         }
-        w.stop();
-        System.out.println("Reading  DONE in: " +  w.toString());
-
 
         this.compoundCounter.set(maxIndex + 1);
         fireProjectSpaceChange(ProjectSpaceEvent.OPENED);
@@ -733,52 +726,52 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return configuration.getAllComponentsForContainer(CompoundContainer.class).toArray(Class[]::new);
     }
 
-    public void updateSummaries(Summarizer... summarizers) throws IOException {
-        updateSummaries(null, summarizers);
+    public void writeSummaries(Summarizer... summarizers) throws IOException {
+        writeSummaries(null, false, summarizers);
     }
 
-    public void updateSummaries(@Nullable Path summaryLocation, Summarizer... summarizers) throws IOException {
+    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, Summarizer... summarizers) throws IOException {
         try {
-            makeSummarizerJob(summaryLocation, summarizers).compute();
+            makeSummarizerJob(summaryLocation, compressed, summarizers).compute();
         } catch (InterruptedException e) {
             throw new IOException(e); //a bit ugly but will not happen anyway.
         }
     }
 
     public SummarizerJob makeSummarizerJob(Summarizer... summarizers) {
-        return makeSummarizerJob(null, summarizers);
+        return makeSummarizerJob(null, false, summarizers);
     }
 
-    public SummarizerJob makeSummarizerJob(@Nullable Path summaryLocation, Summarizer... summarizers) {
-        return new SummarizerJob(summaryLocation, summarizers);
+    public SummarizerJob makeSummarizerJob(@Nullable Path summaryLocation, boolean compressed, Summarizer... summarizers) {
+        if (summaryLocation == null)
+            return new SummarizerJob(null, summarizers);
+        else if (compressed)
+            return new SummarizerJob(ProjectSpaceIO.getDefaultZipProvider(summaryLocation), summarizers);
+        return new SummarizerJob(new FileProjectSpaceIOProvider(summaryLocation), summarizers);
     }
 
 
     public class SummarizerJob extends TinyBackgroundJJob<Boolean> {
-        private ProjectIOProvider<?, ?, ?> iofactory;
+        private ProjectIOProvider<?, ?, ?> ioProvider;
         private final Summarizer[] summarizers;
 
         protected SummarizerJob(Summarizer... summarizers) {
-            this((ProjectIOProvider<?, ?, ?>) null, summarizers);
+            this(null, summarizers);
         }
 
-        protected SummarizerJob(@Nullable Path summaryLocation, Summarizer... summarizers) {
-            this(summaryLocation != null ? new FileProjectSpaceIOProvider(summaryLocation) : null, summarizers);
-        }
-
-        protected SummarizerJob(@Nullable ProjectIOProvider<?, ?, ?> iofactory, Summarizer... summarizers) {
+        protected SummarizerJob(@Nullable ProjectIOProvider<?, ?, ?> ioProvider, Summarizer... summarizers) {
             this.summarizers = summarizers;
-            this.iofactory = iofactory;
+            this.ioProvider = ioProvider;
         }
 
         @Override
         protected Boolean compute() throws IOException, InterruptedException {
             int max = ids.size() + summarizers.length + 1;
             AtomicInteger p = new AtomicInteger(0);
-            if (this.iofactory == null) {
-                this.iofactory = SiriusProjectSpace.this.ioProvider;
+            if (this.ioProvider == null) {
+                this.ioProvider = SiriusProjectSpace.this.ioProvider;
             } else {
-                updateProgress(0, max, p.get(), "Storing Summaries outside the Project-Space at: '" + iofactory.getLocation().toString() + "'");
+                updateProgress(0, max, p.get(), "Storing Summaries outside the Project-Space at: '" + ioProvider.getLocation().toString() + "'");
             }
 
 

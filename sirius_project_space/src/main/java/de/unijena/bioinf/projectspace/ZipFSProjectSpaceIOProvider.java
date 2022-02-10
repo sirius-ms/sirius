@@ -22,6 +22,7 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -36,11 +37,15 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
 
     public ZipFSProjectSpaceIOProvider(@NotNull Path location, boolean createNew, boolean useTempFile) {
+        this(location, createNew, useTempFile, PropertyManager.getInteger("de.unijena.bioinf.sirius.zipfs.maxWritesBeforeFlush", null, 250));
+    }
+
+    public ZipFSProjectSpaceIOProvider(@NotNull Path location, boolean createNew, boolean useTempFile, int maxWritesBeforeFlush) {
         super(() -> {
             try {
                 if (Files.exists(location) && !Files.isRegularFile(location))
-                    throw new IllegalArgumentException("Compressed Project-Space must be a regular file!");
-                return new ZipFSWrapper(location, createNew, useTempFile);
+                    throw new IllegalArgumentException("Compressed Location must be a regular file!");
+                return new ZipFSWrapper(location, createNew, useTempFile, maxWritesBeforeFlush);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -60,12 +65,11 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
 
         private FileSystem zipFS;
 
-
         private ZipFSWrapper(Path location, boolean createNew, boolean useTempFile) throws IOException {
-            this(location, createNew, useTempFile, 100);
+            this(location, createNew, useTempFile, 0);
         }
 
-        private ZipFSWrapper(Path location, boolean createNew, boolean useTempFile, int maxWrites) throws IOException {
+        public ZipFSWrapper(Path location, boolean createNew, boolean useTempFile, int maxWrites) throws IOException {
             this.location = location;
             this.useTempFile = useTempFile;
             this.maxWrites = maxWrites;
@@ -152,6 +156,8 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
         }
 
         private void ensureWrite() throws IOException {
+            if (maxWrites <= 0) // disabled
+                return;
             lock.lock();
             try {
                 if (++writes >= maxWrites) {
@@ -168,8 +174,12 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                 try {
                     if (zipFS.isOpen())
                         zipFS.close();
+    //            } catch (ClosedChannelException e) {
+    //                LoggerFactory.getLogger(getClass()).error("Could not close ZipFS due to ClosedChannelException usually caused by a thread level interrupt. Try to delete lock and reopen!", e);
+    //                ((ZipFileSystemProvider)zipFS.provider()).removeFileSystem(location, (ZipFileSystem) zipFS); //todo find out how to access  api via gradle
                 } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Could not close ZipFS. Try to ignore and reopen!", e);
+                    throw e;
                 }
                 zipFS = FileUtils.asZipFS(location, false, useTempFile);
                 writes = 0;
