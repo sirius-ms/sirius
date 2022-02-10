@@ -246,7 +246,7 @@ public class ProjectSpaceIO {
         }
     }
 
-    public static ProjectIOProvider<?, ?, ?> getDefaultZipProvider(Path location) {
+    public static ProjectIOProvider<?, ?, ?> getDefaultZipProvider(@NotNull Path location) {
         return ZipProvider.newInstance(location, PropertyManager.getProperty("de.unijena.bioinf.sirius.project.zipProvider"));
     }
 }
