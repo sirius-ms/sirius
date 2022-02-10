@@ -43,6 +43,10 @@ public abstract class IOFunctions {
         void accept(A a) throws IOException;
     }
 
+    public interface BiIOConsumer<A,B> {
+        void accept(A a, B b) throws IOException;
+    }
+
     public interface IOSupplier<A> {
         A get() throws IOException;
     }
