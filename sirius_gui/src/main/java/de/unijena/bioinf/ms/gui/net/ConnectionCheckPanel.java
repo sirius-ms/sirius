@@ -48,18 +48,18 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionMonitor.neededTypes;
  */
 public class ConnectionCheckPanel extends TwoColumnPanel {
     public static final String WORKER_WARNING_MESSAGE =
-            "<b>Warning:</b> For some predictors there is currently no worker <br>" +
-                    "instance available! Corresponding jobs will need to wait until<br> " +
-                    "a new worker instance is started. Please send an error report<br>" +
+            "<b>Warning:</b> For some predictors there is currently no worker " +
+                    "instance available! Corresponding jobs will need to wait until " +
+                    "a new worker instance is started. Please send an error report " +
                     "if a specific predictor stays unavailable for a longer time.";
 
     public static final String WORKER_INFO_MISSING_MESSAGE =
             "<font color='red'>" +
-                    "<b>Error:</b> Could not fetch worker information from Server. This is <br>" +
+                    "<b>Error:</b> Could not fetch worker information from Server. This is " +
                     "an unexpected behaviour! </font> <br><br>" +
-                    "<b>Warning:</b> It might be the case that there is no worker instance <br> " +
-                    "available for some predictors! Corresponding jobs will need to <br> " +
-                    "wait until a new worker instance is started. Please send an error <br>" +
+                    "<b>Warning:</b> It might be the case that there is no worker instance " +
+                    "available for some predictors! Corresponding jobs will need to " +
+                    "wait until a new worker instance is started. Please send an error " +
                     "report if this message occurs for a longer time.";
 
 

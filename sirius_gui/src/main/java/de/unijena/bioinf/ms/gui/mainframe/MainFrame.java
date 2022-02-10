@@ -177,7 +177,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
     protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace) {
-        System.out.println("START CHANGE PROJECT");
         final BasicEventList<InstanceBean> psList = this.ps.INSTANCE_LIST;
         final AtomicBoolean compatible = new AtomicBoolean(true);
         this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
@@ -201,7 +200,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
                     "Do you wish to convert and lose all fingerprint related results?" +
                     "</body></html>").isSuccess())
                 ps().updateFingerprintData();
-        System.out.println("END CHANGE PROJECT");
     }
 
     public void decoradeMainFrameInstance(@NotNull GuiProjectSpaceManager projectSpaceManager) {
