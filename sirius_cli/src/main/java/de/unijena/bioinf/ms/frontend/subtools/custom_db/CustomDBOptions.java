@@ -130,8 +130,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         public void cancel() {
             if (dbjob != null)
                 dbjob.cancel();
-
-            cancel(true);
+            cancel(false);
         }
     }
 }
