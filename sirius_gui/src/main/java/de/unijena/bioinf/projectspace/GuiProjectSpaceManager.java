@@ -74,30 +74,25 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
 
     public GuiProjectSpaceManager(@NotNull SiriusProjectSpace space, BasicEventList<InstanceBean> compoundList, @Nullable Function<Ms2Experiment, String> formatter, int maxBufferSize) {
         super(space, new InstanceBeanFactory(), formatter);
-        System.out.println("MANAGER 1");
         this.ringBuffer = new InstanceBuffer(maxBufferSize);
         this.INSTANCE_LIST = compoundList;
         final ArrayList<InstanceBean> buf = new ArrayList<>(size());
-        System.out.println("MANAGER 2");
 
         forEach(it -> {
             it.clearFormulaResultsCache();
             it.clearCompoundCache();
             buf.add((InstanceBean) it);
         });
-        System.out.println("MANAGER 3");
 
         inEDTAndWait(() -> {
             INSTANCE_LIST.clear();
             INSTANCE_LIST.addAll(buf);
         });
-        System.out.println("MANAGER 4");
 
         createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
             final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID());
             Jobs.runEDTLater(() -> INSTANCE_LIST.add(inst));
         })).register();
-        System.out.println("MANAGER 5");
 
         computeListener = projectSpace().defineCompoundListener().on(ContainerEvent.EventType.ID_FLAG).thenDo(event -> {
             if (event.getAffectedIDs().isEmpty() || !event.getAffectedIdFlags().contains(CompoundContainerId.Flag.COMPUTING))
@@ -108,8 +103,6 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
             Set<InstanceBean> upt = INSTANCE_LIST.stream().filter(i -> eff.contains(i.getID())).collect(Collectors.toSet());
             Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
         }).register();
-        System.out.println("MANAGER 6");
-
     }
 
 

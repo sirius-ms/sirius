@@ -236,8 +236,15 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         return space.containsCompound(id);
     }
 
-    public void updateSummaries(@Nullable Path summaryLocation, @NotNull Summarizer... summarizers) throws IOException {
-        space.updateSummaries(summaryLocation, summarizers);
+    public void writeSummaries(@Nullable Path summaryLocation, @NotNull Summarizer... summarizers) throws IOException {
+        if (summaryLocation == null)
+            writeSummaries(null, false, summarizers);
+        else
+            writeSummaries(summaryLocation, summaryLocation.toString().endsWith(".zip"), summarizers);
+    }
+
+    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @NotNull Summarizer... summarizers) throws IOException {
+        space.writeSummaries(summaryLocation, compressed, summarizers);
     }
 
     public void close() throws IOException {
