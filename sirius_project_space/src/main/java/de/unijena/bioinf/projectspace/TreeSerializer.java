@@ -36,7 +36,7 @@ public class TreeSerializer implements ComponentSerializer<FormulaResultId, Form
     public FTree read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
         return reader.inDirectory(TREES.relDir(), () -> {
             final String relativePath = TREES.fileName(id);
-            return reader.textFile(relativePath, (r) -> new FTJsonReader().parse(r, reader.asURL(relativePath)));
+            return reader.textFile(relativePath, (r) -> new FTJsonReader().parse(r, reader.asURI(relativePath).toURL()));
         });
 
         //NOTE: we do not need to read annotated spectra because the information is already in the trees.

@@ -27,24 +27,32 @@ import java.util.Optional;
 
 public abstract class IOFunctions {
 
-    public interface IOCallable<T> {
-        T call() throws IOException;
+    public interface IOCallable<R> {
+        R call() throws IOException;
     }
 
     public interface IORunnable {
         void run() throws IOException;
     }
 
-    public interface IOFunction<A,B> {
-        B apply(A a) throws IOException;
+    public interface IOFunction<A, R> {
+        R apply(A a) throws IOException;
+    }
+
+    public interface BiIOFunction<A, B, R> {
+        R apply(A a, B b) throws IOException;
     }
 
     public interface IOConsumer<A> {
         void accept(A a) throws IOException;
     }
 
-    public interface IOSupplier<A> {
-        A get() throws IOException;
+    public interface BiIOConsumer<A, B> {
+        void accept(A a, B b) throws IOException;
+    }
+
+    public interface IOSupplier<R> {
+        R get() throws IOException;
     }
 
     public interface ClassValueProducer {
