@@ -24,10 +24,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 public interface FilenameFormatter extends Function<Ms2Experiment, String> {
     String getFormatExpression();
@@ -50,9 +48,7 @@ public interface FilenameFormatter extends Function<Ms2Experiment, String> {
         @Override
         public PSProperty read(ProjectReader reader, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container) throws IOException {
             if (reader.exists(FILENAME))
-                try (Stream<String> lines = Files.lines(reader.asPath(FILENAME))) {
-                    return lines.findFirst().map(PSProperty::new).orElse(null);
-                }
+                reader.textFile(FILENAME, br -> br.lines().findFirst().map(PSProperty::new).orElse(null));
             return null;
         }
 
