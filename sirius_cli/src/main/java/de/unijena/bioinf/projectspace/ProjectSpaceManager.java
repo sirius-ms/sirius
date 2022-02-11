@@ -56,6 +56,7 @@ import de.unijena.bioinf.projectspace.summaries.mztab.MztabMExporter;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -116,14 +117,16 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
         this.space = space;
         this.instFac = factory;
-        this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class).map(p -> (Function<Ms2Experiment, String>) new StandardMSFilenameFormatter(p.formatExpression))
+        StopWatch w = new StopWatch(); w.start();
+        this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class)
+                .map(p -> (Function<Ms2Experiment, String>) new StandardMSFilenameFormatter(p.formatExpression))
                 .orElseGet(() -> {
                     Function<Ms2Experiment, String> f = (formatter != null) ? formatter : new StandardMSFilenameFormatter();
                     if (f instanceof FilenameFormatter)
                         space.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty((FilenameFormatter) f));
                     return f;
                 });
-
+        w.stop();
         this.namingScheme = (idx, name) -> idx + "_" + name;
     }
 
@@ -233,8 +236,15 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         return space.containsCompound(id);
     }
 
-    public void updateSummaries(@Nullable Path summaryLocation, @NotNull Summarizer... summarizers) throws IOException {
-        space.updateSummaries(summaryLocation, summarizers);
+    public void writeSummaries(@Nullable Path summaryLocation, @NotNull Summarizer... summarizers) throws IOException {
+        if (summaryLocation == null)
+            writeSummaries(null, false, summarizers);
+        else
+            writeSummaries(summaryLocation, summaryLocation.toString().endsWith(".zip"), summarizers);
+    }
+
+    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @NotNull Summarizer... summarizers) throws IOException {
+        space.writeSummaries(summaryLocation, compressed, summarizers);
     }
 
     public void close() throws IOException {

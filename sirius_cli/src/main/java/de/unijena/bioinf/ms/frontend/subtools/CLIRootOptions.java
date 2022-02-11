@@ -133,9 +133,14 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
         defaultConfigOptions.changeOption("WriteSummaries", !noSummaries);
     }
 
-    @Option(names = {"--summary-location", "--summaryLocation"}, description = "Specify location (outside the project) for writing summary files. Per default summaries are written to the project-space", order = 299)
+    @Option(names = {"--summary-location", "--summaryLocation"}, description = "Specify location (outside the project) for writing summary files. Specify extention '.zip' to save them compressed. Per default summaries are written to the project-space", order = 299)
     private void setSummaryLocation(Path summaryLocation) throws Exception {
         defaultConfigOptions.changeOption("SummaryLocation", summaryLocation.toAbsolutePath().toString());
+    }
+
+    @Option(names = {"--zip-provider"}, description = "Specify the Provider for handling zip compressed resources (e.g. project-space). Valid values: ${COMPLETION-CANDIDATES}", order = 300)
+    private void setZipProvider(ZipProvider provider) throws Exception {
+        PropertyManager.setProperty("de.unijena.bioinf.sirius.project.zipProvider", provider.name());
     }
 
     @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Specify OUTPUT Project-Space: %n|@", order = 200)
@@ -265,7 +270,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                     //use all experiments in workspace to create summaries
                     if (defaultConfigOptions.config.createInstanceWithDefaults(WriteSummaries.class).value) {
                         LOG.info("Writing summary files...");
-                        project.updateSummaries(defaultConfigOptions.config.createInstanceWithDefaults(SummaryLocation.class).asPath(), ProjectSpaceManager.defaultSummarizer());
+                        project.writeSummaries(defaultConfigOptions.config.createInstanceWithDefaults(SummaryLocation.class).asPath(), ProjectSpaceManager.defaultSummarizer());
                         LOG.info("Project-Space summaries successfully written!");
                     }
                     return true;
