@@ -97,7 +97,9 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     protected void addToCache() {
-        ((GuiProjectSpaceManager) getProjectSpaceManager()).ringBuffer.add(this);
+        synchronized (spaceManager){
+            ((GuiProjectSpaceManager) spaceManager).ringBuffer.add(this);
+        }
     }
 
 
