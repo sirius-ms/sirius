@@ -28,13 +28,13 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
         this.addCompletePath = addCompletePath;
     }
 
-    public void initialize(CombinatorialFragmenter.Callback2 furtherFragmentation){
+    public void initialize(CombinatorialFragmenter.Callback2 fragmentationConstraint){
         if(this.isInitialized) throw new IllegalStateException("This object is already initialised.");
 
         // 1. Create a CombinatorialFragmentationGraph - if it hasn't been computed yet:
         if(this.graph == null) {
             CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule, scoring);
-            this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
+            this.graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
             CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
         }
 

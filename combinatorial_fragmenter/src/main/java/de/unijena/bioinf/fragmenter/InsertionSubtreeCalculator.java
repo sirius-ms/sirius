@@ -24,13 +24,13 @@ public class InsertionSubtreeCalculator extends CombinatorialSubtreeCalculator{
         this.isComputed = false;
     }
 
-    public void initialize(CombinatorialFragmenter.Callback2 furtherFragmentation){
+    public void initialize(CombinatorialFragmenter.Callback2 fragmentationConstraint){
         if(this.isInitialised) throw new IllegalStateException("This object is already initialised.");
 
         // 1. Create the combinatorial fragmentation graph, if it hasn't been constructed yet:
         if(this.graph == null){
             CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, this.scoring);
-            this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
+            this.graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
             CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
         }
 
