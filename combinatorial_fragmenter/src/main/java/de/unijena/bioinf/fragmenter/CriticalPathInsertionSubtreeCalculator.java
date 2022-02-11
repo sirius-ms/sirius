@@ -164,7 +164,7 @@ public class CriticalPathInsertionSubtreeCalculator extends CombinatorialSubtree
 
     private double getCriticalPathScore(CombinatorialNode node){
         int idx = this.nodeIndices.get(node);
-        if(this.criticalPathScores[idx] != Double.NaN) return this.criticalPathScores[idx];
+        if(!Double.isNaN(this.criticalPathScores[idx])) return this.criticalPathScores[idx];
 
         double maxScore = 0.0;
         for(CombinatorialEdge edge : node.getOutgoingEdges()){
