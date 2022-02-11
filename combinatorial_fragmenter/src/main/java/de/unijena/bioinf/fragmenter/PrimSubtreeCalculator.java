@@ -24,13 +24,13 @@ public class PrimSubtreeCalculator extends CombinatorialSubtreeCalculator {
         this.isComputed = false;
     }
 
-    public void initialize(CombinatorialFragmenter.Callback2 furtherFragmentation){
+    public void initialize(CombinatorialFragmenter.Callback2 fragmentationConstraint){
         if(this.isInitialized) throw new IllegalStateException("This object has been already initialised.");
 
         // 1.) Create fragmentation graph and add the terminal nodes - if it hasn't been done before:
         if(this.graph == null) {
             CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, scoring);
-            this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
+            this.graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
             CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
         }
 

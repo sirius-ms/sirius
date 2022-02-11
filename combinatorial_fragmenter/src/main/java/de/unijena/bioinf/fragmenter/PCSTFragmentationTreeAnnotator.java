@@ -25,13 +25,13 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
         this.isInitialized = false;
     }
 
-    public void initialize(CombinatorialFragmenter.Callback2 furtherFragmentation){
+    public void initialize(CombinatorialFragmenter.Callback2 fragmentationConstraint){
         if(this.isInitialized) throw new IllegalStateException("This object is already initialized.");
 
         // 1.: Creation of the combinatorial fragmentation graph - if it hasn't been computed yet:
         if(this.graph == null) {
             CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(this.molecule, this.scoring);
-            this.graph = fragmenter.createCombinatorialFragmentationGraph(furtherFragmentation);
+            this.graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
             CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
         }
 
