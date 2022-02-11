@@ -147,7 +147,7 @@ public class ProjectSpaceWorkflow implements Workflow {
 
                             if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
                                 LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of Batch '" + batchSpace.projectSpace().getLocation().toString());
-                                batchSpace.updateSummaries(config.createInstanceWithDefaults(SummaryLocation.class).asPath(), ProjectSpaceManager.defaultSummarizer());
+                                batchSpace.writeSummaries(config.createInstanceWithDefaults(SummaryLocation.class).asPath(), ProjectSpaceManager.defaultSummarizer());
                             }
                         } finally {
                             if (batchSpace != null)
@@ -212,7 +212,7 @@ public class ProjectSpaceWorkflow implements Workflow {
 
                     if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
                         LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of '" + space.projectSpace().getLocation().toString());
-                        space.updateSummaries(config.createInstanceWithDefaults(SummaryLocation.class).asPath(), ProjectSpaceManager.defaultSummarizer());
+                        space.writeSummaries(config.createInstanceWithDefaults(SummaryLocation.class).asPath(), ProjectSpaceManager.defaultSummarizer());
                     }
                 } catch (ExecutionException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when filtering Project(s)!", e);

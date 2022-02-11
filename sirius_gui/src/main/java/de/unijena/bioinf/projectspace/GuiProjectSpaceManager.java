@@ -77,11 +77,13 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         this.ringBuffer = new InstanceBuffer(maxBufferSize);
         this.INSTANCE_LIST = compoundList;
         final ArrayList<InstanceBean> buf = new ArrayList<>(size());
+
         forEach(it -> {
             it.clearFormulaResultsCache();
             it.clearCompoundCache();
             buf.add((InstanceBean) it);
         });
+
         inEDTAndWait(() -> {
             INSTANCE_LIST.clear();
             INSTANCE_LIST.addAll(buf);

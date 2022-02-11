@@ -55,7 +55,7 @@ public abstract class WebViewPanel extends JFXPanel{
 
     public void cancelTasks(){
         for (FutureTask<Void> task : tasks)
-            task.cancel(true);
+            task.cancel(false);
         tasks.clear();
     }
 

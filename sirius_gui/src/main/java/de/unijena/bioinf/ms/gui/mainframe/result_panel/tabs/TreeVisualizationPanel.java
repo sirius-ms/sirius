@@ -198,7 +198,7 @@ public class TreeVisualizationPanel extends JPanel
                     protected Boolean compute() throws Exception {
                         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
                         if (old != null && !old.isFinished()) {
-                            old.cancel(true);
+                            old.cancel();
                             old.getResult(); //await cancellation so that nothing strange can happen.
                         }else if (sre != null && sre.getFragTree().orElse(null) == ftree) {
                             return false;
