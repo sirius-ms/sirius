@@ -60,9 +60,9 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
 
         DefaultEventSelectionModel<InstanceBean> m = compoundList.getCompoundListSelectionModel();
         if (!m.isSelectionEmpty()) {
-            setData(m.getSelected().get(0));
+            changeData(m.getSelected().get(0));
         } else {
-            setData(null);
+            changeData(null);
         }
 
         //this is the selection refresh, element changes are detected by eventlist
@@ -72,7 +72,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 if (!selection.isSelectionEmpty()) {
                     while (event.next()) {
                         if (selection.isSelectedIndex(event.getIndex())) {
-                            setData(event.getSourceList().get(event.getIndex()));
+                            changeData(event.getSourceList().get(event.getIndex()));
                             return;
                         }
                     }
@@ -82,9 +82,9 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
                 if (!selection.isSelectionEmpty())
-                    setData(selection.getSelected().get(0));
+                    changeData(selection.getSelected().get(0));
                 else
-                    setData(null);
+                    changeData(null);
             }
         });
     }
@@ -92,18 +92,18 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     private JJob<Boolean> backgroundLoader = null;
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
-    private void setData(final InstanceBean ec) {
+    private void changeData(final InstanceBean ec) {
         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
         try {
             backgroundLoaderLock.lock();
-            this.data = ec; //todo not secure!
+            setData(ec);
             final JJob<Boolean> old = backgroundLoader;
             backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
                 @Override
                 protected Boolean compute() throws Exception {
 
                     if (old != null && !old.isFinished()) {
-                        old.cancel(true);
+                        old.cancel();
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
                     checkForInterruption();
@@ -122,7 +122,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                                 refillElements(null);
                             } else {
                                 // to have notification even if the list is already empty
-                                notifyListeners(data, null, elementList, elementListSelectionModel);
+                                readDataByConsumer(data -> notifyListeners(data, null, elementList, elementListSelectionModel));
                             }
                             zodiacScoreStats.update(new double[0]);
                             siriusScoreStats.update(new double[0]);
@@ -165,7 +165,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         elementListSelectionModel.clearSelection();
 //        elementList.clear();
 
-        final List<FormulaResultBean> r = data.getResults();
+        final List<FormulaResultBean> r = readDataByFunction(InstanceBean::getResults);
         if (r != null && !r.isEmpty()) {
             double[] zscores = new double[r.size()];
             double[] sscores = new double[r.size()];
