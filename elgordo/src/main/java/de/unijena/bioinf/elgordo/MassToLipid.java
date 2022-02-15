@@ -471,8 +471,8 @@ public class MassToLipid {
                     if (remainingMass <= 0) continue;
                     sphingosinChains = 1;
                 }
-                {
-                    List<MolecularFormula> chains = cho.decomposeNeutralMassToFormulas(remainingMass, deviation, chainConstraints);
+                if (remainingMass>12){
+                    List<MolecularFormula> chains = cho.decomposeNeutralMassToFormulas(remainingMass, deviation.absoluteFor(precursorMass), chainConstraints);
                     for (MolecularFormula formula : chains) {
                         if (formula.numberOfHydrogens() % 2 != 0 || formula.numberOfCarbons() < 2 || (sphingosinChains == 0 && formula.numberOfHydrogens() > (formula.numberOfCarbons() * 2)))
                             continue;
