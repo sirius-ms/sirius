@@ -249,7 +249,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
             for (File f : options.useFtblast.listFiles()) {
                 if (f.getName().endsWith(".json")) {
                    try (BufferedReader br = FileUtils.getReader(f)){
-                       libTrees.add(new FTJsonReader(cache).parse(br, f.toURI().toURL()));
+                       libTrees.add(new FTJsonReader(cache).parse(br, f.toURI()));
                    } catch (IOException e) {
                        e.printStackTrace();
                    }

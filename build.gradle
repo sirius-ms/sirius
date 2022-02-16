@@ -100,8 +100,8 @@ allprojects {
     apply plugin: 'idea'
 
 
-    sourceCompatibility = 11
-    targetCompatibility = 11
+    sourceCompatibility = 13
+    targetCompatibility = 13
 
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"

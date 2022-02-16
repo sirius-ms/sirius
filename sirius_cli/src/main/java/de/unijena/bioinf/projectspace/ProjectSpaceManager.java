@@ -117,7 +117,6 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
         this.space = space;
         this.instFac = factory;
-        StopWatch w = new StopWatch(); w.start();
         this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class)
                 .map(p -> (Function<Ms2Experiment, String>) new StandardMSFilenameFormatter(p.formatExpression))
                 .orElseGet(() -> {
@@ -126,7 +125,6 @@ public class ProjectSpaceManager implements Iterable<Instance> {
                         space.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty((FilenameFormatter) f));
                     return f;
                 });
-        w.stop();
         this.namingScheme = (idx, name) -> idx + "_" + name;
     }
 
@@ -203,9 +201,12 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     @NotNull
     @Override
     public Iterator<Instance> iterator() {
+        return instanceIterator();
+    }
+    public Iterator<Instance> instanceIterator(Class<? extends DataAnnotation>... c) {
         if (compoundIdFilter != null)
             return filteredIterator(compoundIdFilter, null);
-        return makeInstanceIterator(space.compoundIterator(Ms2Experiment.class));
+        return makeInstanceIterator(space.compoundIterator(c));
     }
 
     private Iterator<Instance> makeInstanceIterator(@NotNull final Iterator<CompoundContainer> compoundIt) {

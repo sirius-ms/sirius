@@ -42,9 +42,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public class StructureSummaryWriter implements Summarizer {
+    private final Lock lock = new ReentrantLock();
     private List<Hit> compoundTopHits = new ArrayList<>();
     private List<Hit> compoundTopHitsAdducts = new ArrayList<>();
 
@@ -145,11 +148,16 @@ public class StructureSummaryWriter implements Summarizer {
 
 
             if (!topHits.isEmpty()) {
-                compoundTopHits.add(topHits.get(0));
                 final int topRank = topHits.stream().mapToInt(h -> h.formulaRank).min().getAsInt();
                 List<Hit> toadd = topHits.stream().filter(hit -> hit.formulaRank == topRank).collect(Collectors.toList());
                 toadd.forEach(h -> h.numberOfAdducts = toadd.size());
-                compoundTopHitsAdducts.addAll(toadd);
+                lock.lock();
+                try {
+                    compoundTopHits.add(topHits.get(0));
+                    compoundTopHitsAdducts.addAll(toadd);
+                } finally {
+                    lock.unlock();
+                }
             }
 
 
@@ -160,14 +168,19 @@ public class StructureSummaryWriter implements Summarizer {
 
     @Override
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
-        if (!compoundTopHits.isEmpty()) {
-            compoundTopHits.sort(Hit.compareByConfidence().reversed());
-            writer.textFile(SummaryLocations.COMPOUND_SUMMARY, w -> write(w, compoundTopHits));
-        }
+        lock.lock();
+        try {
+            if (!compoundTopHits.isEmpty()) {
+                compoundTopHits.sort(Hit.compareByConfidence().reversed());
+                writer.textFile(SummaryLocations.COMPOUND_SUMMARY, w -> write(w, compoundTopHits));
+            }
 
-        if (!compoundTopHitsAdducts.isEmpty()) {
-            compoundTopHitsAdducts.sort(Hit.compareByConfidence().reversed());
-            writer.textFile(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS, w -> write(w, compoundTopHitsAdducts));
+            if (!compoundTopHitsAdducts.isEmpty()) {
+                compoundTopHitsAdducts.sort(Hit.compareByConfidence().reversed());
+                writer.textFile(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS, w -> write(w, compoundTopHitsAdducts));
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
