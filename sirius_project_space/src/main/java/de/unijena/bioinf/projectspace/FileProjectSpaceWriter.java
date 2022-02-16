@@ -35,13 +35,13 @@ import java.util.function.Function;
 
 public class FileProjectSpaceWriter extends FileProjectSpaceIO implements ProjectWriter {
 
-    public FileProjectSpaceWriter(FSWrapper fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+    public FileProjectSpaceWriter(FileSystemManager fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         super(fs, propertyGetter);
     }
 
     @Override
     public void textFile(String relativePath, IOFunctions.IOConsumer<BufferedWriter> func) throws IOException {
-        fs.writeFS(resolve(relativePath), p -> {
+        fs.writeFile(resolve(relativePath), p -> {
             try (final BufferedWriter stream = Files.newBufferedWriter(mkFilePath(p))) {
                 func.accept(stream);
             }
@@ -51,7 +51,7 @@ public class FileProjectSpaceWriter extends FileProjectSpaceIO implements Projec
 
     @Override
     public void binaryFile(String relativePath, IOFunctions.IOConsumer<OutputStream> func) throws IOException {
-        fs.writeFS(resolve(relativePath), p -> {
+        fs.writeFile(resolve(relativePath), p -> {
             try (final OutputStream stream = Files.newOutputStream(mkFilePath(p))) {
                 func.accept(stream);
             }
@@ -60,7 +60,7 @@ public class FileProjectSpaceWriter extends FileProjectSpaceIO implements Projec
 
     @Override
     public void keyValues(String relativePath, Map<?, ?> map) throws IOException {
-        fs.writeFS(resolve(relativePath), p -> {
+        fs.writeFile(resolve(relativePath), p -> {
             try (final BufferedWriter stream = Files.newBufferedWriter(mkFilePath(p))) {
                 FileUtils.writeKeyValues(stream, map);
             }
@@ -69,7 +69,7 @@ public class FileProjectSpaceWriter extends FileProjectSpaceIO implements Projec
 
     @Override
     public void table(String relativePath, @Nullable  String[] header, Iterable<String[]> rows) throws IOException {
-        fs.writeFS(resolve(relativePath), p -> {
+        fs.writeFile(resolve(relativePath), p -> {
             try (final BufferedWriter bw = Files.newBufferedWriter(mkFilePath(p))) {
                 FileUtils.writeTable(bw, header, rows);
             }
@@ -78,17 +78,17 @@ public class FileProjectSpaceWriter extends FileProjectSpaceIO implements Projec
 
     @Override
     public void delete(String relativePath) throws IOException {
-        fs.writeFS(resolve(relativePath), FileUtils::deleteRecursively);
+        fs.writeFile(resolve(relativePath), FileUtils::deleteRecursively);
     }
 
     @Override
     public void deleteIfExists(String relativePath) throws IOException {
-        fs.writeFS(resolve(relativePath), Files::deleteIfExists);
+        fs.writeFile(resolve(relativePath), Files::deleteIfExists);
     }
 
     @Override
     public void move(String directoryName, String newDirName) throws IOException {
-        fs.writeFS(directoryName, newDirName, Files::move);
+        fs.writeFile(directoryName, newDirName, Files::move);
     }
 
     protected Path mkFilePath(Path file) throws IOException {

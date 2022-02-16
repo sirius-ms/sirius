@@ -65,22 +65,19 @@ public class FileUtils {
     }
 
 
-    public static FileSystem asZipFS(Path zipFile, boolean createNew, boolean useTempFile) throws IOException {
+    public static FileSystem asZipFS(Path zipFile, boolean createNew, boolean useTempFile, @Nullable ZipCompressionMethod method) throws IOException {
         final Map<String, Object> option = new HashMap<>();
         option.put("useTempFile", useTempFile);
         option.put("forceZIP64End", "true");
+        option.put("compressionMethod", method == null ? ZipCompressionMethod.DEFLATED.name() : method.name());
         if (createNew)
             option.put("create", "true");
-        return FileSystems.newFileSystem(URI.create("jar:file:" + zipFile.toUri().getPath()), option);
+        return FileSystems.newFileSystem(zipFile, option);
     }
 
-    public static Path asZipFSPath(Path zipFile, boolean createNew, boolean useTempFile) throws IOException {
-        StopWatch w = new StopWatch(); w.start();
-        FileSystem zipFS = asZipFS(zipFile, createNew, useTempFile);
+    public static Path asZipFSPath(Path zipFile, boolean createNew, boolean useTempFile, @Nullable ZipCompressionMethod method) throws IOException {
+        FileSystem zipFS = asZipFS(zipFile, createNew, useTempFile, method);
         Path p = zipFS.getPath(zipFS.getSeparator());
-        w.stop();
-
-        System.out.println("Created ZipFS in: " + w.toString());
         return p;
     }
 

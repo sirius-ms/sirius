@@ -21,6 +21,7 @@
 package de.unijena.bioinf.projectspace;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Function;
@@ -34,4 +35,6 @@ public interface ProjectIOProvider<IO extends ProjectIO, Reader extends ProjectR
     Writer newWriter(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter);
 
     Path getLocation();
+
+    void flush() throws IOException;
 }
