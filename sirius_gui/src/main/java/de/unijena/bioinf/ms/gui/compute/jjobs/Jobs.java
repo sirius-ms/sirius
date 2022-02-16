@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
@@ -44,6 +45,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class Jobs {
     public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
@@ -255,13 +258,18 @@ public class Jobs {
                 final Set<InstanceBean> upt = new HashSet<>(compoundsToProcess);
                 runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
             }*/
-            MainFrame.MF.ps().setComputing(compoundsToProcess,true);
+            MF.ps().setComputing(compoundsToProcess,true);
 
             checkForInterruption();
             if (computation instanceof ProgressJJob)
                 ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
             logInfo(command);
             computation.run();
+            try {
+                MF.ps().projectSpace().flush(); // enforce ps flush to ensure als results are written to disk
+            } catch (IOException e) {
+                LoggerFactory.getLogger("Error when syncing project-space data to disk");
+            }
             System.gc(); //hint for the gc to collect som trash after computations
             return true;
         }
@@ -280,7 +288,7 @@ public class Jobs {
                 SiriusActions.SUMMARY_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
                 SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
             }
-            MainFrame.MF.ps().setComputing(compoundsToProcess,false);
+            MF.ps().setComputing(compoundsToProcess,false);
             /*{
                 compoundsToProcess.forEach(c -> c.setComputing(false, true));
                 final Set<InstanceBean> upt = new HashSet<>(compoundsToProcess);

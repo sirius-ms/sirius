@@ -112,7 +112,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         Jobs.runInBackgroundAndLoad(MainFrame.MF, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
                             @Override
                             protected Boolean compute() throws Exception {
-                                MainFrame.MF.ps().close();
+                                if (MainFrame.MF.ps() != null)
+                                    MainFrame.MF.ps().close();
                                 return true;
                             }
                         });

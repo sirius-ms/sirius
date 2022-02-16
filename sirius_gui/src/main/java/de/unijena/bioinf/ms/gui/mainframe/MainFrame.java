@@ -24,12 +24,14 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.io.LoadController;
@@ -43,6 +45,7 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +53,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -82,6 +86,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public GuiProjectSpaceManager ps() {
         return ps;
     }
+
+    private BasicEventList<InstanceBean> compoundBaseList;
 
     //left side panel
     private CompoundList compoundList;
@@ -168,7 +174,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     public void openNewProjectSpace(Path selFile) {
-
         changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile));
     }
 
@@ -177,21 +182,31 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
     protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace) {
-        final BasicEventList<InstanceBean> psList = this.ps.INSTANCE_LIST;
+        final BasicEventList<InstanceBean> psList = compoundBaseList;
         final AtomicBoolean compatible = new AtomicBoolean(true);
         this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
             final SiriusProjectSpace ps = makeSpace.get();
-            compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
-            Jobs.cancelALL();
-            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
+            Utils.withTime("Data Check done in: ", w -> compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null));
+            Utils.withTime("Cancel Jobs done in: ", w -> Jobs.cancelALL());
+            final GuiProjectSpaceManager gps = Utils.withTimeR("Create GUI SpaceManager: ", w -> new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10)));
             inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
-            gps.projectSpace().addProjectSpaceListener(event -> {
-                if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
-                    inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
+            Utils.withTime("Add listeners done in: ", w -> {
+                gps.projectSpace().addProjectSpaceListener(event -> {
+                    if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
+                        inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
+                });
             });
             return gps;
         }).getResult();
 
+        if (this.ps == null) {
+            try {
+                LoggerFactory.getLogger(getClass()).warn("Error when changing project-space. Falling back to tmp project-space");
+                createNewProjectSpace(ProjectSpaceIO.createTmpProjectSpaceLocation());
+            } catch (IOException e) {
+                new ErrorReportDialog(MF, "Cannot recreate a valid project-space due to: " + e.getMessage() + "'.  SIRIUS will not work properly without valid project-space. Please restart SIRIUS.");
+            }
+        }
         if (!compatible.get())
             if (new QuestionDialog(MF, "<html><body>" +
                     "The opened project-space contains results based on an outdated fingerprint version.<br><br>" +
@@ -205,6 +220,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public void decoradeMainFrameInstance(@NotNull GuiProjectSpaceManager projectSpaceManager) {
         //add project-space
         ps = projectSpaceManager;
+        compoundBaseList = ps.INSTANCE_LIST;
         inEDTAndWait(() -> MF.setTitlePath(ps.projectSpace().getLocation().toString()));
 
         // create models for views
@@ -290,10 +306,15 @@ public class MainFrame extends JFrame implements DropTargetListener {
             if (inputF.msInput.isSingleProject())
                 openNewProject = new QuestionDialog(MF, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
-            if (openNewProject)
+            if (openNewProject) {
+                StopWatch w = new StopWatch();
+                w.start();
                 MF.openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
-            else
+                w.stop();
+                System.out.println("Project Openened in: " + w.toString());
+            } else {
                 importDragAndDropFiles(inputF);
+            }
         }
     }
 
@@ -328,8 +349,4 @@ public class MainFrame extends JFrame implements DropTargetListener {
             }
         }
     }
-
 }
-
-
-
