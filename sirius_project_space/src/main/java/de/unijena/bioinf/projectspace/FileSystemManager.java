@@ -20,21 +20,24 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
-import java.util.function.Function;
 
-public interface ProjectIOProvider<IO extends ProjectIO, Reader extends ProjectReader, Writer extends ProjectWriter> extends Closeable, AutoCloseable {
+public interface FileSystemManager extends Closeable {
 
-    IO newIO(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter);
+    void writeFile(String relativeFrom, String relativeTo, IOFunctions.BiIOConsumer<Path, Path> writeWithFS) throws IOException;
 
-    Reader newReader(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter);
+    void writeFile(@Nullable String relative, IOFunctions.IOConsumer<Path> writeWithFS) throws IOException;
 
-    Writer newWriter(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter);
+    void readFile(@Nullable String relative, IOFunctions.IOConsumer<Path> readWithFS) throws IOException;
+
+    <R> R readFile(@Nullable String relative, IOFunctions.IOFunction<Path, R> readWithFS) throws IOException;
+
+    <R> R withDir(@Nullable String relative, IOFunctions.IOFunction<Path, R> readWithFS) throws IOException;
 
     Path getLocation();
-
-    void flush() throws IOException;
 }

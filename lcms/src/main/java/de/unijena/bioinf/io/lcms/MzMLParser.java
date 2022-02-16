@@ -39,7 +39,6 @@ import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,8 +49,8 @@ public class MzMLParser implements LCMSParser {
         return parse(new DataSource(file), new MzMLUnmarshaller(file), storage);
     }
 
-    public LCMSRun parse(URL source, SpectrumStorage storage) throws IOException {
-        return parse(new DataSource(source), new MzMLUnmarshaller(source), storage);
+    public LCMSRun parse(URI source, SpectrumStorage storage) throws IOException {
+        return parse(new DataSource(source), new MzMLUnmarshaller(source.toURL()), storage);
     }
 
     public LCMSRun parse(@NotNull DataSource source, @NotNull MzMLUnmarshaller um, @NotNull SpectrumStorage storage) throws IOException {
@@ -64,7 +63,7 @@ public class MzMLParser implements LCMSParser {
 
             {
                 // get source location oO
-                URI s = source.getUrl().toURI();
+                URI s = source.getURI();
                 URI parent = s.getPath().endsWith("/") ? s.resolve("..") : s.resolve(".");
                 String fileName = parent.relativize(s).toString();
                 run.setReference(new MsDataSourceReference(parent, fileName, runId, mzMlId));

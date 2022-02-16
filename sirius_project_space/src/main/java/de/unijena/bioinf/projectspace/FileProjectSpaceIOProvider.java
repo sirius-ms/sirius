@@ -22,6 +22,7 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,70 +34,80 @@ import java.util.function.Supplier;
 public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProjectSpaceIO, FileProjectSpaceReader, FileProjectSpaceWriter> {
 
     @NotNull
-    protected final FSWrapper fs;
+    protected final FileSystemManager fsManager;
 
     public FileProjectSpaceIOProvider(@NotNull Path root) {
         this(() -> {
             if (Files.exists(root) && !Files.isDirectory(root))
                 throw new IllegalArgumentException("Uncompressed Project-Space location must be a directory");
-            return new FileFSWrapper(root);
+            return new FileFileSystemManager(root);
         });
     }
 
-    protected FileProjectSpaceIOProvider(@NotNull Supplier<FSWrapper> locationSupplier) {
-        this.fs = locationSupplier.get();
+    protected FileProjectSpaceIOProvider(@NotNull Supplier<FileSystemManager> locationSupplier) {
+        this.fsManager = locationSupplier.get();
     }
 
 
     @Override
     public FileProjectSpaceIO newIO(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
-        return new FileProjectSpaceIO(fs, propertyGetter);
+        return new FileProjectSpaceIO(fsManager, propertyGetter);
     }
 
     @Override
     public FileProjectSpaceReader newReader(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
-        return new FileProjectSpaceReader(fs, propertyGetter);
+        return new FileProjectSpaceReader(fsManager, propertyGetter);
     }
 
     @Override
     public FileProjectSpaceWriter newWriter(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
-        return new FileProjectSpaceWriter(fs, propertyGetter);
+        return new FileProjectSpaceWriter(fsManager, propertyGetter);
     }
 
     public Path getLocation() {
-        return fs.getLocation();
+        return fsManager.getLocation();
+    }
+
+    @Override
+    public void flush() throws IOException {
+        // normal Filesystem. Nothing to do here. Everything is flushed instantly.
     }
 
     public void close() throws IOException {
-        fs.close();
+        fsManager.close();
     }
 
-    static class FileFSWrapper implements FSWrapper {
+    static class FileFileSystemManager implements FileSystemManager {
         @NotNull
         private final Path root;
 
-        FileFSWrapper(@NotNull Path root) {
+        FileFileSystemManager(@NotNull Path root) {
             this.root = root;
         }
 
         @Override
-        public void writeFS(String relativeFrom, String relativeTo, IOFunctions.BiIOConsumer<Path, Path> writeWithFS) throws IOException {
+        public void writeFile(String relativeFrom, String relativeTo, IOFunctions.BiIOConsumer<Path, Path> writeWithFS) throws IOException {
             writeWithFS.accept(resolvePath(relativeFrom), resolvePath(relativeTo));
         }
 
         @Override
-        public void writeFS(String relative, IOFunctions.IOConsumer<Path> writeWithFS) throws IOException {
+        public void writeFile(String relative, IOFunctions.IOConsumer<Path> writeWithFS) throws IOException {
             writeWithFS.accept(resolvePath(relative));
         }
 
         @Override
-        public void readFS(String relative, IOFunctions.IOConsumer<Path> readWithFS) throws IOException {
+        public void readFile(String relative, IOFunctions.IOConsumer<Path> readWithFS) throws IOException {
             readWithFS.accept(resolvePath(relative));
 
         }
 
         @Override
-        public <R> R readFS(String relative, IOFunctions.IOFunction<Path, R> readWithFS) throws IOException {
+        public <R> R withDir(@Nullable String relative, IOFunctions.IOFunction<Path, R> readWithFS) throws IOException {
+            return readFile(relative, readWithFS);
+        }
+
+        @Override
+        public <R> R readFile(String relative, IOFunctions.IOFunction<Path, R> readWithFS) throws IOException {
             return readWithFS.apply(resolvePath(relative));
         }
 

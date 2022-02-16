@@ -38,7 +38,7 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -52,7 +52,7 @@ public class FTDotReader implements Parser<FTree> {
     private static final Pattern SCORE_PATTERN = Pattern.compile("(Compound)?Score:(\\d+)");
 
     @Override
-    public FTree parse(BufferedReader reader, URL source) throws IOException {
+    public FTree parse(BufferedReader reader, URI source) throws IOException {
         final Graph g = DotParser.parseGraph(reader);
         final FragmentPropertySet rootSet = new FragmentPropertySet(g.getRoot().getProperties());
         final FTree tree = new FTree(rootSet.formula, rootSet.ion);

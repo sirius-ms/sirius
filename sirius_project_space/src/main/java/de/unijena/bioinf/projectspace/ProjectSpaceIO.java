@@ -141,7 +141,7 @@ public class ProjectSpaceIO {
     protected SiriusProjectSpace openZipProjectSpace(Path path) throws IOException {
         ProjectIOProvider<?, ?, ?> provider = getDefaultZipProvider(path);
         if (provider instanceof ZipFSProjectSpaceIOProvider)
-            ((ZipFSProjectSpaceIOProvider) provider).fs.writeFS(null, ProjectSpaceIO::doTSVConversion);
+            ((ZipFSProjectSpaceIOProvider) provider).fsManager.writeFile(null, ProjectSpaceIO::doTSVConversion);
         else if (provider instanceof Zip4JProjectSpaceIOProvider) {
             if (doZip4JTSVConversion(((Zip4JProjectSpaceIOProvider) provider).zipLocation)) {
                 provider = new Zip4JProjectSpaceIOProvider(path);
@@ -177,8 +177,8 @@ public class ProjectSpaceIO {
      * @throws IOException if an I/O error happens
      */
     public static boolean copyProject(@NotNull final SiriusProjectSpace space, @NotNull final Path copyLocation, final boolean switchToNewLocation) throws IOException {
-        return space.withAllLockedDo(() -> {
-
+        // source space is only read
+        return space.withAllWriteLockedDo(() -> {
             @NotNull final Path sourceSpaceLocation = space.getLocation();
 
             final boolean isZipTarget = isZipProjectSpace(copyLocation);
@@ -189,6 +189,7 @@ public class ProjectSpaceIO {
                 if (isZipTarget) { // file copy zip to zip
                     Files.copy(sourceSpaceLocation, copyLocation);
                 } else { //unpack from zip source to target folder
+                    space.flush();
                     try (ZipFile zf = new ZipFile(sourceSpaceLocation.toFile())) {
                         zf.extractAll(copyLocation.toString());
                     }
@@ -226,19 +227,14 @@ public class ProjectSpaceIO {
      * Just a quick check to discriminate a project-space for an arbitrary folder
      */
     public static boolean isExistingProjectspaceDirectory(@NotNull Path f) {
-        return isExistingProjectspaceDirectoryNum(f) > 0;
+        return isExistingProjectspaceDirectoryNum(f) >= 0;
     }
 
     public static int isExistingProjectspaceDirectoryNum(@NotNull Path f) {
         try {
-            if (!Files.exists(f) || Files.isRegularFile(f) || FileUtils.listAndClose(f, Stream::count) == 0)
+            if (Files.notExists(f) || Files.isRegularFile(f) || Files.notExists(f.resolve(".format")))
                 return -1;
-            try (SiriusProjectSpace space = new SiriusProjectSpace(new ProjectSpaceConfiguration(), new FileProjectSpaceIOProvider(f))) {
-                space.open();
-                return space.size();
-            } catch (IOException ignored) {
-                return -2;
-            }
+            return FileUtils.listAndClose(f, s -> s.filter(Files::isDirectory).count()).intValue();
         } catch (Exception e) {
             // not critical: if file cannot be read, it is not a valid workspace
             LOG.error("Workspace check failed! This is not a valid Project-Space!", e);
