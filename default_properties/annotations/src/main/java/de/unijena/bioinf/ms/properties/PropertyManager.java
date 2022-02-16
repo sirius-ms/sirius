@@ -295,6 +295,26 @@ public class PropertyManager {
         return PROPERTIES.getBigDecimal(key, defaultValue);
     }
 
+    public static <E extends Enum<E>> E getEnum(@NotNull String key, @NotNull E defaultValue) {
+        return getEnum(key, null, defaultValue);
+    }
+
+    public static <E extends Enum<E>> E getEnum(@NotNull String key, @Nullable String backupKey, @NotNull E defaultValue) {
+        return getEnum(key, backupKey, defaultValue, (Class<E>) defaultValue.getClass());
+    }
+
+    public static <E extends Enum<E>> E getEnum(@NotNull String key, @Nullable String backupKey, @Nullable E defaultValue, @NotNull Class<E> cls) {
+        String val = backupKey != null
+                ? PROPERTIES.getString(key, PROPERTIES.getString(backupKey, null))
+                : PROPERTIES.getString(key, null);
+        return val == null ? defaultValue : Enum.valueOf(cls, val);
+    }
+
+    private static <E extends Enum<E>> E parseEnum(@NotNull String name, @NotNull Class<E> cls) {
+        return Enum.valueOf(cls, name);
+    }
+
+
     public static Path getPath(String key) {
         String v = PROPERTIES.getString(key);
         return (v == null) ? null : Paths.get(v);
@@ -304,6 +324,7 @@ public class PropertyManager {
         String v = PROPERTIES.getString(key);
         return (v == null) ? null : new File(v);
     }
+
 
     public static int getNumberOfCores() {
         return PROPERTIES.getInt("de.unijena.bioinf.sirius.cpu.cores", 1);

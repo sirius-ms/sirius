@@ -25,24 +25,24 @@ import de.unijena.bioinf.model.lcms.LCMSRun;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Objects;
 
 public class MzMlExperimentParser extends AbstractMzParser {
 
-    protected URL currentSource;
+    protected URI currentSource;
 
     @Override
-    protected boolean setNewSource(BufferedReader sourceReader, URL sourceURL) {
-        if (!Objects.equals(currentSource,sourceURL)) {
-            currentSource = sourceURL;
+    protected boolean setNewSource(BufferedReader sourceReader, URI source) {
+        if (!Objects.equals(currentSource,source)) {
+            currentSource = source;
             return true;
         }
         return false;
     }
 
     @Override
-    protected LCMSRun parseToLCMSRun(BufferedReader sourceReader, URL sourceURL) throws IOException {
+    protected LCMSRun parseToLCMSRun(BufferedReader sourceReader, URI source) throws IOException {
         return new MzMLParser().parse(currentSource, inMemoryStorage);
     }
 }

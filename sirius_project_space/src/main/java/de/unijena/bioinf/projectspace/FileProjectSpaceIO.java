@@ -37,11 +37,11 @@ import java.util.stream.Collectors;
 public class FileProjectSpaceIO implements ProjectIO {
 
 
-    protected FSWrapper fs;
+    protected FileSystemManager fs;
     protected Path prefix;
     protected final Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter;
 
-    public FileProjectSpaceIO(FSWrapper fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+    public FileProjectSpaceIO(FileSystemManager fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         this.fs = fs;
         this.propertyGetter = propertyGetter;
     }
@@ -53,7 +53,7 @@ public class FileProjectSpaceIO implements ProjectIO {
 
     @Override
     public List<String> list(String globPattern, boolean recursive, boolean includeFiles, boolean includeDirs) throws IOException {
-        return fs.readFS(resolve(null), dir -> {
+        return fs.withDir(resolve(null), dir -> {
             final ArrayList<String> content = new ArrayList<>();
 
             Iterable<Path> paths = recursive
@@ -83,21 +83,20 @@ public class FileProjectSpaceIO implements ProjectIO {
 
     @Override
     public boolean exists(String relativePath) throws IOException {
-        return fs.readFS(resolve(relativePath), (IOFunctions.IOFunction<Path, Boolean>) Files::exists);
+        return fs.readFile(resolve(relativePath), (IOFunctions.IOFunction<Path, Boolean>) Files::exists);
     }
 
 
     @Override
     public <T> T inDirectory(String relativePath, IOFunctions.IOCallable<T> ioAction) throws IOException {
-        return fs.readFS(resolve(relativePath), newDir -> {
-            final Path oldDir = prefix;
-            try {
-                prefix = newDir;
-                return ioAction.call();
-            } finally {
-                prefix = oldDir;
-            }
-        });
+        final Path newDir = resolveAsPath(relativePath);
+        final Path oldDir = prefix;
+        try {
+            prefix = newDir;
+            return ioAction.call();
+        } finally {
+            prefix = oldDir;
+        }
     }
 
 

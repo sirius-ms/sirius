@@ -409,7 +409,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         return new ExtendedCriticalPathHeuristicTreeBuilder(this::checkHeuristicInterruption);
     }
 
-    private boolean checkHeuristicInterruption() throws Exception {
+    private boolean checkHeuristicInterruption() throws InterruptedException {
         this.checkForInterruption();
         return false;
     }

@@ -18,24 +18,27 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace;
+package de.unijena.bioinf.ChemistryBase.utils;
 
-import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import org.jetbrains.annotations.Nullable;
+import org.apache.commons.lang3.time.StopWatch;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.nio.file.Path;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-public interface FSWrapper extends Closeable {
+public class Utils {
+    public static void withTime(String text, Consumer<StopWatch> exec) {
+        withTimeR(text, (w) -> {
+            exec.accept(w);
+            return null;
+        });
+    }
 
-    void writeFS(String relativeFrom, String relativeTo, IOFunctions.BiIOConsumer<Path, Path> writeWithFS) throws IOException;
-
-    void writeFS(@Nullable String relative, IOFunctions.IOConsumer<Path> writeWithFS) throws IOException;
-
-    void readFS(@Nullable String relative, IOFunctions.IOConsumer<Path> readWithFS) throws IOException;
-
-    <R> R readFS(@Nullable String relative, IOFunctions.IOFunction<Path, R> readWithFS) throws IOException;
-
-    Path getLocation();
+    public static <R> R withTimeR(String text, Function<StopWatch, R> exec) {
+        StopWatch w = new StopWatch();
+        w.start();
+        R r = exec.apply(w);
+        w.stop();
+        System.out.println(text + w.toString());
+        return r;
+    }
 }

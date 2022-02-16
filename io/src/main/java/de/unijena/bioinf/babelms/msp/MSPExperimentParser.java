@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 
 public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2Experiment> {
     private final boolean clearSpectrum;
@@ -45,7 +45,7 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
 
 
     @Override
-    public Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
+    public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
         AnnotatedSpectrum<Peak> spectrum = parseSpectrum(reader);
 
         if (spectrum == null)

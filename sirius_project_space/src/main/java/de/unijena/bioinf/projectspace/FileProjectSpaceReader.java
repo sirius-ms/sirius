@@ -34,13 +34,13 @@ import java.util.function.Function;
 
 public class FileProjectSpaceReader extends FileProjectSpaceIO implements ProjectReader {
 
-    FileProjectSpaceReader(FSWrapper fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+    FileProjectSpaceReader(FileSystemManager fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         super(fs, propertyGetter);
     }
 
     @Override
     public <A> A textFile(String relativePath, IOFunctions.IOFunction<BufferedReader, A> func) throws IOException {
-        return fs.readFS(resolve(relativePath), p -> {
+        return fs.readFile(resolve(relativePath), p -> {
             try (final BufferedReader stream = Files.newBufferedReader(p)) {
                 return func.apply(stream);
             }
@@ -49,7 +49,7 @@ public class FileProjectSpaceReader extends FileProjectSpaceIO implements Projec
 
     @Override
     public <A> A binaryFile(String relativePath, IOFunctions.IOFunction<InputStream, A> func) throws IOException {
-        return fs.readFS(resolve(relativePath), p -> {
+        return fs.readFile(resolve(relativePath), p -> {
             try (final InputStream stream = Files.newInputStream(p)) {
                 return func.apply(stream);
             }
@@ -58,7 +58,7 @@ public class FileProjectSpaceReader extends FileProjectSpaceIO implements Projec
 
     @Override
     public Map<String, String> keyValues(String relativePath) throws IOException {
-        return fs.readFS(resolve(relativePath), p -> {
+        return fs.readFile(resolve(relativePath), p -> {
             try (final BufferedReader br = Files.newBufferedReader(p)) {
                 return FileUtils.readKeyValues(br);
             }
@@ -67,7 +67,7 @@ public class FileProjectSpaceReader extends FileProjectSpaceIO implements Projec
 
     @Override
     public void table(String relativePath, boolean skipHeader, int fromLineInkl, int toLineExkl, Consumer<String[]> f) throws IOException {
-        fs.readFS(resolve(relativePath), p -> {
+        fs.readFile(resolve(relativePath), p -> {
             try (final BufferedReader br = Files.newBufferedReader(p)) {
                 FileUtils.readTable(br, skipHeader, fromLineInkl, toLineExkl, f);
             }
