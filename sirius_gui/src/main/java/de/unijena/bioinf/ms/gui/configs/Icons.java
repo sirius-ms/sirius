@@ -95,6 +95,8 @@ public abstract class Icons {
     public static final Icon INFO_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-information@0.5x.png"));
     public static final Icon CHOOSE_FILE_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-file-16px.png"));
 
+    public static final Icon HELP_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-information@0.5x.png"));
+
 
     public static final Icon FBMN_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn-16px.png"));
     public static final Icon FBMN_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn@0.5x.png"));
