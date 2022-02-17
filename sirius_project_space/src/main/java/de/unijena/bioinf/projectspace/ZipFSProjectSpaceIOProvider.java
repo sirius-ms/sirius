@@ -46,7 +46,7 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
         this(location, useTempFile,
                 PropertyManager.getInteger("de.unijena.bioinf.sirius.zipfs.maxWritesBeforeFlush", 250),
                 CompressionFormat.of(
-                        PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compressionLevels"),
+                        PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compressionLevels",null,"1"),
                         PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compression")
                 )
         );
@@ -71,7 +71,7 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
 
     @Override
     public CompressionFormat getCompressionFormat() {
-        return super.getCompressionFormat();
+        return getFSManager().format;
     }
 
     @Override
