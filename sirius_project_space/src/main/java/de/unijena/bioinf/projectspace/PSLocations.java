@@ -20,29 +20,8 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.utils.ZipCompressionMethod;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.function.Function;
-
-public interface ProjectIOProvider<IO extends ProjectIO, Reader extends ProjectReader, Writer extends ProjectWriter> extends Closeable, AutoCloseable {
-
-    IO newIO(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter);
-
-    Reader newReader(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter);
-
-    Writer newWriter(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter);
-
-    Path getLocation();
-
-    default CompressionFormat getCompressionFormat(){
-        return new CompressionFormat(null, ZipCompressionMethod.STORED);
-    }
-
-    default void setCompressionFormat(CompressionFormat format){};
-
-    void flush() throws IOException;
+public interface PSLocations {
+    String
+            FORMAT = ".format",
+            COMPRESSION = ".compression";
 }

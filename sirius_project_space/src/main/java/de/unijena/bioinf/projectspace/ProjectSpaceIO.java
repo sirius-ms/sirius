@@ -53,9 +53,9 @@ public class ProjectSpaceIO {
         final SiriusProjectSpace space;
 
         if (isZipProjectSpace(path)) {
-            space = openZipProjectSpace(path);
+            space = makeZipProjectSpace(path);
         } else if (isExistingProjectspaceDirectory(path) || (Files.isDirectory(path) &&
-                FileUtils.listAndClose(path, s -> s.filter(p -> !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME)).count()) == 0)) {
+                FileUtils.listAndClose(path, s -> s.filter(p -> !p.getFileName().toString().equals(PSLocations.FORMAT)).count()) == 0)) {
             doTSVConversion(path);
             space = new SiriusProjectSpace(configuration, new FileProjectSpaceIOProvider(path));
         } else throw new IOException("Location '" + path + "' is not a valid Project Location");
@@ -123,7 +123,8 @@ public class ProjectSpaceIO {
             if (path.getParent() != null && Files.notExists(path.getParent()))
                 Files.createDirectories(path.getParent());
 
-            space = openZipProjectSpace(path);
+            space = makeZipProjectSpace(path);
+            space.setProjectSpaceProperty(CompressionFormat.class, space.ioProvider.getCompressionFormat());
         } else {
             if (Files.exists(path)) {
                 if (Files.isRegularFile(path) || FileUtils.listAndClose(path, Stream::count) > 0)
@@ -138,7 +139,7 @@ public class ProjectSpaceIO {
         return space;
     }
 
-    protected SiriusProjectSpace openZipProjectSpace(Path path) throws IOException {
+    protected SiriusProjectSpace makeZipProjectSpace(Path path) throws IOException {
         ProjectIOProvider<?, ?, ?> provider = getDefaultZipProvider(path);
         if (provider instanceof ZipFSProjectSpaceIOProvider)
             ((ZipFSProjectSpaceIOProvider) provider).fsManager.writeFile(null, ProjectSpaceIO::doTSVConversion);
