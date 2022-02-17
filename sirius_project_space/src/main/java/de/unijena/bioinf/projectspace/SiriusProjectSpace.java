@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -44,6 +45,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
@@ -97,8 +99,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected synchronized void open() throws IOException {
         StopWatch w = new StopWatch();
         w.start();
+
         ids.clear();
         int maxIndex = -1;
+        ioProvider.setCompressionFormat(getProjectSpaceProperty(CompressionFormat.class).orElseThrow());
         final ProjectReader reader = ioProvider.newReader(this::getProjectSpaceProperty);
         for (String dir : reader.listDirs("*")) {
             int idx = reader.inDirectory(dir, () -> {
@@ -755,16 +759,12 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return configuration.getAllComponentsForContainer(CompoundContainer.class).toArray(Class[]::new);
     }
 
-    public void writeSummaries(Summarizer... summarizers) throws IOException {
+    public void writeSummaries(Summarizer... summarizers) throws ExecutionException {
         writeSummaries(null, false, summarizers);
     }
 
-    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, Summarizer... summarizers) throws IOException {
-        try {
-            makeSummarizerJob(summaryLocation, compressed, summarizers).compute();
-        } catch (InterruptedException e) {
-            throw new IOException(e); //a bit ugly but will not happen anyway.
-        }
+    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, Summarizer... summarizers) throws ExecutionException {
+        SiriusJobs.getGlobalJobManager().submitJob(makeSummarizerJob(summaryLocation, compressed, summarizers)).awaitResult();
     }
 
     public SummarizerJob makeSummarizerJob(Summarizer... summarizers) {
@@ -796,6 +796,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
         @Override
         protected Boolean compute() throws IOException, InterruptedException {
+            StopWatch w = new StopWatch();
+            w.start();
+
+
             int batches = jobManager.getCPUThreads() * 3;
             int max = ids.size() + summarizers.length + 1;
             AtomicInteger p = new AtomicInteger(0);
@@ -850,6 +854,10 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 }
                 ioProvider.flush();
                 updateProgress(0, max, max, "DONE!");
+
+
+                w.stop();
+                System.out.println("Wrting Summaries din in: " + w.toString());
                 return true;
             });
         }
