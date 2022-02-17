@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public enum ZipProvider {
@@ -39,19 +38,18 @@ public enum ZipProvider {
             LoggerFactory.getLogger(ZipProvider.class).warn("Zip Provider is NULL, using ZipFS with Memory Cache as fallback!");
             providerType = ZIP_FS;
         }
-        boolean createNew = Files.notExists(location);
         switch (providerType) {
             case ZIP_FS:
-                return new ZipFSProjectSpaceIOProvider(location, createNew, false);
+                return new ZipFSProjectSpaceIOProvider(location, false);
             case ZIP_FS_TMP:
-                return new ZipFSProjectSpaceIOProvider(location, createNew, true);
+                return new ZipFSProjectSpaceIOProvider(location, true);
             case ZIP4J:
                 return new Zip4JProjectSpaceIOProvider(location);
             case ZIP4JVM:
                 return new Zip4jvmProjectSpaceIOProvider(location);
             default: {
                 LoggerFactory.getLogger(ZipProvider.class).debug("Unknown Zip Provider using ZipFS with Memory Cache as fallback!");
-                return new ZipFSProjectSpaceIOProvider(location, createNew, false);
+                return new ZipFSProjectSpaceIOProvider(location, false);
             }
         }
     }

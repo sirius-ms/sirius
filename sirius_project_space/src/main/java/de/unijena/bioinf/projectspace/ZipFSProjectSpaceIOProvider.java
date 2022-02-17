@@ -34,28 +34,29 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
 
-    public ZipFSProjectSpaceIOProvider(@NotNull Path location, boolean createNew, boolean useTempFile) {
-        this(location, createNew, useTempFile,
+    public ZipFSProjectSpaceIOProvider(@NotNull Path location, boolean useTempFile) {
+        this(location, useTempFile,
                 PropertyManager.getInteger("de.unijena.bioinf.sirius.zipfs.maxWritesBeforeFlush", 250),
-                PropertyManager.getEnum("de.unijena.bioinf.sirius.zipfs.compression", ZipCompressionMethod.DEFLATED)
+                CompressionFormat.of(
+                        PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compressionLevels"),
+                        PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compression")
+                )
         );
     }
 
-    public ZipFSProjectSpaceIOProvider(@NotNull Path location, boolean createNew, boolean useTempFile, int maxWritesBeforeFlush, ZipCompressionMethod compressionMethod) {
+    public ZipFSProjectSpaceIOProvider(@NotNull Path location, boolean useTempFile, int maxWritesBeforeFlush, CompressionFormat compFormat) {
         super(() -> {
             try {
                 if (Files.exists(location) && !Files.isRegularFile(location))
                     throw new IllegalArgumentException("Compressed Location must be a regular file!");
-                return new ZipFSTree(location, createNew, useTempFile, maxWritesBeforeFlush, 1);
+                return new ZipFSTree(location, useTempFile, maxWritesBeforeFlush, compFormat);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -67,20 +68,29 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
         getFSManager().flush();
     }
 
+    @Override
+    public CompressionFormat getCompressionFormat() {
+        return super.getCompressionFormat();
+    }
+
+    @Override
+    public void setCompressionFormat(CompressionFormat format) {
+        getFSManager().format = format;
+    }
+
     ZipFSTree getFSManager() {
         return (ZipFSTree) fsManager;
     }
 
     static class ZipFSTree implements FileSystemManager {
         private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-//        private final ReentrantLock resolvePathLock = new ReentrantLock(); //only to be use within readwrite lock!
         private final ZipFSTreeNode root;
-        private final int[] sortedSubFSLevels;
+//        private final int[] sortedSubFSLevels;
+        private CompressionFormat format;
 
-        public ZipFSTree(Path location, boolean createNew, boolean useTempFile, int maxWrites, int... sortedSubFSLevels) throws IOException {
-            this.sortedSubFSLevels = sortedSubFSLevels;
-            Arrays.sort(this.sortedSubFSLevels);
-            root = new ZipFSTreeNode(null, location, useTempFile, compressedLevel() == -1 ? ZipCompressionMethod.DEFLATED : ZipCompressionMethod.STORED, maxWrites);
+        public ZipFSTree(Path location, boolean useTempFile, int maxWrites, CompressionFormat format) throws IOException {
+            this.format = format;
+            root = new ZipFSTreeNode(null, location, useTempFile, format.getRootCompression(), maxWrites);
         }
 
         private ZipFSTreeNode resolvePath(String relative, boolean isDir) throws IOException {
@@ -89,7 +99,7 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                 if (relative != null) {
                     final Path source = zipFSNode.zipFS.getPath(relative);
                     Path prefix = source;
-                    for (int idx : sortedSubFSLevels) {
+                    for (int idx : format.compressionLevels) {
                         if (idx >= source.getNameCount())
                             break;
                         if (idx == source.getNameCount() - 1 && !isDir) //path is a file a cannot be a sub fs
@@ -97,12 +107,8 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                         prefix = source.subpath(0, idx + 1);
 
                         if (!zipFSNode.childFileSystems.containsKey(prefix)) {
-                            ZipCompressionMethod cm = idx == compressedLevel() && (idx < source.getNameCount() - 1 || isDir) ? ZipCompressionMethod.DEFLATED : ZipCompressionMethod.STORED;
-                            try {
-                                zipFSNode.childFileSystems.put(prefix, new ZipFSTreeNode(zipFSNode, prefix, zipFSNode.useTempFile, cm, zipFSNode.maxWrites));
-                            } catch (ProviderNotFoundException e) {
-                                e.printStackTrace();
-                            }
+                            zipFSNode.childFileSystems.put(prefix, new ZipFSTreeNode(
+                                    zipFSNode, prefix, zipFSNode.useTempFile, format.getCompression(idx), zipFSNode.maxWrites));
                         }
                         zipFSNode = zipFSNode.childFileSystems.get(prefix);
                         zipFSNode.ensureOpen();
@@ -123,7 +129,6 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
         public void writeFile(String relativeFrom, String relativeTo, IOFunctions.BiIOConsumer<Path, Path> writeWithFS) throws IOException {
             ZipFSTreeNode fsPFrom = null;
             ZipFSTreeNode fsPTo = null;
-            ZipFSTreeNode[] fss = null;
             try {
                 lock.writeLock().lock();
                 try {
@@ -223,11 +228,6 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
             }
         }
 
-        private int compressedLevel() {
-            if (sortedSubFSLevels.length == 0)
-                return -1;
-            return sortedSubFSLevels[sortedSubFSLevels.length - 1];
-        }
 
         @Override
         public Path getLocation() {

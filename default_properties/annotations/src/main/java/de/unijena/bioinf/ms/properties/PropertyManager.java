@@ -37,10 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -242,6 +239,14 @@ public class PropertyManager {
 
     public static String getProperty(@NotNull String key) {
         return PROPERTIES.getString(key);
+    }
+
+    public static Optional<String> getOptional(@NotNull String key, @Nullable String backupKey) {
+        return Optional.ofNullable(getProperty(key, backupKey, null));
+    }
+
+    public static Optional<String> getOptional(@NotNull String key) {
+        return Optional.ofNullable(getProperty(key));
     }
 
     public static Boolean getBoolean(@NotNull String key, Boolean defaultValue) {
