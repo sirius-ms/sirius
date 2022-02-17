@@ -65,6 +65,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -81,6 +82,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
         //configure ProjectSpaceProperties
         config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
+        config.defineProjectSpaceProperty(CompressionFormat.class, new CompressionFormat.Serializer());
         //configure compound container
         config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
         config.registerComponent(CompoundContainer.class, ProjectSpaceConfig.class, new ProjectSpaceConfigSerializer());
@@ -237,14 +239,14 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         return space.containsCompound(id);
     }
 
-    public void writeSummaries(@Nullable Path summaryLocation, @NotNull Summarizer... summarizers) throws IOException {
+    public void writeSummaries(@Nullable Path summaryLocation, @NotNull Summarizer... summarizers) throws ExecutionException {
         if (summaryLocation == null)
             writeSummaries(null, false, summarizers);
         else
             writeSummaries(summaryLocation, summaryLocation.toString().endsWith(".zip"), summarizers);
     }
 
-    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @NotNull Summarizer... summarizers) throws IOException {
+    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @NotNull Summarizer... summarizers) throws ExecutionException {
         space.writeSummaries(summaryLocation, compressed, summarizers);
     }
 

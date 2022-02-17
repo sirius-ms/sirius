@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -274,7 +275,7 @@ public class CLIRootOptions<M extends ProjectSpaceManager> implements RootOption
                         LOG.info("Project-Space summaries successfully written!");
                     }
                     return true;
-                } catch (IOException e) {
+                } catch (ExecutionException e) {
                     LOG.error("Error when summarizing project. Project summaries may be incomplete!", e);
                     return false;
                 } finally {

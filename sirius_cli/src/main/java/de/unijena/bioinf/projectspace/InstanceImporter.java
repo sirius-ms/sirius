@@ -224,7 +224,8 @@ public class InstanceImporter {
             final ProjectReader sourceReader = inputSpace.ioProvider.newReader(inputSpace::getProjectSpaceProperty);
             //todo make use of glob
             List<String> globalFiles = sourceReader.listFiles("*").stream()
-                    .filter(p -> !p.equals(FilenameFormatter.PSPropertySerializer.FILENAME) &&
+                    .filter(p -> !p.equals(PSLocations.FORMAT) &&
+                            !p.equals(PSLocations.COMPRESSION) &&
                             !p.equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
                             !p.equals(SummaryLocations.COMPOUND_SUMMARY) &&
                             !p.equals(SummaryLocations.FORMULA_SUMMARY) &&
@@ -482,7 +483,7 @@ public class InstanceImporter {
                             final List<Path> ins =
                                     FileUtils.listAndClose(g, l -> l.filter(Files::isRegularFile).sorted().collect(Collectors.toList()));
 
-                            if (ins.contains(Path.of(FilenameFormatter.PSPropertySerializer.FILENAME)))
+                            if (ins.contains(Path.of(PSLocations.FORMAT)))
                                 throw new IOException("Unreadable project found!");
 
                             if (!ins.isEmpty())
