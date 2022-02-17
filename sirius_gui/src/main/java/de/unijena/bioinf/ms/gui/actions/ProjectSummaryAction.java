@@ -43,7 +43,7 @@ public class ProjectSummaryAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new ExecutionDialog<>(new MgfExporterConfigPanel(), List.copyOf(MF.getCompounds()), null, MF, "Export Project Summaries", true);
+//        new ExecutionDialog<>(new MgfExporterConfigPanel(), List.copyOf(MF.getCompounds()), null, MF, "Export Project Summaries", true);
 
         Jobs.runInBackgroundAndLoad(MainFrame.MF, "Writing Summaries to Project-Space",
                 MainFrame.MF.ps().projectSpace().makeSummarizerJob(ProjectSpaceManager.defaultSummarizer()));
