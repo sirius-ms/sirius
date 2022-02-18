@@ -88,10 +88,40 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
         private final ZipFSTreeNode root;
         private CompressionFormat format;
 
+        private final int maxWrites;
+        private final AtomicInteger writes = new AtomicInteger(0);
+
         public ZipFSTree(Path location, boolean useTempFile, int maxWrites, CompressionFormat format) throws IOException {
+            this.maxWrites = maxWrites;
             this.format = format;
             lock = new ReentrantReadWriteUpdateLock();
-            root = new ZipFSTreeNode(null, location, useTempFile, format.getRootCompression(), maxWrites, lock);
+            root = new ZipFSTreeNode(null, location, useTempFile, format.getRootCompression(), lock);
+        }
+
+        public void flush() throws IOException {
+            lock.writeLock().lock();
+            try {
+                root.flushAndReloadZipFS();
+                writes.set(0);
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
+
+        private void ensureWrite() throws IOException {
+            if (maxWrites <= 0) // disabled
+                return;
+            if (writes.incrementAndGet() >= maxWrites) {
+                lock.writeLock().lock();
+                try {
+                    if (writes.get() >= maxWrites){
+                        root.flushAndReloadZipFS();
+                        writes.set(0);
+                    }
+                } finally {
+                    lock.writeLock().unlock();
+                }
+            }
         }
 
         private ResolvedPath resolvePath(String relative, boolean isDir) throws IOException {
@@ -115,7 +145,7 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                                 try {
                                     if (!zipFSNode.childFileSystems.containsKey(prefix)) {
                                         zipFSNode.childFileSystems.put(prefix, new ZipFSTreeNode(
-                                                zipFSNode, prefix, zipFSNode.useTempFile, format.getCompression(idx), zipFSNode.maxWrites, lock));
+                                                zipFSNode, prefix, zipFSNode.useTempFile, format.getCompression(idx), lock));
                                     } else {
                                         zipFSNode.childFileSystems.get(prefix).ensureOpen();
                                     }
@@ -128,9 +158,9 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                             }
                         }
                     }
-                    return new ResolvedPath(zipFSNode, zipFSNode.resolveCurrentPath((source != prefix ? prefix.relativize(source) : source).toString()));
+                    return new ResolvedPath(zipFSNode, (source != prefix ? prefix.relativize(source) : source).toString());
                 } else {
-                    return new ResolvedPath(zipFSNode, zipFSNode.resolveCurrentPath(null)); //root
+                    return new ResolvedPath(zipFSNode, "/"); //root
                 }
             } catch (IOException e) {
                 LoggerFactory.getLogger(getClass()).warn("FS operation cancelled by interruption. Connection to ZipFS Lost. Try reopening!");
@@ -156,11 +186,11 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
 
                 lock.readLock().lock();
                 try {
-                    writeWithFS.accept(fsPFrom.path, fsPTo.path);
+                    writeWithFS.accept(fsPFrom.getPath(), fsPTo.getPath());
                 } finally {
                     lock.readLock().unlock();
                 }
-                fsPTo.fs.ensureWrite();
+                ensureWrite();
             } catch (ClosedByInterruptException e) {
                 LoggerFactory.getLogger(getClass()).warn("FS operation cancelled by interruption. Connection to ZipFS Lost. Try reopening!");
                 if (fsPFrom != null)
@@ -177,11 +207,11 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                 fs = resolvePath(relative, false);
                 lock.readLock().lock();
                 try {
-                    writeWithFS.accept(fs.path);
+                    writeWithFS.accept(fs.getPath());
                 } finally {
                     lock.readLock().unlock();
                 }
-                fs.fs.ensureWrite();
+                ensureWrite();
             } catch (ClosedByInterruptException e) {
                 LoggerFactory.getLogger(getClass()).warn("FS operation cancelled by interruption. Connection to ZipFS Lost. Try reopening!");
                 if (fs != null)
@@ -212,7 +242,7 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                 fs = resolvePath(relative, isDir);
                 lock.readLock().lock();
                 try {
-                    return readWithFS.apply(fs.path);
+                    return readWithFS.apply(fs.getPath());
                 } finally {
                     lock.readLock().unlock();
                 }
@@ -238,15 +268,6 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                 lock.writeLock().unlock();
             }
         }
-
-        public void flush() throws IOException {
-            lock.writeLock().lock();
-            try {
-                root.flushAndReloadZipFS();
-            } finally {
-                lock.writeLock().unlock();
-            }
-        }
     }
 
     private static class ZipFSTreeNode implements Closeable, Comparable<ZipFSTreeNode> {
@@ -254,9 +275,7 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
         private final Path location; // the location on the default (real) fs
         private final boolean useTempFile;
         private final ZipCompressionMethod compressionMethod;
-        //todo check if root only flush improves performance
-        private final int maxWrites;
-        private final AtomicInteger writes = new AtomicInteger(0);
+
 
         @Nullable
         private final ZipFSTreeNode parent;
@@ -265,16 +284,15 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
 
         private final Map<Path, ZipFSTreeNode> childFileSystems = new HashMap<>();
 
-        private ZipFSTreeNode(@Nullable ZipFSTreeNode parent, Path location, boolean useTempFile, ZipCompressionMethod compressionMethod, int maxWrites, ReentrantReadWriteUpdateLock lock) throws IOException {
-            this(lock, parent, location, Files.notExists(location), useTempFile, compressionMethod, maxWrites);
+        private ZipFSTreeNode(@Nullable ZipFSTreeNode parent, Path location, boolean useTempFile, ZipCompressionMethod compressionMethod, ReentrantReadWriteUpdateLock lock) throws IOException {
+            this(lock, parent, location, Files.notExists(location), useTempFile, compressionMethod);
         }
 
-        private ZipFSTreeNode(ReentrantReadWriteUpdateLock lock, @Nullable ZipFSTreeNode parent, Path location, boolean createNew, boolean useTempFile, ZipCompressionMethod compressionMethod, int maxWrites) throws IOException {
+        private ZipFSTreeNode(ReentrantReadWriteUpdateLock lock, @Nullable ZipFSTreeNode parent, Path location, boolean createNew, boolean useTempFile, ZipCompressionMethod compressionMethod) throws IOException {
             this.lock = lock;
             this.location = location;
             this.useTempFile = useTempFile;
             this.compressionMethod = compressionMethod;
-            this.maxWrites = maxWrites;
             this.parent = parent;
             this.zipFS = FileUtils.asZipFS(location, createNew, useTempFile, compressionMethod);
         }
@@ -309,19 +327,7 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
             }
         }
 
-        private void ensureWrite() throws IOException {
-            if (maxWrites <= 0) // disabled
-                return;
-            if (writes.incrementAndGet() >= maxWrites) {
-                lock.writeLock().lock();
-                try {
-                    if (writes.get() >= maxWrites)
-                        flushAndReloadZipFS();
-                } finally {
-                    lock.writeLock().unlock();
-                }
-            }
-        }
+
 
         // RUN ONLY WITHIN LOCKED BLOCK
         private void flushAndReloadZipFS() throws IOException {
@@ -338,13 +344,11 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                     throw e;
                 }
                 zipFS = FileUtils.asZipFS(location, false, useTempFile, compressionMethod);
-                writes.set(0);
             } finally {
                 lock.writeLock().unlock();
             }
         }
 
-        // RUN ONLY WITHIN LOCKED BLOCK
         public void close() throws IOException {
             lock.writeLock().lock();
             try {
@@ -376,11 +380,15 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
 
     private static class ResolvedPath {
         private final ZipFSTreeNode fs;
-        private final Path path;
+        private final String path;
 
-        private ResolvedPath(ZipFSTreeNode fs, Path path) {
+        private ResolvedPath(ZipFSTreeNode fs, String path) {
             this.fs = fs;
             this.path = path;
+        }
+
+        Path getPath(){
+         return fs.resolveCurrentPath(path);
         }
     }
 }

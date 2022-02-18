@@ -799,7 +799,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             StopWatch w = new StopWatch();
             w.start();
 
-
+            SiriusProjectSpace.this.ioProvider.flush();
             int batches = jobManager.getCPUThreads() * 3;
             int max = ids.size() + summarizers.length + 1;
             AtomicInteger p = new AtomicInteger(0);
@@ -857,7 +857,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
 
                 w.stop();
-                System.out.println("Wrting Summaries din in: " + w.toString());
+                System.out.println("Writing Summaries in: " + w.toString());
                 return true;
             });
         }
