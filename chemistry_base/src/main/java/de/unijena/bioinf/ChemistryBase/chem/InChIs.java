@@ -155,8 +155,8 @@ public class InChIs {
      * @param inChI
      * @return
      */
-    public static MolecularFormula extractNeutralFormulaByAdjustingHsOrThrow(String inChI) {
-        return extractFormulas(inChI, MolecularFormulaNeutralizationMethod.NEUTRALIZE_BY_ADJUSTING_H_FOR_EACH_CHARGE).next();
+    public static MolecularFormula extractNeutralFormulaByAdjustingHsOrThrow(String inChI) throws UnknownElementException {
+        return extractFormulas(inChI, MolecularFormulaNeutralizationMethod.NEUTRALIZE_BY_ADJUSTING_H_FOR_EACH_CHARGE).nextFormula();
     }
 
     public static MolecularFormula extractFormulaOrThrow(String inChI) {
