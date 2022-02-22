@@ -20,19 +20,15 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class FileProjectSpaceIO implements ProjectIO {
 
@@ -51,34 +47,10 @@ public class FileProjectSpaceIO implements ProjectIO {
         return (Optional<A>) propertyGetter.apply((Class<ProjectSpaceProperty>) klass);
     }
 
+
     @Override
     public List<String> list(String globPattern, boolean recursive, boolean includeFiles, boolean includeDirs) throws IOException {
-        return fs.withDir(resolve(null), dir -> {
-            final ArrayList<String> content = new ArrayList<>();
-
-            Iterable<Path> paths = recursive
-                    ? FileUtils.walkAndClose(w -> w.collect(Collectors.toList()), dir, globPattern)
-                    : Files.newDirectoryStream(dir, globPattern);
-
-
-            try {
-                for (Path p : paths) {
-                    if (includeDirs) {
-                        if (Files.isDirectory(p))
-                            content.add(dir.relativize(p).toString());
-                    }
-                    if (includeFiles) {
-                        if (Files.isRegularFile(p))
-                            content.add(dir.relativize(p).toString());
-                    }
-                }
-            } finally {
-                if (paths instanceof DirectoryStream)
-                    ((DirectoryStream<Path>) paths).close();
-            }
-
-            return content;
-        });
+        return fs.list(resolve(null), globPattern, recursive, includeFiles, includeDirs);
     }
 
     @Override

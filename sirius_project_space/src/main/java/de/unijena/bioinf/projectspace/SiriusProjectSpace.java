@@ -144,17 +144,20 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         System.out.println("Open() done in: " + w.toString());
     }
 
-    public synchronized void flush() throws IOException {
+    public void flush() throws IOException {
         ioProvider.flush();
     }
 
-    public synchronized void close() throws IOException {
-        try {
-            this.ids.clear();
-            ioProvider.close();
-        } finally {
-            fireProjectSpaceChange(ProjectSpaceEvent.CLOSED);
-        }
+    public void close() throws IOException {
+        withAllWriteLockedDo(() -> {
+            try {
+                this.ids.clear();
+                ioProvider.close();
+                return true;
+            } finally {
+                fireProjectSpaceChange(ProjectSpaceEvent.CLOSED);
+            }
+        });
     }
 
 
@@ -572,12 +575,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     final <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     Container getContainer(Class<Container> klass, Id id, Class<? extends DataAnnotation>... components) throws IOException {
         // read container
-        final Container container = configuration.getContainerSerializer(klass).readFromProjectSpace(ioProvider.newReader(this::getProjectSpaceProperty), (r, c, f) -> {
-            // read components
-            for (Class k : components) {
-                f.apply((Class<DataAnnotation>) k, (DataAnnotation) configuration.getComponentSerializer(klass, k).read(r, id, c));
-            }
-        }, id);
+        final Container container = configuration.getContainerSerializer(klass).readFromProjectSpace(ioProvider.newReader(this::getProjectSpaceProperty),
+                (r, c, f) -> {
+                    // read components
+                    for (Class k : components) {
+                        f.apply((Class<DataAnnotation>) k, (DataAnnotation) configuration.getComponentSerializer(klass, k).read(r, id, c));
+                    }
+                }, id);
         return container;
     }
 
@@ -585,13 +589,14 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     final <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     void updateContainer(Class<Container> klass, Container container, Class<? extends DataAnnotation>... components) throws IOException {
         // write container
-        configuration.getContainerSerializer(klass).writeToProjectSpace(ioProvider.newWriter(this::getProjectSpaceProperty), (r, c, f) -> {
-            // write components
-            for (Class k : components) {
-                configuration.getComponentSerializer(klass, k)
-                        .write(r, container.getId(), container, f.apply(k));
-            }
-        }, container.getId(), container);
+        configuration.getContainerSerializer(klass).writeToProjectSpace(ioProvider.newWriter(this::getProjectSpaceProperty),
+                (w, c, f) -> {
+                    // write components
+                    for (Class k : components) {
+                        configuration.getComponentSerializer(klass, k)
+                                .write(w, container.getId(), container, f.apply(k));
+                    }
+                }, container.getId(), container);
     }
 
     final <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
@@ -666,7 +671,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         } else return Optional.of(property);
     }
 
-    public final  synchronized <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
+    public final <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
         synchronized (projectSpaceProperties) {
             if (value == null)
                 return deleteProjectSpaceProperty(key);
@@ -680,7 +685,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public final  synchronized <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key) {
+    public final <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key) {
         synchronized (projectSpaceProperties) {
             try {
                 configuration.getProjectSpacePropertySerializer(key).delete(ioProvider.newWriter(this::getProjectSpaceProperty), null);
@@ -699,7 +704,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return containsCompound(id.getDirectoryName());
     }
 
-    protected synchronized boolean withAllWriteLockedDo(IOCallable<Boolean> code) throws IOException {
+    protected boolean withAllWriteLockedDo(IOCallable<Boolean> code) throws IOException {
         try {
             return withAllWriteLockedDoRaw(code);
         } catch (InterruptedException e) {
@@ -707,17 +712,20 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    protected synchronized boolean withAllWriteLockedDoRaw(IOCallable<Boolean> code) throws IOException, InterruptedException {
-        //todo do we need more locks to move the space?
+    protected boolean withAllWriteLockedDoRaw(IOCallable<Boolean> code) throws IOException, InterruptedException {
         try {
-            ids.values().forEach(cid -> cid.containerLock.writeLock().lock());
+            synchronized (ids) {
+                ids.values().forEach(cid -> cid.containerLock.writeLock().lock());
+            }
             return code.call();
         } finally {
-            ids.values().forEach(cid -> cid.containerLock.writeLock().unlock());
+            synchronized (ids) {
+                ids.values().forEach(cid -> cid.containerLock.writeLock().unlock());
+            }
         }
     }
 
-    protected synchronized boolean withAllReadLockedDo(IOCallable<Boolean> code) throws IOException {
+    protected boolean withAllReadLockedDo(IOCallable<Boolean> code) throws IOException {
         try {
             return withAllReadLockedDoRaw(code);
         } catch (InterruptedException e) {
@@ -725,13 +733,16 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    protected synchronized boolean withAllReadLockedDoRaw(IOCallable<Boolean> code) throws IOException, InterruptedException {
-        //todo do we need more locks to move the space?
+    protected boolean withAllReadLockedDoRaw(IOCallable<Boolean> code) throws IOException, InterruptedException {
         try {
-            ids.values().forEach(cid -> cid.containerLock.readLock().lock());
+            synchronized (ids) {
+                ids.values().forEach(cid -> cid.containerLock.readLock().lock());
+            }
             return code.call();
         } finally {
-            ids.values().forEach(cid -> cid.containerLock.readLock().unlock());
+            synchronized (ids) {
+                ids.values().forEach(cid -> cid.containerLock.readLock().unlock());
+            }
         }
     }
 
@@ -776,7 +787,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             return new SummarizerJob(null, summarizers);
         else if (compressed)
             return new SummarizerJob(ProjectSpaceIO.getDefaultZipProvider(summaryLocation), summarizers);
-        return new SummarizerJob(new FileProjectSpaceIOProvider(summaryLocation), summarizers);
+        return new SummarizerJob(new FileProjectSpaceIOProvider(summaryLocation, null), summarizers);
     }
 
 
@@ -799,12 +810,18 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             StopWatch w = new StopWatch();
             w.start();
 
-            SiriusProjectSpace.this.ioProvider.flush();
             int batches = jobManager.getCPUThreads() * 3;
             int max = ids.size() + summarizers.length + 1;
+
+            updateProgress(0, max, -1, "Flushing all unwritten results to disk...");
+            SiriusProjectSpace.this.ioProvider.flush();
+            updateProgress(0, max, -1, "...Flushing unwritten results DONE!");
+
             AtomicInteger p = new AtomicInteger(0);
             if (this.ioProvider == null) {
                 this.ioProvider = SiriusProjectSpace.this.ioProvider;
+                if (ioProvider instanceof ZipFSProjectSpaceIOProvider)
+                    logWarn("Writing summaries into a zipped project-space is not recommended because it might be slow and I/O intense. Use external summary location instead.");
             } else {
                 updateProgress(0, max, p.get(), "Storing Summaries outside the Project-Space at: '" + ioProvider.getLocation().toString() + "'");
             }
@@ -813,52 +830,58 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             updateProgress(1, max, p.get(), "Collection Summary data...");
             checkForInterruption();
             return withAllReadLockedDoRaw(() -> {
-                Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
-                {
-                    List<BasicMasterJJob<Boolean>> jobs1 = ids.values().stream().map(cid -> new BasicMasterJJob<Boolean>(JobType.CPU) {
-                        @Override
-                        protected Boolean compute() throws Exception {
-                            SummarizerJob.this.updateProgress(0, max, p.incrementAndGet(), "Collection '" + cid.getCompoundName() + "'...");
-                            checkForInterruption();
-                            final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
-                            final List<SScored<FormulaResult, ? extends FormulaScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), annotations);
-                            // write compound summaries
-                            List<BasicJJob<Boolean>> subs = Arrays.stream(summarizers).map(sim -> new BasicJJob<Boolean>(JobType.CPU) {
-                                @Override
-                                protected Boolean compute() throws Exception {
-                                    sim.addWriteCompoundSummary(ioProvider.newWriter(SiriusProjectSpace.this::getProjectSpaceProperty), c, results);
-                                    return true;
-                                }
-                            }).collect(Collectors.toList());
-                            subs.forEach(this::submitSubJob);
-                            subs.forEach(JJob::getResult);
-                            checkForInterruption();
-                            return true;
-                        }
-                    }).collect(Collectors.toList());
-                    submitJobsInBatches(jobs1, batches).forEach(JJob::getResult);
-                }
-                checkForInterruption();
-                // write project summaries in parallel
-                {
-                    @NotNull List<BasicJJob<Boolean>> jobs2 = Arrays.stream(summarizers).map(summarizer -> new BasicJJob<Boolean>(JobType.CPU) {
-                        @Override
-                        protected Boolean compute() throws Exception {
-                            checkForInterruption();
-                            SummarizerJob.this.updateProgress(0, max, p.incrementAndGet(), "Writing Summary '" + summarizer.getClass().getSimpleName() + "'...");
-                            summarizer.writeProjectSpaceSummary(ioProvider.newWriter(SiriusProjectSpace.this::getProjectSpaceProperty));
-                            return true;
-                        }
-                    }).collect(Collectors.toList());
-                    submitJobsInBatches(jobs2, batches).forEach(JJob::getResult);
-                }
-                ioProvider.flush();
-                updateProgress(0, max, max, "DONE!");
+                final boolean autoFlush = ioProvider.isAutoFlushEnabled();
+                ioProvider.setAutoFlushEnabled(false);
+                try {
+                    Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
+                    {
+                        List<BasicMasterJJob<Boolean>> jobs1 = ids.values().stream().map(cid -> new BasicMasterJJob<Boolean>(JobType.CPU) {
+                            @Override
+                            protected Boolean compute() throws Exception {
+                                SummarizerJob.this.updateProgress(0, max, p.incrementAndGet(), "Collection '" + cid.getCompoundName() + "'...");
+                                checkForInterruption();
+                                final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
+                                final List<SScored<FormulaResult, ? extends FormulaScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), annotations);
+                                // write compound summaries
+                                List<BasicJJob<Boolean>> subs = Arrays.stream(summarizers).map(sim -> new BasicJJob<Boolean>(JobType.CPU) {
+                                    @Override
+                                    protected Boolean compute() throws Exception {
+                                        sim.addWriteCompoundSummary(ioProvider.newWriter(SiriusProjectSpace.this::getProjectSpaceProperty), c, results);
+                                        return true;
+                                    }
+                                }).collect(Collectors.toList());
+                                subs.forEach(this::submitSubJob);
+                                subs.forEach(JJob::getResult);
+                                checkForInterruption();
+                                return true;
+                            }
+                        }).collect(Collectors.toList());
+                        submitJobsInBatches(jobs1, batches).forEach(JJob::getResult);
+                    }
+                    checkForInterruption();
+                    // write project summaries in parallel
+                    {
+                        @NotNull List<BasicJJob<Boolean>> jobs2 = Arrays.stream(summarizers).map(summarizer -> new BasicJJob<Boolean>(JobType.CPU) {
+                            @Override
+                            protected Boolean compute() throws Exception {
+                                checkForInterruption();
+                                SummarizerJob.this.updateProgress(0, max, p.incrementAndGet(), "Writing Summary '" + summarizer.getClass().getSimpleName() + "'...");
+                                summarizer.writeProjectSpaceSummary(ioProvider.newWriter(SiriusProjectSpace.this::getProjectSpaceProperty));
+                                return true;
+                            }
+                        }).collect(Collectors.toList());
+                        submitJobsInBatches(jobs2, batches).forEach(JJob::getResult);
+                    }
+                    ioProvider.flush();
+                    updateProgress(0, max, max, "DONE!");
 
 
-                w.stop();
-                System.out.println("Writing Summaries in: " + w.toString());
-                return true;
+                    w.stop();
+                    System.out.println("Writing Summaries in: " + w.toString());
+                    return true;
+                } finally {
+                    ioProvider.setAutoFlushEnabled(autoFlush);
+                }
             });
         }
     }
