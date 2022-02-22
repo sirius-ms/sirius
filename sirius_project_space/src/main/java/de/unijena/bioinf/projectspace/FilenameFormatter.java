@@ -49,7 +49,7 @@ public interface FilenameFormatter extends Function<Ms2Experiment, String> {
         @Override
         public PSProperty read(ProjectReader reader, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container) throws IOException {
             if (reader.exists(FORMAT))
-                reader.textFile(FORMAT, br -> br.lines().findFirst().map(PSProperty::new).orElse(null));
+                return reader.textFile(FORMAT, br -> br.lines().findFirst().map(PSProperty::new).orElse(null));
             return null;
         }
 

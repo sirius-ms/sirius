@@ -45,4 +45,10 @@ public interface ProjectIOProvider<IO extends ProjectIO, Reader extends ProjectR
     default void setCompressionFormat(CompressionFormat format){};
 
     void flush() throws IOException;
+
+    default boolean isAutoFlushEnabled() {
+        return true;
+    }
+
+    default void setAutoFlushEnabled(boolean autoFlushEnabled) {}
 }

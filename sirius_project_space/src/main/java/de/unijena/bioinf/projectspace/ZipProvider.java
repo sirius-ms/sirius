@@ -35,7 +35,7 @@ public enum ZipProvider {
 
     public static ProjectIOProvider<?, ?, ?> newInstance(@NotNull Path location, @Nullable ZipProvider providerType) {
         if (providerType == null) {
-            LoggerFactory.getLogger(ZipProvider.class).warn("Zip Provider is NULL, using ZipFS with Memory Cache as fallback!");
+            LoggerFactory.getLogger(ZipProvider.class).info("Zip Provider is NULL, using ZipFS with in-memory Cache as default.");
             providerType = ZIP_FS;
         }
         switch (providerType) {
@@ -48,7 +48,7 @@ public enum ZipProvider {
             case ZIP4JVM:
                 return new Zip4jvmProjectSpaceIOProvider(location);
             default: {
-                LoggerFactory.getLogger(ZipProvider.class).debug("Unknown Zip Provider using ZipFS with Memory Cache as fallback!");
+                LoggerFactory.getLogger(ZipProvider.class).debug("Unknown Zip Provider using ZipFS with in-memory Cache as fallback!");
                 return new ZipFSProjectSpaceIOProvider(location, false);
             }
         }

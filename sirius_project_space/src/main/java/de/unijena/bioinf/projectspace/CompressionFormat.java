@@ -48,12 +48,12 @@ public class CompressionFormat implements ProjectSpaceProperty {
         return compressionLevels;
     }
 
-    public boolean isEmpty() {
+    public boolean hasLevels() {
         return compressionLevels.length == 0;
     }
 
     public int getCompressedLevel() {
-        if (isEmpty())
+        if (hasLevels())
             return -1;
         return compressionLevels[compressionLevels.length - 1];
     }

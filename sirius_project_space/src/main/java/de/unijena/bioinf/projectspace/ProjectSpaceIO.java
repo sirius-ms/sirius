@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.FileHeader;
 import net.lingala.zip4j.model.ZipParameters;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,6 +134,7 @@ public class ProjectSpaceIO {
                 Files.createDirectories(path);
             }
             space = new SiriusProjectSpace(configuration, new FileProjectSpaceIOProvider(path));
+            space.setProjectSpaceProperty(CompressionFormat.class, space.ioProvider.getCompressionFormat());
         }
 
         space.open();
@@ -158,59 +160,67 @@ public class ProjectSpaceIO {
     public SiriusProjectSpace createTemporaryProjectSpace() throws IOException {
         final Path tempFile = createTmpProjectSpaceLocation();
         //todo use compressed ps as default
-        final SiriusProjectSpace space = new SiriusProjectSpace(configuration, new FileProjectSpaceIOProvider(tempFile));
+        final SiriusProjectSpace space = createNewProjectSpace(tempFile);
         space.addProjectSpaceListener(new TemporaryProjectSpaceCleanUp(tempFile));
         space.open();
         return space;
     }
 
     public static Path createTmpProjectSpaceLocation() throws IOException {
-        return Files.createTempDirectory(".sirius-tmp-project-");
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        return Path.of(tmpDir).resolve(".sirius-tmp-project-" + UUID.randomUUID().toString());
     }
 
     /**
      * Copies a Project-Space to a new location.
      *
-     * @param space               The project to be copied
+     * @param sourceSpace         The project to be copied
      * @param copyLocation        target location
      * @param switchToNewLocation if true switch space location to copyLocation (saveAs vs. saveCopy)
      * @return true if space location has been changed successfully and false otherwise
      * @throws IOException if an I/O error happens
      */
-    public static boolean copyProject(@NotNull final SiriusProjectSpace space, @NotNull final Path copyLocation, final boolean switchToNewLocation) throws IOException {
+    public static boolean copyProject(@NotNull final SiriusProjectSpace sourceSpace, @NotNull final Path copyLocation, final boolean switchToNewLocation) throws IOException {
         // source space is only read
-        return space.withAllWriteLockedDo(() -> {
-            @NotNull final Path sourceSpaceLocation = space.getLocation();
+        return sourceSpace.withAllWriteLockedDo(() -> {
+            @NotNull final Path sourceSpaceLocation = sourceSpace.getLocation();
 
             final boolean isZipTarget = isZipProjectSpace(copyLocation);
             final boolean isZipSource = isZipProjectSpace(sourceSpaceLocation);
 
-            if (isZipSource) {
-                space.ioProvider.close();// close provider because zipfs might not be fully written otherwise
-                if (isZipTarget) { // file copy zip to zip
-                    Files.copy(sourceSpaceLocation, copyLocation);
-                } else { //unpack from zip source to target folder
-                    space.flush();
-                    try (ZipFile zf = new ZipFile(sourceSpaceLocation.toFile())) {
-                        zf.extractAll(copyLocation.toString());
-                    }
-                }
+            sourceSpace.flush();
+            if (isZipSource && isZipTarget) {
+                Files.copy(sourceSpaceLocation, copyLocation); //might keep old non hierarchical zip version but is super fast
+                return !switchToNewLocation || sourceSpace.changeLocation(getDefaultZipProvider(copyLocation));
             } else {
-                if (isZipTarget) { //compress from folder source to target zip
-                    try (ZipFile zf = new ZipFile(copyLocation.toFile())) {
-                        ZipParameters paras = new ZipParameters();
-                        paras.setIncludeRootFolder(false);
-                        zf.addFolder(sourceSpaceLocation.toFile(), paras);
-                    }
-                } else { //copy from folder to folder
-                    Files.createDirectories(copyLocation);
-                    FileUtils.copyFolder(space.getLocation(), copyLocation); //just copy the data -> mounted ZipFS does the rest
+                SiriusProjectSpace targetSpace = new ProjectSpaceIO(sourceSpace.configuration).createNewProjectSpace(copyLocation);
+
+                CompressionFormat format = targetSpace.ioProvider.getCompressionFormat();
+
+                ProjectWriter w = targetSpace.ioProvider.newWriter(targetSpace::getProjectSpaceProperty);
+                ProjectReader r = sourceSpace.ioProvider.newReader(sourceSpace::getProjectSpaceProperty);
+                StopWatch t = new StopWatch();
+                t.start();
+                List<String> files = r.listFilesRecursive(null).stream().filter(p -> !PSLocations.COMPRESSION.equals(p)).collect(Collectors.toList());
+                t.split();
+
+                for (String file : files) {
+                    w.binaryFile(file, out -> r.binaryFile(file, in -> in.transferTo(out)));
+                }
+
+                t.stop();
+                targetSpace.close();
+
+                if (switchToNewLocation) {
+                    boolean rr = sourceSpace.changeLocation(isZipTarget
+                            ? getDefaultZipProvider(copyLocation)
+                            : new FileProjectSpaceIOProvider(copyLocation));
+                    sourceSpace.setProjectSpaceProperty(CompressionFormat.class, format);
+                    return rr;
                 }
             }
 
-            return space.changeLocation(isZipTarget
-                    ? getDefaultZipProvider(switchToNewLocation ? copyLocation : sourceSpaceLocation)
-                    : new FileProjectSpaceIOProvider(switchToNewLocation ? copyLocation : sourceSpaceLocation));
+            return true;
         });
     }
 

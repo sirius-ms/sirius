@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 public interface FileSystemManager extends Closeable {
 
@@ -39,5 +40,13 @@ public interface FileSystemManager extends Closeable {
 
     <R> R withDir(@Nullable String relative, IOFunctions.IOFunction<Path, R> readWithFS) throws IOException;
 
+    List<String> list(@Nullable String relative, @Nullable String globPattern, final boolean recursive, final boolean includeFiles, final boolean includeDirs) throws IOException;
+
     Path getLocation();
+
+    default void flush() throws IOException{}
+
+    CompressionFormat getCompressionFormat();
+
+    void setCompressionFormat(CompressionFormat format);
 }
