@@ -265,12 +265,6 @@ public class Jobs {
                 ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
             logInfo(command);
             computation.run();
-            try {
-                MF.ps().projectSpace().flush(); // enforce ps flush to ensure als results are written to disk
-            } catch (IOException e) {
-                LoggerFactory.getLogger("Error when syncing project-space data to disk");
-            }
-            System.gc(); //hint for the gc to collect som trash after computations
             return true;
         }
 
@@ -282,6 +276,8 @@ public class Jobs {
 
         @Override
         protected void cleanup() {
+            //todo flush ps?
+            System.gc(); //hint for the gc to collect som trash after computations
             synchronized (ACTIVE_COMPUTATIONS) {
                 ACTIVE_COMPUTATIONS.remove(this);
                 ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
