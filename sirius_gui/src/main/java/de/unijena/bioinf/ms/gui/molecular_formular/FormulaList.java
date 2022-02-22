@@ -103,7 +103,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 protected Boolean compute() throws Exception {
 
                     if (old != null && !old.isFinished()) {
-                        old.cancel();
+                        old.cancel(false);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
                     checkForInterruption();

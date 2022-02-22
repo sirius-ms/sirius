@@ -245,7 +245,7 @@ public class SpectraVisualizationPanel
 				protected Boolean compute() throws Exception {
 					//cancel running job if not finished to not waist resources for fetching data that is not longer needed.
 					if (old != null && !old.isFinished()) {
-						old.cancel();
+						old.cancel(false);
 						old.getResult(); //await cancellation so that nothing strange can happen.
 					}
 					checkForInterruption();
