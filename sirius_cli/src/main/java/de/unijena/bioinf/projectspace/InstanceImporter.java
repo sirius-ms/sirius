@@ -337,7 +337,7 @@ public class InstanceImporter {
             if (FileUtils.isZipArchive(toImportPath))
                 reader = ProjectSpaceIO.getDefaultZipProvider(toImportPath).newReader(null);
             else
-                reader = new FileProjectSpaceIOProvider(toImportPath).newReader(null);
+                reader = new FileProjectSpaceIOProvider(toImportPath, null).newReader(null);
 
             FingerIdData fdPos = checkAnReadData(FingerIdLocations.FINGERID_CLIENT_DATA, reader, FingerIdData::read);
             FingerIdData fdNeg = checkAnReadData(FingerIdLocations.FINGERID_CLIENT_DATA_NEG, reader, FingerIdData::read);

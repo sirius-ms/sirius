@@ -1,4 +1,5 @@
-package de.unijena.bioinf.ms.gui.utils;/*
+package de.unijena.bioinf.ms.gui.dialogs;
+/*
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
@@ -21,6 +22,7 @@ package de.unijena.bioinf.ms.gui.utils;/*
 import de.unijena.bioinf.ms.gui.actions.DeleteExperimentAction;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
+import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
@@ -33,7 +35,7 @@ import java.util.stream.Collectors;
 /**
  * Dialog allows to adjust filter criteria of the {@link CompoundFilterModel} which is used to filter compound list.
  */
-public class CompoundFilterOptionsDialog extends JDialog implements ActionListener {
+public class SummariesDialog extends JDialog implements ActionListener {
 
     final SearchTextField searchField;
     final JTextField searchFieldDialogCopy;
@@ -45,8 +47,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
     JCheckBox[] peakShape;
 
-    public CompoundFilterOptionsDialog(MainFrame owner, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
-        super(owner, "Filter options", true);
+    public SummariesDialog(MainFrame owner, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
+        super(owner, "Write Summaries", true);
         this.searchField = searchField;
         this.filterModel = filterModel;
         this.compoundList = compoundList;
