@@ -91,7 +91,7 @@ public class FileProjectSpaceWriter extends FileProjectSpaceIO implements Projec
         fs.writeFile(directoryName, newDirName, Files::move);
     }
 
-    protected Path mkFilePath(Path file) throws IOException {
+    protected static Path mkFilePath(Path file) throws IOException {
         if (file.getParent() != null)
             Files.createDirectories(file.getParent());
         return file;

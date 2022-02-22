@@ -31,14 +31,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.channels.ClosedByInterruptException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.channels.ClosedChannelException;
+import java.nio.file.*;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
 
@@ -66,22 +63,10 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
 
     @Override
     public void flush() throws IOException {
-        getFSManager().flush();
+       fsManager.flush();
     }
 
-    @Override
-    public CompressionFormat getCompressionFormat() {
-        return getFSManager().format;
-    }
 
-    @Override
-    public void setCompressionFormat(CompressionFormat format) {
-        getFSManager().format = format;
-    }
-
-    ZipFSTree getFSManager() {
-        return (ZipFSTree) fsManager;
-    }
 
     static class ZipFSTree implements FileSystemManager {
         private final ReentrantReadWriteUpdateLock lock;
@@ -89,13 +74,22 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
         private CompressionFormat format;
 
         private final int maxWrites;
+        private boolean autoFlushEnabled = true;
         private final AtomicInteger writes = new AtomicInteger(0);
 
         public ZipFSTree(Path location, boolean useTempFile, int maxWrites, CompressionFormat format) throws IOException {
             this.maxWrites = maxWrites;
-            this.format = format;
+            setCompressionFormat(format);
             lock = new ReentrantReadWriteUpdateLock();
             root = new ZipFSTreeNode(null, location, useTempFile, format.getRootCompression(), lock);
+        }
+
+        public boolean isAutoFlushEnabled() {
+            return autoFlushEnabled;
+        }
+
+        public void setAutoFlushEnabled(boolean autoFlushEnabled) {
+            this.autoFlushEnabled = autoFlushEnabled;
         }
 
         public void flush() throws IOException {
@@ -108,13 +102,23 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
             }
         }
 
+        @Override
+        public CompressionFormat getCompressionFormat() {
+            return format;
+        }
+
+        @Override
+        public void setCompressionFormat(CompressionFormat format) {
+            this.format = format;
+        }
+
         private void ensureWrite() throws IOException {
-            if (maxWrites <= 0) // disabled
+            if (!isAutoFlushEnabled() || maxWrites <= 0) // disabled
                 return;
             if (writes.incrementAndGet() >= maxWrites) {
                 lock.writeLock().lock();
                 try {
-                    if (writes.get() >= maxWrites){
+                    if (writes.get() >= maxWrites) {
                         root.flushAndReloadZipFS();
                         writes.set(0);
                     }
@@ -124,12 +128,40 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
             }
         }
 
-        private ResolvedPath resolvePath(String relative, boolean isDir) throws IOException {
+        private String relativizeToRoot(ResolvedPath resolvedToSubFs, @Nullable String relativizeTo) {
+            lock.readLock().lock();
+            try {
+                ZipFSTreeNode node = resolvedToSubFs.fs;
+                String current = resolvedToSubFs.getPath().toString();
+                while (node.parent != null) { //do not execute for root node...
+                    current = node.location.resolve(current.substring(1)).toString();
+                    node = node.parent;
+                }
+
+                String r;
+                if (relativizeTo != null) {
+                    r = Path.of(relativizeTo).relativize(Path.of(current)).toString();
+                } else {
+                    r = current.startsWith("/") ? current.substring(1) : current;
+                    if (r.isBlank()) //todo male nice
+                        r = null;
+                }
+                return r;
+            } finally {
+                lock.readLock().unlock();
+            }
+        }
+
+        private boolean isOnCompressedLevel(Path source){
+            return Arrays.binarySearch(format.compressionLevels, source.getNameCount() - 1) >= 0;
+        }
+
+        private ResolvedPath resolvePath(String relativeFromRoot, boolean isDir) throws IOException {
             ZipFSTreeNode zipFSNode = root;
             lock.updateLock().lock();
             try {
-                if (relative != null) {
-                    final Path source = zipFSNode.zipFS.getPath(relative);
+                if (relativeFromRoot != null) {
+                    final Path source = zipFSNode.zipFS.getPath(relativeFromRoot);
                     Path prefix = source;
                     for (int idx : format.compressionLevels) {
                         if (idx >= source.getNameCount())
@@ -162,10 +194,6 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                 } else {
                     return new ResolvedPath(zipFSNode, "/"); //root
                 }
-            } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).warn("FS operation cancelled by interruption. Connection to ZipFS Lost. Try reopening!");
-                zipFSNode.flushAndReloadZipFS();
-                throw e;
             } finally {
                 lock.updateLock().unlock();
             }
@@ -173,9 +201,9 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
 
         @Override
         public void writeFile(String relativeFrom, String relativeTo, IOFunctions.BiIOConsumer<Path, Path> writeWithFS) throws IOException {
-            ResolvedPath fsPFrom = null;
-            ResolvedPath fsPTo = null;
             try {
+                ResolvedPath fsPFrom = null;
+                ResolvedPath fsPTo = null;
                 lock.updateLock().lock();
                 try {
                     fsPFrom = resolvePath(relativeFrom, false); //copy zipped sub fs as file without decompressing it
@@ -191,32 +219,44 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                     lock.readLock().unlock();
                 }
                 ensureWrite();
-            } catch (ClosedByInterruptException e) {
-                LoggerFactory.getLogger(getClass()).warn("FS operation cancelled by interruption. Connection to ZipFS Lost. Try reopening!");
-                if (fsPFrom != null)
-                    fsPFrom.fs.flushAndReloadZipFS();
-                if (fsPTo != null)
-                    fsPTo.fs.flushAndReloadZipFS();
-                throw e;
+            } catch (ClosedFileSystemException | ClosedChannelException e) {
+                LoggerFactory.getLogger(getClass()).warn("FS copy operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.", e);
+                LoggerFactory.getLogger(getClass()).debug("FS copy operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.", e);
+                lock.writeLock().lock();
+                try {
+                    flush();
+                    ResolvedPath fsPFrom = resolvePath(relativeFrom, false); //copy zipped sub fs as file without decompressing it
+                    ResolvedPath fsPTo = resolvePath(relativeTo, false); //copy zipped sub fs as file without decompressing it
+                    writeWithFS.accept(fsPFrom.getPath(), fsPTo.getPath());
+                    ensureWrite();
+                } finally {
+                    lock.writeLock().unlock();
+                }
             }
         }
 
         public void writeFile(String relative, IOFunctions.IOConsumer<Path> writeWithFS) throws IOException {
-            ResolvedPath fs = null;
             try {
-                fs = resolvePath(relative, false);
+                ResolvedPath rp = resolvePath(relative, false);
                 lock.readLock().lock();
                 try {
-                    writeWithFS.accept(fs.getPath());
+                    writeWithFS.accept(rp.getPath());
                 } finally {
                     lock.readLock().unlock();
                 }
                 ensureWrite();
-            } catch (ClosedByInterruptException e) {
-                LoggerFactory.getLogger(getClass()).warn("FS operation cancelled by interruption. Connection to ZipFS Lost. Try reopening!");
-                if (fs != null)
-                    fs.fs.flushAndReloadZipFS();
-                throw e;
+            } catch (ClosedFileSystemException | ClosedChannelException e) {
+                LoggerFactory.getLogger(getClass()).warn("FS write operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.");
+                LoggerFactory.getLogger(getClass()).debug("FS write operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.", e);
+                lock.writeLock().lock();
+                try {
+                    flush();
+                    ResolvedPath fs = resolvePath(relative, false);
+                    writeWithFS.accept(fs.getPath());
+                    ensureWrite();
+                } finally {
+                    lock.writeLock().unlock();
+                }
             }
         }
 
@@ -236,24 +276,86 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
             return readFile(relative, true, readWithFS);
         }
 
+        @Override
+        public List<String> list(String relative, String globPattern, boolean recursive, boolean includeFiles, boolean includeDirs) throws IOException {
+                List<String> output = new ArrayList<>();
+                final ResolvedPath fs = resolvePath(relative, true);
+                final String walkingRoot = relativizeToRoot(fs, null);
+
+                if (globPattern != null)
+                    globPattern = "glob:" + globPattern;
+
+                if (includeDirs && (globPattern == null || fs.fs.zipFS.getPathMatcher(globPattern).matches(fs.getPath())))
+                    output.add(relativizeToRoot(fs, walkingRoot));
+
+                final Queue<ResolvedPath> paths;
+                lock.readLock().lock();
+                try {
+                    paths = FileUtils.walkAndClose(w -> w.collect(Collectors.toList()), fs.getPath(), recursive ? Integer.MAX_VALUE : 1, globPattern)
+                            .stream().map(p -> new ResolvedPath(fs.fs, p.toString())).collect(Collectors.toCollection(LinkedList::new));
+                } finally {
+                    lock.readLock().unlock();
+                }
+                paths.poll(); // remove walk root
+
+                while (!paths.isEmpty()) {
+                    final ResolvedPath current = paths.poll();
+                    if (Files.isDirectory(current.getPath())) {
+                        String relativeFromRoot = relativizeToRoot(current, walkingRoot);
+                        if (includeDirs)
+                            output.add(relativeFromRoot);
+                    } else {
+                        final Path currentP = current.getPath();
+                        // lazy file ext matching to speedup check for zip files
+                        final PathMatcher noZipExt = currentP.getFileSystem().getPathMatcher("glob:**{.ms?, .tsv, .csv, .info, .config}");
+                        if (isOnCompressedLevel(currentP) &&
+                                !noZipExt.matches(currentP) &&
+                                FileUtils.isZipArchive(currentP)) {
+                            String relativeFromRoot = relativizeToRoot(current, walkingRoot);
+                            if (includeDirs)
+                                output.add(relativeFromRoot);
+
+                            if (recursive) {
+                                final ResolvedPath nuCurrent = resolvePath(relativeFromRoot, true);
+                                lock.readLock().lock();
+                                try {
+                                    List<ResolvedPath> nuLevel = FileUtils.walkAndClose(w -> w.map(p -> new ResolvedPath(nuCurrent.fs, p.toString()))
+                                            .collect(Collectors.toList()), nuCurrent.getPath(), globPattern);
+                                    paths.addAll(nuLevel.subList(1, nuLevel.size() - 1)); //remove walk root
+                                } finally {
+                                    lock.readLock().unlock();
+                                }
+                            }
+                        } else if (includeFiles) {
+                            output.add(relativizeToRoot(current, walkingRoot));
+                        }
+                    }
+                }
+                return output;
+        }
+
         private <R> R readFile(String relative, boolean isDir, IOFunctions.IOFunction<Path, R> readWithFS) throws IOException {
-            ResolvedPath fs = null;
             try {
-                fs = resolvePath(relative, isDir);
+                ResolvedPath fs = resolvePath(relative, isDir);
                 lock.readLock().lock();
                 try {
                     return readWithFS.apply(fs.getPath());
                 } finally {
                     lock.readLock().unlock();
                 }
-            } catch (ClosedByInterruptException e) {
-                LoggerFactory.getLogger(getClass()).warn("FS operation cancelled by interruption. Connection to ZipFS Lost. Try reopening!");
-                if (fs != null)
-                    fs.fs.flushAndReloadZipFS();
-                throw e;
+            } catch (ClosedFileSystemException | ClosedChannelException e) {
+                LoggerFactory.getLogger(getClass()).warn("FS read operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.");
+                LoggerFactory.getLogger(getClass()).debug("FS read operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.", e);
+                lock.writeLock().lock();
+                try {
+                    flush();
+                    ResolvedPath fs = resolvePath(relative, isDir);
+                    return readWithFS.apply(fs.getPath());
+                } finally {
+                    lock.writeLock().unlock();
+                }
             }
         }
-
 
         @Override
         public Path getLocation() {
@@ -318,7 +420,7 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                 try {
                     lock.writeLock().lock();
                     if (!zipFS.isOpen()) {
-                        LoggerFactory.getLogger(getClass()).warn("ZipFS seems to be interrupted!");
+                        LoggerFactory.getLogger(getClass()).warn("ZipFS seems to be closed unexpectedly! Try Reopen it.");
                         flushAndReloadZipFS();
                     }
                 } finally {
@@ -361,8 +463,9 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                     }
                 }
 
-                if (zipFS.isOpen())
-                    zipFS.close();
+                if (!FileSystems.getDefault().equals(zipFS)) //do not try to close default fs --> just in case
+                    if (zipFS.isOpen())
+                        zipFS.close();
 
                 if (parent != null) {
                     parent.childFileSystems.remove(this.location);
