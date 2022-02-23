@@ -21,6 +21,8 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.utils.ZipCompressionMethod;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -36,13 +38,18 @@ public interface ProjectIOProvider<IO extends ProjectIO, Reader extends ProjectR
 
     Writer newWriter(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter);
 
+    /**
+     * Location of the provided filesystem/directory in the default fil system (path of the default filesystem)
+     * @return location of the managed resource
+     */
     Path getLocation();
 
+    @NotNull
     default CompressionFormat getCompressionFormat(){
         return new CompressionFormat(null, ZipCompressionMethod.STORED);
     }
 
-    default void setCompressionFormat(CompressionFormat format){};
+    default void setCompressionFormat(@Nullable CompressionFormat format){};
 
     void flush() throws IOException;
 

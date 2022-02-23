@@ -30,14 +30,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class FileProjectSpaceIO implements ProjectIO {
+public class PathProjectSpaceIO implements ProjectIO {
 
 
     protected FileSystemManager fs;
     protected Path prefix;
     protected final Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter;
 
-    public FileProjectSpaceIO(FileSystemManager fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+    public PathProjectSpaceIO(FileSystemManager fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         this.fs = fs;
         this.propertyGetter = propertyGetter;
     }

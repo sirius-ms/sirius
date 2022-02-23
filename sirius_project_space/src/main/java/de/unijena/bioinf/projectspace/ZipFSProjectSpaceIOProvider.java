@@ -37,13 +37,13 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
+public class ZipFSProjectSpaceIOProvider extends PathProjectSpaceIOProvider {
 
     public ZipFSProjectSpaceIOProvider(@NotNull Path location, boolean useTempFile) {
         this(location, useTempFile,
                 PropertyManager.getInteger("de.unijena.bioinf.sirius.zipfs.maxWritesBeforeFlush", 250),
                 CompressionFormat.of(
-                        PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compressionLevels",null,"1"),
+                        PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compressionLevels", null, "1"),
                         PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compression")
                 )
         );
@@ -103,12 +103,14 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
         }
 
         @Override
-        public CompressionFormat getCompressionFormat() {
+        public @NotNull CompressionFormat getCompressionFormat() {
             return format;
         }
 
         @Override
-        public void setCompressionFormat(CompressionFormat format) {
+        public void setCompressionFormat(@Nullable CompressionFormat format) {
+            if (format == null)
+                format = new CompressionFormat(null, ZipCompressionMethod.DEFLATED);
             this.format = format;
         }
 
@@ -143,7 +145,7 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
                     r = Path.of(relativizeTo).relativize(Path.of(current)).toString();
                 } else {
                     r = current.startsWith("/") ? current.substring(1) : current;
-                    if (r.isBlank()) //todo male nice
+                    if (r.isBlank())
                         r = null;
                 }
                 return r;
@@ -362,6 +364,11 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
             return root.location;
         }
 
+        @Override
+        public Path getRoot() {
+            return root.zipFS.getPath(root.zipFS.getSeparator());
+        }
+
         public void close() throws IOException {
             lock.writeLock().lock();
             try {
@@ -374,6 +381,7 @@ public class ZipFSProjectSpaceIOProvider extends FileProjectSpaceIOProvider {
 
     private static class ZipFSTreeNode implements Closeable, Comparable<ZipFSTreeNode> {
         private final ReentrantReadWriteUpdateLock lock;
+
         private final Path location; // the location on the default (real) fs
         private final boolean useTempFile;
         private final ZipCompressionMethod compressionMethod;

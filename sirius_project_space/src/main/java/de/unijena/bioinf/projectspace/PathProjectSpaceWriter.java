@@ -33,9 +33,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class FileProjectSpaceWriter extends FileProjectSpaceIO implements ProjectWriter {
+public class PathProjectSpaceWriter extends PathProjectSpaceIO implements ProjectWriter {
 
-    public FileProjectSpaceWriter(FileSystemManager fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+    public PathProjectSpaceWriter(FileSystemManager fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         super(fs, propertyGetter);
     }
 

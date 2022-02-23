@@ -32,9 +32,9 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class FileProjectSpaceReader extends FileProjectSpaceIO implements ProjectReader {
+public class PathProjectSpaceReader extends PathProjectSpaceIO implements ProjectReader {
 
-    FileProjectSpaceReader(FileSystemManager fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+    PathProjectSpaceReader(FileSystemManager fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         super(fs, propertyGetter);
     }
 
