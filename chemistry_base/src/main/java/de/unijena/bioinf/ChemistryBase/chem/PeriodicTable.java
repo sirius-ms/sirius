@@ -1052,7 +1052,8 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         name = canonicalizeIonName(name);
         if (name.equals(canonicalizeIonName(Charge.POSITIVE_CHARGE)) || name.equals("M+?+"))
             return PrecursorIonType.unknownPositive();
-        if (name.equals(canonicalizeIonName(Charge.NEGATIVE_CHARGE)) || name.equals("M+?-"))
+        if (name.equals(canonicalizeIonName(Charge.NEGATIVE_CHARGE)) || name.equals("M+?-") || name.equals("[M-?]-") || name.equals("M-?-"))
+            //[M-?]- is actually an incorrect use of [M+?]-. However, we still want it to be parse correctly
             return PrecursorIonType.unknownNegative();
 
         return knownIonTypes.get(name);
