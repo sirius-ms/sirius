@@ -21,6 +21,7 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
@@ -42,11 +43,21 @@ public interface FileSystemManager extends Closeable {
 
     List<String> list(@Nullable String relative, @Nullable String globPattern, final boolean recursive, final boolean includeFiles, final boolean includeDirs) throws IOException;
 
+    /**
+     * Location of the managed filesystem/directory in the default filesystem (path of the default filesystem)
+     * @return location of the managed resource
+     */
     Path getLocation();
+    /**
+     * root path of the managed filesystem/directory (path of the manged filesystem)
+     * @return root path of the managed resource
+     */
+    Path getRoot();
 
     default void flush() throws IOException{}
 
+    @NotNull
     CompressionFormat getCompressionFormat();
 
-    void setCompressionFormat(CompressionFormat format);
+    void setCompressionFormat(@Nullable CompressionFormat format);
 }

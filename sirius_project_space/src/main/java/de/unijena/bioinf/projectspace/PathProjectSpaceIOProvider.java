@@ -24,6 +24,7 @@ import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.ZipCompressionMethod;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -33,25 +34,31 @@ import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProjectSpaceIO, FileProjectSpaceReader, FileProjectSpaceWriter> {
+public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProjectSpaceIO, PathProjectSpaceReader, PathProjectSpaceWriter> {
 
     @NotNull
     protected final FileSystemManager fsManager;
 
-    public FileProjectSpaceIOProvider(@NotNull Path root) {
+    public PathProjectSpaceIOProvider(@NotNull Path root) {
         this(root, new CompressionFormat(new int[]{1}, ZipCompressionMethod.DEFLATED));
     }
 
-    public FileProjectSpaceIOProvider(@NotNull Path root, @Nullable CompressionFormat format) {
+    public PathProjectSpaceIOProvider(@NotNull Path root, @Nullable CompressionFormat format) {
         this(() -> {
             if (Files.exists(root) && !Files.isDirectory(root))
                 throw new IllegalArgumentException("Uncompressed Project-Space location must be a directory");
             try {
-                return new ZipFSTree(root, false, 1, format == null ? new CompressionFormat(null, ZipCompressionMethod.STORED) : format);
+                return new FSTree(root, false,
+                        PropertyManager.getInteger("de.unijena.bioinf.sirius.pathfs.maxWritesBeforeFlush", 25),
+                        PropertyManager.getInteger("de.unijena.bioinf.sirius.pathfs.subFsBufferSize", 125),
+                        format == null ? new CompressionFormat(null, ZipCompressionMethod.STORED) : format);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -59,28 +66,32 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
         });
     }
 
-    protected FileProjectSpaceIOProvider(@NotNull Supplier<FileSystemManager> locationSupplier) {
+    protected PathProjectSpaceIOProvider(@NotNull Supplier<FileSystemManager> locationSupplier) {
         this.fsManager = locationSupplier.get();
     }
 
 
     @Override
-    public FileProjectSpaceIO newIO(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
-        return new FileProjectSpaceIO(fsManager, propertyGetter);
+    public PathProjectSpaceIO newIO(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+        return new PathProjectSpaceIO(fsManager, propertyGetter);
     }
 
     @Override
-    public FileProjectSpaceReader newReader(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
-        return new FileProjectSpaceReader(fsManager, propertyGetter);
+    public PathProjectSpaceReader newReader(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+        return new PathProjectSpaceReader(fsManager, propertyGetter);
     }
 
     @Override
-    public FileProjectSpaceWriter newWriter(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
-        return new FileProjectSpaceWriter(fsManager, propertyGetter);
+    public PathProjectSpaceWriter newWriter(Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+        return new PathProjectSpaceWriter(fsManager, propertyGetter);
     }
 
     public Path getLocation() {
         return fsManager.getLocation();
+    }
+
+    public Path getRoot() {
+        return fsManager.getRoot();
     }
 
     @Override
@@ -93,7 +104,7 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
     }
 
     @Override
-    public CompressionFormat getCompressionFormat() {
+    public @NotNull CompressionFormat getCompressionFormat() {
         return fsManager.getCompressionFormat();
     }
 
@@ -103,38 +114,71 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
     }
 
 
-    static class ZipFSTree implements FileSystemManager {
+    static class FSTree implements FileSystemManager {
         private final Path location;
-        private boolean autoFlushEnabled = true;
-
-        private final ZipNode root;
-        private final Map<Path, ZipNode> childFileSystems = new HashMap<>();
-        private final ReentrantReadWriteUpdateLock childFileSystemsLock;
 
         private final boolean useTempFile;
         private final int maxWrites;
+        private final int buffersize;
 
         private CompressionFormat compressionFormat;
 
-        public ZipFSTree(Path location, boolean useTempFile, int maxWrites, @NotNull CompressionFormat format) throws IOException {
+        private final FSNode root;
+
+        private final Map<Path, FSNode> childFileSystems;
+        private final ReentrantReadWriteUpdateLock childFileSystemsLock;
+
+
+        public FSTree(Path location, boolean useTempFile, int maxWrites, int subFSBufferSize, @NotNull CompressionFormat format) throws IOException {
             this.location = location;
             this.useTempFile = useTempFile;
             this.maxWrites = maxWrites;
+            this.buffersize = subFSBufferSize;
+            this.childFileSystems = new HashMap<>(buffersize + 2);
             this.childFileSystemsLock = new ReentrantReadWriteUpdateLock();
             setCompressionFormat(format);
-            root = new ZipNode(this, null, location, useTempFile, maxWrites, format.compressionMethod, location.getFileSystem());
+            root = new FSNode(this, null, location, useTempFile, maxWrites, format.compressionMethod, location.getFileSystem());
         }
 
-        public boolean isAutoFlushEnabled() {
-            return autoFlushEnabled;
+        //needs write lock
+        private FSNode putFS(Path path, FSNode fs) {
+            fs.updateAccess();
+            return childFileSystems.put(path, fs);
         }
 
-        public void setAutoFlushEnabled(boolean autoFlushEnabled) {
-            this.autoFlushEnabled = autoFlushEnabled;
+        //needs write lock
+        private FSNode removeFS(Path path) {
+            return childFileSystems.remove(path);
+        }
+
+        //needs read lock
+        private FSNode getFS(Path path) {
+            FSNode it = childFileSystems.get(path);
+            if (it != null)
+                it.updateAccess();
+            return it;
+        }
+
+        //needs writelock
+        private void maintainBuffer() {
+            if (childFileSystems.size() > buffersize) {
+                int remove = Math.max(1, (int) (buffersize * 0.2));
+                childFileSystems.entrySet().stream()
+                        .sorted(Comparator.comparing(e -> e.getValue().lastAccessed.longValue()))
+                        .map(Map.Entry::getValue).limit(remove)
+                        .forEach(v -> {
+                            try {
+                                v.close();
+                            } catch (IOException e) {
+                                LoggerFactory.getLogger(getClass()).warn("Error when closing subfs '" + v.location + "'. Try to Ignore!", e);
+                            }
+                        });
+            }
         }
 
         private String relativizeToRoot(ResolvedPath resolvedToSubFs, @Nullable String relativizeToSubRoot) {
-            childFileSystemsLock.readLock().lock();
+            if (!resolvedToSubFs.fs.isDefault())
+                resolvedToSubFs.fs.lock.readLock().lock();
             try {
                 String current;
                 if (resolvedToSubFs.fs.isDefault()) { //is default fs and no archive
@@ -154,7 +198,8 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
                     r = null;
                 return r;
             } finally {
-                childFileSystemsLock.readLock().unlock();
+                if (!resolvedToSubFs.fs.isDefault())
+                    resolvedToSubFs.fs.lock.readLock().unlock();
             }
         }
 
@@ -164,7 +209,7 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
 
         private ResolvedPath resolvePath(String relativeFromRoot, Boolean isDir) throws IOException {
             if (compressionFormat.getCompressedLevel() < 1)
-                return new ResolvedPath(root, root.location.resolve(relativeFromRoot).toString());
+                return new ResolvedPath(root, relativeFromRoot == null ? null : root.location.resolve(relativeFromRoot).toString());
 
             childFileSystemsLock.updateLock().lock();
             try {
@@ -180,14 +225,13 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
                     } else {
                         Path prefix = source.subpath(0, compressionFormat.getCompressedLevel() + 1);
 
-                        ZipNode zipFSNode = childFileSystems.get(prefix);
+                        FSNode zipFSNode = getFS(prefix);
                         if (zipFSNode == null) {
                             childFileSystemsLock.writeLock().lock();
                             try {
-                                if (!childFileSystems.containsKey(prefix)) {
-                                    childFileSystems.put(prefix, new ZipNode(this, location.resolve(prefix), useTempFile, maxWrites, compressionFormat.compressionMethod, new ReentrantReadWriteUpdateLock()));
-                                }
-                                zipFSNode = childFileSystems.get(prefix);
+                                zipFSNode = new FSNode(this, location.resolve(prefix), useTempFile, maxWrites, compressionFormat.compressionMethod, new ReentrantReadWriteLock());
+                                putFS(prefix, zipFSNode);
+                                maintainBuffer();
                             } finally {
                                 childFileSystemsLock.writeLock().unlock();
                             }
@@ -196,7 +240,6 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
                         }
 
                         return new ResolvedPath(zipFSNode, "/" + (source != prefix ? prefix.relativize(source) : source));
-
                     }
                 } else {
                     return new ResolvedPath(root, null); //root
@@ -208,12 +251,11 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
 
         @Override
         public void writeFile(String relativeFrom, String relativeTo, IOFunctions.BiIOConsumer<Path, Path> writeWithFS) throws IOException {
+            ResolvedPath fsPFrom = null;
+            ResolvedPath fsPTo = null;
+
+            ResolvedPath[] lockOrder = null;
             try {
-                ResolvedPath fsPFrom = null;
-                ResolvedPath fsPTo = null;
-
-                ResolvedPath[] lockOrder;
-
                 childFileSystemsLock.updateLock().lock();
                 try {
                     fsPFrom = resolvePath(relativeFrom, false); //copy zipped sub fs as file without decompressing it
@@ -225,33 +267,47 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
                 }
 
 
-                for (ResolvedPath resolvedPath : lockOrder)
+                for (int i = 0; i < lockOrder.length; i++) {
+                    ResolvedPath resolvedPath = lockOrder[i];
                     if (!resolvedPath.fs.isDefault())
                         resolvedPath.fs.lock.readLock().lock();
-
-                try {
-                    writeWithFS.accept(fsPFrom.getPath(), fsPTo.getPath());
-                } finally {
-                    for (ResolvedPath resolvedPath : lockOrder)
-                        if (!resolvedPath.fs.isDefault())
-                            resolvedPath.fs.lock.readLock().unlock();
                 }
 
-                fsPTo.fs.ensureWrite();
-            } catch (ClosedFileSystemException | ClosedChannelException e) {
-                LoggerFactory.getLogger(getClass()).warn("FS copy operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.", e);
-                LoggerFactory.getLogger(getClass()).debug("FS copy operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.", e);
-                //todo rewerite with full lock
-                /*childFileSystemsLock.writeLock().lock();
                 try {
-                    flush();
-                    ResolvedPath fsPFrom = resolvePath(relativeFrom, false); //copy zipped sub fs as file without decompressing it
-                    ResolvedPath fsPTo = resolvePath(relativeTo, false); //copy zipped sub fs as file without decompressing it
                     writeWithFS.accept(fsPFrom.getPath(), fsPTo.getPath());
-                    ensureWrite();
                 } finally {
-                    childFileSystemsLock.writeLock().unlock();
-                }*/
+                    for (int i = lockOrder.length - 1; i >= 0; i--) {
+                        ResolvedPath resolvedPath = lockOrder[i];
+                        if (!resolvedPath.fs.isDefault())
+                            resolvedPath.fs.lock.readLock().unlock();
+                    }
+                    fsPTo.fs.ensureWrite();
+                }
+            } catch (ClosedFileSystemException | ClosedChannelException e) {
+                LoggerFactory.getLogger(getClass()).warn("FS copy operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.");
+                LoggerFactory.getLogger(getClass()).debug("FS copy operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.", e);
+                if (lockOrder != null) {
+                    for (int i = 0; i < lockOrder.length; i++) {
+                        ResolvedPath resolvedPath = lockOrder[i];
+                        if (!resolvedPath.fs.isDefault())
+                            resolvedPath.fs.lock.writeLock().lock();
+                    }
+
+                    try {
+                        fsPFrom.fs.ensureOpen();
+                        fsPTo.fs.ensureOpen();
+                        writeWithFS.accept(fsPFrom.getPath(), fsPTo.getPath());
+                    } finally {
+                        for (int i = lockOrder.length - 1; i >= 0; i--) {
+                            ResolvedPath resolvedPath = lockOrder[i];
+                            if (!resolvedPath.fs.isDefault())
+                                resolvedPath.fs.lock.writeLock().unlock();
+                        }
+                        fsPTo.fs.ensureWrite();
+                    }
+                } else {
+                    throw e;
+                }
             }
         }
 
@@ -266,8 +322,8 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
                 } finally {
                     if (!rp.fs.isDefault())
                         rp.fs.lock.readLock().unlock();
+                    rp.fs.ensureWrite();
                 }
-                rp.fs.ensureWrite();
             } catch (ClosedFileSystemException | ClosedChannelException e) {
                 LoggerFactory.getLogger(getClass()).warn("FS write operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.");
                 LoggerFactory.getLogger(getClass()).debug("FS write operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.", e);
@@ -279,8 +335,9 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
                 } finally {
                     if (!rp.fs.isDefault())
                         rp.fs.lock.writeLock().unlock();
+                    rp.fs.ensureWrite();
                 }
-                rp.fs.ensureWrite();
+
             }
         }
 
@@ -305,7 +362,6 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
                 } finally {
                     if (!rp.fs.isDefault())
                         rp.fs.lock.readLock().unlock();
-                    rp.fs.ensureWrite();
                 }
             } catch (ClosedFileSystemException | ClosedChannelException e) {
                 LoggerFactory.getLogger(getClass()).warn("FS read operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock.");
@@ -318,7 +374,6 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
                 } finally {
                     if (!rp.fs.isDefault())
                         rp.fs.lock.writeLock().unlock();
-                    rp.fs.ensureWrite();
                 }
 
             }
@@ -354,7 +409,6 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
             } finally {
                 if (!workingRootFS.fs.isDefault()) {
                     workingRootFS.fs.lock.readLock().unlock();
-                    workingRootFS.fs.ensureWrite();
                 }
             }
 
@@ -380,10 +434,8 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
                         output.add(relativizeToRoot(current, walkingRoot));
                     }
                 } finally {
-                    if (!current.fs.isDefault()) {
+                    if (!current.fs.isDefault())
                         current.fs.lock.readLock().unlock();
-                        current.fs.ensureWrite();
-                    }
                 }
             }
             return output;
@@ -394,17 +446,25 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
             return location;
         }
 
+        @Override
+        public Path getRoot() {
+            return getLocation();
+        }
+
         public void flush() throws IOException {
             close();
         }
 
         @Override
-        public CompressionFormat getCompressionFormat() {
+        public @NotNull CompressionFormat getCompressionFormat() {
             return compressionFormat;
         }
 
         @Override
-        public void setCompressionFormat(CompressionFormat format) {
+        public void setCompressionFormat(@Nullable CompressionFormat format) {
+            if (format == null)
+                format = new CompressionFormat(null, ZipCompressionMethod.STORED);
+
             if (format.compressionLevels != null && format.compressionLevels.length > 1)
                 throw new IllegalArgumentException("MultiLevel compression is not supported for folder based project-space");
             this.compressionFormat = format;
@@ -414,9 +474,9 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
         public void close() throws IOException {
             childFileSystemsLock.updateLock().lock();
             try {
-                ArrayList<Map.Entry<Path, ZipNode>> entries = new ArrayList<>(childFileSystems.entrySet());
-                for (Map.Entry<Path, ZipNode> entry : entries) {
-                    final ZipNode zipfs = entry.getValue();
+                ArrayList<Map.Entry<Path, FSNode>> entries = new ArrayList<>(childFileSystems.entrySet());
+                for (Map.Entry<Path, FSNode> entry : entries) {
+                    final FSNode zipfs = entry.getValue();
                     zipfs.close();
                 }
             } finally {
@@ -425,29 +485,31 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
         }
     }
 
-    private static class ZipNode implements Closeable, Comparable<ZipNode> {
-        private final ReentrantReadWriteUpdateLock lock;
+    private static class FSNode implements Closeable, Comparable<FSNode> {
+        private final ReentrantReadWriteLock lock;
+
         private final Path location; // the location on the default (real) fs
         private final boolean useTempFile;
         private final ZipCompressionMethod compressionMethod;
 
         private final int maxWrites;
-        private int writes = 0;
+        private final AtomicInteger writes = new AtomicInteger(0);
 
+        private final AtomicLong lastAccessed = new AtomicLong(System.currentTimeMillis());
 
-        private final ZipFSTree parent;
+        private final FSTree parent;
         private FileSystem zipFS;
 
 
-        private ZipNode(ZipFSTree parent, Path location, boolean useTempFile, int maxwrites, ZipCompressionMethod compressionMethod, ReentrantReadWriteUpdateLock lock) throws IOException {
+        private FSNode(FSTree parent, Path location, boolean useTempFile, int maxwrites, ZipCompressionMethod compressionMethod, ReentrantReadWriteLock lock) throws IOException {
             this(parent, lock, location, Files.notExists(location), useTempFile, maxwrites, compressionMethod);
         }
 
-        private ZipNode(ZipFSTree parent, ReentrantReadWriteUpdateLock lock, Path location, boolean createNew, boolean useTempFile, int maxWrites, ZipCompressionMethod compressionMethod) throws IOException {
+        private FSNode(FSTree parent, ReentrantReadWriteLock lock, Path location, boolean createNew, boolean useTempFile, int maxWrites, ZipCompressionMethod compressionMethod) throws IOException {
             this(parent, lock, location, useTempFile, maxWrites, compressionMethod, FileUtils.asZipFS(location, createNew, useTempFile, compressionMethod));
         }
 
-        private ZipNode(ZipFSTree parent, ReentrantReadWriteUpdateLock lock, Path location, boolean useTempFile, int maxWrites, ZipCompressionMethod compressionMethod, FileSystem fs) {
+        private FSNode(FSTree parent, ReentrantReadWriteLock lock, Path location, boolean useTempFile, int maxWrites, ZipCompressionMethod compressionMethod, FileSystem fs) {
             this.lock = lock;
             this.location = location;
             this.parent = parent;
@@ -455,6 +517,10 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
             this.compressionMethod = compressionMethod;
             this.maxWrites = maxWrites;
             this.zipFS = fs;
+        }
+
+        private void updateAccess() {
+            lastAccessed.set(System.currentTimeMillis());
         }
 
         /**
@@ -482,11 +548,11 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
                 return;
             if (maxWrites <= 0) // disabled
                 return;
-            if (++writes >= maxWrites) {
+            if (writes.incrementAndGet() >= maxWrites) {
                 lock.writeLock().lock();
                 try {
-                    if (writes >= maxWrites)
-                        close(); //just close and reopen if needed again to save memory
+                    if (writes.get() >= maxWrites)
+                        flushAndReopen(); //just close to save memory. can be reopened if needed again.
                 } finally {
                     lock.writeLock().unlock();
                 }
@@ -497,25 +563,31 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
             if (isDefault())
                 return;
             if (!zipFS.isOpen()) {
-                try {
-                    lock.writeLock().lock();
-                    if (!zipFS.isOpen()) {
-                        LoggerFactory.getLogger(getClass()).warn("ZipFS seems to be closed unexpectedly! Try Reopen it.");
-                        try {
-                            zipFS.close();
-                            //            } catch (ClosedChannelException e) {
-                            //                LoggerFactory.getLogger(getClass()).error("Could not close ZipFS due to ClosedChannelException usually caused by a thread level interrupt. Try to delete lock and reopen!", e);
-                            //                ((ZipFileSystemProvider)zipFS.provider()).removeFileSystem(location, (ZipFileSystem) zipFS); //todo find out how to access  api via gradle
-                        } catch (IOException e) {
-                            LoggerFactory.getLogger(getClass()).error("Could not close ZipFS. Try to ignore and reopen!", e);
-                        }
-                        zipFS = FileUtils.asZipFS(location, false, useTempFile, compressionMethod);
-                    }
-                } finally {
-                    lock.writeLock().unlock();
-                }
+                flushAndReopen();
             }
         }
+
+        //unchecked
+        private void flushAndReopen() throws IOException {
+            try {
+                lock.writeLock().lock();
+                if (!zipFS.isOpen()) {
+                    LoggerFactory.getLogger(getClass()).warn("ZipFS seems to be closed unexpectedly! Try Reopen it.");
+                    try {
+                        zipFS.close();
+                        //            } catch (ClosedChannelException e) {
+                        //                LoggerFactory.getLogger(getClass()).error("Could not close ZipFS due to ClosedChannelException usually caused by a thread level interrupt. Try to delete lock and reopen!", e);
+                        //                ((ZipFileSystemProvider)zipFS.provider()).removeFileSystem(location, (ZipFileSystem) zipFS); //todo find out how to access  api via gradle
+                    } catch (IOException e) {
+                        LoggerFactory.getLogger(getClass()).error("Could not close ZipFS. Try to ignore and reopen!", e);
+                    }
+                    zipFS = FileUtils.asZipFS(location, false, useTempFile, compressionMethod);
+                }
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
+
 
         public void close() throws IOException {
             if (isDefault())
@@ -524,11 +596,13 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
             try {
                 if (zipFS.isOpen())
                     zipFS.close();
-                parent.childFileSystemsLock.writeLock().lock();
-                try {
-                    parent.childFileSystems.remove(parent.location.relativize(location));
-                } finally {
-                    parent.childFileSystemsLock.writeLock().unlock();
+                if (parent != null) {
+                    parent.childFileSystemsLock.writeLock().lock();
+                    try {
+                        parent.childFileSystems.remove(parent.location.relativize(location));
+                    } finally {
+                        parent.childFileSystemsLock.writeLock().unlock();
+                    }
                 }
             } finally {
                 lock.writeLock().unlock();
@@ -536,16 +610,16 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
         }
 
         @Override
-        public int compareTo(@NotNull FileProjectSpaceIOProvider.ZipNode o) {
+        public int compareTo(@NotNull PathProjectSpaceIOProvider.FSNode o) {
             return location.compareTo(o.location);
         }
     }
 
     private static class ResolvedPath implements Comparable<ResolvedPath> {
-        private final ZipNode fs;
+        private final FSNode fs;
         private final String path;
 
-        private ResolvedPath(@NotNull ZipNode fs, String path) {
+        private ResolvedPath(@NotNull PathProjectSpaceIOProvider.FSNode fs, String path) {
             this.fs = fs;
             this.path = path;
         }
@@ -556,7 +630,7 @@ public class FileProjectSpaceIOProvider implements ProjectIOProvider<FileProject
 
 
         @Override
-        public int compareTo(@NotNull FileProjectSpaceIOProvider.ResolvedPath o) {
+        public int compareTo(@NotNull PathProjectSpaceIOProvider.ResolvedPath o) {
             return fs.location.toString()
                     .compareTo(o.fs.location.toString());
         }

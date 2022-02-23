@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -58,7 +59,7 @@ public class ProjectSpaceIO {
         } else if (isExistingProjectspaceDirectory(path) || (Files.isDirectory(path) &&
                 FileUtils.listAndClose(path, s -> s.filter(p -> !p.getFileName().toString().equals(PSLocations.FORMAT)).count()) == 0)) {
             doTSVConversion(path);
-            space = new SiriusProjectSpace(configuration, new FileProjectSpaceIOProvider(path));
+            space = new SiriusProjectSpace(configuration, new PathProjectSpaceIOProvider(path));
         } else throw new IOException("Location '" + path + "' is not a valid Project Location");
 
         space.open();
@@ -133,7 +134,7 @@ public class ProjectSpaceIO {
             } else {
                 Files.createDirectories(path);
             }
-            space = new SiriusProjectSpace(configuration, new FileProjectSpaceIOProvider(path));
+            space = new SiriusProjectSpace(configuration, new PathProjectSpaceIOProvider(path));
             space.setProjectSpaceProperty(CompressionFormat.class, space.ioProvider.getCompressionFormat());
         }
 
@@ -175,53 +176,72 @@ public class ProjectSpaceIO {
      * Copies a Project-Space to a new location.
      *
      * @param sourceSpace         The project to be copied
-     * @param copyLocation        target location
+     * @param targetLocation      target location
      * @param switchToNewLocation if true switch space location to copyLocation (saveAs vs. saveCopy)
      * @return true if space location has been changed successfully and false otherwise
      * @throws IOException if an I/O error happens
      */
-    public static boolean copyProject(@NotNull final SiriusProjectSpace sourceSpace, @NotNull final Path copyLocation, final boolean switchToNewLocation) throws IOException {
-        // source space is only read
-        return sourceSpace.withAllWriteLockedDo(() -> {
-            @NotNull final Path sourceSpaceLocation = sourceSpace.getLocation();
+    public static boolean copyProject(@NotNull final SiriusProjectSpace sourceSpace, @NotNull final Path targetLocation, final boolean switchToNewLocation) throws IOException {
+        try {
+            // source space is only read
+            return sourceSpace.withAllWriteLockedDo(() -> {
+                @NotNull final Path sourceSpaceLocation = sourceSpace.getLocation();
 
-            final boolean isZipTarget = isZipProjectSpace(copyLocation);
-            final boolean isZipSource = isZipProjectSpace(sourceSpaceLocation);
+                final boolean isZipTarget = isZipProjectSpace(targetLocation);
+                final boolean isZipSource = isZipProjectSpace(sourceSpaceLocation);
 
-            sourceSpace.flush();
-            if (isZipSource && isZipTarget) {
-                Files.copy(sourceSpaceLocation, copyLocation); //might keep old non hierarchical zip version but is super fast
-                return !switchToNewLocation || sourceSpace.changeLocation(getDefaultZipProvider(copyLocation));
-            } else {
-                SiriusProjectSpace targetSpace = new ProjectSpaceIO(sourceSpace.configuration).createNewProjectSpace(copyLocation);
-
-                CompressionFormat format = targetSpace.ioProvider.getCompressionFormat();
-
-                ProjectWriter w = targetSpace.ioProvider.newWriter(targetSpace::getProjectSpaceProperty);
-                ProjectReader r = sourceSpace.ioProvider.newReader(sourceSpace::getProjectSpaceProperty);
                 StopWatch t = new StopWatch();
                 t.start();
-                List<String> files = r.listFilesRecursive(null).stream().filter(p -> !PSLocations.COMPRESSION.equals(p)).collect(Collectors.toList());
-                t.split();
 
-                for (String file : files) {
-                    w.binaryFile(file, out -> r.binaryFile(file, in -> in.transferTo(out)));
+                sourceSpace.flush();
+                CompressionFormat sourceFormat = sourceSpace.ioProvider.getCompressionFormat();
+                CompressionFormat targetFormat;
+
+                if (isZipSource && isZipTarget) {
+                    try(ProjectIOProvider<?,?,?> p = getDefaultZipProvider(targetLocation)){
+                        targetFormat = p.getCompressionFormat();
+                    }
+
+                    if (Objects.equals(sourceFormat, targetFormat)) {
+                        Files.copy(sourceSpaceLocation, targetLocation); //might keep old non hierarchical zip version but is super fast
+                        return !switchToNewLocation || sourceSpace.changeLocation(getDefaultZipProvider(targetLocation));
+                    }
                 }
 
+                try (SiriusProjectSpace targetSpace = new ProjectSpaceIO(sourceSpace.configuration).createNewProjectSpace(targetLocation)) {
+                    targetFormat = targetSpace.ioProvider.getCompressionFormat();
+
+                    if (Objects.equals(sourceFormat, targetFormat) && (targetSpace.ioProvider instanceof PathProjectSpaceIOProvider && sourceSpace.ioProvider instanceof PathProjectSpaceIOProvider)) {
+                        FileUtils.copyFolder(((PathProjectSpaceIOProvider) sourceSpace.ioProvider).getRoot(), ((PathProjectSpaceIOProvider) targetSpace.ioProvider).getRoot());
+                    } else {
+                        ProjectWriter w = targetSpace.ioProvider.newWriter(targetSpace::getProjectSpaceProperty);
+                        ProjectReader r = sourceSpace.ioProvider.newReader(sourceSpace::getProjectSpaceProperty);
+                        //todo in place iteration
+                        List<String> files = r.listFilesRecursive(null).stream().filter(p -> !PSLocations.COMPRESSION.equals(p)).collect(Collectors.toList());
+
+                        for (String file : files) {
+                            w.binaryFile(file, out -> r.binaryFile(file, in -> in.transferTo(out)));
+                        }
+                    }
+
+                }
                 t.stop();
-                targetSpace.close();
+                System.out.println("Copied Project in: " + t.toString());
 
                 if (switchToNewLocation) {
                     boolean rr = sourceSpace.changeLocation(isZipTarget
-                            ? getDefaultZipProvider(copyLocation)
-                            : new FileProjectSpaceIOProvider(copyLocation));
-                    sourceSpace.setProjectSpaceProperty(CompressionFormat.class, format);
+                            ? getDefaultZipProvider(targetLocation)
+                            : new PathProjectSpaceIOProvider(targetLocation));
+                    sourceSpace.setProjectSpaceProperty(CompressionFormat.class, targetFormat);
                     return rr;
                 }
-            }
 
-            return true;
-        });
+                return true;
+            });
+        } catch (Throwable e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     /**
