@@ -237,8 +237,8 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
             while (parseResult.hasSubcommand()) {
                 parseResult = parseResult.subcommand();
-                if (parseResult.commandSpec().commandLine() instanceof PostprocessingTool) {
-                    postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine()).makePostprocessingJob(rootOptions, configOptionLoader.config);
+                if (parseResult.commandSpec().commandLine().getCommand() instanceof PostprocessingTool) {
+                    postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePostprocessingJob(rootOptions, configOptionLoader.config);
                     break;
                 } else {
                     execute(parseResult.commandSpec().commandLine(), toolchain);
