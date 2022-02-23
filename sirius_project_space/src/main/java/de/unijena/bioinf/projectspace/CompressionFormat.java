@@ -22,12 +22,10 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.utils.ZipCompressionMethod;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.projectspace.PSLocations.COMPRESSION;
@@ -66,6 +64,20 @@ public class CompressionFormat implements ProjectSpaceProperty {
         return level == getCompressedLevel() ? compressionMethod : ZipCompressionMethod.STORED;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CompressionFormat)) return false;
+        CompressionFormat format = (CompressionFormat) o;
+        return Arrays.equals(compressionLevels, format.compressionLevels) && compressionMethod == format.compressionMethod;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(compressionMethod);
+        result = 31 * result + Arrays.hashCode(compressionLevels);
+        return result;
+    }
 
     public static CompressionFormat fromKeyValuePairs(Map<String, String> pairs) {
         String string = pairs.get("compressionLevels");
@@ -100,12 +112,12 @@ public class CompressionFormat implements ProjectSpaceProperty {
 
     static class Serializer implements ComponentSerializer<ProjectSpaceContainerId, ProjectSpaceContainer<ProjectSpaceContainerId>, CompressionFormat> {
         @Override
+        @Nullable
         public CompressionFormat read(ProjectReader reader, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container) throws IOException {
-            Map<String, String> pairs = Map.of();
             if (reader.exists(COMPRESSION))
-                pairs = reader.keyValues(COMPRESSION);
+                return CompressionFormat.fromKeyValuePairs(reader.keyValues(COMPRESSION));
 
-            return CompressionFormat.fromKeyValuePairs(pairs);
+            return null;
         }
 
         @Override

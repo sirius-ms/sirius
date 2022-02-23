@@ -71,8 +71,11 @@ public class FileUtils {
         option.put("useTempFile", useTempFile);
         option.put("forceZIP64End", "true");
         option.put("compressionMethod", method == null ? ZipCompressionMethod.DEFLATED.name() : method.name());
-        if (createNew)
+        if (createNew){
+            if (zipFile.getParent() != null)
+                Files.createDirectories(zipFile.getParent());
             option.put("create", "true");
+        }
         return FileSystems.newFileSystem(zipFile, option);
     }
 
