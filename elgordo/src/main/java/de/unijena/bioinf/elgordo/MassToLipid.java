@@ -552,7 +552,7 @@ public class MassToLipid {
                         // add lipid candidate
                         int numberOfAcylChains = formula.numberOfOxygens();
                         for (LipidClass c : classes) {
-                            if (c.fragmentLib.getFor(ionType).isEmpty()) continue;
+                            if (c.fragmentLib!=null && c.fragmentLib.getFor(ionType).isEmpty()) continue;
                             int numberOfAlkylChains = c.chains - sphingosinChains - numberOfAcylChains;
                             if (numberOfAlkylChains >= 0) {
                                 final MolecularFormula chainFormula = sphingosinChains > 0 ? formula.add(SPHINGOSIN_HEAD) : formula;
