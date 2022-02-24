@@ -121,8 +121,16 @@ public class FragmentLib {
             sphingosinFragments = Arrays.stream(frags).map(FragmentLib::parseF).toArray(MolecularFormula[]::new);
             return this;
         }
+        public Builder sphingosinFragments(MolecularFormula... frags) {
+            sphingosinFragments = frags;
+            return this;
+        }
         public Builder sphingosinLosses(String... frags) {
             sphingosinLosses = Arrays.stream(frags).map(FragmentLib::parseF).toArray(MolecularFormula[]::new);
+            return this;
+        }
+        public Builder sphingosinLosses(MolecularFormula... frags) {
+            sphingosinLosses = frags;
             return this;
         }
 
@@ -130,9 +138,17 @@ public class FragmentLib {
             fragments = Arrays.stream(frags).map(MolecularFormula::parseOrThrow).toArray(MolecularFormula[]::new);
             return this;
         }
+        public Builder fragments(MolecularFormula... frags) {
+            fragments = frags;
+            return this;
+        }
 
         public Builder losses(String... frags) {
             losses = Arrays.stream(frags).map(FragmentLib::parseF).toArray(MolecularFormula[]::new);
+            return this;
+        }
+        public Builder losses(MolecularFormula... frags) {
+            losses = frags;
             return this;
         }
 
@@ -140,14 +156,26 @@ public class FragmentLib {
             alkylLosses = Arrays.stream(frags).map(FragmentLib::parseF).toArray(MolecularFormula[]::new);
             return this;
         }
+        public Builder alkyl(MolecularFormula... frags) {
+            alkylLosses = frags;
+            return this;
+        }
 
         public Builder acyl(String... frags) {
             acylLosses = Arrays.stream(frags).map(FragmentLib::parseF).toArray(MolecularFormula[]::new);
             return this;
         }
+        public Builder acyl(MolecularFormula... frags) {
+            acylLosses =frags;
+            return this;
+        }
 
         public Builder plasmalogenFragment(String... frags) {
             plasmalogenFragments = Arrays.stream(frags).map(MolecularFormula::parseOrThrow).toArray(MolecularFormula[]::new);
+            return this;
+        }
+        public Builder plasmalogenFragment(MolecularFormula... frags) {
+            plasmalogenFragments = frags;
             return this;
         }
 
@@ -185,8 +213,16 @@ public class FragmentLib {
             acylFragments = Arrays.stream(frags).map(FragmentLib::parseF).toArray(MolecularFormula[]::new);
             return this;
         }
+        public Builder acylFragments(MolecularFormula... frags) {
+            acylFragments = frags;
+            return this;
+        }
         public Builder alkylFragments(String... frags) {
             alkylFragments = Arrays.stream(frags).map(FragmentLib::parseF).toArray(MolecularFormula[]::new);
+            return this;
+        }
+        public Builder alkylFragments(MolecularFormula... frags) {
+            alkylFragments = frags;
             return this;
         }
     }
@@ -220,6 +256,11 @@ public class FragmentLib {
             ));
         }
         return new FragmentLib(map);
+    }
+
+    private static MolecularFormula[] mf(MolecularFormula[] a) {
+        if (a==null) return new MolecularFormula[0];
+        else return a;
     }
 
     private static MolecularFormula[] join(MolecularFormula[] a, MolecularFormula[] b) {

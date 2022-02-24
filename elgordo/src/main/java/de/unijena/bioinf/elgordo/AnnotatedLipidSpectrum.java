@@ -43,8 +43,16 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
     private final LipidSpecies annotatedSpecies;
     private final LipidAnnotation[][] annotationsPerPeak;
     private final int[] peakIndizes;
+    private final double contradictionScore;
+
+    private final int[] contradictingIndizes;
+    private final LipidAnnotation[] contradictingAnnotations;
 
     public AnnotatedLipidSpectrum(T spectrum, MolecularFormula formula, double precursorMz, PrecursorIonType ionType, LipidSpecies species, LipidAnnotation[][] annotationsPerPeak, int[] indizes) {
+        this(spectrum,formula,precursorMz,ionType,species,annotationsPerPeak,indizes,new LipidAnnotation[0], new int[0], 0d);
+    }
+
+    public AnnotatedLipidSpectrum(T spectrum, MolecularFormula formula, double precursorMz, PrecursorIonType ionType, LipidSpecies species, LipidAnnotation[][] annotationsPerPeak, int[] indizes, LipidAnnotation[] contradictingAnnotations, int[] contradictingIndizes, double contradictionScore) {
         this.spectrum = spectrum;
         this.formula = formula;
         this.precursorMz = precursorMz;
@@ -52,6 +60,9 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
         this.annotationsPerPeak = annotationsPerPeak;
         this.peakIndizes = indizes;
         this.annotatedSpecies = species;
+        this.contradictingAnnotations = contradictingAnnotations;
+        this.contradictingIndizes = contradictingIndizes;
+        this.contradictionScore = contradictionScore;
     }
 
     public MolecularFormula getFormula() {
@@ -354,6 +365,58 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
         return explained / all;
     }
 
+    public float[] makeFeatureVector2() {
+        float intensitySum = 0f;
+        for (int i=0; i < spectrum.size(); ++i) intensitySum += spectrum.getIntensityAt(i);
+        int uncommonSmallChainLength = 0, uncommonLargeChainLength = 0, strangeDifference = 0;
+        final boolean phosphocholin = isPhosphocholin();
+        int numberOfAlkylChains = (int)Arrays.stream(getAnnotatedSpecies().getChains()).filter(x->x.getType()== LipidChain.Type.ALKYL).count(), maxDoubleBonds = 0;
+        if (annotatedSpecies.chainsUnknown()) {
+
+        } else {
+            final IntSummaryStatistics chainLengths = Arrays.stream(annotatedSpecies.getChains()).mapToInt(x -> x.chainLength).summaryStatistics();
+            maxDoubleBonds = Arrays.stream(annotatedSpecies.getChains()).mapToInt(x->x.numberOfDoubleBonds).max().orElse(0);
+            if (phosphocholin) {
+                // everything below 6 is uncommon:
+                uncommonSmallChainLength = Math.max(0, 6 - chainLengths.getMin());
+                // everything above 36 is uncommon
+                uncommonLargeChainLength = Math.max(0, chainLengths.getMax() - 36);
+                // might be imbalanced
+                strangeDifference = 0;
+            } else {
+                // everything below 8 is uncommon:
+                uncommonSmallChainLength = Math.max(0, 8 - chainLengths.getMin());
+                // everything above 22 is uncommon
+                uncommonLargeChainLength = Math.max(0, chainLengths.getMax() - 22);
+                // each chain should be more than halve the largest chain
+                strangeDifference = Math.max(0,chainLengths.getMax()/2 - chainLengths.getMin());
+            }
+        }
+
+        return new float[]{
+                (float)explainedIntensityOfNontrivialPeaks(),
+                numberOfSpecificHeadGroupAnnotations(),
+                Math.min(18, numberOfChainAnnotations()),
+                //Math.min(50, uncommonLargeChainLength),
+                uncommonSmallChainLength,
+                Math.min(30, strangeDifference),
+                phosphocholin ? 1 : -1,
+                numberOfAlkylChains,
+                Math.min(35, Math.max(0, maxDoubleBonds - 6)),
+                Math.min(30, numberOfUnexplainedIntensivePeaks(0.01)),
+                // add classificators to distinguish lipids from steroids
+                numerOfWaterLosses(),
+                numberOfcommonSteroidFragments(),
+                numberOfcommonSteroidLosses(),
+                (float)getContradictionScore(),
+                (float)Arrays.stream(contradictingIndizes).mapToDouble(spectrum::getIntensityAt).sum()/intensitySum
+        };
+    }
+
+    public double getContradictionScore() {
+        return contradictionScore;
+    }
+
     @Override
     public String toString() {
         return String.format(Locale.US, "%s, %d peaks annotated (%.2f %% intensity)", annotatedSpecies.toString(), numberOfAnnotatedPeaks(), explainedIntensityOfNontrivialPeaks()*100d);
@@ -376,5 +439,16 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
             }
         }
         return c;
+    }
+
+    public int numberOfContradictingAnnotations() {
+        return contradictingIndizes.length;
+    }
+
+    public LipidAnnotation getContradictingAnnotation(int i) {
+        return contradictingAnnotations[i];
+    }
+    public int getContradictingPeakIndex(int i) {
+        return contradictingIndizes[i];
     }
 }
