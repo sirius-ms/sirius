@@ -91,9 +91,12 @@ public class Ms2Validator extends Ms1Validator {
         instrumentCorrection.put("Q-ToF (LCMS)", new Pair<>(5d,5d));
         instrumentCorrection.put("Tripple-Quadrupole", new Pair<>(5d,5d));
 
-        String instrumentType = input.getAnnotationOrNull(MsInstrumentation.class).description();
+        String instrumentType = input.getAnnotation(MsInstrumentation.class).map(x->x.description()).orElse(null);
 
         for (MutableMs2Spectrum spectrum : input.getMs2Spectra()) {
+            if (spectrum.getCollisionEnergy()==null) {
+                spectrum.setCollisionEnergy(CollisionEnergy.none());
+            }
             if (!spectrum.getCollisionEnergy().isCorrected()) {
                 if (instrumentCorrection.containsKey(instrumentType) && !spectrum.getCollisionEnergy().equals(CollisionEnergy.none())) {
                     spectrum.getCollisionEnergy().setMinEnergy(spectrum.getCollisionEnergy().minEnergySource() + instrumentCorrection.get(instrumentType).getFirst());
