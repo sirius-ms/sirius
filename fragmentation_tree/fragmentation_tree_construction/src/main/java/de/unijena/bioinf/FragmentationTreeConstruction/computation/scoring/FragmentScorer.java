@@ -21,9 +21,13 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring;
 
 import de.unijena.bioinf.ChemistryBase.ms.ft.AbstractFragmentationGraph;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 /**
  * A scorer for each fragment node in the graph
@@ -31,6 +35,18 @@ import de.unijena.bioinf.sirius.ProcessedPeak;
 public interface FragmentScorer<T> {
 
     public T prepare(ProcessedInput input, AbstractFragmentationGraph graph);
+
+    public static Optional<Fragment> getDecompositionRootNode(AbstractFragmentationGraph graph) {
+        if (graph instanceof FTree) {
+            return Optional.of(graph.getRoot()); // todo: what is with in-source fragments
+        } else {
+            if (graph.getRoot().getOutDegree()>1) {
+                LoggerFactory.getLogger(FragmentScorer.class).warn("Cannot score root for graph with multiple roots.");
+                return Optional.empty();
+            }
+            return Optional.of(graph.getRoot().getChildren(0));
+        }
+    }
 
     public double score(Fragment graphFragment, ProcessedPeak correspondingPeak, boolean isRoot, T prepared);
 
