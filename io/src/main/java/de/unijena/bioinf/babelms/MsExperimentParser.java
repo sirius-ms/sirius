@@ -101,6 +101,7 @@ public class MsExperimentParser {
         endings.put(".cef", AgilentCefExperimentParser.class);
         endings.put(".msp", MSPExperimentParser.class);
         endings.put(".txt", MassbankExperimentParser.class); //Too bad that Massbank format has no unique file extension
+        endings.put(".mb", MassbankExperimentParser.class);
         return endings;
     }
 }
