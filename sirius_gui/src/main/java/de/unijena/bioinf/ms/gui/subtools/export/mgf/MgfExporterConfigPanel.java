@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.gui.subtools.export.mgf;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.frontend.subtools.export.mgf.MgfExporterOptions;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -37,7 +38,9 @@ public class MgfExporterConfigPanel extends SubToolConfigPanel<MgfExporterOption
 
 
         paras.add(new JXTitledSeparator("Quant Table file (csv)"));
-        FileChooserPanel quantFile = new FileChooserPanel(JFileChooser.FILES_ONLY, JFileChooser.SAVE_DIALOG);
+        FileChooserPanel quantFile = new FileChooserPanel(
+                MainFrame.MF.ps().projectSpace().getLocation().toString() + "_quantTable.csv",
+                JFileChooser.FILES_ONLY, JFileChooser.SAVE_DIALOG);
         parameterBindings.put("quant-table", quantFile::getFilePath);
         getOptionDescriptionByName("quant-table").ifPresent(it -> quantFile.setToolTipText(GuiUtils.formatToolTip(it)));
         quantFile.field.setPreferredSize(new Dimension(300, quantFile.field.getPreferredSize().height));
@@ -45,7 +48,9 @@ public class MgfExporterConfigPanel extends SubToolConfigPanel<MgfExporterOption
 
 
         paras.add(new JXTitledSeparator("MGF file"));
-        FileChooserPanel mgfFile = new FileChooserPanel(JFileChooser.FILES_ONLY, JFileChooser.SAVE_DIALOG);
+        FileChooserPanel mgfFile = new FileChooserPanel(
+                MainFrame.MF.ps().projectSpace().getLocation().toString() + ".mgf",
+                JFileChooser.FILES_ONLY, JFileChooser.SAVE_DIALOG);
         parameterBindings.put("output", mgfFile::getFilePath);
         getOptionDescriptionByName("output").ifPresent(it -> mgfFile.setToolTipText(GuiUtils.formatToolTip(it)));
         mgfFile.field.setPreferredSize(new Dimension(300, mgfFile.field.getPreferredSize().height));

@@ -24,9 +24,9 @@ import de.unijena.bioinf.ms.gui.configs.Buttons;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -46,24 +46,36 @@ public class FileChooserPanel extends JPanel {
     public FileChooserPanel(int fileChooserMode) {
         this("", fileChooserMode, JFileChooser.OPEN_DIALOG);
     }
+
     public FileChooserPanel(int fileChooserMode, int dialogMode) {
         this("", fileChooserMode, dialogMode);
     }
 
     public FileChooserPanel(String currentPath, int fileChooserMode) {
-        this(currentPath,fileChooserMode, JFileChooser.OPEN_DIALOG);
+        this(currentPath, currentPath, fileChooserMode, JFileChooser.OPEN_DIALOG);
 
     }
+
     public FileChooserPanel(String currentPath, int fileChooserMode, int dialogMode) {
+        this(currentPath, currentPath, fileChooserMode, dialogMode);
+    }
+
+    public FileChooserPanel(String currentPathChooser, String currentPathTextField, int fileChooserMode, int dialogMode) {
+
         super();
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
 
-        final JFileChooser fileChooser = new JFileChooser(currentPath);
+        Path current = Path.of(currentPathChooser);
+        if (!Files.isDirectory(current))
+            current = current.getParent();
+
+        final JFileChooser fileChooser = new JFileChooser(current.toFile());
         fileChooser.setDialogType(dialogMode);
         fileChooser.setFileSelectionMode(fileChooserMode);
 
-        field.setText(currentPath);
+        field.setText(currentPathTextField);
+
         add(field);
         add(changeDir);
         changeDir.addActionListener(e -> {
@@ -78,7 +90,10 @@ public class FileChooserPanel extends JPanel {
     }
 
     public String getFilePath() {
-        return field.getText();
+        String it = field.getText();
+        if (it == null || it.isBlank())
+            return null;
+        return it;
     }
 
     @Override
