@@ -69,6 +69,8 @@ public class CompoundContainerIterator implements Iterator<CompoundContainer> {
                     return true;
                 }
             } catch (IOException e) {
+                e.printStackTrace();
+                LoggerFactory.getLogger(getClass()).debug("Could not parse Compound with ID '" + cid.getDirectoryName() + "' Skipping it!", e);
                 LoggerFactory.getLogger(getClass()).error("Could not parse Compound with ID '" + cid.getDirectoryName() + "' Skipping it!");
                 return hasNext();
             }

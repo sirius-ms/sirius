@@ -23,6 +23,7 @@ package de.unijena.bioinf.babelms;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 
 public interface Parser<T> {
@@ -42,7 +43,7 @@ public interface Parser<T> {
      * @return data element from the input stream
      * @throws IOException if an IO error happens
      */
-    <S extends T> S parse(BufferedReader reader, URL source) throws IOException;
+    <S extends T> S parse(BufferedReader reader, URI source) throws IOException;
 
     default public boolean isClosingAfterParsing() {
         return false;

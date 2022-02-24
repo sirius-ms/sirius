@@ -63,6 +63,11 @@ public class Zip4JProjectSpaceIOProvider implements ProjectIOProvider<Zip4JProje
     }
 
     @Override
+    public void flush() {
+       //no reopen needed writes instantly
+    }
+
+    @Override
     public void close() throws IOException {
         zipLocation.close();
     }

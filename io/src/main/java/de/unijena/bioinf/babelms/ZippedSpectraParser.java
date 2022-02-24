@@ -24,8 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 
 import java.io.*;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -60,7 +59,7 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
                 final GenericParser<Ms2Experiment> genericParser = msExperimentParser.getParser(asFile);
                 InputStream stream = zipFile.getInputStream(entry);
                 reader = FileUtils.ensureBuffering(new InputStreamReader(stream));
-                final URL source = file.toPath().resolve(entry.getName()).toUri().toURL();
+                final URI source = file.toPath().resolve(entry.getName()).toUri();
 
                 S elem = genericParser.parse(reader,source);
                 while (elem!=null) {
@@ -71,8 +70,7 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
             }
             return list;
         } catch (IOException e) {
-            final IOException newOne = new IOException("Error while parsing " + entry.getName() + " in zip archive " + file.getName(), e);
-            throw newOne;
+            throw new IOException("Error while parsing " + entry.getName() + " in zip archive " + file.getName(), e);
         } finally {
             if (reader != null) reader.close();
         }
@@ -82,19 +80,13 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
     /*
     this implementation throws an error if a single file in the zipped input stream cannot be parsed!
      */
-    public <S extends Ms2Experiment> CloseableIterator<S> parseIterator(InputStream input, URL source) throws IOException {
+    public <S extends Ms2Experiment> CloseableIterator<S> parseIterator(InputStream input, URI source) throws IOException {
         ZipInputStream zipInputStream = new ZipInputStream(input);
         BufferedReader r = FileUtils.ensureBuffering(new InputStreamReader(zipInputStream));
-        Path sourcePath;
-        try {
-            sourcePath = Paths.get(source.toURI());
-        } catch (URISyntaxException e) {
-            throw new IOException(e);
-        }
-
+        Path sourcePath = Paths.get(source);
 
         ZipEntry entry;
-        while ((entry=zipInputStream.getNextEntry())!=null) {
+        while ((entry = zipInputStream.getNextEntry()) != null) {
             if (!entry.isDirectory()) break;
         }
 
@@ -104,7 +96,7 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
         if (entry!=null){
             firstEntry = entry;
             firstParser = msExperimentParser.getParser(new File(firstEntry.getName()));
-            firstEle = firstParser.parse(r, sourcePath.resolve(firstEntry.getName()).toUri().toURL());
+            firstEle = firstParser.parse(r, sourcePath.resolve(firstEntry.getName()).toUri());
         } else {
             return new CloseableIterator<S>() {
                 @Override
@@ -196,12 +188,12 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
     @Override
     public <S extends Ms2Experiment> CloseableIterator<S> parseFromFileIterator(File file) throws IOException {
         final InputStream input = new FileInputStream(file);
-        return parseIterator(input, file.toURI().toURL());
+        return parseIterator(input, file.toURI());
     }
 
     @Override
-    public <S extends Ms2Experiment> S parse(BufferedReader reader, URL source) throws IOException {
-        String file = source.getFile();
+    public <S extends Ms2Experiment> S parse(BufferedReader reader, URI source) throws IOException {
+        String file = source.getPath();
         if (file.endsWith(".zip")){
             file = file.substring(0, file.length()-4);
         }
@@ -230,7 +222,7 @@ public class ZippedSpectraParser extends GenericParser<Ms2Experiment> {
      * @throws IOException
      */
     @Override
-    public <S extends Ms2Experiment> CloseableIterator<S> parseIterator(BufferedReader r, URL source) throws IOException {
+    public <S extends Ms2Experiment> CloseableIterator<S> parseIterator(BufferedReader r, URI source) throws IOException {
         throw new UnsupportedOperationException("this method is not supported for zipped files");
     }
 

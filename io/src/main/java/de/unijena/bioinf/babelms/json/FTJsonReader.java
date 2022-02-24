@@ -42,7 +42,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -72,11 +72,11 @@ public class FTJsonReader implements Parser<FTree> {
         return parse(reader, null);
     }
 
-    public FTree parse(BufferedReader reader, URL source) throws IOException {
+    public FTree parse(BufferedReader reader, URI source) throws IOException {
         return treeFromJson(reader, source);
     }
 
-    public FTree treeFromJsonString(String reader, URL source) throws IOException {
+    public FTree treeFromJsonString(String reader, URI source) throws IOException {
         return treeFromJson(new StringReader(reader), source);
     }
 
@@ -85,13 +85,13 @@ public class FTJsonReader implements Parser<FTree> {
         return true;
     }
 
-    public FTree treeFromJson(Reader reader, URL source) throws IOException {
+    public FTree treeFromJson(Reader reader, URI source) throws IOException {
         final JacksonDocument json = new JacksonDocument();
         final JsonNode docRoot = json.fromReader(reader);
         return treeFromJson(docRoot, json, source);
     }
 
-    public FTree treeFromJson(@NotNull final JsonNode docRoot, @NotNull final JacksonDocument json, @Nullable URL source) throws IOException {
+    public FTree treeFromJson(@NotNull final JsonNode docRoot, @NotNull final JacksonDocument json, @Nullable URI source) throws IOException {
         final DescriptorRegistry registry = DescriptorRegistry.getInstance();
         double score = 0d;
         double scoreBoost = 0d;

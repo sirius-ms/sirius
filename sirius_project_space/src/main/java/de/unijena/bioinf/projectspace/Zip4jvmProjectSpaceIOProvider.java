@@ -58,6 +58,11 @@ public class Zip4jvmProjectSpaceIOProvider implements ProjectIOProvider<Zip4jvmP
     }
 
     @Override
+    public void flush() {
+
+    }
+
+    @Override
     public void close() throws IOException {
         //nothing to do
     }

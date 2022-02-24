@@ -20,28 +20,24 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
-public class FileProjectSpaceIO implements ProjectIO {
+public class PathProjectSpaceIO implements ProjectIO {
 
 
-    protected FSWrapper fs;
+    protected FileSystemManager fs;
     protected Path prefix;
     protected final Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter;
 
-    public FileProjectSpaceIO(FSWrapper fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+    public PathProjectSpaceIO(FileSystemManager fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
         this.fs = fs;
         this.propertyGetter = propertyGetter;
     }
@@ -51,53 +47,28 @@ public class FileProjectSpaceIO implements ProjectIO {
         return (Optional<A>) propertyGetter.apply((Class<ProjectSpaceProperty>) klass);
     }
 
+
     @Override
     public List<String> list(String globPattern, boolean recursive, boolean includeFiles, boolean includeDirs) throws IOException {
-        return fs.readFS(resolve(null), dir -> {
-            final ArrayList<String> content = new ArrayList<>();
-
-            Iterable<Path> paths = recursive
-                    ? FileUtils.walkAndClose(w -> w.collect(Collectors.toList()), dir, globPattern)
-                    : Files.newDirectoryStream(dir, globPattern);
-
-
-            try {
-                for (Path p : paths) {
-                    if (includeDirs) {
-                        if (Files.isDirectory(p))
-                            content.add(dir.relativize(p).toString());
-                    }
-                    if (includeFiles) {
-                        if (Files.isRegularFile(p))
-                            content.add(dir.relativize(p).toString());
-                    }
-                }
-            } finally {
-                if (paths instanceof DirectoryStream)
-                    ((DirectoryStream<Path>) paths).close();
-            }
-
-            return content;
-        });
+        return fs.list(resolve(null), globPattern, recursive, includeFiles, includeDirs);
     }
 
     @Override
     public boolean exists(String relativePath) throws IOException {
-        return fs.readFS(resolve(relativePath), (IOFunctions.IOFunction<Path, Boolean>) Files::exists);
+        return fs.readFile(resolve(relativePath), (IOFunctions.IOFunction<Path, Boolean>) Files::exists);
     }
 
 
     @Override
     public <T> T inDirectory(String relativePath, IOFunctions.IOCallable<T> ioAction) throws IOException {
-        return fs.readFS(resolve(relativePath), newDir -> {
-            final Path oldDir = prefix;
-            try {
-                prefix = newDir;
-                return ioAction.call();
-            } finally {
-                prefix = oldDir;
-            }
-        });
+        final Path newDir = resolveAsPath(relativePath);
+        final Path oldDir = prefix;
+        try {
+            prefix = newDir;
+            return ioAction.call();
+        } finally {
+            prefix = oldDir;
+        }
     }
 
 

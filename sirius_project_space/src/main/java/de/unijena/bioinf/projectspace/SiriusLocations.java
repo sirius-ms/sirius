@@ -20,9 +20,6 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.Location;
-
 public interface SiriusLocations {
 
     String

@@ -25,35 +25,25 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 
 public class DataSource implements DataAnnotation, TreeAnnotation, Ms2ExperimentAnnotation {
 
-    private final URL url;
+    private final URI url;
 
     public static DataSource fromString(String x) {
-        try {
-            return new DataSource(URI.create(x).toURL());
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException(e);
-        }
+        return new DataSource(URI.create(x));
     }
 
-    public DataSource(URL url) {
+    public DataSource(URI url) {
         this.url = url;
     }
 
     public DataSource(File f) {
-        try {
-            this.url = f.toURI().toURL();
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException(e);
-        }
+        this.url = f.toURI();
     }
 
-    public URL getUrl() {
+    public URI getURI() {
         return url;
     }
 

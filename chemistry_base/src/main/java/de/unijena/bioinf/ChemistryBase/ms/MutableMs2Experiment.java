@@ -28,7 +28,7 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,7 +93,7 @@ public class MutableMs2Experiment implements Ms2Experiment {
 
     @Override
     @Nullable
-    public URL getSource() {
+    public URI getSource() {
         final SourceLocation s = getSourceAnnotation();
         return s != null ? s.value : null;
     }
