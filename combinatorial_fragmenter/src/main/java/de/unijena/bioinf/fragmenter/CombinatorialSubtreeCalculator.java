@@ -1,6 +1,5 @@
 package de.unijena.bioinf.fragmenter;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.BitsetOps;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -8,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.List;
 
 public abstract class CombinatorialSubtreeCalculator extends AbstractFragmentationTreeAnnotator {
 
@@ -65,6 +65,30 @@ public abstract class CombinatorialSubtreeCalculator extends AbstractFragmentati
         }
 
         return this.mapping;
+    }
+
+    /**
+     * This method returns a list which contains for each fragment-terminalNode assignment the number of
+     * hydrogen rearrangements.
+     *
+     * @return list containing the amount of hydrogen rearrangement for each fragment-peak assignment
+     */
+    public List<Integer> getListWithAmountOfHydrogenRearrangements(){
+        ArrayList<Integer> hydrogenRearrangements = new ArrayList<>();
+        BitSet bitset = new BitSet();
+        bitset.set(this.molecule.natoms); //at this moment, 'bitset' represents the bitset of the first added terminal node
+
+        for(int i = 0; i < this.fTree.numberOfVertices(); i++){ //#terminalNodes <= #vertices in fTree
+            CombinatorialNode terminalNode = this.subtree.getNode(bitset);
+            if(terminalNode != null){
+                CombinatorialNode assignedNode = terminalNode.getIncomingEdges().get(0).source;
+                int hydrogenDiff = Math.abs(assignedNode.fragment.hydrogenRearrangements(terminalNode.fragment.getFormula()));
+                hydrogenRearrangements.add(hydrogenDiff);
+            }
+            this.incrementBitSet(bitset);
+        }
+
+        return hydrogenRearrangements;
     }
 
     private void incrementBitSet(BitSet bitSet){

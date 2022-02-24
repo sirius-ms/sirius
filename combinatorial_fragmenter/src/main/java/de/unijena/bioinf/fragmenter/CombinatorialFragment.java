@@ -92,7 +92,7 @@ public class CombinatorialFragment {
      * @return number of explicit and implicit hydrogen atoms in this fragment
      */
     public int numberOfHydrogens() {
-        if(!this.isRealFragment) return 0;
+        if(!this.isRealFragment) return this.formula.numberOfHydrogens();
         TableSelection sel = parent.getTableSelectionOfFormula();
         int[] atomLabels = parent.getAtomLabels();
         int count=0;
