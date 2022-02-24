@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -75,11 +75,11 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
     String lastCompundName = null;
 
     @Override
-    public Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
+    public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
         return parse(reader, source, PropertyManager.DEFAULTS);
     }
 
-    public Ms2Experiment parse(BufferedReader reader, URL source, ParameterConfig config) throws IOException {
+    public Ms2Experiment parse(BufferedReader reader, URI source, ParameterConfig config) throws IOException {
 
         ParserInstance p = null;
         while (true) {
@@ -110,7 +110,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
     private static class ParserInstance {
 
-        private ParserInstance(URL source, BufferedReader reader, ParameterConfig baseConfig) {
+        private ParserInstance(URI source, BufferedReader reader, ParameterConfig baseConfig) {
             this.source = new MsFileSource(source);
             this.reader = reader;
             lineNumber = 0;
@@ -292,7 +292,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 addAsAdditionalField("index", Integer.toString(index));
             } else if (optionName.equals("source")) {
                 //override in source set in ms file
-                this.externalSource = new SpectrumFileSource(new URL(value));
+                this.externalSource = new SpectrumFileSource(URI.create(value));
             } else if (optionName.equals("formula") || optionName.equals("formulas")) {
                 final List<String> valueList = Arrays.asList(value.split("(?:\\s+|,)"));
                 if (this.formulas == null) {

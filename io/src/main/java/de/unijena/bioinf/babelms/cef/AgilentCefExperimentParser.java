@@ -43,7 +43,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.net.URL;
+import java.net.URI;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -55,20 +55,21 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     private XMLEventReader xmlEventReader;
 
     private InputStream currentStream = null;
-    private URL currentUrl = null;
+    private @NotNull URI currentUrl = null;
 
 
 
     private Iterator<Ms2Experiment> iterator = null;
+
     @Override
-    public <S extends Ms2Experiment> S parse(@Nullable BufferedReader ignored, @NotNull URL source) throws IOException {
+    public <S extends Ms2Experiment> S parse(@Nullable BufferedReader ignored, @NotNull URI source) throws IOException {
         //XML parsing on readers works bad, so we create our own stream from url
         if (iterator != null && iterator.hasNext()) {
             return (S) iterator.next();
         } else if (!Objects.equals(currentUrl, source) || xmlEventReader == null || unmarshaller == null) {
             try {
                 currentUrl = source;
-                currentStream = source.openStream();
+                currentStream = currentUrl.toURL().openStream();
                 // create xml event reader for input stream
                 XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
                 xmlEventReader = xmlInputFactory.createXMLEventReader(currentStream);

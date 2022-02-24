@@ -21,28 +21,22 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
-import org.slf4j.LoggerFactory;
 
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Path;
 
 public abstract class SourceLocation implements Ms2ExperimentAnnotation {
-    public final URL value;
+    public final URI value;
 
-    protected SourceLocation(URL value) {
+    protected SourceLocation(URI value) {
         this.value = value;
     }
 
     @Override
     public String toString() {
-        if (value.getProtocol().equalsIgnoreCase("file")) {
-            try {
-                return Path.of(value.toURI()).toString();
-            } catch (URISyntaxException e) {
-                LoggerFactory.getLogger(getClass()).warn("Error creating local file path",e);
-                return value.toString();
-            }
+        if (value.getScheme().equalsIgnoreCase("file")) {
+            return Path.of(value).toString();
+
         }
         return value.toString();
     }

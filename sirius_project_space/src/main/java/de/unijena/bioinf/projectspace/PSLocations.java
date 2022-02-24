@@ -20,22 +20,8 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.nio.file.Path;
-
-public interface FSWrapper extends Closeable {
-
-    void writeFS(String relativeFrom, String relativeTo, IOFunctions.BiIOConsumer<Path, Path> writeWithFS) throws IOException;
-
-    void writeFS(@Nullable String relative, IOFunctions.IOConsumer<Path> writeWithFS) throws IOException;
-
-    void readFS(@Nullable String relative, IOFunctions.IOConsumer<Path> readWithFS) throws IOException;
-
-    <R> R readFS(@Nullable String relative, IOFunctions.IOFunction<Path, R> readWithFS) throws IOException;
-
-    Path getLocation();
+public interface PSLocations {
+    String
+            FORMAT = ".format",
+            COMPRESSION = ".compression";
 }
