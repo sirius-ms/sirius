@@ -20,15 +20,17 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
+import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutionException;
-
-public class SummarySubToolJob extends PostprocessingJob<Boolean> {
+public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Workflow {
     private static final Logger LOG = LoggerFactory.getLogger(SummarySubToolJob.class);
     private final ProjectSpaceManager project;
     private final ParameterConfig config;
@@ -40,21 +42,43 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> {
         this.options = options;
     }
 
+    private boolean standalone = false;
+
+    public boolean isStandalone() {
+        return standalone;
+    }
+
+    public void setStandalone(boolean standalone) {
+        this.standalone = standalone;
+    }
+
     @Override
     protected Boolean compute() throws Exception {
         try {
             //use all experiments in workspace to create summaries
-
             LOG.info("Writing summary files...");
-            project.writeSummaries(options.location,options.compress, ProjectSpaceManager.defaultSummarizer());
-            LOG.info("Project-Space summaries successfully written!");
+            StopWatch w = new StopWatch(); w.start();
+            SiriusProjectSpace.SummarizerJob job = project.projectSpace().makeSummarizerJob(options.location, options.compress, ProjectSpaceManager.defaultSummarizer());
+            job.addJobProgressListener(this::updateProgress);
+            SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+            w.stop();
+            LOG.info("Project-Space summaries successfully written in: " + w);
 
             return true;
-        } catch (ExecutionException e) {
-            LOG.error("Error when summarizing project. Project summaries may be incomplete!", e);
-            return false;
         } finally {
-            project.close(); // close project since this is standalone or postprocessor
+            if (!standalone)
+                project.close(); // close project if this is a postprocessor
         }
+    }
+
+    @Override
+    public void run() {
+        setStandalone(true);
+        SiriusJobs.getGlobalJobManager().submitJob(this).takeResult();
+    }
+
+    @Override
+    public void cancel() {
+        cancel(true);
     }
 }

@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
@@ -37,16 +36,15 @@ public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, St
 
     Path location;
     @CommandLine.Option(names = {"--output", "-o"}, description = "Specify location (outside the project) for writing summary files. Per default summaries are written to the project-space")
-    private void setSummaryLocation(Path summaryLocation) throws Exception {
+    public void setSummaryLocation(Path summaryLocation) throws Exception {
         this.location = summaryLocation;
     }
 
     boolean compress;
-    @CommandLine.Option(names = {"--compress", "-c"}, description = "Summaries will be written into a compressed zip archive.", defaultValue = "false")
-    private void setCompress(boolean compress) throws Exception {
+    @CommandLine.Option(names = {"--compress", "--zip", "-c"}, description = "Summaries will be written into a compressed zip archive. This parameter will be ignored if the summary is written into the project-space.", defaultValue = "false")
+    public void setCompress(boolean compress) throws Exception {
         this.compress = compress;
     }
-
 
 
     @Override
@@ -56,6 +54,7 @@ public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, St
 
     @Override
     public Workflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
-        return () -> SiriusJobs.getGlobalJobManager().submitJob(makePostprocessingJob(rootOptions, config)).takeResult();
+        return makePostprocessingJob(rootOptions, config);
     }
+
 }

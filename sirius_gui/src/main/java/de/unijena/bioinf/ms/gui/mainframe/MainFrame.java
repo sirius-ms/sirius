@@ -152,7 +152,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         super(ApplicationCore.VERSION_STRING());
         setIconImage(Icons.SIRIUS_APP_IMAGE);
         configureTaskbar();
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 
