@@ -12,6 +12,8 @@ import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 
 public class PCSTFragmentationTreeAnnotatorTest {
@@ -54,6 +56,34 @@ public class PCSTFragmentationTreeAnnotatorTest {
 
             assertEquals(26.0, subtreeCalc.getScore(), 0.0);
             assertEquals(26.0, subtree.getScore(), 0.0);
+        }catch(UnknownElementException | InvalidSmilesException | GRBException e){
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testGetListWithAmountOfHydrogenRearrangements(){
+        try{
+            String smiles = "C1=CC=C1";
+            SmilesParser parser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+            MolecularGraph molecule = new MolecularGraph(parser.parseSmiles(smiles));
+
+            FTree fTree = new FTree(MolecularFormula.parse("C4H4"), new ElectronIonization());
+            fTree.addFragment(fTree.getRoot(), new Fragment(1, MolecularFormula.parse("C2H2"), new ElectronIonization()));
+            fTree.addFragment(fTree.getRoot(), new Fragment(2, MolecularFormula.parse("CH2"), new ElectronIonization()));
+
+            PCSTFragmentationTreeAnnotator subtreeCalc = new PCSTFragmentationTreeAnnotator(fTree, molecule, DEFAULT_SCORING);
+            subtreeCalc.initialize(n -> true);
+            CombinatorialSubtree subtree = subtreeCalc.computeSubtree();
+
+            List<Integer> actualHydrogenRearrangementList = subtreeCalc.getListWithAmountOfHydrogenRearrangements();
+            int[] expectedHydrogenRearrangements = new int[]{0,0,1};
+
+            assertEquals(3, actualHydrogenRearrangementList.size());
+
+            for(int i = 0; i < 3; i++){
+                assertEquals(expectedHydrogenRearrangements[i], actualHydrogenRearrangementList.get(i).intValue());
+            }
         }catch(UnknownElementException | InvalidSmilesException | GRBException e){
             e.printStackTrace();
         }
