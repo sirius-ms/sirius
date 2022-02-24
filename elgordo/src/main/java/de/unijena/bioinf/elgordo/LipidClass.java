@@ -19,8 +19,11 @@
 
 package de.unijena.bioinf.elgordo;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+
 import java.util.*;
 
+import static de.unijena.bioinf.ChemistryBase.chem.MolecularFormula.parseOrNull;
 import static de.unijena.bioinf.elgordo.FragmentLib.def;
 import static de.unijena.bioinf.elgordo.HeadGroup.*;
 
@@ -36,8 +39,8 @@ public enum LipidClass {
     DGDG(	2,	Digalactosyldiacylglycerol,def("+").losses("C12H21O11","C12H23O12").acyl("","H2O","C3H5O").def("[M+NH3+H]+").def("[M+Na]+").done(), "C(O[C@H]1[C@H](O)[C@@H](O)[C@@H](O)[C@@H](CO[C@@H]2[C@H](O)[C@@H](O)[C@@H](O)[C@@H](CO)O2)O1)[C@]([H])(OR1)(COR2)"),
     SQDG(	2,	Sulfoquinovosylglycerols,def("+").losses("C6H10O7S","C6H12O8S").acyl("","H2O","C3H5O").acylFragments("").def("[M+NH3+H]+").done(), "[C@](CO[C@@H]1[C@H](O)[C@@H](O)[C@H](O)[C@@H](CS(O)(=O)=O)O1)([H])(OR2)COR1"),
     SQMG(	1,	Sulfoquinovosylglycerols,null, "[C@](CO[C@@H]1[C@H](O)[C@@H](O)[C@H](O)[C@@H](CS(O)(=O)=O)O1)([H])(O)COR1"),
-    PC(	2,	Glycerophosphocholines, def("+").fragments("C2H5O4P").losses("C3H9N","C5H14NO4P").alkyl("","H","H2O").acyl("","H2O").plasmalogenFragment("C21H39O").
-                                            def("[M+H]+").fragments("C5H13NO","C5H14NO4P").def("[M+Na]+").adductSwitch().acyl("-C3H9N","C-3H-7N-O").done(), "[C@](COP(=O)([O-])OCC[N+](C)(C)C)([H])(OR2)COR1"),
+    PC(	2,	Glycerophosphocholines, def("+").fragments("C2H5O4P","C5H14NO4P","C5H13NO").losses("C3H9N","C5H14NO4P").alkyl("","H","H2O").acyl("","H2O").plasmalogenFragment("C21H39O").
+                                            def("[M+H]+").def("[M+Na]+").adductSwitch().acyl(parseOrNull("C3H9N").negate(),MolecularFormula.parseOrThrow("C3H9N").negate().add(parseOrNull("H2O"))).done(), "[C@](COP(=O)([O-])OCC[N+](C)(C)C)([H])(OR2)COR1"),
     LPC(	1,	Glycerophosphocholines, def("[M+H]+").fragments("C5H13NO","C5H14NO4P","C2H5O4P").losses("H2O","C5H14NO4P").acyl("","H2O").def("[M+Na]+").fragments("C5H13NO","C5H14NO4P","C2H5O4P").losses("C3H9N","C5H14NO4P").acyl("").done(), "C(OP(OCC[N+](C)(C)C)(=O)[O-])[C@@](O)([H])COR1"),
     //PE(	2,	Glycerophosphoethanolamines, def("[M+H]+").losses("C2H8NO4P","C2H5N").acylFragments("", "-OH","-H3O2", "-C2H5N").acyl("","H2O").def("[M+Na]+").fragments("H3PO4","C2H6NO3P","C2H8NO4P").losses("C2H5N","C2H6NO3P","C2H8NO4P","C2H6NO4P").acyl("","-C2H5N").acylFragments("").done()),
     PE(	2,	Glycerophosphoethanolamines, def("+").losses("C2H5N","C2H6NO3P","C2H8NO4P","C2H6NO4P").acylFragments("", "-OH","-H3O2", "-C2H5N").acyl("","H2O","-C2H5N").fragments("H3PO4","C2H6NO3P","C2H8NO4P").def("[M+Na]+").def("[M+H]+").done(),"[C@](COP(=O)(O)OCCN)([H])(OR2)COR1"),
@@ -52,7 +55,7 @@ public enum LipidClass {
     LPA(	1,	Glycerophosphates,null,"[C@](COP(=O)(O)O)([H])(O)COR1"),
     CL(	4,	Glycerophosphoglycerophosphoglycerols, def("[M+NH3+H]+").acyl("").acylFragments("", "C3H5").done()),
 
-    Cer(2, NoHeadGroup, def("[M+H]+").losses("H2O","H4O2").sphingosinFragments("","H2O","H4O2","CH4O2").sphingosinLosses("","H2O","H4O2","CH2O","-NH3").done()),
+    Cer(2, NoHeadGroup, def("+").losses("H2O","H4O2").sphingosinFragments("","H2O","H4O2","CH4O2").sphingosinLosses("","-H2O","-H4O2","-CH2O","-NH3", "-NH5O").def("[M+O+H]+").def("[M+H]+")/* .losses("H2O","H4O2").sphingosinFragments("", "H2O", "H4O","CH4O2").sphingosinLosses("") */.done()),
     Sm(2, Phosphocholin, def("+").fragments("C5H13NO","C2H5O4P","C5H14NO4P").losses("H2O","C3H11NO").sphingosinFragments("").sphingosinLosses("").def("[M+H]+").def("[M+Na]+").fragments("C5H15NO5P").losses("C3H9N").done());
 
 
