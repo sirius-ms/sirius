@@ -27,17 +27,14 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.ProjectWriter;
-import de.unijena.bioinf.projectspace.Summarizer;
-import de.unijena.bioinf.projectspace.CompoundContainer;
-import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.util.Iterators;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CanopusSummaryWriter implements Summarizer {
 
@@ -87,11 +84,8 @@ public class CanopusSummaryWriter implements Summarizer {
         }
     }
 
-    private List<CanopusSummaryRow> rows;
-
-    public CanopusSummaryWriter() {
-        this.rows = new ArrayList<>();
-    }
+    private final List<CanopusSummaryRow> rows = new ArrayList<>();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     @Override
     public List<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations() {
@@ -123,7 +117,18 @@ public class CanopusSummaryWriter implements Summarizer {
                 ++i;
             } while (i < results.size() && results.get(i).getScoreObject().compareTo(hit.getScoreObject()) >= 0);
             if (fingerprints.size()>0) {
-                this.rows.add(new CanopusSummaryRow(fingerprints.toArray(ProbabilityFingerprint[]::new), formulas.toArray(MolecularFormula[]::new), preForms.toArray(MolecularFormula[]::new), ionTypes.toArray(PrecursorIonType[]::new), id.getParentId().getDirectoryName()));
+                lock.writeLock().lock();
+                try {
+                    this.rows.add(new CanopusSummaryRow(
+                            fingerprints.toArray(ProbabilityFingerprint[]::new),
+                            formulas.toArray(MolecularFormula[]::new),
+                            preForms.toArray(MolecularFormula[]::new),
+                            ionTypes.toArray(PrecursorIonType[]::new),
+                            id.getParentId().getDirectoryName()
+                    ));
+                } finally {
+                    lock.writeLock().unlock();
+                }
             }
         }
 
@@ -131,8 +136,13 @@ public class CanopusSummaryWriter implements Summarizer {
 
     @Override
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
-        writer.table(SummaryLocations.CANOPUS_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas()));
-        writer.table(SummaryLocations.CANOPUS_SUMMARY_ADDUCT, HEADER2, Iterators.capture(new IterateOverAdducts()));
+        lock.readLock().lock();
+        try {
+            writer.table(SummaryLocations.CANOPUS_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas()));
+            writer.table(SummaryLocations.CANOPUS_SUMMARY_ADDUCT, HEADER2, Iterators.capture(new IterateOverAdducts()));
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     private final static String[] HEADER = new String[]{ "name","molecularFormula", "adduct", "most specific class", "level 5", "subclass", "class",

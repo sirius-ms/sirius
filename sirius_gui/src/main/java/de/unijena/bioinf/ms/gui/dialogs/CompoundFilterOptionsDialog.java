@@ -1,4 +1,5 @@
-package de.unijena.bioinf.ms.gui.utils;/*
+package de.unijena.bioinf.ms.gui.dialogs;
+/*
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
@@ -21,6 +22,7 @@ package de.unijena.bioinf.ms.gui.utils;/*
 import de.unijena.bioinf.ms.gui.actions.DeleteExperimentAction;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
+import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
