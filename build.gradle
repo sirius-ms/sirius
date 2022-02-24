@@ -36,7 +36,7 @@ ext {
     siriusVersion = System.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = System.getProperty('de.unijena.bioinf.fingerid.version')
     //version for external libraries
-    jjobs_version = '0.9.26'
+    jjobs_version = '0.9.27'
     slf4j_version = '1.7.32'
     gson_version = "2.8.6"//'2.6.2'
     math3_version = '3.6.1'
@@ -69,8 +69,8 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
 
-    sourceCompatibility = 11
-    targetCompatibility = 11
+    sourceCompatibility = 13
+    targetCompatibility = 13
 
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"

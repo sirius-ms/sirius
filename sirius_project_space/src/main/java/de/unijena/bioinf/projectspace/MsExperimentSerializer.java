@@ -37,7 +37,7 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
         if (!reader.exists(SiriusLocations.MS2_EXPERIMENT))
             return null;
 
-        final Ms2Experiment exp = reader.textFile(SiriusLocations.MS2_EXPERIMENT, (b) -> new JenaMsParser().parse(b, Path.of(id.getDirectoryName(), SiriusLocations.MS2_EXPERIMENT).toUri().toURL()));
+        final Ms2Experiment exp = reader.textFile(SiriusLocations.MS2_EXPERIMENT, (b) -> new JenaMsParser().parse(b, Path.of(id.getDirectoryName(), SiriusLocations.MS2_EXPERIMENT).toUri()));
 
         if (exp != null)
             id.getDetectedAdducts().ifPresent(pa -> exp.setAnnotation(DetectedAdducts.class, pa));
