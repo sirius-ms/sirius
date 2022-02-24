@@ -188,7 +188,11 @@ public class LipidChain implements Comparable<LipidChain> {
         }
         final int d = x.indexOf(':');
         final int length = Integer.parseInt(x.substring(0, d));
-        final int doubleBonds = Integer.parseInt(x.substring(d+1));
+
+        String db = x.substring(d + 1);
+        int special = db.indexOf('(');
+        if (special>=0) db = db.substring(0,special);
+        final int doubleBonds = Integer.parseInt(db);
         return new LipidChain(t,length,doubleBonds);
     }
 

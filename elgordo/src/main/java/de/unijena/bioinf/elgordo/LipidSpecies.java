@@ -20,6 +20,7 @@
 package de.unijena.bioinf.elgordo;
 
 import com.google.common.base.Joiner;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 
 import java.util.Arrays;
@@ -30,6 +31,12 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
 
     private final LipidChain[] chains;
     private final LipidClass type;
+
+    public LipidSpecies sortChains() {
+        final LipidChain[] clone = chains.clone();
+        Arrays.sort(clone);
+        return new LipidSpecies(type, clone);
+    }
 
     public Optional<String> generateHypotheticalStructure() {
         return type.getSmiles().map(smiles-> {
@@ -85,6 +92,15 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
     public LipidSpecies(LipidClass type) {
         this.chains = new LipidChain[0];
         this.type = type;
+    }
+
+    public Optional<MolecularFormula> getHypotheticalMolecularFormula() {
+        if (chainsUnknown()) return Optional.empty();
+        else {
+            MolecularFormula f = type.headgroup.getMolecularFormula();
+            for (LipidChain c : chains) f = f.add(c.getFormula());
+            return Optional.of(f);
+        }
     }
 
     public boolean chainsUnknown() {
