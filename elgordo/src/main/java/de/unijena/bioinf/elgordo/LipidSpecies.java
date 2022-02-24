@@ -67,7 +67,7 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
 
         int splitIdx = lipid.indexOf('(');
         for (LipidClass c : LipidClass.values()) {
-            if (lipid.substring(0, splitIdx).equals(c.abbr()) || lipid.substring(0, splitIdx).equals(c.name())) {
+            if (lipid.substring(0, splitIdx).equalsIgnoreCase(c.abbr()) || lipid.substring(0, splitIdx).equalsIgnoreCase(c.name())) {
                 klasse = c;
                 break;
             }
@@ -81,6 +81,9 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
             subchains = chain.split("/");
         }
         final LipidChain[] chains = Arrays.stream(subchains).map(x->LipidChain.fromString(x)).toArray(LipidChain[]::new);
+        if (chains.length==1 && klasse.chains > 1) {
+            chains[0] = new LipidChain(LipidChain.Type.MERGED, chains[0].chainLength, chains[0].numberOfDoubleBonds);
+        }
         return new LipidSpecies(klasse, chains);
     }
 
@@ -104,7 +107,7 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
     }
 
     public boolean chainsUnknown() {
-        return chains.length==0;
+        return chains.length==0 || chains[0].isMerged();
     }
 
     public HeadGroup getHeadGroup() {
@@ -137,5 +140,11 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
     @Override
     public String toString() {
         return type.abbr() + "("+ (chains.length>0 ? Joiner.on('_').join(chains) : "?")  + ")";
+    }
+
+    public LipidSpecies makeGeneric() {
+        if (this.chains.length==1 && this.chains[0].isMerged()) return this;
+        if (this.chains.length==0) return this;
+        return new LipidSpecies(this.type, new LipidChain[]{LipidChain.merge(this.chains)});
     }
 }
