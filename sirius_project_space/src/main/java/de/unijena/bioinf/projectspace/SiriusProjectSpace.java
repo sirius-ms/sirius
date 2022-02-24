@@ -25,12 +25,16 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -41,14 +45,18 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCloseable {
 
-    protected final ConcurrentHashMap<String, CompoundContainerId> ids;
+    private final ReadWriteLock idLock = new ReentrantReadWriteLock();
+    private final Map<String, CompoundContainerId> ids;
     protected final ProjectSpaceConfiguration configuration;
     protected final AtomicInteger compoundCounter;
     private final ConcurrentHashMap<Class<? extends ProjectSpaceProperty>, ProjectSpaceProperty> projectSpaceProperties;
@@ -62,7 +70,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     protected SiriusProjectSpace(ProjectSpaceConfiguration configuration, ProjectIOProvider<?, ?, ?> ioProvider) {
         this.configuration = configuration;
         this.ioProvider = ioProvider;
-        this.ids = new ConcurrentHashMap<>();
+        this.ids = new HashMap<>();
         this.compoundCounter = new AtomicInteger(-1);
         this.projectSpaceListeners = new ConcurrentLinkedQueue<>();
         this.projectSpaceProperties = new ConcurrentHashMap<>();
@@ -92,55 +100,81 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     protected synchronized void open() throws IOException {
-        ids.clear();
-        int maxIndex = -1;
-        final ProjectReader reader = ioProvider.newReader(this::getProjectSpaceProperty);
-        for (String dir : reader.listDirs("*")) {
-            int idx = reader.inDirectory(dir, () -> {
-                if (reader.exists(SiriusLocations.COMPOUND_INFO)) {
-                    final Map<String, String> keyValues = reader.keyValues(SiriusLocations.COMPOUND_INFO);
-                    final int index = Integer.parseInt(keyValues.getOrDefault("index", "-1"));
-                    final String name = keyValues.getOrDefault("name", "");
-                    final String dirName = Path.of(dir).getFileName().toString();
-                    final Double ionMass = Optional.ofNullable(keyValues.get("ionMass")).map(Double::parseDouble).orElse(null);
-                    final RetentionTime rt = Optional.ofNullable(keyValues.get("rt")).map(RetentionTime::fromStringValue).orElse(null);
+        StopWatch w = new StopWatch();
+        w.start();
 
-                    final PrecursorIonType ionType = Optional.ofNullable(keyValues.get("ionType"))
-                            .flatMap(PrecursorIonType::parsePrecursorIonType).orElse(null);
+        int maxIndex;
+        idLock.readLock().lock();
+        try {
+            ids.clear();
+            maxIndex = -1;
+            // if compression format definition does not exist in ps, use null to let IOProvider decide which
+            // CompressionFormat represents the pre CompressionFormat times configuration
+            ioProvider.setCompressionFormat(getProjectSpaceProperty(CompressionFormat.class).orElse(null));
 
-                    final Double confidenceScore = Optional.ofNullable(keyValues.get("confidenceScore")).map(Double::parseDouble).orElse(null);
+            final ProjectReader reader = ioProvider.newReader(this::getProjectSpaceProperty);
+            for (String dir : reader.listDirs("*")) {
+                int idx = reader.inDirectory(dir, () -> {
+                    if (reader.exists(SiriusLocations.COMPOUND_INFO)) {
+                        final Map<String, String> keyValues = reader.keyValues(SiriusLocations.COMPOUND_INFO);
+                        final int index = Integer.parseInt(keyValues.getOrDefault("index", "-1"));
+                        final String name = keyValues.getOrDefault("name", "");
+                        final String dirName = Path.of(dir).getFileName().toString();
+                        final Double ionMass = Optional.ofNullable(keyValues.get("ionMass")).map(Double::parseDouble).orElse(null);
+                        final RetentionTime rt = Optional.ofNullable(keyValues.get("rt")).map(RetentionTime::fromStringValue).orElse(null);
 
-                    final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType, rt, confidenceScore);
+                        final PrecursorIonType ionType = Optional.ofNullable(keyValues.get("ionType"))
+                                .flatMap(PrecursorIonType::parsePrecursorIonType).orElse(null);
 
-                    cid.setDetectedAdducts(
-                            Optional.ofNullable(keyValues.get("detectedAdducts")).map(DetectedAdducts::fromString).orElse(null));
+                        final Double confidenceScore = Optional.ofNullable(keyValues.get("confidenceScore")).map(Double::parseDouble).orElse(null);
 
-                    cid.setRankingScoreTypes(
-                            Optional.ofNullable(keyValues.get(CompoundContainerId.RANKING_KEY))
-                                    .flatMap(FormulaResultRankingScore::parseFromString).map(FormulaResultRankingScore::value)
-                                    .orElse(Collections.emptyList()));
+                        final CompoundContainerId cid = new CompoundContainerId(dirName, name, index, ionMass, ionType, rt, confidenceScore);
 
-                    ids.put(dirName, cid);
-                    return index;
-                }
+                        cid.setDetectedAdducts(
+                                Optional.ofNullable(keyValues.get("detectedAdducts")).map(DetectedAdducts::fromString).orElse(null));
 
-                return -1;
-            });
-            maxIndex = Math.max(idx, maxIndex);
+                        cid.setRankingScoreTypes(
+                                Optional.ofNullable(keyValues.get(CompoundContainerId.RANKING_KEY))
+                                        .flatMap(FormulaResultRankingScore::parseFromString).map(FormulaResultRankingScore::value)
+                                        .orElse(Collections.emptyList()));
 
+                        ids.put(dirName, cid);
+                        return index;
+                    }
+
+                    return -1;
+                });
+                maxIndex = Math.max(idx, maxIndex);
+            }
+        } finally {
+            idLock.readLock().unlock();
         }
 
         this.compoundCounter.set(maxIndex + 1);
         fireProjectSpaceChange(ProjectSpaceEvent.OPENED);
+        w.stop();
+        System.out.println("Open() done in: " + w.toString());
     }
 
-    public synchronized void close() throws IOException {
-        try {
-            this.ids.clear();
-            ioProvider.close();
-        } finally {
-            fireProjectSpaceChange(ProjectSpaceEvent.CLOSED);
-        }
+    public void flush() throws IOException {
+        ioProvider.flush();
+    }
+
+    public void close() throws IOException {
+        withAllWriteLockedDo(() -> {
+            try {
+                idLock.writeLock().lock();
+                try {
+                    this.ids.clear();
+                } finally {
+                    idLock.writeLock().unlock();
+                }
+                ioProvider.close();
+                return true;
+            } finally {
+                fireProjectSpaceChange(ProjectSpaceEvent.CLOSED);
+            }
+        });
     }
 
 
@@ -244,7 +278,12 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
 
     public Optional<CompoundContainerId> findCompound(String dirName) {
-        return Optional.ofNullable(ids.get(dirName));
+        idLock.readLock().lock();
+        try {
+            return Optional.ofNullable(ids.get(dirName));
+        } finally {
+            idLock.readLock().unlock();
+        }
     }
 
 
@@ -260,7 +299,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return newUniqueCompoundId(compoundName, index2dirName, ionMass, iontype, rt, null)
                 .map(idd -> {
                     try {
-                        idd.containerLock.lock();
+                        idd.containerLock.writeLock().lock();
                         final CompoundContainer comp = getContainer(CompoundContainer.class, idd);
                         if (exp != null) {
                             comp.setAnnotation(Ms2Experiment.class, exp);
@@ -272,7 +311,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                     } catch (IOException e) {
                         return null;
                     } finally {
-                        idd.containerLock.unlock();
+                        idd.containerLock.writeLock().unlock();
                     }
                 });
     }
@@ -312,7 +351,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         r.setAnnotation(FormulaScoring.class, new FormulaScoring(FTreeMetricsHelper.getScoresFromTree(tree)));
 
         try {
-            container.getId().containerLock.lock();
+            container.getId().containerLock.writeLock().lock();
             updateContainer(FormulaResult.class, r, FTree.class, FormulaScoring.class);
             //modify input container
             container.results.put(r.getId().fileName(), r.getId());
@@ -323,7 +362,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             LoggerFactory.getLogger(getClass()).error("Could not create FormulaResult from FTree!", e);
             return Optional.empty();
         } finally {
-            container.getId().containerLock.unlock();
+            container.getId().containerLock.writeLock().unlock();
         }
         return Optional.of(r);
     }
@@ -335,17 +374,18 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     //this is used for quick filesystem base copying
     protected void fireCompoundCreated(CompoundContainerId id) throws IOException {
         try {
-            id.containerLock.lock();
+            id.containerLock.writeLock().lock();
             CompoundContainer comp = getContainer(CompoundContainer.class, id);
             fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.CREATED, comp, Collections.emptySet()));
         } finally {
-            id.containerLock.unlock();
+            id.containerLock.writeLock().unlock();
         }
     }
 
     protected Optional<CompoundContainerId> tryCreateCompoundContainer(String directoryName, String compoundName, int compoundIndex, double ionMass, PrecursorIonType ionType, RetentionTime rt, Double confidence) {
         if (containsCompound(directoryName)) return Optional.empty();
-        synchronized (ids) {
+        idLock.writeLock().lock();
+        try {
             final ProjectWriter writer = ioProvider.newWriter(this::getProjectSpaceProperty);
             final CompoundContainerId id = new CompoundContainerId(directoryName, compoundName, compoundIndex, ionMass, ionType, rt, confidence);
             try {
@@ -362,18 +402,27 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 ids.remove(id.getDirectoryName());
                 return Optional.empty();
             }
+        } finally {
+            idLock.writeLock().unlock();
         }
     }
 
     public void updateCompoundContainerID(CompoundContainerId cid) throws IOException {
-        if (cid == null || ids.get(cid.getDirectoryName()) != cid)
+        if (cid == null)
             return;
 
-        cid.containerLock.lock();
+        try {
+            if (ids.get(cid.getDirectoryName()) != cid)
+                return;
+        } finally {
+
+        }
+
+        cid.containerLock.writeLock().lock();
         try {
             writeCompoundContainerID(cid, null);
         } finally {
-            cid.containerLock.unlock();
+            cid.containerLock.writeLock().unlock();
         }
     }
 
@@ -410,23 +459,23 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     @SafeVarargs
     public final FormulaResult getFormulaResult(FormulaResultId id, Class<? extends DataAnnotation>... components) throws IOException {
         CompoundContainerId parentId = id.getParentId();
-        parentId.containerLock.lock();
+        parentId.containerLock.readLock().lock();
         try {
             return getContainer(FormulaResult.class, id, components);
         } finally {
-            parentId.containerLock.unlock();
+            parentId.containerLock.readLock().unlock();
         }
     }
 
     @SafeVarargs
     public final void updateFormulaResult(FormulaResult result, Class<? extends DataAnnotation>... components) throws IOException {
         CompoundContainerId parentId = result.getId().getParentId();
-        parentId.containerLock.lock();
+        parentId.containerLock.writeLock().lock();
         try {
             updateContainer(FormulaResult.class, result, components);
             fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, result, new HashSet<>(Arrays.asList(components))));
         } finally {
-            parentId.containerLock.unlock();
+            parentId.containerLock.writeLock().unlock();
         }
     }
 
@@ -440,12 +489,12 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     @SafeVarargs
     public final void deleteFromFormulaResult(FormulaResultId resultId, Class<? extends DataAnnotation>... components) throws IOException {
         final CompoundContainerId parentId = resultId.getParentId();
-        parentId.containerLock.lock();
+        parentId.containerLock.writeLock().lock();
         try {
             deleteFromContainer(FormulaResult.class, resultId, List.of(components));
             fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, resultId, Set.of(components)));
         } finally {
-            parentId.containerLock.unlock();
+            parentId.containerLock.writeLock().unlock();
         }
     }
 
@@ -457,14 +506,14 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         if (!containsCompound(parentId))
             throw new IllegalArgumentException("Compound is not part of the project Space! ID: " + parentId);
 
-        parentId.containerLock.lock();
+        parentId.containerLock.writeLock().lock();
         try {
             deleteContainer(FormulaResult.class, resultId);
             if (container != null)
                 container.removeResult(resultId);
             fireContainerListeners(formulaResultListener, new ContainerEvent<>(ContainerEvent.EventType.DELETED, resultId, Collections.emptySet()));
         } finally {
-            parentId.containerLock.unlock();
+            parentId.containerLock.writeLock().unlock();
         }
     }
 
@@ -475,44 +524,53 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
     @SafeVarargs
     public final CompoundContainer getCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) throws IOException {
-        id.containerLock.lock();
+        id.containerLock.readLock().lock();
         try {
             return getContainer(CompoundContainer.class, id, components);
         } finally {
-            id.containerLock.unlock();
+            id.containerLock.readLock().unlock();
         }
     }
 
     @SafeVarargs
     public final void updateCompound(CompoundContainer compound, Class<? extends DataAnnotation>... components) throws IOException {
         final CompoundContainerId id = compound.getId();
-        id.containerLock.lock();
+        id.containerLock.writeLock().lock();
         try {
             updateContainer(CompoundContainer.class, compound, components);
             fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.UPDATED, compound, new HashSet<>(Arrays.asList(components))));
         } finally {
-            id.containerLock.unlock();
+            id.containerLock.writeLock().unlock();
         }
     }
 
     public void deleteCompound(CompoundContainerId cid) throws IOException {
-        cid.containerLock.lock();
+        cid.containerLock.writeLock().lock();
         try {
-            if (ids.remove(cid.getDirectoryName()) != null) {
+            CompoundContainerId removed = null;
+            idLock.writeLock().lock();
+            try {
+                removed = ids.remove(cid.getDirectoryName());
+            } finally {
+                idLock.writeLock().unlock();
+            }
+
+            if (removed != null) {
                 deleteContainer(CompoundContainer.class, cid);
                 fireContainerListeners(compoundListeners, new ContainerEvent<>(ContainerEvent.EventType.DELETED, cid, Collections.emptySet()));
                 fireProjectSpaceChange(ProjectSpaceEvent.INDEX_UPDATED);
             }
         } finally {
-            cid.containerLock.unlock();
+            cid.containerLock.writeLock().unlock();
         }
     }
 
     public boolean renameCompound(CompoundContainerId oldId, String name, IntFunction<String> index2dirName) {
-        oldId.containerLock.lock();
+        oldId.containerLock.writeLock().lock();
         try {
             final String newDirName = index2dirName.apply(oldId.getCompoundIndex());
-            synchronized (ids) {
+            idLock.writeLock().lock();
+            try {
                 final ProjectWriter writer = ioProvider.newWriter(this::getProjectSpaceProperty);
                 if (newDirName.equals(oldId.getDirectoryName())) {
                     try {
@@ -545,9 +603,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                     LoggerFactory.getLogger(SiriusProjectSpace.class).error("cannot move directory", e);
                     return false; // move failed due to an error
                 }
+            } finally {
+                idLock.writeLock().unlock();
             }
         } finally {
-            oldId.containerLock.unlock();
+            oldId.containerLock.writeLock().unlock();
         }
     }
 
@@ -558,12 +618,13 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     final <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     Container getContainer(Class<Container> klass, Id id, Class<? extends DataAnnotation>... components) throws IOException {
         // read container
-        final Container container = configuration.getContainerSerializer(klass).readFromProjectSpace(ioProvider.newReader(this::getProjectSpaceProperty), (r, c, f) -> {
-            // read components
-            for (Class k : components) {
-                f.apply((Class<DataAnnotation>) k, (DataAnnotation) configuration.getComponentSerializer(klass, k).read(r, id, c));
-            }
-        }, id);
+        final Container container = configuration.getContainerSerializer(klass).readFromProjectSpace(ioProvider.newReader(this::getProjectSpaceProperty),
+                (r, c, f) -> {
+                    // read components
+                    for (Class k : components) {
+                        f.apply((Class<DataAnnotation>) k, (DataAnnotation) configuration.getComponentSerializer(klass, k).read(r, id, c));
+                    }
+                }, id);
         return container;
     }
 
@@ -571,13 +632,14 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     final <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
     void updateContainer(Class<Container> klass, Container container, Class<? extends DataAnnotation>... components) throws IOException {
         // write container
-        configuration.getContainerSerializer(klass).writeToProjectSpace(ioProvider.newWriter(this::getProjectSpaceProperty), (r, c, f) -> {
-            // write components
-            for (Class k : components) {
-                configuration.getComponentSerializer(klass, k)
-                        .write(r, container.getId(), container, f.apply(k));
-            }
-        }, container.getId(), container);
+        configuration.getContainerSerializer(klass).writeToProjectSpace(ioProvider.newWriter(this::getProjectSpaceProperty),
+                (w, c, f) -> {
+                    // write components
+                    for (Class k : components) {
+                        configuration.getComponentSerializer(klass, k)
+                                .write(w, container.getId(), container, f.apply(k));
+                    }
+                }, container.getId(), container);
     }
 
     final <Id extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<Id>>
@@ -595,15 +657,20 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }, containerId);
     }
 
-    @NotNull
+    /*@NotNull
     public Collection<CompoundContainerId> getIds() {
-        return Collections.unmodifiableCollection(ids.values());
-    }
+        idLock.readLock().lock();
+        try {
+            return Collections.unmodifiableCollection(ids.values());
+        } finally {
+            idLock.readLock().unlock();
+        }
+    }*/
 
     @NotNull
     @Override
     public Iterator<CompoundContainerId> iterator() {
-        return ids.values().iterator();
+        return ids.values().stream().iterator();
     }
 
     public Iterator<CompoundContainerId> filteredIterator(Predicate<CompoundContainerId> predicate) {
@@ -652,7 +719,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         } else return Optional.of(property);
     }
 
-    public final  synchronized <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
+    public final <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
         synchronized (projectSpaceProperties) {
             if (value == null)
                 return deleteProjectSpaceProperty(key);
@@ -666,7 +733,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
     }
 
-    public final  synchronized <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key) {
+    public final <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key) {
         synchronized (projectSpaceProperties) {
             try {
                 configuration.getProjectSpacePropertySerializer(key).delete(ioProvider.newWriter(this::getProjectSpaceProperty), null);
@@ -685,28 +752,67 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return containsCompound(id.getDirectoryName());
     }
 
-    protected synchronized boolean withAllLockedDo(IOCallable<Boolean> code) throws IOException {
+    protected boolean withAllWriteLockedDo(IOCallable<Boolean> code) throws IOException {
         try {
-            return withAllLockedDoRaw(code);
+            return withAllWriteLockedDoRaw(code);
         } catch (InterruptedException e) {
             throw new IOException(e); //ugly but will not happen anyways
         }
     }
 
-    protected synchronized boolean withAllLockedDoRaw(IOCallable<Boolean> code) throws IOException, InterruptedException {
-        //todo do we need more locks to move the space?
+    protected synchronized boolean withAllWriteLockedDoRaw(IOCallable<Boolean> code) throws IOException, InterruptedException {
+
         try {
-            ids.values().forEach(cid -> cid.containerLock.lock());
+            idLock.readLock().lock();
+            try {
+                ids.values().forEach(cid -> cid.containerLock.writeLock().lock());
+            } finally {
+                idLock.readLock().unlock();
+            }
             return code.call();
         } finally {
-            ids.values().forEach(cid -> cid.containerLock.unlock());
+            idLock.readLock().lock();
+            try {
+                ids.values().forEach(cid -> cid.containerLock.writeLock().unlock());
+            } finally {
+                idLock.readLock().unlock();
+            }
+
         }
     }
 
+    protected boolean withAllReadLockedDo(IOCallable<Boolean> code) throws IOException {
+        try {
+            return withAllReadLockedDoRaw(code);
+        } catch (InterruptedException e) {
+            throw new IOException(e); //ugly but will not happen anyways
+        }
+    }
+
+    protected synchronized boolean withAllReadLockedDoRaw(IOCallable<Boolean> code) throws IOException, InterruptedException {
+        try {
+            idLock.readLock().lock();
+            try {
+                ids.values().forEach(cid -> cid.containerLock.readLock().lock());
+            } finally {
+                idLock.readLock().unlock();
+            }
+            return code.call();
+        } finally {
+            idLock.readLock().lock();
+            try {
+                ids.values().forEach(cid -> cid.containerLock.readLock().unlock());
+            } finally {
+                idLock.readLock().unlock();
+            }
+        }
+    }
+
+
     protected boolean changeLocation(ProjectIOProvider<?, ?, ?> nuLocation) throws IOException {
-        return withAllLockedDo(() -> {
-            ioProvider = nuLocation;
+        return withAllWriteLockedDo(() -> {
             ioProvider.close();
+            ioProvider = nuLocation;
             fireProjectSpaceChange(ProjectSpaceEvent.LOCATION_CHANGED);
             return true;
         });
@@ -726,16 +832,12 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         return configuration.getAllComponentsForContainer(CompoundContainer.class).toArray(Class[]::new);
     }
 
-    public void writeSummaries(Summarizer... summarizers) throws IOException {
+    public void writeSummaries(Summarizer... summarizers) throws ExecutionException {
         writeSummaries(null, false, summarizers);
     }
 
-    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, Summarizer... summarizers) throws IOException {
-        try {
-            makeSummarizerJob(summaryLocation, compressed, summarizers).compute();
-        } catch (InterruptedException e) {
-            throw new IOException(e); //a bit ugly but will not happen anyway.
-        }
+    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, Summarizer... summarizers) throws ExecutionException {
+        SiriusJobs.getGlobalJobManager().submitJob(makeSummarizerJob(summaryLocation, compressed, summarizers)).awaitResult();
     }
 
     public SummarizerJob makeSummarizerJob(Summarizer... summarizers) {
@@ -747,11 +849,11 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
             return new SummarizerJob(null, summarizers);
         else if (compressed)
             return new SummarizerJob(ProjectSpaceIO.getDefaultZipProvider(summaryLocation), summarizers);
-        return new SummarizerJob(new FileProjectSpaceIOProvider(summaryLocation), summarizers);
+        return new SummarizerJob(new PathProjectSpaceIOProvider(summaryLocation, null), summarizers);
     }
 
 
-    public class SummarizerJob extends TinyBackgroundJJob<Boolean> {
+    public class SummarizerJob extends BasicMasterJJob<Boolean> {
         private ProjectIOProvider<?, ?, ?> ioProvider;
         private final Summarizer[] summarizers;
 
@@ -760,45 +862,92 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
 
         protected SummarizerJob(@Nullable ProjectIOProvider<?, ?, ?> ioProvider, Summarizer... summarizers) {
+            super(JobType.SCHEDULER);
             this.summarizers = summarizers;
             this.ioProvider = ioProvider;
         }
 
         @Override
         protected Boolean compute() throws IOException, InterruptedException {
-            int max = ids.size() + summarizers.length + 1;
-            AtomicInteger p = new AtomicInteger(0);
-            if (this.ioProvider == null) {
-                this.ioProvider = SiriusProjectSpace.this.ioProvider;
-            } else {
-                updateProgress(0, max, p.get(), "Storing Summaries outside the Project-Space at: '" + ioProvider.getLocation().toString() + "'");
-            }
+            idLock.readLock().lock();
+            try {
+                int batches = jobManager.getCPUThreads() * 3;
+                int max = ids.size() + summarizers.length + 1;
 
+                updateProgress(0, max, -1, "Flushing all unwritten results to disk...");
+                SiriusProjectSpace.this.ioProvider.flush();
+                updateProgress(0, max, -1, "...Flushing unwritten results DONE!");
 
-            updateProgress(1, max, p.get(), "Collection Summary data...");
-            checkForInterruption();
-            return withAllLockedDoRaw(() -> {
-                Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
-                for (CompoundContainerId cid : ids.values()) {
-                    updateProgress(0, max, p.incrementAndGet(), "Collection '" + cid.getCompoundName() + "'...");
-                    checkForInterruption();
-                    final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
-                    final List<SScored<FormulaResult, ? extends FormulaScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), annotations);
-                    // write compound summaries
-                    for (Summarizer sim : summarizers)
-                        sim.addWriteCompoundSummary(ioProvider.newWriter(SiriusProjectSpace.this::getProjectSpaceProperty), c, results);
-                    checkForInterruption();
+                AtomicInteger p = new AtomicInteger(0);
+                if (this.ioProvider == null) {
+                    this.ioProvider = SiriusProjectSpace.this.ioProvider;
+                    if (ioProvider instanceof ZipFSProjectSpaceIOProvider)
+                        logWarn("Writing summaries into a zipped project-space is not recommended because it might be slow and I/O intense. Use external summary location instead.");
+                } else {
+                    updateProgress(0, max, p.get(), "Storing Summaries outside the Project-Space at: '" + ioProvider.getLocation().toString() + "'");
                 }
+
+
+                updateProgress(1, max, p.get(), "Collection Summary data...");
                 checkForInterruption();
-                // write project summaries
-                for (Summarizer summarizer : summarizers) {
+
+                final boolean autoFlush = ioProvider.isAutoFlushEnabled();
+                ioProvider.setAutoFlushEnabled(false);
+                try {
+                    Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
+                    {
+                        List<BasicMasterJJob<Boolean>> jobs1 = ids.values().stream().map(cid -> new BasicMasterJJob<Boolean>(JobType.CPU) {
+                            @Override
+                            protected Boolean compute() throws Exception {
+                                cid.containerLock.readLock().lock();
+                                try {
+                                    SummarizerJob.this.updateProgress(0, max, p.incrementAndGet(), "Collection '" + cid.getCompoundName() + "'...");
+                                    checkForInterruption();
+                                    final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
+                                    final List<SScored<FormulaResult, ? extends FormulaScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), annotations);
+                                    // write compound summaries
+                                    List<BasicJJob<Boolean>> subs = Arrays.stream(summarizers).map(sim -> new BasicJJob<Boolean>(JobType.CPU) {
+                                        @Override
+                                        protected Boolean compute() throws Exception {
+                                            sim.addWriteCompoundSummary(ioProvider.newWriter(SiriusProjectSpace.this::getProjectSpaceProperty), c, results);
+                                            return true;
+                                        }
+                                    }).collect(Collectors.toList());
+                                    subs.forEach(this::submitSubJob);
+                                    subs.forEach(JJob::getResult);
+                                    checkForInterruption();
+                                    return true;
+                                } finally {
+                                    cid.containerLock.readLock().unlock();
+                                }
+                            }
+                        }).collect(Collectors.toList());
+
+                        submitJobsInBatches(jobs1, batches).forEach(JJob::getResult);
+                    }
                     checkForInterruption();
-                    updateProgress(0, max, p.incrementAndGet(), "Writing Summary '" + summarizer.getClass().getSimpleName() + "'...");
-                    summarizer.writeProjectSpaceSummary(ioProvider.newWriter(SiriusProjectSpace.this::getProjectSpaceProperty));
+                    // write project summaries in parallel
+                    {
+                        @NotNull List<BasicJJob<Boolean>> jobs2 = Arrays.stream(summarizers).map(summarizer -> new BasicJJob<Boolean>(JobType.CPU) {
+                            @Override
+                            protected Boolean compute() throws Exception {
+                                checkForInterruption();
+                                SummarizerJob.this.updateProgress(0, max, p.incrementAndGet(), "Writing Summary '" + summarizer.getClass().getSimpleName() + "'...");
+                                summarizer.writeProjectSpaceSummary(ioProvider.newWriter(SiriusProjectSpace.this::getProjectSpaceProperty));
+                                return true;
+                            }
+                        }).collect(Collectors.toList());
+                        submitJobsInBatches(jobs2, batches).forEach(JJob::getResult);
+                    }
+                    ioProvider.flush();
+                    updateProgress(0, max, max, "DONE!");
+                    return true;
+                } finally {
+                    ioProvider.setAutoFlushEnabled(autoFlush);
                 }
-                updateProgress(0, max, max, "DONE!");
-                return true;
-            });
+            } finally {
+                idLock.readLock().unlock();
+            }
         }
     }
 }

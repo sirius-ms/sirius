@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static de.unijena.bioinf.projectspace.PSLocations.FORMAT;
+
 public interface FilenameFormatter extends Function<Ms2Experiment, String> {
     String getFormatExpression();
 
@@ -43,20 +45,19 @@ public interface FilenameFormatter extends Function<Ms2Experiment, String> {
     }
 
     class PSPropertySerializer implements ComponentSerializer<ProjectSpaceContainerId, ProjectSpaceContainer<ProjectSpaceContainerId>, PSProperty> {
-        public static final String FILENAME = ".format";
 
         @Override
         public PSProperty read(ProjectReader reader, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container) throws IOException {
-            if (reader.exists(FILENAME))
-                reader.textFile(FILENAME, br -> br.lines().findFirst().map(PSProperty::new).orElse(null));
+            if (reader.exists(FORMAT))
+                return reader.textFile(FORMAT, br -> br.lines().findFirst().map(PSProperty::new).orElse(null));
             return null;
         }
 
         @Override
         public void write(ProjectWriter writer, ProjectSpaceContainerId id, ProjectSpaceContainer<ProjectSpaceContainerId> container, Optional<PSProperty> optProp) throws IOException {
             if (optProp.isPresent()) {
-                writer.deleteIfExists(FILENAME);
-                writer.textFile(FILENAME, bf -> bf.write(optProp.get().formatExpression));
+                writer.deleteIfExists(FORMAT);
+                writer.textFile(FORMAT, bf -> bf.write(optProp.get().formatExpression));
             } else {
                 LoggerFactory.getLogger(getClass()).warn("Could not find Project Space formatting information!");
             }
@@ -65,7 +66,7 @@ public interface FilenameFormatter extends Function<Ms2Experiment, String> {
 
         @Override
         public void delete(ProjectWriter writer, ProjectSpaceContainerId id) throws IOException {
-            writer.deleteIfExists(FILENAME);
+            writer.deleteIfExists(FORMAT);
         }
     }
 }

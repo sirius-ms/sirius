@@ -37,10 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -244,6 +241,14 @@ public class PropertyManager {
         return PROPERTIES.getString(key);
     }
 
+    public static Optional<String> getOptional(@NotNull String key, @Nullable String backupKey) {
+        return Optional.ofNullable(getProperty(key, backupKey, null));
+    }
+
+    public static Optional<String> getOptional(@NotNull String key) {
+        return Optional.ofNullable(getProperty(key));
+    }
+
     public static Boolean getBoolean(@NotNull String key, Boolean defaultValue) {
         return PROPERTIES.getBoolean(key, defaultValue);
     }
@@ -295,6 +300,26 @@ public class PropertyManager {
         return PROPERTIES.getBigDecimal(key, defaultValue);
     }
 
+    public static <E extends Enum<E>> E getEnum(@NotNull String key, @NotNull E defaultValue) {
+        return getEnum(key, null, defaultValue);
+    }
+
+    public static <E extends Enum<E>> E getEnum(@NotNull String key, @Nullable String backupKey, @NotNull E defaultValue) {
+        return getEnum(key, backupKey, defaultValue, (Class<E>) defaultValue.getClass());
+    }
+
+    public static <E extends Enum<E>> E getEnum(@NotNull String key, @Nullable String backupKey, @Nullable E defaultValue, @NotNull Class<E> cls) {
+        String val = backupKey != null
+                ? PROPERTIES.getString(key, PROPERTIES.getString(backupKey, null))
+                : PROPERTIES.getString(key, null);
+        return val == null ? defaultValue : Enum.valueOf(cls, val);
+    }
+
+    private static <E extends Enum<E>> E parseEnum(@NotNull String name, @NotNull Class<E> cls) {
+        return Enum.valueOf(cls, name);
+    }
+
+
     public static Path getPath(String key) {
         String v = PROPERTIES.getString(key);
         return (v == null) ? null : Paths.get(v);
@@ -304,6 +329,7 @@ public class PropertyManager {
         String v = PROPERTIES.getString(key);
         return (v == null) ? null : new File(v);
     }
+
 
     public static int getNumberOfCores() {
         return PROPERTIES.getInt("de.unijena.bioinf.sirius.cpu.cores", 1);
