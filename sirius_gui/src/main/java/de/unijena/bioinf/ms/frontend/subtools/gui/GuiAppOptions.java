@@ -32,7 +32,6 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
@@ -54,7 +53,7 @@ import java.awt.event.WindowEvent;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
-    public static final String DONT_ASK_SUM_KEY = "de.unijena.bioinf.sirius.computeDialog.writeSummaries.dontAskAgain";
+    public static final String DONT_ASK_CLOSE_KEY = "de.unijena.bioinf.sirius.mainframe.close.dontAskAgain";
     public static final String COMPOUND_BUFFER_KEY = "de.unijena.bioinf.sirius.gui.instanceBuffer";
     private final Splash splash;
 
@@ -99,27 +98,28 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
             MainFrame.MF.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent event) {
-                    try {
-                        ApplicationCore.DEFAULT_LOGGER.info("Saving properties file before termination.");
-                        SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                        Jobs.runInBackgroundAndLoad(MainFrame.MF, "Cancelling running jobs...", Jobs::cancelALL);
-                        if (new QuestionDialog(MainFrame.MF,
-                                "<html>Do you want to write summary files to the project-space before closing this project?<br>This may take some time for large projects. </html>", DONT_ASK_SUM_KEY).isSuccess()) {
-                            ApplicationCore.DEFAULT_LOGGER.info("Writing Summaries to Project-Space before termination.");
-                            SiriusActions.SUMMARY_WS.getInstance().actionPerformed(null);
+                    if (!Jobs.MANAGER.hasActiveJobs() || new QuestionDialog(MainFrame.MF,
+                            "<html>Do you really want close SIRIUS?" +
+                                    "<br> <b>There are still some Jobs running.</b> Running Jobs will be canceled when closing SIRIUS.</html>", DONT_ASK_CLOSE_KEY).isSuccess()) {
+                        try {
+                            ApplicationCore.DEFAULT_LOGGER.info("Saving properties file before termination.");
+                            SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
+                            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Cancelling running jobs...", Jobs::cancelALL);
+
+                            ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space");
+                            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
+                                @Override
+                                protected Boolean compute() throws Exception {
+                                    if (MainFrame.MF.ps() != null)
+                                        MainFrame.MF.ps().close();
+                                    return true;
+                                }
+                            });
+                            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Disconnecting from webservice...", SiriusCLIApplication::shutdownWebservice);
+                        } finally {
+                            MainFrame.MF.CONNECTION_MONITOR().close();
+                            System.exit(0);
                         }
-                        ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space");
-                        Jobs.runInBackgroundAndLoad(MainFrame.MF, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
-                            @Override
-                            protected Boolean compute() throws Exception {
-                                MainFrame.MF.ps().close();
-                                return true;
-                            }
-                        });
-                        Jobs.runInBackgroundAndLoad(MainFrame.MF, "Disconnecting from webservice...", SiriusCLIApplication::shutdownWebservice);
-                    } finally {
-                        MainFrame.MF.CONNECTION_MONITOR().close();
-                        System.exit(0);
                     }
                 }
             });

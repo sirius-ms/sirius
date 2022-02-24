@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -99,7 +98,7 @@ public class MS2ExpInputIterator implements InstIterProvider {
                             } else {
                                 ProgressInputStream s = new ProgressInputStream(currentFile);
                                 s.addPropertyChangeListener(progress);
-                                currentExperimentIterator = p.parseIterator(s, currentFile.toUri().toURL());
+                                currentExperimentIterator = p.parseIterator(s, currentFile.toUri());
                             }
                         }
                     } catch (Exception e) {
