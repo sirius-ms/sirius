@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -324,7 +324,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     private MgfParserInstance inst;
 
     @Override
-    public synchronized Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
+    public synchronized Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
         if (inst == null || inst.reader != reader) inst = new MgfParserInstance(reader);
         if (!inst.hasNext()) return null;
         ++inst.specIndex;

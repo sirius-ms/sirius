@@ -115,8 +115,8 @@ public class Ms2Validator extends Ms1Validator {
 
     private static String nameOf(MutableMs2Experiment exp) {
         final DataSource s = exp.getAnnotation(DataSource.class).orElse(new DataSource(exp.getSource()));
-        if (s.getUrl()==null) return exp.getName();
-        else return s.getUrl().getFile();
+        if (s.getURI()==null) return exp.getName();
+        else return s.getURI().getPath();
     }
 
 

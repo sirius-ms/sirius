@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.FileHeader;
 import net.lingala.zip4j.model.ZipParameters;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,11 +55,11 @@ public class ProjectSpaceIO {
         final SiriusProjectSpace space;
 
         if (isZipProjectSpace(path)) {
-            space = openZipProjectSpace(path);
+            space = makeZipProjectSpace(path);
         } else if (isExistingProjectspaceDirectory(path) || (Files.isDirectory(path) &&
-                FileUtils.listAndClose(path, s -> s.filter(p -> !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME)).count()) == 0)) {
+                FileUtils.listAndClose(path, s -> s.filter(p -> !p.getFileName().toString().equals(PSLocations.FORMAT)).count()) == 0)) {
             doTSVConversion(path);
-            space = new SiriusProjectSpace(configuration, new FileProjectSpaceIOProvider(path));
+            space = new SiriusProjectSpace(configuration, new PathProjectSpaceIOProvider(path));
         } else throw new IOException("Location '" + path + "' is not a valid Project Location");
 
         space.open();
@@ -123,7 +125,8 @@ public class ProjectSpaceIO {
             if (path.getParent() != null && Files.notExists(path.getParent()))
                 Files.createDirectories(path.getParent());
 
-            space = openZipProjectSpace(path);
+            space = makeZipProjectSpace(path);
+            space.setProjectSpaceProperty(CompressionFormat.class, space.ioProvider.getCompressionFormat());
         } else {
             if (Files.exists(path)) {
                 if (Files.isRegularFile(path) || FileUtils.listAndClose(path, Stream::count) > 0)
@@ -131,17 +134,18 @@ public class ProjectSpaceIO {
             } else {
                 Files.createDirectories(path);
             }
-            space = new SiriusProjectSpace(configuration, new FileProjectSpaceIOProvider(path));
+            space = new SiriusProjectSpace(configuration, new PathProjectSpaceIOProvider(path));
+            space.setProjectSpaceProperty(CompressionFormat.class, space.ioProvider.getCompressionFormat());
         }
 
         space.open();
         return space;
     }
 
-    protected SiriusProjectSpace openZipProjectSpace(Path path) throws IOException {
+    protected SiriusProjectSpace makeZipProjectSpace(Path path) throws IOException {
         ProjectIOProvider<?, ?, ?> provider = getDefaultZipProvider(path);
         if (provider instanceof ZipFSProjectSpaceIOProvider)
-            ((ZipFSProjectSpaceIOProvider) provider).fs.writeFS(null, ProjectSpaceIO::doTSVConversion);
+            ((ZipFSProjectSpaceIOProvider) provider).fsManager.writeFile(null, ProjectSpaceIO::doTSVConversion);
         else if (provider instanceof Zip4JProjectSpaceIOProvider) {
             if (doZip4JTSVConversion(((Zip4JProjectSpaceIOProvider) provider).zipLocation)) {
                 provider = new Zip4JProjectSpaceIOProvider(path);
@@ -157,59 +161,87 @@ public class ProjectSpaceIO {
     public SiriusProjectSpace createTemporaryProjectSpace() throws IOException {
         final Path tempFile = createTmpProjectSpaceLocation();
         //todo use compressed ps as default
-        final SiriusProjectSpace space = new SiriusProjectSpace(configuration, new FileProjectSpaceIOProvider(tempFile));
+        final SiriusProjectSpace space = createNewProjectSpace(tempFile);
         space.addProjectSpaceListener(new TemporaryProjectSpaceCleanUp(tempFile));
         space.open();
         return space;
     }
 
     public static Path createTmpProjectSpaceLocation() throws IOException {
-        return Files.createTempDirectory(".sirius-tmp-project-");
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        return Path.of(tmpDir).resolve(".sirius-tmp-project-" + UUID.randomUUID().toString());
     }
 
     /**
      * Copies a Project-Space to a new location.
      *
-     * @param space               The project to be copied
-     * @param copyLocation        target location
+     * @param sourceSpace         The project to be copied
+     * @param targetLocation      target location
      * @param switchToNewLocation if true switch space location to copyLocation (saveAs vs. saveCopy)
      * @return true if space location has been changed successfully and false otherwise
      * @throws IOException if an I/O error happens
      */
-    public static boolean copyProject(@NotNull final SiriusProjectSpace space, @NotNull final Path copyLocation, final boolean switchToNewLocation) throws IOException {
-        return space.withAllLockedDo(() -> {
+    public static boolean copyProject(@NotNull final SiriusProjectSpace sourceSpace, @NotNull final Path targetLocation, final boolean switchToNewLocation) throws IOException {
+        try {
+            // source space is only read
+            return sourceSpace.withAllWriteLockedDo(() -> {
+                @NotNull final Path sourceSpaceLocation = sourceSpace.getLocation();
 
-            @NotNull final Path sourceSpaceLocation = space.getLocation();
+                final boolean isZipTarget = isZipProjectSpace(targetLocation);
+                final boolean isZipSource = isZipProjectSpace(sourceSpaceLocation);
 
-            final boolean isZipTarget = isZipProjectSpace(copyLocation);
-            final boolean isZipSource = isZipProjectSpace(sourceSpaceLocation);
+                StopWatch t = new StopWatch();
+                t.start();
 
-            if (isZipSource) {
-                space.ioProvider.close();// close provider because zipfs might not be fully written otherwise
-                if (isZipTarget) { // file copy zip to zip
-                    Files.copy(sourceSpaceLocation, copyLocation);
-                } else { //unpack from zip source to target folder
-                    try (ZipFile zf = new ZipFile(sourceSpaceLocation.toFile())) {
-                        zf.extractAll(copyLocation.toString());
+                sourceSpace.flush();
+                CompressionFormat sourceFormat = sourceSpace.ioProvider.getCompressionFormat();
+                CompressionFormat targetFormat;
+
+                if (isZipSource && isZipTarget) {
+                    try(ProjectIOProvider<?,?,?> p = getDefaultZipProvider(targetLocation)){
+                        targetFormat = p.getCompressionFormat();
+                    }
+
+                    if (Objects.equals(sourceFormat, targetFormat)) {
+                        Files.copy(sourceSpaceLocation, targetLocation); //might keep old non hierarchical zip version but is super fast
+                        return !switchToNewLocation || sourceSpace.changeLocation(getDefaultZipProvider(targetLocation));
                     }
                 }
-            } else {
-                if (isZipTarget) { //compress from folder source to target zip
-                    try (ZipFile zf = new ZipFile(copyLocation.toFile())) {
-                        ZipParameters paras = new ZipParameters();
-                        paras.setIncludeRootFolder(false);
-                        zf.addFolder(sourceSpaceLocation.toFile(), paras);
-                    }
-                } else { //copy from folder to folder
-                    Files.createDirectories(copyLocation);
-                    FileUtils.copyFolder(space.getLocation(), copyLocation); //just copy the data -> mounted ZipFS does the rest
-                }
-            }
 
-            return space.changeLocation(isZipTarget
-                    ? getDefaultZipProvider(switchToNewLocation ? copyLocation : sourceSpaceLocation)
-                    : new FileProjectSpaceIOProvider(switchToNewLocation ? copyLocation : sourceSpaceLocation));
-        });
+                try (SiriusProjectSpace targetSpace = new ProjectSpaceIO(sourceSpace.configuration).createNewProjectSpace(targetLocation)) {
+                    targetFormat = targetSpace.ioProvider.getCompressionFormat();
+
+                    if (Objects.equals(sourceFormat, targetFormat) && (targetSpace.ioProvider instanceof PathProjectSpaceIOProvider && sourceSpace.ioProvider instanceof PathProjectSpaceIOProvider)) {
+                        FileUtils.copyFolder(((PathProjectSpaceIOProvider) sourceSpace.ioProvider).getRoot(), ((PathProjectSpaceIOProvider) targetSpace.ioProvider).getRoot());
+                    } else {
+                        ProjectWriter w = targetSpace.ioProvider.newWriter(targetSpace::getProjectSpaceProperty);
+                        ProjectReader r = sourceSpace.ioProvider.newReader(sourceSpace::getProjectSpaceProperty);
+                        //todo in place iteration
+                        List<String> files = r.listFilesRecursive(null).stream().filter(p -> !PSLocations.COMPRESSION.equals(p)).collect(Collectors.toList());
+
+                        for (String file : files) {
+                            w.binaryFile(file, out -> r.binaryFile(file, in -> in.transferTo(out)));
+                        }
+                    }
+
+                }
+                t.stop();
+                System.out.println("Copied Project in: " + t.toString());
+
+                if (switchToNewLocation) {
+                    boolean rr = sourceSpace.changeLocation(isZipTarget
+                            ? getDefaultZipProvider(targetLocation)
+                            : new PathProjectSpaceIOProvider(targetLocation));
+                    sourceSpace.setProjectSpaceProperty(CompressionFormat.class, targetFormat);
+                    return rr;
+                }
+
+                return true;
+            });
+        } catch (Throwable e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     /**
@@ -226,19 +258,14 @@ public class ProjectSpaceIO {
      * Just a quick check to discriminate a project-space for an arbitrary folder
      */
     public static boolean isExistingProjectspaceDirectory(@NotNull Path f) {
-        return isExistingProjectspaceDirectoryNum(f) > 0;
+        return isExistingProjectspaceDirectoryNum(f) >= 0;
     }
 
     public static int isExistingProjectspaceDirectoryNum(@NotNull Path f) {
         try {
-            if (!Files.exists(f) || Files.isRegularFile(f) || FileUtils.listAndClose(f, Stream::count) == 0)
+            if (Files.notExists(f) || Files.isRegularFile(f) || Files.notExists(f.resolve(".format")))
                 return -1;
-            try (SiriusProjectSpace space = new SiriusProjectSpace(new ProjectSpaceConfiguration(), new FileProjectSpaceIOProvider(f))) {
-                space.open();
-                return space.size();
-            } catch (IOException ignored) {
-                return -2;
-            }
+            return FileUtils.listAndClose(f, s -> s.filter(Files::isDirectory).count()).intValue();
         } catch (Exception e) {
             // not critical: if file cannot be read, it is not a valid workspace
             LOG.error("Workspace check failed! This is not a valid Project-Space!", e);

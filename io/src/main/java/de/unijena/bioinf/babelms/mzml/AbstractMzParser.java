@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Iterator;
 
 public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
@@ -45,17 +45,17 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
     protected LCMSProccessingInstance instance;
 
 
-    protected abstract boolean setNewSource(BufferedReader sourceReader, URL sourceURL);
+    protected abstract boolean setNewSource(BufferedReader sourceReader, URI source);
 
-    protected abstract LCMSRun parseToLCMSRun(BufferedReader sourceReader, URL sourceURL) throws IOException;
+    protected abstract LCMSRun parseToLCMSRun(BufferedReader sourceReader, URI source) throws IOException;
 
     @Override
-    public Ms2Experiment parse(BufferedReader sourceReader, URL sourceURL) throws IOException {
+    public Ms2Experiment parse(BufferedReader sourceReader, URI source) throws IOException {
         try {
-            if (setNewSource(sourceReader, sourceURL)) {
+            if (setNewSource(sourceReader, source)) {
                 instance = new LCMSProccessingInstance();
                 inMemoryStorage = new InMemoryStorage();
-                final LCMSRun run = parseToLCMSRun(sourceReader, sourceURL);
+                final LCMSRun run = parseToLCMSRun(sourceReader, source);
                 sample = instance.addSample(run, inMemoryStorage);
                 instance.detectFeatures(sample);
 
@@ -75,7 +75,7 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
                 return null;
             }
         } catch (Throwable e) {
-            LoggerFactory.getLogger(AbstractMzParser.class).error("Error while parsing " + sourceURL + ": " + e.getMessage());
+            LoggerFactory.getLogger(AbstractMzParser.class).error("Error while parsing " + source + ": " + e.getMessage());
             if (e instanceof InvalidInputData){
                 return null;
             } else  if (e instanceof IOException) {
