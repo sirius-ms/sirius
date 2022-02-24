@@ -869,9 +869,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
 
         @Override
         protected Boolean compute() throws IOException, InterruptedException {
-            StopWatch w = new StopWatch();
-            w.start();
-
             idLock.readLock().lock();
             try {
                 int batches = jobManager.getCPUThreads() * 3;
@@ -944,10 +941,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                     }
                     ioProvider.flush();
                     updateProgress(0, max, max, "DONE!");
-
-
-                    w.stop();
-                    System.out.println("Writing Summaries in: " + w.toString());
                     return true;
                 } finally {
                     ioProvider.setAutoFlushEnabled(autoFlush);
