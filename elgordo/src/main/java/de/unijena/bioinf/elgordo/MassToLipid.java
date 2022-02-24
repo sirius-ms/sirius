@@ -163,6 +163,12 @@ public class MassToLipid {
                 }
             }
             LipidChain[] finalChains = chains.size() == (candidate.acylChains+candidate.alkylChains+candidate.sphingosinChains) ? chains.toArray(LipidChain[]::new) : bestChains.stream().map(x->x.get(0).candidate).toArray(LipidChain[]::new);
+
+            if (finalChains.length==0) {
+                final Optional<LipidChain> mergedFromFormula = LipidChain.getMergedFromFormula(candidate.chainFormula, candidate.possibleClass);
+                if (mergedFromFormula.isPresent()) finalChains = new LipidChain[]{mergedFromFormula.get()};
+            }
+
             return new AnnotatedLipidSpectrum<>(spectrum, candidate.lipidFormula, candidate.ionMass,candidate.ionType, new LipidSpecies(candidate.possibleClass,
                     finalChains),
                     finalAnnotations, peakindizes, remainingContradictingPeaks.stream().map(x->x.annotation).toArray(LipidAnnotation[]::new), remainingContradictingPeaks.stream().mapToInt(x->x.index).toArray(), contraScore
@@ -552,7 +558,7 @@ public class MassToLipid {
                         // add lipid candidate
                         int numberOfAcylChains = formula.numberOfOxygens();
                         for (LipidClass c : classes) {
-                            if (c.fragmentLib!=null && c.fragmentLib.getFor(ionType).isEmpty()) continue;
+                            if (c.fragmentLib==null || c.fragmentLib.getFor(ionType).isEmpty()) continue;
                             int numberOfAlkylChains = c.chains - sphingosinChains - numberOfAcylChains;
                             if (numberOfAlkylChains >= 0) {
                                 final MolecularFormula chainFormula = sphingosinChains > 0 ? formula.add(SPHINGOSIN_HEAD) : formula;

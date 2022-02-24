@@ -39,7 +39,8 @@ public class HeadGroup {
             Glycerophosphoinositols = new HeadGroup("C9H19PO11"),
             Glycerophosphates = new HeadGroup("C3H9O6P"),
             Glycerophosphoglycerophosphoglycerols = new HeadGroup("C9H22O13P2"),
-            Phosphocholin = new HeadGroup("C5H12NO3P")
+            Phosphocholin = new HeadGroup("C5H12NO3P"),
+            Hexose = new HeadGroup("C6H10O5");
     ;
 
     protected MolecularFormula molecularFormula;
