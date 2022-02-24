@@ -24,12 +24,10 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TObjectProcedure;
-import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
@@ -58,29 +56,32 @@ public class FileUtils {
         if (!Files.isRegularFile(f))
             return false;
         int fileSignature;
-        try (RandomAccessFile raf = new RandomAccessFile(f.toFile(), "r")) {
+
+        try (DataInputStream raf = new DataInputStream(Files.newInputStream(f, StandardOpenOption.READ))) {
+            if (raf.available() < 4)
+                return false;
             fileSignature = raf.readInt();
         }
         return fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708;
     }
 
 
-    public static FileSystem asZipFS(Path zipFile, boolean createNew, boolean useTempFile) throws IOException {
+    public static FileSystem asZipFS(Path zipFile, boolean createNew, boolean useTempFile, @Nullable ZipCompressionMethod method) throws IOException {
         final Map<String, Object> option = new HashMap<>();
         option.put("useTempFile", useTempFile);
         option.put("forceZIP64End", "true");
-        if (createNew)
+        option.put("compressionMethod", method == null ? ZipCompressionMethod.DEFLATED.name() : method.name());
+        if (createNew){
+            if (zipFile.getParent() != null)
+                Files.createDirectories(zipFile.getParent());
             option.put("create", "true");
-        return FileSystems.newFileSystem(URI.create("jar:file:" + zipFile.toUri().getPath()), option);
+        }
+        return FileSystems.newFileSystem(zipFile, option);
     }
 
-    public static Path asZipFSPath(Path zipFile, boolean createNew, boolean useTempFile) throws IOException {
-        StopWatch w = new StopWatch(); w.start();
-        FileSystem zipFS = asZipFS(zipFile, createNew, useTempFile);
+    public static Path asZipFSPath(Path zipFile, boolean createNew, boolean useTempFile, @Nullable ZipCompressionMethod method) throws IOException {
+        FileSystem zipFS = asZipFS(zipFile, createNew, useTempFile, method);
         Path p = zipFS.getPath(zipFS.getSeparator());
-        w.stop();
-
-        System.out.println("Created ZipFS in: " + w.toString());
         return p;
     }
 
@@ -797,10 +798,11 @@ public class FileUtils {
         return walkAndClose(tryWith, p, null, options);
     }
 
-    public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, @Nullable String glob, FileVisitOption... options) throws IOException {
+    // If the parameter does not take the form: syntax:pattern
+    public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, @Nullable String globOrRegex, FileVisitOption... options) throws IOException {
         try (Stream<Path> s = Files.walk(p, options)) {
-            if (glob != null && !glob.equals("*")) {
-                final PathMatcher pathMatcher = p.getFileSystem().getPathMatcher(glob);
+            if (globOrRegex != null && !globOrRegex.equals("glob:*")) {
+                final PathMatcher pathMatcher = p.getFileSystem().getPathMatcher(globOrRegex);
                 return tryWith.apply(s.filter(pathMatcher::matches));
             }
             return tryWith.apply(s);
@@ -812,10 +814,11 @@ public class FileUtils {
 
     }
 
-    public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, int maxDepth, @Nullable String glob, FileVisitOption... options) throws IOException {
+    // If the parameter does not take the form: syntax:pattern
+    public static <R> R walkAndClose(Function<Stream<Path>, R> tryWith, Path p, int maxDepth, @Nullable String globOrRegex, FileVisitOption... options) throws IOException {
         try (Stream<Path> s = Files.walk(p, maxDepth, options)) {
-            if (glob != null && !glob.equals("*")) {
-                final PathMatcher pathMatcher = p.getFileSystem().getPathMatcher(glob);
+            if (globOrRegex != null && !globOrRegex.equals("glob:*")) {
+                final PathMatcher pathMatcher = p.getFileSystem().getPathMatcher(globOrRegex);
                 return tryWith.apply(s.filter(pathMatcher::matches));
             }
             return tryWith.apply(s);

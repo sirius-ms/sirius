@@ -306,7 +306,7 @@ public class CustomDatabaseImporter {
         checkCancellation();
         try {
             for (String in : dict.keySet())
-                formulasToSearch.add(InChIs.extractFormula(in));
+                formulasToSearch.add(InChIs.extractNeutralFormulaByAdjustingHsOrThrow(in));
         } catch (UnknownElementException e) {
             throw new IOException(e);
         }
@@ -443,7 +443,12 @@ public class CustomDatabaseImporter {
         synchronized (database) {
             final Multimap<MolecularFormula, FingerprintCandidate> candidatePerFormula = ArrayListMultimap.create();
             for (FingerprintCandidate fc : candidates) {
-                candidatePerFormula.put(fc.getInchi().extractFormulaOrThrow(), fc);
+                try {
+                    candidatePerFormula.put(InChIs.extractNeutralFormulaByAdjustingHsOrThrow(fc.getInchi().in2D), fc);
+                } catch (UnknownElementException e) {
+                    LoggerFactory.getLogger(this.getClass()).error("Cannot extract molecular formula of InChI {}. Skipping");
+                    continue;
+                }
             }
             for (Map.Entry<MolecularFormula, Collection<FingerprintCandidate>> entry : candidatePerFormula.asMap().entrySet()) {
                 mergeCompounds(entry.getKey(), entry.getValue());
