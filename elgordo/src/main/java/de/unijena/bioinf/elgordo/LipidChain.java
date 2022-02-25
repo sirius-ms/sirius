@@ -24,10 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.BitSet;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public class LipidChain implements Comparable<LipidChain> {
 
@@ -51,6 +48,32 @@ public class LipidChain implements Comparable<LipidChain> {
         int db = (((formula.numberOfCarbons()*2 + 3)-formula.numberOfHydrogens())/2);
         if (db >= formula.numberOfCarbons()/2) return false;
         return formula.isCHNO();
+    }
+
+    private static MolecularFormula SPH = MolecularFormula.parseOrNull("NH3O2");
+    public static Optional<LipidChain> getMergedFromFormula(MolecularFormula origFormula, LipidClass lipidClass) {
+        int chains = lipidClass.chains;
+        MolecularFormula formula = origFormula;
+        if (formula.numberOfCarbons() < chains) return Optional.empty();
+        if (lipidClass.sphingolipid) {
+            formula = formula.subtract(SPH);
+            --chains;
+        }
+        int acylChains = formula.numberOfOxygens();
+        chains -= acylChains;
+        if (chains < 0) {
+            return Optional.empty();
+        }
+        int alkylChains = chains;
+        formula = formula.subtract(MolecularFormula.getHydrogen().multiply(2*acylChains));
+        if (formula.atomCount()==(formula.numberOfCarbons()+formula.numberOfHydrogens())) {
+            int c = formula.numberOfCarbons();
+            int doublebonds = (formula.numberOfHydrogens() - c*2)/2;
+            return Optional.of(new LipidChain(origFormula, c, doublebonds));
+        } else {
+            return Optional.empty();
+        }
+
     }
 
     public static Optional<LipidChain> fromFormula(MolecularFormula formula) {
@@ -82,14 +105,29 @@ public class LipidChain implements Comparable<LipidChain> {
         return Optional.empty();
     }
 
+    public static LipidChain merge(LipidChain... chains) {
+        return new LipidChain(Type.MERGED, Arrays.stream(chains).mapToInt(LipidChain::getChainLength).sum(), Arrays.stream(chains).mapToInt(LipidChain::getNumberOfDoubleBonds).sum());
+    }
+
+    public boolean isMerged() {
+        return type==Type.MERGED;
+    }
+
     public enum Type {
-        ACYL, ALKYL, SPHINGOSIN;
+        ACYL, ALKYL, SPHINGOSIN, MERGED;
     }
 
     protected final int chainLength;
     protected final int numberOfDoubleBonds;
     protected final Type type;
     protected MolecularFormula formula;
+
+    private LipidChain(MolecularFormula formula, int chainLength, int numberOfDoubleBonds) {
+        this.chainLength = chainLength;
+        this.numberOfDoubleBonds = numberOfDoubleBonds;
+        this.type = Type.MERGED;
+        this.formula = formula;
+    }
 
     public LipidChain(Type type, int chainLength, int numberOfDoubleBonds) {
         this.chainLength = chainLength;
@@ -174,7 +212,19 @@ public class LipidChain implements Comparable<LipidChain> {
         if (type==Type.ACYL) return chainLength + ":" + numberOfDoubleBonds;
         else if (type == Type.ALKYL) return "O-" + chainLength + ":" + numberOfDoubleBonds;
         else if (type == Type.SPHINGOSIN) return "d" + chainLength + ":" + numberOfDoubleBonds;
-        else return "(unknown-chain type)-" + chainLength + ":" + numberOfDoubleBonds;
+        else if (type == Type.MERGED) return chainLength + ":" + numberOfDoubleBonds;
+        else return "unknown-chain-type";
+    }
+
+    public static LipidChain mergedFromString(String x) {
+        final int d = x.indexOf(':');
+        final int length = Integer.parseInt(x.substring(0, d));
+
+        String db = x.substring(d + 1);
+        int special = db.indexOf('(');
+        if (special>=0) db = db.substring(0,special);
+        final int doubleBonds = Integer.parseInt(db);
+        return new LipidChain(Type.MERGED,length,doubleBonds);
     }
 
     public static LipidChain fromString(String x) {

@@ -56,6 +56,7 @@ public enum LipidClass {
     CL(	4,	Glycerophosphoglycerophosphoglycerols, def("[M+NH3+H]+").acyl("").acylFragments("", "C3H5").done()),
 
     Cer(2, NoHeadGroup, def("+").losses("H2O","H4O2").sphingosinFragments("","H2O","H4O2","CH4O2").sphingosinLosses("","-H2O","-H4O2","-CH2O","-NH3", "-NH5O").def("[M+O+H]+").def("[M+H]+")/* .losses("H2O","H4O2").sphingosinFragments("", "H2O", "H4O","CH4O2").sphingosinLosses("") */.done()),
+    HexCer(2, Hexose, def("+").losses("H2O","H4O2", "C6H10O5", "C6H12O6", "C6H14O7").sphingosinFragments("","H2O","H4O2","CH4O2").sphingosinLosses("","-H2O","-H4O2","-CH2O","-NH3", "-NH5O").def("[M+O+H]+").def("[M+H]+")/* .losses("H2O","H4O2").sphingosinFragments("", "H2O", "H4O","CH4O2").sphingosinLosses("") */.done()),
     Sm(2, Phosphocholin, def("+").fragments("C5H13NO","C2H5O4P","C5H14NO4P").losses("H2O","C3H11NO").sphingosinFragments("").sphingosinLosses("").def("[M+H]+").def("[M+Na]+").fragments("C5H15NO5P").losses("C3H9N").done());
 
 
