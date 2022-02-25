@@ -13,14 +13,14 @@ import org.openscience.cdk.smiles.SmilesParser;
 import java.io.*;
 import java.util.List;
 
-public class ExpectationMaximizationHydrogenRearrangmentEstimator {
+public class ExpectationMaximizationHydrogenRearrangementEstimator {
 
     private File spectraDir;
     private File fTreeDir;
     private String[] fileNames;
     private double parameter;
 
-    public ExpectationMaximizationHydrogenRearrangmentEstimator(File spectraDir, File fTreeDir, double startParameter){
+    public ExpectationMaximizationHydrogenRearrangementEstimator(File spectraDir, File fTreeDir, double startParameter){
         if(spectraDir.isDirectory()){
             if(fTreeDir.isDirectory()){
                 this.spectraDir = spectraDir;
@@ -84,7 +84,7 @@ public class ExpectationMaximizationHydrogenRearrangmentEstimator {
 
             /* Now, iterate over the training data until the maximal number of iterations 'maxNumIterations'
              * are reached or the new estimated parameter differs by 'epsilon' or less.
-             * In each iterations, there are two major steps:
+             * In each iteration, there are two major steps:
              * -E-step: compute the optimal subtree with the current parameter 'parameter' for the scoring
              *          and calculate for each peak assignment the number of hydrogen rearrangements
              * -M-step: use this data to recompute 'parameter' by using its Maximum-Likelihood estimator
@@ -101,7 +101,8 @@ public class ExpectationMaximizationHydrogenRearrangmentEstimator {
                     EMFragmenterScoring scoring = new EMFragmenterScoring(molecule);
 
                     PCSTFragmentationTreeAnnotator subtreeCalc = new PCSTFragmentationTreeAnnotator(fTree, molecule, scoring);
-                    subtreeCalc.initialize(node -> node.fragment.getFormula().getMass() > this.getMinimalMassInFTree(fTree));
+                    double minMass = this.getMinimalMassInFTree(fTree);
+                    subtreeCalc.initialize(node -> node.fragment.getFormula().getMass() > minMass);
                     subtreeCalc.computeSubtree();
 
                     List<Integer> hydrogenRearrangements = subtreeCalc.getListWithAmountOfHydrogenRearrangements();
@@ -122,7 +123,6 @@ public class ExpectationMaximizationHydrogenRearrangmentEstimator {
                 this.parameter = newParameter;
                 iterations++;
             }
-
         }else{
             throw new IOException("The given File 'outputFile' does not exist, is not a file or cannot be written.");
         }
