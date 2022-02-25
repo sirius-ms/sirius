@@ -61,7 +61,6 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
             if(mfWasRead && smilesWasRead) break;
             currentLine = fileReader.readLine();
         }
-
         // Assumption: In any case, 'file' contains two lines that start with ">formula" and ">smiles".
         // --> the molecular formula and the smiles string have been read
         SmilesParser smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
@@ -74,7 +73,7 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
         return fTree;
     }
 
-    public void run(int maxNumIterations, double epsilon, File outputFile) throws IOException, InvalidSmilesException, UnknownElementException, GRBException {
+    public void run(int fragmentationDepth, int maxNumIterations, double epsilon, File outputFile) throws IOException, InvalidSmilesException, UnknownElementException, GRBException {
         if(outputFile.isFile() && outputFile.canWrite()){
             // Create the BufferedWriter that writes each estimated parameter into 'outputFile'
             // and write the start parameter into this file.
@@ -101,8 +100,7 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
                     EMFragmenterScoring scoring = new EMFragmenterScoring(molecule);
 
                     PCSTFragmentationTreeAnnotator subtreeCalc = new PCSTFragmentationTreeAnnotator(fTree, molecule, scoring);
-                    double minMass = this.getMinimalMassInFTree(fTree);
-                    subtreeCalc.initialize(node -> node.fragment.getFormula().getMass() > minMass);
+                    subtreeCalc.initialize(node -> node.depth < fragmentationDepth);
                     subtreeCalc.computeSubtree();
 
                     List<Integer> hydrogenRearrangements = subtreeCalc.getListWithAmountOfHydrogenRearrangements();
@@ -123,6 +121,7 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
                 this.parameter = newParameter;
                 iterations++;
             }
+            fileWriter.close();
         }else{
             throw new IOException("The given File 'outputFile' does not exist, is not a file or cannot be written.");
         }
@@ -137,6 +136,35 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
             }
         }
         return minMass;
+    }
+
+    public static void main(String[] args){
+        try{
+            File spectraDir = new File(args[0]);
+            File fTreeDir = new File(args[1]);
+            File outputFile = new File(args[2]);
+            double startParameter = Double.parseDouble(args[3]);
+            int fragmentationDepth = Integer.parseInt(args[4]);
+            int maxNumOfIterations = Integer.parseInt(args[5]);
+            double epsilon = Double.parseDouble(args[6]);
+
+            ExpectationMaximizationHydrogenRearrangementEstimator em = new ExpectationMaximizationHydrogenRearrangementEstimator(spectraDir, fTreeDir, startParameter);
+            em.run(fragmentationDepth, maxNumOfIterations, epsilon, outputFile);
+
+        } catch (UnknownElementException e) {
+            System.out.println("A molecular formula was not possible to parse.");
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("An IOException occured.");
+            e.printStackTrace();
+        } catch (InvalidSmilesException e) {
+            System.out.println("A smiles string was not possible to parse.");
+            e.printStackTrace();
+        } catch (GRBException e) {
+            System.out.println("The ILP computation terminated with an error.");
+            e.printStackTrace();
+        }
+
     }
 
 
