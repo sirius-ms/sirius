@@ -155,7 +155,7 @@ public class FileUtils {
         for (Path source : files) {
             String relative = src.relativize(source).toString();
             final Path target = dest.resolve(relative);
-            if (!target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
+            if (!target.equals(dest) && !target.equals(target.getFileSystem().getPath("/"))) //exclude root to be zipFS compatible
                 Files.copy(source, target, REPLACE_EXISTING);
         }
     }
