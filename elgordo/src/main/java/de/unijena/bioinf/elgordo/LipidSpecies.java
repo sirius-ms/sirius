@@ -39,7 +39,26 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
     }
 
     public Optional<String> generateHypotheticalStructure() {
+        if (chainsUnknown()) return Optional.empty();
         return type.getSmiles().map(smiles-> {
+            if (getLipidClass().isSphingolipid()) {
+                final Optional<LipidChain> mightSphingoChain = Arrays.stream(chains).filter(x->x.type== LipidChain.Type.SPHINGOSIN).findFirst();
+                if (mightSphingoChain.isEmpty()) return null;
+                LipidChain sphingoChain = mightSphingoChain.get();
+                StringBuilder chainBuilder = new StringBuilder();
+                int bondsToAdd = sphingoChain.numberOfDoubleBonds;
+                chainBuilder.append("OCC(NR1)C(O)");
+                int dboffset = ((sphingoChain.chainLength/2 - sphingoChain.numberOfDoubleBonds)/2) * 2;
+                for (int j=3, n = sphingoChain.chainLength; j < n; ++j) {
+                    chainBuilder.append('C');
+                    if (bondsToAdd > 0 && j>=dboffset && j % 2 == 0) {
+                        chainBuilder.append('=');
+                        --bondsToAdd;
+                    }
+                }
+                smiles = smiles.replace("X",chainBuilder.toString());
+            }
+            int chainId = 1;
             for (int i=0; i < chains.length; ++i) {
                 int dboffset = ((chains[i].chainLength/2 - chains[i].numberOfDoubleBonds)/2) * 2;
                 StringBuilder chainBuilder = new StringBuilder();
@@ -48,7 +67,9 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
                     chainBuilder.append("C(=O)");
                 } else if (chains[i].type == LipidChain.Type.ALKYL) {
                     chainBuilder.append("C");
-                } else return null; // Sphingosin is not implemented yet
+                } else {
+                    continue;
+                }
                 for (int j=1, n = chains[i].chainLength; j < n; ++j) {
                     chainBuilder.append('C');
                     if (bondsToAdd > 0 && j>=dboffset && j % 2 == 0) {
@@ -56,7 +77,7 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
                         --bondsToAdd;
                     }
                 }
-                smiles = smiles.replace("R" + (i+1),chainBuilder.toString());
+                smiles = smiles.replace("R" + (chainId++),chainBuilder.toString());
             }
             return smiles;
         });
