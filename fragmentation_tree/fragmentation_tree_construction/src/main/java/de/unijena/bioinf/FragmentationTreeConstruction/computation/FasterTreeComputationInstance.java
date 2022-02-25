@@ -362,6 +362,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             //if (r.input!=null) r.input.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(orig));
             final double penalty = (r.tree.getAnnotationOrThrow(Beautified.class).getBeautificationPenalty());
             r.tree.setTreeWeight(r.tree.getTreeWeight()-penalty);
+            r.tree.setRootScore(r.tree.getRootScore()-penalty);
             recalculateScore(r.input==null ? pinput : r.input, r.tree, "final");
         }
     }
