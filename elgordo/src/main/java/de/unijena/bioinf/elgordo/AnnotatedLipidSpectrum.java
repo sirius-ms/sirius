@@ -440,7 +440,7 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
                 //Math.min(50, uncommonLargeChainLength),
                 uncommonSmallChainLength,
                 Math.min(30, strangeDifference),
-                phosphocholin ? 1 : -1,
+                0f,
                 numberOfAlkylChains,
                 Math.min(35, Math.max(0, maxDoubleBonds - 6)),
                 Math.min(30, numberOfUnexplainedIntensivePeaks(0.01)),
@@ -449,7 +449,7 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
                 numberOfcommonSteroidFragments(),
                 numberOfcommonSteroidLosses(),
                 (float)getContradictionScore(),
-                (float)Arrays.stream(contradictingIndizes).mapToDouble(spectrum::getIntensityAt).sum()/intensitySum,
+                intensitySum==0 ? 0f : (float)Arrays.stream(contradictingIndizes).mapToDouble(spectrum::getIntensityAt).sum()/intensitySum,
                 isSpecified() ? 1 : -1,
                 // additional features
                 isSpecified() ? nspec : 0,
@@ -473,6 +473,7 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
         for (MolecularFormula f : fragmentSet.fragments) {
             ++shouldHave;
         }
+        if(shouldHave==0) return 0f;
 
 
         final int have = (int)Arrays.stream(annotationsPerPeak).filter(x->Arrays.stream(x).anyMatch(y -> y instanceof HeadGroupFragmentAnnotation
