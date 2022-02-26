@@ -26,7 +26,11 @@ public class EMFragmenterScoring extends DirectedBondTypeScoring.Impl {
             return super.scoreEdge(edge);
         }else{
             int hydrogenDiff = Math.abs(sourceFragment.hydrogenRearrangements(targetFragment.getFormula()));
-            return hydrogenDiff * Math.log(rearrangementProb);
+            if(hydrogenDiff == 0){
+                return 0;
+            }else{
+                return (rearrangementProb > 0.0) ? hydrogenDiff * Math.log(rearrangementProb) : -Double.MAX_VALUE;
+            }
         }
     }
 }
