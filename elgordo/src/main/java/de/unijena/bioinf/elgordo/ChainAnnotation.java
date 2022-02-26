@@ -24,8 +24,8 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 public class ChainAnnotation extends LipidAnnotation{
 
-    public ChainAnnotation(Target target, MolecularFormula chainFormula, MolecularFormula peakFormula, PrecursorIonType ionType, LipidChain chain) {
-        super(target, chainFormula, peakFormula, ionType);
+    public ChainAnnotation(Target target, MolecularFormula chainFormula, MolecularFormula peakFormula, PrecursorIonType ionType, MolecularFormula modification, LipidChain chain) {
+        super(target, chainFormula, peakFormula, ionType,modification);
         this.chain = chain;
     }
 
