@@ -50,7 +50,7 @@ public class LipidChain implements Comparable<LipidChain> {
         return formula.isCHNO();
     }
 
-    private static MolecularFormula SPH = MolecularFormula.parseOrNull("NH3O2");
+    private static MolecularFormula SPH = MolecularFormula.parseOrNull("NH3O2"), O=MolecularFormula.parseOrThrow("O");
     public static Optional<LipidChain> getMergedFromFormula(MolecularFormula origFormula, LipidClass lipidClass) {
         int chains = lipidClass.chains;
         MolecularFormula formula = origFormula;
@@ -65,10 +65,10 @@ public class LipidChain implements Comparable<LipidChain> {
             return Optional.empty();
         }
         int alkylChains = chains;
-        formula = formula.subtract(MolecularFormula.getHydrogen().multiply(2*acylChains));
+        formula = formula.subtract(O.multiply(acylChains));
         if (formula.atomCount()==(formula.numberOfCarbons()+formula.numberOfHydrogens())) {
             int c = formula.numberOfCarbons();
-            int doublebonds = (formula.numberOfHydrogens() - c*2)/2;
+            int doublebonds = -(formula.numberOfHydrogens() + acylChains*2 - c*2)/2;
             if (doublebonds<0 || doublebonds>c/2) return Optional.empty();
             return Optional.of(new LipidChain(origFormula, c, doublebonds));
         } else {
@@ -107,7 +107,7 @@ public class LipidChain implements Comparable<LipidChain> {
     }
 
     public static LipidChain merge(LipidChain... chains) {
-        return new LipidChain(Type.MERGED, Arrays.stream(chains).mapToInt(LipidChain::getChainLength).sum(), Arrays.stream(chains).mapToInt(LipidChain::getNumberOfDoubleBonds).sum());
+        return new LipidChain(Arrays.stream(chains).map(x->x.formula).reduce(MolecularFormula::add).orElseGet(MolecularFormula::emptyFormula), Arrays.stream(chains).mapToInt(LipidChain::getChainLength).sum(), Arrays.stream(chains).mapToInt(LipidChain::getNumberOfDoubleBonds).sum());
     }
 
     public boolean isMerged() {
