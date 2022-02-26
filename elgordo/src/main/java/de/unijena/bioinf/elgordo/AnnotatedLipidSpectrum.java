@@ -39,6 +39,12 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
        MolecularFormula.parseOrThrow("H2O"),
             MolecularFormula.parseOrThrow("")
     ));
+    private final static Set<MolecularFormula> ALMOST_BORING = new HashSet<>(Arrays.asList(
+            MolecularFormula.parseOrThrow("H2O"),MolecularFormula.parseOrThrow("H4O2"),
+            MolecularFormula.parseOrThrow("NH3"),MolecularFormula.parseOrThrow("OH"),
+            MolecularFormula.parseOrThrow("H3O2"),
+            MolecularFormula.parseOrThrow("")
+    ));
 
     private final static HashMap<LipidClass, float[]> ModelsGeneric, ModelsSpecies;
     static {
@@ -82,11 +88,10 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
     private final LipidDetectionLevel detectionLevel;
     private final float formulaCorrectScore, classCorrectScore;
 
-    public AnnotatedLipidSpectrum(T spectrum, MolecularFormula formula, double precursorMz, PrecursorIonType ionType, LipidSpecies species, LipidAnnotation[][] annotationsPerPeak, int[] indizes) {
-        this(spectrum,formula,precursorMz,ionType,species,annotationsPerPeak,indizes,new LipidAnnotation[0], new int[0], 0d);
-    }
+    private final int numberOfNondecomposableIntensivePeaks;
+    private final float intensityOfNondecomposablePeaks;
 
-    public AnnotatedLipidSpectrum(T spectrum, MolecularFormula formula, double precursorMz, PrecursorIonType ionType, LipidSpecies species, LipidAnnotation[][] annotationsPerPeak, int[] indizes, LipidAnnotation[] contradictingAnnotations, int[] contradictingIndizes, double contradictionScore) {
+    public AnnotatedLipidSpectrum(T spectrum, MolecularFormula formula, double precursorMz, PrecursorIonType ionType, LipidSpecies species, LipidAnnotation[][] annotationsPerPeak, int[] indizes, LipidAnnotation[] contradictingAnnotations, int[] contradictingIndizes, double contradictionScore, int numberOfNondecomposableIntensivePeaks, float intensityOfNondecomposablePeaks) {
         this.spectrum = spectrum;
         this.formula = formula;
         this.precursorMz = precursorMz;
@@ -97,11 +102,14 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
         this.contradictingAnnotations = contradictingAnnotations;
         this.contradictingIndizes = contradictingIndizes;
         this.contradictionScore = contradictionScore;
+        this.numberOfNondecomposableIntensivePeaks = numberOfNondecomposableIntensivePeaks;
+        this.intensityOfNondecomposablePeaks = intensityOfNondecomposablePeaks;
 
         final float[] vector = makeFeatureVector();
         this.formulaCorrectScore = calcScore(vector, ModelsGeneric.get(this.annotatedSpecies.getLipidClass()));
         this.classCorrectScore = isSpecified() ? calcScore(vector, ModelsSpecies.get(this.annotatedSpecies.getLipidClass())) : 0f;
         this.detectionLevel = classCorrectScore > 0 ? LipidDetectionLevel.CLASS_CORRECT : (formulaCorrectScore > 0 ? LipidDetectionLevel.FORMULA_CORRECT : LipidDetectionLevel.UNSPECIFIED);
+
     }
 
     private float calcScore(float[] vector, float[] coeffs) {
@@ -446,4 +454,80 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
     public float getClassCorrectScore() {
         return classCorrectScore;
     }
+
+
+    public float[] makeFeatureVector2() {
+        float intensitySum = 0f;
+        for (int i=0; i < spectrum.size(); ++i) intensitySum += spectrum.getIntensityAt(i);
+        int uncommonSmallChainLength = 0, uncommonLargeChainLength = 0, strangeDifference = 0;
+        final boolean phosphocholin = isPhosphocholin();
+        int numberOfAlkylChains = (int)Arrays.stream(getAnnotatedSpecies().getChains()).filter(x->x.getType()== LipidChain.Type.ALKYL).count(), maxDoubleBonds = 0;
+        {
+            final IntSummaryStatistics chainLengths = Arrays.stream(annotatedSpecies.getChains()).mapToInt(x -> x.chainLength).summaryStatistics();
+            maxDoubleBonds = Arrays.stream(annotatedSpecies.getChains()).mapToInt(x->x.numberOfDoubleBonds).max().orElse(0);
+            if (phosphocholin) {
+                // everything below 6 is uncommon:
+                uncommonSmallChainLength = Math.max(0, 6 - chainLengths.getMin());
+                // everything above 36 is uncommon
+                uncommonLargeChainLength = Math.max(0, chainLengths.getMax() - 36);
+                // might be imbalanced
+                strangeDifference = 0;
+            } else {
+                // everything below 8 is uncommon:
+                uncommonSmallChainLength = Math.max(0, 8 - chainLengths.getMin());
+                // everything above 22 is uncommon
+                uncommonLargeChainLength = Math.max(0, chainLengths.getMax() - 22);
+                // each chain should be more than halve the largest chain
+                strangeDifference = Math.max(0,chainLengths.getMax()/2 - chainLengths.getMin());
+            }
+        }
+
+        final int nspec = numberOfSpecificHeadGroupAnnotations();
+        return new float[]{
+                (float)explainedIntensityOfNontrivialPeaks(),
+                nspec,
+                Math.min(18, numberOfChainAnnotations()),
+                //Math.min(50, uncommonLargeChainLength),
+                uncommonSmallChainLength,
+                Math.min(30, strangeDifference),
+                phosphocholin ? 1 : -1,
+                numberOfAlkylChains,
+                Math.min(35, Math.max(0, maxDoubleBonds - 6)),
+                Math.min(30, numberOfUnexplainedIntensivePeaks(0.01)),
+                // add classificators to distinguish lipids from steroids
+                numerOfWaterLosses(),
+                numberOfcommonSteroidFragments(),
+                numberOfcommonSteroidLosses(),
+                (float)getContradictionScore(),
+                (float)Arrays.stream(contradictingIndizes).mapToDouble(spectrum::getIntensityAt).sum()/intensitySum,
+                isSpecified() ? 1 : -1,
+                // additional features
+                isSpecified() ? nspec : 0,
+                (float)(Math.log(explainedIntensityOfNontrivialPeaks()+1e-4)-Math.log(1e-4)),
+                nspec * Math.min(18, numberOfChainAnnotations()),
+
+                numberOfNondecomposableIntensivePeaks,
+                intensityOfNondecomposablePeaks,
+                ratioOfSpecificFragments()
+
+        };
+    }
+
+    private float ratioOfSpecificFragments() {
+        final FragmentLib.FragmentSet fragmentSet = this.annotatedSpecies.getLipidClass().fragmentLib.getFor(this.ionType).get();
+        int shouldHave = 0;
+        for (MolecularFormula f : fragmentSet.losses) {
+            if (!ALMOST_BORING.contains(f)) ++shouldHave;
+        }
+        for (MolecularFormula f : fragmentSet.fragments) {
+            ++shouldHave;
+        }
+
+
+        final int have = (int)Arrays.stream(annotationsPerPeak).filter(x->Arrays.stream(x).anyMatch(y -> y instanceof HeadGroupFragmentAnnotation
+                && !ALMOST_BORING.contains(y.getUnderlyingFormula()))).count();
+        return (float)((double)have / (double)shouldHave);
+    }
+
+
 }
