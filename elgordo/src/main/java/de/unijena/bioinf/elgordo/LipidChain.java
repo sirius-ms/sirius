@@ -69,6 +69,7 @@ public class LipidChain implements Comparable<LipidChain> {
         if (formula.atomCount()==(formula.numberOfCarbons()+formula.numberOfHydrogens())) {
             int c = formula.numberOfCarbons();
             int doublebonds = (formula.numberOfHydrogens() - c*2)/2;
+            if (doublebonds<0 || doublebonds>c/2) return Optional.empty();
             return Optional.of(new LipidChain(origFormula, c, doublebonds));
         } else {
             return Optional.empty();
