@@ -228,6 +228,8 @@ public class LipidChain implements Comparable<LipidChain> {
     }*/
 
     public static LipidChain fromString(String x) {
+        if ("?".equals(x))
+            return null;
         Type t = Type.ACYL;
         if (x.startsWith("d")) {
             t = Type.SPHINGOSIN;
