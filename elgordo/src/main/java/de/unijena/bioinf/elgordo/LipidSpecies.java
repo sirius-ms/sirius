@@ -101,9 +101,9 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
         if (subchains.length==1 && !chain.contains("_") && chain.indexOf("/")>0) {
             subchains = chain.split("/");
         }
-        final LipidChain[] chains = Arrays.stream(subchains).map(x->LipidChain.fromString(x)).toArray(LipidChain[]::new);
+        final LipidChain[] chains = Arrays.stream(subchains).map(LipidChain::fromString).toArray(LipidChain[]::new);
         if (chains.length==1 && klasse.chains > 1) {
-            chains[0] = new LipidChain(LipidChain.Type.MERGED, chains[0].chainLength, chains[0].numberOfDoubleBonds);
+            chains[0] = new LipidChain(chains[0].formula, chains[0].chainLength, chains[0].numberOfDoubleBonds);
         }
         return new LipidSpecies(klasse, chains);
     }

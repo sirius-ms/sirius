@@ -106,7 +106,7 @@ public class LipidChain implements Comparable<LipidChain> {
     }
 
     public static LipidChain merge(LipidChain... chains) {
-        return new LipidChain(Type.MERGED, Arrays.stream(chains).mapToInt(LipidChain::getChainLength).sum(), Arrays.stream(chains).mapToInt(LipidChain::getNumberOfDoubleBonds).sum());
+        return new LipidChain(Arrays.stream(chains).map(x -> x.formula).reduce(MolecularFormula::add).orElseGet(MolecularFormula::emptyFormula), Arrays.stream(chains).mapToInt(LipidChain::getChainLength).sum(), Arrays.stream(chains).mapToInt(LipidChain::getNumberOfDoubleBonds).sum());
     }
 
     public boolean isMerged() {
@@ -122,7 +122,7 @@ public class LipidChain implements Comparable<LipidChain> {
     protected final Type type;
     protected MolecularFormula formula;
 
-    private LipidChain(MolecularFormula formula, int chainLength, int numberOfDoubleBonds) {
+    LipidChain(MolecularFormula formula, int chainLength, int numberOfDoubleBonds) {
         this.chainLength = chainLength;
         this.numberOfDoubleBonds = numberOfDoubleBonds;
         this.type = Type.MERGED;
@@ -216,7 +216,7 @@ public class LipidChain implements Comparable<LipidChain> {
         else return "unknown-chain-type";
     }
 
-    public static LipidChain mergedFromString(String x) {
+    /*public static LipidChain mergedFromString(String x) {
         final int d = x.indexOf(':');
         final int length = Integer.parseInt(x.substring(0, d));
 
@@ -225,7 +225,7 @@ public class LipidChain implements Comparable<LipidChain> {
         if (special>=0) db = db.substring(0,special);
         final int doubleBonds = Integer.parseInt(db);
         return new LipidChain(Type.MERGED,length,doubleBonds);
-    }
+    }*/
 
     public static LipidChain fromString(String x) {
         Type t = Type.ACYL;
