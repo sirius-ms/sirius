@@ -95,6 +95,10 @@ public class FragmentLib {
         public boolean isAdductSwitch() {
             return true;
         }
+
+        public boolean hasAlkyl() {
+            return alkylLosses.length>0 || alkylFragments.length>0;
+        }
     }
 
     public static Builder def(String ionType) {

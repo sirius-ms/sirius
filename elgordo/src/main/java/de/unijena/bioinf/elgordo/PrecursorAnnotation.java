@@ -24,6 +24,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 public class PrecursorAnnotation extends LipidAnnotation{
     public PrecursorAnnotation(MolecularFormula formula, PrecursorIonType ionType) {
-        super(Target.FRAGMENT, formula,formula, ionType);
+        super(Target.FRAGMENT, formula,formula, ionType,MolecularFormula.emptyFormula());
     }
 }
