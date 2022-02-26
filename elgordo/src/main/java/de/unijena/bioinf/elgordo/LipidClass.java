@@ -29,10 +29,10 @@ import static de.unijena.bioinf.elgordo.HeadGroup.*;
 
 public enum LipidClass {
 
-    MG(1,	Glycerol, def("[M+NH3+H]+").losses("","OH", "H2O","H3O2","C3H6O2","C3H8O3").acyl("", "H2O").acylFragments("","-H2O","C3H5O","C3H8O").done(), "OCC(O)COR1"),
-    DG(2,	Glycerol, def("[M+NH3+H]+").losses("","OH", "H2O","H3O2","C3H6O2","C3H8O3").acyl("","H2O").acylFragments("","C3H5O","-H2O","C3H8O").
-                              def("[M+Na]+").losses("H2O").adductSwitch().acyl("").acylFragments("","-O").done(), "OCC(OR2)COR1"),
-    TG(3,	Glycerol, def("[M+NH3+H]+").losses("","OH", "H2O","H3O2","C3H6O2","C3H8O3").acyl("","H2O").acylFragments("","-OH","-H3O2","H2O","C3H8O3").def("[M+Na]+").adductSwitch().acyl("","H2O").acylFragments("-OH","-H3O2").done(), "C(COR1)(OR2)COR3"),
+    MG(1,	Glycerol, def("+").losses("","OH", "H2O").acyl("", "H2O").acylFragments("","-H2O","C3H5O","C3H3").def("[M+NH3+H]+").def("[M+Na]+").adductSwitch().done(), "OCC(O)COR1"),
+    DG(2,	Glycerol, def("+").losses("","OH", "H2O").acyl("", "H2O").acylFragments("","-H2O","C3H5O","C3H3").
+                              def("[M+NH3+H]+").def("[M+Na]+").adductSwitch().done(), "OCC(OR2)COR1"),
+    TG(3,	Glycerol, def("+").losses("","OH", "H2O").acyl("", "H2O").acylFragments("","-H2O","C3H5O","C3H3").def("[M+NH3+H]+").def("[M+Na]+").adductSwitch().done(), "C(COR1)(OR2)COR3"),
     DGTS(	2,	Glyceroltrimethylhomoserin, def("+").fragments("C10H21NO5","C7H13NO2").acyl("","H2O").def("[M+H]+").done(), "N(C)(C)(C)C(C(=O)[O-])CCOCC(OR2)COR1"),
     LDGTS(	1,	Glyceroltrimethylhomoserin, def("+").fragments("C10H21NO5","C7H13NO2").losses("H2O").acyl("").def("[M+H]+").done(), "[C@](COCCC(C(=O)[O-])[N+](C)(C)C)([H])(O)COR1", "MGTS"),
     MGDG(	2,	Galactosylglycerol, def("+").losses("C6H11O6","C6H13O7").acyl("","C6H11O6","C6H13O7","C3H5O").def("[M+NH3+H]+").def("[M+Na]+").done(),"O([C@H]1[C@H](O)[C@@H](O)[C@@H](O)[C@@H](CO)O1)C[C@]([H])(OR2)(COR1)"),
@@ -47,9 +47,9 @@ public enum LipidClass {
     LPE(	1,	Glycerophosphoethanolamines, def("[M+H]+").fragments("C3H7O5P").losses("H2O","C2H7NO","C2H8NO4P","C3H9O6P").acyl("","-C2H6NO3P").acylFragments("").def("[M+Na]+").fragments("H3PO4","C2H8NO4P","C3H7O5P","C3H9O6P").losses("C2H5N","C2H7NO","C2H6NO3P","C2H8NO4P","C2H6NO4P").acylFragments("").acyl("","H2O").done(), "[C@](COP(=O)(O)OCCN)([H])(O)COR1"),
     PS(	2,	Glycerophosphoserines, def("[M+H]+").fragments("C3H7NO3","C3H7O5P").losses("C3H8NO6P","C3H6NO6P").acyl("","H2O", "-C3H6NO5P").acylFragments("").done(), "C(O)(=O)[C@@]([H])(N)COP(=O)(O)OC[C@]([H])(OR2)COR1"),
     LPS(	1,	Glycerophosphoserines, def("[M+H]+").fragments("C3H8NO3").losses("H2O","C3H8NO6P").acyl("","H2O").done(), "C(O)(=O)[C@@]([H])(N)COP(=O)(O)OC[C@]([H])(O)COR1"),
-    PG(	2,	Glycerophosphoglycerols, def("+").losses("H2O","C3H9O6P").fragments("C3H9O6P").acyl("","H2O").acylFragments("","-H2O").def("[M+Na]+").losses("C3H8O6P","C3H7O5P").acyl("-C3H6O2").adductSwitch().def("[M+H]+").def("[M+NH3+H]+").done(), "[H][C@](O)(CO)COP(=O)(O)OC[C@]([H])(OR2)COR1"),
+    PG(	2,	Glycerophosphoglycerols, def("+").losses("H2O","C3H9O6P","C3H7O5P","C3H9O6P").fragments("C3H9O6P").acyl("","H2O").acylFragments("","-H2O").def("[M+Na]+").losses("C3H8O6P","C3H7O5P").acyl("-C3H6O2").adductSwitch().def("[M+H]+").def("[M+NH3+H]+").done(), "C(COR1)(COP(=O)(O)OCC(CO)O)OR2"),
     LPG(	1,	Glycerophosphoglycerols, null, "[H][C@](O)(CO)COP(=O)(O)OC[C@]([H])(O)COR1"),
-    PI(	2,	Glycerophosphoinositols, def("[M+H]+").losses("C6H10O5","C6H12O6","C6H11O8P","C6H13O9P").acyl("","H2O").done()),
+    PI(	2,	Glycerophosphoinositols, def("+").losses("C6H10O5","C6H12O6","C6H11O8P","C6H13O9P").fragments("C6H12O6","C6H11O8P","C6H13O9P").acyl("","H2O","C6H10O5").def("[M+H]+").def("[M+Na]+").def("[M+NH3+H]+").done(),"P(OC1C(O)C(O)C(O)C(O)C1O)(=O)(O)OCC(OR2)COR1"),
     LPI(	1,	Glycerophosphoinositols),
     PA(	2,	Glycerophosphates, def("[M+Na]+").losses("HO3P","H3O4P").acyl("","-H3O4P").acylFragments("").done(), "[C@](COP(=O)(O)O)([H])(OR2)COR1"),
     LPA(	1,	Glycerophosphates,null,"[C@](COP(=O)(O)O)([H])(O)COR1"),
