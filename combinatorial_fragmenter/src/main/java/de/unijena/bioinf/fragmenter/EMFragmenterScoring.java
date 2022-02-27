@@ -30,7 +30,7 @@ public class EMFragmenterScoring extends DirectedBondTypeScoring.Impl {
                 return 0;
             }else{
                 double score = hydrogenDiff * Math.log(rearrangementProb);
-                return (Double.isNaN(score) || Double.isInfinite(score)) ? (-1.0E100) : score;
+                return (Double.isNaN(score) || Double.isInfinite(score)) ? (-1.0E6) : score;
             }
         }
     }
