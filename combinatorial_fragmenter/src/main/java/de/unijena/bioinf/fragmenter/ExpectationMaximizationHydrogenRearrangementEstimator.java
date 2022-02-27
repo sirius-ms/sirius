@@ -155,7 +155,7 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
             System.out.println("A molecular formula was not possible to parse.");
             e.printStackTrace();
         } catch (IOException e) {
-            System.out.println("An IOException occured.");
+            System.out.println("An IOException occurred.");
             e.printStackTrace();
         } catch (InvalidSmilesException e) {
             System.out.println("A smiles string was not possible to parse.");
