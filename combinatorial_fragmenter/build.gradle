@@ -18,3 +18,11 @@ dependencies() {
     compile "com.gurobi:gurobi-jar:$gurobi_version"
 }
 
+task EM_Rearrangement_Prob_Estimation_FatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'de.unijena.bioinf.fragmenter.ExpectationMaximizationHydrogenRearrangementEstimator'
+    }
+    archiveBaseName = "EM_Rearrangement_Prob_Estimation"
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
