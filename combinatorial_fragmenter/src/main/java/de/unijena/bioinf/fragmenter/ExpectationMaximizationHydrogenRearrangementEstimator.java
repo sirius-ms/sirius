@@ -114,6 +114,7 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
 
                 fileWriter.write(String.valueOf(newParameter));
                 fileWriter.newLine();
+                fileWriter.flush();
 
                 // Termination criterion:
                 if(Math.abs(this.parameter - newParameter) <= epsilon) break;
