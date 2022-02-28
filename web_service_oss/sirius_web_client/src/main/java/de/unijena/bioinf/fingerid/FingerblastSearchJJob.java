@@ -36,6 +36,7 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.webapi.WebJJob;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -103,94 +104,62 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
     }
 
     @Override
-    protected FingerblastResult compute() {
+    protected FingerblastResult compute() throws Exception {
         checkInput();
         //we want to score all available candidates and may create subsets later.
         final Set<FingerprintCandidate> combinedCandidates = candidates.getCombCandidates();
+        checkForInterruption();
 
         // to get a prepared FingerblastScorer, an object of BayesnetScoring that is specific to the molecular formula has to be initialized
         List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(
                 predictor.getPreparedFingerblastScorer(ParameterStore.of(fp, bayesnetScoring)), combinedCandidates, fp);
+        checkForInterruption();
         scoreJobs.forEach(this::submitSubJob);
-
+        checkForInterruption();
         scoredCandidates = scoreJobs.stream().flatMap(r -> r.takeResult().stream()).sorted(Comparator.reverseOrder()).map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
+        checkForInterruption();
         scoredCandidates.forEach(sc -> postprocessCandidate(sc.getCandidate()));
+        checkForInterruption();
 
         //create filtered result for FingerblastResult result
         Set<String> requestedCandidatesInChIs = candidates.getReqCandidatesInChIs();
+        checkForInterruption();
         final List<Scored<FingerprintCandidate>> cds = scoredCandidates.stream().
                 filter(sc -> requestedCandidatesInChIs.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList());
+        checkForInterruption();
 
         if (this.ftree != null) {
             if (ftree.getAnnotation(LipidSpecies.class).isPresent()) {
                 final LipidSpecies l = ftree.getAnnotationOrThrow(LipidSpecies.class);
-                final List<DBLink> elGordoLink = List.of(new DBLink("El-Gordo", l.toString()));
+                final List<DBLink> elGordoLink = List.of(new DBLink(DataSource.LIPID.realName(), l.toString()));
 
                 List<BasicJJob<FingerprintCandidate>> lipidAnoJobs = scoredCandidates.stream().map(SScored::getCandidate).map(c -> new BasicJJob<FingerprintCandidate>() {
                     @Override
                     protected FingerprintCandidate compute() throws Exception {
+                        checkForInterruption();
                         IAtomContainer molecule = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(c.getSmiles());
+                        checkForInterruption();
                         LipidStructureMatcher m = new LipidStructureMatcher(l.getLipidClass(), molecule);
+                        checkForInterruption();
                         if (m.isMatched()) {
-                            System.out.println("Candidate '" + c.getInchi().in2D + "' belongs to '" + l + "'."); //todo remove
-                            c.mergeBits(DataSource.ELGORDO.flag);
+                            c.mergeBits(DataSource.LIPID.flag);
                             c.mergeDBLinks(elGordoLink);
                         }
                         return c;
                     }
                 }).collect(Collectors.toList());
-
+                checkForInterruption();
                 submitSubJobsInBatchesByThreads(lipidAnoJobs, jobManager.getCPUThreads()).forEach(j -> {
                     try {
                         j.awaitResult();
                     } catch (ExecutionException e) {
-                        logWarn("Error when annotating checking if candidate belongs to lipid species. Annotations might be incomplete!");
+                        logWarn("Error when annotating checking if candidate belongs to lipid class. Annotations might be incomplete!");
                     }
                 });
             }
         }
-
         return new FingerblastResult(cds);
     }
-
-    /*private void addOrReplace(Set<FingerprintCandidate> combinedCandidates, FingerprintCandidate x) {
-        for (FingerprintCandidate fc : combinedCandidates) {
-            if (fc.getInchi().key2D().equals(x.getInchiKey2D())) {
-                if (fc.getName() == null || fc.getName().isBlank()) fc.setName(x.getName());
-                fc.mergeBits(x.getBitset());
-                fc.mergeDBLinks(x.getLinks());
-                return; // is already in list
-            }
-        }
-        combinedCandidates.add(x); //add new candidate
-    }*/
-
-    /*private FingerprintCandidate lipid2candidate(LipidSpecies lipid) {
-        final Optional<String> smiles = lipid.generateHypotheticalStructure();
-        return smiles.map(str->{
-            try {
-                final IAtomContainer molecule = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(str);
-                ArrayFingerprint fp = new FixedFingerprinter(CdkFingerprintVersion.getDefault()).computeFingerprintFromSMILES(str);
-                final InChIGenerator gen = InChIGeneratorFactory.getInstance().getInChIGenerator(molecule);
-                return new FingerprintCandidate(new CompoundCandidate(
-                        new InChI(gen.getInchiKey(), gen.getInchi()),
-                        lipid.toString(),
-                        str,
-                        0,
-                        0,
-                        ((DoubleResult)(new XLogPDescriptor().calculate(molecule).getValue())).doubleValue(),
-                        null,
-                        DataSource.ELGORDO.flag,
-                        new DBLink[]{new DBLink("El-Gordo", lipid.toString())},
-                        new PubmedLinks()
-                ), fp);
-            } catch (CDKException e) {
-                LoggerFactory.getLogger(FingerblastSearchJJob.class).error("Error when parsing lipid SMILES " + str, e);
-                return null;
-            }
-        }).orElse(null);
-    }
-*/
     protected void postprocessCandidate(CompoundCandidate candidate) {
         //annotate training compounds;
         if (predictor.getTrainingStructures().isInTrainingData(candidate.getInchi())) {
