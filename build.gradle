@@ -45,7 +45,7 @@ ext {
     cplex_version = System.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
     graphUtils_version = '1.1'
     cdk_version = "2.3"
-    jetbrains_version = "17.0.0"
+    jetbrains_version = "22.0.0"
     httpclient_version = "4.5.13"
 
     jewelcli_version = '0.8.9'
