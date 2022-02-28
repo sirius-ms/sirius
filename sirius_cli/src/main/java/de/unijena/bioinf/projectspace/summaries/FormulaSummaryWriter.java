@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -161,11 +162,11 @@ public class FormulaSummaryWriter implements Summarizer {
         final StringBuilder headerBuilder = new StringBuilder("molecularFormula\tadduct\tprecursorFormula");/*	rankingScore*/
         if (scorings != null && !scorings.isEmpty())
             headerBuilder.append("\t").append(scorings);
-        headerBuilder.append("\tnumExplainedPeaks\texplainedIntensity\tmedianMassErrorFragmentPeaks(ppm)\tmedianAbsoluteMassErrorFragmentPeaks(ppm)\tmassErrorPrecursor(ppm)");
+        headerBuilder.append("\tnumExplainedPeaks\texplainedIntensity\tmedianMassErrorFragmentPeaks(ppm)\tmedianAbsoluteMassErrorFragmentPeaks(ppm)\tmassErrorPrecursor(ppm)\tlipidClass");
         return headerBuilder.toString();
     }
 
-    private void writeCSV(Writer w, LinkedHashMap<Class<? extends FormulaScore>, String> types, List<? extends SScored<? extends ResultEntry, ? extends Score<?>>> results, boolean prefix) throws IOException {
+    private void writeCSV(Writer w, LinkedHashMap<Class<? extends FormulaScore>, String> types, List<? extends SScored<? extends ResultEntry, ? extends Score<?>>> results, boolean suffix) throws IOException {
         final List<Class<? extends FormulaScore>> scoreOrder = ProjectSpaceManager.scorePriorities().stream().filter(types::containsKey).collect(Collectors.toList());
         results = results.stream()
                 .sorted((i1, i2) -> FormulaScoring.comparingMultiScore(scoreOrder).compare(
@@ -175,7 +176,7 @@ public class FormulaSummaryWriter implements Summarizer {
 
 
         String header = makeHeader(scoreOrder.stream().map(types::get).collect(Collectors.joining("\t")));
-        if (prefix)
+        if (suffix)
             header = header + "\tionMass" + "\tretentionTimeInSeconds" + "\tid";
 
         w.write("rank\t" + header + "\n");
@@ -213,7 +214,9 @@ public class FormulaSummaryWriter implements Summarizer {
             w.write(r.medianAbsMassDev);
             w.write('\t');
             w.write(r.massErrorPrecursor);
-            if (prefix) {
+            w.write('\t');
+            w.write(r.lipidClass);
+            if (suffix) {
                 w.write('\t');
                 w.write(r.ionMass);
                 w.write('\t');
@@ -241,6 +244,8 @@ public class FormulaSummaryWriter implements Summarizer {
         public String medianAbsMassDev = "N/A";
         public String massErrorPrecursor = "N/A";
 
+        public String lipidClass = "";
+
         public ResultEntry(FormulaResult r, CompoundContainer exp) {
             scoring = r.getAnnotationOrThrow(FormulaScoring.class);
             molecularFormula = r.getId().getMolecularFormula();
@@ -254,6 +259,7 @@ public class FormulaSummaryWriter implements Summarizer {
                 medianMassDev = String.valueOf(new FTreeMetricsHelper(tree).getMedianMassDeviation().getPpm());
                 medianAbsMassDev = String.valueOf(new FTreeMetricsHelper(tree).getMedianAbsoluteMassDeviation().getPpm());
                 massErrorPrecursor = r.getId().getParentId().getIonMass().map(e -> tree.getMassErrorTo(tree.getRoot(), e).getPpm()).map(String::valueOf).orElse("N/A");
+                lipidClass = tree.getAnnotation(LipidSpecies.class).map(LipidSpecies::toString).orElse("");
             });
 
             ionMass = BigDecimal.valueOf(exp.getId().getIonMass().orElse(Double.NaN)).setScale(5, RoundingMode.HALF_UP).toString();

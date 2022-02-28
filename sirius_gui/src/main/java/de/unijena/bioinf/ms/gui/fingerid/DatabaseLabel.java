@@ -23,18 +23,30 @@ import java.awt.*;
 
 public class DatabaseLabel implements Comparable<DatabaseLabel> {
 
-    protected final String name;
+    protected final String displayName;
+    protected final String sourceName;
     protected final String[] values;
     protected final Rectangle rect;
 
     public DatabaseLabel(String name, String[] values, Rectangle rect) {
-        this.name = name;
+        this(name, null, values, rect);
+    }
+
+    public DatabaseLabel(String sourceName, String displayName, String[] values, Rectangle rect) {
+        this.sourceName = sourceName;
+        this.displayName = displayName;
         this.values = values;
         this.rect = rect;
     }
 
+    public String name(){
+        if (displayName != null)
+            return displayName;
+        return sourceName;
+    }
+
     @Override
     public int compareTo(DatabaseLabel o) {
-        return name.compareTo(o.name);
+        return sourceName.compareTo(o.sourceName);
     }
 }

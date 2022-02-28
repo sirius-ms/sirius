@@ -62,7 +62,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
         add(searchDBList);
 
         final TwoColumnPanel additionalOptions = new TwoColumnPanel();
-        additionalOptions.addNamed("Inject Lipids", makeParameterCheckBox("InjectElGordoCompounds"));
+        additionalOptions.addNamed("Tag Lipids", makeParameterCheckBox("InjectElGordoCompounds"));
 
         add(new TextHeaderBoxPanel("General", additionalOptions));
 
