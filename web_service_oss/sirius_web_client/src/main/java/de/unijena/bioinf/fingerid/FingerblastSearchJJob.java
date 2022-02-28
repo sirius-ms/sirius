@@ -20,36 +20,32 @@
 
 package de.unijena.bioinf.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.elgordo.LipidSpecies;
+import de.unijena.bioinf.elgordo.LipidStructureMatcher;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
-import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.inchi.InChIGenerator;
-import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.qsar.descriptors.molecular.XLogPDescriptor;
-import org.openscience.cdk.qsar.result.DoubleResult;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastResult> implements AnnotationJJob<FingerblastResult, FingerIdResult> {
@@ -111,12 +107,6 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
         checkInput();
         //we want to score all available candidates and may create subsets later.
         final Set<FingerprintCandidate> combinedCandidates = candidates.getCombCandidates();
-        if (this.ftree!=null) {
-            ftree.getAnnotation(LipidSpecies.class)
-                    .map(this::lipid2candidate)
-                    .ifPresent(x -> addOrReplace(combinedCandidates, x));
-
-        }
 
         // to get a prepared FingerblastScorer, an object of BayesnetScoring that is specific to the molecular formula has to be initialized
         List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(
@@ -131,10 +121,39 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
         final List<Scored<FingerprintCandidate>> cds = scoredCandidates.stream().
                 filter(sc -> requestedCandidatesInChIs.contains(sc.getCandidate().getInchiKey2D())).collect(Collectors.toList());
 
+        if (this.ftree != null) {
+            if (ftree.getAnnotation(LipidSpecies.class).isPresent()) {
+                final LipidSpecies l = ftree.getAnnotationOrThrow(LipidSpecies.class);
+                final List<DBLink> elGordoLink = List.of(new DBLink("El-Gordo", l.toString()));
+
+                List<BasicJJob<FingerprintCandidate>> lipidAnoJobs = scoredCandidates.stream().map(SScored::getCandidate).map(c -> new BasicJJob<FingerprintCandidate>() {
+                    @Override
+                    protected FingerprintCandidate compute() throws Exception {
+                        IAtomContainer molecule = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(c.getSmiles());
+                        LipidStructureMatcher m = new LipidStructureMatcher(l.getLipidClass(), molecule);
+                        if (m.isMatched()) {
+                            System.out.println("Candidate '" + c.getInchi().in2D + "' belongs to '" + l + "'."); //todo remove
+                            c.mergeBits(DataSource.ELGORDO.flag);
+                            c.mergeDBLinks(elGordoLink);
+                        }
+                        return c;
+                    }
+                }).collect(Collectors.toList());
+
+                submitSubJobsInBatchesByThreads(lipidAnoJobs, jobManager.getCPUThreads()).forEach(j -> {
+                    try {
+                        j.awaitResult();
+                    } catch (ExecutionException e) {
+                        logWarn("Error when annotating checking if candidate belongs to lipid species. Annotations might be incomplete!");
+                    }
+                });
+            }
+        }
+
         return new FingerblastResult(cds);
     }
 
-    private void addOrReplace(Set<FingerprintCandidate> combinedCandidates, FingerprintCandidate x) {
+    /*private void addOrReplace(Set<FingerprintCandidate> combinedCandidates, FingerprintCandidate x) {
         for (FingerprintCandidate fc : combinedCandidates) {
             if (fc.getInchi().key2D().equals(x.getInchiKey2D())) {
                 if (fc.getName() == null || fc.getName().isBlank()) fc.setName(x.getName());
@@ -144,9 +163,9 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
             }
         }
         combinedCandidates.add(x); //add new candidate
-    }
+    }*/
 
-    private FingerprintCandidate lipid2candidate(LipidSpecies lipid) {
+    /*private FingerprintCandidate lipid2candidate(LipidSpecies lipid) {
         final Optional<String> smiles = lipid.generateHypotheticalStructure();
         return smiles.map(str->{
             try {
@@ -171,7 +190,7 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
             }
         }).orElse(null);
     }
-
+*/
     protected void postprocessCandidate(CompoundCandidate candidate) {
         //annotate training compounds;
         if (predictor.getTrainingStructures().isInTrainingData(candidate.getInchi())) {
