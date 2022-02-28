@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -52,5 +53,12 @@ public enum ZipProvider {
                 return new ZipFSProjectSpaceIOProvider(location, false);
             }
         }
+    }
+
+    public static CompressionFormat getDefaultCompressionFormat() {
+        return CompressionFormat.of(
+                PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compressionLevels", null, "1"),
+                PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compression")
+        );
     }
 }
