@@ -214,6 +214,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
      */
     private void resetFilter() {
         resetSpinnerValues();
+        for (int i=0; i < peakShape.length; ++i) {
+            peakShape[i].setSelected(true);
+        }
         searchFieldDialogCopy.setText("");
         invertFilter.setSelected(false);
     }
