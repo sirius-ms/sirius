@@ -22,6 +22,7 @@ package de.unijena.bioinf.elgordo;
 import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -85,8 +86,14 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
 
     public static LipidSpecies fromString(String lipid) {
         LipidClass klasse = null;
-
+        boolean chainKnown;
         int splitIdx = lipid.indexOf('(');
+        if (splitIdx >= 0) chainKnown = true;
+        else {
+            chainKnown = false;
+            splitIdx = lipid.indexOf(' ');
+            if (splitIdx<0) return new LipidSpecies(LipidClass.valueOf(lipid), new LipidChain[0]);
+        }
         for (LipidClass c : LipidClass.values()) {
             if (lipid.substring(0, splitIdx).equalsIgnoreCase(c.abbr()) || lipid.substring(0, splitIdx).equalsIgnoreCase(c.name())) {
                 klasse = c;
@@ -95,7 +102,7 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
         }
         if (klasse==null) throw new IllegalArgumentException("Unknown lipid: " + lipid);
         int chainIndex = splitIdx + 1;
-        String chain = lipid.substring(chainIndex, lipid.lastIndexOf(')'));
+        String chain = lipid.substring(chainIndex, chainKnown ? lipid.lastIndexOf(')') : lipid.length());
         if (chain.isEmpty()) throw new IllegalArgumentException("Unknown lipid: " + lipid);
         String[] subchains = chain.split("_");
         if (subchains.length==1 && !chain.contains("_") && chain.indexOf("/")>0) {
@@ -104,6 +111,8 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
         final LipidChain[] chains = Arrays.stream(subchains).map(LipidChain::fromString).filter(Objects::nonNull).toArray(LipidChain[]::new);
         if (chains.length==1 && klasse.chains > 1) {
             chains[0] = new LipidChain(chains[0].formula, chains[0].chainLength, chains[0].numberOfDoubleBonds);
+        } else if (!chainKnown) {
+            LoggerFactory.getLogger(LipidSpecies.class).warn("Malformed lipid string: '" + lipid + "' must contain brackets.");
         }
         return new LipidSpecies(klasse, chains);
     }
@@ -160,7 +169,9 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
 
     @Override
     public String toString() {
-        return type.abbr() + "("+ (chains.length>0 ? Joiner.on('_').join(chains) : "?")  + ")";
+        if (chains.length==0) return type.abbr();
+        final boolean cu = chainsUnknown();
+        return type.abbr() + (cu ? " " : "(") + Joiner.on('_').join(chains) + (cu ? "" : ")");
     }
 
     public LipidSpecies makeGeneric() {
