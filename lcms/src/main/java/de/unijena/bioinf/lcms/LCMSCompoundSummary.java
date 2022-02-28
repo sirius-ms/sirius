@@ -53,341 +53,403 @@ public class LCMSCompoundSummary {
     }
 
     private void checkMs2() {
-        ms2Check=new ArrayList<>();
-        if (ms2Experiment!=null) {
-            final MassToFormulaDecomposer mfd = new MassToFormulaDecomposer(
-                    new ChemicalAlphabet(MolecularFormula.parseOrThrow("CHNOPS").elementArray())
-            );
-            final FormulaConstraints fcr = new FormulaConstraints("CHNOPS");
-            final Deviation dev = new Deviation(5);
-            final PrecursorIonType ionType = PrecursorIonType.getPrecursorIonType("[M+H]+");
-            // check number of peaks and number of peaks with intensity above 3%
-            int npeaks=0, nIntensivePeaks=0, total = 0;
-            final HashSet<CollisionEnergy> ces = new HashSet<>();
-            final Optional<NoiseInformation> noiseModel = ms2Experiment.getAnnotation(NoiseInformation.class);
-            for (Ms2Spectrum<Peak> ms2 : ms2Experiment.getMs2Spectra()) {
-                ces.add(ms2.getCollisionEnergy());
-                final double mx = Spectrums.getMaximalIntensity(ms2);
-                final double threshold = noiseModel.map(NoiseInformation::getSignalLevel).orElse(mx*0.03);
-                for (int k=0; k < ms2.size(); ++k) {
-                    final double mass = ionType.precursorMassToNeutralMass(ms2.getMzAt(k));
-                    if (mass >= ms2Experiment.getIonMass()-10)
-                        continue;
-                    final Iterator<MolecularFormula> molecularFormulaIterator = mfd.neutralMassFormulaIterator(mass, dev, fcr);
-                    boolean found=false;
-                    while (molecularFormulaIterator.hasNext()) {
-                        final MolecularFormula F = molecularFormulaIterator.next();
-                        if (F.rdbe()>=0) {
-                            found=true;
-                            break;
-                        }
-                    }
-
-                    if (found) {
-                        if (ms2.getIntensityAt(k) >= threshold) {
-                            ++nIntensivePeaks;
-                        }
-                        ++npeaks;
-                    }
-                    ++total;
-                }
-            }
-
-            int score = 0;
-
-            if (npeaks >= 20) {
-                ms2Check.add(new Check(
-                        Quality.GOOD, "Ms/Ms has " + npeaks + " decomposable peaks."
-                ));
-                score += 5;
-            } else if (npeaks >= 10) {
-                ms2Check.add(new Check(
-                        Quality.MEDIUM, "Ms/Ms has " + npeaks + " decomposable peaks."
-                ));
-                score += 3;
-            } else {
-                ms2Check.add(new Check(
-                        Quality.LOW, "Ms/Ms has only " + npeaks + " decomposable peaks."
-                ));
-                score += 1;
-            }
-
-            if (nIntensivePeaks >= 6) {
-                ms2Check.add(new Check(
-                        Quality.GOOD, "Ms/Ms has " + nIntensivePeaks + (noiseModel.isPresent() ? " peaks above the noise level." : " peaks with relative intensity above 3%.")
-                ));
-                score += 3;
-            } else if (nIntensivePeaks >= 3) {
-                ms2Check.add(new Check(
-                        Quality.MEDIUM, "Ms/Ms has " + nIntensivePeaks + (noiseModel.isPresent() ? " peaks above the noise level." : " peaks with relative intensity above 3%.")
-                ));
-                score += 2;
-            } else {
-                ms2Check.add(new Check(
-                        Quality.LOW, "Ms/Ms has " + (nIntensivePeaks == 0 ? "no" : (nIntensivePeaks==1) ? "only one" : "only " + nIntensivePeaks) + (noiseModel.isPresent() ? " peaks above the noise level." : " peaks with relative intensity above 3%.")
-                ));
-                score += 1;
-            }
-            if (ces.size()>1) {
-                ms2Check.add(new Check(
-                        Quality.GOOD, "Ms/Ms has " + ces.size() + " different collision energies."
-                ));
-                score += 3;
-            } else {
-                ms2Check.add(new Check(
-                        Quality.LOW, "Ms/Ms was only recorded at a single collision energy."
-                ));
-            }
-            ms2Quality = (score >= 6) ? Quality.GOOD : (score >= 3 ? Quality.MEDIUM : Quality.LOW);
-        }
+        CheckResult result = new Ms2Checker(ms2Experiment).performCheck();
+        ms2Check = result.checks;
+        ms2Quality = result.quality;
     }
-
-
-    private static String[] words = new String[]{
-            "First","Second","Third","Fourth","Fifth"
-    };
 
     private void checkIsotopes() {
-        this.isotopeCheck = new ArrayList<>();
-
-        // check number if isotope peaks
-        if (compoundTrace.getIsotopes().length>=3) {
-            isotopeQuality=Quality.GOOD;
-            isotopeCheck.add(new Check(
-                    Quality.GOOD, "Has " + compoundTrace.getIsotopes().length + " isotope peaks."
-            ));
-
-        } else if (compoundTrace.getIsotopes().length>=2) {
-            isotopeQuality=Quality.MEDIUM;
-            isotopeCheck.add(new Check(
-                    Quality.MEDIUM, "Has two isotope peaks."
-            ));
-        } else {
-            isotopeCheck.add(new Check(
-                    Quality.LOW, "Has no isotope peaks besides the monoisotopic peak."
-            ));
-            this.isotopeQuality = Quality.LOW;
-            return;
-        }
-
-        int goodIsotopePeaks = 0;
-        final Trace m = compoundTrace.getIsotopes()[0];
-        checkIsotopes:
-        for (int k=1; k < compoundTrace.getIsotopes().length; ++k) {
-            final Trace t = compoundTrace.getIsotopes()[k];
-            double correlation = 0d;
-            double[] iso = new double[t.getDetectedFeatureLength()];
-            double[] main = iso.clone();
-            int j=0;
-            eachPeak:
-            for (int i=t.getDetectedFeatureOffset(),n=t.getDetectedFeatureOffset()+ t.getDetectedFeatureLength(); i<n; ++i) {
-                final int mainIndex = i+t.getIndexOffset()-m.getIndexOffset();
-                if (mainIndex < 0 || mainIndex >= m.getIntensities().length) {
-                    if (t.getIntensities()[i] <  traceSet.getNoiseLevels()[i+t.getIndexOffset()]) {
-                        continue eachPeak;
-                    } else {
-                        isotopeCheck.add(new Check(
-                                Quality.LOW, "The isotope peak is found at retention times outside of the monoisotopic peak"
-                        ));
-                        break checkIsotopes;
-                    }
-                }
-                main[j] = m.getIntensities()[mainIndex];
-                iso[j++] = t.getIntensities()[i];
-            }
-            if (j < iso.length) {
-                main = Arrays.copyOf(main, j);
-                iso = Arrays.copyOf(iso,j);
-            }
-            correlation = Statistics.pearson(main, iso);
-            // we also use our isotope scoring
-            final double intensityScore = scoreIso(main, iso);
-            Quality quality;
-            if (correlation>=0.99 || intensityScore>=5) quality=Quality.GOOD;
-            else if (correlation>=0.95 || intensityScore>=0) quality=Quality.MEDIUM;
-            else quality = Quality.LOW;
-
-            isotopeCheck.add(new Check(quality, String.format(Locale.US, "%s isotope peak has a correlation of %.2f. The isotope score is %.3f.", getNumWord(k), correlation, intensityScore)));
-            if (quality==Quality.GOOD) ++goodIsotopePeaks;
-        }
-
-        if (goodIsotopePeaks>=2) {
-            isotopeQuality = Quality.GOOD;
-        }
-
-    }
-
-    private static String getNumWord(int i) {
-        if (i-1 < words.length) return words[i-1];
-        else return i + "th";
-    }
-
-    private double scoreIso(double[] a, double[] b) {
-        double mxLeft = a[0];
-        for (int i=1; i < a.length; ++i) {
-            mxLeft = Math.max(a[i],mxLeft);
-        }
-        double mxRight = b[0];
-        for (int i=1; i < b.length; ++i) {
-            mxRight = Math.max(b[i],mxRight);
-        }
-
-        double sigmaA = Math.max(0.02, traceSet.getNoiseLevels()[compoundTrace.getMonoisotopicPeak().getAbsoluteIndexApex()]/Math.max(mxLeft,mxRight));
-        double sigmaR = 0.05;
-
-        double score = 0d;
-        for (int i=0; i < a.length; ++i) {
-            final double ai = a[i]/mxLeft;
-            final double bi = b[i]/mxRight;
-            final double delta = bi-ai;
-
-            double peakPropbability = Math.log(Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + bi*bi*sigmaR*sigmaR)))/(2*Math.PI*bi*sigmaR*sigmaR));
-            final double sigma = 2*bi*sigmaR + 2*sigmaA;
-            score += peakPropbability-Math.log(Math.exp(-(sigma*sigma)/(2*(sigmaA*sigmaA + bi*bi*sigmaR*sigmaR)))/(2*Math.PI*bi*sigmaR*sigmaR));
-        }
-
-        return score;
-
-
+        CheckResult result = new IsotopesChecker(traceSet, compoundTrace).performCheck();
+        isotopeCheck = result.checks;
+        isotopeQuality = result.quality;
     }
 
     private void checkPeak() {
-        this.peakCheck = new ArrayList<>();
-        final Trace t = compoundTrace.getMonoisotopicPeak();
+        CheckResult result = new PeakChecker(traceSet, compoundTrace).performCheck();
+        peakCheck = result.checks;
+        peakQuality = result.quality;
+    }
 
-        // has a clearly defined apex
-        // 1. apex is larger than variance
-        double variance = 0d;
-        int l=0;
-        int apexIndex = t.getAbsoluteIndexApex()-t.getIndexOffset();
-        for (int i=t.getDetectedFeatureOffset(), n = t.getDetectedFeatureOffset()+t.getDetectedFeatureLength(); i < n; ++i) {
-            if (i>0 && i+1 < n) {
-                if (i != apexIndex && t.getIntensities()[i-1] < t.getIntensities()[i] && t.getIntensities()[i+1] < t.getIntensities()[i]) {
-                    variance += Math.min(Math.pow(t.getIntensities()[i] - t.getIntensities()[i - 1], 2),Math.pow(t.getIntensities()[i] - t.getIntensities()[i + 1], 2));
-                    l++;
+    public static Quality checkPeakQuality(CoelutingTraceSet traceSet, IonTrace compoundTrace){
+        CheckResult result = new PeakChecker(traceSet, compoundTrace).performCheck();
+        return  result.quality;
+    }
+
+
+    protected class Ms2Checker implements Checker {
+        private final Ms2Experiment ms2Experiment;
+
+        public Ms2Checker(Ms2Experiment ms2Experiment) {
+            this.ms2Experiment = ms2Experiment;
+        }
+
+        @Override
+        public CheckResult performCheck() {
+            ArrayList<Check> ms2Check=new ArrayList<>();
+            if (ms2Experiment!=null) {
+                final MassToFormulaDecomposer mfd = new MassToFormulaDecomposer(
+                        new ChemicalAlphabet(MolecularFormula.parseOrThrow("CHNOPS").elementArray())
+                );
+                final FormulaConstraints fcr = new FormulaConstraints("CHNOPS");
+                final Deviation dev = new Deviation(5);
+                final PrecursorIonType ionType = PrecursorIonType.getPrecursorIonType("[M+H]+");
+                // check number of peaks and number of peaks with intensity above 3%
+                int npeaks=0, nIntensivePeaks=0, total = 0;
+                final HashSet<CollisionEnergy> ces = new HashSet<>();
+                final Optional<NoiseInformation> noiseModel = ms2Experiment.getAnnotation(NoiseInformation.class);
+                for (Ms2Spectrum<Peak> ms2 : ms2Experiment.getMs2Spectra()) {
+                    ces.add(ms2.getCollisionEnergy());
+                    final double mx = Spectrums.getMaximalIntensity(ms2);
+                    final double threshold = noiseModel.map(NoiseInformation::getSignalLevel).orElse(mx*0.03);
+                    for (int k=0; k < ms2.size(); ++k) {
+                        final double mass = ionType.precursorMassToNeutralMass(ms2.getMzAt(k));
+                        if (mass >= ms2Experiment.getIonMass()-10)
+                            continue;
+                        final Iterator<MolecularFormula> molecularFormulaIterator = mfd.neutralMassFormulaIterator(mass, dev, fcr);
+                        boolean found=false;
+                        while (molecularFormulaIterator.hasNext()) {
+                            final MolecularFormula F = molecularFormulaIterator.next();
+                            if (F.rdbe()>=0) {
+                                found=true;
+                                break;
+                            }
+                        }
+
+                        if (found) {
+                            if (ms2.getIntensityAt(k) >= threshold) {
+                                ++nIntensivePeaks;
+                            }
+                            ++npeaks;
+                        }
+                        ++total;
+                    }
+                }
+
+                int score = 0;
+
+                if (npeaks >= 20) {
+                    ms2Check.add(new Check(
+                            Quality.GOOD, "Ms/Ms has " + npeaks + " decomposable peaks."
+                    ));
+                    score += 5;
+                } else if (npeaks >= 10) {
+                    ms2Check.add(new Check(
+                            Quality.MEDIUM, "Ms/Ms has " + npeaks + " decomposable peaks."
+                    ));
+                    score += 3;
+                } else {
+                    ms2Check.add(new Check(
+                            Quality.LOW, "Ms/Ms has only " + npeaks + " decomposable peaks."
+                    ));
+                    score += 1;
+                }
+
+                if (nIntensivePeaks >= 6) {
+                    ms2Check.add(new Check(
+                            Quality.GOOD, "Ms/Ms has " + nIntensivePeaks + (noiseModel.isPresent() ? " peaks above the noise level." : " peaks with relative intensity above 3%.")
+                    ));
+                    score += 3;
+                } else if (nIntensivePeaks >= 3) {
+                    ms2Check.add(new Check(
+                            Quality.MEDIUM, "Ms/Ms has " + nIntensivePeaks + (noiseModel.isPresent() ? " peaks above the noise level." : " peaks with relative intensity above 3%.")
+                    ));
+                    score += 2;
+                } else {
+                    ms2Check.add(new Check(
+                            Quality.LOW, "Ms/Ms has " + (nIntensivePeaks == 0 ? "no" : (nIntensivePeaks==1) ? "only one" : "only " + nIntensivePeaks) + (noiseModel.isPresent() ? " peaks above the noise level." : " peaks with relative intensity above 3%.")
+                    ));
+                    score += 1;
+                }
+                if (ces.size()>1) {
+                    ms2Check.add(new Check(
+                            Quality.GOOD, "Ms/Ms has " + ces.size() + " different collision energies."
+                    ));
+                    score += 3;
+                } else {
+                    ms2Check.add(new Check(
+                            Quality.LOW, "Ms/Ms was only recorded at a single collision energy."
+                    ));
+                }
+                Quality ms2Quality = (score >= 6) ? Quality.GOOD : (score >= 3 ? Quality.MEDIUM : Quality.LOW);
+
+                return new CheckResult(ms2Check, ms2Quality);
+            } else {
+                return new CheckResult(ms2Check, null);
+            }
+        }
+    }
+
+    protected class IsotopesChecker implements Checker {
+        private final CoelutingTraceSet traceSet;
+        private final IonTrace compoundTrace;
+
+        public IsotopesChecker(CoelutingTraceSet traceSet, IonTrace compoundTrace) {
+            this.traceSet = traceSet;
+            this.compoundTrace = compoundTrace;
+        }
+
+        @Override
+        public CheckResult performCheck() {
+            ArrayList<Check> isotopeCheck = new ArrayList<>();
+            Quality isotopeQuality = null;
+
+            // check number if isotope peaks
+            if (compoundTrace.getIsotopes().length>=3) {
+                isotopeQuality=Quality.GOOD;
+                isotopeCheck.add(new Check(
+                        Quality.GOOD, "Has " + compoundTrace.getIsotopes().length + " isotope peaks."
+                ));
+
+            } else if (compoundTrace.getIsotopes().length>=2) {
+                isotopeQuality=Quality.MEDIUM;
+                isotopeCheck.add(new Check(
+                        Quality.MEDIUM, "Has two isotope peaks."
+                ));
+            } else {
+                isotopeCheck.add(new Check(
+                        Quality.LOW, "Has no isotope peaks besides the monoisotopic peak."
+                ));
+                isotopeQuality = Quality.LOW;
+                return new CheckResult(isotopeCheck, isotopeQuality);
+            }
+
+            int goodIsotopePeaks = 0;
+            final Trace m = compoundTrace.getIsotopes()[0];
+            checkIsotopes:
+            for (int k=1; k < compoundTrace.getIsotopes().length; ++k) {
+                final Trace t = compoundTrace.getIsotopes()[k];
+                double correlation = 0d;
+                double[] iso = new double[t.getDetectedFeatureLength()];
+                double[] main = iso.clone();
+                int j=0;
+                eachPeak:
+                for (int i=t.getDetectedFeatureOffset(),n=t.getDetectedFeatureOffset()+ t.getDetectedFeatureLength(); i<n; ++i) {
+                    final int mainIndex = i+t.getIndexOffset()-m.getIndexOffset();
+                    if (mainIndex < 0 || mainIndex >= m.getIntensities().length) {
+                        if (t.getIntensities()[i] <  traceSet.getNoiseLevels()[i+t.getIndexOffset()]) {
+                            continue eachPeak;
+                        } else {
+                            isotopeCheck.add(new Check(
+                                    Quality.LOW, "The isotope peak is found at retention times outside of the monoisotopic peak"
+                            ));
+                            break checkIsotopes;
+                        }
+                    }
+                    main[j] = m.getIntensities()[mainIndex];
+                    iso[j++] = t.getIntensities()[i];
+                }
+                if (j < iso.length) {
+                    main = Arrays.copyOf(main, j);
+                    iso = Arrays.copyOf(iso,j);
+                }
+                correlation = Statistics.pearson(main, iso);
+                // we also use our isotope scoring
+                final double intensityScore = scoreIso(main, iso);
+                Quality quality;
+                if (correlation>=0.99 || intensityScore>=5) quality=Quality.GOOD;
+                else if (correlation>=0.95 || intensityScore>=0) quality=Quality.MEDIUM;
+                else quality = Quality.LOW;
+
+                isotopeCheck.add(new Check(quality, String.format(Locale.US, "%s isotope peak has a correlation of %.2f. The isotope score is %.3f.", getNumWord(k), correlation, intensityScore)));
+                if (quality==Quality.GOOD) ++goodIsotopePeaks;
+            }
+
+            if (goodIsotopePeaks>=2) {
+                isotopeQuality = Quality.GOOD;
+            }
+
+            return new CheckResult(isotopeCheck, isotopeQuality);
+        }
+
+        private String[] words = new String[]{
+                "First","Second","Third","Fourth","Fifth"
+        };
+
+        private String getNumWord(int i) {
+            if (i-1 < words.length) return words[i-1];
+            else return i + "th";
+        }
+
+        private double scoreIso(double[] a, double[] b) {
+            double mxLeft = a[0];
+            for (int i=1; i < a.length; ++i) {
+                mxLeft = Math.max(a[i],mxLeft);
+            }
+            double mxRight = b[0];
+            for (int i=1; i < b.length; ++i) {
+                mxRight = Math.max(b[i],mxRight);
+            }
+
+            double sigmaA = Math.max(0.02, traceSet.getNoiseLevels()[compoundTrace.getMonoisotopicPeak().getAbsoluteIndexApex()]/Math.max(mxLeft,mxRight));
+            double sigmaR = 0.05;
+
+            double score = 0d;
+            for (int i=0; i < a.length; ++i) {
+                final double ai = a[i]/mxLeft;
+                final double bi = b[i]/mxRight;
+                final double delta = bi-ai;
+
+                double peakPropbability = Math.log(Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + bi*bi*sigmaR*sigmaR)))/(2*Math.PI*bi*sigmaR*sigmaR));
+                final double sigma = 2*bi*sigmaR + 2*sigmaA;
+                score += peakPropbability-Math.log(Math.exp(-(sigma*sigma)/(2*(sigmaA*sigmaA + bi*bi*sigmaR*sigmaR)))/(2*Math.PI*bi*sigmaR*sigmaR));
+            }
+
+            return score;
+        }
+    }
+
+
+    protected static class PeakChecker implements Checker {
+        private final CoelutingTraceSet traceSet;
+        private final IonTrace compoundTrace;
+
+        public PeakChecker(CoelutingTraceSet traceSet, IonTrace compoundTrace) {
+            this.traceSet = traceSet;
+            this.compoundTrace = compoundTrace;
+        }
+
+
+        @Override
+        public CheckResult performCheck() {
+            ArrayList<Check> peakCheck = new ArrayList<>();
+            final Trace t = compoundTrace.getMonoisotopicPeak();
+
+            // has a clearly defined apex
+            // 1. apex is larger than variance
+            double variance = 0d;
+            int l=0;
+            int apexIndex = t.getAbsoluteIndexApex()-t.getIndexOffset();
+            for (int i=t.getDetectedFeatureOffset(), n = t.getDetectedFeatureOffset()+t.getDetectedFeatureLength(); i < n; ++i) {
+                if (i>0 && i+1 < n) {
+                    if (i != apexIndex && t.getIntensities()[i-1] < t.getIntensities()[i] && t.getIntensities()[i+1] < t.getIntensities()[i]) {
+                        variance += Math.min(Math.pow(t.getIntensities()[i] - t.getIntensities()[i - 1], 2),Math.pow(t.getIntensities()[i] - t.getIntensities()[i + 1], 2));
+                        l++;
+                    }
                 }
             }
-        }
-        double v2 = 0d;
-        if (l!=0) {
-            v2 = Math.sqrt(variance/Math.sqrt(l));
-            variance /= l;
-            variance = Math.sqrt(variance);
-        }
-        double stp = Math.max(t.getLeftEdgeIntensity(),t.getRightEdgeIntensity());
-        double peak = t.getApexIntensity() - stp;
-
-        if (l==0) {
-            double m = peak/stp;
-            if (m > 8) {
-                peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined apex."));
-            } else if (m > 4) {
-                peakCheck.add(new Check(Quality.MEDIUM, "The apex of the chromatographic peak has a low slope."));
-            } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has no clearly defined apex."));
-
-        } else {
-            if (peak > 10*v2) {
-                peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined apex."));
-            } else if (peak > 5*v2) {
-                peakCheck.add(new Check(Quality.MEDIUM, "The apex of the chromatographic peak has a low intensity compared to the variance of the surrounding peaks."));
-            } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has no clearly defined apex."));
-        }
-
-        // has a clearly defined start point
-        float apex = t.getApexIntensity();
-        float begin = t.getLeftEdgeIntensity();
-        float ende = t.getRightEdgeIntensity();
-
-        // check if there is another peak on the left side
-        boolean leftNeighbour = false;
-        if (t.getDetectedFeatureOffset()>1) {
-            float[] xs = t.getIntensities();
-            int j = t.getDetectedFeatureOffset();
-            if (xs[j] < xs[j-1] && xs[j-1] < xs[j-2] && (xs[j-2]-xs[j]) > traceSet.getNoiseLevels()[j] ) {
-                leftNeighbour = true;
+            double v2 = 0d;
+            if (l!=0) {
+                v2 = Math.sqrt(variance/Math.sqrt(l));
+                variance /= l;
+                variance = Math.sqrt(variance);
             }
-        }
+            double stp = Math.max(t.getLeftEdgeIntensity(),t.getRightEdgeIntensity());
+            double peak = t.getApexIntensity() - stp;
 
-        // check if there is another peak on the right side
-        boolean rightNeighbour = false;
-        if (t.getDetectedFeatureOffset()+t.getDetectedFeatureLength()+1 <t.getIntensities().length ) {
-            float[] xs = t.getIntensities();
-            int j = t.getDetectedFeatureOffset()+t.getDetectedFeatureLength()-1;
-            if (xs[j] < xs[j+1] && xs[j+1] < xs[j+2] && (xs[j+2]-xs[j]) > traceSet.getNoiseLevels()[j] ) {
-                rightNeighbour = true;
-            }
-        }
+            if (l==0) {
+                double m = peak/stp;
+                if (m > 8) {
+                    peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined apex."));
+                } else if (m > 4) {
+                    peakCheck.add(new Check(Quality.MEDIUM, "The apex of the chromatographic peak has a low slope."));
+                } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has no clearly defined apex."));
 
-        boolean relativeBegin = begin/apex <= 0.2;
-        boolean absoluteBegin = begin <= traceSet.getNoiseLevels()[t.absoluteIndexLeft()]*20;
-
-        boolean relativeEnd = ende/apex <= 0.2;
-        boolean clearlyRelativeEnd = ende/apex < 0.05;
-        boolean clearlyRelativeBegin = begin/apex < 0.05;
-        boolean absoluteEnd = ende <= traceSet.getNoiseLevels()[t.absoluteIndexRight()]*20;
-
-        absoluteBegin = absoluteBegin || clearlyRelativeBegin;
-        absoluteEnd = absoluteEnd || clearlyRelativeEnd;
-
-        boolean slopeLeft = (apex-begin)/apex >= 0.2;
-        boolean slopeRight = (apex-ende)/apex >= 0.2;
-
-        final boolean reallyBadLeft = (begin/apex > 0.3) && ((apex-begin)/apex > 0.3);
-        final boolean reallyBadRight = (ende/apex > 0.3) && ((apex-ende)/apex > 0.3);
-
-        leftNeighbour &= slopeLeft;
-        rightNeighbour &= slopeRight;
-
-        if (relativeBegin&&absoluteBegin && (relativeEnd&&absoluteEnd || clearlyRelativeEnd)) {
-            peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined start and end points."));
-        } else {
-            if (relativeBegin&&(absoluteBegin||leftNeighbour)) {
-                peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined start points."));
-            } else if (relativeBegin) {
-                peakCheck.add(new Check(Quality.MEDIUM, "The chromatographic peak starts way above the noise level."));
-            } else if (absoluteBegin) {
-                peakCheck.add(new Check(Quality.MEDIUM, "The left side of the chromatographic peak is close to noise level"));
-            } else if (leftNeighbour) {
-                peakCheck.add(new Check(Quality.MEDIUM, "The left edge of the chromatographic peak is clearly separated from its left neighbour peak"));
-            } else if (!reallyBadLeft) {
-                peakCheck.add(new Check(Quality.MEDIUM, "The left edge of the chromatographic peak is not clearly defined."));
             } else {
-                peakCheck.add(new Check(Quality.LOW, "The left edge of the chromatographic peak is not well defined."));
-            }
-            if (relativeEnd&&(absoluteEnd||rightNeighbour)) {
-                peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined end points."));
-            } else if (relativeEnd) {
-                peakCheck.add(new Check(Quality.MEDIUM, "The chromatographic peak ends way above the noise level."));
-            } else if (absoluteEnd) {
-                peakCheck.add(new Check(Quality.MEDIUM, "The right side of the chromatographic peak is close to noise level"));
-            } else if (rightNeighbour) {
-                peakCheck.add(new Check(Quality.MEDIUM, "The right edge of the chromatographic peak is clearly separated from its right neighbour peak"));
-            } else if (!reallyBadRight) {
-                peakCheck.add(new Check(Quality.MEDIUM, "The right edge of the chromatographic peak is not clearly defined."));
-            }  else {
-                peakCheck.add(new Check(Quality.LOW, "The right edge of the chromatographic peak is not well defined."));
+                if (peak > 10*v2) {
+                    peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined apex."));
+                } else if (peak > 5*v2) {
+                    peakCheck.add(new Check(Quality.MEDIUM, "The apex of the chromatographic peak has a low intensity compared to the variance of the surrounding peaks."));
+                } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has no clearly defined apex."));
             }
 
+            // has a clearly defined start point
+            float apex = t.getApexIntensity();
+            float begin = t.getLeftEdgeIntensity();
+            float ende = t.getRightEdgeIntensity();
 
+            // check if there is another peak on the left side
+            boolean leftNeighbour = false;
+            if (t.getDetectedFeatureOffset()>1) {
+                float[] xs = t.getIntensities();
+                int j = t.getDetectedFeatureOffset();
+                if (xs[j] < xs[j-1] && xs[j-1] < xs[j-2] && (xs[j-2]-xs[j]) > traceSet.getNoiseLevels()[j] ) {
+                    leftNeighbour = true;
+                }
+            }
+
+            // check if there is another peak on the right side
+            boolean rightNeighbour = false;
+            if (t.getDetectedFeatureOffset()+t.getDetectedFeatureLength()+1 <t.getIntensities().length ) {
+                float[] xs = t.getIntensities();
+                int j = t.getDetectedFeatureOffset()+t.getDetectedFeatureLength()-1;
+                if (xs[j] < xs[j+1] && xs[j+1] < xs[j+2] && (xs[j+2]-xs[j]) > traceSet.getNoiseLevels()[j] ) {
+                    rightNeighbour = true;
+                }
+            }
+
+            boolean relativeBegin = begin/apex <= 0.2;
+            boolean absoluteBegin = begin <= traceSet.getNoiseLevels()[t.absoluteIndexLeft()]*20;
+
+            boolean relativeEnd = ende/apex <= 0.2;
+            boolean clearlyRelativeEnd = ende/apex < 0.05;
+            boolean clearlyRelativeBegin = begin/apex < 0.05;
+            boolean absoluteEnd = ende <= traceSet.getNoiseLevels()[t.absoluteIndexRight()]*20;
+
+            absoluteBegin = absoluteBegin || clearlyRelativeBegin;
+            absoluteEnd = absoluteEnd || clearlyRelativeEnd;
+
+            boolean slopeLeft = (apex-begin)/apex >= 0.2;
+            boolean slopeRight = (apex-ende)/apex >= 0.2;
+
+            final boolean reallyBadLeft = (begin/apex > 0.3) && ((apex-begin)/apex > 0.3);
+            final boolean reallyBadRight = (ende/apex > 0.3) && ((apex-ende)/apex > 0.3);
+
+            leftNeighbour &= slopeLeft;
+            rightNeighbour &= slopeRight;
+
+            if (relativeBegin&&absoluteBegin && (relativeEnd&&absoluteEnd || clearlyRelativeEnd)) {
+                peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined start and end points."));
+            } else {
+                if (relativeBegin&&(absoluteBegin||leftNeighbour)) {
+                    peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined start points."));
+                } else if (relativeBegin) {
+                    peakCheck.add(new Check(Quality.MEDIUM, "The chromatographic peak starts way above the noise level."));
+                } else if (absoluteBegin) {
+                    peakCheck.add(new Check(Quality.MEDIUM, "The left side of the chromatographic peak is close to noise level"));
+                } else if (leftNeighbour) {
+                    peakCheck.add(new Check(Quality.MEDIUM, "The left edge of the chromatographic peak is clearly separated from its left neighbour peak"));
+                } else if (!reallyBadLeft) {
+                    peakCheck.add(new Check(Quality.MEDIUM, "The left edge of the chromatographic peak is not clearly defined."));
+                } else {
+                    peakCheck.add(new Check(Quality.LOW, "The left edge of the chromatographic peak is not well defined."));
+                }
+                if (relativeEnd&&(absoluteEnd||rightNeighbour)) {
+                    peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak has clearly defined end points."));
+                } else if (relativeEnd) {
+                    peakCheck.add(new Check(Quality.MEDIUM, "The chromatographic peak ends way above the noise level."));
+                } else if (absoluteEnd) {
+                    peakCheck.add(new Check(Quality.MEDIUM, "The right side of the chromatographic peak is close to noise level"));
+                } else if (rightNeighbour) {
+                    peakCheck.add(new Check(Quality.MEDIUM, "The right edge of the chromatographic peak is clearly separated from its right neighbour peak"));
+                } else if (!reallyBadRight) {
+                    peakCheck.add(new Check(Quality.MEDIUM, "The right edge of the chromatographic peak is not clearly defined."));
+                }  else {
+                    peakCheck.add(new Check(Quality.LOW, "The right edge of the chromatographic peak is not well defined."));
+                }
+
+
+            }
+
+            // check number of data points
+            if (t.getDetectedFeatureLength() >= 8) {
+                peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak consists of " + t.getDetectedFeatureLength() + " data points"));
+            } else if (t.getDetectedFeatureLength() >= 4) {
+                peakCheck.add(new Check(Quality.MEDIUM, "The chromatographic peak consists of " + t.getDetectedFeatureLength() + " data points"));
+            } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has only " + t.getDetectedFeatureLength() + " data points"));
+
+            // check peak slope
+
+            Quality quality = Quality.GOOD;
+            for (Check c : peakCheck) {
+                if (c.quality.ordinal() < quality.ordinal()) {
+                    quality = c.quality;
+                }
+            }
+
+            return new CheckResult(peakCheck, quality);
         }
-
-        // check number of data points
-        if (t.getDetectedFeatureLength() >= 8) {
-            peakCheck.add(new Check(Quality.GOOD, "The chromatographic peak consists of " + t.getDetectedFeatureLength() + " data points"));
-        } else if (t.getDetectedFeatureLength() >= 4) {
-            peakCheck.add(new Check(Quality.MEDIUM, "The chromatographic peak consists of " + t.getDetectedFeatureLength() + " data points"));
-        } else peakCheck.add(new Check(Quality.LOW, "The chromatographic peak has only " + t.getDetectedFeatureLength() + " data points"));
-
-        // check peak slope
-
-        Quality quality = Quality.GOOD;
-        for (Check c : peakCheck) {
-            if (c.quality.ordinal() < quality.ordinal()) {
-                quality = c.quality;
-            }
-        }
-        this.peakQuality = quality;
     }
+
 
     public static enum Quality {
         LOW, MEDIUM, GOOD;
@@ -409,5 +471,19 @@ public class LCMSCompoundSummary {
         public String getDescription() {
             return description;
         }
+    }
+
+    public static class CheckResult {
+        private final ArrayList<Check> checks;
+        private final Quality quality;
+
+        public CheckResult(ArrayList<Check> checks, Quality quality) {
+            this.checks = checks;
+            this.quality = quality;
+        }
+    }
+
+    protected interface Checker {
+        public CheckResult performCheck();
     }
 }
