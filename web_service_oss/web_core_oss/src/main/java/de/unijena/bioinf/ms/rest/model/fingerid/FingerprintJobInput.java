@@ -58,7 +58,7 @@ public class FingerprintJobInput {
         public void serialize(FingerprintJobInput value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
             gen.writeStringField("msData",  new JenaMsWriter(true).writeToString(value.experiment));
-            gen.writeStringField("ftJson",  new FTJsonWriter().treeToJsonString(value.ftree).replaceAll("\\s+",""));
+            gen.writeStringField("ftJson",  new FTJsonWriter().treeToJsonString(value.ftree));
             gen.writeNumberField("predictors", PredictorType.getBits(value.predictors));
             gen.writeEndObject();
         }
