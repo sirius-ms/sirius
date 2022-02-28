@@ -39,8 +39,8 @@ public class LipidStructureMatcher {
 
     public static void main(String[] args) {
         try {
-            IAtomContainer molecule = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles("CCCCCCCCCCCCCC=CC(C(COC1C(C(C(C(O1)CO)O)O)O)NC(=O)CCCCCCCCCCC)O");
-            System.out.println(new LipidStructureMatcher(LipidClass.HexCer, molecule).getMatchedSpecies());
+            IAtomContainer molecule = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles("CCCCCCCCCCCCCCCC(=O)OCC(COP(=O)(O)OCCN)O");
+            System.out.println(new LipidStructureMatcher(LipidClass.LPE, molecule).getMatchedSpecies());
 
 
             molecule = new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles("CCCCCCCCCCCCCCCC(=O)OCC(COP(=O)(O)OCCN)O");
