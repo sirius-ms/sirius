@@ -137,13 +137,13 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MolecularProperty_24, "filter by highlighted molecular property");
 
         smartFilterTextField = new JTextField();
-        TwoColumnPanel panel2 = new TwoColumnPanel();
-        panel2.setBorder(new EmptyBorder(0, 0, 0, 0));
+        TwoColumnPanel smartsFilter = new TwoColumnPanel();
+        smartsFilter.setBorder(new EmptyBorder(0, 0, 0, 0));
         smartFilterTextField.setPreferredSize(new Dimension(100, smartFilterTextField.getPreferredSize().height));
-        panel2.add(new JLabel("SMARTS Filter"), smartFilterTextField);
+        smartsFilter.add(new JLabel("SMARTS Filter"), smartFilterTextField);
 
         tb.add(filterByMolecularPropertyButton);
-        tb.add(panel2);
+        tb.add(smartsFilter);
 
         return tb;
     }
@@ -264,7 +264,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     }
 
     private void clickOnDBLabel(DatabaseLabel label) {
-        DataSources.getSourceFromName(label.name).ifPresent(s -> {
+        DataSources.getSourceFromName(label.sourceName).ifPresent(s -> {
             if (label.values == null || label.values.length == 0 || s.URI == null)
                 return;
             try {

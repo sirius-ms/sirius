@@ -105,10 +105,13 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
 
     protected JPanel getNorth() {
         final JPanel north = new JPanel(new BorderLayout());
-        north.add(searchField, BorderLayout.EAST);
 
         if (toolBar != null) {
-            north.add(toolBar, BorderLayout.CENTER);
+            toolBar.addSeparator();
+            toolBar.add(searchField);
+            north.add(toolBar, BorderLayout.NORTH);
+        } else {
+            north.add(searchField, BorderLayout.NORTH);
         }
 
         return north;

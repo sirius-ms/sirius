@@ -21,20 +21,19 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.CompoundCandidateChargeLayer;
-import de.unijena.bioinf.chemdb.CompoundCandidateChargeState;
-import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import net.sf.jniinchi.INCHI_RET;
+import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
@@ -130,14 +129,18 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
             this.labels = new DatabaseLabel[0];
         } else {
             List<DatabaseLabel> labels = new ArrayList<>();
-            for (String key : this.candidate.getLinkedDatabases().keySet()) {
+            @NotNull Multimap<String, String> linkeDBs = this.candidate.getLinkedDatabases();
+            for (String key : linkeDBs.keySet()) {
                 final Collection<String> values = this.candidate.getLinkedDatabases().get(key);
                 final ArrayList<String> cleaned = new ArrayList<>(values.size());
                 for (String value : values) {
                     if (value != null)
                         cleaned.add(value);
                 }
-                labels.add(new DatabaseLabel(key, cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
+                if (key.equals(DataSource.LIPID.realName))
+                    labels.add(new DatabaseLabel(key, "Lipid - " + linkeDBs.get(key).iterator().next(), cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
+                else
+                    labels.add(new DatabaseLabel(key, cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
             }
             Collections.sort(labels);
             this.labels = labels.toArray(DatabaseLabel[]::new);
@@ -147,6 +150,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
    /* protected CSIPredictor getCorrespondingCSIPredictor() throws IOException {
         return (CSIPredictor) ApplicationCore.WEB_API.getStructurePredictor(adduct.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_POSITIVE);
     }*/
+
+    public DatabaseLabel[] getLabels() {
+        return labels;
+    }
 
     public void highlightInBackground() {
         CompoundMatchHighlighter h = new CompoundMatchHighlighter(this, getPlatts());
@@ -448,7 +455,5 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         public ProbabilityFingerprint getPlatts() {
             return null;
         }
-
-
     }
 }

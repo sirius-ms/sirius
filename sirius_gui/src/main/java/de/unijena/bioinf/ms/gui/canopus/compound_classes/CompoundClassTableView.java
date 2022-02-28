@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.gui.table.ActionListDetailView;
 import de.unijena.bioinf.ms.gui.table.ActionTable;
 import de.unijena.bioinf.ms.gui.table.BarTableCellRenderer;
 import de.unijena.bioinf.ms.gui.table.SiriusResultTableCellRenderer;
+import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 
 import javax.swing.*;
@@ -70,6 +71,7 @@ public class CompoundClassTableView extends ActionListDetailView<ClassyfirePrope
         final JToolBar tb = new JToolBar();
         tb.setFloatable(false);
         tb.setBorderPainted(false);
+        tb.setLayout(new WrapLayout(FlowLayout.LEFT, 0, 0));
         return tb;
     }
 
