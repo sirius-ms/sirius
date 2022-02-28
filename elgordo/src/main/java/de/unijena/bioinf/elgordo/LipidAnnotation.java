@@ -31,14 +31,15 @@ public abstract class LipidAnnotation {
     }
 
     private final Target target;
-    private final MolecularFormula underlyingFormula, measuredPeakFormula;
+    private final MolecularFormula underlyingFormula, measuredPeakFormula,modification;
     private final PrecursorIonType ionType;
 
-    public LipidAnnotation(Target target, MolecularFormula underlyingFormula, MolecularFormula measuredFormula, PrecursorIonType ionType) {
+    public LipidAnnotation(Target target, MolecularFormula underlyingFormula, MolecularFormula measuredFormula, PrecursorIonType ionType,MolecularFormula modification) {
         this.target = target;
         this.underlyingFormula = underlyingFormula;
         this.measuredPeakFormula = measuredFormula;
         this.ionType = ionType;
+        this.modification = modification;
     }
 
     public Target getTarget() {
@@ -57,6 +58,10 @@ public abstract class LipidAnnotation {
         return ionType;
     }
 
+    public MolecularFormula getModification() {
+        return modification;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -72,6 +77,6 @@ public abstract class LipidAnnotation {
 
     @Override
     public String toString() {
-        return (target == Target.FRAGMENT ? "" : "loss of ") + underlyingFormula.toString() + " (" + ionType.toString() + "), peak formula is " + measuredPeakFormula;
+        return (target == Target.FRAGMENT ? "" : "loss of ") + underlyingFormula.toString() + " (" + ionType.toString() + ", " + modification.toString() + "), peak formula is " + measuredPeakFormula;
     }
 }

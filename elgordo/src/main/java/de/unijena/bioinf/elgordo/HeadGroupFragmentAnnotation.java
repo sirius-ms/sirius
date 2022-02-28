@@ -29,7 +29,7 @@ public class HeadGroupFragmentAnnotation extends LipidAnnotation{
     private HeadGroup headGroup;
 
     public HeadGroupFragmentAnnotation(Target target, MolecularFormula formula, MolecularFormula peakFormula, PrecursorIonType ionType, HeadGroup group) {
-        super(target, formula,peakFormula, ionType);
+        super(target, formula,peakFormula, ionType,MolecularFormula.emptyFormula());
         this.headGroup = group;
     }
 
