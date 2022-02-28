@@ -61,6 +61,7 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
             if(mfWasRead && smilesWasRead) break;
             currentLine = fileReader.readLine();
         }
+        fileReader.close();
         // Assumption: In any case, 'file' contains two lines that start with ">formula" and ">smiles".
         // --> the molecular formula and the smiles string have been read
         SmilesParser smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
