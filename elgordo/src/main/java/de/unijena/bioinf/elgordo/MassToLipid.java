@@ -50,18 +50,24 @@ public class MassToLipid {
     private final MolecularFormula SPHINGOSIN_HEAD;
     private final Deviation deviation;
 
-    public MassToLipid(Deviation deviation) {
+    public MassToLipid(Deviation deviation, int polarity) {
         this.deviation = deviation;
         this.cho = new MassToFormulaDecomposer(new ChemicalAlphabet(MolecularFormula.parseOrThrow("CHO").elementArray()));
         this.chno = new MassToFormulaDecomposer(new ChemicalAlphabet(MolecularFormula.parseOrThrow("CHNO").elementArray()));
         this.chnops = new MassToFormulaDecomposer(new ChemicalAlphabet(MolecularFormula.parseOrThrow("CHNOPS").elementArray()));
         this.chainConstraints = new FormulaConstraints("C[1-]H[2-]N[0]O[0-]");
-
-        this.possibleIonTypes = new PrecursorIonType[]{
-                PrecursorIonType.fromString("[M+H]+"),
-                PrecursorIonType.fromString("[M+Na]+"),
-                PrecursorIonType.fromString("[M+NH3+H]+"),
-                PrecursorIonType.fromString("[M+O+H]+")};
+        if (polarity>0) {
+            this.possibleIonTypes = new PrecursorIonType[]{
+                    PrecursorIonType.fromString("[M+H]+"),
+                    PrecursorIonType.fromString("[M+Na]+"),
+                    PrecursorIonType.fromString("[M+NH3+H]+"),
+                    PrecursorIonType.fromString("[M+O+H]+")};
+        } else {
+            this.possibleIonTypes = new PrecursorIonType[]{
+                    PrecursorIonType.fromString("[M-H]-"),
+                    PrecursorIonType.fromString("[M+H2CO2-H]-"),
+            PrecursorIonType.fromString("[M - CH2 - H]-")};
+        }
         this.SPHINGOSIN_HEAD = new LipidChain(LipidChain.Type.SPHINGOSIN, 5, 1).getFormula();
     }
 
