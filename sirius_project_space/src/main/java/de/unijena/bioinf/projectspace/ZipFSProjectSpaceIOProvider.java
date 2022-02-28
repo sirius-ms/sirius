@@ -42,10 +42,7 @@ public class ZipFSProjectSpaceIOProvider extends PathProjectSpaceIOProvider {
     public ZipFSProjectSpaceIOProvider(@NotNull Path location, boolean useTempFile) {
         this(location, useTempFile,
                 PropertyManager.getInteger("de.unijena.bioinf.sirius.zipfs.maxWritesBeforeFlush", 250),
-                CompressionFormat.of(
-                        PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compressionLevels", null, "1"),
-                        PropertyManager.getProperty("de.unijena.bioinf.sirius.zipfs.compression")
-                )
+                ZipProvider.getDefaultCompressionFormat()
         );
     }
 
