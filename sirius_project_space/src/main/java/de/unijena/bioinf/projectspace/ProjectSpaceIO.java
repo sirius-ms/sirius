@@ -198,9 +198,7 @@ public class ProjectSpaceIO {
                 CompressionFormat targetFormat;
 
                 if (isZipSource && isZipTarget) {
-                    try(ProjectIOProvider<?,?,?> p = getDefaultZipProvider(targetLocation)){
-                        targetFormat = p.getCompressionFormat();
-                    }
+                    targetFormat = ZipProvider.getDefaultCompressionFormat();
 
                     if (Objects.equals(sourceFormat, targetFormat)) {
                         Files.copy(sourceSpaceLocation, targetLocation); //might keep old non hierarchical zip version but is super fast
