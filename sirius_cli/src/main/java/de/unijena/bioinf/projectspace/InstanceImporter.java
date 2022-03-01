@@ -276,7 +276,6 @@ public class InstanceImporter {
                                     if (targetP.getParent() != null)
                                         Files.createDirectories(targetP.getParent());
                                     try (OutputStream o = Files.newOutputStream(targetP)) {
-                                        System.out.println("Copy " + sourceP + " -> " + targetP);
                                         s.transferTo(o);
                                     }
                                 });
