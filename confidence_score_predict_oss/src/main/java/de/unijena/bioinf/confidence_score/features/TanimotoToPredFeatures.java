@@ -44,6 +44,8 @@ public class TanimotoToPredFeatures implements FeatureCreator {
     private int feature_size;
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
+    int min_quartil=1;
+    int max_quartil=99;
 
 
     public TanimotoToPredFeatures(Scored<FingerprintCandidate>[] rankedCandidates, Scored<FingerprintCandidate>[] rankedCandidates_filtered) {
@@ -61,6 +63,16 @@ public class TanimotoToPredFeatures implements FeatureCreator {
     }
 
     @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
+    }
+
+    @Override
     public double[] computeFeatures(ParameterStore query) {
         double[] scores = new double[feature_size];
         scores[0] = rankedCandidates_filtered[0].getCandidate().getFingerprint().tanimoto(query.getFP().orElseThrow().asDeterministic());
@@ -70,6 +82,16 @@ public class TanimotoToPredFeatures implements FeatureCreator {
     @Override
     public int getFeatureSize() {
         return 1;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+        max_quartil=quartil;
     }
 
     @Override

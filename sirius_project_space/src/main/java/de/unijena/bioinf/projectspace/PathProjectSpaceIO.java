@@ -23,62 +23,68 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class FileBasedProjectSpaceIO implements ProjectIO {
+public class PathProjectSpaceIO implements ProjectIO {
 
 
-    protected Path dir;
+    protected FileSystemManager fs;
+    protected Path prefix;
     protected final Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter;
 
-    public FileBasedProjectSpaceIO(Path dir, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
-        this.dir = dir;
+    public PathProjectSpaceIO(FileSystemManager fs, Function<Class<ProjectSpaceProperty>, Optional<ProjectSpaceProperty>> propertyGetter) {
+        this.fs = fs;
         this.propertyGetter = propertyGetter;
     }
 
     @Override
     public <A extends ProjectSpaceProperty> Optional<A> getProjectSpaceProperty(Class<A> klass) {
-        return (Optional<A>)propertyGetter.apply((Class<ProjectSpaceProperty>)klass);
+        return (Optional<A>) propertyGetter.apply((Class<ProjectSpaceProperty>) klass);
     }
 
 
     @Override
-    public List<String> list(String globPattern)  throws IOException {
-        final ArrayList<String> content = new ArrayList<>();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, globPattern)) {
-            for (Path p : stream)
-                content.add(dir.relativize(p).toString());
-        }
-        return content;
+    public List<String> list(String globPattern, boolean recursive, boolean includeFiles, boolean includeDirs) throws IOException {
+        return fs.list(resolve(null), globPattern, recursive, includeFiles, includeDirs);
+    }
+
+    @Override
+    public boolean exists(String relativePath) throws IOException {
+        return fs.readFile(resolve(relativePath), (IOFunctions.IOFunction<Path, Boolean>) Files::exists);
     }
 
 
     @Override
-    public boolean exists(String relativePath) {
-        return Files.exists(asPath(relativePath));
-    }
-
-
-    @Override
-    public <T> T inDirectory(String relativePath, IOFunctions.IOCallable<T> ioAction)  throws IOException {
-        final Path newDir = asPath(relativePath);
-        final Path oldDir = dir;
+    public <T> T inDirectory(String relativePath, IOFunctions.IOCallable<T> ioAction) throws IOException {
+        final Path newDir = resolveAsPath(relativePath);
+        final Path oldDir = prefix;
         try {
-            dir = newDir;
+            prefix = newDir;
             return ioAction.call();
         } finally {
-            dir = oldDir;
+            prefix = oldDir;
         }
     }
 
-    @Override
-    public Path asPath(String relativePath) {
-        return dir.resolve(relativePath);
+
+    protected String resolve(String relativePath) {
+        Path p = resolveAsPath(relativePath);
+        return p == null ? null : p.toString();
+    }
+
+    protected Path resolveAsPath(String relativePath) {
+        if (prefix == null)
+            return relativePath == null ? null : Path.of(relativePath);
+        return relativePath == null ? prefix : prefix.resolve(relativePath);
+
+    }
+
+    public URI asURI(String path) {
+        return resolveAsPath(path).toUri();
     }
 }

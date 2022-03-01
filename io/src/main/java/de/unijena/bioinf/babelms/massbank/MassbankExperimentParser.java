@@ -22,7 +22,6 @@ package de.unijena.bioinf.babelms.massbank;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -31,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 
 import static de.unijena.bioinf.babelms.massbank.MassbankFormat.*;
 
@@ -48,7 +47,7 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
 
 
     @Override
-    public Ms2Experiment parse(BufferedReader reader, URL source) throws IOException {
+    public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
         AnnotatedSpectrum<Peak> spectrum = parseSpectrum(reader);
 
         if (spectrum == null)

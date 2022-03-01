@@ -47,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class PvalueDistanceFeatures implements FeatureCreator {
+    int min_quartil=1;
+    int max_quartil=99;
     private int[] distances;
     private int feature_size;
     Scored<FingerprintCandidate>[] rankedCandidates;
@@ -68,6 +70,16 @@ public class PvalueDistanceFeatures implements FeatureCreator {
     }
 
     @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
+    }
+
+    @Override
     public double[] computeFeatures(@Nullable ParameterStore ignored) {
         PvalueScoreUtils putils = new PvalueScoreUtils();
 
@@ -86,6 +98,16 @@ public class PvalueDistanceFeatures implements FeatureCreator {
     @Override
     public int getFeatureSize() {
         return distances.length;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+        max_quartil=quartil;
     }
 
     @Override

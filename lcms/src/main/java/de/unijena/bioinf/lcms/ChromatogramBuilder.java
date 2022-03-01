@@ -22,6 +22,7 @@ package de.unijena.bioinf.lcms;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.model.lcms.*;
@@ -47,11 +48,7 @@ public class ChromatogramBuilder {
     public Optional<ChromatographicPeak> detectExact(Scan startingPoint, double mz) {
         final SimpleSpectrum spectrum = sample.storage.getScan(startingPoint);
         int i = Spectrums.binarySearch(spectrum, mz, dev);
-        if (i>=0) {
-            return buildTrace(spectrum, new ScanPoint(startingPoint, spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
-        } else {
-            return Optional.empty(); // no chromatographic peak detected
-        }
+        return buildTraceOrReturnEmpty(i, spectrum, startingPoint);
     }
 
     public Optional<ChromatographicPeak> detectFirst(Range<Integer> scanRange, int middle, double mz) {
@@ -133,10 +130,36 @@ public class ChromatogramBuilder {
         }
     }
 
-    public Optional<ChromatographicPeak> detect(Scan startingPoint, double mz) {
+    public Optional<ChromatographicPeak> detect(Scan startingPoint, double isolationTargetMz, IsolationWindow window) {
+        if (window != null) {
+            //search in the middle 33% of the window
+            final Deviation leftAbsDev = new Deviation(0, window.getLeftOffset() * 0.33);
+            final Deviation rightAbsDev = new Deviation(0, window.getRightOffset() * 0.33);
+            //todo for windows that isolate the whole isotope pattern a monoisotopic peak detection would be good (to not select the +1 peak with some uncommon elements)
+            return detect(startingPoint, isolationTargetMz, leftAbsDev, rightAbsDev); //todo may assuming a normal distribution be better?
+        } else {
+            return detect(startingPoint, isolationTargetMz, dev);
+        }
+    }
+
+    public Optional<ChromatographicPeak> detect(Scan startingPoint, double mz, Deviation leftWindow, Deviation rightWindow) {
         final SimpleSpectrum spectrum = sample.storage.getScan(startingPoint);
-        int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, dev);
-        if (i>=0) {
+
+        double begin = mz - leftWindow.absoluteFor(mz);
+        double end = mz + rightWindow.absoluteFor(mz);
+        int i = Spectrums.mostIntensivePeakWithin(spectrum, begin, end);
+
+        return buildTraceOrReturnEmpty(i, spectrum, startingPoint);
+    }
+
+    public Optional<ChromatographicPeak> detect(Scan startingPoint, double mz, Deviation window) {
+        final SimpleSpectrum spectrum = sample.storage.getScan(startingPoint);
+        int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, window);
+        return buildTraceOrReturnEmpty(i, spectrum, startingPoint);
+    }
+
+    private Optional<ChromatographicPeak> buildTraceOrReturnEmpty(int i, SimpleSpectrum spectrum, Scan startingPoint) {
+        if (i >=0) {
             return buildTrace(spectrum, new ScanPoint(startingPoint, spectrum.getMzAt(i), spectrum.getIntensityAt(i)));
         } else {
             return Optional.empty(); // no chromatographic peak detected

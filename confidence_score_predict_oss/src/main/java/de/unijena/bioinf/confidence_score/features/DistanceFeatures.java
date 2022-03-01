@@ -48,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 public class DistanceFeatures implements FeatureCreator {
     private int[] distances;
     private int feature_size;
+    int min_quartil=1;
+    int max_quartil=99;
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
@@ -63,6 +65,16 @@ public class DistanceFeatures implements FeatureCreator {
     @Override
     public int weight_direction() {
         return 1;
+    }
+
+    @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
     }
 
     @Override
@@ -88,6 +100,16 @@ public class DistanceFeatures implements FeatureCreator {
     @Override
     public int getFeatureSize() {
         return distances.length;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+        max_quartil=quartil;
     }
 
     @Override
