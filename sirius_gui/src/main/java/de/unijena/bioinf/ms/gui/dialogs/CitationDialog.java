@@ -25,31 +25,37 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class CitationDialog extends InfoDialog {
-    public final String bibTexKey;
+    public final List<String> bibtexKeys;
 
     public CitationDialog(Window owner, String bibtexKey, Supplier<String> messageSupplier) {
-        this(owner, "de.unijena.bioinf.sirius.ui.cite." + bibtexKey, bibtexKey, messageSupplier);
-
+        this(owner, "de.unijena.bioinf.sirius.ui.cite." + bibtexKey, List.of(bibtexKey), messageSupplier);
     }
 
-    public CitationDialog(Window owner, String propertyKey, String bibtexKey, Supplier<String> messageSupplier) {
-        super(owner, "Please cite:", messageSupplier, propertyKey);
-        this.bibTexKey = bibtexKey;
+    public CitationDialog(Window owner, String propertyKey, Collection<String> bibtexKeys, Supplier<String> messageSupplier) {
+        super(owner, "Please cite:", messageSupplier, propertyKey, false);
+        this.bibtexKeys = new ArrayList<>(bibtexKeys);
+        setVisible(true);
     }
 
     @Override
     protected void decorateButtonPanel(JPanel boxedButtonPanel) {
-        final JButton cite = new JButton("Copy Citation");
+        final JButton cite = new JButton("Copy Citation(s)");
         cite.setToolTipText("Copy citations text to clipboard.");
         cite.addActionListener(e -> {
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            ApplicationCore.BIBTEX.getEntryAsPlainText(bibTexKey, false).ifPresent(s -> {
-                final StringSelection sel = new StringSelection(s);
-                clipboard.setContents(sel, null);
-            });
+            String s = bibtexKeys.stream()
+                    .map(bibtexKey -> ApplicationCore.BIBTEX.getEntryAsPlainText(bibtexKey, false))
+                    .flatMap(Optional::stream).collect(Collectors.joining(System.lineSeparator()));
+            final StringSelection sel = new StringSelection(s);
+            clipboard.setContents(sel, null);
 
         });
 
@@ -57,10 +63,11 @@ public class CitationDialog extends InfoDialog {
         bib.setToolTipText("Copy citations bibtex entry to clipboard.");
         bib.addActionListener(e -> {
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            ApplicationCore.BIBTEX.getEntryAsBibTex(bibTexKey).ifPresent(s -> {
-                final StringSelection sel = new StringSelection(s);
-                clipboard.setContents(sel, null);
-            });
+            String s = bibtexKeys.stream()
+                    .map(ApplicationCore.BIBTEX::getEntryAsBibTex)
+                    .flatMap(Optional::stream).collect(Collectors.joining(System.lineSeparator()));
+            final StringSelection sel = new StringSelection(s);
+            clipboard.setContents(sel, null);
         });
 
         boxedButtonPanel.add(bib);
