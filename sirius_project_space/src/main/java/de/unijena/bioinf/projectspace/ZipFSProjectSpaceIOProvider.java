@@ -315,7 +315,7 @@ public class ZipFSProjectSpaceIOProvider extends PathProjectSpaceIOProvider {
                                 output.add(relativeFromRoot);
 
                             if (recursive) {
-                                final ResolvedPath nuCurrent = resolvePath(relativeFromRoot, true);
+                                final ResolvedPath nuCurrent = resolvePath(current.getPath().toString(), true);
                                 lock.readLock().lock();
                                 try {
                                     List<ResolvedPath> nuLevel = FileUtils.walkAndClose(w -> w.map(p -> new ResolvedPath(nuCurrent.fs, p.toString()))
