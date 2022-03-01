@@ -20,16 +20,12 @@
 
 package de.unijena.bioinf.projectspace.canopus;
 
-import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
-import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
-import de.unijena.bioinf.projectspace.ComponentSerializer;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.ProjectReader;
-import de.unijena.bioinf.projectspace.ProjectWriter;
-import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
+import de.unijena.bioinf.projectspace.*;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -43,17 +39,27 @@ public class CanopusSerializer implements ComponentSerializer<FormulaResultId, F
         final String loc = CF.relFilePath(id);
         if (!reader.exists(loc)) return null;
 
-        final CanopusCfData canopusData = reader.getProjectSpaceProperty(CanopusCfDataProperty.class)
+        final CanopusCfData canopusCFData = reader.getProjectSpaceProperty(CanopusCfDataProperty.class)
                 .map(p -> p.getByIonType(id.getIonType())).orElseThrow();
 
-        final double[] probabilities = reader.doubleVector(loc);
-        final ProbabilityFingerprint probabilityFingerprint = new ProbabilityFingerprint(canopusData.getFingerprintVersion(), probabilities);
+        final double[] cfProbabilities = reader.doubleVector(loc);
+        final ProbabilityFingerprint probabilityFingerprint = new ProbabilityFingerprint(canopusCFData.getFingerprintVersion(), cfProbabilities);
 
-        final Optional<ProbabilityFingerprint> npcFingerprint;
+
+        Optional<ProbabilityFingerprint> npcFingerprint = Optional.empty();
         final String npcLoc = NPC.relFilePath(id);
         if (reader.exists(npcLoc)) {
-            npcFingerprint = Optional.of(new ProbabilityFingerprint(MaskedFingerprintVersion.allowAll(NPCFingerprintVersion.get()), reader.doubleVector(npcLoc)));
-        } else npcFingerprint = Optional.empty();
+            final CanopusNpcData canopusNPCData = reader.getProjectSpaceProperty(CanopusNpcDataProperty.class)
+                    .map(p -> p.getByIonType(id.getIonType())).orElse(null);
+
+            if (canopusNPCData != null) {
+                final double[] npcProbabilities = reader.doubleVector(loc);
+                npcFingerprint = Optional.of(new ProbabilityFingerprint(canopusNPCData.getFingerprintVersion(), npcProbabilities));
+            }else {
+                LoggerFactory.getLogger(getClass()).debug("Cannot write Canopus NPC summaries due to missing CANOPUS NPC model data."); //this is for backwards compatibility version
+            }
+        }
+
 
         return new CanopusResult(probabilityFingerprint, npcFingerprint);
     }
