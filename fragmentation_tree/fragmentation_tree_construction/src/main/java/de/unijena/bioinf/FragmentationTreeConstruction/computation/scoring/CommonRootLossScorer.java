@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
+
 @Called("CommonRootLoss")
 public class CommonRootLossScorer implements FragmentScorer<MolecularFormula>, Parameterized {
 
@@ -57,18 +59,12 @@ public class CommonRootLossScorer implements FragmentScorer<MolecularFormula>, P
 
     @Override
     public MolecularFormula prepare(ProcessedInput input, AbstractFragmentationGraph graph) {
-        Fragment root = graph.getRoot();
-        if (root.getFormula()==null) {
-            // fetch "real" root
-            if (root.getOutDegree()>1) {
-                LoggerFactory.getLogger(CommonRootLossScorer.class).warn("Cannot score root losses for graph with multiple roots. Rootloss score is set to 0 for this instance.");
-                return null;
-            }
-            for (Fragment g : root.getChildren()) {
-                root = g;
-            }
+        Optional<Fragment> root = FragmentScorer.getDecompositionRootNode(graph);
+        if (root.isEmpty()) {
+            LoggerFactory.getLogger(CommonRootLossScorer.class).warn("Cannot score root losses for graph with multiple roots. Rootloss score is set to 0 for this instance.");
+            return null;
         }
-        return root.getFormula();
+        return root.get().getFormula();
     }
 
     @Override

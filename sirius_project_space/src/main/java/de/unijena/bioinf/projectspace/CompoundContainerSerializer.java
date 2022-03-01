@@ -23,7 +23,6 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import java.io.IOException;
-import java.util.regex.Pattern;
 
 import static de.unijena.bioinf.projectspace.SiriusLocations.TREES;
 
@@ -38,15 +37,13 @@ public class CompoundContainerSerializer implements ContainerSerializer<Compound
         });
     }
 
-    private final static Pattern resultPattern = Pattern.compile("(\\d+)_([^_]+)_(.+)\\.json");
-
     @Override
     public CompoundContainer readFromProjectSpace(ProjectReader reader, ProjectReader.ForContainer<CompoundContainerId, CompoundContainer> containerSerializer, CompoundContainerId id) throws IOException {
         return reader.inDirectory(id.getDirectoryName(), ()->{
             final CompoundContainer container = new CompoundContainer(id);
             if (reader.exists(TREES.relDir())) {
                 reader.inDirectory(TREES.relDir(), () -> {
-                    for (String file : reader.list("*" + TREES.fileExtDot())) { //todo change to score
+                    for (String file : reader.list("**" + TREES.fileExtDot())) { //todo change to score
                         final String name = file.substring(0, file.length() - TREES.fileExtDot().length());
                         String[] pt = name.split("_");
                         final FormulaResultId fid = new FormulaResultId(id, MolecularFormula.parseOrThrow(pt[0]), PrecursorIonType.fromString(pt[1]));

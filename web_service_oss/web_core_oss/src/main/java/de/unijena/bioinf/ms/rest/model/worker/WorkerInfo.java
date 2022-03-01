@@ -46,8 +46,10 @@ public class WorkerInfo {
     private String prefix;
     private int state;
 
-    // heartbeat of the worker/ last request of the worker
+    // heartbeat of the worker/last request of the worker
     private long alive;
+    // We should be able to compare against server time because client/user systems time can be wrong
+    private long serverTime = System.currentTimeMillis();
 
     public WorkerInfo() {
     }
@@ -170,5 +172,21 @@ public class WorkerInfo {
         this.state = state;
     }
 
+
+    public long getServerTime() {
+        return serverTime;
+    }
+
+    public void setServerTime(long serverTime) {
+        this.serverTime = serverTime;
+    }
+
+    public boolean isAlive(long aliveDifference){
+        return serverTime - alive < aliveDifference;
+    }
+
+    public WorkerWithCharge asWorkerWithCharge(){
+        return WorkerWithCharge.of(this);
+    }
     //endregion
 }

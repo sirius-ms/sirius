@@ -203,7 +203,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         if (Math.abs(newScore - oldScore) > 0.1) {
 
             final double treeSize = tree.numberOfVertices()==1 ? 0 : tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(tree.numberOfVertices() - 1)).get("TreeSizeScorer");
-            this.logDebug(prefix + ": Score of " + tree.getRoot().getFormula() + " differs significantly from recalculated score: " + oldScore + " vs " + newScore + " with tree size is " + pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, () -> new TreeSizeScorer.TreeSizeBonus(-0.5d)).score + " and root score is " + tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(0)).sum() + " and " + treeSize + " sort key is score " + tree.getTreeWeight() + " and filename is " + pinput.getExperimentInformation().getSourceString());
+            this.logWarn(prefix + ": Score of " + tree.getRoot().getFormula() + " differs significantly from recalculated score: " + oldScore + " vs " + newScore + " with tree size is " + pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, () -> new TreeSizeScorer.TreeSizeBonus(-0.5d)).score + " and root score is " + tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(0)).sum() + " and " + treeSize + " sort key is score " + tree.getTreeWeight() + " and filename is " + pinput.getExperimentInformation().getSourceString());
         }
 
     }
@@ -362,6 +362,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             //if (r.input!=null) r.input.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(orig));
             final double penalty = (r.tree.getAnnotationOrThrow(Beautified.class).getBeautificationPenalty());
             r.tree.setTreeWeight(r.tree.getTreeWeight()-penalty);
+            r.tree.setRootScore(r.tree.getRootScore()-penalty);
             recalculateScore(r.input==null ? pinput : r.input, r.tree, "final");
         }
     }
@@ -409,7 +410,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         return new ExtendedCriticalPathHeuristicTreeBuilder(this::checkHeuristicInterruption);
     }
 
-    private boolean checkHeuristicInterruption() throws Exception {
+    private boolean checkHeuristicInterruption() throws InterruptedException {
         this.checkForInterruption();
         return false;
     }

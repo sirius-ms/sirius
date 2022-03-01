@@ -125,7 +125,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                         fingeridInput.getPrecursorIonType(),
                         true,
                         experiment.getAnnotation(InjectElGordoCompounds.class)
-                                .orElse(InjectElGordoCompounds.TRUE).value ? DataSource.ELGORDO.flag : 0)
+                                .orElse(InjectElGordoCompounds.TRUE).value ? DataSource.LIPID.flag : 0)
         ).collect(Collectors.toList());
 
         submitSubJobsInBatches(formulaJobs, PropertyManager.getNumberOfThreads());

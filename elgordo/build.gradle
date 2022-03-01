@@ -21,4 +21,8 @@ dependencies {
     annotationProcessor project(':default_properties:processor')
     compile project(':chemistry_base')
     compile project(':mass_decomposition:mass_decomposer')
+
+    for (module in ["fingerprint", "data", "interfaces", "smiles", "core", "silent", "isomorphism"]) {
+        compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
+    }
 }
