@@ -17,23 +17,32 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.annotations;
+package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
-import de.unijena.bioinf.ms.properties.DefaultProperty;
+import de.unijena.bioinf.ms.gui.configs.Icons;
+import org.slf4j.LoggerFactory;
 
-public class WriteSummaries implements Ms2ExperimentAnnotation {
-    public static final WriteSummaries TRUE = new WriteSummaries(true);
-    public static final WriteSummaries FALSE = new WriteSummaries(false);
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
-    public final boolean value;
+public class OpenOnlineDocumentationAction extends AbstractAction {
 
-    private WriteSummaries(boolean value) {
-        this.value = value;
+    public OpenOnlineDocumentationAction() {
+        super("Help");
+        putValue(Action.LARGE_ICON_KEY, Icons.HELP_32);
+        putValue(Action.SHORT_DESCRIPTION,"Open online documentation");
     }
 
-    @DefaultInstanceProvider
-    public static WriteSummaries newInstance(@DefaultProperty boolean value){
-        return value ? TRUE : FALSE;
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        try {
+            Desktop.getDesktop().browse(new URI("https://boecker-lab.github.io/docs.sirius.github.io/"));
+        } catch (IOException | URISyntaxException er) {
+            LoggerFactory.getLogger(this.getClass()).error(er.getMessage(), er);
+        }
     }
 }

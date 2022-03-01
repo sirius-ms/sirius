@@ -65,8 +65,8 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             final Optional<CoelutingTraceSet> tracesFor = lcmsPeakInformation.getTracesFor(k);
             if (tracesFor.isPresent()) {
                 final CoelutingTraceSet coelutingTraceSet = tracesFor.get();
-                LCMSCompoundSummary sum = new LCMSCompoundSummary(coelutingTraceSet,coelutingTraceSet.getIonTrace(), item.getExperiment());
-                if (filterModel.getPeakShapeQuality(sum.peakQuality)) {
+                LCMSCompoundSummary.Quality peakQuality = LCMSCompoundSummary.checkPeakQuality(coelutingTraceSet,coelutingTraceSet.getIonTrace());
+                if (filterModel.getPeakShapeQuality(peakQuality)) {
                     return true;
                 }
             }

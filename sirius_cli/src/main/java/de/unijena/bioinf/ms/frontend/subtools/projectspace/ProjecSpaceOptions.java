@@ -174,14 +174,14 @@ public class ProjecSpaceOptions implements StandaloneTool<ProjectSpaceWorkflow> 
 
     @Nullable
     public Predicate<Instance> getCombinedInstanceilter() {
-        Predicate<Instance> it = (inst) -> true; //always true as a start
+        Predicate<Instance> it = null; //null to skip filtering
         // combine
         if (keepConfidenceFilter != null)
-            it = it.and(keepConfidenceFilter);
+            it = it == null ? keepConfidenceFilter : it.and(keepConfidenceFilter);
         if (keepTreeSizeFilter != null)
-            it = it.and(keepTreeSizeFilter);
+            it = it == null ? keepTreeSizeFilter : it.and(keepTreeSizeFilter);
         if (keepExplainedIntensityFilter != null)
-            it = it.and(keepExplainedIntensityFilter);
+            it = it == null ? keepExplainedIntensityFilter : it.and(keepExplainedIntensityFilter);
         return it;
     }
 

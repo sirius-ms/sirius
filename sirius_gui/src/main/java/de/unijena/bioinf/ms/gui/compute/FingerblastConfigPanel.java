@@ -54,12 +54,15 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
         parameterBindings.put("StructureSearchDB", () -> searchDBList.checkBoxList.getCheckedItems().isEmpty() ? null : String.join(",", getStructureSearchDBStrings()));
         JButton allBut = new JButton("non in silico");
         allBut.setToolTipText(GuiUtils.formatToolTip("Select all but combinatorial databases."));
-        allBut.addActionListener(c -> innerList.checkAll(allButInsilico()));
+        allBut.addActionListener(c -> {
+            innerList.uncheckAll();
+            innerList.checkAll(allButInsilico());
+        });
         searchDBList.buttons.add(allBut);
         add(searchDBList);
 
         final TwoColumnPanel additionalOptions = new TwoColumnPanel();
-        additionalOptions.addNamed("Inject Lipids", makeParameterCheckBox("InjectElGordoCompounds"));
+        additionalOptions.addNamed("Tag Lipids", makeParameterCheckBox("InjectElGordoCompounds"));
 
         add(new TextHeaderBoxPanel("General", additionalOptions));
 

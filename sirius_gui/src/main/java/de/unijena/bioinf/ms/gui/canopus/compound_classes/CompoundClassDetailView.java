@@ -239,7 +239,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
                 @Override
                 protected Boolean compute() throws Exception {
                     if (old != null && !old.isFinished()) {
-                        old.cancel(true);
+                        old.cancel(false);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
                     Jobs.runEDTAndWait(() -> clear());

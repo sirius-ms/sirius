@@ -25,7 +25,7 @@ public class FxTaskList {
     }
 
     public void cancelAll() {
-        this.taskList.forEach(task->task.cancel(true));
+        this.taskList.forEach(task->task.cancel(false));
     }
 
     private static class Task extends FutureTask<Void> {

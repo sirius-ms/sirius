@@ -19,10 +19,11 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
-import de.unijena.bioinf.ms.gui.table.list_stats.ListStats;
 
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by fleisch on 15.05.17.
@@ -43,6 +44,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
             "#PubMed IDs",
             "XLogP",
             "InChIKey",
+            "Lipid Class",
             "Best"
     };
 
@@ -72,6 +74,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
         if (column == col++) return result.getFingerprintCandidate().getPubmedIDs();
         if (column == col++) return result.candidate.getXlogp();
         if (column == col++) return result.candidate.getInchi().key;
+        if (column == col++) return result.candidate.getLinks().stream().filter(l -> l.name.equals(DataSource.LIPID.realName)).map(l -> l.id).collect(Collectors.joining(","));
         if (column == col) return isBest.apply(result);
 
         throw new IllegalStateException();

@@ -19,13 +19,15 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
+import de.unijena.bioinf.ms.gui.subtools.summaries.SummaryConfigPanel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.List;
+
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class ProjectSummaryAction extends AbstractAction {
 
@@ -38,7 +40,8 @@ public class ProjectSummaryAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Jobs.runInBackgroundAndLoad(MainFrame.MF, "Writing Summaries to Project-Space",
-                MainFrame.MF.ps().projectSpace().makeSummarizerJob(ProjectSpaceManager.defaultSummarizer()));
+        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(new SummaryConfigPanel(), List.copyOf(MF.getCompounds()), null, MF, "Write Project Summaries", true);
+        d.setIndeterminateProgress(false);
+        d.start();
     }
 }

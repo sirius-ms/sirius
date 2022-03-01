@@ -115,7 +115,7 @@ public class MztabMExporter implements Summarizer {
     }
 
     @Override
-    public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer c, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
+    public synchronized void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer c, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
         final @NotNull Ms2Experiment exp = c.getAnnotationOrThrow(Ms2Experiment.class);
         if (results != null && !results.isEmpty()) {
             FormulaResult bestHitSource = results.get(0).getCandidate();
@@ -197,7 +197,7 @@ public class MztabMExporter implements Summarizer {
     }
 
     @Override
-    public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
+    public synchronized void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
         writer.textFile(SummaryLocations.MZTAB_SUMMARY, this::write);
     }
 
