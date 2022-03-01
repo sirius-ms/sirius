@@ -44,8 +44,12 @@ public class WarningDialog extends DoNotShowAgainDialog {
     }
 
     public WarningDialog(Window owner, String title, Supplier<String> messageProvider, String propertyKey) {
+        this(owner, title, messageProvider, propertyKey, true);
+    }
+
+    protected WarningDialog(Window owner, String title, Supplier<String> messageProvider, String propertyKey, boolean setVisible) {
         super(owner, title, messageProvider, propertyKey);
-        this.setVisible(true);
+        setVisible(setVisible);
     }
 
     @Override

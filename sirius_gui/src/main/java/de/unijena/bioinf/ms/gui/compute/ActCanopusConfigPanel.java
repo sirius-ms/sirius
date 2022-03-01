@@ -27,13 +27,15 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 
 public class ActCanopusConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<CanopusOptions>> {
-    public static final String BIBTEX_KEY = "djoumbou-feunang16classyfire";
+    public static final String BIBTEX_KEY_CF = "djoumbou-feunang16classyfire";
+    public static final String BIBTEX_KEY_NPC = "kim21npclassifier";
 
     public ActCanopusConfigPanel() {
         super("CANOPUS", Icons.WORM_32, true, () -> {
@@ -48,12 +50,17 @@ public class ActCanopusConfigPanel extends ActivatableConfigPanel<SubToolConfigP
     @Override
     protected void setComponentsEnabled(boolean enabled) {
         super.setComponentsEnabled(enabled);
-        if (enabled && !PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.cite." + BIBTEX_KEY, false)) {
-            new CitationDialog(MainFrame.MF, BIBTEX_KEY, () ->
-                    "<html><h3> CANOPUS would not have been possible without the awesome work of the ClassyFire people.</h3> "
-                            + "So please also cite the ClassyFire publication when using CANOPUS:<br><br><p>"
-                            + ApplicationCore.BIBTEX.getEntryAsHTML(BIBTEX_KEY, false, true).map(s -> s.replace("beck, ", "beck,<br>")).orElse(null)
-                            + "</p></html>");
+        if (enabled && !PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.cite.canopus", false)) {
+            new CitationDialog(MainFrame.MF, "de.unijena.bioinf.sirius.ui.cite.canopus", List.of(BIBTEX_KEY_CF, BIBTEX_KEY_NPC), () ->
+                    "<html><h3> CANOPUS would not have been possible without the awesome work of the ClassyFire and NPClassifier people.</h3> "
+                            + "So please also cite the ClassyFire and NPClassifier publications when using CANOPUS:<br><br>" +
+                            "<p>"
+                            + ApplicationCore.BIBTEX.getEntryAsHTML(BIBTEX_KEY_CF, false, true).map(s -> s.replace("beck, ", "beck,<br>")).orElse(null)
+                            + "</p>" +
+                            "<p>"
+                            + ApplicationCore.BIBTEX.getEntryAsHTML(BIBTEX_KEY_NPC, false, true).map(s -> s.replace("Bin ", "Bin<br>")).orElse(null)
+                            + "</p>" +
+                            "</html>");
         }
     }
 
