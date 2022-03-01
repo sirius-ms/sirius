@@ -11,6 +11,9 @@ import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class ExpectationMaximizationHydrogenRearrangementEstimator {
@@ -20,7 +23,7 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
     private String[] fileNames;
     private double parameter;
 
-    public ExpectationMaximizationHydrogenRearrangementEstimator(File spectraDir, File fTreeDir, double startParameter){
+    public ExpectationMaximizationHydrogenRearrangementEstimator(File spectraDir, File fTreeDir, int numberOfInstances, double startParameter){
         if(spectraDir.isDirectory()){
             if(fTreeDir.isDirectory()){
                 this.spectraDir = spectraDir;
@@ -28,10 +31,12 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
                 this.parameter = startParameter;
                 EMFragmenterScoring.rearrangementProb = startParameter;
 
-                String[] spectrumFileNames = spectraDir.list();
-                this.fileNames = new String[spectrumFileNames.length];
-                for(int i = 0; i < spectrumFileNames.length; i++){
-                    this.fileNames[i] = spectrumFileNames[i].replaceFirst("\\.ms","");
+                List<String> spectrumFileNames = Arrays.asList(spectraDir.list());
+                Collections.shuffle(spectrumFileNames);
+
+                this.fileNames = new String[numberOfInstances];
+                for(int i = 0; i < numberOfInstances; i++){
+                    this.fileNames[i] = spectrumFileNames.get(i).replaceFirst("\\.ms", "");
                 }
             }else{
                 throw new RuntimeException("The given File object for the fragmentation tree directory does not exist or is not a directory.");
@@ -145,12 +150,13 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
             File spectraDir = new File(args[0]);
             File fTreeDir = new File(args[1]);
             File outputFile = new File(args[2]);
-            double startParameter = Double.parseDouble(args[3]);
-            int fragmentationDepth = Integer.parseInt(args[4]);
-            int maxNumOfIterations = Integer.parseInt(args[5]);
-            double epsilon = Double.parseDouble(args[6]);
+            int numberOfInstances = Integer.parseInt(args[3]);
+            double startParameter = Double.parseDouble(args[4]);
+            int fragmentationDepth = Integer.parseInt(args[5]);
+            int maxNumOfIterations = Integer.parseInt(args[6]);
+            double epsilon = Double.parseDouble(args[7]);
 
-            ExpectationMaximizationHydrogenRearrangementEstimator em = new ExpectationMaximizationHydrogenRearrangementEstimator(spectraDir, fTreeDir, startParameter);
+            ExpectationMaximizationHydrogenRearrangementEstimator em = new ExpectationMaximizationHydrogenRearrangementEstimator(spectraDir, fTreeDir, numberOfInstances, startParameter);
             em.run(fragmentationDepth, maxNumOfIterations, epsilon, outputFile);
 
         } catch (UnknownElementException e) {
