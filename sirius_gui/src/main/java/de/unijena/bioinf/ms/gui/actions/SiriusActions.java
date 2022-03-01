@@ -66,6 +66,7 @@ public enum SiriusActions {
     EXPORT_FBMN(FBMNExportAction.class),
 
     SHOW_SETTINGS(ShowSettingsDialogAction.class),
+    OPEN_ONLINE_DOCUMENTATION(OpenOnlineDocumentationAction.class),
     SHOW_BUGS(ShowBugReportDialogAction.class),
     SHOW_ABOUT(ShowAboutDialogAction.class),
     SHOW_JOBS(ShowJobsDialogAction.class),

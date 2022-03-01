@@ -35,6 +35,7 @@ import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.projectspace.ProjecSpaceOptions;
 import de.unijena.bioinf.ms.frontend.subtools.similarity.SimilarityMatrixOptions;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -87,15 +88,17 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     public final DecompOptions decompOptions;
     public final LoginOptions loginOptions;
 
-    //postprocessing exporting tools
+    //postprocessing, project-space consuming tool, exporting tools,
+    public final SummaryOptions summaryOptions;
     public final MgfExporterOptions mgfExporterOptions;
     public final FTreeExporterOptions ftreeExporterOptions;
 
-    //preprocessing, project-space providing tool, preprojectspace tool
+    //preprocessing, project-space providing tool, pre-project-space tool
     public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
 
     //toolchain subtools
     protected final Map<Class<? extends ToolChainOptions<?, ?>>, ToolChainOptions<?, ?>> toolChainTools;
+
     public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
         this.bufferFactory = bufferFactory;
         this.rootOptions = rootOptions;
@@ -116,6 +119,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         decompOptions =  new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
         ftreeExporterOptions = new FTreeExporterOptions();
+        summaryOptions = new SummaryOptions();
         loginOptions = new LoginOptions();
     }
 
@@ -124,18 +128,20 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         if (rootSpec != null)
             throw new IllegalStateException("Root spec already initialized");
 
+        final CommandLine.Model.CommandSpec summarySpec = forAnnotatedObjectWithSubCommands(summaryOptions);
+
         // define execution order and dependencies of different Subtools
-        final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> chainToolSpecs = configureChainTools();
+        final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> chainToolSpecs = configureChainTools(summarySpec);
 
         final CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, chainToolSpecs.get(SiriusOptions.class));
 
         Object[] standaloneTools = standaloneTools();
 
         final CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(),
-                Stream.concat(Stream.concat(Stream.of(lcmsAlignSpec), chainToolSpecs.values().stream()), Arrays.stream(standaloneTools)).toArray());
+                Stream.concat(Stream.concat(Stream.of(lcmsAlignSpec), chainToolSpecs.values().stream()), Stream.concat(Arrays.stream(standaloneTools), Stream.of(summarySpec))).toArray());
 
         rootSpec = forAnnotatedObjectWithSubCommands(this.rootOptions,
-                Stream.concat(Stream.concat(Stream.of(standaloneTools()), Stream.of(configSpec, lcmsAlignSpec)), chainToolSpecs.values().stream()).toArray()
+                Stream.concat(Stream.concat(Stream.concat(Stream.of(configSpec), Stream.of(standaloneTools())), Stream.of(summarySpec, lcmsAlignSpec)), chainToolSpecs.values().stream()).toArray()
         );
     }
 
@@ -143,7 +149,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, loginOptions};
     }
 
-    protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools() {
+    protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools(CommandLine.Model.CommandSpec... postProcessors) {
         final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> specs = new LinkedHashMap<>();
         //inti command specs
         toolChainTools.values().forEach(t -> {
@@ -160,6 +166,13 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         toolChainTools.values().forEach(parent -> {
             CommandLine.Model.CommandSpec parentSpec = specs.get(parent.getClass());
             parent.getSubCommands().stream().map(specs::get).forEach(subSpec -> parentSpec.addSubcommand(subSpec.name(), subSpec));
+        });
+
+        //add possible postprocessors
+        toolChainTools.values().forEach(parent -> {
+            CommandLine.Model.CommandSpec parentSpec = specs.get(parent.getClass());
+            for (CommandLine.Model.CommandSpec postCommandSpec : postProcessors)
+                parentSpec.addSubcommand(postCommandSpec.name(), postCommandSpec);
         });
 
         return specs;
@@ -224,8 +237,8 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
             while (parseResult.hasSubcommand()) {
                 parseResult = parseResult.subcommand();
-                if (parseResult.commandSpec().commandLine() instanceof PostprocessingTool) {
-                    postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine()).makePostprocessingJob(rootOptions, configOptionLoader.config);
+                if (parseResult.commandSpec().commandLine().getCommand() instanceof PostprocessingTool) {
+                    postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePostprocessingJob(rootOptions, configOptionLoader.config);
                     break;
                 } else {
                     execute(parseResult.commandSpec().commandLine(), toolchain);

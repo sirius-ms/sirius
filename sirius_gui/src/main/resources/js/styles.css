@@ -70,9 +70,9 @@ body {
 .default_bond { fill: #000000; }
 .default_atom { fill: #000000; }
 
-.diff_ruler { stroke: red; }
-.diff_label { fill: red; }
-.diff_band { stroke: red; }
+.diff_ruler { stroke: #000000; }
+.diff_label { fill: #000000; }
+.diff_band { stroke: #32CD32; stroke-width: 2px}
 
 .intensity_1 { fill: #000000; }
-.intensity_2 { fill: #32CD32; }
+.intensity_2 { fill: #000000; }

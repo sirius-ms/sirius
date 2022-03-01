@@ -32,7 +32,6 @@ import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.Partition;
-import de.unijena.bioinf.ms.annotations.WriteSummaries;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
@@ -143,11 +142,6 @@ public class ProjectSpaceWorkflow implements Workflow {
 
                             LoggerFactory.getLogger(getClass()).info("Copying compounds '" + p.stream().map(CompoundContainerId::getDirectoryName).collect(Collectors.joining(",")) + "' to Batch '" + batchSpace.projectSpace().getLocation().toString());
                             InstanceImporter.importProject(source.projectSpace(), batchSpace, (cid) -> p.contains(cid) && cidFilter.test(cid), move, rootOptions.getOutput().isUpdateFingerprints());
-
-                            if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
-                                LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of Batch '" + batchSpace.projectSpace().getLocation().toString());
-                                batchSpace.updateSummaries(ProjectSpaceManager.defaultSummarizer());
-                            }
                         } finally {
                             if (batchSpace != null)
                                 batchSpace.close();
@@ -207,12 +201,6 @@ public class ProjectSpaceWorkflow implements Workflow {
 
                     // io intense filters are applied as last
                     filterOnInstanceLevel(space, projecSpaceOptions);
-
-
-                    if (config.createInstanceWithDefaults(WriteSummaries.class).value) {
-                        LoggerFactory.getLogger(getClass()).info("(Re)Writing Summaries of '" + space.projectSpace().getLocation().toString());
-                        space.updateSummaries(ProjectSpaceManager.defaultSummarizer());
-                    }
                 } catch (ExecutionException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when filtering Project(s)!", e);
                 } finally {

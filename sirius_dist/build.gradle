@@ -5,14 +5,14 @@ import java.nio.file.Paths
 import java.util.stream.Collectors
 
 plugins {
-    id 'edu.sc.seis.launch4j' version '2.4.6'
+    id 'edu.sc.seis.launch4j' version '2.5.1'
 }
 
 
 ext {
     // version for bundeled JRE
-    jre_version = '15.0.4'
-    zulu_jre_version = '15.34.17'
+    jre_version = '15.0.6'
+    zulu_jre_version = '15.38.17'
     jre_major = zulu_jre_version.split("[.]")[0]
 
     OS = DefaultNativePlatform.currentOperatingSystem

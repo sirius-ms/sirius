@@ -118,6 +118,9 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
         cancel.addActionListener(e -> cancel());
 
 //        setMinimumSize(new Dimension(350, getMinimumSize().height));
+    }
+
+    public void start (){
         setResizable(false);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
@@ -146,6 +149,7 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
     }
 
     protected void execute() {
+        dispose();
         try {
             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance("COMPUTE"));
             final WorkflowBuilder<GuiComputeRoot> wfBuilder = new WorkflowBuilder<>(new GuiComputeRoot(MF.ps(), compounds), configOptionLoader, new GuiInstanceBufferFactory());
@@ -161,13 +165,11 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
             if (computation.isWorkflowDefined()) {
                 final TextAreaJJobContainer<Boolean> j = Jobs.runWorkflow(computation.getFlow(), compounds == null ? List.of() : compounds, command, configPanel.toolCommand());
-                LoadingBackroundTask.connectToJob(this, "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
+                LoadingBackroundTask.connectToJob(this.getOwner(), "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
             }
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when running '" + configPanel.toolCommand() + "'.", e);
             new ExceptionDialog(MF, e.getMessage());
-        }finally {
-            dispose();
         }
     }
 }

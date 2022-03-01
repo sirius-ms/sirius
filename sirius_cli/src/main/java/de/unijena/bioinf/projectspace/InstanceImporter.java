@@ -50,9 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -220,29 +218,37 @@ public class InstanceImporter {
         final List<CompoundContainerId> imported = new ArrayList<>(inputSpace.size());
 
         if (resultsToSkip == null || updateFingerprintVersion) {
-            List<Path> globalFiles = FileUtils.listAndClose(inputSpace.getRootPath(), l -> l.filter(Files::isRegularFile).filter(p ->
-                    !p.getFileName().toString().equals(FilenameFormatter.PSPropertySerializer.FILENAME) &&
-                            !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
-                            !p.getFileName().toString().equals(SummaryLocations.COMPOUND_SUMMARY) &&
-                            !p.getFileName().toString().equals(SummaryLocations.FORMULA_SUMMARY) &&
-                            !p.getFileName().toString().equals(SummaryLocations.CANOPUS_SUMMARY) &&
-                            !p.getFileName().toString().equals(SummaryLocations.MZTAB_SUMMARY) &&
-                            (resultsToSkip == null || DATA_FILES_TO_SKIP.test(p.getFileName().toString())) //skip data files if incompatible
-            ).collect(Collectors.toList()));
+            final ProjectWriter targetWriter = importTarget.projectSpace().ioProvider.newWriter(importTarget.projectSpace()::getProjectSpaceProperty);
+            final ProjectReader sourceReader = inputSpace.ioProvider.newReader(inputSpace::getProjectSpaceProperty);
+            //todo make use of glob
+            List<String> globalFiles = sourceReader.listFiles("*").stream()
+                    .filter(p -> !p.equals(PSLocations.FORMAT) &&
+                            !p.equals(PSLocations.COMPRESSION) &&
+                            !p.equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
+                            !p.equals(SummaryLocations.COMPOUND_SUMMARY) &&
+                            !p.equals(SummaryLocations.FORMULA_SUMMARY) &&
+                            !p.equals(SummaryLocations.CANOPUS_SUMMARY) &&
+                            !p.equals(SummaryLocations.MZTAB_SUMMARY) &&
+                            (resultsToSkip == null || DATA_FILES_TO_SKIP.test(p)) //skip data files if incompatible
+                    ).collect(Collectors.toList());
 
-            for (Path s : globalFiles) {
-                final Path t = importTarget.projectSpace().getRootPath().resolve(s.getFileName().toString());
+            for (String relative : globalFiles) {
                 try {
-                    if (Files.notExists(t))
-                        Files.copy(s, t); // no moving here because this may be needed multiple times
+                    sourceReader.binaryFile(relative, r -> {
+                        targetWriter.binaryFile(relative, r::transferTo);
+                        return true;
+                    });
                 } catch (IOException e) {
-                    LOG.error("Could not Copy `" + s.toString() + "` to new location `" + t.toString() + "` Project might be corrupted!", e);
+                    LOG.error("Could not Copy '" + relative + "' from old location '" + inputSpace.getLocation() + "' to new location `" + importTarget.projectSpace().getLocation() + "' Project might be corrupted!", e);
                 }
             }
 
 
             final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);
 
+            final boolean flatCopy = inputSpace.ioProvider.getCompressionFormat().equals(importTarget.projectSpace().ioProvider.getCompressionFormat())
+                    && (inputSpace.ioProvider instanceof PathProjectSpaceIOProvider)
+                    && (importTarget.projectSpace().ioProvider instanceof PathProjectSpaceIOProvider);
 
             while (psIter.hasNext()) {
                 final CompoundContainerId sourceId = psIter.next();
@@ -251,25 +257,58 @@ public class InstanceImporter {
                 id.setAllNonFinal(sourceId);
                 importTarget.projectSpace().updateCompoundContainerID(id);
 
-                final List<Path> files = FileUtils.listAndClose(inputSpace.getRootPath().resolve(sourceId.getDirectoryName()), l -> l
-                        .filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO))
-                        .filter(it -> resultsToSkip == null || resultsToSkip.test(it.getFileName().toString()))
-                        .collect(Collectors.toList()));
+                if (flatCopy) {
+                    ((PathProjectSpaceIOProvider) inputSpace.ioProvider).fsManager.readFile(sourceId.getDirectoryName(), path -> {
+                        List<Path> files = FileUtils.walkAndClose(s -> s
+                                .filter(Files::isRegularFile)
+                                .filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO))
+                                .filter(p -> !p.getFileName().toString().equals(SummaryLocations.FORMULA_CANDIDATES))
+                                .filter(p -> !p.getFileName().toString().equals(SummaryLocations.STRUCTURE_CANDIDATES))
+                                .filter(p -> !p.getFileName().toString().equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP))
+                                .filter(it -> resultsToSkip == null || resultsToSkip.test(it.getFileName().toString()))
+                                .collect(Collectors.toList()), path);
 
-                for (Path s : files) {
-                    final Path t = importTarget.projectSpace().getRootPath().resolve(id.getDirectoryName()).resolve(s.getFileName().toString());
-                    try {
-                        Files.createDirectories(t);
-                        if (move)
-                            FileUtils.moveFolder(s, t);
-                        else
-                            FileUtils.copyFolder(s, t);
-                    } catch (IOException e) {
-                        LOG.error("Could not Copy instance `" + id.getDirectoryName() + "` to new location `" + t.toString() + "` Results might be missing!", e);
-                    }
+                        @NotNull FileSystemManager m = ((PathProjectSpaceIOProvider) importTarget.projectSpace().ioProvider).fsManager;
+                        for (Path sourceP : files) {
+                            try (InputStream s = Files.newInputStream(sourceP)) {
+                                m.writeFile(id.getDirectoryName(), targetRoot -> {
+                                    Path targetP = targetRoot.resolve(path.relativize(sourceP).toString());
+                                    if (targetP.getParent() != null)
+                                        Files.createDirectories(targetP.getParent());
+                                    try (OutputStream o = Files.newOutputStream(targetP)) {
+                                        s.transferTo(o);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                } else {
+                    sourceReader.inDirectory(sourceId.getDirectoryName(), () -> {
+                        List<String> files = sourceReader.listFilesRecursive("*").stream()
+                                .filter(p -> !p.equals(SiriusLocations.COMPOUND_INFO))
+                                .filter(p -> !p.equals(SummaryLocations.FORMULA_CANDIDATES))
+                                .filter(p -> !p.equals(SummaryLocations.STRUCTURE_CANDIDATES))
+                                .filter(p -> !p.equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP))
+                                .filter(it -> resultsToSkip == null || resultsToSkip.test(it))
+                                .collect(Collectors.toList());
+                        for (String relative : files) {
+                            try {
+                                sourceReader.binaryFile(relative, r ->
+                                        targetWriter.inDirectory(id.getDirectoryName(), () -> {
+                                            targetWriter.binaryFile(relative, r::transferTo);
+                                            return null;
+                                        }));//todo reimplement move support for dirs?
+                            } catch (IOException e) {
+                                LOG.error("Could not Copy instance'" + id.getDirectoryName() + "' from old location '" + inputSpace.getLocation() + "' to new location `" + importTarget.projectSpace().getLocation() + "' Results might be missing!", e);
+                            }
+                        }
+
+                        return null;
+                    });
                 }
+
                 if (resultsToSkip != null) {
-                    LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id.toString() + "' after deleting Fingerprint related results...");
+                    LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id + "' after deleting Fingerprint related results...");
                     Instance inst = importTarget.newInstanceFromCompound(id);
                     List<FormulaResult> l = inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
                             .filter(r -> r.getAnnotation(FormulaScoring.class).map(s -> (s.removeAnnotation(TopCSIScore.class) != null)
@@ -277,12 +316,12 @@ public class InstanceImporter {
                             .collect(Collectors.toList());
 
                     l.forEach(r -> inst.updateFormulaResult(r, FormulaScoring.class));
-                    LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id.toString() + "' DONE!");
+                    LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id + "' DONE!");
                 }
 
                 imported.add(id);
                 if (prog != null)
-                    prog.progressChanged(new JobProgressEvent(inputSpace.getRootPath(), 0, size, ++progress, id.toString()));
+                    prog.progressChanged(new JobProgressEvent(inputSpace.getLocation(), 0, size, ++progress, id.toString()));
                 importTarget.projectSpace().fireCompoundCreated(id);
 
                 if (move)
@@ -298,7 +337,7 @@ public class InstanceImporter {
         }
 
         if (prog != null)
-            prog.progressChanged(new JobProgressEvent(inputSpace.getRootPath(), 0, size, size, inputSpace.getRootPath().getFileName().toString() + " Done"));
+            prog.progressChanged(new JobProgressEvent(inputSpace.getLocation(), 0, size, size, inputSpace.getLocation().getFileName().toString() + " Done"));
         return imported;
     }
 
@@ -313,27 +352,27 @@ public class InstanceImporter {
                     && !n.equals(FingerIdLocations.FINGERBLAST.relDir()) && !n.equals(FingerIdLocations.FINGERBLAST_FPs.relDir()) && !n.equals(FingerIdLocations.FINGERPRINTS.relDir())
                     && !n.equals(CanopusLocations.CF.relDir()) && !n.equals(CanopusLocations.NPC.relDir());
 
-    private static <D extends FingerprintData<?>> D checkAnReadData(Path inputFile, IOFunctions.IOFunction<BufferedReader, D> read) throws IOException {
-        if (Files.exists(inputFile)) {
-            try (BufferedReader r = Files.newBufferedReader(inputFile)) {
-                return read.apply(r);
-            }
-        }
+    private static <D extends FingerprintData<?>> D checkAnReadData(String relative, ProjectReader reader, IOFunctions.IOFunction<BufferedReader, D> read) throws IOException {
+        if (reader.exists(relative))
+            return reader.textFile(relative, read);
         return null;
     }
 
 
     public static Predicate<String> checkDataCompatibility(@NotNull Path toImportPath, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) throws IOException {
         try {
+            final ProjectReader reader;
             if (FileUtils.isZipArchive(toImportPath))
-                toImportPath = FileUtils.asZipFS(toImportPath, false);
+                reader = ProjectSpaceIO.getDefaultZipProvider(toImportPath).newReader(null);
+            else
+                reader = new PathProjectSpaceIOProvider(toImportPath, null).newReader(null);
 
-            FingerIdData fdPos = checkAnReadData(toImportPath.resolve(FingerIdLocations.FINGERID_CLIENT_DATA), FingerIdData::read);
-            FingerIdData fdNeg = checkAnReadData(toImportPath.resolve(FingerIdLocations.FINGERID_CLIENT_DATA_NEG), FingerIdData::read);
-            CanopusCfData cdPos = checkAnReadData(toImportPath.resolve(CanopusLocations.CF_CLIENT_DATA), CanopusCfData::read);
-            CanopusCfData cdNeg = checkAnReadData(toImportPath.resolve(CanopusLocations.CF_CLIENT_DATA_NEG), CanopusCfData::read);
-            CanopusNpcData npcPos = checkAnReadData(toImportPath.resolve(CanopusLocations.NPC_CLIENT_DATA), CanopusNpcData::read);
-            CanopusNpcData npcNeg = checkAnReadData(toImportPath.resolve(CanopusLocations.NPC_CLIENT_DATA_NEG), CanopusNpcData::read);
+            FingerIdData fdPos = checkAnReadData(FingerIdLocations.FINGERID_CLIENT_DATA, reader, FingerIdData::read);
+            FingerIdData fdNeg = checkAnReadData(FingerIdLocations.FINGERID_CLIENT_DATA_NEG, reader, FingerIdData::read);
+            CanopusCfData cdPos = checkAnReadData(CanopusLocations.CF_CLIENT_DATA, reader, CanopusCfData::read);
+            CanopusCfData cdNeg = checkAnReadData(CanopusLocations.CF_CLIENT_DATA_NEG, reader, CanopusCfData::read);
+            CanopusNpcData npcPos = checkAnReadData(CanopusLocations.NPC_CLIENT_DATA, reader, CanopusNpcData::read);
+            CanopusNpcData npcNeg = checkAnReadData(CanopusLocations.NPC_CLIENT_DATA_NEG, reader, CanopusNpcData::read);
 
             Predicate<String> r;
             r = checkDataCompatibility((fdNeg != null || fdPos != null) ? new FingerIdDataProperty(fdPos, fdNeg) : null,
@@ -399,7 +438,6 @@ public class InstanceImporter {
             LoggerFactory.getLogger(InstanceImporter.class).warn("Could not retrieve FingerprintData from server! Importing without checking for already outdated fingerprint data" + e.getMessage());
             return null;
         }
-
     }
 
 
@@ -468,12 +506,12 @@ public class InstanceImporter {
                     int size = ProjectSpaceIO.isExistingProjectspaceDirectoryNum(g);
                     if (size > 0) {
                         inputFiles.projects.put(g, size);
-                    } else {
+                    } else if (size < 0) {
                         try {
                             final List<Path> ins =
                                     FileUtils.listAndClose(g, l -> l.filter(Files::isRegularFile).sorted().collect(Collectors.toList()));
 
-                            if (ins.contains(Path.of(FilenameFormatter.PSPropertySerializer.FILENAME)))
+                            if (ins.contains(Path.of(PSLocations.FORMAT)))
                                 throw new IOException("Unreadable project found!");
 
                             if (!ins.isEmpty())
@@ -481,6 +519,8 @@ public class InstanceImporter {
                         } catch (IOException e) {
                             LOG.warn("Could not list directory content of '" + g.toString() + "'. Skipping location! " + e.getMessage());
                         }
+                    } else {
+                        LOG.warn("Project Location  is empty '" + g.toString() + "'. Skipping location!");
                     }
                 } else {
                     //check whether files are lcms runs copressed project-spaces or standard ms/mgf files
@@ -488,8 +528,17 @@ public class InstanceImporter {
                         final String name = g.getFileName().toString();
                         if (ProjectSpaceIO.isZipProjectSpace(g)) {
                             //compressed spaces are read only and can be handled as simple input
-                            try (SiriusProjectSpace ps = new ProjectSpaceIO(new ProjectSpaceConfiguration()).openExistingProjectSpace(g)) {
-                                inputFiles.projects.put(g, ps.size()); //todo estimate size
+                            Path ps = FileUtils.asZipFSPath(g, false, false, null);
+                            try {
+                                int size = ProjectSpaceIO.isExistingProjectspaceDirectoryNum(ps);
+                                if (size > 0) {
+                                    inputFiles.projects.put(g, size);
+                                } else if (size == 0) {
+                                    LOG.warn("Project Location  is empty '" + g.toString() + "'. Skipping location!");
+                                }
+                            } finally {
+                                if (ps != null)
+                                    ps.getFileSystem().close();
                             }
                         } else if (MsExperimentParser.isSupportedFileName(name)) {
                             inputFiles.msParserfiles.put(g, (int) Files.size(g));
@@ -498,13 +547,11 @@ public class InstanceImporter {
                             //                    LOG.warn("File with the name \"" + name + "\" is not in a supported format or has a wrong file extension. File is skipped");
                         }
                     } catch (IOException e) {
-                        LOG.warn("Could not read '" + g.toString() + "'. Skipping location! " + e.getMessage());
+                        LOG.warn("Could not read '" + g.toString() + "'. Skipping location! " + e.getMessage(), e);
                     }
                 }
                 updateProgress(0, files.size(), ++p);
             }
-//            return inputFiles;
         }
     }
-
 }

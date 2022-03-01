@@ -29,6 +29,8 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
+import de.unijena.bioinf.ms.rest.model.worker.WorkerType;
+import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +41,18 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @ThreadSafe
 public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCloseable {
-
+    public static final Set<WorkerWithCharge> neededTypes =
+            WorkerType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedWorkers")).stream()
+                    .flatMap(wt -> Stream.of(
+                            WorkerWithCharge.of(wt, PredictorType.CSI_FINGERID_POSITIVE),
+                            WorkerWithCharge.of(wt, PredictorType.CSI_FINGERID_NEGATIVE)))
+                    .collect(Collectors.toSet());
 
     @Override
     public void close() {
@@ -146,7 +156,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
                 tt = ApplicationCore.WEB_API.getTerms();
                 checkForInterruption();
                 if (connectionState == 0) {
-                    if (wl != null && wl.supportsAllPredictorTypes(PredictorType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedPredictors"))))
+                    if (wl != null && wl.supportsAllPredictorTypes(neededTypes))
                         conState = ConnectionState.YES;
                     else
                         conState = ConnectionState.WARN;

@@ -21,6 +21,7 @@ package de.unijena.bioinf.projectspace;
 
 import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
@@ -77,30 +78,41 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         this.ringBuffer = new InstanceBuffer(maxBufferSize);
         this.INSTANCE_LIST = compoundList;
         final ArrayList<InstanceBean> buf = new ArrayList<>(size());
-        forEach(it -> {
-            it.clearFormulaResultsCache();
-            it.clearCompoundCache();
-            buf.add((InstanceBean) it);
+
+        Utils.withTime("GUI-PS-Manager: Clear caches done in: ", w -> {
+            forEach(it -> {
+                it.clearFormulaResultsCache();
+                it.clearCompoundCache();
+                buf.add((InstanceBean) it);
+            });
         });
-        inEDTAndWait(() -> {
-            INSTANCE_LIST.clear();
-            INSTANCE_LIST.addAll(buf);
+
+        Utils.withTime("GUI-PS-Manager: Clear INSTANCE_LIST: ", w -> {
+            inEDTAndWait(() -> {
+                INSTANCE_LIST.clear();
+                INSTANCE_LIST.addAll(buf);
+            });
         });
 
-        createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
-            final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID());
-            Jobs.runEDTLater(() -> INSTANCE_LIST.add(inst));
-        })).register();
+        Utils.withTime("GUI-PS-Manager: register create listeners: ", w -> {
+            createListener = projectSpace().defineCompoundListener().onCreate().thenDo((event -> {
+                final InstanceBean inst = (InstanceBean) newInstanceFromCompound(event.getAffectedID());
+                Jobs.runEDTLater(() -> INSTANCE_LIST.add(inst));
+            })).register();
 
-        computeListener = projectSpace().defineCompoundListener().on(ContainerEvent.EventType.ID_FLAG).thenDo(event -> {
-            if (event.getAffectedIDs().isEmpty() || !event.getAffectedIdFlags().contains(CompoundContainerId.Flag.COMPUTING))
-                return;
+        });
 
-            Set<CompoundContainerId> eff = new HashSet<>(event.getAffectedIDs());
-            //todo do we want an index of ID to InstanceBean
-            Set<InstanceBean> upt = INSTANCE_LIST.stream().filter(i -> eff.contains(i.getID())).collect(Collectors.toSet());
-            Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
-        }).register();
+        Utils.withTime("GUI-PS-Manager: register compute listeners: ", w -> {
+            computeListener = projectSpace().defineCompoundListener().on(ContainerEvent.EventType.ID_FLAG).thenDo(event -> {
+                if (event.getAffectedIDs().isEmpty() || !event.getAffectedIdFlags().contains(CompoundContainerId.Flag.COMPUTING))
+                    return;
+
+                Set<CompoundContainerId> eff = new HashSet<>(event.getAffectedIDs());
+                //todo do we want an index of ID to InstanceBean
+                Set<InstanceBean> upt = INSTANCE_LIST.stream().filter(i -> eff.contains(i.getID())).collect(Collectors.toSet());
+                Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
+            }).register();
+        });
     }
 
 

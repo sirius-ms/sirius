@@ -40,6 +40,6 @@ public class FBMNExportAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new ExecutionDialog<>(new MgfExporterConfigPanel(), List.copyOf(MF.getCompounds()), null, MF, "Export Project for GNPS FBMN", true);
+        new ExecutionDialog<>(new MgfExporterConfigPanel(), List.copyOf(MF.getCompounds()), null, MF, "Export Project for GNPS FBMN", true).start();
     }
 }

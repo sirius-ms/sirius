@@ -56,13 +56,16 @@ import de.unijena.bioinf.projectspace.summaries.mztab.MztabMExporter;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -79,6 +82,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
         //configure ProjectSpaceProperties
         config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
+        config.defineProjectSpaceProperty(CompressionFormat.class, new CompressionFormat.Serializer());
         //configure compound container
         config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
         config.registerComponent(CompoundContainer.class, ProjectSpaceConfig.class, new ProjectSpaceConfigSerializer());
@@ -115,14 +119,14 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
         this.space = space;
         this.instFac = factory;
-        this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class).map(p -> (Function<Ms2Experiment, String>) new StandardMSFilenameFormatter(p.formatExpression))
+        this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class)
+                .map(p -> (Function<Ms2Experiment, String>) new StandardMSFilenameFormatter(p.formatExpression))
                 .orElseGet(() -> {
                     Function<Ms2Experiment, String> f = (formatter != null) ? formatter : new StandardMSFilenameFormatter();
                     if (f instanceof FilenameFormatter)
                         space.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty((FilenameFormatter) f));
                     return f;
                 });
-
         this.namingScheme = (idx, name) -> idx + "_" + name;
     }
 
@@ -199,9 +203,12 @@ public class ProjectSpaceManager implements Iterable<Instance> {
     @NotNull
     @Override
     public Iterator<Instance> iterator() {
+        return instanceIterator();
+    }
+    public Iterator<Instance> instanceIterator(Class<? extends DataAnnotation>... c) {
         if (compoundIdFilter != null)
             return filteredIterator(compoundIdFilter, null);
-        return makeInstanceIterator(space.compoundIterator(Ms2Experiment.class));
+        return makeInstanceIterator(space.compoundIterator(c));
     }
 
     private Iterator<Instance> makeInstanceIterator(@NotNull final Iterator<CompoundContainer> compoundIt) {
@@ -232,9 +239,15 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         return space.containsCompound(id);
     }
 
+    public void writeSummaries(@Nullable Path summaryLocation, @NotNull Summarizer... summarizers) throws ExecutionException {
+        if (summaryLocation == null)
+            writeSummaries(null, false, summarizers);
+        else
+            writeSummaries(summaryLocation, summaryLocation.toString().endsWith(".zip"), summarizers);
+    }
 
-    public void updateSummaries(Summarizer... summarizers) throws IOException {
-        space.updateSummaries(summarizers);
+    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @NotNull Summarizer... summarizers) throws ExecutionException {
+        space.writeSummaries(summaryLocation, compressed, summarizers);
     }
 
     public void close() throws IOException {

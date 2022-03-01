@@ -29,21 +29,22 @@ import javafx.scene.web.WebView;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URI;
 
 
 public class WebViewBrowserDialog extends JDialog {
     WebView webview;
-    public WebViewBrowserDialog(Frame owner, String title, String url) {
+    public WebViewBrowserDialog(Frame owner, String title, URI url) {
         super(owner, title,true);
         build(url);
     }
 
-    public WebViewBrowserDialog(Dialog owner, String title, String url) {
+    public WebViewBrowserDialog(Dialog owner, String title, URI url) {
         super(owner, title,true);
         build(url);
     }
 
-    private void build(String url) {
+    private void build(URI url) {
         ProxyManager.enforceGlobalProxySetting();
         setLayout(new BorderLayout());
         JFXPanel jfxP = new JFXPanel();
@@ -57,7 +58,7 @@ public class WebViewBrowserDialog extends JDialog {
 
         Jobs.runJFXLater(() -> {
             webview = new WebView();
-            webview.getEngine().load(url);
+            webview.getEngine().load(url.toString());
             jfxP.setScene(new Scene(webview));
         });
 

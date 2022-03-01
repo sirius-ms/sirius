@@ -25,9 +25,9 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
  */
 
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
-import de.unijena.bioinf.ms.gui.table.list_stats.ListStats;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
@@ -40,7 +40,7 @@ import java.util.function.Function;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
-    private static final int COL_COUNT = 11;
+    private static final int COL_COUNT = 12;
 
     protected SiriusResultTableFormat(Function<FormulaResultBean,Boolean> isBest) {
         super(isBest);
@@ -82,6 +82,8 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 10:
                 return "Median Absolute Mass Error (ppm)";
             case 11:
+                return "Lipid Class";
+            case 12:
                 return "Best";
             default:
                 throw new IllegalStateException();
@@ -114,6 +116,8 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             case 10:
                 return result.getMedianAbsoluteMassDevPPM();
             case 11:
+                return result.getFragTree().flatMap(t -> t.getAnnotation(LipidSpecies.class)).map(LipidSpecies::toString).orElse("None");
+            case 12:
                 return isBest.apply(result);
             default:
                 throw new IllegalStateException();
