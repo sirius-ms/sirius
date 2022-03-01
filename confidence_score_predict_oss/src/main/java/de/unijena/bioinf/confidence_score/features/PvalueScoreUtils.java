@@ -297,7 +297,7 @@ public class PvalueScoreUtils {
             NormalDistribution dist = new NormalDistribution(scored_array[i],bandwidth);
 
             double cp = (dist.cumulativeProbability(Math.log(current.getScore()+score_shift)));
-            pvalue+= (cp ==1) ? Double.MIN_VALUE : (1-cp);
+            pvalue += (1-cp);
           //  pvalue+=1-cp;
         }
 

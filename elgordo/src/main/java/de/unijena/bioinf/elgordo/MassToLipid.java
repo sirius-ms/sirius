@@ -24,14 +24,18 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -46,18 +50,31 @@ public class MassToLipid {
     private final MolecularFormula SPHINGOSIN_HEAD;
     private final Deviation deviation;
 
-    public MassToLipid(Deviation deviation) {
+    public MassToLipid(Deviation deviation, int polarity) {
         this.deviation = deviation;
         this.cho = new MassToFormulaDecomposer(new ChemicalAlphabet(MolecularFormula.parseOrThrow("CHO").elementArray()));
         this.chno = new MassToFormulaDecomposer(new ChemicalAlphabet(MolecularFormula.parseOrThrow("CHNO").elementArray()));
         this.chnops = new MassToFormulaDecomposer(new ChemicalAlphabet(MolecularFormula.parseOrThrow("CHNOPS").elementArray()));
         this.chainConstraints = new FormulaConstraints("C[1-]H[2-]N[0]O[0-]");
-
-        this.possibleIonTypes = new PrecursorIonType[]{
-                PrecursorIonType.fromString("[M+H]+"),
-                PrecursorIonType.fromString("[M+Na]+"),
-                PrecursorIonType.fromString("[M+NH3+H]+")};
+        if (polarity>0) {
+            this.possibleIonTypes = new PrecursorIonType[]{
+                    PrecursorIonType.fromString("[M+H]+"),
+                    PrecursorIonType.fromString("[M+Na]+"),
+                    PrecursorIonType.fromString("[M+NH3+H]+"),
+                    PrecursorIonType.fromString("[M+O+H]+")};
+        } else {
+            this.possibleIonTypes = new PrecursorIonType[]{
+                    PrecursorIonType.fromString("[M-H]-"),
+                    PrecursorIonType.fromString("[M+H2CO2-H]-"),
+            PrecursorIonType.fromString("[M - CH2 - H]-")};
+        }
         this.SPHINGOSIN_HEAD = new LipidChain(LipidChain.Type.SPHINGOSIN, 5, 1).getFormula();
+    }
+
+    public <T extends Spectrum<Peak>> SimpleSpectrum prepareSpectrum(T spectrum) {
+        SimpleMutableSpectrum buf = new SimpleMutableSpectrum(spectrum);
+        for (int i=0; i < buf.size(); ++i) buf.setIntensityAt(i, buf.getIntensityAt(i));
+        return Spectrums.getNormalizedSpectrum(buf, Normalization.Max(1d));
     }
 
     public <T extends Spectrum<Peak>> AnnotatedLipidSpectrum<T> annotateSpectrum(LipidCandidate candidate, T spectrum) {
@@ -104,30 +121,52 @@ public class MassToLipid {
             }
 
             final FragmentMap map = new FragmentMap(spectrum, candidate.lipidFormula, chnops, candidate.ionType);
-            final List<List<LipidTreeNode>> bestChains;
+            LipidChainCandidate bestCandidate = null;
+            final LipidTreeNode root = makeRoot(candidate,spectrum,map,set,
+                    peaks.stream().filter(x->x.annotation instanceof HeadGroupFragmentAnnotation && x.annotation.getTarget()== LipidAnnotation.Target.LOSS).collect(Collectors.toList())
+                    //  Collections.emptyList()
+            );
+            final HashMap<LipidChain, ArrayList<IndexedPeak>> lipidChainFrags;
+            final HashMap<LipidChain, ArrayList<IndexedPeak>> remainingAnnotations = new HashMap<>();
             if (candidate.sphingosinChains > 0) {
                 final List<LipidTreeNode> nodes = searchForSphingosin(spectrum, candidate, map, set);
-                bestChains = nodes.isEmpty() ? new ArrayList<>() : new ArrayList<>(Collections.singleton(nodes));
+                root.childNodes.addAll(nodes);
+                bestCandidate = root.getAllCompleteLipidChains(candidate).stream().sorted(Comparator.reverseOrder()).findFirst().orElse(null);
+                root.putAllIn(remainingAnnotations);
             } else {
-                final LipidTreeNode root = makeRoot(candidate,spectrum,map,set,
-                        peaks.stream().filter(x->x.annotation instanceof HeadGroupFragmentAnnotation && x.annotation.getTarget()== LipidAnnotation.Target.LOSS).collect(Collectors.toList())
-                        //  Collections.emptyList()
-                );
-                expand(candidate,spectrum,map,set,root);
-                bestChains = findBestAnnotation(candidate, root);
+                lipidChainFrags = expand(candidate, spectrum, map, set, root);
+                bestCandidate = findBestAnnotation(candidate, root, lipidChainFrags);
+                remainingAnnotations.putAll(lipidChainFrags);
+                root.putAllIn(remainingAnnotations);
             }
-            final Set<LipidChain> chains = new HashSet<>();
-            if (!bestChains.isEmpty()) {
-                for (List<LipidTreeNode> annos : bestChains) {
-                    for (LipidTreeNode node : annos) {
-                        peaks.addAll(node.peaks);
-                        chains.add(node.candidate);
+            if (bestCandidate==null) {
+                final Optional<LipidChain> mergedFromFormula = LipidChain.getMergedFromFormula(candidate.chainFormula, candidate.possibleClass);
+                if (mergedFromFormula.isPresent()) bestCandidate = new LipidChainCandidate(candidate, new LipidChain[]{mergedFromFormula.get()}, new IndexedPeak[0]);
+                else return null;
+            }
+            peaks.addAll(Arrays.asList(bestCandidate.anotations));
+
+            final IndexedPeak[] sorted = peaks.stream().sorted(Comparator.comparingInt(x->x.index)).toArray(IndexedPeak[]::new);
+            //final IndexedPeak[] contradicting = findContradictingAnnotations(sorted, map, spectrum, candidate);
+            final TIntHashSet PeakIndexSet = new TIntHashSet(Arrays.stream(sorted).mapToInt(x -> x.index).toArray());
+            final int[] peakindizes = PeakIndexSet.toArray();
+            Arrays.sort(peakindizes);
+
+            List<IndexedPeak> contraAnnotations = new ArrayList<>();
+            {
+                TIntHashSet ci = new TIntHashSet();
+                for (LipidChain c: remainingAnnotations.keySet()) {
+                    if (!bestCandidate.hasChain(c)) {
+                        for (IndexedPeak p : remainingAnnotations.get(c)) {
+                            if (!PeakIndexSet.contains(p.index) && ci.add(p.index)) {
+                                contraAnnotations.add(p);
+                            }
+                        }
                     }
                 }
             }
-            final IndexedPeak[] sorted = peaks.stream().sorted(Comparator.comparingInt(x->x.index)).toArray(IndexedPeak[]::new);
-            final int[] peakindizes = new TIntHashSet(Arrays.stream(sorted).mapToInt(x->x.index).toArray()).toArray();
-            Arrays.sort(peakindizes);
+
+
             LipidAnnotation[][] finalAnnotations = new LipidAnnotation[peakindizes.length][];
             {
                 final TIntIntHashMap indexmap = new TIntIntHashMap();
@@ -141,10 +180,25 @@ public class MassToLipid {
                     finalAnnotations[index][lengths[index]++] = sorted[i].annotation;
                 }
             }
+            float undecomposable = 0f;
+            int undecompsablePeaks = 0;
+            float totalInt = 0f;
+            double maxIntensity = Spectrums.getMaximalIntensity(spectrum);
+            for (int i=0; i < map.formulasPerPeak.length; ++i) {
+                totalInt += spectrum.getIntensityAt(i);
+                if (map.formulasPerPeak[i].length==0) {
+                    if ((spectrum.getIntensityAt(i) / maxIntensity) >= 0.05) {
+                        ++undecompsablePeaks;
+                    }
+                    undecomposable += spectrum.getIntensityAt(i);
+                }
+            }
+            undecomposable/=totalInt;
 
-            return new AnnotatedLipidSpectrum<>(spectrum, candidate.lipidFormula, candidate.ionMass,candidate.ionType, new LipidSpecies(candidate.possibleClass,
-                    bestChains.stream().map(x->x.get(0).candidate).toArray(LipidChain[]::new)),
-                    finalAnnotations, peakindizes
+            return new AnnotatedLipidSpectrum<T>(spectrum, candidate.lipidFormula, candidate.ionMass,candidate.ionType, new LipidSpecies(candidate.possibleClass,
+                    bestCandidate.chains), (float)bestCandidate.score,
+                    finalAnnotations, peakindizes, contraAnnotations.stream().map(x->x.annotation).toArray(LipidAnnotation[]::new), contraAnnotations.stream().mapToInt(x->x.index).sorted().toArray(),contraAnnotations.stream().mapToDouble(IndexedPeak::getIntensity).sum(),
+                    undecompsablePeaks, undecomposable
                     );
         }
     }
@@ -155,65 +209,50 @@ public class MassToLipid {
         else return ionType;
     }
 
-    private <T extends Spectrum<Peak>> void annotateCarboHydrogens(T spectrum, LipidCandidate candidate, LipidChainCandidate lipidChainCandidate, ArrayList<LipidAnnotation> annotations, TIntArrayList indizes) {
-        final TIntHashSet alreadyAnnotated = new TIntHashSet(indizes);
-        nextPeak:
-        for (int k = 0; k < spectrum.size(); ++k) {
-            if (!alreadyAnnotated.contains(k)) {
-                // TODO: adduct switch
-                final List<MolecularFormula> molecularFormulas = cho.decomposeNeutralMassToFormulas(candidate.ionType.subtractIonAndAdduct(spectrum.getMzAt(k)), deviation);
-                if (!candidate.ionType.isPlainProtonationOrDeprotonation()) {
-                    molecularFormulas.addAll(cho.decomposeNeutralMassToFormulas(adductSwitch(candidate, candidate.ionType.subtractIonAndAdduct(spectrum.getMzAt(k)),false), deviation));
-                }
-                for (MolecularFormula f : molecularFormulas) {
-                    if (f.numberOfHydrogens() % 2 != 0) continue;
-                    for (LipidChain c : lipidChainCandidate.chains) {
-                        if (c.getFormula().isSubtractable(f) && LipidChain.fromFormula(f).map(x -> x.numberOfDoubleBonds).orElse(Integer.MAX_VALUE) <= c.numberOfDoubleBonds) {
-                            annotations.add(new ChainFragmentAnnotation(LipidAnnotation.Target.FRAGMENT, f, f, candidate.ionType));
-                            indizes.add(k);
-                            continue nextPeak;
-                        }
-                    }
-                }
+    private static class LipidChainCandidate implements Comparable<LipidChainCandidate> {
+        private final LipidCandidate parent;
+        private final LipidChain[] chains;
+        private final IndexedPeak[] anotations;
+        private final double score;
 
+        public LipidChainCandidate(LipidCandidate parent, LipidChain[] chains, IndexedPeak[] anotations) {
+            this.parent = parent;
+            this.chains = chains;
+            this.anotations = anotations;
+            this.score = calcScore(parent,anotations);
+        }
 
+        private double calcScore(LipidCandidate parent, IndexedPeak[] anotations) {
+            final TIntHashSet usedPeaks = new TIntHashSet();
+            float intensity = 0f;
+            for (IndexedPeak p : anotations) {
+                if (usedPeaks.add(p.index)) intensity += p.getIntensity();
             }
+            float prior = 0f;
+            for (LipidChain chain : chains) {
+                prior += LipidTreeNode.chainPrior(parent, chain);
+            }
+            return intensity+prior;
+        }
+
+        @Override
+        public int compareTo(@NotNull MassToLipid.LipidChainCandidate o) {
+            return Double.compare(this.score, o.score);
+        }
+
+        public boolean hasChain(LipidChain c) {
+            for (LipidChain d : chains) if (d.equals(c)) return true;
+            return false;
         }
     }
 
-
-    private <T extends Spectrum<Peak>> void annotateCarboHydrogens(T spectrum, LipidCandidate candidate, Set<LipidChain> chains, Set<IndexedPeak> peaks) {
-        final TIntHashSet alreadyAnnotated = new TIntHashSet(peaks.stream().mapToInt(x->x.index).toArray());
-        nextPeak:
-        for (int k = 0; k < spectrum.size(); ++k) {
-            if (!alreadyAnnotated.contains(k)) {
-                // TODO: adduct switch
-                final List<MolecularFormula> molecularFormulas = cho.decomposeNeutralMassToFormulas(candidate.ionType.subtractIonAndAdduct(spectrum.getMzAt(k)), deviation);
-                if (!candidate.ionType.isPlainProtonationOrDeprotonation()) {
-                    molecularFormulas.addAll(cho.decomposeNeutralMassToFormulas(adductSwitch(candidate, candidate.ionType.subtractIonAndAdduct(spectrum.getMzAt(k)),false), deviation));
-                }
-                for (MolecularFormula f : molecularFormulas) {
-                    if (f.numberOfHydrogens() % 2 != 0) continue;
-                    for (LipidChain c : chains) {
-                        if (c.getFormula().isSubtractable(f) && LipidChain.fromFormula(f).map(x -> x.numberOfDoubleBonds).orElse(Integer.MAX_VALUE) <= c.numberOfDoubleBonds) {
-                            final IndexedPeak p = new IndexedPeak(k, spectrum.getMzAt(k), spectrum.getIntensityAt(k), f, new ChainFragmentAnnotation(LipidAnnotation.Target.FRAGMENT, f, f, candidate.ionType));
-                            continue nextPeak;
-                        }
-                    }
-                }
-
-
-            }
-        }
-    }
-
-    private static class LipidChainCandidate {
+    private static class LipidChainCandidateLegacy {
         private final TIntArrayList peakIndizes;
         private final ArrayList<LipidAnnotation> annotations;
         private final List<LipidChain> chains;
         final boolean complete;
 
-        public LipidChainCandidate(TIntArrayList peakIndizes, ArrayList<LipidAnnotation> annotations, List<LipidChain> chains, boolean complete) {
+        public LipidChainCandidateLegacy(TIntArrayList peakIndizes, ArrayList<LipidAnnotation> annotations, List<LipidChain> chains, boolean complete) {
             this.peakIndizes = peakIndizes;
             this.annotations = annotations;
             this.chains = chains;
@@ -221,22 +260,22 @@ public class MassToLipid {
             Collections.sort(chains);
         }
 
-        public LipidChainCandidate copy() {
-            return new LipidChainCandidate(new TIntArrayList(peakIndizes), new ArrayList<>(annotations), new ArrayList<>(chains), complete);
+        public LipidChainCandidateLegacy copy() {
+            return new LipidChainCandidateLegacy(new TIntArrayList(peakIndizes), new ArrayList<>(annotations), new ArrayList<>(chains), complete);
         }
 
-        public void combine(LipidChainCandidate bestSubL) {
+        public void combine(LipidChainCandidateLegacy bestSubL) {
             peakIndizes.addAll(bestSubL.peakIndizes);
             annotations.addAll(bestSubL.annotations);
             chains.addAll(bestSubL.chains);
             Collections.sort(chains);
         }
 
-        public boolean isMergeable(LipidChainCandidate c) {
+        public boolean isMergeable(LipidChainCandidateLegacy c) {
             return chains.equals(c.chains);
         }
 
-        public void merge(LipidChainCandidate c) {
+        public void merge(LipidChainCandidateLegacy c) {
             final TIntHashSet alreadyKnown = new TIntHashSet(peakIndizes);
             for (int k = 0; k < c.peakIndizes.size(); ++k) {
                 if (alreadyKnown.add(c.peakIndizes.getQuick(k))) {
@@ -247,7 +286,7 @@ public class MassToLipid {
         }
     }
 
-    private <T extends Spectrum<Peak>> LipidChainCandidate searchChains(T spectrum, LipidCandidate candidate, FragmentLib.FragmentSet lib) {
+    private <T extends Spectrum<Peak>> LipidChainCandidateLegacy searchChains(T spectrum, LipidCandidate candidate, FragmentLib.FragmentSet lib) {
         if (candidate.alkylChains+candidate.acylChains+candidate.sphingosinChains==1) {
             final Optional<LipidChain> lipidChain = LipidChain.fromFormula(candidate.chainFormula);
             return lipidChain.map(x->annotateLipidChain(spectrum,candidate,lib,x,candidate.ionMass)).orElse(null);
@@ -255,12 +294,12 @@ public class MassToLipid {
         return searchChains(spectrum, candidate, lib, candidate.alkylChains, candidate.acylChains, candidate.ionMass, MolecularFormula.emptyFormula());
     }
 
-    private <T extends Spectrum<Peak>> LipidChainCandidate searchChains(T spectrum, LipidCandidate candidate, FragmentLib.FragmentSet lib, int nalkyl, int nacyl, double precursor, MolecularFormula chainFormulaSoFar) {
+    private <T extends Spectrum<Peak>> LipidChainCandidateLegacy searchChains(T spectrum, LipidCandidate candidate, FragmentLib.FragmentSet lib, int nalkyl, int nacyl, double precursor, MolecularFormula chainFormulaSoFar) {
         // alle möglichen chains enumerieren
         List<LipidChain> chains = new ArrayList<>(findAllChains(spectrum, candidate, lib, nacyl, nalkyl, precursor));
         // für jede Chain: rufe search chain rekursiv auf, gib Anzahl
         // erklärter peaks zurück
-        LipidChainCandidate bestChainSoFar = null;
+        LipidChainCandidateLegacy bestChainSoFar = null;
         int bestN = 0;
         for (LipidChain chain : chains) {
             int acylNow = nacyl;
@@ -270,14 +309,14 @@ public class MassToLipid {
             if (acylNow + alkylNow > 1) {
                 // we have to do a recursive call
                 final MolecularFormula[] modifs = chain.type == LipidChain.Type.ACYL ? lib.acylLosses : lib.alkylLosses;
-                LipidChainCandidate bestSubL = null;
+                LipidChainCandidateLegacy bestSubL = null;
                 for (MolecularFormula m : modifs) {
-                    final LipidChainCandidate best = searchChains(spectrum, candidate, lib, alkylNow, acylNow, precursor - chain.getFormula().getMass() - m.getMass(), chain.formula);
+                    final LipidChainCandidateLegacy best = searchChains(spectrum, candidate, lib, alkylNow, acylNow, precursor - chain.getFormula().getMass() - m.getMass(), chain.formula);
                     if (best==null) continue;
                     if (bestSubL == null || best.annotations.size() > bestSubL.annotations.size()) bestSubL = best;
                 }
                 if (bestSubL == null) continue;
-                LipidChainCandidate c = annotateLipidChain(spectrum, candidate, lib, chain, precursor);
+                LipidChainCandidateLegacy c = annotateLipidChain(spectrum, candidate, lib, chain, precursor);
                 if (bestChainSoFar == null || c.annotations.size() * bestSubL.annotations.size() >= bestN) {
                     bestN = c.annotations.size() * bestSubL.annotations.size();
                     c.combine(bestSubL);
@@ -288,7 +327,7 @@ public class MassToLipid {
                     bestChainSoFar = c;
                 }
             } else {
-                LipidChainCandidate c = annotateLipidChain(spectrum, candidate, lib, chain, precursor);
+                LipidChainCandidateLegacy c = annotateLipidChain(spectrum, candidate, lib, chain, precursor);
                 MolecularFormula f = chainFormulaSoFar;
                 for (LipidChain lchain : c.chains) f = f.add(lchain.formula);
                 if (acylNow == 1) {
@@ -319,8 +358,8 @@ public class MassToLipid {
         return bestChainSoFar;
     }
 
-    private <T extends Spectrum<Peak>> LipidChainCandidate annotateLipidChain(T spectrum, LipidCandidate candidate, FragmentLib.FragmentSet lib, LipidChain chain, double precursor) {
-        final LipidChainCandidate C = new LipidChainCandidate(new TIntArrayList(), new ArrayList<>(), new ArrayList<>(), false);
+    private <T extends Spectrum<Peak>> LipidChainCandidateLegacy annotateLipidChain(T spectrum, LipidCandidate candidate, FragmentLib.FragmentSet lib, LipidChain chain, double precursor) {
+        final LipidChainCandidateLegacy C = new LipidChainCandidateLegacy(new TIntArrayList(), new ArrayList<>(), new ArrayList<>(), false);
         C.chains.add(chain);
         // losses
         boolean[] adductSwitch = ( lib.isAdductSwitch() && !candidate.ionType.isPlainProtonationOrDeprotonation()) ? new boolean[]{true,false} : new boolean[]{false};
@@ -334,7 +373,7 @@ public class MassToLipid {
                     if (i >= 0) {
                         C.peakIndizes.add(i);
                         final MolecularFormula loss = chain.getFormula().add(formula);
-                        C.annotations.add(new ChainAnnotation(LipidAnnotation.Target.LOSS, loss, aswitch ? adductSwitch(candidate, loss, true).getCandidate() : candidate.lipidFormula.subtract(loss), aswitch ? adductSwitch(candidate.ionType) : candidate.ionType, chain));
+                        C.annotations.add(new ChainAnnotation(LipidAnnotation.Target.LOSS, loss, aswitch ? adductSwitch(candidate, loss, true).getCandidate() : candidate.lipidFormula.subtract(loss), aswitch ? adductSwitch(candidate.ionType) : candidate.ionType, formula, chain));
                     }
                 }
             }
@@ -350,7 +389,7 @@ public class MassToLipid {
                     if (i >= 0) {
                         C.peakIndizes.add(i);
                         final MolecularFormula loss = chain.getFormula().add(formula);
-                        C.annotations.add(new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, loss, aswitch ? adductSwitch(candidate,loss, true).getCandidate() : candidate.lipidFormula.subtract(loss), aswitch ? adductSwitch(candidate.ionType) : candidate.ionType, chain));
+                        C.annotations.add(new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, loss, aswitch ? adductSwitch(candidate,loss, true).getCandidate() : candidate.lipidFormula.subtract(loss), aswitch ? adductSwitch(candidate.ionType) : candidate.ionType, formula, chain));
                     }
                 }
             }
@@ -471,18 +510,21 @@ public class MassToLipid {
                     if (remainingMass <= 0) continue;
                     sphingosinChains = 1;
                 }
-                {
-                    List<MolecularFormula> chains = cho.decomposeNeutralMassToFormulas(remainingMass, deviation, chainConstraints);
+                if (remainingMass>12){
+                    List<MolecularFormula> chains = cho.decomposeNeutralMassToFormulas(remainingMass, deviation.absoluteFor(precursorMass), chainConstraints);
                     for (MolecularFormula formula : chains) {
                         if (formula.numberOfHydrogens() % 2 != 0 || formula.numberOfCarbons() < 2 || (sphingosinChains == 0 && formula.numberOfHydrogens() > (formula.numberOfCarbons() * 2)))
                             continue;
                         // add lipid candidate
                         int numberOfAcylChains = formula.numberOfOxygens();
                         for (LipidClass c : classes) {
+                            if (c.fragmentLib==null || c.fragmentLib.getFor(ionType).isEmpty()) continue;
                             int numberOfAlkylChains = c.chains - sphingosinChains - numberOfAcylChains;
                             if (numberOfAlkylChains >= 0) {
-                                final MolecularFormula chainFormula = sphingosinChains > 0 ? formula.add(SPHINGOSIN_HEAD) : formula;
-                                candidates.add(new LipidCandidate(c, ionType, precursorMass, chainFormula.add(group.molecularFormula), chainFormula, numberOfAlkylChains, numberOfAcylChains, sphingosinChains));
+                                if (numberOfAlkylChains==0 || c.fragmentLib.getFor(ionType).get().hasAlkyl()) {
+                                    final MolecularFormula chainFormula = sphingosinChains > 0 ? formula.add(SPHINGOSIN_HEAD) : formula;
+                                    candidates.add(new LipidCandidate(c, ionType, precursorMass, chainFormula.add(group.molecularFormula), chainFormula, numberOfAlkylChains, numberOfAcylChains, sphingosinChains));
+                                }
                             }
                         }
                     }
@@ -490,7 +532,7 @@ public class MassToLipid {
                 }
             }
         }
-        return candidates;
+        return candidates.stream().filter(LipidCandidate::hasValidChainFormula).collect(Collectors.toList());
     }
 
     public static class LipidCandidate {
@@ -509,6 +551,10 @@ public class MassToLipid {
             this.sphingosinChains = sphingosinChains;
             this.ionType = ionType;
             this.chainFormula = chainFormula;
+        }
+
+        public boolean hasValidChainFormula() {
+            return (chainFormula.numberOfOxygens() == (acylChains + sphingosinChains*2)) && (chainFormula.numberOfNitrogens() == sphingosinChains);
         }
 
         public String toString() {
@@ -609,6 +655,10 @@ public class MassToLipid {
             }
         }
 
+        public boolean isDone() {
+            return remainingAlkyl==0 && remainingAcyl==0;
+        }
+
         public boolean isValid() {
             return remainingAcyl>=0 && remainingAlkyl>=0;
         }
@@ -624,23 +674,31 @@ public class MassToLipid {
         }
     }
 
-    <T extends Spectrum<Peak>> void expand(LipidCandidate candidate, T spectrum, FragmentMap fragmentMap, FragmentLib.FragmentSet library, LipidTreeNode root) {
+    private static final MolecularFormula[] SPHINGO_MODIFS = new MolecularFormula[]{MolecularFormula.emptyFormula(), MolecularFormula.parseOrNull("NH3")};
+    private static final MolecularFormula[] FATTY_MODIFS = new MolecularFormula[]{MolecularFormula.emptyFormula(), MolecularFormula.parseOrNull("H2O")};
+
+    <T extends Spectrum<Peak>> HashMap<LipidChain, ArrayList<IndexedPeak>> expand(LipidCandidate candidate, T spectrum, FragmentMap fragmentMap, FragmentLib.FragmentSet library, LipidTreeNode root) {
         // first check if remaining chain formula matches a single chain
         {
             final Optional<LipidChain> chain = LipidChain.fromFormula(root.remainingChainFormula);
             if (chain.isPresent()) {
                 IndexedPeak p=null;
-                final Optional<IndexedPeak> any = root.peaks.stream().filter(x -> x.annotation.getTarget() == LipidAnnotation.Target.LOSS).findAny();
+                final Optional<IndexedPeak> any = root.peaks.stream().filter(x -> x.annotation.getTarget() == LipidAnnotation.Target.LOSS && x.formula.equals(chain.get().formula)).findAny();
+
                 if (any.isPresent()) {
                     final IndexedPeak q = any.get();
-                    p = new IndexedPeak(q.index, q.getMass(), q.getIntensity(), chain.get().formula, new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, chain.get().formula, q.formula, q.annotation.getIonType(), chain.get()));
-                } else {
-                    final Optional<IndexedPeak> any2 = root.peaks.stream().filter(x -> x.annotation.getTarget() == LipidAnnotation.Target.FRAGMENT).findAny();
+                    p = new IndexedPeak(q.index, q.getMass(), q.getIntensity(), chain.get().formula, new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, chain.get().formula, q.formula, q.annotation.getIonType(), MolecularFormula.emptyFormula(), chain.get()));
+                }
+                /*
+                else {
+                    final Optional<IndexedPeak> any2 = root.peaks.stream().filter(x -> x.annotation.getTarget() == LipidAnnotation.Target.FRAGMENT && x.formula).findAny();
                     if (any2.isPresent()) {
                         final IndexedPeak q = any2.get();
                         p = new IndexedPeak(q.index, q.getMass(), q.getIntensity(), any2.get().formula, new ChainAnnotation(LipidAnnotation.Target.LOSS, chain.get().formula,q.formula, q.annotation.getIonType(), chain.get()));
                     }
                 }
+                 */
+
                 OpenChains c = root.openChains.decrement(chain.get());
                 if (c.isValid()) {
                     final LipidTreeNode e = new LipidTreeNode(chain.get(), MolecularFormula.emptyFormula(), root.depth + 1, c);
@@ -653,6 +711,7 @@ public class MassToLipid {
         }
 
         final HashMap<LipidChain, LipidTreeNode> nodes = new HashMap<>();
+        final HashMap<LipidChain, ArrayList<IndexedPeak>> fragmentAnnotations = new HashMap<>();
         for (IndexedPeak p : root.peaks) {
             final boolean precursor = (p.annotation instanceof PrecursorAnnotation);
             if (!precursor && p.annotation.getTarget() == LipidAnnotation.Target.FRAGMENT) {
@@ -671,16 +730,27 @@ public class MassToLipid {
                     final MolecularFormula fragmentFormula = peakFormulas[i];
                     for (LipidChain.Type type : LipidChain.Type.values()) {
                         if (root.openChains.remaining(type)<=0) continue;
-                        for (MolecularFormula modification : precursor ? library.lossesFor(type) : new MolecularFormula[]{MolecularFormula.emptyFormula()}) {
+                        MolecularFormula[] allowedModifs = library.lossesFor(type);
+                        if (!precursor) {
+                            // always allow NH3 in sphingosin and H2O in acyl/alkyl chains
+                            if (type==LipidChain.Type.SPHINGOSIN) {
+                                allowedModifs = SPHINGO_MODIFS;
+                            } else {
+                                allowedModifs = FATTY_MODIFS;
+                            }
+                        }
+                        for (MolecularFormula modification : allowedModifs) {
                             final MolecularFormula finalFormula = lossFormula.subtract(modification);
                             if (finalFormula.isAllPositiveOrZero()) {
                                 Optional<LipidChain> chain = LipidChain.fromFormula(finalFormula);
                                 if (chain.isPresent() && chain.get().type.equals(type)) {
-                                    // add node
-                                    final LipidTreeNode node = nodes.computeIfAbsent(chain.get(), (x)->new LipidTreeNode(chain.get(), root.remainingChainFormula.subtract(chain.get().formula), root.depth+1, root.openChains.decrement(chain.get())));
-                                    final IndexedPeak peak = new IndexedPeak(k,spectrum.getMzAt(k),spectrum.getIntensityAt(k), peakFormulas[i], new ChainAnnotation(LipidAnnotation.Target.LOSS, finalFormula,peakFormulas[i], ionType, chain.get()));
-                                    node.peaks.add(peak);
-
+                                    final MolecularFormula rem = root.remainingChainFormula.subtract(chain.get().formula);
+                                    final boolean done = root.openChains.decrement(chain.get()).isDone();
+                                    if ((done && rem.isEmpty()) || (!done && !rem.isEmpty())) {
+                                        final LipidTreeNode node = nodes.computeIfAbsent(chain.get(), (x)->new LipidTreeNode(chain.get(), rem, root.depth+1, root.openChains.decrement(chain.get())));
+                                        final IndexedPeak peak = new IndexedPeak(k, spectrum.getMzAt(k), spectrum.getIntensityAt(k), peakFormulas[i], new ChainAnnotation(LipidAnnotation.Target.LOSS, finalFormula, peakFormulas[i], ionType, modification, chain.get()));
+                                        node.peaks.add(peak);
+                                    }
                                 }
                             }
                         }
@@ -690,12 +760,18 @@ public class MassToLipid {
                                 final MolecularFormula finalFormula = fragmentFormula.add(modification);
                                 if (finalFormula.isAllPositiveOrZero()) {
                                     Optional<LipidChain> chain = LipidChain.fromFormula(finalFormula);
-                                    if (chain.isPresent() && chain.get().type.equals(type)) {
-                                        // add node
-                                        final LipidTreeNode node = nodes.computeIfAbsent(chain.get(), (x)->new LipidTreeNode(chain.get(),root.remainingChainFormula.subtract(chain.get().formula), root.depth+1,root.openChains.decrement(chain.get())));
-                                        final IndexedPeak peak = new IndexedPeak(k,spectrum.getMzAt(k),spectrum.getIntensityAt(k),
-                                        peakFormulas[i],new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, finalFormula,peakFormulas[i], ionType, chain.get()));
-                                        node.peaks.add(peak);
+                                    if (chain.isPresent() && chain.get().type.equals(type) ) {
+                                        final MolecularFormula rem = root.remainingChainFormula.subtract(chain.get().formula);
+                                        final OpenChains decrement = root.openChains.decrement(chain.get());
+                                        if (rem.isEmpty() && decrement.isDone()) {
+                                            // add node
+                                            final LipidTreeNode node = nodes.computeIfAbsent(chain.get(), (x) -> new LipidTreeNode(chain.get(), rem, root.depth + 1, decrement));
+                                            final IndexedPeak peak = new IndexedPeak(k, spectrum.getMzAt(k), spectrum.getIntensityAt(k),
+                                                    peakFormulas[i], new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, finalFormula, peakFormulas[i], ionType, modification, chain.get()));
+                                            node.peaks.add(peak);
+                                        } else {
+                                            fragmentAnnotations.computeIfAbsent(chain.get(), (aa)->new ArrayList<>()).add(new IndexedPeak(k, spectrum.getMzAt(k), spectrum.getIntensityAt(k), peakFormulas[i], new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, finalFormula, peakFormulas[i], ionType, modification, chain.get())));
+                                        }
                                     }
                                 }
                             }
@@ -709,6 +785,9 @@ public class MassToLipid {
             expand(candidate,spectrum,fragmentMap,library,node);
             root.childNodes.add(node);
         }
+        // and add remaining fragments
+        root.attach(fragmentAnnotations);
+        return fragmentAnnotations;
     }
 
     class FragmentMap {
@@ -768,39 +847,44 @@ public class MassToLipid {
         }
     }
 
-    private static List<List<LipidTreeNode>> findBestAnnotation(LipidCandidate candidate, LipidTreeNode root) {
-        final HashMap<LipidChain, Float> hints = new HashMap<>();
-        final HashMap<LipidChain, Integer> chainCounts = new HashMap<>();
-        for (LipidTreeNode node : root.childNodes) {
-            HashMap<LipidChain, Integer> cc = new HashMap<>();
-            node.populateHints(hints, cc);
-            for (LipidChain l : cc.keySet()) chainCounts.put(l, Math.max(cc.get(l),chainCounts.getOrDefault(l,0)));
-        }
-        final LipidChain[] chains;
-        {
-            final ArrayList<LipidChain> cc = new ArrayList<>();
-            for (LipidChain l : chainCounts.keySet()) {
-                for (int k=0; k < chainCounts.get(l); ++k) cc.add(l);
+    // first search in the tree for a complete annotated lipid chain
+    private static LipidChainCandidate findBestAnnotation(LipidCandidate candidate, LipidTreeNode root, HashMap<LipidChain, ArrayList<IndexedPeak>> otherAnnotations) {
+        final List<LipidChainCandidate> candidates = root.getAllCompleteLipidChains(candidate);
+        if (!candidates.isEmpty()) {
+            return candidates.get(0);
+        } else {
+            final HashMap<LipidChain, Float> hints = new HashMap<>();
+            final HashMap<LipidChain, Integer> chainCounts = new HashMap<>();
+            for (LipidTreeNode node : root.childNodes) {
+                HashMap<LipidChain, Integer> cc = new HashMap<>();
+                node.populateHints(candidate, hints, cc);
+                for (LipidChain l : cc.keySet()) chainCounts.put(l, Math.max(cc.get(l),chainCounts.getOrDefault(l,0)));
             }
-            chains = cc.toArray(LipidChain[]::new);
-            Arrays.sort(chains, Comparator.comparingDouble(hints::get));
-        }
-        // stupid greedy search, just to have something running
-        final LipidChain[] selected = findKBest(candidate, chains);
-        if (selected==null) return new ArrayList<>();
-        List<List<LipidTreeNode>> nodePerChain = new ArrayList<>();
-        Arrays.sort(selected);
-        int rep=0;LipidChain before=null;
-        for (LipidChain chain : selected) {
-            if (chain==before) {
-                ++rep;
-            } else {
-                before = chain;
-                rep=0;
+            final LipidChain[] chains;
+            {
+                for (LipidChain other : otherAnnotations.keySet()) {
+                    if (chainCounts.get(other)==null) {
+                        chainCounts.put(other, 1);
+                        hints.put(other, (float)otherAnnotations.get(other).stream().mapToDouble(IndexedPeak::getIntensity).sum() + LipidTreeNode.chainPrior(candidate,other));
+                    }
+                }
+                final ArrayList<LipidChain> cc = new ArrayList<>();
+                for (LipidChain l : chainCounts.keySet()) {
+                    for (int k=0; k < chainCounts.get(l); ++k) cc.add(l);
+                }
+                chains = cc.toArray(LipidChain[]::new);
+                Arrays.sort(chains, Comparator.comparingDouble(hints::get));
             }
-            nodePerChain.add(root.collectAllChainNodes(chain, rep));
+            // stupid greedy search, just to have something running
+            final LipidChain[] selected = findKBest(candidate, chains);
+            if (selected==null) return null;
+            final List<IndexedPeak> annotatedPeaks = new ArrayList<>();
+            for (LipidChain c : selected) annotatedPeaks.addAll(root.collectAllChainNodes(c).stream().flatMap(x->x.peaks.stream()).collect(Collectors.toList()));
+            return new LipidChainCandidate(candidate,
+                    selected,annotatedPeaks.toArray(IndexedPeak[]::new)
+            );
+
         }
-        return nodePerChain;
     }
 
     private static LipidChain[] findKBest(LipidCandidate candidate, LipidChain[] chainsSortedLowToBest) {
@@ -871,9 +955,65 @@ public class MassToLipid {
             this.depth = depth;
         }
 
+        List<LipidChainCandidate> getAllCompleteLipidChains(LipidCandidate lipidCandidate) {
+            ArrayList<LipidTreeNode> path = new ArrayList<>();
+            ArrayList<LipidChainCandidate> results = new ArrayList<>();
+            for (LipidTreeNode child : childNodes) {
+                child.searchForCompletePath(lipidCandidate, path, results);
+            }
+            results.sort(Comparator.reverseOrder());
+            return results;
+        }
+
+        private void searchForCompletePath(LipidCandidate lipidCandidate, ArrayList<LipidTreeNode> ancestors,ArrayList<LipidChainCandidate> candidates) {
+            if (isComplete()) {
+                ancestors.add(this);
+                LipidChainCandidate candidate = new LipidChainCandidate(lipidCandidate,
+                    ancestors.stream().map(x->x.candidate).filter(Objects::nonNull).toArray(LipidChain[]::new),
+                        ancestors.stream().flatMap(x->x.peaks.stream()).toArray(IndexedPeak[]::new)
+                );
+                candidates.add(candidate);
+                ancestors.remove(ancestors.size()-1);
+            } else {
+                ancestors.add(this);
+                for (LipidTreeNode child : childNodes) {
+                    child.searchForCompletePath(lipidCandidate, ancestors,candidates);
+                }
+                ancestors.remove(ancestors.size()-1);
+            }
+        }
+
         public String toString() {
             if (candidate==null) return "root with " +peaks.size() + " peaks";
-            return candidate.toString() + " |"+depth+"|" + peaks.size() + " peaks";
+            int peaks = peaksum();
+            double intensity = this.peaks.stream().mapToDouble(x->x.intensity).sum();
+            double intens = intsum();
+            return String.format(Locale.US, "%s\tpeaks = %d + %d, int = %.3f + %.3f", this.candidate.toString(),this.peaks.size(), peaks-this.peaks.size(),
+                    intensity, intens-intensity);
+        }
+
+        public List<IndexedPeak> getAllPeaks() {
+            ArrayList<IndexedPeak> pks = new ArrayList<>();
+            getAllPeaks(pks);
+            return pks;
+        }
+        public List<IndexedPeak> getAllPeaks(List<IndexedPeak> ls) {
+            ls.addAll(peaks);
+            for (LipidTreeNode n : childNodes) {
+                n.getAllPeaks(ls);
+            }
+            return ls;
+        }
+
+        private int peaksum() {
+            return peaks.size() + childNodes.stream().mapToInt(LipidTreeNode::peaksum).max().orElse(0);
+        }
+        private double intsum() {
+            return peaks.stream().mapToDouble(x->x.intensity).sum() + childNodes.stream().mapToDouble(LipidTreeNode::intsum).max().orElse(0d);
+        }
+
+        public boolean isComplete() {
+            return childNodes.isEmpty() && remainingChainFormula.isEmpty();
         }
 
         public boolean valid() {
@@ -891,55 +1031,59 @@ public class MassToLipid {
             return valid();
         }
 
-        public void populateHints(HashMap<LipidChain, Float> hints, HashMap<LipidChain, Integer> count) {
+        public void populateHints(LipidCandidate parent, HashMap<LipidChain, Float> hints, HashMap<LipidChain, Integer> count) {
             if (candidate!=null) {
-                hints.put(candidate, hints.getOrDefault(candidate,0.0f)+score());
-                count.put(candidate, count.getOrDefault(candidate, 1)+1);
+                hints.put(candidate, hints.getOrDefault(candidate,0.0f)+score(parent));
+                count.put(candidate, count.getOrDefault(candidate, 0)+1);
             }
             for (LipidTreeNode child : childNodes) {
-                child.populateHints(hints, count);
+                child.populateHints(parent, hints, count);
             }
         }
 
-        private float score() {
-            return (float)peaks.stream().mapToDouble(x->x.intensity).sum() + chainPrior();
+        private float score(LipidCandidate parent) {
+            return (float)peaks.stream().mapToDouble(x->x.intensity).sum() + chainPrior(parent,candidate);
         }
 
         // just to resolve ties
-        private float chainPrior() {
+        private static float chainPrior(LipidCandidate parent, LipidChain candidate) {
             if (candidate==null) return 0f;
-            /*
             float prior = 0f;
-            prior -= Math.max(0,candidate.numberOfDoubleBonds-6)/10000f;
-            prior += candidate.chainLength/10000f;
-            prior -= Math.max(0,12-candidate.chainLength)/1000f;
-            if (candidate.getType()== LipidChain.Type.ACYL) prior += 1e-6;
+            prior -= candidate.numberOfDoubleBonds/1000f;
+            double balancedChainLength = parent.chainFormula.numberOfCarbons()/((double)parent.acylChains+parent.alkylChains);
+            prior -= Math.abs(candidate.chainLength - balancedChainLength)/1000f;
+            if (candidate.getType()== LipidChain.Type.ACYL) prior += 1e-3;
             return prior;
-             */
-            final int n = (openChains.remainingAcyl+ openChains.remainingAlkyl);
-            if (n==0) return 0f;
-            int dist = remainingChainFormula.numberOfCarbons()/n;
-            return -Math.abs(candidate.chainLength - dist)/1000f;
-
-
         }
 
-        public List<LipidTreeNode> collectAllChainNodes(LipidChain chain, int minCount) {
+        public List<LipidTreeNode> collectAllChainNodes(LipidChain chain) {
             final ArrayList<LipidTreeNode> nodes = new ArrayList<>();
-            collect(nodes, chain, minCount);
+            collect(nodes, chain);
             return nodes;
         }
 
 
-        private void collect(List<LipidTreeNode> nodes, LipidChain chain, int minCount) {
+        private void collect(List<LipidTreeNode> nodes, LipidChain chain) {
             if (candidate!=null && this.candidate.equals(chain)) {
-                if (minCount >= 0) {
-                    nodes.add(this);
-                } else {
-                    --minCount;
-                }
+                nodes.add(this);
             }
-            for (LipidTreeNode child : childNodes) child.collect(nodes,chain,minCount);
+            for (LipidTreeNode child : childNodes) child.collect(nodes,chain);
+        }
+
+        public void attach(HashMap<LipidChain, ArrayList<IndexedPeak>> fragmentAnnotations) {
+            this.peaks.addAll(fragmentAnnotations.getOrDefault(this.candidate, new ArrayList<>()));
+            for (LipidTreeNode node : childNodes) {
+                node.attach(fragmentAnnotations);
+            }
+        }
+
+        public void putAllIn(HashMap<LipidChain, ArrayList<IndexedPeak>> remainingAnnotations) {
+            if (candidate!=null) {
+                remainingAnnotations.computeIfAbsent(candidate, (l)->new ArrayList<>()).addAll(peaks);
+            }
+            for (LipidTreeNode child : childNodes) {
+                child.putAllIn(remainingAnnotations);
+            }
         }
     }
 
@@ -957,7 +1101,7 @@ public class MassToLipid {
                         if (LipidChain.validFormulaForAcylChains(remain, 1)) {
                             final LipidChain lipidChain = LipidChain.fromFormula(finalFormula).get();
                             indicators.computeIfAbsent(lipidChain, (x)->new ArrayList<>()).add(new IndexedPeak(
-                                    k, spectrum.getMzAt(k), spectrum.getIntensityAt(k),f, new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, f,f, map.ionTypesPerPeak[k][j], lipidChain)));
+                                    k, spectrum.getMzAt(k), spectrum.getIntensityAt(k),f, new ChainAnnotation(LipidAnnotation.Target.FRAGMENT, f,f, map.ionTypesPerPeak[k][j], modification, lipidChain)));
                         }
                     }
                 }
@@ -968,7 +1112,7 @@ public class MassToLipid {
                         if (LipidChain.validFormulaForAcylChains(remain, 1)) {
                             final LipidChain lipidChain = LipidChain.fromFormula(finalFormula).get();
                             indicators.computeIfAbsent(lipidChain, (x)->new ArrayList<>()).add(new IndexedPeak(
-                                    k, spectrum.getMzAt(k), spectrum.getIntensityAt(k),f, new ChainAnnotation(LipidAnnotation.Target.LOSS, finalFormula.add(modification),f, map.ionTypesPerPeak[k][j], lipidChain)));
+                                    k, spectrum.getMzAt(k), spectrum.getIntensityAt(k),f, new ChainAnnotation(LipidAnnotation.Target.LOSS, finalFormula.add(modification),f, map.ionTypesPerPeak[k][j], modification, lipidChain)));
                         }
                     }
                 }
@@ -980,7 +1124,7 @@ public class MassToLipid {
             final LipidTreeNode child = new LipidTreeNode(LipidChain.fromFormula(root.remainingChainFormula).get(), MolecularFormula.emptyFormula(), 2, new OpenChains(0, 0));
             root.childNodes.add(child);
             return root;
-        }).max(Comparator.comparingDouble(LipidTreeNode::score));
+        }).max(Comparator.comparingDouble(x->x.score(candidate)));
         return best.map(x->new ArrayList<>(Arrays.asList(x,x.childNodes.get(0)))).orElseGet(ArrayList::new);
     }
 

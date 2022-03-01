@@ -43,6 +43,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.Scoring;
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
+import de.unijena.bioinf.MassDecomposer.NonEmptyFormulaValidator;
 import de.unijena.bioinf.ms.annotations.Provides;
 import de.unijena.bioinf.ms.annotations.Requires;
 import de.unijena.bioinf.sirius.PeakAnnotation;
@@ -295,7 +296,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
     private void getDecomposersFor(List<MolecularFormula> pmds, FormulaConstraints constraint, List<MassToFormulaDecomposer> decomposers, List<FormulaConstraints> constraintList) {
         if (pmds.size()==1) {
-            constraintList.add(FormulaConstraints.allSubsetsOf(pmds.get(0)));
+            FormulaConstraints fc = FormulaConstraints.allSubsetsOf(pmds.get(0));
+            fc.addFilter(new NonEmptyFormulaValidator());
+            constraintList.add(fc);
             decomposers.add(getDecomposerFor(new ChemicalAlphabet(pmds.get(0).elementArray())));
             return;
         }
@@ -342,6 +345,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
         for (MassToFormulaDecomposer decomposer : decomposerMap.valueCollection()) {
             final FormulaConstraints cs = constraint.intersection(new FormulaConstraints(decomposer.getChemicalAlphabet()));
+            cs.addFilter(new NonEmptyFormulaValidator());
             constraintList.add(cs);
             decomposers.add(decomposer);
         }

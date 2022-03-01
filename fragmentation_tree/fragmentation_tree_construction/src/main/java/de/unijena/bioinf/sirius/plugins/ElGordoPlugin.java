@@ -142,13 +142,13 @@ public class ElGordoPlugin extends SiriusPlugin  {
     @Override
     protected void beforeDecomposing(ProcessedInput input) {
         super.beforeDecomposing(input);
-        final List<MassToLipid.LipidCandidate> lipidCandidates = new MassToLipid(input.getAnnotation(MS1MassDeviation.class).map(x->x.allowedMassDeviation).orElseGet(()->new Deviation(20))).analyzePrecursor(input.getExperimentInformation().getIonMass());
+        final List<MassToLipid.LipidCandidate> lipidCandidates = new MassToLipid(input.getAnnotation(MS1MassDeviation.class).map(x->x.allowedMassDeviation).orElseGet(()->new Deviation(20)), input.getExperimentInformation().getPrecursorIonType().getCharge()).analyzePrecursor(input.getExperimentInformation().getIonMass());
         final Deviation ms2dev = input.getAnnotation(MS2MassDeviation.class).map(x -> x.allowedMassDeviation).orElseGet(() -> new Deviation(20));
-        final MassToLipid m2l = new MassToLipid(ms2dev);
+        final MassToLipid m2l = new MassToLipid(ms2dev, input.getExperimentInformation().getPrecursorIonType().getCharge());
         final Spectrum<ProcessedPeak> peaklist = Spectrums.wrap(input.getMergedPeaks());
         final SimpleSpectrum ms2 = new SimpleSpectrum(peaklist);
         final Optional<AnnotatedLipidSpectrum<SimpleSpectrum>> annotated = lipidCandidates.stream().map(x -> m2l.annotateSpectrum(x, ms2)).filter(Objects::nonNull).max(Comparator.naturalOrder());
-        if (annotated.isPresent() && annotated.get().predictIsALipid()) {
+        if (annotated.isPresent() && annotated.get().getDetectionLevel().isFormulaSpecified()) {
             // specify molecular formula
 
             final AnnotatedLipidSpectrum<SimpleSpectrum> ano = annotated.get();
@@ -166,23 +166,30 @@ public class ElGordoPlugin extends SiriusPlugin  {
             }
             input.setAnnotation(Whiteset.class, whiteset);
             input.getOrCreatePeakAnnotation(DecompositionList.class).set(input.getParentPeak(), DecompositionList.fromFormulas(Arrays.asList(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula())), ano.getIonType().getIonization()));
-            PeakAnnotation<PredefinedPeak> pa = input.getOrCreatePeakAnnotation(PredefinedPeak.class);
-            input.setAnnotation(LipidSpecies.class, species);
-            input.setAnnotation(ForbidRecalibration.class, ForbidRecalibration.FORBIDDEN);
-            input.getExperimentInformation().setPrecursorIonType(ano.getIonType());
-            final TIntObjectHashMap<PredefinedPeak> elgordoScoreMap = new TIntObjectHashMap<>();
-            for (int k=0, n=ano.numberOfAnnotatedPeaks(); k < n; ++k) {
-                final LipidAnnotation annotation = ano.getAnnotationAt(k);
-                final int j = ano.getPeakIndexAt(k);
-                if (j < 0) continue;
-                final int i = Spectrums.mostIntensivePeakWithin(peaklist, ms2.getMzAt(j), ms2dev);
-                if (i>=0) {
-                    final MolecularFormula formula = annotation.getMeasuredPeakFormula();
-                    ProcessedPeak pk = input.getMergedPeaks().get(i);
-                    final PredefinedPeak obj = new PredefinedPeak(formula, annotation.getIonType(), "el Gordo: " + annotation.toString());
-                    pa.set(pk, obj);
-                    elgordoScoreMap.put(pk.getIndex(), obj);
+
+            // pre-annotate spectrum
+            if (annotated.get().getDetectionLevel().arePeaksCorrectlyAnnotated()){
+                input.setAnnotation(LipidSpecies.class, species);
+                PeakAnnotation<PredefinedPeak> pa = input.getOrCreatePeakAnnotation(PredefinedPeak.class);
+                input.setAnnotation(LipidSpecies.class, species);
+                input.setAnnotation(ForbidRecalibration.class, ForbidRecalibration.FORBIDDEN);
+                input.getExperimentInformation().setPrecursorIonType(ano.getIonType());
+                final TIntObjectHashMap<PredefinedPeak> elgordoScoreMap = new TIntObjectHashMap<>();
+                for (int k = 0, n = ano.numberOfAnnotatedPeaks(); k < n; ++k) {
+                    final LipidAnnotation annotation = ano.getAnnotationAt(k);
+                    final int j = ano.getPeakIndexAt(k);
+                    if (j < 0) continue;
+                    final int i = Spectrums.mostIntensivePeakWithin(peaklist, ms2.getMzAt(j), ms2dev);
+                    if (i >= 0) {
+                        final MolecularFormula formula = annotation.getMeasuredPeakFormula();
+                        ProcessedPeak pk = input.getMergedPeaks().get(i);
+                        final PredefinedPeak obj = new PredefinedPeak(formula, annotation.getIonType(), "el Gordo: " + annotation.toString());
+                        pa.set(pk, obj);
+                        elgordoScoreMap.put(pk.getIndex(), obj);
+                    }
                 }
+            } else {
+                input.setAnnotation(LipidSpecies.class, species.makeGeneric());
             }
         }
 

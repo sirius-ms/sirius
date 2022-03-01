@@ -281,7 +281,7 @@ public class CustomDatabaseImporter {
         checkCancellation();
         try {
             for (String in : dict.keySet())
-                formulasToSearch.add(InChIs.extractFormula(in));
+                formulasToSearch.add(InChIs.extractNeutralFormulaByAdjustingHsOrThrow(in));
         } catch (UnknownElementException e) {
             throw new IOException(e);
         }

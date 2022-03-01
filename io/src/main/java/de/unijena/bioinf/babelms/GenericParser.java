@@ -25,7 +25,7 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -67,12 +67,12 @@ public class GenericParser<T> implements Parser<T> {
         return parseIterator(input, null);
     }
 
-    public <S extends T> CloseableIterator<S> parseIterator(InputStream input, URL source) throws IOException {
+    public <S extends T> CloseableIterator<S> parseIterator(InputStream input, URI source) throws IOException {
         final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(input));
         return parseIterator(reader, source);
     }
 
-    public <S extends T> CloseableIterator<S> parseIterator(final BufferedReader r, final URL source) throws IOException {
+    public <S extends T> CloseableIterator<S> parseIterator(final BufferedReader r, final URI source) throws IOException {
         return new CloseableIterator<S>() {
             @Override
             public void close() throws IOException {
@@ -80,7 +80,7 @@ public class GenericParser<T> implements Parser<T> {
                 tryclose();
             }
 
-            BufferedReader reader=r;
+            BufferedReader reader = r;
             S elem = parse(reader, source);
             @Override
             public boolean hasNext() {
@@ -126,18 +126,18 @@ public class GenericParser<T> implements Parser<T> {
 
     public <S extends T> CloseableIterator<S> parseFromFileIterator(File file) throws IOException {
         final BufferedReader r = FileUtils.ensureBuffering(new FileReader(file));
-        return parseIterator(r, file.toURI().toURL());
+        return parseIterator(r, file.toURI());
     }
 
     public <S extends T> CloseableIterator<S> parseFromPathIterator(Path file) throws IOException {
         final BufferedReader r = Files.newBufferedReader(file);
-        return parseIterator(r, file.toUri().toURL());
+        return parseIterator(r, file.toUri());
     }
 
 
     public <S extends T> List<S> parseFromFile(File file) throws IOException {
         BufferedReader reader = null;
-        final URL source = file.toURI().toURL();
+        final URI source = file.toURI();
         try {
             reader = FileUtils.ensureBuffering(new FileReader(file));
             final ArrayList<S> list = new ArrayList<S>();
@@ -152,8 +152,7 @@ public class GenericParser<T> implements Parser<T> {
             }
             return list;
         } catch (IOException e) {
-            final IOException newOne = new IOException("Error while parsing " + file.getName(), e);
-            throw newOne;
+            throw new IOException("Error while parsing " + file.getName(), e);
         } finally {
             if (reader != null) reader.close();
         }
@@ -162,20 +161,19 @@ public class GenericParser<T> implements Parser<T> {
     @Deprecated
     public <S extends T> S parseFile(File file) throws IOException {
         BufferedReader reader = null;
-        final URL source = file.toURI().toURL();
+        final URI source = file.toURI();
         try {
             reader = FileUtils.ensureBuffering(new FileReader(file));
-            return parse(reader,source);
+            return parse(reader, source);
         } catch (IOException e) {
-            final IOException newOne = new IOException("Error while parsing " + file.getName(), e);
-            throw newOne;
+            throw new IOException("Error while parsing " + file.getName(), e);
         } finally {
             if (reader != null) reader.close();
         }
     }
 
     @Override
-    public <S extends T> S parse(BufferedReader reader, URL source) throws IOException {
+    public <S extends T> S parse(BufferedReader reader, URI source) throws IOException {
         S it = parser.parse(reader, source);
         if (it != null)
             postProcessor.accept(it);

@@ -178,16 +178,15 @@ public class Feature implements Annotated<DataAnnotation> {
         // deprecated
         //exp.setAnnotation(Quantification.class, new Quantification(Collections.singletonMap(origin.identifier, intensity)));
         exp.setAnnotation(CompoundQuality.class,quality);
-        exp.setSource(new SpectrumFileSource(origin.source.getUrl()));
+        exp.setSource(new SpectrumFileSource(origin.source.getURI()));
 
         final Set<PrecursorIonType> ionTypes = getPossibleAdductTypes();
         exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(DetectedAdducts.Keys.LCMS_ALIGN,new PossibleAdducts(ionTypes));
 
         // add trace information
         exp.setAnnotation(LCMSPeakInformation.class, new LCMSPeakInformation(new CoelutingTraceSet[]{getTraceset()}));
-
+        // add instrument annotation
+        exp.setAnnotation(MsInstrumentation.class, origin.instrument);
         return exp;
     }
-
-
 }

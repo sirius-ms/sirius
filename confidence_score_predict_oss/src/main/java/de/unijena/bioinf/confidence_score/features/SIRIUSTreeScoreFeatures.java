@@ -45,6 +45,8 @@ public class SIRIUSTreeScoreFeatures implements FeatureCreator {
 
     List<IdentificationResult<SiriusScore>> idlist;
     Ms2Experiment exp;
+    int min_quartil=1;
+    int max_quartil=99;
 
     public SIRIUSTreeScoreFeatures(List<IdentificationResult<SiriusScore>> idlist, Ms2Experiment exp) {
         this.idlist = idlist;
@@ -54,6 +56,16 @@ public class SIRIUSTreeScoreFeatures implements FeatureCreator {
     @Override
     public int weight_direction() {
         return 0;
+    }
+
+    @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
     }
 
     @Override
@@ -121,6 +133,16 @@ public class SIRIUSTreeScoreFeatures implements FeatureCreator {
     @Override
     public int getFeatureSize() {
         return 19;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+        max_quartil=quartil;
     }
 
     @Override
