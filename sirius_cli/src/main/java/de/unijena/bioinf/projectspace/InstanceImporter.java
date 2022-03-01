@@ -50,9 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -248,6 +246,9 @@ public class InstanceImporter {
 
             final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);
 
+            final boolean flatCopy = inputSpace.ioProvider.getCompressionFormat().equals(importTarget.projectSpace().ioProvider.getCompressionFormat())
+                    && (inputSpace.ioProvider instanceof PathProjectSpaceIOProvider)
+                    && (importTarget.projectSpace().ioProvider instanceof PathProjectSpaceIOProvider);
 
             while (psIter.hasNext()) {
                 final CompoundContainerId sourceId = psIter.next();
@@ -256,28 +257,56 @@ public class InstanceImporter {
                 id.setAllNonFinal(sourceId);
                 importTarget.projectSpace().updateCompoundContainerID(id);
 
+                if (flatCopy) {
+                    ((PathProjectSpaceIOProvider) inputSpace.ioProvider).fsManager.readFile(sourceId.getDirectoryName(), path -> {
+                        List<Path> files = FileUtils.walkAndClose(s -> s
+                                .filter(Files::isRegularFile)
+                                .filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO))
+                                .filter(p -> !p.getFileName().toString().equals(SummaryLocations.FORMULA_CANDIDATES))
+                                .filter(p -> !p.getFileName().toString().equals(SummaryLocations.STRUCTURE_CANDIDATES))
+                                .filter(p -> !p.getFileName().toString().equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP))
+                                .filter(it -> resultsToSkip == null || resultsToSkip.test(it.getFileName().toString()))
+                                .collect(Collectors.toList()), path);
 
-                sourceReader.inDirectory(sourceId.getDirectoryName(), () -> {
-                    List<String> files = sourceReader.listFilesRecursive("*").stream()
-                            .filter(p -> !p.equals(SiriusLocations.COMPOUND_INFO))
-                            .filter(p -> !p.equals(SummaryLocations.FORMULA_CANDIDATES))
-                            .filter(p -> !p.equals(SummaryLocations.STRUCTURE_CANDIDATES))
-                            .filter(p -> !p.equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP))
-                            .filter(it -> resultsToSkip == null || resultsToSkip.test(it))
-                            .collect(Collectors.toList());
-                    for (String relative : files) {
-                        try {
-                            sourceReader.binaryFile(relative, r ->
-                                    targetWriter.inDirectory(id.getDirectoryName(), () -> {
-                                        targetWriter.binaryFile(relative, r::transferTo);
-                                        return null;
-                                    }));//todo reimplement move support for dirs?
-                        } catch (IOException e) {
-                            LOG.error("Could not Copy instance'" + id.getDirectoryName() + "' from old location '" + inputSpace.getLocation() + "' to new location `" + importTarget.projectSpace().getLocation() + "' Results might be missing!", e);
+                        @NotNull FileSystemManager m = ((PathProjectSpaceIOProvider) importTarget.projectSpace().ioProvider).fsManager;
+                        for (Path sourceP : files) {
+                            try (InputStream s = Files.newInputStream(sourceP)) {
+                                m.writeFile(id.getDirectoryName(), targetRoot -> {
+                                    Path targetP = targetRoot.resolve(path.relativize(sourceP).toString());
+                                    if (targetP.getParent() != null)
+                                        Files.createDirectories(targetP.getParent());
+                                    try (OutputStream o = Files.newOutputStream(targetP)) {
+                                        System.out.println("Copy " + sourceP + " -> " + targetP);
+                                        s.transferTo(o);
+                                    }
+                                });
+                            }
                         }
-                    }
-                    return null;
-                });
+                    });
+                } else {
+                    sourceReader.inDirectory(sourceId.getDirectoryName(), () -> {
+                        List<String> files = sourceReader.listFilesRecursive("*").stream()
+                                .filter(p -> !p.equals(SiriusLocations.COMPOUND_INFO))
+                                .filter(p -> !p.equals(SummaryLocations.FORMULA_CANDIDATES))
+                                .filter(p -> !p.equals(SummaryLocations.STRUCTURE_CANDIDATES))
+                                .filter(p -> !p.equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP))
+                                .filter(it -> resultsToSkip == null || resultsToSkip.test(it))
+                                .collect(Collectors.toList());
+                        for (String relative : files) {
+                            try {
+                                sourceReader.binaryFile(relative, r ->
+                                        targetWriter.inDirectory(id.getDirectoryName(), () -> {
+                                            targetWriter.binaryFile(relative, r::transferTo);
+                                            return null;
+                                        }));//todo reimplement move support for dirs?
+                            } catch (IOException e) {
+                                LOG.error("Could not Copy instance'" + id.getDirectoryName() + "' from old location '" + inputSpace.getLocation() + "' to new location `" + importTarget.projectSpace().getLocation() + "' Results might be missing!", e);
+                            }
+                        }
+
+                        return null;
+                    });
+                }
 
                 if (resultsToSkip != null) {
                     LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id + "' after deleting Fingerprint related results...");
