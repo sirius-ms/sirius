@@ -45,7 +45,6 @@ public class CanopusSerializer implements ComponentSerializer<FormulaResultId, F
         final double[] cfProbabilities = reader.doubleVector(loc);
         final ProbabilityFingerprint probabilityFingerprint = new ProbabilityFingerprint(canopusCFData.getFingerprintVersion(), cfProbabilities);
 
-
         Optional<ProbabilityFingerprint> npcFingerprint = Optional.empty();
         final String npcLoc = NPC.relFilePath(id);
         if (reader.exists(npcLoc)) {
@@ -53,7 +52,7 @@ public class CanopusSerializer implements ComponentSerializer<FormulaResultId, F
                     .map(p -> p.getByIonType(id.getIonType())).orElse(null);
 
             if (canopusNPCData != null) {
-                final double[] npcProbabilities = reader.doubleVector(loc);
+                final double[] npcProbabilities = reader.doubleVector(npcLoc);
                 npcFingerprint = Optional.of(new ProbabilityFingerprint(canopusNPCData.getFingerprintVersion(), npcProbabilities));
             }else {
                 LoggerFactory.getLogger(getClass()).debug("Cannot write Canopus NPC summaries due to missing CANOPUS NPC model data."); //this is for backwards compatibility version
