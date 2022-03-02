@@ -56,13 +56,14 @@ public enum SiriusActions {
     EDIT_EXP(EditExperimentAction.class),
     DELETE_EXP(DeleteExperimentAction.class),
     REMOVE_FORMULA_EXP(RemoveFormulaAction.class),
+    SUMMARIZE_EXP(SummarizeSelectedAction.class),
 
 
     NEW_WS(ProjectCreateAction.class),
     LOAD_WS(ProjectOpenAction.class),
     SAVE_WS(ProjectSaveAction.class),
     EXPORT_WS(ProjectSaveCopyAction.class),
-    SUMMARY_WS(ProjectSummaryAction.class),
+    SUMMARIZE_WS(SummarizeAllAction.class),
     EXPORT_FBMN(FBMNExportAction.class),
 
     SHOW_SETTINGS(ShowSettingsDialogAction.class),
