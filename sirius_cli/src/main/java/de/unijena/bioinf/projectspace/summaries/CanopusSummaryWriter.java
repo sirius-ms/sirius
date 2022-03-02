@@ -26,8 +26,10 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.canopus.CanopusResult;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.util.Iterators;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -74,7 +76,7 @@ public class CanopusSummaryWriter implements Summarizer {
                 mostSpecificClasses[i] = primary;
                 final double prob = classifications[i].getProbability(CLF.getIndexOfMolecularProperty(primary));
                 final int ord = new ClassyfireProperty.CompareCompoundClassDescriptivity().compare(primary, bestClass);
-                if (ord > 0  || (ord == 0 && prob > bestProb )) {
+                if (ord > 0 || (ord == 0 && prob > bestProb)) {
                     argmax = i;
                     bestClass = primary;
                     bestProb = prob;
@@ -84,86 +86,98 @@ public class CanopusSummaryWriter implements Summarizer {
         }
     }
 
-    private final List<CanopusSummaryRow> rows = new ArrayList<>();
+    private final List<CanopusSummaryRow> rowsBySiriusScore = new ArrayList<>();
+    private final List<CanopusSummaryRow> rowsByCSIScore = new ArrayList<>();
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     @Override
     public List<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations() {
-        return Arrays.asList(CanopusResult.class);
+        return List.of(CanopusResult.class);
     }
 
     @Override
     public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
-        if (results.size()>0) {
-            // sometimes we have multiple results with same score (adducts!). In this case, we list all of them in
-            // a separate summary file
-            int i=0;
-            SScored<FormulaResult, ? extends FormulaScore> hit;
-            ArrayList<ProbabilityFingerprint> fingerprints = new ArrayList<>();
-            ArrayList<MolecularFormula> formulas = new ArrayList<>(), preForms = new ArrayList<>();
-            ArrayList<PrecursorIonType> ionTypes = new ArrayList<>();
-            FormulaResultId id;
-            do {
-                hit = results.get(i);
-                id = hit.getCandidate().getId();
-                final Optional<CanopusResult> cr = hit.getCandidate().getAnnotation(CanopusResult.class);
-                final var cid = id;
-                cr.ifPresent(canopusResult -> {
-                    fingerprints.add(canopusResult.getCanopusFingerprint());
-                    formulas.add(cid.getMolecularFormula());
-                    ionTypes.add(cid.getIonType());
-                    preForms.add(cid.getPrecursorFormula());
-                });
-                ++i;
-            } while (i < results.size() && results.get(i).getScoreObject().compareTo(hit.getScoreObject()) >= 0);
-            if (fingerprints.size()>0) {
-                lock.writeLock().lock();
-                try {
-                    this.rows.add(new CanopusSummaryRow(
-                            fingerprints.toArray(ProbabilityFingerprint[]::new),
-                            formulas.toArray(MolecularFormula[]::new),
-                            preForms.toArray(MolecularFormula[]::new),
-                            ionTypes.toArray(PrecursorIonType[]::new),
-                            id.getParentId().getDirectoryName()
-                    ));
-                } finally {
-                    lock.writeLock().unlock();
-                }
-            }
+        if (!results.isEmpty()) {
+            addToRows(rowsBySiriusScore, FormulaScoring.reRankBy(results, List.of(SiriusScore.class), true));
+            addToRows(rowsByCSIScore, FormulaScoring.reRankBy(results, List.of(TopCSIScore.class), true));
         }
 
+    }
+
+    private void addToRows(List<CanopusSummaryRow> rows, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) {
+        // sometimes we have multiple results with same score (adducts!). In this case, we list all of them in
+        // a separate summary file
+        int i = 0;
+        SScored<FormulaResult, ? extends FormulaScore> hit;
+        ArrayList<ProbabilityFingerprint> fingerprints = new ArrayList<>();
+        ArrayList<MolecularFormula> formulas = new ArrayList<>(), preForms = new ArrayList<>();
+        ArrayList<PrecursorIonType> ionTypes = new ArrayList<>();
+        FormulaResultId id;
+        do {
+            hit = results.get(i);
+            id = hit.getCandidate().getId();
+            final Optional<CanopusResult> cr = hit.getCandidate().getAnnotation(CanopusResult.class);
+            final var cid = id;
+            cr.ifPresent(canopusResult -> {
+                fingerprints.add(canopusResult.getCanopusFingerprint());
+                formulas.add(cid.getMolecularFormula());
+                ionTypes.add(cid.getIonType());
+                preForms.add(cid.getPrecursorFormula());
+            });
+            ++i;
+        } while (i < results.size() && results.get(i).getScoreObject().compareTo(hit.getScoreObject()) >= 0);
+        if (fingerprints.size() > 0) {
+            lock.writeLock().lock();
+            try {
+                rows.add(new CanopusSummaryRow(
+                        fingerprints.toArray(ProbabilityFingerprint[]::new),
+                        formulas.toArray(MolecularFormula[]::new),
+                        preForms.toArray(MolecularFormula[]::new),
+                        ionTypes.toArray(PrecursorIonType[]::new),
+                        id.getParentId().getDirectoryName()
+                ));
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
     }
 
     @Override
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
         lock.readLock().lock();
         try {
-            writer.table(SummaryLocations.CANOPUS_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas()));
-            writer.table(SummaryLocations.CANOPUS_SUMMARY_ADDUCT, HEADER2, Iterators.capture(new IterateOverAdducts()));
+            writer.table(SummaryLocations.CANOPUS_FORMULA_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsBySiriusScore)));
+            writer.table(SummaryLocations.CANOPUS_COMPOUND_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsByCSIScore)));
+            writer.table(SummaryLocations.CANOPUS_FOMRULA_SUMMARY_ADDUCTS, HEADER2, Iterators.capture(new IterateOverAdducts(rowsBySiriusScore)));
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    private final static String[] HEADER = new String[]{ "name","molecularFormula", "adduct", "most specific class", "level 5", "subclass", "class",
+    private final static String[] HEADER = new String[]{ "id","molecularFormula", "adduct", "most specific class", "level 5", "subclass", "class",
             "superclass", "all classifications"},
-            HEADER2 = new String[]{ "name","molecularFormula", "adduct", "precursorFormula", "most specific class", "level 5", "subclass", "class",
+            HEADER2 = new String[]{ "id","molecularFormula", "adduct", "precursorFormula", "most specific class", "level 5", "subclass", "class",
                     "superclass", "all classifications"};
 
-    public class IterateOverFormulas implements Iterator<String[]> {
-            int k = 0;
-            String[] cols = new String[HEADER.length];
+    public static class IterateOverFormulas implements Iterator<String[]> {
+        int k = 0;
+        String[] cols = new String[HEADER.length];
+        final List<CanopusSummaryRow> rows;
 
-            @Override
-            public boolean hasNext() {
-                return k < rows.size();
-            }
+        public IterateOverFormulas(List<CanopusSummaryRow> rows) {
+            this.rows = rows;
+        }
 
-            @Override
-            public String[] next() {
-                try {
-                    final CanopusSummaryRow row = rows.get(k);
-                    final ClassyfireProperty primaryClass = row.mostSpecificClasses[row.best];
+        @Override
+        public boolean hasNext() {
+            return k < rows.size();
+        }
+
+        @Override
+        public String[] next() {
+            try {
+                final CanopusSummaryRow row = rows.get(k);
+                final ClassyfireProperty primaryClass = row.mostSpecificClasses[row.best];
                     final ClassyfireProperty[] lineage = primaryClass.getLineage();
 
                     cols[0] = row.id;
@@ -187,10 +201,15 @@ public class CanopusSummaryWriter implements Summarizer {
                 }
             }
         }
-    public class IterateOverAdducts implements Iterator<String[]> {
+
+    public static class IterateOverAdducts implements Iterator<String[]> {
         int k = 0, j=0;
         String[] cols = new String[HEADER2.length];
+        final List<CanopusSummaryRow> rows;
 
+        public IterateOverAdducts(List<CanopusSummaryRow> rows) {
+            this.rows = rows;
+        }
         @Override
         public boolean hasNext() {
             return k < rows.size();

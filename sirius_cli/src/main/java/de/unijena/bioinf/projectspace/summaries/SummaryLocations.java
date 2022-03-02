@@ -21,14 +21,17 @@ package de.unijena.bioinf.projectspace.summaries;
 
 public interface SummaryLocations {
     String
-            MZTAB_SUMMARY = "report.mztab",
-            FORMULA_CANDIDATES = "formula_candidates.tsv",
-            STRUCTURE_CANDIDATES = "structure_candidates.tsv",
-            STRUCTURE_CANDIDATES_TOP = "structure_candidates_topHits.tsv",
+            FORMULA_CANDIDATES = "formula_candidates.tsv", //all formula candidates
+            STRUCTURE_CANDIDATES = "structure_candidates.tsv", //all structure candidates
+//            CANOPUS_CANDIDATES_ANNOTATIONS = "canopus_summary.tsv", //todo canopus annotation for all formula candidates
+            //project level summaries
             FORMULA_SUMMARY = "formula_identifications.tsv",
             FORMULA_SUMMARY_ADDUCTS = "formula_identifications_adducts.tsv",
             COMPOUND_SUMMARY = "compound_identifications.tsv",
-            COMPOUND_SUMMARY_ADDUCTS = "compound_identifications_adducts.tsv",
-            CANOPUS_SUMMARY = "canopus_summary.tsv",
-            CANOPUS_SUMMARY_ADDUCT = "canopus_summary_adducts.tsv";
+            COMPOUND_SUMMARY_ADDUCTS = "compound_identifications_adducts.tsv", // does this make much sense???
+            CANOPUS_FORMULA_SUMMARY = "canopus_formula_summary.tsv",
+            CANOPUS_FOMRULA_SUMMARY_ADDUCTS = "canopus_formula_summary_adducts.tsv",
+            CANOPUS_COMPOUND_SUMMARY = "canopus_compound_summary.tsv",
+//            CANOPUS_COMPOUND_SUMMARY_ADDUCTS = "canopus_compound_summary_adducts.tsv", // does this make not much sense???
+            MZTAB_SUMMARY = "report.mztab";
 }
