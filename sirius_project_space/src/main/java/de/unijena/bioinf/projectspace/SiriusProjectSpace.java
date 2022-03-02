@@ -151,6 +151,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
 
         this.compoundCounter.set(maxIndex + 1);
+        flush();
         fireProjectSpaceChange(ProjectSpaceEvent.OPENED);
         w.stop();
         System.out.println("Open() done in: " + w.toString());
