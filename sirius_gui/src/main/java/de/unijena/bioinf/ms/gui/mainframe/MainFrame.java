@@ -185,18 +185,23 @@ public class MainFrame extends JFrame implements DropTargetListener {
         final BasicEventList<InstanceBean> psList = compoundBaseList;
         final AtomicBoolean compatible = new AtomicBoolean(true);
         this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
-            final SiriusProjectSpace ps = makeSpace.get();
-            Utils.withTime("Data Check done in: ", w -> compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null));
-            Utils.withTime("Cancel Jobs done in: ", w -> Jobs.cancelALL());
-            final GuiProjectSpaceManager gps = Utils.withTimeR("Create GUI SpaceManager: ", w -> new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10)));
-            inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
-            Utils.withTime("Add listeners done in: ", w -> {
-                gps.projectSpace().addProjectSpaceListener(event -> {
-                    if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
-                        inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
+            GuiProjectSpaceManager old = this.ps;
+            try {
+                final SiriusProjectSpace ps = makeSpace.get();
+                Utils.withTime("Data Check done in: ", w -> compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null));
+                Utils.withTime("Cancel Jobs done in: ", w -> Jobs.cancelALL());
+                final GuiProjectSpaceManager gps = Utils.withTimeR("Create GUI SpaceManager: ", w -> new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10)));
+                inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
+                Utils.withTime("Add listeners done in: ", w -> {
+                    gps.projectSpace().addProjectSpaceListener(event -> {
+                        if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
+                            inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
+                    });
                 });
-            });
-            return gps;
+                return gps;
+            } finally {
+                old.close();
+            }
         }).getResult();
 
         if (this.ps == null) {
