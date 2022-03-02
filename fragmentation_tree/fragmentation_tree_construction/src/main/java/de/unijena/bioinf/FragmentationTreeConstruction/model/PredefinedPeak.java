@@ -65,4 +65,13 @@ public final class PredefinedPeak implements DataAnnotation {
     public Decomposition toDecomposition() {
         return new Decomposition(peakFormula,ionization, 0d);
     }
+
+    @Override
+    public String toString() {
+        return "PredefinedPeak{" +
+                "peakFormula=" + peakFormula +
+                ", ionization=" + ionization +
+                ", comment='" + comment + '\'' +
+                '}';
+    }
 }

@@ -36,13 +36,13 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.annotations.AnnotationJJob;
 import de.unijena.bioinf.ms.webapi.WebJJob;
-import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
+import java.io.File;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -178,5 +178,11 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
         nu.setFtree(input.getSourceTree());
         nu.setFingerprint(input.getPredictedFingerprint());
         return nu;
+    }
+
+    @Override
+    public String identifier() {
+        String filePath = ftree==null ? "Null" : ftree.getAnnotation(de.unijena.bioinf.ChemistryBase.data.DataSource.class).orElse(new de.unijena.bioinf.ChemistryBase.data.DataSource(new File(""))).toString();
+        return super.identifier() + " | " + filePath;
     }
 }

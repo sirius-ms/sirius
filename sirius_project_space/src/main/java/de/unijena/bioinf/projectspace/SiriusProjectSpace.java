@@ -151,6 +151,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }
 
         this.compoundCounter.set(maxIndex + 1);
+        flush();
         fireProjectSpaceChange(ProjectSpaceEvent.OPENED);
         w.stop();
         System.out.println("Open() done in: " + w.toString());
@@ -657,16 +658,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         }, containerId);
     }
 
-    /*@NotNull
-    public Collection<CompoundContainerId> getIds() {
-        idLock.readLock().lock();
-        try {
-            return Collections.unmodifiableCollection(ids.values());
-        } finally {
-            idLock.readLock().unlock();
-        }
-    }*/
-
     @NotNull
     @Override
     public Iterator<CompoundContainerId> iterator() {
@@ -833,44 +824,52 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     public void writeSummaries(Summarizer... summarizers) throws ExecutionException {
-        writeSummaries(null, false, summarizers);
+        writeSummaries(null, false, null, summarizers);
     }
 
-    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, Summarizer... summarizers) throws ExecutionException {
-        SiriusJobs.getGlobalJobManager().submitJob(makeSummarizerJob(summaryLocation, compressed, summarizers)).awaitResult();
+    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @Nullable Collection<CompoundContainerId> inclusionList, Summarizer... summarizers) throws ExecutionException {
+        SiriusJobs.getGlobalJobManager().submitJob(makeSummarizerJob(summaryLocation, compressed, inclusionList, summarizers)).awaitResult();
     }
 
     public SummarizerJob makeSummarizerJob(Summarizer... summarizers) {
-        return makeSummarizerJob(null, false, summarizers);
+        return makeSummarizerJob(null, false, null, summarizers);
     }
 
-    public SummarizerJob makeSummarizerJob(@Nullable Path summaryLocation, boolean compressed, Summarizer... summarizers) {
+    public SummarizerJob makeSummarizerJob(@Nullable Path summaryLocation, boolean compressed, @Nullable Collection<CompoundContainerId> inclusionList, Summarizer... summarizers) {
         if (summaryLocation == null)
-            return new SummarizerJob(null, summarizers);
+            return new SummarizerJob(null, inclusionList, summarizers);
         else if (compressed)
-            return new SummarizerJob(ProjectSpaceIO.getDefaultZipProvider(summaryLocation), summarizers);
-        return new SummarizerJob(new PathProjectSpaceIOProvider(summaryLocation, null), summarizers);
+            return new SummarizerJob(ProjectSpaceIO.getDefaultZipProvider(summaryLocation), inclusionList, summarizers);
+        return new SummarizerJob(new PathProjectSpaceIOProvider(summaryLocation, null), inclusionList, summarizers);
     }
 
 
-    public class SummarizerJob extends BasicMasterJJob<Boolean> {
+    public class SummarizerJob extends BasicMasterJJob<Boolean> { //todo change to static job
         private ProjectIOProvider<?, ?, ?> ioProvider;
         private final Summarizer[] summarizers;
+        private Collection<CompoundContainerId> ids;
 
         protected SummarizerJob(Summarizer... summarizers) {
             this(null, summarizers);
         }
 
-        protected SummarizerJob(@Nullable ProjectIOProvider<?, ?, ?> ioProvider, Summarizer... summarizers) {
+        protected SummarizerJob(Collection<CompoundContainerId> inclusionList, Summarizer... summarizers) {
+            this(null, inclusionList, summarizers);
+        }
+
+        protected SummarizerJob(@Nullable ProjectIOProvider<?, ?, ?> ioProvider, Collection<CompoundContainerId> inclusionList, Summarizer... summarizers) {
             super(JobType.SCHEDULER);
             this.summarizers = summarizers;
             this.ioProvider = ioProvider;
+            this.ids = inclusionList;
         }
 
         @Override
         protected Boolean compute() throws IOException, InterruptedException {
             idLock.readLock().lock();
             try {
+                if (ids == null || ids.isEmpty())
+                    ids = SiriusProjectSpace.this.ids.values();
                 int batches = jobManager.getCPUThreads() * 3;
                 int max = ids.size() + summarizers.length + 1;
 
@@ -896,7 +895,7 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
                 try {
                     Class[] annotations = Arrays.stream(summarizers).flatMap(s -> s.requiredFormulaResultAnnotations().stream()).distinct().collect(Collectors.toList()).toArray(Class[]::new);
                     {
-                        List<BasicMasterJJob<Boolean>> jobs1 = ids.values().stream().map(cid -> new BasicMasterJJob<Boolean>(JobType.CPU) {
+                        List<BasicMasterJJob<Boolean>> jobs1 = ids.stream().map(cid -> new BasicMasterJJob<Boolean>(JobType.CPU) {
                             @Override
                             protected Boolean compute() throws Exception {
                                 cid.containerLock.readLock().lock();
