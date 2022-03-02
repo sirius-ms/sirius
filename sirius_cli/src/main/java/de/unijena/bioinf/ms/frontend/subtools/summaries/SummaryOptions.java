@@ -49,12 +49,11 @@ public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, St
 
     @Override
     public SummarySubToolJob makePostprocessingJob(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
-        return new SummarySubToolJob(rootOptions.getProjectSpace(), config, this);
+        return new SummarySubToolJob(rootOptions, config, this);
     }
 
     @Override
     public Workflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
         return makePostprocessingJob(rootOptions, config);
     }
-
 }

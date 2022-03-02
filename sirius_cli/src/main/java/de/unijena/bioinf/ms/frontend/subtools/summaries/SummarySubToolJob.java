@@ -22,22 +22,28 @@ package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Workflow {
     private static final Logger LOG = LoggerFactory.getLogger(SummarySubToolJob.class);
-    private final ProjectSpaceManager project;
-    private final ParameterConfig config;
     private final SummaryOptions options;
+    private final ParameterConfig config;
+    private final RootOptions<?,?,?> rootOptions;
 
-    public SummarySubToolJob(ProjectSpaceManager project, ParameterConfig config, SummaryOptions options) {
-        this.project = project;
+    public SummarySubToolJob(RootOptions<?,?,?> rootOptions, ParameterConfig config, SummaryOptions options) {
+        this.rootOptions = rootOptions;
         this.config = config;
         this.options = options;
     }
@@ -54,11 +60,22 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
 
     @Override
     protected Boolean compute() throws Exception {
+        ProjectSpaceManager project = rootOptions.getProjectSpace();
         try {
             //use all experiments in workspace to create summaries
             LOG.info("Writing summary files...");
             StopWatch w = new StopWatch(); w.start();
-            SiriusProjectSpace.SummarizerJob job = project.projectSpace().makeSummarizerJob(options.location, options.compress, ProjectSpaceManager.defaultSummarizer());
+
+            Iterable<? extends Instance> compounds = SiriusJobs.getGlobalJobManager().submitJob(rootOptions.makeDefaultPreprocessingJob()).awaitResult();
+
+            List<CompoundContainerId> ids = null;
+            if (compounds != null && !compounds.equals(project)) {
+                List<CompoundContainerId> idsTMP = new ArrayList<>(project.size());
+                compounds.forEach(i -> idsTMP.add(i.getID()));
+                ids = idsTMP;
+            }
+
+            SiriusProjectSpace.SummarizerJob job = project.projectSpace().makeSummarizerJob(options.location, options.compress, ids, ProjectSpaceManager.defaultSummarizer());
             job.addJobProgressListener(this::updateProgress);
             SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
             w.stop();

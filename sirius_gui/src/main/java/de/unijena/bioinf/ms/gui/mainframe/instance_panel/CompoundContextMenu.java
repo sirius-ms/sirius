@@ -35,6 +35,7 @@ public class CompoundContextMenu extends JPopupMenu {
 
     public CompoundContextMenu() {
         add(new JMenuItem(SiriusActions.COMPUTE.getInstance()));
+        add(new JMenuItem(SiriusActions.SUMMARIZE_EXP.getInstance()));
         add(new JMenuItem(SiriusActions.DELETE_EXP.getInstance()));
         addSeparator();
         add(new JMenuItem(SiriusActions.EDIT_EXP.getInstance()));
