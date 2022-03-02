@@ -107,7 +107,7 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
         buf.append("<b>El Gordo</b> classified this compound as <b>");
         buf.append(species.getLipidClass().longName());
         buf.append("</b>.");
-        buf.append(" Note that neither the exact chain locations nor the stereochemistry and the double bond locations can be determined from the MS/MS.");
+        buf.append("<br>Note that neither the exact chain locations nor the stereochemistry and the double bond locations can be determined from the MS/MS.");
         if (species.chainsUnknown()) {
             buf.append("The formula composition of the chains could not be determined from the MS/MS, too.");
         }
