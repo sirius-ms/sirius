@@ -87,7 +87,7 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
                 setText("<html>" +
                         "<b>" + lipidSpecies + "</b>" +
                         " - " +
-                        "<b>El Gordo</b> classified this compound as <b>lipid</b>" +
+                        elgordoExplanation(lipidSpecies) +
                         " </html>");
                 String link = String.format(Locale.US, DataSource.LIPID.URI, URLEncoder.encode(lipidSpecies.toString(), StandardCharsets.UTF_8));
                 try {
@@ -100,6 +100,18 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
 
             repaint();
         }
+    }
+
+    private String elgordoExplanation(LipidSpecies species) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("<b>El Gordo</b> classified this compound as <b>");
+        buf.append(species.getLipidClass().longName());
+        buf.append("</b>.");
+        buf.append("<br>Note that neither the exact chain locations nor the stereochemistry and the double bond locations can be determined from the MS/MS.");
+        if (species.chainsUnknown()) {
+            buf.append("The formula composition of the chains could not be determined from the MS/MS, too.");
+        }
+        return buf.toString();
     }
 
     private void open(URI uri) {

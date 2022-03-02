@@ -71,7 +71,7 @@ class SiriusToolbar extends JToolBar {
 
         //summarize
         addSeparator(new Dimension(20, 20));
-        summB = new ToolbarButton(SiriusActions.SUMMARY_WS.getInstance());
+        summB = new ToolbarButton(SiriusActions.SUMMARIZE_WS.getInstance());
         add(summB);
 
         //fbmn

@@ -22,6 +22,8 @@ package de.unijena.bioinf.ms.gui.actions;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
 import de.unijena.bioinf.ms.gui.subtools.summaries.SummaryConfigPanel;
+import de.unijena.bioinf.projectspace.InstanceBean;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -29,18 +31,23 @@ import java.util.List;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
-public class ProjectSummaryAction extends AbstractAction {
+public class SummarizeAllAction extends AbstractAction {
 
-    public ProjectSummaryAction() {
+    public SummarizeAllAction() {
         super("Summaries");
         putValue(Action.LARGE_ICON_KEY, Icons.EXPORT_32);
-        putValue(Action.SHORT_DESCRIPTION, "Write Summary .tsv files to project.");
+        putValue(Action.SMALL_ICON, Icons.EXPORT_16);
+        putValue(Action.SHORT_DESCRIPTION, "Write/Export Summary .tsv files.");
         setEnabled(true);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(new SummaryConfigPanel(), List.copyOf(MF.getCompounds()), null, MF, "Write Project Summaries", true);
+        run(List.copyOf(MF.getCompounds()), "Write Summaries for whole Project");
+    }
+
+    protected void run(@NotNull List<InstanceBean> compounds, String title) {
+        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(new SummaryConfigPanel(), compounds, null, MF, title, true);
         d.setIndeterminateProgress(false);
         d.start();
     }
