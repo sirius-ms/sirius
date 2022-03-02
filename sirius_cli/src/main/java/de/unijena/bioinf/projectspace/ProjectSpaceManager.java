@@ -239,15 +239,15 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         return space.containsCompound(id);
     }
 
-    public void writeSummaries(@Nullable Path summaryLocation, @NotNull Summarizer... summarizers) throws ExecutionException {
+    public void writeSummaries(@Nullable Path summaryLocation, @Nullable Collection<CompoundContainerId> inclusionList, @NotNull Summarizer... summarizers) throws ExecutionException {
         if (summaryLocation == null)
-            writeSummaries(null, false, summarizers);
+            writeSummaries(null, false, inclusionList, summarizers);
         else
-            writeSummaries(summaryLocation, summaryLocation.toString().endsWith(".zip"), summarizers);
+            writeSummaries(summaryLocation, summaryLocation.toString().endsWith(".zip"), inclusionList, summarizers);
     }
 
-    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @NotNull Summarizer... summarizers) throws ExecutionException {
-        space.writeSummaries(summaryLocation, compressed, summarizers);
+    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @Nullable Collection<CompoundContainerId> inclusionList, @NotNull Summarizer... summarizers) throws ExecutionException {
+        space.writeSummaries(summaryLocation, compressed, inclusionList, summarizers);
     }
 
     public void close() throws IOException {

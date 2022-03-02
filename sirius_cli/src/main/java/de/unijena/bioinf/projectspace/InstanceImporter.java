@@ -227,7 +227,7 @@ public class InstanceImporter {
                             !p.equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
                             !p.equals(SummaryLocations.COMPOUND_SUMMARY) &&
                             !p.equals(SummaryLocations.FORMULA_SUMMARY) &&
-                            !p.equals(SummaryLocations.CANOPUS_SUMMARY) &&
+                            !p.equals(SummaryLocations.CANOPUS_FORMULA_SUMMARY) &&
                             !p.equals(SummaryLocations.MZTAB_SUMMARY) &&
                             (resultsToSkip == null || DATA_FILES_TO_SKIP.test(p)) //skip data files if incompatible
                     ).collect(Collectors.toList());
@@ -264,7 +264,6 @@ public class InstanceImporter {
                                 .filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO))
                                 .filter(p -> !p.getFileName().toString().equals(SummaryLocations.FORMULA_CANDIDATES))
                                 .filter(p -> !p.getFileName().toString().equals(SummaryLocations.STRUCTURE_CANDIDATES))
-                                .filter(p -> !p.getFileName().toString().equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP))
                                 .filter(it -> resultsToSkip == null || resultsToSkip.test(it.getFileName().toString()))
                                 .collect(Collectors.toList()), path);
 
@@ -288,7 +287,6 @@ public class InstanceImporter {
                                 .filter(p -> !p.equals(SiriusLocations.COMPOUND_INFO))
                                 .filter(p -> !p.equals(SummaryLocations.FORMULA_CANDIDATES))
                                 .filter(p -> !p.equals(SummaryLocations.STRUCTURE_CANDIDATES))
-                                .filter(p -> !p.equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP))
                                 .filter(it -> resultsToSkip == null || resultsToSkip.test(it))
                                 .collect(Collectors.toList());
                         for (String relative : files) {
@@ -348,7 +346,7 @@ public class InstanceImporter {
                     && !n.equals(CanopusLocations.NPC_CLIENT_DATA) && !n.equals(CanopusLocations.NPC_CLIENT_DATA_NEG);
 
     private final static Predicate<String> RESULTS_TO_SKIP = n ->
-            !n.equals(SummaryLocations.STRUCTURE_CANDIDATES) && !n.equals(SummaryLocations.STRUCTURE_CANDIDATES_TOP)
+            !n.equals(SummaryLocations.STRUCTURE_CANDIDATES)
                     && !n.equals(FingerIdLocations.FINGERBLAST.relDir()) && !n.equals(FingerIdLocations.FINGERBLAST_FPs.relDir()) && !n.equals(FingerIdLocations.FINGERPRINTS.relDir())
                     && !n.equals(CanopusLocations.CF.relDir()) && !n.equals(CanopusLocations.NPC.relDir());
 
