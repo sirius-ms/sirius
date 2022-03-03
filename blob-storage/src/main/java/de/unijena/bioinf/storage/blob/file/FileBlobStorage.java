@@ -57,6 +57,8 @@ public class FileBlobStorage implements BlobStorage {
 
     private Map<String, String> tags = null;
     private final ReadWriteLock tagLock = new ReentrantReadWriteLock();
+    private final Map<String, ReentrantReadWriteLock> pathLocks = new HashMap<>();
+    private final ReadWriteLock pathLocksLock = new ReentrantReadWriteLock();
 
     public FileBlobStorage(Path root) {
         this.root = root;
@@ -168,24 +170,238 @@ public class FileBlobStorage implements BlobStorage {
         Path blob = root.resolve(relative);
         if (!Files.isRegularFile(blob))
             return null;
-        final FileInputStream stream = new FileInputStream(blob.toFile());
-        stream.getChannel().lock(0, Long.MAX_VALUE, true);
-
-        return stream;
+        return new LockedInputStream(blob.toFile());
     }
 
+    //
     protected OutputStream writer(Path relative) throws IOException {
         @NotNull Path target = root.resolve(relative);
         Files.createDirectories(target.getParent());
-        FileOutputStream w = new FileOutputStream(target.toFile());
-        w.getChannel().lock();
-        return w;
+        return new LockedOutputStream(target.toFile());
     }
 
     @Override
     public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
         try (OutputStream w = writer(relative)) {
             withStream.accept(w);
+        }
+    }
+
+
+   /* private void readLockPath(String absolute) {
+        pathLocksLock.readLock().lock();
+        try {
+            ReadWriteLock lock = pathLocks.get(absolute);
+            if (lock != null) {
+                lock.readLock().lock();
+                return;
+            }
+        } finally {
+            pathLocksLock.readLock().unlock();
+        }
+
+        pathLocksLock.writeLock().lock();
+        try {
+            pathLocks.computeIfAbsent(absolute, path -> new ReentrantReadWriteLock()).readLock().lock();
+        } finally {
+            pathLocksLock.writeLock().unlock();
+        }
+    }
+
+    private void readUnLockPath(String absolute) {
+        pathLocksLock.readLock().lock();
+        ReentrantReadWriteLock lock = null;
+        try {
+            lock = pathLocks.get(absolute);
+            if (lock == null) {
+                LoggerFactory.getLogger(getClass()).warn("Lock for path '" + absolute + "' does not exist!");
+                return;
+            } else {
+                lock.readLock().unlock();
+                if (lock.isWriteLocked() || lock.getReadLockCount() > 0)
+                    return;
+            }
+        } finally {
+            pathLocksLock.readLock().unlock();
+        }
+
+        pathLocksLock.writeLock().lock();
+        try {
+            if (!lock.isWriteLocked() && lock.getReadLockCount() == 0)
+                pathLocks.remove(absolute);
+        } finally {
+            pathLocksLock.writeLock().unlock();
+        }
+    }
+
+    private void writeLockPath(String absolute) {
+        pathLocksLock.readLock().lock();
+        try {
+            ReadWriteLock lock = pathLocks.get(absolute);
+            if (lock != null) {
+                lock.writeLock().lock();
+                return;
+            }
+        } finally {
+            pathLocksLock.readLock().unlock();
+        }
+
+        pathLocksLock.writeLock().lock();
+        try {
+            pathLocks.computeIfAbsent(absolute, path -> new ReentrantReadWriteLock()).writeLock().lock();
+        } finally {
+            pathLocksLock.writeLock().unlock();
+        }
+    }
+
+    private void writeUnLockPath(String absolute) {
+        pathLocksLock.readLock().lock();
+        ReentrantReadWriteLock lock = null;
+        try {
+            lock = pathLocks.get(absolute);
+            if (lock == null) {
+                LoggerFactory.getLogger(getClass()).warn("Lock for path '" + absolute + "' does not exist!");
+                return;
+            } else {
+                lock.writeLock().unlock();
+                if (lock.isWriteLocked() || lock.getReadLockCount() > 0)
+                    return;
+            }
+        } finally {
+            pathLocksLock.readLock().unlock();
+        }
+
+        pathLocksLock.writeLock().lock();
+        try {
+            if (!lock.isWriteLocked() && lock.getReadLockCount() == 0)
+                pathLocks.remove(absolute);
+        } finally {
+            pathLocksLock.writeLock().unlock();
+        }
+    }*/
+
+    /**
+     * Write locks the given Path and frees the lock when closed
+     */
+    public final class LockedOutputStream extends FileOutputStream {
+        private ReentrantReadWriteLock lock;
+        private final String path;
+
+        private LockedOutputStream(@NotNull File file) throws FileNotFoundException {
+            super(file);
+            path = file.getAbsolutePath();
+
+            pathLocksLock.readLock().lock();
+            try {
+//                synchronized (pathLocks) {
+                lock = pathLocks.get(path);
+                if (lock != null)
+                    lock.writeLock().lock();
+//                }
+            } finally {
+                pathLocksLock.readLock().unlock();
+            }
+
+            if (lock == null) {
+                pathLocksLock.writeLock().lock();
+                try {
+                    //                synchronized (pathLocks) {
+                    lock = pathLocks.computeIfAbsent(path, r -> new ReentrantReadWriteLock());
+                    lock.writeLock().lock();
+                    //                }
+                } finally {
+                    pathLocksLock.writeLock().unlock();
+                }
+            }
+//            System.out.println(file.getAbsolutePath() + ": Waiter=" + lock.getReadLockCount() + ":" + lock.isWriteLocked());
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                super.close();
+            } finally {
+                if (lock != null) {
+                    lock.writeLock().unlock();
+                    if (lock == pathLocks.get(path)) {
+                        if (!lock.isWriteLocked() && lock.getReadLockCount() == 0 && !lock.hasQueuedThreads()) {
+                            try {
+                                pathLocksLock.writeLock().lock();
+//                                synchronized (pathLocks) {
+                                if (!lock.isWriteLocked() && lock.getReadLockCount() == 0 && !lock.hasQueuedThreads())
+                                    pathLocks.remove(path);
+//                                }
+                            } finally {
+                                pathLocksLock.writeLock().unlock();
+                            }
+                        }
+                    }
+                    lock = null;
+//                    System.out.println("Number of locks=" + pathLocks.size());
+                }
+            }
+        }
+    }
+
+    /**
+     * Read locks the given Path and frees the lock when closed
+     */
+    public final class LockedInputStream extends FileInputStream {
+        private ReentrantReadWriteLock lock;
+        private final String path;
+
+        private LockedInputStream(@NotNull File file) throws FileNotFoundException {
+            super(file);
+            path = file.getAbsolutePath();
+            pathLocksLock.readLock().lock();
+            try {
+//                synchronized (pathLocks) {
+                lock = pathLocks.get(path);
+                if (lock != null)
+                    lock.readLock().lock();
+//                }
+            } finally {
+                pathLocksLock.readLock().unlock();
+            }
+
+            if (lock == null) {
+                pathLocksLock.writeLock().lock();
+                try {
+                    //                synchronized (pathLocks) {
+                    lock = pathLocks.computeIfAbsent(path, r -> new ReentrantReadWriteLock());
+                    lock.readLock().lock();
+                    //                }
+                } finally {
+                    pathLocksLock.writeLock().unlock();
+                }
+            }
+//            System.out.println(file.getAbsolutePath() + ": Waiter=" + lock.getReadLockCount() + ":" + lock.isWriteLocked());
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                super.close();
+            } finally {
+                if (lock != null) {
+                    lock.readLock().unlock();
+                    if (lock == pathLocks.get(path)) {
+                        if (!lock.isWriteLocked() && lock.getReadLockCount() == 0 && !lock.hasQueuedThreads()) {
+                            pathLocksLock.writeLock().lock();
+                            try {
+//                                synchronized (pathLocks) {
+                                if (!lock.isWriteLocked() && lock.getReadLockCount() == 0 && !lock.hasQueuedThreads())
+                                    pathLocks.remove(path);
+//                                }
+                            } finally {
+                                pathLocksLock.writeLock().unlock();
+                            }
+                        }
+                    }
+                    lock = null;
+//                    System.out.println("Number of locks=" + pathLocks.size());
+                }
+            }
         }
     }
 }
