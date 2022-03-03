@@ -29,6 +29,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final CompoundList compoundList;
 
     JCheckBox[] peakShape;
+
+    final JComboBox<CompoundFilterModel.LipidFilter> lipidFilterBox;
 
     public CompoundFilterOptionsDialog(MainFrame owner, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
         super(owner, "Filter options", true);
@@ -98,6 +101,12 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
 
         }
+
+        //lipid filter
+        lipidFilterBox = new JComboBox<>();
+        java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
+        smallParameters.addNamed("Lipids: ",lipidFilterBox);
+        lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
 
         invertFilter = new JCheckBox("select non-matching");
         invertFilter.setSelected(compoundList.isFilterInverted());
@@ -177,6 +186,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         for (int k=0; k < peakShape.length; ++k) {
             filterModel.setPeakShapeQuality(k, peakShape[k].isSelected());
         }
+
+        filterModel.setLipidFilter((CompoundFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
     }
 
     @Override
@@ -217,6 +228,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         for (int i=0; i < peakShape.length; ++i) {
             peakShape[i].setSelected(true);
         }
+        lipidFilterBox.setSelectedItem(CompoundFilterModel.LipidFilter.ALL);
         searchFieldDialogCopy.setText("");
         invertFilter.setSelected(false);
     }

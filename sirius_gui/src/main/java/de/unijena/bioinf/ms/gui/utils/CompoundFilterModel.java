@@ -40,6 +40,8 @@ public class CompoundFilterModel implements SiriusPCS {
     //
     private boolean[] peakShapeQualities = new boolean[]{true,true,true};
 
+    private LipidFilter lipidFilter = LipidFilter.ALL;
+
     /*
     min/max possible values
      */
@@ -79,6 +81,20 @@ public class CompoundFilterModel implements SiriusPCS {
             if (!val) return true;
         }
         return false;
+    }
+
+    public boolean isLipidFilterEnabled() {
+        return lipidFilter != LipidFilter.ALL;
+    }
+
+    public LipidFilter getLipidFilter() {
+        return lipidFilter;
+    }
+
+    public void setLipidFilter(LipidFilter value) {
+        LipidFilter oldValue = lipidFilter;
+        lipidFilter = value;
+        pcs.firePropertyChange("setLipidFilter", oldValue, value);
     }
 
     public void setPeakShapeQuality(LCMSCompoundSummary.Quality quality, boolean value) {
@@ -167,6 +183,7 @@ public class CompoundFilterModel implements SiriusPCS {
     public boolean isActive(){
         if (currentMinMz != minMz || currentMaxMz != maxMz ||
                 currentMinRt != minRt || currentMaxRt != maxRt) return true;
+        if (isPeakShapeFilterEnabled() || isLipidFilterEnabled()) return true;
         return false;
     }
 
@@ -190,5 +207,11 @@ public class CompoundFilterModel implements SiriusPCS {
         setCurrentMinRt(minRt);
         setCurrentMaxRt(maxRt);
         Arrays.fill(peakShapeQualities,true);
+        lipidFilter = LipidFilter.ALL;
+    }
+
+
+    public enum LipidFilter {
+        ALL, ANY_LIPID_CLASS_DETECTED, NO_LIPID_CLASS_DETECTED
     }
 }
