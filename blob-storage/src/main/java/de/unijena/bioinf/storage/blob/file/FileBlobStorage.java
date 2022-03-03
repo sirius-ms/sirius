@@ -29,14 +29,12 @@ import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -56,7 +54,6 @@ public class FileBlobStorage implements BlobStorage {
     protected final Path root;
 
     private Map<String, String> tags = null;
-    private final ReadWriteLock tagLock = new ReentrantReadWriteLock();
     private final Map<String, ReentrantReadWriteLock> pathLocks = new HashMap<>();
     private final ReadWriteLock pathLocksLock = new ReentrantReadWriteLock();
 
@@ -86,32 +83,19 @@ public class FileBlobStorage implements BlobStorage {
     @Override
     public @NotNull Map<String, String> getTags() throws IOException {
         if (tags == null) {
-            tagLock.writeLock().lock();
-            try (InputStream r = reader(Path.of(BLOB_TAGS))) {
-                this.tags = new ObjectMapper().readValue(r, new TypeReference<>() {
-                });
-            } finally {
-                tagLock.writeLock().unlock();
-            }
+            withWriteLock(Path.of(BLOB_TAGS), p -> {
+                try (InputStream r = reader(p)) {
+                    this.tags = new ObjectMapper().readValue(r, new TypeReference<>() {});
+                }
+            });
         }
-        tagLock.readLock().lock();
-        try {
-            return Collections.unmodifiableMap(tags);
-        } finally {
-            tagLock.readLock().unlock();
-        }
+
+        return withReadLock(Path.of(BLOB_TAGS), p -> Collections.unmodifiableMap(tags));
     }
 
     @Override
     public void setTags(@NotNull Map<String, String> tags) throws IOException {
-        tagLock.writeLock().lock();
-        try {
-            this.tags = tags;
-            withWriter(Path.of(BLOB_TAGS), o -> new ObjectMapper().writeValue(o, tags));
-        } finally {
-            tagLock.writeLock().unlock();
-        }
-
+        withWriteLock(Path.of(BLOB_TAGS), p -> withWriter(p, o -> new ObjectMapper().writeValue(o, tags)));
     }
 
     @Override
@@ -121,7 +105,7 @@ public class FileBlobStorage implements BlobStorage {
 
     @Override
     public Iterator<Blob> listBlobs() throws IOException {
-        return new BlobIt<>(FileUtils.walkAndClose(s -> s.filter(p -> !p.getFileName().toString().equals(BLOB_TAGS)).collect(Collectors.toList()), getRoot()).iterator(), PathBlob::new);
+        return new BlobIt<>(FileUtils.walkAndClose(s -> s.filter(p -> !p.getFileName().toString().equals(BLOB_TAGS)).sorted(Comparator.reverseOrder()).collect(Collectors.toList()), getRoot()).iterator(), PathBlob::new);
     }
 
     public class PathBlob implements Blob {
@@ -153,13 +137,23 @@ public class FileBlobStorage implements BlobStorage {
 
     @Override
     public boolean deleteBlob(Path relative) throws IOException {
-        return Files.deleteIfExists(root.resolve(relative));
+        return withWriteLockR(root.resolve(relative), Files::deleteIfExists);
     }
 
     @Override
     public void deleteBucket() throws IOException {
         try {
-            FileUtils.deleteRecursively(root);
+            if (Files.notExists(root))
+                return;
+
+            List<Path> files = FileUtils.walkAndClose(w -> w.sorted(Comparator.reverseOrder()).collect(Collectors.toList()), root);
+            pathLocksLock.writeLock().lock();
+            try {
+                for (Path file : files)
+                    withWriteLock(file, Files::deleteIfExists);
+            } finally {
+                pathLocksLock.writeLock().unlock();
+            }
         } finally {
             close();
         }
@@ -188,13 +182,23 @@ public class FileBlobStorage implements BlobStorage {
     }
 
 
-   /* private void readLockPath(String absolute) {
+    private <R> R withReadLock(@NotNull final Path absolute, @NotNull final IOFunctions.IOFunction<Path, R> doWith) throws IOException {
+        final String abs = absolute.toAbsolutePath().toString();
+        final ReentrantReadWriteLock lock = readLockPath(abs);
+        try {
+            return doWith.apply(absolute);
+        } finally {
+            readUnLockPath(abs, lock);
+        }
+    }
+
+    private ReentrantReadWriteLock readLockPath(String absolute) {
         pathLocksLock.readLock().lock();
         try {
-            ReadWriteLock lock = pathLocks.get(absolute);
+            ReentrantReadWriteLock lock = pathLocks.get(absolute);
             if (lock != null) {
                 lock.readLock().lock();
-                return;
+                return lock;
             }
         } finally {
             pathLocksLock.readLock().unlock();
@@ -202,45 +206,46 @@ public class FileBlobStorage implements BlobStorage {
 
         pathLocksLock.writeLock().lock();
         try {
-            pathLocks.computeIfAbsent(absolute, path -> new ReentrantReadWriteLock()).readLock().lock();
+            ReentrantReadWriteLock lock = pathLocks.computeIfAbsent(absolute, path -> new ReentrantReadWriteLock());
+            lock.readLock().lock();
+            return lock;
         } finally {
             pathLocksLock.writeLock().unlock();
         }
     }
 
-    private void readUnLockPath(String absolute) {
-        pathLocksLock.readLock().lock();
-        ReentrantReadWriteLock lock = null;
-        try {
-            lock = pathLocks.get(absolute);
-            if (lock == null) {
-                LoggerFactory.getLogger(getClass()).warn("Lock for path '" + absolute + "' does not exist!");
-                return;
-            } else {
-                lock.readLock().unlock();
-                if (lock.isWriteLocked() || lock.getReadLockCount() > 0)
-                    return;
-            }
-        } finally {
-            pathLocksLock.readLock().unlock();
-        }
+    private void readUnLockPath(@NotNull String absolute, @NotNull ReentrantReadWriteLock lock) {
+        lock.readLock().unlock();
+        removeLockIfFree(absolute, lock);
+    }
 
-        pathLocksLock.writeLock().lock();
+    private void withWriteLock(@NotNull final Path absolute, @NotNull final IOFunctions.IOConsumer<Path> doWith) throws IOException {
+        final String abs = absolute.toAbsolutePath().toString();
+        final ReentrantReadWriteLock lock = writeLockPath(abs);
         try {
-            if (!lock.isWriteLocked() && lock.getReadLockCount() == 0)
-                pathLocks.remove(absolute);
+            doWith.accept(absolute);
         } finally {
-            pathLocksLock.writeLock().unlock();
+            writeUnLockPath(abs, lock);
         }
     }
 
-    private void writeLockPath(String absolute) {
+    private <R> R withWriteLockR(@NotNull final Path absolute, @NotNull final IOFunctions.IOFunction<Path, R> doWith) throws IOException {
+        final String abs = absolute.toAbsolutePath().toString();
+        final ReentrantReadWriteLock lock = writeLockPath(abs);
+        try {
+            return doWith.apply(absolute);
+        } finally {
+            writeUnLockPath(abs, lock);
+        }
+    }
+
+    private ReentrantReadWriteLock writeLockPath(String absolute) {
         pathLocksLock.readLock().lock();
         try {
-            ReadWriteLock lock = pathLocks.get(absolute);
+            ReentrantReadWriteLock lock = pathLocks.get(absolute);
             if (lock != null) {
                 lock.writeLock().lock();
-                return;
+                return lock;
             }
         } finally {
             pathLocksLock.readLock().unlock();
@@ -248,37 +253,35 @@ public class FileBlobStorage implements BlobStorage {
 
         pathLocksLock.writeLock().lock();
         try {
-            pathLocks.computeIfAbsent(absolute, path -> new ReentrantReadWriteLock()).writeLock().lock();
+            ReentrantReadWriteLock lock = pathLocks.computeIfAbsent(absolute, path -> new ReentrantReadWriteLock());
+            lock.writeLock().lock();
+            return lock;
         } finally {
             pathLocksLock.writeLock().unlock();
         }
     }
 
-    private void writeUnLockPath(String absolute) {
-        pathLocksLock.readLock().lock();
-        ReentrantReadWriteLock lock = null;
-        try {
-            lock = pathLocks.get(absolute);
-            if (lock == null) {
-                LoggerFactory.getLogger(getClass()).warn("Lock for path '" + absolute + "' does not exist!");
-                return;
-            } else {
-                lock.writeLock().unlock();
-                if (lock.isWriteLocked() || lock.getReadLockCount() > 0)
-                    return;
-            }
-        } finally {
-            pathLocksLock.readLock().unlock();
-        }
+    private void writeUnLockPath(@NotNull String absolute, @NotNull ReentrantReadWriteLock lock) {
+        lock.writeLock().unlock();
+        removeLockIfFree(absolute, lock);
+    }
 
-        pathLocksLock.writeLock().lock();
-        try {
-            if (!lock.isWriteLocked() && lock.getReadLockCount() == 0)
-                pathLocks.remove(absolute);
-        } finally {
-            pathLocksLock.writeLock().unlock();
+    private void removeLockIfFree(@NotNull String absolute, @NotNull ReentrantReadWriteLock lock) {
+        if (lock == pathLocks.get(absolute)) {
+            if (!lock.isWriteLocked() && lock.getReadLockCount() == 0 && !lock.hasQueuedThreads()) {
+                try {
+                    pathLocksLock.writeLock().lock();
+                    if (!lock.isWriteLocked() && lock.getReadLockCount() == 0 && !lock.hasQueuedThreads())
+                        pathLocks.remove(absolute);
+//                                }
+                } finally {
+                    pathLocksLock.writeLock().unlock();
+                }
+            }
+        } else {
+            LoggerFactory.getLogger(getClass()).warn("Lock for path '" + absolute + "' does not exist or differs!");
         }
-    }*/
+    }
 
     /**
      * Write locks the given Path and frees the lock when closed
@@ -290,30 +293,7 @@ public class FileBlobStorage implements BlobStorage {
         private LockedOutputStream(@NotNull File file) throws FileNotFoundException {
             super(file);
             path = file.getAbsolutePath();
-
-            pathLocksLock.readLock().lock();
-            try {
-//                synchronized (pathLocks) {
-                lock = pathLocks.get(path);
-                if (lock != null)
-                    lock.writeLock().lock();
-//                }
-            } finally {
-                pathLocksLock.readLock().unlock();
-            }
-
-            if (lock == null) {
-                pathLocksLock.writeLock().lock();
-                try {
-                    //                synchronized (pathLocks) {
-                    lock = pathLocks.computeIfAbsent(path, r -> new ReentrantReadWriteLock());
-                    lock.writeLock().lock();
-                    //                }
-                } finally {
-                    pathLocksLock.writeLock().unlock();
-                }
-            }
-//            System.out.println(file.getAbsolutePath() + ": Waiter=" + lock.getReadLockCount() + ":" + lock.isWriteLocked());
+            lock = writeLockPath(path);
         }
 
         @Override
@@ -322,22 +302,8 @@ public class FileBlobStorage implements BlobStorage {
                 super.close();
             } finally {
                 if (lock != null) {
-                    lock.writeLock().unlock();
-                    if (lock == pathLocks.get(path)) {
-                        if (!lock.isWriteLocked() && lock.getReadLockCount() == 0 && !lock.hasQueuedThreads()) {
-                            try {
-                                pathLocksLock.writeLock().lock();
-//                                synchronized (pathLocks) {
-                                if (!lock.isWriteLocked() && lock.getReadLockCount() == 0 && !lock.hasQueuedThreads())
-                                    pathLocks.remove(path);
-//                                }
-                            } finally {
-                                pathLocksLock.writeLock().unlock();
-                            }
-                        }
-                    }
+                    writeUnLockPath(path, lock);
                     lock = null;
-//                    System.out.println("Number of locks=" + pathLocks.size());
                 }
             }
         }
@@ -353,29 +319,7 @@ public class FileBlobStorage implements BlobStorage {
         private LockedInputStream(@NotNull File file) throws FileNotFoundException {
             super(file);
             path = file.getAbsolutePath();
-            pathLocksLock.readLock().lock();
-            try {
-//                synchronized (pathLocks) {
-                lock = pathLocks.get(path);
-                if (lock != null)
-                    lock.readLock().lock();
-//                }
-            } finally {
-                pathLocksLock.readLock().unlock();
-            }
-
-            if (lock == null) {
-                pathLocksLock.writeLock().lock();
-                try {
-                    //                synchronized (pathLocks) {
-                    lock = pathLocks.computeIfAbsent(path, r -> new ReentrantReadWriteLock());
-                    lock.readLock().lock();
-                    //                }
-                } finally {
-                    pathLocksLock.writeLock().unlock();
-                }
-            }
-//            System.out.println(file.getAbsolutePath() + ": Waiter=" + lock.getReadLockCount() + ":" + lock.isWriteLocked());
+            lock = readLockPath(path);
         }
 
         @Override
@@ -384,22 +328,8 @@ public class FileBlobStorage implements BlobStorage {
                 super.close();
             } finally {
                 if (lock != null) {
-                    lock.readLock().unlock();
-                    if (lock == pathLocks.get(path)) {
-                        if (!lock.isWriteLocked() && lock.getReadLockCount() == 0 && !lock.hasQueuedThreads()) {
-                            pathLocksLock.writeLock().lock();
-                            try {
-//                                synchronized (pathLocks) {
-                                if (!lock.isWriteLocked() && lock.getReadLockCount() == 0 && !lock.hasQueuedThreads())
-                                    pathLocks.remove(path);
-//                                }
-                            } finally {
-                                pathLocksLock.writeLock().unlock();
-                            }
-                        }
-                    }
+                    readUnLockPath(path, lock);
                     lock = null;
-//                    System.out.println("Number of locks=" + pathLocks.size());
                 }
             }
         }
