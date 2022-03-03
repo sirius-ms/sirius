@@ -974,7 +974,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 lscore.set(lossScores[k++], lossShouldBeScoredbyPeakPairScorers(loss) ? pseudoMatrix[1][0] : 0d);
             }
             for (int i=0; i < lossScorers.size(); ++i) {
-                lscore.set(lossScores[k++], lossScorers.get(i).score(loss, input, preparedLoss[i]));
+                if (!loss.isArtificial() || lossScorers.get(i).processArtificialEdges()) {
+                    lscore.set(lossScores[k++], lossScorers.get(i).score(loss, input, preparedLoss[i]));
+                }
             }
             lAno.set(loss, lscore.done());
 
