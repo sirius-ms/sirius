@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.json.JsonException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,10 +71,12 @@ public class ChemDBFileCache extends AbstractCompressible {
             List<FingerprintCandidate> fpcs = new ArrayList<>();
             if (cacheStorage.hasBlob(blobKey)) {
                 try {
-                    try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(),
-                            Compressible.decompressRawStream(cacheStorage.reader(blobKey), getCompression()).get())) {
-                        while (fciter.hasNext())
-                            fpcs.add(fciter.next());
+                    try(InputStream i = cacheStorage.reader(blobKey)){
+                        try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(),
+                                Compressible.decompressRawStream(i, getCompression()).get())) {
+                            while (fciter.hasNext())
+                                fpcs.add(fciter.next());
+                        }
                     }
                 } catch (IOException | JsonException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when searching for " + formula + " in file database. Deleting cache file '" + blobKey + "' an try fetching from Server");

@@ -42,7 +42,6 @@ public interface BlobStorage extends Closeable, AutoCloseable {
 
     @Override
     default void close() throws IOException {
-
     }
 
     default Charset getCharset() {
