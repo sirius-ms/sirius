@@ -157,6 +157,7 @@ class DefaultDescriptors {
         }
     }
 
+    @Deprecated // we already have Fragment#getIonization so this is not necessary anymore...
     private static class IonizationDescriptor implements Descriptor<Ionization> {
 
         @Override
@@ -180,7 +181,7 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, Ionization annotation) {
-            document.addToDictionary(dictionary, "ion", annotation.toString());
+            //document.addToDictionary(dictionary, "ion", annotation.toString());
         }
     }
 
@@ -711,12 +712,13 @@ class DefaultDescriptors {
 
         @Override
         public <G, D, L> void write(DataDocument<G, D, L> document, D dictionary, AnnotatedPeak annotation) {
-            if (!document.hasKeyInDictionary(dictionary, "molecularFormula"))
-                document.addToDictionary(dictionary, "molecularFormula", annotation.getMolecularFormula().toString());
+            // molecularFormula and ion are always part of the node
+            //if (!document.hasKeyInDictionary(dictionary, "molecularFormula"))
+            //    document.addToDictionary(dictionary, "molecularFormula", annotation.getMolecularFormula().toString());
             document.addToDictionary(dictionary, "mz", annotation.getMass());
             document.addToDictionary(dictionary, "relativeIntensity", annotation.getRelativeIntensity());
             document.addToDictionary(dictionary, "recalibratedMass", annotation.getRecalibratedMass());
-            document.addToDictionary(dictionary, "ion", annotation.getIonization().toString());
+            //document.addToDictionary(dictionary, "ion", annotation.getIonization().toString());
 
             final Peak[] peaks = annotation.getOriginalPeaks();
             final L peaklist = document.newList();
