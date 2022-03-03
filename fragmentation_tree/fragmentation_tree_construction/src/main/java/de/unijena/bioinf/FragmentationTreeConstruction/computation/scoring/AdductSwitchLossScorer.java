@@ -109,6 +109,11 @@ public class AdductSwitchLossScorer implements LossScorer<Object> {
     }
 
     @Override
+    public boolean processArtificialEdges() {
+        return true;
+    }
+
+    @Override
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         this.naHSwitchScore = document.getDoubleFromDictionary(dictionary, "na-h-switch-score");
         this.naHSwitchChildrenScore = document.getDoubleFromDictionary(dictionary, "na-h-switch-child-score");
