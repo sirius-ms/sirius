@@ -40,7 +40,7 @@ public class CompoundFilterModel implements SiriusPCS {
     //
     private boolean[] peakShapeQualities = new boolean[]{true,true,true};
 
-    private LipidFilter lipidFilter = LipidFilter.ALL;
+    private LipidFilter lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
 
     /*
     min/max possible values
@@ -84,7 +84,7 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public boolean isLipidFilterEnabled() {
-        return lipidFilter != LipidFilter.ALL;
+        return lipidFilter != LipidFilter.KEEP_ALL_COMPOUNDS;
     }
 
     public LipidFilter getLipidFilter() {
@@ -207,11 +207,11 @@ public class CompoundFilterModel implements SiriusPCS {
         setCurrentMinRt(minRt);
         setCurrentMaxRt(maxRt);
         Arrays.fill(peakShapeQualities,true);
-        lipidFilter = LipidFilter.ALL;
+        lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
     }
 
 
     public enum LipidFilter {
-        ALL, ANY_LIPID_CLASS_DETECTED, NO_LIPID_CLASS_DETECTED
+        KEEP_ALL_COMPOUNDS, ANY_LIPID_CLASS_DETECTED, NO_LIPID_CLASS_DETECTED
     }
 }

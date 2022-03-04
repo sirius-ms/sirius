@@ -105,7 +105,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         //lipid filter
         lipidFilterBox = new JComboBox<>();
         java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
-        smallParameters.addNamed("Lipids: ",lipidFilterBox);
+        smallParameters.addNamed("Lipid filter: ",lipidFilterBox);
         lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
 
         invertFilter = new JCheckBox("select non-matching");
@@ -228,7 +228,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         for (int i=0; i < peakShape.length; ++i) {
             peakShape[i].setSelected(true);
         }
-        lipidFilterBox.setSelectedItem(CompoundFilterModel.LipidFilter.ALL);
+        lipidFilterBox.setSelectedItem(CompoundFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
         searchFieldDialogCopy.setText("");
         invertFilter.setSelected(false);
     }
