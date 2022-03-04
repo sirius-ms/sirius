@@ -24,24 +24,30 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
+import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.*;
+import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.JTextAreaDropImage;
 import de.unijena.bioinf.ms.gui.utils.ListAction;
-import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
+import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -65,14 +71,13 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class DatabaseDialog extends JDialog {
 
     //todo: we should separate the Dialog from the Database Managing part.
-    //todo: we should use the import mechanisms from cli or library so that we do not nee
-    //todo: prptected acces to th importer classes
     protected JList<String> dbList;
-    protected Map<String, CustomDatabase> customDatabases;
-    protected JButton addCustomDb;
+    protected Map<String, CustomDatabase<?>> customDatabases;
+
     protected DatabaseView dbView;
-    protected PlaceholderTextField nameField;
     private final JDialog owner = this;
+    JButton deleteDB, editDB, addCustomDb;
+
 
     public DatabaseDialog(final Frame owner) {
         super(owner, true);
@@ -84,69 +89,52 @@ public class DatabaseDialog extends JDialog {
         add(header, BorderLayout.NORTH);
 
 
-        this.customDatabases = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
+        this.customDatabases = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase<?>>>) SearchableDatabases::getCustomDatabases).getResult()
                 .stream().collect(Collectors.toMap(CustomDatabase::name, k -> k));
         this.dbList = new DatabaseList(customDatabases.keySet().stream().sorted().collect(Collectors.toList()));
-        final Box box = Box.createVerticalBox();
+        JScrollPane scroll = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        TextHeaderBoxPanel pane = new TextHeaderBoxPanel("Custom Databases", scroll);
+        pane.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, GuiUtils.SMALL_GAP,0,0));
 
-        JScrollPane pane = new JScrollPane(dbList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        box.add(pane);
-        this.nameField = new PlaceholderTextField(16);
-        nameField.setPlaceholder("Enter name (no whitespaces) of custom database");
-        nameField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                onTextChanged();
-            }
+        addCustomDb = Buttons.getAddButton16("Create custom DB");
+        deleteDB = Buttons.getRemoveButton16("Delete Custom Database");
+        editDB = Buttons.getEditButton16("Edit Custom Database");
 
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                onTextChanged();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                onTextChanged();
-            }
-
-            public void onTextChanged() {
-                addCustomDb.setEnabled(nameField.getText().length() > 0 && nameField.getText().replaceAll("\\s", "").equals(nameField.getText()) && customDatabases.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(nameField.getText())));
-            }
-        });
-
-        this.addCustomDb = Buttons.getAddButton16("Create custom DB");
-        addCustomDb.setEnabled(false);
         final Box but = Box.createHorizontalBox();
-        but.add(nameField);
-        but.add(addCustomDb);
-
-        add(but, BorderLayout.SOUTH);
-        add(box, BorderLayout.CENTER);
         but.add(Box.createHorizontalGlue());
+        but.add(deleteDB);
+        but.add(editDB);
+        but.add(addCustomDb);
+        editDB.setEnabled(false);
+        deleteDB.setEnabled(false);
 
         this.dbView = new DatabaseView();
 
+        add(but, BorderLayout.SOUTH);
+        add(pane, BorderLayout.CENTER);
         add(dbView, BorderLayout.EAST);
+
 
         dbList.addListSelectionListener(e -> {
             final int i = dbList.getSelectedIndex();
             if (i >= 0) {
                 final String s = dbList.getModel().getElementAt(i);
-                if (customDatabases.containsKey(s))
-                    dbView.updateContent(customDatabases.get(s));
+                if (customDatabases.containsKey(s)) {
+                    final CustomDatabase<?> c = customDatabases.get(s);
+                    dbView.updateContent(c);
+                    editDB.setEnabled(!c.needsUpgrade());
+                    deleteDB.setEnabled(true);
+                } else {
+                    editDB.setEnabled(false);
+                    deleteDB.setEnabled(false);
+                }
+
             }
         });
 
         dbList.setSelectedIndex(0);
 
-        addCustomDb.addActionListener(e ->{
-            final  String t = nameField.getText();
-            if (t.replaceAll("\\s", "").equals(t)){
-                new ImportDatabaseDialog(nameField.getText());
-            } else {
-               new ExceptionDialog(MF,"DB name '" + t + "' must not contain white spaces.");
-            }
-        });
+        addCustomDb.addActionListener(e ->  new ImportDatabaseDialog());
 
 
         //klick on Entry ->  open import dialog
@@ -154,29 +142,35 @@ public class DatabaseDialog extends JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final int k = dbList.getSelectedIndex();
-                if (k >= 0 && k < dbList.getModel().getSize())
-                    new ImportDatabaseDialog(dbList.getModel().getElementAt(k));
+                if (k >= 0 && k < dbList.getModel().getSize()){
+                    String key = dbList.getModel().getElementAt(k);
+                    CustomDatabase<?> db = customDatabases.get(key);
+                    new ImportDatabaseDialog(db);
+                }
 
             }
         });
 
         //edit button ->  open import dialog
-        dbView.edit.addActionListener(e -> {
+        editDB.addActionListener(e -> {
             final int k = dbList.getSelectedIndex();
-            if (k >= 0 && k < dbList.getModel().getSize())
-                new ImportDatabaseDialog(dbList.getModel().getElementAt(k));
+            if (k >= 0 && k < dbList.getModel().getSize()){
+                String key = dbList.getModel().getElementAt(k);
+                CustomDatabase<?> db = customDatabases.get(key);
+                new ImportDatabaseDialog(db);
+            }
         });
 
-        dbView.deleteDB.addActionListener(e -> {
+        deleteDB.addActionListener(e -> {
             final int index = dbList.getSelectedIndex();
             if (index < 0 || index >= dbList.getModel().getSize())
                 return;
             final String name = dbList.getModel().getElementAt(index);
             final String msg = "Do you really want to delete the custom database '" + name + "'?";
             if (new QuestionDialog(getOwner(), msg).isSuccess()) {
-                new CustomDatabase(name, new File(SearchableDatabases.getCustomDatabaseDirectory(), name)).deleteDatabase();
+//                CustomDatabase.openDatabase(name).deleteDatabase();;
                 customDatabases.remove(name);
-                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult()
+                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase<?>>>) SearchableDatabases::getCustomDatabases).getResult()
                         .stream().map(CustomDatabase::name).toArray(String[]::new);
                 dbList.setListData(dbs);
             }
@@ -184,50 +178,44 @@ public class DatabaseDialog extends JDialog {
         });
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(350, getMinimumSize().height));
+        setMinimumSize(new Dimension(375, getMinimumSize().height));
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
     }
 
     protected void whenCustomDbIsAdded(final String dbName) {
+        //todo
         SearchableDatabases.getCustomDatabaseByName(dbName).ifPresent(db -> {
             this.customDatabases.put(db.name(), db);
 
             dbList.setListData(this.customDatabases.keySet().stream().sorted().toArray(String[]::new));
             dbList.setSelectedValue(db.name(),true);
-            nameField.setText(null);
         });
     }
 
     protected static class DatabaseView extends JPanel {
         JLabel content;
-        JButton deleteDB, edit;
 
         protected DatabaseView() {
-            this.content = new JLabel("placeholder");
-            content.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 4));
-            this.deleteDB = new JButton("Delete");
+            this.content = new JLabel("No DB selected!");
+            content.setHorizontalAlignment(JLabel.CENTER);
+            content.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
             setLayout(new BorderLayout());
             add(content, BorderLayout.CENTER);
-            final Box hor = Box.createHorizontalBox();
-            hor.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
-            edit = new JButton("Edit");
-            hor.add(Box.createHorizontalGlue());
-            hor.add(edit);
-            hor.add(deleteDB);
-            hor.add(Box.createHorizontalGlue());
-            add(hor, BorderLayout.SOUTH);
             setPreferredSize(new Dimension(200, 240));
         }
 
-        public void updateContent(CustomDatabase c) {
-            if (c.getNumberOfCompounds() > 0) {
-                content.setText("<html>Custom database. Containing " + c.getNumberOfCompounds() + " compounds with " + c.getNumberOfFormulas() + " different molecular formulas. Consumes " + c.getMegabytes() + " mb on the hard drive." + ((c.isDeriveFromRestDb()) ? "<br>This database will also include all compounds from `" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()) + "`." : "") + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>");
+        public void updateContent(CustomDatabase<?> c) {
+            if (c.getStatistics().getCompounds() > 0) {
+                content.setText("<html>Custom database. Containing "
+                        + c.getStatistics().getCompounds() + " compounds with " + c.getStatistics().getFormulas()
+                        + " different molecular formulas." +
+                        ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from '" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()).stream().filter(n -> !DBSelectionList.BLACK_LIST.contains(n)).collect(Collectors.joining("', '")) + "'." : "")
+                                + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "") + "</html>"));
             } else {
                 content.setText("Empty custom database.");
             }
-            edit.setEnabled(!c.needsUpgrade());
         }
     }
 
@@ -270,63 +258,21 @@ public class DatabaseDialog extends JDialog {
         }
     }
 
-    protected class ImportCompoundsDialog extends JDialog {
-        protected JLabel statusText;
-        protected JProgressBar progressBar;
-        protected JTextArea details;
-        protected CustomDatabaseImporter importer;
-        protected JButton close;
-
-        public ImportCompoundsDialog(CustomDatabaseImporter importer) {
-            super(owner, "Import compounds", false);
-            this.importer = importer;
-            JPanel panel = new JPanel();
-            panel.setLayout(new BorderLayout());
-            panel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
-            panel.setPreferredSize(new Dimension(480, 320));
-            add(panel);
-            JPanel inner = new JPanel();
-            inner.setLayout(new BorderLayout());
-            progressBar = new JProgressBar();
-            statusText = new JLabel();
-            statusText.setHorizontalAlignment(SwingConstants.CENTER);
-            panel.add(statusText, BorderLayout.NORTH);
-            panel.add(inner, BorderLayout.CENTER);
-            inner.add(progressBar, BorderLayout.NORTH);
-            details = new JTextArea();
-            details.setEditable(false);
-            details.setMinimumSize(new Dimension(200, 200));
-            JScrollPane pane = new JScrollPane(details, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            inner.add(pane, BorderLayout.CENTER);
-            close = new JButton("close");
-            inner.add(close, BorderLayout.SOUTH);
-            close.setEnabled(false);
-            close.addActionListener(e -> dispose());
-
-            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-            setLocationRelativeTo(getParent());
-        }
-
-        @Override
-        public void dispose() {
-            super.dispose();
-        }
-    }
-
     protected class ImportDatabaseDialog extends JDialog {
         protected JButton importButton;
-
         protected DatabaseImportConfigPanel configPanel;
-        private String name;
 
-        public ImportDatabaseDialog(String name) {
-            super(owner, "Import into '" + name + "' database", false);
+        public ImportDatabaseDialog() {
+            this(null);
+        }
 
-            this.name = name;
+        public ImportDatabaseDialog(@Nullable CustomDatabase<?> db) {
+            super(owner, db != null ? "Import into '" + db.name() + "' database" : "Create custom database", false);
+
             setPreferredSize(new Dimension(640, 480));
             setLayout(new BorderLayout());
 
-            final JLabel explain = new JLabel("<html>You can inherit compounds from PubChem or our biological database. If you do so, all compounds in these databases are implicitly added to your custom database.");
+            final JLabel explain = new JLabel("<html>You can inherit compounds from PubChem or our biological databases. If you do so, all compounds in these databases are implicitly added to your custom database.");
             final Box hbox = Box.createHorizontalBox();
             hbox.add(explain);
             final Box vbox = Box.createVerticalBox();
@@ -335,10 +281,11 @@ public class DatabaseDialog extends JDialog {
 
             final Box box = Box.createVerticalBox();
             box.setAlignmentX(Component.LEFT_ALIGNMENT);
-            final JLabel label = new JLabel("<html>Please insert the compounds of your custom database here (one compound per line). You can use SMILES and InChI to describe your compounds. It is also possible to drag and drop files with InChI, SMILES or in other molecule formats (e.g. MDL) into this text field.");
+            final JLabel label = new JLabel(
+                    "<html>Please insert the compounds of your custom database as SMILES here (one compound per line). It is also possible to drag and drop files with SMILES into this text field.");
             label.setAlignmentX(Component.LEFT_ALIGNMENT);
             box.add(label);
-            final JTextArea textArea = new JTextArea();
+            final JTextArea textArea = new JTextAreaDropImage();
             textArea.setAlignmentX(Component.LEFT_ALIGNMENT);
             final JScrollPane pane = new JScrollPane(textArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             pane.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -348,7 +295,28 @@ public class DatabaseDialog extends JDialog {
             importButton = new JButton("Import compounds");
             importButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
-            configPanel = new DatabaseImportConfigPanel(name);
+            configPanel = new DatabaseImportConfigPanel(db);
+            importButton.setEnabled(db != null && ! configPanel.nameField.getText().isBlank());
+            configPanel.nameField.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    onTextChanged();
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    onTextChanged();
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    onTextChanged();
+                }
+
+                public void onTextChanged() {
+                    importButton.setEnabled(configPanel.nameField.getText().length() > 0 && configPanel.nameField.getText().replaceAll("\\s", "").equals(configPanel.nameField.getText()) && customDatabases.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(configPanel.nameField.getText())));
+                }
+            });
 
             add(configPanel, BorderLayout.NORTH);
             add(box, BorderLayout.CENTER);
@@ -380,8 +348,8 @@ public class DatabaseDialog extends JDialog {
 
             setDropTarget(dropTarget);
             textArea.setDropTarget(dropTarget);
-            setLocationRelativeTo(getOwner());
             pack();
+            setLocationRelativeTo(getOwner());
             setVisible(true);
 
         }
@@ -400,15 +368,13 @@ public class DatabaseDialog extends JDialog {
 
                 if (computation.isWorkflowDefined()) {
                     final TextAreaJJobContainer<Boolean> j = Jobs.runWorkflow(computation.getFlow(), List.of(), command, configPanel.toolCommand());
-                    LoadingBackroundTask.connectToJob(this, "Importing into '" + name + "'...", false, j);
-                    whenCustomDbIsAdded(name);
+                    LoadingBackroundTask.connectToJob(this, "Importing into '" + configPanel.nameField.getText() + "'...", false, j);
+                    whenCustomDbIsAdded(configPanel.nameField.getText());
                 }
                 //todo else some error message with pico cli output
             } catch (Exception e) {
                 LoggerFactory.getLogger(getClass()).error("Unexpected Error during Custom DB import.", e);
                 new StacktraceDialog(MF, "Unexpected Error during Custom DB import.", e);
-
-//                new ExceptionDialog(MF, e.getMessage());
             }
         }
     }

@@ -18,11 +18,6 @@
  */
 
 package de.unijena.bioinf.ms.gui.configs;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 11.10.16.
- */
 
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 
@@ -51,16 +46,24 @@ public abstract class Buttons {
         return new ToolbarButton(Zoom_Out_24, "Zoom out");
     }
 
+    public static ToolbarButton getEditButton16(String tootip) {
+        return new ToolbarButton(LIST_EDIT_16, tootip);
+    }
+
+    public static ToolbarButton getEditButton16() {
+        return getEditButton16( "add");
+    }
+
     public static ToolbarButton getAddButton16(String tootip) {
         return new ToolbarButton(LIST_ADD_16, tootip);
     }
 
     public static ToolbarButton getAddButton16() {
-        return new ToolbarButton(LIST_ADD_16, "add");
+        return getAddButton16("add");
     }
 
     public static ToolbarButton getRemoveButton16() {
-        return new ToolbarButton(LIST_REMOVE_16, "remove");
+        return getRemoveButton16("remove");
     }
 
     public static ToolbarButton getRemoveButton16(String tootip) {

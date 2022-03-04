@@ -1,42 +1,51 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 
 public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOptions> {
 
-    JCheckboxListPanel parentDBList;
+    private final JCheckboxListPanel<CustomDataSources.Source> parentDBList;
+    public final PlaceholderTextField nameField;
+    public final JComboBox<Compressible.Compression> compression;
     JSpinner bufferSize;
-    JTextField name;
 
     public DatabaseImportConfigPanel() {
         this(null);
     }
 
-    public DatabaseImportConfigPanel(@Nullable String dbName) {
+    public DatabaseImportConfigPanel(@Nullable CustomDatabase<?> db) {
         super(CustomDBOptions.class);
-
 
         final TwoColumnPanel smalls = new TwoColumnPanel();
         add(new TextHeaderBoxPanel("Parameters", smalls));
 
-        name = new JTextField(dbName != null ? dbName : "");
-        name.setMinimumSize(new Dimension(150, name.getMinimumSize().height));
-        name.setPreferredSize(new Dimension(150, name.getPreferredSize().height));
-        name.setEnabled(dbName == null);
-        getOptionDescriptionByName("name").ifPresent(it -> name.setToolTipText(GuiUtils.formatToolTip(it)));
-        smalls.addNamed("Name", name);
-        parameterBindings.put("name", name::getText);
+        this.nameField = new PlaceholderTextField(20);
+        if (db == null) {
+            nameField.setPlaceholder("Enter location (no whitespaces)");
+        } else {
+            nameField.setText(db.name());
+
+        }
+        nameField.setEnabled(db == null);
+
+
+        getOptionDescriptionByName("location").ifPresent(it -> nameField.setToolTipText(GuiUtils.formatToolTip(it)));
+        smalls.addNamed("Location", nameField);
+        parameterBindings.put("location", nameField::getText);
 
         final String buf = "buffer";
         bufferSize = makeGenericOptionSpinner(buf,
@@ -44,13 +53,18 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 1, Integer.MAX_VALUE, 1,
                 (v) -> String.valueOf(v.getNumber().intValue()));
         smalls.addNamed("Buffer Size", bufferSize);
-
-
+        compression = makeGenericOptionComboBox("compression", Compressible.Compression.class);
+        smalls.addNamed("Compression", compression);
+        compression.setSelectedItem(db == null ? Compressible.Compression.GZIP : db.compression());
+        compression.setEnabled(db == null);
 
         // configure database to derive from
         parentDBList = new JCheckboxListPanel<>(new DBSelectionList(false), "Derive DB from:");
         getOptionDescriptionByName("derive-from").ifPresent(it -> parentDBList.setToolTipText(GuiUtils.formatToolTip(it)));
         add(parentDBList);
         parameterBindings.put("derive-from", () -> parentDBList.checkBoxList.getCheckedItems().isEmpty() ? null : String.join(",", ((DBSelectionList) parentDBList.checkBoxList).getSelectedFormulaSearchDBStrings()));
+        if (db != null)
+            db.getSettings().getInheritedDBs().stream().map(CustomDataSources::getSourceFromName).forEach(parentDBList.checkBoxList::check);
+        parentDBList.setEnabled(db == null);
     }
 }
