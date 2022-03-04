@@ -33,16 +33,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Super simple object reading/writing API
  */
-
 public interface BlobStorage extends Closeable, AutoCloseable {
 
     @Override
     default void close() throws IOException {
-
     }
 
     default Charset getCharset() {
@@ -51,10 +50,30 @@ public interface BlobStorage extends Closeable, AutoCloseable {
 
     String getName();
 
+    String getBucketLocation();
+
+    default long size() throws IOException {
+        AtomicLong size = new AtomicLong(size());
+        listBlobs().forEachRemaining(blob -> {
+            if (!blob.isDirectory())
+                size.addAndGet(blob.size());
+        });
+        return size.get();
+    }
+
     boolean hasBlob(Path relative) throws IOException;
 
+    boolean deleteBlob(Path relative) throws IOException;
+
+    default void clear() throws IOException {
+        Iterator<Blob> it = listBlobs();
+        while (it.hasNext())
+            deleteBlob(Path.of(it.next().getKey()));
+    }
+
     /**
-     * returns a writer for the given path
+     * Applies given function to a writer for the given path
+     * in the store and closes it after writing
      *
      * @param relative   relative path from storage root
      * @param withStream consume OutputStream to write data
@@ -73,6 +92,7 @@ public interface BlobStorage extends Closeable, AutoCloseable {
 
     /**
      * Returns the Tag on storage/bucket level for the given key
+     *
      * @param key associated with the requested value
      * @return tag corresponding to the given key or NULL if key does not exist or
      * if the storage/bucket does not support tags.
@@ -120,12 +140,20 @@ public interface BlobStorage extends Closeable, AutoCloseable {
 
     Iterator<Blob> listBlobs() throws IOException;
 
+    /**
+     * delete bucket and close client if necessary
+     */
+    void deleteBucket() throws IOException;
+
     interface Blob {
         boolean isDirectory();
+
         String getKey();
-        default String getFileName(){
+
+        default String getFileName() {
             return Path.of(getKey()).getFileName().toString();
         }
+
         long size();
     }
 

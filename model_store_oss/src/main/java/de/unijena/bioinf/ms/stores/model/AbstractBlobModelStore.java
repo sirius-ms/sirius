@@ -66,12 +66,12 @@ public abstract class AbstractBlobModelStore<Storage extends BlobStorage> extend
 
     @Override
     public @Nullable InputStream getRawResource(@NotNull Path path) throws IOException {
-        return blobStorage.reader(Path.of(path.toString() + getCompression().ext()));
+        return blobStorage.reader(addExt(path));
     }
 
     @Override
     public boolean hasResource(@NotNull Path path) throws IOException {
-        return blobStorage.hasBlob(Path.of(path.toString() + getCompression().ext()));
+        return blobStorage.hasBlob(addExt(path));
     }
 
 
@@ -110,7 +110,7 @@ public abstract class AbstractBlobModelStore<Storage extends BlobStorage> extend
     }
 
     public void writeResource(@NotNull final Path path, @NotNull IOFunctions.IOConsumer<OutputStream> streamConsumer) throws IOException {
-        blobStorage.withWriter(Path.of(path.toString() + getCompression().ext()), (out) ->
+        blobStorage.withWriter(addExt(path), (out) ->
                 Compressible.withCompression(out, getCompression(), streamConsumer));
     }
 

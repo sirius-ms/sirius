@@ -26,6 +26,7 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -34,6 +35,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -45,6 +47,27 @@ import java.util.zip.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class FileUtils {
+
+    public static long getFolderSize(Path startPath) throws IOException {
+        final AtomicLong size = new AtomicLong(0);
+
+        Files.walkFileTree(startPath, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                size.addAndGet(attrs.size());
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                // Skip folders that can't be traversed
+                LoggerFactory.getLogger(FileUtils.class).warn("skipped: " + file, exc);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return size.get();
+    }
 
     public static void closeIfNotDefaultFS(Path zipFS) throws IOException {
         final FileSystem fs = zipFS.getFileSystem();

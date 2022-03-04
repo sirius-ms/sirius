@@ -64,6 +64,7 @@ import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
+import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +73,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -245,13 +245,13 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     //endregion
 
     //region ChemDB
-    public void consumeStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOConsumer<RESTDatabase> doWithClient) throws IOException {
+    public void consumeStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOConsumer<RESTDatabase> doWithClient) throws IOException {
         try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, getChemDbDate(), chemDBClient, ProxyManager.client())) {
             doWithClient.accept(restDB);
         }
     }
 
-    public <T> T applyStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOFunction<RESTDatabase, T> doWithClient) throws IOException {
+    public <T> T applyStructureDB(long filter, @Nullable BlobStorage cacheDir, IOFunctions.IOFunction<RESTDatabase, T> doWithClient) throws IOException {
         try (RESTDatabase restDB = new RESTDatabase(cacheDir, filter, getChemDbDate(), chemDBClient, ProxyManager.client())) {
             return doWithClient.apply(restDB);
         }

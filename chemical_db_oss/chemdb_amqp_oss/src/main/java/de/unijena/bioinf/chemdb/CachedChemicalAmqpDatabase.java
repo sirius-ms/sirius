@@ -22,20 +22,20 @@ package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ms.amqp.client.AmqpClient;
+import de.unijena.bioinf.storage.blob.BlobStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 
 public class CachedChemicalAmqpDatabase extends ChemicalAmqpDatabase {
     protected long filter;
     protected final ChemDBFileCache cache;
 
-    public CachedChemicalAmqpDatabase(@NotNull AmqpClient client, @Nullable File cacheDir, long filter) {
+    public CachedChemicalAmqpDatabase(@NotNull AmqpClient client, @Nullable BlobStorage cache, long filter) {
         super(client);
         this.filter = filter;
-        this.cache = new ChemDBFileCache(cacheDir, CachedChemicalAmqpDatabase.super::lookupStructuresAndFingerprintsByFormula);
+        this.cache = new ChemDBFileCache(cache, CachedChemicalAmqpDatabase.super::lookupStructuresAndFingerprintsByFormula);
     }
 
 

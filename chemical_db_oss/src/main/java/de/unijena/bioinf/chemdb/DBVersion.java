@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 public class DBVersion {
@@ -66,12 +66,12 @@ public class DBVersion {
     }
 
     @NotNull
-    public static DBVersion newLocalVersion(File dbCache) {
-        final File f = new File(dbCache, "version");
+    public static DBVersion newLocalVersion(Path dbCache) {
+        final Path f = dbCache.resolve("version");
         String dbDate = null;
-        if (f.exists()) {
+        if (Files.exists(f)) {
             try {
-                final List<String> content = Files.readAllLines(f.toPath(), StandardCharsets.UTF_8);
+                final List<String> content = Files.readAllLines(f, StandardCharsets.UTF_8);
                 if (!content.isEmpty())
                     dbDate = content.get(0);
             } catch (IOException e) {
@@ -80,7 +80,7 @@ public class DBVersion {
         }
 
         if (dbDate == null || dbDate.isBlank())
-            LoggerFactory.getLogger(DBVersion.class).warn("DBVersion of file '" + f.getAbsolutePath() + "' is empty!");
+            LoggerFactory.getLogger(DBVersion.class).warn("DBVersion of file '" + f.toAbsolutePath() + "' is empty!");
 
         return new DBVersion(PropertyManager.getProperty("de.unijena.bioinf.fingerid.customdb.version"), dbDate);
     }

@@ -53,13 +53,13 @@ import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
+import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
@@ -141,9 +141,17 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
         return SearchableDatabases.makeWebWithCustomDB(this);
     }
 
-    void consumeStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOConsumer<D> doWithClient) throws IOException;
+    void consumeStructureDB(long filter, @Nullable BlobStorage cache, IOFunctions.IOConsumer<D> doWithClient) throws IOException;
 
-    <T> T applyStructureDB(long filter, @Nullable File cacheDir, IOFunctions.IOFunction<D, T> doWithClient) throws IOException;
+    default void consumeStructureDB(long filter, IOFunctions.IOConsumer<D> doWithClient) throws IOException {
+        consumeStructureDB(filter, SearchableDatabases.getWebDatabaseCacheStorage(), doWithClient);
+    }
+
+    <T> T applyStructureDB(long filter, @Nullable BlobStorage cache, IOFunctions.IOFunction<D, T> doWithClient) throws IOException;
+
+    default <T> T applyStructureDB(long filter, IOFunctions.IOFunction<D, T> doWithClient) throws IOException {
+        return applyStructureDB(filter, SearchableDatabases.getWebDatabaseCacheStorage(), doWithClient);
+    }
 
     //endregion
 

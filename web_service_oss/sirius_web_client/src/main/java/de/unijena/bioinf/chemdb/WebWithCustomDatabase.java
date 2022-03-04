@@ -20,23 +20,18 @@
 
 package de.unijena.bioinf.chemdb;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.BitsetOps;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.storage.blob.BlobStorage;
-import de.unijena.bioinf.storage.blob.BlobStorages;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -58,19 +53,16 @@ public class WebWithCustomDatabase {
     protected static Logger logger = LoggerFactory.getLogger(WebWithCustomDatabase.class);
 
 
-    protected final File directory;
-    protected final String webCacheDir;
-    protected final String customDbDir;
+    protected final Path directory;
     protected HashMap<String, ChemicalBlobDatabase<?>> customDatabases;
+    protected BlobStorage restCache;
 
     protected final WebAPI<?> api;
-    private VersionsInfo versionInfoCache = null;
 
-    public WebWithCustomDatabase(WebAPI<?> api, File dir, String webCacheDir, String customDbDir) {
+    public WebWithCustomDatabase(WebAPI<?> api, Path dir, BlobStorage dbCache) {
         this.api = api;
         this.directory = dir;
-        this.webCacheDir = webCacheDir;
-        this.customDbDir = customDbDir;
+        this.restCache = dbCache;
         this.customDatabases = new HashMap<>();
     }
 
@@ -93,19 +85,11 @@ public class WebWithCustomDatabase {
 
 
     public synchronized void destroyCache() throws IOException {
-        final File all = getWebDBCacheDir();
-        if (all.exists()) {
-            for (File f : all.listFiles()) {
-                Files.deleteIfExists(f.toPath());
-            }
-        }
+        Files.createDirectories(directory);
 
-        if (!directory.exists()) {
-            directory.mkdirs();
-            all.mkdirs();
-        }
+        restCache.clear();
 
-        try (BufferedWriter bw = Files.newBufferedWriter(new File(directory, "version").toPath(), StandardCharsets.UTF_8)) {
+        try (BufferedWriter bw = Files.newBufferedWriter(directory.resolve("version"), StandardCharsets.UTF_8)) {
             bw.write(api.getChemDbDate());
         }
     }
@@ -134,16 +118,18 @@ public class WebWithCustomDatabase {
 
         final OptionalLong requestFilterOpt = extractFilterBits(dbs);
         if (requestFilterOpt.isPresent()) {
-            api.consumeStructureDB(requestFilterOpt.getAsLong(), getWebDBCacheDir(), restDb -> {
+            api.consumeStructureDB(requestFilterOpt.getAsLong(), restCache, restDb -> {
                 candidates.addAll(restDb.lookupMolecularFormulas(ionMass, deviation, ionType));
             });
         }
 
-        for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).collect(Collectors.toList())) {
-            Optional<ChemicalBlobDatabase<?>> optDB = getCustomDb(cdb);
+        for (CustomDatabase<?> cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase<?>) it).collect(Collectors.toList())) {
+            Optional<? extends ChemicalBlobDatabase<?>> optDB = cdb.toChemDB(api.getCDKChemDBFingerprintVersion());
+
             if (optDB.isPresent()) {
                 final List<FormulaCandidate> mfs = optDB.get().lookupMolecularFormulas(ionMass, deviation, ionType);
-                mfs.forEach(fc -> fc.setBitset(CustomDataSources.getSourceFromName(cdb.name()).flag())); //annotate with bitset
+                mfs.forEach(fc -> fc.setBitset(cdb.getFilterFlag())); //annotate with bitset
+//                mfs.forEach(fc -> fc.setBitset(CustomDataSources.getSourceFromName(cdb.name()).flag())); //annotate with bitset
                 candidates.addAll(mfs);
             }
         }
@@ -165,15 +151,15 @@ public class WebWithCustomDatabase {
             final long requestFilter = extractFilterBits(dbs).orElse(-1);
             if (requestFilter >= 0 || includeRestAllDb) {
                 final long searchFilter = includeRestAllDb ? 0 : requestFilter;
-                result = api.applyStructureDB(searchFilter, getWebDBCacheDir(), restDb -> new CandidateResult(
+                result = api.applyStructureDB(searchFilter, restCache, restDb -> new CandidateResult(
                         restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
             } else {
                 logger.warn("No filter for Rest DBs found bits in DB list: '" + dbs.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) + "'. Returning empty search list from REST DB");
                 result = new CandidateResult();
             }
 
-            for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).collect(Collectors.toList())) {
-                Optional<ChemicalBlobDatabase<?>> optDB = getCustomDb(cdb);
+            for (CustomDatabase<?> cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase<?>) it).collect(Collectors.toList())) {
+                Optional<? extends ChemicalBlobDatabase<?>> optDB = cdb.toChemDB(api.getCDKChemDBFingerprintVersion());
                 if (optDB.isPresent())
                     result.addCustom(cdb.name(), optDB.get().lookupStructuresAndFingerprintsByFormula(formula), false);
             }
@@ -187,41 +173,13 @@ public class WebWithCustomDatabase {
         }
     }
 
-
-    protected Optional<ChemicalBlobDatabase<?>> getInternalCustomDb(String dbName) {
-        return getCustomDb(dbName, getCustomDBDirectory().toPath().resolve(dbName).toString());
-    }
-
-    protected Optional<ChemicalBlobDatabase<?>> getCustomDb(Path dbDir) {
-        return getCustomDb(dbDir.getFileName().toString(), dbDir.toString());
-    }
-
-    protected Optional<ChemicalBlobDatabase<?>> getCustomDb(@NotNull CustomDatabase cdb) {
-        return getCustomDb(cdb.name(), cdb.getDatabasePath().toString());
-    }
-
-    protected Optional<ChemicalBlobDatabase<?>> getCustomDb(@NotNull String dbName, @NotNull String dbLocation) {
-        try {
-            if (!customDatabases.containsKey(dbName)) {
-                BlobStorage storage = BlobStorages.openDefault(FingerIDProperties.customDBStorePropertyPrefix(), dbLocation);
-                customDatabases.put(dbName, new ChemicalBlobDatabase<>(api.getCDKChemDBFingerprintVersion(), storage));
-            }
-            return Optional.of(customDatabases.get(dbName));
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error("Could not load Custom Database '" + dbName + "'. DB seems to be corrupted and should be deleted and re-imported", e);
-            return Optional.empty();
-        }
-    }
-
-
     protected List<ChemicalBlobDatabase<?>> getAdditionalCustomDBs(Collection<SearchableDatabase> dbs) throws IOException {
-        final Set<String> customToSearch = dbs.stream().filter(SearchableDatabase::isCustomDb).map(SearchableDatabase::name).collect(Collectors.toSet());
-        List<ChemicalBlobDatabase<?>> fdbs = new ArrayList<>(CustomDataSources.size());
-        for (CustomDataSources.Source customSource : CustomDataSources.sources()) {
-            if (customSource.isCustomSource() && !customToSearch.contains(customSource.name()))
-                getInternalCustomDb(customSource.name()).ifPresent(fdbs::add);
+        List<ChemicalBlobDatabase<?>> chemDBs = new ArrayList<>(dbs.size());
+        for (SearchableDatabase db : dbs) {
+            if (db.isCustomDb())
+                ((CustomDatabase<?>) db).toChemDB(api.getCDKChemDBFingerprintVersion()).ifPresent(chemDBs::add);
         }
-        return fdbs;
+        return chemDBs;
     }
 
 
@@ -306,6 +264,8 @@ public class WebWithCustomDatabase {
 
 
             if (x != null) {
+                x.setpLayer(x.getpLayer() | c.getpLayer());
+                x.setqLayer(x.getqLayer() | c.getqLayer());
                 x.mergeDBLinks(c.links);
                 x.mergeBits(c.bitset);
             } else {
@@ -436,15 +396,5 @@ public class WebWithCustomDatabase {
             restDbInChIs.addAll(mergeCompounds(other.restDbInChIs, cs));
             other.customInChIs.forEach((k, v) -> customInChIs.get(k).addAll(mergeCompounds(v, cs)));
         }
-    }
-
-    @NotNull
-    public File getWebDBCacheDir() {
-        return new File(directory, webCacheDir);
-    }
-
-    @NotNull
-    public File getCustomDBDirectory() {
-        return new File(directory, customDbDir);
     }
 }

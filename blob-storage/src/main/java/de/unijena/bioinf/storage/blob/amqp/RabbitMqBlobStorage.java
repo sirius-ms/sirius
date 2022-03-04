@@ -72,12 +72,22 @@ public class RabbitMqBlobStorage implements BlobStorage {
     }
 
     @Override
+    public String getBucketLocation() {
+        return null;
+    }
+
+    @Override
     public boolean hasBlob(Path relative) throws IOException {
         RpcClient.Response resp = rpcRequest(relative, ResourceRequest.EXISTS);
         if (resp.getProperties().getBodySize() == 0)
             throw new IOException("Error during RPC call: 'EMPTY Response body!'");
 
         return Boolean.parseBoolean(new String(resp.getBody(), Charset.forName(resp.getProperties().getContentEncoding())));
+    }
+
+    @Override
+    public boolean deleteBlob(Path relative) throws IOException {
+        return false;
     }
 
     protected RpcClient.Response rpcRequest(@NotNull Path relative, @NotNull ResourceRequest requestType) throws IOException {
@@ -126,6 +136,11 @@ public class RabbitMqBlobStorage implements BlobStorage {
     @Override
     public Iterator<Blob> listBlobs() throws IOException {
         throw new NotImplementedException("TOOD: implement Endpoint to list blobs"); //TODO implement list blobs
+    }
+
+    @Override
+    public void deleteBucket() throws IOException {
+
     }
 
     @Override

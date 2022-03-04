@@ -20,22 +20,12 @@
 
 package de.unijena.bioinf.projectspace;
 
-import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.ChemistryBase.utils.ZipCompressionMethod;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
-import java.nio.channels.ClosedChannelException;
-import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class ZipFSProjectSpaceIOProvider extends PathProjectSpaceIOProvider {
 
@@ -51,21 +41,15 @@ public class ZipFSProjectSpaceIOProvider extends PathProjectSpaceIOProvider {
             try {
                 if (Files.exists(location) && !Files.isRegularFile(location))
                     throw new IllegalArgumentException("Compressed Location must be a regular file!");
-                return new ZipFSTree(location, useTempFile, maxWritesBeforeFlush, compFormat);
+                return new FSTree(location, useTempFile, 25, 125, compFormat, true);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    @Override
-    public void flush() throws IOException {
-       fsManager.flush();
-    }
 
-
-
-    static class ZipFSTree implements FileSystemManager {
+    /*static class ZipFSTree implements FileSystemManager {
         private final ReentrantReadWriteUpdateLock lock;
         private final ZipFSTreeNode root;
         private CompressionFormat format;
@@ -382,7 +366,7 @@ public class ZipFSProjectSpaceIOProvider extends PathProjectSpaceIOProvider {
         private final Path location; // the location on the default (real) fs
         private final boolean useTempFile;
         private final ZipCompressionMethod compressionMethod;
-
+        private boolean firstRun = true;
 
         @Nullable
         private final ZipFSTreeNode parent;
@@ -390,6 +374,8 @@ public class ZipFSProjectSpaceIOProvider extends PathProjectSpaceIOProvider {
         private FileSystem zipFS;
 
         private final Map<Path, ZipFSTreeNode> childFileSystems = new HashMap<>();
+
+
 
         private ZipFSTreeNode(@Nullable ZipFSTreeNode parent, Path location, boolean useTempFile, ZipCompressionMethod compressionMethod, ReentrantReadWriteUpdateLock lock) throws IOException {
             this(lock, parent, location, Files.notExists(location), useTempFile, compressionMethod);
@@ -404,10 +390,10 @@ public class ZipFSProjectSpaceIOProvider extends PathProjectSpaceIOProvider {
             this.zipFS = FileUtils.asZipFS(location, createNew, useTempFile, compressionMethod);
         }
 
-        /**
+        *//**
          * @param relative resolves path and caches int as currentPath
          * @return Resolved path or arror if path is not part of this FS
-         */
+         *//*
 
         private Path resolveCurrentPath(String relative) {
             if (relative == null || relative.isBlank() || relative.equals("/") || relative.equals(zipFS.getSeparator()))
@@ -498,5 +484,5 @@ public class ZipFSProjectSpaceIOProvider extends PathProjectSpaceIOProvider {
         Path getPath(){
          return fs.resolveCurrentPath(path);
         }
-    }
+    }*/
 }
