@@ -70,8 +70,9 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         clearDBCache.addActionListener(evt -> {
             Jobs.runInBackgroundAndLoad(MF, "Clearing database cache...", () -> {
                 try {
-                    FileUtils.deleteDirContentRecursively(SearchableDatabases.getWebDatabaseCacheDirectory().toPath());
+                    SearchableDatabases.getWebDatabaseCacheStorage().clear();
                 } catch (IOException e) {
+                    LoggerFactory.getLogger(getClass()).error("Error when clearing DB cache", e);
                     new StacktraceDialog(MF, "Error when clearing DB cache", e);
                 }
             });
