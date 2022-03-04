@@ -138,7 +138,7 @@ public class ExpectationMaximizationHydrogenRearrangementEstimator {
 
                 // M-STEP:
                 // Estimate the new probability parameter by using the MLE of the geometric distribution.
-                double newParameter = (double) (sum / (sum + numberOfAssignments));
+                double newParameter = ((double) sum / (sum + numberOfAssignments));
                 EMFragmenterScoring.rearrangementProb = newParameter;
 
                 fileWriter.write(sum+" "+numberOfAssignments+" "+newParameter);
