@@ -80,7 +80,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     }
 
     private boolean matchesLipidFilter(InstanceBean item, CompoundFilterModel filterModel) {
-        boolean hasAnyLipidHit = item.loadFormulaResults(FTree.class).stream().filter(c->c.getCandidate().hasAnnotation(FTree.class)).anyMatch(r -> r.getCandidate().getAnnotation(FTree.class).get().getAnnotation(LipidSpecies.class).isPresent());
+        boolean hasAnyLipidHit = item.loadTopFormulaResult(FTree.class).map(o->o.getAnnotation(FTree.class).get().getAnnotation(LipidSpecies.class).isPresent()).orElse(false);
         return (filterModel.getLipidFilter()==CompoundFilterModel.LipidFilter.ANY_LIPID_CLASS_DETECTED && hasAnyLipidHit) || (filterModel.getLipidFilter()==CompoundFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED && !hasAnyLipidHit);
     }
 }
