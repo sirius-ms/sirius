@@ -130,6 +130,10 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
 
 
         public FSTree(Path location, boolean useTempFile, int maxWrites, int subFSBufferSize, @NotNull CompressionFormat format) throws IOException {
+            this(location, useTempFile, maxWrites, subFSBufferSize, format, false);
+        }
+
+        public FSTree(Path location, boolean useTempFile, int maxWrites, int subFSBufferSize, @NotNull CompressionFormat format, boolean rootAsArchive) throws IOException {
             this.location = location;
             this.useTempFile = useTempFile;
             this.maxWrites = maxWrites;
@@ -137,7 +141,10 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
             this.childFileSystems = new HashMap<>(buffersize + 2);
             this.childFileSystemsLock = new ReentrantReadWriteUpdateLock();
             setCompressionFormat(format);
-            root = new FSNode(this, null, location, useTempFile, maxWrites, format.compressionMethod, location.getFileSystem());
+            if (rootAsArchive)
+                root = new FSNode(null, new ReentrantReadWriteLock(), location, useTempFile, maxWrites, format.compressionMethod, FileUtils.asZipFS(location, Files.notExists(location), useTempFile, getCompressionFormat().getRootCompression()));
+            else
+                root = new FSNode(null, null, location, useTempFile, maxWrites, format.compressionMethod, location.getFileSystem());
         }
 
         //needs write lock
@@ -176,27 +183,36 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
             }
         }
 
-        private String relativizeToRoot(ResolvedPath resolvedToSubFs, @Nullable String relativizeToSubRoot) {
+        private String relativizeToRoot(ResolvedPath resolvedToSubFs, @Nullable String subRoot) {
             if (!resolvedToSubFs.fs.isDefault())
                 resolvedToSubFs.fs.lock.readLock().lock();
             try {
+                // create absolute path
                 String current;
                 if (resolvedToSubFs.fs.isDefault()) { //is default fs and no archive
-//                    relativizeToSubRoot = resolvedToSubFs.fs.location.toString();
                     current = resolvedToSubFs.getPath().toString();
                 } else {
-                    current = resolvedToSubFs.fs.location.resolve(resolvedToSubFs.getPath().toString().substring(1)).toString();
+                    current = root.resolveCurrentPath(resolvedToSubFs.fs.location.toString()).resolve(
+                            resolvedToSubFs.getPath().toString().substring(1)).toString();
                 }
 
-                String r;
-                if (relativizeToSubRoot != null) {
-                    r = location.resolve(Path.of(relativizeToSubRoot)).relativize(Path.of(current)).toString();
-                } else {
-                    r = location.relativize(Path.of(current)).toString()/*current.startsWith("/") ? current.substring(1) : current*/;
-                }
-                if (r.isBlank())
-                    r = null;
-                return r;
+                //relativize to root
+                if (current.startsWith(root.location.toString()))
+                    current = current.substring(root.location.toString().length());
+
+                if (current.startsWith("/"))
+                    current = current.substring(1); //remove leading /
+
+                if (subRoot != null && current.startsWith(subRoot))
+                    current = current.substring(subRoot.length());
+
+                if (current.startsWith("/"))
+                    current = current.substring(1); //remove leading /
+
+                if (current.isBlank())
+                    return null;
+
+                return current;
             } finally {
                 if (!resolvedToSubFs.fs.isDefault())
                     resolvedToSubFs.fs.lock.readLock().unlock();
@@ -209,19 +225,19 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
 
         private ResolvedPath resolvePath(String relativeFromRoot, Boolean isDir) throws IOException {
             if (compressionFormat.getCompressedLevel() < 1)
-                return new ResolvedPath(root, relativeFromRoot == null ? null : root.location.resolve(relativeFromRoot).toString());
+                return new ResolvedPath(root, relativeFromRoot == null ? null : root.rootPath().resolve(relativeFromRoot).toString());
 
             childFileSystemsLock.updateLock().lock();
             try {
                 if (relativeFromRoot != null && !relativeFromRoot.isBlank()) {
-                    final Path source = location.getFileSystem().getPath(relativeFromRoot);
+                    final Path source = root.resolveCurrentPath(relativeFromRoot);
                     final PathMatcher noZipExt = source.getFileSystem().getPathMatcher("glob:**{.ms, .tsv, .csv, .info, .config}");
 
                     if ((compressionFormat.getCompressedLevel() >= source.getNameCount())
                             || (isDir != null && !isDir && isOnCompressedLevel(source))
                             || (isDir == null && isOnCompressedLevel(source) && !noZipExt.matches(source) && FileUtils.isZipArchive(source))
                     ) {
-                        return new ResolvedPath(root, root.location.resolve(source).toString());
+                        return new ResolvedPath(root, root.rootPath().resolve(source).toString());
                     } else {
                         Path prefix = source.subpath(0, compressionFormat.getCompressedLevel() + 1);
 
@@ -229,7 +245,7 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
                         if (zipFSNode == null) {
                             childFileSystemsLock.writeLock().lock();
                             try {
-                                zipFSNode = new FSNode(this, location.resolve(prefix), useTempFile, maxWrites, compressionFormat.compressionMethod, new ReentrantReadWriteLock());
+                                zipFSNode = new FSNode(this, root.rootPath().resolve(prefix.toString()), useTempFile, maxWrites, compressionFormat.compressionMethod, new ReentrantReadWriteLock());
                                 putFS(prefix, zipFSNode);
                                 maintainBuffer();
                             } finally {
@@ -448,11 +464,29 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
 
         @Override
         public Path getRoot() {
-            return getLocation();
+            return root.rootPath();
         }
 
         public void flush() throws IOException {
-            close();
+            childFileSystemsLock.updateLock().lock();
+            try {
+                ArrayList<Map.Entry<Path, FSNode>> entries = new ArrayList<>(childFileSystems.entrySet());
+                for (Map.Entry<Path, FSNode> entry : entries) {
+                    final FSNode zipfs = entry.getValue();
+                    zipfs.close();
+                }
+                if (!root.isDefault()) { //close and reopen root in case it is an archive
+                    childFileSystemsLock.writeLock().lock();
+                    try {
+                        root.close();
+                        root.reopen();
+                    } finally {
+                        childFileSystemsLock.writeLock().unlock();
+                    }
+                }
+            } finally {
+                childFileSystemsLock.updateLock().unlock();
+            }
         }
 
         @Override
@@ -462,8 +496,12 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
 
         @Override
         public void setCompressionFormat(@Nullable CompressionFormat format) {
-            if (format == null)
-                format = new CompressionFormat(null, ZipCompressionMethod.STORED);
+            if (format == null) {
+                if (root.isDefault())
+                    format = new CompressionFormat(null, ZipCompressionMethod.STORED);
+                else
+                    format = new CompressionFormat(null, ZipCompressionMethod.DEFLATED);
+            }
 
             if (format.compressionLevels != null && format.compressionLevels.length > 1)
                 throw new IllegalArgumentException("MultiLevel compression is not supported for folder based project-space");
@@ -478,6 +516,15 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
                 for (Map.Entry<Path, FSNode> entry : entries) {
                     final FSNode zipfs = entry.getValue();
                     zipfs.close();
+                }
+
+                if (!root.isDefault()) {//close and reopen root in case it is an archive
+                    childFileSystemsLock.writeLock().lock();
+                    try {
+                        root.close();
+                    } finally {
+                        childFileSystemsLock.writeLock().unlock();
+                    }
                 }
             } finally {
                 childFileSystemsLock.updateLock().unlock();
@@ -524,18 +571,16 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
         }
 
         /**
-         * @param path resolves path and caches int as currentPath
-         * @return Resolved path or arror if path is not part of this FS
+         * @param absolute resolves path
+         * @return Resolved path or error if path is not part of this FS
          */
 
-        private Path resolveCurrentPath(String path) {
-            if (path == null || path.isBlank() || path.equals("/") || path.equals(zipFS.getSeparator())) {
-                if (isDefault())
-                    return location;
-                else
-                    return zipFS.getPath(zipFS.getSeparator());
+        private Path resolveCurrentPath(String absolute) {
+            if (absolute == null || absolute.isBlank() || absolute.equals("/") || absolute.equals(zipFS.getSeparator())) {
+                if (isDefault()) return location;
+                else return zipFS.getPath(zipFS.getSeparator());
             } else {
-                return zipFS.getPath(path);
+                return zipFS.getPath(absolute);
             }
         }
 
@@ -552,7 +597,7 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
                 lock.writeLock().lock();
                 try {
                     if (writes.get() >= maxWrites)
-                        flushAndReopen(); //just close to save memory. can be reopened if needed again.
+                        reopen(); //just close to save memory. can be reopened if needed again.
                 } finally {
                     lock.writeLock().unlock();
                 }
@@ -563,12 +608,12 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
             if (isDefault())
                 return;
             if (!zipFS.isOpen()) {
-                flushAndReopen();
+                reopen();
             }
         }
 
         //unchecked
-        private void flushAndReopen() throws IOException {
+        private void reopen() throws IOException {
             try {
                 lock.writeLock().lock();
                 if (!zipFS.isOpen()) {
@@ -599,7 +644,7 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
                 if (parent != null) {
                     parent.childFileSystemsLock.writeLock().lock();
                     try {
-                        parent.childFileSystems.remove(parent.location.relativize(location));
+                        parent.childFileSystems.remove(parent.root.rootPath().relativize(location));
                     } finally {
                         parent.childFileSystemsLock.writeLock().unlock();
                     }
@@ -612,6 +657,10 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
         @Override
         public int compareTo(@NotNull PathProjectSpaceIOProvider.FSNode o) {
             return location.compareTo(o.location);
+        }
+
+        private Path rootPath() {
+            return resolveCurrentPath(null);
         }
     }
 
@@ -627,7 +676,6 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
         Path getPath() {
             return fs.resolveCurrentPath(path);
         }
-
 
         @Override
         public int compareTo(@NotNull PathProjectSpaceIOProvider.ResolvedPath o) {
