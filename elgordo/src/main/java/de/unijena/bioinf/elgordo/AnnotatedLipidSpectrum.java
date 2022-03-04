@@ -108,10 +108,21 @@ public class AnnotatedLipidSpectrum<T extends Spectrum<Peak>> implements Compara
         this.intensityOfNondecomposablePeaks = intensityOfNondecomposablePeaks;
 
         final float[] vector = makeFeatureVector();
-        this.formulaCorrectScore = calcScore(vector, ModelsGeneric.get(this.annotatedSpecies.getLipidClass()));
+        this.formulaCorrectScore = hasAnyPeakAnnotation() ? calcScore(vector, ModelsGeneric.get(this.annotatedSpecies.getLipidClass())) : 0f;
         this.classCorrectScore = isSpecified() ? calcScore(vector, ModelsSpecies.get(this.annotatedSpecies.getLipidClass())) : 0f;
         this.detectionLevel = classCorrectScore > 0 ? LipidDetectionLevel.CLASS_CORRECT : (formulaCorrectScore > 0 ? LipidDetectionLevel.FORMULA_CORRECT : LipidDetectionLevel.UNSPECIFIED);
 
+    }
+
+    private boolean hasAnyPeakAnnotation() {
+        for (LipidAnnotation[] ano : annotationsPerPeak) {
+            for (LipidAnnotation a : ano) {
+                if (!(a instanceof PrecursorAnnotation)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private float calcScore(float[] vector, float[] coeffs) {
