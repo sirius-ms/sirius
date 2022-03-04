@@ -19,12 +19,11 @@ package de.unijena.bioinf.ms.gui.utils;/*
  */
 
 import ca.odell.glazedlists.matchers.Matcher;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.projectspace.CompoundContainer;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -81,7 +80,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     }
 
     private boolean matchesLipidFilter(InstanceBean item, CompoundFilterModel filterModel) {
-        boolean hasAnyLipidHit = item.loadFormulaResults(FBCandidates.class).stream().map(SScored::getCandidate).filter(c->c.hasAnnotation(FBCandidates.class)).map(c->c.getAnnotationOrNull(FBCandidates.class)).anyMatch(r->r.getResults().stream().map(SScored::getCandidate).anyMatch(c->c.getLinks().stream().anyMatch(l -> l.name.equals(DataSource.LIPID.realName))));
+        boolean hasAnyLipidHit = item.loadFormulaResults(FTree.class).stream().filter(c->c.getCandidate().hasAnnotation(FTree.class)).anyMatch(r -> r.getCandidate().getAnnotation(FTree.class).get().getAnnotation(LipidSpecies.class).isPresent());
         return (filterModel.getLipidFilter()==CompoundFilterModel.LipidFilter.ANY_LIPID_CLASS_DETECTED && hasAnyLipidHit) || (filterModel.getLipidFilter()==CompoundFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED && !hasAnyLipidHit);
     }
 }
