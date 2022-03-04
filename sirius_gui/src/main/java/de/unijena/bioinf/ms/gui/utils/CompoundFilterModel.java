@@ -76,6 +76,11 @@ public class CompoundFilterModel implements SiriusPCS {
         this.maxRt = maxRt;
     }
 
+    public void fireUpdateCompleted() {
+        //as long as we do not treat changes differently, we only have to listen to this event after performing all updates
+        pcs.firePropertyChange("filterUpdateCompleted", -1, 0);
+    }
+
     public boolean isPeakShapeFilterEnabled() {
         for (boolean val : peakShapeQualities) {
             if (!val) return true;

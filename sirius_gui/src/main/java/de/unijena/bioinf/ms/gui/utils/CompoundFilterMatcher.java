@@ -52,6 +52,11 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
                 return false;
             }
         }
+
+        return anyIOIntenseFilterMatches(item, filterModel);
+    }
+
+    private boolean anyIOIntenseFilterMatches(InstanceBean item, CompoundFilterModel filterModel) {
         if (filterModel.isPeakShapeFilterEnabled()) {
             if (!filterByPeakShape(item, filterModel)) return false;
         }
@@ -59,7 +64,6 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             if (!matchesLipidFilter(item, filterModel)) return false;
         }
         return true;
-
     }
 
     private boolean filterByPeakShape(InstanceBean item, CompoundFilterModel filterModel) {
