@@ -26,18 +26,11 @@ public interface SearchableDatabase {
 
     String name();
 
-//    boolean searchInNonBio();
-//
-//    boolean searchInBio();
-
     boolean isRestDb();
 
     default boolean isCustomDb() {
         return this instanceof CustomDatabase;
     }
-
-
-//    File getDatabasePath();
 
     long getFilterFlag();
 }

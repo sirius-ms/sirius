@@ -23,7 +23,13 @@
 package de.unijena.bioinf.chemdb.custom;
 
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,6 +54,7 @@ public class CustomDataSources {
         bits = BitSet.valueOf(new long[]{b});
         lastEnumBit = bits.cardinality();
     }
+
 
     public interface Source {
         long flag();
@@ -122,15 +129,17 @@ public class CustomDataSources {
         public final long flag;
         public final long searchFlag;
         public final String name;
+        public final String id;
 
-        public CustomSource(long flag, long searchFlag, String name) {
+        public CustomSource(long flag, long searchFlag, String name, String bucketPath) {
             this.flag = flag;
             this.searchFlag = searchFlag;
             this.name = name;
+            this.id = bucketPath;
         }
 
-        public CustomSource(long flag, String name) {
-            this(flag, flag, name);
+        public CustomSource(long flag, String name, String bucketPath) {
+            this(flag, flag, name, bucketPath);
         }
 
         @Override
@@ -140,7 +149,7 @@ public class CustomDataSources {
 
         @Override
         public String id() {
-            return name();
+            return id;
         }
 
         @Override
@@ -153,6 +162,7 @@ public class CustomDataSources {
             return searchFlag;
         }
 
+        //this is for web links
         @Override
         public String URI() {
             return null;
@@ -198,13 +208,13 @@ public class CustomDataSources {
         return SOURCE_MAP.values();
     }
 
-    public static Source addCustomSourceIfAbsent(String name) {
+    public static Source addCustomSourceIfAbsent(String name, String bucketLocation) {
         Source s = getSourceFromName(name);
         if (s == null) {
             int bitIndex = bits.nextClearBit(lastEnumBit);
             bits.set(bitIndex);
             long flag = 1L << bitIndex;
-            Source r = new CustomSource(flag, name);
+            Source r = new CustomSource(flag, name, bucketLocation);
             SOURCE_MAP.put(name, r);
             notifyListeners(Collections.singleton(r.name()));
             return r;
