@@ -194,7 +194,7 @@ public class LipidStructureMatcher {
         IAtom carbon = a2[0];
         if (walk(nitrogen, usedAtoms, a1, 6)) {
             chainLocalizations[1] = a1[0].getIndex();
-        }
+        } else return false;
         if(!walk(carbon, usedAtoms, a2, 6,8)) return false;
         carbon = a2[0];
         chainProperties[0] += 3;
