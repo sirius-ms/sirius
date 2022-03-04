@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.projectspace.CompoundContainer;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import java.util.Optional;
@@ -80,7 +81,10 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     }
 
     private boolean matchesLipidFilter(InstanceBean item, CompoundFilterModel filterModel) {
-        boolean hasAnyLipidHit = item.loadTopFormulaResult(FTree.class).map(o->o.getAnnotation(FTree.class).get().getAnnotation(LipidSpecies.class).isPresent()).orElse(false);
+        boolean hasAnyLipidHit = item.getResults().stream()
+                .map(FormulaResultBean::getFragTree).flatMap(Optional::stream)
+                .map(ft -> ft.getAnnotation(LipidSpecies.class)).flatMap(Optional::stream)
+                .findAny().isPresent();
         return (filterModel.getLipidFilter()==CompoundFilterModel.LipidFilter.ANY_LIPID_CLASS_DETECTED && hasAnyLipidHit) || (filterModel.getLipidFilter()==CompoundFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED && !hasAnyLipidHit);
     }
 }
