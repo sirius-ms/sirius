@@ -243,26 +243,30 @@ public class Jobs {
         @Override
         protected Boolean compute() throws Exception {
             //todo progress? maybe move to CLI to have progress there to?
-            synchronized (ACTIVE_COMPUTATIONS) { //todo this is a bit hacky but much mor efficient than listening to the job states
-                ACTIVE_COMPUTATIONS.add(this);
-                ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
-                SiriusActions.SUMMARIZE_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
-                SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
-            }
-            checkForInterruption();
-            /*{
-                compoundsToProcess.forEach(c -> c.setComputing(true, true));
-                final Set<InstanceBean> upt = new HashSet<>(compoundsToProcess);
-                runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
-            }*/
-            MF.ps().setComputing(compoundsToProcess,true);
+            try {
+                synchronized (ACTIVE_COMPUTATIONS) { //todo this is a bit hacky but much mor efficient than listening to the job states
+                    ACTIVE_COMPUTATIONS.add(this);
+                    ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
+                    SiriusActions.SUMMARIZE_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
+                    SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
+                }
+                checkForInterruption();
 
-            checkForInterruption();
-            if (computation instanceof ProgressJJob)
-                ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
-            logInfo(command);
-            computation.run();
-            return true;
+                MF.ps().setComputing(compoundsToProcess,true);
+
+                checkForInterruption();
+                if (computation instanceof ProgressJJob)
+                    ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
+                logInfo(command);
+                computation.run();
+                return true;
+            } finally {
+                runInBackgroundAndLoad(MF, "Writing Results to disk...", () -> {
+                    MF.ps().projectSpace().flush(); //todo improve flushing strategy
+                    System.gc(); //hint for the gc to collect som trash after computations
+                    return true;
+                });
+            }
         }
 
         @Override
@@ -274,7 +278,6 @@ public class Jobs {
         @Override
         protected void cleanup() {
             //todo flush ps?
-            System.gc(); //hint for the gc to collect som trash after computations
             synchronized (ACTIVE_COMPUTATIONS) {
                 ACTIVE_COMPUTATIONS.remove(this);
                 ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
