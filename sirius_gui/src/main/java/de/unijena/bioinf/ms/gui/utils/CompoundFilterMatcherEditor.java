@@ -37,7 +37,7 @@ public class CompoundFilterMatcherEditor extends AbstractMatcherEditor<InstanceB
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         //todo probably we do not even need new CompoundFilterMatcher...
-        if (evt.getSource() == filterModel) {
+        if (evt.getSource() == filterModel && evt.getPropertyName().equals("filterUpdateCompleted")) {
             fireChanged(new CompoundFilterMatcher(filterModel));
         }
     }

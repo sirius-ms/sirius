@@ -188,6 +188,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         }
 
         filterModel.setLipidFilter((CompoundFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
+
+        filterModel.fireUpdateCompleted();
     }
 
     @Override
