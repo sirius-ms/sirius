@@ -165,6 +165,7 @@ public class ElGordoPlugin extends SiriusPlugin  {
                 whiteset = Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()));
             }
             input.setAnnotation(Whiteset.class, whiteset);
+            input.getExperimentInformation().setPrecursorIonType(ano.getIonType());
             input.getOrCreatePeakAnnotation(DecompositionList.class).set(input.getParentPeak(), DecompositionList.fromFormulas(Arrays.asList(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula())), ano.getIonType().getIonization()));
 
             // pre-annotate spectrum
