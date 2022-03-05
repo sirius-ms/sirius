@@ -193,7 +193,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             compoundList.toggleInvertFilter();
         }
 
-        System.out.println("Is EDT: " + SwingUtilities.isEventDispatchThread());
         filterModel.fireUpdateCompleted();
     }
 
