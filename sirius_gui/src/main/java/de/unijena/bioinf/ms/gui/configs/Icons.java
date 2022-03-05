@@ -38,6 +38,8 @@ public abstract class Icons {
 
     public static final ImageIcon SPLASH = new ImageIcon(MainFrame.class.getResource("/icons/sirius_splash.gif"));
 
+    public static final ImageIcon FILTER_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader.gif"));
+
     public static final Icon FP_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/fp-binary-sirius.gif"));
 
     public static final Icon NO_MATCH_128 = new ImageIcon(MainFrame.class.getResource("/icons/nothing-found.png"));
@@ -156,7 +158,6 @@ public abstract class Icons {
     }
 
     public static final Icon MolecularProperty_24 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-molecularPropertyWhite-24px.png"));
-
 
 
     public static final Icon[] TRAFFIC_LIGHT_LARGE = new Icon[]{new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/red_l.png")),

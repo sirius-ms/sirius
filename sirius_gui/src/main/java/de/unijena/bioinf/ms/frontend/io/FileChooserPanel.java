@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.frontend.io;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
+import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +33,7 @@ import java.nio.file.Path;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FileChooserPanel extends JPanel {
-    public final JTextField field = new JTextField();
+    public final PlaceholderTextField field = new PlaceholderTextField();
     public final JButton changeDir = Buttons.getFileChooserButton16("Choose file or directory");
 
     public FileChooserPanel() {

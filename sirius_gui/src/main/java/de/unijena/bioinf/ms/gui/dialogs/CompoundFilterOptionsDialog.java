@@ -174,21 +174,26 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         });
     }
 
-    private void saveChanges(){
+    private void saveChanges() {
         filterModel.setCurrentMinMz(getMinMz());
         filterModel.setCurrentMaxMz(getMaxMz());
         filterModel.setCurrentMinRt(getMinRt());
         filterModel.setCurrentMaxRt(getMaxRt());
-        searchField.textField.setText(searchFieldDialogCopy.getText());
-        if (invertFilter.isSelected()!=compoundList.isFilterInverted()) {
-            compoundList.toggleInvertFilter();
-        }
-        for (int k=0; k < peakShape.length; ++k) {
+
+        for (int k = 0; k < peakShape.length; ++k) {
             filterModel.setPeakShapeQuality(k, peakShape[k].isSelected());
         }
 
         filterModel.setLipidFilter((CompoundFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
 
+        searchField.textField.setText(searchFieldDialogCopy.getText());
+//            searchField.textField.setEnabled(!filterModel.isPeakShapeFilterEnabled() && !filterModel.isLipidFilterEnabled());
+
+        if (invertFilter.isSelected() != compoundList.isFilterInverted()) {
+            compoundList.toggleInvertFilter();
+        }
+
+        System.out.println("Is EDT: " + SwingUtilities.isEventDispatchThread());
         filterModel.fireUpdateCompleted();
     }
 

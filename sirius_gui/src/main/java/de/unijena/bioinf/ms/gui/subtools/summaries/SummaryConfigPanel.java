@@ -29,6 +29,7 @@ public class SummaryConfigPanel extends SubToolConfigPanel<SummaryOptions> {
         FileChooserPanel summaryLocation = new FileChooserPanel(
                 Optional.ofNullable(MainFrame.MF.ps().projectSpace().getLocation().getParent()).map(Path::toString).orElse(""), "",
                 JFileChooser.FILES_AND_DIRECTORIES,JFileChooser.SAVE_DIALOG);
+        summaryLocation.field.setPlaceholder("Writes to project-space if empty");
         parameterBindings.put("output", summaryLocation::getFilePath);
         getOptionDescriptionByName("output").ifPresent(it -> summaryLocation.setToolTipText(GuiUtils.formatToolTip(it)));
         summaryLocation.field.setPreferredSize(new Dimension(300, summaryLocation.field.getPreferredSize().height));

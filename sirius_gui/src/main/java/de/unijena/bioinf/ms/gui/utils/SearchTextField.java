@@ -27,12 +27,13 @@ import java.awt.*;
  * Created by fleisch on 18.05.17.
  */
 public class SearchTextField extends TwoColumnPanel {
-    public final JTextField textField;
+    public final PlaceholderTextField textField;
 
     public SearchTextField() {
         super();
         setBorder(new EmptyBorder(0, 0, 0, 0));
-        textField = new JTextField();
+        textField = new PlaceholderTextField();
+        textField.setPlaceholder("Hit enter to search...");
         textField.setPreferredSize(new Dimension(100, textField.getPreferredSize().height));
         add(new JLabel("Filter"), textField);
     }

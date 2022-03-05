@@ -78,7 +78,7 @@ public class CompoundFilterModel implements SiriusPCS {
 
     public void fireUpdateCompleted() {
         //as long as we do not treat changes differently, we only have to listen to this event after performing all updates
-        pcs.firePropertyChange("filterUpdateCompleted", -1, 0);
+        pcs.firePropertyChange("filterUpdateCompleted", null, this);
     }
 
     public boolean isPeakShapeFilterEnabled() {
