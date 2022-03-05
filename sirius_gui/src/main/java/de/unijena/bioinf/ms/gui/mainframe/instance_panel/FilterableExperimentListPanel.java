@@ -26,17 +26,25 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.jjobs.ProgressJJob;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.utils.Loadable;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FilterableExperimentListPanel extends JPanel {
+public class FilterableExperimentListPanel extends JPanel implements Loadable {
     final JLabel elementCounter = new JLabel("N/A");
+
+    final CardLayout centerCards = new CardLayout();
+    final JPanel center = new JPanel(centerCards);
     private ExperimentListChangeListener sizeListener = new ExperimentListChangeListener() {
         @Override
         public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
@@ -50,19 +58,51 @@ public class FilterableExperimentListPanel extends JPanel {
         }
     };
 
+    public void setLoading(boolean loading, ProgressJJob<?> ignored){
+        try {
+            Jobs.runEDTAndWait(() -> centerCards.show(center, loading ? "load" : "content"));
+        } catch (InvocationTargetException | InterruptedException e) {
+            LoggerFactory.getLogger("Setting loading state was interrupted unexpectedly");
+            try {
+                Jobs.runEDTAndWait(() -> centerCards.show(center, loading ? "load" : "content"));
+            }  catch (InvocationTargetException | InterruptedException e2) {
+                LoggerFactory.getLogger("Retry Setting loading state was interrupted unexpectedly. Giving up!");
+            }
+        }
+    }
+
     public FilterableExperimentListPanel(ExperimentListView view) {
         super(new BorderLayout());
+        center.add("content", view);
+        JPanel lp = loadingPanel();
+        lp.setPreferredSize(view.getPreferredSize());
+        center.add("load", lp);
         view.sourceList.addChangeListener(sizeListener);
+        view.sourceList.getCompoundList().getReadWriteLock().readLock();
+        view.sourceList.backgroundFilterMatcher.setLoadable(this);
         JPanel searchPanel = new JPanel(new BorderLayout());
         searchPanel.add(view.sourceList.searchField, BorderLayout.CENTER);
         searchPanel.add(view.sourceList.openFilterPanelButton, BorderLayout.EAST);
         add(searchPanel, BorderLayout.NORTH);
-        add(view, BorderLayout.CENTER);
+        add(center, BorderLayout.CENTER);
         JPanel j = new JPanel(new GridBagLayout());
         j.setBorder(BorderFactory.createEmptyBorder(0,0,0,0));
         j.setPreferredSize(new Dimension(getPreferredSize().width,16));
         j.add(elementCounter);
         add(j, BorderLayout.SOUTH);
         setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    }
+
+    //todo make generic loader panel
+    private JPanel loadingPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setOpaque(true);
+        JLabel iconLabel = new JLabel(Icons.FILTER_LOADER, SwingUtilities.CENTER);
+        Icons.FILTER_LOADER.setImageObserver(iconLabel);
+        JLabel label = new JLabel("Loading...");
+        panel.add(iconLabel, BorderLayout.CENTER);
+        panel.add(label, BorderLayout.SOUTH);
+        return panel;
     }
 }

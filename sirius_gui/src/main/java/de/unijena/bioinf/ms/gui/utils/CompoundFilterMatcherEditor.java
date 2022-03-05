@@ -25,22 +25,16 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class CompoundFilterMatcherEditor extends AbstractMatcherEditor<InstanceBean> implements PropertyChangeListener {
-    final CompoundFilterModel filterModel;
+    final CompoundFilterMatcher matchter;
 
     public CompoundFilterMatcherEditor(CompoundFilterModel filterModel) {
-        this.filterModel = filterModel;
-        fireChanged(new CompoundFilterMatcher(filterModel)); //todo update for dialog
-
-        filterModel.addPropertyChangeListener(this);
+        this.matchter = new CompoundFilterMatcher(filterModel);
+        filterModel.addPropertyChangeListener("filterUpdateCompleted", this);
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        //todo probably we do not even need new CompoundFilterMatcher...
-        if (evt.getSource() == filterModel && evt.getPropertyName().equals("filterUpdateCompleted")) {
-            fireChanged(new CompoundFilterMatcher(filterModel));
-        }
+        if (evt.getSource() == matchter.filterModel)
+            fireChanged(matchter);
     }
-
-
 }
