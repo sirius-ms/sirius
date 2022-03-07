@@ -26,6 +26,7 @@ import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
@@ -50,7 +51,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-
+@CommandLine.Command(name = "prediction-export", aliases = {"EPR"}, description = "<STANDALONE> Exports predictions from CSI:FingerID and CANOPUS.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class ExportPredictions implements StandaloneTool<ExportPredictions.ExportPredictionWorkflow> {
 
     protected Path output = null;

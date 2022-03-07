@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.decomp.DecompOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.mgf.MgfExporterOptions;
+import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictions;
 import de.unijena.bioinf.ms.frontend.subtools.export.trees.FTreeExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
@@ -90,6 +91,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
     //postprocessing, project-space consuming tool, exporting tools,
     public final SummaryOptions summaryOptions;
+    public final ExportPredictions exportPredictions;
     public final MgfExporterOptions mgfExporterOptions;
     public final FTreeExporterOptions ftreeExporterOptions;
 
@@ -120,6 +122,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         mgfExporterOptions = new MgfExporterOptions();
         ftreeExporterOptions = new FTreeExporterOptions();
         summaryOptions = new SummaryOptions();
+        exportPredictions = new ExportPredictions();
         loginOptions = new LoginOptions();
     }
 
@@ -146,7 +149,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     }
 
     protected Object[] standaloneTools() {
-        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, loginOptions};
+        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, loginOptions};
     }
 
     protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools(CommandLine.Model.CommandSpec... postProcessors) {
