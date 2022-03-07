@@ -98,8 +98,8 @@ public class FilterableExperimentListPanel extends JPanel implements Loadable {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
         panel.setOpaque(true);
-        JLabel iconLabel = new JLabel(Icons.FILTER_LOADER, SwingUtilities.CENTER);
-        Icons.FILTER_LOADER.setImageObserver(iconLabel);
+        JLabel iconLabel = new JLabel(Icons.FILTER_LOADER_120, SwingUtilities.CENTER);
+        Icons.FILTER_LOADER_120.setImageObserver(iconLabel);
         JLabel label = new JLabel("Loading...");
         panel.add(iconLabel, BorderLayout.CENTER);
         panel.add(label, BorderLayout.SOUTH);
