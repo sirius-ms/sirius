@@ -105,7 +105,9 @@ public class FileBlobStorage implements BlobStorage {
 
     @Override
     public Iterator<Blob> listBlobs() throws IOException {
-        return new BlobIt<>(FileUtils.walkAndClose(s -> s.filter(p -> !p.getFileName().toString().equals(BLOB_TAGS)).sorted(Comparator.reverseOrder()).collect(Collectors.toList()), getRoot()).iterator(), PathBlob::new);
+        return new BlobIt<>(FileUtils.walkAndClose(s ->
+                s.filter(p -> !p.getFileName().toString().equals(BLOB_TAGS) && !p.equals(root))
+                        .sorted(Comparator.reverseOrder()).collect(Collectors.toList()), getRoot()).iterator(), PathBlob::new);
     }
 
     public class PathBlob implements Blob {

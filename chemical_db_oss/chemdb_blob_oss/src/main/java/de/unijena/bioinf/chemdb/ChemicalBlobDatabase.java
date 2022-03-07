@@ -85,6 +85,8 @@ public enum Format {
     public static final String BLOB_SETTINGS = "SETTINGS";
     public static final String BLOB_FORMULAS = "formulas";
 
+    public static final Set<String> CONFIG_BLOBS = Set.of(BLOB_FORMULAS, BLOB_SETTINGS);
+
     protected final Storage storage;
     protected Format format; // csv or json
     protected CompoundReader reader;
@@ -175,11 +177,13 @@ public enum Format {
                 Arrays.sort(this.formulas);
             }
         } else {
-            LoggerFactory.getLogger(getClass()).debug("No formula index found! Loading molecular formulas by iterating ove all blobs in storage. Might be slow...");
+            LoggerFactory.getLogger(getClass()).debug("No formula index found! Loading molecular formulas by iterating over all blobs in storage. Might be slow...");
             List<MolecularFormula> formulaList = new ArrayList<>();
             storage.listBlobs().forEachRemaining(blob -> {
                 String fname = blob.getFileName();
-                formulaList.add(MolecularFormula.parseOrThrow(fname.substring(0, fname.length() - format.ext().length() - compression.ext().length())));
+                if (!CONFIG_BLOBS.contains(fname)) {
+                    formulaList.add(MolecularFormula.parseOrThrow(fname.substring(0, fname.length() - format.ext().length() - compression.ext().length())));
+                }
             });
             Collections.sort(formulaList);
             formulas = formulaList.toArray(MolecularFormula[]::new);
