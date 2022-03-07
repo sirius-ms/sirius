@@ -174,14 +174,17 @@ public class WebWithCustomDatabase {
     }
 
     protected List<ChemicalBlobDatabase<?>> getAdditionalCustomDBs(Collection<SearchableDatabase> dbs) throws IOException {
-        List<ChemicalBlobDatabase<?>> chemDBs = new ArrayList<>(dbs.size());
-        for (SearchableDatabase db : dbs) {
-            if (db.isCustomDb())
-                ((CustomDatabase<?>) db).toChemDB(api.getCDKChemDBFingerprintVersion()).ifPresent(chemDBs::add);
+        final Set<String> customToSearch = dbs.stream().filter(SearchableDatabase::isCustomDb).map(SearchableDatabase::name).collect(Collectors.toSet());
+        List<ChemicalBlobDatabase<?>> fdbs = new ArrayList<>(CustomDataSources.size());
+        for (CustomDataSources.Source customSource : CustomDataSources.sources()) {
+            if (customSource.isCustomSource() && !customToSearch.contains(customSource.name())) {
+                @NotNull Optional<CustomDatabase<?>> opCustom = SearchableDatabases.getCustomDatabaseByName(customSource.name());
+                if (opCustom.isPresent())
+                    opCustom.get().toChemDB(api.getCDKChemDBFingerprintVersion()).ifPresent(fdbs::add);
+            }
         }
-        return chemDBs;
+        return fdbs;
     }
-
 
 
     /**
