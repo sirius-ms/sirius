@@ -155,6 +155,15 @@ public class CombinatorialGraph {
         return adjMatrix;
     }
 
+    public ArrayList<CombinatorialEdge> getEdgeList(){
+        // each node can have more than one incoming edge:
+        ArrayList<CombinatorialEdge> edgeList = new ArrayList<>();
+        for(CombinatorialNode node : this.nodes){
+            edgeList.addAll(node.incomingEdges);
+        }
+        return edgeList;
+    }
+
     public boolean contains(CombinatorialFragment fragment){
         return this.bitset2node.get(fragment.bitset) != null;
     }

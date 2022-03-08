@@ -160,6 +160,13 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
         return sortedList;
     }
 
+    public ArrayList<CombinatorialEdge> getEdgeList(){
+        // each node (except the root) has exactly one incoming edge:
+        ArrayList<CombinatorialEdge> edgeList = new ArrayList<>(this.nodes.size());
+        for(CombinatorialNode node : this.nodes) edgeList.add(node.incomingEdges.get(0));
+        return edgeList;
+    }
+
     public double[][] getAdjacencyMatrix(){
         ArrayList<CombinatorialNode> sortedNodeList = this.getSortedNodeList();
         TObjectIntHashMap<CombinatorialNode> nodeIndices = new TObjectIntHashMap<>(this.numberOfNodes());
