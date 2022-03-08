@@ -19,13 +19,13 @@
 
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.Run;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiComputeRoot;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
@@ -33,7 +33,6 @@ import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
-import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
@@ -69,7 +68,6 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class DatabaseDialog extends JDialog {
-
     //todo: we should separate the Dialog from the Database Managing part.
     protected JList<String> dbList;
     protected Map<String, CustomDatabase<?>> customDatabases;
@@ -168,9 +166,22 @@ public class DatabaseDialog extends JDialog {
             final String name = dbList.getModel().getElementAt(index);
             final String msg = "Do you really want to delete the custom database '" + name + "'?";
             if (new QuestionDialog(getOwner(), msg).isSuccess()) {
-//                CustomDatabase.openDatabase(name).deleteDatabase();;
-                customDatabases.remove(name);
-                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Loading DBs...", (Callable<List<CustomDatabase<?>>>) SearchableDatabases::getCustomDatabases).getResult()
+                Jobs.runInBackgroundAndLoad(owner, "Deleting database '" + name + "'...", () -> {
+                    CustomDatabase<?> dbToRemove = customDatabases.get(name);
+
+                    List<CustomDatabase<?>> customs = customDatabases.values().stream().distinct()
+                            .sorted(Comparator.comparing(CustomDatabase::name))
+                            .collect(Collectors.toList());
+                    customs.remove(dbToRemove);
+
+                    dbToRemove.deleteDatabase();
+                    customDatabases.remove(name);
+
+                    SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SearchableDatabases.PROP_KEY, customs.stream().map(CustomDatabase::storageLocation).collect(Collectors.joining(",")));
+
+
+                });
+                final String[] dbs = Jobs.runInBackgroundAndLoad(owner, "Reloading DBs...", (Callable<List<CustomDatabase<?>>>) SearchableDatabases::getCustomDatabases).getResult()
                         .stream().map(CustomDatabase::name).toArray(String[]::new);
                 dbList.setListData(dbs);
             }
@@ -185,10 +196,8 @@ public class DatabaseDialog extends JDialog {
     }
 
     protected void whenCustomDbIsAdded(final String dbName) {
-        //todo
-        SearchableDatabases.getCustomDatabaseByName(dbName).ifPresent(db -> {
+        SearchableDatabases.getCustomDatabaseByPath(Path.of(dbName)).ifPresent(db -> {
             this.customDatabases.put(db.name(), db);
-
             dbList.setListData(this.customDatabases.keySet().stream().sorted().toArray(String[]::new));
             dbList.setSelectedValue(db.name(),true);
         });
@@ -227,37 +236,6 @@ public class DatabaseDialog extends JDialog {
 
     }
 
-    protected static class ImportList extends JList<InChI> implements ListCellRenderer<InChI> {
-        private final Box cell;
-        private final JLabel left, right;
-        protected HashSet<String> importedCompounds;
-        protected DefaultListModel<InChI> model;
-
-        public ImportList() {
-            super();
-            this.model = new DefaultListModel<>();
-            setCellRenderer(this);
-            setModel(model);
-            importedCompounds = new HashSet<>();
-            cell = Box.createHorizontalBox();
-            left = new JLabel("GZCGUPFRVQAUEE");
-            right = new JLabel("InChI=1S/C6H12O6/c7-1-3(9)5(11)6(12)4(10)2-8/h1,3-6,8-12H,2H2");
-            cell.add(left);
-            cell.add(Box.createHorizontalStrut(32));
-            cell.add(right);
-
-            right.setFont(Fonts.FONT_BOLD);
-            left.setFont(Fonts.FONT_BOLD.deriveFont(Font.BOLD));
-        }
-
-        @Override
-        public Component getListCellRendererComponent(JList<? extends InChI> list, InChI value, int index, boolean isSelected, boolean cellHasFocus) {
-            left.setText(value.key2D());
-            right.setText(value.in2D);
-            return cell;
-        }
-    }
-
     protected class ImportDatabaseDialog extends JDialog {
         protected JButton importButton;
         protected DatabaseImportConfigPanel configPanel;
@@ -267,7 +245,7 @@ public class DatabaseDialog extends JDialog {
         }
 
         public ImportDatabaseDialog(@Nullable CustomDatabase<?> db) {
-            super(owner, db != null ? "Import into '" + db.name() + "' database" : "Create custom database", false);
+            super(owner, db != null ? "Import into '" + db.name() + "' database" : "Create/Add custom database", false);
 
             setPreferredSize(new Dimension(640, 480));
             setLayout(new BorderLayout());
@@ -292,12 +270,12 @@ public class DatabaseDialog extends JDialog {
             box.add(pane);
             box.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Import compounds"));
 
-            importButton = new JButton("Import compounds");
+            importButton = new JButton("Create/Open database and import compounds");
             importButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
             configPanel = new DatabaseImportConfigPanel(db);
-            importButton.setEnabled(db != null && ! configPanel.nameField.getText().isBlank());
-            configPanel.nameField.getDocument().addDocumentListener(new DocumentListener() {
+            importButton.setEnabled(db != null && ! configPanel.dbLocationField.getFilePath().isBlank());
+            configPanel.dbLocationField.field.getDocument().addDocumentListener(new DocumentListener() {
                 @Override
                 public void insertUpdate(DocumentEvent e) {
                     onTextChanged();
@@ -314,7 +292,7 @@ public class DatabaseDialog extends JDialog {
                 }
 
                 public void onTextChanged() {
-                    importButton.setEnabled(configPanel.nameField.getText().length() > 0 && configPanel.nameField.getText().replaceAll("\\s", "").equals(configPanel.nameField.getText()) && customDatabases.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(configPanel.nameField.getText())));
+                    importButton.setEnabled(configPanel.dbLocationField.getFilePath().length() > 0 && configPanel.dbLocationField.getFilePath().replaceAll("\\s", "").equals(configPanel.dbLocationField.getFilePath()) && customDatabases.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(configPanel.dbLocationField.getFilePath())));
                 }
             });
 
@@ -368,8 +346,8 @@ public class DatabaseDialog extends JDialog {
 
                 if (computation.isWorkflowDefined()) {
                     final TextAreaJJobContainer<Boolean> j = Jobs.runWorkflow(computation.getFlow(), List.of(), command, configPanel.toolCommand());
-                    LoadingBackroundTask.connectToJob(this, "Importing into '" + configPanel.nameField.getText() + "'...", false, j);
-                    whenCustomDbIsAdded(configPanel.nameField.getText());
+                    LoadingBackroundTask.connectToJob(this, "Importing into '" + configPanel.dbLocationField.getFilePath() + "'...", false, j);
+                    whenCustomDbIsAdded(configPanel.dbLocationField.getFilePath());
                 }
                 //todo else some error message with pico cli output
             } catch (Exception e) {

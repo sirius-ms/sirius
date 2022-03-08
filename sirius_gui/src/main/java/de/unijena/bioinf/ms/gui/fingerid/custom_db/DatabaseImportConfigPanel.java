@@ -2,11 +2,11 @@ package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
@@ -19,7 +19,8 @@ import javax.swing.*;
 public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOptions> {
 
     private final JCheckboxListPanel<CustomDataSources.Source> parentDBList;
-    public final PlaceholderTextField nameField;
+    public final FileChooserPanel dbLocationField;
+
     public final JComboBox<Compressible.Compression> compression;
     JSpinner bufferSize;
 
@@ -33,19 +34,19 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         final TwoColumnPanel smalls = new TwoColumnPanel();
         add(new TextHeaderBoxPanel("Parameters", smalls));
 
-        this.nameField = new PlaceholderTextField(20);
+        this.dbLocationField = new FileChooserPanel(JFileChooser.DIRECTORIES_ONLY);
         if (db == null) {
-            nameField.setPlaceholder("Enter location (no whitespaces)");
+            dbLocationField.field.setPlaceholder("Enter location (no whitespaces)");
         } else {
-            nameField.setText(db.name());
+            dbLocationField.field.setText(db.name());
 
         }
-        nameField.setEnabled(db == null);
+        dbLocationField.setEnabled(db == null);
 
 
-        getOptionDescriptionByName("location").ifPresent(it -> nameField.setToolTipText(GuiUtils.formatToolTip(it)));
-        smalls.addNamed("Location", nameField);
-        parameterBindings.put("location", nameField::getText);
+        getOptionDescriptionByName("location").ifPresent(it -> dbLocationField.setToolTipText(GuiUtils.formatToolTip(it)));
+        smalls.addNamed("Location", dbLocationField);
+        parameterBindings.put("location", dbLocationField::getFilePath);
 
         final String buf = "buffer";
         bufferSize = makeGenericOptionSpinner(buf,

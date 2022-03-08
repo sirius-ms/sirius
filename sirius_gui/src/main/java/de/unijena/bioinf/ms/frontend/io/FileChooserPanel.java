@@ -33,15 +33,15 @@ import java.nio.file.Path;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FileChooserPanel extends JPanel {
-    public final PlaceholderTextField field = new PlaceholderTextField();
+    public final PlaceholderTextField field = new PlaceholderTextField(20);
     public final JButton changeDir = Buttons.getFileChooserButton16("Choose file or directory");
 
     public FileChooserPanel() {
-        this("", 2, JFileChooser.OPEN_DIALOG);
+        this("", JFileChooser.FILES_AND_DIRECTORIES, JFileChooser.OPEN_DIALOG);
     }
 
     public FileChooserPanel(String currentPath) {
-        this(currentPath, 2, JFileChooser.OPEN_DIALOG);
+        this(currentPath, JFileChooser.FILES_AND_DIRECTORIES, JFileChooser.OPEN_DIALOG);
     }
 
     public FileChooserPanel(int fileChooserMode) {

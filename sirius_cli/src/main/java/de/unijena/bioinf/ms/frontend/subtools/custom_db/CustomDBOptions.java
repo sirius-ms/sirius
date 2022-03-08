@@ -39,6 +39,7 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.storage.blob.Compressible;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -127,12 +128,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                     List.of(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion().getUsedFingerprints()), VersionsInfo.CUSTOM_DATABASE_SCHEMA, null);
 
             CustomDatabase<?> db = CustomDatabase.createOrOpen(location, compression, settings);
-
-            List<CustomDatabase<?>> customs = SearchableDatabases.getCustomDatabases();
-            customs.add(db);
-            customs = customs.stream().distinct().sorted(Comparator.comparing(CustomDatabase::name)).collect(Collectors.toList());
-
-            SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SearchableDatabases.PROP_KEY, customs.stream().map(CustomDatabase::storageLocation).collect(Collectors.joining(",")));
+            addDBToProperties(db);
 
             dbjob = db.importToDatabaseJob(
                     unknown.stream().map(Path::toFile).collect(Collectors.toList()),
@@ -152,5 +148,14 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 dbjob.cancel();
             cancel(false);
         }
+    }
+
+    public static void addDBToProperties(@NotNull CustomDatabase<?> db){
+        List<CustomDatabase<?>> customs = SearchableDatabases.getCustomDatabases();
+        customs.add(db);
+        customs = customs.stream().distinct().sorted(Comparator.comparing(CustomDatabase::name)).collect(Collectors.toList());
+
+        SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SearchableDatabases.PROP_KEY, customs.stream().map(CustomDatabase::storageLocation).collect(Collectors.joining(",")));
+
     }
 }
