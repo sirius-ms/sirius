@@ -98,7 +98,7 @@ public class CombinatorialSubtreeJsonWriter {
         if(parentBitSet != null){
             writeBitSetToJson("parentBitset", parentBitSet, jsonGenerator);
         }else{
-            jsonGenerator.writeStringField("parentBitset", "NULL");
+            jsonGenerator.writeNullField("parentBitSet");
         }
         jsonGenerator.writeStringField("smiles", node.fragment.toSMILES());
         jsonGenerator.writeStringField("molecularFormula", node.fragment.getFormula().toString());
@@ -115,7 +115,7 @@ public class CombinatorialSubtreeJsonWriter {
         CombinatorialNode targetNode = edge.target;
         jsonGenerator.writeStartObject();
         writeBitSetToJson("sourceBitset", permutate(sourceNode.fragment.bitset, order), jsonGenerator);
-        writeBitSetToJson("targetBitSet", (targetNode.fragment.isRealFragment()) ? permutate(targetNode.fragment.bitset, order) : targetNode.fragment.bitset, jsonGenerator);
+        writeBitSetToJson("targetBitset", (targetNode.fragment.isRealFragment()) ? permutate(targetNode.fragment.bitset, order) : targetNode.fragment.bitset, jsonGenerator);
         writeBondToJson("cut1", edge.getCut1(), edge.getDirectionOfFirstCut(), order, jsonGenerator);
         writeBondToJson("cut2", edge.getCut2(), edge.getDirectionOfSecondCut(), order, jsonGenerator);
         jsonGenerator.writeNumberField("edgeScore", edge.getScore());
@@ -136,7 +136,7 @@ public class CombinatorialSubtreeJsonWriter {
             jsonGenerator.writeStringField("bondNameGeneric", DirectedBondTypeScoring.bondNameGeneric(bond, cutDirection));
             jsonGenerator.writeEndObject();
         }else{
-            jsonGenerator.writeStringField(fieldName, "NULL");
+            jsonGenerator.writeNullField(fieldName);
         }
     }
 }
