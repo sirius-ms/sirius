@@ -38,7 +38,7 @@ public class CombinatorialSubtreeJsonWriter {
         jsonGenerator.close();
     }
 
-    private static void tree2Json(final CombinatorialSubtree tree,final JsonGenerator jsonGenerator) throws IOException, CDKException {
+    public static void tree2Json(final CombinatorialSubtree tree,final JsonGenerator jsonGenerator) throws IOException, CDKException {
         jsonGenerator.useDefaultPrettyPrinter();
         jsonGenerator.writeStartObject();
 
