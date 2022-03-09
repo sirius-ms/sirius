@@ -1,8 +1,10 @@
 package de.unijena.bioinf.fragmenter;
 
 import gnu.trove.map.hash.TObjectIntHashMap;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IBond;
 
+import java.io.IOException;
 import java.util.*;
 
 public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
@@ -271,6 +273,14 @@ public class CombinatorialSubtree implements Iterable<CombinatorialNode> {
 
         strBuilder.append(this.nodeString(currentNode));
         return strBuilder.toString();
+    }
+
+    public String toJsonString(){
+        try {
+            return CombinatorialSubtreeJsonWriter.treeToJsonString(this);
+        } catch (CDKException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
