@@ -20,11 +20,10 @@
 package de.unijena.bioinf.ms.gui.utils;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.projectspace.MsExperiments2;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.MsExperiments2;
 
 import javax.swing.*;
 
@@ -73,10 +72,7 @@ public class ExperimentEditPanel extends JPanel {
     }
 
     public PrecursorIonType getSelectedIonization() {
-        String item = (String) ionizationCB.getSelectedItem();
-        if (item != null)
-            return PeriodicTable.getInstance().ionByNameOrThrow(item);
-        return PeriodicTable.getInstance().getUnknownPrecursorIonType(1);
+       return ionizationCB.getSelectedAdductOrDefault();
     }
 
     public void setData(InstanceBean ec) {
