@@ -24,7 +24,7 @@ plugins {
 //Global Properties
 ext {
     //version for external libraries
-    slf4j_version = '1.7.32'
+    slf4j_version = '1.7.36'
     jjobs_version = '0.9.27'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
@@ -156,19 +156,17 @@ allprojects {
 //        compile "cplex:cplex:12.7.1"
     }
 
-    configurations {
-        //replaced by log4j-over-slf4j
-        runtime.exclude group: "log4j", module: "log4j"
-        compile.exclude group: "log4j", module: "log4j"
-        //replaced by jcl-over-slf4j
-        runtime.exclude group: "commons-logging", module: "commons-logging"
-        compile.exclude group: "commons-logging", module: "commons-logging"
-    }
-
     //there are some outdated incompatible trove dependencies in some libs.
     // this is to exclude them and enforce the one we need.
+    configurations.all {
+        //replaced by log4j-over-slf4j
+        it.exclude group: "log4j", module: "log4j"
+        //replaced by jcl-over-slf4j
+        it.exclude group: "commons-logging", module: "commons-logging"
+        it.exclude module: 'trove4j'
+    }
+
     configurations {
-        compile.exclude module: 'trove4j'
         compileClasspath {
             resolutionStrategy.force 'net.sf.trove4j:core:3.1.0'
         }
