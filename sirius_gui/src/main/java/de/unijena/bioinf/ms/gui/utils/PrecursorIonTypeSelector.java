@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 import javax.swing.*;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
@@ -61,5 +62,14 @@ public class PrecursorIonTypeSelector extends JComboBox<String> {
             return r;
         }
     }
-}
 
+    public Optional<PrecursorIonType> getSelectedAdduct(){
+        String item = (String) getSelectedItem();
+        if (item != null)
+            return Optional.of(PeriodicTable.getInstance().ionByNameOrThrow(item));
+        return Optional.empty();
+    }
+    public PrecursorIonType getSelectedAdductOrDefault(){
+        return getSelectedAdduct().orElse(PeriodicTable.getInstance().getUnknownPrecursorIonType(1));
+    }
+}
