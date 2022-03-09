@@ -44,7 +44,8 @@ import java.awt.event.WindowEvent;
  */
 class SiriusToolbar extends JToolBar {
     private final ToolbarToggleButton logs;
-    private ToolbarButton imCompB, createB, openB, saveB,exportB, summB, fbmnB, imB, computeAllB, configFingerID, jobs, db, connect, settings, help, bug, about;
+    private ToolbarButton imCompB, createB, openB, saveB, exportB, summB, fbmnB, imB, computeAllB, jobs, db, connect, settings, account, /*bug,*/
+            help, about;
 
     SiriusToolbar() {
 
@@ -88,8 +89,6 @@ class SiriusToolbar extends JToolBar {
         add(computeAllB);
         addSeparator(new Dimension(20, 20));
 
-        //todo implement database menu
-        //todo reenable if fixed
         db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance());
         add(db);
         addSeparator(new Dimension(20,20));
@@ -109,11 +108,14 @@ class SiriusToolbar extends JToolBar {
         connect = new ToolbarButton(SiriusActions.CHECK_CONNECTION.getInstance());
         add(connect);
 
+        account = new ToolbarButton(SiriusActions.SHOW_ACCOUNT.getInstance());
+        add(account);
+
         help = new ToolbarButton(SiriusActions.OPEN_ONLINE_DOCUMENTATION.getInstance());
         add(help);
 
-        bug = new ToolbarButton(SiriusActions.SHOW_BUGS.getInstance());
-        add(bug);
+      /*  bug = new ToolbarButton(SiriusActions.SHOW_BUGS.getInstance());
+        add(bug);*/
 
         about = new ToolbarButton(SiriusActions.SHOW_ABOUT.getInstance());
         add(about);

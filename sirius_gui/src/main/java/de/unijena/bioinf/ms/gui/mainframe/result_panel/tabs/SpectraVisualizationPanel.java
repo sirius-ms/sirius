@@ -112,7 +112,7 @@ public class SpectraVisualizationPanel
 	private InsilicoFragmenter fragmenter;
 
     public WebViewSpectraViewer browser;
-
+	final JToolBar toolBar;
 	public SpectraVisualizationPanel(boolean annotationBox) {
 		this(MS1_DISPLAY, annotationBox);
 	}
@@ -122,36 +122,36 @@ public class SpectraVisualizationPanel
 		this.fragmenter = new InsilicoFragmenter();
 		this.preferredMode = preferredMode;
 
-		JToolBar northPanel = new JToolBar();
-		northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
-		northPanel.setPreferredSize(new Dimension(northPanel.getPreferredSize().width,32));
-		northPanel.setFloatable(false);
+		toolBar = new JToolBar();
+		toolBar.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+		toolBar.setPreferredSize(new Dimension(toolBar.getPreferredSize().width,32));
+		toolBar.setFloatable(false);
 
 		JLabel l = new JLabel("Mode");
 		l.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
 		modesBox = new JComboBox<>();
 		modesBox.addItemListener(this);
 		ceBox = new JComboBox<>();
-		northPanel.add(l);
-		northPanel.add(modesBox);
-		northPanel.add(ceBox);
+		toolBar.add(l);
+		toolBar.add(modesBox);
+		toolBar.add(ceBox);
 
 		optAnoBox = annotationBox ? Optional.of(new InSilicoSelectionBox(new Dimension(200, 100), 5)) : Optional.empty();
 
 		optAnoBox.ifPresent(anoBox -> {
-			northPanel.add(anoBox);
+			toolBar.add(anoBox);
 			anoBox.setAction(new InsilicoFrament());
 		});
 
-        northPanel.addSeparator(new Dimension(10, 10));
+        toolBar.addSeparator(new Dimension(10, 10));
         saveButton = Buttons.getExportButton24("Export spectra");
         saveButton.addActionListener(this);
         saveButton.setToolTipText("Export the current view to various formats");
-        northPanel.add(saveButton);
+        toolBar.add(saveButton);
 
-		northPanel.addSeparator(new Dimension(10, 10));
-		this.add(northPanel, BorderLayout.NORTH);
-
+		toolBar.addSeparator(new Dimension(10, 10));
+		this.add(toolBar, BorderLayout.NORTH);
+		setToolbarEnabled(false);
 
 		/////////////
 		// Browser //
@@ -159,6 +159,11 @@ public class SpectraVisualizationPanel
 		this.browser = new WebViewSpectraViewer();
 		this.add(this.browser, BorderLayout.CENTER);
 		this.setVisible(true);
+	}
+
+	protected void setToolbarEnabled(boolean enabled) {
+		for (Component comp : toolBar.getComponents())
+			comp.setEnabled(enabled);
 	}
 
     public SpectraViewerConnector getConnector(){
@@ -255,6 +260,7 @@ public class SpectraVisualizationPanel
 					if ((SpectraVisualizationPanel.this.experiment != experimentParam) || (SpectraVisualizationPanel.this.sre != sre) || (SpectraVisualizationPanel.this.annotation != spectrumAno)) {
 						isotopePattern = null;
 						if (experimentParam != null) {
+							Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
 							if (experimentParam.getMs1Spectra().size() > 0 || experimentParam.getMergedMs1Spectrum() != null)
 								items.add(MS1_DISPLAY);
 							if (sre != null) {
@@ -266,6 +272,8 @@ public class SpectraVisualizationPanel
 							}
 							if (experimentParam.getMs2Spectra().size() > 0)
 								items.add(MS2_DISPLAY);
+						}else {
+							Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
 						}
 
 						Jobs.runEDTAndWait(() -> {

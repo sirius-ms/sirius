@@ -41,9 +41,6 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 @ThreadSafe
 public class CheckConnectionAction extends AbstractAction {
 
-
-//    private final AtomicBoolean execAction = new AtomicBoolean(false);
-
     protected CheckConnectionAction() {
         super("Webservice");
         putValue(Action.SHORT_DESCRIPTION, "Check and refresh webservice connection");
@@ -51,7 +48,8 @@ public class CheckConnectionAction extends AbstractAction {
         MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> {
             ConnectionMonitor.ConnetionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
             setIcon(check);
-            ConnectionDialog.of(MainFrame.MF, check.errorCode, check.workerInfo, check.userId, check.license, check.terms);
+            if (!check.isConnected())
+                ConnectionDialog.of(MainFrame.MF, check.errorCode, check.workerInfo, check.userId, check.license, check.terms);
         });
 
 
@@ -65,9 +63,7 @@ public class CheckConnectionAction extends AbstractAction {
             ConnectionMonitor.ConnetionCheck r = checkConnectionAndLoad();
             if (r != null) {
                 setIcon(r);
-
                 ConnectionDialog.of(MainFrame.MF, r.errorCode, r.workerInfo, r.userId, r.license, r.terms);
-
             }
         } catch (Exception e1) {
             LoggerFactory.getLogger(getClass()).error("Error when checking connection by action");
