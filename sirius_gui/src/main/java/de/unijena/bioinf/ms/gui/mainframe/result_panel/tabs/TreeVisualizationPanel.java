@@ -119,8 +119,7 @@ public class TreeVisualizationPanel extends JPanel
         saveTreeBtn = Buttons.getExportButton24("Export tree");
         saveTreeBtn.addActionListener(this);
         saveTreeBtn.setEnabled(false);
-        saveTreeBtn.setToolTipText("Export the tree view (or zoomed-in region) "
-                + "to various formats");
+        saveTreeBtn.setToolTipText("Export current tree view (or zoomed-in region) to various formats");
         toolBar.add(saveTreeBtn);
         toolBar.addSeparator(new Dimension(10, 10));
         scaleSlider = new JSlider(JSlider.HORIZONTAL,
@@ -174,8 +173,7 @@ public class TreeVisualizationPanel extends JPanel
             put("connector", jsConnector);
         }};
         browser.load(bridges);
-        for (Component comp : toolBar.getComponents())
-            comp.setEnabled(false);
+        setToolbarEnabled(false);
         this.addComponentListener(this);
         applyPreset((String) presetBox.getSelectedItem());
     }
@@ -237,7 +235,11 @@ public class TreeVisualizationPanel extends JPanel
                                     if (settings == null)
                                         Jobs.runEDTAndWait(() -> settings = new TreeViewerSettings(TreeVisualizationPanel.this));
                                     return true;
+                                }else {
+                                    Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                                 }
+                            }else {
+                                Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                             }
                         }
                         ftree = null;

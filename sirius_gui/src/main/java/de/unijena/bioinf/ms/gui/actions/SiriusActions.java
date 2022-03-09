@@ -17,11 +17,7 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.actions;/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 28.01.17.
- */
+package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -74,16 +70,16 @@ public enum SiriusActions {
     SHOW_DB(ShowDBDialogAction.class),
     SHOW_LOG(OpenLogAction.class),
 
-    CHECK_CONNECTION(CheckConnectionAction.class),
-
-
     SHOW_ACCOUNT(ShowAccountDialog.class),
     SIGN_OUT(SignOutAction.class),
     SIGN_IN(SignInAction.class),
     SIGN_UP(SignUpAction.class),
     RESET_PWD(PasswdResetAction.class),
     DELETE_ACCOUNT(AccountDeleteAction.class),
-    ACCEPT_TERMS(AcceptTermsAction.class);
+    ACCEPT_TERMS(AcceptTermsAction.class),
+
+    CHECK_CONNECTION(CheckConnectionAction.class);
+
 
     public static final ActionMap ROOT_MANAGER = new ActionMap();
     public final Class<? extends Action> actionClass;

@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
@@ -95,10 +96,13 @@ public class AccountPanel extends JPanel {
             login.setAction(SiriusActions.SIGN_IN.getInstance());
         } else {
             try {
-                userIconLabel.setIcon(new ImageIcon(new URL(userInfo.getClaim("picture").asString())));
+                Image image = ImageIO.read(new URL(userInfo.getClaim("picture").asString()));//Toolkit.getDefaultToolkit().getImage();
+                image = Icons.makeEllipse(image);
+
+                userIconLabel.setIcon(new ImageIcon(image));
             } catch (Throwable e) {
                 LoggerFactory.getLogger(getClass()).warn("Could not load profile image: " + e.getMessage());
-                userIconLabel.setIcon(Icons.USER_128);
+                userIconLabel.setIcon(Icons.USER_GREEN_128);
             }
             userInfoLabel.setText("<html>Logged in as:<br><b>"
                     + userInfo.getClaim("email").asString() + "</b>"

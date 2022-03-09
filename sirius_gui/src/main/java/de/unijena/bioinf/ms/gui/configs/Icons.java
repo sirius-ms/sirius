@@ -20,12 +20,16 @@
 package de.unijena.bioinf.ms.gui.configs;
 
 import de.unijena.bioinf.ms.gui.dialogs.AboutDialog;
+import de.unijena.bioinf.ms.gui.login.AccountPanel;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -96,11 +100,14 @@ public abstract class Icons {
     public static final Icon USER_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user.png"));
     public static final Icon USER_128 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user@2x.png"));
 
+    public static final Icon USER_GREEN_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user_green@0.5x.png"));
+    public static final Icon USER_GREEN_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user_green.png"));
+    public static final Icon USER_GREEN_128 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user_green@2x.png"));
+
+    public static final Icon HELP_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-question_blue@0.5x.png"));
+
     public static final Icon INFO_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-information@0.5x.png"));
     public static final Icon CHOOSE_FILE_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-file-16px.png"));
-
-    public static final Icon HELP_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-information@0.5x.png"));
-
 
     public static final Icon FBMN_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn-16px.png"));
     public static final Icon FBMN_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn@0.5x.png"));
@@ -176,4 +183,50 @@ public abstract class Icons {
             new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_s.png"))};
 
 
+    public static Image makeEllipse(Image image) {
+        return makeRoundedCorner(image);
+    }
+    public static Image makeRoundedCorner(Image image) {
+        return makeRoundedCorner(image, null);
+    }
+    public static Image makeRoundedCorner(Image image, @Nullable Integer cornerRadius) {
+        if (!(image instanceof BufferedImage)){
+            LoggerFactory.getLogger(AccountPanel.class).warn("Cannot crop Image to circle. Only BufferedSImages are supported.");
+            return image;
+        }
+
+
+        int w = ((BufferedImage)image).getWidth();
+        int h = ((BufferedImage)image).getHeight();
+
+        BufferedImage output = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D g2 = output.createGraphics();
+
+        // This is what we want, but it only does hard-clipping, i.e. aliasing
+        // g2.setClip(new RoundRectangle2D ...)
+
+        // so instead fake soft-clipping by first drawing the desired clip shape
+        // in fully opaque white with antialiasing enabled...
+        g2.setComposite(AlphaComposite.Src);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(Color.WHITE);
+        if (cornerRadius == null)
+            g2.fill(new Ellipse2D.Float(0, 0, w, h));
+        else
+            g2.fill(new RoundRectangle2D.Float(0, 0, w, h, cornerRadius, cornerRadius));
+        //Ellipse2D
+        // ... then compositing the image on top,
+        // using the white shape from above as alpha source
+        g2.setComposite(AlphaComposite.SrcAtop);
+        g2.drawImage(image, 0, 0, null);
+
+        g2.dispose();
+
+        return output;
+    }
+
+    public static Image scaledInstance(Image image, int width, int height) {
+        return image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+    }
 }

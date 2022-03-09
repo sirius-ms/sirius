@@ -19,9 +19,13 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.subtools.export.mgf.MgfExporterConfigPanel;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -35,7 +39,18 @@ public class FBMNExportAction extends AbstractAction {
         super("FBMN Export");
         putValue(Action.LARGE_ICON_KEY, Icons.FBMN_32);
         putValue(Action.SHORT_DESCRIPTION, "Export project for GNPS Feature Based Molecular Networking.");
-        setEnabled(true);
+        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundListSelectionModel()));
+
+        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+            @Override
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
+            }
+
+            @Override
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
+                setEnabled(SiriusActions.notComputingOrEmpty(selection));
+            }
+        });
     }
 
     @Override
