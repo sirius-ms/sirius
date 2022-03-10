@@ -187,6 +187,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setLipidFilter((CompoundFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
 
         searchField.textField.setText(searchFieldDialogCopy.getText());
+        searchField.textField.postActionEvent();
 //            searchField.textField.setEnabled(!filterModel.isPeakShapeFilterEnabled() && !filterModel.isLipidFilterEnabled());
 
         if (invertFilter.isSelected() != compoundList.isFilterInverted()) {
