@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 /**
- * Mass deviation setting for MS1 spectra. Mass Deviations are always written as "X ppm (Y Da)" with X and Y
+ * Mass deviation setting for MS2 spectra. Mass Deviations are always written as "X ppm (Y Da)" with X and Y
  * are numerical values. The ppm is a relative measure (parts per million), Da is an absolute measure. For each mass, the
  * maximum of relative and absolute is used.
  */
