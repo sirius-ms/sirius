@@ -292,6 +292,7 @@ public class DatabaseDialog extends JDialog {
                 }
 
                 public void onTextChanged() {
+                    if (configPanel.dbLocationField.getFilePath() == null) return;
                     importButton.setEnabled(configPanel.dbLocationField.getFilePath().length() > 0 && configPanel.dbLocationField.getFilePath().replaceAll("\\s", "").equals(configPanel.dbLocationField.getFilePath()) && customDatabases.keySet().stream().noneMatch(k -> k.equalsIgnoreCase(configPanel.dbLocationField.getFilePath())));
                 }
             });
