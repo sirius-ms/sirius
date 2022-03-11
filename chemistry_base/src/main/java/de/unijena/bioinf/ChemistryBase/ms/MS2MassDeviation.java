@@ -26,16 +26,16 @@ import org.jetbrains.annotations.NotNull;
 
 
 /**
- * Mass deviation setting for MS2 spectra. Mass Deviations are always written as "X ppm (Y Da)" with X and Y
+ * Mass accuracy setting for MS2 spectra. Mass Accuracies are always written as "X ppm (Y Da)" with X and Y
  * are numerical values. The ppm is a relative measure (parts per million), Da is an absolute measure. For each mass, the
  * maximum of relative and absolute is used.
  */
 public class MS2MassDeviation extends MassDeviation {
 
     /**
-     * @param allowedMassDeviation maximum allowed mass deviation. Only molecular formulas within this mass window are considered.
-     * @param standardMassDeviation expected mass deviation of the instrument. Is used for the scoring.
-     * @param massDifferenceDeviation expected mass deviation of the instrument for two close peaks or for recalibrated spectra. Should be smaller than the standard mass deviation. This value is only used for isotope pattern analysis in MS/MS
+     * @param allowedMassDeviation maximum allowed mass accuracy. Only molecular formulas within this mass window are considered.
+     * @param standardMassDeviation expected mass accuracy of the instrument. Is used for the scoring.
+     * @param massDifferenceDeviation expected mass accuracy of the instrument for two close peaks or for recalibrated spectra. Should be smaller than the standard mass deviation. This value is only used for isotope pattern analysis in MS/MS
      */
     public MS2MassDeviation(@NotNull Deviation allowedMassDeviation, @NotNull Deviation standardMassDeviation, @NotNull Deviation massDifferenceDeviation) {
         super(allowedMassDeviation, standardMassDeviation, massDifferenceDeviation);
