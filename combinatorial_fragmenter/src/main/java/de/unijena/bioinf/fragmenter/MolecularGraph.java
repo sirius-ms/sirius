@@ -108,6 +108,10 @@ public class MolecularGraph {
         return molecule;
     }
 
+    public MolecularFormula getFormula(){
+        return this.formula;
+    }
+
     public IBond[] getBonds() {
         return bonds;
     }
