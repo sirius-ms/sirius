@@ -92,6 +92,8 @@ public class CombinatorialSubtreeCalculatorJsonWriter {
         jsonGenerator.writeStartArray();
         for(Fragment ftFrag : mapping.keySet()){
             ArrayList<CombinatorialFragment> assignedFragments = mapping.get(ftFrag);
+
+            jsonGenerator.writeStartObject();
             jsonGenerator.writeNumberField("ftFragVertexId", ftFrag.getVertexId());
             jsonGenerator.writeStringField("molecularFormula", ftFrag.getFormula().toString());
 
@@ -103,11 +105,14 @@ public class CombinatorialSubtreeCalculatorJsonWriter {
             jsonGenerator.writeFieldName("assignedFragments");
             jsonGenerator.writeStartArray();
             for(CombinatorialFragment fragment : assignedFragments){
+                jsonGenerator.writeStartObject();
                 writeBitSetToJson("bitset", permutateBitSet(fragment.bitset, order), jsonGenerator);
                 jsonGenerator.writeStringField("molecularFormula", fragment.getFormula().toString());
                 jsonGenerator.writeNumberField("hydrogenRearrangements", Math.abs(fragment.hydrogenRearrangements(ftFrag.getFormula())));
+                jsonGenerator.writeEndObject();
             }
             jsonGenerator.writeEndArray();
+            jsonGenerator.writeEndObject();
         }
         jsonGenerator.writeEndArray();
     }
