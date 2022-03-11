@@ -162,4 +162,9 @@ public class PCSTFragmentationTreeAnnotator extends CombinatorialSubtreeCalculat
         return this.isComputed;
     }
 
+    @Override
+    public String getMethodName(){
+        return "ILP";
+    }
+
 }

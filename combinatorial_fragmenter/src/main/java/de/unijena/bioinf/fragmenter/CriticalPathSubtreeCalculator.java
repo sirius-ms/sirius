@@ -166,4 +166,13 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
     public boolean isComputed(){
         return this.isComputed;
     }
+
+    @Override
+    public String getMethodName(){
+        if(this.addCompletePath){
+            return "CriticalPath1";
+        }else{
+            return "CriticalPath2";
+        }
+    }
 }

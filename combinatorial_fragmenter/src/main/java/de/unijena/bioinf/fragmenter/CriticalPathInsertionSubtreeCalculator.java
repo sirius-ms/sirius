@@ -178,4 +178,16 @@ public class CriticalPathInsertionSubtreeCalculator extends CombinatorialSubtree
         }
         return maxScore;
     }
+
+    public boolean isComputed(){
+        return this.isComputed;
+    }
+
+    public boolean isInitialised(){
+        return this.isInitialised;
+    }
+
+    public String getMethodName(){
+        return "CriticalPath3";
+    }
 }

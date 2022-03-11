@@ -157,4 +157,17 @@ public class InsertionSubtreeCalculator extends CombinatorialSubtreeCalculator{
             }
         }
     }
+
+    public boolean isInitialised(){
+        return this.isInitialised;
+    }
+
+    public boolean isComputed(){
+        return this.isComputed;
+    }
+
+    @Override
+    public String getMethodName(){
+        return "Insertion";
+    }
 }
