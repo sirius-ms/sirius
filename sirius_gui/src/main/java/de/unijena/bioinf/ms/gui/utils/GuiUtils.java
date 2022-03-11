@@ -238,14 +238,14 @@ public class GuiUtils {
 
     public static Dimension getEffectiveScreenSize(@NotNull GraphicsConfiguration c) {
         Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-        Insets in = getScreenInsets(c);
-        return new Dimension(d.width - in.left - in.right, d.height - in.bottom - in.top);
+//        Insets in = getScreenInsets(c);
+        return new Dimension((int) Math.round(d.width * .8), (int) Math.round(d.height * .8));
     }
 
-    public static Insets getScreenInsets(@NotNull GraphicsConfiguration c) {
+   /* public static Insets getScreenInsets(@NotNull GraphicsConfiguration c) {
         //height of the task bar
         return Toolkit.getDefaultToolkit().getScreenInsets(c);
-    }
+    }*/
 
 
     public static JPanel newNoResultsComputedPanel() {

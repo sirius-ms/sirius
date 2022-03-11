@@ -67,7 +67,8 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
         SpinnerNumberModel model = new SpinnerNumberModel(value, minimum, maximum, stepSize);
         JSpinner spinner = new JSpinner(model);
         spinner.setMinimumSize(new Dimension(70, 26));
-        spinner.setPreferredSize(new Dimension(70, 26));
+        spinner.setPreferredSize(new Dimension(95, 26));
+        spinner.setMaximumSize(new Dimension(120, 26));
         parameterBindings.put(parameterKey, () -> result.apply(model));
         return spinner;
     }
