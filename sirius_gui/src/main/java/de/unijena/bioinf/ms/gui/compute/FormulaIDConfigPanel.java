@@ -61,7 +61,10 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
     protected Logger logger = LoggerFactory.getLogger(FormulaIDConfigPanel.class);
 
     public enum Instrument {
-        QTOF("Q-TOF", MsInstrumentation.Instrument.QTOF, "qtof", 10), ORBI("Orbitrap", MsInstrumentation.Instrument.ORBI, "orbitrap", 5), FTICR("FT-ICR", MsInstrumentation.Instrument.FTICR, "orbitrap", 2), BRUKER("Q-TOF (isotopes)", MsInstrumentation.Instrument.BRUKER_MAXIS, "qtof", 10);
+        QTOF("Q-TOF", MsInstrumentation.Instrument.QTOF, "qtof", 10),
+        ORBI("Orbitrap", MsInstrumentation.Instrument.ORBI, "orbitrap", 5),
+        FTICR("FT-ICR", MsInstrumentation.Instrument.FTICR, "orbitrap", 2);
+//        BRUKER("Q-TOF (isotopes)", MsInstrumentation.Instrument.BRUKER_MAXIS, "qtof", 10); // there is now if separate MS/MS isotope setting
 
         public final String name, profile;
         public final MsInstrumentation instrument;
@@ -128,13 +131,13 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
                 PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
                 0.25, 20, 0.25, m -> m.getNumber().doubleValue() + "ppm");
-        smallParameters.addNamed("MS2 MassDev (ppm)", ppmSpinner);
+        smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
 
         candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
-        smallParameters.addNamed("Candidates", candidatesSpinner);
+        smallParameters.addNamed("Candidates stored", candidatesSpinner);
 
         candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
-        smallParameters.addNamed("Candidates per Ion", candidatesPerIonSpinner);
+        smallParameters.addNamed("Min candidates per Ion stored", candidatesPerIonSpinner);
 
 //        restrictToOrganics = new JCheckBox(); //todo implement parameter?? or as constraint?
 //        GuiUtils.assignParameterToolTip(restrictToOrganics, "RestrictToOrganics");
