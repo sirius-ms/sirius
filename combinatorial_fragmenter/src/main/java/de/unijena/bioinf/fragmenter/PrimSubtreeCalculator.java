@@ -122,4 +122,9 @@ public class PrimSubtreeCalculator extends CombinatorialSubtreeCalculator {
     public boolean isComputed(){
         return this.isComputed;
     }
+
+    @Override
+    public String getMethodName(){
+        return "Prim";
+    }
 }

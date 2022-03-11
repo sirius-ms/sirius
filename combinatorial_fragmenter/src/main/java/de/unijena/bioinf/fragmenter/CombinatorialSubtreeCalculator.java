@@ -28,6 +28,8 @@ public abstract class CombinatorialSubtreeCalculator extends AbstractFragmentati
 
     public abstract CombinatorialSubtree computeSubtree() throws Exception;
 
+    public abstract String getMethodName();
+
     /**
      * Returns a mapping which assigns each {@link Fragment} (or molecular formula) contained in the fragmentation tree
      * a {@link CombinatorialFragment} whose molecular formula differs only in the number the hydrogen atoms compared to
