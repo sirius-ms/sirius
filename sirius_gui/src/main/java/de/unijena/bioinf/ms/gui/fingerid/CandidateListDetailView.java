@@ -24,7 +24,13 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventListModel;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.DataSources;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
+import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
@@ -34,6 +40,8 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.webapi.rest.ProxyManager;
+import org.apache.http.client.methods.HttpGet;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -52,9 +60,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Locale;
-import java.util.Map;
-import java.util.OptionalInt;
+import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CandidateListDetailView extends CandidateListView implements MouseListener, ActionListener {
     public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
@@ -252,7 +260,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
             for (DatabaseLabel l : candidate.labels) {
                 if (l.rect.contains(point.x, point.y)) {
-                    clickOnDBLabel(l);
+                    clickOnDBLabel(l, candidate);
                     break;
                 }
             }
@@ -263,14 +271,54 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         }
     }
 
-    private void clickOnDBLabel(DatabaseLabel label) {
+    private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {
         DataSources.getSourceFromName(label.sourceName).ifPresent(s -> {
             if (label.values == null || label.values.length == 0 || s.URI == null)
                 return;
             try {
                 for (String id : label.values) {
                     if (id == null) continue;
-                    if (s.URI.contains("%s")) {
+                    if (s == DataSource.LIPID) {
+                        Jobs.runInBackground(() -> {
+                            try {
+                                //todo remove if lipid maps is added to our pubchem copy
+                                List<String> lmIds = ProxyManager.applyClient(client -> {
+                                    URI uri = URI.create(String.format(Locale.US, "https://www.lipidmaps.org/rest/compound/inchi_key/%s/lm_id", URLEncoder.encode(InChISMILESUtils.inchi2inchiKey(candidate.candidate.getInchi().in3D), StandardCharsets.UTF_8)));
+                                    HttpGet get = new HttpGet(uri);
+                                    return client.execute(get, r -> {
+                                        List<String> ids = new ArrayList<>();
+                                        try {
+                                            ObjectMapper mapper = new ObjectMapper();
+                                            mapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
+                                            JsonNode array = mapper.readTree(r.getEntity().getContent());
+                                            if (array != null && !array.isEmpty() && array.isArray()) {
+                                                array.forEach(node -> {
+                                                    if (node.has("lm_id"))
+                                                        ids.add(node.get("lm_id").asText(null));
+                                                });
+                                            }
+                                        } catch (Exception e) {
+                                            LoggerFactory.getLogger(getClass()).error("Error when parsing lipid maps response.", e);
+                                        }
+                                        return ids.stream().filter(Objects::nonNull).collect(Collectors.toList());
+                                    });
+                                });
+                                if (lmIds != null && !lmIds.isEmpty()) {
+                                    lmIds.forEach(lmId -> {
+                                        try {
+                                            Desktop.getDesktop().browse(URI.create(String.format(Locale.US, DataSource.LIPID.URI, URLEncoder.encode(lmId, StandardCharsets.UTF_8))));
+                                        } catch (IOException e) {
+                                            LoggerFactory.getLogger(getClass()).error("Error when opening lipid maps URL.", e);
+                                        }
+                                    });
+                                } else {
+                                    Desktop.getDesktop().browse(LipidClass.makeLipidMapsFuzzySearchLink(id));
+                                }
+                            } catch (Exception ex) {
+                                LoggerFactory.getLogger(getClass()).error("Could not fetch lipid maps URL.", ex);
+                            }
+                        });
+                    } else if (s.URI.contains("%s")) {
                         Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(id, StandardCharsets.UTF_8))));
                     } else {
                         Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(id))));
