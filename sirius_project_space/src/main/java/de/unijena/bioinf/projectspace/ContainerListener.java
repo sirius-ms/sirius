@@ -143,7 +143,8 @@ public interface ContainerListener<ID extends ProjectSpaceContainerId, Container
 
         @Override
         public void containerChanged(ContainerEvent<ID, Container> event) {
-            if (idToListenOn != null && !idToListenOn.equals(event.getAffectedID()))
+            //todo should this always or never update, if no affected id is present (event type ID_FLAG)?
+            if (!event.hasAffectedID() || (idToListenOn != null && !idToListenOn.equals(event.getAffectedID())))
                 return;
 
             if (listenToTypes.contains(event.type)) {
