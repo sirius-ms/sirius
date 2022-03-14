@@ -200,13 +200,13 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
                 if (current.startsWith(root.location.toString()))
                     current = current.substring(root.location.toString().length());
 
-                if (current.startsWith("/"))
+                if (current.startsWith(resolvedToSubFs.fs.zipFS.getSeparator()))
                     current = current.substring(1); //remove leading /
 
                 if (subRoot != null && current.startsWith(subRoot))
                     current = current.substring(subRoot.length());
 
-                if (current.startsWith("/"))
+                if (current.startsWith(resolvedToSubFs.fs.zipFS.getSeparator()))
                     current = current.substring(1); //remove leading /
 
                 if (current.isBlank())
@@ -255,7 +255,7 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
                             zipFSNode.ensureOpen();
                         }
 
-                        return new ResolvedPath(zipFSNode, "/" + (source != prefix ? prefix.relativize(source) : source));
+                        return new ResolvedPath(zipFSNode, root.zipFS.getSeparator() + (source != prefix ? prefix.relativize(source) : source));
                     }
                 } else {
                     return new ResolvedPath(root, null); //root
@@ -576,7 +576,7 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
          */
 
         private Path resolveCurrentPath(String absolute) {
-            if (absolute == null || absolute.isBlank() || absolute.equals("/") || absolute.equals(zipFS.getSeparator())) {
+            if (absolute == null || absolute.isBlank() || absolute.equals(zipFS.getSeparator())) {
                 if (isDefault()) return location;
                 else return zipFS.getPath(zipFS.getSeparator());
             } else {
