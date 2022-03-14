@@ -91,15 +91,15 @@ public class DataProcessor {
                     FTree fTree = this.readFTree(fileName + ".json");
                     EMFragmenterScoring scoring = new EMFragmenterScoring(molecule);
 
-                    System.out.println("Task"+fileName+": Initialize and compute subtree.");
+                    System.out.println("Task "+fileName+": Initialize and compute subtree.");
                     CriticalPathSubtreeCalculator subtreeCalc = new CriticalPathSubtreeCalculator(fTree, molecule, scoring, true);
                     subtreeCalc.initialize(fragmentationConstraint);
                     subtreeCalc.computeSubtree();
 
-                    System.out.println("Task"+fileName+": Save results.");
+                    System.out.println("Task "+fileName+": Save results.");
                     CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
                 }catch (UnknownElementException | IOException | CDKException e) {
-                    System.out.println("Task"+fileName+": AN ERROR OCCURED!");
+                    System.out.println("Task "+fileName+": AN ERROR OCCURED!");
                     e.printStackTrace();
                 }
             });
