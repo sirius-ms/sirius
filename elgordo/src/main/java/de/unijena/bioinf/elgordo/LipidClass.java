@@ -61,9 +61,9 @@ public enum LipidClass {
 
     PS(2, Glycerophosphoserines, def("[M+H]+").fragments("C3H7NO3", "C3H7O5P").losses("C3H8NO6P", "C3H6NO6P").acyl("", "H2O", "-C3H6NO5P").acylFragments("")
             .def("[M-H]-").fragments("C3H7O5P", "C3H9O6P").losses("C3H5NO2").acyl("", "H2O", "C3H5NO2", "C3H7NO3").acylFragments("", "-H2O")
-            .done(), "C(O)(=O)C(N)COP(=O)(O)OCC(OR2)COR1", "Diacylglycerophosphoserine", "lmsd/LMGP03010000"),
+            .done(), "C(O)(=O)C(N)COP(=O)(O)OCC(OR2)COR1", "Diacylglycerophosphoserine", "LMGP03010000"),
 
-    LPS(1, Glycerophosphoserines, def("[M+H]+").fragments("C3H8NO3").losses("H2O", "C3H8NO6P").acyl("", "H2O").done(), "C(O)(=O)C(N)COP(=O)(O)OCC(O)COR1", "Monoacylglycerophosphoserine", "lmsd/LMGP03050000"),
+    LPS(1, Glycerophosphoserines, def("[M+H]+").fragments("C3H8NO3").losses("H2O", "C3H8NO6P").acyl("", "H2O").done(), "C(O)(=O)C(N)COP(=O)(O)OCC(O)COR1", "Monoacylglycerophosphoserine", "LMGP03050000"),
 
     PG(2, Glycerophosphoglycerols, def("+").losses("H2O", "C3H9O6P", "C3H7O5P", "C3H9O6P").fragments("C3H9O6P").acyl("", "H2O").acylFragments("", "-H2O").def("[M+Na]+").losses("C3H8O6P", "C3H7O5P").acyl("-C3H6O2").adductSwitch().def("[M+H]+").def("[M+NH3+H]+")
             .def("[M-H]-").fragments("C3H7O5P", "C3H9O6P", "C6H13O7P", "C6H11O6P").losses("C3H6O2").acyl("", "H2O", "C3H6O2", "C3H8O3").acylFragments("", "-H2O")
@@ -75,7 +75,7 @@ public enum LipidClass {
                     .done(),
             "C(O)(CO)COP(=O)(O)OCC(O)COR1", "Monoacylglycerophosphoglycerol", "LMGP04050000"),
 
-    PI(2, Glycerophosphoinositols, def("+").losses("C6H10O5", "C6H12O6", "C6H11O8P", "C6H13O9P").fragments("C6H12O6", "C6H11O8P", "C6H13O9P").acyl("", "H2O", "C6H10O5").def("[M+H]+").def("[M+Na]+").def("[M+NH3+H]+").done(), "P(OC1C(O)C(O)C(O)C(O)C1O)(=O)(O)OCC(OR2)COR1", "Diacylglycerophosphoinositol", "https://lipidmaps.org/databases/lmsd/LMGP06010000"),
+    PI(2, Glycerophosphoinositols, def("+").losses("C6H10O5", "C6H12O6", "C6H11O8P", "C6H13O9P").fragments("C6H12O6", "C6H11O8P", "C6H13O9P").acyl("", "H2O", "C6H10O5").def("[M+H]+").def("[M+Na]+").def("[M+NH3+H]+").done(), "P(OC1C(O)C(O)C(O)C(O)C1O)(=O)(O)OCC(OR2)COR1", "Diacylglycerophosphoinositol", "LMGP06010000"),
     LPI(1, Glycerophosphoinositols, null, "C(O)(COP(=O)(O)OC1C(O)C(O)C(O)C(O)C1O)COR1", "Monoacylglycerophosphoinositol", "LMGP06050000"),
     PA(2, Glycerophosphates, def("[M+Na]+").losses("HO3P", "H3O4P").acyl("", "-H3O4P").acylFragments("")
             .def("-").fragments("C3H9O6P", "C3H7O5P", "H3PO4", "HPO3").acyl("", "H2O").acylFragments("", "-H2O").def("[M-H]-")
