@@ -4,7 +4,7 @@ dependencies() {
     compile project(':chemistry_base')
     compile project(':io')
     testCompile project(":io")
-    for (module in ["interfaces", "core", "silent", "isomorphism", "formula", "smiles"]) {
+    for (module in ["interfaces", "core", "silent", "isomorphism", "formula", "smiles", "inchi"]) {
         //todo legacy is for old SMARTS matching in FixedMaACCSFingerprinter, SmartsMapper etc. THIS should be updated in the future
         compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
     }
