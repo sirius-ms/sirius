@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
@@ -169,14 +170,19 @@ public final class LipidSpecies implements ProcessedInputAnnotation {
 
     @Override
     public String toString() {
-        if (chains.length==0) return type.abbr();
+        if (chains.length == 0) return type.abbr();
         final boolean cu = chainsUnknown();
         return type.abbr() + (cu ? " " : "(") + Joiner.on('_').join(chains) + (cu ? "" : ")");
     }
 
     public LipidSpecies makeGeneric() {
-        if (this.chains.length==1 && this.chains[0].isMerged()) return this;
-        if (this.chains.length==0) return this;
+        if (this.chains.length == 1 && this.chains[0].isMerged()) return this;
+        if (this.chains.length == 0) return this;
         return new LipidSpecies(this.type, new LipidChain[]{LipidChain.merge(this.chains)});
     }
+
+    public URI lipidMapsFuzzySearchLink() {
+        return LipidClass.makeLipidMapsFuzzySearchLink(this.toString());
+    }
+
 }
