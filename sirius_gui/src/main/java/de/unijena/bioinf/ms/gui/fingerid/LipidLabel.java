@@ -20,8 +20,8 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
-import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.elgordo.LipidSpecies;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -34,18 +34,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 public class LipidLabel extends JLabel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FormulaResultBean>> {
 
 
-    private volatile URI uri;
-
+    private volatile LipidSpecies lipidSpecies;
     public LipidLabel(StructureList source) {
         setBorder(BorderFactory.createEmptyBorder(3, GuiUtils.SMALL_GAP, 3, GuiUtils.SMALL_GAP));
         setForeground(Color.WHITE);
@@ -59,7 +54,33 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                open(uri);
+                if (lipidSpecies != null) {
+                    Jobs.runInBackground(() -> {
+                        //nice but too much info?
+                        /*try {
+                            List<String> lmIds = ProxyManager.applyClient(client -> {
+                                URI uri = URI.create(String.format(Locale.US, "https://www.lipidmaps.org/rest/compound/abbrev/%s/lm_id", URLEncoder.encode(lipidSpecies.toString(), StandardCharsets.UTF_8)));
+                                System.out.println(uri);
+                                HttpGet get = new HttpGet(uri);
+                                return client.execute(get, r -> {
+                                    ObjectNode array = new ObjectMapper().readValue(r.getEntity().getContent(), ObjectNode.class);
+                                    List<String> ids = new ArrayList<>();
+                                    array.forEach(node -> {
+                                        if (node.has("lm_id"))
+                                            ids.add(node.get("lm_id").asText(null));
+                                    });
+                                    return ids.stream().filter(Objects::nonNull).collect(Collectors.toList());
+                                });
+                            });
+                            if (lmIds != null && !lmIds.isEmpty())
+                                lmIds.forEach(lmId -> open(URI.create(String.format(Locale.US, DataSource.LIPID.URI, URLEncoder.encode(lmId, StandardCharsets.UTF_8)))));
+                        } catch (Exception ex) {
+                            LoggerFactory.getLogger(getClass()).error("Could not fetch lipid maps URL.", ex);
+                        }*/
+                        open(lipidSpecies.getLipidClass().lipidMapsClassLink());
+                        open(lipidSpecies.lipidMapsFuzzySearchLink());
+                    });
+                }
             }
 
             @Override
@@ -80,24 +101,18 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
     public void resultsChanged(Set<FormulaResultBean> experiment, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
         setText(null);
         setVisible(false);
-        uri = null;
+        this.lipidSpecies = null;
         if (experiment != null && !experiment.isEmpty()) {
             FormulaResultBean current = experiment.iterator().next();
             current.getFragTree().flatMap(t -> t.getAnnotation(LipidSpecies.class)).ifPresent(lipidSpecies -> {
+                this.lipidSpecies = lipidSpecies;
                 setText("<html>" +
                         "<b>" + lipidSpecies + "</b>" +
                         " - " +
                         elgordoExplanation(lipidSpecies) +
                         " </html>");
-                String link = String.format(Locale.US, DataSource.LIPID.URI, URLEncoder.encode(lipidSpecies.toString(), StandardCharsets.UTF_8));
-                try {
-                    uri = new URI(link);
-                } catch (URISyntaxException e) {
-                    LoggerFactory.getLogger(getClass()).error("Could not create Link URI from '" + link + "'.", e);
-                }
                 setVisible(true);
             });
-
             repaint();
         }
     }
