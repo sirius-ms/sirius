@@ -77,6 +77,10 @@ public class ContainerEvent<ID extends ProjectSpaceContainerId, Container extend
         return ids.get(0);
     }
 
+    public boolean hasAffectedID() {
+        return ids.size()>0;
+    }
+
     public Set<Class<? extends DataAnnotation>> getAffectedComponents() {
         return affectedComponents;
     }
