@@ -81,20 +81,25 @@ public class DataProcessor {
         // LOOP - ITERATE OVER ALL FILES:
         // For each spectrum file and its corresponding FTree file, a new task, for computing the best subtree
         // in the calculated in silico fragmentation graph and saving this result, will be submitted.
+        System.out.println("Collect all tasks...");
         ArrayList<Callable<Object>> tasks = new ArrayList<>(this.fileNames.length);
         for(String fileName : this.fileNames){
             Callable<Object> task = Executors.callable(() -> {
                 try {
+                    System.out.println("Starting task: "+fileName);
                     MolecularGraph molecule = this.readMolecule(fileName + ".ms");
                     FTree fTree = this.readFTree(fileName + ".json");
                     EMFragmenterScoring scoring = new EMFragmenterScoring(molecule);
 
+                    System.out.println("Task"+fileName+": Initialize and compute subtree.");
                     CriticalPathSubtreeCalculator subtreeCalc = new CriticalPathSubtreeCalculator(fTree, molecule, scoring, true);
                     subtreeCalc.initialize(fragmentationConstraint);
                     subtreeCalc.computeSubtree();
 
+                    System.out.println("Task"+fileName+": Save results.");
                     CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
                 }catch (UnknownElementException | IOException | CDKException e) {
+                    System.out.println("Task"+fileName+": AN ERROR OCCURED!");
                     e.printStackTrace();
                 }
             });
@@ -102,8 +107,10 @@ public class DataProcessor {
         }
         // COMPUTING THE TASKS:
         // Wait, until all tasks terminated.
+        System.out.println("Execute all tasks...");
         Collection<Future<Object>> futures = executor.invokeAll(tasks);
 
+        System.out.println("All tasks have been processed and the executor service will be shutdown.");
         executor.shutdown();
     }
 
