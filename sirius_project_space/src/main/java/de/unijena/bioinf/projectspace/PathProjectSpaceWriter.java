@@ -78,12 +78,12 @@ public class PathProjectSpaceWriter extends PathProjectSpaceIO implements Projec
 
     @Override
     public void delete(String relativePath) throws IOException {
-        fs.writeFile(resolve(relativePath), FileUtils::deleteRecursively);
+        fs.delete(resolve(relativePath), true);
     }
 
     @Override
     public void deleteIfExists(String relativePath) throws IOException {
-        fs.writeFile(resolve(relativePath), Files::deleteIfExists);
+        fs.delete(resolve(relativePath), false);
     }
 
     @Override

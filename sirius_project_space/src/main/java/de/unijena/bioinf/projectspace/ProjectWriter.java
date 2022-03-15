@@ -25,7 +25,9 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.concurrent.NotThreadSafe;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.Optional;
 
@@ -44,24 +46,27 @@ public interface ProjectWriter extends ProjectIO {
     public default void intVector(String relativePath, int[] vector) throws IOException {
         textFile(relativePath, w->FileUtils.writeIntVector(w,vector));
     }
+
     public default void doubleVector(String relativePath, double[] vector) throws IOException {
-        textFile(relativePath, w->FileUtils.writeDoubleVector(w,vector));
-    }
-    public default void intMatrix(String relativePath, int[][] matrix) throws IOException {
-        textFile(relativePath, w->FileUtils.writeIntMatrix(w,matrix));
-    }
-    public default void doubleMatrix(String relativePath, double[][] matrix) throws IOException {
-        textFile(relativePath, w->FileUtils.writeDoubleMatrix(w,matrix));
+        textFile(relativePath, w -> FileUtils.writeDoubleVector(w, vector));
     }
 
-    public void delete(String relativePath)  throws IOException;
+    public default void intMatrix(String relativePath, int[][] matrix) throws IOException {
+        textFile(relativePath, w -> FileUtils.writeIntMatrix(w, matrix));
+    }
+
+    public default void doubleMatrix(String relativePath, double[][] matrix) throws IOException {
+        textFile(relativePath, w -> FileUtils.writeDoubleMatrix(w, matrix));
+    }
+
+    public void delete(String relativePath) throws IOException;
 
     public void deleteIfExists(String relativePath) throws IOException;
 
     public void move(String directoryName, String newDirName) throws IOException;
 
-    public static interface ForContainer<S extends ProjectSpaceContainerId,T extends ProjectSpaceContainer<S>> {
-        public void writeAllComponents(ProjectWriter writer, T container, IOFunctions.ClassValueProducer producer)  throws IOException;
+    public static interface ForContainer<S extends ProjectSpaceContainerId, T extends ProjectSpaceContainer<S>> {
+        public void writeAllComponents(ProjectWriter writer, T container, IOFunctions.ClassValueProducer producer) throws IOException;
     }
 
     public static interface DeleteContainer<S extends ProjectSpaceContainerId> {
