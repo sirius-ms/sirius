@@ -183,36 +183,37 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
             }
         }
 
-        private String relativizeToRoot(ResolvedPath resolvedToSubFs, @Nullable String subRoot) {
+        private String relativizeToRoot(ResolvedPath resolvedToSubFs, @Nullable String subNodeRelativeToRoot) {
             if (!resolvedToSubFs.fs.isDefault())
                 resolvedToSubFs.fs.lock.readLock().lock();
             try {
-                // create absolute path
-                String current;
+                // create absolute path in default fs
+                Path current;
                 if (resolvedToSubFs.fs.isDefault()) { //is default fs and no archive
-                    current = resolvedToSubFs.getPath().toString();
+                    current = resolvedToSubFs.getPath();
                 } else {
-                    current = root.resolveCurrentPath(resolvedToSubFs.fs.location.toString()).resolve(
-                            resolvedToSubFs.getPath().toString().substring(1)).toString();
+                    current = resolvedToSubFs.fs.location;
+
+                    if (!resolvedToSubFs.isLocalRoot())
+                        current = current.resolve(resolvedToSubFs.relativeToPsRoot);
+
+                    // if root fs
+                    if (!current.getFileSystem().equals(root.location.getFileSystem())) {
+                        current = root.location.resolve(
+                                current.getFileSystem().getRootDirectories().iterator().next()
+                                        .relativize(current).toString());
+                    }
                 }
 
                 //relativize to root
-                if (current.startsWith(root.location.toString()))
-                    current = current.substring(root.location.toString().length());
+                if (subNodeRelativeToRoot != null && !subNodeRelativeToRoot.isBlank())
+                    current = root.location.resolve(subNodeRelativeToRoot).relativize(current);
+                else
+                    current = root.location.relativize(current);
 
-                if (current.startsWith(resolvedToSubFs.fs.zipFS.getSeparator()))
-                    current = current.substring(1); //remove leading /
-
-                if (subRoot != null && current.startsWith(subRoot))
-                    current = current.substring(subRoot.length());
-
-                if (current.startsWith(resolvedToSubFs.fs.zipFS.getSeparator()))
-                    current = current.substring(1); //remove leading /
-
-                if (current.isBlank())
+                if (current.equals(root.zipFS.getPath(".")))
                     return null;
-
-                return current;
+                return current.toString();
             } finally {
                 if (!resolvedToSubFs.fs.isDefault())
                     resolvedToSubFs.fs.lock.readLock().unlock();
@@ -223,42 +224,48 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
             return compressionFormat.getCompressedLevel() == source.getNameCount() - 1;
         }
 
+        //todo redone
+
+        /**
+         * Resolves a path relative from FS root to internal zipfs node
+         *
+         * @param relativeFromRoot
+         * @param isDir
+         * @return resolved path with subfs
+         * @throws IOException If any IO error happens
+         */
         private ResolvedPath resolvePath(String relativeFromRoot, Boolean isDir) throws IOException {
-            if (compressionFormat.getCompressedLevel() < 1)
-                return new ResolvedPath(root, relativeFromRoot == null ? null : root.rootPath().resolve(relativeFromRoot).toString());
+            if (compressionFormat.getCompressedLevel() < 1 || relativeFromRoot == null || relativeFromRoot.isBlank())
+                return new ResolvedPath(root, relativeFromRoot);
 
             childFileSystemsLock.updateLock().lock();
             try {
-                if (relativeFromRoot != null && !relativeFromRoot.isBlank()) {
-                    final Path source = root.resolveCurrentPath(relativeFromRoot);
-                    final PathMatcher noZipExt = source.getFileSystem().getPathMatcher("glob:**{.ms, .tsv, .csv, .info, .config}");
+                final Path source = root.zipFS.getPath(relativeFromRoot);
+                final PathMatcher noZipExt = source.getFileSystem().getPathMatcher("glob:**{.ms, .tsv, .csv, .info, .config}");
 
-                    if ((compressionFormat.getCompressedLevel() >= source.getNameCount())
-                            || (isDir != null && !isDir && isOnCompressedLevel(source))
-                            || (isDir == null && isOnCompressedLevel(source) && !noZipExt.matches(source) && FileUtils.isZipArchive(source))
-                    ) {
-                        return new ResolvedPath(root, root.rootPath().resolve(source).toString());
-                    } else {
-                        Path prefix = source.subpath(0, compressionFormat.getCompressedLevel() + 1);
-
-                        FSNode zipFSNode = getFS(prefix);
-                        if (zipFSNode == null) {
-                            childFileSystemsLock.writeLock().lock();
-                            try {
-                                zipFSNode = new FSNode(this, root.rootPath().resolve(prefix.toString()), useTempFile, maxWrites, compressionFormat.compressionMethod, new ReentrantReadWriteLock());
-                                putFS(prefix, zipFSNode);
-                                maintainBuffer();
-                            } finally {
-                                childFileSystemsLock.writeLock().unlock();
-                            }
-                        } else if (!zipFSNode.zipFS.isOpen()) {
-                            zipFSNode.ensureOpen();
-                        }
-
-                        return new ResolvedPath(zipFSNode, root.zipFS.getSeparator() + (source != prefix ? prefix.relativize(source) : source));
-                    }
+                if ((compressionFormat.getCompressedLevel() >= source.getNameCount())
+                        || (isDir != null && !isDir && isOnCompressedLevel(source))
+                        || (isDir == null && isOnCompressedLevel(source) && (noZipExt.matches(source.getFileName()) || !FileUtils.isZipArchive(source)))
+                ) {
+                    return new ResolvedPath(root, source.toString());
                 } else {
-                    return new ResolvedPath(root, null); //root
+                    Path prefix = source.subpath(0, compressionFormat.getCompressedLevel() + 1);
+                    // check if subfs already opened
+                    FSNode zipFSNode = getFS(prefix);
+                    if (zipFSNode == null) {
+                        childFileSystemsLock.writeLock().lock();
+                        try {
+                            zipFSNode = new FSNode(this, root.rootPath().resolve(prefix.toString()), useTempFile, maxWrites, compressionFormat.compressionMethod, new ReentrantReadWriteLock());
+                            putFS(prefix, zipFSNode);
+                            maintainBuffer();
+                        } finally {
+                            childFileSystemsLock.writeLock().unlock();
+                        }
+                    } else if (!zipFSNode.zipFS.isOpen()) {
+                        zipFSNode.ensureOpen();
+                    }
+
+                    return new ResolvedPath(zipFSNode, (source != prefix ? prefix.relativize(source).toString() : source.toString()));
                 }
             } finally {
                 childFileSystemsLock.updateLock().unlock();
@@ -357,6 +364,81 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
             }
         }
 
+
+        @Override
+        public void delete(String relative, boolean recursive) throws IOException {
+            final ResolvedPath rp = resolvePath(relative, null);
+            try {
+                if (!rp.fs.isDefault())
+                    rp.fs.lock.readLock().lock();
+                if (Files.notExists(rp.getPath()))
+                    return;
+            } finally {
+                if (!rp.fs.isDefault())
+                    rp.fs.lock.readLock().unlock();
+            }
+
+            try {
+                if (!rp.fs.isDefault())
+                    rp.fs.lock.writeLock().lock();
+                try {
+                    Path rootPath = rp.getPath();
+                    if (Files.notExists(rootPath))
+                        return;
+                    if (recursive) {
+                        if (rp.isLocalRoot()) {
+                            rp.fs.close();
+                            Files.deleteIfExists(rp.fs.location);
+                        } else if (Files.isRegularFile(rootPath)) {
+                            Files.deleteIfExists(rootPath);
+                        } else {
+                            List<Path> files = FileUtils.walkAndClose(w -> w.sorted(Comparator.reverseOrder()).collect(Collectors.toList()), rootPath);
+                            //close if some files are cached subfs, cannot be null because this would mean deleting the root
+                            files.stream().map(p -> root.zipFS.getPath(relativizeToRoot(new ResolvedPath(rp.fs, Path.of(rp.relativeToPsRoot).resolve(rootPath.relativize(p).toString()).toString()), null)))
+                                    .map(childFileSystems::get).filter(Objects::nonNull).forEach(fsNode -> {
+                                        try {
+                                            fsNode.close();
+                                        } catch (IOException e) {
+                                            LoggerFactory.getLogger(getClass()).error("Error when closing cached sub filesystem!", e);
+                                        }
+                                    });
+                            for (Path file : files)
+                                Files.deleteIfExists(file);
+                        }
+
+                    } else {
+                        if (rp.isLocalRoot()) {
+                            rp.fs.close();
+                            Files.deleteIfExists(rp.fs.location);
+                        } else {
+                            Files.deleteIfExists(rootPath);
+                        }
+                    }
+                } finally {
+                    if (!rp.fs.isDefault())
+                        rp.fs.lock.writeLock().unlock();
+                    rp.fs.ensureWrite();
+                }
+            } catch (ClosedFileSystemException | ClosedChannelException e) {
+                LoggerFactory.getLogger(getClass()).warn("FS delete operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock and lazy deletion.");
+                LoggerFactory.getLogger(getClass()).debug("FS delete operation cancelled unexpectedly! Connection to ZipFS Lost. Try reopening and execute with Full Lock and lazy deletion.", e);
+                if (!rp.fs.isDefault())
+                    rp.fs.lock.writeLock().lock();
+                try {
+                    rp.fs.ensureOpen();
+                    if (recursive)
+                        FileUtils.deleteRecursively(rp.getPath());
+                    else
+                        Files.deleteIfExists(rp.getPath());
+                } finally {
+                    if (!rp.fs.isDefault())
+                        rp.fs.lock.writeLock().unlock();
+                    rp.fs.ensureWrite();
+                }
+
+            }
+        }
+
         public void readFile(String relative, IOFunctions.IOConsumer<Path> readWithFS) throws IOException {
             readFile(relative, p -> {
                 readWithFS.accept(p);
@@ -419,7 +501,7 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
             try {
                 paths = FileUtils.walkAndClose(w -> w
                                 .filter(p -> !p.equals(workingRootFS.getPath()))
-                                .map(p -> relativizeToRoot(new ResolvedPath(workingRootFS.fs, p.toString()), null))
+                                .map(p -> workingRootFS.getPath().relativize(p).toString())
                                 .collect(Collectors.toCollection(LinkedList::new)),
                         workingRootFS.getPath(), 1, globPattern);
             } finally {
@@ -442,7 +524,7 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
                         if (recursive) {
                             List<String> nuLevel = FileUtils.walkAndClose(w -> w
                                     .filter(p -> !p.equals(current.getPath())) //remove walk root
-                                    .map(p -> relativizeToRoot(new ResolvedPath(current.fs, p.toString()), null))
+                                    .map(p -> current.getPath().relativize(p).toString())
                                     .collect(Collectors.toList()), current.getPath(), 1, globPattern);
                             paths.addAll(nuLevel);
                         }
@@ -571,16 +653,18 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
         }
 
         /**
-         * @param absolute resolves path
+         * @param relativeToPsRoot resolves path
          * @return Resolved path or error if path is not part of this FS
          */
 
-        private Path resolveCurrentPath(String absolute) {
-            if (absolute == null || absolute.isBlank() || absolute.equals(zipFS.getSeparator())) {
+        private Path resolveCurrentPath(@Nullable String relativeToPsRoot) {
+            if (relativeToPsRoot == null || relativeToPsRoot.isBlank() || relativeToPsRoot.equals(zipFS.getSeparator())) {
                 if (isDefault()) return location;
-                else return zipFS.getPath(zipFS.getSeparator());
+                else return zipFS.getRootDirectories().iterator().next();
             } else {
-                return zipFS.getPath(absolute);
+                if (isDefault()) return location.resolve(relativeToPsRoot);
+                    // zipfs should have only one root even on windows
+                else return zipFS.getRootDirectories().iterator().next().resolve(relativeToPsRoot);
             }
         }
 
@@ -666,15 +750,19 @@ public class PathProjectSpaceIOProvider implements ProjectIOProvider<PathProject
 
     private static class ResolvedPath implements Comparable<ResolvedPath> {
         private final FSNode fs;
-        private final String path;
+        private final String relativeToPsRoot;
 
-        private ResolvedPath(@NotNull PathProjectSpaceIOProvider.FSNode fs, String path) {
+        private ResolvedPath(@NotNull PathProjectSpaceIOProvider.FSNode fs, String relativeToPsRoot) {
             this.fs = fs;
-            this.path = path;
+            this.relativeToPsRoot = relativeToPsRoot;
         }
 
         Path getPath() {
-            return fs.resolveCurrentPath(path);
+            return fs.resolveCurrentPath(relativeToPsRoot);
+        }
+
+        boolean isLocalRoot() {
+            return relativeToPsRoot == null || relativeToPsRoot.isBlank() || relativeToPsRoot.equals(fs.zipFS.getSeparator());
         }
 
         @Override
