@@ -49,7 +49,7 @@ public class RemoveFormulaAction extends AbstractAction {
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Remove the preset molecular formula from the selected data.");
 
-        setEnabled(SiriusActions.notComputingOrEmptyFirst(MF.getCompoundListSelectionModel()));
+        setEnabled(SiriusActions.notComputingOrEmptyFirstSelected(MF.getCompoundListSelectionModel()));
 
         MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -58,7 +58,7 @@ public class RemoveFormulaAction extends AbstractAction {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                setEnabled(SiriusActions.notComputingOrEmptyFirst(selection));
+                setEnabled(SiriusActions.notComputingOrEmptyFirstSelected(selection));
             }
         });
     }

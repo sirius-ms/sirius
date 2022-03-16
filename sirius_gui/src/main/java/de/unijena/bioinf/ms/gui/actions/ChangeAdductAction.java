@@ -44,7 +44,7 @@ public class ChangeAdductAction extends AbstractAction {
         putValue(Action.SMALL_ICON, Icons.LIST_EDIT_16);
         putValue(Action.SHORT_DESCRIPTION, "Change adduct type of selected compounds");
 
-        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundListSelectionModel()));
+        setEnabled(SiriusActions.notComputingOrEmptySelected(MF.getCompoundListSelectionModel()));
 
         MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -53,7 +53,7 @@ public class ChangeAdductAction extends AbstractAction {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                setEnabled(SiriusActions.notComputingOrEmpty(selection));
+                setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
             }
         });
     }
