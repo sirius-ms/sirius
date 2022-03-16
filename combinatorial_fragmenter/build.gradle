@@ -4,25 +4,21 @@ dependencies() {
     compile project(':chemistry_base')
     compile project(':io')
     testCompile project(":io")
-    for (module in ["interfaces", "core", "silent", "isomorphism", "formula", "smiles", "inchi"]) {
-        //todo legacy is for old SMARTS matching in FixedMaACCSFingerprinter, SmartsMapper etc. THIS should be updated in the future
-        compile group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
-    }
+
+    compile "org.openscience.cdk:cdk-bundle:$cdk_version"
 
     testCompile project(":sirius_api")
 
-    for (module in ["depict", "smiles"]) {
-        testCompile  group: "org.openscience.cdk", name: "cdk-$module", version: "$cdk_version"
-    }
+    testCompile "org.openscience.cdk:cdk-bundle:$cdk_version"
 
     compile "com.gurobi:gurobi-jar:$gurobi_version"
 }
 
-task EM_Rearrangement_Prob_Estimation_FatJar(type: Jar) {
+task DataProcessing_FatJar(type: Jar) {
     manifest {
-        attributes 'Main-Class': 'de.unijena.bioinf.fragmenter.ExpectationMaximizationHydrogenRearrangementEstimator'
+        attributes 'Main-Class': 'de.unijena.bioinf.fragmenter.DataProcessor'
     }
-    archiveBaseName = "EM_Rearrangement_Prob_Estimation"
+    archiveBaseName = "DataProcessor"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
