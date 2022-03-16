@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -114,21 +115,32 @@ public enum SiriusActions {
         this.actionClass = action;
     }
 
-    public static boolean notComputingOrEmpty(AdvancedListSelectionModel<InstanceBean> selection) {
-        return !isComputingOrEmpty(selection);
+
+    public static boolean notComputingOrEmpty(Collection<InstanceBean> instance) {
+        return !isComputingOrEmpty(instance);
     }
 
-    public static boolean isComputingOrEmpty(AdvancedListSelectionModel<InstanceBean> selection) {
+    public static boolean isComputingOrEmpty(Collection<InstanceBean> instances) {
+        if (instances == null || instances.isEmpty())
+            return true;
+        return instances.stream().anyMatch(InstanceBean::isComputing);
+    }
+
+    public static boolean notComputingOrEmptySelected(AdvancedListSelectionModel<InstanceBean> selection) {
+        return !isComputingOrEmptySelected(selection);
+    }
+
+    public static boolean isComputingOrEmptySelected(AdvancedListSelectionModel<InstanceBean> selection) {
         if (selection == null || selection.isSelectionEmpty())
             return true;
         return selection.getSelected().stream().anyMatch(InstanceBean::isComputing);
     }
 
-    public static boolean notComputingOrEmptyFirst(AdvancedListSelectionModel<InstanceBean> selection) {
-        return !isComputingOrEmptyFirst(selection);
+    public static boolean notComputingOrEmptyFirstSelected(AdvancedListSelectionModel<InstanceBean> selection) {
+        return !isComputingOrEmptyFirstSelected(selection);
     }
 
-    public static boolean isComputingOrEmptyFirst(AdvancedListSelectionModel<InstanceBean> selection) {
+    public static boolean isComputingOrEmptyFirstSelected(AdvancedListSelectionModel<InstanceBean> selection) {
         if (selection == null || selection.isSelectionEmpty())
             return true;
         return selection.getSelected().get(0).isComputing();

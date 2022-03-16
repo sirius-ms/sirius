@@ -27,7 +27,6 @@ package de.unijena.bioinf.ms.gui.actions;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogNoSaveReturnValue;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogReturnValue;
@@ -58,7 +57,7 @@ public class DeleteExperimentAction extends AbstractAction {
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Delete the selected data");
 
-        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundListSelectionModel()));
+        setEnabled(SiriusActions.notComputingOrEmptySelected(MF.getCompoundListSelectionModel()));
 
         MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -67,7 +66,7 @@ public class DeleteExperimentAction extends AbstractAction {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                setEnabled(SiriusActions.notComputingOrEmpty(selection));
+                setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
             }
         });
     }

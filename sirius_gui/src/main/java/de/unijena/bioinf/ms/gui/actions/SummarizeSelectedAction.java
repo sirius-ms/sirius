@@ -20,13 +20,35 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 import java.awt.event.ActionEvent;
 import java.util.List;
 
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
+
 
 public class SummarizeSelectedAction extends SummarizeAllAction {
+    @Override
+    protected void initListeners(){
+        setEnabled(SiriusActions.notComputingOrEmptySelected(MF.getCompoundListSelectionModel()));
+
+        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+            @Override
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
+            }
+
+            @Override
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
+                setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
+            }
+        });
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         run(List.copyOf(MainFrame.MF.getCompoundListSelectionModel().getSelected()), "Write Summaries for selected Compounds");

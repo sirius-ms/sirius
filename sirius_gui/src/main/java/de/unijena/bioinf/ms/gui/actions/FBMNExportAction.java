@@ -39,17 +39,20 @@ public class FBMNExportAction extends AbstractAction {
         super("FBMN Export");
         putValue(Action.LARGE_ICON_KEY, Icons.FBMN_32);
         putValue(Action.SHORT_DESCRIPTION, "Export project for GNPS Feature Based Molecular Networking.");
-        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundListSelectionModel()));
+        initListeners();
+    }
+
+    protected void initListeners(){
+        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundList().getCompoundList()));
 
         MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
+                setEnabled(SiriusActions.notComputingOrEmpty(event.getSourceList()));
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                setEnabled(SiriusActions.notComputingOrEmpty(selection));
-            }
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {}
         });
     }
 
