@@ -33,5 +33,7 @@ public interface SummaryLocations {
             CANOPUS_FOMRULA_SUMMARY_ADDUCTS = "canopus_formula_summary_adducts.tsv",
             CANOPUS_COMPOUND_SUMMARY = "canopus_compound_summary.tsv",
 //            CANOPUS_COMPOUND_SUMMARY_ADDUCTS = "canopus_compound_summary_adducts.tsv", // does this make not much sense???
+            PREDICTIONS = "predictions.tsv",
+            PREDICTIONS_NEG = "predictions_neg.tsv",
             MZTAB_SUMMARY = "report.mztab";
 }

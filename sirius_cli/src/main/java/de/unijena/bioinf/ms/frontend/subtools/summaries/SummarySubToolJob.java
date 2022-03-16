@@ -21,18 +21,26 @@
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ChemistryBase.utils.ZipCompressionMethod;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,6 +73,7 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
             //use all experiments in workspace to create summaries
             LOG.info("Writing summary files...");
             StopWatch w = new StopWatch(); w.start();
+            final JobProgressEventListener listener = this::updateProgress;
 
             Iterable<? extends Instance> compounds = SiriusJobs.getGlobalJobManager().submitJob(rootOptions.makeDefaultPreprocessingJob()).awaitResult();
 
@@ -76,8 +85,37 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
             }
 
             SiriusProjectSpace.SummarizerJob job = project.projectSpace().makeSummarizerJob(options.location, options.compress, ids, ProjectSpaceManager.defaultSummarizer());
-            job.addJobProgressListener(this::updateProgress);
+            job.addJobProgressListener(listener);
             SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+            job.removePropertyChangeListener(listener);
+
+            if (options.predictionsOptions.isAnyPredictionSet()) {
+                Path root = options.compress
+                        ? FileUtils.asZipFSPath(options.location, false, true, ZipCompressionMethod.DEFLATED)
+                        : options.location;
+                try {
+                    LOG.info("Writing positive ion mode predictions table...");
+                    ExportPredictionsOptions.ExportPredictionJJob posJob = new ExportPredictionsOptions.ExportPredictionJJob(
+                            options.predictionsOptions, 1, compounds,
+                            () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS)));
+                    posJob.addJobProgressListener(listener);
+                    SiriusJobs.getGlobalJobManager().submitJob(posJob).awaitResult();
+                    posJob.removePropertyChangeListener(listener);
+
+                    LOG.info("Writing negative ion mode predictions table...");
+                    ExportPredictionsOptions.ExportPredictionJJob negJob = new ExportPredictionsOptions.ExportPredictionJJob(
+                            options.predictionsOptions, -1, compounds,
+                            () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS_NEG)));
+                    negJob.addJobProgressListener(listener);
+                    SiriusJobs.getGlobalJobManager().submitJob(negJob).awaitResult();
+                    negJob.removePropertyChangeListener(listener);
+                }finally {
+                    //close and write zip file
+                    if (!root.getFileSystem().equals(FileSystems.getDefault()))
+                        root.getFileSystem().close();
+                }
+            }
+
             w.stop();
             LOG.info("Project-Space summaries successfully written in: " + w);
 

@@ -26,7 +26,7 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.decomp.DecompOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.mgf.MgfExporterOptions;
-import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictions;
+import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.trees.FTreeExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
@@ -91,7 +91,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
     //postprocessing, project-space consuming tool, exporting tools,
     public final SummaryOptions summaryOptions;
-    public final ExportPredictions exportPredictions;
+    public final ExportPredictionsOptions exportPredictions;
     public final MgfExporterOptions mgfExporterOptions;
     public final FTreeExporterOptions ftreeExporterOptions;
 
@@ -122,7 +122,7 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         mgfExporterOptions = new MgfExporterOptions();
         ftreeExporterOptions = new FTreeExporterOptions();
         summaryOptions = new SummaryOptions();
-        exportPredictions = new ExportPredictions();
+        exportPredictions = new ExportPredictionsOptions();
         loginOptions = new LoginOptions();
     }
 

@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.frontend.subtools.PostprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
+import de.unijena.bioinf.ms.frontend.subtools.export.tables.PredictionsOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import picocli.CommandLine;
@@ -45,6 +46,9 @@ public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, St
     public void setCompress(boolean compress) throws Exception {
         this.compress = compress;
     }
+
+    @CommandLine.ArgGroup(exclusive = false, heading = "Include Predictions Table")
+    protected PredictionsOptions predictionsOptions;
 
 
     @Override
