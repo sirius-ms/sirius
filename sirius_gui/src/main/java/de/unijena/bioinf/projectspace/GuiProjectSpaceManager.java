@@ -133,7 +133,10 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
                 inEDTAndWait(() -> INSTANCE_LIST.removeAll(insts));
                 insts.iterator().forEachRemaining(inst -> {
                     try {
-                        projectSpace().deleteCompound(inst.getID());
+                        if (!inst.isComputing())
+                            projectSpace().deleteCompound(inst.getID());
+                        else
+                            LOG.warn("Cannot delete compound '" + inst.getID() + "' because it is currently computing. Skipping!");
                     } catch (IOException e) {
                         LOG.error("Could not delete Compound: " + inst.getID(), e);
                     } finally {

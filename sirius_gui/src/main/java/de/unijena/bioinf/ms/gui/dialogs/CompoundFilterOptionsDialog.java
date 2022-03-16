@@ -19,11 +19,13 @@ package de.unijena.bioinf.ms.gui.dialogs;
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-import de.unijena.bioinf.ms.gui.actions.DeleteExperimentAction;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.jdesktop.swingx.JXTitledSeparator;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,6 +35,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
+
 /**
  * Dialog allows to adjust filter criteria of the {@link CompoundFilterModel} which is used to filter compound list.
  */
@@ -41,8 +45,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final SearchTextField searchField;
     final JTextField searchFieldDialogCopy;
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner;
-    JButton discard, save, reset, deleteSelection;
+    JButton discard, apply, reset;
     JCheckBox invertFilter;
+    JCheckBox deleteSelection;
     final CompoundFilterModel filterModel;
     final CompoundList compoundList;
 
@@ -51,7 +56,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final JComboBox<CompoundFilterModel.LipidFilter> lipidFilterBox;
 
     public CompoundFilterOptionsDialog(MainFrame owner, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
-        super(owner, "Filter options", true);
+        super(owner, "Filter configuration", true);
         this.searchField = searchField;
         this.filterModel = filterModel;
         this.compoundList = compoundList;
@@ -59,7 +64,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         setLayout(new BorderLayout());
 
         final TwoColumnPanel smallParameters = new TwoColumnPanel();
-        add(new TextHeaderBoxPanel("Select by:", smallParameters), BorderLayout.CENTER);
+        add(smallParameters, BorderLayout.CENTER);
+
+        smallParameters.add(new JXTitledSeparator("Filter criteria"));
 
         searchFieldDialogCopy = new JTextField(searchField.textField.getText());
         smallParameters.addNamed("filter by text", searchFieldDialogCopy);
@@ -68,7 +75,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         smallParameters.addNamed("minimum m/z: ", minMzSpinner);
         maxMzSpinner = makeSpinner(filterModel.getCurrentMaxMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
         smallParameters.addNamed("maximum m/z: ", maxMzSpinner);
-        ((JSpinner.DefaultEditor) maxMzSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel)maxMzSpinner.getModel(), filterModel.getMaxMz()));
+        ((JSpinner.DefaultEditor) maxMzSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxMzSpinner.getModel(), filterModel.getMaxMz()));
 
         ensureCompatibleBounds(minMzSpinner, maxMzSpinner);
 
@@ -105,44 +112,38 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         //lipid filter
         lipidFilterBox = new JComboBox<>();
         java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
-        smallParameters.addNamed("Lipid filter: ",lipidFilterBox);
+        smallParameters.addNamed("Lipid filter: ", lipidFilterBox);
         lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
 
-        invertFilter = new JCheckBox("select non-matching");
+
+        smallParameters.add(new JXTitledSeparator("Filter options"));
+
+        invertFilter = new JCheckBox("Invert Filter");
         invertFilter.setSelected(compoundList.isFilterInverted());
-        JPanel invertPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        invertPanel.add(invertFilter);
-        smallParameters.add(invertPanel);
+        smallParameters.add(invertFilter);
 
-        smallParameters.add(new JSeparator(SwingConstants.VERTICAL));
-
+        deleteSelection = new JCheckBox("<html>Delete all <b>non-</b>matching compounds</html>");
+        deleteSelection.setSelected(false);
+        smallParameters.add(deleteSelection);
 
         reset = new JButton("Reset");
         reset.addActionListener(this);
-        JPanel resetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        resetPanel.add(reset);
-        smallParameters.add(resetPanel);
-
         smallParameters.add(new JSeparator(SwingConstants.VERTICAL));
-
-        deleteSelection = new JButton("<html>Delete all <b>non-</b>selected compounds");
-        deleteSelection.addActionListener(this);
-        JPanel deleteSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        deleteSelectionPanel.add(deleteSelection);
-
 
         discard = new JButton("Discard");
         discard.addActionListener(this);
-        save = new JButton("Apply filter");
-        save.addActionListener(this);
+        apply = new JButton("Apply");
+        apply.addActionListener(this);
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel buttons = new JPanel();
+        buttons.setLayout(new BoxLayout(buttons, BoxLayout.X_AXIS));
+        buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        buttons.add(reset);
+        buttons.add(Box.createHorizontalGlue());
         buttons.add(discard);
-        buttons.add(save);
+        buttons.add(apply);
 
-        add(new TwoColumnPanel(deleteSelectionPanel, buttons), BorderLayout.SOUTH);
-
-//        add(buttons, BorderLayout.SOUTH);
+        add(buttons, BorderLayout.SOUTH);
 
         setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
         configureActions();
@@ -175,6 +176,19 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     }
 
     private void saveChanges() {
+        if (deleteSelection.isSelected()) {
+            deleteSelectedCompoundsAndResetFilter();
+
+        } else {
+            applyToModel(filterModel);
+            if (invertFilter.isSelected() != compoundList.isFilterInverted())
+                compoundList.toggleInvertFilter();
+
+            filterModel.fireUpdateCompleted();
+        }
+    }
+
+    private void applyToModel(@NotNull CompoundFilterModel filterModel) {
         filterModel.setCurrentMinMz(getMinMz());
         filterModel.setCurrentMaxMz(getMaxMz());
         filterModel.setCurrentMinRt(getMinRt());
@@ -188,12 +202,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
         saveTextFilter();
 //            searchField.textField.setEnabled(!filterModel.isPeakShapeFilterEnabled() && !filterModel.isLipidFilterEnabled());
-
-        if (invertFilter.isSelected() != compoundList.isFilterInverted()) {
-            compoundList.toggleInvertFilter();
-        }
-
-        filterModel.fireUpdateCompleted();
     }
 
     private void saveTextFilter() {
@@ -207,28 +215,35 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             resetFilter();
             return;
         }
-        if (e.getSource() == deleteSelection) {
-            deleteSelectedCompoundsAndResetFilter();
-            return;
-        }
-        if (e.getSource() == save){
+        if (e.getSource() == apply) {
             saveChanges();
         }
         this.dispose();
     }
 
     private void deleteSelectedCompoundsAndResetFilter() {
-        saveChanges();
-        //invert selection to remove all non-selected
-        //todo currently the displayed FilterList ist used to select the compounds to remove.
-        //this makes copying necessary to make it not look strange.
-        // maybe it is better to apply the filter in a way to not change the displayed list
-        compoundList.toggleInvertFilter();
-        List<InstanceBean> toRemoveList = compoundList.getCompoundList().stream().collect(Collectors.toList());
-        compoundList.toggleInvertFilter();
-        (new DeleteExperimentAction(toRemoveList)).deleteCompounds();
+
+        // create deletion matcher
+        CompoundFilterModel tmpModel = new CompoundFilterModel();
+        applyToModel(tmpModel);
+        CompoundFilterMatcher matcher = new CompoundFilterMatcher(tmpModel);
+
+        // reset global filter and close
         resetFilter();
         saveChanges();
+        dispose();
+
+        // clear selection to prevent unnecessary updates during deletions
+        MF.getCompoundList().getCompoundListSelectionModel().clearSelection();
+
+        // collect instances to delete
+        List<InstanceBean> toDelete = Jobs.runInBackgroundAndLoad(MF, "Collecting Instances...", () -> invertFilter.isSelected()
+                ? compoundList.getCompoundList().stream().filter(matcher::matches).collect(Collectors.toList())
+                : compoundList.getCompoundList().stream().filter(i -> !matcher.matches(i)).collect(Collectors.toList())
+        ).getResult();
+
+        //delete instances
+        MF.ps().deleteCompounds(toDelete);
     }
 
     /**
@@ -242,6 +257,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         lipidFilterBox.setSelectedItem(CompoundFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
         searchFieldDialogCopy.setText("");
         invertFilter.setSelected(false);
+        deleteSelection.setSelected(false);
     }
 
     private void resetSpinnerValues() {
