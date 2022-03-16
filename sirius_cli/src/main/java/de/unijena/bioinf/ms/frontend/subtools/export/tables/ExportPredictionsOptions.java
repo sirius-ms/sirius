@@ -22,8 +22,10 @@ package de.unijena.bioinf.ms.frontend.subtools.export.tables;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
@@ -47,29 +49,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+
 @CommandLine.Command(name = "prediction-export", aliases = {"EPR"}, description = "<STANDALONE> Exports predictions from CSI:FingerID and CANOPUS.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
-public class ExportPredictions implements StandaloneTool<ExportPredictions.ExportPredictionWorkflow> {
+public class ExportPredictionsOptions implements StandaloneTool<ExportPredictionsOptions.ExportPredictionWorkflow> {
 
     protected Path output = null;
-    protected DecimalFormat decimalFormat = null;
-
-    @CommandLine.Option(names = {"--digits","--precision","-p"},
-            description = {"Specify number of digits used for printing floating point values. -1 -> full length Double value."}, defaultValue="-1")
-    protected void setDigits(int digits) {
-        if (digits == 0) {
-            decimalFormat = new DecimalFormat("0");
-        } else if (digits > 0) {
-            StringBuilder buf = new StringBuilder();
-            for (int i=0; i < digits; ++i) buf.append("#");
-            decimalFormat = new DecimalFormat("0." + buf.toString());
-        } else {
-            decimalFormat = null;
-        }
-    }
 
     @CommandLine.Option(names = {"--polarity", "--charge", "-c"}, defaultValue = "0", description = "Restrict output to the given polarity. By default this value is 0 and the polarity of the first compound in the project space is chosen. Note that each output file can only contain predictions from one polarity.")
     protected int polarity;
@@ -79,108 +67,109 @@ public class ExportPredictions implements StandaloneTool<ExportPredictions.Expor
         output = Paths.get(outputPath);
     }
 
-    @CommandLine.Option(names = {"--canopus","--classyfire"}, description = "Output predicted  classyfire probabilities by CANOPUS.")
-    protected boolean canopus;
-
-    @CommandLine.Option(names = {"--npc"}, description = "Output predicted NPC (natural product classifier) probabilities.")
-    protected boolean npc;
-
-    @CommandLine.Option(names = {"--fingerprints"}, description = "Output predicted fingerprint probabilities by CSI:FingerID.")
-    protected boolean fingerprints;
-
-    @CommandLine.Option(names = {"--pubchem"}, description = "Output predicted PubChem fingerprint probabilities by CSI:FingerID.")
-    protected boolean pubchem;
-
-
-    @CommandLine.Option(names = {"--maccs"}, description = "Output predicted MACCS fingerprint probabilities by CSI:FingerID.")
-    protected boolean maccs;
+    @CommandLine.ArgGroup(exclusive = false)
+    protected PredictionsOptions predictionsOptions;
 
     @Override
     public ExportPredictionWorkflow makeWorkflow(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {
-
         return new ExportPredictionWorkflow((PreprocessingJob<? extends Iterable<Instance>>) rootOptions.makeDefaultPreprocessingJob(), this, config);
     }
 
-    public static class ExportPredictionWorkflow  implements Workflow {
-        private final ExportPredictions options;
-        private final PreprocessingJob<? extends Iterable<Instance>> job;
+    public static class ExportPredictionJJob extends BasicJJob<Boolean> {
+        private enum X {
+            CLASSYFIRE, NPC, FP, PUBCHEM, MACCS;
+        }
+
+        private final IOFunctions.IOSupplier<BufferedWriter> outputProvider;
+        private int polarity = 0;
+        private final PredictionsOptions options;
+        private final Iterable<? extends Instance> instances;
+
         Class[] components;
         MaskedFingerprintVersion[] versions;
 
-        private static enum X {
-            CANOPUS,NPC,FP,PUBCHEM,MACCS;
-        }
-
-        public ExportPredictionWorkflow(PreprocessingJob<? extends Iterable<Instance>> job, ExportPredictions options, ParameterConfig config) {
+        public ExportPredictionJJob(PredictionsOptions options, int polarity, Iterable<? extends Instance> inputInstances, IOFunctions.IOSupplier<BufferedWriter> outputProvider) {
+            super(JobType.SCHEDULER);
             this.options = options;
-            this.job = job;
+            this.polarity = polarity;
+            this.instances = inputInstances;
+            this.outputProvider = outputProvider;
+
+
             ArrayList<Class<? extends DataAnnotation>> comps = new ArrayList<>();
-            if(options.canopus) comps.add(CanopusResult.class);
-            if(options.fingerprints || options.pubchem || options.maccs) comps.add(FingerprintResult.class);
+            if (options.classyfire || options.npc) comps.add(CanopusResult.class);
+            if (options.fingerprints || options.pubchem || options.maccs) comps.add(FingerprintResult.class);
             this.components = comps.toArray(Class[]::new);
             this.versions = new MaskedFingerprintVersion[X.values().length];
-
-
         }
 
         @Override
-        public void run() {
-            try {
-                final Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
-                int polarity = options.polarity;
-                boolean headerWritten = false;
-                try (final BufferedWriter writer = Files.newBufferedWriter(options.output)) {
-                    for (Instance inst : ps){
-                        if (polarity==0) polarity = inst.getExperiment().getPrecursorIonType().getCharge();
-                        if (polarity!=inst.getExperiment().getPrecursorIonType().getCharge()) {
-                            continue;
-                        }
-                        loadVersions(inst, polarity);
-                        if (!headerWritten) {
-                            writeHeader(writer, versions);
-                            headerWritten=true;
-                        }
-                        try {
-                            write(writer, inst, inst.getExperiment());
-                        } catch (IOException e) {
-                            throw e;
-                        } catch (Exception e) {
-                            LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst.getID() + "'. Skipping this instance!", e);
-                        } finally {
-                            inst.clearCompoundCache();
-                            inst.clearFormulaResultsCache();
-                        }
-                    }
+        protected Boolean compute() throws Exception {
+            updateProgress(0, -1, -1, "Collection Instances for prediction export...");
+            boolean headerWritten = false;
+            List<Instance> filtered = new ArrayList<>();
+            if (polarity == 0) polarity = instances.iterator().next().getExperiment().getPrecursorIonType().getCharge();
+            for (Instance inst : instances) {
+                if (polarity == inst.getExperiment().getPrecursorIonType().getCharge()) {
+                    filtered.add(inst);
                 }
-            } catch (ExecutionException e) {
-                LoggerFactory.getLogger(getClass()).error("Error when reading input project!", e);
-            } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).error("Error when writing the table file to: " + options.output.toString(), e);
             }
+
+            if (filtered.isEmpty()) {
+                updateProgress(0, 1, 1, "No instances to export!");
+                return Boolean.FALSE;
+            }
+
+            try (final BufferedWriter writer = outputProvider.get()) {
+                String message = "Writing " + (polarity < 0 ? "negative" : "positive") + " ion mode data predictions...";
+                int progress = 0;
+                updateProgress(0, filtered.size(), progress, message);
+                for (Instance inst : filtered) {
+
+                    loadVersions(inst, polarity);
+                    if (!headerWritten) {
+                        writeHeader(writer, versions);
+                        writer.newLine();
+                        headerWritten = true;
+                    }
+                    try {
+                        write(writer, inst, inst.getExperiment());
+                    } catch (IOException e) {
+                        throw e;
+                    } catch (Exception e) {
+                        LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst.getID() + "'. Skipping this instance!", e);
+                    } finally {
+                        inst.clearCompoundCache();
+                        inst.clearFormulaResultsCache();
+                    }
+                    updateProgress(0, filtered.size(), ++progress, message);
+                }
+            }
+            return Boolean.TRUE;
         }
 
         private void loadVersions(Instance inst, int polarity) {
-            if (versions[X.CANOPUS.ordinal()]==null) {
+            if (versions[X.CLASSYFIRE.ordinal()] == null) {
                 final Optional<CanopusCfDataProperty> ps = inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusCfDataProperty.class);
                 if (ps.isPresent()) {
                     final CanopusCfData byCharge = ps.get().getByCharge(polarity);
-                    versions[X.CANOPUS.ordinal()] = byCharge.getFingerprintVersion();
+                    versions[X.CLASSYFIRE.ordinal()] = byCharge.getFingerprintVersion();
                 }
             }
-            if (versions[X.NPC.ordinal()]==null) {
+            if (versions[X.NPC.ordinal()] == null) {
                 final Optional<CanopusNpcDataProperty> ps = inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusNpcDataProperty.class);
                 if (ps.isPresent()) {
                     final CanopusNpcData byCharge = ps.get().getByCharge(polarity);
-                    versions[X.CANOPUS.ordinal()] = byCharge.getFingerprintVersion();
+                    versions[X.NPC.ordinal()] = byCharge.getFingerprintVersion();
                 }
             }
-            if (versions[X.FP.ordinal()]==null) {
+            if (versions[X.FP.ordinal()] == null) {
                 final Optional<FingerIdDataProperty> ps = inst.getProjectSpaceManager().getProjectSpaceProperty(FingerIdDataProperty.class);
                 if (ps.isPresent()) {
                     final FingerIdData byCharge = ps.get().getByCharge(polarity);
-                    versions[X.CANOPUS.ordinal()] = byCharge.getFingerprintVersion();
-                    versions[X.PUBCHEM.ordinal()] = versions[X.CANOPUS.ordinal()].getIntersection(CdkFingerprintVersion.getComplete().getMaskFor(CdkFingerprintVersion.USED_FINGERPRINTS.PUBCHEM));
-                    versions[X.MACCS.ordinal()] = versions[X.MACCS.ordinal()].getIntersection(CdkFingerprintVersion.getComplete().getMaskFor(CdkFingerprintVersion.USED_FINGERPRINTS.MACCS));
+                    versions[X.FP.ordinal()] = byCharge.getFingerprintVersion();
+                    versions[X.PUBCHEM.ordinal()] = versions[X.FP.ordinal()].getIntersection(CdkFingerprintVersion.getComplete().getMaskFor(CdkFingerprintVersion.USED_FINGERPRINTS.PUBCHEM));
+                    versions[X.MACCS.ordinal()] = versions[X.FP.ordinal()].getIntersection(CdkFingerprintVersion.getComplete().getMaskFor(CdkFingerprintVersion.USED_FINGERPRINTS.MACCS));
                 }
             }
         }
@@ -196,32 +185,49 @@ public class ExportPredictions implements StandaloneTool<ExportPredictions.Expor
                 writer.write(formulaResult.getId().getMolecularFormula().toString());
                 writer.write('\t');
                 writer.write(formulaResult.getId().getIonType().toString());
-                if (options.canopus) {
-                    write(writer, versions[X.CANOPUS.ordinal()], formulaResult.getAnnotation(CanopusResult.class).map(CanopusResult::getCanopusFingerprint));
+                if (options.classyfire) {
+                    write(writer, versions[X.CLASSYFIRE.ordinal()], formulaResult.getAnnotation(CanopusResult.class).map(CanopusResult::getCanopusFingerprint));
+                }
+                if (options.npc) {
+                    write(writer, versions[X.NPC.ordinal()], formulaResult.getAnnotation(CanopusResult.class).flatMap(CanopusResult::getNpcFingerprint));
                 }
                 if (options.fingerprints) {
-                    write(writer, versions[X.FP.ordinal()], formulaResult.getAnnotation(FingerprintResult.class).map(x->x.fingerprint));
+                    write(writer, versions[X.FP.ordinal()], formulaResult.getAnnotation(FingerprintResult.class).map(x -> x.fingerprint));
                 }
                 if (options.pubchem) {
-                    write(writer, versions[X.PUBCHEM.ordinal()], formulaResult.getAnnotation(FingerprintResult.class).map(x->versions[X.PUBCHEM.ordinal()].mask(x.fingerprint)));
+                    write(writer, versions[X.PUBCHEM.ordinal()], formulaResult.getAnnotation(FingerprintResult.class).map(x -> versions[X.PUBCHEM.ordinal()].mask(x.fingerprint)));
                 }
                 if (options.maccs) {
-                    write(writer, versions[X.MACCS.ordinal()], formulaResult.getAnnotation(FingerprintResult.class).map(x->versions[X.MACCS.ordinal()].mask(x.fingerprint)));
+                    write(writer, versions[X.MACCS.ordinal()], formulaResult.getAnnotation(FingerprintResult.class).map(x -> versions[X.MACCS.ordinal()].mask(x.fingerprint)));
                 }
+
+
                 writer.newLine();
             }
         }
 
         private void writeHeader(BufferedWriter writer, MaskedFingerprintVersion[] versions) throws IOException {
-            writer.write("directory\tid\tmolecularFormula\tionType");
-            if (options.canopus) {
-                final MaskedFingerprintVersion version = versions[X.CANOPUS.ordinal()];
+            writer.write("id\tname\tmolecularFormula\tadduct");
+            if (options.classyfire) {
+                final MaskedFingerprintVersion version = versions[X.CLASSYFIRE.ordinal()];
                 for (int absi : version.allowedIndizes()) {
-                    MolecularProperty prop  = version.getMolecularProperty(absi);
+                    MolecularProperty prop = version.getMolecularProperty(absi);
                     writer.write('\t');
-                    writer.write(((ClassyfireProperty)prop).getName());
+                    writer.write("ClassyFire#");
+                    writer.write(((ClassyfireProperty) prop).getName());
                 }
             }
+
+            if (options.npc) {
+                final MaskedFingerprintVersion version = versions[X.NPC.ordinal()];
+                for (int absi : version.allowedIndizes()) {
+                    MolecularProperty prop = version.getMolecularProperty(absi);
+                    writer.write('\t');
+                    writer.write("NPC#");
+                    writer.write(((NPCFingerprintVersion.NPCProperty) prop).getName());
+                }
+            }
+
             if (options.fingerprints) {
                 final MaskedFingerprintVersion version = versions[X.FP.ordinal()];
                 for (int absi : version.allowedIndizes()) {
@@ -229,6 +235,7 @@ public class ExportPredictions implements StandaloneTool<ExportPredictions.Expor
                     writer.write(String.valueOf(absi));
                 }
             }
+
             if (options.pubchem) {
                 final MaskedFingerprintVersion version = versions[X.PUBCHEM.ordinal()];
                 int pubchemOffset = CdkFingerprintVersion.getComplete().getOffsetFor(CdkFingerprintVersion.USED_FINGERPRINTS.PUBCHEM);
@@ -256,20 +263,35 @@ public class ExportPredictions implements StandaloneTool<ExportPredictions.Expor
                     writer.write(options.float2string(x.getProbability()));
                 }
             } else {
-                for (int i=0; i < version.size(); ++i) {
+                for (int i = 0; i < version.size(); ++i) {
                     writer.write("\tN/A");
                 }
             }
         }
     }
 
-    private String float2string(double value) {
-        if (decimalFormat==null) return String.valueOf(value);
-        else return decimalFormat.format(value);
-    }
-    private String float2string(float value) {
-        if (decimalFormat==null) return String.valueOf(value);
-        else return decimalFormat.format(value);
-    }
+    public static class ExportPredictionWorkflow implements Workflow {
 
+        private final PreprocessingJob<? extends Iterable<Instance>> job;
+        private final ExportPredictionsOptions options;
+
+        public ExportPredictionWorkflow(PreprocessingJob<? extends Iterable<Instance>> job, ExportPredictionsOptions options, ParameterConfig config) {
+            this.options = options;
+            this.job = job;
+        }
+
+        @Override
+        public void run() {
+            try {
+                final Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+                try {
+                    SiriusJobs.getGlobalJobManager().submitJob(new ExportPredictionJJob(options.predictionsOptions, options.polarity, ps, () -> Files.newBufferedWriter(options.output))).awaitResult();
+                } catch (ExecutionException e) {
+                    LoggerFactory.getLogger(getClass()).error("Error when writing the table file to: " + options.output.toString(), e);
+                }
+            } catch (ExecutionException e) {
+                LoggerFactory.getLogger(getClass()).error("Error when reading input project!", e);
+            }
+        }
+    }
 }

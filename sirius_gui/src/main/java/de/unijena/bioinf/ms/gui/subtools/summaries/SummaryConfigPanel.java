@@ -20,10 +20,20 @@ public class SummaryConfigPanel extends SubToolConfigPanel<SummaryOptions> {
         super(SummaryOptions.class);
 
         final TwoColumnPanel paras = new TwoColumnPanel();
-        JCheckBox compressBox = new JCheckBox("Zip Compression", false);
-        parameterBindings.put("compress", () -> "~" + compressBox.isSelected());
-        getOptionDescriptionByName("compress").ifPresent(it -> compressBox.setToolTipText(GuiUtils.formatToolTip(it)));
-        paras.add(compressBox);
+        paras.add(new JXTitledSeparator("Include prediction table"));
+        paras.add(makeGenericOptionCheckBox("CANOPUS ClassyFire predictions", "classyfire"));
+        paras.add(makeGenericOptionCheckBox("CANOPUS NPC predictions", "npc"));
+        paras.add(makeGenericOptionCheckBox("CSI:FingerID PubChem Fingerprints", "pubchem"));
+        paras.add(makeGenericOptionCheckBox("CSI:FingerID MACCS Fingerprints", "maccs"));
+        JSpinner digitSpinner = makeGenericOptionSpinner("digits",
+                getOptionDefaultByName("digits").map(Integer::parseInt).orElse(-1),
+                -1, 20, 1,
+                (v) -> String.valueOf(v.getNumber().intValue()));
+        paras.addNamed("Precision", digitSpinner);
+
+
+        paras.add(new JXTitledSeparator("Summary Output Location"));
+        paras.add(makeGenericOptionCheckBox("Zip Compression", "compress"));
 
         paras.add(new JXTitledSeparator("Summary Output Location"));
         FileChooserPanel summaryLocation = new FileChooserPanel(

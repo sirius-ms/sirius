@@ -120,4 +120,14 @@ public abstract class SubToolConfigPanel<C> extends ConfigPanel {
         parameterBindings.put(name, () -> result.apply((T) box.getSelectedItem()));
         return box;
     }
+
+    public  JCheckBox makeGenericOptionCheckBox(String text, String optionKey){
+        return makeGenericOptionCheckBox(text, optionKey,false);
+    }
+    public  JCheckBox makeGenericOptionCheckBox(String text, String optionKey, boolean selected){
+        JCheckBox checkBox = new JCheckBox(text, selected);
+        parameterBindings.put(optionKey, () -> "~" + checkBox.isSelected());
+        getOptionDescriptionByName(optionKey).ifPresent(it -> checkBox.setToolTipText(GuiUtils.formatToolTip(it)));
+        return checkBox;
+    }
 }
