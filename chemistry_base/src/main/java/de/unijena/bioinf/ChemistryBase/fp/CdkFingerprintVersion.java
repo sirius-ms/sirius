@@ -119,6 +119,19 @@ public class CdkFingerprintVersion extends FingerprintVersion {
         return false;
     }
 
+    @Override
+    public boolean identical(FingerprintVersion fingerprintVersion) {
+        if (this == fingerprintVersion) return true;
+        if (fingerprintVersion.getClass().equals(this.getClass())) {
+            return fastCompareFlag == ((CdkFingerprintVersion)fingerprintVersion).fastCompareFlag;
+        }
+        if (fingerprintVersion instanceof MaskedFingerprintVersion) {
+            final MaskedFingerprintVersion m = (MaskedFingerprintVersion)fingerprintVersion;
+            return m.isNotFiltering() && identical(m.getMaskedFingerprintVersion());
+        }
+        return false;
+    }
+
     private static final USED_FINGERPRINTS[] WITHOUT_ECFP_SETUP = new USED_FINGERPRINTS[]{
             USED_FINGERPRINTS.OPENBABEL, USED_FINGERPRINTS.SUBSTRUCTURE, USED_FINGERPRINTS.MACCS, USED_FINGERPRINTS.PUBCHEM, USED_FINGERPRINTS.KLEKOTA_ROTH
     };

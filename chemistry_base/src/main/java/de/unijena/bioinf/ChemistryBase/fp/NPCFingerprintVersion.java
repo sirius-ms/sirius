@@ -81,6 +81,11 @@ public class NPCFingerprintVersion extends FingerprintVersion {
 
     @Override
     public boolean compatible(FingerprintVersion fingerprintVersion) {
+       return identical(fingerprintVersion);
+    }
+
+    @Override
+    public boolean identical(FingerprintVersion fingerprintVersion) {
         if (fingerprintVersion==this) return true;
         if (fingerprintVersion instanceof NPCFingerprintVersion) {
             return Arrays.equals(properties, ((NPCFingerprintVersion) fingerprintVersion).properties);
