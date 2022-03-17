@@ -24,7 +24,6 @@ import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
@@ -188,15 +187,14 @@ public class MainFrame extends JFrame implements DropTargetListener {
             GuiProjectSpaceManager old = this.ps;
             try {
                 final SiriusProjectSpace ps = makeSpace.get();
-                Utils.withTime("Data Check done in: ", w -> compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null));
-                Utils.withTime("Cancel Jobs done in: ", w -> Jobs.cancelALL());
-                final GuiProjectSpaceManager gps = Utils.withTimeR("Create GUI SpaceManager: ", w -> new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10)));
+                compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
+                Jobs.cancelALL();
+                final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
                 inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
-                Utils.withTime("Add listeners done in: ", w -> {
-                    gps.projectSpace().addProjectSpaceListener(event -> {
-                        if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
-                            inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
-                    });
+
+                gps.projectSpace().addProjectSpaceListener(event -> {
+                    if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
+                        inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
                 });
                 return gps;
             } finally {
