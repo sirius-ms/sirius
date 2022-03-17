@@ -48,6 +48,11 @@ import java.util.concurrent.ExecutionException;
 @CommandLine.Command(name = "login", description = "<STANDALONE> Allows a user to login for SIRIUS Webservices (e.g. CSI:FingerID or CANOPUS) and securely store a personal access token.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> {
 
+    // RESET Account password
+    @CommandLine.Option(names = "--reset-password",
+            description = {"Delete stored refresh/access token (re-login required to use webservices)"})
+    protected String emailToReset;
+
     // DELETE Account
     @CommandLine.Option(names = "--clear",
             description = {"Delete stored refresh/access token (re-login required to use webservices)"})
@@ -98,11 +103,25 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             if (clearLogin) {
                 try {
                     AuthServices.clearRefreshToken(ApplicationCore.TOKEN_FILE);
+                    System.out.println("Token successfully removed. You are now logged out!");
                 } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when clearing refresh token.", e);
                 }
                 return;
             }
+
+            if (emailToReset != null) {
+                try {
+                    if (!emailToReset.contains("@"))
+                        throw  new IllegalArgumentException("'" + emailToReset +"' id not a valid email address! No password reset request sent.");
+                    ApplicationCore.WEB_API.getAuthService().sendPasswordReset(emailToReset);
+                    System.out.println("Password reset request sent to '" + emailToReset + "'.");
+                } catch (IOException | ExecutionException | InterruptedException e) {
+                    LoggerFactory.getLogger(getClass()).error("Error when sending password reset request.", e);
+                }
+                return;
+            }
+
 
 
             if (login != null && login.username != null && login.password != null) {
