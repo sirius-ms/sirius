@@ -81,7 +81,7 @@ public enum SiriusMZTabParameter {
     }
 
     public static OptColumnMapping newOptColumn(SiriusMZTabParameter p, String value) {
-        return new OptColumnMappingBuilder().forGlobal().withName(p.parameterName).build(value);
+        return new OptColumnMappingBuilder.GlobalOptColumnMappingBuilder().withName(p.parameterName).build(value);
     }
 
 
