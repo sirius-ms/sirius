@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
@@ -104,8 +105,10 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
         // EXPAND LIST for different Adducts
         // expand adduct trees before filtering scores.
         // This is important because zodiac can create different scores for adducts that correspond to the same tree
-        logDebug("Expanding Identification Results for different Adducts.");
-        {
+
+        // skip if there is a single candidate with lipid annotation (El gordo)
+        if(idResult.size() != 1 || !idResult.get(0).getTree().hasAnnotation(LipidSpecies.class)) {
+            logDebug("Expanding Identification Results for different Adducts.");
             final PossibleAdducts adducts;
             if (experiment.getPrecursorIonType().isIonizationUnknown()) {
                 if (!experiment.hasAnnotation(DetectedAdducts.class))
@@ -154,6 +157,8 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
 
             idResult.sort(Collections.reverseOrder()); //descending
             addedIdentificationResults = ionTypes;
+        }else {
+            logDebug("Skip Expanding Identification Results for different Adducts due to existing El Gordo Result.");
         }
 
         checkForInterruption();
