@@ -19,10 +19,10 @@ import java.util.concurrent.Future;
 
 public class DataProcessor {
 
-    private File spectraDir;
-    private File fTreeDir;
-    private File outputDir;
-    private String[] fileNames;
+    private final File spectraDir;
+    private final File fTreeDir;
+    private final File outputDir;
+    private final String[] fileNames;
 
     public DataProcessor(File spectraDir, File fTreeDir, File outputDir){
         if(spectraDir.isDirectory() && fTreeDir.isDirectory() && outputDir.isDirectory()){
