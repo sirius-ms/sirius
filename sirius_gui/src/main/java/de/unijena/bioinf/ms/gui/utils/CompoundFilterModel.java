@@ -18,10 +18,13 @@ package de.unijena.bioinf.ms.gui.utils;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * This model stores the filter criteria for a compound list
@@ -40,6 +43,7 @@ public class CompoundFilterModel implements SiriusPCS {
     //
     private boolean[] peakShapeQualities = new boolean[]{true,true,true};
 
+    private Set<PrecursorIonType> adducts = Set.of();
     private LipidFilter lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
 
     /*
@@ -188,7 +192,9 @@ public class CompoundFilterModel implements SiriusPCS {
     public boolean isActive(){
         if (currentMinMz != minMz || currentMaxMz != maxMz ||
                 currentMinRt != minRt || currentMaxRt != maxRt) return true;
+        if (!adducts.isEmpty()) return true;
         if (isPeakShapeFilterEnabled() || isLipidFilterEnabled()) return true;
+
         return false;
     }
 
@@ -198,6 +204,14 @@ public class CompoundFilterModel implements SiriusPCS {
 
     public boolean isMaxRtFilterActive() {
         return currentMaxRt != maxRt;
+    }
+
+    public void setAdducts(Set<PrecursorIonType> adducts) {
+        this.adducts = adducts;
+    }
+
+    public Set<PrecursorIonType> getAdducts() {
+        return Collections.unmodifiableSet(adducts);
     }
 
     @Override
@@ -213,6 +227,7 @@ public class CompoundFilterModel implements SiriusPCS {
         setCurrentMaxRt(maxRt);
         Arrays.fill(peakShapeQualities,true);
         lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
+        adducts = Set.of();
     }
 
 

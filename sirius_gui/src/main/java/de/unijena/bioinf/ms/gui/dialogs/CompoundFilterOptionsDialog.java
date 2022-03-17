@@ -19,10 +19,15 @@ package de.unijena.bioinf.ms.gui.dialogs;
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
+import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
+import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +36,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.EnumSet;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
@@ -45,6 +50,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final SearchTextField searchField;
     final JTextField searchFieldDialogCopy;
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner;
+    //    final PrecursorIonTypeSelector adductSelector;
+    public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply, reset;
     JCheckBox invertFilter;
     JCheckBox deleteSelection;
@@ -83,10 +90,12 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         smallParameters.addNamed("minimum RT in sec: ", minRtSpinner);
         maxRtSpinner = makeSpinner(filterModel.getCurrentMaxRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
         smallParameters.addNamed("minimum RT in sec ", maxRtSpinner);
-        ((JSpinner.DefaultEditor) maxRtSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel)maxRtSpinner.getModel(), filterModel.getMaxRt()));
+        ((JSpinner.DefaultEditor) maxRtSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxRtSpinner.getModel(), filterModel.getMaxRt()));
 
         ensureCompatibleBounds(minRtSpinner, maxRtSpinner);
 
+
+        //peak shape filter
         {
             peakShape = new JCheckBox[]{
                     new JCheckBox("Low"),
@@ -115,6 +124,24 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         smallParameters.addNamed("Lipid filter: ", lipidFilterBox);
         lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
 
+
+        // Adduct filter
+        adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to  filter by. Selecting all or none mean every adducts can pass"));
+        adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
+
+        List<PrecursorIonType> ionizations = new ArrayList<>();
+        ionizations.add(PrecursorIonType.unknownPositive());
+        ionizations.add(PrecursorIonType.unknownNegative());
+        ionizations.addAll(PeriodicTable.getInstance().getPositiveAdducts());
+        ionizations.addAll(PeriodicTable.getInstance().getNegativeAdducts());
+        ionizations.sort(Comparator.comparing(PrecursorIonType::toString));
+
+        adductOptions.checkBoxList.replaceElements(ionizations);
+        adductOptions.checkBoxList.uncheckAll();
+        adductOptions.setEnabled(true);
+
+        smallParameters.add(adductOptions);
+        adductOptions.checkBoxList.checkAll(filterModel.getAdducts());
 
         smallParameters.add(new JXTitledSeparator("Filter options"));
 
@@ -193,6 +220,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setCurrentMaxMz(getMaxMz());
         filterModel.setCurrentMinRt(getMinRt());
         filterModel.setCurrentMaxRt(getMaxRt());
+        filterModel.setAdducts(new HashSet<>(adductOptions.checkBoxList.getCheckedItems()));
 
         for (int k = 0; k < peakShape.length; ++k) {
             filterModel.setPeakShapeQuality(k, peakShape[k].isSelected());
@@ -201,7 +229,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setLipidFilter((CompoundFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
 
         saveTextFilter();
-//            searchField.textField.setEnabled(!filterModel.isPeakShapeFilterEnabled() && !filterModel.isLipidFilterEnabled());
     }
 
     private void saveTextFilter() {
@@ -251,6 +278,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
      */
     private void resetFilter() {
         resetSpinnerValues();
+        adductOptions.checkBoxList.uncheckAll();
         for (int i=0; i < peakShape.length; ++i) {
             peakShape[i].setSelected(true);
         }

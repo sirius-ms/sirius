@@ -19,6 +19,7 @@ package de.unijena.bioinf.ms.gui.utils;/*
  */
 
 import ca.odell.glazedlists.matchers.Matcher;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
@@ -29,6 +30,7 @@ import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import java.util.Optional;
+import java.util.Set;
 
 public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     final CompoundFilterModel filterModel;
@@ -51,6 +53,10 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
                 return false;
             }
         }
+
+        final Set<PrecursorIonType> adducts = filterModel.getAdducts();
+        if (!adducts.isEmpty() && !adducts.contains(item.getIonization()))
+            return false;
 
         return anyIOIntenseFilterMatches(item, filterModel);
     }
