@@ -36,13 +36,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.time.Instant;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
-
-import static de.unijena.bioinf.ms.gui.net.ConnectionMonitor.neededTypes;
-
 /**
  * Created by fleisch on 06.06.17.
  */
@@ -117,16 +113,16 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         if (auth.isTrue()) {
             authLabel.setText(userId != null ? "Authenticated as '" + userId + "'  " : "Authenticated ?  ");
         }else {
-            authLabel.setText("Not authenticated!  ");
+            authLabel.setText("Not authenticated! (Or cannot verify token)  ");
         }
 
 
-        fingerID_Worker.setState(availableTypes.containsAll(neededTypes));
+        fingerID_Worker.setState(availableTypes.containsAll(ConnectionMonitor.neededTypes));
 
         if (resultPanel != null)
             remove(resultPanel);
 
-        resultPanel = createResultPanel(state, neededTypes, availableTypes, pendingJobs, userId, terms);
+        resultPanel = createResultPanel(state, new HashSet<>(ConnectionMonitor.neededTypes), availableTypes, pendingJobs, userId, terms);
 
         add(resultPanel, 15, true);
 

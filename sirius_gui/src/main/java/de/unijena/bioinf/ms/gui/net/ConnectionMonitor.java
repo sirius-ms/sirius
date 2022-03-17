@@ -40,6 +40,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,11 +49,11 @@ import java.util.stream.Stream;
 @ThreadSafe
 public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCloseable {
     public static final Set<WorkerWithCharge> neededTypes =
-            WorkerType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedWorkers")).stream()
+            Collections.unmodifiableSet(WorkerType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedWorkers")).stream()
                     .flatMap(wt -> Stream.of(
                             WorkerWithCharge.of(wt, PredictorType.CSI_FINGERID_POSITIVE),
                             WorkerWithCharge.of(wt, PredictorType.CSI_FINGERID_NEGATIVE)))
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toSet()));
 
     @Override
     public void close() {
