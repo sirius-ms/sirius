@@ -132,6 +132,11 @@ public class ClassyFireFingerprintVersion extends FingerprintVersion {
 
     @Override
     public boolean compatible(FingerprintVersion fingerprintVersion) {
+        return identical(fingerprintVersion);
+    }
+
+    @Override
+    public boolean identical(FingerprintVersion fingerprintVersion) {
         return fingerprintVersion instanceof ClassyFireFingerprintVersion && ((ClassyFireFingerprintVersion) fingerprintVersion).properties.length == properties.length;
     }
 
