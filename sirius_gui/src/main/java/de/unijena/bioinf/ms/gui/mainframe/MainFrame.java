@@ -216,7 +216,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
             if (new QuestionDialog(MF, "<html><body>" +
                     "The opened project-space contains results based on an outdated fingerprint version.<br><br>" +
                     "You can either convert the project to the new fingerprint version and <b>lose all fingerprint related results</b> (e.g. CSI:FingerID an CANOPUS),<br>" +
-                    "or you stay with the old fingerprint version but without being able to execute any  fingerprint related computations.<br><br>" +
+                    "or you stay with the old fingerprint version but without being able to execute any fingerprint related computations (e.g. for data visualization).<br><br>" +
                     "Do you wish to convert and lose all fingerprint related results?" +
                     "</body></html>").isSuccess())
                 ps().updateFingerprintData();

@@ -75,9 +75,7 @@ public class CanopusSubToolJob extends InstanceJob {
             return;
         }
 
-        checkForInterruption();
-
-        if (!checkFingerprintCompatibility()) return;
+        checkFingerprintCompatibilityOrThrow();
 
         checkForInterruption();
 

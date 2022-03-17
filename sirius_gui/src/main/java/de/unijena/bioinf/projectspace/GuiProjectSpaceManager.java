@@ -121,39 +121,41 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
     }
 
 
-    public synchronized void deleteCompounds(@Nullable final List<InstanceBean> insts) {
+    public void deleteCompounds(@Nullable final List<InstanceBean> insts) {
         if (insts == null || insts.isEmpty())
             return;
         Jobs.runInBackgroundAndLoad(MF, "Deleting Compounds...", false, new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() throws Exception {
-                final AtomicInteger pro = new AtomicInteger(0);
-                updateProgress(0, insts.size(), pro.get(), "Deleting...");
-                ringBuffer.removeAllLazy(insts);
-                inEDTAndWait(() -> INSTANCE_LIST.removeAll(insts));
-                insts.iterator().forEachRemaining(inst -> {
-                    try {
-                        if (!inst.isComputing())
-                            projectSpace().deleteCompound(inst.getID());
-                        else
-                            LOG.warn("Cannot delete compound '" + inst.getID() + "' because it is currently computing. Skipping!");
-                    } catch (IOException e) {
-                        LOG.error("Could not delete Compound: " + inst.getID(), e);
-                    } finally {
-                        updateProgress(0, insts.size(), pro.incrementAndGet(), "Deleting...");
-                    }
-                });
-                return true;
+                synchronized (GuiProjectSpaceManager.this) {
+                    final AtomicInteger pro = new AtomicInteger(0);
+                    updateProgress(0, insts.size(), pro.get(), "Deleting...");
+                    ringBuffer.removeAllLazy(insts);
+                    inEDTAndWait(() -> INSTANCE_LIST.removeAll(insts));
+                    insts.iterator().forEachRemaining(inst -> {
+                        try {
+                            if (!inst.isComputing())
+                                projectSpace().deleteCompound(inst.getID());
+                            else
+                                LOG.warn("Cannot delete compound '" + inst.getID() + "' because it is currently computing. Skipping!");
+                        } catch (IOException e) {
+                            LOG.error("Could not delete Compound: " + inst.getID(), e);
+                        } finally {
+                            updateProgress(0, insts.size(), pro.incrementAndGet(), "Deleting...");
+                        }
+                    });
+                    return true;
+                }
             }
         });
 
     }
 
-    public synchronized void deleteAll() {
+    public void deleteAll() {
         deleteCompounds(INSTANCE_LIST);
     }
 
-
+    //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     public synchronized void importOneExperimentPerLocation(@NotNull final List<File> inputFiles) {
         final InputFilesOptions inputF = new InputFilesOptions();
         inputF.msInput = Jobs.runInBackgroundAndLoad(MF, "Analyzing Files...", false,
@@ -161,6 +163,7 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         importOneExperimentPerLocation(inputF);
     }
 
+    //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input) {
         boolean align = Jobs.runInBackgroundAndLoad(MF, "Checking for alignable input...", () ->
                 (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
@@ -220,15 +223,17 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
         }
     }
 
-    protected synchronized void copy(Path newlocation, boolean switchLocation) {
-        String header = switchLocation ? "Saving Project to" : "Saving a Copy to";
+    protected void copy(Path newlocation, boolean switchLocation) {
+        final String header = switchLocation ? "Saving Project to" : "Saving a Copy to";
         final IOException ex = Jobs.runInBackgroundAndLoad(MF, header + " '" + newlocation.toString() + "'...", () -> {
-            try {
-                ProjectSpaceIO.copyProject(projectSpace(), newlocation, switchLocation);
-                inEDTAndWait(() -> MF.setTitlePath(projectSpace().getLocation().toString()));
-                return null;
-            } catch (IOException e) {
-                return e;
+            synchronized (GuiProjectSpaceManager.this) {
+                try {
+                    ProjectSpaceIO.copyProject(projectSpace(), newlocation, switchLocation);
+                    inEDTAndWait(() -> MF.setTitlePath(projectSpace().getLocation().toString()));
+                    return null;
+                } catch (IOException e) {
+                    return e;
+                }
             }
         }).getResult();
 
@@ -236,31 +241,33 @@ public class GuiProjectSpaceManager extends ProjectSpaceManager {
             new ExceptionDialog(MF, ex.getMessage());
     }
 
-    public synchronized void updateFingerprintData() {
+    public void updateFingerprintData() {
         Jobs.runInBackgroundAndLoad(MF, new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() throws Exception {
-                List<Consumer<Instance>> invalidators = new ArrayList<>();
-                invalidators.add(new FingerprintOptions(null).getInvalidator());
-                invalidators.add(new FingerblastOptions(null).getInvalidator());
-                invalidators.add(new CanopusOptions(null).getInvalidator());
-                final AtomicInteger progress = new AtomicInteger(0);
-                int max = INSTANCE_LIST.size() * invalidators.size() + 3;
-                updateProgress(0, max, progress.getAndIncrement(), "Starting Update...");
-                // remove fingerprint related results
-                INSTANCE_LIST.forEach(i -> invalidators.forEach(inv -> {
-                    updateProgress(0, max, progress.getAndIncrement(), "Deleting results for '" + i.getName() + "'...");
-                    inv.accept(i);
-                }));
-                //remove Fingerprint data
-                updateProgress(0, max, progress.getAndIncrement(), "delete CSI:FinerID Data");
-                deleteProjectSpaceProperty(FingerIdDataProperty.class);
-                updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS ClassyFire Data");
-                deleteProjectSpaceProperty(CanopusCfDataProperty.class);
-                updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS NPC Data");
-                deleteProjectSpaceProperty(CanopusNpcDataProperty.class);
-                updateProgress(0, max, progress.get(), "DONE!");
-                return true;
+                synchronized (GuiProjectSpaceManager.this) {
+                    List<Consumer<Instance>> invalidators = new ArrayList<>();
+                    invalidators.add(new FingerprintOptions(null).getInvalidator());
+                    invalidators.add(new FingerblastOptions(null).getInvalidator());
+                    invalidators.add(new CanopusOptions(null).getInvalidator());
+                    final AtomicInteger progress = new AtomicInteger(0);
+                    final int max = INSTANCE_LIST.size() * invalidators.size() + 3;
+                    updateProgress(0, max, progress.getAndIncrement(), "Starting Update...");
+                    // remove fingerprint related results
+                    INSTANCE_LIST.forEach(i -> invalidators.forEach(inv -> {
+                        updateProgress(0, max, progress.getAndIncrement(), "Deleting results for '" + i.getName() + "'...");
+                        inv.accept(i);
+                    }));
+                    //remove Fingerprint data
+                    updateProgress(0, max, progress.getAndIncrement(), "delete CSI:FinerID Data");
+                    deleteProjectSpaceProperty(FingerIdDataProperty.class);
+                    updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS ClassyFire Data");
+                    deleteProjectSpaceProperty(CanopusCfDataProperty.class);
+                    updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS NPC Data");
+                    deleteProjectSpaceProperty(CanopusNpcDataProperty.class);
+                    updateProgress(0, max, progress.get(), "DONE!");
+                    return true;
+                }
             }
         });
     }
