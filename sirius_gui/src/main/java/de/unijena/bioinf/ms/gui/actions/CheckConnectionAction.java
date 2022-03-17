@@ -66,7 +66,7 @@ public class CheckConnectionAction extends AbstractAction {
                 ConnectionDialog.of(MainFrame.MF, r.errorCode, r.workerInfo, r.userId, r.license, r.terms);
             }
         } catch (Exception e1) {
-            LoggerFactory.getLogger(getClass()).error("Error when checking connection by action");
+            LoggerFactory.getLogger(getClass()).error("Error when checking connection by action", e1);
         }
     }
 
