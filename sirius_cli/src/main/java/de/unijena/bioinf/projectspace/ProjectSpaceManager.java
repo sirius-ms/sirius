@@ -254,17 +254,11 @@ public class ProjectSpaceManager implements Iterable<Instance> {
         space.close();
     }
 
-    public static void writeIncompatibleLog() {
-        LoggerFactory.getLogger(ProjectSpaceManager.class).warn("INCOMPATIBLE INPUT: The Fingerprint version of your Project ist incompatible to the one used by this SIRIUS version (outdated)." +
-                " The project can be Converted using `--update-fingerprint-version`." +
-                " WARNING: This will delete all Fingerprint related results like CSI:FingerID and CANOPUS.");
-    }
-
     private final Map<Class<? extends PosNegFpProperty<?, ?>>, Boolean> dataCompatibilityCache = new HashMap<>();
 
     /**
      * This checks whether the data files are compatible with them on the server. Since have had versions of the PS with
-     * incomplete data files it also load missing files from the server but only if the existing one are compatible.
+     * incomplete data files it also loads missing files from the server but only if the existing ones are compatible.
      * <p>
      * Results are cached!
      *
@@ -284,9 +278,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
                 checkFingerprintData(CanopusCfDataProperty.class, CanopusCfData.class, ApplicationCore.WEB_API::getCanopusCfData, interrupted);
                 checkFingerprintData(CanopusNpcDataProperty.class, CanopusNpcData.class, ApplicationCore.WEB_API::getCanopusNpcData, interrupted);
 
-                boolean out = dataCompatibilityCache.values().stream().reduce((a, b) -> a && b).orElse(true);
-                if (!out) writeIncompatibleLog();
-                return out;
+                return dataCompatibilityCache.values().stream().reduce((a, b) -> a && b).orElse(true);
             } catch (Exception e) {
                 dataCompatibilityCache.clear();
                 LoggerFactory.getLogger(getClass()).warn("Could not retrieve FingerprintData from server! \n" + e.getMessage());
@@ -304,9 +296,9 @@ public class ProjectSpaceManager implements Iterable<Instance> {
                 if (cd != null) {
                     dataCompatibilityCache.put(propClz, true);
                     final D pos = NetUtils.tryAndWait(() -> dataLoader.apply(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
-                    final D neg = NetUtils.tryAndWait(() -> dataLoader.apply(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
+                    final D neg = NetUtils.tryAndWait(() -> dataLoader.apply(PredictorType.CSI_FINGERID_NEGATIVE), interrupted);
                     if (cd.getPositive() != null) {
-                        if (!cd.getPositive().compatible(pos)) {
+                        if (!cd.getPositive().identical(pos)) {
                             dataCompatibilityCache.put(propClz, false);
                         } else if (cd.getNegative() == null) {
                             LoggerFactory.getLogger(InstanceImporter.class).warn("Negative '" + propDataClz.getName() + "' file missing in project. Try to repair by reloading from webservice.");
@@ -317,7 +309,7 @@ public class ProjectSpaceManager implements Iterable<Instance> {
                     }
 
                     if (cd.getNegative() != null) {
-                        if (!cd.getNegative().compatible(neg)) {
+                        if (!cd.getNegative().identical(neg)) {
                             dataCompatibilityCache.put(propClz, false);
                         } else if (cd.getPositive() == null) {
                             LoggerFactory.getLogger(InstanceImporter.class).warn("Positive '" + propDataClz.getName() + "' file missing in project. Try to repair by reloading from webservice.");

@@ -83,9 +83,7 @@ public class FingerblastSubToolJob extends InstanceJob {
             return;
         }
 
-        checkForInterruption();
-
-        if (!checkFingerprintCompatibility()) return;
+        checkFingerprintCompatibilityOrThrow();
 
         checkForInterruption();
 
