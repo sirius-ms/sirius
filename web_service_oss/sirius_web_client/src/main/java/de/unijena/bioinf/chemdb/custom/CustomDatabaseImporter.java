@@ -116,6 +116,11 @@ public class CustomDatabaseImporter {
     }
 
     public void importFromString(String str, String id, String name) throws IOException, CDKException {
+        if (str == null || str.isBlank()) {
+            LoggerFactory.getLogger(getClass()).warn("No structure information given in Line ' " + str + "\t" + id + "\t" + name + "'. Skipping!");
+            return;
+        }
+
         final Molecule molecule;
         if (InChIs.isInchi(str)) {
             if (!InChIs.isConnected(str)) {
