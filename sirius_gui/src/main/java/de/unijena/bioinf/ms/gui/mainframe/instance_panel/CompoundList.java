@@ -129,9 +129,10 @@ public class CompoundList {
 
     public void resetFilter() {
         //filtering consists of the text filter, the filter model and the possible inversion using the MatcherEditor
-        searchField.textField.setText("");
         compoundFilterModel.resetFilter();
         compoundListMatchEditor.setInverted(false);
+        searchField.textField.setText("");
+        searchField.textField.postActionEvent();
         colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
     }
 
