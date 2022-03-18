@@ -100,9 +100,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
     }
 
     protected synchronized void open() throws IOException {
-        StopWatch w = new StopWatch();
-        w.start();
-
         int maxIndex;
         idLock.readLock().lock();
         try {
@@ -153,8 +150,6 @@ public class SiriusProjectSpace implements Iterable<CompoundContainerId>, AutoCl
         this.compoundCounter.set(maxIndex + 1);
         flush();
         fireProjectSpaceChange(ProjectSpaceEvent.OPENED);
-        w.stop();
-        System.out.println("Open() done in: " + w.toString());
     }
 
     public void flush() throws IOException {
