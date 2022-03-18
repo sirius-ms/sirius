@@ -310,11 +310,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
                 openNewProject = new QuestionDialog(MF, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
             if (openNewProject) {
-                StopWatch w = new StopWatch();
-                w.start();
                 MF.openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
-                w.stop();
-                System.out.println("Project Openened in: " + w.toString());
             } else {
                 importDragAndDropFiles(inputF);
             }
