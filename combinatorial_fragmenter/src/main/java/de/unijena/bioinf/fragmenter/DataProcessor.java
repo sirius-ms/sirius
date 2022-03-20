@@ -10,12 +10,12 @@ import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class DataProcessor {
 
@@ -24,20 +24,48 @@ public class DataProcessor {
     private final File outputDir;
     private final String[] fileNames;
 
-    public DataProcessor(File spectraDir, File fTreeDir, File outputDir){
+    public DataProcessor(File spectraDir, File fTreeDir, File outputDir, int numPartitions, int idxPartition){
         if(spectraDir.isDirectory() && fTreeDir.isDirectory() && outputDir.isDirectory()){
             this.spectraDir = spectraDir;
             this.fTreeDir = fTreeDir;
             this.outputDir = outputDir;
 
-            String[] spectrumFileNames = spectraDir.list();
-            this.fileNames = new String[spectrumFileNames.length];
-            for(int i = 0; i < spectrumFileNames.length; i++){
-                this.fileNames[i] = spectrumFileNames[i].replaceFirst("\\.ms", "");
+            // Now, exclude all fTree files whose results are already present in 'outputDir'.
+            // An fTree file and a result file share the same ending ".json".
+            String[] resultFileNames = outputDir.list();
+            List<String> filteredFTreeFileNames = Arrays.stream(fTreeDir.list()).
+                    filter(fileName -> {
+                        for(String resultFileName : resultFileNames){
+                            if(fileName.equals(resultFileName)) return false;
+                        }
+                        return true;
+                    }).collect(Collectors.toList());
+
+            // Create the 'idxPartition'-th partition of 'filteredFTreeFileNames:
+            Collections.shuffle(filteredFTreeFileNames);
+            int lengthPartition = filteredFTreeFileNames.size() / numPartitions;
+            int rest = filteredFTreeFileNames.size() - (lengthPartition * numPartitions);
+
+            int startIndex, endIndex; // startIndex inclusive, endIndex exclusive
+            if(idxPartition < rest){
+                startIndex = idxPartition * lengthPartition + idxPartition;
+                endIndex = startIndex + lengthPartition + 1;
+            }else{
+                startIndex = idxPartition * lengthPartition + rest;
+                endIndex = startIndex + lengthPartition;
+            }
+
+            this.fileNames = new String[endIndex - startIndex];
+            for(int i = startIndex; i < endIndex; i++){
+                this.fileNames[i - startIndex] = filteredFTreeFileNames.get(i).replaceFirst("\\.json", "");
             }
         }else{
             throw new RuntimeException("The given abstract pathnames don't exist or aren't a directory.");
         }
+    }
+
+    public DataProcessor(File spectraDir, File fTreeDir, File outputDir){
+        this(spectraDir, fTreeDir, outputDir, 1, 0);
     }
 
     private MolecularGraph readMolecule(String fileName) throws IOException, InvalidSmilesException, UnknownElementException {
