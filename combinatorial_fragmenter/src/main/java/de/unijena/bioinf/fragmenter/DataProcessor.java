@@ -24,14 +24,23 @@ public class DataProcessor {
     private final File outputDir;
     private final String[] fileNames;
 
+    private static final long SHUFFLE_SEED = 42;
+
     public DataProcessor(File spectraDir, File fTreeDir, File outputDir, int numPartitions, int idxPartition){
         if(spectraDir.isDirectory() && fTreeDir.isDirectory() && outputDir.isDirectory()){
             this.spectraDir = spectraDir;
             this.fTreeDir = fTreeDir;
             this.outputDir = outputDir;
 
-            // Now, exclude all fTree files whose results are already present in 'outputDir'.
-            // An fTree file and a result file share the same ending ".json".
+            /* Assumptions:
+             * 1. 'spectraDir' and 'fTreeDir' contain the same amount of files
+             * 2. For each spectrum in 'spectraDir' there is the corresponding FTree in 'fTreeDir' with the same name
+             *
+             * Now: FILTERING
+             * Exclude all fTree files whose results are already processed and stored in 'outputDir'.
+             * An fTree file and a result file share the same ending ".json".
+             */
+            System.out.println("Filter out already processed instances.");
             String[] resultFileNames = outputDir.list();
             List<String> filteredFTreeFileNames = Arrays.stream(fTreeDir.list()).
                     filter(fileName -> {
@@ -40,9 +49,13 @@ public class DataProcessor {
                         }
                         return true;
                     }).collect(Collectors.toList());
+            System.out.println(filteredFTreeFileNames.size()+" instances remain after filtering.");
 
-            // Create the 'idxPartition'-th partition of 'filteredFTreeFileNames:
-            Collections.shuffle(filteredFTreeFileNames);
+            /* PARTITION:
+             * Create the 'idxPartition'-th partition of 'filteredFTreeFileNames.
+             */
+            System.out.println("Partition the data set into "+numPartitions+" partitions.");
+            Collections.shuffle(filteredFTreeFileNames, new Random(SHUFFLE_SEED));
             int lengthPartition = filteredFTreeFileNames.size() / numPartitions;
             int rest = filteredFTreeFileNames.size() - (lengthPartition * numPartitions);
 
@@ -59,6 +72,7 @@ public class DataProcessor {
             for(int i = startIndex; i < endIndex; i++){
                 this.fileNames[i - startIndex] = filteredFTreeFileNames.get(i).replaceFirst("\\.json", "");
             }
+            System.out.println("The "+idxPartition+"-th partition with "+this.fileNames.length+" instances was created.");
         }else{
             throw new RuntimeException("The given abstract pathnames don't exist or aren't a directory.");
         }
@@ -148,8 +162,10 @@ public class DataProcessor {
             File fTreeDir = new File(args[1]);
             File outputDir = new File(args[2]);
             int fragmentationDepth = Integer.parseInt(args[3]);
+            int numPartitions = Integer.parseInt(args[4]);
+            int idxPartition = Integer.parseInt(args[5]);
 
-            DataProcessor dataProcessor = new DataProcessor(spectraDir, fTreeDir, outputDir);
+            DataProcessor dataProcessor = new DataProcessor(spectraDir, fTreeDir, outputDir, numPartitions, idxPartition);
             dataProcessor.run(node -> node.depth < fragmentationDepth);
         } catch (InterruptedException e) {
             e.printStackTrace();
