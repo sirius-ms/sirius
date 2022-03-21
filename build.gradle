@@ -119,10 +119,11 @@ allprojects {
             url "https://www.xypron.de/repository" //glpk repo
         }
         maven {
-            url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/" //mzml parser
+            url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/" //mzml parser
         }
         maven {
             url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
+            allowInsecureProtocol = true
         }
         /*maven{
             url "https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/ebi-repo/" //cpdetector no gpl

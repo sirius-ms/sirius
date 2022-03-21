@@ -54,7 +54,6 @@ import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.storage.blob.BlobStorage;
-import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -125,7 +124,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     WorkerList getWorkerInfo() throws IOException;
 
-    <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException;
+//    <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException;
     //endregion
 
     //region Jobs
