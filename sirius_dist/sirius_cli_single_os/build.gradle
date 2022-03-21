@@ -19,6 +19,7 @@ distImage {
     macPackageName = 'SIRIUS-headless'
 }
 
+distribution.dependsOn(createChecksums)
 distribution.dependsOn 'distImageZip'
 if (!OS.isLinux())
     distribution.dependsOn 'distInstaller'

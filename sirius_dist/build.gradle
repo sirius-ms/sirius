@@ -467,7 +467,6 @@ subprojects {
     }
 
     task distribution { group = 'distribution' }
-    distribution.dependsOn(createChecksums)
     artifactoryPublish.dependsOn 'distribution'
 }
 
