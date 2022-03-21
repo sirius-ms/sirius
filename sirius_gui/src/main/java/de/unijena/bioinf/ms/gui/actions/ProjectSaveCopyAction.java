@@ -19,13 +19,13 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 
@@ -99,7 +99,7 @@ public class ProjectSaveCopyAction extends AbstractAction {
             try {
                 MF.ps().saveCopy(selectedFile.toPath());
             } catch (Exception e2) {
-                new ErrorReportDialog(MF, e2.getMessage());
+                new StacktraceDialog(MF, e2.getMessage(), e2);
             }
         }
     }

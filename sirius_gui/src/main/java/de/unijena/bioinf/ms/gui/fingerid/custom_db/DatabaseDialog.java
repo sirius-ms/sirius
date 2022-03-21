@@ -35,7 +35,6 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
-import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
@@ -309,7 +308,7 @@ public class DatabaseDialog extends JDialog {
                         Files.write(f, Arrays.asList(textArea.getText().split("\n")));
                         return f;
                     } catch (IOException ioException) {
-                        new ErrorReportDialog(this, "Could not write input data to '" + f.toString() + "'.");
+                        new StacktraceDialog(this, "Could not write input data to '" + f.toString() + "'.", ioException);
                         return null;
                     }
                 }).getResult();

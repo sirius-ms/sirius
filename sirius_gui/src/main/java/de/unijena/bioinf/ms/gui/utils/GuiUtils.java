@@ -27,7 +27,8 @@ package de.unijena.bioinf.ms.gui.utils;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
@@ -299,7 +300,7 @@ public class GuiUtils {
 
     public static void openURL(@NotNull JFrame owner, @NotNull URI url, String title, boolean useSystemBrowser) throws IOException {
         if (url == null)
-            new ErrorReportDialog(owner, "Cannot open empty URL!");
+            new ExceptionDialog(owner, "Cannot open empty URL!");
 
         if (useSystemBrowser) {
             if (Desktop.isDesktopSupported()) {

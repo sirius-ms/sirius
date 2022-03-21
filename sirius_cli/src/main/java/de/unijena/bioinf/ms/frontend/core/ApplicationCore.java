@@ -28,7 +28,6 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import de.unijena.bioinf.sirius.SiriusFactory;
-import de.unijena.bioinf.utils.errorReport.ErrorReporter;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.webapi.rest.ProxyManager;
 import de.unijena.bioinf.webapi.rest.RestAPI;
@@ -39,8 +38,6 @@ import org.jbibtex.BibTeXParser;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import oshi.SystemInfo;
-import oshi.hardware.HardwareAbstractionLayer;
 
 import java.io.*;
 import java.net.URI;
@@ -281,20 +278,21 @@ public abstract class ApplicationCore {
             measureTime("DONE init Configs, start Hardware Check");
 
 
-            HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
-            int cores = hardware.getProcessor().getPhysicalProcessorCount();
-            PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(cores));
-            PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
+//            HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
+//            int cores = hardware.getProcessor().getPhysicalProcessorCount();
+            int threads = Runtime.getRuntime().availableProcessors();
+            PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(Math.max(1, threads / 2)));
+            PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(threads));
             DEFAULT_LOGGER.info("CPU check done. " + PropertyManager.getNumberOfCores() + " cores that handle " + PropertyManager.getNumberOfThreads() + " threads were found.");
             measureTime("DONE  Hardware Check, START init bug reporting");
 
 
             //bug reporting
-            ErrorReporter.INIT_PROPS(PropertyManager.asProperties());
-            DEFAULT_LOGGER.info("Bug reporter initialized.");
+//            ErrorReporter.INIT_PROPS(PropertyManager.asProperties());
+//            DEFAULT_LOGGER.info("Bug reporter initialized.");
 
             measureTime("DONE init bug reporting, START init WebAPI");
-            TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile",null,".rtoken"));
+            TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile", null, ".rtoken"));
             URI webserviceHost = URI.create(FingerIDProperties.fingeridWebHost());
             AuthService service = AuthServices.createDefault(webserviceHost, TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
             WEB_API = new RestAPI(service, webserviceHost);

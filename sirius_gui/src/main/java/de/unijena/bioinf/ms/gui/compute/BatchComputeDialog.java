@@ -303,7 +303,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 if (builder == null) {
                     String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers), tried '" + Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) + "'. Please read the installation instructions.";
                     LoggerFactory.getLogger(BatchComputeDialog.class).error(noILPSolver);
-                    new ErrorReportDialog(BatchComputeDialog.this, noILPSolver);
+                    new ExceptionDialog(BatchComputeDialog.this, noILPSolver);
                     dispose();
                     return false;
                 }

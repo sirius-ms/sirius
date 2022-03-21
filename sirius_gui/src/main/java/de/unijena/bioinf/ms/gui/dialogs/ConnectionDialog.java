@@ -99,9 +99,9 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
         setVisible(true);
         if (state > WebAPI.MAX_STATE)
             if (getParent() instanceof Dialog) {
-                new ErrorReportDialog((Dialog) getParent(), "An unknown Network Error occurred!");
+                new ExceptionDialog((Dialog) getParent(), "An unknown Network Error occurred!");
             } else {
-                new ErrorReportDialog((Frame) getParent(), "An unknown Network Error occurred!");
+                new ExceptionDialog((Frame) getParent(), "An unknown Network Error occurred!");
             }
     }
 
