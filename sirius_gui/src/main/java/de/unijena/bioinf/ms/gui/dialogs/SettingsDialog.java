@@ -45,7 +45,6 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private AdductSettingsPanel addSettings;
     private NetworkSettingsPanel proxSettings;
     private GerneralSettingsPanel genSettings;
-    private ErrorReportSettingsPanel errorSettings;
     private JTabbedPane settingsPane;
 
     public SettingsDialog(Frame owner) {
@@ -76,10 +75,6 @@ public class SettingsDialog extends JDialog implements ActionListener {
 
         proxSettings = new NetworkSettingsPanel(nuProps);
         settingsPane.add(proxSettings.name(), proxSettings);
-
-        errorSettings = new ErrorReportSettingsPanel(nuProps);
-        errorSettings.addVerticalGlue();
-        settingsPane.add(errorSettings.name(), errorSettings);
 
 //        accountSettings = new AccountSettingsPanel(nuProps, ApplicationCore.WEB_API.getAuthService());
 //        settingsPane.add(accountSettings.name(), accountSettings);

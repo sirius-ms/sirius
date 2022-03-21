@@ -1,3 +1,8 @@
+import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 import java.nio.file.Files
@@ -11,8 +16,8 @@ plugins {
 
 ext {
     // version for bundeled JRE
-    jre_version = '15.0.6'
-    zulu_jre_version = '15.38.17'
+    jre_version = '17.0.2'//'15.0.6'
+    zulu_jre_version = '17.32.13'//'15.38.17'
     jre_major = zulu_jre_version.split("[.]")[0]
 
     OS = DefaultNativePlatform.currentOperatingSystem
@@ -185,6 +190,9 @@ task downloadManual(type: Download, group: 'documentation') {
 
 subprojects {
     apply plugin: 'edu.sc.seis.launch4j'
+    installDist {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 
     jar {
         enabled = false
@@ -502,23 +510,36 @@ abstract class ExtractRuntime extends DefaultTask {
 
 abstract class AppImage extends DefaultTask {
 
+    @InputDirectory
     File inputDir
+    @InputFile
     File jpackagerBin
+    @OutputDirectory
     File outputDir
+    @Input
     String imageName
+    @Input
     String[] jvmArgs
+    @Input
     String[] args
+    @Input
     String version
+    @Input
     String mainClass
+    @Input
     String mainJarName
+    @InputDirectory
     File runtimeImageDirectory
+    @Input
     boolean winConsole
+    @Input
     Map<String, File> launchers = [:]
 
     /*--mac-package-name name string
     Name of the application as it appears in the Menu Bar.
     This can be different from the application name.
     This name must be less than 16 characters long and be suitable for displaying in the menu bar and the application Info window. Defaults to the application name.*/
+    @Input
     String macPackageName = null
 
     AppImage() {
@@ -529,6 +550,7 @@ abstract class AppImage extends DefaultTask {
         inputDir = project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
     }
 
+    @OutputDirectory
     File getImageDir() {
         return outputDir.toPath().resolve(project.OS.isMacOsX() ? "${imageName}.app" : imageName).toFile()
     }

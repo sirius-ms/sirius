@@ -1,8 +1,8 @@
 import java.nio.file.Files
 
 dependencies {
-    compile project(':sirius_cli')
-    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    implementation project(':sirius_cli')
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
 task multiOSImage(group: 'distribution') {

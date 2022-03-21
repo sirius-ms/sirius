@@ -66,7 +66,6 @@ public enum SiriusActions {
 
     SHOW_SETTINGS(ShowSettingsDialogAction.class),
     OPEN_ONLINE_DOCUMENTATION(OpenOnlineDocumentationAction.class),
-    SHOW_BUGS(ShowBugReportDialogAction.class),
     SHOW_ABOUT(ShowAboutDialogAction.class),
     SHOW_JOBS(ShowJobsDialogAction.class),
     SHOW_DB(ShowDBDialogAction.class),

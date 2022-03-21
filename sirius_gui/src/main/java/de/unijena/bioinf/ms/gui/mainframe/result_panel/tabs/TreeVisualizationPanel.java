@@ -28,8 +28,8 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
-import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
+import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.tree_viewer.*;
@@ -494,7 +494,7 @@ public class TreeVisualizationPanel extends JPanel
                         new FTJsonWriter().writeTreeToFile(fSelectedFile, ftree);
                     }
                 } catch (Exception e2) {
-                    new ErrorReportDialog(MF, e2.getMessage());
+                    new StacktraceDialog(MF, e2.getMessage(), e2);
                     LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);
                 }
             });
