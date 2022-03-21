@@ -1,3 +1,4 @@
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 import java.nio.file.Files
@@ -192,7 +193,12 @@ subprojects {
 
     jar {
         enabled = false
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+
+    createExe{
+        copySpec {
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        }
     }
 
     //###################################### Start Default values ##########################################
