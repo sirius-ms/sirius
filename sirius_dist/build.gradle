@@ -195,11 +195,19 @@ subprojects {
         enabled = false
     }
 
-    createExe{
-        copySpec {
-            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        }
-    }
+
+
+    /*tasks.named("createExe") {
+        duplicatesStrategy = DuplicatesStrategy.WARN
+    }*/
+
+   /* gradle.taskGraph.whenReady {
+        it.allTasks.stream()
+                .filter { it.hasProperty("duplicatesStrategy") } // Because it's some weird decorated wrapper that I can't cast.
+                .forEach {
+                    it.setProperty("duplicatesStrategy", "EXCLUDE")
+                }
+    }*/
 
     //###################################### Start Default values ##########################################
 
