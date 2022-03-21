@@ -1,3 +1,4 @@
+import org.gradle.crypto.checksum.Checksum
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 import java.nio.file.Files
@@ -6,6 +7,7 @@ import java.util.stream.Collectors
 
 plugins {
     id 'edu.sc.seis.launch4j' version '2.5.1'
+    id 'org.gradle.crypto.checksum' version '1.4.0'
 }
 
 
@@ -459,6 +461,14 @@ subprojects {
         //linux
         linuxMenuGroup = ['Applications', 'Science']
         debPackageMaintaner = 'sirius@uni-jena.de'
+    }
+
+    task createChecksums(type: Checksum) {
+        mustRunAfter('distImageZip','distInstaller')
+        inputFiles.setFrom(fileTree(dir: "$buildDir/distributions", includes: ['*.zip','*.pkg','*.deb','*.msi']))
+        outputDirectory.set(file("$buildDir/distributions"))
+        checksumAlgorithm.set(Checksum.Algorithm.SHA256)
+        appendFileNameToChecksum.set(true)
     }
 
     task distribution { group = 'distribution' }

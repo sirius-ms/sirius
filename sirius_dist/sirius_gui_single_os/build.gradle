@@ -40,18 +40,23 @@ distInstaller {
     linuxShortcut = true
 }
 
+distribution.dependsOn(createChecksums)
 distribution.dependsOn 'distImageZip'
-if (!OS.isLinux())
+if (!OS.isLinux()) {
     distribution.dependsOn 'distInstaller'
+}
 
 publishing {
     publications {
         sirius(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
-            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
-            if (!OS.isLinux())
-                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: osName, extension: installerNameType
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-headless", extension: 'zip'
+            artifact source: "${distImage.getImageDir().absolutePath}.zip.sha256", classifier: "$osName-headless", extension: 'zip.sha256'
+            if (!OS.isLinux()){
+                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
+                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}.sha256", classifier: "$osName-headless", extension: "${installerNameType}.sha256"
+            }
         }
     }
 }
