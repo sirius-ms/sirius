@@ -1,4 +1,3 @@
-import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 import java.nio.file.Files
@@ -6,7 +5,7 @@ import java.nio.file.Paths
 import java.util.stream.Collectors
 
 plugins {
-    id 'edu.sc.seis.launch4j' version '2.5.2'
+    id 'edu.sc.seis.launch4j' version '2.5.1'
 }
 
 
@@ -194,20 +193,6 @@ subprojects {
     jar {
         enabled = false
     }
-
-
-
-    /*tasks.named("createExe") {
-        duplicatesStrategy = DuplicatesStrategy.WARN
-    }*/
-
-   /* gradle.taskGraph.whenReady {
-        it.allTasks.stream()
-                .filter { it.hasProperty("duplicatesStrategy") } // Because it's some weird decorated wrapper that I can't cast.
-                .forEach {
-                    it.setProperty("duplicatesStrategy", "EXCLUDE")
-                }
-    }*/
 
     //###################################### Start Default values ##########################################
 
