@@ -60,14 +60,12 @@ import de.unijena.bioinf.ms.stores.model.CanopusClientDataStore;
 import de.unijena.bioinf.ms.stores.model.FingerIdClientDataStore;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.storage.blob.BlobStorage;
-import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -152,11 +150,11 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
         return new WorkerList();
     }
 
-    @Override
+  /*  @Override
     public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {
         //todo implement
         throw new UnsupportedOperationException("Error reporting is not yet implemented!");
-    }
+    }*/
 
 
     @Override

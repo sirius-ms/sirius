@@ -65,7 +65,6 @@ import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.storage.blob.BlobStorage;
-import de.unijena.bioinf.utils.errorReport.ErrorReport;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,9 +212,9 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         return ProxyManager.applyClient(jobsClient::getLicenseInfo);
     }
 
-    public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {
+   /* public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {
         return ProxyManager.applyClient(client -> serverInfoClient.reportError(report, SOFTWARE_NAME, client));
-    }
+    }*/
     //endregion
 
     //region Jobs

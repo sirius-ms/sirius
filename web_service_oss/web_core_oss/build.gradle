@@ -2,7 +2,7 @@ dependencies {
     //internal
     compile project(':io')
     compile project(':fingerid_base_oss')
-    compile project(':error_reporter_oss')
+//    compile project(':error_reporter_oss')
     compile project(':sirius_api')
     compile project(':io')
 
