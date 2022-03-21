@@ -33,7 +33,7 @@ publishing {
             artifact source: "${distImage.getImageDir().absolutePath}.zip.sha256", classifier: osName, extension: 'zip.sha256'
             if (!OS.isLinux()){
                 artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: osName, extension: installerNameType
-                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app.sha256', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: osName, extension: "${installerNameType}.sha256"
+                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}.sha256", classifier: osName, extension: "${installerNameType}.sha256"
             }
         }
     }
