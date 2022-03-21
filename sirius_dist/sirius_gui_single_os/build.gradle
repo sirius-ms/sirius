@@ -41,8 +41,9 @@ distInstaller {
 }
 
 distribution.dependsOn 'distImageZip'
-if (!OS.isLinux())
+if (!OS.isLinux()) {
     distribution.dependsOn 'distInstaller'
+}
 
 publishing {
     publications {
@@ -50,8 +51,11 @@ publishing {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
-            if (!OS.isLinux())
+            artifact source: "${distImage.getImageDir().absolutePath}.zip.sha256", classifier: osName, extension: 'zip.sha256'
+            if (!OS.isLinux()){
                 artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: osName, extension: installerNameType
+                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app.sha256', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: osName, extension: "${installerNameType}.sha256"
+            }
         }
     }
 }

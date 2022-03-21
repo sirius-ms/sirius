@@ -49,6 +49,7 @@ jobs:
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.msi
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
   distGUI:
     strategy:
       matrix:
@@ -84,6 +85,7 @@ jobs:
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.msi
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
   distMulti:
     needs: distCLI
     runs-on: ubuntu-latest
@@ -129,7 +131,9 @@ jobs:
         with:
           retention-days: 1
           name: "sirius-${{ steps.sirius_version.outputs.value }}-multiOS-x86-64-headless"
-          path: ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
+          path: |
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
       - name: Delete img artifacts
         uses: geekyeggo/delete-artifact@v1
         with:
