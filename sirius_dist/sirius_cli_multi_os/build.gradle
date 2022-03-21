@@ -151,6 +151,7 @@ publishing {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${multiOSImageZip.outputs.files.singleFile}", classifier: "multiOS-headless", extension: 'zip'
+            artifact source: "${multiOSImageZip.outputs.files.singleFile}.sha256", classifier: "multiOS-headless", extension: 'zip.sha256'
         }
     }
 }
