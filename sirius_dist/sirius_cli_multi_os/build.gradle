@@ -1,3 +1,5 @@
+import org.gradle.crypto.checksum.Checksum
+
 import java.nio.file.Files
 
 dependencies {
@@ -141,7 +143,16 @@ task multiOSImageZip(dependsOn: multiOSImage, group: 'distribution') {
     }
 }
 
+task multiOSCreateChecksums(type: Checksum) {
+    mustRunAfter('multiOSImageZip')
+    inputFiles.setFrom(multiOSImageZip.outputs.files.singleFile)
+    outputDirectory.set(file("$buildDir/distributions"))
+    checksumAlgorithm.set(Checksum.Algorithm.SHA256)
+    appendFileNameToChecksum.set(true)
+}
 
+
+distribution.dependsOn(multiOSCreateChecksums)
 distribution.dependsOn 'multiOSImage'
 distribution.dependsOn 'multiOSImageZip'
 

@@ -30,7 +30,7 @@ jobs:
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         with:
-          gradle-version: 6.8
+          gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_cli_single_os
           arguments: clean publishSiriusPublicationToMavenLocal
       - name: Upload multiOS Source
@@ -72,7 +72,7 @@ jobs:
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         with:
-          gradle-version: 6.8
+          gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_gui_single_os
           arguments: clean publishSiriusPublicationToMavenLocal
       - name: Upload Zip Distributions
@@ -123,7 +123,7 @@ jobs:
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         with:
-          gradle-version: 6.8
+          gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_cli_multi_os
           arguments: publishSiriusPublicationToMavenLocal
       - name: Upload Distributions

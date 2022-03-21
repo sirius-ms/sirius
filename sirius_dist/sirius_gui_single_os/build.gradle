@@ -40,6 +40,7 @@ distInstaller {
     linuxShortcut = true
 }
 
+distribution.dependsOn(createChecksums)
 distribution.dependsOn 'distImageZip'
 if (!OS.isLinux()) {
     distribution.dependsOn 'distInstaller'
