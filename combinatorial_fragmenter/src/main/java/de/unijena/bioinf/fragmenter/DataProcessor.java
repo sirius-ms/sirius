@@ -72,7 +72,7 @@ public class DataProcessor {
             for(int i = startIndex; i < endIndex; i++){
                 this.fileNames[i - startIndex] = filteredFTreeFileNames.get(i).replaceFirst("\\.json", "");
             }
-            System.out.println("The "+idxPartition+"-th partition with "+this.fileNames.length+" instances was created.");
+            System.out.println("The "+(idxPartition+1)+"-th partition with "+this.fileNames.length+" instances was created.");
         }else{
             throw new RuntimeException("The given abstract pathnames don't exist or aren't a directory.");
         }
@@ -141,7 +141,7 @@ public class DataProcessor {
                     System.out.println("Task "+fileName+": Save results.");
                     CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
                 }catch (UnknownElementException | IOException | CDKException e) {
-                    System.out.println("Task "+fileName+": AN ERROR OCCURED!");
+                    System.out.println("Task "+fileName+": AN ERROR OCCURRED!");
                     e.printStackTrace();
                 }
             });
@@ -166,12 +166,19 @@ public class DataProcessor {
             int idxPartition = Integer.parseInt(args[5]);
 
             DataProcessor dataProcessor = new DataProcessor(spectraDir, fTreeDir, outputDir, numPartitions, idxPartition);
+            promptEnterKeyToContinue("The DataProcessor is initialised. Press ENTER to start processing...");
             dataProcessor.run(node -> node.depth < fragmentationDepth);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
+    private static void promptEnterKeyToContinue(String msg){
+        try(Scanner scanner = new Scanner(System.in)){
+            System.out.println(msg);
+            scanner.nextLine();
+        }
+    }
 
 
 }
