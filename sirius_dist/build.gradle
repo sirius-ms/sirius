@@ -545,6 +545,7 @@ abstract class AppImage extends DefaultTask {
     AppImage() {
         imageName = project.name
         jvmArgs = []
+        args = []
         version = project.OS.isLinux() ? project.version : project.version.replace('-SNAPSHOT', '')
         winConsole = false
         inputDir = project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
