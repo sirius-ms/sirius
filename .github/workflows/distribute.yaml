@@ -167,4 +167,12 @@ jobs:
           allowUpdates: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
           draft: ${{ env.GITHUB_REF_SLUG == 'stable' && 'false' || 'true' }}
           token: ${{ secrets.GITHUB_TOKEN }}
-
+      - uses: MCJack123/ghaction-generate-release-hashes@v1
+        with:
+          hash-type: sha256
+          file-name: sha256.txt
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Asset Hashes for release Artifacts
+          path: sha256.txt
+`
