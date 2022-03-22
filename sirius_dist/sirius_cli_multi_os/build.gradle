@@ -166,4 +166,4 @@ publishing {
         }
     }
 }
-publishSiriusWithchecksumsPublicationToMavenLocal.dependsOn 'distribution'
+publishSiriusWithChecksumsPublicationToMavenLocal.dependsOn 'distribution'
