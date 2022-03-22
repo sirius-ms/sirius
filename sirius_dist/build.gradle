@@ -188,10 +188,6 @@ task downloadManual(type: Download, group: 'documentation') {
 subprojects {
     apply plugin: 'edu.sc.seis.launch4j'
 
-    installDist {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    }
-
     jar {
         enabled = false
     }
@@ -516,42 +512,28 @@ abstract class ExtractRuntime extends DefaultTask {
 
 abstract class AppImage extends DefaultTask {
 
-    @InputDirectory
     File inputDir
-    @InputFile
     File jpackagerBin
-    @OutputDirectory
     File outputDir
-    @Input
     String imageName
-    @Input
     String[] jvmArgs
-    @Input
     String[] args
-    @Input
     String version
-    @Input
     String mainClass
-    @Input
     String mainJarName
-    @InputDirectory
     File runtimeImageDirectory
-    @Input
     boolean winConsole
-    @Input
     Map<String, File> launchers = [:]
 
     /*--mac-package-name name string
     Name of the application as it appears in the Menu Bar.
     This can be different from the application name.
     This name must be less than 16 characters long and be suitable for displaying in the menu bar and the application Info window. Defaults to the application name.*/
-    @Input
     String macPackageName = null
 
     AppImage() {
         imageName = project.name
         jvmArgs = []
-        args = []
         version = project.OS.isLinux() ? project.version : project.version.replace('-SNAPSHOT', '')
         winConsole = false
         inputDir = project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
