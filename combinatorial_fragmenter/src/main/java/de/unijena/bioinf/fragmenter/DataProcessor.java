@@ -55,7 +55,14 @@ public class DataProcessor {
              * Create the 'idxPartition'-th partition of 'filteredFTreeFileNames.
              */
             System.out.println("Partition the data set into "+numPartitions+" partitions.");
+
+            /* First, sort 'filteredFTreeFileNames' lexicographically - just in case that
+             * 'File.list()' is not reproducible due to system properties.
+             * Second, shuffle 'filteredFTreeFileNames' to distribute the instances equally between the partitions.
+             */
+            Collections.sort(filteredFTreeFileNames);
             Collections.shuffle(filteredFTreeFileNames, new Random(SHUFFLE_SEED));
+
             int lengthPartition = filteredFTreeFileNames.size() / numPartitions;
             int rest = filteredFTreeFileNames.size() - (lengthPartition * numPartitions);
 
