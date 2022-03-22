@@ -158,7 +158,7 @@ distribution.dependsOn 'multiOSImageZip'
 
 publishing {
     publications {
-        sirius(org.gradle.api.publish.maven.MavenPublication) {
+        siriusWithchecksums(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${multiOSImageZip.outputs.files.singleFile}", classifier: "multiOS-headless", extension: 'zip'
@@ -166,4 +166,4 @@ publishing {
         }
     }
 }
-publishSiriusPublicationToMavenLocal.dependsOn 'distribution'
+publishSiriusWithchecksumsPublicationToMavenLocal.dependsOn 'distribution'
