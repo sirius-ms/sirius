@@ -32,7 +32,7 @@ jobs:
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_cli_single_os
-          arguments: clean publishSiriusPublicationToMavenLocal
+          arguments: clean publishSiriusWithchecksumsPublicationToMavenLocal
       - name: Upload multiOS Source
         uses: actions/upload-artifact@v2
         with:
@@ -74,7 +74,7 @@ jobs:
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_gui_single_os
-          arguments: clean publishSiriusPublicationToMavenLocal
+          arguments: clean publishSiriusWithchecksumsPublicationToMavenLocal
       - name: Upload Zip Distributions
         uses: actions/upload-artifact@v2
         with:
@@ -125,7 +125,7 @@ jobs:
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_cli_multi_os
-          arguments: publishSiriusPublicationToMavenLocal
+          arguments: publishSiriusWithchecksumsPublicationToMavenLocal
       - name: Upload Distributions
         uses: actions/upload-artifact@v2
         with:
