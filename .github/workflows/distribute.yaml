@@ -32,7 +32,7 @@ jobs:
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_cli_single_os
-          arguments: clean publishSiriusWithChecksumsPublicationToMavenLocal
+          arguments: clean publishSiriusPublicationToMavenLocal
       - name: Upload multiOS Source
         uses: actions/upload-artifact@v2
         with:
@@ -45,11 +45,11 @@ jobs:
           retention-days: 1
           name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64-headless"
           path: |
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.zip
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.msi
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.pkg
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.deb
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.sha256
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.msi
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
   distGUI:
     strategy:
       matrix:
@@ -74,18 +74,18 @@ jobs:
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_gui_single_os
-          arguments: clean publishSiriusWithChecksumsPublicationToMavenLocal
+          arguments: clean publishSiriusPublicationToMavenLocal
       - name: Upload Zip Distributions
         uses: actions/upload-artifact@v2
         with:
           retention-days: 1
           name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64"
           path: |
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.zip
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.msi
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.pkg
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.deb
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.sha256
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.msi
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
   distMulti:
     needs: distCLI
     runs-on: ubuntu-latest
@@ -125,15 +125,15 @@ jobs:
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_cli_multi_os
-          arguments: publishSiriusWithChecksumsPublicationToMavenLocal
+          arguments: publishSiriusPublicationToMavenLocal
       - name: Upload Distributions
         uses: actions/upload-artifact@v2
         with:
           retention-days: 1
           name: "sirius-${{ steps.sirius_version.outputs.value }}-multiOS-x86-64-headless"
           path: |
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.zip
-            ~/.m2/repository/de/unijena/bioinf/ms/siriusWithChecksums/${{ steps.sirius_version.outputs.value }}/*.sha256
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
+            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
       - name: Delete img artifacts
         uses: geekyeggo/delete-artifact@v1
         with:
