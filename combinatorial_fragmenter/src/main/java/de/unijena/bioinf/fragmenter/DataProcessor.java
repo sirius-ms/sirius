@@ -122,48 +122,88 @@ public class DataProcessor {
         return fTree;
     }
 
+    private ArrayList<String[]> divideInstancesIntoBatches(int numOfBatches){
+        if(this.fileNames.length <= numOfBatches){
+            ArrayList<String[]> batches = new ArrayList<>(this.fileNames.length);
+            for(String fileName : this.fileNames){
+                String[] batch = new String[]{fileName};
+                batches.add(batch);
+            }
+            return batches;
+        }else{
+            ArrayList<String[]> batches = new ArrayList<>(numOfBatches);
+            int numInstancesPerBatch = this.fileNames.length / numOfBatches;
+            int rest = this.fileNames.length - (numInstancesPerBatch * numOfBatches);
+
+            for(int i = 0; i < numOfBatches; i++){
+                int startIndex, endIndex; // startIndex is inclusive, endIndex is exclusive
+                if(i < rest){
+                    startIndex = i * (numInstancesPerBatch + 1);
+                    endIndex = startIndex + numInstancesPerBatch + 1;
+                }else{
+                    startIndex = i * numInstancesPerBatch + rest;
+                    endIndex = startIndex + numInstancesPerBatch;
+                }
+                String[] batch = new String[endIndex - startIndex];
+                for(int j = startIndex; j < endIndex; j++){
+                    batch[j - startIndex] = this.fileNames[j];
+                }
+                batches.add(batch);
+            }
+            return batches;
+        }
+    }
+
     public void run(CombinatorialFragmenter.Callback2 fragmentationConstraint) throws InterruptedException {
         // INITIALISATION:
-        EMFragmenterScoring.rearrangementProb = 1.0; // don't punish hydrogen rearrangements at first
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        // Initialise the ExecutorServie and divide instances in NUM_CONCURRENT_THREADS batches.
+        System.out.println("Initialise ExecutorService and divide instances into equally sized batches...");
+        final int NUM_CONCURRENT_THREADS = Runtime.getRuntime().availableProcessors();
+        ExecutorService executor = Executors.newFixedThreadPool(NUM_CONCURRENT_THREADS);
+        ArrayList<String[]> batches = this.divideInstancesIntoBatches(NUM_CONCURRENT_THREADS);
 
-        // LOOP - ITERATE OVER ALL FILES:
-        // For each spectrum file and its corresponding FTree file, a new task, for computing the best subtree
-        // in the calculated in silico fragmentation graph and saving this result, will be submitted.
-        System.out.println("Collect all tasks...");
-        ArrayList<Callable<Object>> tasks = new ArrayList<>(this.fileNames.length);
-        for(String fileName : this.fileNames){
+        // LOOP - CREATE TASKS FOR EACH BATCH:
+        // For each batch, create a task which iterates over its instances.
+        // For each instance, compute the in silico fragmentation graph, compute the subtree using CriticalPath1 and
+        // save this result.
+        System.out.println("Each batch corresponds to one task. Collect all tasks...");
+        ArrayList<Callable<Object>> tasks = new ArrayList<>(batches.size());
+        for(String[] batch : batches){
             Callable<Object> task = Executors.callable(() -> {
-                try {
-                    System.out.println("Starting task: "+fileName);
-                    MolecularGraph molecule = this.readMolecule(fileName + ".ms");
-                    FTree fTree = this.readFTree(fileName + ".json");
-                    EMFragmenterScoring scoring = new EMFragmenterScoring(molecule);
+                for(String fileName : batch){
+                    try {
+                        System.out.println("Start processing instance: " + fileName);
+                        MolecularGraph molecule = this.readMolecule(fileName + ".ms");
+                        FTree fTree = this.readFTree(fileName + ".json");
+                        EMFragmenterScoring scoring = new EMFragmenterScoring(molecule);
 
-                    System.out.println("Task "+fileName+": Initialize and compute subtree.");
-                    CriticalPathSubtreeCalculator subtreeCalc = new CriticalPathSubtreeCalculator(fTree, molecule, scoring, true);
-                    subtreeCalc.initialize(fragmentationConstraint);
-                    subtreeCalc.computeSubtree();
+                        System.out.println(fileName+": Fragment and compute the subtree.");
+                        CriticalPathSubtreeCalculator subtreeCalc = new CriticalPathSubtreeCalculator(fTree, molecule, scoring, true);
+                        subtreeCalc.initialize(fragmentationConstraint);
+                        subtreeCalc.computeSubtree();
 
-                    System.out.println("Task "+fileName+": Save results.");
-                    CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
-                }catch (UnknownElementException | IOException | CDKException e) {
-                    System.out.println("Task "+fileName+": AN ERROR OCCURRED!");
-                    e.printStackTrace();
+                        System.out.println(fileName+": Save computed subtree and assignments.");
+                        CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
+                    }catch (UnknownElementException | IOException | CDKException e) {
+                        System.out.println(fileName+": AN ERROR OCCURRED.");
+                        e.printStackTrace();
+                    }
                 }
             });
             tasks.add(task);
         }
+
         // COMPUTING THE TASKS:
         // Wait, until all tasks terminated.
         System.out.println("Execute all tasks...");
         Collection<Future<Object>> futures = executor.invokeAll(tasks);
 
-        System.out.println("All tasks have been processed and the executor service will be shutdown.");
+        System.out.println(futures.size()+" many tasks of "+tasks.size()+" have been processed and the executor service will be shutdown.");
         executor.shutdown();
     }
 
     public static void main(String[] args){
+        EMFragmenterScoring.rearrangementProb = 1.0; // don't punish hydrogen rearrangements at first
         try{
             File spectraDir = new File(args[0]);
             File fTreeDir = new File(args[1]);
