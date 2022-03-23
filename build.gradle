@@ -354,7 +354,7 @@ artifactory {
         }
         defaults {
             //Publish every distribution to Artifactory
-            publications("sirius")
+            publications("siriusMS")
             publications("manual")
         }
     }

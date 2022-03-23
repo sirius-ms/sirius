@@ -48,14 +48,14 @@ if (!OS.isLinux()) {
 
 publishing {
     publications {
-        sirius(org.gradle.api.publish.maven.MavenPublication) {
+        siriusMS(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
             if (!OS.isLinux())
                 artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: osName, extension: installerNameType
         }
-        siriusWithChecksums(org.gradle.api.publish.maven.MavenPublication) {
+        sirius(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
@@ -68,4 +68,4 @@ publishing {
     }
 }
 publishSiriusPublicationToMavenLocal.dependsOn 'distribution'
-publishSiriusWithChecksumsPublicationToMavenLocal.dependsOn 'distribution'
+publishSiriusMSPublicationToMavenLocal.dependsOn 'distribution'
