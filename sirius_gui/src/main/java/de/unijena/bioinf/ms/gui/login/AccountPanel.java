@@ -96,8 +96,9 @@ public class AccountPanel extends JPanel {
             login.setAction(SiriusActions.SIGN_IN.getInstance());
         } else {
             try {
-                Image image = ImageIO.read(new URL(userInfo.getClaim("picture").asString()));//Toolkit.getDefaultToolkit().getImage();
+                Image image = ImageIO.read(new URL(userInfo.getClaim("picture").asString()));
                 image = Icons.makeEllipse(image);
+                image = Icons.scaledInstance(image, 128, 128);
 
                 userIconLabel.setIcon(new ImageIcon(image));
             } catch (Throwable e) {
