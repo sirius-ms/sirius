@@ -229,4 +229,21 @@ public abstract class Icons {
     public static Image scaledInstance(Image image, int width, int height) {
         return image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
     }
+
+    public static Image scaledInstance(Image image, int longSide) {
+        int w = ((BufferedImage) image).getWidth();
+        int h = ((BufferedImage) image).getHeight();
+
+        if (w > h) {
+            h = (int) (h * ((double) w / (double) longSide));
+            w = longSide;
+        } else if (w < h) {
+            w = (int) (w * ((double) h / (double) longSide));
+            h = longSide;
+        } else {
+            w = longSide;
+            h = longSide;
+        }
+        return scaledInstance(image, w, h);
+    }
 }
