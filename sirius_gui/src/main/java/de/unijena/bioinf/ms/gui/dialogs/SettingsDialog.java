@@ -141,7 +141,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
                 }
             }.execute();
             if (restartMessage)
-                new ExceptionDialog(this, "For at least one change you made requires a restart of Sirius.");
+                new InfoDialog(this, "At least one change you made requires a restart of Sirius to take effect.");
             this.dispose();
         }
     }
