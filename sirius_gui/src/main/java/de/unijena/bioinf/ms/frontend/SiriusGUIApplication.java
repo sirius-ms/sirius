@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.frontend.splash.Splash;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -31,6 +32,7 @@ import de.unijena.bioinf.ms.frontend.workfow.GuiInstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workfow.GuiWorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfiguration;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
@@ -38,10 +40,14 @@ import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintSerializerG
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesSerializerGUI;
-import de.unijena.bioinf.projectspace.FormulaResult;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Properties;
 import java.util.function.Supplier;
 
 /**
@@ -51,6 +57,25 @@ import java.util.function.Supplier;
 public class SiriusGUIApplication extends SiriusCLIApplication {
 
     public static void main(String[] args) {
+        {
+            Path propsFile = Workspace.siriusPropsFile;
+            //override VM defaults from OS
+            if (!System.getProperties().containsKey("sun.java2d.uiScale"))
+                System.setProperty("sun.java2d.uiScale", "1");
+            //override with stored value if available
+            if (Files.exists(propsFile)) {
+                Properties props = new Properties();
+                try (BufferedReader r = Files.newBufferedReader(propsFile)) {
+                    props.load(r);
+                    if (props.containsKey("sun.java2d.uiScale"))
+                        System.setProperty("sun.java2d.uiScale", props.getProperty("sun.java2d.uiScale"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
         final Splash splash = Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("gui")) ? new Splash() : null;
         if (splash == null) {
             SiriusCLIApplication.main(args);

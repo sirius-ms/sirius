@@ -44,15 +44,15 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Handler;
 import java.util.logging.LogManager;
 import java.util.logging.SimpleFormatter;
+
+import static de.unijena.bioinf.ms.frontend.core.Workspace.*;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -60,7 +60,7 @@ import java.util.logging.SimpleFormatter;
 public abstract class ApplicationCore {
     public static final Logger DEFAULT_LOGGER;
 
-    public static final Path WORKSPACE;
+
     public static final Path TOKEN_FILE;
 
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
@@ -85,57 +85,10 @@ public abstract class ApplicationCore {
             t1 = System.currentTimeMillis();
         measureTime("Start AppCore");
         try {
-            System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
-
+            //init static block (does not work via static import Oo)
+            Path it = WORKSPACE;
             final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
-            final String[] versionParts = version.split("[.]");
-            //#################### start init workspace ################################
-            measureTime("Start init Workspace");
-            final String home = System.getProperty("user.home");
-            String defaultFolderName = PropertyManager.getProperty("de.unijena.bioinf.sirius.ws.default.name", null, ".sirius");
-            if (versionParts != null && versionParts.length > 1)
-                defaultFolderName = defaultFolderName + "-" + versionParts[0] + "." + versionParts[1];
-
-            final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(defaultFolderName);
-            final Map<String, String> env = System.getenv();
-            final String ws = env.get("SIRIUS_WORKSPACE");
-            if (ws != null) {
-                Path wsDir = Paths.get(ws);
-                if (Files.isDirectory(wsDir)) {
-                    WORKSPACE = wsDir;
-                } else if (Files.notExists(wsDir)) {
-                    try {
-                        Files.createDirectories(wsDir);
-                    } catch (IOException e) {
-                        System.err.println("Could not create Workspace set in environment variable! Falling back to default Workspace - " + DEFAULT_WORKSPACE.toString());
-                        e.printStackTrace();
-                        wsDir = DEFAULT_WORKSPACE;
-                    } finally {
-                        WORKSPACE = wsDir;
-                    }
-                } else {
-                    System.err.println("WARNING: " + wsDir.toString() + " is not a directory! Falling back to default Workspace - " + DEFAULT_WORKSPACE.toString());
-                    WORKSPACE = DEFAULT_WORKSPACE;
-                }
-            } else {
-                WORKSPACE = DEFAULT_WORKSPACE;
-            }
-
-            if (Files.notExists(WORKSPACE)) {
-                try {
-                    Files.createDirectories(WORKSPACE);
-                } catch (IOException e) {
-                    System.err.println("Could NOT create Workspace");
-                    e.printStackTrace();
-                    System.exit(1);
-                }
-            }
-
             // create ws files
-            Path loggingPropFile = WORKSPACE.resolve("logging.properties");
-            Path siriusPropsFile = WORKSPACE.resolve("sirius.properties");
-            Path customProfileFile = WORKSPACE.resolve("custom.config");
-            Path versionFile = WORKSPACE.resolve("version");
             try {
                 if (Files.exists(versionFile)) {
                     List<String> lines = Files.readAllLines(versionFile);
