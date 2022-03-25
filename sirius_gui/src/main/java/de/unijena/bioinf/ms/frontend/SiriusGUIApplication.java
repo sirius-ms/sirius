@@ -57,6 +57,10 @@ import java.util.function.Supplier;
 public class SiriusGUIApplication extends SiriusCLIApplication {
 
     public static void main(String[] args) {
+        //run gui if not parameter ist given, to get rid of a second launcher
+        if (args == null || args.length == 0)
+            args = new String[]{"gui"};
+
         {
             Path propsFile = Workspace.siriusPropsFile;
             //override VM defaults from OS
@@ -92,6 +96,7 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
                 t1 = System.currentTimeMillis();
 
             try {
+                final String[] finalArgs = args;
                 TinyBackgroundJJob<Object> j = new TinyBackgroundJJob<>() {
                     @Override
                     protected Object compute() throws Exception {
@@ -109,7 +114,7 @@ public class SiriusGUIApplication extends SiriusCLIApplication {
 
                         measureTime("Start Run method");
                         updateProgress(0, 7, 3, "Configure Workflows... ");
-                        run(args, () -> {
+                        run(finalArgs, () -> {
                             final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
                             CLIRootOptions rootOptions = new CLIRootOptions<>(configOptionLoader, new GuiProjectSpaceManagerFactory());
                             updateProgress(0, 7, 4, "Firing up SIRIUS... ");

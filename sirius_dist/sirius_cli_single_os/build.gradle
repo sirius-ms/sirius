@@ -19,7 +19,11 @@ distImage {
     macPackageName = 'SIRIUS-headless'
 }
 
-distribution.dependsOn(createChecksums)
+distribution.dependsOn 'signDistImage'
+distribution.dependsOn 'signDistInstaller'
+if (project.OS.isMacOsX())
+    distribution.dependsOn 'macNotarize'
+distribution.dependsOn 'createChecksums'
 distribution.dependsOn 'distImageZip'
 if (!OS.isLinux())
     distribution.dependsOn 'distInstaller'
