@@ -35,7 +35,7 @@ public class CombinatorialSubtreeCalculatorJsonReader {
 
     private static void addBondToList(ArrayList<String> cuttedBonds, JsonNode cutNode, JacksonDocument json){
         if(!cutNode.isNull()){
-            String bondName = json.getString(cutNode);
+            String bondName = json.getString(cutNode.get("bondNameSpecific"));
             cuttedBonds.add(bondName);
         }
     }

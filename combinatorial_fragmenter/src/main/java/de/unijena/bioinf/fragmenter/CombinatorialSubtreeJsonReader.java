@@ -1,7 +1,6 @@
 package de.unijena.bioinf.fragmenter;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.data.JacksonDocument;
@@ -12,8 +11,7 @@ import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -95,7 +93,7 @@ public class CombinatorialSubtreeJsonReader {
         return BitSet.valueOf(longs);
     }
 
-    private static IBond getBondFromJsonNode(MolecularGraph molecule, JsonNode jsonNode, JacksonDocument json) {
+    private static IBond getBondFromJsonNode(MolecularGraph molecule, JsonNode jsonNode, JacksonDocument json) throws IOException{
         if (jsonNode.isNull()) return null;
 
         final int idxFirstAtom = json.getFromDictionary(jsonNode, "indexFirstAtom").asInt();
