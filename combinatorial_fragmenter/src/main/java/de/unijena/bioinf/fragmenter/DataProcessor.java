@@ -81,7 +81,7 @@ public class DataProcessor {
             }
             System.out.println("The "+(idxPartition+1)+"-th partition with "+this.fileNames.length+" instances was created.");
         }else{
-            throw new RuntimeException("The given abstract pathnames don't exist or aren't a directory.");
+            throw new RuntimeException("The given abstract path names don't exist or aren't a directory.");
         }
     }
 
@@ -156,38 +156,40 @@ public class DataProcessor {
 
     public void run(CombinatorialFragmenter.Callback2 fragmentationConstraint) throws InterruptedException {
         // INITIALISATION:
-        // Initialise the ExecutorServie and divide instances in NUM_CONCURRENT_THREADS batches.
-        System.out.println("Initialise ExecutorService and divide instances into equally sized batches...");
+        // Initialise the ExecutorService:
+        System.out.println("Initialise ExecutorService...");
         final int NUM_CONCURRENT_THREADS = Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(NUM_CONCURRENT_THREADS);
-        ArrayList<String[]> batches = this.divideInstancesIntoBatches(NUM_CONCURRENT_THREADS);
 
-        // LOOP - CREATE TASKS FOR EACH BATCH:
-        // For each batch, create a task which iterates over its instances.
-        // For each instance, compute the in silico fragmentation graph, compute the subtree using CriticalPath1 and
-        // save this result.
-        System.out.println("Each batch corresponds to one task. Collect all tasks...");
-        ArrayList<Callable<Object>> tasks = new ArrayList<>(batches.size());
-        for(String[] batch : batches){
+        // LOOP - CREATE TASKS FOR EACH INSTANCE:
+        // For each instance, create a task which computes the in silico fragmentation graph, computes the subtree using
+        // CriticalPath1 and saves the result into a JSON file.
+        System.out.println("Each instance corresponds to one task. Collect all tasks...");
+        ArrayList<Callable<Object>> tasks = new ArrayList<>(this.fileNames.length);
+        for(String fileName : this.fileNames){
             Callable<Object> task = Executors.callable(() -> {
-                for(String fileName : batch){
-                    try {
-                        System.out.println("Start processing instance: " + fileName);
-                        MolecularGraph molecule = this.readMolecule(fileName + ".ms");
-                        FTree fTree = this.readFTree(fileName + ".json");
-                        EMFragmenterScoring scoring = new EMFragmenterScoring(molecule);
+                try {
+                    MolecularGraph molecule = this.readMolecule(fileName + ".ms");
+                    FTree fTree = this.readFTree(fileName + ".json");
+                    EMFragmenterScoring scoring = new EMFragmenterScoring(molecule);
 
-                        System.out.println(fileName+": Fragment and compute the subtree.");
-                        CriticalPathSubtreeCalculator subtreeCalc = new CriticalPathSubtreeCalculator(fTree, molecule, scoring, true);
-                        subtreeCalc.initialize(fragmentationConstraint);
-                        subtreeCalc.computeSubtree();
+                    CriticalPathSubtreeCalculator subtreeCalc = new CriticalPathSubtreeCalculator(fTree, molecule, scoring, true);
+                    subtreeCalc.initialize(fragmentationConstraint);
+                    subtreeCalc.computeSubtree();
 
-                        System.out.println(fileName+": Save computed subtree and assignments.");
-                        CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
-                    }catch (UnknownElementException | IOException | CDKException e) {
-                        System.out.println(fileName+": AN ERROR OCCURRED.");
-                        e.printStackTrace();
+                    CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
+                }catch (CDKException | UnknownElementException | IOException e) {
+                    System.out.println("An error occurred during processing instance "+fileName);
+                    File resultFile = new File(this.outputDir, fileName + ".json");
+                    if(resultFile.exists()){
+                        boolean wasDeleted = resultFile.delete();
+                        if(wasDeleted) {
+                            System.out.println(fileName+".json was successfully deleted.");
+                        }else{
+                            System.out.println("Could not delete "+fileName+".json.");
+                        }
                     }
+                    e.printStackTrace();
                 }
             });
             tasks.add(task);
@@ -198,7 +200,7 @@ public class DataProcessor {
         System.out.println("Execute all tasks...");
         Collection<Future<Object>> futures = executor.invokeAll(tasks);
 
-        System.out.println(futures.size()+" many tasks of "+tasks.size()+" have been processed and the executor service will be shutdown.");
+        System.out.println(futures.size()+" tasks of "+tasks.size()+" have been processed and the executor service will be shutdown.");
         executor.shutdown();
     }
 
