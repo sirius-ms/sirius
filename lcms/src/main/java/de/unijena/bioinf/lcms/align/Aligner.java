@@ -42,6 +42,7 @@ import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.quality.AlignmentQuality;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
+import de.unijena.bioinf.recal.MzRecalibration;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
@@ -397,7 +398,8 @@ public class Aligner {
                                 }
                                 final double[] X = Spectrums.copyMasses(buff);
                                 final double[] Y = Spectrums.copyIntensities(buff);
-                                s.setRecalibrationFunction(new LoessFunction(new LoessInterpolator().interpolate(X, Y)));
+                                s.setRecalibrationFunction(MzRecalibration.getMedianLinearRecalibration(X, Y));
+                                //s.setRecalibrationFunction(new LoessFunction(new LoessInterpolator().interpolate(X, Y)));
                                 System.out.println(s.run.getSource() + " :: " + s.getRecalibrationFunction());
                             } else {
                                 System.out.println("Not enough aligned features to recalibrate " + s.run.getSource());
