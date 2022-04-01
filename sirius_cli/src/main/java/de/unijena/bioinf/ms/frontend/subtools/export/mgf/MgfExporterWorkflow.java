@@ -103,7 +103,14 @@ public class MgfExporterWorkflow implements Workflow {
                 final Ms2Experiment experiment = i.getExperiment();
                 getQuantificationTable(i, experiment).ifPresent(quant->{
                     for (int j=0; j < quant.length(); ++j) sampleNames.add(quant.getName(j));
-                    compounds.put(experiment.getName(), new QuantInfo(
+                    String id;
+                    if (compounds.containsKey(experiment.getName())) {
+                        LoggerFactory.getLogger(MgfExporterWorkflow.class).warn("Features with duplicate names detected: '" + experiment.getName() + "'. Use directory name instead.");
+                        id = i.getID().getDirectoryName();
+                    } else {
+                        id = experiment.getName();
+                    }
+                    compounds.put(id, new QuantInfo(
                             experiment.getIonMass(),
                             experiment.getAnnotation(RetentionTime.class).orElse(new RetentionTime(0d)).getRetentionTimeInSeconds() / 60d, //use min
                             quant
