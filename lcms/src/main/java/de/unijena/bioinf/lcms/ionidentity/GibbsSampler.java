@@ -66,16 +66,12 @@ class GibbsSampler {
         int repetitions = 10000;
         int recordEvery = 10;
         int totalSamples = repetitions/recordEvery;
-        if (nodes.stream().anyMatch(x->(int)(10*x.mz) == 5092)) {
-            System.out.println("debug!");
-        }
         gibbsSampling(nodes, edges, posteriorCount, repetitions,recordEvery);
         // compute marginals
         for (int i=0; i < nodes.size(); ++i) {
             for (int j=0; j < posteriorCount[i].length; ++j) {
                 nodes.get(i).assignment.probabilities[j] = ((float)posteriorCount[i][j]) / totalSamples;
             }
-            System.out.println(nodes.get(i).assignment);
         }
     }
 
@@ -94,10 +90,14 @@ class GibbsSampler {
             for (int i = 0; i < nodes.size(); ++i) {
                 IonNode node = nodes.get(i);
                 double[] probs = buf[i], drw = draw[i];
-                double total = 0;
+                double max = Double.NEGATIVE_INFINITY;
                 for (int j=0; j < probs.length; ++j) {
                     probs[j] = node.activeAssignment==j ? score : probabilityUpdate(node, j, score);
-                    drw[j] = Math.exp(probs[j]/LAMBDA);
+                    max = Math.max(probs[j], max);
+                }
+                double total = 0d;
+                for (int j=0; j < probs.length; ++j) {
+                    drw[j] = Math.exp(probs[j]-max);
                     total += drw[j];
                 }
                 double randomNumber = r.nextDouble()*total;

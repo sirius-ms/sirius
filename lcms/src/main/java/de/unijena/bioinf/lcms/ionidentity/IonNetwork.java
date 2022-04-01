@@ -123,7 +123,8 @@ public class IonNetwork {
 
         final float quantile25 = (float)getSignalThreshold();
         nodes.forEach(node->node.priorForUnknownIonType = scoreNode(node,quantile25));
-
+        float average = (float)nodes.stream().mapToDouble(x->x.priorForUnknownIonType).average().orElse(0d);
+        nodes.forEach(x->x.priorForUnknownIonType = Math.max(x.priorForUnknownIonType,average));
 
         try (final PrintStream OUT = new PrintStream("edge_scores.txt")){
             for (IonNode node : nodes) {
@@ -300,9 +301,6 @@ public class IonNetwork {
 
                 for (var p : lnks.entrySet()) {
                     // if we have more than 10 samples, we only add edges if we see a correlation in at least two samples
-                    if (((int)Math.round(node.mz*10) == 4872) || (int)Math.round(node.mz * 10.0D) == 5092) {
-                        System.out.println("DEBUG!");
-                    }
                     if (node.getFeature().getFeatures().keySet().size()<10 || p.getValue().size()>1) {
                         // now add the edge into the graph
                         final Edge edge = new Edge(node, link.associatedNode, Edge.Type.ADDUCT, p.getKey().getLeft(), p.getKey().getRight());
@@ -327,15 +325,24 @@ public class IonNetwork {
     }
 
     private void scoreEdge(Map.Entry<Pair<PrecursorIonType, PrecursorIonType>, List<CorrelatedIon>> p, Edge edge, double signalThreshold) {
-        final double intraSampleCorrelationScore = (float) p.getValue().stream().mapToDouble(x->-Math.log(Math.max(0.01, 1.0-x.correlation.score)) + Math.log(0.5)).sum();
+
+        final double[] intraSampleCorrelationScores = p.getValue().stream().mapToDouble(x->-Math.log(Math.max(0.01, 1.0-x.correlation.score)) + Math.log(0.5)).toArray();
+        Arrays.sort(intraSampleCorrelationScores);
+        double intraSampleCorrelationScore = 0d;
+        for (int i=0; i < intraSampleCorrelationScores.length; ++i) {
+            intraSampleCorrelationScore += intraSampleCorrelationScores[i];
+        }
 
 
         // DEBUG
         edge.evidencesIntra = p.getValue().size();
+        edge.debugScoreIntra = intraSampleCorrelationScore;
 
         //final double[] interSampleCorrelationScore = edge.calculateInterSampleCorrelation(signalThreshold);
         //final double weighted = interSampleCorrelationScore[0]*interSampleCorrelationScore[3];
-        edge.score = (float)(intraSampleCorrelationScore+edge.calculateEdgeScore(signalThreshold));//(float)(intraSampleCorrelationScore + weighted);
+        final double scoreExtra = edge.calculateEdgeScore(signalThreshold);
+        edge.debugScoreExtra = scoreExtra;
+        edge.score = (float)(intraSampleCorrelationScore+ scoreExtra);//(float)(intraSampleCorrelationScore + weighted);
     }
 
     private static class Link {
