@@ -43,7 +43,7 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
     protected Iterator<FragmentedIon> ions;
     protected ProcessedSample sample;
     protected LCMSProccessingInstance instance;
-
+    protected int counter = 0;
 
     protected abstract boolean setNewSource(BufferedReader sourceReader, URI source);
 
@@ -59,14 +59,14 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
                 sample = instance.addSample(run, inMemoryStorage);
                 instance.detectFeatures(sample);
 
-                ions = Iterators.filter(sample.ions.iterator(), i -> i!=null && Math.abs(i.getChargeState()) <= 1
+                ions = Iterators.filter(sample.ions.iterator(), i -> i != null && Math.abs(i.getChargeState()) <= 1
                         // TODO: kaidu: maybe we can add some parameter for that? But Marcus SpectralQuality is not flexible enough for this
-                        && i.getMsMsQuality().betterThan(Quality.BAD) );
+                        && i.getMsMsQuality().betterThan(Quality.BAD));
             }
 
             if (ions.hasNext()) {
                 Feature feature = instance.makeFeature(sample, ions.next(), false);
-                return feature.toMsExperiment();
+                return feature.toMsExperiment(sample.run.getIdentifier() + "_" + String.valueOf(counter++));
             } else {
                 instance = null;
                 inMemoryStorage = null;
@@ -76,13 +76,13 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
             }
         } catch (Throwable e) {
             LoggerFactory.getLogger(AbstractMzParser.class).error("Error while parsing " + source + ": " + e.getMessage());
-            if (e instanceof InvalidInputData){
+            if (e instanceof InvalidInputData) {
                 return null;
-            } else  if (e instanceof IOException) {
-                throw (IOException)e;
+            } else if (e instanceof IOException) {
+                throw (IOException) e;
             } else {
                 throw new IOException(e);
             }
         }
-        }
+    }
 }

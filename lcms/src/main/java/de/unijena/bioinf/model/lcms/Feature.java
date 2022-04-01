@@ -149,11 +149,11 @@ public class Feature implements Annotated<DataAnnotation> {
         return annotations;
     }
 
-    public Ms2Experiment toMsExperiment() {
+    public Ms2Experiment toMsExperiment(String name) {
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         final Trace peak = traceset.getIonTrace().getMonoisotopicPeak();
         int apex = traceset.getScanIds()[peak.getAbsoluteIndexApex()];
-        exp.setName(String.valueOf(apex));
+        exp.setName(name);
         exp.setPrecursorIonType(ionType);
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(getCorrelatedFeatures()));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
