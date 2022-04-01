@@ -35,11 +35,16 @@ import java.util.*;
 
 class Edge {
 
+    public double debugScoreIntra = 0f, debugScoreExtra = 0f;
+
     public Edge reverse() {
         final Edge e = new Edge(to,from,type,toType,fromType);
         e.cor = cor.invert();
         e.score = score;
         e.totalNumberOfCorrelatedPeaks = totalNumberOfCorrelatedPeaks;
+        //
+        e.debugScoreIntra = debugScoreIntra;
+        e.debugScoreExtra = debugScoreExtra;
         return e;
     }
 
@@ -168,11 +173,11 @@ class Edge {
                     break;
                 }
             }
-            if (!found || left.size()<=2) return 0d;
+            if (!found || left.size()<=4) return 0d;
 
             final double correlation = Statistics.pearson(left.toArray(), right.toArray());
             if (left.size()>evidencesInter) evidencesInter=left.size(); // DEBUG
-            return left.size() * (-Math.log(Math.max(0.01d, 1d- (correlation*correlation))) + Math.log(0.4d));
+            return left.size() * (-Math.log(Math.max(0.01d, 1d-correlation)) + Math.log(1d-0.8d));
 
         }
     }

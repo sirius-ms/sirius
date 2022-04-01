@@ -46,7 +46,12 @@ public class MzMLParser implements LCMSParser {
 
     @Override
     public LCMSRun parse(File file, SpectrumStorage storage) throws IOException {
-        return parse(new DataSource(file), new MzMLUnmarshaller(file), storage);
+        try {
+            return parse(new DataSource(file), new MzMLUnmarshaller(file), storage);
+        } catch (Throwable w) {
+            LoggerFactory.getLogger(MzMLParser.class).error("Error when parsing file: " + file.getName());
+            throw w;
+        }
     }
 
     public LCMSRun parse(URI source, SpectrumStorage storage) throws IOException {

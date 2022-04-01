@@ -33,6 +33,8 @@ public class Ms1Ms2Pairing {
     private final ProcessedSample ms1;
     private final ProcessedSample[] msmsRuns;
 
+    private IsolationWindow isolationWindow = null;
+
     public Ms1Ms2Pairing(ProcessedSample ms1, ProcessedSample... msmsRuns) {
         this.ms1 = ms1;
         ms1.setMs2NoiseModel(msmsRuns[0].ms2NoiseModel, msmsRuns[0].ms2NoiseInformation);
@@ -93,6 +95,8 @@ public class Ms1Ms2Pairing {
         final PriorityQueue<Target> targetQueue = new PriorityQueue<>(Comparator.comparingDouble(x->-x.spectrum.totalTic()));
         // first we extract all m/z retention time pairs from MS/MS
         for (ProcessedSample msms : msmsRuns) {
+            if (isolationWindow==null)
+                isolationWindow = msms.learnIsolationWindow(instance, msms);
             final List<Target> targets = extractTargets(msms);
             // now search for the targets in the MS1 run
             searchMs1(ms1, targets, instance);
@@ -339,7 +343,7 @@ public class Ms1Ms2Pairing {
             progress=false;
             if (forward < rts.length && rts[forward] < rightBorder) {
                 final Scan scan = scans.get(forward);
-                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, ms1.getMs2IsolationWindowOrLearnDefault(scan, instance));
+                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, isolationWindow);
                 if (feature.isPresent() && feature.get().numberOfScans()>=5) {
                     return feature;
                 }
@@ -348,7 +352,7 @@ public class Ms1Ms2Pairing {
             }
             if (backward >= 0 && rts[backward] > leftBorder) {
                 final Scan scan = scans.get(backward);
-                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, ms1.getMs2IsolationWindowOrLearnDefault(scan, instance));
+                Optional<ChromatographicPeak> feature = ms1.builder.detect(scan, target.mz, isolationWindow);
                 if (feature.isPresent()) {
                     return feature;
                 }
