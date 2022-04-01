@@ -247,7 +247,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
     }
 
     private void info() {
-        final Ms2Experiment exp = instance.makeFeature(sample,specViewer.ion,false).toMsExperiment();
+        final Ms2Experiment exp = instance.makeFeature(sample,specViewer.ion,false).toMsExperiment("");
         final StringWriter s = new StringWriter();
         try (final BufferedWriter bw = new BufferedWriter(s)) {
             new JenaMsWriter().write(bw,exp);
