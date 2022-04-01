@@ -511,6 +511,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             this.graphCache = null;
             this.decomposition = null;
         }
+
+        @Override
+        public String identifier() {
+            return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z | " +decomposition.toString();
+        }
     }
 
 
