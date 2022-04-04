@@ -50,6 +50,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -168,8 +170,23 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             abort.addActionListener(e -> dispose());
             JButton showCommand = new JButton("Show Command");
             showCommand.addActionListener(e -> {
+                final String commandString = String.join(" ", makeCommand(new ArrayList<>()));
                 if (warnNoMethodIsSelected()) return;
-                new InfoDialog(owner, "Command:" + GuiUtils.formatToolTip(String.join(" ", makeCommand(new ArrayList<>()))));
+                new InfoDialog(owner, "Command:" + GuiUtils.formatToolTip(commandString)){
+                    @Override
+                    protected void decorateButtonPanel(JPanel boxedButtonPanel) {
+                        JButton copyCommand = new JButton("Copy Command");
+                        copyCommand.setToolTipText("Copy command to clipboard.");
+                        copyCommand.addActionListener(evt ->{
+                            StringSelection stringSelection = new StringSelection(commandString);
+                            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                            clipboard.setContents(stringSelection, null);
+                        });
+                        Arrays.stream(boxedButtonPanel.getComponents()).forEach(boxedButtonPanel::remove);
+                        boxedButtonPanel.add(copyCommand);
+                        super.decorateButtonPanel(boxedButtonPanel);
+                    }
+                };
             });
 
             rsouthPanel.add(showCommand);
