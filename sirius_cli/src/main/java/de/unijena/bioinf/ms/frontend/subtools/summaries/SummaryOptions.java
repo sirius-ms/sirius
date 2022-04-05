@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.export.tables.PredictionsOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -48,8 +49,14 @@ public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, St
     }
 
     @CommandLine.ArgGroup(exclusive = false, heading = "Include Predictions Table")
+    @Nullable
     protected PredictionsOptions predictionsOptions;
 
+    public boolean isAnyPredictionOptionSet(){
+        if (predictionsOptions == null)
+            return false;
+        return predictionsOptions.isAnyPredictionSet();
+    }
 
     @Override
     public SummarySubToolJob makePostprocessingJob(RootOptions<?, ?, ?> rootOptions, ParameterConfig config) {

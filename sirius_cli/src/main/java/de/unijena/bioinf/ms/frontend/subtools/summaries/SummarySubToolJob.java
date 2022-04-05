@@ -89,7 +89,7 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
             SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
             job.removePropertyChangeListener(listener);
 
-            if (options.predictionsOptions.isAnyPredictionSet()) {
+            if (options.isAnyPredictionOptionSet()) { // this includes options.predictionsOptions null check
                 Path root = options.compress
                         ? FileUtils.asZipFSPath(options.location, false, true, ZipCompressionMethod.DEFLATED)
                         : options.location;
