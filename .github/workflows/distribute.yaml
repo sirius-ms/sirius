@@ -51,6 +51,15 @@ jobs:
         name: Check Identities
         run: /usr/bin/security find-identity
 
+      - if: ${{ matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest'}}
+        name: Load generic installer codesign cert
+        id: generic_codesign_cert
+        uses: timheuer/base64-to-file@v1.1
+        with:
+          fileName: 'generic_installer_cert.p12'
+          encodedString: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
+
+
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         env:
@@ -58,6 +67,10 @@ jobs:
           MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
           MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
           MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
+          WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
+          WIN_INSTALLER_CERTIFICATE_PW: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}
+          WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}
+#          LINUX_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_cli_single_os
@@ -121,6 +134,14 @@ jobs:
         name: Check Identities
         run: /usr/bin/security find-identity
 
+      - if: ${{ matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest'}}
+        name: Load generic installer codesign cert
+        id: generic_codesign_cert
+        uses: timheuer/base64-to-file@v1.1
+        with:
+          fileName: 'generic_installer_cert.p12'
+          encodedString: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
+
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         env:
@@ -128,6 +149,9 @@ jobs:
           MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
           MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
           MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
+          WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
+          WIN_INSTALLER_CERTIFICATE_PW: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}
+          WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_gui_single_os

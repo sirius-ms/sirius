@@ -29,8 +29,12 @@ distImage {
     runtimeImageDirectory = getParent().tasks.getByName('extractRuntimeImageFX').outputs.files.singleFile
     mainJarName = getRootProject().getChildProjects().get('sirius_gui').tasks.getByName('jar').outputs.files.singleFile.getName()
     winConsole = false
-    macPackageName = "SIRIUS"
+    macPackageName = 'SIRIUS'
+    if (OS.isWindows()) { //HACK additional windows launchers are imported from launch4j, this is just fake to register it for the start menu. must be a valid path but file must not exists
+        launchers = ["sirius-gui": "${createGuiExe.outfile}"]
+    }
 }
+distImage.dependsOn 'createGuiExe'
 
 distInstaller {
     linuxShortcut = true
