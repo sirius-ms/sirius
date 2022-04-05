@@ -1,8 +1,7 @@
 import org.gradle.crypto.checksum.Checksum
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
-import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.*
 import java.util.stream.Collectors
 
 plugins {
@@ -320,21 +319,26 @@ subprojects {
             File appRootTarget
             File launcherTarget
             File libTarget
+            File resourceTarget
             if (OS.isLinux()) {
                 appRootTarget = outputDir.toPath().resolve(imageName).toFile()
                 nativeLibsTarget = appRootTarget.toPath().resolve("lib/native").toFile()
                 launcherTarget = appRootTarget.toPath().resolve("bin").toFile()
                 libTarget = appRootTarget.toPath().resolve("lib/app").toFile()
+                resourceTarget = appRootTarget
             } else if (OS.isWindows()) {
                 appRootTarget = outputDir.toPath().resolve(imageName).toFile()
                 nativeLibsTarget = appRootTarget
                 launcherTarget = appRootTarget
                 libTarget = appRootTarget.toPath().resolve("app").toFile()
+                resourceTarget = appRootTarget
             } else if (OS.isMacOsX()) {
                 appRootTarget = outputDir.toPath().resolve("${imageName}.app/Contents").toFile()
                 nativeLibsTarget = appRootTarget.toPath().resolve("native").toFile()
                 launcherTarget = appRootTarget.toPath().resolve("MacOS").toFile()
                 libTarget = appRootTarget.toPath().resolve("app").toFile()
+                resourceTarget = appRootTarget.toPath().resolve("Resources").toFile()
+
             } else {
                 throw new RuntimeException("Could not detect OS for packaging!")
             }
@@ -357,7 +361,7 @@ subprojects {
                     include('LICENSE.txt')
                 }
                 from(downloadManual.outputs.files.singleFile)
-                into(appRootTarget)
+                into(resourceTarget)
             }
 
 
@@ -376,7 +380,7 @@ subprojects {
             }
 
 
-            if (launchers != null) {
+           /* if (launchers != null) {
                 launchers.forEach({ k, v ->
                     copy {
                         from(v)
@@ -385,7 +389,7 @@ subprojects {
                     }
                 })
             }
-
+*/
 
             def templateBinding = [
                     toolName : "SIRIUS",
@@ -434,6 +438,70 @@ subprojects {
     }
     distImage.shouldRunAfter downloadManual
 
+    task signDistImage(dependsOn: distImage, group: 'distribution') {
+
+        inputs.dir(distImage.outputDir)
+        doLast {
+            if (project.OS.isMacOsX()) {
+
+                def signID = System.getenv("MACOS_APP_IDENTITY_ID")
+                if (signID != null && !signID.isBlank()) {
+                    def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
+                    def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib")]
+                    def jarNestedLibs = [
+                            FileSystems.newFileSystem(distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve("jni-inchi-0.8.jar"))
+                                    .getPath("META-INF/jniinchi/1.03_1/MAC-X86_64/JniInchi-1.03_1-MAC-X86_64")
+                    ]
+
+                    getLogger().lifecycle("extract libs nested in the following jars ${Arrays.toString(jarNestedLibs)}")
+                    def extractedLibs = getBuildDir().toPath().resolve("tmp").resolve("jarLibs")
+                    Files.createDirectories(extractedLibs)
+                    for (def inJar : jarNestedLibs) {
+                        getLogger().lifecycle("Extracting from jar '${inJar}'")
+                        Files.copy(inJar, extractedLibs.resolve(inJar.getFileName().toString()), StandardCopyOption.REPLACE_EXISTING)
+                    }
+
+                    getLogger().lifecycle("Signing native libs dir")
+                    for (File f : distImage.getImageDir().toPath().resolve("Contents").resolve("native").toFile().listFiles() + additionalLibs + extractedLibs.toFile().listFiles()) {
+                        getLogger().lifecycle("Signing native lib '$f'")
+                        project.exec {
+                            commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                         "${f.getAbsolutePath()}"])
+                        }
+                    }
+
+                    getLogger().lifecycle("Reinsert libs nested in jars")
+                    for (def inJar : jarNestedLibs) {
+                        getLogger().lifecycle("Reinserting into jar '${inJar}'")
+                        Files.copy(extractedLibs.resolve(inJar.getFileName().toString()), inJar, StandardCopyOption.REPLACE_EXISTING)
+                        inJar.fileSystem.close()
+                    }
+
+                    getLogger().lifecycle("Signing jars dir")
+                    for (File f : distImage.getImageDir().toPath().resolve("Contents").resolve("app").toFile().listFiles({ file -> file.getName().endsWith(".jar") } as FileFilter)) {
+                        getLogger().lifecycle("Signing jar '$f'")
+                        project.exec {
+                            commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                         "${f.getAbsolutePath()}"])
+                        }
+                    }
+
+                    println "Signing .app dir"
+                    project.exec {
+                        commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                     "${distImage.getImageDir()}"])
+                    }
+                } else {
+                    println "Could not find ID for signing. APP image will not be signed!"
+                }
+            } else if (project.OS.isWindows()) {
+                println "Image signing not needed on Windows"
+            } else if (project.OS.isLinux()) {
+                println "Image signing not yet implemented for Linux"
+            }
+        }
+    }
+
     task distImageZip(dependsOn: distImage, group: 'distribution') {
         doFirst {
             def imageDir = distImage.getImageDir()
@@ -448,6 +516,7 @@ subprojects {
             }
         }
     }
+    distImageZip.mustRunAfter(signDistImage)
 
     task distInstaller(type: AppInstaller, dependsOn: distImage, group: 'distribution') {
         distImg = distImage
@@ -457,11 +526,135 @@ subprojects {
         //linux
         linuxMenuGroup = ['Applications', 'Science']
         debPackageMaintaner = 'sirius@uni-jena.de'
+
+        //win
+        winUpdateUUID = '5e660105-397c-4ab7-8d7e-69b4ce2c9564'
+        winMenuGroup = 'SIRIUS'
+    }
+    distInstaller.mustRunAfter(signDistImage)
+
+    task signDistInstaller(dependsOn: distInstaller, group: 'distribution') {
+        inputs.dir(distImage.outputDir)
+        doLast {
+            def source
+            def target
+            if (project.OS.isMacOsX()) {
+                source = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
+                target = Path.of(distImage.getImageDir().absolutePath.replace('.app', "-SIGNED") + installerAppendix)
+                getLogger().lifecycle("Signing INSTALLER '$source'")
+                project.exec {
+                    commandLine(["/usr/bin/productsign", "--timestamp", "--sign", "${System.getenv("MACOS_IDENTITY_ID")}",
+                                 "$source", "$target"
+                    ])
+                }
+
+                getLogger().lifecycle("Replacing source INSTALLER with signed installer")
+                if (target != null && source != null && Files.exists(target))
+                    Files.move(target, source, StandardCopyOption.REPLACE_EXISTING)
+            } else if (project.OS.isWindows()) {
+                def input = distImage.getImageDir().absolutePath + installerAppendix
+                def certFile = System.getenv('WIN_INSTALLER_CERTIFICATE_FILE')
+                getLogger().lifecycle("Cert File location to use: '$certFile'")
+                if (certFile != null && !certFile.isBlank() && file(certFile).exists()) {
+                    def searchPaths = [Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files (x86)").resolve("Windows Kits"), Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files").resolve("Windows Kits")]
+                    getLogger().lifecycle("Searching recursively for signtool.exe in ${searchPaths}")
+                    def signtoolExe = searchPaths.stream().filter({p -> Files.exists(p)}).flatMap({ p -> Files.walk(p) })
+                            .filter({ p -> p.getFileName().toString().equalsIgnoreCase('signtool.exe') })
+                            .findAny().orElseThrow({new FileNotFoundException("Could not find signtool.exe!")})
+                            .toAbsolutePath().toString()
+
+                    getLogger().lifecycle("Testing  signtool.exe found in '$signtoolExe'")
+                    project.exec {
+                        commandLine(["$signtoolExe", "/h"])
+                        standardOutput = System.out
+                    }
+
+                    getLogger().lifecycle("Signing MSI installer using signtool.exe '$input'")
+                    def c = ["$signtoolExe", "sign", "/debug", "/f", "${certFile}",
+                             "/d", "Installer for the SIRIUS MS/MS analysis Software",
+                             "/du", "https://bright-giant.com",
+                             "/p", "${System.getenv('WIN_INSTALLER_CERTIFICATE_PW')}", "/v", "/fd", "SHA256",
+                             "/tr", "\"${System.getenv('WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL')}\"", "/td", "SHA256", "$input"]
+                    println(c)
+                    project.exec {
+                        commandLine(c)
+                        standardOutput = System.out
+                    }
+                } else {
+                    getLogger().warn("Could not find certificate file for signign installer. Skipping signing step")
+                }
+            } else if (project.OS.isLinux()) {
+                println "Installer signing not yet implemented for Linux"
+            }
+        }
+    }
+
+    task macNotarize(dependsOn: signDistInstaller, group: 'distribution') {
+        inputs.dir(distImage.outputDir)
+        doLast {
+            if (project.OS.isMacOsX()) {
+                def pkg = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
+                getLogger().lifecycle("Showing available providers")
+                project.exec {
+                    commandLine(["xcrun", "altool", "--list-providers",
+                                 "-u", "${System.getenv("MACOS_APPLE_ID")}",
+                                 "-p", "${System.getenv("MACOS_APPLE_ID_PW")}"])
+                }
+
+                getLogger().lifecycle("Submit for  notarization")
+                String uuid = null
+                new ByteArrayOutputStream().withStream { os ->
+                    project.exec {
+                        commandLine(["xcrun", "altool", "--notarize-app", "--primary-bundle-id", "app.${distImage.imageName}-$version",
+                                     "-u", "${System.getenv("MACOS_APPLE_ID")}",
+                                     "-p", "${System.getenv("MACOS_APPLE_ID_PW")}",
+                                     "--file", "$pkg"])
+                        standardOutput = os
+                    }
+                    uuid = (os.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("RequestUUID = ") }).findFirst() map({ s -> s.split("RequestUUID = ")[1].strip() }).orElseThrow()
+                    println("Submitted Notarization Job with RequestUUID: $uuid")
+                }
+
+                Map<String, String> states = ["Status": "in progress"]
+                getLogger().lifecycle("Waiting  for  notarization")
+                while ("in progress" == states.get("Status")) {
+                    new ByteArrayOutputStream().withStream { os ->
+                        def c = ["xcrun", "altool", "--notarization-info", "${uuid}", "-u", "${System.getenv("MACOS_APPLE_ID")}", "-p", "${System.getenv("MACOS_APPLE_ID_PW")}"]
+                        println(Arrays.toString(c))
+                        project.exec {
+                            commandLine(c)
+                            standardOutput = os
+                        }
+
+                        states = (os.toString().split(System.lineSeparator()) as List).stream().map({ s -> s.split("\\s*[:]\\s*") as List })
+                                .collect(Collectors.toMap({ k -> k.get(0).strip() }, { v -> v.size() > 1 ? String.join(':', v.subList(1, v.size())).strip() : "N/A" }))
+                        println(states)
+                        println("Waiting 30s before retry...")
+                    }
+                    sleep(30000)
+                }
+
+                if (states.get("Status Code") == "0" && states.get("Status") == "success") {
+                    new ByteArrayOutputStream().withStream { os ->
+                        project.exec {
+                            commandLine(["xcrun", "stapler", "staple", "${pkg}"])
+                            standardOutput = os
+                        }.assertNormalExitValue()
+                        getLogger().lifecycle(os.toString())
+                    }
+                } else {
+                    getLogger().lifecycle("Status Code: " + states.get("Status Code"))
+                    getLogger().lifecycle("Status: " + states.get("Status"))
+                    getLogger().lifecycle("Status Message: " + states.get("Status Message"))
+                    throw new GradleException("Error during notarization")
+                }
+            }
+        }
     }
 
     task createChecksums(type: Checksum) {
-        mustRunAfter('distImageZip','distInstaller')
-        inputFiles.setFrom(fileTree(dir: "$buildDir/distributions", includes: ['*.zip','*.pkg','*.deb','*.msi']))
+        mustRunAfter('distImageZip', 'distInstaller', 'macNotarize', 'signDistImage', 'signDistInstaller')
+        inputFiles.setFrom(fileTree(dir: "$buildDir/distributions", includes: ['*.zip', '*.pkg', '*.deb', '*.msi']))
         outputDirectory.set(file("$buildDir/distributions"))
         checksumAlgorithm.set(Checksum.Algorithm.SHA256)
         appendFileNameToChecksum.set(true)
@@ -496,8 +689,8 @@ abstract class ExtractRuntime extends DefaultTask {
             project.exec { commandLine(['rm', '-rf', getOutputDir().absolutePath]) }
             project.exec { commandLine(['tar', 'zxf', inputArchive.absolutePath, '-C', getOutputDir().getParentFile().absolutePath]) }
 //            project.exec { commandLine(['unzip', '-q', inputArchive.absolutePath, '-d', getOutputDir().getParentFile().absolutePath]) }
-        }else {
-            def tmpPath= getOutputDir().getParentFile().absolutePath + "/mac"
+        } else {
+            def tmpPath = getOutputDir().getParentFile().absolutePath + "/mac"
             Files.createDirectories(Paths.get(tmpPath))
             project.exec { commandLine(['rm', '-rf', tmpPath]) }
             Files.createDirectories(Paths.get(tmpPath))
@@ -512,24 +705,25 @@ abstract class ExtractRuntime extends DefaultTask {
 
 abstract class AppImage extends DefaultTask {
 
-    File inputDir
-    File jpackagerBin
-    File outputDir
-    String imageName
-    String[] jvmArgs
-    String[] args
-    String version
-    String mainClass
-    String mainJarName
-    File runtimeImageDirectory
-    boolean winConsole
-    Map<String, File> launchers = [:]
+    public File inputDir
+    public File jpackagerBin
+    public File outputDir
+    public String imageName
+    public String[] jvmArgs
+    public String[] args
+    public String version
+    public String mainClass
+    public String mainJarName
+    public File runtimeImageDirectory
+    public boolean winConsole
+    public Map<String, File> launchers = [:]
+
 
     /*--mac-package-name name string
     Name of the application as it appears in the Menu Bar.
     This can be different from the application name.
     This name must be less than 16 characters long and be suitable for displaying in the menu bar and the application Info window. Defaults to the application name.*/
-    String macPackageName = null
+    public String macPackageName = null
 
     AppImage() {
         imageName = project.name
@@ -589,9 +783,9 @@ abstract class AppImage extends DefaultTask {
             for (String arg : args)
                 paras += ['--arguments', "\"$arg\""]
 
-        /*if (launchers != null)
+        if (launchers != null && !launchers.isEmpty())
             for (String name : launchers.keySet())
-                paras += ["--add-launcher", "\"$name=${launchers.get(name)}\""]*/
+                paras += ["--add-launcher", "\"$name=${launchers.get(name)}\""]
 
 
         def iconDir = project.getRootProject().rootDir.toPath().resolve('icons')
@@ -623,6 +817,7 @@ abstract class AppInstaller extends DefaultTask {
     String winMenuGroup = null
     boolean winShortcut
     boolean winPerUserInstall = false
+    String winUpdateUUID = null
 
 
     /*--linux-menu-group <menu-group-name>
@@ -678,6 +873,8 @@ abstract class AppInstaller extends DefaultTask {
                 paras += ['--win-shortcut']
             if (winPerUserInstall)
                 paras += ['--win-per-user-install']
+            if (winUpdateUUID !=  null && !winUpdateUUID.isBlank())
+                paras += ['--win-upgrade-uuid', "$winUpdateUUID"]
         } else if (project.OS.isMacOsX()) {
 
         } else if (project.OS.isLinux()) {
