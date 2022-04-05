@@ -7,7 +7,6 @@ import java.util.stream.Collectors
 plugins {
     id 'edu.sc.seis.launch4j' version '2.5.1'
     id 'org.gradle.crypto.checksum' version '1.4.0'
-    id 'net.jsign'
 }
 
 
@@ -381,7 +380,7 @@ subprojects {
             }
 
 
-            if (launchers != null) {
+           /* if (launchers != null) {
                 launchers.forEach({ k, v ->
                     copy {
                         from(v)
@@ -390,7 +389,7 @@ subprojects {
                     }
                 })
             }
-
+*/
 
             def templateBinding = [
                     toolName : "SIRIUS",
@@ -457,7 +456,7 @@ subprojects {
                     getLogger().lifecycle("extract libs nested in the following jars ${Arrays.toString(jarNestedLibs)}")
                     def extractedLibs = getBuildDir().toPath().resolve("tmp").resolve("jarLibs")
                     Files.createDirectories(extractedLibs)
-                    for (def inJar : jarNestedLibs){
+                    for (def inJar : jarNestedLibs) {
                         getLogger().lifecycle("Extracting from jar '${inJar}'")
                         Files.copy(inJar, extractedLibs.resolve(inJar.getFileName().toString()), StandardCopyOption.REPLACE_EXISTING)
                     }
@@ -472,7 +471,7 @@ subprojects {
                     }
 
                     getLogger().lifecycle("Reinsert libs nested in jars")
-                    for (def inJar : jarNestedLibs){
+                    for (def inJar : jarNestedLibs) {
                         getLogger().lifecycle("Reinserting into jar '${inJar}'")
                         Files.copy(extractedLibs.resolve(inJar.getFileName().toString()), inJar, StandardCopyOption.REPLACE_EXISTING)
                         inJar.fileSystem.close()
@@ -495,10 +494,10 @@ subprojects {
                 } else {
                     println "Could not find ID for signing. APP image will not be signed!"
                 }
-            } else if (project.OS.isWindows()){
-                println "Signing not yet implemented for Windows"
-            }else if (project.OS.isLinux()){
-                println "Signing not yet implemented for Linux"
+            } else if (project.OS.isWindows()) {
+                println "Image signing not needed on Windows"
+            } else if (project.OS.isLinux()) {
+                println "Image signing not yet implemented for Linux"
             }
         }
     }
@@ -527,6 +526,10 @@ subprojects {
         //linux
         linuxMenuGroup = ['Applications', 'Science']
         debPackageMaintaner = 'sirius@uni-jena.de'
+
+        //win
+        winUpdateUUID = '5e660105-397c-4ab7-8d7e-69b4ce2c9564'
+        winMenuGroup = 'SIRIUS'
     }
     distInstaller.mustRunAfter(signDistImage)
 
@@ -544,27 +547,46 @@ subprojects {
                                  "$source", "$target"
                     ])
                 }
+
+                getLogger().lifecycle("Replacing source INSTALLER with signed installer")
+                if (target != null && source != null && Files.exists(target))
+                    Files.move(target, source, StandardCopyOption.REPLACE_EXISTING)
             } else if (project.OS.isWindows()) {
-                /*jsign(
-                        file: distImage.getImageDir().absolutePath + installerAppendix,
-//                        name: 'SIRIUS',
-                        keystore: 'https://cs-try.ssl.com', //todo remove, this is a testenv
-                        alias: 'sirius-test',
-                        storetype: 'ESIGNER',
-                        storepass: "${System.getenv("SSLCOM_USERNAME")}|${System.getenv("SSLCOM_PW")}",
-//                        keypass: ""
-//                        tsaurl: 'http://ts.ssl.com/'
-                )*/
-                println "Signing not yet implemented for Windows"
+                def input = distImage.getImageDir().absolutePath + installerAppendix
+                def certFile = System.getenv('WIN_INSTALLER_CERTIFICATE_FILE')
+                getLogger().lifecycle("Cert File location to use: '$certFile'")
+                if (certFile != null && !certFile.isBlank() && file(certFile).exists()) {
+                    def searchPaths = [Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files (x86)").resolve("Windows Kits"), Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files").resolve("Windows Kits")]
+                    getLogger().lifecycle("Searching recursively for signtool.exe in ${searchPaths}")
+                    def signtoolExe = searchPaths.stream().filter({p -> Files.exists(p)}).flatMap({ p -> Files.walk(p) })
+                            .filter({ p -> p.getFileName().toString().equalsIgnoreCase('signtool.exe') })
+                            .findAny().orElseThrow({new FileNotFoundException("Could not find signtool.exe!")})
+                            .toAbsolutePath().toString()
+
+                    getLogger().lifecycle("Testing  signtool.exe found in '$signtoolExe'")
+                    project.exec {
+                        commandLine(["$signtoolExe", "/h"])
+                        standardOutput = System.out
+                    }
+
+                    getLogger().lifecycle("Signing MSI installer using signtool.exe '$input'")
+                    def c = ["$signtoolExe", "sign", "/debug", "/f", "${certFile}",
+                             "/d", "Installer for the SIRIUS MS/MS analysis Software",
+                             "/du", "https://bright-giant.com",
+                             "/p", "${System.getenv('WIN_INSTALLER_CERTIFICATE_PW')}", "/v", "/fd", "SHA256",
+                             "/tr", "\"${System.getenv('WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL')}\"", "/td", "SHA256", "$input"]
+                    println(c)
+                    project.exec {
+                        commandLine(c)
+                        standardOutput = System.out
+                    }
+                } else {
+                    getLogger().warn("Could not find certificate file for signign installer. Skipping signing step")
+                }
             } else if (project.OS.isLinux()) {
-                println "Signing not yet implemented for Linux"
+                println "Installer signing not yet implemented for Linux"
             }
-
-            getLogger().lifecycle("Replacing source INSTALLER with signed installer")
-            if (target != null && source != null && Files.exists(target))
-                Files.move(target, source, StandardCopyOption.REPLACE_EXISTING)
         }
-
     }
 
     task macNotarize(dependsOn: signDistInstaller, group: 'distribution') {
@@ -589,7 +611,7 @@ subprojects {
                                      "--file", "$pkg"])
                         standardOutput = os
                     }
-                    uuid = (os.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("RequestUUID = ") }).findFirst()map({ s -> s.split("RequestUUID = ")[1].strip() }).orElseThrow()
+                    uuid = (os.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("RequestUUID = ") }).findFirst() map({ s -> s.split("RequestUUID = ")[1].strip() }).orElseThrow()
                     println("Submitted Notarization Job with RequestUUID: $uuid")
                 }
 
@@ -667,8 +689,8 @@ abstract class ExtractRuntime extends DefaultTask {
             project.exec { commandLine(['rm', '-rf', getOutputDir().absolutePath]) }
             project.exec { commandLine(['tar', 'zxf', inputArchive.absolutePath, '-C', getOutputDir().getParentFile().absolutePath]) }
 //            project.exec { commandLine(['unzip', '-q', inputArchive.absolutePath, '-d', getOutputDir().getParentFile().absolutePath]) }
-        }else {
-            def tmpPath= getOutputDir().getParentFile().absolutePath + "/mac"
+        } else {
+            def tmpPath = getOutputDir().getParentFile().absolutePath + "/mac"
             Files.createDirectories(Paths.get(tmpPath))
             project.exec { commandLine(['rm', '-rf', tmpPath]) }
             Files.createDirectories(Paths.get(tmpPath))
@@ -761,9 +783,9 @@ abstract class AppImage extends DefaultTask {
             for (String arg : args)
                 paras += ['--arguments', "\"$arg\""]
 
-        /*if (launchers != null)
+        if (launchers != null && !launchers.isEmpty())
             for (String name : launchers.keySet())
-                paras += ["--add-launcher", "\"$name=${launchers.get(name)}\""]*/
+                paras += ["--add-launcher", "\"$name=${launchers.get(name)}\""]
 
 
         def iconDir = project.getRootProject().rootDir.toPath().resolve('icons')
@@ -795,6 +817,7 @@ abstract class AppInstaller extends DefaultTask {
     String winMenuGroup = null
     boolean winShortcut
     boolean winPerUserInstall = false
+    String winUpdateUUID = null
 
 
     /*--linux-menu-group <menu-group-name>
@@ -850,6 +873,8 @@ abstract class AppInstaller extends DefaultTask {
                 paras += ['--win-shortcut']
             if (winPerUserInstall)
                 paras += ['--win-per-user-install']
+            if (winUpdateUUID !=  null && !winUpdateUUID.isBlank())
+                paras += ['--win-upgrade-uuid', "$winUpdateUUID"]
         } else if (project.OS.isMacOsX()) {
 
         } else if (project.OS.isLinux()) {
