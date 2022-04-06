@@ -443,7 +443,6 @@ subprojects {
         inputs.dir(distImage.outputDir)
         doLast {
             if (project.OS.isMacOsX()) {
-
                 def signID = System.getenv("MACOS_APP_IDENTITY_ID")
                 if (signID != null && !signID.isBlank()) {
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
@@ -539,18 +538,23 @@ subprojects {
             def source
             def target
             if (project.OS.isMacOsX()) {
-                source = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
-                target = Path.of(distImage.getImageDir().absolutePath.replace('.app', "-SIGNED") + installerAppendix)
-                getLogger().lifecycle("Signing INSTALLER '$source'")
-                project.exec {
-                    commandLine(["/usr/bin/productsign", "--timestamp", "--sign", "${System.getenv("MACOS_IDENTITY_ID")}",
-                                 "$source", "$target"
-                    ])
-                }
+                def macInstallerIdentity = System.getenv('MACOS_IDENTITY_ID') //just to check whether a certificate was given
+                if (macInstallerIdentity != null && !macInstallerIdentity.isBlank()) {
+                    source = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
+                    target = Path.of(distImage.getImageDir().absolutePath.replace('.app', "-SIGNED") + installerAppendix)
+                    getLogger().lifecycle("Signing INSTALLER '$source'")
+                    project.exec {
+                        commandLine(["/usr/bin/productsign", "--timestamp", "--sign", "${macInstallerIdentity}",
+                                     "$source", "$target"
+                        ])
+                    }
 
-                getLogger().lifecycle("Replacing source INSTALLER with signed installer")
-                if (target != null && source != null && Files.exists(target))
-                    Files.move(target, source, StandardCopyOption.REPLACE_EXISTING)
+                    getLogger().lifecycle("Replacing source INSTALLER with signed installer")
+                    if (target != null && source != null && Files.exists(target))
+                        Files.move(target, source, StandardCopyOption.REPLACE_EXISTING)
+                } else {
+                    getLogger().warn("Could not find apple identity for signign installer. Skipping signing step")
+                }
             } else if (project.OS.isWindows()) {
                 def input = distImage.getImageDir().absolutePath + installerAppendix
                 def certFile = System.getenv('WIN_INSTALLER_CERTIFICATE_FILE')
@@ -593,60 +597,67 @@ subprojects {
         inputs.dir(distImage.outputDir)
         doLast {
             if (project.OS.isMacOsX()) {
-                def pkg = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
-                getLogger().lifecycle("Showing available providers")
-                project.exec {
-                    commandLine(["xcrun", "altool", "--list-providers",
-                                 "-u", "${System.getenv("MACOS_APPLE_ID")}",
-                                 "-p", "${System.getenv("MACOS_APPLE_ID_PW")}"])
-                }
+                def appleId = System.getenv("MACOS_APPLE_ID")
+                def appleIdPw = System.getenv("MACOS_APPLE_ID_PW")
 
-                getLogger().lifecycle("Submit for  notarization")
-                String uuid = null
-                new ByteArrayOutputStream().withStream { os ->
+                if (appleId != null && appleIdPw != null && !appleId.isBlank() && !appleIdPw.isBlank()) {
+                    def pkg = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
+                    getLogger().lifecycle("Showing available providers")
                     project.exec {
-                        commandLine(["xcrun", "altool", "--notarize-app", "--primary-bundle-id", "app.${distImage.imageName}-$version",
-                                     "-u", "${System.getenv("MACOS_APPLE_ID")}",
-                                     "-p", "${System.getenv("MACOS_APPLE_ID_PW")}",
-                                     "--file", "$pkg"])
-                        standardOutput = os
+                        commandLine(["xcrun", "altool", "--list-providers",
+                                     "-u", "$appleId",
+                                     "-p", "$appleIdPw"])
                     }
-                    uuid = (os.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("RequestUUID = ") }).findFirst() map({ s -> s.split("RequestUUID = ")[1].strip() }).orElseThrow()
-                    println("Submitted Notarization Job with RequestUUID: $uuid")
-                }
 
-                Map<String, String> states = ["Status": "in progress"]
-                getLogger().lifecycle("Waiting  for  notarization")
-                while ("in progress" == states.get("Status")) {
+                    getLogger().lifecycle("Submit for  notarization")
+                    String uuid = null
                     new ByteArrayOutputStream().withStream { os ->
-                        def c = ["xcrun", "altool", "--notarization-info", "${uuid}", "-u", "${System.getenv("MACOS_APPLE_ID")}", "-p", "${System.getenv("MACOS_APPLE_ID_PW")}"]
-                        println(Arrays.toString(c))
                         project.exec {
-                            commandLine(c)
+                            commandLine(["xcrun", "altool", "--notarize-app", "--primary-bundle-id", "app.${distImage.imageName}-$version",
+                                         "-u", "$appleId",
+                                         "-p", "$appleIdPw",
+                                         "--file", "$pkg"])
                             standardOutput = os
                         }
-
-                        states = (os.toString().split(System.lineSeparator()) as List).stream().map({ s -> s.split("\\s*[:]\\s*") as List })
-                                .collect(Collectors.toMap({ k -> k.get(0).strip() }, { v -> v.size() > 1 ? String.join(':', v.subList(1, v.size())).strip() : "N/A" }))
-                        println(states)
-                        println("Waiting 30s before retry...")
+                        uuid = (os.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("RequestUUID = ") }).findFirst() map({ s -> s.split("RequestUUID = ")[1].strip() }).orElseThrow()
+                        println("Submitted Notarization Job with RequestUUID: $uuid")
                     }
-                    sleep(30000)
-                }
 
-                if (states.get("Status Code") == "0" && states.get("Status") == "success") {
-                    new ByteArrayOutputStream().withStream { os ->
-                        project.exec {
-                            commandLine(["xcrun", "stapler", "staple", "${pkg}"])
-                            standardOutput = os
-                        }.assertNormalExitValue()
-                        getLogger().lifecycle(os.toString())
+                    Map<String, String> states = ["Status": "in progress"]
+                    getLogger().lifecycle("Waiting  for  notarization")
+                    while ("in progress" == states.get("Status")) {
+                        new ByteArrayOutputStream().withStream { os ->
+                            def c = ["xcrun", "altool", "--notarization-info", "${uuid}", "-u", "$appleId", "-p", "$appleIdPw"]
+                            println(Arrays.toString(c))
+                            project.exec {
+                                commandLine(c)
+                                standardOutput = os
+                            }
+
+                            states = (os.toString().split(System.lineSeparator()) as List).stream().map({ s -> s.split("\\s*[:]\\s*") as List })
+                                    .collect(Collectors.toMap({ k -> k.get(0).strip() }, { v -> v.size() > 1 ? String.join(':', v.subList(1, v.size())).strip() : "N/A" }))
+                            println(states)
+                            println("Waiting 30s before retry...")
+                        }
+                        sleep(30000)
+                    }
+
+                    if (states.get("Status Code") == "0" && states.get("Status") == "success") {
+                        new ByteArrayOutputStream().withStream { os ->
+                            project.exec {
+                                commandLine(["xcrun", "stapler", "staple", "${pkg}"])
+                                standardOutput = os
+                            }.assertNormalExitValue()
+                            getLogger().lifecycle(os.toString())
+                        }
+                    } else {
+                        getLogger().lifecycle("Status Code: " + states.get("Status Code"))
+                        getLogger().lifecycle("Status: " + states.get("Status"))
+                        getLogger().lifecycle("Status Message: " + states.get("Status Message"))
+                        throw new GradleException("Error during notarization")
                     }
                 } else {
-                    getLogger().lifecycle("Status Code: " + states.get("Status Code"))
-                    getLogger().lifecycle("Status: " + states.get("Status"))
-                    getLogger().lifecycle("Status Message: " + states.get("Status Message"))
-                    throw new GradleException("Error during notarization")
+                    getLogger().warn("Could not find apple id for notarization. Skipping notarization step")
                 }
             }
         }
