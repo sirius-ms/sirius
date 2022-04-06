@@ -105,16 +105,19 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
 
         @Override
         protected Boolean compute() throws Exception {
-            updateProgress(0, -1, -1, "Collection Instances for prediction export...");
+            updateProgress(0, -1, -1, "Collecting instances for prediction export...");
             boolean headerWritten = false;
             List<Instance> filtered = new ArrayList<>();
-            if (polarity == 0) polarity = instances.iterator().next().getExperiment().getPrecursorIonType().getCharge();
             for (Instance inst : instances) {
-                if (polarity == inst.getExperiment().getPrecursorIonType().getCharge()) {
+                final int pol = inst.getExperiment().getPrecursorIonType().getCharge();
+                if (polarity==0) {
+                    polarity = pol;
+                }
+                if (polarity == pol) {
                     filtered.add(inst);
                 }
             }
-
+            System.out.println(filtered);
             if (filtered.isEmpty()) {
                 updateProgress(0, 1, 1, "No instances to export!");
                 return Boolean.FALSE;
