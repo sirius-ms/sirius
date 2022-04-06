@@ -19,7 +19,6 @@ jobs:
       MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
       MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
       MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
-      MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
       WIN_INSTALLER_CERTIFICATE_PW: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}
       WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}
       #          LINUX_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
@@ -38,7 +37,7 @@ jobs:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
 
-      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_CERTIFICATE != '') }}
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_APP_IDENTITY_ID != '') }}
         name: Import Apple APP Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
@@ -46,7 +45,7 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
 
-      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_CERTIFICATE != '') }}
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_IDENTITY_ID != '') }}
         name: Import Apple Installer Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
@@ -120,7 +119,7 @@ jobs:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
 
-      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_CERTIFICATE != '') }}
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_APP_IDENTITY_ID != '') }}
         name: Import Apple APP Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
@@ -128,7 +127,7 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
 
-      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_CERTIFICATE != '') }}
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_IDENTITY_ID != '') }}
         name: Import Apple Installer Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
