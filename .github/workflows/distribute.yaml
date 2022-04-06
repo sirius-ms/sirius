@@ -12,8 +12,17 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-#        os: [macos-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
+      MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
+      MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
+      MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
+      MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
+      MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+      WIN_INSTALLER_CERTIFICATE_PW: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}
+      WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}
+      #          LINUX_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Zulu JDK
@@ -29,7 +38,7 @@ jobs:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
 
-      - if: matrix.os == 'macos-latest'
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_CERTIFICATE != '') }}
         name: Import Apple APP Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
@@ -37,7 +46,7 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
 
-      - if: matrix.os == 'macos-latest'
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_CERTIFICATE != '') }}
         name: Import Apple Installer Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
@@ -50,26 +59,18 @@ jobs:
         name: Check Identities
         run: /usr/bin/security find-identity
 
-      - if: ${{ matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest'}}
+      - if: ${{ (matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest') && (env.GENERIC_INSTALLER_CERTIFICATE != '') }}
         name: Load generic installer codesign cert
         id: generic_codesign_cert
         uses: timheuer/base64-to-file@v1.1
         with:
           fileName: 'generic_installer_cert.p12'
-          encodedString: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
-
+          encodedString: ${{ env.GENERIC_INSTALLER_CERTIFICATE }}
 
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         env:
-          MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
-          MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
-          MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
-          MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
           WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
-          WIN_INSTALLER_CERTIFICATE_PW: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}
-          WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}
-#          LINUX_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_cli_single_os
@@ -94,9 +95,16 @@ jobs:
   distGUI:
     strategy:
       matrix:
-#        os: [macos-latest]
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
+      MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
+      MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
+      MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
+      MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
+      WIN_INSTALLER_CERTIFICATE_PW: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}
+      WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Zulu JDK-FX
@@ -112,7 +120,7 @@ jobs:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
 
-      - if: matrix.os == 'macos-latest'
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_CERTIFICATE != '') }}
         name: Import Apple APP Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
@@ -120,7 +128,7 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
 
-      - if: matrix.os == 'macos-latest'
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_CERTIFICATE != '') }}
         name: Import Apple Installer Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
@@ -133,24 +141,18 @@ jobs:
         name: Check Identities
         run: /usr/bin/security find-identity
 
-      - if: ${{ matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest'}}
+      - if: ${{ (matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest') && (env.GENERIC_INSTALLER_CERTIFICATE != '') }}
         name: Load generic installer codesign cert
         id: generic_codesign_cert
         uses: timheuer/base64-to-file@v1.1
         with:
           fileName: 'generic_installer_cert.p12'
-          encodedString: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
+          encodedString: ${{ env.GENERIC_INSTALLER_CERTIFICATE }}
 
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         env:
-          MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
-          MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
-          MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
-          MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
           WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
-          WIN_INSTALLER_CERTIFICATE_PW: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}
-          WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_gui_single_os
