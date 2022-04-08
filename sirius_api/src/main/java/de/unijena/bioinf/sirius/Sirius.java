@@ -87,6 +87,7 @@ public class Sirius {
         this.getMs2Analyzer().registerPlugin(new PredefinedPeakPlugin());
         this.getMs2Analyzer().registerPlugin(new ElGordoPlugin());
         this.getMs2Analyzer().registerPlugin(new AminoAcidPlugin());
+        this.getMs2Analyzer().registerPlugin(new AdductNeutralizationPlugin());
     }
 
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {

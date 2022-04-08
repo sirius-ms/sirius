@@ -181,19 +181,25 @@ public class IonTreeUtils {
      * @param preserveOriginalTreeScore reducing the tree may remove nodes. If true, the total tree score is preserved by adding an adductSubstitution to the parent node of removed tree nodes.
      */
     private void reduceTree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct, final boolean preserveOriginalTreeScore) {
+        double oldScore =0d;
+        for (Loss l : tree.losses()) {
+            oldScore+=l.getWeight();
+        }
+        oldScore+=tree.getRootScore();
         StatsForNonRootNonArtificialPeaks peakStatsBefore = countNumberOfFragmentsAndIntensityWithoutArtificialOrRoot(tree);
 
         final Score.ScoreAdder scoreAdd = Score.extendWith("adductSubstitution");
         final Score.ScoreAdder fragAdd = Score.extendWith("adductSubstitution");
+        final Score.ScoreAdder implAddSc = Score.extendWith("ImplicitAdductPeakScore");
+
         final ImplicitAdduct implicitAdduct = new ImplicitAdduct(adduct);
-        reduceSubtree(tree, iontype, adduct, tree.getRoot(), scoreAdd, fragAdd, implicitAdduct, preserveOriginalTreeScore);
+        reduceSubtree(tree, iontype, adduct, tree.getRoot(), scoreAdd, fragAdd, implAddSc,implicitAdduct, preserveOriginalTreeScore);
 
-        if (!preserveOriginalTreeScore) recalculateTreeWeight(tree);
+        if (!preserveOriginalTreeScore) recalculateTreeWeight(tree,oldScore);
         updateTreeStatistics(tree, peakStatsBefore);
-
     }
 
-    private void reduceSubtree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct, Fragment vertex, Score.ScoreAdder lossAdder, Score.ScoreAdder fragAdder, ImplicitAdduct implicitAdduct, boolean preserveOriginalTreeScore) {
+    private void reduceSubtree(final FTree tree, PrecursorIonType iontype, final MolecularFormula adduct, Fragment vertex, Score.ScoreAdder lossAdder, Score.ScoreAdder fragAdder, Score.ScoreAdder implAddScoreAdder, ImplicitAdduct implicitAdduct, boolean preserveOriginalTreeScore) {
         final FragmentAnnotation<PrecursorIonType> fa = tree.getOrCreateFragmentAnnotation(PrecursorIonType.class);
         final FragmentAnnotation<AnnotatedPeak> peakAno = tree.getOrCreateFragmentAnnotation(AnnotatedPeak.class);
         final FragmentAnnotation<Score> scoreFrag = tree.getOrCreateFragmentAnnotation(Score.class);
@@ -203,24 +209,50 @@ public class IonTreeUtils {
         //todo can there arise problems with PrecursorIonType.SPECIAL_TYPES?
         final PrecursorIonType newIonType = PrecursorIonType.getPrecursorIonType(vertex.getIonization()).substituteInsource(iontype.getInSourceFragmentation());
         // if adduct is lost: contract loss
+        final FragmentAnnotation<ImplicitAdduct> implAdductAnnotation = tree.getOrCreateFragmentAnnotation(ImplicitAdduct.class);
         if (vertex.getInDegree() > 0 && vertex.getIncomingEdge().getFormula().equals(adduct)) {
+            final Fragment parent = vertex.getParent();
 //            final PrecursorIonType newIonType = iontype.withoutAdduct();
             // delete this vertex
             final List<Fragment> children = new ArrayList<Fragment>(vertex.getChildren());
             for (Fragment f : children) {
                 Loss oldLoss = f.getIncomingEdge();
                 Loss contractedLoss = vertex.getIncomingEdge();
-                Loss newLoss = tree.swapLoss(f, vertex.getParent());
+                Loss newLoss = tree.swapLoss(f, parent);
                 lossType.set(newLoss, LossType.adductLoss(adduct, oldLoss.getFormula()));
                 if (lossAno!=null) {
                     final Score oldScore = lossAno.get(oldLoss);
                     if  (oldScore!=null) {
                         lossAno.set(f.getIncomingEdge(), oldScore);
+                        f.getIncomingEdge().setWeight(oldLoss.getWeight());
                     }
                 }
             }
 
-            if (preserveOriginalTreeScore) scoreFrag.set(vertex.getParent(), fragAdder.add(scoreFrag.get(vertex.getParent()), scoreFrag.get(vertex).sum() + lossAno.get(vertex.getIncomingEdge()).sum()));
+            if (preserveOriginalTreeScore) scoreFrag.set(parent, fragAdder.add(scoreFrag.get(parent), scoreFrag.get(vertex).sum() + lossAno.get(vertex.getIncomingEdge()).sum()));
+
+            {
+                final ImplicitAdduct implicitAdductParent = implAdductAnnotation.get(parent, ()->implicitAdduct);
+                if (implicitAdductParent.getImplicitPeak().isPresent()) {
+                    LoggerFactory.getLogger(IonTreeUtils.class).warn("Peak has multiple adduct peaks. That should not happen: " + implicitAdductParent.getImplicitPeak().get() + " as well as " + peakAno.get(vertex));
+                }
+                final ImplicitAdduct impl = new ImplicitAdduct(
+                        implicitAdduct.adductFormula,
+                        Optional.of(peakAno.get(vertex)),
+                        vertex.getIncomingEdge().weight
+                );
+                implAdductAnnotation.set(parent, impl);
+                if (impl.getScore()!=0) {
+                    scoreFrag.set(parent, implAddScoreAdder.add(scoreFrag.get(parent), impl.getScore()));
+                    if (parent.isRoot()) {
+                        tree.setRootScore(tree.getRootScore() + impl.getScore());
+                    } else {
+                        parent.getIncomingEdge().setWeight(parent.getIncomingEdge().getWeight() + impl.getScore());
+                    }
+                }
+
+            }
+
             tree.deleteVertex(vertex);
             fa.set(vertex, newIonType);
             for (Fragment f : children) {
@@ -230,7 +262,7 @@ public class IonTreeUtils {
             // finished
             return;
         }
-        final FragmentAnnotation<ImplicitAdduct> implAdduct = tree.getOrCreateFragmentAnnotation(ImplicitAdduct.class);
+        final FragmentAnnotation<ImplicitAdduct> implAdduct = implAdductAnnotation;
         final LossAnnotation<ImplicitAdduct> implAdductLoss = tree.getOrCreateLossAnnotation(ImplicitAdduct.class);
         // if adduct is still part of the fragment: remove it from fragment
         final MolecularFormula f = vertex.getFormula().subtract(adduct);
@@ -243,9 +275,9 @@ public class IonTreeUtils {
             fa.set(vertex, newIonType);
             final ArrayList<Fragment> childs = new ArrayList<Fragment>(vertex.getChildren());
             for (Fragment g : childs) {
-                reduceSubtree(tree, iontype, adduct, g, lossAdder, fragAdder, implicitAdduct, preserveOriginalTreeScore);
+                reduceSubtree(tree, iontype, adduct, g, lossAdder, fragAdder, implAddScoreAdder, implicitAdduct, preserveOriginalTreeScore);
             }
-        } else if (vertex.getInDegree()>0){
+        } else if (vertex.getInDegree()>0) {
             // if adduct is part of the loss, remove it from loss
             final MolecularFormula l = vertex.getIncomingEdge().getFormula().subtract(adduct);
             if (l.isAllPositiveOrZero()) {
@@ -304,15 +336,13 @@ public class IonTreeUtils {
         return new StatsForNonRootNonArtificialPeaks(numberOfExplainedPeaks, treeIntensity);
     }
 
-    private void recalculateTreeWeight(FTree tree) {
+    private void recalculateTreeWeight(FTree tree, double oldScore) {
         double scoreSum = 0d;
         for (Loss l : tree.losses()) {
             scoreSum += l.getWeight();
         }
         scoreSum += tree.getRootScore();
-
         tree.setTreeWeight(scoreSum);
-
     }
 
     protected static Logger logger = LoggerFactory.getLogger(IonTreeUtils.class);
