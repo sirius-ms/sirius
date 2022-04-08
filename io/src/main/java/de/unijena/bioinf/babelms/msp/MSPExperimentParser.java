@@ -22,6 +22,7 @@ package de.unijena.bioinf.babelms.msp;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -34,6 +35,7 @@ import java.net.URI;
 
 public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2Experiment> {
     private final boolean clearSpectrum;
+    private AnnotatedSpectrum<Peak> spectrum = null;
 
     public MSPExperimentParser() {
         this(false); //todo which is the correct default here
@@ -45,41 +47,56 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
 
 
     @Override
-    public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
-        AnnotatedSpectrum<Peak> spectrum = parseSpectrum(reader);
+    public synchronized Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
+        AdditionalFields fields = null;
+        MutableMs2Experiment exp = null;
+        while (true) {
+            if (spectrum == null)
+                spectrum = parseSpectrum(reader, fields);
 
-        if (spectrum == null)
-            return null;
+            if (spectrum == null)
+                return exp;
 
-        final AdditionalFields fields = spectrum.getAnnotation(AdditionalFields.class).orElse(null);
-        final MutableMs2Experiment exp = new MutableMs2Experiment();
-        if (spectrum instanceof Ms2Spectrum) {
-            exp.getMs2Spectra().add((MutableMs2Spectrum) spectrum);
-        } else {
-            exp.getMs1Spectra().add((SimpleSpectrum) spectrum);
+            final boolean additionalSpec = spectrum.getAnnotation(AdditionalFields.class).map(f -> f.containsKey("MAT_ADDITIONAL_SPEC")).orElse(false);
+            if (fields != null && !additionalSpec)
+                return exp;
+
+            if (fields == null)
+                exp = new MutableMs2Experiment();
+
+            fields = spectrum.getAnnotation(AdditionalFields.class).orElse(null);
+            if (spectrum instanceof Ms2Spectrum) {
+                exp.getMs2Spectra().add((MutableMs2Spectrum) spectrum);
+            } else {
+                exp.getMs1Spectra().add((SimpleSpectrum) spectrum);
+            }
+
+            //set metadata
+            if (fields != null) {
+                if (!additionalSpec) {
+                    final AdditionalFields finFields = fields;
+                    // mandatory
+                    exp.setSource(new SpectrumFileSource(source));
+                    fields.getField(MSP.NAME).ifPresent(exp::setName);
+                    fields.getField(MSP.FORMULA).map(MolecularFormula::parseOrThrow).ifPresent(exp::setMolecularFormula);
+                    MSP.parsePrecursorIonType(fields).ifPresent(exp::setPrecursorIonType);
+                    MSP.parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
+                    //optional
+                    fields.getField(MSP.INCHI).map(inchi -> MSP.getWithSynonyms(finFields, MSP.INCHI_KEY).map(key -> InChIs.newInChI(key, inchi)).
+                            orElse(InChIs.newInChI(inchi))).ifPresent(exp::annotate);
+                    fields.getField(MSP.SMILES).map(Smiles::new).ifPresent(exp::annotate);
+                    fields.getField(MSP.SPLASH).map(Splash::new).ifPresent(exp::annotate);
+                    MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
+                    fields.getField(MSP.RT).filter(s -> !s.isBlank()).map(Double::parseDouble).filter(v -> v > 0).map(v -> new RetentionTime(v * 60)).ifPresent(exp::annotate);
+                }
+            } else {
+                LoggerFactory.getLogger(getClass()).warn("Cannot find additional meta data fields. Experiment might be incomplete!");
+            }
+
+            if (clearSpectrum)
+                spectrum.removeAnnotation(AdditionalFields.class);
+
+            spectrum = null;
         }
-
-        //set metadata
-        if (fields != null) {
-            // mandatory
-            exp.setSource(new SpectrumFileSource(source));
-            fields.getField(MSP.NAME).ifPresent(exp::setName);
-            fields.getField(MSP.FORMULA).map(MolecularFormula::parseOrThrow).ifPresent(exp::setMolecularFormula);
-            MSP.parsePrecursorIonType(fields).ifPresent(exp::setPrecursorIonType);
-            MSP.parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
-            //optional
-            fields.getField(MSP.INCHI).map(inchi -> fields.getField(MSP.INCHI_KEY).map(key -> InChIs.newInChI(key, inchi)).
-                    orElse(InChIs.newInChI(inchi))).ifPresent(exp::annotate);
-            fields.getField(MSP.SMILES).map(Smiles::new).ifPresent(exp::annotate);
-            fields.getField(MSP.SPLASH).map(Splash::new).ifPresent(exp::annotate);
-            fields.getField(MSP.INSTRUMENT_TYPE).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
-        } else {
-            LoggerFactory.getLogger(getClass()).warn("Cannot find additional meta data fields. Experiment might be incomplete!");
-        }
-
-        if (clearSpectrum)
-            spectrum.removeAnnotation(AdditionalFields.class);
-
-        return exp;
     }
 }

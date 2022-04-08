@@ -22,8 +22,11 @@ package de.unijena.bioinf.babelms.msp;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /*
@@ -110,38 +113,44 @@ Num peaks: 11
 633.343 18.68 "pi/0.9900 5/14"
 633.375 12.69 "?i 4/14"
 633.579 10.09 "?i 4/14"
+*
 */
+
+/*
+Also supports MS-Finder .mat extensions
+ */
 
 public class MSP {
     public final static String SYNONYME = "Synon"; //multiple times possible
     public final static String SYNONYME_KEY = "Synon: $:"; //multiple times possible
-    public final static String PRECURSOR_MZ = "PrecursorMZ";
+    public final static String[] PRECURSOR_MZ = {"PrecursorMZ", "PRECURSORMZ"};
     public final static String SYN_PRECURSOR_MZ = SYNONYME_KEY + "04";
 
-    public final static String SPEC_TYPE = "Spectrum_type";
-    public final static String COL_ENERGY = "05";
-    public final static String SYN_COL_ENERGY = SYNONYME_KEY + "Collision_energy";
-    public final static String PRECURSOR_ION_TYPE = "Precursor_type";
+    public final static String[] SPEC_TYPE = {"Spectrum_type", "MSTYPE"};
+    public final static String[] COL_ENERGY = {"Collision_energy", "COLLISIONENERGY"};
+    public final static String SYN_COL_ENERGY = SYNONYME_KEY + "05";
+    public final static String[] PRECURSOR_ION_TYPE = {"Precursor_type", "PRECURSORTYPE"};
     public final static String SYN_PRECURSOR_ION_TYPE = SYNONYME_KEY + "03";
     public final static String NAME = "Name";
     public final static String DB_ID = "DB#";
-    public final static String INCHI_KEY = "InChIKey";
+    public final static String[] INCHI_KEY = {"InChIKey", "INCHIKEY"};
     public final static String INCHI = "InChI";
     public final static String SMILES = "SMILES";
-    public final static String INSTRUMENT_TYPE = "Instrument_type";
+    public final static String[] INSTRUMENT_TYPE = {"Instrument_type", "INSTRUMENTTYPE"};
     public final static String INSTRUMENT = "Instrument";
     public final static String FORMULA = "Formula";
     public final static String COMMENTS = "Comments"; //multiple times possible
     public final static String SPLASH = "Splash";
     public final static String EXACT_MASS = "ExactMass";
     public final static String NOMINAL_MASS = "MW"; // seems to be unit mass? Molecular Weight?
-    public final static String CHARGE = "Ion_mode"; // seems to be unit mass? Molecular Weight?
+    public final static String[] CHARGE = {"Ion_mode", "IONMODE"};
 
     public final static String NUM_PEAKS = "Num Peaks";
 
+    public final static String RT = "RETENTIONTIME";
 
     public static Optional<PrecursorIonType> parsePrecursorIonType(Map<String, String> metaInfo) {
-        String value = metaInfo.get(PRECURSOR_ION_TYPE);
+        String value = getWithSynonyms(metaInfo, PRECURSOR_ION_TYPE).orElse(null);
         if (value != null)
             return Optional.of(PrecursorIonType.fromString(value));
 
@@ -149,15 +158,16 @@ public class MSP {
         if (value != null)
             return Optional.of(PrecursorIonType.fromString(value));
 
-        value = metaInfo.get(CHARGE);
+        value = getWithSynonyms(metaInfo, CHARGE).orElse(null);
         if (value != null) {
             return Optional.of(value.toLowerCase().charAt(0) == 'n' ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
         }
+
         return Optional.empty();
     }
 
     public static Optional<Double> parsePrecursorMZ(Map<String, String> metaInfo) {
-        String value = metaInfo.get(PRECURSOR_MZ);
+        String value = getWithSynonyms(metaInfo, PRECURSOR_MZ).orElse(null);
         if (value != null) {
             String[] arr = value.split("/");
             return Optional.of(Double.parseDouble(arr[arr.length - 1]));
@@ -177,7 +187,7 @@ public class MSP {
     }
 
     public static Optional<CollisionEnergy> parseCollisionEnergy(Map<String, String> metaInfo) {
-        String value = metaInfo.get(COL_ENERGY);
+        String value = getWithSynonyms(metaInfo, COL_ENERGY).orElse(null);
         CollisionEnergy e = null;
         if (value != null) {
             e = CollisionEnergy.fromStringOrNull(value);
@@ -188,5 +198,10 @@ public class MSP {
             }
         }
         return Optional.ofNullable(e);
+    }
+
+
+    public static Optional<String> getWithSynonyms(@NotNull final Map<String, String> metaInfo, @NotNull final String... keys) {
+        return Arrays.stream(keys).map(metaInfo::get).filter(Objects::nonNull).findFirst();
     }
 }
