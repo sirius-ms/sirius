@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.Arrays;
 
 import static de.unijena.bioinf.babelms.msp.MSP.*;
 
@@ -41,7 +42,6 @@ import static de.unijena.bioinf.babelms.msp.MSP.*;
 public class MSPSpectralParser extends SpectralParser {
     private final static String START = NUM_PEAKS + ":";
 
-
     @Override
     public CloseableIterator<? extends AnnotatedSpectrum<Peak>> parseSpectra(BufferedReader reader) throws IOException {
         return new MSPSpectraIterator(reader);
@@ -50,6 +50,10 @@ public class MSPSpectralParser extends SpectralParser {
 
     @Nullable
     AnnotatedSpectrum<Peak> parseSpectrum(BufferedReader reader) throws IOException {
+        return parseSpectrum(reader, null);
+    }
+
+    AnnotatedSpectrum<Peak> parseSpectrum(BufferedReader reader, @Nullable AdditionalFields prevMetaInfo) throws IOException {
 
         AdditionalFields metaInfo = new AdditionalFields(false);
         String line;
@@ -81,6 +85,12 @@ public class MSPSpectralParser extends SpectralParser {
             }
         }
 
+        //multi MS/MS .mat format extension -> MS-Dial export
+        if (prevMetaInfo != null && metaInfo.size() == 1 && metaInfo.containsKey(SPEC_TYPE[1])){
+            prevMetaInfo.forEach(metaInfo::putIfAbsent);
+            metaInfo.put("MAT_ADDITIONAL_SPEC", "TRUE");
+        }
+
         AnnotatedSpectrum<Peak> spectrum;
         {
             double[] masses = new double[peaks];
@@ -104,18 +114,18 @@ public class MSPSpectralParser extends SpectralParser {
                 LoggerFactory.getLogger(getClass()).error("0 Peaks found in current Block, Returning empty spectrum with meta data");
         }
 
-        String msLevel = metaInfo.get(SPEC_TYPE);
-        if ((msLevel == null && (metaInfo.containsKey(PRECURSOR_MZ) || (metaInfo.containsKey(SYN_PRECURSOR_MZ))) ||
+        String msLevel = MSP.getWithSynonyms(metaInfo, SPEC_TYPE).orElse(null);
+        if ((msLevel == null && (getWithSynonyms(metaInfo, PRECURSOR_MZ).isPresent() || (metaInfo.containsKey(SYN_PRECURSOR_MZ))) ||
                 (msLevel != null && !("MS".equalsIgnoreCase(msLevel) || "MS1".equalsIgnoreCase(msLevel))))) { // we have MSn
             spectrum = new MutableMs2Spectrum(
                     spectrum,
-                    MSP.parsePrecursorMZ(metaInfo).orElseThrow(() -> new IOException("Could neither parse '" + PRECURSOR_MZ + "' nor '" + EXACT_MASS + "'!")),
+                    MSP.parsePrecursorMZ(metaInfo).orElseThrow(() -> new IOException("Could neither parse '" + Arrays.toString(PRECURSOR_MZ) + "' nor '" + EXACT_MASS + "'!")),
                     MSP.parseCollisionEnergy(metaInfo).orElse(null),
                     msLevel == null ? 2 : Character.getNumericValue(msLevel.charAt(msLevel.indexOf("MS") + 2))
             );
 
             ((MutableMs2Spectrum) spectrum).setIonization(MSP.parsePrecursorIonType(metaInfo)
-                    .orElseThrow(() -> new IOException("Could neither parse '" + PRECURSOR_ION_TYPE + "' nor '" + CHARGE + "!"))
+                    .orElseThrow(() -> new IOException("Could neither parse '" +  Arrays.toString(PRECURSOR_ION_TYPE) + "' nor '" +  Arrays.toString(CHARGE) + "!"))
                     .getIonization());
         }
 
