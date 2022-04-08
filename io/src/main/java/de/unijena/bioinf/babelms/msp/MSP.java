@@ -151,15 +151,15 @@ public class MSP {
 
     public static Optional<PrecursorIonType> parsePrecursorIonType(Map<String, String> metaInfo) {
         String value = getWithSynonyms(metaInfo, PRECURSOR_ION_TYPE).orElse(null);
-        if (value != null)
+        if (value != null && !value.isBlank())
             return Optional.of(PrecursorIonType.fromString(value));
 
         value = metaInfo.get(SYN_PRECURSOR_ION_TYPE);
-        if (value != null)
+        if (value != null && !value.isBlank())
             return Optional.of(PrecursorIonType.fromString(value));
 
         value = getWithSynonyms(metaInfo, CHARGE).orElse(null);
-        if (value != null) {
+        if (value != null && !value.isBlank()) {
             return Optional.of(value.toLowerCase().charAt(0) == 'n' ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
         }
 
@@ -168,19 +168,19 @@ public class MSP {
 
     public static Optional<Double> parsePrecursorMZ(Map<String, String> metaInfo) {
         String value = getWithSynonyms(metaInfo, PRECURSOR_MZ).orElse(null);
-        if (value != null) {
+        if (value != null && !value.isBlank()) {
             String[] arr = value.split("/");
             return Optional.of(Double.parseDouble(arr[arr.length - 1]));
         }
 
         value = metaInfo.get(SYN_PRECURSOR_MZ);
-        if (value != null) {
+        if (value != null && !value.isBlank()) {
             String[] arr = value.split("/");
             return Optional.of(Double.parseDouble(arr[arr.length - 1]));
         }
 
         value = metaInfo.get(EXACT_MASS);
-        if (value != null)
+        if (value != null && !value.isBlank())
             return Optional.of(Double.parseDouble(value));
 
         return Optional.empty();
@@ -189,7 +189,7 @@ public class MSP {
     public static Optional<CollisionEnergy> parseCollisionEnergy(Map<String, String> metaInfo) {
         String value = getWithSynonyms(metaInfo, COL_ENERGY).orElse(null);
         CollisionEnergy e = null;
-        if (value != null) {
+        if (value != null && !value.isBlank()) {
             e = CollisionEnergy.fromStringOrNull(value);
             if (e != null) {
                 value = metaInfo.get(SYN_COL_ENERGY);
@@ -202,6 +202,6 @@ public class MSP {
 
 
     public static Optional<String> getWithSynonyms(@NotNull final Map<String, String> metaInfo, @NotNull final String... keys) {
-        return Arrays.stream(keys).map(metaInfo::get).filter(Objects::nonNull).findFirst();
+        return Arrays.stream(keys).map(metaInfo::get).filter(Objects::nonNull).filter(s -> !s.isBlank()).findFirst();
     }
 }

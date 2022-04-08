@@ -115,7 +115,7 @@ public class MSPSpectralParser extends SpectralParser {
         }
 
         String msLevel = MSP.getWithSynonyms(metaInfo, SPEC_TYPE).orElse(null);
-        if ((msLevel == null && (getWithSynonyms(metaInfo, PRECURSOR_MZ).isPresent() || (metaInfo.containsKey(SYN_PRECURSOR_MZ))) ||
+        if ((msLevel == null && (getWithSynonyms(metaInfo, PRECURSOR_MZ).isPresent() || (metaInfo.getField(SYN_PRECURSOR_MZ).filter(s -> !s.isBlank()).isPresent())) ||
                 (msLevel != null && !("MS".equalsIgnoreCase(msLevel) || "MS1".equalsIgnoreCase(msLevel))))) { // we have MSn
             spectrum = new MutableMs2Spectrum(
                     spectrum,
