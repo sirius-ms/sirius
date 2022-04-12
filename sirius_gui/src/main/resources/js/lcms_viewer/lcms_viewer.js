@@ -202,14 +202,15 @@ class SampleViewer {
             .attr("d", trace => line(trace));
 
         const ms2Markers = this.getMs2Markers(traces);
+        const xrt = function(f){return x(self.rt(f))};
         const ms2MarkerSvg = svg.append("g")
             .attr("stroke-width", 1)
             .selectAll("line")
             .data(ms2Markers)
             .join("line")
-            .attr("x1", d=>self.rt(d.orig(x,y)[0]))
-            .attr("y1", d=>d.orig(x,y)[1])
-            .attr("x2", d=>self.rt(d.tx(x)))
+            .attr("x1", d=>d.orig(xrt,y)[0])
+            .attr("y1", d=>d.orig(xrt,y)[1])
+            .attr("x2", d=>d.tx(xrt))
             .attr("y2", d=>d.ty(y))
             .attr("stroke","black")
             .attr("marker-end","url(#arrowhead)");
