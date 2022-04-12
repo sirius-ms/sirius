@@ -22,12 +22,10 @@ package de.unijena.bioinf.babelms.msp;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /*
 
@@ -139,7 +137,7 @@ public class MSP {
     public final static String[] INSTRUMENT_TYPE = {"Instrument_type", "INSTRUMENTTYPE"};
     public final static String INSTRUMENT = "Instrument";
     public final static String FORMULA = "Formula";
-    public final static String COMMENTS = "Comments"; //multiple times possible
+    public final static String COMMENTS[] = {"Comments", "COMMENT"}; //multiple times possible
     public final static String SPLASH = "Splash";
     public final static String EXACT_MASS = "ExactMass";
     public final static String NOMINAL_MASS = "MW"; // seems to be unit mass? Molecular Weight?
@@ -148,6 +146,8 @@ public class MSP {
     public final static String NUM_PEAKS = "Num Peaks";
 
     public final static String RT = "RETENTIONTIME";
+
+    public static String COMMENT_SEPARATOR = ";:|:;";
 
     public static Optional<PrecursorIonType> parsePrecursorIonType(Map<String, String> metaInfo) {
         String value = getWithSynonyms(metaInfo, PRECURSOR_ION_TYPE).orElse(null);
@@ -170,18 +170,18 @@ public class MSP {
         String value = getWithSynonyms(metaInfo, PRECURSOR_MZ).orElse(null);
         if (value != null && !value.isBlank()) {
             String[] arr = value.split("/");
-            return Optional.of(Double.parseDouble(arr[arr.length - 1]));
+            return Optional.of(Utils.parseDoubleWithUnknownDezSep(arr[arr.length - 1]));
         }
 
         value = metaInfo.get(SYN_PRECURSOR_MZ);
         if (value != null && !value.isBlank()) {
             String[] arr = value.split("/");
-            return Optional.of(Double.parseDouble(arr[arr.length - 1]));
+            return Optional.of(Utils.parseDoubleWithUnknownDezSep(arr[arr.length - 1]));
         }
 
         value = metaInfo.get(EXACT_MASS);
         if (value != null && !value.isBlank())
-            return Optional.of(Double.parseDouble(value));
+            return Optional.of(Utils.parseDoubleWithUnknownDezSep(value));
 
         return Optional.empty();
     }
@@ -200,6 +200,25 @@ public class MSP {
         return Optional.ofNullable(e);
     }
 
+    public static Optional<List<String>> extractComments(Map<String, String> metaInfo) {
+        String value = getWithSynonyms(metaInfo, COMMENTS).orElse(null);
+        if (value != null && !value.isBlank())
+            return Optional.of(List.of(value.split(COMMENT_SEPARATOR)));
+        return Optional.empty();
+    }
+
+    public static Optional<String> parseName(Map<String, String> metaInfo) {
+        String value = metaInfo.get(MSP.NAME);
+        if (value != null && !value.isBlank() && !"Unknown".equalsIgnoreCase(value) && !"null".equalsIgnoreCase(value)) {
+            return Optional.of(value);
+        }
+
+        value = extractComments(metaInfo).flatMap(l -> l.stream().min(Comparator.comparing(String::length))).orElse(null);
+        if (value != null && !value.isBlank())
+            return Optional.of(value);
+
+        return Optional.empty();
+    }
 
     public static Optional<String> getWithSynonyms(@NotNull final Map<String, String> metaInfo, @NotNull final String... keys) {
         return Arrays.stream(keys).map(metaInfo::get).filter(Objects::nonNull).filter(s -> !s.isBlank()).findFirst();
