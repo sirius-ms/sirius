@@ -208,11 +208,12 @@ public class ChromatogramBuilder {
             else slopes.add(j/i);
         }
         slopes.sort();
-        final double slope66 = slopes.get((int)Math.floor(slopes.size()*0.66));
+        final double slope66 = slopes.get((int)Math.floor(slopes.size()*0.33));//slopes.get((int)Math.floor(slopes.size()*0.66));
 
         // make statistics about deviations within
 
-        Extrema extrema = detectExtremaWithSmoothing(concat);//detectExtrema(concat);
+        Extrema extrema = detectExtremaWithSmoothing2(concat);
+                            //detectExtrema(concat);
         final int before = extrema.numberOfExtrema();
         extrema.deleteExtremaOfSinglePeaks(slope66);
         final int after = extrema.numberOfExtrema();
@@ -282,8 +283,9 @@ public class ChromatogramBuilder {
         for (int i=0; i < peak.numberOfScans(); ++i) mxm = Math.max(mxm, smoothedFunction[i]);
         final double noiseThreshold =0d;
         final Extrema extrema = new Extrema();
+        extrema.addExtremum(0, peak.getIntensityAt(0));
         boolean minimum = true;
-        for (int k=0; k < peak.numberOfScans()-1; ++k) {
+        for (int k=1; k < peak.numberOfScans()-1; ++k) {
             final double a = ((k == 0) ? 0 : smoothedFunction[k - 1]) + (minimum ? -Float.MIN_VALUE : Float.MIN_VALUE);
             final double b = smoothedFunction[k];
             final double c = smoothedFunction[k + 1] + (minimum ? -Float.MIN_VALUE : Float.MIN_VALUE);
@@ -315,6 +317,98 @@ public class ChromatogramBuilder {
 
         //extrema.smooth((i)->(float)this.sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(i),peak.getMzAt(0)), peak, 0.33, 5);
         return extrema;
+    }
+
+    private Extrema detectExtremaWithSmoothing2(MutableChromatographicPeak peak) {
+        SavitzkyGolayFilter filter;
+        if (peak.numberOfScans() < 3) {
+            return detectExtrema(peak); // no smoothing
+        } else if (peak.numberOfScans() < 10) {
+            filter = SavitzkyGolayFilter.Window1Polynomial1;
+        } else if (peak.numberOfScans() < 20) {
+            filter = SavitzkyGolayFilter.Window2Polynomial2;
+        } else if (peak.numberOfScans() < 50) {
+            filter = SavitzkyGolayFilter.Window3Polynomial2;
+        } else {
+            filter = SavitzkyGolayFilter.Window4Polynomial2;
+        }
+        return detectExtremaWithSmoothing2(peak, filter);
+    }
+
+    private Extrema detectExtremaWithSmoothing2(MutableChromatographicPeak peak, SavitzkyGolayFilter filter) {
+        final int GAP = filter.getNumberOfDataPointsPerSide();
+        double[] functionValues = new double[peak.numberOfScans() + 2*GAP];
+        for (int k=0; k < peak.numberOfScans(); ++k) functionValues[k+GAP] = peak.getIntensityAt(k);
+        double[] smoothedFunction = filter.apply(functionValues);
+        {
+            double[] xs = new double[peak.numberOfScans()];
+            System.arraycopy(smoothedFunction, GAP, xs, 0, peak.numberOfScans());
+            smoothedFunction = xs;
+        }
+
+        for (int k=0; k < smoothedFunction.length; ++k) smoothedFunction[k] = Math.max(0, smoothedFunction[k]);
+        double mxm = 0d; int mxindex=0;
+        for (int i=0; i < peak.numberOfScans(); ++i) {
+            if (mxm > smoothedFunction[i]) {
+                mxm = smoothedFunction[i];
+                mxindex=i;
+            }
+            mxm = Math.max(mxm, smoothedFunction[i]);
+        }
+        double noiseThreshold = this.sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(mxindex), peak.getMzAt(mxindex))/10;
+        final Extrema extrema = new Extrema();
+        extrema.addExtremum(0, peak.getIntensityAt(0));
+        double lastExtremumIntensity = smoothedFunction[0];
+        boolean minimum = true;
+        for (int k=1; k < peak.numberOfScans()-1; ++k) {
+            final double a = ((k == 0) ? 0 : peak.getIntensityAt(k - 1)) + (minimum ? -Float.MIN_VALUE : Float.MIN_VALUE);
+            final double b = peak.getIntensityAt(k);
+            final double c = peak.getIntensityAt(k + 1) + (minimum ? -Float.MIN_VALUE : Float.MIN_VALUE);
+            noiseThreshold = noiseThreshold*0.9 + 0.1 * Math.abs(b-c);
+            final double bsmooth = smoothedFunction[k];
+
+            //final double slope = Math.min(Math.abs(b-a),Math.abs(b-c));
+            if ((b - a) < 0 && (b - c) < 0) {
+                // minimum
+                if (minimum) {
+                    if (extrema.lastExtremumIntensity() > b) {
+                        extrema.replaceLastExtremum(k, b);
+                        lastExtremumIntensity = bsmooth;
+                    }
+                } else if (extrema.lastExtremumIntensity() - b > noiseThreshold && (lastExtremumIntensity - bsmooth > noiseThreshold)) {
+                    extrema.addExtremum(k, b);
+                    lastExtremumIntensity = bsmooth;
+                    minimum = true;
+                }
+            } else if ((b - a) > 0 && (b - c) > 0) {
+                // maximum
+                if (minimum) {
+                    if (b - extrema.lastExtremumIntensity() > noiseThreshold && bsmooth - lastExtremumIntensity > noiseThreshold/* || slope/b>=0.25*/) {
+                        extrema.addExtremum(k, b);
+                        lastExtremumIntensity = bsmooth;
+                        minimum = false;
+                    }
+                } else {
+                    if (extrema.lastExtremumIntensity() < b) {
+                        extrema.replaceLastExtremum(k, b);
+                        lastExtremumIntensity = bsmooth;
+                    }
+                }
+            }
+        }
+
+
+        //extrema.smooth((i)->(float)this.sample.ms1NoiseModel.getNoiseLevel(peak.getScanNumberAt(i),peak.getMzAt(0)), peak, 0.33, 5);
+        if (extrema.numberOfExtrema() > 16 && peak.numberOfScans() >= 200 && filter.getRadius()<32) {
+            // try a larger filter
+            System.out.println("Use an even larger filter! 32");
+            return detectExtremaWithSmoothing2(peak, SavitzkyGolayFilter.Window32Polynomial2);
+        } else if (extrema.numberOfExtrema() > 8 && peak.numberOfScans() >= 100 && filter.getRadius()<16) {
+            // try a larger filter
+            System.out.println("Use an even larger filter! 16");
+            return detectExtremaWithSmoothing2(peak, SavitzkyGolayFilter.Window16Polynomial2);
+        } else
+            return extrema;
     }
 
     private Extrema detectExtrema(MutableChromatographicPeak peak) {
@@ -438,4 +532,35 @@ public class ChromatogramBuilder {
     public Deviation getAllowedMassDeviation() {
         return dev;
     }
+
+    private static class RingBuffer {
+        private double[] buf;
+        private int offset = 0;
+        private double meanSum = 0d;
+
+        public RingBuffer(double[] init) {
+            this.buf = init;
+            this.offset = 0;
+            for (double v : init) meanSum += v;
+        }
+
+        public double mean() {
+            return meanSum / buf.length;
+        }
+
+        public double std() {
+            double m = mean();
+            double s = 0d;
+            for (double v : buf) s += (v-m)*(v-m);
+            return Math.sqrt(s)/buf.length;
+        }
+
+        public void put(double value) {
+            meanSum -= buf[offset];
+            buf[offset++] = value;
+            meanSum += value;
+            if (offset>=buf.length) offset=0;
+        }
+    }
+
 }
