@@ -21,6 +21,7 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -125,11 +126,11 @@ public class CollisionEnergy {
 
         int k = value.indexOf('-');
         if (k > 0) {
-            final double x = Double.parseDouble(value.substring(0, k).replace(",", "."));
-            final double y = Double.parseDouble(value.substring(k + 1).replace(">", "").replace(",", "."));
+            final double x = Utils.parseDoubleWithUnknownDezSep(value.substring(0, k));
+            final double y = Utils.parseDoubleWithUnknownDezSep(value.substring(k + 1).replace(">", ""));
             return new double[]{x, y};
         } else {
-            final double x = Double.parseDouble(value.replace(",", "."));
+            final double x = Utils.parseDoubleWithUnknownDezSep(value);
             return new double[]{x, x};
         }
     }

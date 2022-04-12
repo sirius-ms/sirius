@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.Parser;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +78,7 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
                     final AdditionalFields finFields = fields;
                     // mandatory
                     exp.setSource(new SpectrumFileSource(source));
-                    fields.getField(MSP.NAME).filter(s -> !s.isBlank()).ifPresent(exp::setName);
+                    MSP.parseName(fields).ifPresent(exp::setName);
                     fields.getField(MSP.FORMULA).filter(s -> !s.isBlank()).map(MolecularFormula::parseOrThrow).ifPresent(exp::setMolecularFormula);
                     MSP.parsePrecursorIonType(fields).ifPresent(exp::setPrecursorIonType);
                     MSP.parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
@@ -87,7 +88,7 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
                     fields.getField(MSP.SMILES).filter(s -> !s.isBlank()).map(Smiles::new).ifPresent(exp::annotate);
                     fields.getField(MSP.SPLASH).filter(s -> !s.isBlank()).map(Splash::new).ifPresent(exp::annotate);
                     MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
-                    fields.getField(MSP.RT).filter(s -> !s.isBlank()).map(Double::parseDouble).filter(v -> v > 0).map(v -> new RetentionTime(v * 60)).ifPresent(exp::annotate);
+                    fields.getField(MSP.RT).filter(s -> !s.isBlank()).map(Utils::parseDoubleWithUnknownDezSep).filter(v -> v > 0).map(v -> new RetentionTime(v * 60)).ifPresent(exp::annotate);
                 }
             } else {
                 LoggerFactory.getLogger(getClass()).warn("Cannot find additional meta data fields. Experiment might be incomplete!");

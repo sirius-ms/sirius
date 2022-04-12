@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.AnnotatedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.SpectralParser;
 import org.jetbrains.annotations.Nullable;
@@ -32,13 +33,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static de.unijena.bioinf.babelms.msp.MSP.*;
 
 /**
  * Parser for Massbank MSP format
  */
+
 public class MSPSpectralParser extends SpectralParser {
     private final static String START = NUM_PEAKS + ":";
 
@@ -58,7 +62,7 @@ public class MSPSpectralParser extends SpectralParser {
         AdditionalFields metaInfo = new AdditionalFields(false);
         String line;
         int peaks = -1;
-
+        List<String> comments = new ArrayList<>();
         while (peaks == -1) {
             line = reader.readLine();
 
@@ -75,9 +79,13 @@ public class MSPSpectralParser extends SpectralParser {
                 } else {
                     int split = line.indexOf(':');
                     if (split >= 0 && split < line.length() - 1) {
-                        metaInfo.put(
-                                line.substring(0, split).strip(),
-                                line.substring(split + 1).strip());
+                        final String key = line.substring(0, split).strip();
+                        final String value = line.substring(split + 1).strip();
+                        if (Arrays.stream(COMMENTS).anyMatch(key::equalsIgnoreCase)) {
+                            comments.add(value);
+                        } else {
+                            metaInfo.put(key, value);
+                        }
                     } else {
                         LoggerFactory.getLogger("Meta data key '" + line.substring(0, split) + "' does not have any value. Skipping...");
                     }
@@ -85,8 +93,11 @@ public class MSPSpectralParser extends SpectralParser {
             }
         }
 
+        if (!comments.isEmpty())
+            metaInfo.put(COMMENTS[0], String.join(COMMENT_SEPARATOR, comments));
+
         //multi MS/MS .mat format extension -> MS-Dial export
-        if (prevMetaInfo != null && metaInfo.size() == 1 && metaInfo.containsKey(SPEC_TYPE[1])){
+        if (prevMetaInfo != null && metaInfo.size() == 1 && metaInfo.containsKey(SPEC_TYPE[1])) {
             prevMetaInfo.forEach(metaInfo::putIfAbsent);
             metaInfo.put("MAT_ADDITIONAL_SPEC", "TRUE");
         }
@@ -102,8 +113,8 @@ public class MSPSpectralParser extends SpectralParser {
                     return null;
                 if (!line.isBlank()) {
                     String[] sl = line.strip().split("\\s+");
-                    masses[i] = Double.parseDouble(sl[0]);
-                    intensities[i] = Double.parseDouble(sl[1]);
+                    masses[i] = Utils.parseDoubleWithUnknownDezSep(sl[0]);
+                    intensities[i] = Utils.parseDoubleWithUnknownDezSep(sl[1]);
                     i++;
                 }
             }
