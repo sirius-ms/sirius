@@ -22,6 +22,7 @@ package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -72,6 +73,9 @@ public class ChimericDetector {
 
         //todo ScanPoint could also just directly store idx of peak
         int precursorPeakIdx = Spectrums.indexOfPeakClosestToMassWithin(scan, scanPoint.getMass(), sample.builder.getAllowedMassDeviation());
+        // use most intensive peak instead
+        final int mostInteniveIdx = Spectrums.mostIntensivePeakWithin(scan, scanPoint.getMass(), new Deviation(10));
+        if (mostInteniveIdx>=0) precursorPeakIdx = mostInteniveIdx;
 
         if (precursorPeakIdx<0) {
             LoggerFactory.getLogger(ChimericDetector.class).warn("Do not find precursor ion in MS1 scan.");

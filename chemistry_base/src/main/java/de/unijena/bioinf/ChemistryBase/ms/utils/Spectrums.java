@@ -1191,9 +1191,9 @@ public class Spectrums {
             if (spectrum.getMzAt(j) > end)
                 break;
             final double currentMzDiff = Math.abs(spectrum.getMzAt(j) - mz);
-            if (currentMzDiff < mz) {
+            if (currentMzDiff < mzDiff) {
                 k = j;
-                mz = spectrum.getIntensityAt(j);
+                mzDiff = currentMzDiff;
             }
         }
         return k;
