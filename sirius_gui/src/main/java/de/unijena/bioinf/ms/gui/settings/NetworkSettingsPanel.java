@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.PasswordCrypter;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.webapi.rest.ProxyManager;
@@ -79,6 +80,8 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
         systemBrowser = new JCheckBox();
         systemBrowser.setText("Use System Browser for SignUp:");
         systemBrowser.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.ui.signUp.systemBrowser", "false")));
+        systemBrowser.setToolTipText(GuiUtils.formatToolTip("If selected, the system browser instead of SIRIUS' internal browser will be used for SignUp (account creation)."
+                + "If a proxy server is configured this selection will be ignored and the system browser will always be used."));
         add(systemBrowser);
 
         add(new JXTitledSeparator("Proxy Configuration"));
