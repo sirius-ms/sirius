@@ -30,6 +30,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.PeakComment;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.Parser;
@@ -249,7 +250,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
         private static Pattern LINE_PATTERN = Pattern.compile("^\\s*([>#]|\\d)");
 
-        private static final String decimalPattern = "[+-]?\\s*\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?";
+        private static final String decimalPattern = "[+-]?\\s*\\d+(?:[.,]\\d+)?(?:[eE][+-]?\\d+)?";
 
         private static final Pattern MASS_PATTERN = Pattern.compile("(" + decimalPattern + ")(?:\\s*Da)?");
 
@@ -305,13 +306,13 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 if (parentMass != 0) warn("parent mass is set twice");
                 final Matcher m = MASS_PATTERN.matcher(value);
                 if (m.find())
-                    this.parentMass = Double.parseDouble(m.group(1));
+                    this.parentMass = Utils.parseDoubleWithUnknownDezSep(m.group(1));
                 else
                     error("Cannot parse parent mass: '" + value + "'");
             } else if (optionName.equals("charge")) {
                 final Matcher m = FLOAT_PATTERN.matcher(value);
                 if (m.find()) {
-                    this.charge = (int) Double.parseDouble(m.group(1));
+                    this.charge = (int) Utils.parseDoubleWithUnknownDezSep(m.group(1));
                 } else {
                     error("Cannot parse charge '" + value + "'");
                 }
@@ -377,7 +378,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 if (tic != 0) warn("total ion count is set twice");
                 final Matcher m = FLOAT_PATTERN.matcher(value);
                 if (m.find()) {
-                    tic = Double.parseDouble(value);
+                    tic = Utils.parseDoubleWithUnknownDezSep(value);
                 } else {
                     error("Cannot parse total ion count: '" + value + "'");
                 }
@@ -526,7 +527,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private double parseRetentionTime(String value) {
             final Matcher m = RETENTION_PATTER.matcher(value);
             if (m.find()) {
-                return Double.parseDouble(m.group(1));
+                return Utils.parseDoubleWithUnknownDezSep(m.group(1));
             } else {
                 warn("Cannot parse retention time: '" + value + "'");
                 return Double.NaN;
@@ -536,7 +537,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private double parseTime(String value) {
             final Matcher m = TIME_PATTERN.matcher(value);
             if (m.find()) {
-                return Double.parseDouble(m.group(1));
+                return Utils.parseDoubleWithUnknownDezSep(m.group(1));
             } else {
                 return Double.NaN;
             }
@@ -545,7 +546,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         private void parsePeak(String line, List<String> comments) throws IOException {
             final Matcher m = PEAK_PATTERN.matcher(line);
             if (m.find()) {
-                currentSpectrum.addPeak(new SimplePeak(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2))));
+                currentSpectrum.addPeak(new SimplePeak(Utils.parseDoubleWithUnknownDezSep(m.group(1)), Utils.parseDoubleWithUnknownDezSep(m.group(2))));
                 if (m.group(3)!=null && m.group(3).length()>0) {
                     hasPeakComment = true;
                     comments.add(m.group(3).strip());
