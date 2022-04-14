@@ -52,38 +52,20 @@ ext {
 //    cplex_version = '20.1.0'
     gurobi_version = '9.1.1'
 
-    logger.lifecycle('reading gradle properties file...')
-    File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
-    if (propertiesFile.exists()) {
-        getLogger().lifecycle("Loading properties from ${propertiesFile.absolutePath}")
-        Properties props = new Properties()
-
-        propertiesFile.withReader("UTF8", {
-            props.load(it)
-        })
-        System.properties.putAll(props)
-    }else {
-        getLogger().lifecycle("No properties file found at '${propertiesFile.absolutePath}'. Some tasks might not work without this information.")
-    }
-
     logger.lifecycle('reading build properties file...')
     props = new Properties()
     File propertiesFileIn = new File("${projectDir}/sirius_cli/src/main/resources/sirius_frontend.build.properties")
     propertiesFileIn.withReader("UTF8", {
         props.load(it)
     })
-    System.properties.putAll(props)
 
     // edit all these versions in sirius_cli/src/main/resources/....build.properties
-    appName = System.properties.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
-//    buildNumber = System.properties.getProperty('de.unijena.bioinf.sirius.build')
-//    println(buildNumber)
-    siriusFrontendVersion = System.properties.getProperty('de.unijena.bioinf.siriusFrontend.version')
-    siriusVersion = System.properties.getProperty('de.unijena.bioinf.sirius.version')
-    fingeridVersion = System.properties.getProperty('de.unijena.bioinf.fingerid.version')
-    mztabm_version = System.properties.getProperty('de.unijena.bioinf.mztabm.version')
+    appName = props.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
+    siriusFrontendVersion = props.getProperty('de.unijena.bioinf.siriusFrontend.version')
+    siriusVersion = props.getProperty('de.unijena.bioinf.sirius.version')
+    fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
+    mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
 }
-
 
 /*################### DISTRIBUTION STUFF ################### */
 project.ext.set("linSuffix", "linux")
@@ -345,12 +327,8 @@ artifactory {
     publish {
         repository {
             repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
-            username = System.getenv("ARTIFACTORY_USERNAME") != null
-                    ? System.getenv("ARTIFACTORY_USERNAME")
-                    : System.properties['de.unijena.bioinf.build.artifactory.username']
-            password = System.getenv("ARTIFACTORY_TOKEN") != null
-                    ? System.getenv("ARTIFACTORY_TOKEN")
-                    : System.properties['de.unijena.bioinf.build.artifactory.password']
+            username = project.property('de.unijena.bioinf.build.artifactory.username')
+            password = project.property('de.unijena.bioinf.build.artifactory.password')
         }
         defaults {
             //Publish every distribution to Artifactory

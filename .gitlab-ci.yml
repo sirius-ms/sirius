@@ -66,7 +66,7 @@ distCliLinux64:
   stage: build
   script:
     - cd sirius_dist/sirius_cli_single_os
-    - gradle clean artifactoryPublish --refresh-dependencies
+    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -88,7 +88,7 @@ distGuiLinux64:
   stage: build
   script:
     - cd sirius_dist/sirius_gui_single_os
-    - gradle clean artifactoryPublish --refresh-dependencies
+    - gradle clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push

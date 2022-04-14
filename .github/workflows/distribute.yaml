@@ -73,7 +73,7 @@ jobs:
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_cli_single_os
-          arguments: clean publishSiriusPublicationToMavenLocal
+          arguments: clean publishSiriusPublicationToMavenLocal -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=$MACOS_APP_IDENTITY_ID" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=$MACOS_IDENTITY_ID" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=$MACOS_APPLE_ID" -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE=$WIN_INSTALLER_CERTIFICATE_FILE"
       - name: Upload multiOS Source
         uses: actions/upload-artifact@v2
         with:
@@ -155,7 +155,7 @@ jobs:
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_gui_single_os
-          arguments: clean publishSiriusPublicationToMavenLocal
+          arguments: clean publishSiriusPublicationToMavenLocal -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=$MACOS_APP_IDENTITY_ID" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=$MACOS_IDENTITY_ID" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=$MACOS_APPLE_ID" -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE=$WIN_INSTALLER_CERTIFICATE_FILE"
       - name: Upload Distributions
         uses: actions/upload-artifact@v2
         with:
@@ -255,4 +255,3 @@ jobs:
           allowUpdates: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
           draft: ${{ (env.GITHUB_REF_SLUG == 'stable' || env.GITHUB_REF_SLUG == 'master') && 'false' || 'true' }}
           token: ${{ secrets.GITHUB_TOKEN }}
-
