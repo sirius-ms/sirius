@@ -443,7 +443,7 @@ subprojects {
         inputs.dir(distImage.outputDir)
         doLast {
             if (project.OS.isMacOsX()) {
-                def signID = System.getenv("MACOS_APP_IDENTITY_ID")
+                def signID = findProperty("de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID")
                 if (signID != null && !signID.isBlank()) {
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
                     def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib")]
@@ -538,7 +538,7 @@ subprojects {
             def source
             def target
             if (project.OS.isMacOsX()) {
-                def macInstallerIdentity = System.getenv('MACOS_IDENTITY_ID') //just to check whether a certificate was given
+                def macInstallerIdentity = findProperty('de.unijena.bioinf.build.MACOS_IDENTITY_ID') //just to check whether a certificate was given
                 if (macInstallerIdentity != null && !macInstallerIdentity.isBlank()) {
                     source = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
                     target = Path.of(distImage.getImageDir().absolutePath.replace('.app', "-SIGNED") + installerAppendix)
@@ -557,7 +557,7 @@ subprojects {
                 }
             } else if (project.OS.isWindows()) {
                 def input = distImage.getImageDir().absolutePath + installerAppendix
-                def certFile = System.getenv('WIN_INSTALLER_CERTIFICATE_FILE')
+                def certFile = findProperty('de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE')
                 getLogger().lifecycle("Cert File location to use: '$certFile'")
                 if (certFile != null && !certFile.isBlank() && file(certFile).exists()) {
                     def searchPaths = [Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files (x86)").resolve("Windows Kits"), Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files").resolve("Windows Kits")]
@@ -577,8 +577,8 @@ subprojects {
                     def c = ["$signtoolExe", "sign", "/debug", "/f", "${certFile}",
                              "/d", "Installer for the SIRIUS MS/MS analysis Software",
                              "/du", "https://bright-giant.com",
-                             "/p", "${System.getenv('WIN_INSTALLER_CERTIFICATE_PW')}", "/v", "/fd", "SHA256",
-                             "/tr", "\"${System.getenv('WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL')}\"", "/td", "SHA256", "$input"]
+                             "/p", "${findProperty('de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_PW')}", "/v", "/fd", "SHA256",
+                             "/tr", "\"${findProperty('de.unijena.bioinf.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL')}\"", "/td", "SHA256", "$input"]
                     println(c)
                     project.exec {
                         commandLine(c)
@@ -597,8 +597,8 @@ subprojects {
         inputs.dir(distImage.outputDir)
         doLast {
             if (project.OS.isMacOsX()) {
-                def appleId = System.getenv("MACOS_APPLE_ID")
-                def appleIdPw = System.getenv("MACOS_APPLE_ID_PW")
+                def appleId = findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID')
+                def appleIdPw = findProperty('de.unijena.bioinf.MACOS_APPLE_ID_PW')
 
                 if (appleId != null && appleIdPw != null && !appleId.isBlank() && !appleIdPw.isBlank()) {
                     def pkg = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
