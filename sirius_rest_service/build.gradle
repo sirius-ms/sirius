@@ -134,8 +134,8 @@ artifactory {
             else
                 repoKey = 'libs-release-local'
 
-            username = property('de.unijena.bioinf.build.artifactory.username')
-            password = property('de.unijena.bioinf.build.artifactory.password')
+            username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
+            password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
         }
         defaults {
             publications('mavenJava')
