@@ -444,7 +444,7 @@ subprojects {
         doLast {
             if (project.OS.isMacOsX()) {
                 def signID = findProperty("de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID")
-                if (signID != null && !signID.isBlank()) {
+                if (signID != null && !signID.isBlank() && !'null'.equalsIgnoreCase(signID)) {
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
                     def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib")]
                     def jarNestedLibs = [
@@ -539,7 +539,7 @@ subprojects {
             def target
             if (project.OS.isMacOsX()) {
                 def macInstallerIdentity = findProperty('de.unijena.bioinf.build.MACOS_IDENTITY_ID') //just to check whether a certificate was given
-                if (macInstallerIdentity != null && !macInstallerIdentity.isBlank()) {
+                if (macInstallerIdentity != null && !macInstallerIdentity.isBlank()  && !'null'.equalsIgnoreCase(macInstallerIdentity)) {
                     source = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
                     target = Path.of(distImage.getImageDir().absolutePath.replace('.app', "-SIGNED") + installerAppendix)
                     getLogger().lifecycle("Signing INSTALLER '$source'")
@@ -559,7 +559,7 @@ subprojects {
                 def input = distImage.getImageDir().absolutePath + installerAppendix
                 def certFile = findProperty('de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE')
                 getLogger().lifecycle("Cert File location to use: '$certFile'")
-                if (certFile != null && !certFile.isBlank() && file(certFile).exists()) {
+                if (certFile != null && !certFile.isBlank() && !'null'.equalsIgnoreCase(certFile) && file(certFile).exists()) {
                     def searchPaths = [Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files (x86)").resolve("Windows Kits"), Path.of("${System.getenv("SystemDrive")}\\").resolve("Program Files").resolve("Windows Kits")]
                     getLogger().lifecycle("Searching recursively for signtool.exe in ${searchPaths}")
                     def signtoolExe = searchPaths.stream().filter({p -> Files.exists(p)}).flatMap({ p -> Files.walk(p) })
@@ -600,7 +600,7 @@ subprojects {
                 def appleId = findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID')
                 def appleIdPw = findProperty('de.unijena.bioinf.MACOS_APPLE_ID_PW')
 
-                if (appleId != null && appleIdPw != null && !appleId.isBlank() && !appleIdPw.isBlank()) {
+                if (appleId != null && appleIdPw != null && !appleId.isBlank() && !appleIdPw.isBlank() && !'null'.equalsIgnoreCase(appleId) && !'null'.equalsIgnoreCase(appleIdPw)) {
                     def pkg = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
                     getLogger().lifecycle("Showing available providers")
                     project.exec {
