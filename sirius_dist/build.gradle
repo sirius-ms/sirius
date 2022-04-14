@@ -444,6 +444,8 @@ subprojects {
         doLast {
             if (project.OS.isMacOsX()) {
                 def signID = findProperty("de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID")
+                println("===========> " + signID)
+                println("===========> " + (signID != null && !signID.isBlank() && !'null'.equalsIgnoreCase(signID)))
                 if (signID != null && !signID.isBlank() && !'null'.equalsIgnoreCase(signID)) {
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
                     def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib")]
