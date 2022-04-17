@@ -11,37 +11,61 @@ import java.util.*;
 public class CombinatorialFragmenter {
 
     protected final MolecularGraph molecularGraph;
+    protected final CombinatorialFragmenterScoring scoring;
 
-    public CombinatorialFragmenter(MolecularGraph molecularGraph) {
+    private static final CombinatorialFragmenterScoring EMPTY_SCORING = new CombinatorialFragmenterScoring() {
+        @Override
+        public double scoreBond(IBond bond, boolean direction) {
+            return -1d;
+        }
+
+        @Override
+        public double scoreFragment(CombinatorialNode fragment) {
+            return 0;
+        }
+
+        @Override
+        public double scoreEdge(CombinatorialEdge edge){
+            return (edge.getCut1() != null ? scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) : 0) + (edge.getCut2() != null ? scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) : 0);
+        }
+    };
+
+    public CombinatorialFragmenter(MolecularGraph molecularGraph, CombinatorialFragmenterScoring scoring) {
         this.molecularGraph = molecularGraph;
+        this.scoring = scoring;
+    }
+
+    public CombinatorialFragmenter(MolecularGraph molecularGraph){
+        this(molecularGraph, EMPTY_SCORING);
     }
 
     public interface Callback {
-        public void cut(CombinatorialFragment parent, IBond[] bonds, CombinatorialFragment[] fragments);
+        void cut(CombinatorialFragment parent, IBond[] bonds, CombinatorialFragment[] fragments);
     }
 
     public List<CombinatorialFragment> cutAllBonds(CombinatorialFragment fragment, Callback callback) {
         int[] bonds = fragment.bonds().toArray();
+        BitSet cuttedBonds = new BitSet(fragment.parent.bonds.length);
         List<CombinatorialFragment> list = new ArrayList<>();
-        for (int i=0; i < bonds.length; ++i) {
-            final int bond = bonds[i];
+        for (final int bond : bonds) {
+            cuttedBonds.set(bond);
             if (fragment.allRingsDisconnected(bond)) {
                 final CombinatorialFragment[] combinatorialFragments = cutBond(fragment, bond);
                 list.add(combinatorialFragments[0]);
                 list.add(combinatorialFragments[1]);
-                if (callback!=null) {
+                if (callback != null) {
                     callback.cut(fragment, new IBond[]{fragment.parent.bonds[bond]}, combinatorialFragments);
                 }
             } else {
                 int ringId = fragment.getSSSRIfCuttable(bond);
-                if (ringId>=0) {
+                if (ringId >= 0) {
                     for (IBond b : fragment.parent.bondsOfRings[ringId]) {
                         final int bidx = b.getIndex();
-                        if (bidx != bond && fragment.stillContains(b) && fragment.getSSSRIfCuttable(bidx)==ringId) {
-                            final CombinatorialFragment[] combinatorialFragments =cutRing(fragment, ringId, bond, bidx);
+                        if (bidx != bond && !cuttedBonds.get(bidx) && fragment.stillContains(b) && fragment.getSSSRIfCuttable(bidx) == ringId) {
+                            final CombinatorialFragment[] combinatorialFragments = cutRing(fragment, ringId, bond, bidx);
                             list.add(combinatorialFragments[0]);
                             list.add(combinatorialFragments[1]);
-                            if (callback!=null) {
+                            if (callback != null) {
                                 callback.cut(fragment, new IBond[]{fragment.parent.bonds[bond], b}, combinatorialFragments);
                             }
                         }
@@ -57,7 +81,7 @@ public class CombinatorialFragmenter {
          * @param node last node which was created
          * @return true, if node should be considered for further fragmentation
          */
-        public boolean cut(CombinatorialNode node);
+        boolean cut(CombinatorialNode node);
     }
 
     public CombinatorialGraph createCombinatorialFragmentationGraph(Callback2 callback) {
@@ -68,7 +92,7 @@ public class CombinatorialFragmenter {
             CombinatorialNode n = nodes.pollFirst();
             List<CombinatorialFragment> fragments = cutAllBonds(n.fragment, (parent, bonds, fragments1) -> {
                 for (CombinatorialFragment f : fragments1) {
-                    CombinatorialNode w = graph.addReturnNovel(n,f,bonds[0], bonds.length>1 ? bonds[1] : null);
+                    CombinatorialNode w = graph.addReturnNovel(n,f,bonds[0], bonds.length>1 ? bonds[1] : null, scoring);
                     if (w!=null && callback.cut(w)) nodes.addLast(w);
                 }
             });

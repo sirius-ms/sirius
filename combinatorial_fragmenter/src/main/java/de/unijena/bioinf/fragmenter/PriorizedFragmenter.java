@@ -6,7 +6,6 @@ import java.util.*;
  * This fragmenter will create fragments step by step, beginning with fragments with higher score
  */
 public class PriorizedFragmenter extends CombinatorialFragmenter {
-    protected final CombinatorialFragmenterScoring scoring;
 
     protected CombinatorialGraph graph;
     protected PriorityQueue<CombinatorialNode> nodes;
@@ -14,11 +13,10 @@ public class PriorizedFragmenter extends CombinatorialFragmenter {
     protected CombinatorialNode currentFragment;
 
     // 0 = reject, 2 = acceptForFragmentation
-    protected byte state = 0;
+    protected byte state;
 
     public PriorizedFragmenter(MolecularGraph molecularGraph, CombinatorialFragmenterScoring scoring) {
-        super(molecularGraph);
-        this.scoring = scoring;
+        super(molecularGraph, scoring);
         this.graph = new CombinatorialGraph(molecularGraph);
         this.nodes = new PriorityQueue<>((o1, o2) -> Float.compare(o2.totalScore,o1.totalScore));
         this.currentFragment = graph.root;
@@ -61,7 +59,7 @@ public class PriorizedFragmenter extends CombinatorialFragmenter {
             CombinatorialNode n = nodes.pollFirst();
             List<CombinatorialFragment> fragments = cutAllBonds(n.fragment, (parent, bonds, fragments1) -> {
                 for (CombinatorialFragment f : fragments1) {
-                    CombinatorialNode w = graph.addReturnNovel(n,f,bonds[0], bonds.length>1 ? bonds[1] : null);
+                    CombinatorialNode w = graph.addReturnNovel(n,f,bonds[0], bonds.length>1 ? bonds[1] : null,scoring);
                     if (w!=null && callback.cut(w)) nodes.addLast(w);
                 }
             });

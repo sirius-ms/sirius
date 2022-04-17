@@ -79,7 +79,7 @@ public class AnnotateFragmentationTree {
                 if (remaining == 0) break;
                 CombinatorialNode f = fragmenter.currentFragment;
 
-                final boolean match = formulas.containsKey(f.fragment.getFormula());
+                final boolean match = formulas.containsKey(f.fragment.getFormula().withoutHydrogen());
                 if (((match || f.totalScore >= -10)) && (f.getBondbreaks() < 10))
                     fragmenter.acceptFragmentForFragmentation();
                 if (match) {
@@ -115,7 +115,7 @@ public class AnnotateFragmentationTree {
 
 
     private static boolean insertBestMatching(HashMap<Fragment, CombinatorialNode> mapping, HashMap<MolecularFormula, List<Fragment>> formulas, CombinatorialNode node, HashMap<Fragment, CombinatorialNode> secondBest) {
-        final Iterator<Fragment> iterator = formulas.get(node.fragment.getFormula()).stream().sorted(Comparator.comparingInt(
+        final Iterator<Fragment> iterator = formulas.get(node.fragment.getFormula().withoutHydrogen()).stream().sorted(Comparator.comparingInt(
                 x -> node.fragment.hydrogenRearrangements(x.getFormula())
         )).iterator();
         while (iterator.hasNext()) {

@@ -7,6 +7,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
@@ -17,16 +18,23 @@ public class CombinatorialFragment {
     protected final MolecularGraph parent;
     protected final BitSet bitset;
     protected final BitSet disconnectedRings;
-    protected MolecularFormula formula;
+    protected MolecularFormula formula; // --> in general, with hydrogens!!
+    protected final boolean isRealFragment;
 
-    public CombinatorialFragment(MolecularGraph parent, BitSet bitset, BitSet disconnectedRings) {
+    public CombinatorialFragment(MolecularGraph parent, BitSet bitset, BitSet disconnectedRings){
+        this(parent, bitset, null, disconnectedRings);
+    }
+
+    public CombinatorialFragment(MolecularGraph parent, BitSet bitset, MolecularFormula formula, BitSet disconnectedRings) {
         this.parent = parent;
         this.bitset = bitset;
-        this.formula = null;
+        this.formula = formula;
         this.disconnectedRings = disconnectedRings;
+        this.isRealFragment = bitset.length() <= parent.natoms;
     }
 
     public IAtom[] getAtoms() {
+        if(!this.isRealFragment) return new IAtom[0];
         IAtom[] atoms = new IAtom[bitset.cardinality()];
         int k=0;
         for (int b = bitset.nextSetBit(0); b>=0; b = bitset.nextSetBit(b+1)) {
@@ -36,6 +44,7 @@ public class CombinatorialFragment {
     }
 
     public IAtomContainer toMolecule() {
+        if(!this.isRealFragment) return new AtomContainer();
         final int cardinality = bitset.cardinality();
         if (cardinality==parent.natoms) return parent.molecule;
         int[] indizes = new int[cardinality];
@@ -45,6 +54,8 @@ public class CombinatorialFragment {
         }
         try {
             return AtomContainerManipulator.extractSubstructure(parent.molecule, indizes);
+            // Atom objects in the resulting IAtomContainer are copies of the Atom objects in parent.molecule
+            // --> the number of implicit hydrogen atoms remains
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
@@ -73,39 +84,72 @@ public class CombinatorialFragment {
         return found;
     }
 
+    /**
+     * Returns the number of all hydrogen atoms (explicit and implicit) in this fragment.<br>
+     *
+     * If this object is not a real fragment, this method returns 0.
+     *
+     * @return number of explicit and implicit hydrogen atoms in this fragment
+     */
     public int numberOfHydrogens() {
+        if(!this.isRealFragment) return this.formula.numberOfHydrogens();
+        TableSelection sel = parent.getTableSelectionOfFormula();
+        int[] atomLabels = parent.getAtomLabels();
         int count=0;
         for (int b = bitset.nextSetBit(0); b>=0; b = bitset.nextSetBit(b+1)) {
-            count += parent.hydrogens[b];
+            if(atomLabels[b] == sel.hydrogenIndex()){
+                count++;
+            }else {
+                count += parent.hydrogens[b];
+            }
         }
         return count;
     }
 
+    /**
+     * Returns the number of hydrogen atoms by which the given molecular formula and the molecular formula of this
+     * fragment differ.
+     *
+     * @param matcher another {@link MolecularFormula} object
+     * @return difference of hydrogen atoms
+     * @throws IllegalArgumentException if the given {@link MolecularFormula} differs not only in the number of hydrogen atoms
+     */
     public int hydrogenRearrangements(MolecularFormula matcher) {
-        MolecularFormula f = getFormula();
+        MolecularFormula f = this.getFormula().withoutHydrogen();
         final MolecularFormula hydrogens = matcher.subtract(f);
         if (hydrogens.numberOfHydrogens()!=hydrogens.atomCount()) {
-            throw new IllegalArgumentException("Molecular formulas do not match");
+            throw new IllegalArgumentException("The given molecular formula differs not only " +
+                    "in the number of hydrogen atoms");
         }
-        return numberOfHydrogens() - hydrogens.numberOfHydrogens();
+        return this.numberOfHydrogens() - hydrogens.numberOfHydrogens();
     }
 
+    /**
+     * In general, this method returns the molecular formula of this fragment including the hydrogen atoms.
+     *
+     * @return {@link MolecularFormula} object that represents the molecular formula of this fragment
+     */
     public MolecularFormula getFormula() {
         if(formula==null) determineFormula();
         return formula;
     }
 
+    /**
+     * This method computes the molecular formula of this fragment including the hydrogen atom.
+     */
     private void determineFormula() {
         final TableSelection sel = parent.getTableSelectionOfFormula();
         short[] buffer = sel.makeCompomer();
         int[] labels = parent.getAtomLabels();
-        for (int node=bitset.nextSetBit(0); node >= 0; node=bitset.nextSetBit(node+1) ) {
+        for (int node = bitset.nextSetBit(0); node >= 0; node = bitset.nextSetBit(node + 1)) {
             ++buffer[labels[node]];
         }
+        buffer[sel.hydrogenIndex()] = (short) this.numberOfHydrogens();
         this.formula = MolecularFormula.fromCompomer(sel, buffer);
     }
 
     public TIntArrayList bonds() {
+        if(!this.isRealFragment) return new TIntArrayList();
         final int[][] adj = parent.getAdjacencyList();
         final int[][] bondj = parent.bondList;
         final TIntArrayList bonds = new TIntArrayList();
@@ -121,10 +165,10 @@ public class CombinatorialFragment {
     }
 
     public boolean stillContains(IBond b) {
-        return bitset.get(b.getAtom(0).getIndex()) && bitset.get(b.getAtom(1).getIndex());
+        return this.isRealFragment && bitset.get(b.getAtom(0).getIndex()) && bitset.get(b.getAtom(1).getIndex());
     }
     public boolean stillContains(IAtom a) {
-        return bitset.get(a.getIndex());
+        return this.isRealFragment && bitset.get(a.getIndex());
     }
 
     public String toSMILES() {
@@ -133,5 +177,9 @@ public class CombinatorialFragment {
         } catch (CDKException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public boolean isRealFragment(){
+        return this.isRealFragment;
     }
 }
