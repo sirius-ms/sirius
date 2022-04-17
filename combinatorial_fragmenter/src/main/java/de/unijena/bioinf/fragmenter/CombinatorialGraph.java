@@ -1,12 +1,14 @@
 package de.unijena.bioinf.fragmenter;
 
+import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import org.openscience.cdk.interfaces.IBond;
 
 import java.util.*;
 
 public class CombinatorialGraph {
 
-    protected final List<CombinatorialNode> nodes;
+    protected final List<CombinatorialNode> nodes; //alle Knoten außer der Wurzel
     protected final CombinatorialNode root;
     protected final HashMap<BitSet, CombinatorialNode> bitset2node;
 
@@ -20,79 +22,82 @@ public class CombinatorialGraph {
         bitset2node.put(root.fragment.bitset, root);
     }
 
-    public CombinatorialNode addReturnNovel(CombinatorialNode parent, CombinatorialFragment fragment, IBond firstBond, IBond secondBond) {
-        return addReturnNovel(parent,fragment,firstBond,secondBond,EMPTY_SCORING);
-    }
-    private static CombinatorialFragmenterScoring EMPTY_SCORING = new CombinatorialFragmenterScoring() {
-        @Override
-        public double scoreBond(IBond bond, boolean direction) {
-            return -1d;
-        }
-
-        @Override
-        public double scoreFragment(CombinatorialFragment fragment) {
-            return 0;
-        }
-    };
-
     public CombinatorialNode addReturnNovel(CombinatorialNode parent, CombinatorialFragment fragment, IBond firstBond, IBond secondBond, CombinatorialFragmenterScoring scoring) {
-        boolean novel = false;
-        CombinatorialNode node = bitset2node.get(fragment.bitset);
-        if (node == null) {
-            node = new CombinatorialNode(fragment);
-            bitset2node.put(fragment.bitset,node);
-            nodes.add(node);
-            novel = true;
-            node.score = Float.NEGATIVE_INFINITY;
-            node.totalScore = Float.NEGATIVE_INFINITY;
-
+        boolean novel = (bitset2node.get(fragment.bitset) == null);
+        CombinatorialNode node = this.addReturnAlways(parent, fragment,firstBond,secondBond,scoring,null);
+        if(novel){
+            return node;
+        }else{
+            return null;
         }
-        node.depth = (short)Math.min(node.depth, parent.depth+1);
-        node.bondbreaks = (short)Math.min(node.bondbreaks, parent.bondbreaks + (secondBond==null ? 1 : 2));
-
-        boolean cut1Direction =  ( fragment.bitset.get(firstBond.getAtom(0).getIndex()));
-        boolean cut2Direction = secondBond != null && (fragment.bitset.get(secondBond.getAtom(0).getIndex()));
-
-        float score = (float)(scoring.scoreBond(firstBond,cut1Direction)+ (secondBond!=null ? scoring.scoreBond(secondBond,cut2Direction) : 0f) + scoring.scoreFragment(node.fragment));
-        float bestScore = (parent.totalScore + score);
-        if (bestScore > node.totalScore) {
-            node.totalScore = bestScore;
-            node.score = score;
-        }
-        CombinatorialEdge edge = new CombinatorialEdge(parent, node, firstBond, secondBond, cut1Direction,cut2Direction);
-        node.incomingEdges.add(edge);
-        parent.outgoingEdges.add(edge);
-        if (novel) return node;
-        else return null;
     }
+
     public CombinatorialNode addReturnAlways(CombinatorialNode parent, CombinatorialFragment fragment, IBond firstBond, IBond secondBond, CombinatorialFragmenterScoring scoring, boolean[] updateFlag) {
-        boolean novel = false;
         CombinatorialNode node = bitset2node.get(fragment.bitset);
         if (node == null) {
             node = new CombinatorialNode(fragment);
             bitset2node.put(fragment.bitset,node);
             nodes.add(node);
-            novel = true;
             node.score = Float.NEGATIVE_INFINITY;
             node.totalScore = Float.NEGATIVE_INFINITY;
-
         }
+
         node.depth = (short)Math.min(node.depth, parent.depth+1);
-        node.bondbreaks = (short)Math.min(node.bondbreaks, parent.bondbreaks + (secondBond==null ? 1 : 2));
-        boolean cut1Direction =  ( fragment.bitset.get(firstBond.getAtom(0).getIndex()));
+        node.bondbreaks = (short)Math.min(node.bondbreaks, parent.bondbreaks + (firstBond != null ? 1 : 0) + (secondBond !=null ? 1 : 0));
+
+        boolean cut1Direction = firstBond != null && (fragment.bitset.get(firstBond.getAtom(0).getIndex()));
         boolean cut2Direction = secondBond != null && (fragment.bitset.get(secondBond.getAtom(0).getIndex()));
-        float score = (float)(scoring.scoreBond(firstBond,cut1Direction)+(secondBond!=null ? scoring.scoreBond(secondBond,cut2Direction) : 0f) + scoring.scoreFragment(node.fragment));
+
+        CombinatorialEdge edge = new  CombinatorialEdge(parent, node, firstBond, secondBond,cut1Direction,cut2Direction);
+        node.incomingEdges.add(edge);
+        parent.outgoingEdges.add(edge);
+
+        edge.score = (float) scoring.scoreEdge(edge);
+        node.fragmentScore = (float) scoring.scoreFragment(node);
+        float score = node.fragmentScore + edge.score;
         float bestScore = (parent.totalScore + score);
+
         if (bestScore > node.totalScore) {
             node.totalScore = bestScore;
             node.score = score;
-            updateFlag[0] = true;
-        } else updateFlag[0] = false;
-
-        CombinatorialEdge edge = new CombinatorialEdge(parent, node, firstBond, secondBond,cut1Direction,cut2Direction);
-        node.incomingEdges.add(edge);
-        parent.outgoingEdges.add(edge);
+            if(updateFlag != null && updateFlag.length > 0) updateFlag[0] = true;
+        } else {
+            if(updateFlag != null && updateFlag.length > 0) updateFlag[0] = false;
+        }
         return node;
+    }
+
+    public CombinatorialEdge deleteEdge(CombinatorialNode source, CombinatorialNode target){
+        CombinatorialEdge edge = null;
+        for(CombinatorialEdge e : source.outgoingEdges){
+            if(e.target == target){
+                edge = e;
+                break;
+            }
+        }
+        if(edge == null || target.incomingEdges.size() == 1) return null;
+
+        source.outgoingEdges.remove(edge);
+        target.incomingEdges.remove(edge);
+
+        // the scores of 'source' haven't changed, but maybe for 'target'
+        target.bondbreaks = Short.MAX_VALUE;
+        target.depth = Short.MAX_VALUE;
+        target.totalScore = Float.NEGATIVE_INFINITY;
+
+        for(CombinatorialEdge e : target.incomingEdges){
+            target.bondbreaks = (short) Math.min(target.bondbreaks, e.source.bondbreaks + (e.cut1 != null ? 1 : 0) + (e.cut2 != null ? 1 : 0));
+            target.depth = (short) Math.min(target.depth, e.source.depth +1);
+
+            float score = target.fragmentScore + e.score;
+            float bestScore = e.source.totalScore + score;
+            if(bestScore > target.totalScore){
+                target.totalScore = bestScore;
+                target.score = score;
+            }
+        }
+
+        return edge;
     }
 
     /**
@@ -105,25 +110,66 @@ public class CombinatorialGraph {
         }
     }
 
-    public CombinatorialEdge addBondCut(CombinatorialNode parent, CombinatorialFragment fragment, IBond firstBond) {
-        return addRingCut(parent,fragment,firstBond,null);
+    /**
+     * Returns an {@link ArrayList} containing all nodes in this graph which are sorted
+     * regarding to their {@link BitSet} object. In this case, the {@link BitSet} represents a binary number.
+     *
+     * @return a list contained all nodes sorted regarding to their {@link BitSet}
+     */
+    public ArrayList<CombinatorialNode> getSortedNodeList(){
+        ArrayList<CombinatorialNode> sortedList = new ArrayList<>(this.nodes);
+        sortedList.add(this.root);
+        sortedList.sort((n1, n2) -> {
+            int num1 = 0, num2 = 0;
+            for (int i = 0; i <= this.root.fragment.parent.natoms; i++) {
+                num1 = num1 + (n1.fragment.bitset.get(i) ? (int) Math.pow(2, i) : 0);
+                num2 = num2 + (n2.fragment.bitset.get(i) ? (int) Math.pow(2, i) : 0);
+            }
+            return num1 - num2;
+        });
+        return sortedList;
     }
 
-    public CombinatorialEdge addRingCut(CombinatorialNode parent, CombinatorialFragment fragment, IBond firstBond, IBond secondBond) {
+    /**
+     * Returns the adjacency matrix of this {@link CombinatorialGraph} object.<br>
+     * Each row and column represents a pair of {@link CombinatorialNode} objects contained in this graph.
+     * The nodes are ordered in respect to their {@link BitSet}.
+     *
+     * @return adjacency matrix of this graph
+     */
+    public double[][] getAdjacencyMatrix(){
+        ArrayList<CombinatorialNode> sortedNodeList = this.getSortedNodeList();
+        TObjectIntHashMap<CombinatorialNode> nodeIndices = new TObjectIntHashMap<>(this.numberOfNodes());
+        for(int i = 0; i < this.numberOfNodes(); i++) nodeIndices.put(sortedNodeList.get(i),i);
 
-        CombinatorialNode node = bitset2node.get(fragment.bitset);
-        if (node == null) {
-            node = new CombinatorialNode(fragment);
-            bitset2node.put(fragment.bitset,node);
+        double[][] adjMatrix = new double[this.numberOfNodes()][this.numberOfNodes()];
+        for(double[] row : adjMatrix) Arrays.fill(row, Double.NEGATIVE_INFINITY);
+
+        for(int i = 0; i < adjMatrix.length; i++){
+            CombinatorialNode node = sortedNodeList.get(i);
+            for(CombinatorialEdge edge : node.outgoingEdges){
+                int adjNodeIdx = nodeIndices.get(edge.target);
+                adjMatrix[i][adjNodeIdx] = edge.score + edge.target.fragmentScore;
+            }
         }
-        node.depth = (short)Math.min(node.depth, parent.depth+1);
-        node.bondbreaks = (short)Math.min(node.bondbreaks, parent.bondbreaks+2);
-        boolean cut1Direction =  ( fragment.bitset.get(firstBond.getAtom(0).getIndex()));
-        boolean cut2Direction = secondBond != null && (fragment.bitset.get(secondBond.getAtom(0).getIndex()));
-        CombinatorialEdge edge = new CombinatorialEdge(parent, node, firstBond, secondBond,cut1Direction,cut2Direction);
-        node.incomingEdges.add(edge);
-        parent.outgoingEdges.add(edge);
-        return edge;
+        return adjMatrix;
+    }
+
+    public ArrayList<CombinatorialEdge> getEdgeList(){
+        // each node can have more than one incoming edge:
+        ArrayList<CombinatorialEdge> edgeList = new ArrayList<>();
+        for(CombinatorialNode node : this.nodes){
+            edgeList.addAll(node.incomingEdges);
+        }
+        return edgeList;
+    }
+
+    public boolean contains(CombinatorialFragment fragment){
+        return this.bitset2node.get(fragment.bitset) != null;
+    }
+
+    public CombinatorialNode getNode(BitSet fragment){
+        return this.bitset2node.get(fragment);
     }
 
     public List<CombinatorialNode> getNodes() {
@@ -132,5 +178,9 @@ public class CombinatorialGraph {
 
     public CombinatorialNode getRoot() {
         return root;
+    }
+
+    public int numberOfNodes(){
+        return this.nodes.size() + 1;
     }
 }
