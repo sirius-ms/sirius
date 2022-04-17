@@ -400,15 +400,19 @@ class SampleViewer {
         traces[0].topTrace = true;
         if (this.trace.ionTrace["adducts"]) {
             for (let i = 0; i < this.trace.ionTrace.adducts.length; i++) {
+                const scores = this.trace.ionTrace.adducts[i].correlationScores;
+                const score = (scores && scores.length>0) ? (", score = " + scores[0].toFixed(2)) : "";
                 const mzdiff = (this.trace.ionTrace.adducts[i].isotopes[0].masses[0] - 
                     this.trace.ionTrace.isotopes[0].masses[0]).toFixed(2);
-                this.addIsotopeTraces(traces, this.trace.ionTrace.adducts[i], "adduct m/z " + mzdiff, 1);
+                this.addIsotopeTraces(traces, this.trace.ionTrace.adducts[i], "adduct m/z " + mzdiff + score, 1);
             }
         }
         if (this.trace.ionTrace["inSourceFragments"]) {
             for (let i = 0; i < this.trace.ionTrace.inSourceFragments.length; i++) {
+                const scores = this.trace.ionTrace.inSourceFragments[i].correlationScores;
+                const score = (scores && scores.length>0) ? (", score = " + scores[0].toFixed(2)) : "";
             	const mz = this.trace.ionTrace.inSourceFragments[i].isotopes[0].masses[0].toFixed(2);
-                this.addIsotopeTraces(traces, this.trace.ionTrace.inSourceFragments[i], "in-source m/z " + mz, 2);
+                this.addIsotopeTraces(traces, this.trace.ionTrace.inSourceFragments[i], "in-source m/z " + mz + score, 2);
             }
         }
         return traces;
@@ -418,7 +422,9 @@ class SampleViewer {
         const monoIsotopic = new Trace(name, trace.isotopes[0], this.trace, style);
         array.push(monoIsotopic);
         for (let i = 1; i < trace.isotopes.length; ++i) {
-            const iso = new Trace(name + "+" + i, trace.isotopes[i], this.trace, style);
+            const scores = this.trace.correlationScores;
+            const score = (scores && scores.length>0) ? (", score = " + scores[i].toFixed(2)) : "";
+            const iso = new Trace(name + "+" + i + score, trace.isotopes[i], this.trace, style);
             monoIsotopic.addSubtrace(iso);
             array.push(iso);
         }
@@ -520,7 +526,7 @@ class Trace {
 
     description(i) {
         if (this.values[i].background) {
-            return "background";
+            return "extended ion chromatogram";
         } else {
             return this.name;
         }
