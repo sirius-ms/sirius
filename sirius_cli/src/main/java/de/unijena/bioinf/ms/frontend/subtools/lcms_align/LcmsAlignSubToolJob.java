@@ -173,14 +173,10 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         // attach remaining ms1
         RealDistribution error = ms1Ms2Pairing.attachRemainingMs1(instance, remainingSamples);
         // start alignment
-        if (error instanceof NormalDistribution)
-        System.out.println("Error: " + ((NormalDistribution)error).getStandardDeviation());
         int deleted = jm.submitJob(new Aligner(false).prealignAndFeatureCutoff2(instance.getSamples(), new Aligner2(error).maxRetentionError(), 1)).takeResult();
-        System.out.println(deleted + " samples deleted due to low quality");
         Cluster cluster = jm.submitJob(new Aligner2(error).align(instance.getSamples())).takeResult().deleteRowsWithNoMsMs().deleteDuplicateRows();
         instance.detectAdductsWithGibbsSampling(cluster);
         cluster=cluster.deleteDuplicateRows();
-        System.out.println("Done.");
         final MultipleSources sourcelocation = MultipleSources.leastCommonAncestor(Arrays.stream(lcmsWorkflow.getPooledMs2()).map(File::new).toArray(File[]::new));
         return importIntoProjectSpace(instance, cluster, sourcelocation);
     }

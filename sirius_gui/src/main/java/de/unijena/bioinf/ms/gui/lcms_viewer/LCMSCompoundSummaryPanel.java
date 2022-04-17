@@ -58,6 +58,7 @@ public class LCMSCompoundSummaryPanel extends JPanel {
 
             addSection("Isotope Quality", summary.isotopeCheck, summary.isotopeQuality);
             addSection("MS/MS Quality", summary.ms2Check, summary.ms2Quality);
+            addSection("Adducts", summary.adductCheck, summary.adductQuality);
 
         }
         revalidate();
