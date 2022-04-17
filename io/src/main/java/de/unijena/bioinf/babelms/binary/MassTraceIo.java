@@ -173,7 +173,7 @@ public class MassTraceIo {
         int numberOfAdducts = stream.readInt();
         final IonTrace[] adducts = new IonTrace[numberOfAdducts];
         for (int i=0; i < numberOfAdducts; ++i) {
-            adducts[i] = new IonTrace(readIon(stream));
+            adducts[i] = new IonTrace(readIon(stream), null);
         }
 
         if (stream.readByte() != 41)
@@ -182,7 +182,7 @@ public class MassTraceIo {
         int numberOfInsources = stream.readInt();
         final IonTrace[] insources = new IonTrace[numberOfInsources];
         for (int i=0; i < numberOfInsources; ++i) {
-            insources[i] = new IonTrace(readIon(stream));
+            insources[i] = new IonTrace(readIon(stream), null);
         }
 
         // read ms2 scan ids
@@ -213,7 +213,7 @@ public class MassTraceIo {
             final CompoundReport[] reports = (CompoundReport[]) obj.readObject();
 
             return new CoelutingTraceSet(
-                    name,ref,new CompoundTrace(mainIonTraces,adducts,insources),retentionTimes,scanIds,noiseLevels, ms2ScanIds, ms2RetentionTimes, reports
+                    name,ref,new CompoundTrace(mainIonTraces,null,adducts,insources),retentionTimes,scanIds,noiseLevels, ms2ScanIds, ms2RetentionTimes, reports
             );
         } catch (ClassNotFoundException e) {
             throw new IOException(e.getMessage());

@@ -32,6 +32,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.ionidentity.AdductMassDifference;
 import de.unijena.bioinf.lcms.ionidentity.CorrelationGroupScorer;
+import de.unijena.bioinf.lcms.ionidentity.CorrelationGroupScorer2;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
@@ -61,7 +62,7 @@ public class CorrelatedPeakDetector {
 */
 
     protected final static double PROBABILITY_THRESHOLD_ISOTOPES = 0.5d,
-            PROBABILITY_THRESHOLD_ADDUCTS = 0.75d, STRICT_THRESHOLD = 0.9;
+            PROBABILITY_THRESHOLD_ADDUCTS = 0.5d, STRICT_THRESHOLD = 0.9;
 
 
     protected Set<PrecursorIonType> detectableIonTypes;
@@ -113,7 +114,7 @@ public class CorrelatedPeakDetector {
         detectIsotopesFor(sample, peakBeforeChr.get().mutate(), segmentForScanId.get(), ion.getChargeState(), correlationGroups, new SimpleMutableSpectrum());
         for (CorrelationGroup g : correlationGroups) {
             int scanNumber = g.getRight().findScanNumber(ms1Scan.getIndex());
-            if (scanNumber >= 0 && new CorrelationGroupScorer().predictProbability(g) >= STRICT_THRESHOLD  /*g.getCosine() >= STRICT_COSINE_THRESHOLD*/ && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass()) < 1e-8) {
+            if (scanNumber >= 0 && new CorrelationGroupScorer2().predictProbability(g.getLeftSegment(), g.getRightSegment()) >= STRICT_THRESHOLD  /*g.getCosine() >= STRICT_COSINE_THRESHOLD*/ && Math.abs(g.getRight().getMzAt(scanNumber) - ionPeak.getMass()) < 1e-8) {
                 final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
                 for (CorrelationGroup h : correlationGroups) {
                     int sc = h.getRight().findScanNumber(ms1Scan.getIndex());
@@ -525,7 +526,8 @@ public class CorrelatedPeakDetector {
         final double correlation = pearson(a, b);
         final double kl = kullbackLeibler(a, b, a.size());
         final CorrelationGroup correlationGroup = new CorrelationGroup(large, small, largeSegment, smallSegment, smallSegment.getPeak().getScanNumberAt(t25.lowerEndpoint()), smallSegment.getPeak().getScanNumberAt(t25.upperEndpoint()), t25.upperEndpoint()-t25.lowerEndpoint()+1, correlation, kl, cosine(a, b), 0);
-        correlationGroup.score = new CorrelationGroupScorer().predictProbability(correlationGroup);
+        correlationGroup.score = new CorrelationGroupScorer2().predictProbability(correlationGroup.getLeftSegment(), correlationGroup.getRightSegment());
+
         return correlationGroup;
     }
 

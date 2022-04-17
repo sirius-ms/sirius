@@ -4,7 +4,7 @@ import de.unijena.bioinf.model.lcms.ChromatographicPeak;
 import de.unijena.bioinf.model.lcms.CorrelationGroup;
 import gnu.trove.list.array.TDoubleArrayList;
 import org.slf4j.LoggerFactory;
-
+@Deprecated
 public class CorrelationGroupScorer {
 
     private final double[] LEARNED_COEFFICIENTS = new double[]{2.83620147d, 0.24242094d, 2.34225035d};
@@ -78,7 +78,7 @@ public class CorrelationGroupScorer {
         return cosine/Math.sqrt(l*r);
     }
 
-    private static double kullbackLeibler(TDoubleArrayList a, TDoubleArrayList b, int size) {
+    public static double kullbackLeibler(TDoubleArrayList a, TDoubleArrayList b, int size) {
         double[] x =normalized(a);
         double[] y = normalized(b);
         double l=0d, r=0d;
@@ -90,7 +90,7 @@ public class CorrelationGroupScorer {
         return l+r;
     }
 
-    private static double[] normalized(TDoubleArrayList a) {
+    public static double[] normalized(TDoubleArrayList a) {
         final double[] b = a.toArray();
         if (b.length<1) return b;
         double sum = a.sum();
@@ -99,7 +99,7 @@ public class CorrelationGroupScorer {
         }
         return b;
     }
-    private static double[] normalizedToMax(TDoubleArrayList a) {
+    public static double[] normalizedToMax(TDoubleArrayList a) {
         final double[] b = a.toArray();
         if (b.length<1) return b;
         double mx = a.max();
@@ -110,7 +110,7 @@ public class CorrelationGroupScorer {
     }
 
 
-    private static double pearson(TDoubleArrayList a, TDoubleArrayList b) {
+    public static double pearson(TDoubleArrayList a, TDoubleArrayList b) {
         final int n = b.size();
         double meanA=0d;
         double meanB=0d;
@@ -133,7 +133,7 @@ public class CorrelationGroupScorer {
     }
 
     private final static double LAMBDA2 = 200d, SIGMA_ABS2 = 0.1, SIGMA_REL2 = 0.01;
-    private static double maximumLikelihoodIsotopeScore2(TDoubleArrayList xslist, TDoubleArrayList yslist) {
+    public static double maximumLikelihoodIsotopeScore2(TDoubleArrayList xslist, TDoubleArrayList yslist) {
         double currentScore = 0d;
         double maxScore = 0d;
         int maxLenLeft, maxLenRight = 0;
