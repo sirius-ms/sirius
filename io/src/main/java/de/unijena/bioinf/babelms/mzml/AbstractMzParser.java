@@ -27,6 +27,7 @@ import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.lcms.InMemoryStorage;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.ProcessedSample;
+import de.unijena.bioinf.lcms.ionidentity.AdductResolver;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.Feature;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
@@ -63,9 +64,10 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
                         // TODO: kaidu: maybe we can add some parameter for that? But Marcus SpectralQuality is not flexible enough for this
                         && i.getMsMsQuality().betterThan(Quality.BAD));
             }
-
             if (ions.hasNext()) {
-                Feature feature = instance.makeFeature(sample, ions.next(), false);
+                final FragmentedIon ion = ions.next();
+                AdductResolver.resolve(instance, ion);
+                Feature feature = instance.makeFeature(sample, ion, false);
                 return feature.toMsExperiment(sample.run.getIdentifier() + "_" + String.valueOf(counter++));
             } else {
                 instance = null;

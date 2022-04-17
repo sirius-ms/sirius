@@ -93,15 +93,15 @@ class TraceConverter {
         final ArrayList<IonTrace> adducts = new ArrayList<>(), insources = new ArrayList<>();
         // create Ion traces for each adduct and in-source fragment
         for (CorrelatedIon ion : mainIon.getAdducts()) {
-            adducts.add(new IonTrace(isotopeTraces(ion.ion)));
+            adducts.add(new IonTrace(isotopeTraces(ion.ion), correlationScoring(ion)));
         }
         for (CorrelatedIon ion : mainIon.getInSourceFragments()) {
-            insources.add(new IonTrace((isotopeTraces(ion.ion))));
+            insources.add(new IonTrace(isotopeTraces(ion.ion), correlationScoring(ion)));
         }
 
         this.traceSet = new CoelutingTraceSet(sample.run.getIdentifier(),
                 sample.run.getReference(),
-                new CompoundTrace(isotopeTraces(mainIon), adducts.toArray(IonTrace[]::new),
+                new CompoundTrace(isotopeTraces(mainIon), correlationScoring(mainIon), adducts.toArray(IonTrace[]::new),
                         insources.toArray(IonTrace[]::new)), retentionTime, scanIds, noiseLevels,
                 Arrays.stream(mainIon.getMergedScans()).mapToInt(Scan::getIndex).toArray(), Arrays.stream(mainIon.getMergedScans()).mapToLong(Scan::getRetentionTime).toArray(),
 
@@ -112,6 +112,23 @@ class TraceConverter {
                 //new CompoundReport[0]
         );
 
+    }
+
+    private double[] correlationScoring(CorrelatedIon ion) {
+        double[] scoring = new double[ion.ion.getIsotopes().size()+1];
+        scoring[0] = ion.correlation.score;
+        for (int i=1; i <= ion.ion.getIsotopes().size(); ++i) {
+            scoring[i] = ion.ion.getIsotopes().get(i-1).score;
+        }
+        return scoring;
+    }
+    private double[] correlationScoring(FragmentedIon mainIon) {
+        double[] scoring = new double[mainIon.getIsotopes().size()+1];
+        scoring[0] = 1d;
+        for (int i=1; i <= mainIon.getIsotopes().size(); ++i) {
+            scoring[i] = mainIon.getIsotopes().get(i-1).score;
+        }
+        return scoring;
     }
 
     private Trace[] isotopeTraces(IonGroup ion) {

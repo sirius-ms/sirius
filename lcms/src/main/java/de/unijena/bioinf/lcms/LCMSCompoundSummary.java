@@ -19,19 +19,23 @@
 
 package de.unijena.bioinf.lcms;
 
+import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.IonTrace;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.Trace;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
+import de.unijena.bioinf.lcms.ionidentity.AdductResolver;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class LCMSCompoundSummary {
 
@@ -48,8 +52,84 @@ public class LCMSCompoundSummary {
         this.ms2Experiment = ms2Experiment;
         checkPeak();
         checkIsotopes();
-        //checkAdducts();
+        checkAdducts();
         checkMs2();
+    }
+
+    private void checkAdducts() {
+        adductCheck = new ArrayList<>();
+        HashSet<PrecursorIonType> possibleIonTypes;
+        possibleIonTypes = new HashSet<>(ms2Experiment.getAnnotationOrDefault(AdductSettings.class).getDetectable(ms2Experiment.getPrecursorIonType().getCharge()));
+        possibleIonTypes = new HashSet<>(Arrays.asList(
+                PrecursorIonType.fromString("[M+Na]+"),
+                PrecursorIonType.fromString("[M+K]+"),
+                PrecursorIonType.fromString("[M+H]+"),
+                PrecursorIonType.fromString("[M-H2O+H]+"),
+                PrecursorIonType.fromString("[M-H4O2+H]+"),
+                PrecursorIonType.fromString("[M-H2O+Na]+"),
+                PrecursorIonType.fromString("[M + FA + H]+"),
+                PrecursorIonType.fromString("[M + ACN + H]+"),
+                PrecursorIonType.fromString("[M + ACN + Na]+"),
+                //PrecursorIonType.fromString("[M-H+Na2]+"),
+                PrecursorIonType.fromString("[M+NH3+H]+"),
+                PrecursorIonType.fromString("[M-H]-"),
+                PrecursorIonType.fromString("[M+Cl]-"),
+                PrecursorIonType.fromString("[M+Br]-"),
+                PrecursorIonType.fromString("[M-H2O-H]-")
+        ));
+        possibleIonTypes.removeIf(x->x.getCharge() != ms2Experiment.getPrecursorIonType().getCharge());
+
+
+        final double ionmz = compoundTrace.getMonoisotopicPeak().getApexMass();
+        final AdductResolver resolver = new AdductResolver(ionmz, possibleIonTypes);
+        System.out.println(possibleIonTypes);
+        final IonTrace[] adducts = traceSet.getIonTrace().getAdducts();
+        for (int i = 0; i < adducts.length; ++i) {
+            resolver.addAdduct(adducts[i].getMonoisotopicPeak().getApexMass(), adducts[i].getCorrelationScores().length > 0 ? adducts[i].getCorrelationScores()[0] : 1e-3);
+        }
+        final List<AdductResolver.AdductAssignment> assignments = resolver.getAssignments();
+        if (assignments.size()==0) {
+            adductCheck.add(new Check(Quality.MEDIUM, "No adducts found."));
+            adductQuality=Quality.MEDIUM;
+            return;
+        }
+        final AdductResolver.AdductAssignment bestAss = assignments.get(0);
+        if (assignments.size()==1) {
+            if (bestAss.probability>=0.9 || bestAss.supportedIons>=3) {
+                adductCheck.add(new Check(Quality.GOOD, "Adduct assignment is unambigous: Ion is annotated as " + bestAss.ionType + " with " + bestAss.supportedIons + " correlated ions and probability " + String.format(Locale.US, "%.2f", bestAss.probability)));
+            } else {
+                adductCheck.add(new Check(Quality.GOOD, "Adduct assignment is unambigous, but support is not strong. Ion is annotated as " + bestAss.ionType + " with " + bestAss.supportedIons + " correlated ions and probability " + String.format(Locale.US, "%.2f", bestAss.probability)));
+            }
+        }
+        if (assignments.size()>1) {
+            StringBuilder alternativeAssignments = new StringBuilder();
+            alternativeAssignments.append(". Alternative assignments are ");
+            for (int j=1; j < assignments.size(); ++j) {
+                alternativeAssignments.append(String.format(Locale.US, "%s with probability %.2f", assignments.get(j).ionType, assignments.get(j).probability));
+                if (j < assignments.size()-1) {
+                    alternativeAssignments.append(", ");
+                } else {
+                    alternativeAssignments.append(".");
+                }
+            }
+            if (bestAss.probability>=0.9) {
+                adductCheck.add(new Check(Quality.GOOD, "Adduct assignment is ambigous, but " + bestAss.ionType + " has strong support with " + bestAss.supportedIons + " correlated ions and probability " + String.format(Locale.US, "%.2f", bestAss.probability) + alternativeAssignments));
+            } else if (bestAss.probability>0.5) {
+                adductCheck.add(new Check(Quality.MEDIUM, "Adduct assignment is ambigous, but " + bestAss.ionType + " has good support with " + bestAss.supportedIons + " correlated ions and probability " + String.format(Locale.US, "%.2f", bestAss.probability) + alternativeAssignments));
+            } else {
+                adductCheck.add(new Check(Quality.LOW, "Adduct assignment is ambigous. Best assignment is " + bestAss.ionType + " with " + bestAss.supportedIons + " correlated ions and probability " + String.format(Locale.US, "%.2f", bestAss.probability) + alternativeAssignments));
+            }
+        }
+        for (int j=0; j < bestAss.supportedIonTypes.length; ++j) {
+            adductCheck.add(new Check(Quality.GOOD, "Mass delta " + (bestAss.supportedIonMzs[j]-ionmz) + " can be interpreted as " + bestAss.ionType + " -> " + bestAss.supportedIonTypes[j]));
+        }
+        for (int i=1; i < assignments.size(); ++i) {
+            for (int j = 0; j < assignments.get(i).supportedIonTypes.length; ++j) {
+                adductCheck.add(new Check(Quality.LOW, "Mass delta " + (assignments.get(i).supportedIonMzs[j] - ionmz) + " can be interpreted as " + assignments.get(i).ionType + " -> " + assignments.get(i).supportedIonTypes[j]));
+            }
+        }
+        adductCheck.add(new Check(traceSet.getIonTrace().getAdducts().length>2 ? Quality.GOOD : Quality.MEDIUM, "Adduct mass deltas are: " + Arrays.stream(traceSet.getIonTrace().getAdducts()).map(x->String.format(Locale.US, "%.3f", x.getMonoisotopicPeak().getApexMass()-ionmz)).collect(Collectors.joining(", "))));
+        adductQuality = adductCheck.get(0).quality;
     }
 
     private void checkMs2() {
