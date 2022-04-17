@@ -59,6 +59,7 @@ import org.apache.commons.math3.analysis.function.Identity;
 import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.distribution.LaplaceDistribution;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -125,7 +126,7 @@ public class Aligner {
             }
 
             if (rejectedSamples.size()>0) {
-                System.out.println("Reject " +rejectedSamples.size() + " of " + tot + " samples");
+                LoggerFactory.getLogger(Aligner.class).info("Reject " +rejectedSamples.size() + " of " + tot + " samples for feature " + featureID);
             }
 
             double totalInt = 0d;
