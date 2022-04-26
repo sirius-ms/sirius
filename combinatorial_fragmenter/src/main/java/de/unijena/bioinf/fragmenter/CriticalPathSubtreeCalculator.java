@@ -3,15 +3,17 @@ package de.unijena.bioinf.fragmenter;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculator{
 
+    public final static int INSERTED = 5, ATTACHED_TO_TERMINAL=7, DELETED = 9;
+
     private boolean isInitialized, isComputed;
     private TObjectIntHashMap<CombinatorialNode> vertexIndices;
-    private double[] criticalPathScores;
-
+    private float[] criticalPathScores;
+    private ArrayList<CombinatorialNode> insertedNodes = new ArrayList<>();
+    protected int maxNumberOfNodes = Integer.MAX_VALUE;
     private final boolean addCompletePath;
 
     public CriticalPathSubtreeCalculator(FTree fTree, MolecularGraph molecule, CombinatorialFragmenterScoring scoring, boolean addCompletePath){
@@ -19,6 +21,14 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
         this.isInitialized = false;
         this.isComputed = false;
         this.addCompletePath = addCompletePath;
+    }
+
+    public int getMaxNumberOfNodes() {
+        return maxNumberOfNodes;
+    }
+
+    public void setMaxNumberOfNodes(int maxNumberOfNodes) {
+        this.maxNumberOfNodes = maxNumberOfNodes;
     }
 
     public CriticalPathSubtreeCalculator(FTree fTree, CombinatorialGraph graph, CombinatorialFragmenterScoring scoring, boolean addCompletePath){
@@ -34,7 +44,8 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
         // 1. Create a CombinatorialFragmentationGraph - if it hasn't been computed yet:
         if(this.graph == null) {
             CombinatorialFragmenter fragmenter = new CombinatorialFragmenter(molecule, scoring);
-            this.graph = fragmenter.createCombinatorialFragmentationGraph(fragmentationConstraint);
+            this.graph = fragmenter.createCombinatorialFragmentationGraphPriorized(fragmentationConstraint, maxNumberOfNodes);
+
             CombinatorialGraphManipulator.addTerminalNodes(this.graph, this.scoring, this.fTree);
         }
 
@@ -48,8 +59,9 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
         }
 
         // 3. Initialise the array this.criticalPathScores:
-        this.criticalPathScores = new double[nodes.size() +1];
-        Arrays.fill(this.criticalPathScores, Double.NaN);
+        this.criticalPathScores = new float[nodes.size() +1];
+        Arrays.fill(this.criticalPathScores, Float.NaN);
+        insertedNodes.clear();
 
         this.isInitialized = true;
     }
@@ -62,6 +74,7 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
          * - the array of critical path scores is initialised with NaN values
          *  --> these scores have to be computed now by calling calculateCriticalPathScore(graph.root)*/
         this.calculateCriticalPathScore(this.graph.root);
+        addFragment(this.graph.root,null);
         CombinatorialNode maxScoreNode = this.graph.root; //node in subtree with maximum critical path score
         int maxScoreNodeIdx = this.vertexIndices.get(maxScoreNode);
 
@@ -73,20 +86,18 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
         while(this.criticalPathScores[maxScoreNodeIdx] > 0){
             if(this.addCompletePath){
                 this.addCriticalPathToTree(maxScoreNode);
+                Arrays.fill(this.criticalPathScores, Float.NaN);
             }else{
                 this.addCriticalEdgeToTree(maxScoreNode);
+                Arrays.fill(this.criticalPathScores, Float.NaN);
             }
-            Arrays.fill(this.criticalPathScores, Double.NaN);
 
-            maxScoreNode = this.graph.root;
-            double bestScore = this.calculateCriticalPathScore(maxScoreNode);
-            for(CombinatorialNode node : this.graph.getNodes()){
-                if(this.subtree.contains(node.fragment)){
-                    double score = this.calculateCriticalPathScore(node);
-                    if(score > bestScore){
-                        maxScoreNode = node;
-                        bestScore = score;
-                    }
+            float bestScore = Float.NEGATIVE_INFINITY;
+            for(CombinatorialNode node : insertedNodes){
+                float score = this.calculateCriticalPathScore(node);
+                if(score > bestScore){
+                    maxScoreNode = node;
+                    bestScore = score;
                 }
             }
             maxScoreNodeIdx = this.vertexIndices.get(maxScoreNode);
@@ -97,22 +108,30 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
         return this.subtree;
     }
 
-    private double calculateCriticalPathScore(CombinatorialNode node) {
+    public ArrayList<CombinatorialNode> getInsertedNodes() {
+        return insertedNodes;
+    }
+
+    private float calculateCriticalPathScore(CombinatorialNode node) {
         int nodeIdx = this.vertexIndices.get(node);
         // check, if the CriticalPath score of node was calculated
-        if(!Double.isNaN(this.criticalPathScores[nodeIdx])) return this.criticalPathScores[nodeIdx];
+        if(!Float.isNaN(this.criticalPathScores[nodeIdx])) return this.criticalPathScores[nodeIdx];
 
-        double bestScore = Double.NEGATIVE_INFINITY;
+        float bestScore = 0f;
         for(CombinatorialEdge edge : node.outgoingEdges){
             CombinatorialNode child = edge.target;
-            if(!this.subtree.contains(child.fragment)){
-                double score = this.calculateCriticalPathScore(child) + child.fragmentScore + edge.score;
+            if(child.state<INSERTED) {//!this.subtree.contains(child.fragment)){
+                float score = this.calculateCriticalPathScore(child) + child.fragmentScore + edge.score;
+                // this prevents a node from explaining multiple peaks
+                if (node.state==ATTACHED_TO_TERMINAL && !child.fragment.isInnerNode()) {
+                    score = Float.NEGATIVE_INFINITY;
+                }
                 if(score > bestScore){
                     bestScore = score;
                 }
             }
         }
-        this.criticalPathScores[nodeIdx] = Math.max(0,bestScore);
+        this.criticalPathScores[nodeIdx] = bestScore;
         return this.criticalPathScores[nodeIdx];
     }
 
@@ -120,38 +139,59 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
         CombinatorialNode currentNode = node;
         int crntNodeIdx = this.vertexIndices.get(currentNode);
 
+        eachNode:
         while(this.criticalPathScores[crntNodeIdx] > 0){
             for(CombinatorialEdge edge : currentNode.outgoingEdges){
                 CombinatorialNode child = edge.target;
-                if(!this.subtree.contains(child.fragment)){
+                if(child.state<INSERTED) {  //!this.subtree.contains(child.fragment)){
                     int childIdx = this.vertexIndices.get(child);
-                    double score = this.criticalPathScores[childIdx] + edge.score + child.fragmentScore;
+                    float score = this.criticalPathScores[childIdx] + edge.score + child.fragmentScore;
                     if(this.criticalPathScores[crntNodeIdx] == score){
                         this.subtree.addFragment(this.subtree.getNode(currentNode.fragment.bitset),child.fragment,edge.cut1, edge.cut2, child.fragmentScore,edge.score);
+
+                        addFragment(child, edge);
+
                         currentNode = child;
                         crntNodeIdx = childIdx;
-                        break;
+                        continue eachNode;
                     }
                 }
             }
+            throw new RuntimeException("Did not find correct path");
         }
     }
 
-    private void addCriticalEdgeToTree(CombinatorialNode node){
+    private void addFragment(CombinatorialNode node, CombinatorialEdge graphEdge) {
+        if (node.getFragment().isInnerNode()) {
+            node.state = INSERTED;
+        } else {
+            node.state = INSERTED;
+            graphEdge.getSource().state = ATTACHED_TO_TERMINAL;
+        }
+        //if (graphEdge!=null) System.out.println("Add " + node + " with " + graphEdge + " and score " + (node.score + graphEdge.score + criticalPathScores[vertexIndices.get(node)]));
+        insertedNodes.add(node);
+    }
+
+    private CombinatorialNode addCriticalEdgeToTree(CombinatorialNode node){
         int nodeIdx = this.vertexIndices.get(node);
+        float bestScore = Float.NEGATIVE_INFINITY;
         if(this.criticalPathScores[nodeIdx] > 0){
             for(CombinatorialEdge edge : node.outgoingEdges){
                 CombinatorialNode child = edge.target;
-                if(!this.subtree.contains(child.fragment)){
+                if(child.state < INSERTED) {//!this.subtree.contains(child.fragment)){
                     int childIdx = this.vertexIndices.get(child);
-                    double score = this.criticalPathScores[childIdx] + child.fragmentScore + edge.score;
+                    float score = this.criticalPathScores[childIdx] + child.fragmentScore + edge.score;
+                    bestScore = Math.max(bestScore,score);
                     if(this.criticalPathScores[nodeIdx] == score){
                         this.subtree.addFragment(this.subtree.getNode(node.fragment.bitset), child.fragment, edge.cut1, edge.cut2, child.fragmentScore, edge.score);
-                        break;
+                        addFragment(child, edge);
+                        return child;
                     }
                 }
             }
         }
+        //System.out.println("Do not find path from " + node +  " with score " + this.criticalPathScores[nodeIdx] + ", best score is " + bestScore );
+        return null;
     }
 
     @Override

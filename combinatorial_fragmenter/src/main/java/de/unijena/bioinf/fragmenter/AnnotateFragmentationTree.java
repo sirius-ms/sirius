@@ -171,6 +171,8 @@ public class AnnotateFragmentationTree {
         return w.toString();
     }
 
+
+
     public static void writeJson(FTree tree, MolecularGraph graph, List<Entry> entries, Writer out) throws IOException {
         final JsonGenerator G = new JsonFactory().createGenerator(out);
         G.writeStartArray();

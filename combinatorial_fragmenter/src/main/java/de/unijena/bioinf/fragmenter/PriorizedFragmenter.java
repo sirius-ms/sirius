@@ -53,17 +53,46 @@ public class PriorizedFragmenter extends CombinatorialFragmenter {
     }
 
     public CombinatorialGraph createCombinatorialFragmentationGraph(CombinatorialFragmenter.Callback2 callback) {
+        boolean[] updateFlag = new boolean[1];
+        int nnodes=0, nedges=0;
+        while (true) {
+            // fragment node
+            if (currentFragment.state==0) {
+                currentFragment.state=1; // never fragment it again
+                if (callback.cut(currentFragment, nnodes, nedges)) {
+                    List<CombinatorialFragment> fragments = cutAllBonds(currentFragment.fragment, (parent, bonds, fragments1) -> {
+                        for (CombinatorialFragment f : fragments1) {
+                            CombinatorialNode w = graph.addReturnAlways(currentFragment, f, bonds[0], bonds.length > 1 ? bonds[1] : null, scoring, updateFlag);
+                            if (updateFlag[0]) nodes.offer(w);
+                        }
+                    });
+                }
+            }
+            currentFragment = nodes.poll();
+            if (currentFragment==null) return graph;
+        }
+    }
+
+    /*
+    public CombinatorialGraph createCombinatorialFragmentationGraph(CombinatorialFragmenter.Callback2 callback) {
         ArrayDeque<CombinatorialNode> nodes = new ArrayDeque<>();
         nodes.addLast(graph.root);
+        final int[] counting = new int[]{1,0};
         while (!nodes.isEmpty()) {
             CombinatorialNode n = nodes.pollFirst();
             List<CombinatorialFragment> fragments = cutAllBonds(n.fragment, (parent, bonds, fragments1) -> {
                 for (CombinatorialFragment f : fragments1) {
+                    ++counting[1];
                     CombinatorialNode w = graph.addReturnNovel(n,f,bonds[0], bonds.length>1 ? bonds[1] : null,scoring);
-                    if (w!=null && callback.cut(w)) nodes.addLast(w);
+                    if (w!=null) {
+                        ++counting[0];
+                        if (callback.cut(w,counting[0],counting[1])) nodes.addLast(w);
+                    }
                 }
             });
         }
         return graph;
     }
+
+ */
 }

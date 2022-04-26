@@ -7,7 +7,7 @@ import java.util.List;
 public class CombinatorialNode {
 
     protected final CombinatorialFragment fragment;
-    protected final List<CombinatorialEdge> incomingEdges, outgoingEdges;
+    protected final ArrayList<CombinatorialEdge> incomingEdges, outgoingEdges;
 
     /**
      * The depth of this node; i.e. the minimal number of edges from this node to the root.
@@ -84,6 +84,10 @@ public class CombinatorialNode {
 
     public short getBondbreaks() {
         return bondbreaks;
+    }
+
+    public byte getState() {
+        return state;
     }
 
     @Override

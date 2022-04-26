@@ -14,6 +14,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.List;
 
 public class CombinatorialSubtreeJsonWriter {
@@ -51,10 +52,11 @@ public class CombinatorialSubtreeJsonWriter {
         jsonGenerator.writeNumberField("treeScore", tree.getScore());
 
         // Now, write a list of all nodes (including the root) into the JSON format:
+        final HashMap<CombinatorialNode, Integer> subtreeSizes = tree.getSubtreeSizes();
         jsonGenerator.writeFieldName("nodes");
         jsonGenerator.writeStartArray();
-        writeCombinatorialNodeToJson(tree.getRoot(), atomOrder, jsonGenerator);
-        for(CombinatorialNode node : tree.getNodes()) writeCombinatorialNodeToJson(node, atomOrder, jsonGenerator);
+        writeCombinatorialNodeToJson(tree.getRoot(), atomOrder,subtreeSizes.get(tree.getRoot()), jsonGenerator);
+        for(CombinatorialNode node : tree.getNodes()) writeCombinatorialNodeToJson(node, atomOrder,subtreeSizes.get(node), jsonGenerator);
         jsonGenerator.writeEndArray();
 
         // Now, write a list of all edges into the JSON format:
@@ -87,8 +89,8 @@ public class CombinatorialSubtreeJsonWriter {
         jsonGenerator.writeEndArray();
     }
 
-    private static void writeCombinatorialNodeToJson(CombinatorialNode node, int[] order, JsonGenerator jsonGenerator) throws IOException{
-        final BitSet bitSet = (node.fragment.isRealFragment()) ? permutate(node.fragment.bitset, order) : node.fragment.bitset;
+    private static void writeCombinatorialNodeToJson(CombinatorialNode node, int[] order, int subtreeSize, JsonGenerator jsonGenerator) throws IOException{
+        final BitSet bitSet = (node.fragment.isInnerNode()) ? permutate(node.fragment.bitset, order) : node.fragment.bitset;
         final CombinatorialNode parentNode = (node.incomingEdges.size() == 1) ? node.incomingEdges.get(0).source : null;
         final BitSet parentBitSet = (parentNode == null) ? null : permutate(parentNode.fragment.bitset, order);
 
@@ -105,8 +107,9 @@ public class CombinatorialSubtreeJsonWriter {
         jsonGenerator.writeNumberField("fragmentScore", node.fragmentScore);
         jsonGenerator.writeNumberField("totalScore", node.totalScore);
         jsonGenerator.writeNumberField("depth", node.depth);
+        jsonGenerator.writeNumberField("subtreeSize", subtreeSize);
         jsonGenerator.writeNumberField("bondbreaks", node.bondbreaks);
-        jsonGenerator.writeBooleanField("isRealFragment", node.fragment.isRealFragment());
+        jsonGenerator.writeBooleanField("innerNode", node.fragment.isInnerNode());
         jsonGenerator.writeEndObject();
     }
 
@@ -115,12 +118,19 @@ public class CombinatorialSubtreeJsonWriter {
         CombinatorialNode targetNode = edge.target;
         jsonGenerator.writeStartObject();
         writeBitSetToJson("sourceBitset", permutate(sourceNode.fragment.bitset, order), jsonGenerator);
-        writeBitSetToJson("targetBitset", (targetNode.fragment.isRealFragment()) ? permutate(targetNode.fragment.bitset, order) : targetNode.fragment.bitset, jsonGenerator);
+        writeBitSetToJson("targetBitset", (targetNode.fragment.isInnerNode()) ? permutate(targetNode.fragment.bitset, order) : targetNode.fragment.bitset, jsonGenerator);
         writeBondToJson("cut1", edge.getCut1(), edge.getDirectionOfFirstCut(), order, jsonGenerator);
         writeBondToJson("cut2", edge.getCut2(), edge.getDirectionOfSecondCut(), order, jsonGenerator);
         jsonGenerator.writeNumberField("edgeScore", edge.getScore());
         jsonGenerator.writeBooleanField("directionCut1", edge.getDirectionOfFirstCut());
         jsonGenerator.writeBooleanField("directionCut2", edge.getDirectionOfSecondCut());
+
+        if (!edge.target.fragment.isInnerNode()) {
+            // outout hydrogen rearrangements
+            final int hydrogenRearrangements =edge.source.fragment.hydrogenRearrangements(edge.target.fragment.getFormula());
+            jsonGenerator.writeNumberField("hydrogenRearrangements", hydrogenRearrangements);
+        }
+
         jsonGenerator.writeEndObject();
     }
 

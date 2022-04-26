@@ -8,7 +8,7 @@ import java.util.*;
 
 public class CombinatorialGraph {
 
-    protected final List<CombinatorialNode> nodes; //alle Knoten außer der Wurzel
+    protected final ArrayList<CombinatorialNode> nodes; //alle Knoten außer der Wurzel
     protected final CombinatorialNode root;
     protected final HashMap<BitSet, CombinatorialNode> bitset2node;
 
@@ -18,9 +18,12 @@ public class CombinatorialGraph {
         root.depth = 0;
         root.bondbreaks = 0;
         this.nodes = new ArrayList<>();
+        nodes.add(root);
         this.bitset2node = new HashMap<>();
         bitset2node.put(root.fragment.bitset, root);
     }
+
+
 
     public CombinatorialNode addReturnNovel(CombinatorialNode parent, CombinatorialFragment fragment, IBond firstBond, IBond secondBond, CombinatorialFragmenterScoring scoring) {
         boolean novel = (bitset2node.get(fragment.bitset) == null);

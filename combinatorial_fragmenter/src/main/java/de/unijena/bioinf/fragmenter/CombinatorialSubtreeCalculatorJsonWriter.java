@@ -3,24 +3,85 @@ package de.unijena.bioinf.fragmenter;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
+import org.openscience.cdk.interfaces.IAtom;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.HashMap;
+import java.util.*;
 
 public class CombinatorialSubtreeCalculatorJsonWriter {
+
+    public static String writeResultForVisualization(FTree tree, CombinatorialSubtreeCalculator subtreeCalc) throws IOException {
+        final HashMap<MolecularFormula, AnnotatedPeak[]> formula2peak = new HashMap<>();
+        final FragmentAnnotation<AnnotatedPeak> ano = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
+        for (Fragment f : tree) {
+            if (formula2peak.containsKey(f.getFormula())) {
+                AnnotatedPeak a = ano.get(f);
+                AnnotatedPeak[] bs = (formula2peak.get(f.getFormula()));
+                AnnotatedPeak[] cs = Arrays.copyOf(bs, bs.length+1);
+                cs[bs.length] = a;
+                formula2peak.put(f.getFormula(), cs);
+            } else {
+                formula2peak.put(f.getFormula(), new AnnotatedPeak[]{ano.get(f)});
+            }
+        }
+        StringWriter writer = new StringWriter();
+        JsonFactory factory = new JsonFactory();
+        factory.enable(JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS);
+        JsonGenerator jsonGenerator = factory.createGenerator(writer);
+        jsonGenerator.writeStartArray();
+        for (CombinatorialNode node : subtreeCalc.subtree) {
+            if (!node.fragment.isInnerNode()) {
+                final CombinatorialNode frag = node.getIncomingEdges().get(0).getSource();
+                final AnnotatedPeak[] peaks = formula2peak.getOrDefault(node.fragment.formula, new AnnotatedPeak[0]);
+                for (AnnotatedPeak peak : peaks) {
+                    jsonGenerator.writeStartObject();
+                    jsonGenerator.writeStringField("formula", node.fragment.getFormula().toString());
+                    jsonGenerator.writeNumberField("peakmass", peak.getMass());
+                    jsonGenerator.writeNumberField("score", subtreeCalc.subtree.getScore());
+                    jsonGenerator.writeArrayFieldStart("atoms");
+                    final Set<IAtom> atoms = new HashSet<>();
+                    for (IAtom a : frag.fragment.getAtoms()) {
+                        atoms.add(a);
+                        jsonGenerator.writeNumber(a.getIndex());
+                    }
+                    jsonGenerator.writeEndArray();
+                    jsonGenerator.writeArrayFieldStart("bonds");
+                    for (IBond b : subtreeCalc.molecule.bonds) {
+                        if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {
+                            jsonGenerator.writeNumber(b.getIndex());
+                        }
+                    }
+                    jsonGenerator.writeEndArray();
+                    jsonGenerator.writeArrayFieldStart("cuts");
+                    CombinatorialEdge e = frag.getIncomingEdges().isEmpty() ? null : frag.incomingEdges.get(0);
+                    while (e != null) {
+                        if (e.cut1!=null) jsonGenerator.writeNumber(e.cut1.getIndex());
+                        if (e.cut2!=null) jsonGenerator.writeNumber(e.cut2.getIndex());
+                        e = e.getSource().incomingEdges.isEmpty() ? null : e.getSource().getIncomingEdges().get(0);
+                    }
+                    jsonGenerator.writeEndArray();
+                    jsonGenerator.writeEndObject();
+                }
+            }
+        }
+        jsonGenerator.writeEndArray();
+        jsonGenerator.flush();
+        return writer.toString();
+    }
 
     public static String writeResultsToString(CombinatorialSubtreeCalculator subtreeCalc) throws CDKException, IOException {
         StringWriter writer = new StringWriter();

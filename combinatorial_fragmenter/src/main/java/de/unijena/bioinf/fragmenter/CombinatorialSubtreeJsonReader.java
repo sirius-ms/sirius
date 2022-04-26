@@ -70,7 +70,7 @@ public class CombinatorialSubtreeJsonReader {
                     final JsonNode targetNode = bitset2Fragment.get(targetBitset);
                     BitSet targetDisconnectedRings = getBitSetFromJsonNode(json.getFromDictionary(targetNode, "disconnectedRings"));
                     MolecularFormula targetMf = MolecularFormula.parse(json.getStringFromDictionary(targetNode, "molecularFormula"));
-                    CombinatorialFragment targetFragment = new CombinatorialFragment(molecule, targetBitset, targetMf, targetDisconnectedRings);
+                    CombinatorialFragment targetFragment = new CombinatorialFragment(molecule, targetBitset, targetMf, targetDisconnectedRings, json.getBooleanFromDictionary(targetNode, "innerNode"), 0f);
 
                     float fragmentScore = json.getFromDictionary(targetNode, "fragmentScore").floatValue();
                     float edgeScore = json.getFromDictionary(edge, "edgeScore").floatValue();
@@ -82,6 +82,7 @@ public class CombinatorialSubtreeJsonReader {
                 }
             }
         }
+
         return tree;
     }
 

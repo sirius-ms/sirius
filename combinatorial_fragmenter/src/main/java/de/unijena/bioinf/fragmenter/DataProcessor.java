@@ -205,7 +205,7 @@ public class DataProcessor {
     }
 
     public static void main(String[] args){
-        EMFragmenterScoring.rearrangementProb = 1.0; // don't punish hydrogen rearrangements at first
+        //EMFragmenterScoring.rearrangementProb = 1.0; // don't punish hydrogen rearrangements at first
         try{
             File spectraDir = new File(args[0]);
             File fTreeDir = new File(args[1]);
@@ -216,7 +216,7 @@ public class DataProcessor {
 
             DataProcessor dataProcessor = new DataProcessor(spectraDir, fTreeDir, outputDir, numPartitions, idxPartition);
             promptEnterKeyToContinue("The DataProcessor is initialised. Press ENTER to start processing...");
-            dataProcessor.run(node -> node.depth < fragmentationDepth);
+            dataProcessor.run((node,x,y) -> node.depth < fragmentationDepth);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
