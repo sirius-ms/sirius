@@ -7,4 +7,5 @@ public interface CombinatorialFragmenterScoring {
     double scoreBond(IBond bond, boolean direction);
     double scoreFragment(CombinatorialNode fragment);
     double scoreEdge(CombinatorialEdge edge);
+
 }

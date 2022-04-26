@@ -194,6 +194,12 @@ public class DirectedBondTypeScoring {
         return explainBondBy(b, b.getAtom(0).getAtomTypeName()  ,b.getAtom(1).getAtomTypeName(), fromLeftToRight);
     }
 
+    public static String bondNameEcfp(IBond b, boolean fromLeftToRight) {
+        int ecfp = b.getAtom(0).getProperty("ECFP");
+        int ecfp2 = b.getAtom(1).getProperty("ECFP");
+        return explainBondBy(b, b.getAtom(0).getAtomTypeName() + "#" + ecfp  ,b.getAtom(1).getAtomTypeName() + "#" + ecfp2, fromLeftToRight);
+    }
+
     private static String explainBondBy(IBond b, String labelA, String labelB, boolean fromLeftToRight) {
         if (!fromLeftToRight) {
             String c = labelA;
