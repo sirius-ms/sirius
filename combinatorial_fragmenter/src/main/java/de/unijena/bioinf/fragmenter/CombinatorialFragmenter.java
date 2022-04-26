@@ -2,6 +2,7 @@ package de.unijena.bioinf.fragmenter;
 
 import gnu.trove.list.array.TIntArrayList;
 import org.openscience.cdk.interfaces.IBond;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -81,19 +82,70 @@ public class CombinatorialFragmenter {
          * @param node last node which was created
          * @return true, if node should be considered for further fragmentation
          */
-        boolean cut(CombinatorialNode node);
+        boolean cut(CombinatorialNode node, int numberOfNodes, int numberOfEdges);
     }
 
     public CombinatorialGraph createCombinatorialFragmentationGraph(Callback2 callback) {
         CombinatorialGraph graph = new CombinatorialGraph(this.molecularGraph);
         ArrayDeque<CombinatorialNode> nodes = new ArrayDeque<>();
         nodes.addLast(graph.root);
+        final int[] counting = new int[]{1,0};
         while (!nodes.isEmpty()) {
             CombinatorialNode n = nodes.pollFirst();
             List<CombinatorialFragment> fragments = cutAllBonds(n.fragment, (parent, bonds, fragments1) -> {
                 for (CombinatorialFragment f : fragments1) {
+                    ++counting[1];
                     CombinatorialNode w = graph.addReturnNovel(n,f,bonds[0], bonds.length>1 ? bonds[1] : null, scoring);
-                    if (w!=null && callback.cut(w)) nodes.addLast(w);
+                    if (w!=null) {
+                        ++counting[0];
+                        if (callback.cut(w,counting[0], counting[1])) nodes.addLast(w);
+                    }
+                }
+            });
+        }
+        return graph;
+    }
+
+
+    public CombinatorialGraph createCombinatorialFragmentationGraphPriorized(Callback2 callback, int maxNumberOfNodes) {
+        CombinatorialGraph graph = new CombinatorialGraph(this.molecularGraph);
+        final int maxLen = 20;
+        final double SCALE = 2;
+        ArrayDeque<CombinatorialNode>[] nodes = new ArrayDeque[maxLen+1];
+        for (int i=0; i < nodes.length; ++i) nodes[i] = new ArrayDeque<>();
+        nodes[0].addLast(graph.root);
+        int currentj = 0;
+        final int[] counting = new int[]{1,0};
+        while (currentj < nodes.length) {
+            if (counting[0] > maxNumberOfNodes) {
+                LoggerFactory.getLogger(CombinatorialFragmenter.class).warn("Too many fragments, cancel fragmentation process");
+                break;
+            }
+            CombinatorialNode n;
+            do {
+                n = nodes[currentj].pollFirst();
+                if (n==null) ++currentj;
+                if (currentj>=nodes.length) return graph;
+            } while (n==null);
+            final int J=currentj;
+            final CombinatorialNode node = n;
+            List<CombinatorialFragment> fragments = cutAllBonds(n.fragment, (parent, bonds, fragments1) -> {
+                for (CombinatorialFragment f : fragments1) {
+                    ++counting[1];
+                    CombinatorialNode w = graph.addReturnNovel(node,f,bonds[0], bonds.length>1 ? bonds[1] : null, scoring);
+                    if (w!=null) {
+                        ++counting[0];
+                        if (callback.cut(w,counting[0], counting[1])) {
+                            double rawScore = w.totalScore;
+                            if (scoring instanceof EMFragmenterScoring2) {
+                                rawScore += ((EMFragmenterScoring2) scoring).terminalScore(w);
+                            }
+                            rawScore -= 5;
+                            rawScore*=SCALE;
+                            final int score = Math.min(maxLen, Math.max(J, (int)Math.floor(Math.abs(rawScore))));
+                            nodes[score].addLast(w);
+                        }
+                    }
                 }
             });
         }
