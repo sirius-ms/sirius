@@ -130,7 +130,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
 
         ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
                 PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
-                0.25, 20, 0.25, m -> m.getNumber().doubleValue() + "ppm");
+                0.25, 50, 0.25, m -> m.getNumber().doubleValue() + "ppm");
         smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
 
         candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
