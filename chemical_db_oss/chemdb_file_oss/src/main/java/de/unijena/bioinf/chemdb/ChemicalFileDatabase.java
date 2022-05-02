@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
     A file based database consists of a directory of files (either .csv or .json), each file contains compounds from the
     same molecular formula. The filenames consists of the molecular formula strings.
  */
+@Deprecated
 public class ChemicalFileDatabase extends ChemicalBlobDatabase<FileBlobStorage> {
 
     public ChemicalFileDatabase(FingerprintVersion version, FileBlobStorage storage) throws IOException {
