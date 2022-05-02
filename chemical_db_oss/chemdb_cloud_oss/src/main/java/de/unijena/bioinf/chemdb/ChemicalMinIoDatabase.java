@@ -25,9 +25,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
-import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.storage.blob.gcs.GCSBlobStorage;
-import de.unijena.bioinf.storage.blob.gcs.GCSUtils;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.storage.blob.minio.MinIoS3BlobStorage;
+import de.unijena.bioinf.storage.blob.minio.MinIoUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -41,21 +41,21 @@ import java.util.concurrent.atomic.AtomicInteger;
     A file based database based on Google cloud storage consists of a directory of files (either .csv or .json), each file contains compounds from the
     same molecular formula. The filenames consists of the molecular formula strings.
  */
-public class ChemicalGCSDatabase extends ChemicalBlobDatabase<GCSBlobStorage> {
+public class ChemicalMinIoDatabase extends ChemicalBlobDatabase<MinIoS3BlobStorage> {
 
-    public ChemicalGCSDatabase() throws IOException {
-        this(FingerIDProperties.gcsChemDBBucketName());
+    public ChemicalMinIoDatabase() throws IOException {
+        this(PropertyManager.getProperty("de.unijena.bioinf.chemdb.s3.bucket"));
     }
 
-    public ChemicalGCSDatabase(String bucketName) throws IOException {
+    public ChemicalMinIoDatabase(String bucketName) throws IOException {
         this(USE_EXTENDED_FINGERPRINTS ? CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getDefault(), bucketName);
     }
 
-    public ChemicalGCSDatabase(FingerprintVersion version, String bucketName) throws IOException {
-        this(version, new GCSBlobStorage(GCSUtils.storageOptions(FingerIDProperties.gcsChemDBCredentialsPath()).getService().get(bucketName)));
+    public ChemicalMinIoDatabase(FingerprintVersion version, String bucketName) throws IOException {
+        this(version, MinIoUtils.openDefaultS3Storage("de.unijena.bioinf.chemdb",bucketName));
     }
 
-    public ChemicalGCSDatabase(FingerprintVersion version, GCSBlobStorage store) throws IOException {
+    public ChemicalMinIoDatabase(FingerprintVersion version, MinIoS3BlobStorage store) throws IOException {
         super(version, store);
     }
 
@@ -86,7 +86,7 @@ public class ChemicalGCSDatabase extends ChemicalBlobDatabase<GCSBlobStorage> {
                 final MolecularFormula mf = MolecularFormula.parseOrThrow(e.getKey());
                 final long flag = Long.parseLong(e.getValue());
                 this.formulas[i.getAndIncrement()] = mf;
-                synchronized (formulaFlags){
+                synchronized (formulaFlags) {
                     this.formulaFlags.put(mf, flag);
                 }
             });

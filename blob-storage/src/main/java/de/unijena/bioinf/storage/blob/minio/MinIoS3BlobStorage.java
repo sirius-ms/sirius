@@ -24,39 +24,47 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.storage.blob.BlobStorage;
-import io.minio.GetObjectArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.StatObjectArgs;
+import io.minio.*;
 import io.minio.errors.*;
+import io.minio.messages.DeleteObject;
+import io.minio.messages.Item;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Path;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-public class MinIoBlobStorage implements BlobStorage {
+public class MinIoS3BlobStorage implements BlobStorage {
 
     private final MinioClient minioClient;
     private final String bucketName;
 
 
-    public MinIoBlobStorage(@NotNull String bucketName, @NotNull MinioClient client) {
+    public MinIoS3BlobStorage(@NotNull String bucketName, @NotNull MinioClient client) {
         this.minioClient = client;
         this.bucketName = bucketName;
         init();
     }
 
     private void init() {
-        if (!MinIoUtils.bucketExists(bucketName, minioClient))
+        if (!MinIoUtils.existsS3Bucket(bucketName, minioClient))
             throw new IllegalArgumentException("Database bucket seems to be not existent or you have not the correct permissions");
     }
 
     @Override
     public String getName() {
         return bucketName;
+    }
+
+    @Override
+    public String getBucketLocation() {
+        return MinIoUtils.URL_PREFIX + getName();
     }
 
     @Override
@@ -71,6 +79,12 @@ public class MinIoBlobStorage implements BlobStorage {
     }
 
     @Override
+    public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
+        try (OutputStream w = writer(relative)) {
+            withStream.accept(w);
+        }
+    }
+
     public OutputStream writer(Path relative) throws IOException {
         return BackgroundPipedOutputStream.createAndRead((in) -> {
             try {
@@ -148,6 +162,101 @@ public class MinIoBlobStorage implements BlobStorage {
             return false;
         } else {
             throw new IOException("Unknown Error response when searching Object", e);
+        }
+    }
+
+    @Override
+    public @NotNull Map<String, String> getTags() throws IOException {
+        try {
+            return minioClient.getBucketTags(GetBucketTagsArgs.builder().bucket(bucketName).build()).get();
+        } catch (ErrorResponseException e) {
+            exists(e);
+            LoggerFactory.getLogger(getClass()).warn("Error Response when requesting tags. No tags returned!", e);
+            return Collections.emptyMap();
+        } catch (InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            throw new IOException("Error when requesting Tags", e);
+        }
+    }
+
+    @Override
+    public void setTags(@NotNull Map<String, String> tags) throws IOException {
+        try {
+            minioClient.setBucketTags(SetBucketTagsArgs.builder()
+                    .bucket(bucketName)
+                    .tags(tags)
+                    .build());
+        } catch (ErrorResponseException | InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            throw new IOException("Error when writing Tags", e);
+        }
+    }
+
+    @Override
+    public Iterator<Blob> listBlobs() {
+        Iterator<Result<Item>> it = minioClient.listObjects(ListObjectsArgs.builder().bucket(bucketName).build()).iterator();
+        return new BlobIt<>(it, MinIoBlob::of);
+    }
+
+    @Override
+    public boolean deleteBlob(Path relative) throws IOException {
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(makePath(relative)).build());
+            return true;
+        } catch (ErrorResponseException e) {
+            exists(e);
+            return false;
+        } catch (InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            throw new IOException("Error when Searching Object", e);
+        }
+    }
+
+    @Override
+    public void deleteBucket() throws IOException {
+        try {
+            minioClient.removeBucket(RemoveBucketArgs.builder().bucket(bucketName).build());
+            close();
+        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException | InvalidResponseException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            throw new IOException("Error when deleting Bucket", e);
+        }
+    }
+
+    public static class MinIoBlob implements Blob {
+        final Item source;
+
+        private MinIoBlob(@NotNull Result<Item> sourceResult) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+            this(sourceResult.get());
+        }
+        private MinIoBlob(@NotNull Item source) {
+            this.source = source;
+        }
+
+        @Override
+        public boolean isDirectory() {
+            return source.isDir();
+        }
+
+        @Override
+        public String getKey() {
+            return source.objectName();
+        }
+
+        @Override
+        public long size() {
+            return source.size();
+        }
+
+        public static MinIoBlob of(@NotNull Item source){
+            return new MinIoBlob(source);
+        }
+
+        public static MinIoBlob of(@NotNull Result<Item> sourceResult) throws IOException {
+            try {
+                return new MinIoBlob(sourceResult);
+            } catch (ErrorResponseException | InvalidResponseException | IOException | InsufficientDataException | InternalException | InvalidKeyException | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+                throw new IOException("Error when writing Tags", e);
+            }
         }
     }
 }
