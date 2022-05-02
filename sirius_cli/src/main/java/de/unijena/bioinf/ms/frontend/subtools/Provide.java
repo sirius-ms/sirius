@@ -41,7 +41,7 @@ public class Provide {
     public static class Versions implements CommandLine.IVersionProvider {
         @Override
         public String[] getVersion() throws Exception {
-            return new String[]{ApplicationCore.VERSION_STRING(), "SIRIUS lib: " + FingerIDProperties.siriusVersion(), "CSI:FingerID lib: " + FingerIDProperties.fingeridVersion()};
+            return new String[]{ApplicationCore.VERSION_STRING(), "SIRIUS lib: " + FingerIDProperties.siriusVersion(), "CSI:FingerID lib: " + FingerIDProperties.fingeridFullVersion()};
         }
     }
 }
