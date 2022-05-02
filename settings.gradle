@@ -56,8 +56,8 @@ include ':rest_service_oss:rest_client_oss'
 
 include ':agents'
 
-include ':google-cloud-support'
-include ':aws-cloud-support'
+//include ':google-cloud-support'
+//include ':aws-cloud-support'
 include ':blob-storage'
 
 include ':confidence_score_predict_oss'
