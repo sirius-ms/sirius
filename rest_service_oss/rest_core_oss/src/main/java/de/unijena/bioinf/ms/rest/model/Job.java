@@ -41,7 +41,7 @@ public abstract class Job<O> extends JobBase {
     protected Job(String workerPrefix, Long jobId, JobState state,  JobTable table) {
         super(jobId, state, table);
         this.workerPrefix = workerPrefix;
-        this.version = FingerIDProperties.fingeridVersion();
+        this.version = FingerIDProperties.fingeridMinorVersion();
     }
 
     public String getWorkerPrefix() {

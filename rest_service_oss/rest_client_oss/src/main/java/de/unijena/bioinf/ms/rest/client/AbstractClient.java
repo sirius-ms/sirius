@@ -145,7 +145,7 @@ public abstract class AbstractClient {
         } else {
             b = new URIBuilder(serverUrl);
             if (versionSpecificPath)
-                path = "/v" + FingerIDProperties.fingeridVersion() + path; //todo check if this works
+                path = "/v" + FingerIDProperties.fingeridMinorVersion() + path;
         }
 
         if (!path.isEmpty())

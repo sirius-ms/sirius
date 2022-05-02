@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
     A file based database based on Google cloud storage consists of a directory of files (either .csv or .json), each file contains compounds from the
     same molecular formula. The filenames consists of the molecular formula strings.
  */
+@Deprecated
 public class ChemicalMinIoDatabase extends ChemicalBlobDatabase<MinIoS3BlobStorage> {
 
     public ChemicalMinIoDatabase() throws IOException {

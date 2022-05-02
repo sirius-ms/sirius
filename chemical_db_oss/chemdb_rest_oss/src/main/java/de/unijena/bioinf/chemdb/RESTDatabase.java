@@ -50,7 +50,8 @@ import java.util.zip.GZIPOutputStream;
 
 public class RESTDatabase implements AbstractChemicalDatabase {
     static {
-        FingerIDProperties.fingeridVersion();
+        //just to load props
+        FingerIDProperties.fingeridFullVersion();
     }
 
 

@@ -30,8 +30,17 @@ import java.nio.file.Path;
  */
 public class FingerIDProperties {
 
-    public static String fingeridVersion() {
+    public static String fingeridFullVersion() {
         return PropertyManager.getProperty("de.unijena.bioinf.fingerid.version");
+    }
+
+    public static String fingeridMinorVersion() {
+        String[] splits = fingeridFullVersion().split("[.]");
+        return splits[0] + "." + splits[1];
+    }
+
+    public static String fingeridMajorVersion() {
+        return fingeridFullVersion().split("[.]")[0];
     }
 
     public static String fingeridWebHost() {
