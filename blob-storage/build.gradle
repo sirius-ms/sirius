@@ -1,6 +1,7 @@
 dependencies{
-    compile project(':google-cloud-support')
-    compile project(':aws-cloud-support')
+    compile project(':chemistry_base')
     compile 'io.minio:minio:8.2.2'
-
+    compile 'com.google.cloud:google-cloud-storage:1.118.0'
+    compile 'org.apache.commons:commons-compress:1.21'
+    compile 'org.tukaani:xz:1.9'
 }

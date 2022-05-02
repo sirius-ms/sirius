@@ -26,8 +26,8 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.gc.GCSUtils;
 import de.unijena.bioinf.storage.blob.gcs.GCSBlobStorage;
+import de.unijena.bioinf.storage.blob.gcs.GCSUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -62,7 +62,7 @@ public class ChemicalGCSDatabase extends ChemicalBlobDatabase<GCSBlobStorage> {
 
     @Override
     protected void init() throws IOException {
-        Map<String, String> labels = storage.getBucket().getLabels();
+        Map<String, String> labels = storage.getTags();
 
         format = Optional.ofNullable(labels.get("chemdb-format")).map(String::toUpperCase).map(Format::valueOf)
                 .orElseThrow(() -> new IOException("Could not determine database file format."));
