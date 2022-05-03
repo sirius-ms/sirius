@@ -34,13 +34,24 @@ import java.util.concurrent.ConcurrentHashMap;
 public class InMemoryBlobStorage implements BlobStorage {
 
     private final String name;
-    private final Map<String, byte[]> blobs = new ConcurrentHashMap<>();
-    private Map<String, String> tags = new ConcurrentHashMap<>();
+    protected final Map<String, byte[]> blobs = new ConcurrentHashMap<>();
+    protected Map<String, String> tags = new ConcurrentHashMap<>();
 
     public InMemoryBlobStorage(String name) {
         this.name = name;
     }
 
+    protected byte[] get(@NotNull String key){
+        return blobs.get(key);
+    }
+
+    protected byte[] put(String key, byte[] value){
+        return blobs.put(key, value);
+    }
+
+    protected byte[] remove(String key){
+        return blobs.remove(key);
+    }
 
     @Override
     public String getName() {
@@ -61,13 +72,13 @@ public class InMemoryBlobStorage implements BlobStorage {
     public void withWriter(Path relative, IOFunctions.IOConsumer<OutputStream> withStream) throws IOException {
         try (ByteArrayOutputStream w = new ByteArrayOutputStream()) {
             withStream.accept(w);
-            blobs.put(relative.toString(), w.toByteArray());
+            put(relative.toString(), w.toByteArray());
         }
     }
 
     @Override
     public InputStream reader(Path relative) throws IOException {
-        byte[] blob = blobs.get(relative.toString());
+        byte[] blob = get(relative.toString());
         if (blob == null)
             throw new IOException("Path '" + relative + "' does not exist in InMemory BlobStorage '" + getName() + "'!");
         return new ByteArrayInputStream(blob);
@@ -90,7 +101,7 @@ public class InMemoryBlobStorage implements BlobStorage {
 
     @Override
     public boolean deleteBlob(Path relative) {
-        return blobs.remove(relative.toString()) != null;
+        return remove(relative.toString()) != null;
     }
 
     @Override
@@ -121,6 +132,4 @@ public class InMemoryBlobStorage implements BlobStorage {
             return blobs.get(key).length;
         }
     }
-
-
 }
