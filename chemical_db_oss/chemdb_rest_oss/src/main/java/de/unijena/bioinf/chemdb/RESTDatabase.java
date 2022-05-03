@@ -54,7 +54,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     protected long filter;
 
 
-    public static BlobStorage defaultCacheDir() {
+    public static BlobStorage defaultCache() {
         final String val = System.getenv("CSI_FINGERID_STORAGE");
         if (val != null) return new FileBlobStorage(Path.of(val));
         return new FileBlobStorage(Path.of(System.getProperty("user.home"), "csi_fingerid_cache"));
@@ -70,7 +70,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
         this.chemDbDate = chemDbDate;
         this.chemDBClient = chemDBClient;
         this.client = client;
-        this.cache = new ChemDBFileCache(cacheDir != null ? cacheDir : defaultCacheDir(), new SearchStructureByFormula() {
+        this.cache = new ChemDBFileCache(cacheDir != null ? cacheDir : defaultCache(), new SearchStructureByFormula() {
             @Override
             public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
                 try {
@@ -85,7 +85,7 @@ public class RESTDatabase implements AbstractChemicalDatabase {
     }
 
     public RESTDatabase(long filter, String chemDbDate, @NotNull AuthService authService) {
-        this(RESTDatabase.defaultCacheDir(), filter, chemDbDate, new ChemDBClient(null, authService) , HttpClients.createDefault());
+        this(RESTDatabase.defaultCache(), filter, chemDbDate, new ChemDBClient(null, authService) , HttpClients.createDefault());
     }
 
     @Override
