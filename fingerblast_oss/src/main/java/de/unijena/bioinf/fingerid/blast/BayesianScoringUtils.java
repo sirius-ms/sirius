@@ -269,12 +269,12 @@ public class BayesianScoringUtils {
             try {
                 return computeTreeTopologyOrThrow(candidates, minNumInformativeProperties);
             } catch (InsufficientDataException e) {
-                Log.info("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula:  "+formula, e);
+                Log.info("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula '" + formula + "'. Trying with additional biotransformations.");
             }
 
         }
 
-        //2. if it is was insufficient data, compute tree topology based on candidates with same MF or biotransformations
+        //2. if it was insufficient data, compute tree topology based on candidates with same MF or biotransformations
         if (USE_BIOTRANSFORMATIONS_FOR_TREE_TOPOLOGY && candidates.size()>=minNumStructuresTopologySameMf) {
             startTime = System.currentTimeMillis();
             Set<MolecularFormula> transformationMFs = applyBioTransformations(formula, false);
@@ -313,7 +313,7 @@ public class BayesianScoringUtils {
             try {
                 return computeTreeTopologyOrThrowParallel(candidates, minNumInformativeProperties, masterJJob, numThreads);
             } catch (InsufficientDataException e) {
-                Log.info("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula:  "+formula, e);
+                Log.info("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula '" + formula + "'. Trying with additional biotransformations.");
             }
 
         }
