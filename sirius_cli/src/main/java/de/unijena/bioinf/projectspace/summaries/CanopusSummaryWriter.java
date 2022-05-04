@@ -204,14 +204,14 @@ public class CanopusSummaryWriter implements Summarizer {
             "ClassyFire#most specific class", "ClassyFire#most specific class Probability", "ClassyFire#level 5",
             "ClassyFire#level 5 Probability", "ClassyFire#subclass", "ClassyFire#subclass Probability",
             "ClassyFire#class", "ClassyFire#class Probability", "ClassyFire#superclass", "ClassyFire#superclass probability",
-            "NPC#all classifications", "ClassyFire#all classifications"},
+            /*"NPC#all classifications",*/ "ClassyFire#all classifications"},
             HEADER2 = new String[]{"id", "molecularFormula", "adduct", "precursorFormula",
                     "NPC#pathway", "NPC#pathway Probability", "NPC#superclass", "NPC#superclass Probability",
                     "NPC#class", "NPC#class Probability",
                     "ClassyFire#most specific class", "ClassyFire#most specific class Probability", "ClassyFire#level 5",
                     "ClassyFire#level 5 Probability", "ClassyFire#subclass", "ClassyFire#subclass Probability",
                     "ClassyFire#class", "ClassyFire#class Probability", "ClassyFire#superclass", "ClassyFire#superclass probability",
-                    "NPC#all classifications", "ClassyFire#all classifications"};
+                    /*"NPC#all classifications",*/ "ClassyFire#all classifications"};
 
     public static class IterateOverFormulas implements Iterator<String[]> {
         int k = 0;
@@ -284,7 +284,7 @@ public class CanopusSummaryWriter implements Summarizer {
                 }
 
                 cols[i++] = Joiner.on("; ").join(row.cfClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
-                cols[i++] = Joiner.on("; ").join(row.npcClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
+//                cols[i++] = Joiner.on("; ").join(row.npcClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
                 ++k;
                 return cols;
 
@@ -368,7 +368,7 @@ public class CanopusSummaryWriter implements Summarizer {
                 }
 
                 cols[i++] = Joiner.on("; ").join(row.cfClassifications[j].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
-                cols[i++] = Joiner.on("; ").join(row.npcClassifications[j].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
+//                cols[i++] = Joiner.on("; ").join(row.npcClassifications[j].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
 
                 ++j;
                 if (j >= rows.get(k).cfClassifications.length) {
