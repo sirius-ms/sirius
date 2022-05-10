@@ -49,7 +49,7 @@ public class CheckConnectionAction extends AbstractAction {
             ConnectionMonitor.ConnetionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
             setIcon(check);
             if (!check.isConnected())
-                ConnectionDialog.of(MainFrame.MF, check.errorCode, check.workerInfo, check.userId, check.license, check.terms);
+                ConnectionDialog.of(MainFrame.MF, check.errors, check.workerInfo, check.userId, check.license);
         });
 
 
@@ -63,7 +63,7 @@ public class CheckConnectionAction extends AbstractAction {
             ConnectionMonitor.ConnetionCheck r = checkConnectionAndLoad();
             if (r != null) {
                 setIcon(r);
-                ConnectionDialog.of(MainFrame.MF, r.errorCode, r.workerInfo, r.userId, r.license, r.terms);
+                ConnectionDialog.of(MainFrame.MF, r.errors, r.workerInfo, r.userId, r.license);
             }
         } catch (Exception e1) {
             LoggerFactory.getLogger(getClass()).error("Error when checking connection by action", e1);

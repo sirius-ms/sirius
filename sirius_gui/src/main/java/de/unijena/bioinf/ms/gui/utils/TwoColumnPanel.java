@@ -163,5 +163,9 @@ public class TwoColumnPanel extends JPanel {
         both.weighty = weighty;
     }
 
-
+    public static TwoColumnPanel of(Component leftComp, Component rightComp){
+        TwoColumnPanel p = new TwoColumnPanel();
+        p.add(leftComp,rightComp);
+        return p;
+    }
 }

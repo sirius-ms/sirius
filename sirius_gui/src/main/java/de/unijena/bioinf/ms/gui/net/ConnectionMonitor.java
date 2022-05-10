@@ -19,18 +19,18 @@
 
 package de.unijena.bioinf.ms.gui.net;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
-import de.unijena.bioinf.auth.AuthServices;
+import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
-import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerType;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
+import de.unijena.bioinf.webapi.Tokens;
+import de.unijena.bioinf.webapi.rest.ConnectionError;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,8 +40,10 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -66,7 +68,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         YES, WARN, TERMS, AUTH_ERROR, NO;
     }
 
-    private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, 0, null, null, null, null);
+    private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, Map.of(), null, null, null);
 
     private ConnectionCheckMonitor backroundMonitorJob = null;
 
@@ -121,7 +123,6 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
         firePropertyChange(new ConnectionUpdateEvent(this.checkResult));
         firePropertyChange(new ConnectionStateEvent(old, this.checkResult));
-        firePropertyChange(new ErrorStateEvent(old, this.checkResult));
     }
 
 
@@ -131,61 +132,55 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
     public void addConnectionStateListener(PropertyChangeListener listener) {
         addPropertyChangeListener(ConnectionStateEvent.KEY, listener);
-
     }
-
-    public void addConnectionErrorListener(PropertyChangeListener listener) {
-        addPropertyChangeListener(ErrorStateEvent.KEY, listener);
-    }
-
 
     private class CheckJob extends TinyBackgroundJJob<ConnetionCheck> {
         @Override
         protected ConnetionCheck compute() throws Exception {
             checkForInterruption();
-            int connectionState = ApplicationCore.WEB_API.checkConnection();
-            checkForInterruption();
-
-            ConnectionState conState;
+            ConnectionState conState = ConnectionState.YES;
+            Map<Integer, ConnectionError> errors = Map.of();
             @Nullable WorkerList wl = null;
             @Nullable LicenseInfo ll = null;
-            @Nullable List<Term> tt = null;
-            if (connectionState == 0 || connectionState == 7 || connectionState == 8 || connectionState == 9) {
-                checkForInterruption();
-                wl = ApplicationCore.WEB_API.getWorkerInfo();
-                checkForInterruption();
-                tt = ApplicationCore.WEB_API.getTerms();
-                checkForInterruption();
-                if (connectionState == 0) {
-                    if (wl != null && wl.supportsAllPredictorTypes(neededTypes))
-                        conState = ConnectionState.YES;
-                    else
-                        conState = ConnectionState.WARN;
+            @Nullable AuthService.Token token = null;
 
-                    checkForInterruption();
-                    ll = ApplicationCore.WEB_API.getLicenseInfo();
-                    if (ll != null && ll.isCountQueries())
-                        ll.setCountedCompounds(ApplicationCore.WEB_API.getCountedJobs(!ll.hasCompoundLimit())); //yearly if there is compound limit
-                } else if (connectionState == 8) {
-                    conState = ConnectionState.TERMS;
-                } else if (connectionState == 9) {
-                    conState = ConnectionState.AUTH_ERROR;
-                } else {
-                    conState = ConnectionState.WARN;
-                }
-            } else {
-                conState = ConnectionState.NO;
-            }
-            checkForInterruption();
-            @Nullable DecodedJWT userID = null;
             try {
-                if (connectionState != 9)
-                    userID = AuthServices.getIDToken(ApplicationCore.WEB_API.getAuthService());
-            } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).error("Error when requesting access_token", e);
+                wl = ApplicationCore.WEB_API.getWorkerInfo();
+                if (wl == null || !wl.supportsAllPredictorTypes(neededTypes)) {
+                    conState = ConnectionState.WARN;
+                    errors = Map.of(13, new ConnectionError(13,"No all supported Worker Types are available.",null, ConnectionError.Type.WARNING));
+                }
+
+                checkForInterruption();
+                ll = new LicenseInfo();
+                token = ApplicationCore.WEB_API.getAuthService().getToken();
+                ll.setSubscription(Tokens.getActiveSubscription(token));
+                checkForInterruption();
+                if (ll.getSubscription() != null && ll.isCountQueries())
+                    ll.setConsumables(ApplicationCore.WEB_API.getConsumables(!ll.hasCompoundLimit())); //yearly if there is compound limit
+            } catch (IOException e) {
+                errors = ApplicationCore.WEB_API.checkConnection();
+                errors.put(14, new ConnectionError(14, "Error when requesting worker information or computation limits.", e));
             }
 
-            final ConnetionCheck c = new ConnetionCheck(conState, connectionState, wl, userID != null ? userID.getClaim("email").asString() : null, ll, tt);
+            checkForInterruption();
+
+            if (!errors.isEmpty()){
+                if (errors.containsKey(6))
+                    conState = ConnectionState.TERMS;
+                else if (errors.containsKey(12))
+                    conState = ConnectionState.AUTH_ERROR;
+                else if (errors.values().stream().noneMatch(ConnectionError::isError)){
+                    conState = ConnectionState.WARN;
+                }else {
+                    conState = ConnectionState.NO;
+                }
+            }
+
+            checkForInterruption();
+            final ConnetionCheck c = new ConnetionCheck(conState, errors, wl,
+                    token != null ? token.getDecodedAccessToken().getClaim("https://bright-giant.com/email").asString() : null, ll);
+
             setResult(c);
             return c;
         }
@@ -216,21 +211,22 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
     public static class ConnetionCheck {
-        @NotNull
-        public final ConnectionState state;
-        public final int errorCode;
         public final WorkerList workerInfo;
         public final LicenseInfo license;
-        public final List<Term> terms;
-        public final String userId; //represents if user is logged in.
+        @NotNull
+        public final Map<Integer, ConnectionError> errors;
 
-        public ConnetionCheck(@NotNull ConnectionState state, int errorCode, @Nullable WorkerList workerInfo, @Nullable String userId,  @Nullable  LicenseInfo license, @Nullable List<Term> terms) {
+        public final String userId; //represents if user is logged in.
+        public final ConnectionState state;
+
+        public ConnetionCheck(@NotNull ConnectionState state, @NotNull Map<Integer, ConnectionError> errors, @Nullable WorkerList workerInfo, @Nullable String userId,  @Nullable  LicenseInfo license) {
             this.state = state;
-            this.errorCode = errorCode;
+//            this.errorCode = errorCode;
+            this.errors = errors;
             this.workerInfo = workerInfo;
             this.userId = userId;
             this.license = license;
-            this.terms = terms;
+//            this.terms = terms;
         }
 
         public boolean isLoggedIn() {
@@ -238,7 +234,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         }
 
         public boolean isConnected() {
-            return errorCode == 0;
+            return errors.isEmpty();
         }
 
         public boolean isNotConnected() {
@@ -246,7 +242,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         }
 
         public boolean hasWorkerWarning() {
-            return state.ordinal() > ConnectionState.YES.ordinal();
+            return errors.values().stream().anyMatch(e -> e.getSiriusErrorCode() == 13);
         }
     }
 
@@ -281,39 +277,6 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             return newConnectionCheck;
         }
     }
-
-    public class ErrorStateEvent extends PropertyChangeEvent {
-        public static final String KEY = "connection-errorCode";
-        /**
-         * Constructs a new {@code PropertyChangeEvent}.
-         *
-         * @param oldValue     the old value of the property
-         * @param newValue     the new value of the property
-         * @throws IllegalArgumentException if {@code source} is {@code null}
-         */
-
-        private final ConnetionCheck newConnectionCheck;
-
-        public ErrorStateEvent(final ConnetionCheck oldCheck, final ConnetionCheck newCheck) {
-            super(ConnectionMonitor.this, KEY, oldCheck.errorCode, newCheck.errorCode);
-            newConnectionCheck = newCheck;
-        }
-
-        @Override
-        public Integer getNewValue() {
-            return (Integer) super.getNewValue();
-        }
-
-        @Override
-        public Integer getOldValue() {
-            return (Integer) super.getOldValue();
-        }
-
-        public ConnetionCheck getConnectionCheck() {
-            return newConnectionCheck;
-        }
-    }
-
 
     public class ConnectionUpdateEvent extends PropertyChangeEvent {
         public static final String KEY = "connection-update";

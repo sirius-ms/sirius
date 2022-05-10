@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
+import de.unijena.bioinf.webapi.rest.ConnectionError;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,8 +61,8 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
 
     final BooleanJlabel internet = new BooleanJlabel();
-    final BooleanJlabel hoster = new BooleanJlabel();
-    final BooleanJlabel domain = new BooleanJlabel();
+    final BooleanJlabel authServer = new BooleanJlabel();
+    final BooleanJlabel licenseServer = new BooleanJlabel();
     final BooleanJlabel fingerID = new BooleanJlabel();
     final BooleanJlabel fingerID_WebAPI = new BooleanJlabel();
     final BooleanJlabel fingerID_Worker = new BooleanJlabel();
@@ -72,14 +73,14 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     JLabel authLabel = new JLabel("Authenticated ?  ");
     JPanel resultPanel = null;
 
-    public ConnectionCheckPanel(@Nullable JDialog owner, int state, @Nullable WorkerList workerInfoList, String userId, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
+    public ConnectionCheckPanel(@Nullable JDialog owner, @NotNull Map<Integer, ConnectionError> errors, @Nullable WorkerList workerInfoList, String userId, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
         super(GridBagConstraints.WEST, GridBagConstraints.EAST);
         this.owner = owner;
 
         add(new JXTitledSeparator("Connection check:"), 15, false);
-        add(new JLabel("Connection to the internet (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external") + ")  "), internet, 5, false);
-        add(new JLabel("Connection to domain provider"), hoster, 5, false);
-        add(new JLabel("Connection to domain (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.domain") + ")  "), domain, 5, false);
+        add(new JLabel("Connection to the internet (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.external") + ")  "), internet, 5, false);
+        add(new JLabel("Connection to domain provider"), authServer, 5, false);
+        add(new JLabel("Connection to domain (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.authServer") + ")  "), licenseServer, 5, false);
         add(new JLabel("Connection to CSI:FingerID Server (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host") + ")  "), fingerID, 5, false);
         add(new JLabel("Check CSI:FingerID REST API"), fingerID_WebAPI, 5, false);
         add(new JLabel("All necessary workers available?"), fingerID_Worker, 5, false);
@@ -92,23 +93,24 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         String description = license == null ? null : license.getDescription();
 
         if (workerInfoList != null) {
-            refreshPanel(state,
+            refreshPanel(errors,
                     workerInfoList.getActiveSupportedTypes(Instant.ofEpochSecond(600)),
                     workerInfoList.getPendingJobs(), userId, licensee, description, terms
             );
         } else {
-            refreshPanel(state, Set.of(), Integer.MIN_VALUE, userId, licensee, description, terms);
+            refreshPanel(errors, Set.of(), Integer.MIN_VALUE, userId, licensee, description, terms);
         }
     }
 
-    public void refreshPanel(final int state, final Set<WorkerWithCharge> availableTypes, final int pendingJobs, @Nullable String userId, @NotNull String licensee, @Nullable String description, @Nullable List<Term> terms) {
-        internet.setState(state > 1 || state <= 0);
-        hoster.setState(state > 2 || state <= 0);
-        domain.setState(state > 3 || state <= 0);
-        fingerID.setState(state > 4 || state <= 0);
-        fingerID_WebAPI.setState(state > 6 || state <= 0);
+    public void refreshPanel(@NotNull Map<Integer, ConnectionError> errors, final Set<WorkerWithCharge> availableTypes, final int pendingJobs, @Nullable String userId, @NotNull String licensee, @Nullable String description, @Nullable List<Term> terms) {
+        internet.setState(!errors.containsKey(1));
+        authServer.setState(!errors.containsKey(2));
+        licenseServer.setState(!errors.containsKey(3));
         auth.setState(userId != null);
         authPermission.setState(state == 0);
+        fingerID.setState(state > 4 || state <= 0);
+        fingerID_WebAPI.setState(state > 6 || state <= 0);
+
 
         if (auth.isTrue()) {
             authLabel.setText(userId != null ? "Authenticated as '" + userId + "'  " : "Authenticated ?  ");
@@ -233,7 +235,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                 break;
             case 3:
                 resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
-                        " Could not reach "+ PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.domain") +". <br>" +
+                        " Could not reach "+ PropertyManager.getProperty("de.unijena.bioinf.sirius.web.authServer") +". <br>" +
                         "Either our web server is temporary not available<br>" +
                         " or it cannot be reached because of your network configuration.<br>" +
                         "</html>"));
