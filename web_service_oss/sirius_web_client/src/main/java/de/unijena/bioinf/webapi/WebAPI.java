@@ -48,12 +48,13 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
-import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.storage.blob.BlobStorage;
+import de.unijena.bioinf.webapi.rest.ConnectionError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -63,7 +64,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -94,33 +94,36 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     void changeHost(URI host);
 
+    default void changeHost(Subscription subWithURL){
+        changeHost(URI.create(subWithURL.getServiceUrl()));
+    }
+
     //region ServerInfo
-
-    @Nullable List<Term> getTerms();
-
-    LicenseInfo getLicenseInfo() throws IOException;
-
-    int MAX_STATE = 10;
 
     /**
      *
-     *
-     *  9 Authentication Server error
-     *  8 no tos and/or pp
-     *  7 no permission
-     *  6 csi web api for this version is not reachable because it is outdated
-     *  5 csi web api for this version is not reachable
-     *  4 csi server not reachable
+     *  14 Worker Error
+     *  13 Worker Warning
+     *  12 Authentication Server error
+     *  11 Secured Endpoint error UNEXPECTED
+     *  10 Secured Endpoint error
+     *  9 no tos and/or pp
+     *  8 csi web api reachable UNEXPECTED
+     *  7 csi web api not reachable
+     *  6 Login/Token: Terms and Condition not Accepted
+     *  5 Login/Token: No License
+     *  4 Login/Token: Not Logged in
      *  3 no connection to Doamin e.g. www.csi-fingerid.uni-jena.de
      *  2 no connection to Domain Provider e.g. uni-jena.de
      *  1 no connection to internet (google/microsoft/ubuntu?)
      *  0 everything is fine
      *
+     *
      * @return version and connectivity information of the webserver
      */
-    @Nullable VersionsInfo getVersionInfo();
+    @Nullable VersionsInfo getVersionInfo() throws IOException;
 
-    int checkConnection();
+    Map<Integer, ConnectionError> checkConnection();
 
     WorkerList getWorkerInfo() throws IOException;
 
@@ -130,9 +133,9 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     //region Jobs
     void deleteClientAndJobs() throws IOException;
 
-    int getCountedJobs(boolean byMonth) throws IOException;
+    SubscriptionConsumables getConsumables(boolean byMonth) throws IOException;
 
-    int getCountedJobs(@NotNull Date monthAndYear, boolean byMonth) throws IOException;
+    SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth) throws IOException;
     //endregion
 
     //region ChemDB

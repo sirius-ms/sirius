@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -46,7 +47,8 @@ import java.util.stream.Collectors;
 public class JobsClient extends AbstractClient {
     private static final Logger LOG = LoggerFactory.getLogger(JobsClient.class);
 
-    public JobsClient(@NotNull URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
+    @SafeVarargs
+    public JobsClient(@NotNull URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorator) {
         super(serverUrl, requestDecorator);
     }
 
@@ -80,11 +82,11 @@ public class JobsClient extends AbstractClient {
         });
     }
 
-    public int getCountedJobs(@NotNull Date monthAndYear, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
-        return getCountedJobs(monthAndYear, null, byMonth, client);
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
+        return getConsumables(monthAndYear, null, byMonth, client);
     }
 
-    public int getCountedJobs(@NotNull Date monthAndYear, @Nullable JobTable jobType, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, @Nullable JobTable jobType, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
         return executeFromJson(client,
                 () -> {
                     URIBuilder builder = buildVersionSpecificWebapiURI("/jobs/count")

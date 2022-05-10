@@ -53,14 +53,15 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
-import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.stores.model.CanopusClientDataStore;
 import de.unijena.bioinf.ms.stores.model.FingerIdClientDataStore;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
+import de.unijena.bioinf.webapi.rest.ConnectionError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -111,18 +112,6 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    public @Nullable List<Term> getTerms() {
-        //todo implement
-        return null;
-    }
-
-    @Override
-    public LicenseInfo getLicenseInfo() throws IOException {
-        //todo implement
-        return null;
-    }
-
-    @Override
     public @Nullable VersionsInfo getVersionInfo() {
         //todo request via data service as static file like the models?
         return new VersionsInfo(FingerIDProperties.sirius_guiVersion(), getChemDbDate(), false);
@@ -140,8 +129,10 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    public int checkConnection() {
-        return amqpClient.isConnected() ? 0 : 1;
+    public Map<Integer, ConnectionError> checkConnection() {
+        //todo implement
+        return Map.of();
+//        return amqpClient.isConnected() ? 0 : 1;
     }
 
     @Override
@@ -150,28 +141,21 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
         return new WorkerList();
     }
 
-  /*  @Override
-    public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {
-        //todo implement
-        throw new UnsupportedOperationException("Error reporting is not yet implemented!");
-    }*/
-
-
     @Override
     public void deleteClientAndJobs() throws IOException {
         //todo send message to delete que and stuff
     }
 
     @Override
-    public int getCountedJobs(boolean byMonth) throws IOException {
+    public SubscriptionConsumables getConsumables(boolean byMonth) throws IOException {
         //todo implement
-        return 0;
+        return null;
     }
 
     @Override
-    public int getCountedJobs(@NotNull Date monthAndYear, boolean byMonth) throws IOException {
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth) throws IOException {
         //todo implement
-        return 0;
+        return null;
     }
 
     @Override

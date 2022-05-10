@@ -52,12 +52,14 @@ public class StructureSearchClient extends AbstractClient {
     protected final boolean cacheFpVersion;
 
 
-    public StructureSearchClient(URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
-        this(serverUrl, true, requestDecorator);
+    @SafeVarargs
+    public StructureSearchClient(URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+        this(serverUrl, true, requestDecorators);
     }
 
-    public StructureSearchClient(URI serverUrl, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
-        super(serverUrl, requestDecorator);
+    @SafeVarargs
+    public StructureSearchClient(URI serverUrl, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+        super(serverUrl, requestDecorators);
         this.cacheFpVersion = cacheFpVersion;
     }
 
