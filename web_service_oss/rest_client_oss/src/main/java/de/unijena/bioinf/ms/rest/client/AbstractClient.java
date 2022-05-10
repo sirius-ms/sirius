@@ -47,6 +47,7 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
 
 public abstract class AbstractClient {
@@ -63,11 +64,16 @@ public abstract class AbstractClient {
     @NotNull
     protected URI serverUrl;
     @NotNull
-    protected final IOFunctions.IOConsumer<HttpUriRequest> requestDecorator;
+    protected final List<IOFunctions.IOConsumer<HttpUriRequest>> requestDecorators;
 
-    protected AbstractClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
+    @SafeVarargs
+    protected AbstractClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+        this(serverUrl, List.of(requestDecorators));
+    }
+
+    protected AbstractClient(@Nullable URI serverUrl, @NotNull List<IOFunctions.IOConsumer<HttpUriRequest>> requestDecorators) {
         this.serverUrl = Objects.requireNonNullElseGet(serverUrl, () -> URI.create(FingerIDProperties.fingeridWebHost()));
-        this.requestDecorator = requestDecorator;
+        this.requestDecorators = requestDecorators;
     }
 
     public void setServerUrl(@NotNull URI serverUrl) {
@@ -78,33 +84,6 @@ public abstract class AbstractClient {
         return serverUrl;
     }
 
-    public boolean testConnection(@NotNull CloseableHttpClient client) throws IOException {
-        execute(client, () -> new HttpGet(getBaseURI("/actuator/health", true).build()));
-        return true;
-    }
-
-    public int testSecuredConnection(@NotNull CloseableHttpClient client) {
-        try {
-            execute(client, () -> {
-                HttpGet get = new HttpGet(getBaseURI("/check", true).build());
-                final int timeoutInSeconds = 8000;
-                get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
-                return get;
-            });
-            return 0;
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).warn("Could not reach secured api endpoint: " + e.getMessage());
-            String[] splitMsg = e.getMessage().split(SecurityService.ERROR_CODE_SEPARATOR);
-
-            if (splitMsg.length > 1 && splitMsg[1].equals(SecurityService.TERMS_MISSING))
-                return 8;
-            return 7;
-        } catch (OAuthResponseException e){
-            LoggerFactory.getLogger(getClass()).error("Error when contacting login Server: " + e.getMessage(), e);
-            return 9;
-        }
-    }
-
     @Nullable
     public LicenseInfo getLicenseInfo(@NotNull CloseableHttpClient client) throws IOException {
         return executeFromJson(client,
@@ -113,11 +92,12 @@ public abstract class AbstractClient {
                     final int timeoutInSeconds = 8000;
                     get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
                     return get;
-                }, new TypeReference<>() {}
+                }, new TypeReference<>() {
+                }
         );
     }
 
-    public boolean deleteAccount(@NotNull CloseableHttpClient client){
+    public boolean deleteAccount(@NotNull CloseableHttpClient client) {
         try {
             execute(client, () -> {
                 HttpDelete delete = new HttpDelete(getBaseURI("/delete-account", true).build());
@@ -132,7 +112,7 @@ public abstract class AbstractClient {
         }
     }
 
-    public boolean acceptTerms(@NotNull CloseableHttpClient client){
+    public boolean acceptTerms(@NotNull CloseableHttpClient client) {
         try {
             execute(client, () -> {
                 HttpPost post = new HttpPost(getBaseURI("/accept-terms", true).build());
@@ -152,16 +132,29 @@ public abstract class AbstractClient {
 
         if (status.getStatusCode() >= 400) {
             final String content = response.getEntity() != null ? IOUtils.toString(getIn(response, sourceRequest)) : "No Content";
-            throw new IOException("Error when querying REST service. Bad Response Code: "
-                    + status.getStatusCode() + " | Message: " + status.getReasonPhrase() + " | " + response.getFirstHeader("WWW-Authenticate") + " | Content: " + content);
+            throw new HttpErrorResponseException(status.getStatusCode(), status.getReasonPhrase(), response.getFirstHeader("WWW-Authenticate").getValue(), content);
         }
     }
 
 
     //region http request execution API
-    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
-        requestDecorator.accept(request);
+    public <T> T executeWithResponse(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
+        try {
+            return executeWithResponse(client, makeRequest.get(),respHandling);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public <T> T executeWithResponse(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
         try (CloseableHttpResponse response = client.execute(request)) {
+            return respHandling.apply(response);
+        }
+    }
+
+    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
+        for (IOFunctions.IOConsumer<HttpUriRequest> requestDecorator : requestDecorators)
+            requestDecorator.accept(request);
+        return executeWithResponse(client, request, response -> {
             isSuccessful(response, request);
             if (response.getEntity() != null) {
                 try (final BufferedReader reader = new BufferedReader(getIn(response, request))) {
@@ -173,7 +166,7 @@ public abstract class AbstractClient {
                 getIn(response, request).close();
             }
             return null;
-        }
+        });
     }
 
     public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
@@ -209,7 +202,9 @@ public abstract class AbstractClient {
     }
 
     public <T> T executeFromStream(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
-        requestDecorator.accept(request);
+        for (IOFunctions.IOConsumer<HttpUriRequest> requestDecorator : requestDecorators)
+            requestDecorator.accept(request);
+
         try (CloseableHttpResponse response = client.execute(request)) {
             isSuccessful(response, request);
             if (response.getEntity() != null) {
@@ -333,7 +328,7 @@ public abstract class AbstractClient {
     //#################################################################################################################
 
     protected static String makeVersionContext() {
-            return "/v" + FingerIDProperties.fingeridMinorVersion();
+        return "/v" + FingerIDProperties.fingeridMinorVersion();
     }
 
 }

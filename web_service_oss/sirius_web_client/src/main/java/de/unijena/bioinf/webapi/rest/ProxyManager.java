@@ -42,6 +42,7 @@ package de.unijena.bioinf.webapi.rest;
 
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.client.HttpErrorResponseException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -77,9 +78,7 @@ import java.net.HttpURLConnection;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -161,29 +160,25 @@ public class ProxyManager {
 
 
     //0 everything is fine
-    //1 no connection to bioinf web site
-    //2 no connection to uni jena
-    //3 no connection to internet (google/microft/ubuntu????)
-    public static int checkInternetConnection(final HttpClient client) {
-        if (!checkDomain(client)) {
-            if (!checkHoster(client)) {
-                if (!checkExternal(client)) {
-                    return 1;
-                }
-                return 2;
-            }
-            return 3;
-        }
-        return 0;
+    //1 no connection to Internet
+    //2 no connection to Auth0 Server
+    //3 no connection to BG License Server
+    public static Optional<List<ConnectionError>> checkInternetConnection(final HttpClient client) {
+        List<ConnectionError> failedChecks = new ArrayList<>();
+        checkLicenseServer(client).ifPresent(failedChecks::add);
+        checkAuthServer(client).ifPresent(failedChecks::add);
+        checkExternal(client).ifPresent(failedChecks::add);
+        return failedChecks.isEmpty() ? Optional.empty() : Optional.of(failedChecks);
     }
 
-    public static int checkInternetConnection() {
+    public static Optional<List<ConnectionError>> checkInternetConnection() {
         try (CloseableHttpClient client = getSirirusHttpClient()) {
             return checkInternetConnection(client);
         } catch (IOException e) {
-            LoggerFactory.getLogger(ProxyManager.class).error("Cant not create Http client", e);
+            String m = "Could not create Http client during Internet connection check.";
+            LoggerFactory.getLogger(ProxyManager.class).error(m, e);
+            return Optional.of(List.of(new ConnectionError(98, m)));
         }
-        return 3;
     }
 
     private static <B> B handleSSLValidation(@NotNull final B builder) {
@@ -313,19 +308,25 @@ public class ProxyManager {
     }
 
 
-    public static boolean checkExternal(HttpClient proxy) {
-        return checkConnectionToUrl(proxy, PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external", null, "http://www.google.de/"));
+
+    public static Optional<ConnectionError> checkExternal(HttpClient proxy) {
+        String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.external", null, "https://www.google.de/");
+        return checkConnectionToUrl(proxy, url).map(e -> e.withNewMessage(1, "Could not connect to the Internet: " + url));
+//                ? Optional.of(new ConnectionError(2, "Could not connect to the Internet: " + url)) : Optional.empty();
     }
 
-    public static boolean checkHoster(HttpClient proxy) {
-        return checkConnectionToUrl(proxy, PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.hoster", null, "https://www.uni-jena.de/"));
+    public static Optional<ConnectionError> checkAuthServer(HttpClient proxy) {
+        String url =  PropertyManager.getProperty("de.unijena.bioinf.sirius.web.authServer",null,"https://auth0.brigh-giant.com/");
+        return checkConnectionToUrl(proxy, url).map(e -> e.withNewMessage(2, "Could not connect to the Authentication Server: " + url));
+//                ? Optional.of(new ConnectionError()) : Optional.empty();
     }
 
-    public static boolean checkDomain(HttpClient proxy) {
-        return checkConnectionToUrl(proxy, PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.domain",null,"https://bio.informatik.uni-jena.de/"));
+    public static Optional<ConnectionError> checkLicenseServer(HttpClient proxy) {
+        String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer", null, "https://gate.bright-giant.com/");
+        return checkConnectionToUrl(proxy, url).map(e -> e.withNewMessage(3, "Could not connect to the License Server: " + url));
     }
 
-    public static boolean checkConnectionToUrl(final HttpClient proxy, String url) {
+    public static Optional<ConnectionError> checkConnectionToUrl(final HttpClient proxy, String url) {
         try {
             HttpResponse response = proxy.execute(new HttpHead(url));
             int code = response.getStatusLine().getStatusCode();
@@ -338,13 +339,13 @@ public class ProxyManager {
             LoggerFactory.getLogger(ProxyManager.class).debug("Protocol Version: " + response.getStatusLine().getProtocolVersion());
             if (code != HttpURLConnection.HTTP_OK) {
                 LoggerFactory.getLogger(ProxyManager.class).warn("Error Response code: " + response.getStatusLine().getReasonPhrase() + " " + code);
-                return false;
+                return Optional.of(new ConnectionError(96,"Error when connecting to: " + url + "Bad Response!", null, ConnectionError.Type.ERROR, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase()));
             }
-            return true;
+            return Optional.empty();
         } catch (Exception e) {
             LoggerFactory.getLogger(ProxyManager.class).warn("Connection error", e);
+            return Optional.of(new ConnectionError(97,"Error when connecting to: " + url, e));
         }
-        return false;
     }
 
 

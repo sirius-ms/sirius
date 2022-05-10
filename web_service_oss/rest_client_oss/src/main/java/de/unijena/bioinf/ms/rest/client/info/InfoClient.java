@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.info.News;
-import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.apache.http.client.config.RequestConfig;
@@ -54,44 +53,25 @@ public class InfoClient extends AbstractClient {
     private static final String WEBAPI_TERMS_JSON = "/terms.json";
 
     public InfoClient(@NotNull URI serverUrl) {
-        this(serverUrl, (it) -> {});
+        this(serverUrl, (it) -> {
+        });
     }
 
-    public InfoClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
-        super(serverUrl, requestDecorator);
+    @SafeVarargs
+    public InfoClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+        super(serverUrl, requestDecorators);
     }
 
-    @Nullable
-    public VersionsInfo getVersionInfo(final CloseableHttpClient client) {
-        VersionsInfo v = null;
-        try {
-            v = execute(client,
-                    () -> {
-                        HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
-                        get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
-                        return get;
-                    },
-                    this::parseVersionInfo
-            );
-
-        } catch (IOException e) {
-            LOG.warn("Could not reach fingerid version specific URL for version verification. Try to reach root url. Cause:" + e.getMessage());
-
-            try {
-                v = execute(client,
-                        () -> {
-                            HttpGet get = new HttpGet(buildVersionLessWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
-                            get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
-                            return get;
-                        },
-                        this::parseVersionInfo
-                );
-            } catch (IOException ex) {
-                LOG.warn("Could not reach fingerid root url for version verification.  Cause: " + e.getMessage());
-            }
-        }
-
-        return v;
+    @NotNull
+    public VersionsInfo getVersionInfo(final CloseableHttpClient client) throws IOException {
+        return execute(client,
+                () -> {
+                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
+                    get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
+                    return get;
+                },
+                this::parseVersionInfo
+        );
     }
 
     //todo change to Jackson
@@ -129,7 +109,7 @@ public class InfoClient extends AbstractClient {
         return null;
     }
 
-    @Nullable
+   /* @Nullable
     public List<Term> getTerms(@NotNull CloseableHttpClient client) throws IOException {
         return executeFromJson(client,
                 () -> {
@@ -137,9 +117,10 @@ public class InfoClient extends AbstractClient {
                     final int timeoutInSeconds = 8000;
                     get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
                     return get;
-                }, new TypeReference<>() {}
+                }, new TypeReference<>() {
+                }
         );
-    }
+    }*/
 
     @Nullable
     public WorkerList getWorkerInfo(@NotNull CloseableHttpClient client) throws IOException {
@@ -149,31 +130,8 @@ public class InfoClient extends AbstractClient {
                     final int timeoutInSeconds = 8000;
                     get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
                     return get;
-                }, new TypeReference<>() {}
-        );
-    }
-
-
-    /*public <T extends ErrorReport> String reportError(ErrorReport report, String SOFTWARE_NAME, @NotNull CloseableHttpClient client) throws IOException {
-        return execute(client,
-                () -> {
-                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/report.json")
-                            .addParameter("name", SOFTWARE_NAME).build());
-                    final String json = new ObjectMapper().writeValueAsString(report);
-                    post.setEntity(new StringEntity(json, StandardCharsets.UTF_8));
-                    post.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
-                    return post;
-                },
-                reader -> {
-                    JsonNode jTree = new ObjectMapper().readTree(reader);
-                    boolean suc = jTree.get("success").asBoolean();
-                    String m = jTree.get("message").asText();
-                    if (suc)
-                        LOG.info(m);
-                    else
-                        LOG.error(m);
-                    return m;
+                }, new TypeReference<>() {
                 }
         );
-    }*/
+    }
 }
