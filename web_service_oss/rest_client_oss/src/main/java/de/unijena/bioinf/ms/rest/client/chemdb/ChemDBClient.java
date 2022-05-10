@@ -43,12 +43,14 @@ import java.util.List;
 public class ChemDBClient extends StructureSearchClient {
     public static final int MAX_NUM_OF_INCHIS = 1000; //todo this should be requested from server!
 
-    public ChemDBClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
-        super(serverUrl, requestDecorator);
+    @SafeVarargs
+    public ChemDBClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+        super(serverUrl, requestDecorators);
     }
 
-    public ChemDBClient(URI serverUrl, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
-        super(serverUrl,cacheFpVersion, requestDecorator);
+    @SafeVarargs
+    public ChemDBClient(URI serverUrl, boolean cacheFpVersion, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+        super(serverUrl, cacheFpVersion, requestDecorators);
     }
 
     public List<FingerprintCandidate> postCompounds(@NotNull List<String> inChIs2d, CloseableHttpClient client) throws IOException {

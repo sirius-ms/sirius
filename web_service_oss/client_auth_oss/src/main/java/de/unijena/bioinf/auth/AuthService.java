@@ -263,6 +263,9 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
             throw new IOException("Could not initiate Password reset. Cause: " + resp.getMessage() + " | Body: " + resp.getBody());
     }
 
+    public Token getToken() {
+        return token;
+    }
 
     @Override
     public void close() throws IOException {

@@ -61,8 +61,9 @@ import java.util.Map;
 public class FingerIdClient extends AbstractClient {
     private static final Logger LOG = LoggerFactory.getLogger(FingerIdClient.class);
 
-    public FingerIdClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
-        super(serverUrl, requestDecorator);
+    @SafeVarargs
+    public FingerIdClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+        super(serverUrl, requestDecorators);
     }
 
     public JobUpdate<FingerprintJobOutput> postJobs(final FingerprintJobInput input, CloseableHttpClient client) throws IOException {

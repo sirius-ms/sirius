@@ -46,8 +46,9 @@ import java.nio.charset.StandardCharsets;
 
 public class CanopusClient extends AbstractClient {
 
-    public CanopusClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
-        super(serverUrl, requestDecorator);
+    @SafeVarargs
+    public CanopusClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+        super(serverUrl, requestDecorators);
     }
 
     public CanopusCfData getCfData(PredictorType predictorType, CloseableHttpClient client) throws IOException {
