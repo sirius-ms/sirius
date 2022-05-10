@@ -33,7 +33,10 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.webapi.rest.ConnectionError;
 import de.unijena.bioinf.webapi.rest.ProxyManager;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -41,9 +44,12 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "login", description = "<STANDALONE> Allows a user to login for SIRIUS Webservices (e.g. CSI:FingerID or CANOPUS) and securely store a personal access token.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> {
@@ -135,11 +141,13 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                         ApplicationCore.WEB_API.changeHost(login.webserviceURL);
                     }
                     //check connection
-                    int i = ApplicationCore.WEB_API.checkConnection();
-                    LoggerFactory.getLogger(getClass()).debug("Connection check after login returned error code: " + i);
-                    if (i == 8){
+                    Map<Integer,ConnectionError> errors = ApplicationCore.WEB_API.checkConnection();
+                    LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: " +
+                            errors.values().stream().sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
+                                    .map(ConnectionError::toString).collect(Collectors.joining(",\n")));
 
-                        List<Term> terms = ApplicationCore.WEB_API.getTerms();
+                    if (errors.containsKey(6)){
+                        List<Term> terms = Tokens.getActiveSubscriptionTerms(service.getToken());
 
                         System.out.println();
                         System.out.println("###################### Accept Terms ######################");
@@ -152,7 +160,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                         if (answer.equalsIgnoreCase("Y") || answer.equalsIgnoreCase("YES")){
                             ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
                             System.out.println("Terms accepted! Checking web service permissions...");
-                            i = ApplicationCore.WEB_API.checkConnection();
+                            errors = ApplicationCore.WEB_API.checkConnection();
                         }else { //not accepted clear account data
                             System.out.println("Terms NOT Accepted! Removing login information. Please re-login and accept terms to use web service based features.");
                             AuthServices.clearRefreshToken(ApplicationCore.TOKEN_FILE);
@@ -162,7 +170,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
                     }
 
-                    if (i == 0){
+                    if (errors.isEmpty()){
                         if (login.webserviceURL != null){ //make host change persistent because connection was successful
                             SiriusProperties.setAndStoreInBackground("de.unijena.bioinf.fingerid.web.host", login.webserviceURL.toString());
                             System.out.println("Login successful!");
@@ -207,20 +215,22 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
         private void showLicense() throws IOException {
             WebAPI<?> api = ApplicationCore.WEB_API;
-            final LicenseInfo licenseInfo = api.getLicenseInfo();
+            @Nullable Subscription subs = Tokens.getActiveSubscription(api.getAuthService().getToken());
 
             System.out.println();
             System.out.println("###################### License Info ######################");
-            if (licenseInfo != null) {
+            if (subs != null) {
+                final LicenseInfo licenseInfo = new LicenseInfo();
+                licenseInfo.setSubscription(subs);
                 System.out.println("Licensed to: " + licenseInfo.getLicensee() + " (" + licenseInfo.getDescription() + ")");
                 System.out.println("Expires at: " + (licenseInfo.hasExpirationTime() ? licenseInfo.getExpirationDate().toString() : "NEVER"));
                 if (licenseInfo.isCountQueries()) {
                     if (licenseInfo.hasCompoundLimit()) {
-                        int year = api.getCountedJobs(false);
-                        System.out.println("Compounds Computed (Yearly): " + year + " of " + licenseInfo.getCompoundLimit());
+                        licenseInfo.setConsumables(api.getConsumables(false));
+                        System.out.println("Compounds Computed (Yearly): " + licenseInfo.getCountedCompounds() + " of " + licenseInfo.getCompoundLimit());
                     } else {
-                        int month = api.getCountedJobs(true);
-                        System.out.println("Compounds Computed (Monthly): " + month);
+                        licenseInfo.setConsumables(api.getConsumables(true));
+                        System.out.println("Compounds Computed (Monthly): " + licenseInfo.getCountedCompounds());
                     }
                 }
             } else {

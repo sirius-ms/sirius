@@ -23,10 +23,16 @@ package de.unijena.bioinf.ms.gui.login;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
+import de.unijena.bioinf.auth.LoginException;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.sirius.SiriusFactory;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
@@ -36,9 +42,10 @@ import java.net.URL;
 
 public class AccountPanel extends JPanel {
     private final AuthService service;
-//    private JTextField webserverURL;
+    //    private JTextField webserverURL;
     private JLabel userIconLabel, userInfoLabel;
     private JButton login, reset, create;
+    private ToolbarButton refresh;
 
     public AccountPanel(AuthService service) {
         super(new BorderLayout());
@@ -59,8 +66,17 @@ public class AccountPanel extends JPanel {
 
         JPanel iconPanel = new JPanel(new BorderLayout());
         iconPanel.add(userIconLabel, BorderLayout.CENTER);
-
-        center.add(iconPanel, userInfoLabel);
+        refresh = new ToolbarButton(Icons.REFRESH_32);
+        refresh.addActionListener(e ->
+                Jobs.runInBackgroundAndLoad(MainFrame.MF, () -> {
+                    try {
+                        ApplicationCore.WEB_API.getAuthService().refreshIfNeeded(true);
+                    } catch (LoginException ex) {
+                        LoggerFactory.getLogger(getClass()).error("Error when refreshing access_token!", ex);
+//                    new ExceptionDialog(MainFrame.MF, "Error when refreshing access_token!", ex.getMessage());
+                    }
+                }));
+        center.add(iconPanel, TwoColumnPanel.of(userInfoLabel, refresh));
         center.addVerticalGlue();
         add(center, BorderLayout.CENTER);
 
@@ -70,7 +86,7 @@ public class AccountPanel extends JPanel {
         create = new JButton();
         login = new JButton();
         Box buttons = Box.createHorizontalBox();
-        buttons.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+        buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         buttons.add(reset);
         buttons.add(create);
         buttons.add(Box.createHorizontalGlue());
@@ -86,7 +102,6 @@ public class AccountPanel extends JPanel {
     }
 
 
-
     public void reloadChanges() {
         DecodedJWT userInfo = getLogin();
         if (userInfo == null) {
@@ -94,7 +109,9 @@ public class AccountPanel extends JPanel {
             userInfoLabel.setText("Please log in!");
             create.setAction(SiriusActions.SIGN_UP.getInstance());
             login.setAction(SiriusActions.SIGN_IN.getInstance());
+            refresh.setEnabled(false);
         } else {
+            refresh.setEnabled(true);
             try {
                 Image image = ImageIO.read(new URL(userInfo.getClaim("picture").asString()));
                 image = Icons.makeEllipse(image);

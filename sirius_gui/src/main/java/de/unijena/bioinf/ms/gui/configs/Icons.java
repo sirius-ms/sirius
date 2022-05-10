@@ -113,6 +113,9 @@ public abstract class Icons {
     public static final Icon FBMN_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn@0.5x.png"));
 //    public static final Icon FBMN_64 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn.png"));
 
+    public static final Icon REFRESH_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-refresh-16px.png"));
+    public static final Icon REFRESH_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-refresh@0.5x.png"));
+
     public static final Icon SIRIUS_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-sirius@0.5x.png"));
     public static final Icon SIRIUS_64 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-sirius.png"));
 

@@ -35,6 +35,7 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.Term;
+import de.unijena.bioinf.webapi.Tokens;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -162,8 +163,8 @@ public class UserLoginDialog extends JDialog {
     }
 
     public void addTermsPanel(@NotNull TwoColumnPanel center) {
-        List<Term> terms = Jobs.runInBackgroundAndLoad(MainFrame.MF, "Loading Terms", ApplicationCore.WEB_API::getTerms).getResult();
-        if (terms != null && !terms.isEmpty()) {
+        List<Term> terms = Tokens.getActiveSubscriptionTerms(ApplicationCore.WEB_API.getAuthService().getToken());
+        if (!terms.isEmpty()) {
             boxAcceptTerms.setSelected(false);
             signInAction.setEnabled(false);
             boxAcceptTerms.addActionListener(evt -> signInAction.setEnabled(((JCheckBox)evt.getSource()).isSelected()));
