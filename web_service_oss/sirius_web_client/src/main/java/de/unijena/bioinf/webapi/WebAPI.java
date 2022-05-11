@@ -65,6 +65,7 @@ import java.net.URI;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Frontend WebAPI class, that represents the client to our backend rest api
@@ -92,32 +93,30 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     void acceptTermsAndRefreshToken() throws LoginException;
 
-    void changeHost(URI host);
+    void changeActiveSubscription(Subscription activeSubscription);
 
-    default void changeHost(Subscription subWithURL){
-        changeHost(URI.create(subWithURL.getServiceUrl()));
-    }
+    Subscription getActiveSubscription();
+
+    void changeHost(Supplier<URI> hostSupplier);
 
     //region ServerInfo
 
     /**
-     *
-     *  14 Worker Error
-     *  13 Worker Warning
-     *  12 Authentication Server error
-     *  11 Secured Endpoint error UNEXPECTED
-     *  10 Secured Endpoint error
-     *  9 no tos and/or pp
-     *  8 csi web api reachable UNEXPECTED
-     *  7 csi web api not reachable
-     *  6 Login/Token: Terms and Condition not Accepted
-     *  5 Login/Token: No License
-     *  4 Login/Token: Not Logged in
-     *  3 no connection to Doamin e.g. www.csi-fingerid.uni-jena.de
-     *  2 no connection to Domain Provider e.g. uni-jena.de
-     *  1 no connection to internet (google/microsoft/ubuntu?)
-     *  0 everything is fine
-     *
+     * 14 Worker Error
+     * 13 Worker Warning
+     * 12 Authentication Server error
+     * 11 Secured Endpoint error UNEXPECTED
+     * 10 Secured Endpoint error
+     * 9 no tos and/or pp
+     * 8 csi web api reachable UNEXPECTED
+     * 7 csi web api not reachable
+     * 6 Login/Token: Terms and Condition not Accepted
+     * 5 Login/Token: No License
+     * 4 Login/Token: Not Logged in
+     * 3 no connection to Doamin e.g. www.csi-fingerid.uni-jena.de
+     * 2 no connection to Domain Provider e.g. uni-jena.de
+     * 1 no connection to internet (google/microsoft/ubuntu?)
+     * 0 everything is fine
      *
      * @return version and connectivity information of the webserver
      */
@@ -201,8 +200,8 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
      * @throws IOException if something went wrong with the web query
      */
     //uncached -> access via predictor
-    default BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType) throws IOException{
-        return getBayesnetScoring(predictorType,null);
+    default BayesnetScoring getBayesnetScoring(@NotNull PredictorType predictorType) throws IOException {
+        return getBayesnetScoring(predictorType, null);
     }
 
     /**

@@ -40,7 +40,6 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.FingerprintWebResultConverter;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.client.HttpErrorResponseException;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
@@ -87,6 +86,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Frontend WebAPI class, that represents the client to our backend rest api
@@ -104,6 +104,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     public final FingerIdClient fingerprintClient;
     public final CanopusClient canopusClient;
 
+    private Subscription activeSubscription;
 
     public RestAPI(@Nullable AuthService authService, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
         super(authService);
@@ -114,32 +115,27 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         this.canopusClient = canopusClient;
     }
 
-    public RestAPI(@NotNull AuthService authService, @NotNull URI host) {
+
+    public RestAPI(@NotNull AuthService authService, @Nullable Subscription activeSubscription) {
         super(authService);
         IOFunctions.IOConsumer<HttpUriRequest> subsDeco = (req) -> {
-            Subscription sub = Tokens.getActiveSubscription(authService.getToken());
-            if (sub != null)
-                req.addHeader("SUBSCRIPTION", sub.getSid());
-//            else LoggerFactory.getLogger(getClass()).warn("No active subscription found! Request might fail");
+            if (this.activeSubscription != null)
+                req.addHeader("SUBSCRIPTION", this.activeSubscription.getSid());
         };
 
-        this.serverInfoClient = new InfoClient(host, authService, subsDeco);
-        this.jobsClient = new JobsClient(host, authService, subsDeco);
-        ;
-        this.chemDBClient = new ChemDBClient(host, authService, subsDeco);
-        ;
-        this.fingerprintClient = new FingerIdClient(host, authService, subsDeco);
-        ;
-        this.canopusClient = new CanopusClient(host, authService, subsDeco);
-        ;
+        this.serverInfoClient = new InfoClient(null, authService, subsDeco);
+        this.jobsClient = new JobsClient(null, authService, subsDeco);
+        this.chemDBClient = new ChemDBClient(null, authService, subsDeco);
+        this.fingerprintClient = new FingerIdClient(null, authService, subsDeco);
+        this.canopusClient = new CanopusClient(null, authService, subsDeco);
+
+        if (activeSubscription != null)
+            changeActiveSubscription(activeSubscription);
     }
 
-    public RestAPI(@NotNull AuthService authService, @NotNull String host) {
-        this(authService, URI.create(host));
-    }
 
     public RestAPI(@NotNull AuthService authService) {
-        this(authService, URI.create(FingerIDProperties.fingeridWebHost()));
+        this(authService, Optional.ofNullable(authService.getToken()).map(Tokens::getActiveSubscription).orElse(null));
     }
 
 
@@ -156,14 +152,23 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     }
 
     @Override
-    public void changeHost(URI host) {
-        this.serverInfoClient.setServerUrl(host);
-        this.jobsClient.setServerUrl(host);
-        this.chemDBClient.setServerUrl(host);
-        this.fingerprintClient.setServerUrl(host);
-        this.canopusClient.setServerUrl(host);
+    public void changeActiveSubscription(@Nullable Subscription activeSubscription) {
+        this.activeSubscription = activeSubscription;
+        changeHost(this.activeSubscription != null ? () -> URI.create(this.activeSubscription.getServiceUrl()) : () -> null);
     }
 
+    public Subscription getActiveSubscription() {
+        return activeSubscription;
+    }
+
+    @Override
+    public void changeHost(Supplier<URI> hostSupplier) {
+        this.serverInfoClient.setServerUrl(hostSupplier);
+        this.jobsClient.setServerUrl(hostSupplier);
+        this.chemDBClient.setServerUrl(hostSupplier);
+        this.fingerprintClient.setServerUrl(hostSupplier);
+        this.canopusClient.setServerUrl(hostSupplier);
+    }
 
     @Override
     public boolean deleteAccount() {
@@ -201,11 +206,10 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     @Override
     public Map<Integer, ConnectionError> checkConnection() {
-        return ProxyManager.doWithClient(client -> {
-            Map<Integer, ConnectionError> errors = new HashMap<>();
-            try {
+        final Map<Integer, ConnectionError> errors = new HashMap<>();
+        try {
+            ProxyManager.consumeClient(client -> {
                 checkSecuredConnection(client).ifPresent(e -> errors.put(e.getSiriusErrorCode(), e));
-
                 //failed
                 if (!errors.isEmpty()) {
                     checkLogin(client).ifPresent(e -> errors.put(e.getSiriusErrorCode(), e));
@@ -213,13 +217,13 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
                     ProxyManager.checkInternetConnection(client).ifPresent(es -> es.forEach(e -> errors.put(e.getSiriusErrorCode(), e)));
                 }
-            } catch (Throwable e) {
-                ConnectionError c = new ConnectionError(99, "Unexpected error during connection check!", e);
-                LOG.error(c.getSiriusMessage(), e);
-                errors.put(c.getSiriusErrorCode(), c);
-            }
-            return errors;
-        });
+            });
+        } catch (Throwable e) {
+            ConnectionError c = new ConnectionError(99, "Unexpected error during connection check!", e);
+            LOG.error(c.getSiriusMessage(), e);
+            errors.put(c.getSiriusErrorCode(), c);
+        }
+        return errors;
     }
 
     public Optional<ConnectionError> checkLogin(@NotNull CloseableHttpClient client) {
@@ -267,7 +271,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
             String message = "Could not load version info (unsecured api endpoint). Bad Response Code.";
             LoggerFactory.getLogger(getClass()).warn(message + " Cause: " + e.getMessage());
             return Optional.of(new ConnectionError(7, message, e));
-        } catch (IOException e) {
+        } catch (Throwable e) {
             return Optional.of(new ConnectionError(8, "Unexpected error when contacting secured api endpoint", e));
         }
     }
@@ -290,12 +294,12 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
                 return Optional.of(new ConnectionError(9, "Terms and Conditions and/or Privacy policy of the active subscription has not been accepted."));
 
             return Optional.of(new ConnectionError(10, message, e));
-        } catch (IOException e) {
-            return Optional.of(new ConnectionError(11, "Unexpected error when contacting secured api endpoint", e));
         } catch (OAuthResponseException e) {
             String m = "Error when contacting login Server";
             LoggerFactory.getLogger(getClass()).error(m + ": " + e.getMessage(), e);
             return Optional.of(new ConnectionError(12, m, e));
+        } catch (Throwable e) {
+            return Optional.of(new ConnectionError(11, "Unexpected error when contacting secured api endpoint", e));
         }
     }
 
@@ -303,16 +307,6 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         return ProxyManager.applyClient(serverInfoClient::getWorkerInfo);
     }
 
-    /*   @Nullable
-       public List<Term> getTerms() {
-           try {
-               return ProxyManager.applyClient(serverInfoClient::getTerms);
-           } catch (IOException e) {
-               LoggerFactory.getLogger(getClass()).error("Could not load Terms from server!", e);
-               return null;
-           }
-       }
-   */
     public LicenseInfo getLicenseInfo() throws IOException {
         return ProxyManager.applyClient(jobsClient::getLicenseInfo);
     }
