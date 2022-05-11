@@ -21,6 +21,8 @@
 package de.unijena.bioinf.ms.frontend.subtools.login;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -38,6 +40,7 @@ import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.webapi.rest.ConnectionError;
 import de.unijena.bioinf.webapi.rest.ProxyManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -71,10 +74,13 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
     protected boolean showProfile;
 
     //SHOW License info
-    @CommandLine.Option(names = {"--license", "--limits"},
+    @CommandLine.Option(names = {"--license-info", "--limits"},
             description = {"Show license information and compound limits."})
     protected boolean showLicense;
 
+    @CommandLine.Option(names = {"--select-license", "--select-subscription"}, required = false,
+            description = {"Specify active subscription (sid) if multiple licenses are available at your account. Available subscriptions can be listed with '--show'"})
+    protected String sid = null;
 
     //SET Account
     @CommandLine.ArgGroup(exclusive = false)
@@ -89,11 +95,6 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 description = {"Console password input."},
                 interactive = true)
         protected String password;
-
-        @CommandLine.Option(names = {"--url"}, required = false,
-                description = {"Changes base URL of the webservice to be used with the given account."},
-                interactive = true)
-        protected URI webserviceURL = null;
     }
 
 
@@ -105,7 +106,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
     public class LoginWorkflow implements Workflow {
         @Override
         public void run() {
-            PropertyManager.DEFAULTS.changeConfig("PrintCitations","FALSE");
+            PropertyManager.DEFAULTS.changeConfig("PrintCitations", "FALSE");
             if (clearLogin) {
                 try {
                     AuthServices.clearRefreshToken(ApplicationCore.TOKEN_FILE);
@@ -119,7 +120,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             if (emailToReset != null) {
                 try {
                     if (!emailToReset.contains("@"))
-                        throw  new IllegalArgumentException("'" + emailToReset +"' id not a valid email address! No password reset request sent.");
+                        throw new IllegalArgumentException("'" + emailToReset + "' id not a valid email address! No password reset request sent.");
                     ApplicationCore.WEB_API.getAuthService().sendPasswordReset(emailToReset);
                     System.out.println("Password reset request sent to '" + emailToReset + "'.");
                 } catch (IOException | ExecutionException | InterruptedException e) {
@@ -129,24 +130,37 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             }
 
 
-
             if (login != null && login.username != null && login.password != null) {
                 AuthService service = ApplicationCore.WEB_API.getAuthService();
                 try {
-                    service.login(login.username,  login.password);
+                    service.login(login.username, login.password);
                     AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
                     if (showProfile)
-                        showProfile(AuthServices.getIDToken(service));
-                    if  (login.webserviceURL != null){
-                        ApplicationCore.WEB_API.changeHost(login.webserviceURL);
+                        showProfile(service.getToken());
+
+
+                    {
+                        Subscription sub = null;
+                        @NotNull List<Subscription> subs = Tokens.getSubscriptions(service.getToken());
+                        if (sid != null)
+                            sub = Tokens.getActiveSubscription(subs, sid, false);
+                        if (sub == null) {
+                            if (sid != null)
+                                LoggerFactory.getLogger(getClass()).debug("Could not find subscription with sid '"
+                                        + sid + "'. Trying to find fallback");
+                            sub = Tokens.getActiveSubscription(subs);
+                        }
+                        ApplicationCore.WEB_API.changeActiveSubscription(sub);
                     }
+
+
                     //check connection
-                    Map<Integer,ConnectionError> errors = ApplicationCore.WEB_API.checkConnection();
+                    Map<Integer, ConnectionError> errors = ApplicationCore.WEB_API.checkConnection();
                     LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: " +
                             errors.values().stream().sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
                                     .map(ConnectionError::toString).collect(Collectors.joining(",\n")));
 
-                    if (errors.containsKey(6)){
+                    if (errors.containsKey(6)) {
                         List<Term> terms = Tokens.getActiveSubscriptionTerms(service.getToken());
 
                         System.out.println();
@@ -155,13 +169,13 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                         System.out.println(Term.toText(terms));
                         System.out.print("Y(es)|No:  ");
                         Scanner scanner = new Scanner(System.in);
-                        String answer =  scanner.next();
+                        String answer = scanner.next();
                         System.out.println("##########################################################");
-                        if (answer.equalsIgnoreCase("Y") || answer.equalsIgnoreCase("YES")){
+                        if (answer.equalsIgnoreCase("Y") || answer.equalsIgnoreCase("YES")) {
                             ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
                             System.out.println("Terms accepted! Checking web service permissions...");
                             errors = ApplicationCore.WEB_API.checkConnection();
-                        }else { //not accepted clear account data
+                        } else { //not accepted clear account data
                             System.out.println("Terms NOT Accepted! Removing login information. Please re-login and accept terms to use web service based features.");
                             AuthServices.clearRefreshToken(ApplicationCore.TOKEN_FILE);
                             return;
@@ -170,11 +184,12 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
                     }
 
-                    if (errors.isEmpty()){
-                        if (login.webserviceURL != null){ //make host change persistent because connection was successful
-                            SiriusProperties.setAndStoreInBackground("de.unijena.bioinf.fingerid.web.host", login.webserviceURL.toString());
-                            System.out.println("Login successful!");
+                    if (errors.isEmpty()) {
+                        Subscription subUsed = ApplicationCore.WEB_API.getActiveSubscription();
+                        if (sid != null && sid.equals(subUsed.getSid())) { //make host change persistent because connection was successful
+                            SiriusProperties.setAndStoreInBackground(Tokens.ACTIVE_SUBSCRIPTION_KEY, sid);
                         }
+                        System.out.println("Login successful! Active License is: '" + subUsed.getSid() + " - " + subUsed.getName() +"'.");
                     }
                 } catch (ExecutionException | InterruptedException | IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Could not login to Authentication Server!", e);
@@ -182,10 +197,10 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             } else if (showProfile) {
                 try {
                     AuthService service = AuthServices.createDefault(
-                            URI.create(SiriusProperties.getProperty("de.unijena.bioinf.fingerid.web.host")),
+                            URI.create(SiriusProperties.getProperty("de.unijena.bioinf.sirius.security.audience")),
                             ApplicationCore.TOKEN_FILE,
                             ProxyManager.getSirirusHttpAsyncClient());
-                    showProfile(AuthServices.getIDToken(service));
+                    showProfile(service.getToken());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -199,13 +214,26 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 }
         }
 
-        private void showProfile(@Nullable DecodedJWT decoded) {
+        private void showProfile(@Nullable AuthService.Token token) {
             System.out.println();
             System.out.println("####################### Login Info #######################");
-            if (decoded != null) {
-                System.out.println("Logged in as: " + decoded.getClaim("name").asString());
-                System.out.println("User ID: " + decoded.getClaim("sub").asString());
-                System.out.println("Token expires at: " + decoded.getExpiresAt().toString());
+            if (token != null) {
+                DecodedJWT decodedId = token.getDecodedIdToken();
+                System.out.println("Logged in as: " + decodedId.getClaim("name").asString());
+                System.out.println("User ID: " + decodedId.getClaim("sub").asString());
+                System.out.println("Token expires at: " + decodedId.getExpiresAt().toString());
+                System.out.println();
+                System.out.println("---- Available Subscriptions ----");
+                @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
+                if (subs.isEmpty()) {
+                    System.out.println("<NO SUBSCRIPTIONS/LICENSES AVAILABLE>");
+                }else{
+                    try {
+                        System.out.println(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(subs));
+                    } catch (JsonProcessingException e) {
+                        LoggerFactory.getLogger(getClass()).error("Error when printing available licenses!", e);
+                    }
+                }
             } else {
                 System.out.println("Not logged in.");
             }

@@ -20,7 +20,6 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
-import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -59,7 +58,7 @@ public class ShowAccountDialog extends AbstractAction {
     protected synchronized void setIcon(final @Nullable ConnectionMonitor.ConnetionCheck check) {
         if (check != null) {
             if (check.isLoggedIn()) {
-                @Nullable DecodedJWT token = AuthServices.getIDToken(ApplicationCore.WEB_API.getAuthService());
+                @Nullable DecodedJWT token = ApplicationCore.WEB_API.getAuthService().getToken().getDecodedIdToken();
                 if (token == null) {
                     putValue(Action.LARGE_ICON_KEY, Icons.USER_32); //bad login
                     return;

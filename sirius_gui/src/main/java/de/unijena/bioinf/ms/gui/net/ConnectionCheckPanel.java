@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.net;
 
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.actions.ActionUtils;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
@@ -26,7 +27,7 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
-import de.unijena.bioinf.ms.rest.model.info.Term;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
 import de.unijena.bioinf.webapi.rest.ConnectionError;
@@ -37,8 +38,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.time.Instant;
-import java.util.*;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 /**
  * Created by fleisch on 06.06.17.
@@ -64,28 +67,33 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     final BooleanJlabel authServer = new BooleanJlabel();
     final BooleanJlabel licenseServer = new BooleanJlabel();
     final BooleanJlabel fingerID = new BooleanJlabel();
-    final BooleanJlabel fingerID_WebAPI = new BooleanJlabel();
+//    final BooleanJlabel fingerID_WebAPI = new BooleanJlabel();
     final BooleanJlabel fingerID_Worker = new BooleanJlabel();
     final BooleanJlabel auth = new BooleanJlabel();
-    final BooleanJlabel authPermission = new BooleanJlabel();
+    final BooleanJlabel authLicense = new BooleanJlabel();
     private final JDialog owner;
 
     JLabel authLabel = new JLabel("Authenticated ?  ");
+    JLabel authLicenseLabel = new JLabel("Authenticated ?  ");
     JPanel resultPanel = null;
 
-    public ConnectionCheckPanel(@Nullable JDialog owner, @NotNull Map<Integer, ConnectionError> errors, @Nullable WorkerList workerInfoList, String userId, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
+    public ConnectionCheckPanel(@Nullable JDialog owner, @NotNull Map<Integer, ConnectionError> errors, @Nullable WorkerList workerInfoList, String userId, @Nullable LicenseInfo license) {
         super(GridBagConstraints.WEST, GridBagConstraints.EAST);
         this.owner = owner;
 
         add(new JXTitledSeparator("Connection check:"), 15, false);
         add(new JLabel("Connection to the internet (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.external") + ")  "), internet, 5, false);
-        add(new JLabel("Connection to domain provider"), authServer, 5, false);
-        add(new JLabel("Connection to domain (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.authServer") + ")  "), licenseServer, 5, false);
-        add(new JLabel("Connection to CSI:FingerID Server (" + PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host") + ")  "), fingerID, 5, false);
-        add(new JLabel("Check CSI:FingerID REST API"), fingerID_WebAPI, 5, false);
+        add(new JLabel("Connection to Auth Server (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.security.authServer") + ")  "), authServer, 5, false);
+        add(new JLabel("Connection to License Server (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer") + ")  "), licenseServer, 5, false);
+
+        add(authLicenseLabel, auth, 5, false);
+        add(new JLabel("License active"), authLicense, 5, false);
+
+
+        add(new JLabel("Connection to SIRIUS web service (" + Optional.ofNullable(ApplicationCore.WEB_API.getActiveSubscription()).map(Subscription::getServiceUrl).orElse("<No active subscription>") + ")  "), fingerID, 5, false);
+//        add(new JLabel("Check CSI:FingerID REST API"), fingerID_WebAPI, 5, false);
+
         add(new JLabel("All necessary workers available?"), fingerID_Worker, 5, false);
-        add(authLabel, auth, 5, false);
-        add(new JLabel("Permission granted?"), authPermission, 5, false);
 
         addVerticalGlue();
 
@@ -95,27 +103,27 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         if (workerInfoList != null) {
             refreshPanel(errors,
                     workerInfoList.getActiveSupportedTypes(Instant.ofEpochSecond(600)),
-                    workerInfoList.getPendingJobs(), userId, licensee, description, terms
+                    workerInfoList.getPendingJobs(), userId, licensee, description
             );
         } else {
-            refreshPanel(errors, Set.of(), Integer.MIN_VALUE, userId, licensee, description, terms);
+            refreshPanel(errors, Set.of(), Integer.MIN_VALUE, userId, licensee, description);
         }
     }
 
-    public void refreshPanel(@NotNull Map<Integer, ConnectionError> errors, final Set<WorkerWithCharge> availableTypes, final int pendingJobs, @Nullable String userId, @NotNull String licensee, @Nullable String description, @Nullable List<Term> terms) {
+    public void refreshPanel(@NotNull Map<Integer, ConnectionError> errors, final Set<WorkerWithCharge> availableTypes, final int pendingJobs, @Nullable String userId, @NotNull String licensee, @Nullable String description) {
         internet.setState(!errors.containsKey(1));
         authServer.setState(!errors.containsKey(2));
         licenseServer.setState(!errors.containsKey(3));
         auth.setState(userId != null);
-        authPermission.setState(state == 0);
-        fingerID.setState(state > 4 || state <= 0);
-        fingerID_WebAPI.setState(state > 6 || state <= 0);
+        authLicense.setState(errors.isEmpty());
+        fingerID.setState(!errors.containsKey(7) && !errors.containsKey(8));
+//        fingerID_WebAPI.setState(state > 6 || state <= 0);
 
 
         if (auth.isTrue()) {
-            authLabel.setText(userId != null ? "Authenticated as '" + userId + "'  " : "Authenticated ?  ");
+            authLicenseLabel.setText(userId != null ? "Authenticated as '" + userId + "'  " : "Authenticated ?  ");
         }else {
-            authLabel.setText("Not authenticated! (Or cannot verify token)  ");
+            authLicenseLabel.setText("Not authenticated! (Or cannot verify token)  ");
         }
 
 
@@ -124,7 +132,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         if (resultPanel != null)
             remove(resultPanel);
 
-        resultPanel = createResultPanel(state, new HashSet<>(ConnectionMonitor.neededTypes), availableTypes, pendingJobs, userId, terms);
+        resultPanel = createResultPanel(errors, new HashSet<>(ConnectionMonitor.neededTypes), availableTypes, pendingJobs, userId);
 
         add(resultPanel, 15, true);
 
@@ -138,11 +146,13 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     }
 
 
-    private JPanel createResultPanel(final int state, final Set<WorkerWithCharge> neededTypes, final Set<WorkerWithCharge> availableTypes, final int pendingJobs, @Nullable String userID, @Nullable List<Term> terms) {
+    private JPanel createResultPanel(Map<Integer,ConnectionError> errors, final Set<WorkerWithCharge> neededTypes, final Set<WorkerWithCharge> availableTypes, final int pendingJobs, @Nullable String userID) {
         TwoColumnPanel resultPanel = new TwoColumnPanel();
         resultPanel.setBorder(BorderFactory.createEmptyBorder());
         resultPanel.add(new JXTitledSeparator("Description"), 15, false);
 
+        //todo dummy
+        int state = errors.keySet().stream().min(Integer::compareTo).orElse(0);
         switch (state) {
             case 0:
                 resultPanel.add(new JLabel("<html>Connection to CSI:FingerID Server successfully established!</html>"), 5, false);
@@ -188,7 +198,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                         SiriusActions.SIGN_OUT.getInstance())));
                 break;
             case 8:
-                addHTMLTextPanel(resultPanel, "ErrorCode " + 9 + ": " + Term.toLinks(terms) +
+                addHTMLTextPanel(resultPanel, "ErrorCode " + 9 + ": " /*+ Term.toLinks()*/ + //todo DUMMY
                         " for the selected Webservice have not been accepted. <br> Click Accept to get Access:");
                 resultPanel.add(new JButton(ActionUtils.deriveFrom(
                         evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
@@ -235,7 +245,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                 break;
             case 3:
                 resultPanel.add(new JLabel("<html>" + " ErrorCode " + state + ": " +
-                        " Could not reach "+ PropertyManager.getProperty("de.unijena.bioinf.sirius.web.authServer") +". <br>" +
+                        " Could not reach "+ PropertyManager.getProperty("de.unijena.bioinf.sirius.security.authServer") +". <br>" +
                         "Either our web server is temporary not available<br>" +
                         " or it cannot be reached because of your network configuration.<br>" +
                         "</html>"));

@@ -25,9 +25,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
-import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
-import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.webapi.rest.ConnectionError;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +33,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,26 +47,26 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
 
     private static ConnectionDialog instance;
 
-    public static synchronized ConnectionDialog of(Frame owner, Map<Integer, ConnectionError> errors, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
+    public static synchronized ConnectionDialog of(Frame owner, Map<Integer, ConnectionError> errors, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license) {
         if (instance != null)
             instance.dispose();
-        instance = new ConnectionDialog(owner, errors, workerList, userID, license, terms);
+        instance = new ConnectionDialog(owner, errors, workerList, userID, license);
         return instance;
     }
 
-    private ConnectionDialog(Frame owner, Map<Integer, ConnectionError> errors, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
+    private ConnectionDialog(Frame owner, Map<Integer, ConnectionError> errors, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license) {
         super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(errors, workerList, userID, license, terms);
+        initDialog(errors, workerList, userID, license);
     }
 
-    private void initDialog(Map<Integer, ConnectionError> errors, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license, @Nullable List<Term> terms) {
+    private void initDialog(Map<Integer, ConnectionError> errors, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license) {
         setLayout(new BorderLayout());
 
         //header
         JPanel header = new DialogHeader(Icons.NET_64);
         add(header, BorderLayout.NORTH);
 
-        connectionCheck = new ConnectionCheckPanel(this, errors, workerList, userID, license, terms);
+        connectionCheck = new ConnectionCheckPanel(this, errors, workerList, userID, license);
         add(connectionCheck, BorderLayout.CENTER);
 
 
@@ -99,12 +96,6 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
-        if (state > WebAPI.MAX_STATE)
-            if (getParent() instanceof Dialog) {
-                new ExceptionDialog((Dialog) getParent(), "An unknown Network Error occurred!");
-            } else {
-                new ExceptionDialog((Frame) getParent(), "An unknown Network Error occurred!");
-            }
     }
 
     @Override

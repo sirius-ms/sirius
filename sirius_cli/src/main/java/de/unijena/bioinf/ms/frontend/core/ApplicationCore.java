@@ -246,9 +246,10 @@ public abstract class ApplicationCore {
 
             measureTime("DONE init bug reporting, START init WebAPI");
             TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile", null, ".rtoken"));
-            URI webserviceHost = URI.create(FingerIDProperties.fingeridWebHost());
-            AuthService service = AuthServices.createDefault(webserviceHost, TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
-            WEB_API = new RestAPI(service, webserviceHost);
+//            URI webserviceHost = URI.create(FingerIDProperties.fingeridWebHost());
+            //todo we need nullable server urls and throw error when trying to connect.
+            AuthService service = AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
+            WEB_API = new RestAPI(service);
             DEFAULT_LOGGER.info("Web API initialized.");
             measureTime("DONE init  init WebAPI");
 

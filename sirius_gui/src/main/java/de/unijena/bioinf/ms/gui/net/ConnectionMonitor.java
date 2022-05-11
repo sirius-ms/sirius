@@ -29,7 +29,6 @@ import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerType;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
-import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.rest.ConnectionError;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +39,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -145,6 +142,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             @Nullable AuthService.Token token = null;
 
             try {
+                token = ApplicationCore.WEB_API.getAuthService().getToken();
                 wl = ApplicationCore.WEB_API.getWorkerInfo();
                 if (wl == null || !wl.supportsAllPredictorTypes(neededTypes)) {
                     conState = ConnectionState.WARN;
@@ -153,12 +151,11 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
                 checkForInterruption();
                 ll = new LicenseInfo();
-                token = ApplicationCore.WEB_API.getAuthService().getToken();
-                ll.setSubscription(Tokens.getActiveSubscription(token));
+                ll.setSubscription(ApplicationCore.WEB_API.getActiveSubscription());
                 checkForInterruption();
                 if (ll.getSubscription() != null && ll.isCountQueries())
                     ll.setConsumables(ApplicationCore.WEB_API.getConsumables(!ll.hasCompoundLimit())); //yearly if there is compound limit
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 errors = ApplicationCore.WEB_API.checkConnection();
                 errors.put(14, new ConnectionError(14, "Error when requesting worker information or computation limits.", e));
             }

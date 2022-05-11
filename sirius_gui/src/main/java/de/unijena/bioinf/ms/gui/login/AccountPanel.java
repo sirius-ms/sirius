@@ -22,17 +22,14 @@ package de.unijena.bioinf.ms.gui.login;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import de.unijena.bioinf.auth.AuthService;
-import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
-import de.unijena.bioinf.sirius.SiriusFactory;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
@@ -55,11 +52,6 @@ public class AccountPanel extends JPanel {
 
     private void buildPanel() {
         TwoColumnPanel center = new TwoColumnPanel();
-
-//        webserverURL = new JTextField(PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host"));
-//        webserverURL.setEditable(false);
-//        center.addNamed("Web service URL", webserverURL);
-//        center.addVerticalGlue();
 
         userIconLabel = new JLabel();
         userInfoLabel = new JLabel();
@@ -98,7 +90,7 @@ public class AccountPanel extends JPanel {
 
     private DecodedJWT getLogin() {
         return Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), "Checking Login",
-                () -> AuthServices.getIDToken(service)).getResult();
+                () -> service.getToken().getDecodedIdToken()).getResult();
     }
 
 
