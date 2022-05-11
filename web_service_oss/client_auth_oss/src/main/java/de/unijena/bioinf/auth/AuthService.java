@@ -264,7 +264,12 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
     }
 
     public Token getToken() {
-        return token;
+        try {
+            return refreshIfNeeded();
+        } catch (LoginException e) {
+            LoggerFactory.getLogger(AuthServices.class).warn("No login Found: " + e.getMessage());
+            return null;
+        }
     }
 
     @Override

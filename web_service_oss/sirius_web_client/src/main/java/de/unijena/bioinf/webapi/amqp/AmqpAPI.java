@@ -52,8 +52,8 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.stores.model.CanopusClientDataStore;
@@ -71,8 +71,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends AbstractWebAPI<WebChemDB> {
     private final AmqpClient amqpClient;
@@ -107,7 +107,17 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    public void changeHost(URI host) {
+    public void changeActiveSubscription(Subscription activeSubscription) {
+        //todo implement.
+    }
+
+    @Override
+    public Subscription getActiveSubscription() {
+        return null;
+    }
+
+    @Override
+    public void changeHost(Supplier<URI> host) {
 //todo implement
     }
 

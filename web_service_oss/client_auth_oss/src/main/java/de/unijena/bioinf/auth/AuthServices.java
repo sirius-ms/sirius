@@ -117,14 +117,4 @@ public class AuthServices {
             toClear.logout();
         return Files.deleteIfExists(refreshTokenFile);
     }
-
-    @Nullable
-    public static DecodedJWT getIDToken(AuthService service)  {
-        try {
-            return service.refreshIfNeeded().getDecodedIdToken();
-        } catch (LoginException e) {
-            LoggerFactory.getLogger(AuthServices.class).warn("No login Found: " + e.getMessage());
-            return null;
-        }
-    }
 }

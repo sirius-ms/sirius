@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.rest.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.scribejava.core.model.OAuthResponseException;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
@@ -48,7 +47,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Objects;
+import java.util.function.Supplier;
 
 public abstract class AbstractClient {
     public static final boolean DEBUG_CONNECTION = PropertyManager.getBoolean("de.unijena.bioinf.webapi.DEBUG_CONNECTION", false);
@@ -62,7 +61,7 @@ public abstract class AbstractClient {
     }
 
     @NotNull
-    protected URI serverUrl;
+    protected Supplier<URI> serverUrl;
     @NotNull
     protected final List<IOFunctions.IOConsumer<HttpUriRequest>> requestDecorators;
 
@@ -72,16 +71,16 @@ public abstract class AbstractClient {
     }
 
     protected AbstractClient(@Nullable URI serverUrl, @NotNull List<IOFunctions.IOConsumer<HttpUriRequest>> requestDecorators) {
-        this.serverUrl = Objects.requireNonNullElseGet(serverUrl, () -> URI.create(FingerIDProperties.fingeridWebHost()));
+        this.serverUrl = () -> serverUrl;
         this.requestDecorators = requestDecorators;
     }
 
-    public void setServerUrl(@NotNull URI serverUrl) {
+    public void setServerUrl(@NotNull Supplier<URI> serverUrl) {
         this.serverUrl = serverUrl;
     }
 
     public URI getServerUrl() {
-        return serverUrl;
+        return serverUrl.get();
     }
 
     @Nullable
@@ -286,7 +285,7 @@ public abstract class AbstractClient {
             b = b.setPort(8080);
 //            path = FINGERID_DEBUG_FRONTEND_PATH + path;
         } else {
-            b = new URIBuilder(serverUrl);
+            b = new URIBuilder(getServerUrl());
             if (versionSpecificPath)
                 path = makeVersionContext() + path;
         }
@@ -330,5 +329,4 @@ public abstract class AbstractClient {
     protected static String makeVersionContext() {
         return "/v" + FingerIDProperties.fingeridMinorVersion();
     }
-
 }
