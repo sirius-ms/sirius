@@ -41,14 +41,9 @@ public class FingerIDProperties {
         return fingeridFullVersion().split("[.]")[0];
     }
 
-    public static String fingeridWebHost() {
+    public static String siriusFallbackWebHost() {
         return PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host");
     }
-
-    public static String fingeridWebPort() {
-        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.port");
-    }
-
 
     public static String siriusVersion() {
         return PropertyManager.getProperty("de.unijena.bioinf.sirius.version");

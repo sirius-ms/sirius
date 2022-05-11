@@ -48,7 +48,7 @@ public class JobsClient extends AbstractClient {
     private static final Logger LOG = LoggerFactory.getLogger(JobsClient.class);
 
     @SafeVarargs
-    public JobsClient(@NotNull URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorator) {
+    public JobsClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorator) {
         super(serverUrl, requestDecorator);
     }
 
