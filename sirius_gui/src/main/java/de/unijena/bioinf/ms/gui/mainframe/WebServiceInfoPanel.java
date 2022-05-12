@@ -60,12 +60,12 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
     public void propertyChange(PropertyChangeEvent evt) {
         final ConnectionMonitor.ConnectionUpdateEvent cevt = (ConnectionMonitor.ConnectionUpdateEvent) evt;
         ConnectionMonitor.ConnetionCheck check = cevt.getConnectionCheck();
-        if (check.license != null) {
-            license.setText("<html>License: <b>" + check.license.getLicensee() + "</b>" + (check.license.getDescription() == null ? "" : " (" + check.license.getDescription() + ")</html>"));
-            if (check.license.isCountQueries()) {
-                String max = check.license.hasCompoundLimit() ? String.valueOf(check.license.getCompoundLimit()) : INF;
-                String current = check.license.getCountedCompounds() < 0 ? "N/A" :  String.valueOf(check.license.getCountedCompounds());
-                consumedCompounds.setText("<html>Compounds: <b>" + current + "/" + max + "</b> (per " + (check.license.hasCompoundLimit() ? "Year" : "Month") + ")</html>");
+        if (check.licenseInfo.getSubscription() != null) {
+            license.setText("<html>License: <b>" + check.licenseInfo.getLicensee() + "</b>" + (check.licenseInfo.getDescription() == null ? "" : " (" + check.licenseInfo.getDescription() + ")</html>"));
+            if (check.licenseInfo.isCountQueries()) {
+                String max = check.licenseInfo.hasCompoundLimit() ? String.valueOf(check.licenseInfo.getCompoundLimit()) : INF;
+                String current = check.licenseInfo.getCountedCompounds() < 0 ? "N/A" :  String.valueOf(check.licenseInfo.getCountedCompounds());
+                consumedCompounds.setText("<html>Compounds: <b>" + current + "/" + max + "</b> (per " + (check.licenseInfo.hasCompoundLimit() ? "Year" : "Month") + ")</html>");
             } else {
                 consumedCompounds.setText("<html>Compounds: <b>UNLIMITED</b></html>");
             }

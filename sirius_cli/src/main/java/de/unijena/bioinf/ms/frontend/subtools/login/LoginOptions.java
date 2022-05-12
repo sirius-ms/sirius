@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.frontend.subtools.login;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Multimap;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -49,7 +50,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -135,13 +135,14 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 try {
                     service.login(login.username, login.password);
                     AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
+                    final AuthService.Token token = service.getToken().orElse(null);
                     if (showProfile)
-                        showProfile(service.getToken());
+                        showProfile(token);
 
 
                     {
                         Subscription sub = null;
-                        @NotNull List<Subscription> subs = Tokens.getSubscriptions(service.getToken());
+                        @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
                         if (sid != null)
                             sub = Tokens.getActiveSubscription(subs, sid, false);
                         if (sub == null) {
@@ -155,13 +156,13 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
 
                     //check connection
-                    Map<Integer, ConnectionError> errors = ApplicationCore.WEB_API.checkConnection();
+                    Multimap<ConnectionError.Klass, ConnectionError> errors = ApplicationCore.WEB_API.checkConnection();
                     LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: " +
                             errors.values().stream().sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
                                     .map(ConnectionError::toString).collect(Collectors.joining(",\n")));
 
-                    if (errors.containsKey(6)) {
-                        List<Term> terms = Tokens.getActiveSubscriptionTerms(service.getToken());
+                    if (errors.containsKey(ConnectionError.Klass.TERMS)) {
+                        List<Term> terms = Tokens.getActiveSubscriptionTerms(token);
 
                         System.out.println();
                         System.out.println("###################### Accept Terms ######################");
@@ -200,7 +201,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                             URI.create(SiriusProperties.getProperty("de.unijena.bioinf.sirius.security.audience")),
                             ApplicationCore.TOKEN_FILE,
                             ProxyManager.getSirirusHttpAsyncClient());
-                    showProfile(service.getToken());
+                    showProfile(service.getToken().orElse(null));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -243,7 +244,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
         private void showLicense() throws IOException {
             WebAPI<?> api = ApplicationCore.WEB_API;
-            @Nullable Subscription subs = Tokens.getActiveSubscription(api.getAuthService().getToken());
+            @Nullable Subscription subs = Tokens.getActiveSubscription(api.getAuthService().getToken().orElse(null));
 
             System.out.println();
             System.out.println("###################### License Info ######################");

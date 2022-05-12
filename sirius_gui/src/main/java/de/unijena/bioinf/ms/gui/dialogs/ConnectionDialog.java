@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
+import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -27,13 +28,13 @@ import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.webapi.rest.ConnectionError;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Map;
 
 /**
  * Created by Marcus Ludwig on 17.11.16.
@@ -47,26 +48,26 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
 
     private static ConnectionDialog instance;
 
-    public static synchronized ConnectionDialog of(Frame owner, Map<Integer, ConnectionError> errors, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license) {
+    public static synchronized ConnectionDialog of(Frame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList, @NotNull LicenseInfo license) {
         if (instance != null)
             instance.dispose();
-        instance = new ConnectionDialog(owner, errors, workerList, userID, license);
+        instance = new ConnectionDialog(owner, errors, workerList, license);
         return instance;
     }
 
-    private ConnectionDialog(Frame owner, Map<Integer, ConnectionError> errors, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license) {
+    private ConnectionDialog(Frame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList,  @NotNull LicenseInfo license) {
         super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(errors, workerList, userID, license);
+        initDialog(errors, workerList, license);
     }
 
-    private void initDialog(Map<Integer, ConnectionError> errors, @Nullable WorkerList workerList, @Nullable String userID, @Nullable LicenseInfo license) {
+    private void initDialog(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList,  @NotNull LicenseInfo license) {
         setLayout(new BorderLayout());
 
         //header
         JPanel header = new DialogHeader(Icons.NET_64);
         add(header, BorderLayout.NORTH);
 
-        connectionCheck = new ConnectionCheckPanel(this, errors, workerList, userID, license);
+        connectionCheck = new ConnectionCheckPanel(this, errors, workerList, license);
         add(connectionCheck, BorderLayout.CENTER);
 
 

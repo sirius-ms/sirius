@@ -90,7 +90,7 @@ public class AccountPanel extends JPanel {
 
     private DecodedJWT getLogin() {
         return Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), "Checking Login",
-                () -> service.getToken().getDecodedIdToken()).getResult();
+                () -> service.getToken().map(AuthService.Token::getDecodedIdToken).orElse(null)).getResult();
     }
 
 
