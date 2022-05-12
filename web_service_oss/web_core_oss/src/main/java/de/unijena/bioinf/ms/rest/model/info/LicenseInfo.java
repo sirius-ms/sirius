@@ -28,8 +28,28 @@ import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import java.sql.Date;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LicenseInfo {
+    private String userEmail;
+    private String userId;
     private Subscription subscription;
     private SubscriptionConsumables consumables;
+
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
     public Subscription getSubscription() {
         return subscription;
     }
