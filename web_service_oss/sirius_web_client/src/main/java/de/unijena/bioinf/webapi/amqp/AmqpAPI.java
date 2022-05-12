@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.webapi.amqp;
 
+import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
@@ -139,10 +140,9 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    public Map<Integer, ConnectionError> checkConnection() {
+    public Multimap<ConnectionError.Klass, ConnectionError> checkConnection() {
         //todo implement
-        return Map.of();
-//        return amqpClient.isConnected() ? 0 : 1;
+        return null;
     }
 
     @Override

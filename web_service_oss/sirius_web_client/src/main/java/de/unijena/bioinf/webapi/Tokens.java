@@ -21,14 +21,16 @@
 package de.unijena.bioinf.webapi;
 
 import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.Term;
-import de.unijena.bioinf.ms.rest.model.license.SubscriptionData;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,21 +39,55 @@ public class Tokens {
     public static final String ACTIVE_SUBSCRIPTION_KEY = "de.unijena.bioinf.sirius.security.subscription";
 
     @NotNull
-    public static List<Term> getAcceptedTerms(AuthService.Token token) {
-        Claim appMetadata = token.getDecodedAccessToken().getClaim("https://bright-giant.com/app_metadata");
-        if (appMetadata.isNull())
-            return List.of();
-
-        List<String> terms = (List<String>) appMetadata.asMap().get("acceptedTerms");
-        return terms.stream().map(Term::of).collect(Collectors.toList());
-//        if (rootJson == null) //M2M token, no terms needed or available. User tokens always have this claim.
-//            return OAuth2TokenValidatorResult.success();
-//
-//        final JSONObject acceptedJson = rootJson.containsKey("terms") ? (JSONObject) rootJson.get("terms") : null;
+    public static Boolean isUserEmailVerified(@Nullable AuthService.Token token) {
+        return parseATClaim(token, "https://bright-giant.com/email_verified").map(Claim::asBoolean).orElse(false);
     }
 
     @NotNull
-    public static List<Term> getActiveSubscriptionTerms(AuthService.Token token) {
+    public static Optional<URI> getUserImage(@Nullable AuthService.Token token) {
+        return parseIDClaim(token, "picture").map(Claim::asString).map(URI::create);
+    }
+
+    @NotNull
+    public static Optional<String> getUserId(@Nullable AuthService.Token token) {
+        return parseIDClaim(token, "sub").map(Claim::asString);
+    }
+
+    @NotNull
+    public static Optional<String> getUserEmail(@Nullable AuthService.Token token) {
+        return parseIDClaim(token, "email").map(Claim::asString);
+    }
+    
+    private static Optional<Claim> parseATClaim(@Nullable AuthService.Token token, @NotNull String key) {
+        if (token == null)
+            return Optional.empty();
+        return parseClaim(token.getDecodedAccessToken(),key);
+    }
+    private static Optional<Claim> parseIDClaim(@Nullable AuthService.Token token, @NotNull String key) {
+        if (token == null)
+            return Optional.empty();
+        return parseClaim(token.getDecodedIdToken(),key);
+    }
+    private static Optional<Claim> parseClaim(@Nullable DecodedJWT token, @NotNull String key) {
+        if (token == null)
+            return Optional.empty();
+        Claim claim = token.getClaim(key);
+        if (claim.isNull())
+            return Optional.empty();
+        return Optional.of(claim);
+    }
+
+    @NotNull
+    public static List<Term> getAcceptedTerms(@Nullable AuthService.Token token) {
+        return parseATClaim(token, "https://bright-giant.com/app_metadata")
+                .map(Claim::asMap)
+                .map(m -> (List<String>) m.get("acceptedTerms"))
+                .map(t -> t.stream().map(Term::of).collect(Collectors.toList()))
+                .orElse(List.of());
+    }
+
+    @NotNull
+    public static List<Term> getActiveSubscriptionTerms(@Nullable AuthService.Token token) {
         @Nullable Subscription sub = Tokens.getActiveSubscription(token);
         if (sub == null)
             return List.of();
@@ -60,15 +96,12 @@ public class Tokens {
 
 
     @NotNull
-    public static Optional<SubscriptionData> getLicenseData(AuthService.Token token) {
-        Claim claim = token.getDecodedAccessToken().getClaim("https://bright-giant.com/licenseData");
-        return claim.isNull()
-                ? Optional.empty()
-                : Optional.of(claim.as(SubscriptionData.class));
+    public static Optional<SubscriptionData> getLicenseData(@Nullable AuthService.Token token) {
+        return parseATClaim(token,"https://bright-giant.com/licenseData").map(c -> c.as(SubscriptionData.class));
     }
 
     @NotNull
-    public static List<Subscription> getSubscriptions(AuthService.Token token) {
+    public static List<Subscription> getSubscriptions(@Nullable AuthService.Token token) {
         return getLicenseData(token).map(SubscriptionData::getSubscriptions).orElse(List.of());
     }
 
@@ -95,18 +128,18 @@ public class Tokens {
         return sub;
     }
 
-    public static Subscription getActiveSubscription(AuthService.Token token, @Nullable String sid, boolean useFallback) {
+    public static Subscription getActiveSubscription(@Nullable AuthService.Token token, @Nullable String sid, boolean useFallback) {
         return getActiveSubscription(getSubscriptions(token), sid, useFallback);
     }
 
     @Nullable
-    public static Subscription getActiveSubscription(AuthService.Token token, @Nullable String sid) {
+    public static Subscription getActiveSubscription(@Nullable AuthService.Token token, @Nullable String sid) {
         return getActiveSubscription(getSubscriptions(token), sid);
 
     }
 
     @Nullable
-    public static Subscription getActiveSubscription(AuthService.Token token) {
+    public static Subscription getActiveSubscription(@Nullable AuthService.Token token) {
         return getActiveSubscription(getSubscriptions(token));
     }
 

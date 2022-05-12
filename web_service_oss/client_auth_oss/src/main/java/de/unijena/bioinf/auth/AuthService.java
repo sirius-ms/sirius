@@ -41,6 +41,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -263,12 +264,12 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
             throw new IOException("Could not initiate Password reset. Cause: " + resp.getMessage() + " | Body: " + resp.getBody());
     }
 
-    public Token getToken() {
+    public Optional<Token> getToken() {
         try {
-            return refreshIfNeeded();
+            return Optional.of(refreshIfNeeded());
         } catch (LoginException e) {
             LoggerFactory.getLogger(AuthServices.class).warn("No login Found: " + e.getMessage());
-            return null;
+            return Optional.empty();
         }
     }
 

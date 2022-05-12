@@ -30,8 +30,23 @@ public class ConnectionError {
 
     public enum Type {WARNING, ERROR}
 
+    /**
+     * ######### error classes ###########3
+     *        //1 Internet
+     *         // 2. login server
+     *         //3.license server
+     *         // 4. Token error
+     *         // 5. logged in
+     *         // 6. license available and active
+     *         // 7. service reachable
+     *         // 8. Worker availability
+     */
+    public enum Klass {UNKNOWN, INTERNET, LOGIN_SERVER, LICENSE_SERVER, TOKEN, LOGIN, LICENSE, TERMS, APP_SERVER, WORKER}
+
     @NotNull
-    private final Type type;
+    private final Type errorType;
+    @NotNull
+    private final Klass errorKlass;
 
     private final int siriusErrorCode;
     @NotNull
@@ -42,25 +57,26 @@ public class ConnectionError {
     private @Nullable Integer serverResponseErrorCode;
     private @Nullable String serverResponseErrorMessage;
 
-    public ConnectionError(int siriusErrorCode, @NotNull String siriusMessage) {
-        this(siriusErrorCode, siriusMessage, null);
+    public ConnectionError(int siriusErrorCode, @NotNull String siriusMessage, @NotNull Klass errorKlass) {
+        this(siriusErrorCode, siriusMessage, errorKlass, null);
     }
 
-    public ConnectionError(int siriusErrorCode, @NotNull String siriusMessage, @Nullable Throwable exception) {
-        this(siriusErrorCode, siriusMessage, exception, Type.ERROR);
+    public ConnectionError(int siriusErrorCode, @NotNull String siriusMessage, @NotNull Klass errorKlass, @Nullable Throwable exception) {
+        this(siriusErrorCode, siriusMessage, errorKlass, exception, Type.ERROR);
     }
 
-    public ConnectionError(int siriusErrorCode, @NotNull String siriusMessage, @Nullable Throwable exception, @NotNull Type type) {
-        this(siriusErrorCode, siriusMessage, exception, type, null, null);
+    public ConnectionError(int siriusErrorCode, @NotNull String siriusMessage, @NotNull Klass errorKlass, @Nullable Throwable exception, @NotNull Type type) {
+        this(siriusErrorCode, siriusMessage, errorKlass, exception, type, null, null);
     }
 
-    public ConnectionError(int siriusErrorCode, @NotNull String siriusMessage, @Nullable Throwable exception, @NotNull Type type, @Nullable Integer serverResponseErrorCode, @Nullable String serverResponseErrorMessage) {
+    public ConnectionError(int siriusErrorCode, @NotNull String siriusMessage, @NotNull Klass errorKlass, @Nullable Throwable exception, @NotNull Type type, @Nullable Integer serverResponseErrorCode, @Nullable String serverResponseErrorMessage) {
         this.serverResponseErrorCode = serverResponseErrorCode;
         this.serverResponseErrorMessage = serverResponseErrorMessage;
         this.siriusErrorCode = siriusErrorCode;
         this.siriusMessage = siriusMessage;
+        this.errorKlass = errorKlass;
         this.exception = exception;
-        this.type = type;
+        this.errorType = type;
 
         if (exception instanceof HttpErrorResponseException){
             if (this.serverResponseErrorCode == null)
@@ -72,7 +88,7 @@ public class ConnectionError {
 
     @Override
     public String toString() {
-        return type.name() + ": " + siriusErrorCode + " | " + siriusMessage;
+        return errorKlass.name() + " " + errorType.name() + ": " + siriusErrorCode + " | " + siriusMessage;
     }
 
     public int getSiriusErrorCode() {
@@ -108,19 +124,23 @@ public class ConnectionError {
     }
 
     public boolean isError() {
-        return type == Type.ERROR;
+        return errorType == Type.ERROR;
     }
 
     public boolean isWarning() {
-        return type == Type.WARNING;
+        return errorType == Type.WARNING;
     }
 
     @NotNull
-    public Type getType() {
-        return type;
+    public Type getErrorType() {
+        return errorType;
     }
 
-    public ConnectionError withNewMessage(int siriusErrorCode, String siriusMessage){
-        return new ConnectionError(siriusErrorCode, siriusMessage, exception ,type, serverResponseErrorCode, serverResponseErrorMessage);
+    public Klass getErrorKlass() {
+        return errorKlass;
+    }
+
+    public ConnectionError withNewMessage(int siriusErrorCode, String siriusMessage, Klass errorKlass){
+        return new ConnectionError(siriusErrorCode, siriusMessage, errorKlass, exception , errorType, serverResponseErrorCode, serverResponseErrorMessage);
     }
 }

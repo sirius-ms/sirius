@@ -22,6 +22,7 @@
 
 package de.unijena.bioinf.webapi;
 
+import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
@@ -102,19 +103,23 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     //region ServerInfo
 
     /**
-     * 14 Worker Error
-     * 13 Worker Warning
-     * 12 Authentication Server error
-     * 11 Secured Endpoint error UNEXPECTED
-     * 10 Secured Endpoint error
-     * 9 no tos and/or pp
-     * 8 csi web api reachable UNEXPECTED
-     * 7 csi web api not reachable
-     * 6 Login/Token: Terms and Condition not Accepted
-     * 5 Login/Token: No License
+     * 10 Worker Warning
+     * 94 LincenseInfo Error
+     * 93 Worker Error
+     * 92 Secured Endpoint error UNEXPECTED
+     * 91 Secured Endpoint error
+     * 82 Unsecured web api endpoint not reachable UNEXPECTED
+     * 81 Unsecured web api endpoint not reachable
+     * 71 Authentication Server error: Login Error
+     * 72 Authentication Server error: Token Error
+     * 63 Login/Token: Server error no tos and/or pp
+     * 62 Login/Token: Privacy Policy not Accepted
+     * 61 Login/Token: Terms and Condition not Accepted
+     * 52 Login/Token: No active License
+     * 51 Login/Token: No Licenses
      * 4 Login/Token: Not Logged in
-     * 3 no connection to Doamin e.g. www.csi-fingerid.uni-jena.de
-     * 2 no connection to Domain Provider e.g. uni-jena.de
+     * 3 no connection to login server
+     * 2 no connection to auth server
      * 1 no connection to internet (google/microsoft/ubuntu?)
      * 0 everything is fine
      *
@@ -122,7 +127,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
      */
     @Nullable VersionsInfo getVersionInfo() throws IOException;
 
-    Map<Integer, ConnectionError> checkConnection();
+    Multimap<ConnectionError.Klass, ConnectionError> checkConnection();
 
     WorkerList getWorkerInfo() throws IOException;
 
