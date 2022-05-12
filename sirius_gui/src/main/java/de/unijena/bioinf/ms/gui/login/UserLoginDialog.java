@@ -100,7 +100,7 @@ public class UserLoginDialog extends JDialog {
                         if (boxAcceptTerms.isSelected())
                             ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
                     } catch (Throwable ex) {
-                        LoggerFactory.getLogger(getClass()).error("Error during password reset.",ex);
+                        LoggerFactory.getLogger(getClass()).error("Error during Login.",ex);
                         new ExceptionDialog(UserLoginDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
                         try {
                             AuthServices.clearRefreshToken(service, ApplicationCore.TOKEN_FILE);
@@ -163,7 +163,9 @@ public class UserLoginDialog extends JDialog {
     }
 
     public void addTermsPanel(@NotNull TwoColumnPanel center) {
-        List<Term> terms = Tokens.getActiveSubscriptionTerms(ApplicationCore.WEB_API.getAuthService().getToken());
+        List<Term> terms = ApplicationCore.WEB_API.getAuthService().getToken()
+                .map(Tokens::getActiveSubscriptionTerms).orElse(List.of());
+
         if (!terms.isEmpty()) {
             boxAcceptTerms.setSelected(false);
             signInAction.setEnabled(false);

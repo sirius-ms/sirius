@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.frontend.core.PasswordCrypter;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.rest.ProxyManager;
@@ -72,7 +73,6 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
         webserverURL.setToolTipText(GuiUtils.formatToolTip("URL is provided via your active subscription and cannot be changed manually. You need to be logged in to see the URL."));
 
 
-
         sslValidation = new JCheckBox();
         sslValidation.setText("Enable SSL Validation:");
         sslValidation.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.security.sslValidation", "true")));
@@ -89,8 +89,7 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
         useProxy = new JComboBox<>(ProxyManager.ProxyStrategy.values());
         useProxy.setSelectedItem(ProxyManager.getStrategyByName(props.getProperty("de.unijena.bioinf.sirius.proxy")));
         useProxy.addActionListener(this);
-        add(new JLabel("Use Proxy Server"),useProxy);
-
+        add(new JLabel("Use Proxy Server"), useProxy);
 
 
         proxyHost = new JTextField();
@@ -172,11 +171,19 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     @Override
     public void reloadChanges() {
-        URI host = URI.create(props.getProperty("de.unijena.bioinf.sirius.security.audience"));
+        URI host = URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"));
         ProxyManager.reconnect();
-        ApplicationCore.WEB_API.getAuthService().reconnectService(AuthServices.createDefaultApi(host), ProxyManager.getSirirusHttpAsyncClient()); //load new proxy data from service.
+
+        ApplicationCore.WEB_API.getAuthService().reconnectService(
+                AuthServices.createDefaultApi(host),
+                ProxyManager.getSirirusHttpAsyncClient()); //load new proxy data from service.
+
         ProxyManager.enforceGlobalProxySetting(); //update global proxy stuff for Webview.
-        ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(ApplicationCore.WEB_API.getAuthService().getToken()));
+
+        ApplicationCore.WEB_API.changeActiveSubscription(
+                ApplicationCore.WEB_API.getAuthService().getToken()
+                        .map(Tokens::getActiveSubscription).orElse(null));
+
         MF.CONNECTION_MONITOR().checkConnectionInBackground();
     }
 
@@ -192,7 +199,8 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
             public void run() {
                 try {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                         UnsupportedLookAndFeelException ex) {
                     ex.printStackTrace();
                 }
 

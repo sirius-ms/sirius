@@ -19,7 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.net;
 
-import de.unijena.bioinf.auth.AuthService;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -29,6 +30,7 @@ import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerType;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
+import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.rest.ConnectionError;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +41,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,10 +62,10 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
     public enum ConnectionState {
-        YES, WARN, TERMS, AUTH_ERROR, NO;
+        YES, WARN, TERMS, AUTH_ERROR, NO; //NO means ERROR (No connection)
     }
 
-    private ConnetionCheck checkResult = new ConnetionCheck(ConnectionState.YES, Map.of(), null, null, null);
+    private ConnetionCheck checkResult = new ConnetionCheck(Multimaps.newSetMultimap(Map.of(), Set::of), null, new LicenseInfo());
 
     private ConnectionCheckMonitor backroundMonitorJob = null;
 
@@ -100,8 +100,8 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
 
-    // this method might block you might want to run in backround to wait for the result
-    //e.g. Jobs.runInBackroundAnLoad
+    // this method might block. You might want to run it in background to wait for the result.
+    //e.g. Jobs.runInBackgroundAnLoad
     public ConnetionCheck checkConnection() {
         return runOrGet().getResult();
     }
@@ -118,13 +118,13 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             this.checkResult = checkResult;
         }
 
-        firePropertyChange(new ConnectionUpdateEvent(this.checkResult));
-        firePropertyChange(new ConnectionStateEvent(old, this.checkResult));
+        firePropertyChange(new ConnectionUpdateEvent(checkResult));
+        firePropertyChange(new ConnectionStateEvent(old, checkResult));
     }
 
 
     public void addConnectionUpdateListener(PropertyChangeListener listener) {
-        addPropertyChangeListener(ConnectionUpdateEvent.KEY,listener);
+        addPropertyChangeListener(ConnectionUpdateEvent.KEY, listener);
     }
 
     public void addConnectionStateListener(PropertyChangeListener listener) {
@@ -135,51 +135,56 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         @Override
         protected ConnetionCheck compute() throws Exception {
             checkForInterruption();
-            ConnectionState conState = ConnectionState.YES;
-            Map<Integer, ConnectionError> errors = Map.of();
-            @Nullable WorkerList wl = null;
-            @Nullable LicenseInfo ll = null;
-            @Nullable AuthService.Token token = null;
+            Multimap<ConnectionError.Klass, ConnectionError> errors = Multimaps.newSetMultimap(new HashMap<>(), LinkedHashSet::new);
 
+            final @NotNull LicenseInfo ll = new LicenseInfo();
+            @Nullable WorkerList wl = null;
+
+            // offline data
+            ApplicationCore.WEB_API.getAuthService().getToken().ifPresent(token -> {
+                Tokens.getUserEmail(token).ifPresent(ll::setUserEmail);
+                Tokens.getUserId(token).ifPresent(ll::setUserId);
+            });
+            ll.setSubscription(ApplicationCore.WEB_API.getActiveSubscription());
+
+            checkForInterruption();
             try {
-                token = ApplicationCore.WEB_API.getAuthService().getToken();
+                //online connection check
                 wl = ApplicationCore.WEB_API.getWorkerInfo();
                 if (wl == null || !wl.supportsAllPredictorTypes(neededTypes)) {
-                    conState = ConnectionState.WARN;
-                    errors = Map.of(13, new ConnectionError(13,"No all supported Worker Types are available.",null, ConnectionError.Type.WARNING));
+                    errors.put(ConnectionError.Klass.WORKER, new ConnectionError(10,
+                            "No all supported Worker Types are available.", ConnectionError.Klass.WORKER,
+                            null, ConnectionError.Type.WARNING));
                 }
 
                 checkForInterruption();
-                ll = new LicenseInfo();
-                ll.setSubscription(ApplicationCore.WEB_API.getActiveSubscription());
-                checkForInterruption();
-                if (ll.getSubscription() != null && ll.isCountQueries())
-                    ll.setConsumables(ApplicationCore.WEB_API.getConsumables(!ll.hasCompoundLimit())); //yearly if there is compound limit
+                try {
+                    //enrich license info with consumables
+                    if (ll.getSubscription() != null && ll.isCountQueries())
+                        ll.setConsumables(ApplicationCore.WEB_API.getConsumables(!ll.hasCompoundLimit())); //yearly if there is compound limit
+                } catch (Throwable e) {
+                    errors.put(ConnectionError.Klass.APP_SERVER, new ConnectionError(93,
+                            "Error when requesting computation limits.",
+                            ConnectionError.Klass.APP_SERVER, e));
+                    errors.putAll(ApplicationCore.WEB_API.checkConnection());
+                }
+
             } catch (Throwable e) {
-                errors = ApplicationCore.WEB_API.checkConnection();
-                errors.put(14, new ConnectionError(14, "Error when requesting worker information or computation limits.", e));
+                errors.put(ConnectionError.Klass.APP_SERVER, new ConnectionError(94,
+                        "Error when requesting worker information.",
+                        ConnectionError.Klass.APP_SERVER, e));
+                errors.putAll(ApplicationCore.WEB_API.checkConnection());
             }
 
             checkForInterruption();
 
-            if (!errors.isEmpty()){
-                if (errors.containsKey(6))
-                    conState = ConnectionState.TERMS;
-                else if (errors.containsKey(12))
-                    conState = ConnectionState.AUTH_ERROR;
-                else if (errors.values().stream().noneMatch(ConnectionError::isError)){
-                    conState = ConnectionState.WARN;
-                }else {
-                    conState = ConnectionState.NO;
-                }
-            }
+            return new ConnetionCheck(errors, wl, ll);
+        }
 
-            checkForInterruption();
-            final ConnetionCheck c = new ConnetionCheck(conState, errors, wl,
-                    token != null ? token.getDecodedAccessToken().getClaim("https://bright-giant.com/email").asString() : null, ll);
-
-            setResult(c);
-            return c;
+        @Override
+        protected void postProcess() throws Exception {
+            super.postProcess();
+            setResult(result());
         }
 
         @Override
@@ -208,26 +213,26 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
     public static class ConnetionCheck {
+        @Nullable
         public final WorkerList workerInfo;
-        public final LicenseInfo license;
         @NotNull
-        public final Map<Integer, ConnectionError> errors;
+        public final LicenseInfo licenseInfo;
+        @NotNull
+        public final Multimap<ConnectionError.Klass, ConnectionError> errors;
 
-        public final String userId; //represents if user is logged in.
+        @NotNull
         public final ConnectionState state;
 
-        public ConnetionCheck(@NotNull ConnectionState state, @NotNull Map<Integer, ConnectionError> errors, @Nullable WorkerList workerInfo, @Nullable String userId,  @Nullable  LicenseInfo license) {
-            this.state = state;
-//            this.errorCode = errorCode;
+        public ConnetionCheck(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerInfo, @NotNull LicenseInfo licenseInfo) {
             this.errors = errors;
             this.workerInfo = workerInfo;
-            this.userId = userId;
-            this.license = license;
-//            this.terms = terms;
+            this.licenseInfo = licenseInfo;
+            this.state = getConnectionState(this.errors);
         }
 
+
         public boolean isLoggedIn() {
-            return userId != null;
+            return licenseInfo.getUserEmail() != null;
         }
 
         public boolean isConnected() {
@@ -239,7 +244,25 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         }
 
         public boolean hasWorkerWarning() {
-            return errors.values().stream().anyMatch(e -> e.getSiriusErrorCode() == 13);
+            return errors.containsKey(ConnectionError.Klass.WORKER) && errors.get(ConnectionError.Klass.WORKER).stream().anyMatch(e -> e.getErrorType() == ConnectionError.Type.WARNING);
+        }
+
+        private static ConnectionState getConnectionState(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors) {
+            if (!errors.isEmpty()) {
+                if (errors.values().stream().noneMatch(ConnectionError::isError))
+                    return ConnectionState.WARN;
+
+                ConnectionError.Klass min = errors.keySet().stream().sorted().findFirst().get();
+                switch (min) {
+                    case TERMS:
+                        return ConnectionState.TERMS;
+                    case LOGIN_SERVER:
+                        return ConnectionState.AUTH_ERROR;
+                    default:
+                        return ConnectionState.NO;
+                }
+            }
+            return ConnectionState.YES;
         }
     }
 
