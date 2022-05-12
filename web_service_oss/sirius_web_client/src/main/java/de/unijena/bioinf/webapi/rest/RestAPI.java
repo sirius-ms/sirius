@@ -23,6 +23,8 @@
 package de.unijena.bioinf.webapi.rest;
 
 import com.github.scribejava.core.model.OAuthResponseException;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
@@ -134,8 +136,8 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     }
 
 
-    public RestAPI(@NotNull AuthService authService) {
-        this(authService, Optional.ofNullable(authService.getToken()).map(Tokens::getActiveSubscription).orElse(null));
+    public RestAPI(@NotNull AuthService authService, @NotNull AuthService.Token token) {
+        this(authService, Tokens.getActiveSubscription(token));
     }
 
 
@@ -205,23 +207,24 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     }
 
     @Override
-    public Map<Integer, ConnectionError> checkConnection() {
-        final Map<Integer, ConnectionError> errors = new HashMap<>();
+    public Multimap<ConnectionError.Klass, ConnectionError> checkConnection() {
+        final Multimap<ConnectionError.Klass, ConnectionError> errors = Multimaps.newSetMultimap(new HashMap<>(), LinkedHashSet::new);
+
         try {
             ProxyManager.consumeClient(client -> {
-                checkSecuredConnection(client).ifPresent(e -> errors.put(e.getSiriusErrorCode(), e));
+                checkSecuredConnection(client).ifPresent(e -> errors.put(e.getErrorKlass(), e));
                 //failed
                 if (!errors.isEmpty()) {
-                    checkLogin(client).ifPresent(e -> errors.put(e.getSiriusErrorCode(), e));
-                    checkUnsecuredConnection(client).ifPresent(e -> errors.put(e.getSiriusErrorCode(), e));
+                    checkLogin(client).ifPresent(e -> errors.put(e.getErrorKlass(), e));
+                    checkUnsecuredConnection(client).ifPresent(e -> errors.put(e.getErrorKlass(), e));
 
-                    ProxyManager.checkInternetConnection(client).ifPresent(es -> es.forEach(e -> errors.put(e.getSiriusErrorCode(), e)));
+                    ProxyManager.checkInternetConnection(client).ifPresent(es -> es.forEach(e -> errors.put(e.getErrorKlass(), e)));
                 }
             });
         } catch (Throwable e) {
-            ConnectionError c = new ConnectionError(99, "Unexpected error during connection check!", e);
+            ConnectionError c = new ConnectionError(100, "Unexpected error during connection check!", ConnectionError.Klass.UNKNOWN, e);
             LOG.error(c.getSiriusMessage(), e);
-            errors.put(c.getSiriusErrorCode(), c);
+            errors.put(c.getErrorKlass(), c);
         }
         return errors;
     }
@@ -229,37 +232,59 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     public Optional<ConnectionError> checkLogin(@NotNull CloseableHttpClient client) {
         //6,5,4
         if (authService.needsLogin())
-            return Optional.of(new ConnectionError(4, "You are not logged in. Please login to connect to the SIRIUS web services. " +
-                    "If you do not have an account you can create one for free using your institutional email address."));
+            return Optional.of(new ConnectionError(4, "You are not logged in. Please login with a verified user account to connect to the SIRIUS web services. " +
+                    "If you do not have an account you can create one for free using your institutional email address.", ConnectionError.Klass.LOGIN));
         try {
-            authService.refreshIfNeeded();
+            AuthService.Token token = authService.refreshIfNeeded();
 
-            @NotNull List<Subscription> subs = Tokens.getSubscriptions(authService.getToken());
+            if (!Tokens.isUserEmailVerified(token)) {
+                String email = Tokens.getUserEmail(token).orElse("N/A");
+                return Optional.of(new ConnectionError(51,
+                        "Your accounts (primary) email address '" + email + "' has not been verified."
+                                + "Please verify this email address by clicking on the verification " +
+                                "link we sent to your inbox and re-login or refresh your access_token afterwards. " +
+                                "Please contact support if you have not received a verification email.",
+                        ConnectionError.Klass.LICENSE));
+            }
+
+            @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
             if (subs.isEmpty())
-                return Optional.of(new ConnectionError(5, "No Subscriptions (License) found for your Account. " +
-                        "Are you using your correct institutional email address? Subscriptions are usually bound to institutional email addresses. " +
-                        "If you believe that a subscription should be available, try to re-login or refresh your access_token."));
+                return Optional.of(new ConnectionError(52,
+                        "No Subscriptions (Licenses) found for your Account. " +
+                                "Are you using your correct institutional email address? " +
+                                "Subscriptions are usually bound to institutional email addresses. " +
+                                "If you believe that a subscription should be available, try to re-login or refresh " +
+                                "your access_token. If the problem persists contact support."
+                        , ConnectionError.Klass.LICENSE));
 
             @Nullable Subscription sub = Tokens.getActiveSubscription(subs);
             if (sub == null)
-                return Optional.of(new ConnectionError(5,
-                        "Could not determine an active subscription but there are '"
-                                + subs.size() + "' subscriptions available for your account."));
+                return Optional.of(new ConnectionError(53,
+                        "Could not determine an active subscription, but there are'"
+                                + subs.size() + "' subscriptions available for your account. This is likely to be a bug. " +
+                                "Please contact support.", ConnectionError.Klass.LICENSE));
 
-            @NotNull List<Term> terms = Tokens.getAcceptedTerms(authService.getToken());
+            java.sql.Date expDate = sub.getExpirationDate();
+            if (expDate != null && expDate.getTime() < System.currentTimeMillis())
+                return Optional.of(new ConnectionError(54,
+                        "The active subscription expired at '"
+                                + sub.getExpirationDate() + "'. Please renew your subscription or choose another non expired subscription if available." +
+                                "Please contact support.", ConnectionError.Klass.LICENSE));
+
+            @NotNull List<Term> terms = Tokens.getAcceptedTerms(token);
             String pp = sub.getPp();
             String tos = sub.getTos();
             if (tos != null && terms.stream().filter(t -> t.getLink().toString().equals(tos)).findAny().isEmpty())
-                return Optional.of(new ConnectionError(6, "Terms of Service (ToS) not Accepted. Please accept the ToS of this subscription."));
+                return Optional.of(new ConnectionError(61, "Terms of Service (ToS) not Accepted. Please accept the ToS of active subscription.", ConnectionError.Klass.TERMS));
             if (pp != null && terms.stream().filter(t -> t.getLink().toString().equals(pp)).findAny().isEmpty())
-                return Optional.of(new ConnectionError(6, "Privacy Policy (PP) not Accepted. Please accept the PP of this subscription."));
+                return Optional.of(new ConnectionError(62, "Privacy Policy (PP) not Accepted. Please accept the PP of active subscription.", ConnectionError.Klass.TERMS));
 
             return Optional.empty();
 
         } catch (LoginException e) {
-            String m = "Error when contacting login Server";
+            String m = "Error when requesting login token.";
             LoggerFactory.getLogger(getClass()).error(m + ": " + e.getMessage(), e);
-            return Optional.of(new ConnectionError(12, m, e));
+            return Optional.of(new ConnectionError(71, m, ConnectionError.Klass.TOKEN, e));
         }
     }
 
@@ -270,9 +295,9 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         } catch (HttpErrorResponseException e) {
             String message = "Could not load version info (unsecured api endpoint). Bad Response Code.";
             LoggerFactory.getLogger(getClass()).warn(message + " Cause: " + e.getMessage());
-            return Optional.of(new ConnectionError(7, message, e));
+            return Optional.of(new ConnectionError(81, message, ConnectionError.Klass.APP_SERVER, e));
         } catch (Throwable e) {
-            return Optional.of(new ConnectionError(8, "Unexpected error when contacting secured api endpoint", e));
+            return Optional.of(new ConnectionError(82, "Unexpected error when contacting unsecured api endpoint", ConnectionError.Klass.APP_SERVER, e));
         }
     }
 
@@ -291,15 +316,15 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
             String[] splitMsg = e.getReasonPhrase().split(SecurityService.ERROR_CODE_SEPARATOR);
             if (splitMsg.length > 1 && splitMsg[1].equals(SecurityService.TERMS_MISSING))
-                return Optional.of(new ConnectionError(9, "Terms and Conditions and/or Privacy policy of the active subscription has not been accepted."));
+                return Optional.of(new ConnectionError(63, "Server detected that that Terms and Conditions and/or Privacy policy of the used subscription has not been accepted.", ConnectionError.Klass.TERMS));
 
-            return Optional.of(new ConnectionError(10, message, e));
+            return Optional.of(new ConnectionError(91, message, ConnectionError.Klass.APP_SERVER, e));
         } catch (OAuthResponseException e) {
-            String m = "Error when contacting login Server";
+            String m = "Error when contacting login Server during application server connection.";
             LoggerFactory.getLogger(getClass()).error(m + ": " + e.getMessage(), e);
-            return Optional.of(new ConnectionError(12, m, e));
+            return Optional.of(new ConnectionError(72, m, ConnectionError.Klass.TOKEN, e));
         } catch (Throwable e) {
-            return Optional.of(new ConnectionError(11, "Unexpected error when contacting secured api endpoint", e));
+            return Optional.of(new ConnectionError(92, "Unexpected error when contacting secured api endpoint", ConnectionError.Klass.APP_SERVER, e));
         }
     }
 
