@@ -27,17 +27,13 @@ import de.unijena.bioinf.ms.rest.client.AbstractClient;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
-import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,8 +41,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class JobsClient extends AbstractClient {
-    private static final Logger LOG = LoggerFactory.getLogger(JobsClient.class);
-
     @SafeVarargs
     public JobsClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorator) {
         super(serverUrl, requestDecorator);
@@ -80,24 +74,5 @@ public class JobsClient extends AbstractClient {
             patch.setEntity(new StringEntity(new ObjectMapper().writeValueAsString(body)));
             return patch;
         });
-    }
-
-    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
-        return getConsumables(monthAndYear, null, byMonth, client);
-    }
-
-    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, @Nullable JobTable jobType, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
-        return executeFromJson(client,
-                () -> {
-                    URIBuilder builder = buildVersionSpecificWebapiURI("/jobs/count")
-                            .setParameter("date", Long.toString(monthAndYear.getTime()))
-                            .setParameter("byMonth", Boolean.toString(byMonth));
-                    if (jobType != null)
-                        builder.setParameter("jobType", new ObjectMapper().writeValueAsString(jobType));
-
-                    return new HttpGet(builder.build());
-                },
-                new TypeReference<>() {}
-        );
     }
 }

@@ -21,20 +21,22 @@
 package de.unijena.bioinf.ms.rest.client.info;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.client.AbstractClient;
+import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.info.News;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -44,18 +46,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class InfoClient extends AbstractClient {
-    private static final Logger LOG = LoggerFactory.getLogger(InfoClient.class);
     private static final String WEBAPI_VERSION_JSON = "/version.json";
     private static final String WEBAPI_WORKER_JSON = "/workers.json";
-    private static final String WEBAPI_TERMS_JSON = "/terms.json";
-
-    public InfoClient(@NotNull URI serverUrl) {
-        this(serverUrl, (it) -> {
-        });
-    }
 
     @SafeVarargs
     public InfoClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
@@ -109,19 +105,6 @@ public class InfoClient extends AbstractClient {
         return null;
     }
 
-   /* @Nullable
-    public List<Term> getTerms(@NotNull CloseableHttpClient client) throws IOException {
-        return executeFromJson(client,
-                () -> {
-                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_TERMS_JSON).build());
-                    final int timeoutInSeconds = 8000;
-                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
-                    return get;
-                }, new TypeReference<>() {
-                }
-        );
-    }*/
-
     @Nullable
     public WorkerList getWorkerInfo(@NotNull CloseableHttpClient client) throws IOException {
         return executeFromJson(client,
@@ -132,6 +115,25 @@ public class InfoClient extends AbstractClient {
                     return get;
                 }, new TypeReference<>() {
                 }
+        );
+    }
+
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
+        return getConsumables(monthAndYear, null, byMonth, client);
+    }
+
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, @Nullable JobTable jobType, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
+        return executeFromJson(client,
+                () -> {
+                    URIBuilder builder = buildVersionSpecificWebapiURI("/consumed-resources")
+                            .setParameter("date", Long.toString(monthAndYear.getTime()))
+                            .setParameter("byMonth", Boolean.toString(byMonth));
+                    if (jobType != null)
+                        builder.setParameter("jobType", new ObjectMapper().writeValueAsString(jobType));
+
+                    return new HttpGet(builder.build());
+                },
+                new TypeReference<>() {}
         );
     }
 }

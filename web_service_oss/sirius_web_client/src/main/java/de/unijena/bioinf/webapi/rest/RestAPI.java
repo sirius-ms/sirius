@@ -147,7 +147,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     public String getSignUpURL() {
         try {
-            return getAuthService().signUpURL(jobsClient.getBaseURI("/signUp", true).build().toURL().toString());
+            return getAuthService().signUpURL(jobsClient.getBaseURI("/signUp").build().toURL().toString());
         } catch (MalformedURLException | URISyntaxException e) {
             throw new IllegalArgumentException("Illegal URL!", e);
         }
@@ -290,7 +290,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     public Optional<ConnectionError> checkUnsecuredConnection(@NotNull CloseableHttpClient client) {
         try {
-            serverInfoClient.execute(client, () -> new HttpGet(serverInfoClient.getBaseURI("/actuator/health", true).build()));
+            serverInfoClient.execute(client, () -> new HttpGet(serverInfoClient.getBaseURI("/actuator/health").build()));
             return Optional.empty();
         } catch (HttpErrorResponseException e) {
             String message = "Could not load version info (unsecured api endpoint). Bad Response Code.";
@@ -304,7 +304,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     public Optional<ConnectionError> checkSecuredConnection(@NotNull CloseableHttpClient client) {
         try {
             serverInfoClient.execute(client, () -> {
-                HttpGet get = new HttpGet(serverInfoClient.getBaseURI("/api/check", true).build());
+                HttpGet get = new HttpGet(serverInfoClient.getBaseURI("/api/check").build());
                 final int timeoutInSeconds = 8000;
                 get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
                 return get;
@@ -344,7 +344,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     }
 
     public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth) throws IOException {
-        return ProxyManager.applyClient(client -> jobsClient.getConsumables(monthAndYear, byMonth, client));
+        return ProxyManager.applyClient(client -> serverInfoClient.getConsumables(monthAndYear, byMonth, client));
     }
 
     public List<JobUpdate<?>> updateJobStates(JobTable jobTable) throws IOException {
