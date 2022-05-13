@@ -29,6 +29,7 @@ import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public class Term {
     private String name;
@@ -129,5 +130,18 @@ public class Term {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Term)) return false;
+        Term term = (Term) o;
+        return link.equals(term.link);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(link);
     }
 }
