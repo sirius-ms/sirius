@@ -51,7 +51,6 @@ import java.util.function.Supplier;
 
 public abstract class AbstractClient {
     public static final boolean DEBUG_CONNECTION = PropertyManager.getBoolean("de.unijena.bioinf.webapi.DEBUG_CONNECTION", false);
-    public final static boolean DEBUG = PropertyManager.getBoolean("de.unijena.bioinf.ms.rest.DEBUG", false);
     protected static final String API_ROOT = "/api";
     protected static final String CID = SecurityService.generateSecurityToken();
 
