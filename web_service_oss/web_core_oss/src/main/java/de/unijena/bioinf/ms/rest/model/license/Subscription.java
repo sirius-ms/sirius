@@ -148,4 +148,12 @@ public class Subscription {
     public void setPp(String pp) {
         this.pp = pp;
     }
+
+
+    // non json methods
+    public boolean hasCompoundLimit() {
+        Integer l = getCompoundLimit();
+        return  l != null && l > 0;
+    }
+
 }
