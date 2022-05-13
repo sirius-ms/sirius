@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -91,18 +92,25 @@ public class Tokens {
         @Nullable Subscription sub = Tokens.getActiveSubscription(token);
         if (sub == null)
             return List.of();
-        return List.of(Term.of(sub.getPp()), Term.of(sub.getTos()));
+
+        List<Term> terms = new ArrayList<>();
+        if (sub.getTos() != null)
+            terms.add(Term.of(sub.getTos()));
+        if (sub.getPp() != null)
+            terms.add(Term.of(sub.getPp()));
+
+        return terms;
     }
 
 
     @NotNull
-    public static Optional<SubscriptionData> getLicenseData(@Nullable AuthService.Token token) {
+    public static Optional<SubscriptionData> getSubscriptionData(@Nullable AuthService.Token token) {
         return parseATClaim(token,"https://bright-giant.com/licenseData").map(c -> c.as(SubscriptionData.class));
     }
 
     @NotNull
     public static List<Subscription> getSubscriptions(@Nullable AuthService.Token token) {
-        return getLicenseData(token).map(SubscriptionData::getSubscriptions).orElse(List.of());
+        return getSubscriptionData(token).map(SubscriptionData::getSubscriptions).orElse(List.of());
     }
 
     @Nullable
@@ -146,6 +154,4 @@ public class Tokens {
     public static boolean hasSubscriptions(AuthService.Token token) {
         return !getSubscriptions(token).isEmpty();
     }
-
-
 }
