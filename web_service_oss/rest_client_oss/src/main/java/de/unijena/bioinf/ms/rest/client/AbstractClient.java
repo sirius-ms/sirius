@@ -47,6 +47,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public abstract class AbstractClient {
@@ -60,7 +61,7 @@ public abstract class AbstractClient {
     }
 
     @NotNull
-    protected Supplier<URI> serverUrl;
+    private Supplier<URI> serverUrl;
     @NotNull
     protected final List<IOFunctions.IOConsumer<HttpUriRequest>> requestDecorators;
 
@@ -75,7 +76,11 @@ public abstract class AbstractClient {
     }
 
     public void setServerUrl(@NotNull Supplier<URI> serverUrl) {
-        this.serverUrl = serverUrl;
+        if (NetUtils.DEBUG){
+            this.serverUrl = () -> URI.create("http://localhost:8080");
+        }else {
+            this.serverUrl = serverUrl;
+        }
     }
 
     public URI getServerUrl() {
@@ -98,7 +103,7 @@ public abstract class AbstractClient {
     public boolean deleteAccount(@NotNull CloseableHttpClient client) {
         try {
             execute(client, () -> {
-                HttpDelete delete = new HttpDelete(getBaseURI("/delete-account", true).build());
+                HttpDelete delete = new HttpDelete(getBaseURI("/delete-account").build());
                 final int timeoutInSeconds = 8000;
                 delete.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
                 return delete;
@@ -113,7 +118,7 @@ public abstract class AbstractClient {
     public boolean acceptTerms(@NotNull CloseableHttpClient client) {
         try {
             execute(client, () -> {
-                HttpPost post = new HttpPost(getBaseURI("/accept-terms", true).build());
+                HttpPost post = new HttpPost(getBaseURI("/accept-terms").build());
                 final int timeoutInSeconds = 8000;
                 post.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
                 return post;
@@ -130,7 +135,8 @@ public abstract class AbstractClient {
 
         if (status.getStatusCode() >= 400) {
             final String content = response.getEntity() != null ? IOUtils.toString(getIn(response, sourceRequest)) : "No Content";
-            throw new HttpErrorResponseException(status.getStatusCode(), status.getReasonPhrase(), response.getFirstHeader("WWW-Authenticate").getValue(), content);
+            throw new HttpErrorResponseException(status.getStatusCode(), status.getReasonPhrase(),
+                    Optional.ofNullable(response.getFirstHeader("WWW-Authenticate")).map(Header::getValue).orElse("NULL"), content);
         }
     }
 
@@ -138,11 +144,12 @@ public abstract class AbstractClient {
     //region http request execution API
     public <T> T executeWithResponse(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
         try {
-            return executeWithResponse(client, makeRequest.get(),respHandling);
+            return executeWithResponse(client, makeRequest.get(), respHandling);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }
+
     public <T> T executeWithResponse(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
         try (CloseableHttpResponse response = client.execute(request)) {
             return respHandling.apply(response);
@@ -274,7 +281,7 @@ public abstract class AbstractClient {
 
     //#################################################################################################################
     //region PathBuilderMethods
-    public URIBuilder getBaseURI(@Nullable String path, final boolean versionSpecificPath) throws URISyntaxException {
+    public URIBuilder getBaseURI(@Nullable String path) throws URISyntaxException {
         if (path == null)
             path = "";
 
@@ -285,8 +292,7 @@ public abstract class AbstractClient {
 //            path = FINGERID_DEBUG_FRONTEND_PATH + path;
         } else {
             b = new URIBuilder(getServerUrl());
-            if (versionSpecificPath)
-                path = makeVersionContext() + path;
+            path = makeVersionContext() + path;
         }
 
         if (!path.isEmpty())
@@ -300,8 +306,8 @@ public abstract class AbstractClient {
         return new StringBuilder(API_ROOT);
     }
 
-    protected URIBuilder buildWebapiURI(@Nullable final String path, final boolean versionSpecific) throws URISyntaxException {
-        StringBuilder pathBuilder = versionSpecific || NetUtils.DEBUG ? getWebAPIBasePath() : new StringBuilder("/webapi"); //todo workaround until nu api version is deployed to root
+    protected URIBuilder buildWebapiURI(@Nullable final String path) throws URISyntaxException {
+        StringBuilder pathBuilder = getWebAPIBasePath();
 
         if (path != null && !path.isEmpty()) {
             if (!path.startsWith("/"))
@@ -310,16 +316,12 @@ public abstract class AbstractClient {
             pathBuilder.append(path);
         }
 
-        return getBaseURI(pathBuilder.toString(), versionSpecific);
-    }
-
-    protected URIBuilder buildVersionLessWebapiURI(@Nullable String path) throws URISyntaxException {
-        return buildWebapiURI(path, false);
+        return getBaseURI(pathBuilder.toString());
     }
 
 
     protected URIBuilder buildVersionSpecificWebapiURI(@Nullable String path) throws URISyntaxException {
-        return buildWebapiURI(path, true);
+        return buildWebapiURI(path);
     }
 
     //endregion

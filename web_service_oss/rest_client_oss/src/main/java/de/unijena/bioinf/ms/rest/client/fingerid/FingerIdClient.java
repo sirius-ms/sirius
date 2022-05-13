@@ -26,8 +26,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.blast.BayesianScoringUtils;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
@@ -50,8 +48,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -59,8 +55,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class FingerIdClient extends AbstractClient {
-    private static final Logger LOG = LoggerFactory.getLogger(FingerIdClient.class);
-
     @SafeVarargs
     public FingerIdClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
         super(serverUrl, requestDecorators);
