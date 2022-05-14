@@ -63,7 +63,6 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
@@ -331,11 +330,6 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     public WorkerList getWorkerInfo() throws IOException {
         return ProxyManager.applyClient(serverInfoClient::getWorkerInfo);
     }
-
-    public LicenseInfo getLicenseInfo() throws IOException {
-        return ProxyManager.applyClient(jobsClient::getLicenseInfo);
-    }
-
     //endregion
 
     //region Jobs
