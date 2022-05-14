@@ -87,19 +87,6 @@ public abstract class AbstractClient {
         return serverUrl.get();
     }
 
-    @Nullable
-    public LicenseInfo getLicenseInfo(@NotNull CloseableHttpClient client) throws IOException {
-        return executeFromJson(client,
-                () -> {
-                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/license.json").build());
-                    final int timeoutInSeconds = 8000;
-                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
-                    return get;
-                }, new TypeReference<>() {
-                }
-        );
-    }
-
     public boolean deleteAccount(@NotNull CloseableHttpClient client) {
         try {
             execute(client, () -> {
