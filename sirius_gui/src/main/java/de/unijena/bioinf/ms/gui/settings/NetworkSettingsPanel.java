@@ -67,7 +67,7 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     private void buildPanel() {
 //        add(new JXTitledSeparator("Webservice"));
-        webserverURL = new JTextField(Optional.of(ApplicationCore.WEB_API.getActiveSubscription()).map(Subscription::getServiceUrl).orElse("<No subscription active>"));
+        webserverURL = new JTextField(Optional.ofNullable(ApplicationCore.WEB_API.getActiveSubscription()).map(Subscription::getServiceUrl).orElse("<No subscription active>"));
         addNamed("Web service URL", webserverURL);
         webserverURL.setEditable(false);
         webserverURL.setToolTipText(GuiUtils.formatToolTip("URL is provided via your active subscription and cannot be changed manually. You need to be logged in to see the URL."));
@@ -171,6 +171,9 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     @Override
     public void reloadChanges() {
+
+        ApplicationCore.WEB_API.changeActiveSubscription(null);
+
         URI host = URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"));
         ProxyManager.reconnect();
 

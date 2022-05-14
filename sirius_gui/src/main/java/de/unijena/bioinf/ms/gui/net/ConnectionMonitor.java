@@ -201,7 +201,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
                 try {
                     checkConnection();
                 } catch (Exception e) {
-                    LoggerFactory.getLogger(this.getClass()).error("Error when waiting vor connection check in backround monitor!", e);
+                    LoggerFactory.getLogger(this.getClass()).error("Error when waiting vor connection check in background monitor!", e);
                 }
                 checkForInterruption();
                 for (int i = 0; i < 40; i++) {
