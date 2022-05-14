@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.actions;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.webapi.rest.ProxyManager;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -45,6 +46,8 @@ public class SignOutAction extends AbstractAction {
         boolean r = Jobs.runInBackgroundAndLoad(MF, "Logging out...", () -> {
             try {
                 AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
+                ApplicationCore.WEB_API.changeActiveSubscription(null);
+                ProxyManager.reconnect();
                 return true;
             } catch (IOException ex) {
                 LoggerFactory.getLogger(getClass()).warn("Error during logout!", ex);
