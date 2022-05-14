@@ -169,7 +169,7 @@ public class ProxyManager {
                 else if (builder instanceof HttpClientBuilder)
                     ((HttpClientBuilder) builder).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).setSSLContext(context);
                 else
-                    throw new IllegalArgumentException("Only HttpAsyncClientBuilder and  HttpClientBuilder are supported");
+                    throw new IllegalArgumentException("Only HttpAsyncClientBuilder and  HttpClientBuilder are supported but found: " + builder.getClass().getName());
             } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
                 LoggerFactory.getLogger(ProxyManager.class).warn("Could not create Noop SSL context. SSL Validation will NOT be disabled!");
             }
@@ -178,9 +178,10 @@ public class ProxyManager {
     }
 
     private static Object getNoProxyClient(boolean async) {
-        return handleSSLValidation(async
-                ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).build()
-                : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).build());
+        Object builder = handleSSLValidation(async
+                ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG)
+                : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG));
+        return async ? ((HttpAsyncClientBuilder) builder).build() : ((HttpClientBuilder) builder).build();
     }
 
     private static Object getSiriusProxyClient(boolean async) {
