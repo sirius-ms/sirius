@@ -304,7 +304,7 @@ public class ProxyManager {
     }
 
     public static Optional<ConnectionError> checkLicenseServer(HttpClient proxy) {
-        String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer", null, "https://gate.bright-giant.com/") + "v0.1/actuator/health";
+        String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer", null, "https://gate.bright-giant.com/v1/") + "actuator/health";
         return checkConnectionToUrl(proxy, url).map(e -> e.withNewMessage(3, "Could not connect to the License Server: " + url, ConnectionError.Klass.LICENSE_SERVER));
     }
 
