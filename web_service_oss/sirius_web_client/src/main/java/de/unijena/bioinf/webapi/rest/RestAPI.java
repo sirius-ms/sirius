@@ -42,6 +42,7 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.FingerprintWebResultConverter;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.HttpErrorResponseException;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
@@ -145,11 +146,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     }
 
     public String getSignUpURL() {
-        try {
-            return getAuthService().signUpURL(jobsClient.getBaseURI("/signUp").build().toURL().toString());
-        } catch (MalformedURLException | URISyntaxException e) {
-            throw new IllegalArgumentException("Illegal URL!", e);
-        }
+        return getAuthService().signUpURL(PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer") + "account/signUp");
     }
 
     @Override
