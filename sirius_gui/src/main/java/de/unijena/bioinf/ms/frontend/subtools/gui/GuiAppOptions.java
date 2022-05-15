@@ -150,16 +150,15 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
                         updateProgress(0, max, progress++, "Checking Webservice connection...");
                         ConnectionMonitor.ConnetionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
                         if (cc.isConnected()) {
-                            @Nullable VersionsInfo versionsNumber = ApplicationCore.WEB_API.getVersionInfo();
-                            ApplicationCore.DEFAULT_LOGGER.debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
-                            if (versionsNumber != null) {
+                            System.out.println("INSERT GITHUB UPDATE CHECK HERE");
+                            /*if (versionsNumber != null) {
                                 if (versionsNumber.expired()) {
                                     new UpdateDialog(MainFrame.MF, versionsNumber);
                                 }
                                 if (versionsNumber.hasNews()) {
                                     new NewsDialog(MainFrame.MF, versionsNumber.getNews());
                                 }
-                            }
+                            }*/
                         }
                         return true;
                     } catch (Exception e) {
