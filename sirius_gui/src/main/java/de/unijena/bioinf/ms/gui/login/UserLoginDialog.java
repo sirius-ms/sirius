@@ -35,6 +35,8 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.Term;
+import de.unijena.bioinf.webapi.Tokens;
+import de.unijena.bioinf.webapi.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -94,12 +96,14 @@ public class UserLoginDialog extends JDialog {
                     try {
                         service.login(username.getText(), new String(password.getPassword()));
                         AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
+                        ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(service.getToken().orElse(null)));
+                        ProxyManager.reconnect();
                         performedLogin = true;
                         Jobs.runEDTLater(UserLoginDialog.this::dispose);
                         if (boxAcceptTerms.isSelected())
                             ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
                     } catch (Throwable ex) {
-                        LoggerFactory.getLogger(getClass()).error("Error during password reset.",ex);
+                        LoggerFactory.getLogger(getClass()).error("Error during Login.",ex);
                         new ExceptionDialog(UserLoginDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
                         try {
                             AuthServices.clearRefreshToken(service, ApplicationCore.TOKEN_FILE);
@@ -162,8 +166,10 @@ public class UserLoginDialog extends JDialog {
     }
 
     public void addTermsPanel(@NotNull TwoColumnPanel center) {
-        List<Term> terms = Jobs.runInBackgroundAndLoad(MainFrame.MF, "Loading Terms", ApplicationCore.WEB_API::getTerms).getResult();
-        if (terms != null && !terms.isEmpty()) {
+        List<Term> terms = ApplicationCore.WEB_API.getAuthService().getToken()
+                .map(Tokens::getActiveSubscriptionTerms).orElse(List.of());
+
+        if (!terms.isEmpty()) {
             boxAcceptTerms.setSelected(false);
             signInAction.setEnabled(false);
             boxAcceptTerms.addActionListener(evt -> signInAction.setEnabled(((JCheckBox)evt.getSource()).isSelected()));

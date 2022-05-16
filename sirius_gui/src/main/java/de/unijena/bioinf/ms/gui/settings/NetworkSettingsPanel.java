@@ -23,13 +23,13 @@ import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.PasswordCrypter;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.rest.ProxyManager;
 import org.jdesktop.swingx.JXTitledSeparator;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -38,7 +38,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.Optional;
 import java.util.Properties;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
@@ -67,9 +67,10 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     private void buildPanel() {
 //        add(new JXTitledSeparator("Webservice"));
-        webserverURL = new JTextField(props.getProperty("de.unijena.bioinf.fingerid.web.host", PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host")));
+        webserverURL = new JTextField(Optional.ofNullable(ApplicationCore.WEB_API.getActiveSubscription()).map(Subscription::getServiceUrl).orElse("<No subscription active>"));
         addNamed("Web service URL", webserverURL);
-
+        webserverURL.setEditable(false);
+        webserverURL.setToolTipText(GuiUtils.formatToolTip("URL is provided via your active subscription and cannot be changed manually. You need to be logged in to see the URL."));
 
 
         sslValidation = new JCheckBox();
@@ -88,8 +89,7 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
         useProxy = new JComboBox<>(ProxyManager.ProxyStrategy.values());
         useProxy.setSelectedItem(ProxyManager.getStrategyByName(props.getProperty("de.unijena.bioinf.sirius.proxy")));
         useProxy.addActionListener(this);
-        add(new JLabel("Use Proxy Server"),useProxy);
-
+        add(new JLabel("Use Proxy Server"), useProxy);
 
 
         proxyHost = new JTextField();
@@ -158,14 +158,6 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     @Override
     public void saveProperties() {
-        try {
-            URI uri = new URI(webserverURL.getText());
-            props.setProperty("de.unijena.bioinf.fingerid.web.host", uri.toString());
-        } catch (URISyntaxException e) {
-            LoggerFactory.getLogger(getClass()).warn("Invalid host URI. Host not changed");
-            new WarningDialog(MF, "Invalid web service URI. Web service host not changed.");
-        }
-
         props.setProperty("de.unijena.bioinf.sirius.security.sslValidation", String.valueOf(sslValidation.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.ui.signUp.systemBrowser", String.valueOf(systemBrowser.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.proxy", String.valueOf(useProxy.getSelectedItem()));
@@ -179,11 +171,22 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     @Override
     public void reloadChanges() {
-        URI host = URI.create(props.getProperty("de.unijena.bioinf.fingerid.web.host"));
+
+        ApplicationCore.WEB_API.changeActiveSubscription(null);
+
+        URI host = URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"));
         ProxyManager.reconnect();
-        ApplicationCore.WEB_API.getAuthService().reconnectService(AuthServices.createDefaultApi(host), ProxyManager.getSirirusHttpAsyncClient()); //load new proxy data from service.
+
+        ApplicationCore.WEB_API.getAuthService().reconnectService(
+                AuthServices.createDefaultApi(host),
+                ProxyManager.getSirirusHttpAsyncClient()); //load new proxy data from service.
+
         ProxyManager.enforceGlobalProxySetting(); //update global proxy stuff for Webview.
-        ApplicationCore.WEB_API.changeHost(host);
+
+        ApplicationCore.WEB_API.changeActiveSubscription(
+                ApplicationCore.WEB_API.getAuthService().getToken()
+                        .map(Tokens::getActiveSubscription).orElse(null));
+
         MF.CONNECTION_MONITOR().checkConnectionInBackground();
     }
 
@@ -199,7 +202,8 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
             public void run() {
                 try {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                         UnsupportedLookAndFeelException ex) {
                     ex.printStackTrace();
                 }
 

@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.webapi.rest.ProxyManager;
@@ -29,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.net.URI;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -45,7 +43,7 @@ public class SignUpAction extends AbstractAction {
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
         try {
-            GuiUtils.openURL(URI.create(ApplicationCore.WEB_API.getSignUpURL()), "Create Account",
+            GuiUtils.openURL(ApplicationCore.WEB_API.getSignUpURL(), "Create Account",
                     ProxyManager.getProxyStrategy().equals(ProxyManager.ProxyStrategy.SIRIUS)
                             || PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.signUp.systemBrowser", false));
         } catch (Exception ex2) {
