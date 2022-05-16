@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerType;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
@@ -161,8 +162,8 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
                 checkForInterruption();
                 try {
                     //enrich license info with consumables
-                    if (ll.getSubscription() != null && ll.isCountQueries())
-                        ll.setConsumables(ApplicationCore.WEB_API.getConsumables(!ll.hasCompoundLimit())); //yearly if there is compound limit
+                    if (ll.subscription().map(Subscription::getCountQueries).orElse(false))
+                        ll.setConsumables(ApplicationCore.WEB_API.getConsumables(!ll.subscription().get().hasCompoundLimit())); //yearly if there is compound limit
                 } catch (Exception e) {
                     errors.put(ConnectionError.Klass.APP_SERVER, new ConnectionError(93,
                             "Error when requesting computation limits.",

@@ -22,6 +22,9 @@ package de.unijena.bioinf.ms.gui.mainframe;
 
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,12 +63,16 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
     public void propertyChange(PropertyChangeEvent evt) {
         final ConnectionMonitor.ConnectionUpdateEvent cevt = (ConnectionMonitor.ConnectionUpdateEvent) evt;
         ConnectionMonitor.ConnectionCheck check = cevt.getConnectionCheck();
-        if (check.licenseInfo.getSubscription() != null) {
-            license.setText("<html>License: <b>" + check.licenseInfo.getLicensee() + "</b>" + (check.licenseInfo.getDescription() == null ? "" : " (" + check.licenseInfo.getDescription() + ")</html>"));
-            if (check.licenseInfo.isCountQueries()) {
-                String max = check.licenseInfo.hasCompoundLimit() ? String.valueOf(check.licenseInfo.getCompoundLimit()) : INF;
-                String current = check.licenseInfo.getCountedCompounds() < 0 ? "N/A" :  String.valueOf(check.licenseInfo.getCountedCompounds());
-                consumedCompounds.setText("<html>Compounds: <b>" + current + "/" + max + "</b> (per " + (check.licenseInfo.hasCompoundLimit() ? "Year" : "Month") + ")</html>");
+
+        if (check.licenseInfo.subscription().isPresent()) {
+            @Nullable Subscription sub = check.licenseInfo.getSubscription();
+            license.setText("<html>License: <b>" + sub.getSubscriberName() + "</b>" + (check.licenseInfo.getSubscription() == null ? "" : " (" + check.licenseInfo.getSubscription().getName() + ")</html>"));
+            if (sub.getCountQueries()) {
+                String max = sub.hasCompoundLimit() ? String.valueOf(sub.getCompoundLimit()) : INF;
+                String current = check.licenseInfo.consumables().map(SubscriptionConsumables::getCountedCompounds).orElse(-1) < 0
+                        ? "N/A" : check.licenseInfo.consumables().map(SubscriptionConsumables::getCountedCompounds)
+                        .map(String::valueOf).get();
+                consumedCompounds.setText("<html>Compounds: <b>" + current + "/" + max + "</b> (per " + (sub.hasCompoundLimit() ? "Year" : "Month") + ")</html>");
             } else {
                 consumedCompounds.setText("<html>Compounds: <b>UNLIMITED</b></html>");
             }

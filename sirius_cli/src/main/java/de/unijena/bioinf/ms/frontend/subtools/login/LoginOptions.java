@@ -37,6 +37,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.webapi.rest.ConnectionError;
@@ -251,15 +252,18 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             if (subs != null) {
                 final LicenseInfo licenseInfo = new LicenseInfo();
                 licenseInfo.setSubscription(subs);
-                System.out.println("Licensed to: " + licenseInfo.getLicensee() + " (" + licenseInfo.getDescription() + ")");
-                System.out.println("Expires at: " + (licenseInfo.hasExpirationTime() ? licenseInfo.getExpirationDate().toString() : "NEVER"));
-                if (licenseInfo.isCountQueries()) {
-                    if (licenseInfo.hasCompoundLimit()) {
+                System.out.println("Licensed to: " + subs.getSubscriberName() + " (" + subs.getDescription() + ")");
+                System.out.println("Expires at: " + (subs.hasExpirationTime() ? subs.getExpirationDate().toString() : "NEVER"));
+                if (subs.getCountQueries()) {
+                    if (subs.hasCompoundLimit()) {
                         licenseInfo.setConsumables(api.getConsumables(false));
-                        System.out.println("Compounds Computed (Yearly): " + licenseInfo.getCountedCompounds() + " of " + licenseInfo.getCompoundLimit());
+                        System.out.println("Compounds Computed (Yearly): " + licenseInfo.consumables()
+                                .map(SubscriptionConsumables::getCountedCompounds)
+                                .map(String::valueOf).orElse("?") + " of " + subs.getCompoundLimit());
                     } else {
                         licenseInfo.setConsumables(api.getConsumables(true));
-                        System.out.println("Compounds Computed (Monthly): " + licenseInfo.getCountedCompounds());
+                        System.out.println("Compounds Computed (Monthly): " + licenseInfo.consumables().map(SubscriptionConsumables::getCountedCompounds)
+                                .map(String::valueOf).orElse("?"));
                     }
                 }
             } else {
