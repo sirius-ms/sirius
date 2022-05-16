@@ -18,24 +18,41 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.auth;
+package de.unijena.bioinf.ms.rest.client;
 
 import java.io.IOException;
 
-public class LoginException extends IOException {
-    public LoginException() {
-        super("Not Logged in, No valid refresh token Available");
+public class HttpErrorResponseException extends IOException {
+    private final int errorCode;
+    private final String bearerToken;
+    private final String content;
+
+    public HttpErrorResponseException(int errorCode, String reasonPhrase, String bearerToken, String content) {
+        super(reasonPhrase);
+        this.errorCode = errorCode;
+        this.bearerToken = bearerToken;
+        this.content = content;
     }
 
-    public LoginException(Throwable cause) {
-        super("Not Logged in, No valid refresh token Available", cause);
+    @Override
+    public String getMessage() {
+        return "Error when querying REST service. Bad Response Code: "
+                + getErrorCode() + " | Message: " + super.getMessage() + " | Content: " + getContent();
     }
 
-    public LoginException(String message) {
-        super(message);
+    public int getErrorCode() {
+        return errorCode;
     }
 
-    public LoginException(String message, Throwable cause) {
-        super(message, cause);
+    public String getBearerToken() {
+        return bearerToken;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public String getReasonPhrase(){
+        return super.getMessage();
     }
 }

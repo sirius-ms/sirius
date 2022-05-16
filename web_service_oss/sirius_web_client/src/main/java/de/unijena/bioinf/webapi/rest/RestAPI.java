@@ -22,6 +22,9 @@
 
 package de.unijena.bioinf.webapi.rest;
 
+import com.github.scribejava.core.model.OAuthResponseException;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
@@ -39,7 +42,9 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.FingerprintWebResultConverter;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.client.HttpErrorResponseException;
+import de.unijena.bioinf.ms.rest.client.account.AccountClient;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
@@ -49,6 +54,7 @@ import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
+import de.unijena.bioinf.ms.rest.model.SecurityService;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobOutput;
@@ -59,13 +65,19 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
+import de.unijena.bioinf.webapi.Tokens;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -73,10 +85,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Frontend WebAPI class, that represents the client to our backend rest api
@@ -88,16 +99,21 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     private final WebJobWatcher jobWatcher = new WebJobWatcher(this);
 
-    public final InfoClient serverInfoClient;
-    public final JobsClient jobsClient;
-    public final StructureSearchClient chemDBClient;
-    public final FingerIdClient fingerprintClient;
-    public final CanopusClient canopusClient;
+    private final AccountClient accountClient;
+
+    private final InfoClient serverInfoClient;
+    private final JobsClient jobsClient;
+    private final StructureSearchClient chemDBClient;
+    private final FingerIdClient fingerprintClient;
+    private final CanopusClient canopusClient;
+
+    private Subscription activeSubscription;
 
 
 
-    public RestAPI(@Nullable AuthService authService, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
+    public RestAPI(@Nullable AuthService authService, @NotNull AccountClient accountClient, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
         super(authService);
+        this.accountClient = accountClient;
         this.serverInfoClient = infoClient;
         this.jobsClient = jobsClient;
         this.chemDBClient = chemDBClient;
@@ -105,125 +121,224 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         this.canopusClient = canopusClient;
     }
 
-    public RestAPI(@NotNull AuthService authService, @NotNull URI host) {
-        this(authService, new InfoClient(host), new JobsClient(host, authService), new ChemDBClient(host, authService), new FingerIdClient(host, authService), new CanopusClient(host, authService));
+
+    public RestAPI(@NotNull AuthService authService, @Nullable Subscription activeSubscription) {
+        super(authService);
+        IOFunctions.IOConsumer<HttpUriRequest> subsDeco = (req) -> {
+            if (this.activeSubscription != null)
+                req.addHeader("SUBSCRIPTION", this.activeSubscription.getSid());
+        };
+
+        this.accountClient = new AccountClient(
+                URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer")),
+                PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer.version"),
+                authService, authService, subsDeco);
+        this.serverInfoClient = new InfoClient(null, authService, subsDeco);
+        this.jobsClient = new JobsClient(null, authService, subsDeco);
+        this.chemDBClient = new ChemDBClient(null, authService, subsDeco);
+        this.fingerprintClient = new FingerIdClient(null, authService, subsDeco);
+        this.canopusClient = new CanopusClient(null, authService, subsDeco);
+
+        if (activeSubscription != null)
+            changeActiveSubscription(activeSubscription);
     }
 
-    public RestAPI(@NotNull AuthService authService, @NotNull String host) {
-        this(authService, URI.create(host));
+
+    public RestAPI(@NotNull AuthService authService, @NotNull AuthService.Token token) {
+        this(authService, Tokens.getActiveSubscription(token));
     }
 
-    public RestAPI(@NotNull AuthService authService) {
-        this(authService, URI.create(FingerIDProperties.fingeridWebHost()));
-    }
-
-
-    public AuthService getAuthService() {
-        return authService;
-    }
-
-    public String getSignUpURL() {
-        try {
-            return getAuthService().signUpURL(jobsClient.getBaseURI("/signUp", true).build().toURL().toString());
-        } catch (MalformedURLException | URISyntaxException e) {
-            throw new IllegalArgumentException("Illegal URL!", e);
-        }
+    public URI getSignUpURL() {
+        return getAuthService().signUpURL(accountClient.getSignUpRedirectURL());
     }
 
     @Override
-    public void changeHost(URI host){
-        this.serverInfoClient.setServerUrl(host);
-        this.jobsClient.setServerUrl(host);
-        this.chemDBClient.setServerUrl(host);
-        this.fingerprintClient.setServerUrl(host);
-        this.canopusClient.setServerUrl(host);
+    public void changeActiveSubscription(@Nullable Subscription activeSubscription) {
+        this.activeSubscription = activeSubscription;
+        changeHost(this.activeSubscription != null ? () -> URI.create(this.activeSubscription.getServiceUrl()) : () -> null);
     }
 
+    public Subscription getActiveSubscription() {
+        return activeSubscription;
+    }
 
     @Override
-    public boolean deleteAccount(){
-        return ProxyManager.doWithClient(jobsClient::deleteAccount);
+    public void changeHost(Supplier<URI> hostSupplier) {
+        this.serverInfoClient.setServerUrl(hostSupplier);
+        this.jobsClient.setServerUrl(hostSupplier);
+        this.chemDBClient.setServerUrl(hostSupplier);
+        this.fingerprintClient.setServerUrl(hostSupplier);
+        this.canopusClient.setServerUrl(hostSupplier);
+    }
+
+    @Override
+    public boolean deleteAccount() {
+        return ProxyManager.doWithClient(accountClient::deleteAccount);
     }
 
 
     @Override
     public void shutdown() throws IOException {
-            jobWatcher.shutdown();
+        jobWatcher.shutdown();
         super.shutdown();
     }
 
     @Override
     public void acceptTermsAndRefreshToken() throws LoginException {
-        if (ProxyManager.doWithClient(jobsClient::acceptTerms));
+        if (ProxyManager.doWithClient(accountClient::acceptTerms))
             authService.refreshIfNeeded(true);
     }
 
 
     //region ServerInfo
-    @Nullable
-    public VersionsInfo getVersionInfo() {
-        return ProxyManager.doWithClient(serverInfoClient::getVersionInfo);
+    @NotNull
+    public VersionsInfo getVersionInfo() throws IOException {
+        return ProxyManager.applyClient(serverInfoClient::getVersionInfo);
     }
 
     @Override
     public String getChemDbDate() { //todo this is ugly an should be moved to a separate endpoint in the chemDB client
-        @Nullable VersionsInfo v = getVersionInfo();
-        return v == null ? null : v.databaseDate;
+        try {
+            return getVersionInfo().databaseDate;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public int checkConnection() {
-        return ProxyManager.doWithClient(client -> {
-            try {
-                VersionsInfo v = serverInfoClient.getVersionInfo(client);
-                if (v == null) {
-                    int error = ProxyManager.checkInternetConnection(client);
-                    if (error > 0) return error;
-                    else return 4;
-                } else if (v.outdated()) {
-                    return MAX_STATE;
-                } else if (serverInfoClient.testConnection(client)) {
-                    return jobsClient.testSecuredConnection(client);
-                } else {
-                    return 5;
+    public synchronized Multimap<ConnectionError.Klass, ConnectionError> checkConnection() {
+        final Multimap<ConnectionError.Klass, ConnectionError> errors = Multimaps.newSetMultimap(new HashMap<>(), LinkedHashSet::new);
+
+        try {
+            ProxyManager.consumeClient(client -> {
+                checkSecuredConnection(client).ifPresent(e -> errors.put(e.getErrorKlass(), e));
+                //failed
+                if (!errors.isEmpty()) {
+                    checkLogin().ifPresent(e -> errors.put(e.getErrorKlass(), e));
+                    checkUnsecuredConnection(client).ifPresent(e -> errors.put(e.getErrorKlass(), e));
+
+                    ProxyManager.checkInternetConnection(client).ifPresent(es -> es.forEach(e -> errors.put(e.getErrorKlass(), e)));
                 }
-            } catch (Exception e) {
-                LOG.error("Error during connection check!", e);
-                return MAX_STATE;
+            });
+        } catch (Exception e) {
+            ConnectionError c = new ConnectionError(100, "Unexpected error during connection check!", ConnectionError.Klass.UNKNOWN, e);
+            LOG.error(c.getSiriusMessage(), e);
+            errors.put(c.getErrorKlass(), c);
+        }
+        return errors;
+    }
+
+    private Optional<ConnectionError> checkLogin() {
+        //6,5,4
+        if (authService.needsLogin())
+            return Optional.of(new ConnectionError(4, "You are not logged in. Please login with a verified user account to connect to the SIRIUS web services. " +
+                    "If you do not have an account you can create one for free using your institutional email address.", ConnectionError.Klass.LOGIN));
+        try {
+            AuthService.Token token = authService.refreshIfNeeded();
+
+            if (!Tokens.isUserEmailVerified(token)) {
+                String email = Tokens.getUserEmail(token).orElse("N/A");
+                return Optional.of(new ConnectionError(51,
+                        "Your accounts (primary) email address '" + email + "' has not been verified."
+                                + "Please verify this email address by clicking on the verification " +
+                                "link we sent to your inbox and re-login or refresh your access_token afterwards. " +
+                                "Please contact support if you have not received a verification email.",
+                        ConnectionError.Klass.LICENSE));
             }
-        });
+
+            @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
+            if (subs.isEmpty())
+                return Optional.of(new ConnectionError(52,
+                        "No Subscriptions (Licenses) found for your Account. " +
+                                "Are you using your correct institutional email address? " +
+                                "Subscriptions are usually bound to institutional email addresses. " +
+                                "If you believe that a subscription should be available, try to re-login or refresh " +
+                                "your access_token. If the problem persists contact support."
+                        , ConnectionError.Klass.LICENSE));
+
+            @Nullable Subscription sub = Tokens.getActiveSubscription(subs);
+            if (sub == null)
+                return Optional.of(new ConnectionError(53,
+                        "Could not determine an active subscription, but there are'"
+                                + subs.size() + "' subscriptions available for your account. This is likely to be a bug. " +
+                                "Please contact support.", ConnectionError.Klass.LICENSE));
+
+            java.sql.Date expDate = sub.getExpirationDate();
+            if (expDate != null && expDate.getTime() < System.currentTimeMillis())
+                return Optional.of(new ConnectionError(54,
+                        "The active subscription expired at '"
+                                + sub.getExpirationDate() + "'. Please renew your subscription or choose another non expired subscription if available." +
+                                "Please contact support.", ConnectionError.Klass.LICENSE));
+
+            @NotNull List<Term> terms = Tokens.getAcceptedTerms(token);
+            String pp = sub.getPp();
+            String tos = sub.getTos();
+            if (tos != null && terms.stream().filter(t -> t.getLink().toString().equals(tos)).findAny().isEmpty())
+                return Optional.of(new ConnectionError(61, "Terms of Service (ToS) not Accepted. Please accept the ToS of active subscription.", ConnectionError.Klass.TERMS));
+            if (pp != null && terms.stream().filter(t -> t.getLink().toString().equals(pp)).findAny().isEmpty())
+                return Optional.of(new ConnectionError(62, "Privacy Policy (PP) not Accepted. Please accept the PP of active subscription.", ConnectionError.Klass.TERMS));
+
+            return Optional.empty();
+
+        } catch (LoginException e) {
+            String m = "Error when requesting login token.";
+            LoggerFactory.getLogger(getClass()).error(m + ": " + e.getMessage(), e);
+            return Optional.of(new ConnectionError(71, m, ConnectionError.Klass.TOKEN, e));
+        }
+    }
+
+    private Optional<ConnectionError> checkUnsecuredConnection(@NotNull CloseableHttpClient client) {
+        try {
+            serverInfoClient.execute(client, () -> new HttpGet(serverInfoClient.getBaseURI("/actuator/health").build()));
+            return Optional.empty();
+        } catch (HttpErrorResponseException e) {
+            String message = "Could not load version info (unsecured api endpoint). Bad Response Code.";
+            LoggerFactory.getLogger(getClass()).warn(message + " Cause: " + e.getMessage());
+            return Optional.of(new ConnectionError(81, message, ConnectionError.Klass.APP_SERVER, e));
+        } catch (Exception e) {
+            return Optional.of(new ConnectionError(82, "Unexpected error when contacting unsecured api endpoint", ConnectionError.Klass.APP_SERVER, e));
+        }
+    }
+
+    private Optional<ConnectionError> checkSecuredConnection(@NotNull CloseableHttpClient client) {
+        try {
+            serverInfoClient.execute(client, () -> {
+                HttpGet get = new HttpGet(serverInfoClient.getBaseURI("/api/check").build());
+                final int timeoutInSeconds = 8000;
+                get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
+                return get;
+            });
+            return Optional.empty();
+        } catch (HttpErrorResponseException e) {
+            String message = "Could not reach secured api endpoint. Bad Response Code.";
+            LoggerFactory.getLogger(getClass()).warn(message + " Cause: " + e.getMessage());
+
+            String[] splitMsg = e.getReasonPhrase().split(SecurityService.ERROR_CODE_SEPARATOR);
+            if (splitMsg.length > 1 && splitMsg[1].equals(SecurityService.TERMS_MISSING))
+                return Optional.of(new ConnectionError(63, "Server detected that that Terms and Conditions and/or Privacy policy of the used subscription has not been accepted.", ConnectionError.Klass.TERMS));
+
+            return Optional.of(new ConnectionError(91, message, ConnectionError.Klass.APP_SERVER, e));
+        } catch (OAuthResponseException e) {
+            String m = "Error when contacting login Server during application server connection.";
+            LoggerFactory.getLogger(getClass()).error(m + ": " + e.getMessage(), e);
+            return Optional.of(new ConnectionError(72, m, ConnectionError.Klass.TOKEN, e));
+        } catch (Exception e) {
+            return Optional.of(new ConnectionError(92, "Unexpected error when contacting secured api endpoint", ConnectionError.Klass.APP_SERVER, e));
+        }
     }
 
     public WorkerList getWorkerInfo() throws IOException {
         return ProxyManager.applyClient(serverInfoClient::getWorkerInfo);
     }
-
-    @Nullable
-    public List<Term> getTerms() {
-        try {
-            return ProxyManager.applyClient(serverInfoClient::getTerms);
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error("Could not load Terms from server!", e);
-            return null;
-        }
-    }
-
-    public LicenseInfo getLicenseInfo() throws IOException {
-        return ProxyManager.applyClient(jobsClient::getLicenseInfo);
-    }
-
-   /* public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {
-        return ProxyManager.applyClient(client -> serverInfoClient.reportError(report, SOFTWARE_NAME, client));
-    }*/
     //endregion
 
     //region Jobs
-    public int getCountedJobs(boolean byMonth) throws IOException {
-        return getCountedJobs(new Date(System.currentTimeMillis()), byMonth);
+    public SubscriptionConsumables getConsumables(boolean byMonth) throws IOException {
+        return getConsumables(new Date(System.currentTimeMillis()), byMonth);
     }
 
-    public int getCountedJobs(@NotNull Date monthAndYear, boolean byMonth) throws IOException {
-        return ProxyManager.applyClient(client -> jobsClient.getCountedJobs(monthAndYear, byMonth, client));
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth) throws IOException {
+        return ProxyManager.applyClient(client -> serverInfoClient.getConsumables(monthAndYear, byMonth, client));
     }
 
     public List<JobUpdate<?>> updateJobStates(JobTable jobTable) throws IOException {
@@ -294,7 +409,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     // use via predictor/scoring method
     public WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> submitCovtreeJob(@NotNull MolecularFormula formula, @NotNull PredictorType predictorType) throws IOException {
         final CovtreeJobInput input = new CovtreeJobInput(formula.toString(), predictorType);
-        final JobUpdate<CovtreeJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postCovtreeJobs(input,  client));
+        final JobUpdate<CovtreeJobOutput> jobUpdate = ProxyManager.applyClient(client -> fingerprintClient.postCovtreeJobs(input, client));
         final MaskedFingerprintVersion fpVersion = getFingerIdData(predictorType).getFingerprintVersion();
         final PredictionPerformance[] performances = getFingerIdData(predictorType).getPerformances();
         return jobWatcher.watchJob(new RestWebJJob<>(jobUpdate.getID(), input, new CovtreeWebResultConverter(fpVersion, performances)));
@@ -303,7 +418,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     /**
      * @param predictorType pos or neg
-     * @param formula Molecular formula for which the tree is requested (Default tree will be used if formula is null)
+     * @param formula       Molecular formula for which the tree is requested (Default tree will be used if formula is null)
      * @return {@link BayesnetScoring} for the given {@link PredictorType} and {@link MolecularFormula}
      * @throws IOException if something went wrong with the web query
      */
@@ -327,6 +442,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     //endRegion
 
     //region FingerprintVersions
+
     /**
      * @return The Fingerprint version used by the rest Database --  not really needed but for sanity checks
      * @throws IOException if connection error happens

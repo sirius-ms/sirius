@@ -158,7 +158,7 @@ public class ElGordoPlugin extends SiriusPlugin  {
                 if (whiteset.getNeutralFormulas().contains(ano.getFormula()) || whiteset.getMeasuredFormulas().contains(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula()))) {
                  whiteset = Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()));
                 } else {
-                    LoggerFactory.getLogger(ElGordoPlugin.class).warn(input.getExperimentInformation().getSourceString() + " is estimated to be " + species.toString() + " but the corresponding molecular formula " + ano.getFormula() + " is not part of the candidate set. Compound name = " + input.getExperimentInformation().getName());
+                    LoggerFactory.getLogger(ElGordoPlugin.class).warn(input.getExperimentInformation().getName() + " is estimated to be " + species.toString() + " but the corresponding molecular formula " + ano.getFormula() + " is not part of the candidate set. Compound name = " + input.getExperimentInformation().getName());
                     return;
                 }
             } else {

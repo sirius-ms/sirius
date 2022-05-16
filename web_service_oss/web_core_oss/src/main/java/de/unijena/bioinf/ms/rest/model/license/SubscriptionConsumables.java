@@ -18,24 +18,20 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.auth;
+package de.unijena.bioinf.ms.rest.model.license;
 
-import java.io.IOException;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-public class LoginException extends IOException {
-    public LoginException() {
-        super("Not Logged in, No valid refresh token Available");
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SubscriptionConsumables {
+    //todo at the time frame of this values
+    private int countedCompounds = -1;
+
+    public int getCountedCompounds() {
+        return countedCompounds;
     }
 
-    public LoginException(Throwable cause) {
-        super("Not Logged in, No valid refresh token Available", cause);
-    }
-
-    public LoginException(String message) {
-        super(message);
-    }
-
-    public LoginException(String message, Throwable cause) {
-        super(message, cause);
+    public void setCountedCompounds(int countedCompounds) {
+        this.countedCompounds = countedCompounds;
     }
 }

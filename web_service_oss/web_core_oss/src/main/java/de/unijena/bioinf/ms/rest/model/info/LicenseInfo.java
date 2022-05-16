@@ -22,132 +22,91 @@ package de.unijena.bioinf.ms.rest.model.info;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.sql.Date;
+import java.util.Optional;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LicenseInfo {
-    private String licensee;
-    private String description;
-    private String groupID;
-    private Date expirationDate;
-    private boolean countQueries;
-    private int compoundLimit;
-    private int countedCompounds = -1;
-    private int compoundHashRecordingTime;
-    private int maxQueriesPerCompound;
+    @Nullable
+    private String userEmail;
+    @Nullable
+    private String userId;
+    @Nullable
+    private Subscription subscription;
+    @Nullable
+    private SubscriptionConsumables consumables;
 
-    public String getLicensee() {
-        return licensee;
+    @Nullable
+    public String getUserEmail() {
+        return userEmail;
     }
-
-    public void setLicensee(String licensee) {
-        this.licensee = licensee;
-    }
-
-    public boolean isCountQueries() {
-        return countQueries;
-    }
-
-    public void setCountQueries(boolean countQueries) {
-        this.countQueries = countQueries;
-    }
-
-    public int getCompoundHashRecordingTime() {
-        return compoundHashRecordingTime;
-    }
-
-    public void setCompoundHashRecordingTime(int timeInHours) {
-        this.compoundHashRecordingTime = timeInHours;
-    }
-
-    public int getMaxQueriesPerCompound() {
-        return maxQueriesPerCompound;
-    }
-
-    public void setMaxQueriesPerCompound(int maxQueriesPerCompound) {
-        this.maxQueriesPerCompound = maxQueriesPerCompound;
-    }
-
-    public int getCompoundLimit() {
-        return compoundLimit;
-    }
-
-    public void setCompoundLimit(int compoundLimit) {
-        this.compoundLimit = compoundLimit;
-    }
-
-    public int getCountedCompounds() {
-        return countedCompounds;
-    }
-
-    public void setCountedCompounds(int countedCompounds) {
-        this.countedCompounds = countedCompounds;
-    }
-
-    public String getGroupID() {
-        return groupID;
-    }
-
-    public void setGroupID(String groupID) {
-        this.groupID = groupID;
-    }
-
-    public Date getExpirationDate() {
-        return expirationDate;
-    }
-
-    public void setExpirationDate(Date expirationDate) {
-        this.expirationDate = expirationDate;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     @JsonIgnore
-    public boolean hasExpirationTime(){
-        return getExpirationDate() != null;
+    @NotNull
+    public Optional<String> userEmail() {
+        return Optional.ofNullable(userEmail);
     }
 
-    @JsonIgnore
-    public boolean isExpired() {
-        if (!hasExpirationTime())
-            return false;
-        return getExpirationDate().getTime() < System.currentTimeMillis();
+    public void setUserEmail(@Nullable String userEmail) {
+        this.userEmail = userEmail;
     }
 
+    @Nullable
+    public String getUserId() {
+        return userId;
+    }
     @JsonIgnore
-    public long getExpirationTime() {
-        if (expirationDate == null)
-            return -1;
-        return expirationDate.getTime();
+    @NotNull
+    public Optional<String> userId() {
+        return Optional.ofNullable(userId);
     }
 
-    @JsonIgnore
-    public void setExpirationTime(long expirationDate) {
-        this.expirationDate = new Date(expirationDate);
+    public void setUserId(@Nullable String userId) {
+        this.userId = userId;
     }
 
 
     @JsonIgnore
-    public boolean hasCompoundLimit() {
-        return getCompoundLimit() > 0;
+    @NotNull
+    public Optional<SubscriptionConsumables> consumables(){
+        return Optional.ofNullable(consumables);
     }
 
     @JsonIgnore
-    public LicenseInfo copyWithCounted(int countedCompounds){
+    @NotNull
+    public Optional<Subscription> subscription(){
+        return Optional.ofNullable(subscription);
+    }
+
+    @Nullable
+    public Subscription getSubscription() {
+        return subscription;
+    }
+
+    public void setSubscription(@Nullable Subscription subscription) {
+        this.subscription = subscription;
+    }
+
+    @Nullable
+    public SubscriptionConsumables getConsumables() {
+        return consumables;
+    }
+
+    public void setConsumables(@Nullable SubscriptionConsumables consumables) {
+        this.consumables = consumables;
+    }
+
+
+    @JsonIgnore
+    public LicenseInfo copyWithUpdate(SubscriptionConsumables consumables){
         LicenseInfo nu  = new LicenseInfo();
-        nu.setCountedCompounds(countedCompounds);
-        nu.setLicensee(getLicensee());
-        nu.setCountQueries(isCountQueries());
-        nu.setCompoundHashRecordingTime(getCompoundHashRecordingTime());
-        nu.setMaxQueriesPerCompound(getMaxQueriesPerCompound());
-        nu.setGroupID(getGroupID());
-        nu.setExpirationDate(getExpirationDate());
+        nu.setConsumables(consumables);
+        nu.setSubscription(subscription);
+        nu.setUserId(userId);
+        nu.setUserEmail(userEmail);
         return nu;
     }
 }

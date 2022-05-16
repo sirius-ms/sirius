@@ -47,7 +47,7 @@ public abstract class AbstractWebAPI<D extends AbstractChemicalDatabase> impleme
     }
 
 
-    //caches predicors so that we do not have to download the statistics and fingerprint info every time
+    //caches predictors so that we do not have to download the statistics and fingerprint info every time
     private final EnumMap<PredictorType, StructurePredictor> fingerIdPredictors = new EnumMap<>(PredictorType.class);
 
     public @NotNull StructurePredictor getStructurePredictor(@NotNull PredictorType type) throws IOException {
