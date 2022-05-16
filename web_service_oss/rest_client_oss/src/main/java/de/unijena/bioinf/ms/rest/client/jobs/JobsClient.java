@@ -23,7 +23,7 @@ package de.unijena.bioinf.ms.rest.client.jobs;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.ms.rest.client.AbstractClient;
+import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
 import de.unijena.bioinf.ms.rest.model.JobId;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
@@ -40,7 +40,7 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class JobsClient extends AbstractClient {
+public class JobsClient extends AbstractCsiClient {
     @SafeVarargs
     public JobsClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorator) {
         super(serverUrl, requestDecorator);

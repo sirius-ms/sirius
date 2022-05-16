@@ -58,17 +58,19 @@ public class Tokens {
     public static Optional<String> getUserEmail(@Nullable AuthService.Token token) {
         return parseIDClaim(token, "email").map(Claim::asString);
     }
-    
+
     private static Optional<Claim> parseATClaim(@Nullable AuthService.Token token, @NotNull String key) {
         if (token == null)
             return Optional.empty();
-        return parseClaim(token.getDecodedAccessToken(),key);
+        return parseClaim(token.getDecodedAccessToken(), key);
     }
+
     private static Optional<Claim> parseIDClaim(@Nullable AuthService.Token token, @NotNull String key) {
         if (token == null)
             return Optional.empty();
-        return parseClaim(token.getDecodedIdToken(),key);
+        return parseClaim(token.getDecodedIdToken(), key);
     }
+
     private static Optional<Claim> parseClaim(@Nullable DecodedJWT token, @NotNull String key) {
         if (token == null)
             return Optional.empty();
@@ -89,15 +91,19 @@ public class Tokens {
 
     @NotNull
     public static List<Term> getActiveSubscriptionTerms(@Nullable AuthService.Token token) {
-        @Nullable Subscription sub = Tokens.getActiveSubscription(token);
+        return getActiveSubscriptionTerms(getActiveSubscription(token));
+    }
+
+    @NotNull
+    public static List<Term> getActiveSubscriptionTerms(@Nullable Subscription sub) {
         if (sub == null)
             return List.of();
 
         List<Term> terms = new ArrayList<>();
         if (sub.getTos() != null)
-            terms.add(Term.of(sub.getTos()));
+            terms.add(Term.of("Terms of Service", sub.getTos()));
         if (sub.getPp() != null)
-            terms.add(Term.of(sub.getPp()));
+            terms.add(Term.of("Privacy Policy", sub.getPp()));
 
         return terms;
     }
@@ -105,7 +111,7 @@ public class Tokens {
 
     @NotNull
     public static Optional<SubscriptionData> getSubscriptionData(@Nullable AuthService.Token token) {
-        return parseATClaim(token,"https://bright-giant.com/licenseData").map(c -> c.as(SubscriptionData.class));
+        return parseATClaim(token, "https://bright-giant.com/licenseData").map(c -> c.as(SubscriptionData.class));
     }
 
     @NotNull

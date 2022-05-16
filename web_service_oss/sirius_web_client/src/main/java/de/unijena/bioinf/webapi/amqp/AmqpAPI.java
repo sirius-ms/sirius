@@ -28,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
-import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
@@ -93,7 +92,7 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    public String getSignUpURL() {
+    public URI getSignUpURL() {
         return null;//todo implement
     }
 
@@ -103,7 +102,7 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    public void acceptTermsAndRefreshToken() throws LoginException {
+    public void acceptTermsAndRefreshToken() {
 //todo implement
     }
 
@@ -278,6 +277,4 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
         return new CdkFingerprintVersion(CdkFingerprintVersion.withECFP().getUsedFingerprints()); //todo DUMMY add to amqp api
     }
     //endregion
-
-
 }
