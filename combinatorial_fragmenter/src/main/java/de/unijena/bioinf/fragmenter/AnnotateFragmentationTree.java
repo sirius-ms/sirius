@@ -175,11 +175,13 @@ public class AnnotateFragmentationTree {
     public static void writeJson(FTree tree, MolecularGraph graph, List<Entry> entries, Writer out) throws IOException {
         final JsonGenerator G = new JsonFactory().createGenerator(out);
         G.writeStartArray();
+        double totalScore = entries.stream().mapToDouble(x->x.totalScore).sum();
         FragmentAnnotation<AnnotatedPeak> peak = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
         for (Entry entry : entries) {
             G.writeStartObject();
             G.writeStringField("formula", entry.formula);
             G.writeNumberField("peakmass", peak.get(entry.bestMatchingFragment).getMass());
+            G.writeNumberField("totalScore", totalScore);
             G.writeNumberField("score", entry.totalScore);
             // write bonds and atoms
             G.writeArrayFieldStart("atoms");

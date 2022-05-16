@@ -50,8 +50,12 @@ public class EMFragmenterScoring2 implements CombinatorialFragmenterScoring {
         return -1;
     }
 
+    // the prior penalty for hydrogen missmatch PER hydrogen
     protected static double rearrangementScore = -0.25d;
-    protected static double peakScore = 5d;
+    // the prior score for explaining a peak
+    protected static double peakScore = 6d;
+    // penalizes deep nodes, such that on a tie, a node with fewer cuts is always preferred
+    protected static double depthPenalty = -0.05f;
 
     private double[] bondScoresLeft, bondScoresRight;
     private TObjectDoubleHashMap<MolecularFormula> fragmentScores;
@@ -154,15 +158,16 @@ public class EMFragmenterScoring2 implements CombinatorialFragmenterScoring {
     public double scoreEdge(CombinatorialEdge edge) {
         CombinatorialFragment sourceFragment = edge.source.fragment;
         CombinatorialFragment targetFragment = edge.target.fragment;
+        double depthScore = (edge.source.depth+1) * depthPenalty;
 
         if (targetFragment.isInnerNode()) {
             return scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) + (edge.getCut2() != null ? scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) : 0);
         } else {
             int hydrogenDiff = Math.abs(sourceFragment.hydrogenRearrangements(targetFragment.getFormula()));
             if (hydrogenDiff == 0) {
-                return 0;
+                return depthScore;
             } else {
-                double score = hydrogenDiff * rearrangementScore;
+                double score = hydrogenDiff * rearrangementScore + depthScore;
                 return (Double.isNaN(score) || Double.isInfinite(score)) ? (-1.0E6) : score;
             }
         }
