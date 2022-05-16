@@ -194,6 +194,12 @@ public class DirectedBondTypeScoring {
         return explainBondBy(b, b.getAtom(0).getAtomTypeName()  ,b.getAtom(1).getAtomTypeName(), fromLeftToRight);
     }
 
+    public static String bondNameEcfp(IBond b, boolean fromLeftToRight) {
+        int ecfp = b.getAtom(0).getProperty("ECFP");
+        int ecfp2 = b.getAtom(1).getProperty("ECFP");
+        return explainBondBy(b, b.getAtom(0).getAtomTypeName() + "#" + ecfp  ,b.getAtom(1).getAtomTypeName() + "#" + ecfp2, fromLeftToRight);
+    }
+
     private static String explainBondBy(IBond b, String labelA, String labelB, boolean fromLeftToRight) {
         if (!fromLeftToRight) {
             String c = labelA;
@@ -225,7 +231,6 @@ public class DirectedBondTypeScoring {
     public CombinatorialFragmenterScoring getScoringFor(MolecularGraph graph, FTree tree){
         return new Impl(graph,tree);
     }
-
 
 
     protected static class Impl implements CombinatorialFragmenterScoring {
@@ -288,10 +293,15 @@ public class DirectedBondTypeScoring {
         }
 
         @Override
-        public double scoreFragment(CombinatorialFragment fragment) {
+        public double scoreFragment(CombinatorialNode fragment) {
             if (fragmentScores==null) return 0d;
-            return fragmentScores.get(fragment.getFormula());
+            return fragmentScores.get(fragment.fragment.getFormula().withoutHydrogen());
         }
+
+        public double scoreEdge(CombinatorialEdge edge){
+            return scoreBond(edge.getCut1(),edge.getDirectionOfFirstCut()) + (edge.getCut2() != null ? scoreBond(edge.getCut2(),edge.getDirectionOfSecondCut()) : 0);
+        }
+
     }
 
 }

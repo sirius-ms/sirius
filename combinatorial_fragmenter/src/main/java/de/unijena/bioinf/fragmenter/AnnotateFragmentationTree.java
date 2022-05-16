@@ -20,11 +20,11 @@ public class AnnotateFragmentationTree {
 
     private final FTree tree;
     private final MolecularGraph graph;
-    private final DirectedBondTypeScoring scoring;
+    private final CombinatorialFragmenterScoring scoring;
 
     private ArrayList<Entry> entries;
 
-    public AnnotateFragmentationTree(FTree tree, MolecularGraph molecule, DirectedBondTypeScoring scoring) {
+    public AnnotateFragmentationTree(FTree tree, MolecularGraph molecule, CombinatorialFragmenterScoring scoring) {
         this.tree = tree;
         this.graph = molecule;
         this.scoring = scoring;
@@ -51,9 +51,9 @@ public class AnnotateFragmentationTree {
     public static class Job extends BasicJJob<ArrayList<Entry>> {
         private final FTree tree;
         private final MolecularGraph graph;
-        private final DirectedBondTypeScoring scoring;
+        private final CombinatorialFragmenterScoring scoring;
 
-        public Job(FTree tree, MolecularGraph graph, DirectedBondTypeScoring scoring) {
+        public Job(FTree tree, MolecularGraph graph, CombinatorialFragmenterScoring scoring) {
             this.tree = tree;
             this.graph = graph;
             this.scoring = scoring;
@@ -61,11 +61,10 @@ public class AnnotateFragmentationTree {
 
         @Override
         protected ArrayList<Entry> compute() throws Exception {
-            final PriorizedFragmenter fragmenter = new PriorizedFragmenter(graph, scoring.getScoringFor(graph, tree));
+            final PriorizedFragmenter fragmenter = new PriorizedFragmenter(graph, scoring);
 
             final HashMap<MolecularFormula, List<Fragment>> formulas = new HashMap<>();
             for (Fragment f : tree.getFragmentsWithoutRoot()) {
-                checkForInterruption();
                 formulas.computeIfAbsent(f.getFormula().withoutHydrogen(), (x) -> new ArrayList<>()).add(f);
             }
 
@@ -79,8 +78,8 @@ public class AnnotateFragmentationTree {
                 if (remaining == 0) break;
                 CombinatorialNode f = fragmenter.currentFragment;
 
-                final boolean match = formulas.containsKey(f.fragment.getFormula());
-                if (((match || f.totalScore >= -10)) && (f.getBondbreaks() < 10))
+                final boolean match = formulas.containsKey(f.fragment.getFormula().withoutHydrogen());
+                if (((match || f.totalScore >= -5)) && (f.getBondbreaks() < 10))
                     fragmenter.acceptFragmentForFragmentation();
                 if (match) {
                     if (insertBestMatching(bestMatch, formulas, f, secondBestMatch)) {
@@ -115,7 +114,7 @@ public class AnnotateFragmentationTree {
 
 
     private static boolean insertBestMatching(HashMap<Fragment, CombinatorialNode> mapping, HashMap<MolecularFormula, List<Fragment>> formulas, CombinatorialNode node, HashMap<Fragment, CombinatorialNode> secondBest) {
-        final Iterator<Fragment> iterator = formulas.get(node.fragment.getFormula()).stream().sorted(Comparator.comparingInt(
+        final Iterator<Fragment> iterator = formulas.get(node.fragment.getFormula().withoutHydrogen()).stream().sorted(Comparator.comparingInt(
                 x -> node.fragment.hydrogenRearrangements(x.getFormula())
         )).iterator();
         while (iterator.hasNext()) {
@@ -153,7 +152,7 @@ public class AnnotateFragmentationTree {
         return graph;
     }
 
-    public DirectedBondTypeScoring getScoring() {
+    public CombinatorialFragmenterScoring getScoring() {
         return scoring;
     }
 
@@ -170,6 +169,8 @@ public class AnnotateFragmentationTree {
         }
         return w.toString();
     }
+
+
 
     public static void writeJson(FTree tree, MolecularGraph graph, List<Entry> entries, Writer out) throws IOException {
         final JsonGenerator G = new JsonFactory().createGenerator(out);

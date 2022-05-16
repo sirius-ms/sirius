@@ -93,6 +93,9 @@ public class MolecularGraph {
         try {
             circularFingerprinter.calculate(molecule);
             this.atomIdentities = circularFingerprinter.identitiesPerIteration.get(circularFingerprinter.identitiesPerIteration.size()-1);
+            for (int i=0; i < atomIdentities.length; ++i) {
+                molecule.getAtom(i).setProperty("ECFP", atomIdentities[i]);
+            }
         } catch (CDKException e) {
             throw new RuntimeException(e);
         }
@@ -100,12 +103,16 @@ public class MolecularGraph {
 
     public CombinatorialFragment asFragment() {
         BitSet bitset = new BitSet();
-        for (int i=0; i < natoms; ++i) bitset.set(i);;
-        return new CombinatorialFragment(this, bitset, new BitSet(bondsOfRings.length));
+        for (int i=0; i < natoms; ++i) bitset.set(i);
+        return new CombinatorialFragment(this, bitset, formula, new BitSet(bondsOfRings.length));
     }
 
     public IAtomContainer getMolecule() {
         return molecule;
+    }
+
+    public MolecularFormula getFormula(){
+        return this.formula;
     }
 
     public IBond[] getBonds() {
