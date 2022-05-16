@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SubscriptionConsumables {
+    //todo at the time frame of this values
     private int countedCompounds = -1;
 
     public int getCountedCompounds() {
