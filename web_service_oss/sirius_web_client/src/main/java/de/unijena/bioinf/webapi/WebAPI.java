@@ -63,6 +63,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.Map;
@@ -88,7 +89,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     AuthService getAuthService();
 
-    String getSignUpURL();
+    URI getSignUpURL() throws URISyntaxException;
 
     boolean deleteAccount();
 

@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
@@ -251,11 +252,15 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
         return refreshToken;
     }
 
-    public String signUpURL(String redirectUrl){
-        return service.createAuthorizationUrlBuilder().additionalParams(Map.of(
+    public URI signUpURL(URI redirectUrl){
+        return signUpURL(redirectUrl.toString());
+    }
+
+    public URI signUpURL(String redirectUrl){
+        return URI.create(service.createAuthorizationUrlBuilder().additionalParams(Map.of(
                 "screen_hint","signup",
                 "prompt","login",
-                "redirect_uri", redirectUrl)).build();
+                "redirect_uri", redirectUrl)).build());
     }
 
     public void sendPasswordReset(String email) throws IOException, ExecutionException, InterruptedException {

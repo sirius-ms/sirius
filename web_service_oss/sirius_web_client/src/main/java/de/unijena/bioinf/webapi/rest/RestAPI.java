@@ -44,6 +44,7 @@ import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.HttpErrorResponseException;
+import de.unijena.bioinf.ms.rest.client.account.AccountClient;
 import de.unijena.bioinf.ms.rest.client.canopus.CanopusClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.ChemDBClient;
 import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
@@ -84,9 +85,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -100,16 +99,21 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     private final WebJobWatcher jobWatcher = new WebJobWatcher(this);
 
-    public final InfoClient serverInfoClient;
-    public final JobsClient jobsClient;
-    public final StructureSearchClient chemDBClient;
-    public final FingerIdClient fingerprintClient;
-    public final CanopusClient canopusClient;
+    private final AccountClient accountClient;
+
+    private final InfoClient serverInfoClient;
+    private final JobsClient jobsClient;
+    private final StructureSearchClient chemDBClient;
+    private final FingerIdClient fingerprintClient;
+    private final CanopusClient canopusClient;
 
     private Subscription activeSubscription;
 
-    public RestAPI(@Nullable AuthService authService, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
+
+
+    public RestAPI(@Nullable AuthService authService, @NotNull AccountClient accountClient, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
         super(authService);
+        this.accountClient = accountClient;
         this.serverInfoClient = infoClient;
         this.jobsClient = jobsClient;
         this.chemDBClient = chemDBClient;
@@ -125,6 +129,10 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
                 req.addHeader("SUBSCRIPTION", this.activeSubscription.getSid());
         };
 
+        this.accountClient = new AccountClient(
+                URI.create(PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer")),
+                PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer.version"),
+                authService, authService, subsDeco);
         this.serverInfoClient = new InfoClient(null, authService, subsDeco);
         this.jobsClient = new JobsClient(null, authService, subsDeco);
         this.chemDBClient = new ChemDBClient(null, authService, subsDeco);
@@ -140,13 +148,8 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         this(authService, Tokens.getActiveSubscription(token));
     }
 
-
-    public AuthService getAuthService() {
-        return authService;
-    }
-
-    public String getSignUpURL() {
-        return getAuthService().signUpURL(PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer") + "account/signUp");
+    public URI getSignUpURL() {
+        return getAuthService().signUpURL(accountClient.getSignUpRedirectURL());
     }
 
     @Override
@@ -170,7 +173,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     @Override
     public boolean deleteAccount() {
-        return ProxyManager.doWithClient(jobsClient::deleteAccount);
+        return ProxyManager.doWithClient(accountClient::deleteAccount);
     }
 
 
@@ -182,8 +185,8 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
 
     @Override
     public void acceptTermsAndRefreshToken() throws LoginException {
-        if (ProxyManager.doWithClient(jobsClient::acceptTerms)) ;
-        authService.refreshIfNeeded(true);
+        if (ProxyManager.doWithClient(accountClient::acceptTerms))
+            authService.refreshIfNeeded(true);
     }
 
 
@@ -203,7 +206,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
     }
 
     @Override
-    public Multimap<ConnectionError.Klass, ConnectionError> checkConnection() {
+    public synchronized Multimap<ConnectionError.Klass, ConnectionError> checkConnection() {
         final Multimap<ConnectionError.Klass, ConnectionError> errors = Multimaps.newSetMultimap(new HashMap<>(), LinkedHashSet::new);
 
         try {
@@ -211,13 +214,13 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
                 checkSecuredConnection(client).ifPresent(e -> errors.put(e.getErrorKlass(), e));
                 //failed
                 if (!errors.isEmpty()) {
-                    checkLogin(client).ifPresent(e -> errors.put(e.getErrorKlass(), e));
+                    checkLogin().ifPresent(e -> errors.put(e.getErrorKlass(), e));
                     checkUnsecuredConnection(client).ifPresent(e -> errors.put(e.getErrorKlass(), e));
 
                     ProxyManager.checkInternetConnection(client).ifPresent(es -> es.forEach(e -> errors.put(e.getErrorKlass(), e)));
                 }
             });
-        } catch (Throwable e) {
+        } catch (Exception e) {
             ConnectionError c = new ConnectionError(100, "Unexpected error during connection check!", ConnectionError.Klass.UNKNOWN, e);
             LOG.error(c.getSiriusMessage(), e);
             errors.put(c.getErrorKlass(), c);
@@ -225,7 +228,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         return errors;
     }
 
-    public Optional<ConnectionError> checkLogin(@NotNull CloseableHttpClient client) {
+    private Optional<ConnectionError> checkLogin() {
         //6,5,4
         if (authService.needsLogin())
             return Optional.of(new ConnectionError(4, "You are not logged in. Please login with a verified user account to connect to the SIRIUS web services. " +
@@ -284,7 +287,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
         }
     }
 
-    public Optional<ConnectionError> checkUnsecuredConnection(@NotNull CloseableHttpClient client) {
+    private Optional<ConnectionError> checkUnsecuredConnection(@NotNull CloseableHttpClient client) {
         try {
             serverInfoClient.execute(client, () -> new HttpGet(serverInfoClient.getBaseURI("/actuator/health").build()));
             return Optional.empty();
@@ -292,12 +295,12 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
             String message = "Could not load version info (unsecured api endpoint). Bad Response Code.";
             LoggerFactory.getLogger(getClass()).warn(message + " Cause: " + e.getMessage());
             return Optional.of(new ConnectionError(81, message, ConnectionError.Klass.APP_SERVER, e));
-        } catch (Throwable e) {
+        } catch (Exception e) {
             return Optional.of(new ConnectionError(82, "Unexpected error when contacting unsecured api endpoint", ConnectionError.Klass.APP_SERVER, e));
         }
     }
 
-    public Optional<ConnectionError> checkSecuredConnection(@NotNull CloseableHttpClient client) {
+    private Optional<ConnectionError> checkSecuredConnection(@NotNull CloseableHttpClient client) {
         try {
             serverInfoClient.execute(client, () -> {
                 HttpGet get = new HttpGet(serverInfoClient.getBaseURI("/api/check").build());
@@ -319,7 +322,7 @@ public final class RestAPI extends AbstractWebAPI<RESTDatabase> {
             String m = "Error when contacting login Server during application server connection.";
             LoggerFactory.getLogger(getClass()).error(m + ": " + e.getMessage(), e);
             return Optional.of(new ConnectionError(72, m, ConnectionError.Klass.TOKEN, e));
-        } catch (Throwable e) {
+        } catch (Exception e) {
             return Optional.of(new ConnectionError(92, "Unexpected error when contacting secured api endpoint", ConnectionError.Klass.APP_SERVER, e));
         }
     }

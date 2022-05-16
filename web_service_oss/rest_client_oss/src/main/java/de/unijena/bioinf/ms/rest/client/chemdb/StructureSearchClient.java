@@ -32,7 +32,7 @@ import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
-import de.unijena.bioinf.ms.rest.client.AbstractClient;
+import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -45,7 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class StructureSearchClient extends AbstractClient {
+public class StructureSearchClient extends AbstractCsiClient {
 
 
     protected CdkFingerprintVersion fpVersion = null;
