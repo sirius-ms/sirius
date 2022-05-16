@@ -51,7 +51,8 @@ public class CombinatorialSubtreeCalculatorJsonWriter {
                     jsonGenerator.writeStartObject();
                     jsonGenerator.writeStringField("formula", node.fragment.getFormula().toString());
                     jsonGenerator.writeNumberField("peakmass", peak.getMass());
-                    jsonGenerator.writeNumberField("score", subtreeCalc.subtree.getScore());
+                    jsonGenerator.writeNumberField("totalScore", subtreeCalc.subtree.getScore());
+                    jsonGenerator.writeNumberField("score", node.totalScore);
                     jsonGenerator.writeArrayFieldStart("atoms");
                     final Set<IAtom> atoms = new HashSet<>();
                     for (IAtom a : frag.fragment.getAtoms()) {
