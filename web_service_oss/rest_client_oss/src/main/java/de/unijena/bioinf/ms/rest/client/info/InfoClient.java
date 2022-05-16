@@ -21,21 +21,22 @@
 package de.unijena.bioinf.ms.rest.client.info;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
-import de.unijena.bioinf.ms.rest.client.AbstractClient;
+import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
+import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.info.News;
-import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -45,53 +46,28 @@ import java.io.IOException;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
-public class InfoClient extends AbstractClient {
-    private static final Logger LOG = LoggerFactory.getLogger(InfoClient.class);
+public class InfoClient extends AbstractCsiClient {
     private static final String WEBAPI_VERSION_JSON = "/version.json";
     private static final String WEBAPI_WORKER_JSON = "/workers.json";
-    private static final String WEBAPI_TERMS_JSON = "/terms.json";
 
-    public InfoClient(@NotNull URI serverUrl) {
-        this(serverUrl, (it) -> {});
+    @SafeVarargs
+    public InfoClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+        super(serverUrl, requestDecorators);
     }
 
-    public InfoClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
-        super(serverUrl, requestDecorator);
-    }
-
-    @Nullable
-    public VersionsInfo getVersionInfo(final CloseableHttpClient client) {
-        VersionsInfo v = null;
-        try {
-            v = execute(client,
-                    () -> {
-                        HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
-                        get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
-                        return get;
-                    },
-                    this::parseVersionInfo
-            );
-
-        } catch (IOException e) {
-            LOG.warn("Could not reach fingerid version specific URL for version verification. Try to reach root url. Cause:" + e.getMessage());
-
-            try {
-                v = execute(client,
-                        () -> {
-                            HttpGet get = new HttpGet(buildVersionLessWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
-                            get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
-                            return get;
-                        },
-                        this::parseVersionInfo
-                );
-            } catch (IOException ex) {
-                LOG.warn("Could not reach fingerid root url for version verification.  Cause: " + e.getMessage());
-            }
-        }
-
-        return v;
+    @NotNull
+    public VersionsInfo getVersionInfo(final CloseableHttpClient client) throws IOException {
+        return execute(client,
+                () -> {
+                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_VERSION_JSON).setParameter("fingeridVersion", FingerIDProperties.fingeridFullVersion()).setParameter("siriusguiVersion", FingerIDProperties.sirius_guiVersion()).build());
+                    get.setConfig(RequestConfig.custom().setConnectTimeout(8000).setSocketTimeout(8000).build());
+                    return get;
+                },
+                this::parseVersionInfo
+        );
     }
 
     //todo change to Jackson
@@ -130,18 +106,6 @@ public class InfoClient extends AbstractClient {
     }
 
     @Nullable
-    public List<Term> getTerms(@NotNull CloseableHttpClient client) throws IOException {
-        return executeFromJson(client,
-                () -> {
-                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI(WEBAPI_TERMS_JSON).build());
-                    final int timeoutInSeconds = 8000;
-                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
-                    return get;
-                }, new TypeReference<>() {}
-        );
-    }
-
-    @Nullable
     public WorkerList getWorkerInfo(@NotNull CloseableHttpClient client) throws IOException {
         return executeFromJson(client,
                 () -> {
@@ -149,31 +113,27 @@ public class InfoClient extends AbstractClient {
                     final int timeoutInSeconds = 8000;
                     get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
                     return get;
-                }, new TypeReference<>() {}
+                }, new TypeReference<>() {
+                }
         );
     }
 
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
+        return getConsumables(monthAndYear, null, byMonth, client);
+    }
 
-    /*public <T extends ErrorReport> String reportError(ErrorReport report, String SOFTWARE_NAME, @NotNull CloseableHttpClient client) throws IOException {
-        return execute(client,
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, @Nullable JobTable jobType, boolean byMonth, @NotNull CloseableHttpClient client) throws IOException {
+        return executeFromJson(client,
                 () -> {
-                    final HttpPost post = new HttpPost(buildVersionSpecificWebapiURI("/report.json")
-                            .addParameter("name", SOFTWARE_NAME).build());
-                    final String json = new ObjectMapper().writeValueAsString(report);
-                    post.setEntity(new StringEntity(json, StandardCharsets.UTF_8));
-                    post.addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
-                    return post;
+                    URIBuilder builder = buildVersionSpecificWebapiURI("/consumed-resources")
+                            .setParameter("date", Long.toString(monthAndYear.getTime()))
+                            .setParameter("byMonth", Boolean.toString(byMonth));
+                    if (jobType != null)
+                        builder.setParameter("jobType", new ObjectMapper().writeValueAsString(jobType));
+
+                    return new HttpGet(builder.build());
                 },
-                reader -> {
-                    JsonNode jTree = new ObjectMapper().readTree(reader);
-                    boolean suc = jTree.get("success").asBoolean();
-                    String m = jTree.get("message").asText();
-                    if (suc)
-                        LOG.info(m);
-                    else
-                        LOG.error(m);
-                    return m;
-                }
+                new TypeReference<>() {}
         );
-    }*/
+    }
 }
