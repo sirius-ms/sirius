@@ -39,7 +39,6 @@ import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
@@ -148,8 +147,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 
 //                        ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
                         updateProgress(0, max, progress++, "Checking Webservice connection...");
-                        ConnectionMonitor.ConnetionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
-                        if (cc.isConnected()) {
+                        ConnectionMonitor.ConnectionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
+                        if (cc.hasInternet()) {
                             System.out.println("INSERT GITHUB UPDATE CHECK HERE");
                             /*if (versionsNumber != null) {
                                 if (versionsNumber.expired()) {

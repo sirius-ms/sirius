@@ -48,14 +48,14 @@ public class ShowAccountDialog extends AbstractAction {
         putValue(Action.SHORT_DESCRIPTION, "Show user account information and settings.");
 
         MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> {
-            ConnectionMonitor.ConnetionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
+            ConnectionMonitor.ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
             setIcon(check);
         });
 
         Jobs.runInBackground(() -> setIcon(MF.CONNECTION_MONITOR().checkConnection()));
     }
 
-    protected synchronized void setIcon(final @Nullable ConnectionMonitor.ConnetionCheck check) {
+    protected synchronized void setIcon(final @Nullable ConnectionMonitor.ConnectionCheck check) {
         if (check != null) {
             if (check.isLoggedIn()) {
                 URI imageURI = ApplicationCore.WEB_API.getAuthService().getToken()

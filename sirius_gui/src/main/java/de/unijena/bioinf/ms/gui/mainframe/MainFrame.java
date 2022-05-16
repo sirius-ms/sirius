@@ -30,7 +30,6 @@ import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
@@ -137,18 +136,19 @@ public class MainFrame extends JFrame implements DropTargetListener {
     private DropTarget dropTarget;
 
 
-    public synchronized ConnectionMonitor CONNECTION_MONITOR() {
-        if (CONNECTION_MONITOR == null)
-            CONNECTION_MONITOR = new ConnectionMonitor();
+    public ConnectionMonitor CONNECTION_MONITOR() {
         return CONNECTION_MONITOR;
     }
 
     //internet connection monitor
-    private ConnectionMonitor CONNECTION_MONITOR;
+    private final ConnectionMonitor CONNECTION_MONITOR;
 
     // methods for creating the mainframe
     private MainFrame() {
         super(ApplicationCore.VERSION_STRING());
+        //inti connection monitor
+        CONNECTION_MONITOR = new ConnectionMonitor();
+
         setIconImage(Icons.SIRIUS_APP_IMAGE);
         configureTaskbar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);

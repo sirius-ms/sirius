@@ -65,7 +65,8 @@ public abstract class ApplicationCore {
 
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
     public static final WebAPI<?> WEB_API;
-    @NotNull public static final BibtexManager BIBTEX;
+    @NotNull
+    public static final BibtexManager BIBTEX;
 
     private static final boolean TIME = false;
     private static long t1;
@@ -167,8 +168,8 @@ public abstract class ApplicationCore {
                 final StringWriter buff = new StringWriter();
                 PropertyManager.DEFAULTS.write(buff);
                 String[] lines = buff.toString().split(System.lineSeparator());
-                try (BufferedWriter w = Files.newBufferedWriter(customProfileFile,StandardCharsets.UTF_8)) {
-                    for(String line : lines){
+                try (BufferedWriter w = Files.newBufferedWriter(customProfileFile, StandardCharsets.UTF_8)) {
+                    for (String line : lines) {
                         w.write(line.startsWith("#") ? line : "#" + line);
                         w.newLine();
                     }
@@ -248,7 +249,14 @@ public abstract class ApplicationCore {
             TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile", null, ".rtoken"));
 
             AuthService service = AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
-            Subscription sub = service.getToken().map(Tokens::getActiveSubscription).orElse(null); //web connection
+            Subscription sub = null; //web connection
+            try {
+                sub = service.getToken().map(Tokens::getActiveSubscription).orElse(null);
+            } catch (Exception e) {
+                LoggerFactory.getLogger(ApplicationCore.class).warn("Error when refreshing token: " + e.getMessage() + " Cleaning login information. Please re-login!");
+                LoggerFactory.getLogger(ApplicationCore.class).debug("Error when refreshing token", e);
+                AuthServices.clearRefreshToken(service, TOKEN_FILE); // in case token is corrupted or the account has been deleted
+            }
             WEB_API = new RestAPI(service, sub);
             DEFAULT_LOGGER.info("Web API initialized.");
             measureTime("DONE init  init WebAPI");

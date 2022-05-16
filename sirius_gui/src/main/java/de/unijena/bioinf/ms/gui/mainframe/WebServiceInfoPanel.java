@@ -59,7 +59,7 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         final ConnectionMonitor.ConnectionUpdateEvent cevt = (ConnectionMonitor.ConnectionUpdateEvent) evt;
-        ConnectionMonitor.ConnetionCheck check = cevt.getConnectionCheck();
+        ConnectionMonitor.ConnectionCheck check = cevt.getConnectionCheck();
         if (check.licenseInfo.getSubscription() != null) {
             license.setText("<html>License: <b>" + check.licenseInfo.getLicensee() + "</b>" + (check.licenseInfo.getDescription() == null ? "" : " (" + check.licenseInfo.getDescription() + ")</html>"));
             if (check.licenseInfo.isCountQueries()) {

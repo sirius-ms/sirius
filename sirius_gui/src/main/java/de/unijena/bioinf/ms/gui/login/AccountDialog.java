@@ -64,7 +64,7 @@ public class AccountDialog extends JDialog implements PropertyChangeListener {
 
         configureActions();
 
-        setMinimumSize(new Dimension(450, getMinimumSize().height));
+        setMinimumSize(new Dimension(500, getMinimumSize().height));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();
         setLocationRelativeTo(getParent());

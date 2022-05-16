@@ -45,15 +45,15 @@ public class SignOutAction extends AbstractAction {
     public synchronized void actionPerformed(ActionEvent e) {
         boolean r = Jobs.runInBackgroundAndLoad(MF, "Logging out...", () -> {
             try {
-                AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
                 ApplicationCore.WEB_API.changeActiveSubscription(null);
+                AuthServices.clearRefreshToken(ApplicationCore.WEB_API.getAuthService(), ApplicationCore.TOKEN_FILE);
                 ProxyManager.reconnect();
                 return true;
             } catch (IOException ex) {
                 LoggerFactory.getLogger(getClass()).warn("Error during logout!", ex);
                 return false;
             }finally {
-                MF.CONNECTION_MONITOR().checkConnectionInBackground();
+                MF.CONNECTION_MONITOR().checkConnection();
             }
         }).getResult();
         firePropertyChange("logout", null, r);
