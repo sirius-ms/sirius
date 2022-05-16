@@ -50,29 +50,38 @@ public class InsilicoFragmenter {
 
             String json = null;
             if (experimental) {
+                System.out.println("EXPERIMENTAL3!!!!!!!!!!!!!!!");
                 final EMFragmenterScoring2 scoring = new EMFragmenterScoring2(graph, tree.get());
                 final CriticalPathSubtreeCalculator calc = new CriticalPathSubtreeCalculator(tree.get(), graph, scoring, false);
-                int[] maxBondDepth = new int[]{3};
-                final HashSet<MolecularFormula> formulas = new HashSet<>();
-                for (Fragment ft : tree.get().getFragmentsWithoutRoot()) formulas.add(ft.getFormula().withoutHydrogen());
                 calc.setMaxNumberOfNodes(1000000);
-                calc.initialize((node,nnodes,nedges)->{
-                    if (node.getTotalScore()<-7f) return false;
-                    if (formulas.isEmpty()) {
-                        return node.getBondbreaks() < maxBondDepth[0];
-                    } else {
-                        formulas.remove(node.getFragment().getFormula().withoutHydrogen());
-                        if (formulas.isEmpty()) {
-                            maxBondDepth[0] = node.getBondbreaks();
+                final HashSet<MolecularFormula> fset = new HashSet<>();
+                for (Fragment ft : tree.get().getFragmentsWithoutRoot()) {
+                    fset.add(ft.getFormula());
+                    fset.add(ft.getFormula().add(MolecularFormula.getHydrogen()));
+                    fset.add(ft.getFormula().add(MolecularFormula.getHydrogen().multiply(2)));
+                    if (ft.getFormula().numberOfHydrogens()>0) fset.add(ft.getFormula().subtract(MolecularFormula.getHydrogen()));
+                    if (ft.getFormula().numberOfHydrogens()>1) fset.add(ft.getFormula().subtract(MolecularFormula.getHydrogen().multiply(2)));
+                }
+                try {
+                    calc.initialize((node, nnodes, nedges) -> {
+                        try {
+                            checkForInterruption();
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
                         }
-                        return true;
-                    }
-                });
+                        if (fset.contains(node.getFragment().getFormula())) return true;
+                        return (node.getTotalScore() > -5f);
+                    });
+                } catch (RuntimeException e) {
+                    if (e.getCause() instanceof InterruptedException) {
+                        throw (InterruptedException)e.getCause();
+                    } else throw e;
+                }
                 checkForInterruption();
                 calc.computeSubtree();
                 json = CombinatorialSubtreeCalculatorJsonWriter.writeResultForVisualization(tree.get(), calc);
             } else {
-                final DirectedBondTypeScoring scoring = new DirectedBondTypeScoring();
+                final EMFragmenterScoring2 scoring = new EMFragmenterScoring2(graph,tree.get());//DirectedBondTypeScoring();
                 AnnotateFragmentationTree.Job annos = new AnnotateFragmentationTree(tree.get(), graph, scoring).makeJJob();
                 submitSubJob(annos.asType(JobType.TINY_BACKGROUND)).awaitResult();
                 json = annos.getJson();

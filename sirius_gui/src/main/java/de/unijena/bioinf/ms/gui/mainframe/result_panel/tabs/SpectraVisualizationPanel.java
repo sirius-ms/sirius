@@ -255,6 +255,8 @@ public class SpectraVisualizationPanel
 	private JJob<Boolean> backgroundLoader = null;
 	private final Lock backgroundLoaderLock = new ReentrantLock();
 
+	private InsilicoFragmenter.Job insilicoJob = null;
+
 	public void resultsChanged(InstanceBean experimentParam, FormulaResultBean sre, @Nullable CompoundCandidate spectrumAno) {
 		try {
 			final boolean expMode = anoModeBox.map(x->x.isSelected()).orElse(false);
