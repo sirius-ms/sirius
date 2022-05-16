@@ -52,7 +52,7 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
         this.structureList = structureList;
         this.candidateTable = new CandidateListTableView(structureList);
 //        final TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
-        final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY, false, true);
+        final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY, false, false);
         this.structureList.getTopLevelSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         // Class to synchronize selected peak/node

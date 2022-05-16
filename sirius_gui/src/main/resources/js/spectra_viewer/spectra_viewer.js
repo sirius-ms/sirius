@@ -245,7 +245,7 @@ function annotation(d) {
                    "&nbsp;".repeat(25) + "(" + sign + d.massDeviationPpm.toFixed(decimal_place) + " ppm)";
         }
         if ("structureInformation" in d) {
-            anno = anno + "<br>Fragmenter Score: " + d.structureInformation.score.toFixed(2);
+            anno = anno + "<br>Total fragmenter score: " + d.structureInformation.totalScore.toFixed(2) + "<br>Fragment score: " + d.structureInformation.score.toFixed(2);
         }
     } else {
         anno = "m/z: " + d.mz.toFixed(decimal_place) + "<br>Intensity: " + d.intensity.toFixed(decimal_place);

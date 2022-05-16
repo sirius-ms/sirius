@@ -107,6 +107,7 @@ public class SpectraVisualizationPanel
 	JComboBox<String> ceBox;
 	final Optional<InSilicoSelectionBox> optAnoBox;
 	final Optional<JCheckBox> anoModeBox;
+	public final static boolean USE_TREEALGO_BY_DEFAULT = true;
 
 
 	String preferredMode;
@@ -141,7 +142,7 @@ public class SpectraVisualizationPanel
 		toolBar.add(ceBox);
 
 		optAnoBox = annotationBox ? Optional.of(new InSilicoSelectionBox(new Dimension(200, 100), 5)) : Optional.empty();
-		anoModeBox = expModeBox ? Optional.of(new JCheckBox("experimental mode", false)) : Optional.empty();
+		anoModeBox = expModeBox ? Optional.of(new JCheckBox("experimental mode", USE_TREEALGO_BY_DEFAULT)) : Optional.empty();
 
 		optAnoBox.ifPresent(anoBox -> {
 			toolBar.add(anoBox);
@@ -259,7 +260,7 @@ public class SpectraVisualizationPanel
 
 	public void resultsChanged(InstanceBean experimentParam, FormulaResultBean sre, @Nullable CompoundCandidate spectrumAno) {
 		try {
-			final boolean expMode = anoModeBox.map(x->x.isSelected()).orElse(false);
+			final boolean expMode = anoModeBox.map(AbstractButton::isSelected).orElse(USE_TREEALGO_BY_DEFAULT);
 			backgroundLoaderLock.lock();
 			final JJob<Boolean> old = backgroundLoader;
 			backgroundLoader = Jobs.runInBackground(new BasicMasterJJob<>(JJob.JobType.TINY_BACKGROUND) {
@@ -317,7 +318,6 @@ public class SpectraVisualizationPanel
 
 					checkForInterruption();
 
-					System.out.println("FRAGMENTER!!!!!!!!!!!!!!!!!!!!");
 					if (sre != SpectraVisualizationPanel.this.sre || spectrumAno != null) {
 						if (sre != null && spectrumAno != null) {
 							InsilicoFragmenter.Result r = submitSubJob(fragmenter.fragmentJob(sre, spectrumAno, expMode)).awaitResult();
