@@ -37,7 +37,7 @@ public class InsilicoFragmenter {
 
         @Override
         protected Result compute() throws Exception {
-            System.out.println("STARTE INSILICO FRAGMENTIERUNG. Das SOLLTE nur einmal aufgerufen werden.");
+//            System.out.println("STARTE INSILICO FRAGMENTIERUNG. Das SOLLTE nur einmal aufgerufen werden.");
             final Optional<FTree> tree = sre.getFragTree();
 
             if (tree.isEmpty()) return null;
