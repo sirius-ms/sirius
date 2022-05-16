@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.webapi.amqp;
 
+import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
@@ -27,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.fp.NPCFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.auth.AuthService;
-import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
@@ -52,15 +52,16 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
-import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.stores.model.CanopusClientDataStore;
 import de.unijena.bioinf.ms.stores.model.FingerIdClientDataStore;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
+import de.unijena.bioinf.webapi.rest.ConnectionError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -70,8 +71,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends AbstractWebAPI<WebChemDB> {
     private final AmqpClient amqpClient;
@@ -91,7 +92,7 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    public String getSignUpURL() {
+    public URI getSignUpURL() {
         return null;//todo implement
     }
 
@@ -101,25 +102,23 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    public void acceptTermsAndRefreshToken() throws LoginException {
+    public void acceptTermsAndRefreshToken() {
 //todo implement
     }
 
     @Override
-    public void changeHost(URI host) {
+    public void changeActiveSubscription(Subscription activeSubscription) {
+        //todo implement.
+    }
+
+    @Override
+    public Subscription getActiveSubscription() {
+        return null;
+    }
+
+    @Override
+    public void changeHost(Supplier<URI> host) {
 //todo implement
-    }
-
-    @Override
-    public @Nullable List<Term> getTerms() {
-        //todo implement
-        return null;
-    }
-
-    @Override
-    public LicenseInfo getLicenseInfo() throws IOException {
-        //todo implement
-        return null;
     }
 
     @Override
@@ -140,8 +139,9 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
     }
 
     @Override
-    public int checkConnection() {
-        return amqpClient.isConnected() ? 0 : 1;
+    public Multimap<ConnectionError.Klass, ConnectionError> checkConnection() {
+        //todo implement
+        return null;
     }
 
     @Override
@@ -150,28 +150,21 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
         return new WorkerList();
     }
 
-  /*  @Override
-    public <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException {
-        //todo implement
-        throw new UnsupportedOperationException("Error reporting is not yet implemented!");
-    }*/
-
-
     @Override
     public void deleteClientAndJobs() throws IOException {
         //todo send message to delete que and stuff
     }
 
     @Override
-    public int getCountedJobs(boolean byMonth) throws IOException {
+    public SubscriptionConsumables getConsumables(boolean byMonth) throws IOException {
         //todo implement
-        return 0;
+        return null;
     }
 
     @Override
-    public int getCountedJobs(@NotNull Date monthAndYear, boolean byMonth) throws IOException {
+    public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth) throws IOException {
         //todo implement
-        return 0;
+        return null;
     }
 
     @Override
@@ -284,6 +277,4 @@ public final class AmqpAPI<WebChemDB extends AbstractChemicalDatabase> extends A
         return new CdkFingerprintVersion(CdkFingerprintVersion.withECFP().getUsedFingerprints()); //todo DUMMY add to amqp api
     }
     //endregion
-
-
 }

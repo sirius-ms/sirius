@@ -39,8 +39,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -250,11 +252,15 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
         return refreshToken;
     }
 
-    public String signUpURL(String redirectUrl){
-        return service.createAuthorizationUrlBuilder().additionalParams(Map.of(
+    public URI signUpURL(URI redirectUrl){
+        return signUpURL(redirectUrl.toString());
+    }
+
+    public URI signUpURL(String redirectUrl){
+        return URI.create(service.createAuthorizationUrlBuilder().additionalParams(Map.of(
                 "screen_hint","signup",
                 "prompt","login",
-                "redirect_uri", redirectUrl)).build();
+                "redirect_uri", redirectUrl)).build());
     }
 
     public void sendPasswordReset(String email) throws IOException, ExecutionException, InterruptedException {
@@ -263,6 +269,14 @@ public class AuthService implements IOFunctions.IOConsumer<HttpUriRequest>, Clos
             throw new IOException("Could not initiate Password reset. Cause: " + resp.getMessage() + " | Body: " + resp.getBody());
     }
 
+    public Optional<Token> getToken() {
+        try {
+            return Optional.of(refreshIfNeeded());
+        } catch (LoginException e) {
+            LoggerFactory.getLogger(AuthServices.class).warn("No login Found: " + e.getMessage());
+            return Optional.empty();
+        }
+    }
 
     @Override
     public void close() throws IOException {

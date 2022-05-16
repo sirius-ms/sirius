@@ -22,18 +22,15 @@ package de.unijena.bioinf.ms.rest.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.scribejava.core.model.OAuthResponseException;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
-import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.*;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.*;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -47,12 +44,12 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 public abstract class AbstractClient {
     public static final boolean DEBUG_CONNECTION = PropertyManager.getBoolean("de.unijena.bioinf.webapi.DEBUG_CONNECTION", false);
-    public final static boolean DEBUG = PropertyManager.getBoolean("de.unijena.bioinf.ms.rest.DEBUG", false);
-    protected static final String API_ROOT = "/api";
     protected static final String CID = SecurityService.generateSecurityToken();
 
     static {
@@ -61,90 +58,39 @@ public abstract class AbstractClient {
     }
 
     @NotNull
-    protected URI serverUrl;
+    private Supplier<URI> serverUrl;
     @NotNull
-    protected final IOFunctions.IOConsumer<HttpUriRequest> requestDecorator;
+    protected final List<IOFunctions.IOConsumer<HttpUriRequest>> requestDecorators;
 
-    protected AbstractClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest> requestDecorator) {
-        this.serverUrl = Objects.requireNonNullElseGet(serverUrl, () -> URI.create(FingerIDProperties.fingeridWebHost()));
-        this.requestDecorator = requestDecorator;
+    @SafeVarargs
+    protected AbstractClient(@Nullable URI serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+        this(serverUrl, List.of(requestDecorators));
     }
 
-    public void setServerUrl(@NotNull URI serverUrl) {
+    protected AbstractClient(@NotNull Supplier<URI> serverUrl, @NotNull IOFunctions.IOConsumer<HttpUriRequest>... requestDecorators) {
+        this(serverUrl, List.of(requestDecorators));
+    }
+
+
+    protected AbstractClient(@Nullable URI serverUrl, @NotNull List<IOFunctions.IOConsumer<HttpUriRequest>> requestDecorators) {
+        this(() -> serverUrl, requestDecorators);
+    }
+
+    protected AbstractClient(@NotNull Supplier<URI> serverUrl, @NotNull List<IOFunctions.IOConsumer<HttpUriRequest>> requestDecorators) {
         this.serverUrl = serverUrl;
+        this.requestDecorators = requestDecorators;
+    }
+
+    public void setServerUrl(@NotNull Supplier<URI> serverUrl) {
+        if (NetUtils.DEBUG) {
+            this.serverUrl = () -> URI.create("http://localhost:8080");
+        } else {
+            this.serverUrl = serverUrl;
+        }
     }
 
     public URI getServerUrl() {
-        return serverUrl;
-    }
-
-    public boolean testConnection(@NotNull CloseableHttpClient client) throws IOException {
-        execute(client, () -> new HttpGet(getBaseURI("/actuator/health", true).build()));
-        return true;
-    }
-
-    public int testSecuredConnection(@NotNull CloseableHttpClient client) {
-        try {
-            execute(client, () -> {
-                HttpGet get = new HttpGet(getBaseURI("/check", true).build());
-                final int timeoutInSeconds = 8000;
-                get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
-                return get;
-            });
-            return 0;
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).warn("Could not reach secured api endpoint: " + e.getMessage());
-            String[] splitMsg = e.getMessage().split(SecurityService.ERROR_CODE_SEPARATOR);
-
-            if (splitMsg.length > 1 && splitMsg[1].equals(SecurityService.TERMS_MISSING))
-                return 8;
-            return 7;
-        } catch (OAuthResponseException e){
-            LoggerFactory.getLogger(getClass()).error("Error when contacting login Server: " + e.getMessage(), e);
-            return 9;
-        }
-    }
-
-    @Nullable
-    public LicenseInfo getLicenseInfo(@NotNull CloseableHttpClient client) throws IOException {
-        return executeFromJson(client,
-                () -> {
-                    HttpGet get = new HttpGet(buildVersionSpecificWebapiURI("/license.json").build());
-                    final int timeoutInSeconds = 8000;
-                    get.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
-                    return get;
-                }, new TypeReference<>() {}
-        );
-    }
-
-    public boolean deleteAccount(@NotNull CloseableHttpClient client){
-        try {
-            execute(client, () -> {
-                HttpDelete delete = new HttpDelete(getBaseURI("/delete-account", true).build());
-                final int timeoutInSeconds = 8000;
-                delete.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
-                return delete;
-            });
-            return true;
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).warn("Error when deleting user account: " + e.getMessage());
-            return false;
-        }
-    }
-
-    public boolean acceptTerms(@NotNull CloseableHttpClient client){
-        try {
-            execute(client, () -> {
-                HttpPost post = new HttpPost(getBaseURI("/accept-terms", true).build());
-                final int timeoutInSeconds = 8000;
-                post.setConfig(RequestConfig.custom().setConnectTimeout(timeoutInSeconds).setSocketTimeout(timeoutInSeconds).build());
-                return post;
-            });
-            return true;
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).warn("Error when accepting terms: " + e.getMessage());
-            return false;
-        }
+        return serverUrl.get();
     }
 
     protected void isSuccessful(HttpResponse response, HttpRequest sourceRequest) throws IOException {
@@ -152,16 +98,31 @@ public abstract class AbstractClient {
 
         if (status.getStatusCode() >= 400) {
             final String content = response.getEntity() != null ? IOUtils.toString(getIn(response, sourceRequest)) : "No Content";
-            throw new IOException("Error when querying REST service. Bad Response Code: "
-                    + status.getStatusCode() + " | Message: " + status.getReasonPhrase() + " | " + response.getFirstHeader("WWW-Authenticate") + " | Content: " + content);
+            throw new HttpErrorResponseException(status.getStatusCode(), status.getReasonPhrase(),
+                    Optional.ofNullable(response.getFirstHeader("WWW-Authenticate")).map(Header::getValue).orElse("NULL"), content);
         }
     }
 
 
     //region http request execution API
-    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
-        requestDecorator.accept(request);
+    public <T> T executeWithResponse(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
+        try {
+            return executeWithResponse(client, makeRequest.get(), respHandling);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public <T> T executeWithResponse(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<HttpResponse, T> respHandling) throws IOException {
         try (CloseableHttpResponse response = client.execute(request)) {
+            return respHandling.apply(response);
+        }
+    }
+
+    public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
+        for (IOFunctions.IOConsumer<HttpUriRequest> requestDecorator : requestDecorators)
+            requestDecorator.accept(request);
+        return executeWithResponse(client, request, response -> {
             isSuccessful(response, request);
             if (response.getEntity() != null) {
                 try (final BufferedReader reader = new BufferedReader(getIn(response, request))) {
@@ -173,7 +134,7 @@ public abstract class AbstractClient {
                 getIn(response, request).close();
             }
             return null;
-        }
+        });
     }
 
     public <T> T execute(@NotNull CloseableHttpClient client, @NotNull final HTTPSupplier<?> makeRequest, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
@@ -209,7 +170,9 @@ public abstract class AbstractClient {
     }
 
     public <T> T executeFromStream(@NotNull CloseableHttpClient client, @NotNull final HttpUriRequest request, IOFunctions.IOFunction<InputStream, T> respHandling) throws IOException {
-        requestDecorator.accept(request);
+        for (IOFunctions.IOConsumer<HttpUriRequest> requestDecorator : requestDecorators)
+            requestDecorator.accept(request);
+
         try (CloseableHttpResponse response = client.execute(request)) {
             isSuccessful(response, request);
             if (response.getEntity() != null) {
@@ -244,9 +207,10 @@ public abstract class AbstractClient {
         Charset charset = ContentType.getOrDefault(entity).getCharset();
         charset = charset == null ? StandardCharsets.UTF_8 : charset;
         if (!DEBUG_CONNECTION) {
+            if (entity == null)
+                throw new NullPointerException("Cannot extract content from NULL entity");
             return new InputStreamReader(entity.getContent(), charset);
         } else {
-            final String content = entity.getContent() == null ? null : IOUtils.toString(new InputStreamReader(entity.getContent(), charset));
             System.out.println("##### Request DEBUG information #####S");
             System.out.println("----- Source Request");
             System.out.println("Request URL: '" + sourceRequest.getRequestLine().getUri() + "'");
@@ -255,8 +219,8 @@ public abstract class AbstractClient {
 
             System.out.println("----- Response");
             System.out.println("Content encoding: '" + charset + "'");
-            System.out.println("Used Content encoding: '" + entity.getContentEncoding() + "'");
-            System.out.println("Content Type: '" + entity.getContentType() + "'");
+            System.out.println("Used Content encoding: '" + (entity==null ? "<ENTITY NULL>" : entity.getContentEncoding()) + "'");
+            System.out.println("Content Type: '" + (entity==null ? "<ENTITY NULL>" : entity.getContentType()) + "'");
             System.out.println("Response Return Code: '" + response.getStatusLine().getStatusCode() + "'");
             System.out.println("Response Reason Phrase: '" + response.getStatusLine().getReasonPhrase() + "'");
             System.out.println("Response Protocol Version: '" + response.getStatusLine().getProtocolVersion().toString() + "'");
@@ -264,6 +228,8 @@ public abstract class AbstractClient {
             for (Header header : response.getAllHeaders())
                 System.out.println("Request Header: '" + header.getName() + "':'" + header.getValue() + "'");
             System.out.println("----- Content");
+
+            final String content = (entity == null ||entity.getContent() == null) ? null : IOUtils.toString(new InputStreamReader(entity.getContent(), charset));
             if (content == null || content.isBlank())
                 System.out.println("<NO CONTENT>");
             else
@@ -281,7 +247,7 @@ public abstract class AbstractClient {
 
     //#################################################################################################################
     //region PathBuilderMethods
-    public URIBuilder getBaseURI(@Nullable String path, final boolean versionSpecificPath) throws URISyntaxException {
+    public URIBuilder getBaseURI(@Nullable String path) {
         if (path == null)
             path = "";
 
@@ -291,9 +257,11 @@ public abstract class AbstractClient {
             b = b.setPort(8080);
 //            path = FINGERID_DEBUG_FRONTEND_PATH + path;
         } else {
+            URI serverUrl = getServerUrl();
+            if (serverUrl == null)
+                throw new NullPointerException("Server URL is null!");
             b = new URIBuilder(serverUrl);
-            if (versionSpecificPath)
-                path = makeVersionContext() + path;
+            path = makeVersionContext() + path;
         }
 
         if (!path.isEmpty())
@@ -302,38 +270,8 @@ public abstract class AbstractClient {
         return b;
     }
 
-    // WebAPI paths
-    protected StringBuilder getWebAPIBasePath() {
-        return new StringBuilder(API_ROOT);
-    }
-
-    protected URIBuilder buildWebapiURI(@Nullable final String path, final boolean versionSpecific) throws URISyntaxException {
-        StringBuilder pathBuilder = versionSpecific || NetUtils.DEBUG ? getWebAPIBasePath() : new StringBuilder("/webapi"); //todo workaround until nu api version is deployed to root
-
-        if (path != null && !path.isEmpty()) {
-            if (!path.startsWith("/"))
-                pathBuilder.append("/");
-
-            pathBuilder.append(path);
-        }
-
-        return getBaseURI(pathBuilder.toString(), versionSpecific);
-    }
-
-    protected URIBuilder buildVersionLessWebapiURI(@Nullable String path) throws URISyntaxException {
-        return buildWebapiURI(path, false);
-    }
-
-
-    protected URIBuilder buildVersionSpecificWebapiURI(@Nullable String path) throws URISyntaxException {
-        return buildWebapiURI(path, true);
-    }
+    protected abstract String makeVersionContext();
 
     //endregion
     //#################################################################################################################
-
-    protected static String makeVersionContext() {
-            return "/v" + FingerIDProperties.fingeridMinorVersion();
-    }
-
 }

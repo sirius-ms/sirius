@@ -2,26 +2,6 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
- */
-
-/*
- *
- *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
- *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
@@ -77,9 +57,7 @@ import java.net.HttpURLConnection;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -161,29 +139,25 @@ public class ProxyManager {
 
 
     //0 everything is fine
-    //1 no connection to bioinf web site
-    //2 no connection to uni jena
-    //3 no connection to internet (google/microft/ubuntu????)
-    public static int checkInternetConnection(final HttpClient client) {
-        if (!checkDomain(client)) {
-            if (!checkHoster(client)) {
-                if (!checkExternal(client)) {
-                    return 1;
-                }
-                return 2;
-            }
-            return 3;
-        }
-        return 0;
+    //1 no connection to Internet
+    //2 no connection to Auth0 Server
+    //3 no connection to BG License Server
+    public static Optional<List<ConnectionError>> checkInternetConnection(final HttpClient client) {
+        List<ConnectionError> failedChecks = new ArrayList<>();
+        checkLicenseServer(client).ifPresent(failedChecks::add);
+        checkAuthServer(client).ifPresent(failedChecks::add);
+        checkExternal(client).ifPresent(failedChecks::add);
+        return failedChecks.isEmpty() ? Optional.empty() : Optional.of(failedChecks);
     }
 
-    public static int checkInternetConnection() {
+    public static Optional<List<ConnectionError>> checkInternetConnection() {
         try (CloseableHttpClient client = getSirirusHttpClient()) {
             return checkInternetConnection(client);
         } catch (IOException e) {
-            LoggerFactory.getLogger(ProxyManager.class).error("Cant not create Http client", e);
+            String m = "Could not create Http client during Internet connection check.";
+            LoggerFactory.getLogger(ProxyManager.class).error(m, e);
+            return Optional.of(List.of(new ConnectionError(98, m, ConnectionError.Klass.UNKNOWN)));
         }
-        return 3;
     }
 
     private static <B> B handleSSLValidation(@NotNull final B builder) {
@@ -195,7 +169,7 @@ public class ProxyManager {
                 else if (builder instanceof HttpClientBuilder)
                     ((HttpClientBuilder) builder).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).setSSLContext(context);
                 else
-                    throw new IllegalArgumentException("Only HttpAsyncClientBuilder and  HttpClientBuilder are supported");
+                    throw new IllegalArgumentException("Only HttpAsyncClientBuilder and  HttpClientBuilder are supported but found: " + builder.getClass().getName());
             } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
                 LoggerFactory.getLogger(ProxyManager.class).warn("Could not create Noop SSL context. SSL Validation will NOT be disabled!");
             }
@@ -204,9 +178,10 @@ public class ProxyManager {
     }
 
     private static Object getNoProxyClient(boolean async) {
-        return handleSSLValidation(async
-                ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).build()
-                : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG).build());
+        Object builder = handleSSLValidation(async
+                ? HttpAsyncClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG)
+                : HttpClientBuilder.create().setDefaultRequestConfig(DEFAULT_CONFIG));
+        return async ? ((HttpAsyncClientBuilder) builder).build() : ((HttpClientBuilder) builder).build();
     }
 
     private static Object getSiriusProxyClient(boolean async) {
@@ -313,19 +288,30 @@ public class ProxyManager {
     }
 
 
-    public static boolean checkExternal(HttpClient proxy) {
-        return checkConnectionToUrl(proxy, PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.external", null, "http://www.google.de/"));
+    public static Optional<ConnectionError> checkExternal(HttpClient proxy) {
+        String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.external", null, "https://www.google.de/");
+        return checkConnectionToUrl(proxy, url)
+                .map(e -> e.withNewMessage(1, "Could not connect to the Internet: " + url,
+                        ConnectionError.Klass.INTERNET));
     }
 
-    public static boolean checkHoster(HttpClient proxy) {
-        return checkConnectionToUrl(proxy, PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.hoster", null, "https://www.uni-jena.de/"));
+    public static Optional<ConnectionError> checkAuthServer(HttpClient proxy) {
+        String auth0HealthCheck = "https://status.auth0.com/feed?domain=dev-4yibfvd4.auth0.com";
+        return checkConnectionToUrl(proxy, auth0HealthCheck)
+                .map(e -> e.withNewMessage(2, "Could not connect to the Authentication Server: " + auth0HealthCheck,
+                        ConnectionError.Klass.LOGIN_SERVER));
     }
 
-    public static boolean checkDomain(HttpClient proxy) {
-        return checkConnectionToUrl(proxy, PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.domain",null,"https://bio.informatik.uni-jena.de/"));
+    public static Optional<ConnectionError> checkLicenseServer(HttpClient proxy) {
+        String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer", null, "https://gate.bright-giant.com/") +
+                PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer.version", null, "v1/")
+                + "/actuator/health";
+        return checkConnectionToUrl(proxy, url)
+                .map(e -> e.withNewMessage(3, "Could not connect to the License Server: " + url,
+                        ConnectionError.Klass.LICENSE_SERVER));
     }
 
-    public static boolean checkConnectionToUrl(final HttpClient proxy, String url) {
+    public static Optional<ConnectionError> checkConnectionToUrl(final HttpClient proxy, String url) {
         try {
             HttpResponse response = proxy.execute(new HttpHead(url));
             int code = response.getStatusLine().getStatusCode();
@@ -338,13 +324,17 @@ public class ProxyManager {
             LoggerFactory.getLogger(ProxyManager.class).debug("Protocol Version: " + response.getStatusLine().getProtocolVersion());
             if (code != HttpURLConnection.HTTP_OK) {
                 LoggerFactory.getLogger(ProxyManager.class).warn("Error Response code: " + response.getStatusLine().getReasonPhrase() + " " + code);
-                return false;
+                return Optional.of(new ConnectionError(103,
+                        "Error when connecting to: " + url + "Bad Response!",
+                        ConnectionError.Klass.UNKNOWN, null, ConnectionError.Type.ERROR,
+                        response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase()));
             }
-            return true;
+            return Optional.empty();
         } catch (Exception e) {
             LoggerFactory.getLogger(ProxyManager.class).warn("Connection error", e);
+            return Optional.of(new ConnectionError(102, "Error when connecting to: " + url,
+                    ConnectionError.Klass.UNKNOWN, e));
         }
-        return false;
     }
 
 
