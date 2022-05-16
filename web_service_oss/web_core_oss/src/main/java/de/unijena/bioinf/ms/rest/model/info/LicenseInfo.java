@@ -24,116 +24,89 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.sql.Date;
+import java.util.Optional;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LicenseInfo {
+    @Nullable
     private String userEmail;
+    @Nullable
     private String userId;
+    @Nullable
     private Subscription subscription;
+    @Nullable
     private SubscriptionConsumables consumables;
 
-
+    @Nullable
     public String getUserEmail() {
         return userEmail;
     }
+    @JsonIgnore
+    @NotNull
+    public Optional<String> userEmail() {
+        return Optional.ofNullable(userEmail);
+    }
 
-    public void setUserEmail(String userEmail) {
+    public void setUserEmail(@Nullable String userEmail) {
         this.userEmail = userEmail;
     }
 
+    @Nullable
     public String getUserId() {
         return userId;
     }
+    @JsonIgnore
+    @NotNull
+    public Optional<String> userId() {
+        return Optional.ofNullable(userId);
+    }
 
-    public void setUserId(String userId) {
+    public void setUserId(@Nullable String userId) {
         this.userId = userId;
     }
 
+
+    @JsonIgnore
+    @NotNull
+    public Optional<SubscriptionConsumables> consumables(){
+        return Optional.ofNullable(consumables);
+    }
+
+    @JsonIgnore
+    @NotNull
+    public Optional<Subscription> subscription(){
+        return Optional.ofNullable(subscription);
+    }
+
+    @Nullable
     public Subscription getSubscription() {
         return subscription;
     }
 
-    public void setSubscription(Subscription subscription) {
+    public void setSubscription(@Nullable Subscription subscription) {
         this.subscription = subscription;
     }
 
+    @Nullable
     public SubscriptionConsumables getConsumables() {
         return consumables;
     }
 
-    public void setConsumables(SubscriptionConsumables consumables) {
+    public void setConsumables(@Nullable SubscriptionConsumables consumables) {
         this.consumables = consumables;
     }
 
-    public String getLicensee() {
-        return subscription.getSubscriberName();
-    }
-
-
-    public boolean isCountQueries() {
-        return subscription.getCountQueries();
-    }
-
-    public int getCompoundHashRecordingTime() {
-        return subscription.getCompoundHashRecordingTime();
-    }
-
-
-    public int getMaxQueriesPerCompound() {
-        return subscription.getMaxQueriesPerCompound();
-    }
-
-    public int getCompoundLimit() {
-        return subscription.getCompoundLimit();
-    }
-
-    public int getCountedCompounds() {
-        return consumables.getCountedCompounds();
-    }
-
-    public String getSid() {
-        return subscription.getSid();
-    }
-
-    public Date getExpirationDate() {
-        return subscription.getExpirationDate();
-    }
-
-    public String getDescription() {
-        return subscription.getDescription();
-    }
-
-    @JsonIgnore
-    public boolean hasExpirationTime(){
-        return getExpirationDate() != null;
-    }
-
-    @JsonIgnore
-    public boolean isExpired() {
-        if (!hasExpirationTime())
-            return false;
-        return getExpirationDate().getTime() < System.currentTimeMillis();
-    }
-
-    @JsonIgnore
-    public long getExpirationTime() {
-        Date d = getExpirationDate();
-        if (d == null)
-            return -1;
-        return d.getTime();
-    }
-
-    @JsonIgnore
-    public boolean hasCompoundLimit() {
-        return getCompoundLimit() > 0;
-    }
 
     @JsonIgnore
     public LicenseInfo copyWithUpdate(SubscriptionConsumables consumables){
         LicenseInfo nu  = new LicenseInfo();
         nu.setConsumables(consumables);
-        nu.setSubscription(getSubscription());
+        nu.setSubscription(subscription);
+        nu.setUserId(userId);
+        nu.setUserEmail(userEmail);
         return nu;
     }
 }

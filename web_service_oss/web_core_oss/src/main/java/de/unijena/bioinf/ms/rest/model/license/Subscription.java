@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.rest.model.license;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.sql.Date;
 
 public class Subscription {
@@ -17,7 +19,7 @@ public class Subscription {
 
     private Date expirationDate;
 
-    private Boolean countQueries;
+    private boolean countQueries;
 
     private Integer compoundLimit;
 
@@ -151,9 +153,29 @@ public class Subscription {
 
 
     // non json methods
+    @JsonIgnore
     public boolean hasCompoundLimit() {
         Integer l = getCompoundLimit();
         return  l != null && l > 0;
     }
 
+    @JsonIgnore
+    public boolean hasExpirationTime(){
+        return getExpirationDate() != null;
+    }
+
+    @JsonIgnore
+    public boolean isExpired() {
+        if (!hasExpirationTime())
+            return false;
+        return getExpirationDate().getTime() < System.currentTimeMillis();
+    }
+
+    @JsonIgnore
+    public long getExpirationTime() {
+        Date d = getExpirationDate();
+        if (d == null)
+            return -1;
+        return d.getTime();
+    }
 }
