@@ -109,8 +109,8 @@ public class CombinatorialFragmenter {
 
     public CombinatorialGraph createCombinatorialFragmentationGraphPriorized(Callback2 callback, int maxNumberOfNodes) {
         CombinatorialGraph graph = new CombinatorialGraph(this.molecularGraph);
-        final int maxLen = 20;
-        final double SCALE = 2;
+        final int maxLen = 200;
+        final double SCALE = 10;
         ArrayDeque<CombinatorialNode>[] nodes = new ArrayDeque[maxLen+1];
         for (int i=0; i < nodes.length; ++i) nodes[i] = new ArrayDeque<>();
         nodes[0].addLast(graph.root);
@@ -137,12 +137,8 @@ public class CombinatorialFragmenter {
                         ++counting[0];
                         if (callback.cut(w,counting[0], counting[1])) {
                             double rawScore = w.totalScore;
-                            if (scoring instanceof EMFragmenterScoring2) {
-                                rawScore += ((EMFragmenterScoring2) scoring).terminalScore(w);
-                            }
-                            rawScore -= 5;
                             rawScore*=SCALE;
-                            final int score = Math.min(maxLen, Math.max(J, (int)Math.floor(Math.abs(rawScore))));
+                            final int score = Math.min(maxLen, Math.max(J, (int)Math.floor(-rawScore)));
                             nodes[score].addLast(w);
                         }
                     }

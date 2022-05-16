@@ -3,16 +3,19 @@ package de.unijena.bioinf.fragmenter;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.TableSelection;
 import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.set.hash.TIntHashSet;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.silent.AtomContainer;
+import org.openscience.cdk.smarts.SmartsFragmentExtractor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
+import org.slf4j.LoggerFactory;
 
-import java.util.BitSet;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CombinatorialFragment {
 
@@ -191,7 +194,162 @@ public class CombinatorialFragment {
         }
     }
 
+    public String toSMARTS(Set<IBond> bondsToCut) {
+        final SmartsGen extr = new SmartsGen(parent.molecule);
+        TIntHashSet atoms = new TIntHashSet();
+        TIntHashSet peripherie = new TIntHashSet();
+        for (IAtom a : getAtoms()) atoms.add(a.getIndex());
+        for (IBond b : bondsToCut) {
+            if (atoms.contains(b.getAtom(0).getIndex()) && !atoms.contains(b.getAtom(1).getIndex())) {
+                peripherie.add(b.getAtom(1).getIndex());
+            } else if (atoms.contains(b.getAtom(1).getIndex()) && !atoms.contains(b.getAtom(0).getIndex())) {
+                peripherie.add(b.getAtom(0).getIndex());
+            }
+        }
+        return extr.generate(atoms.toArray(), peripherie.toArray());
+    }
+
+    public float getPeakIntensity() {
+        return peakIntensity;
+    }
+
     public boolean isInnerNode(){
         return this.innerNode;
+    }
+
+    public IAtomContainer getLoss() {
+        final HashSet<IAtom> atoms = new HashSet<>();
+        final HashSet<IBond> bonds = new HashSet<>();
+        for (IAtom a : parent.molecule.atoms()) atoms.add(a);
+        for (IAtom a : getAtoms()) atoms.remove(a);
+        try {
+            return AtomContainerManipulator.extractSubstructure(parent.molecule, atoms.stream().mapToInt(IAtom::getIndex).toArray());
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public HashMap<String, String> getAllSMARTS() {
+
+        int k=0;
+        for (IAtom a : parent.molecule.atoms()) {
+            a.setProperty("PID", k++);
+        }
+
+        ArrayList<IAtomContainer> mols = new ArrayList<>();
+        mols.addAll(Arrays.asList(extractSubstructures(Arrays.stream(this.getAtoms()).mapToInt(IAtom::getIndex).toArray())));
+        final HashSet<IAtom> loss = new HashSet<>();
+        for (IAtom a : parent.molecule.atoms()) loss.add(a);
+        for (IAtom a : this.getAtoms()) loss.remove(a);
+        mols.addAll(Arrays.asList(extractSubstructures(loss.stream().mapToInt(IAtom::getIndex).toArray())));
+        final SmilesGenerator smi = SmilesGenerator.unique();
+        final SmartsGen extr = new SmartsGen(parent.molecule);
+        final HashMap<String, String> map = new HashMap<>();
+        for (IAtomContainer m : mols) {
+            try {
+                final String smiles = smi.create(m);
+                final TIntArrayList xs = new TIntArrayList();
+                for (IAtom a : m.atoms()) xs.add(((Integer)a.getProperty("PID")).intValue());
+                final String smarts = extr.generate(xs.toArray(), new int[0]);
+                map.put(smiles, smarts);
+
+            } catch (CDKException e) {
+                LoggerFactory.getLogger(CombinatorialFragment.class).warn(e.getMessage());
+            }
+
+        }
+        return map;
+    }
+
+    public String toSMARTSLoss(Set<IBond> bondsToCut) {
+        final SmartsGen extr = new SmartsGen(parent.molecule);
+        TIntHashSet atoms = new TIntHashSet();
+        TIntHashSet peripherie = new TIntHashSet();
+        for (IAtom a : parent.molecule.atoms()) atoms.add(a.getIndex());
+        for (IAtom a : getAtoms()) atoms.remove(a.getIndex());
+        for (IBond b : bondsToCut) {
+            if (atoms.contains(b.getAtom(0).getIndex()) && !atoms.contains(b.getAtom(1).getIndex())) {
+                peripherie.add(b.getAtom(1).getIndex());
+            } else if (atoms.contains(b.getAtom(1).getIndex()) && !atoms.contains(b.getAtom(0).getIndex())) {
+                peripherie.add(b.getAtom(0).getIndex());
+            }
+        }
+        return extr.generate(atoms.toArray(), peripherie.toArray());
+    }
+
+    public String toUniqueSMILES() {
+        try {
+            return SmilesGenerator.unique().create(toMolecule());
+        } catch (CDKException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public IAtomContainer[] getNeutralLosses() {
+        HashSet<IAtom> atoms = new HashSet<>();
+        for (IAtom a : parent.molecule.atoms()) {
+            atoms.add(a);
+        }
+        for (IAtom a : getAtoms()) atoms.remove(a);
+        IAtom[] todo = atoms.toArray(IAtom[]::new);
+        final TIntArrayList indizes = new TIntArrayList();
+        ArrayList<IAtomContainer> losses = new ArrayList<>();
+        for (IAtom a : todo) {
+            indizes.clearQuick();
+            if (atoms.remove(a)) {
+                indizes.add(a.getIndex());
+                ArrayList<IAtom> stack = new ArrayList<>();
+                stack.add(a);
+                while (!stack.isEmpty()) {
+                    final IAtom b = stack.remove(stack.size() - 1);
+                    for (IBond bond : b.bonds()) {
+                        for (IAtom neighbour : bond.atoms()) {
+                            if (atoms.remove(neighbour)) {
+                                stack.add(neighbour);
+                                indizes.add(neighbour.getIndex());
+                            }
+                        }
+                    }
+                }
+                try {
+                    losses.add(AtomContainerManipulator.extractSubstructure(parent.molecule, indizes.toArray()));
+                } catch (CloneNotSupportedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return losses.toArray(IAtomContainer[]::new);
+    }
+
+    private IAtomContainer[] extractSubstructures(int[] atomids) {
+        Set<IAtom> atoms = Arrays.stream(atomids).mapToObj(parent.molecule::getAtom).collect(Collectors.toSet());
+        IAtom[] todo = atoms.toArray(IAtom[]::new);
+        final TIntArrayList indizes = new TIntArrayList();
+        ArrayList<IAtomContainer> losses = new ArrayList<>();
+        for (IAtom a : todo) {
+            indizes.clearQuick();
+            if (atoms.remove(a)) {
+                indizes.add(a.getIndex());
+                ArrayList<IAtom> stack = new ArrayList<>();
+                stack.add(a);
+                while (!stack.isEmpty()) {
+                    final IAtom b = stack.remove(stack.size() - 1);
+                    for (IBond bond : b.bonds()) {
+                        for (IAtom neighbour : bond.atoms()) {
+                            if (atoms.remove(neighbour)) {
+                                stack.add(neighbour);
+                                indizes.add(neighbour.getIndex());
+                            }
+                        }
+                    }
+                }
+                try {
+                    losses.add(AtomContainerManipulator.extractSubstructure(parent.molecule, indizes.toArray()));
+                } catch (CloneNotSupportedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return losses.toArray(IAtomContainer[]::new);
     }
 }
