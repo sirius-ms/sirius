@@ -53,7 +53,7 @@ public class InsilicoFragmenter {
             if (experimental) {
                 final EMFragmenterScoring2 scoring = new EMFragmenterScoring2(graph, tree.get());
                 final CriticalPathSubtreeCalculator calc = new CriticalPathSubtreeCalculator(tree.get(), graph, scoring, true);
-                calc.setMaxNumberOfNodes(100000);
+                calc.setMaxNumberOfNodes(50000);
                 final HashSet<MolecularFormula> fset = new HashSet<>();
                 for (Fragment ft : tree.get().getFragmentsWithoutRoot()) {
                     fset.add(ft.getFormula());
