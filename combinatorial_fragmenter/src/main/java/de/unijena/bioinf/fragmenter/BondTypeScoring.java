@@ -105,8 +105,12 @@ public class BondTypeScoring {
         }
 
         @Override
-        public double scoreFragment(CombinatorialFragment fragment) {
-            return fragmentScores.get(fragment.getFormula());
+        public double scoreFragment(CombinatorialNode fragment) {
+            return fragmentScores.get(fragment.fragment.getFormula().withoutHydrogen());
+        }
+
+        public double scoreEdge(CombinatorialEdge edge){
+            return scoreBond(edge.getCut1(),edge.getDirectionOfFirstCut()) + (edge.getCut2() != null ? scoreBond(edge.getCut2(),edge.getDirectionOfSecondCut()) : 0);
         }
     }
 
