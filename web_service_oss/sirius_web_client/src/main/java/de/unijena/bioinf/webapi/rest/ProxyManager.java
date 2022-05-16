@@ -32,7 +32,7 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -288,29 +288,32 @@ public class ProxyManager {
     }
 
 
-
     public static Optional<ConnectionError> checkExternal(HttpClient proxy) {
         String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.external", null, "https://www.google.de/");
-        return checkConnectionToUrl(proxy, url).map(e -> e.withNewMessage(1, "Could not connect to the Internet: " + url, ConnectionError.Klass.INTERNET));
-//                ? Optional.of(new ConnectionError(2, "Could not connect to the Internet: " + url)) : Optional.empty();
+        return checkConnectionToUrl(proxy, url)
+                .map(e -> e.withNewMessage(1, "Could not connect to the Internet: " + url,
+                        ConnectionError.Klass.INTERNET));
     }
 
     public static Optional<ConnectionError> checkAuthServer(HttpClient proxy) {
         String auth0HealthCheck = "https://status.auth0.com/feed?domain=dev-4yibfvd4.auth0.com";
-//        String auth0HealthCheck = "status.auth0.com/feed?domain=auth0.brigh-giant.com";
-        //        String url =  PropertyManager.getProperty("de.unijena.bioinf.sirius.security.authServer",null,"https://auth0.brigh-giant.com/");
-        return checkConnectionToUrl(proxy, auth0HealthCheck).map(e -> e.withNewMessage(2, "Could not connect to the Authentication Server: " + auth0HealthCheck, ConnectionError.Klass.LOGIN_SERVER));
-//                ? Optional.of(new ConnectionError()) : Optional.empty();
+        return checkConnectionToUrl(proxy, auth0HealthCheck)
+                .map(e -> e.withNewMessage(2, "Could not connect to the Authentication Server: " + auth0HealthCheck,
+                        ConnectionError.Klass.LOGIN_SERVER));
     }
 
     public static Optional<ConnectionError> checkLicenseServer(HttpClient proxy) {
-        String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer", null, "https://gate.bright-giant.com/v1/") + "actuator/health";
-        return checkConnectionToUrl(proxy, url).map(e -> e.withNewMessage(3, "Could not connect to the License Server: " + url, ConnectionError.Klass.LICENSE_SERVER));
+        String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer", null, "https://gate.bright-giant.com/") +
+                PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer.version", null, "v1/")
+                + "/actuator/health";
+        return checkConnectionToUrl(proxy, url)
+                .map(e -> e.withNewMessage(3, "Could not connect to the License Server: " + url,
+                        ConnectionError.Klass.LICENSE_SERVER));
     }
 
     public static Optional<ConnectionError> checkConnectionToUrl(final HttpClient proxy, String url) {
         try {
-            HttpResponse response = proxy.execute(new HttpGet(url));
+            HttpResponse response = proxy.execute(new HttpHead(url));
             int code = response.getStatusLine().getStatusCode();
             LoggerFactory.getLogger(ProxyManager.class).debug("Testing internet connection");
             LoggerFactory.getLogger(ProxyManager.class).debug("Try to connect to: " + url);
@@ -329,7 +332,7 @@ public class ProxyManager {
             return Optional.empty();
         } catch (Exception e) {
             LoggerFactory.getLogger(ProxyManager.class).warn("Connection error", e);
-            return Optional.of(new ConnectionError(102,"Error when connecting to: " + url,
+            return Optional.of(new ConnectionError(102, "Error when connecting to: " + url,
                     ConnectionError.Klass.UNKNOWN, e));
         }
     }

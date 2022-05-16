@@ -24,22 +24,30 @@ import de.unijena.bioinf.ms.rest.client.HttpErrorResponseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.Optional;
 
-public class ConnectionError {
+public class ConnectionError implements Comparable<ConnectionError> {
+    private static final Comparator<ConnectionError> c = Comparator.comparing(ConnectionError::getErrorKlass)
+            .thenComparingInt(ConnectionError::getSiriusErrorCode);
+
+    @Override
+    public int compareTo(@NotNull ConnectionError o) {
+        return c.compare(this, o);
+    }
 
     public enum Type {WARNING, ERROR}
 
     /**
      * ######### error classes ###########3
-     *        //1 Internet
-     *         // 2. login server
-     *         //3.license server
-     *         // 4. Token error
-     *         // 5. logged in
-     *         // 6. license available and active
-     *         // 7. service reachable
-     *         // 8. Worker availability
+     * //1 Internet
+     * // 2. login server
+     * //3.license server
+     * // 4. Token error
+     * // 5. logged in
+     * // 6. license available and active
+     * // 7. service reachable
+     * // 8. Worker availability
      */
     public enum Klass {UNKNOWN, INTERNET, LOGIN_SERVER, LICENSE_SERVER, TOKEN, LOGIN, LICENSE, TERMS, APP_SERVER, WORKER}
 
@@ -78,7 +86,7 @@ public class ConnectionError {
         this.exception = exception;
         this.errorType = type;
 
-        if (exception instanceof HttpErrorResponseException){
+        if (exception instanceof HttpErrorResponseException) {
             if (this.serverResponseErrorCode == null)
                 this.serverResponseErrorCode = ((HttpErrorResponseException) exception).getErrorCode();
             if (this.serverResponseErrorMessage == null)
@@ -140,7 +148,7 @@ public class ConnectionError {
         return errorKlass;
     }
 
-    public ConnectionError withNewMessage(int siriusErrorCode, String siriusMessage, Klass errorKlass){
-        return new ConnectionError(siriusErrorCode, siriusMessage, errorKlass, exception , errorType, serverResponseErrorCode, serverResponseErrorMessage);
+    public ConnectionError withNewMessage(int siriusErrorCode, String siriusMessage, Klass errorKlass) {
+        return new ConnectionError(siriusErrorCode, siriusMessage, errorKlass, exception, errorType, serverResponseErrorCode, serverResponseErrorMessage);
     }
 }
