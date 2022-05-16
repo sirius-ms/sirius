@@ -7,6 +7,8 @@ import java.util.*;
 
 public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculator{
 
+    public final static boolean ALLOW_MULTIPLE_FRAGMENTS_PER_PEAK = true;
+
     public final static int INSERTED = 5, ATTACHED_TO_TERMINAL=7, DELETED = 9;
 
     private boolean isInitialized, isComputed;
@@ -123,7 +125,7 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
             if(child.state<INSERTED) {//!this.subtree.contains(child.fragment)){
                 float score = this.calculateCriticalPathScore(child) + child.fragmentScore + edge.score;
                 // this prevents a node from explaining multiple peaks
-                if (node.state==ATTACHED_TO_TERMINAL && !child.fragment.isInnerNode()) {
+                if (!ALLOW_MULTIPLE_FRAGMENTS_PER_PEAK && node.state==ATTACHED_TO_TERMINAL && !child.fragment.isInnerNode()) {
                     score = Float.NEGATIVE_INFINITY;
                 }
                 if(score > bestScore){
