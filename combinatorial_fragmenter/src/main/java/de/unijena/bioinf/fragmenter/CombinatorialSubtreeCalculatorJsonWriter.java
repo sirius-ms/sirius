@@ -119,7 +119,11 @@ public class CombinatorialSubtreeCalculatorJsonWriter {
         jsonGenerator.writeStringField("inchiKey", inchiGen.getInchiKey());
         jsonGenerator.writeStringField("method", subtreeCalc.getMethodName());
         jsonGenerator.writeNumberField("score", subtreeCalc.getScore());
-
+        jsonGenerator.writeNumberField("explainedPeaks", subtreeCalc.getSubtree().getNodes().stream().filter(x->!x.fragment.isInnerNode()).count());
+        jsonGenerator.writeNumberField("numberOfPeaks", subtreeCalc.fTree.numberOfVertices());
+        FragmentAnnotation<AnnotatedPeak> pa = subtreeCalc.fTree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
+        double totalIntensity = subtreeCalc.fTree.getFragments().stream().mapToDouble(x->pa.get(x, AnnotatedPeak::none).getRelativeIntensity()).sum();
+        jsonGenerator.writeNumberField("explainedIntensity", subtreeCalc.getSubtree().getNodes().stream().filter(x->!x.fragment.isInnerNode()).mapToDouble(x->x.fragment.peakIntensity).sum() / totalIntensity);
         // assignments and computed subtree:
         writeAssignmentsToJson(subtreeCalc, atomOrder, jsonGenerator);
         jsonGenerator.writeFieldName("tree");
