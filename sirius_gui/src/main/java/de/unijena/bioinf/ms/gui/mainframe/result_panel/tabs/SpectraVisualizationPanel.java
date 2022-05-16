@@ -233,7 +233,7 @@ public class SpectraVisualizationPanel
 					jsonSpectra = spectraWriter.ms2JSON(spectrum);
 			}
 		} else {
-			System.err.println("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
+			LoggerFactory.getLogger(getClass()).warn("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
 			return;
 		}
 
