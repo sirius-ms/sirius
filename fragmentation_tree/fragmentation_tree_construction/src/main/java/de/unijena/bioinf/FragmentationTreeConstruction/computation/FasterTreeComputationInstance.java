@@ -514,7 +514,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
         @Override
         public String identifier() {
-            return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z | " +decomposition.toString();
+            return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z | " +decomposition;
         }
     }
 

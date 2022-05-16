@@ -4,9 +4,17 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IBond;
 
 public class CombinatorialEdge {
-    IBond cut1, cut2;
-    byte direction;
-    CombinatorialNode source, target;
+    protected IBond cut1, cut2;
+    protected byte direction;
+    protected CombinatorialNode source, target;
+    /**
+     * This is the score or profit of this edge.
+     */
+    protected float score;
+
+    public CombinatorialEdge(CombinatorialNode source, CombinatorialNode target){
+        this(source, target, null, null, false, false);
+    }
 
     public CombinatorialEdge(CombinatorialNode source, CombinatorialNode target, IBond cut1, boolean leftToRight) {
         this(source,target,cut1,null, leftToRight, false);
@@ -18,33 +26,42 @@ public class CombinatorialEdge {
         this.cut1 = cut1;
         this.cut2 = cut2;
         this.direction = (byte)((direction1 ? 2 : 0) | (direction2  ? 4 : 0));
+        this.score = 0f;
     }
 
-    public IAtom getAtomOfFragment() {
-        if (getDirectionOfFirstCut()) return cut1.getAtom(0);
-        else return cut1.getAtom(1);
+    public IBond[] getCuts() {
+        if (cut1 !=null && cut2 !=null) return new IBond[]{cut1, cut2};
+        if (cut1 != null) return new IBond[]{cut1};
+        if (cut2 !=null) return new IBond[]{cut2};
+        return new IBond[]{};
     }
-    public IAtom getAtomOfLoss() {
-        if (getDirectionOfFirstCut()) return cut1.getAtom(1);
-        else return cut1.getAtom(0);
-    }
+
     public IAtom[] getAtomsOfFragment() {
-        IAtom[] atoms = (cut2==null ? new IAtom[1] : new IAtom[2] );
-        if (getDirectionOfFirstCut()) atoms[0] = cut1.getAtom(0);
-        else atoms[0] = cut1.getAtom(1);
-        if (cut2==null) return atoms;
-        if (getDirectionOfSecondCut()) atoms[1] = cut2.getAtom(0);
-        else atoms[1] = cut2.getAtom(1);
-        return atoms;
+        if(cut1 != null) {
+            IAtom[] atoms = (cut2 == null ? new IAtom[1] : new IAtom[2]);
+            if (getDirectionOfFirstCut()) atoms[0] = cut1.getAtom(0);
+            else atoms[0] = cut1.getAtom(1);
+            if (cut2 == null) return atoms;
+            if (getDirectionOfSecondCut()) atoms[1] = cut2.getAtom(0);
+            else atoms[1] = cut2.getAtom(1);
+            return atoms;
+        }else{
+            return null;
+        }
     }
+
     public IAtom[] getAtomsOfLoss() {
-        IAtom[] atoms = (cut2==null ? new IAtom[1] : new IAtom[2] );
-        if (getDirectionOfFirstCut()) atoms[0] = cut1.getAtom(1);
-        else atoms[0] = cut1.getAtom(0);
-        if (cut2==null) return atoms;
-        if (getDirectionOfSecondCut()) atoms[1] = cut2.getAtom(1);
-        else atoms[1] = cut2.getAtom(0);
-        return atoms;
+        if(cut1 != null) {
+            IAtom[] atoms = (cut2 == null ? new IAtom[1] : new IAtom[2]);
+            if (getDirectionOfFirstCut()) atoms[0] = cut1.getAtom(1);
+            else atoms[0] = cut1.getAtom(0);
+            if (cut2 == null) return atoms;
+            if (getDirectionOfSecondCut()) atoms[1] = cut2.getAtom(1);
+            else atoms[1] = cut2.getAtom(0);
+            return atoms;
+        }else{
+            return null;
+        }
     }
 
     public boolean getDirectionOfFirstCut() {
@@ -69,5 +86,37 @@ public class CombinatorialEdge {
 
     public CombinatorialNode getTarget() {
         return target;
+    }
+
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        if (cut1==null) return "<" + target.fragment.formula + ">";
+        buf.append(cut1.getAtom(0).getSymbol() + "." + cut1.getAtom(0).getHybridization().toString().toLowerCase());
+        buf.append(bond2string(cut1));
+        buf.append(cut1.getAtom(1).getSymbol() + "." + cut1.getAtom(1).getHybridization().toString().toLowerCase());
+        if (cut2!=null){
+            buf.append(" + ");
+            buf.append(cut2.getAtom(0).getSymbol() + "." + cut2.getAtom(0).getHybridization().toString().toLowerCase());
+            buf.append(bond2string(cut2));
+            buf.append(cut2.getAtom(1).getSymbol() + "." + cut2.getAtom(1).getHybridization().toString().toLowerCase());
+        }
+        buf.append(" -> ");
+        buf.append(target.fragment.formula.toString());
+        buf.append(!target.fragment.innerNode ? "*" : "");
+        return buf.toString();
+    }
+
+    private static String bond2string(IBond b) {
+        if (b.isAromatic()) return ":";
+        switch (b.getOrder()) {
+            case SINGLE: return "-";
+            case DOUBLE: return "=";
+            case TRIPLE: return "#";
+        }
+        return "~?";
+    }
+
+    public float getScore(){
+        return this.score;
     }
 }
