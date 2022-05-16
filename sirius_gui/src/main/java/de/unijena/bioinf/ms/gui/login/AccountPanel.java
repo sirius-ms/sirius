@@ -27,16 +27,19 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.webapi.Tokens;
+import de.unijena.bioinf.webapi.rest.ProxyManager;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
+
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class AccountPanel extends JPanel {
     private final AuthService service;
@@ -61,12 +64,16 @@ public class AccountPanel extends JPanel {
         iconPanel.add(userIconLabel, BorderLayout.CENTER);
         refresh = new ToolbarButton(Icons.REFRESH_32);
         refresh.addActionListener(e ->
-                Jobs.runInBackgroundAndLoad(MainFrame.MF, () -> {
+                Jobs.runInBackgroundAndLoad(MF, () -> {
                     try {
-                        ApplicationCore.WEB_API.getAuthService().refreshIfNeeded(true);
+                        ApplicationCore.WEB_API.changeActiveSubscription(null);
+                        AuthService.Token t = ApplicationCore.WEB_API.getAuthService().refreshIfNeeded(true);
+                        ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(t));
+                        ProxyManager.reconnect();
                     } catch (LoginException ex) {
                         LoggerFactory.getLogger(getClass()).error("Error when refreshing access_token!", ex);
-//                    new ExceptionDialog(MainFrame.MF, "Error when refreshing access_token!", ex.getMessage());
+                    }finally {
+                        MF.CONNECTION_MONITOR().checkConnectionInBackground();
                     }
                 }));
         refresh.setPreferredSize(new Dimension(45, 45));

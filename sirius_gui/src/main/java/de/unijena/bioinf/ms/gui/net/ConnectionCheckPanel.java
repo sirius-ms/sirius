@@ -113,7 +113,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
         Optional<Subscription> sub = Optional.ofNullable(licenseInfo.getSubscription());
         String licensee = sub.map(Subscription::getSubscriberName).orElse("N/A");
-        String description = sub.map(Subscription::getDescription).orElse(null);
+        String description = sub.map(Subscription::getName).orElse(null);
         List<Term> terms = sub.map(Tokens::getActiveSubscriptionTerms).orElse(List.of());
         String userEmail = licenseInfo.getUserEmail();
 
@@ -143,9 +143,9 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         add(resultPanel, 15, true);
 
         add(new JXTitledSeparator("Subscription"), 15, false);
-        add(new JLabel("<html>Licensed to: <b> " + licensee
+        add(new JLabel("<html>Licensed to:  <b>" + licensee + "</b>"
                 + (description != null ? " (" + description + ")" : "")
-                + "</b></html>"), 5, false);
+                + "</html>"), 5, false);
 
         revalidate();
         repaint();

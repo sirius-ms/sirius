@@ -53,7 +53,7 @@ public class SignOutAction extends AbstractAction {
                 LoggerFactory.getLogger(getClass()).warn("Error during logout!", ex);
                 return false;
             }finally {
-                MF.CONNECTION_MONITOR().checkConnection();
+                MF.CONNECTION_MONITOR().checkConnectionInBackground();
             }
         }).getResult();
         firePropertyChange("logout", null, r);
