@@ -37,6 +37,7 @@ public class InsilicoFragmenter {
 
         @Override
         protected Result compute() throws Exception {
+            System.out.println("STARTE INSILICO FRAGMENTIERUNG. Das SOLLTE nur einmal aufgerufen werden.");
             final Optional<FTree> tree = sre.getFragTree();
 
             if (tree.isEmpty()) return null;
@@ -50,10 +51,9 @@ public class InsilicoFragmenter {
 
             String json = null;
             if (experimental) {
-                System.out.println("EXPERIMENTAL3!!!!!!!!!!!!!!!");
                 final EMFragmenterScoring2 scoring = new EMFragmenterScoring2(graph, tree.get());
-                final CriticalPathSubtreeCalculator calc = new CriticalPathSubtreeCalculator(tree.get(), graph, scoring, false);
-                calc.setMaxNumberOfNodes(1000000);
+                final CriticalPathSubtreeCalculator calc = new CriticalPathSubtreeCalculator(tree.get(), graph, scoring, true);
+                calc.setMaxNumberOfNodes(100000);
                 final HashSet<MolecularFormula> fset = new HashSet<>();
                 for (Fragment ft : tree.get().getFragmentsWithoutRoot()) {
                     fset.add(ft.getFormula());
