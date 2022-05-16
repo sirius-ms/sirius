@@ -29,6 +29,13 @@ public class CombinatorialEdge {
         this.score = 0f;
     }
 
+    public IBond[] getCuts() {
+        if (cut1 !=null && cut2 !=null) return new IBond[]{cut1, cut2};
+        if (cut1 != null) return new IBond[]{cut1};
+        if (cut2 !=null) return new IBond[]{cut2};
+        return new IBond[]{};
+    }
+
     public IAtom[] getAtomsOfFragment() {
         if(cut1 != null) {
             IAtom[] atoms = (cut2 == null ? new IAtom[1] : new IAtom[2]);

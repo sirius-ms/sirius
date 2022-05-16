@@ -145,8 +145,8 @@ public class CriticalPathSubtreeCalculator extends CombinatorialSubtreeCalculato
                 CombinatorialNode child = edge.target;
                 if(child.state<INSERTED) {  //!this.subtree.contains(child.fragment)){
                     int childIdx = this.vertexIndices.get(child);
-                    float score = this.criticalPathScores[childIdx] + edge.score + child.fragmentScore;
-                    if(this.criticalPathScores[crntNodeIdx] == score){
+                    float score = this.criticalPathScores[childIdx] + child.fragmentScore + edge.score;
+                    if(this.criticalPathScores[crntNodeIdx] <= score){
                         this.subtree.addFragment(this.subtree.getNode(currentNode.fragment.bitset),child.fragment,edge.cut1, edge.cut2, child.fragmentScore,edge.score);
 
                         addFragment(child, edge);

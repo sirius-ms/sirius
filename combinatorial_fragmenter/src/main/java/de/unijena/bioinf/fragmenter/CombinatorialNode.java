@@ -1,8 +1,7 @@
 package de.unijena.bioinf.fragmenter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CombinatorialNode {
 
@@ -47,10 +46,24 @@ public class CombinatorialNode {
         this.state=0;
     }
 
+    public String toSmarts() {
+        return fragment.toSMARTS(Collections.emptySet());
+    }
+    public String invertSmarts() {
+        return fragment.toSMARTSLoss(Collections.emptySet());
+    }
+
+    public String pathToSmarts() {
+        return fragment.toSMARTS(getOptimalPathToRoot().stream().flatMap(x-> Arrays.stream(x.getCuts())).collect(Collectors.toSet()));
+    }
+    public String pathToInvertedSmarts() {
+        return fragment.toSMARTSLoss(getOptimalPathToRoot().stream().flatMap(x-> Arrays.stream(x.getCuts())).collect(Collectors.toSet()));
+    }
+
     public List<CombinatorialEdge> getOptimalPathToRoot() {
         List<CombinatorialEdge> path = new ArrayList<>();
         CombinatorialNode n = this;
-        while (n.depth>0) {
+        while (n.getIncomingEdges().size()>0) {
             double maxScore = Double.NEGATIVE_INFINITY;
             CombinatorialEdge best = null;
             for (CombinatorialEdge e : n.incomingEdges) {
@@ -105,5 +118,12 @@ public class CombinatorialNode {
 
     public float getTotalScore() {
         return totalScore;
+    }
+
+    public Optional<CombinatorialNode> getTerminalChildNode() {
+        for (CombinatorialEdge e : outgoingEdges) {
+            if (!e.target.fragment.isInnerNode()) return Optional.of(e.target);
+        }
+        return Optional.empty();
     }
 }
