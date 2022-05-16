@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,15 @@ public class AccountPanel extends JPanel {
 //                    new ExceptionDialog(MainFrame.MF, "Error when refreshing access_token!", ex.getMessage());
                     }
                 }));
-        center.add(iconPanel, TwoColumnPanel.of(userInfoLabel, refresh));
+        refresh.setPreferredSize(new Dimension(45, 45));
+        refresh.setToolTipText(
+                GuiUtils.formatToolTip("Refresh access_token (also reloads account an license information)."));
+
+        Box right = Box.createHorizontalBox();
+        right.add(Box.createHorizontalGlue());
+        right.add(refresh);
+
+        center.add(iconPanel, TwoColumnPanel.of(userInfoLabel, right));
         center.addVerticalGlue();
         add(center, BorderLayout.CENTER);
 

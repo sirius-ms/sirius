@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
+import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.rest.ConnectionError;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
     public static final String READ_MORE_LICENSING =
             "<br> <a href=\"https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/\">" +
-                    "Read more</a> about licensing.";
+                    "Read more</a> about account and licensing.";
 
 
     private static final String NO_ACTIVE_SUB_MSG = "<No active subscription>";
@@ -113,9 +114,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         Optional<Subscription> sub = Optional.ofNullable(licenseInfo.getSubscription());
         String licensee = sub.map(Subscription::getSubscriberName).orElse("N/A");
         String description = sub.map(Subscription::getDescription).orElse(null);
-        List<Term> terms = new ArrayList<>();
-        sub.map(Subscription::getTos).map(Term::of).ifPresent(terms::add);
-        sub.map(Subscription::getPp).map(Term::of).ifPresent(terms::add);
+        List<Term> terms = sub.map(Tokens::getActiveSubscriptionTerms).orElse(List.of());
         String userEmail = licenseInfo.getUserEmail();
 
         internet.setState(!errors.containsKey(INTERNET));
@@ -139,7 +138,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         if (resultPanel != null)
             remove(resultPanel);
 
-        resultPanel = createResultPanel(errors, new HashSet<>(ConnectionMonitor.neededTypes), workerList, userEmail, terms);
+        resultPanel = createResultPanel(errors, new HashSet<>(ConnectionMonitor.neededTypes), workerList, terms);
 
         add(resultPanel, 15, true);
 
@@ -153,13 +152,13 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     }
 
 
-    private JPanel createResultPanel(Multimap<ConnectionError.Klass, ConnectionError> errors, final Set<WorkerWithCharge> neededTypes, @Nullable WorkerList workerList, @Nullable String userID, @NotNull List<Term> terms) {
+    private JPanel createResultPanel(Multimap<ConnectionError.Klass, ConnectionError> errors, final Set<WorkerWithCharge> neededTypes, @Nullable WorkerList workerList, @NotNull List<Term> terms) {
         TwoColumnPanel resultPanel = new TwoColumnPanel();
         resultPanel.setBorder(BorderFactory.createEmptyBorder());
         resultPanel.add(new JXTitledSeparator("Description"), 15, false);
 
 
-        if (errors.isEmpty() || errors.values().stream().filter(i -> !i.getErrorType().equals(ConnectionError.Type.WARNING)).findAny().isEmpty()) {
+        if (errors.isEmpty() || errors.values().isEmpty() || errors.values().stream().filter(i -> !i.getErrorType().equals(ConnectionError.Type.WARNING)).findAny().isEmpty()) {
 
             //case 0 NO ERROR
             resultPanel.add(new JLabel("<html>Connection to SIRIUS web services successfully established!</html>"), 5, false);
@@ -202,41 +201,42 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
             text.append("</p></html>");
             resultPanel.add(new JLabel(text.toString()), 5, false);
         } else {
-            ConnectionError.Klass mainError = errors.keySet().stream().min(ConnectionError.Klass::compareTo).get();
-            ConnectionError err = errors.get(mainError).stream().findFirst().get();
+            ConnectionError err = errors.values().stream().sorted().findFirst().get();
+            ConnectionError.Klass mainError = err.getErrorKlass();
             switch (mainError) {
                 case INTERNET:
                     addHTMLTextPanel(resultPanel, err + "<br><b> Could not establish an internet connection.</b><br>" +
                             "Please check whether your computer is connected to the internet. " +
                             "All features depending on the SIRIUS web services won't work without internet connection.<br>" +
-                            "If you use a proxy, please check the proxy settings.");
+                            "If you use a proxy, please check the proxy settings." + addHtmlErrorText(err));
                     break;
                 case LOGIN_SERVER:
                     addHTMLTextPanel(resultPanel, err + "<br>" +
                             "Could not reach " + PropertyManager.getProperty("de.unijena.bioinf.sirius.security.authServer") + ". <br>" +
                             "Either our Authentication/Login server is temporary not available " +
-                            "or it cannot be reached because of your network configuration.<br>");
+                            "or it cannot be reached because of your network configuration.<br>" + addHtmlErrorText(err));
                     break;
                 case LICENSE_SERVER:
                     addHTMLTextPanel(resultPanel, err + "<br>" +
                             "Could not reach " + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer") + ". <br>" +
                             "Either our Licensing server is temporary not available, " +
-                            "or it cannot be reached because of your network configuration.<br>");
+                            "or it cannot be reached because of your network configuration.<br>" + addHtmlErrorText(err));
                     break;
                 case TOKEN:
                 addHTMLTextPanel(resultPanel, err +
-                        "<br>Unexpected error when refreshing/validating your access_token. <br> <b>Please try to re-login:</b>");
+                        "<br>Unexpected error when refreshing/validating your access_token. <br> <b>Please try to re-login:</b>"
+                        + addHtmlErrorText(err));
                 resultPanel.add(new JButton(ActionUtils.deriveFrom(
                         evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
                         SiriusActions.SIGN_OUT.getInstance())));
                 case LOGIN:
-                    addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING);
+                    addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING + addHtmlErrorText(err));
                     resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
                             SiriusActions.SIGN_IN.getInstance())));
                     break;
                 case LICENSE:
-                    addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING);
+                    addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING + addHtmlErrorText(err));
                     break;
                 case TERMS:
                     addHTMLTextPanel(resultPanel, err + "<br><b>" + Term.toLinks(terms) +
@@ -249,28 +249,37 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                     addHTMLTextPanel(resultPanel, err + "<br>" +
                             "Could not connect to the SIRIUS web service (REST API). <br><br>" + "<b>Possible reasons:</b><br>" +
                             "<ol>" +
-                            "<li>Our Application server is temporary not available.</li>" +
+                            "<li>The SIRIUS web service is temporary not available.</li>" +
                             "<li>The service cannot be reached because of your network configuration.</li>" +
                             "<li>Our Service is no longer available for your current SIRIUS version. <br>" +
                             "Please <a href=https://bio.informatik.uni-jena.de/software/sirius/>download</a> " +
                             "the latest version of SIRIUS</li>" +
-                            "</ol>");
+                            "</ol>" + addHtmlErrorText(err));
 
 
                     break;
                 case WORKER:
-                    addHTMLTextPanel(resultPanel, err + WORKER_INFO_MISSING_MESSAGE);
+                    addHTMLTextPanel(resultPanel, err + WORKER_INFO_MISSING_MESSAGE + addHtmlErrorText(err));
                     break;
                 default:
                     addHTMLTextPanel(resultPanel, err + "<br><b>An Unexpected Network Error has occurred! " +
-                            "Please submit a bug report.</b>");
+                            "Please submit a bug report.</b>" + addHtmlErrorText(err));
             }
         }
         return resultPanel;
     }
 
+    private static String addHtmlErrorText(ConnectionError e){
+        if (e == null || e.getServerResponseErrorCode().isEmpty() && e.getServerResponseErrorMessage().isEmpty())
+            return "";
+
+        StringBuilder detail = new StringBuilder("<br><br> <b>Details</b><br>");
+        e.getServerResponseErrorCode().ifPresent(c -> detail.append("Response Code: ").append(c).append("<br>"));
+        e.getServerResponseErrorMessage().ifPresent(m -> detail.append("Response Message: ").append(m));
+        return  detail.toString();
+    }
     public WebviewHTMLTextJPanel addHTMLTextPanel(@NotNull JPanel resultPanel, @NotNull String text) {
-        return addHTMLTextPanel(resultPanel, text, 75);
+        return addHTMLTextPanel(resultPanel, text, 100);
     }
 
     public WebviewHTMLTextJPanel addHTMLTextPanel(@NotNull JPanel resultPanel, @NotNull String text, int height) {

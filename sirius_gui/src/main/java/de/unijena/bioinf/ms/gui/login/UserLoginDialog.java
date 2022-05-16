@@ -36,6 +36,7 @@ import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.webapi.Tokens;
+import de.unijena.bioinf.webapi.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -95,6 +96,8 @@ public class UserLoginDialog extends JDialog {
                     try {
                         service.login(username.getText(), new String(password.getPassword()));
                         AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
+                        ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(service.getToken().orElse(null)));
+                        ProxyManager.reconnect();
                         performedLogin = true;
                         Jobs.runEDTLater(UserLoginDialog.this::dispose);
                         if (boxAcceptTerms.isSelected())

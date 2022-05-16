@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.net;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -56,40 +57,41 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
     @Override
     public void close() {
-        if (backroundMonitorJob != null)
-            backroundMonitorJob.cancel();
-        backroundMonitorJob = null;
+        if (backgroundMonitorJob != null)
+            backgroundMonitorJob.cancel();
+        backgroundMonitorJob = null;
     }
 
-    public enum ConnectionState {
-        YES, WARN, TERMS, AUTH_ERROR, NO; //NO means ERROR (No connection)
-    }
+    /*  public enum ConnectionState {
+          YES, WARN, TERMS, AUTH_ERROR, NO; //NO means ERROR (No connection)
+      }
+  */
+    private volatile ConnectionCheck checkResult = new ConnectionCheck(Multimaps.newSetMultimap(Map.of(), Set::of), null, new LicenseInfo());
+    private volatile CheckJob checkJob = null;
 
-    private ConnetionCheck checkResult = new ConnetionCheck(Multimaps.newSetMultimap(Map.of(), Set::of), null, new LicenseInfo());
-
-    private ConnectionCheckMonitor backroundMonitorJob = null;
-
-    private CheckJob checkJob = null;
+    private ConnectionCheckMonitor backgroundMonitorJob = null;
 
     public ConnectionMonitor() {
-        this(true, true);
+        this(true);
     }
 
-    public ConnectionMonitor(boolean startBackroundMonitorThread, boolean checkOnlyDisconnected) {
+    public ConnectionMonitor(boolean withBackgroundMonitorThread) {
         super();
-        if (startBackroundMonitorThread) {
-            backroundMonitorJob = new ConnectionCheckMonitor();
-            Jobs.runInBackground(backroundMonitorJob);
+        if (withBackgroundMonitorThread) {
+            backgroundMonitorJob = new ConnectionCheckMonitor();
+            Jobs.runInBackground(backgroundMonitorJob);
         } else {
             Jobs.runInBackground(this::checkConnection);
         }
     }
 
-
-    private synchronized TinyBackgroundJJob<ConnetionCheck> runOrGet() {
+    private TinyBackgroundJJob<ConnectionCheck> runOrGet() {
         if (checkJob == null) {
-            checkJob = new CheckJob();
-            Jobs.runInBackground(checkJob);
+            synchronized (this) {
+                if (checkJob == null) {
+                    checkJob = SiriusJobs.getGlobalJobManager().submitJob(new CheckJob());
+                }
+            }
         }
         return checkJob;
     }
@@ -102,7 +104,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
     // this method might block. You might want to run it in background to wait for the result.
     //e.g. Jobs.runInBackgroundAnLoad
-    public ConnetionCheck checkConnection() {
+    public ConnectionCheck checkConnection() {
         return runOrGet().getResult();
     }
 
@@ -111,12 +113,11 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
 
-    protected void setResult(final ConnetionCheck checkResult) {
-        ConnetionCheck old;
-        synchronized (this) {
-            old = this.checkResult;
-            this.checkResult = checkResult;
-        }
+    private synchronized void setResult(final ConnectionCheck checkResult) {
+        ConnectionCheck old;
+
+        old = this.checkResult;
+        this.checkResult = checkResult;
 
         firePropertyChange(new ConnectionUpdateEvent(checkResult));
         firePropertyChange(new ConnectionStateEvent(old, checkResult));
@@ -131,9 +132,9 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         addPropertyChangeListener(ConnectionStateEvent.KEY, listener);
     }
 
-    private class CheckJob extends TinyBackgroundJJob<ConnetionCheck> {
+    private class CheckJob extends TinyBackgroundJJob<ConnectionCheck> {
         @Override
-        protected ConnetionCheck compute() throws Exception {
+        protected ConnectionCheck compute() throws Exception {
             checkForInterruption();
             Multimap<ConnectionError.Klass, ConnectionError> errors = Multimaps.newSetMultimap(new HashMap<>(), LinkedHashSet::new);
 
@@ -162,14 +163,14 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
                     //enrich license info with consumables
                     if (ll.getSubscription() != null && ll.isCountQueries())
                         ll.setConsumables(ApplicationCore.WEB_API.getConsumables(!ll.hasCompoundLimit())); //yearly if there is compound limit
-                } catch (Throwable e) {
+                } catch (Exception e) {
                     errors.put(ConnectionError.Klass.APP_SERVER, new ConnectionError(93,
                             "Error when requesting computation limits.",
                             ConnectionError.Klass.APP_SERVER, e));
                     errors.putAll(ApplicationCore.WEB_API.checkConnection());
                 }
 
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 errors.put(ConnectionError.Klass.APP_SERVER, new ConnectionError(94,
                         "Error when requesting worker information.",
                         ConnectionError.Klass.APP_SERVER, e));
@@ -178,7 +179,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
             checkForInterruption();
 
-            return new ConnetionCheck(errors, wl, ll);
+            return new ConnectionCheck(errors, wl, ll);
         }
 
         @Override
@@ -212,7 +213,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         }
     }
 
-    public static class ConnetionCheck {
+    public static class ConnectionCheck {
         @Nullable
         public final WorkerList workerInfo;
         @NotNull
@@ -220,14 +221,13 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         @NotNull
         public final Multimap<ConnectionError.Klass, ConnectionError> errors;
 
-        @NotNull
-        public final ConnectionState state;
+        public final ConnectionError.Klass state;
 
-        public ConnetionCheck(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerInfo, @NotNull LicenseInfo licenseInfo) {
+        public ConnectionCheck(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerInfo, @NotNull LicenseInfo licenseInfo) {
             this.errors = errors;
             this.workerInfo = workerInfo;
             this.licenseInfo = licenseInfo;
-            this.state = getConnectionState(this.errors);
+            this.state = this.errors.keySet().stream().sorted().findFirst().orElse(ConnectionError.Klass.INTERNET);// getConnectionState(this.errors);
         }
 
 
@@ -243,78 +243,66 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
             return !isConnected();
         }
 
-        public boolean hasWorkerWarning() {
-            return errors.containsKey(ConnectionError.Klass.WORKER) && errors.get(ConnectionError.Klass.WORKER).stream().anyMatch(e -> e.getErrorType() == ConnectionError.Type.WARNING);
+        public boolean hasInternet() {
+            return isConnected() || errors.values().stream().filter(e -> e.getErrorKlass().equals(ConnectionError.Klass.INTERNET)).findAny().isEmpty();
         }
 
-        private static ConnectionState getConnectionState(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors) {
-            if (!errors.isEmpty()) {
-                if (errors.values().stream().noneMatch(ConnectionError::isError))
-                    return ConnectionState.WARN;
+        public boolean hasWorkerWarning() {
+            return errors.containsKey(ConnectionError.Klass.WORKER) && errors.get(ConnectionError.Klass.WORKER).stream()
+                    .anyMatch(e -> e.getErrorType() == ConnectionError.Type.WARNING);
+        }
 
-                ConnectionError.Klass min = errors.keySet().stream().sorted().findFirst().get();
-                switch (min) {
-                    case TERMS:
-                        return ConnectionState.TERMS;
-                    case LOGIN_SERVER:
-                        return ConnectionState.AUTH_ERROR;
-                    default:
-                        return ConnectionState.NO;
-                }
-            }
-            return ConnectionState.YES;
+        public boolean hasOnlyWarning() {
+            return !errors.isEmpty() && errors.values().stream()
+                    .map(ConnectionError::getErrorType)
+                    .filter(e -> !e.equals(ConnectionError.Type.WARNING))
+                    .findAny().isEmpty();
         }
     }
 
     public class ConnectionStateEvent extends PropertyChangeEvent {
         public static final String KEY = "connection-state";
 
-        /**
-         * Constructs a new {@code PropertyChangeEvent}.
-         *
-         * @param oldCheck     the old value of the property
-         * @param newCheck     the new value of the property
-         * @throws IllegalArgumentException if {@code source} is {@code null}
-         */
-        private final ConnetionCheck newConnectionCheck;
+        private final ConnectionCheck newConnectionCheck;
 
-        public ConnectionStateEvent(final ConnetionCheck oldCheck, final ConnetionCheck newCheck) {
+        public ConnectionStateEvent(final ConnectionCheck oldCheck, final ConnectionCheck newCheck) {
             super(ConnectionMonitor.this, KEY, oldCheck.state, newCheck.state);
             newConnectionCheck = newCheck;
         }
 
         @Override
-        public ConnectionState getNewValue() {
-            return (ConnectionState) super.getNewValue();
+        public ConnectionError.Klass getNewValue() {
+            return (ConnectionError.Klass) super.getNewValue();
         }
 
         @Override
-        public ConnectionState getOldValue() {
-            return (ConnectionState) super.getOldValue();
+        public ConnectionError.Klass getOldValue() {
+            return (ConnectionError.Klass) super.getOldValue();
         }
 
-        public ConnetionCheck getConnectionCheck() {
+        public ConnectionCheck getConnectionCheck() {
             return newConnectionCheck;
         }
     }
 
     public class ConnectionUpdateEvent extends PropertyChangeEvent {
         public static final String KEY = "connection-update";
-        public ConnectionUpdateEvent(ConnetionCheck check) {
+
+        public ConnectionUpdateEvent(ConnectionCheck check) {
             super(ConnectionMonitor.this, KEY, null, check);
         }
 
         @Override
-        public ConnetionCheck getNewValue() {
-            return (ConnetionCheck) super.getNewValue();
+        public ConnectionCheck getNewValue() {
+            return (ConnectionCheck) super.getNewValue();
         }
 
         @Override
-        public ConnetionCheck getOldValue() {
-            return (ConnetionCheck) super.getOldValue();
+        public ConnectionCheck getOldValue() {
+            return (ConnectionCheck) super.getOldValue();
         }
 
-        public ConnetionCheck getConnectionCheck() {
+        public ConnectionCheck getConnectionCheck() {
             return getNewValue();
         }
     }
