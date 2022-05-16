@@ -22,11 +22,16 @@ package de.unijena.bioinf.ms.gui.login;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import de.unijena.bioinf.auth.AuthService;
-import de.unijena.bioinf.auth.AuthServices;
+import de.unijena.bioinf.auth.LoginException;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.webapi.Tokens;
+import de.unijena.bioinf.webapi.rest.ProxyManager;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
@@ -34,11 +39,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
 
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
+
 public class AccountPanel extends JPanel {
     private final AuthService service;
-//    private JTextField webserverURL;
+    //    private JTextField webserverURL;
     private JLabel userIconLabel, userInfoLabel;
     private JButton login, reset, create;
+    private ToolbarButton refresh;
 
     public AccountPanel(AuthService service) {
         super(new BorderLayout());
@@ -49,18 +57,34 @@ public class AccountPanel extends JPanel {
     private void buildPanel() {
         TwoColumnPanel center = new TwoColumnPanel();
 
-//        webserverURL = new JTextField(PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host"));
-//        webserverURL.setEditable(false);
-//        center.addNamed("Web service URL", webserverURL);
-//        center.addVerticalGlue();
-
         userIconLabel = new JLabel();
         userInfoLabel = new JLabel();
 
         JPanel iconPanel = new JPanel(new BorderLayout());
         iconPanel.add(userIconLabel, BorderLayout.CENTER);
+        refresh = new ToolbarButton(Icons.REFRESH_32);
+        refresh.addActionListener(e ->
+                Jobs.runInBackgroundAndLoad(MF, () -> {
+                    try {
+                        ApplicationCore.WEB_API.changeActiveSubscription(null);
+                        AuthService.Token t = ApplicationCore.WEB_API.getAuthService().refreshIfNeeded(true);
+                        ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(t));
+                        ProxyManager.reconnect();
+                    } catch (LoginException ex) {
+                        LoggerFactory.getLogger(getClass()).error("Error when refreshing access_token!", ex);
+                    }finally {
+                        MF.CONNECTION_MONITOR().checkConnectionInBackground();
+                    }
+                }));
+        refresh.setPreferredSize(new Dimension(45, 45));
+        refresh.setToolTipText(
+                GuiUtils.formatToolTip("Refresh access_token (also reloads account an license information)."));
 
-        center.add(iconPanel, userInfoLabel);
+        Box right = Box.createHorizontalBox();
+        right.add(Box.createHorizontalGlue());
+        right.add(refresh);
+
+        center.add(iconPanel, TwoColumnPanel.of(userInfoLabel, right));
         center.addVerticalGlue();
         add(center, BorderLayout.CENTER);
 
@@ -70,7 +94,7 @@ public class AccountPanel extends JPanel {
         create = new JButton();
         login = new JButton();
         Box buttons = Box.createHorizontalBox();
-        buttons.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+        buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         buttons.add(reset);
         buttons.add(create);
         buttons.add(Box.createHorizontalGlue());
@@ -82,9 +106,8 @@ public class AccountPanel extends JPanel {
 
     private DecodedJWT getLogin() {
         return Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), "Checking Login",
-                () -> AuthServices.getIDToken(service)).getResult();
+                () -> service.getToken().map(AuthService.Token::getDecodedIdToken).orElse(null)).getResult();
     }
-
 
 
     public void reloadChanges() {
@@ -94,7 +117,9 @@ public class AccountPanel extends JPanel {
             userInfoLabel.setText("Please log in!");
             create.setAction(SiriusActions.SIGN_UP.getInstance());
             login.setAction(SiriusActions.SIGN_IN.getInstance());
+            refresh.setEnabled(false);
         } else {
+            refresh.setEnabled(true);
             try {
                 Image image = ImageIO.read(new URL(userInfo.getClaim("picture").asString()));
                 image = Icons.makeEllipse(image);

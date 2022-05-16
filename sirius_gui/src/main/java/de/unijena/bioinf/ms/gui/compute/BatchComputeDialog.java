@@ -43,7 +43,6 @@ import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
 import org.jdesktop.swingx.JXTitledSeparator;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -69,6 +68,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     public static final String DO_NOT_SHOW_AGAIN_KEY_Z_MEM = "de.unijena.bioinf.sirius.computeDialog.zodiac.memory.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_S_MASS = "de.unijena.bioinf.sirius.computeDialog.sirius.highmass.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.dontAskAgain";
+    public static final String DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.na.dontAskAgain";
 
 
     // main parts
@@ -172,12 +172,12 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             showCommand.addActionListener(e -> {
                 final String commandString = String.join(" ", makeCommand(new ArrayList<>()));
                 if (warnNoMethodIsSelected()) return;
-                new InfoDialog(owner, "Command:" + GuiUtils.formatToolTip(commandString)){
+                new InfoDialog(owner, "Command:" + GuiUtils.formatToolTip(commandString)) {
                     @Override
                     protected void decorateButtonPanel(JPanel boxedButtonPanel) {
                         JButton copyCommand = new JButton("Copy Command");
                         copyCommand.setToolTipText("Copy command to clipboard.");
-                        copyCommand.addActionListener(evt ->{
+                        copyCommand.addActionListener(evt -> {
                             StringSelection stringSelection = new StringSelection(commandString);
                             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                             clipboard.setContents(stringSelection, null);
@@ -259,7 +259,10 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                 LoadController.completeExisting(ec, editPanel));
     }
 
+    ConnectionMonitor.ConnectionCheck checkResult = null;
+
     private void startComputing() {
+        checkResult = null;
         if (warnNoMethodIsSelected()) return;
 
         if (editPanel != null && compoundsToProcess.size() == 1)
@@ -274,19 +277,33 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
 
         if (csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected() || canopusConfigPanel.isToolSelected() && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
-            boolean compCheck = Jobs.runInBackgroundAndLoad(MF, "Checking FP version...", new TinyBackgroundJJob<Boolean>() {
-                @Override
-                protected Boolean compute() throws Exception {
-                    return MF.ps().checkAndFixDataFiles(this::checkForInterruption);
+            //CHECK Server connection
+            if (checkResult == null)
+                checkResult = CheckConnectionAction.checkConnectionAndLoad();
+
+            if (checkResult.isConnected()) {
+                boolean compCheck = Jobs.runInBackgroundAndLoad(MF, "Checking FP version...", new TinyBackgroundJJob<Boolean>() {
+                    @Override
+                    protected Boolean compute() throws Exception {
+                        return MF.ps().checkAndFixDataFiles(this::checkForInterruption);
+                    }
+
+                }).getResult();
+
+                if (!compCheck) {
+                    new WarningDialog(this, "Outdated Fingerprint version!", "<html><body>You are working on an project with an outdated Fingerprint version!<br> " +
+                            "CSI:FingerID and CANOPUS are not available; all jobs will be skipped.<br>" +
+                            "Project conversion can be selected during import or via the commandline.<br><br>" +
+                            "</body></html>", DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS);
                 }
+            } else {
+                new WarningDialog(this, "No web service connection!",
+                        "<html><body>Could not perform Fingerprint compatibility check <br> " +
+                        "due to missing web service connection (see Webservice panel for details). <br> " +
+                        "CSI:FingerID and CANOPUS are not available; all corresponding jobs will fail and be skipped." +
+                        "</body></html>", DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK);
 
-            }).getResult();
 
-            if (!compCheck) {
-                new WarningDialog(this, "Outdated Fingerprint version!", "<html><body>You are working on an project with an outdated Fingerprint version!<br> " +
-                        "CSI:FingerID and CANOPUS are not available; all jobs will be skipped.<br>" +
-                        "Project conversion can be selected during import or via the commandline.<br><br>" +
-                        "</body></html>", DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS);
             }
         }
         // todo hotfix to prevent gui from going crazy
@@ -343,7 +360,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                     computation.parseArgs(c.toArray(String[]::new));
 
                     if (computation.isWorkflowDefined())
-                        Jobs.runWorkflow(computation.getFlow(), finalComps, c, String.join(" > ",toolList));//todo make som nice head job that does some organizing stuff
+                        Jobs.runWorkflow(computation.getFlow(), finalComps, c, String.join(" > ", toolList));//todo make som nice head job that does some organizing stuff
                     //todo else some error message with pico cli output
                 } catch (Exception e) {
                     new ExceptionDialog(MF, e.getMessage());
@@ -413,23 +430,24 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
     private boolean isAnySelected(ActivatableConfigPanel... configPanels) {
         for (ActivatableConfigPanel configPanel : configPanels) {
-            if (configPanel != null && configPanel.isToolSelected())  return true;
+            if (configPanel != null && configPanel.isToolSelected()) return true;
         }
         return false;
     }
 
     private void checkConnection() {
-        final @Nullable ConnectionMonitor.ConnetionCheck cc = CheckConnectionAction.checkConnectionAndLoad();
+        if (checkResult == null)
+            checkResult = CheckConnectionAction.checkConnectionAndLoad();
 
-        if (cc != null) {
-            if (cc.isConnected()) {
-                if ((csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected()) && cc.hasWorkerWarning()) {
-                    if (cc.workerInfo == null ||
-                            (!cc.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isNegative).collect(Collectors.toSet()))
+        if (checkResult != null) {
+            if (checkResult.isConnected()) {
+                if ((csiPredictConfigs.isToolSelected() || csiSearchConfigs.isToolSelected()) && checkResult.hasWorkerWarning()) {
+                    if (checkResult.workerInfo == null ||
+                            (!checkResult.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isNegative).collect(Collectors.toSet()))
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isNegative())) ||
-                            (!cc.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isPositive).collect(Collectors.toSet()))
+                            (!checkResult.workerInfo.supportsAllPredictorTypes(ConnectionMonitor.neededTypes.stream().filter(WorkerWithCharge::isPositive).collect(Collectors.toSet()))
                                     && compoundsToProcess.stream().anyMatch(it -> it.getIonization().isPositive()))
-                    ) new WorkerWarningDialog(MF, cc.workerInfo == null);
+                    ) new WorkerWarningDialog(MF, checkResult.workerInfo == null);
                 }
             } else {
                 if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
@@ -447,7 +465,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
     public void initSingleExperimentDialog() {
         JPanel north = new JPanel(new BorderLayout());
-        north.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP,0,GuiUtils.SMALL_GAP,0));
+        north.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, 0, GuiUtils.SMALL_GAP, 0));
 
         InstanceBean ec = compoundsToProcess.get(0);
         editPanel = new ExperimentEditPanel(false);

@@ -41,7 +41,7 @@ public class AcceptTermsAction extends AbstractAction {
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = Jobs.runInBackgroundAndLoad(MF, "Accepting and Refreshing...", () -> {
+        Jobs.runInBackgroundAndLoad(MF, "Accepting and Refreshing...", () -> {
             try {
                 ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
                 return true;
@@ -51,6 +51,6 @@ public class AcceptTermsAction extends AbstractAction {
             }finally {
                 MF.CONNECTION_MONITOR().checkConnection();
             }
-        }).getResult();
+        });
     }
 }
