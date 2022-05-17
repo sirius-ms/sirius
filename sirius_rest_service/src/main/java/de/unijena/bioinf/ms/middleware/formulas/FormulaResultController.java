@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.middleware.formulas;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -30,8 +32,8 @@ import de.unijena.bioinf.ms.middleware.BaseApiController;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.CompoundContainer;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -57,7 +59,7 @@ public class FormulaResultController extends BaseApiController {
     public List<FormulaId> getFormulaIds(@PathVariable String pid, @PathVariable String cid, @RequestParam(required = false) boolean includeFormulaScores) {
         SiriusProjectSpace space = projectSpace(pid);
         LoggerFactory.getLogger(FormulaResultController.class).info("Started collecting formulas...");
-        return getCompound(space ,cid).map(con -> con.getResults().values().stream().map(frId -> {
+        return getCompound(space ,cid).map(con -> con.getResultsRO().values().stream().map(frId -> {
             try{
                 return space.getFormulaResult(frId, FormulaScoring.class);
             } catch (IOException e) {
@@ -95,20 +97,26 @@ public class FormulaResultController extends BaseApiController {
     @GetMapping(value = "/formulas/{fid}/candidates", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public String getStructureCandidates(@PathVariable String pid, @PathVariable String cid, @PathVariable String fid){
         SiriusProjectSpace projectSpace = projectSpace(pid);
+        ObjectMapper mapper = new ObjectMapper();
         return this.getAnnotatedFormulaResult(projectSpace, cid, fid, FBCandidates.class).map(fr -> {
             List<String> jsons = fr.getAnnotation(FBCandidates.class).map(candidates ->
-                    candidates.getResults().stream().map(sc ->
-                            sc.getCandidate().toJSON()).collect(Collectors.toList()))
+                    candidates.getResults().stream().map(sc -> {
+                        try {
+                            return mapper.writeValueAsString(sc.getCandidate());
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }).collect(Collectors.toList()))
                     .orElse(Collections.emptyList());
             return this.JSONListToOneJSON(jsons);
         }).orElse(null);
     }
 
     @GetMapping(value = "/formulas/topHitCandidate", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public String getTopHitCandidate(@PathVariable String pid, @PathVariable String cid){
+    public String getTopHitCandidate(@PathVariable String pid, @PathVariable String cid) throws JsonProcessingException {
         SiriusProjectSpace projectSpace = projectSpace(pid);
         Stream<Optional<FormulaResult>> annotatedFResults = this.getCompound(projectSpace,cid).map(cc ->
-                cc.getResults().values().stream().map(frId -> {
+                cc.getResultsRO().values().stream().map(frId -> {
                     try {
                         return Optional.of(projectSpace.getFormulaResult(frId, FBCandidates.class));
                     } catch (IOException e) {
@@ -135,7 +143,7 @@ public class FormulaResultController extends BaseApiController {
                 bestCandidate = topHits.get(idx);
             }
         }
-        return bestCandidate.getCandidate().toJSON();
+        return new ObjectMapper().writeValueAsString(bestCandidate.getCandidate());
     }
 
     @GetMapping(value = "formulas/{fid}/tree", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)

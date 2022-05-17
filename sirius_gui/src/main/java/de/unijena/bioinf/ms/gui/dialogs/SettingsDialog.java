@@ -18,14 +18,10 @@
  */
 
 package de.unijena.bioinf.ms.gui.dialogs;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 06.10.16.
- */
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.settings.*;
 import org.slf4j.LoggerFactory;
@@ -43,10 +39,8 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private JButton discard, save;
     private final Properties nuProps;
     private AdductSettingsPanel addSettings;
-    private ProxySettingsPanel proxSettings;
+    private NetworkSettingsPanel proxSettings;
     private GerneralSettingsPanel genSettings;
-    private ErrorReportSettingsPanel errorSettings;
-    //    private ILPSettings ilpSettings;
     private JTabbedPane settingsPane;
 
     public SettingsDialog(Frame owner) {
@@ -60,7 +54,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
         nuProps = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
 
 //=============NORTH =================
-        JPanel header = new DialogHaeder(Icons.GEAR_64);
+        JPanel header = new DialogHeader(Icons.GEAR_64);
         add(header, BorderLayout.NORTH);
 
 //============= CENTER =================
@@ -75,13 +69,11 @@ public class SettingsDialog extends JDialog implements ActionListener {
         /*ilpSettings = new ILPSettings(nuProps);
         settingsPane.add(ilpSettings.name(),ilpSettings);*/
 
-        proxSettings = new ProxySettingsPanel(nuProps);
+        proxSettings = new NetworkSettingsPanel(nuProps);
         settingsPane.add(proxSettings.name(), proxSettings);
 
-        errorSettings = new ErrorReportSettingsPanel(nuProps);
-        errorSettings.addVerticalGlue();
-        settingsPane.add(errorSettings.name(), errorSettings);
-
+//        accountSettings = new AccountSettingsPanel(nuProps, ApplicationCore.WEB_API.getAuthService());
+//        settingsPane.add(accountSettings.name(), accountSettings);
 
         if (activeTab >= 0 && activeTab < settingsPane.getTabCount())
             settingsPane.setSelectedIndex(activeTab);
@@ -95,8 +87,8 @@ public class SettingsDialog extends JDialog implements ActionListener {
         save.addActionListener(this);
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttons.add(discard);
         buttons.add(save);
+        buttons.add(discard);
 
         add(buttons, BorderLayout.SOUTH);
 
@@ -134,18 +126,13 @@ public class SettingsDialog extends JDialog implements ActionListener {
             this.dispose();
         } else {
             boolean restartMessage = collectChangedProps();
-            new SwingWorker<Integer, String>() {
-                @Override
-                protected Integer doInBackground() throws Exception {
-                    LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
-                    SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                    CheckConnectionAction.isConnectedAndLoad();
-                    return 1;
-
-                }
-            }.execute();
+            Jobs.runInBackground(()->{
+                LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
+                SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
+                CheckConnectionAction.checkConnectionAndLoad().isConnected();
+            });
             if (restartMessage)
-                new ExceptionDialog(this, "For at least one change you made requires a restart of Sirius.");
+                new InfoDialog(this, "At least one change you made requires a restart of Sirius to take effect.");
             this.dispose();
         }
     }

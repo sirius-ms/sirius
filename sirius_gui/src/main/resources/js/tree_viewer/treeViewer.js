@@ -15,11 +15,12 @@ var md_ppm_max, md_ppm_min, md_mz_max, md_mz_min,
     rel_int_max;
 // misc
 var max_box_text;
-var nodeToMove = null, unambig_mode = 'none',
+var highlightedNode = null, nodeToMove = null, unambig_mode = 'none',
     moveModes = {};
 var brushTransition = d3.transition().duration(500),
     zeroTransition = d3.transition().duration(0);
 var colorGen, loss_colors_dict, losses;
+var lastRightClickTime = null;     // for distinguishing double right click (->reset zoom) from brushing
 // use innerWidth/Height (for renderers other than WebView)
 var window_use_inner = false;
 // theming
@@ -27,11 +28,17 @@ var styles = {'elegant': {'node-rect': {'stroke' : 'transparent'},
                           'node-rect-hovered': {'stroke': 'black',
                                                 'stroke-width': 2,
                                                 'stroke-dasharray': '7,7'},
+                          'node-rect-selected': {'stroke': 'black',
+                                                'stroke-width': 4,
+                                                'stroke-dasharray': '7,7'},
                           'link-line': {'stroke-width': 2}},
               'classic': {'node-rect': {'stroke' : 'black',
                                         'stroke-width': 1},
                           'node-rect-hovered': {'stroke': 'black',
                                                 'stroke-width': 2,
+                                                'stroke-dasharray': ''},
+                          'node-rect-selected': {'stroke': 'black',
+                                                'stroke-width': 4,
                                                 'stroke-dasharray': ''},
                           'link-line': {'stroke-width': 1}}};
 var theme = 'elegant';
@@ -155,9 +162,8 @@ function handleMouseMove(){
     } else{
         changeCursor('move');
         popupClose();
-        for (var style in styles[theme]['node-rect'])
-            svg.selectAll('.node rect').style(style, styles[theme]['node-rect'][
-                style]);
+        // remove hover faces for all nodes except highlighted one
+        highlightNode(highlightedNode);
     }
     if (nodeToMove != null)
         line_coords[0] = [getTransformedCoordinate(nodeToMove.__data__.x, 'x',
@@ -200,9 +206,6 @@ function handleMouseMove(){
 
 // activate node move/swap-mode, visualize moving possibilities
 function handleClick(){
-    if (!edit_mode)
-        return;
-
     function clickedOnCollapse(){
         if (typeof(collapse_button) == 'undefined')
             return false;
@@ -224,6 +227,17 @@ function handleClick(){
     var clickedNode = getNodeByPos(
         getTransformedCoordinate(d3.event.offsetX, 'x'),
         getTransformedCoordinate(d3.event.offsetY, 'y'));
+
+    // highlighting / connector interaction
+    if (clickedNode != null){
+        highlightNode(d3.select(clickedNode));
+        // pass selected node (~> peak) to Java connector
+        selectionChanged(clickedNode.__data__.data.fragmentData.mz);
+    }
+
+    // node moving (only when edit mode is enabled)
+    if (!edit_mode)
+        return;
 
     if (clickedNode != null){
         if (nodeToMove == null){
@@ -273,6 +287,17 @@ function handleClick(){
     }
 }
 
+function highlightNode(node) {
+    // unhighlight any other node and highlight selected node
+    for (var style in styles[theme]['node-rect'])
+        svg.selectAll('.node rect').style(style, styles[theme]['node-rect'][style]);
+    highlightedNode = node;
+    if (node != null)
+        for (var style in styles[theme]['node-rect-selected'])
+            highlightedNode.select('rect').style(
+                style, styles[theme]['node-rect-selected'][style]);
+}
+
 function changeCursor(new_cursor){
     svg.select('.overlay').attr('cursor', new_cursor);
 }
@@ -316,7 +341,8 @@ function reset(){
 function popupOpen(d) {
     var popupStrings = [];
     popup_annot_fields.forEach(function(a) {
-        popupStrings.push(formatAnnot(a, d.data.fragmentData[a]));
+        const str = formatAnnot(a, d.data.fragmentData[a]);
+        if (str) popupStrings.push(str);
     });
     var open_left = 0, open_above=0;
     var popup_width = parseFloat(popup_div.style('width').replace('px', ''));
@@ -336,43 +362,47 @@ function popupClose(d) {
 }
 
 function formatAnnot(id, value) {
-    switch (id) {
-    case "score":
-        return "Score: " + parseFloat(value).toFixed(4);
-    case "ion":
-        return value;
-    case "mz":
-        return parseFloat(value).toFixed(4) + ' Da';
-    case "massDeviation":
-        // example: "-5.479016320565768 ppm (-0.0035791853184719002 m/z)"
-        var number = parseFloat(value.split(' ')[0]);
-        return number.toFixed(4) + ' ppm';
-    case 'massDeviationPpm':
-        return parseFloat(value).toFixed(4) + ' ppm';
-    case 'massDeviationMz':
-        return (value>0?"+":"")+(parseFloat(value) * 1000).toFixed(4) + ' mDa';
-    case 'relativeIntensity':
-        return parseFloat(value).toFixed(4) + " rel. int.";
-    default:
-        // for showing custom (not predefined) information,
-        // that has to be present in 'data' though
-        return value;
-    }
+    if (value) {
+        switch (id) {
+        case 'score':
+            return parseFloat(value).toFixed(4) + ' score';
+        case 'ion':
+            return value;
+        case 'mz':
+            return parseFloat(value).toFixed(4) + ' Da';
+        case 'massDeviation':
+            // example: '-5.479016320565768 ppm (-0.0035791853184719002 m/z)'
+            var number = parseFloat(value.split(' ')[0]);
+            return number.toFixed(4) + ' ppm';
+        case 'massDeviationPpm':
+            return parseFloat(value).toFixed(4) + ' ppm';
+        case 'massDeviationMz':
+            return (value>0?'+':'')+(parseFloat(value) * 1000).toFixed(4) + ' mDa';
+        case 'relativeIntensity':
+            return parseFloat(value).toFixed(4) + ' rel. int.';
+        default:
+            // for showing custom (not predefined) information,
+            // that has to be present in 'data' though
+            return value;
+        }
+    } else return '';
 }
 
 // returns annotation color depending on type of annotation and value
 function getAnnotColor(id, value) {
-    value = parseFloat(value);
-    var min, max;
-    if (id == 'massDeviationMz'){
-        min = md_mz_min;
-        max = md_mz_max;
-    } else if (id == 'massDeviationPpm'){
-        min = md_ppm_min;
-        max = md_ppm_max;
-    } else
-        return 'black';
-    return interpolateBuBlRd(parseFloat(value) / Math.max(min, max) / 2 + 0.5);
+    if (value) {
+        value = parseFloat(value);
+        var min, max;
+        if (id == 'massDeviationMz'){
+            min = md_mz_min;
+            max = md_mz_max;
+        } else if (id == 'massDeviationPpm'){
+            min = md_ppm_min;
+            max = md_ppm_max;
+        } else
+            return 'black';
+        return interpolateBuBlRd(parseFloat(value) / Math.max(min, max) / 2 + 0.5);
+    } else return "white";
 }
 
 function getLossColor(loss, colorFunction=colorLossByElements){
@@ -811,8 +841,13 @@ function zoomed() {
 // handles brush event
 function brushended() {
     var s = d3.event.selection, x, y, k;
-    if (s == null)
+    if (s == null){
+        if (d3.event.sourceEvent.type != 'end' // no successful brush call (see last line of this function calling brush.move)
+            && (performance.now() - lastRightClickTime < 300)) // AND double click
+            resetZoom();
+        lastRightClickTime = performance.now();
         return;
+    }
     // adjusting selection for current zoom transformations
     s[1][0] = getTransformedCoordinate(s[1][0], 'x');
     s[0][0] = getTransformedCoordinate(s[0][0], 'x');
@@ -829,7 +864,7 @@ function brushended() {
     zoom_base.call(zoom.transform, transform).transition(t);
     zoom_base.node().__zoom = transform;
     svg.select('.brush').node().__zoom = transform;
-    svg.select('.brush').call(brush.move, null);
+    svg.select('.brush').call(brush.move, null); // clear brush rectangle
 }
 
 
@@ -937,8 +972,6 @@ function colorCode(variant, scheme) {
     cb_label
         .attr('transform', 'translate(' + parseInt(width - cb_width - cb_pad_right)
               + ',' + parseInt(cb_pad_top) + ')')
-        .style('font-size', '12')
-        .style('font-family', 'sans-serif')
         .text({md_mz: 'mass deviation in m/z',
                md_mz_abs: 'mass deviation in mz (absolute)',
                md_ppm: 'mass deviation in ppm',
@@ -1048,7 +1081,7 @@ function generateTree(data) {
     });
     addFragmentData(data);
     boxwidth = calcBoxwidth(max_box_text,
-                            {'font-weight': 'bold', 'font-size': '12'});
+                            {'font-weight': 'bold'});
 }
 
 // additionally to adding fragment data to tree nodes, also stores
@@ -1063,21 +1096,27 @@ function addFragmentData(data) {
     data.fragments.forEach(function(fragment) { // must not be empty!
         // Pre-processing of 'fragment' to make things simpler later
         // for display of these attributes as annotations
-        fragment['massDeviationPpm'] = fragment.massDeviation.split(' ')[0];
-        fragment['massDeviationMz'] = fragment.massDeviation.split(' ')[2].
-            substring(1);
-        // storing maxima/minima for color coding
-        var md_ppm = parseFloat(fragment.massDeviationPpm);
-        var md_mz = parseFloat(fragment.massDeviationMz);
+        if (fragment['massDeviation']) {
+            fragment['massDeviationPpm'] = fragment.massDeviation.split(' ')[0];
+            // storing maxima/minima for color coding
+            const md_ppm = parseFloat(fragment.massDeviationPpm);
+            if (md_ppm > md_ppm_max) {
+                md_ppm_max = md_ppm;
+            }
+            if (md_ppm < md_ppm_min) {
+                md_ppm_min = md_ppm;
+            }
+            fragment['massDeviationMz'] = fragment.massDeviation.split(' ')[2].substring(1);
+            const md_mz = parseFloat(fragment.massDeviationMz);
+            if (md_mz > md_mz_max) {
+                md_mz_max = md_mz;
+            }
+            if (md_mz < md_mz_min) {
+                md_mz_min = md_mz;
+            }
+        }
+
         var rel_int = parseFloat(fragment.relativeIntensity);
-        if (md_ppm > md_ppm_max)
-            md_ppm_max = md_ppm;
-        if (md_ppm < md_ppm_min)
-            md_ppm_min = md_ppm;
-        if (md_mz > md_mz_max)
-            md_mz_max = md_mz;
-        if (md_mz < md_mz_min)
-            md_mz_min = md_mz;
         if (rel_int > rel_int_max)
             rel_int_max = rel_int;
         if (fragment.molecularFormula in node_map) {
@@ -1183,10 +1222,8 @@ function drawNodes(root) {
     enter.append('text')
         .attr('class', 'node_label')
         .text(function(d) { return d.data.name; })
-        .style('font-weight', 'bold')
+        .style('font-weight', 'bold');
         // .style('text-decoration', 'underline')
-        .style('font-family', 'sans-serif')
-        .style('font-size', '12');
 
     node.selectAll('.node_label')
         .data(root.descendants(), function(d) {
@@ -1197,8 +1234,7 @@ function drawNodes(root) {
                                     (-(boxwidth / 2) + 5)),
                              null, d.data.name,
                              (centered_node_labels?'middle':'start'),
-                             {'font-family': 'sans-serif', 'font-size':
-                              '12', 'font-weight': 'bold'})[0];})
+                             {'font-weight': 'bold'})[0];})
         .attr('dy', function(d) { return d.y - boxheight + lineheight + 5; });
 
     enter.append('g')
@@ -1225,9 +1261,7 @@ function drawNodeAnnots() {
                 formatAnnot(d, this.parentNode.parentNode.__data__.data.
                     fragmentData[d]));
         })
-        .attr('class', 'annot_text')
-        .style('font-size', '12')
-        .style('font-family', 'sans-serif');
+        .attr('class', 'annot_text');
 
     // for new AND existing elements
     enter.merge(annot)
@@ -1295,9 +1329,7 @@ function drawLinks(root) {
             loss = d.target.data.parentEdge.molecularFormula;
             if (!losses.contains(loss))
                 losses.push(loss);
-            return loss; })
-        .style('font-size', '12')
-        .style('font-family', 'sans-serif');
+            return loss; });
 
     link.selectAll('.link_text')
         .data(root.links(), function(d) {
@@ -1532,12 +1564,7 @@ popup_div = d3.select('body').append('div')
     .attr('class', 'popup')
     .style('opacity', 0)
     .style('position', 'absolute')
-    .style('pointer-events', 'none')
-    .style('background', 'lightsteelblue')
-    .style('font-size', '12')
-    .style('font-family', 'sans-serif')
-    .style('padding', '2px')
-    .style('border-radius', '8px');
+    .style('pointer-events', 'none');
 
 cb_label = svg.append('text')
     .attr('id', 'cb_label')
@@ -1600,7 +1627,7 @@ svg.append('svg:defs').selectAll('marker')
 zoom = d3.zoom().on('zoom', zoomed);
 brush = d3.brush().on('end', brushended);
 brush.filter(function() {
-    if (event.button == 2) {
+    if (d3.event.button == 2) {
         d3.event.preventDefault(); // no context menu
         return true;
     } else

@@ -31,7 +31,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
+import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -48,7 +48,7 @@ public class SiriusSubToolJob extends InstanceJob {
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return !inst.loadCompoundContainer().getResults().isEmpty();
+        return inst.loadCompoundContainer().hasResults();
     }
 
     @Override

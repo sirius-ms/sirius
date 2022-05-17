@@ -208,7 +208,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             if (candidate == null || candidate.candidate == null) return;
 
             for (DatabaseLabel label : candidate.labels) {
-                final TextLayout tlayout = new TextLayout(label.name, dbPanelFont, new FontRenderContext(null, false, false));
+                final TextLayout tlayout = new TextLayout(label.name(), dbPanelFont, new FontRenderContext(null, false, false));
                 final Rectangle2D r = tlayout.getBounds();
                 final int X = (int) r.getWidth() + 2 * DB_LABEL_PADDING + 6;
                 final int Y = (int) r.getHeight() + 2 * DB_LABEL_PADDING + 6;
@@ -231,10 +231,11 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }
 
         private Color color() {
-            CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.name);
+            CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.sourceName);
             if (s == null) return Colors.DB_UNKNOWN;
             if (s.isCustomSource()) return Colors.DB_CUSTOM;
             if (s.name().equals(DataSource.TRAIN.realName)) return Colors.DB_TRAINING;
+            if (s.name().startsWith(DataSource.LIPID.realName)) return Colors.DB_ELGORDO;
             return label.values.length == 0 || s.URI() == null ? Colors.DB_UNLINKED : Colors.DB_LINKED;
         }
 
@@ -245,7 +246,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             final Graphics2D g = (Graphics2D) graphics;
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
             final FontMetrics m = getFontMetrics(getFont());
-            final int tw = m.stringWidth(label.name);
+            final int tw = m.stringWidth(label.name());
             final int th = m.getHeight();
             final int w = tw + DB_LABEL_PADDING;
             final int h = th + DB_LABEL_PADDING;
@@ -263,7 +264,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             g.setColor(Color.BLACK);
             g.drawRoundRect(2, 2, w, h, 4, 4);
             g.setColor(color.equals(Colors.DB_CUSTOM) ? Color.BLACK : Color.WHITE);
-            g.drawString(label.name, 2 + (w - tw) / 2, h - (h - th) / 2);
+            g.drawString(label.name(), 2 + (w - tw) / 2, h - (h - th) / 2);
         }
     }
 
@@ -373,7 +374,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
             final JPanel b1 = new JPanel(new BorderLayout());
 
-            final JLabel dbl = new JLabel("Databases");
+            final JLabel dbl = new JLabel("Sources/Tags");
             dbl.setFont(nameFont.deriveFont(map));
             scoreL = new ScoreLabel();
             b1.setOpaque(false);

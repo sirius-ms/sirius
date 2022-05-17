@@ -11,26 +11,27 @@ buildscript {
     dependencies {
 //        classpath 'edu.sc.seis.gradle:launch4j:2.4.9'
         classpath 'commons-configuration:commons-configuration:1.10'
-        classpath "com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE"
+        classpath 'com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE'
+        classpath 'org.yaml:snakeyaml:1.29'
     }
 }
 
 plugins {
-    id "com.jfrog.artifactory" version "4.17.2"
+    id "com.jfrog.artifactory" version "4.25.1"
     id "de.undercouch.download" version "4.1.1"
 }
 
 //Global Properties
 ext {
     //version for external libraries
-    slf4j_version = '1.7.25'
-    jjobs_version = '0.9.20-SNAPSHOT'
+    slf4j_version = '1.7.36'
+    jjobs_version = '0.9.27'
     json_version = '1.0' //todo move to gson
     json_impl_version = "1.0.4" //todo move to gson
 
     cdk_version = "2.3"
 
-    picocli_version = '4.3.2'//'3.9.5'
+    picocli_version = '4.6.3'//'3.9.5'
 
     glpk_lib_version = '4.60'
     clp_lib_version = '2.10'
@@ -44,21 +45,12 @@ ext {
     libExclude = ['gurobi-jar-*.jar', 'cplex-*.jar']
 
 
-    jetbrains_version = "17.0.0"
+    jetbrains_version = "22.0.0"
 
-    logger.lifecycle('reading gradle properties file...')
-    File propertiesFile = Paths.get(System.properties['user.home'], 'gradle.properties').toFile()
-    if (propertiesFile.exists()) {
-        getLogger().lifecycle("Loading properties from ${propertiesFile.absolutePath}")
-        Properties props = new Properties()
-
-        propertiesFile.withReader("UTF8", {
-            props.load(it)
-        })
-        System.properties.putAll(props)
-    }else {
-        getLogger().lifecycle("No properties file found at '${propertiesFile.absolutePath}'. Some tasks might not work without this information.")
-    }
+    // mainly for IDE execution, ilp libs are not shipped with distributions anyways
+    cplex_version = '12.7.1'
+//    cplex_version = '20.1.0'
+    gurobi_version = '9.1.1'
 
     logger.lifecycle('reading build properties file...')
     props = new Properties()
@@ -66,18 +58,14 @@ ext {
     propertiesFileIn.withReader("UTF8", {
         props.load(it)
     })
-    System.properties.putAll(props)
 
     // edit all these versions in sirius_cli/src/main/resources/....build.properties
-    appName = System.properties.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
-//    buildNumber = System.properties.getProperty('de.unijena.bioinf.sirius.build')
-//    println(buildNumber)
-    siriusFrontendVersion = System.properties.getProperty('de.unijena.bioinf.siriusFrontend.version')
-    siriusVersion = System.properties.getProperty('de.unijena.bioinf.sirius.version')
-    fingeridVersion = System.properties.getProperty('de.unijena.bioinf.fingerid.version')
-    mztabm_version = System.properties.getProperty('de.unijena.bioinf.mztabm.version')
+    appName = props.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
+    siriusFrontendVersion = props.getProperty('de.unijena.bioinf.siriusFrontend.version')
+    siriusVersion = props.getProperty('de.unijena.bioinf.sirius.version')
+    fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
+    mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
 }
-
 
 /*################### DISTRIBUTION STUFF ################### */
 project.ext.set("linSuffix", "linux")
@@ -94,8 +82,12 @@ allprojects {
     apply plugin: 'idea'
 
 
-    sourceCompatibility = 11
-    targetCompatibility = 11
+    sourceCompatibility = 13
+    targetCompatibility = 15
+
+    compileJava.options.encoding = "UTF-8"
+    compileTestJava.options.encoding = "UTF-8"
+    javadoc.options.encoding = 'UTF-8'
 
 
     version = "$siriusFrontendVersion"
@@ -112,7 +104,7 @@ allprojects {
             }
         }
         maven {
-            url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
+            url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
         }
         maven {
             url "https://www.xypron.de/repository" //glpk repo
@@ -131,34 +123,32 @@ allprojects {
     dependencies {
 
         annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
-        compile 'net.sf.trove4j:core:3.1.0'
+        implementation 'net.sf.trove4j:core:3.1.0'
 
-        compile "org.jetbrains:annotations:$jetbrains_version"
+        implementation "org.jetbrains:annotations:$jetbrains_version"
 
-        compile "org.slf4j:log4j-over-slf4j:$slf4j_version"
-        compile "org.slf4j:jcl-over-slf4j:$slf4j_version"
-        compile "org.slf4j:slf4j-api:$slf4j_version"
+        implementation "org.slf4j:log4j-over-slf4j:$slf4j_version"
+        implementation "org.slf4j:jcl-over-slf4j:$slf4j_version"
+        implementation "org.slf4j:slf4j-api:$slf4j_version"
 
-        testCompile group: 'junit', name: 'junit', version: '4.12'
+        testImplementation group: 'junit', name: 'junit', version: '4.12'
 
         // intellij seems to ignore other scopes than compile so we need to have this here and remove it before distribution
-//        compile "com.gurobi:gurobi-jar:9.1.1"
-//        compile "cplex:cplex:12.7.1"
-    }
-
-    configurations {
-        //replaced by log4j-over-slf4j
-        runtime.exclude group: "log4j", module: "log4j"
-        compile.exclude group: "log4j", module: "log4j"
-        //replaced by jcl-over-slf4j
-        runtime.exclude group: "commons-logging", module: "commons-logging"
-        compile.exclude group: "commons-logging", module: "commons-logging"
+//        implemetation "com.gurobi:gurobi-jar:9.1.1"
+//        implemetation "cplex:cplex:12.7.1"
     }
 
     //there are some outdated incompatible trove dependencies in some libs.
     // this is to exclude them and enforce the one we need.
+    configurations.all {
+        //replaced by log4j-over-slf4j
+        it.exclude group: "log4j", module: "log4j"
+        //replaced by jcl-over-slf4j
+        it.exclude group: "commons-logging", module: "commons-logging"
+        it.exclude module: 'trove4j'
+    }
+
     configurations {
-        compile.exclude module: 'trove4j'
         compileClasspath {
             resolutionStrategy.force 'net.sf.trove4j:core:3.1.0'
         }
@@ -173,7 +163,7 @@ subprojects {
     task listDependecies {
         group = 'reporting'
         doLast {
-            project.configurations.compile.resolvedConfiguration.resolvedArtifacts.stream().map({ i -> i.getModuleVersion()..toString() })
+            project.configurations.implementation.resolvedConfiguration.resolvedArtifacts.stream().map({ i -> i.getModuleVersion()..toString() })
                     .sorted().forEach({ i -> println(i) })
         }
     }
@@ -337,16 +327,12 @@ artifactory {
     publish {
         repository {
             repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
-            username = System.getenv("ARTIFACTORY_USERNAME") != null
-                    ? System.getenv("ARTIFACTORY_USERNAME")
-                    : System.properties['de.unijena.bioinf.build.artifactory.username']
-            password = System.getenv("ARTIFACTORY_TOKEN") != null
-                    ? System.getenv("ARTIFACTORY_TOKEN")
-                    : System.properties['de.unijena.bioinf.build.artifactory.password']
+            username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
+            password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
         }
         defaults {
             //Publish every distribution to Artifactory
-            publications("sirius")
+            publications("siriusMS")
             publications("manual")
         }
     }

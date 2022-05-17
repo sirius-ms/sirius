@@ -30,12 +30,12 @@ public class FingerIdDialog extends JDialog {
 
     protected boolean showComputeButton;
     protected int returnState = CANCELED;
-    protected FingerIDConfigPanel dbForm;
+    protected FingerblastConfigPanel dbForm;
     private String buttonSuffix = "compounds";
 
     public FingerIdDialog(Frame owner, boolean showComputeButton, boolean local) {
         super(owner, "Search with CSI:FingerID", true);
-        dbForm = new FingerIDConfigPanel(null, null);
+        dbForm = new FingerblastConfigPanel(null);
         this.showComputeButton = showComputeButton;
         setLocationRelativeTo(owner);
         if (local)

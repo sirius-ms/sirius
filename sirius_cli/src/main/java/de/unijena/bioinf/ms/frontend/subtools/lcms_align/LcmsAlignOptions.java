@@ -19,18 +19,47 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.LCMSWorkflow;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
 
 @CommandLine.Command(name = "lcms-align", aliases = {"A"}, description = "<PREPROCESSING> Align and merge compounds of multiple LCMS Runs. Use this tool if you want to import from mzML/mzXml", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LcmsAlignOptions implements PreprocessingTool<LcmsAlignSubToolJob> {
 
     @Override
     public LcmsAlignSubToolJob makePreprocessingJob(RootOptions<?,?,?> rootOptions, ParameterConfig config) {
-        return new LcmsAlignSubToolJob(rootOptions);
+        return new LcmsAlignSubToolJob(rootOptions.getInput(), rootOptions.getProjectSpace(), config, this);
+    }
+
+    protected Optional<LCMSWorkflow> workflow = Optional.empty();
+
+    public Optional<LCMSWorkflow> getWorkflow() {
+        return workflow;
+    }
+
+    @CommandLine.Option(names = {"--workflow","-w"})
+    public void setWorkflow(File filename) {
+        if (filename==null) {
+            this.workflow = Optional.empty();
+            return;
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            this.workflow = Optional.of(mapper.readValue(filename, LCMSWorkflow.class));
+        } catch (IOException e) {
+            LoggerFactory.getLogger(LcmsAlignOptions.class).error(e.getMessage(), e);
+            throw new RuntimeException("Cancel workflow");
+
+        }
     }
 }
 

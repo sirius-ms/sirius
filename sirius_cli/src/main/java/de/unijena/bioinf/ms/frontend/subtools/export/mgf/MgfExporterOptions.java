@@ -64,7 +64,7 @@ public class MgfExporterOptions implements StandaloneTool<MgfExporterWorkflow> {
 //    }
 
 
-    @CommandLine.Option(names = {"--output"}, description = "Specify the mgf file destination.")
+    @CommandLine.Option(names = {"--output", "-o"}, description = "Specify the mgf file destination.")
     public void setOutput(String outputPath) {
         output = Paths.get(outputPath);
     }

@@ -28,8 +28,8 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
-import de.unijena.bioinf.ms.gui.dialogs.ErrorReportDialog;
 import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
+import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.tree_viewer.*;
@@ -37,6 +37,7 @@ import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.webView.WebViewIO;
 import javafx.embed.swing.JFXPanel;
 import org.slf4j.LoggerFactory;
 
@@ -67,15 +68,20 @@ public class TreeVisualizationPanel extends JPanel
         dot, json, jpg, png, gif, svg, pdf, none
     }
 
+    @Override
     public String getDescription() {
-        return "Visualization of the Fragmentation tree " +
-                "for the selected molecular formula (JS)";
+        return "<html>"
+                +"<b>Fragmentation Tree Viewer</b>"
+                +"<br>"
+                + "Interactive visualization of the Fragmentation tree for the selected molecular formula."
+                + "</html>";
     }
 
     //    FormulaResultBean sre;
     FTree ftree;
-    TreeViewerBrowser browser;
+    public TreeViewerBrowser browser;
     TreeViewerBridge jsBridge;
+    TreeViewerConnector jsConnector;
     JToolBar toolBar;
     public JComboBox<String> presetBox; // accessible from TreeViewerSettings
     JSlider scaleSlider;
@@ -99,6 +105,7 @@ public class TreeVisualizationPanel extends JPanel
         toolBar = new JToolBar();
         toolBar.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
         toolBar.setFloatable(false);
+        toolBar.setPreferredSize(new Dimension(toolBar.getPreferredSize().width,32));
         presetBox = new JComboBox<>((String[]) localConfig.get("presets"));
         presetBox.addActionListener(this);
         presetBox.setSelectedItem(
@@ -112,8 +119,7 @@ public class TreeVisualizationPanel extends JPanel
         saveTreeBtn = Buttons.getExportButton24("Export tree");
         saveTreeBtn.addActionListener(this);
         saveTreeBtn.setEnabled(false);
-        saveTreeBtn.setToolTipText("Export the tree view (or zoomed-in region) "
-                + "to various formats");
+        saveTreeBtn.setToolTipText("Export current tree view (or zoomed-in region) to various formats");
         toolBar.add(saveTreeBtn);
         toolBar.addSeparator(new Dimension(10, 10));
         scaleSlider = new JSlider(JSlider.HORIZONTAL,
@@ -151,6 +157,7 @@ public class TreeVisualizationPanel extends JPanel
         this.browser = new WebViewTreeViewer();
 
         this.jsBridge = new TreeViewerBridge(browser);
+        this.jsConnector = new TreeViewerConnector();
 
         browser.addJS("d3.min.js");
         browser.addJS("d3-colorbar.js");
@@ -163,11 +170,10 @@ public class TreeVisualizationPanel extends JPanel
         this.setVisible(true);
         HashMap<String, Object> bridges = new HashMap<String, Object>() {{
             put("config", localConfig);
-            put("connector", new TreeViewerConnector());
+            put("connector", jsConnector);
         }};
         browser.load(bridges);
-        for (Component comp : toolBar.getComponents())
-            comp.setEnabled(false);
+        setToolbarEnabled(false);
         this.addComponentListener(this);
         applyPreset((String) presetBox.getSelectedItem());
     }
@@ -184,14 +190,16 @@ public class TreeVisualizationPanel extends JPanel
             try {
                 backgroundLoaderLock.lock();
                 final JJob<Boolean> old = backgroundLoader;
-                backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
+                backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
 
                     @Override
                     protected Boolean compute() throws Exception {
                         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
                         if (old != null && !old.isFinished()) {
-                            old.cancel(true);
+                            old.cancel(false);
                             old.getResult(); //await cancellation so that nothing strange can happen.
+                        }else if (sre != null && sre.getFragTree().orElse(null) == ftree) {
+                            return false;
                         }
                         browser.clear();
                         checkForInterruption();
@@ -227,7 +235,11 @@ public class TreeVisualizationPanel extends JPanel
                                     if (settings == null)
                                         Jobs.runEDTAndWait(() -> settings = new TreeViewerSettings(TreeVisualizationPanel.this));
                                     return true;
+                                }else {
+                                    Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                                 }
+                            }else {
+                                Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                             }
                         }
                         ftree = null;
@@ -473,16 +485,16 @@ public class TreeVisualizationPanel extends JPanel
                     } else if (fff == FileFormat.svg) {
                         final StringBuilder svg = new StringBuilder();
                         Jobs.runJFXAndWait(() -> svg.append(jsBridge.getSVG()));
-                        TreeViewerIO.writeSVG(fSelectedFile, svg.toString());
+                        WebViewIO.writeSVG(fSelectedFile, svg.toString());
                     } else if (fff == FileFormat.pdf) {
                         final StringBuilder svg = new StringBuilder();
                         Jobs.runJFXAndWait(() -> svg.append(jsBridge.getSVG()));
-                        TreeViewerIO.writePDF(fSelectedFile, svg.toString());
+                        WebViewIO.writePDF(fSelectedFile, svg.toString());
                     } else if (fff == FileFormat.json) {
                         new FTJsonWriter().writeTreeToFile(fSelectedFile, ftree);
                     }
                 } catch (Exception e2) {
-                    new ErrorReportDialog(MF, e2.getMessage());
+                    new StacktraceDialog(MF, e2.getMessage(), e2);
                     LoggerFactory.getLogger(this.getClass()).error(e2.getMessage(), e2);
                 }
             });
@@ -535,5 +547,9 @@ public class TreeVisualizationPanel extends JPanel
 
     public TreeConfig getLocalConfig() {
         return localConfig;
+    }
+
+    public TreeViewerConnector getConnector(){
+        return jsConnector;
     }
 }

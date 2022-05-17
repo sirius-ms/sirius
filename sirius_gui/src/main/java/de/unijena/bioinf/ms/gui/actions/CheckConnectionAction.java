@@ -19,20 +19,17 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ConnectionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
@@ -42,19 +39,17 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 @ThreadSafe
 public class CheckConnectionAction extends AbstractAction {
 
-
-    private final AtomicBoolean execAction = new AtomicBoolean(false);
-
     protected CheckConnectionAction() {
         super("Webservice");
         putValue(Action.SHORT_DESCRIPTION, "Check and refresh webservice connection");
 
-        MF.CONNECTION_MONITOR().addConectionStateListener(evt -> {
-            if (!execAction.get()) {
-                ConnectionMonitor.ConnetionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
+        MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> {
+            ConnectionMonitor.ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
+            Jobs.runEDTLater(() -> {
                 setIcon(check);
-                new ConnectionDialog(MainFrame.MF, check.errorCode, check.workerInfo);
-            }
+                if (!check.isConnected())
+                    ConnectionDialog.of(MainFrame.MF, check.errors, check.workerInfo, check.licenseInfo);
+            });
         });
 
         Jobs.runInBackground(() -> setIcon(MF.CONNECTION_MONITOR().checkConnection()));
@@ -63,71 +58,32 @@ public class CheckConnectionAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        execAction.set(true);
         try {
-            ConnectionMonitor.ConnetionCheck r = checkConnectionAndLoad();
+            ConnectionMonitor.ConnectionCheck r = checkConnectionAndLoad();
             if (r != null) {
                 setIcon(r);
-
-                new ConnectionDialog(MainFrame.MF, r.errorCode, r.workerInfo);
-
+                ConnectionDialog.of(MainFrame.MF, r.errors, r.workerInfo, r.licenseInfo);
             }
         } catch (Exception e1) {
-            LoggerFactory.getLogger(getClass()).error("Error when checking connection by action");
-        } finally {
-            execAction.set(false);
+            LoggerFactory.getLogger(getClass()).error("Error when checking connection by action", e1);
         }
     }
 
 
-    public static @Nullable ConnectionMonitor.ConnetionCheck checkConnectionAndLoad() {
-        TinyBackgroundJJob<ConnectionMonitor.ConnetionCheck> connectionChecker = new TinyBackgroundJJob<>() {
-            @Override
-            protected ConnectionMonitor.ConnetionCheck compute() throws Exception {
-                return MF.CONNECTION_MONITOR().checkConnection();
-            }
-        };
-
-        Jobs.runInBackgroundAndLoad(MF, "Checking Connection", true, connectionChecker);
-        return connectionChecker.getResult();
+    public static ConnectionMonitor.ConnectionCheck checkConnectionAndLoad() {
+        return Jobs.runInBackgroundAndLoad(MF, "Checking connection...",
+                () -> MF.CONNECTION_MONITOR().checkConnection()).getResult();
     }
 
-    public static boolean isConnectedAndLoad() {
-        ConnectionMonitor.ConnetionCheck r = checkConnectionAndLoad();
-        return r != null && r.isConnected();
-    }
-
-    public static boolean isNotConnectedAndLoad() {
-        return !isConnectedAndLoad();
-    }
-
-    public static boolean hasWorkerWarningAndLoad() {
-        ConnectionMonitor.ConnetionCheck r = checkConnectionAndLoad();
-        return r == null || r.hasWorkerWarning();
-    }
-
-
-    public static @Nullable WorkerList checkWorkerAvailabilityLoad() {
-        ConnectionMonitor.ConnetionCheck r = checkConnectionAndLoad();
-        if (r == null)
-            return null;
-        return r.workerInfo;
-    }
-
-    protected synchronized void setIcon(final @Nullable ConnectionMonitor.ConnetionCheck check) {
+    protected synchronized void setIcon(final @Nullable ConnectionMonitor.ConnectionCheck check) {
 
         if (check != null) {
-            switch (check.state) {
-                case YES:
-                    putValue(Action.LARGE_ICON_KEY, Icons.NET_YES_32);
-                    break;
-                case WARN:
-                    putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN_32);
-                    break;
-                case NO:
-                    putValue(Action.LARGE_ICON_KEY, Icons.NET_NO_32);
-                    break;
-            }
+            if (check.isConnected())
+                putValue(Action.LARGE_ICON_KEY, Icons.NET_YES_32);
+            else if (check.hasOnlyWarning())
+                putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN_32);
+            else
+                putValue(Action.LARGE_ICON_KEY, Icons.NET_NO_32);
         }
     }
 }

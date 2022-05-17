@@ -3,8 +3,8 @@ import org.gradle.crypto.checksum.Checksum
 import java.nio.file.Files
 
 dependencies {
-    compile project(':sirius_cli')
-    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    implementation project(':sirius_cli')
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
 task multiOSImage(group: 'distribution') {
@@ -71,7 +71,7 @@ task multiOSImage(group: 'distribution') {
             }
             into outputs.files.singleFile.toPath().resolve('All').resolve('Sirius').resolve('app')
         }
-
+        
 
         //modify windows script
         def lines = Files.readAllLines(outputs.files.singleFile.toPath().resolve('Windows').resolve('64bit').resolve('Sirius').resolve('sirius.bat'))

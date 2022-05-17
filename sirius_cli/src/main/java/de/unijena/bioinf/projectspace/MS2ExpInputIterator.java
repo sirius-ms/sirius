@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -99,10 +98,10 @@ public class MS2ExpInputIterator implements InstIterProvider {
                             } else {
                                 ProgressInputStream s = new ProgressInputStream(currentFile);
                                 s.addPropertyChangeListener(progress);
-                                currentExperimentIterator = p.parseIterator(s, currentFile.toUri().toURL());
+                                currentExperimentIterator = p.parseIterator(s, currentFile.toUri());
                             }
                         }
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         LOG.error("Cannot parse file '" + currentFile + "':\n", e);
                     }
                 } else return null;
@@ -110,15 +109,15 @@ public class MS2ExpInputIterator implements InstIterProvider {
                 try {
                     MutableMs2Experiment experiment = Sirius.makeMutable(currentExperimentIterator.next());
 
-                    if (experiment.getPrecursorIonType() == null){
+                    if (experiment.getPrecursorIonType() == null) {
                         LOG.warn("No ion or charge given for: " + experiment.getName() + " Try guessing charge from name.");
                         final String name = (Optional.ofNullable(experiment.getName()).orElse("") +
-                                "_" +  Optional.ofNullable(experiment.getSourceString()).orElse("")).toLowerCase();
+                                "_" + Optional.ofNullable(experiment.getSourceString()).orElse("")).toLowerCase();
 
-                        if ((name.contains("negative") || name.contains("neg")) && (!name.contains("positive") && !name.contains("pos"))){
+                        if ((name.contains("negative") || name.contains("neg")) && (!name.contains("positive") && !name.contains("pos"))) {
                             LOG.info(experiment.getName() + ": Negative charge keyword found!");
                             experiment.setPrecursorIonType(PrecursorIonType.unknownNegative());
-                        }else {
+                        } else {
                             LOG.info(experiment.getName() + ": Falling back to positive");
                             experiment.setPrecursorIonType(PrecursorIonType.unknownPositive());
                         }
@@ -136,12 +135,6 @@ public class MS2ExpInputIterator implements InstIterProvider {
                     } else if (experiment.getMolecularFormula() != null && experiment.getMolecularFormula().numberOf("D") > 0) {
                         LOG.warn("Deuterium Formula found in: " + experiment.getName() + " Instance will be Ignored.");
                     } else {
-
-
-                        if (experiment.getMs2Spectra().isEmpty()){
-
-                        }
-
                         if (ignoreFormula)
                             experiment.setMolecularFormula(null);
                         instances.add(experiment);

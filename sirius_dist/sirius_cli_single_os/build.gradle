@@ -1,6 +1,6 @@
 dependencies {
-    compile project(':sirius_cli')
-    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    implementation project(':sirius_cli')
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
 }
 
 mainClassName = 'de.unijena.bioinf.ms.frontend.SiriusCLIApplication'
@@ -19,7 +19,11 @@ distImage {
     macPackageName = 'SIRIUS-headless'
 }
 
-distribution.dependsOn(createChecksums)
+distribution.dependsOn 'signDistImage'
+distribution.dependsOn 'signDistInstaller'
+if (project.OS.isMacOsX())
+    distribution.dependsOn 'macNotarize'
+distribution.dependsOn 'createChecksums'
 distribution.dependsOn 'distImageZip'
 if (!OS.isLinux())
     distribution.dependsOn 'distInstaller'
@@ -27,12 +31,19 @@ if (!OS.isLinux())
 
 publishing {
     publications {
+        siriusMS(org.gradle.api.publish.maven.MavenPublication) {
+            artifactId = "$name"
+            groupId = "$group"
+            artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-headless", extension: 'zip'
+            if (!OS.isLinux())
+                artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
+        }
         sirius(org.gradle.api.publish.maven.MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: "$osName-headless", extension: 'zip'
             artifact source: "${distImage.getImageDir().absolutePath}.zip.sha256", classifier: "$osName-headless", extension: 'zip.sha256'
-            if (!OS.isLinux()){
+            if (!OS.isLinux()) {
                 artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: "$osName-headless", extension: installerNameType
                 artifact source: "${OS.isMacOsX() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}.sha256", classifier: "$osName-headless", extension: "${installerNameType}.sha256"
             }
@@ -40,4 +51,5 @@ publishing {
     }
 }
 publishSiriusPublicationToMavenLocal.dependsOn 'distribution'
+publishSiriusMSPublicationToMavenLocal.dependsOn 'distribution'
 

@@ -39,7 +39,7 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 public class ProjectSaveAction extends AbstractAction {
 
     public ProjectSaveAction() {
-        super("SaveAs");
+        super("Save As");
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_CLOSE_32);
         putValue(Action.SHORT_DESCRIPTION, "Save (copy) the current project to a new location.");
         setEnabled(true);
@@ -59,7 +59,7 @@ public class ProjectSaveAction extends AbstractAction {
 
 
         while (true) {
-            final int state = jfc.showSaveDialog(MF);
+            final int state = jfc.showDialog(MF, "Save As");
             if (state == JFileChooser.CANCEL_OPTION || state == JFileChooser.ERROR_OPTION)
                 break;
             File selFile = jfc.getSelectedFile();

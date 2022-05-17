@@ -19,11 +19,16 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import de.unijena.bioinf.webapi.WebAPI;
+import com.google.common.collect.Multimap;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
+import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
+import de.unijena.bioinf.webapi.rest.ConnectionError;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,37 +39,53 @@ import java.awt.event.ActionListener;
 /**
  * Created by Marcus Ludwig on 17.11.16.
  */
-public class ConnectionDialog extends JDialog implements ActionListener {
+public final class ConnectionDialog extends JDialog implements ActionListener {
     private final static String name = "Webservice Connection";
-    private JButton proxy;
+    private JButton network;
+    private JButton account;
     private ConnectionCheckPanel connectionCheck;
 
 
-    public ConnectionDialog(Frame owner, int state, @Nullable WorkerList workerList) {
-        super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(state, workerList);
+    private static ConnectionDialog instance;
+
+    public static synchronized ConnectionDialog of(Frame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList, @NotNull LicenseInfo license) {
+        if (instance != null)
+            instance.dispose();
+        instance = new ConnectionDialog(owner, errors, workerList, license);
+        return instance;
     }
 
-    private void initDialog(int state, @Nullable WorkerList workerList) {
+    private ConnectionDialog(Frame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList,  @NotNull LicenseInfo license) {
+        super(owner, name, ModalityType.APPLICATION_MODAL);
+        initDialog(errors, workerList, license);
+    }
+
+    private void initDialog(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList,  @NotNull LicenseInfo license) {
         setLayout(new BorderLayout());
 
         //header
-        JPanel header = new DialogHaeder(Icons.NET_64);
+        JPanel header = new DialogHeader(Icons.NET_64);
         add(header, BorderLayout.NORTH);
 
-        connectionCheck = new ConnectionCheckPanel(state, workerList);
+        connectionCheck = new ConnectionCheckPanel(this, errors, workerList, license);
         add(connectionCheck, BorderLayout.CENTER);
 
 
         //south
-        proxy = new JButton("Open proxy settings");
-        proxy.addActionListener(this);
+        network = new JButton("Network Settings");
+        network.addActionListener(this);
 
-        JButton ok = new JButton("Ok");
+        account = new JButton("Account");
+        account.addActionListener(this);
+
+        JButton ok = new JButton("Close");
         ok.addActionListener(this);
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttons.add(proxy);
+        Box buttons = Box.createHorizontalBox();
+        buttons.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+        buttons.add(account);
+        buttons.add(network);
+        buttons.add(Box.createHorizontalGlue());
         buttons.add(ok);
 
         add(buttons, BorderLayout.SOUTH);
@@ -76,20 +97,21 @@ public class ConnectionDialog extends JDialog implements ActionListener {
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
-        if (state > WebAPI.MAX_STATE)
-            if (getParent() instanceof Dialog) {
-                new ErrorReportDialog((Dialog) getParent(), "An unknown Network Error occurred!");
-            } else {
-                new ErrorReportDialog((Frame) getParent(), "An unknown Network Error occurred!");
-            }
     }
 
+    @Override
+    public void dispose() {
+        if (instance == this)
+            instance = null;
+        super.dispose();
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         this.dispose();
-        if (e.getSource().equals(proxy)) {
-            new SettingsDialog(MainFrame.MF, 2);
-        }
+        if (e.getSource().equals(network))
+            Jobs.runEDTLater(() -> new SettingsDialog(MainFrame.MF, 2));
+        if (e.getSource().equals(account))
+            Jobs.runEDTLater(() -> SiriusActions.SHOW_ACCOUNT.getInstance().actionPerformed(e));
     }
 }

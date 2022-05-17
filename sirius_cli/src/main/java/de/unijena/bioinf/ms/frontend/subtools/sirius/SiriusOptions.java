@@ -26,7 +26,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.projectspace.Instance;
@@ -46,7 +46,6 @@ import java.util.function.Consumer;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 
-//todo got descriprions from defaultConfigOptions
 @Command(name = "formula", aliases = {"tree", "sirius", "F"}, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, InstanceJob.Factory<SiriusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
@@ -201,7 +200,8 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         //todo manipulate adduct lists for marcus?????
     }
 
-    @Option(names = {"--mostintense-ms2"}, description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).", hidden = true)
+    @Option(names = {"--mostintense-ms2"}, hidden = true,
+            description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).")
     public boolean mostIntenseMs2;
 
     @Option(names = "--disable-fast-mode", hidden = true)
@@ -215,7 +215,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     @Override
     public Consumer<Instance> getInvalidator() {
         return inst -> {
-            inst.deleteFormulaResults(); //this step creates the result so we have to delete them before recompute
+            inst.deleteFormulaResults(); //this step creates the results, so we have to delete them before recompute
             inst.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
             inst.getID().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
             inst.updateCompoundID();
@@ -223,7 +223,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     @Override
-    public List<Class<? extends ToolChainOptions<?, ?>>> getSubCommands() {
-        return List.of(PassatuttoOptions.class, ZodiacOptions.class, FingerIdOptions.class);
+    public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
+        return List.of(PassatuttoOptions.class, ZodiacOptions.class, FingerprintOptions.class);
     }
 }

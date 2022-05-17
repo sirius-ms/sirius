@@ -45,8 +45,8 @@ import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.ProjectWriter;
 import de.unijena.bioinf.projectspace.Summarizer;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdLocations;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.CompoundContainer;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -62,8 +62,8 @@ import java.io.Writer;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.SPECTRA;
-import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.TREES;
+import static de.unijena.bioinf.projectspace.SiriusLocations.SPECTRA;
+import static de.unijena.bioinf.projectspace.SiriusLocations.TREES;
 import static de.unijena.bioinf.projectspace.summaries.mztab.JenaMSAdditionalKeys.*;
 
 public class MztabMExporter implements Summarizer {
@@ -115,7 +115,7 @@ public class MztabMExporter implements Summarizer {
     }
 
     @Override
-    public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer c, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
+    public synchronized void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer c, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
         final @NotNull Ms2Experiment exp = c.getAnnotationOrThrow(Ms2Experiment.class);
         if (results != null && !results.isEmpty()) {
             FormulaResult bestHitSource = results.get(0).getCandidate();
@@ -165,7 +165,7 @@ public class MztabMExporter implements Summarizer {
                 smlItem.setBestIdConfidenceValue(smeFingerIDItem.getIdConfidenceMeasure().get(0));
 
 
-                List<String> ids = Arrays.stream(bestHit.getCandidate().getLinks())
+                List<String> ids = bestHit.getCandidate().getLinks().stream()
                         .filter(dbLink -> dbLink.name.equals(DataSource.PUBCHEM.realName)).map(dbLink -> dbLink.id).collect(Collectors.toList());
 
                 smlItem.setDatabaseIdentifier(
@@ -197,7 +197,7 @@ public class MztabMExporter implements Summarizer {
     }
 
     @Override
-    public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
+    public synchronized void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
         writer.textFile(SummaryLocations.MZTAB_SUMMARY, this::write);
     }
 

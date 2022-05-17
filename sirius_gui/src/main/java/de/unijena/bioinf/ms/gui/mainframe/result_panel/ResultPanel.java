@@ -22,10 +22,12 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
+import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,44 +39,58 @@ public class ResultPanel extends JTabbedPane {
 
     protected static final Logger logger = LoggerFactory.getLogger(ResultPanel.class);
 
-    private FormulaOverviewPanel rvp;
-    private TreeVisualizationPanel tvp;
-    private SpectraVisualizationPanel svp;
-    private CandidateListDetailViewPanel ccv;
-    private CandidateOverviewPanel cov;
-    private FingerprintPanel fpt;
-    private CompoundClassPanel ccp;
+    public final FormulaOverviewPanel formulasTab;
+    public final TreeVisualizationPanel treeTab;
+    public final SpectraVisualizationPanel spectrumTab;
 
-    private FormulaList fl;
+    public final LCMSViewerPanel lcmsTab;
+
+    public final CandidateListDetailViewPanel structuresTab;
+    public final EpimetheusPanel structureAnnoTab;
+    public final FingerprintPanel fpTab;
+    public final CompoundClassPanel canopusTab;
+
+    private final FormulaList fl;
 
     public ResultPanel(final FormulaList siriusResultElements, WebAPI webAPI) {
         super();
         this.setToolTipText("Results");
 
-        rvp = new FormulaOverviewPanel(siriusResultElements);
-        tvp = new TreeVisualizationPanel();
-        svp = new SpectraVisualizationPanel();
-        cov = new CandidateOverviewPanel(new StructureList(siriusResultElements, ActionList.DataSelectionStrategy.ALL));
-        ccv = new CandidateListDetailViewPanel(new StructureList(siriusResultElements));
+        formulasTab = new FormulaOverviewPanel(siriusResultElements);
+        treeTab = new TreeVisualizationPanel();
+        spectrumTab = new SpectraVisualizationPanel(PropertyManager.getBoolean("de.unijena.bioinf.spec_viewer.sirius.anopanel", false));
+
+        this.lcmsTab = new LCMSViewerPanel(siriusResultElements);
+
+        structureAnnoTab = new EpimetheusPanel(new StructureList(siriusResultElements, ActionList.DataSelectionStrategy.ALL));
+        structuresTab = new CandidateListDetailViewPanel(new StructureList(siriusResultElements));
+        FingerprintPanel fpTabTmp;
         try {
-            fpt = new FingerprintPanel(new FingerprintTable(siriusResultElements, webAPI));
+            fpTabTmp = new FingerprintPanel(new FingerprintTable(siriusResultElements, webAPI));
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
-            fpt = null;
+            fpTabTmp = null;
         }
 
-        ccp = new CompoundClassPanel(new CompoundClassList(siriusResultElements), siriusResultElements);
+        fpTab = fpTabTmp;
+        canopusTab = new CompoundClassPanel(new CompoundClassList(siriusResultElements), siriusResultElements);
 
 
-        addTab("Sirius Overview", null, rvp, rvp.getDescription());
-        addTab("Spectra", null, new FormulaListHeaderPanel(siriusResultElements, svp), svp.getDescription());
-        addTab("Trees", null, new FormulaListHeaderPanel(siriusResultElements, tvp), tvp.getDescription());
-        addTab("CSI:FingerID Overview", null, cov, cov.getDescription());
-        addTab("CSI:FingerID Details", null, new FormulaListHeaderPanel(siriusResultElements, ccv), ccv.getDescription());
-        if (fpt != null)
-            addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(siriusResultElements, fpt), fpt.getDescription());
-        addTab("CANOPUS", null, new FormulaListHeaderPanel(siriusResultElements, ccp), ccp.getDescription());
+        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription());
+
+        addTab("Formulas"/*""Sirius Overview"*/, null, formulasTab, formulasTab.getDescription());
+        addTab("Spectra", null, new FormulaListHeaderPanel(siriusResultElements, spectrumTab), spectrumTab.getDescription());
+        addTab("Trees", null, new FormulaListHeaderPanel(siriusResultElements, treeTab), treeTab.getDescription());
+
+        addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(siriusResultElements, fpTab), fpTab.getDescription());
+
+        addTab("Structures", null, new FormulaListHeaderPanel(siriusResultElements, structuresTab), structuresTab.getDescription());
+        addTab("Substructure Annotation", null, structureAnnoTab, structureAnnoTab.getDescription());
+
+        addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
 
         this.fl = siriusResultElements;
+
+        setSelectedIndex(1);
     }
 }

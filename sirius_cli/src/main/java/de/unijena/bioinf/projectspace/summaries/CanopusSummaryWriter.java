@@ -26,58 +26,97 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.canopus.CanopusResult;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.ProjectWriter;
-import de.unijena.bioinf.projectspace.Summarizer;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.util.Iterators;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CanopusSummaryWriter implements Summarizer {
 
     protected static class CanopusSummaryRow {
-        private final ArrayFingerprint[] classifications;
+        private final ProbabilityFingerprint[] cfClassifications;
+        private final ProbabilityFingerprint[] npcClassifications;
         private final MolecularFormula[] molecularFormulas, precursorFormulas;
         private final ClassyfireProperty[] mostSpecificClasses;
+
+//        private final double[] mostSpecificClassesProbs;
+
+        private final NPCFingerprintVersion.NPCProperty[][] bestNPCProps;
+
+        private final double[][] bestNPCProbs;
+
         private final PrecursorIonType[] ionTypes;
         private final String id;
         private final int best;
 
-        public CanopusSummaryRow(ProbabilityFingerprint[] classifications, MolecularFormula[] molecularFormulas, MolecularFormula[] precursorFormulas, PrecursorIonType[] ionTypes, String id) {
-            this.classifications = Arrays.stream(classifications).map(x->x.asDeterministic().asArray()).toArray(ArrayFingerprint[]::new);
+        private ClassyFireFingerprintVersion CLF;
+        NPCFingerprintVersion NPCF;
+
+        public CanopusSummaryRow(ProbabilityFingerprint[] cfClassifications, ProbabilityFingerprint[] npcClassifications, MolecularFormula[] molecularFormulas, MolecularFormula[] precursorFormulas, PrecursorIonType[] ionTypes, String id) {
+            this.cfClassifications = cfClassifications;
+            Arrays.stream(cfClassifications).map(x -> x.asDeterministic().asArray()).toArray(ArrayFingerprint[]::new);
+            this.npcClassifications = cfClassifications;
+            Arrays.stream(npcClassifications).map(x -> x.asDeterministic().asArray()).toArray(ArrayFingerprint[]::new);
             this.molecularFormulas = molecularFormulas;
             this.precursorFormulas = precursorFormulas;
             this.mostSpecificClasses = new ClassyfireProperty[molecularFormulas.length];
+//            this.mostSpecificClassesProbs = new double[molecularFormulas.length];
             this.ionTypes = ionTypes;
             this.id = id;
-            this.best = chooseBestAndAssignPrimaryClasses(classifications);
+            this.best = chooseBestAndAssignPrimaryClasses(cfClassifications);
+
+            bestNPCProps = new NPCFingerprintVersion.NPCProperty[molecularFormulas.length][3];
+            bestNPCProbs = new double[molecularFormulas.length][3];
+            chooseBestNPCAssignments(npcClassifications);
+        }
+
+        private void chooseBestNPCAssignments(ProbabilityFingerprint[] npcClassifications) {
+
+            FingerprintVersion v = npcClassifications[0].getFingerprintVersion();
+            if (v instanceof MaskedFingerprintVersion) v = ((MaskedFingerprintVersion) v).getMaskedFingerprintVersion();
+            NPCF = (NPCFingerprintVersion) v;
+            //todo do we have to perform index mapping?
+            for (int i = 0; i < npcClassifications.length; ++i) {
+                ProbabilityFingerprint fp = npcClassifications[i];
+                for (FPIter fpIter : fp) {
+                    NPCFingerprintVersion.NPCProperty prop = ((NPCFingerprintVersion.NPCProperty) fpIter.getMolecularProperty());
+                    if (fpIter.getProbability() >= bestNPCProbs[i][prop.level.level]) {
+                        bestNPCProps[i][prop.level.level] = (NPCFingerprintVersion.NPCProperty) fpIter.getMolecularProperty();
+                        bestNPCProbs[i][prop.level.level] = fpIter.getProbability();
+                    }
+                }
+            }
+
         }
 
         private int chooseBestAndAssignPrimaryClasses(ProbabilityFingerprint[] classifications) {
-            final ClassyFireFingerprintVersion CLF;
             FingerprintVersion v = classifications[0].getFingerprintVersion();
-            if (v instanceof MaskedFingerprintVersion)  v = ((MaskedFingerprintVersion)v).getMaskedFingerprintVersion();
+            if (v instanceof MaskedFingerprintVersion) v = ((MaskedFingerprintVersion) v).getMaskedFingerprintVersion();
             CLF = (ClassyFireFingerprintVersion) v;
             ClassyfireProperty bestClass = CLF.getPrimaryClass(classifications[0]);
             mostSpecificClasses[0] = bestClass;
+
             // choose the classification with the highest probability for the most specific class, starting
             // with probabilities above 50%
-            if (classifications.length==1) return 0;
+            if (classifications.length == 1) return 0;
 
             int argmax = 0;
             double bestProb = classifications[0].getProbability(CLF.getIndexOfMolecularProperty(bestClass));
-            for (int i=1; i < classifications.length; ++i) {
+//            mostSpecificClassesProbs[0] = bestProb;
+            for (int i = 1; i < classifications.length; ++i) {
                 ClassyfireProperty primary = CLF.getPrimaryClass(classifications[i]);
                 mostSpecificClasses[i] = primary;
                 final double prob = classifications[i].getProbability(CLF.getIndexOfMolecularProperty(primary));
+//                mostSpecificClassesProbs[i] = prob;
                 final int ord = new ClassyfireProperty.CompareCompoundClassDescriptivity().compare(primary, bestClass);
-                if (ord > 0  || (ord == 0 && prob > bestProb )) {
+                if (ord > 0 || (ord == 0 && prob > bestProb)) {
                     argmax = i;
                     bestClass = primary;
                     bestProb = prob;
@@ -87,99 +126,184 @@ public class CanopusSummaryWriter implements Summarizer {
         }
     }
 
-    private List<CanopusSummaryRow> rows;
-
-    public CanopusSummaryWriter() {
-        this.rows = new ArrayList<>();
-    }
+    private final List<CanopusSummaryRow> rowsBySiriusScore = new ArrayList<>();
+    private final List<CanopusSummaryRow> rowsByCSIScore = new ArrayList<>();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     @Override
     public List<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations() {
-        return Arrays.asList(CanopusResult.class);
+        return List.of(CanopusResult.class);
     }
 
     @Override
     public void addWriteCompoundSummary(ProjectWriter writer, @NotNull CompoundContainer exp, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) throws IOException {
-        if (results.size()>0) {
-            // sometimes we have multiple results with same score (adducts!). In this case, we list all of them in
-            // a separate summary file
-            int i=0;
-            SScored<FormulaResult, ? extends FormulaScore> hit;
-            ArrayList<ProbabilityFingerprint> fingerprints = new ArrayList<>();
-            ArrayList<MolecularFormula> formulas = new ArrayList<>(), preForms = new ArrayList<>();
-            ArrayList<PrecursorIonType> ionTypes = new ArrayList<>();
-            FormulaResultId id;
-            do {
-                hit = results.get(i);
-                id = hit.getCandidate().getId();
-                final Optional<CanopusResult> cr = hit.getCandidate().getAnnotation(CanopusResult.class);
-                final var cid = id;
-                cr.ifPresent(canopusResult -> {
-                    fingerprints.add(canopusResult.getCanopusFingerprint());
-                    formulas.add(cid.getMolecularFormula());
-                    ionTypes.add(cid.getIonType());
-                    preForms.add(cid.getPrecursorFormula());
-                });
-                ++i;
-            } while (i < results.size() && results.get(i).getScoreObject().compareTo(hit.getScoreObject()) >= 0);
-            if (fingerprints.size()>0) {
-                this.rows.add(new CanopusSummaryRow(fingerprints.toArray(ProbabilityFingerprint[]::new), formulas.toArray(MolecularFormula[]::new), preForms.toArray(MolecularFormula[]::new), ionTypes.toArray(PrecursorIonType[]::new), id.getParentId().getDirectoryName()));
-            }
+        if (!results.isEmpty()) {
+            addToRows(rowsBySiriusScore, FormulaScoring.reRankBy(results, List.of(SiriusScore.class), true));
+            addToRows(rowsByCSIScore, FormulaScoring.reRankBy(results, List.of(TopCSIScore.class), true));
         }
 
+    }
+
+    private void addToRows(List<CanopusSummaryRow> rows, List<? extends SScored<FormulaResult, ? extends FormulaScore>> results) {
+        // sometimes we have multiple results with same score (adducts!). In this case, we list all of them in
+        // a separate summary file
+        int i = 0;
+        SScored<FormulaResult, ? extends FormulaScore> hit;
+        ArrayList<ProbabilityFingerprint> cfFingerprints = new ArrayList<>();
+        ArrayList<ProbabilityFingerprint> npcFingerprints = new ArrayList<>();
+        ArrayList<MolecularFormula> formulas = new ArrayList<>(), preForms = new ArrayList<>();
+        ArrayList<PrecursorIonType> ionTypes = new ArrayList<>();
+        FormulaResultId id;
+        do {
+            hit = results.get(i);
+            id = hit.getCandidate().getId();
+            final Optional<CanopusResult> cr = hit.getCandidate().getAnnotation(CanopusResult.class);
+            final var cid = id;
+            cr.ifPresent(canopusResult -> {
+                cfFingerprints.add(canopusResult.getCanopusFingerprint());
+                npcFingerprints.add(canopusResult.getNpcFingerprint().orElseThrow());
+                formulas.add(cid.getMolecularFormula());
+                ionTypes.add(cid.getIonType());
+                preForms.add(cid.getPrecursorFormula());
+            });
+            ++i;
+        } while (i < results.size() && results.get(i).getScoreObject().compareTo(hit.getScoreObject()) >= 0);
+        if (cfFingerprints.size() > 0) {
+            lock.writeLock().lock();
+            try {
+                rows.add(new CanopusSummaryRow(
+                        cfFingerprints.toArray(ProbabilityFingerprint[]::new),
+                        npcFingerprints.toArray(ProbabilityFingerprint[]::new),
+                        formulas.toArray(MolecularFormula[]::new),
+                        preForms.toArray(MolecularFormula[]::new),
+                        ionTypes.toArray(PrecursorIonType[]::new),
+                        id.getParentId().getDirectoryName()
+                ));
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
     }
 
     @Override
     public void writeProjectSpaceSummary(ProjectWriter writer) throws IOException {
-        writer.table(SummaryLocations.CANOPUS_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas()));
-        writer.table(SummaryLocations.CANOPUS_SUMMARY_ADDUCT, HEADER2, Iterators.capture(new IterateOverAdducts()));
+        lock.readLock().lock();
+        try {
+            writer.table(SummaryLocations.CANOPUS_FORMULA_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsBySiriusScore)));
+            writer.table(SummaryLocations.CANOPUS_COMPOUND_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsByCSIScore)));
+            writer.table(SummaryLocations.CANOPUS_FOMRULA_SUMMARY_ADDUCTS, HEADER2, Iterators.capture(new IterateOverAdducts(rowsBySiriusScore)));
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
-    private final static String[] HEADER = new String[]{ "name","molecularFormula", "adduct", "most specific class", "level 5", "subclass", "class",
-            "superclass", "all classifications"},
-            HEADER2 = new String[]{ "name","molecularFormula", "adduct", "precursorFormula", "most specific class", "level 5", "subclass", "class",
-                    "superclass", "all classifications"};
+    private final static String[]
+            HEADER = new String[]{"id", "molecularFormula", "adduct",
+            "NPC#pathway", "NPC#pathway Probability", "NPC#superclass", "NPC#superclass Probability",
+            "NPC#class", "NPC#class Probability",
+            "ClassyFire#most specific class", "ClassyFire#most specific class Probability", "ClassyFire#level 5",
+            "ClassyFire#level 5 Probability", "ClassyFire#subclass", "ClassyFire#subclass Probability",
+            "ClassyFire#class", "ClassyFire#class Probability", "ClassyFire#superclass", "ClassyFire#superclass probability",
+            /*"NPC#all classifications",*/ "ClassyFire#all classifications"},
+            HEADER2 = new String[]{"id", "molecularFormula", "adduct", "precursorFormula",
+                    "NPC#pathway", "NPC#pathway Probability", "NPC#superclass", "NPC#superclass Probability",
+                    "NPC#class", "NPC#class Probability",
+                    "ClassyFire#most specific class", "ClassyFire#most specific class Probability", "ClassyFire#level 5",
+                    "ClassyFire#level 5 Probability", "ClassyFire#subclass", "ClassyFire#subclass Probability",
+                    "ClassyFire#class", "ClassyFire#class Probability", "ClassyFire#superclass", "ClassyFire#superclass probability",
+                    /*"NPC#all classifications",*/ "ClassyFire#all classifications"};
 
-    public class IterateOverFormulas implements Iterator<String[]> {
-            int k = 0;
-            String[] cols = new String[HEADER.length];
+    public static class IterateOverFormulas implements Iterator<String[]> {
+        int k = 0;
+        String[] cols = new String[HEADER.length];
+        final List<CanopusSummaryRow> rows;
 
-            @Override
-            public boolean hasNext() {
-                return k < rows.size();
-            }
+        public IterateOverFormulas(List<CanopusSummaryRow> rows) {
+            this.rows = rows;
+        }
 
-            @Override
-            public String[] next() {
-                try {
-                    final CanopusSummaryRow row = rows.get(k);
-                    final ClassyfireProperty primaryClass = row.mostSpecificClasses[row.best];
-                    final ClassyfireProperty[] lineage = primaryClass.getLineage();
+        @Override
+        public boolean hasNext() {
+            return k < rows.size();
+        }
 
-                    cols[0] = row.id;
-                    cols[1] = row.molecularFormulas[row.best].toString();
-                    cols[2] = row.ionTypes[row.best].toString();
-                    cols[3] = primaryClass.getName();
+        @Override
+        public String[] next() {
+            try {
+                final CanopusSummaryRow row = rows.get(k);
+                final ClassyfireProperty primaryClass = row.mostSpecificClasses[row.best];
+                final ClassyfireProperty[] lineage = primaryClass.getLineage();
 
-                    cols[7] = lineage.length > 2 ? lineage[2].getName() : "";
-                    cols[6] = lineage.length > 3 ? lineage[3].getName() : "";
-                    cols[5] = lineage.length > 4 ? lineage[4].getName() : "";
-                    cols[4] = lineage.length > 5 ? lineage[5].getName() : "";
+                int i = 0;
+                cols[i++] = row.id;
+                cols[i++] = row.molecularFormulas[row.best].toString();
+                cols[i++] = row.ionTypes[row.best].toString();
 
-                    cols[8] = Joiner.on("; ").join(row.classifications[row.best].presentFingerprints().asMolecularPropertyIterator());
-                    ++k;
-                    return cols;
+                cols[i++] = row.bestNPCProps[row.best][0].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[row.best][0]);
 
-                } catch (ClassCastException e) {
-                    LoggerFactory.getLogger(CanopusSummaryWriter.class).error("Cannot cast CANOPUS fingerprint to ClassyFireFingerprintVersion.");
-                    ++k;
-                    return new String[0];
+                cols[i++] = row.bestNPCProps[row.best][1].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[row.best][1]);
+
+                cols[i++] = row.bestNPCProps[row.best][2].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[row.best][2]);
+
+                cols[i++] = primaryClass.getName();
+                cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(primaryClass)));
+
+                if (lineage.length > 5) {
+                    cols[i++] = lineage[5].getName();
+                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[5])));
+                } else {
+                    cols[i++] = "";
+                    cols[i++] = "";
                 }
+
+                if (lineage.length > 4) {
+                    cols[i++] = lineage[4].getName();
+                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[4])));
+                } else {
+                    cols[i++] = "";
+                    cols[i++] = "";
+                }
+
+                if (lineage.length > 3) {
+                    cols[i++] = lineage[3].getName();
+                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[3])));
+                } else {
+                    cols[i++] = "";
+                    cols[i++] = "";
+                }
+
+                if (lineage.length > 2) {
+                    cols[i++] = lineage[2].getName();
+                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[2])));
+                } else {
+                    cols[i++] = "";
+                    cols[i++] = "";
+                }
+
+                cols[i++] = Joiner.on("; ").join(row.cfClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
+//                cols[i++] = Joiner.on("; ").join(row.npcClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
+                ++k;
+                return cols;
+
+            } catch (ClassCastException e) {
+                LoggerFactory.getLogger(CanopusSummaryWriter.class).error("Cannot cast CANOPUS fingerprint to ClassyFireFingerprintVersion.");
+                ++k;
+                return new String[0];
             }
         }
-    public class IterateOverAdducts implements Iterator<String[]> {
-        int k = 0, j=0;
+    }
+
+    public static class IterateOverAdducts implements Iterator<String[]> {
+        int k = 0, j = 0;
         String[] cols = new String[HEADER2.length];
+        final List<CanopusSummaryRow> rows;
+
+        public IterateOverAdducts(List<CanopusSummaryRow> rows) {
+            this.rows = rows;
+        }
 
         @Override
         public boolean hasNext() {
@@ -192,21 +316,62 @@ public class CanopusSummaryWriter implements Summarizer {
                 final CanopusSummaryRow row = rows.get(k);
                 final ClassyfireProperty primaryClass = row.mostSpecificClasses[j];
                 final ClassyfireProperty[] lineage = primaryClass.getLineage();
+                int i = 0;
 
-                cols[0] = row.id;
-                cols[1] = row.molecularFormulas[j].toString();
-                cols[2] = row.ionTypes[j].toString();
-                cols[3] = row.precursorFormulas[j].toString();
-                cols[4] = primaryClass.getName();
+                cols[i++] = row.id;
+                cols[i++] = row.molecularFormulas[j].toString();
+                cols[i++] = row.ionTypes[j].toString();
+                cols[i++] = row.precursorFormulas[j].toString();
 
-                cols[8] = lineage.length > 2 ? lineage[2].getName() : "";
-                cols[7] = lineage.length > 3 ? lineage[3].getName() : "";
-                cols[6] = lineage.length > 4 ? lineage[4].getName() : "";
-                cols[5] = lineage.length > 5 ? lineage[5].getName() : "";
+                cols[i++] = row.bestNPCProps[row.best][0].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[row.best][0]);
 
-                cols[9] = Joiner.on("; ").join(row.classifications[j].presentFingerprints().asMolecularPropertyIterator());
+                cols[i++] = row.bestNPCProps[row.best][1].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[row.best][1]);
+
+                cols[i++] = row.bestNPCProps[row.best][2].getName();
+                cols[i++] = Double.toString(row.bestNPCProbs[row.best][2]);
+
+                cols[i++] = primaryClass.getName();
+                cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(primaryClass)));
+
+                if (lineage.length > 5) {
+                    cols[i++] = lineage[5].getName();
+                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[5])));
+                } else {
+                    cols[i++] = "";
+                    cols[i++] = "";
+                }
+
+                if (lineage.length > 4) {
+                    cols[i++] = lineage[4].getName();
+                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[4])));
+                } else {
+                    cols[i++] = "";
+                    cols[i++] = "";
+                }
+
+                if (lineage.length > 3) {
+                    cols[i++] = lineage[3].getName();
+                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[3])));
+                } else {
+                    cols[i++] = "";
+                    cols[i++] = "";
+                }
+
+                if (lineage.length > 2) {
+                    cols[i++] = lineage[2].getName();
+                    cols[i++] = Double.toString(row.cfClassifications[row.best].getProbability(row.CLF.getIndexOfMolecularProperty(lineage[2])));
+                } else {
+                    cols[i++] = "";
+                    cols[i++] = "";
+                }
+
+                cols[i++] = Joiner.on("; ").join(row.cfClassifications[j].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
+//                cols[i++] = Joiner.on("; ").join(row.npcClassifications[j].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
+
                 ++j;
-                if (j >= rows.get(k).classifications.length) {
+                if (j >= rows.get(k).cfClassifications.length) {
                     j = 0;
                     ++k;
                 }

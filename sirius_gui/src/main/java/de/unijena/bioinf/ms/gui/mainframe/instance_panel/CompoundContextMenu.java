@@ -18,11 +18,6 @@
  */
 
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 27.01.17.
- */
 
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 
@@ -35,10 +30,12 @@ public class CompoundContextMenu extends JPopupMenu {
 
     public CompoundContextMenu() {
         add(new JMenuItem(SiriusActions.COMPUTE.getInstance()));
+        add(new JMenuItem(SiriusActions.SUMMARIZE_EXP.getInstance()));
         add(new JMenuItem(SiriusActions.DELETE_EXP.getInstance()));
         addSeparator();
         add(new JMenuItem(SiriusActions.EDIT_EXP.getInstance()));
         add(new JMenuItem(SiriusActions.REMOVE_FORMULA_EXP.getInstance()));
+        add(new JMenuItem(SiriusActions.CHANGE_ADDCUCT_EXP.getInstance()));
         addSeparator();
         add(new JMenuItem(SiriusActions.ORDER_BY_INDEX.getInstance()));
         add(new JMenuItem(SiriusActions.ORDER_BY_RT.getInstance()));
@@ -47,7 +44,5 @@ public class CompoundContextMenu extends JPopupMenu {
         add(new JMenuItem(SiriusActions.ORDER_BY_CONFIDENCE.getInstance()));
         addSeparator();
         add(new JMenuItem(SiriusActions.RESET_FILTER.getInstance()));
-
-
     }
 }

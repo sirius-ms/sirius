@@ -18,17 +18,20 @@
  */
 
 package de.unijena.bioinf.ms.gui.configs;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 11.10.16.
- */
 
 import de.unijena.bioinf.ms.gui.dialogs.AboutDialog;
+import de.unijena.bioinf.ms.gui.login.AccountPanel;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -38,6 +41,11 @@ public abstract class Icons {
 
 
     public static final ImageIcon SPLASH = new ImageIcon(MainFrame.class.getResource("/icons/sirius_splash.gif"));
+
+    public static final ImageIcon FILTER_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader.gif"));
+    public static final ImageIcon FILTER_LOADER_60 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_60.gif"));
+    public static final ImageIcon FILTER_LOADER_120 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_120.gif"));
+    public static final ImageIcon FILTER_LOADER_160 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_160.gif"));
 
     public static final Icon FP_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/fp-binary-sirius.gif"));
 
@@ -51,8 +59,11 @@ public abstract class Icons {
     public static final Icon FB_LOADER_STOP_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/fb_loader.png"));
 
     public static final Icon NET_NO_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-no@0.5x.png"));
+//    public static final Icon NET_NO_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-no-16px.png"));
     public static final Icon NET_YES_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-yes@0.5x.png"));
+//    public static final Icon NET_YES_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-yes-16px.png"));
     public static final Icon NET_WARN_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-warn@0.5x.png"));
+//    public static final Icon NET_WARN_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-warn-16px.png"));
     public static final Icon NET_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network@0.5x.png"));
     public static final Icon NET_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network.png"));
     public static final Icon NET_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-network-16px.png"));
@@ -68,6 +79,9 @@ public abstract class Icons {
     public static final Icon DB_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db@0.5x.png"));
     public static final Icon DB_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db.png"));
 
+    public static final Icon DB_LENS_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens@0.5x.png"));
+    public static final Icon DB_LENS_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens.png"));
+
     public static final Icon GEAR_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear@0.5x.png"));
     public static final Icon GEAR_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear.png"));
 
@@ -79,13 +93,28 @@ public abstract class Icons {
     public static final Icon BUG_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-bug@0.5x.png"));
     public static final Icon BUG_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-bug.png"));
 
+    public static final Icon KEY_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-key@0.5x.png"));
+    public static final Icon KEY_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-key.png"));
+
+    public static final Icon USER_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user@0.5x.png"));
+    public static final Icon USER_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user.png"));
+    public static final Icon USER_128 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user@2x.png"));
+
+    public static final Icon USER_GREEN_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user_green@0.5x.png"));
+    public static final Icon USER_GREEN_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user_green.png"));
+    public static final Icon USER_GREEN_128 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-user_green@2x.png"));
+
+    public static final Icon HELP_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-question_blue@0.5x.png"));
+
     public static final Icon INFO_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-information@0.5x.png"));
     public static final Icon CHOOSE_FILE_16 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-file-16px.png"));
-
 
     public static final Icon FBMN_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn-16px.png"));
     public static final Icon FBMN_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn@0.5x.png"));
 //    public static final Icon FBMN_64 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fbmn.png"));
+
+    public static final Icon REFRESH_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-refresh-16px.png"));
+    public static final Icon REFRESH_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-refresh@0.5x.png"));
 
     public static final Icon SIRIUS_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-sirius@0.5x.png"));
     public static final Icon SIRIUS_64 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-sirius.png"));
@@ -113,6 +142,7 @@ public abstract class Icons {
     public static final Icon CANCEL_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-no-16px.png"));
     public static final Icon CANCEL_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-no@0.5x.png"));
     public static final Icon LIST_ADD_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-list-add-16px.png"));
+    public static final Icon LIST_EDIT_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-list-edit-16px.png"));
     public static final Icon LIST_REMOVE_16 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-list-remove-16px.png"));
     public static final Icon Zoom_In_24 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-magnify-plus-24px.png"));
     public static final Icon Zoom_In_20 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-magnify-plus-20px.png"));
@@ -126,10 +156,97 @@ public abstract class Icons {
     public static final Icon FINGER_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fingerprint@0.5x.png"));
     public static final Icon FINGER_64 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fingerprint.png"));
 
+    public static final Icon DRAG_N_DROP_256 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-dragndrop@4x.png"));
+
     public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.jpg"));
     public static final Icon SIRIUS_APP_ICON = new ImageIcon(Icons.class.getResource("/icons/sirius_icon.png"));
     public static final Image SIRIUS_APP_IMAGE = Toolkit.getDefaultToolkit().createImage(Icons.class.getResource("/icons/sirius_icon.png"));
+    public static BufferedImage DRAG_N_DROP_IMAGE_160() {
+        try {
+            return ImageIO.read(Icons.class.getResource("/icons/circular-icons/c-dragNdrop-160px.png"));
+        } catch (IOException e) {
+            LoggerFactory.getLogger(Icons.class).error("Could not read image!", e);
+            return null;
+        }
+    }
 
     public static final Icon MolecularProperty_24 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-molecularPropertyWhite-24px.png"));
 
+
+    public static final Icon[] TRAFFIC_LIGHT_LARGE = new Icon[]{new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/red_l.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_l.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_l.png"))};
+
+    public static final Icon[] TRAFFIC_LIGHT_MEDIUM = new Icon[]{new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/red_m.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_m.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_m.png"))};
+
+    public static final Icon[] TRAFFIC_LIGHT_SMALL = new Icon[]{new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/red_s.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_s.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_s.png"))};
+
+
+    public static Image makeEllipse(Image image) {
+        return makeRoundedCorner(image);
+    }
+    public static Image makeRoundedCorner(Image image) {
+        return makeRoundedCorner(image, null);
+    }
+    public static Image makeRoundedCorner(Image image, @Nullable Integer cornerRadius) {
+        if (!(image instanceof BufferedImage)){
+            LoggerFactory.getLogger(AccountPanel.class).warn("Cannot crop Image to circle. Only BufferedSImages are supported.");
+            return image;
+        }
+
+
+        int w = ((BufferedImage)image).getWidth();
+        int h = ((BufferedImage)image).getHeight();
+
+        BufferedImage output = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D g2 = output.createGraphics();
+
+        // This is what we want, but it only does hard-clipping, i.e. aliasing
+        // g2.setClip(new RoundRectangle2D ...)
+
+        // so instead fake soft-clipping by first drawing the desired clip shape
+        // in fully opaque white with antialiasing enabled...
+        g2.setComposite(AlphaComposite.Src);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(Color.WHITE);
+        if (cornerRadius == null)
+            g2.fill(new Ellipse2D.Float(0, 0, w, h));
+        else
+            g2.fill(new RoundRectangle2D.Float(0, 0, w, h, cornerRadius, cornerRadius));
+        //Ellipse2D
+        // ... then compositing the image on top,
+        // using the white shape from above as alpha source
+        g2.setComposite(AlphaComposite.SrcAtop);
+        g2.drawImage(image, 0, 0, null);
+
+        g2.dispose();
+
+        return output;
+    }
+
+    public static Image scaledInstance(Image image, int width, int height) {
+        return image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+    }
+
+    public static Image scaledInstance(Image image, int longSide) {
+        int w = ((BufferedImage) image).getWidth();
+        int h = ((BufferedImage) image).getHeight();
+
+        if (w > h) {
+            h = (int) (h * ((double) w / (double) longSide));
+            w = longSide;
+        } else if (w < h) {
+            w = (int) (w * ((double) h / (double) longSide));
+            h = longSide;
+        } else {
+            w = longSide;
+            h = longSide;
+        }
+        return scaledInstance(image, w, h);
+    }
 }

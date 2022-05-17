@@ -3,7 +3,7 @@ import com.github.jk1.license.filter.LicenseBundleNormalizer
 plugins {
     id "com.github.kkdad.dependency-license-report" version "1.14.2"
 }
-
+apply plugin: 'java-library'
 licenseReport {
     // Set output directory for the report data.
     // Defaults to ${project.buildDir}/reports/dependency-license.
@@ -48,43 +48,45 @@ ext['jna.version'] = '5.4.0'
 
 dependencies {
 //project
-    compile project(':sirius_cli')
-//    compile "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
-//    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+    api project(':sirius_cli')
+//    implementation "de.unijena.bioinf.ms:ft_glpk:$siriusVersion"
+//    implementation "org.slf4j:slf4j-jdk14:$slf4j_version"
 
 //internal
-    compile group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
-
+    api "de.unijena.bioinf:jjobs-swing:$jjobs_version"
+    // will be ported to sirius_cli later
+    api "de.unijena.bioinf.ms:combinatorial_fragmenter:$siriusVersion"
 //external
-    compile "net.sf.opencsv:opencsv:2.3"
-    compile "org.swinglabs.swingx:swingx-all:1.6.5-1"
-    compile "org.openscience.cdk:cdk-render:$cdk_version"
-    compile "org.openscience.cdk:cdk-renderextra:$cdk_version"
-    compile "org.openscience.cdk:cdk-renderawt:$cdk_version"
-    compile "org.openscience.cdk:cdk-data:$cdk_version"
-    compile "org.openscience.cdk:cdk-core:$cdk_version"
-    compile "org.openscience.cdk:cdk-interfaces:$cdk_version"
-    compile "org.openscience.cdk:cdk-inchi:$cdk_version"
-    compile "org.openscience.cdk:cdk-smiles:$cdk_version"
-    compile "org.openscience.cdk:cdk-io:$cdk_version"
-    compile "org.openscience.cdk:cdk-ioformats:$cdk_version"
-    compile "org.openscience.cdk:cdk-sdg:$cdk_version"
-    compile "org.openscience.cdk:cdk-smarts:$cdk_version"
-    compile "org.openscience.cdk:cdk-legacy:$cdk_version"
+    api "net.sf.opencsv:opencsv:2.3"
+    api "org.swinglabs.swingx:swingx-all:1.6.5-1"
+    api "org.openscience.cdk:cdk-render:$cdk_version"
+    api "org.openscience.cdk:cdk-renderextra:$cdk_version"
+    api "org.openscience.cdk:cdk-renderawt:$cdk_version"
+    api "org.openscience.cdk:cdk-data:$cdk_version"
+    api "org.openscience.cdk:cdk-core:$cdk_version"
+    api "org.openscience.cdk:cdk-interfaces:$cdk_version"
+    api "org.openscience.cdk:cdk-inchi:$cdk_version"
+    api "org.openscience.cdk:cdk-smiles:$cdk_version"
+    api "org.openscience.cdk:cdk-io:$cdk_version"
+    api "org.openscience.cdk:cdk-ioformats:$cdk_version"
+    api "org.openscience.cdk:cdk-sdg:$cdk_version"
+    api "org.openscience.cdk:cdk-smarts:$cdk_version"
+    api "org.openscience.cdk:cdk-legacy:$cdk_version"
 
-    compile group: 'com.glazedlists', name: 'glazedlists', version: '1.11.0'
+    api 'com.glazedlists:glazedlists:1.11.0'
 
-    //compile group: 'com.kitfox.svg', name: 'svg-salamander', version: '1.0'
-    compile group: 'org.apache.xmlgraphics', name: 'batik-rasterizer', version: '1.13'
-    compile group: 'org.apache.xmlgraphics', name: 'fop', version: '2.3'
+//    api 'com.kitfox.svg:svg-salamander:1.0'
+    api 'org.apache.xmlgraphics:batik-rasterizer:1.13'
+    api 'org.apache.xmlgraphics:fop:2.3'
+
 }
 
 //this includes compileOnly dependencies like the ILP solver jars to the idea provided scope.
-idea {
+/*idea {
     module {
         scopes.RUNTIME.plus += [configurations.compileOnly]
     }
-}
+}*/
 
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
@@ -95,12 +97,8 @@ artifactory {
             else
                 repoKey = 'libs-release-local'
 
-            username = System.getenv("ARTIFACTORY_USERNAME") != null
-                    ? System.getenv("ARTIFACTORY_USERNAME")
-                    : System.properties['de.unijena.bioinf.build.artifactory.username']
-            password = System.getenv("ARTIFACTORY_TOKEN") != null
-                    ? System.getenv("ARTIFACTORY_TOKEN")
-                    : System.properties['de.unijena.bioinf.build.artifactory.password']
+            username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
+            password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
         }
         defaults {
             publications('mavenJava')

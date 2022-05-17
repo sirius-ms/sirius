@@ -95,7 +95,7 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
                 @Override
                 protected Boolean compute() throws Exception {
                     if (old != null && !old.isFinished()) {
-                        old.cancel(true);
+                        old.cancel(false);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
                     Jobs.runEDTAndWait(elementList::clear);
@@ -132,4 +132,3 @@ public class FingerprintTable extends ActionList<FingerIdPropertyBean, FormulaRe
         }
     }
 }
-

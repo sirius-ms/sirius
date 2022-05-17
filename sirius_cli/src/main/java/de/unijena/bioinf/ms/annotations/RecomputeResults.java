@@ -32,6 +32,10 @@ public class RecomputeResults implements Ms2ExperimentAnnotation {
         this.value = value;
     }
 
+    public boolean value() {
+        return value;
+    }
+
     @DefaultInstanceProvider
     public static RecomputeResults newInstance(@DefaultProperty boolean value){
         return value ? TRUE : FALSE;

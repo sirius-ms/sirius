@@ -18,11 +18,6 @@
  */
 
 package de.unijena.bioinf.ms.gui.actions;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.01.17.
- */
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
@@ -47,7 +42,7 @@ public class ComputeAction extends AbstractAction {
         putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
         putValue(Action.SHORT_DESCRIPTION, "Compute selected compound(s)");
 
-        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundListSelectionModel()));
+        setEnabled(SiriusActions.notComputingOrEmptySelected(MF.getCompoundListSelectionModel()));
 
         MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -55,7 +50,7 @@ public class ComputeAction extends AbstractAction {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                setEnabled(SiriusActions.notComputingOrEmpty(selection));
+                setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
             }
         });
     }

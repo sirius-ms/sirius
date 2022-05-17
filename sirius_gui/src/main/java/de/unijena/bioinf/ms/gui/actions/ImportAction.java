@@ -60,7 +60,7 @@ public class ImportAction extends AbstractAction {
         chooser.addChoosableFileFilter(new MsBatchDataFormatFilter());
         chooser.addChoosableFileFilter(new ProjectArchivedFilter());
         chooser.setAcceptAllFileFilterUsed(false);
-        int returnVal = chooser.showOpenDialog(MF);
+        int returnVal = chooser.showDialog(MF,"Import");
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = chooser.getSelectedFiles();

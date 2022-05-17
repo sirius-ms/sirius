@@ -30,9 +30,8 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingeridSubToolJob;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
@@ -40,7 +39,6 @@ import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
@@ -54,7 +52,7 @@ import java.awt.event.WindowEvent;
 
 @CommandLine.Command(name = "gui", aliases = {"GUI"}, description = "Starts the graphical user interface of SIRIUS", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
-    public static final String DONT_ASK_SUM_KEY = "de.unijena.bioinf.sirius.computeDialog.writeSummaries.dontAskAgain";
+    public static final String DONT_ASK_CLOSE_KEY = "de.unijena.bioinf.sirius.mainframe.close.dontAskAgain";
     public static final String COMPOUND_BUFFER_KEY = "de.unijena.bioinf.sirius.gui.instanceBuffer";
     private final Splash splash;
 
@@ -86,8 +84,8 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
         @Override
         public void run() {
             // modify fingerid subtool so that it works with reduced GUI candidate list.
-            FingeridSubToolJob.formulaResultComponentsToClear.add(FBCandidatesGUI.class);
-            FingeridSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsGUI.class);
+            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesGUI.class);
+            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsGUI.class);
             //todo minor: cancellation handling
 
             // NOTE: we do not want to run ConfigJob here because we want to set
@@ -99,27 +97,28 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
             MainFrame.MF.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent event) {
-                    try {
-                        ApplicationCore.DEFAULT_LOGGER.info("Saving properties file before termination.");
-                        SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                        Jobs.runInBackgroundAndLoad(MainFrame.MF, "Cancelling running jobs...", Jobs::cancelALL);
-                        if (new QuestionDialog(MainFrame.MF,
-                                "<html>Do you want to write summary files to the project-space before closing this project?<br>This may take some time for large projects. </html>", DONT_ASK_SUM_KEY).isSuccess()) {
-                            ApplicationCore.DEFAULT_LOGGER.info("Writing Summaries to Project-Space before termination.");
-                            SiriusActions.SUMMARY_WS.getInstance().actionPerformed(null);
+                    if (!Jobs.MANAGER.hasActiveJobs() || new QuestionDialog(MainFrame.MF,
+                            "<html>Do you really want close SIRIUS?" +
+                                    "<br> <b>There are still some Jobs running.</b> Running Jobs will be canceled when closing SIRIUS.</html>", DONT_ASK_CLOSE_KEY).isSuccess()) {
+                        try {
+                            ApplicationCore.DEFAULT_LOGGER.info("Saving properties file before termination.");
+                            SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
+                            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Cancelling running jobs...", Jobs::cancelALL);
+
+                            ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space");
+                            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
+                                @Override
+                                protected Boolean compute() throws Exception {
+                                    if (MainFrame.MF.ps() != null)
+                                        MainFrame.MF.ps().close();
+                                    return true;
+                                }
+                            });
+                            Jobs.runInBackgroundAndLoad(MainFrame.MF, "Disconnecting from webservice...", SiriusCLIApplication::shutdownWebservice);
+                        } finally {
+                            MainFrame.MF.CONNECTION_MONITOR().close();
+                            System.exit(0);
                         }
-                        ApplicationCore.DEFAULT_LOGGER.info("Closing Project-Space");
-                        Jobs.runInBackgroundAndLoad(MainFrame.MF, "Closing Project-Space", true, new TinyBackgroundJJob<Boolean>() {
-                            @Override
-                            protected Boolean compute() throws Exception {
-                                MainFrame.MF.ps().close();
-                                return true;
-                            }
-                        });
-                        Jobs.runInBackgroundAndLoad(MainFrame.MF, "Disconnecting from webservice...", SiriusCLIApplication::shutdownWebservice);
-                    } finally {
-                        MainFrame.MF.CONNECTION_MONITOR().close();
-                        System.exit(0);
                     }
                 }
             });
@@ -148,18 +147,17 @@ public class GuiAppOptions implements StandaloneTool<GuiAppOptions.Flow> {
 
 //                        ApplicationCore.DEFAULT_LOGGER.info("Checking client version and webservice connection...");
                         updateProgress(0, max, progress++, "Checking Webservice connection...");
-                        ConnectionMonitor.ConnetionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
-                        if (cc.isConnected()) {
-                            @Nullable VersionsInfo versionsNumber = ApplicationCore.WEB_API.getVersionInfo();
-                            ApplicationCore.DEFAULT_LOGGER.debug("FingerID response " + (versionsNumber != null ? String.valueOf(versionsNumber.toString()) : "NULL"));
-                            if (versionsNumber != null) {
+                        ConnectionMonitor.ConnectionCheck cc = MainFrame.MF.CONNECTION_MONITOR().checkConnection();
+                        if (cc.hasInternet()) {
+                            System.out.println("INSERT GITHUB UPDATE CHECK HERE");
+                            /*if (versionsNumber != null) {
                                 if (versionsNumber.expired()) {
                                     new UpdateDialog(MainFrame.MF, versionsNumber);
                                 }
                                 if (versionsNumber.hasNews()) {
                                     new NewsDialog(MainFrame.MF, versionsNumber.getNews());
                                 }
-                            }
+                            }*/
                         }
                         return true;
                     } catch (Exception e) {

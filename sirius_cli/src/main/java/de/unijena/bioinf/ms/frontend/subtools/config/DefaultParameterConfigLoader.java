@@ -77,7 +77,7 @@ public class DefaultParameterConfigLoader {
                                 @Override
                                 public <T> T set(T value) throws Exception {
                                     LOG.debug("Changing DEFAULT:" + key + " -> " + value);
-                                    config.changeConfig(key, String.valueOf(value).replaceAll("\\s", ""));
+                                    config.changeConfig(key, String.valueOf(value));
                                     return value;
                                 }
                             });

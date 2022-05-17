@@ -24,9 +24,12 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import ca.odell.glazedlists.swing.GlazedListsSwing;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
+import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.gui.utils.matchers.BackgroundJJobMatcheEditor;
 import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
@@ -51,10 +54,10 @@ public class CompoundList {
     final CompoundFilterModel compoundFilterModel;
     final ObservableElementList<InstanceBean> obsevableScource;
     final SortedList<InstanceBean> sortedScource;
-    final FilterList<InstanceBean> compoundList;
+    final EventList<InstanceBean> compoundList;
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
-
-    final MatcherEditorWithOptionalInvert<InstanceBean> compoundListMatchEditor;
+    final BackgroundJJobMatcheEditor<InstanceBean> backgroundFilterMatcher;
+    final private MatcherEditorWithOptionalInvert<InstanceBean> compoundListMatchEditor;
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
@@ -70,7 +73,7 @@ public class CompoundList {
             baseList.add(element.getGUIName());
             baseList.add(element.getIonization().toString());
             baseList.add(String.valueOf(element.getIonMass()));
-        }, true));
+        }, false));
         //additional filter based on specific parameters
         compoundFilterModel = new CompoundFilterModel();
         listOfFilters.add(new CompoundFilterMatcherEditor(compoundFilterModel));
@@ -78,7 +81,10 @@ public class CompoundList {
         CompositeMatcherEditor<InstanceBean> compositeMatcherEditor = new CompositeMatcherEditor<>(listOfFilters);
         compositeMatcherEditor.setMode(CompositeMatcherEditor.AND);
         compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
-        compoundList = new FilterList(sortedScource, compoundListMatchEditor);
+        backgroundFilterMatcher = new BackgroundJJobMatcheEditor<>(compoundListMatchEditor);
+        FilterList<InstanceBean> filterList = new FilterList<>(sortedScource, backgroundFilterMatcher);
+        compoundList = GlazedListsSwing.swingThreadProxyList(filterList);
+
         //filter dialog
         openFilterPanelButton = new JButton("...");
         openFilterPanelButton.addActionListener(e -> {
@@ -123,9 +129,10 @@ public class CompoundList {
 
     public void resetFilter() {
         //filtering consists of the text filter, the filter model and the possible inversion using the MatcherEditor
-        searchField.textField.setText("");
         compoundFilterModel.resetFilter();
         compoundListMatchEditor.setInverted(false);
+        searchField.textField.setText("");
+        searchField.textField.postActionEvent();
         colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
     }
 
@@ -155,7 +162,7 @@ public class CompoundList {
         return compountListSelectionModel;
     }
 
-    public FilterList<InstanceBean> getCompoundList() {
+    public EventList<InstanceBean> getCompoundList() {
         return compoundList;
     }
 }

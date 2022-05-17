@@ -20,25 +20,66 @@
 package de.unijena.bioinf.ms.gui.ms_viewer.data;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
+import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGenerator;
 import gnu.trove.list.array.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
 
     protected SimpleSpectrum isotopePattern;
     protected MolecularFormula patternFormula;
+    protected SimpleSpectrum simulatedPattern;
     protected int[] indizes;
 
-    public SiriusIsotopePattern(FTree tree, Ms2Experiment exp, Spectrum<? extends Peak> spectrum) {
+    @Nullable
+    public static SiriusIsotopePattern create(@Nullable FTree tree, @Nullable Ms2Experiment exp, @Nullable Spectrum<? extends Peak> spectrum){
+        if (spectrum == null)
+            return null;
+        if (tree == null)
+            return null;
+        SiriusIsotopePattern it = new SiriusIsotopePattern(spectrum);
+        it.annotate(tree, exp);
+        if (it.isotopePattern == null)
+            return null;
+        it.simulate(exp, tree);
+        if (it.simulatedPattern == null)
+            return null;
+        return it;
+    }
+
+    protected SiriusIsotopePattern(Spectrum<? extends Peak> spectrum) {
         super(spectrum);
-        annotate(tree, exp);
+    }
+
+    @Override
+    public double minMz() {
+        return Math.min(simulatedPattern.getMzAt(0), isotopePattern.getMzAt(0));
+    }
+
+    @Override
+    public double maxMz() {
+        return Math.max(simulatedPattern.getMzAt(simulatedPattern.size()-1), isotopePattern.getMzAt(isotopePattern.size()-1));
+    }
+
+    private void simulate(Ms2Experiment exp, FTree tree) {
+        final MolecularFormula formula = getPrecursorFormula(exp, tree);
+        final FastIsotopePatternGenerator gen = new FastIsotopePatternGenerator(Normalization.Max);
+        gen.setMinimalProbabilityThreshold(Math.min(0.005, Spectrums.getMinimalIntensity(isotopePattern)));
+        gen.setMaximalNumberOfPeaks(Math.max(4, isotopePattern.size()));
+        this.simulatedPattern = gen.simulatePattern(formula, tree.getAnnotation(PrecursorIonType.class).orElse(exp.getPrecursorIonType()).getIonization());
+    }
+
+    //TODO: we should make a method for that somewhere else
+    private MolecularFormula getPrecursorFormula(Ms2Experiment exp, FTree tree) {
+        PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElse(PrecursorIonType.unknown(exp.getPrecursorIonType().getCharge()));
+        return tree.getRoot().getFormula().subtract(ionType.getInSourceFragmentation()).add(ionType.getAdduct());
     }
 
     @Override
@@ -58,14 +99,18 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
         return false;
     }
 
-    private void annotate(FTree tree, Ms2Experiment exp) {
-        final IsotopePattern pattern = tree.getAnnotationOrNull(IsotopePattern.class);
+	public SimpleSpectrum getIsotopePattern(){
+		return isotopePattern;
+	}
+
+    private SimpleSpectrum annotate(@Nullable FTree tree, @NotNull Ms2Experiment exp) {
+        final IsotopePattern pattern = tree != null ? tree.getAnnotationOrNull(IsotopePattern.class) : null;
         if (pattern != null) {
             isotopePattern = pattern.getPattern();
             patternFormula = pattern.getCandidate();
         } else {
             isotopePattern = Spectrums.extractIsotopePattern(spectrum, exp.getAnnotationOrDefault(MS1MassDeviation.class), exp.getIonMass(), exp.getPrecursorIonType().getCharge(), true);
-            patternFormula = tree.getRoot().getFormula();
+            patternFormula = tree != null ? tree.getRoot().getFormula() : null;
         }
         final TIntArrayList indizes = new TIntArrayList();
         // find isotope peaks in spectrum
@@ -76,5 +121,6 @@ public class SiriusIsotopePattern extends SiriusSingleSpectrumModel{
             }
         }
         this.indizes = indizes.toArray();
+        return isotopePattern;
     }
 }

@@ -19,8 +19,18 @@ package de.unijena.bioinf.ms.gui.utils;/*
  */
 
 import ca.odell.glazedlists.matchers.Matcher;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.elgordo.LipidSpecies;
+import de.unijena.bioinf.lcms.LCMSCompoundSummary;
+import de.unijena.bioinf.projectspace.CompoundContainer;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
+
+import java.util.Optional;
+import java.util.Set;
 
 public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     final CompoundFilterModel filterModel;
@@ -43,7 +53,47 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
                 return false;
             }
         }
-        return true;
 
+        final Set<PrecursorIonType> adducts = filterModel.getAdducts();
+        if (!adducts.isEmpty() && !adducts.contains(item.getIonization()))
+            return false;
+
+        return anyIOIntenseFilterMatches(item, filterModel);
+    }
+
+    private boolean anyIOIntenseFilterMatches(InstanceBean item, CompoundFilterModel filterModel) {
+        if (filterModel.isPeakShapeFilterEnabled()) {
+            if (!filterByPeakShape(item, filterModel)) return false;
+        }
+        if (filterModel.isLipidFilterEnabled()){
+            if (!matchesLipidFilter(item, filterModel)) return false;
+        }
+        return true;
+    }
+
+    private boolean filterByPeakShape(InstanceBean item, CompoundFilterModel filterModel) {
+        final CompoundContainer compoundContainer = item.loadCompoundContainer(LCMSPeakInformation.class);
+        final Optional<LCMSPeakInformation> annotation = compoundContainer.getAnnotation(LCMSPeakInformation.class);
+        if (annotation.isEmpty()) return false;
+        final LCMSPeakInformation lcmsPeakInformation = annotation.get();
+        for (int k=0; k < lcmsPeakInformation.length(); ++k) {
+            final Optional<CoelutingTraceSet> tracesFor = lcmsPeakInformation.getTracesFor(k);
+            if (tracesFor.isPresent()) {
+                final CoelutingTraceSet coelutingTraceSet = tracesFor.get();
+                LCMSCompoundSummary.Quality peakQuality = LCMSCompoundSummary.checkPeakQuality(coelutingTraceSet,coelutingTraceSet.getIonTrace());
+                if (filterModel.getPeakShapeQuality(peakQuality)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean matchesLipidFilter(InstanceBean item, CompoundFilterModel filterModel) {
+        boolean hasAnyLipidHit = item.getResults().stream()
+                .map(FormulaResultBean::getFragTree).flatMap(Optional::stream)
+                .map(ft -> ft.getAnnotation(LipidSpecies.class)).flatMap(Optional::stream)
+                .findAny().isPresent();
+        return (filterModel.getLipidFilter()==CompoundFilterModel.LipidFilter.ANY_LIPID_CLASS_DETECTED && hasAnyLipidHit) || (filterModel.getLipidFilter()==CompoundFilterModel.LipidFilter.NO_LIPID_CLASS_DETECTED && !hasAnyLipidHit);
     }
 }

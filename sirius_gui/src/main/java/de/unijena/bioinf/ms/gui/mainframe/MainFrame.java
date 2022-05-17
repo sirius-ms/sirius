@@ -23,6 +23,7 @@ import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.ChemistryBase.utils.NetUtils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
@@ -30,6 +31,7 @@ import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.io.LoadController;
 import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVFormatReader;
@@ -42,7 +44,6 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.utils.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +51,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.CookieHandler;
+import java.net.CookieManager;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -60,7 +64,12 @@ import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame implements DropTargetListener {
 
+    public static final CookieManager cookieGuard = new CookieManager();
     public static final MainFrame MF = new MainFrame();
+
+    static {
+        CookieHandler.setDefault(cookieGuard);
+    }
 
     //Logging Panel
     private final LogDialog log;
@@ -75,6 +84,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public GuiProjectSpaceManager ps() {
         return ps;
     }
+
+    private BasicEventList<InstanceBean> compoundBaseList;
 
     //left side panel
     private CompoundList compoundList;
@@ -125,21 +136,22 @@ public class MainFrame extends JFrame implements DropTargetListener {
     private DropTarget dropTarget;
 
 
-    public synchronized ConnectionMonitor CONNECTION_MONITOR() {
-        if (CONNECTION_MONITOR == null)
-            CONNECTION_MONITOR = new ConnectionMonitor();
+    public ConnectionMonitor CONNECTION_MONITOR() {
         return CONNECTION_MONITOR;
     }
 
     //internet connection monitor
-    private ConnectionMonitor CONNECTION_MONITOR;
+    private final ConnectionMonitor CONNECTION_MONITOR;
 
     // methods for creating the mainframe
     private MainFrame() {
         super(ApplicationCore.VERSION_STRING());
+        //inti connection monitor
+        CONNECTION_MONITOR = new ConnectionMonitor();
+
         setIconImage(Icons.SIRIUS_APP_IMAGE);
         configureTaskbar();
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 
@@ -161,7 +173,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     public void openNewProjectSpace(Path selFile) {
-
         changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile));
     }
 
@@ -170,26 +181,40 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
     protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace) {
-        final BasicEventList<InstanceBean> psList = this.ps.INSTANCE_LIST;
+        final BasicEventList<InstanceBean> psList = compoundBaseList;
         final AtomicBoolean compatible = new AtomicBoolean(true);
         this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
-            final SiriusProjectSpace ps = makeSpace.get();
-            compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
-            Jobs.cancelALL();
-            final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
-            inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
-            gps.projectSpace().addProjectSpaceListener(event -> {
-                if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
-                    inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
-            });
-            return gps;
+            GuiProjectSpaceManager old = this.ps;
+            try {
+                final SiriusProjectSpace ps = makeSpace.get();
+                compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
+                Jobs.cancelALL();
+                final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
+                inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
+
+                gps.projectSpace().addProjectSpaceListener(event -> {
+                    if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
+                        inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
+                });
+                return gps;
+            } finally {
+                old.close();
+            }
         }).getResult();
 
+        if (this.ps == null) {
+            try {
+                LoggerFactory.getLogger(getClass()).warn("Error when changing project-space. Falling back to tmp project-space");
+                createNewProjectSpace(ProjectSpaceIO.createTmpProjectSpaceLocation());
+            } catch (IOException e) {
+                new StacktraceDialog(MF, "Cannot recreate a valid project-space due to: " + e.getMessage() + "'.  SIRIUS will not work properly without valid project-space. Please restart SIRIUS.", e);
+            }
+        }
         if (!compatible.get())
             if (new QuestionDialog(MF, "<html><body>" +
                     "The opened project-space contains results based on an outdated fingerprint version.<br><br>" +
                     "You can either convert the project to the new fingerprint version and <b>lose all fingerprint related results</b> (e.g. CSI:FingerID an CANOPUS),<br>" +
-                    "or you stay with the old fingerprint version but without being able to execute any  fingerprint related computations.<br><br>" +
+                    "or you stay with the old fingerprint version but without being able to execute any fingerprint related computations (e.g. for data visualization).<br><br>" +
                     "Do you wish to convert and lose all fingerprint related results?" +
                     "</body></html>").isSuccess())
                 ps().updateFingerprintData();
@@ -198,6 +223,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public void decoradeMainFrameInstance(@NotNull GuiProjectSpaceManager projectSpaceManager) {
         //add project-space
         ps = projectSpaceManager;
+        compoundBaseList = ps.INSTANCE_LIST;
         inEDTAndWait(() -> MF.setTitlePath(ps.projectSpace().getLocation().toString()));
 
         // create models for views
@@ -209,6 +235,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
         jobDialog = new JobDialog(this);
         // results Panel
         resultsPanel = new ResultPanel(formulaList, ApplicationCore.WEB_API);
+        JPanel resultPanelContainer = new JPanel(new BorderLayout());
+        resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
+        resultPanelContainer.add(resultsPanel,BorderLayout.CENTER);
+        if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
+            resultPanelContainer.add(new WebServiceInfoPanel(CONNECTION_MONITOR()), BorderLayout.SOUTH);
+
         // toolbar
         toolbar = new SiriusToolbar();
 
@@ -225,7 +257,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         //BUILD the MainFrame (GUI)
         mainPanel.setLeftComponent(experimentListPanel);
-        mainPanel.setRightComponent(resultsPanel);
+        mainPanel.setRightComponent(resultPanelContainer);
         add(toolbar, BorderLayout.NORTH);
 
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
@@ -277,10 +309,11 @@ public class MainFrame extends JFrame implements DropTargetListener {
             if (inputF.msInput.isSingleProject())
                 openNewProject = new QuestionDialog(MF, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
-            if (openNewProject)
+            if (openNewProject) {
                 MF.openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
-            else
+            } else {
                 importDragAndDropFiles(inputF);
+            }
         }
     }
 
@@ -315,8 +348,4 @@ public class MainFrame extends JFrame implements DropTargetListener {
             }
         }
     }
-
 }
-
-
-

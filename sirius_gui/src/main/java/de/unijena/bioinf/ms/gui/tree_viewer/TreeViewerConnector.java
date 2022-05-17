@@ -26,12 +26,23 @@ import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.ftalign.CommonLossScoring;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.VisualizationPanelSynchronizer;
 
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 public class TreeViewerConnector{
+
+    VisualizationPanelSynchronizer sync;
+
+    public void registerSynchronizer(VisualizationPanelSynchronizer sync){
+        this.sync = sync;
+    }
+
+    public void selectionChanged(float fragment_mz) {
+        sync.fragmentChanged(fragment_mz);
+    }
 
     public String getRescoredTree(String json_tree){
         // TODO implement

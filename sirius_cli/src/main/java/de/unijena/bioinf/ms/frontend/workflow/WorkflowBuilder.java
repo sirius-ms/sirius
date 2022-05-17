@@ -26,13 +26,17 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.decomp.DecompOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.mgf.MgfExporterOptions;
+import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.trees.FTreeExporterOptions;
-import de.unijena.bioinf.ms.frontend.subtools.fingerid.FingerIdOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
+import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
+import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.projectspace.ProjecSpaceOptions;
 import de.unijena.bioinf.ms.frontend.subtools.similarity.SimilarityMatrixOptions;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -61,7 +65,7 @@ import java.util.stream.Stream;
  */
 
 // todo In general a lot of the configuration here could be done on compile time.
-//  but on the other hand I do not think it is a performance critical thing.
+//  On the other hand I do not think it is performance critical.
 
 public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
@@ -83,16 +87,20 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
     public final ProjecSpaceOptions projectSpaceOptions; // this is also singleton
     public final SimilarityMatrixOptions similarityMatrixOptions;
     public final DecompOptions decompOptions;
+    public final LoginOptions loginOptions;
 
-    //postprocessing exporting tools
+    //postprocessing, project-space consuming tool, exporting tools,
+    public final SummaryOptions summaryOptions;
+    public final ExportPredictionsOptions exportPredictions;
     public final MgfExporterOptions mgfExporterOptions;
     public final FTreeExporterOptions ftreeExporterOptions;
 
-    //preprocessing, project-space providing tool, preprojectspace tool
+    //preprocessing, project-space providing tool, pre-project-space tool
     public final LcmsAlignOptions lcmsAlignOptions = new LcmsAlignOptions();
 
     //toolchain subtools
     protected final Map<Class<? extends ToolChainOptions<?, ?>>, ToolChainOptions<?, ?>> toolChainTools;
+
     public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
         this.bufferFactory = bufferFactory;
         this.rootOptions = rootOptions;
@@ -102,7 +110,8 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
                 SiriusOptions.class, new SiriusOptions(configOptionLoader),
                 ZodiacOptions.class, new ZodiacOptions(configOptionLoader),
                 PassatuttoOptions.class, new PassatuttoOptions(configOptionLoader),
-                FingerIdOptions.class, new FingerIdOptions(configOptionLoader),
+                FingerprintOptions.class, new FingerprintOptions(configOptionLoader),
+                FingerblastOptions.class, new FingerblastOptions(configOptionLoader),
                 CanopusOptions.class, new CanopusOptions(configOptionLoader)
         );
 
@@ -112,6 +121,9 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         decompOptions =  new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
         ftreeExporterOptions = new FTreeExporterOptions();
+        summaryOptions = new SummaryOptions();
+        exportPredictions = new ExportPredictionsOptions();
+        loginOptions = new LoginOptions();
     }
 
     public void initRootSpec() {
@@ -119,26 +131,28 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         if (rootSpec != null)
             throw new IllegalStateException("Root spec already initialized");
 
+        final CommandLine.Model.CommandSpec summarySpec = forAnnotatedObjectWithSubCommands(summaryOptions);
+
         // define execution order and dependencies of different Subtools
-        final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> chainToolSpecs = configureChainTools();
+        final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> chainToolSpecs = configureChainTools(summarySpec);
 
         final CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, chainToolSpecs.get(SiriusOptions.class));
 
         Object[] standaloneTools = standaloneTools();
 
         final CommandLine.Model.CommandSpec configSpec = forAnnotatedObjectWithSubCommands(configOptionLoader.asCommandSpec(),
-                Stream.concat(Stream.concat(Stream.of(lcmsAlignSpec), chainToolSpecs.values().stream()), Arrays.stream(standaloneTools)).toArray());
+                Stream.concat(Stream.concat(Stream.of(lcmsAlignSpec), chainToolSpecs.values().stream()), Stream.concat(Arrays.stream(standaloneTools), Stream.of(summarySpec))).toArray());
 
         rootSpec = forAnnotatedObjectWithSubCommands(this.rootOptions,
-                Stream.concat(Stream.concat(Stream.of(standaloneTools()), Stream.of(configSpec, lcmsAlignSpec)), chainToolSpecs.values().stream()).toArray()
+                Stream.concat(Stream.concat(Stream.concat(Stream.of(configSpec), Stream.of(standaloneTools())), Stream.of(summarySpec, lcmsAlignSpec)), chainToolSpecs.values().stream()).toArray()
         );
     }
 
     protected Object[] standaloneTools() {
-        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions};
+        return new Object[]{projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, loginOptions};
     }
 
-    protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools() {
+    protected Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> configureChainTools(CommandLine.Model.CommandSpec... postProcessors) {
         final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> specs = new LinkedHashMap<>();
         //inti command specs
         toolChainTools.values().forEach(t -> {
@@ -155,6 +169,13 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         toolChainTools.values().forEach(parent -> {
             CommandLine.Model.CommandSpec parentSpec = specs.get(parent.getClass());
             parent.getSubCommands().stream().map(specs::get).forEach(subSpec -> parentSpec.addSubcommand(subSpec.name(), subSpec));
+        });
+
+        //add possible postprocessors
+        toolChainTools.values().forEach(parent -> {
+            CommandLine.Model.CommandSpec parentSpec = specs.get(parent.getClass());
+            for (CommandLine.Model.CommandSpec postCommandSpec : postProcessors)
+                parentSpec.addSubcommand(postCommandSpec.name(), postCommandSpec);
         });
 
         return specs;
@@ -219,8 +240,8 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
 
             while (parseResult.hasSubcommand()) {
                 parseResult = parseResult.subcommand();
-                if (parseResult.commandSpec().commandLine() instanceof PostprocessingTool) {
-                    postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine()).makePostprocessingJob(rootOptions, configOptionLoader.config);
+                if (parseResult.commandSpec().commandLine().getCommand() instanceof PostprocessingTool) {
+                    postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePostprocessingJob(rootOptions, configOptionLoader.config);
                     break;
                 } else {
                     execute(parseResult.commandSpec().commandLine(), toolchain);
@@ -240,19 +261,12 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
             Object command = parsed.getCommand();
             if (command instanceof ToolChainOptions) {
                 try {
-                    // create a JobFactory (Task) an configures it invalidation behavior based on its
-                    // possible SubTools.
-                    ToolChainOptions<?, ?> toolChainOptions = (ToolChainOptions<?, ?>) command;
-                    ToolChainJob.Factory<?> task = toolChainOptions.call();
+                    // create a JobFactory (Task) and configures it invalidation behavior based on its subtools.
+                    final ToolChainOptions<?, ?> toolChainOptions = (ToolChainOptions<?, ?>) command;
+                    final ToolChainJob.Factory<?> task = toolChainOptions.call();
 
-                    final Set<Class<? extends ToolChainOptions<?, ?>>> reachable = new LinkedHashSet<>();
-                    Set<Class<? extends ToolChainOptions<?, ?>>> tmp = Set.copyOf(toolChainOptions.getSubCommands());
-                    while (tmp != null && !tmp.isEmpty()) {
-                        reachable.addAll(tmp);
-                        tmp = tmp.stream().map(toolChainTools::get).map(ToolChainOptions::getSubCommands)
-                                .flatMap(Collection::stream).collect(Collectors.toSet());
-                    }
-                    reachable.stream().map(toolChainTools::get).forEach(sub -> task.addInvalidator(sub.getInvalidator()));
+                    // detect tool dependencies and configure invalidators
+                    configureInvalidator(toolChainOptions, task);
 
                     executionResult.add(task);
                 } catch (CommandLine.ParameterException | CommandLine.ExecutionException ex) {
@@ -284,5 +298,16 @@ public class WorkflowBuilder<R extends RootOptions<?,?,?>> {
         protected ParseResultHandler self() {
             return this;
         }
+    }
+
+    private void configureInvalidator(ToolChainOptions<?, ?> toolChainOptions, ToolChainJob.Factory<?> task) {
+        final Set<Class<? extends ToolChainOptions<?, ?>>> reachable = new LinkedHashSet<>();
+        Set<Class<? extends ToolChainOptions<?, ?>>> tmp = Set.copyOf(toolChainOptions.getDependentSubCommands());
+        while (tmp != null && !tmp.isEmpty()) {
+            reachable.addAll(tmp);
+            tmp = tmp.stream().map(toolChainTools::get).map(ToolChainOptions::getDependentSubCommands)
+                    .flatMap(Collection::stream).collect(Collectors.toSet());
+        }
+        reachable.stream().map(toolChainTools::get).forEach(sub -> task.addInvalidator(sub.getInvalidator()));
     }
 }
