@@ -37,7 +37,6 @@ public class InsilicoFragmenter {
 
         @Override
         protected Result compute() throws Exception {
-//            System.out.println("STARTE INSILICO FRAGMENTIERUNG. Das SOLLTE nur einmal aufgerufen werden.");
             final Optional<FTree> tree = sre.getFragTree();
 
             if (tree.isEmpty()) return null;
@@ -90,9 +89,7 @@ public class InsilicoFragmenter {
 
             DepictionGenerator gen = new DepictionGenerator();
             String svg = gen.withAromaticDisplay().withAtomColors().depict(graph.getMolecule()).toSvgStr();
-
             checkForInterruption();
-            System.out.println(json);
             return new Result(json, svg);
         }
     }
