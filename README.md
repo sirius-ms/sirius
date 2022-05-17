@@ -47,10 +47,13 @@ For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be pref
 Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from an unknown source" on Windows/MacOS.
 See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/install) for details.
 
-[Creating a user account](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/)
+### [Creating a user account](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/)
 User accounts can be created directly via the SIRIUS GUI. Please, use your institutional email address. SIRIUS
 web services are free for academic/non-commercial use. In some cases, further validation may be required.
 [See also SIRIUS Documentation – Account and License](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/).
+
+These might be especially interesting for Windows and MacOS users that have problems with the installation due to
+an unsigned installer (Unknown developer etc...)
 
 ### [Sources on GitHub](https://github.com/boecker-lab)
 - [SIRIUS frontend](https://github.com/boecker-lab/sirius)
