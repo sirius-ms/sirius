@@ -24,9 +24,7 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.babelms.CloseableIterator;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.util.ArrayDeque;
 import java.util.regex.Pattern;
 
@@ -36,12 +34,12 @@ class CSVReader extends CompoundReader {
 
 
     @Override
-    public CloseableIterator<CompoundCandidate> readCompounds(Reader reader) throws IOException {
+    public CloseableIterator<CompoundCandidate> readCompounds(InputStream reader) throws IOException {
         return new READCMP(reader);
     }
 
     @Override
-    public CloseableIterator<FingerprintCandidate> readFingerprints(FingerprintVersion version, Reader reader) throws IOException {
+    public CloseableIterator<FingerprintCandidate> readFingerprints(FingerprintVersion version, InputStream reader) throws IOException {
         final READFP r = new READFP(version, reader);
         if (!r.hasFingerprints()) throw new IOException("File does not contain a fingerprint column");
         return r;
@@ -51,9 +49,9 @@ class CSVReader extends CompoundReader {
         private final BufferedReader reader;
         private ArrayDeque<String> buffer;
         private int inchiCol=-1, keyCol=-1, fpCol=-1;
-        READ(Reader reader) throws IOException {
+        READ(InputStream reader) throws IOException {
             this.buffer = new ArrayDeque<>(10);
-            this.reader = new BufferedReader(reader);
+            this.reader = new BufferedReader(new InputStreamReader(reader));
             fillBuffer();
             if (buffer.size() > 0) {
                 if (!findCols(buffer.getFirst()) && buffer.size() > 1) {
@@ -127,7 +125,7 @@ class CSVReader extends CompoundReader {
 
     private static class READFP extends READ implements CloseableIterator<FingerprintCandidate> {
         protected FingerprintVersion version;
-        READFP(FingerprintVersion version, Reader reader) throws IOException {
+        READFP(FingerprintVersion version, InputStream reader) throws IOException {
             super(reader);
             this.version = version;
         }
@@ -138,7 +136,7 @@ class CSVReader extends CompoundReader {
         }
     }
     private static class READCMP extends READ implements CloseableIterator<CompoundCandidate> {
-        READCMP(Reader reader) throws IOException {
+        READCMP(InputStream reader) throws IOException {
             super(reader);
         }
 

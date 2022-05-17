@@ -1,0 +1,24 @@
+version =  parent.siriusVersion
+dependencies() {
+    annotationProcessor project(':default_properties:processor')
+    compile project(':chemistry_base')
+    compile project(':io')
+    testCompile project(":io")
+
+    compile "org.openscience.cdk:cdk-bundle:$cdk_version"
+
+    testCompile project(":sirius_api")
+
+    testCompile "org.openscience.cdk:cdk-bundle:$cdk_version"
+
+    compile "com.gurobi:gurobi-jar:$gurobi_version"
+}
+
+task DataProcessing_FatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'de.unijena.bioinf.fragmenter.DataProcessor'
+    }
+    archiveBaseName = "DataProcessor"
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}

@@ -155,6 +155,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     protected FinalResult compute() throws Exception {
         configureProgress(0, 2, 1);
         score();
+
         startTimeMillis = System.currentTimeMillis();
 //        secondsPerInstance = timeout.getNumberOfSecondsPerInstance();
 //        secondsPerTree = timeout.getNumberOfSecondsPerDecomposition();
@@ -202,7 +203,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         if (Math.abs(newScore - oldScore) > 0.1) {
 
             final double treeSize = tree.numberOfVertices()==1 ? 0 : tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(tree.numberOfVertices() - 1)).get("TreeSizeScorer");
-            this.logDebug(prefix + ": Score of " + tree.getRoot().getFormula() + " differs significantly from recalculated score: " + oldScore + " vs " + newScore + " with tree size is " + pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, () -> new TreeSizeScorer.TreeSizeBonus(-0.5d)).score + " and root score is " + tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(0)).sum() + " and " + treeSize + " sort key is score " + tree.getTreeWeight() + " and filename is " + pinput.getExperimentInformation().getSourceString());
+            this.logTrace(prefix + ": Score of " + tree.getRoot().getFormula() + " differs significantly from recalculated score: " + oldScore + " vs " + newScore + " with tree size is " + pinput.getAnnotation(TreeSizeScorer.TreeSizeBonus.class, () -> new TreeSizeScorer.TreeSizeBonus(-0.5d)).score + " and root score is " + tree.getFragmentAnnotationOrNull(Score.class).get(tree.getFragmentAt(0)).sum() + " and " + treeSize + " sort key is score " + tree.getTreeWeight() + " and filename is " + pinput.getExperimentInformation().getSourceString() + " " + pinput.getExperimentInformation().getName());
         }
 
     }
@@ -287,7 +288,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             }
             checkForInterruption();
             jobs.forEach(this::submitSubJob);
-            LoggerFactory.getLogger(FasterTreeComputationInstance.class).warn("Recalibration is disabled!");
+            LoggerFactory.getLogger(FasterTreeComputationInstance.class).debug("Recalibration is disabled!");
             checkForInterruption();
             return jobs.stream().map(JJob::takeResult).sorted(Collections.reverseOrder()).toArray(ExactResult[]::new);
         }
@@ -361,6 +362,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             //if (r.input!=null) r.input.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, new TreeSizeScorer.TreeSizeBonus(orig));
             final double penalty = (r.tree.getAnnotationOrThrow(Beautified.class).getBeautificationPenalty());
             r.tree.setTreeWeight(r.tree.getTreeWeight()-penalty);
+            r.tree.setRootScore(r.tree.getRootScore()-penalty);
             recalculateScore(r.input==null ? pinput : r.input, r.tree, "final");
         }
     }
@@ -408,7 +410,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         return new ExtendedCriticalPathHeuristicTreeBuilder(this::checkHeuristicInterruption);
     }
 
-    private boolean checkHeuristicInterruption() throws Exception {
+    private boolean checkHeuristicInterruption() throws InterruptedException {
         this.checkForInterruption();
         return false;
     }
@@ -482,6 +484,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         protected ExactResult compute() throws Exception {
             final FGraph graph = treeBuilder instanceof ExtendedCriticalPathHeuristicTreeBuilder ? analyzer.buildGraphWithoutReduction(pinput, decomposition) : analyzer.buildGraph(pinput, decomposition);
             checkForInterruption();
+//            System.err.println(Objects.toString(treeBuilder));
             final FTree tree = treeBuilder.computeTree().withTimeLimit(Math.min(restTimeSec(), secsPerTree)).solve(pinput, graph).tree;
             checkForInterruption();
             final ExactResult er = new ExactResult(decomposition, null, tree, tree.getTreeWeight());
@@ -507,6 +510,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             this.treeBuilder = null;
             this.graphCache = null;
             this.decomposition = null;
+        }
+
+        @Override
+        public String identifier() {
+            return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z | " +decomposition;
         }
     }
 
@@ -544,6 +552,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         pin.setAnnotation(PossibleAdducts.class, new PossibleAdducts(PrecursorIonType.getPrecursorIonType(decomp.getIon())));
         pin.setAnnotation(SpectralRecalibration.class, rec);
         pin.setAnnotation(Whiteset.class, Whiteset.ofMeasuredFormulas(Collections.singleton(tree.getRoot().getFormula()))); // TODO: check if this works for adducts
+        pin.getExperimentInformation().setPrecursorIonType(tree.getAnnotation(PrecursorIonType.class).orElse(pin.getExperimentInformation().getPrecursorIonType()));
         pin.setAnnotation(TreeSizeScorer.TreeSizeBonus.class, pinput.getAnnotationOrNull(TreeSizeScorer.TreeSizeBonus.class));
         // we have to completely rescore the input...
         //final DecompositionList l = new DecompositionList(Arrays.asList(pin.getAnnotationOrThrow(DecompositionList.class).find(tree.getRoot().getFormula())));
@@ -638,6 +647,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         return analyzer.getIntensityRatioOfExplainedPeaksFromUnanotatedTree(pinput, r.tree) >= MIN_EXPLAINED_INTENSITY && r.tree.numberOfVertices() >= Math.min(pinput.getMergedPeaks().size() - 2, MIN_NUMBER_OF_EXPLAINED_PEAKS);
     }
 
+
+    @Override
+    public String identifier() {
+        return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z";
+    }
 
     protected final static class ExactResult implements Comparable<ExactResult> {
 

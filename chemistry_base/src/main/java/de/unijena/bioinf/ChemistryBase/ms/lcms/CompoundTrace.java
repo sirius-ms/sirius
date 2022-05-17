@@ -42,8 +42,8 @@ public class CompoundTrace extends IonTrace implements Iterable<IonTrace> {
     @Nonnull @JsonProperty protected final IonTrace[] inSourceFragments;
 
     @JsonCreator
-    public CompoundTrace(@JsonProperty("isotopes") Trace[] isotopes, @JsonProperty("adducts") IonTrace[] adducts, @JsonProperty("inSourceFragments") IonTrace[] inSourceFragments) {
-        super(isotopes);
+    public CompoundTrace(@JsonProperty("isotopes") Trace[] isotopes, @JsonProperty("correlationScores") double[] correlationScores , @JsonProperty("adducts") IonTrace[] adducts, @JsonProperty("inSourceFragments") IonTrace[] inSourceFragments) {
+        super(isotopes, correlationScores);
         this.adducts = adducts==null ? new IonTrace[0] : adducts;
         this.inSourceFragments = inSourceFragments==null ? new IonTrace[0] : inSourceFragments;
     }

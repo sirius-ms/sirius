@@ -36,6 +36,13 @@ class IonAssignment {
         this.probabilities = probabilities;
     }
 
+    public double probability(PrecursorIonType ionType) {
+        for (int k=0; k < ionTypes.length; ++k) {
+            if (ionType.equals(ionTypes[k])) return probabilities[k];
+        }
+        return 0d;
+    }
+
     public static IonAssignment uniform(Set<PrecursorIonType> possibleIonTypes) {
         final PrecursorIonType[] types = possibleIonTypes.toArray(PrecursorIonType[]::new);
         final double[] probs = new double[types.length];

@@ -36,4 +36,7 @@ public enum Quality implements Comparable<Quality>{
         return ordinal() <= q.ordinal();
     }
 
+    public boolean worseThan(Quality q) {
+        return ordinal() < q.ordinal();
+    }
 }

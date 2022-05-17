@@ -138,7 +138,7 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
         final JButton export2 = new JButton(new AbstractAction("Copy Single") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final List<Ms2Experiment> experiments = Arrays.stream(specViewer.feature.getFeatures()).map(f->f.toMsExperiment()).collect(Collectors.toList());
+                final List<Ms2Experiment> experiments = Arrays.stream(specViewer.feature.getFeatures()).map(f->f.toMsExperiment("")).collect(Collectors.toList());
                 final StringWriter wr = new StringWriter();
                 try {
                     final BufferedWriter writer = new BufferedWriter(wr);
@@ -337,7 +337,8 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                 addOrderedSampleNames(c, sampleNames);
 
                 // write correlation network
-                i.detectAdductsWithGibbsSampling(c).writeToFile(i, new File("ion_network.js"));
+                i.
+                        detectAdductsWithGibbsSampling(c).writeToFile(i, new File("ion_network.js"));
                 consensusFeatures = i.makeConsensusFeatures(c);
             } else {
                 sampleNames.add(i.getSamples().get(0).run.getIdentifier());

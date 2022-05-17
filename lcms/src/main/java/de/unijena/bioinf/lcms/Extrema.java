@@ -25,8 +25,9 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.BitSet;
+import java.util.function.Function;
 
-class Extrema {
+public class Extrema {
 
     protected final TDoubleArrayList extrema;
     protected final TIntArrayList indizes;
@@ -51,6 +52,31 @@ class Extrema {
             minimum = !minimum;
         }
         return true;
+    }
+
+    // remove all maxima which are outside of the given indizes (inclusive)
+    public void trimToRegion(int from, int to) {
+        if (indizes.isEmpty()) return;
+        while (!indizes.isEmpty()) {
+            int j=indizes.size()-1;
+            boolean isMaximum = !isMinimum(j);
+            if (!isMaximum) --j;
+            if (j<0) break;
+            if (indizes.getQuick(j) > to) {
+                indizes.remove(j, indizes.size()-j+1);
+                extrema.remove(j, indizes.size()-j+1);
+            } else break;
+        }
+        while (!indizes.isEmpty()) {
+            int j=0;
+            boolean isMaximum = !isMinimum(j);
+            if (!isMaximum) ++j;
+            if (j>= indizes.size()) break;
+            if (indizes.getQuick(j) < from) {
+                indizes.remove(0, j+1);
+                extrema.remove(0, j+1);
+            } else break;
+        }
     }
 
     public void addExtremum(int index, double intensity) {
@@ -82,6 +108,49 @@ class Extrema {
         return v < w;
     }
 
+    // search for the second biggest extremum next to the given one
+    // returns {apex, bestMinimum, secondApex}
+    public int[] findSecondApex(int apex) {
+        final double apexIntensity = extrema.get(apex);
+        int bestIndex = -1, bestMinimum=-1;
+        double bestScore = 0d;
+        // search left
+        for (int j=apex-2; j >= 0; j -= 2) {
+            double intens = extrema.getQuick(j);
+            // find lowest minimum
+            for (int k=j+1; k < apex; k += 2) {
+                double minInt = extrema.getQuick(k);
+                double score = intens-minInt;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestIndex = j;
+                    bestMinimum=k;
+                }
+            }
+        }
+        // search right
+        for (int j=apex+2; j < extrema.size(); j += 2) {
+            double intens = extrema.getQuick(j);
+            // find lowest minimum
+            for (int k=j-1; k > apex; k -= 2) {
+                double minInt = extrema.getQuick(k);
+                double score = intens-minInt;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestIndex = j;
+                    bestMinimum=k;
+                }
+            }
+        }
+        if (bestIndex<0 || bestMinimum<0) return new int[0];
+        // return best one
+        return new int[]{
+                indizes.getQuick(apex),
+                indizes.getQuick(bestMinimum),
+                indizes.getQuick(bestIndex)
+        };
+    }
+
     /**
      * removes extrema which differences are below noise level. However, if after removal less than
      * minimumNumberExtrema is kept, the removal is canceled.
@@ -92,7 +161,7 @@ class Extrema {
      *
      * @return true, if there are more than minimumNumberExtrema after smoothing
      */
-    boolean smooth(float[] noiseLevelPerScan, ChromatographicPeak cpeak, double relativeSlopeThreshold, double noiseWeight) {
+    boolean smooth(Function<Integer,Float> noiseLevelPerScan, ChromatographicPeak cpeak, double relativeSlopeThreshold, double noiseWeight) {
         if (extrema.size()<=1) return false;
 
         final BitSet delete = new BitSet(indizes.size());
@@ -102,9 +171,9 @@ class Extrema {
             double peak = extrema.getQuick(k);
             int length = indizes.getQuick(k+1)-indizes.getQuick(k-1);
             boolean isMaximum = intensityLeft<peak || intensityRight<peak;
-            double minSlope = Math.min(Math.abs(peak-intensityLeft),Math.abs(peak-intensityRight));
+            double minSlope = geom(peak-intensityLeft,peak-intensityRight);//Math.min(Math.abs(peak-intensityLeft),Math.abs(peak-intensityRight));
             double relativeSlope = minSlope/Math.max(peak, Math.max(intensityLeft,intensityRight));
-            if (relativeSlope < relativeSlopeThreshold && minSlope <= noiseWeight*noiseLevelPerScan[indizes.getQuick(k)] && length <= 4){
+            if (relativeSlope < relativeSlopeThreshold && minSlope <= noiseWeight*noiseLevelPerScan.apply(indizes.getQuick(k)) && length <= 4){
                 delete.set(k);
             }
         }
@@ -149,6 +218,10 @@ class Extrema {
         } else return cardinality==0;
     }
 
+    private double geom(double a, double b) {
+        return Math.sqrt(a*b);
+    }
+
     private void calcWidthAt33Maximum(ChromatographicPeak cpeak, long[] widthAt33Maximum, int k) {
         double intensity = extrema.getQuick(k);
         final boolean minimum = (k == 0 && extrema.getQuick(k+1)>intensity)
@@ -189,6 +262,43 @@ class Extrema {
             } else j = indizes.getQuick(k);
             widthAt33Maximum[k] = cpeak.getRetentionTimeAt(j)-cpeak.getRetentionTimeAt(i);
 
+        }
+    }
+
+    public int globalMaximum() {
+        double max = 0d;
+        int bestIndex = -1;
+        for (int j=0; j < extrema.size(); ++j) {
+            if (extrema.getQuick(j)>max) {
+                max=extrema.getQuick(j);
+                bestIndex = j;
+            }
+        }
+        return bestIndex;
+    }
+
+    public void deleteExtremaOfSinglePeaks(double slopeThreshold) {
+        while (true) {
+            for (int k = 1; k < extrema.size() - 1; ++k) {
+                final double m = extrema.getQuick(k);
+                final double l = extrema.getQuick(k - 1), r = extrema.getQuick(k + 1);
+                if (m > l && m > r && ((indizes.getQuick(k + 1) - indizes.getQuick(k) <= 1 && k +2 < extrema.size() && extrema.getQuick(k+2) / m > slopeThreshold ) || (indizes.getQuick(k) - indizes.getQuick(k - 1) <= 1 && k > 1 && extrema.getQuick(k-2) / m > slopeThreshold))) {
+                    if (extrema.getQuick(k-1) < extrema.getQuick(k+1)) {
+                        extrema.removeAt(k);
+                        extrema.removeAt(k);
+                        indizes.removeAt(k);
+                        indizes.removeAt(k);
+                        k=Math.max(k-2,0);
+                    } else {
+                        extrema.removeAt(k-1);
+                        extrema.removeAt(k-1);
+                        indizes.removeAt(k-1);
+                        indizes.removeAt(k-1);
+                        k=Math.max(k-2,0);
+                    }
+                }
+            }
+            break;
         }
     }
 }

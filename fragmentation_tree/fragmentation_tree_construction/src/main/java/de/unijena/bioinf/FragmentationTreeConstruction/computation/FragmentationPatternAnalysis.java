@@ -43,6 +43,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.model.Scoring;
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
+import de.unijena.bioinf.MassDecomposer.NonEmptyFormulaValidator;
 import de.unijena.bioinf.ms.annotations.Provides;
 import de.unijena.bioinf.ms.annotations.Requires;
 import de.unijena.bioinf.sirius.PeakAnnotation;
@@ -53,6 +54,7 @@ import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.map.hash.TObjectLongHashMap;
 import gnu.trove.procedure.TLongProcedure;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -295,7 +297,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
 
     private void getDecomposersFor(List<MolecularFormula> pmds, FormulaConstraints constraint, List<MassToFormulaDecomposer> decomposers, List<FormulaConstraints> constraintList) {
         if (pmds.size()==1) {
-            constraintList.add(FormulaConstraints.allSubsetsOf(pmds.get(0)));
+            FormulaConstraints fc = FormulaConstraints.allSubsetsOf(pmds.get(0));
+            fc.addFilter(new NonEmptyFormulaValidator());
+            constraintList.add(fc);
             decomposers.add(getDecomposerFor(new ChemicalAlphabet(pmds.get(0).elementArray())));
             return;
         }
@@ -342,6 +346,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         }
         for (MassToFormulaDecomposer decomposer : decomposerMap.valueCollection()) {
             final FormulaConstraints cs = constraint.intersection(new FormulaConstraints(decomposer.getChemicalAlphabet()));
+            cs.addFilter(new NonEmptyFormulaValidator());
             constraintList.add(cs);
             decomposers.add(decomposer);
         }
@@ -405,7 +410,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 for (DecompositionScorer<?> scorer : rootScorers) {
                     score += ((DecompositionScorer<Object>) scorer).score(f.getCandidate(),f.getIon(), input.getParentPeak(), input, preparations.get(k++));
                     if (!Double.isFinite(score)) {
-                        throw new RuntimeException(score + " is not finite.");
+                        throw new RuntimeException(score + " is not finite. For root " + f.getCandidate() + " with m/z = " + input.getParentPeak().getMass() + ".\nWhiteset = " + input.getAnnotation(Whiteset.class, Whiteset::empty).toString());
                     }
                 }
                 scored.set(j, new Decomposition(scored.get(j).getCandidate(), scored.get(j).getIon(), score));
@@ -970,7 +975,9 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
                 lscore.set(lossScores[k++], lossShouldBeScoredbyPeakPairScorers(loss) ? pseudoMatrix[1][0] : 0d);
             }
             for (int i=0; i < lossScorers.size(); ++i) {
-                lscore.set(lossScores[k++], lossScorers.get(i).score(loss, input, preparedLoss[i]));
+                if (!loss.isArtificial() || lossScorers.get(i).processArtificialEdges()) {
+                    lscore.set(lossScores[k++], lossScorers.get(i).score(loss, input, preparedLoss[i]));
+                }
             }
             lAno.set(loss, lscore.done());
 
@@ -1027,7 +1034,7 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             lossScore += s.sum();
             scoreSum += lossScore;
             if (Math.abs(lossScore-l.getWeight()) > 1e-4) {
-                //LoggerFactory.getLogger(FragmentationPatternAnalysis.class).warn("Score difference: loss " + l.toString() + " (" + l.getSource().getFormula().toString() + " -> " + l.getTarget().getFormula().toString() + ") should have score " + lossScore + " but edge is weighted with " + l.getWeight() + ", loss is " + lAno.get(l) + " and fragment is " + fAno.get(l.getTarget()));
+                LoggerFactory.getLogger(FragmentationPatternAnalysis.class).trace("Score difference: loss " + l + " (" + l.getSource().getFormula().toString() + " -> " + l.getTarget().getFormula().toString() + ") should have score " + lossScore + " but edge is weighted with " + l.getWeight() + ", loss is " + lAno.get(l) + " and fragment is " + fAno.get(l.getTarget()));
             }
         }
         scoreSum += fAno.get(root).sum();
@@ -1087,9 +1094,6 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
             for (int k=0; k < fragmentScorers.size(); ++k) {
                 final FragmentScorer<Object> scorer = (FragmentScorer<Object>)fragmentScorers.get(k);
                 score += scorer.score(v, correspondingPeak, v.isRoot(), precomputedForFragmentScorer[k]);
-            }
-            if (Double.isInfinite(score)) {
-                System.err.println("check");
             }
             assert !Double.isInfinite(score);
             loss.setWeight(score);
@@ -1284,7 +1288,8 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
     public <G, D, L> void importParameters(ParameterHelper helper, DataDocument<G, D, L> document, D dictionary) {
         setInitial();
         fillList(rootScorers, helper, document, dictionary, "rootScorers");
-        fillList(decompositionScorers, helper, document, dictionary, "fragmentScorers");
+        fillList(fragmentScorers, helper, document, dictionary, "fragmentScorers");
+        fillList(decompositionScorers, helper, document, dictionary, "decompositionScorers");
         fillList(fragmentPeakScorers, helper, document, dictionary, "peakScorers");
         fillList(peakPairScorers, helper, document, dictionary, "peakPairScorers");
         fillList(lossScorers, helper, document, dictionary, "lossScorers");
@@ -1306,8 +1311,11 @@ public class FragmentationPatternAnalysis implements Parameterized, Cloneable {
         for (DecompositionScorer s : rootScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "rootScorers", list);
         list = document.newList();
-        for (DecompositionScorer s : decompositionScorers) document.addToList(list, helper.wrap(document, s));
+        for (FragmentScorer s : fragmentScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "fragmentScorers", list);
+        list = document.newList();
+        for (DecompositionScorer s : decompositionScorers) document.addToList(list, helper.wrap(document, s));
+        document.addListToDictionary(dictionary, "decompositionScorers", list);
         list = document.newList();
         for (PeakScorer s : fragmentPeakScorers) document.addToList(list, helper.wrap(document, s));
         document.addListToDictionary(dictionary, "peakScorers", list);

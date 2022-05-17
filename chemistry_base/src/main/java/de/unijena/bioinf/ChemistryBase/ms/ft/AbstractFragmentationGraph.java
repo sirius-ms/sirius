@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 
 public abstract class AbstractFragmentationGraph implements Iterable<Fragment>, Annotated<DataAnnotation> {
 
-    protected final Annotated.Annotations<DataAnnotation> annotations;//HashMap<Class<Object>, Object> annotations;
+    protected final Annotated.Annotations<DataAnnotation> annotations;
     protected final ArrayList<Fragment> fragments;
     protected final HashMap<Class<DataAnnotation>, FragmentAnnotation<DataAnnotation>> fragmentAnnotations;
     protected final HashMap<Class<DataAnnotation>, LossAnnotation<DataAnnotation>> lossAnnotations;
@@ -485,6 +485,4 @@ public abstract class AbstractFragmentationGraph implements Iterable<Fragment>, 
             adduct = ImplicitAdduct.none();
         return Deviation.fromMeasurementAndReference(referenceMass, fragment.getIonization().addToMass(fragment.formula.add(adduct.getAdductFormula()).getMass()));
     }
-
-
 }

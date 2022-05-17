@@ -22,8 +22,6 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.SiriusLocations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.slf4j.LoggerFactory;
 

@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 /**
- * This configurations hold the information how to autodetect elements based on the given formula constraints.
+ * These configurations hold the information how to autodetect elements based on the given formula constraints.
  * Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.
  */
 public class FormulaSettings implements Ms2ExperimentAnnotation {
@@ -42,7 +42,7 @@ public class FormulaSettings implements Ms2ExperimentAnnotation {
     /**
      * @param enforced   Enforced elements are always considered
      * @param detectable Detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)
-     * @param fallback   Fallback elements are used, if the autodetection fails (e.g. no isotope pattern available)
+     * @param fallback   Fallback elements are used, if the auto-detection fails (e.g. no isotope pattern available)
      */
     @DefaultInstanceProvider
     public static FormulaSettings newInstance(@DefaultProperty(propertyKey = "enforced") FormulaConstraints enforced, @DefaultProperty(propertyKey = "detectable") ChemicalAlphabet detectable, @DefaultProperty(propertyKey = "fallback") FormulaConstraints fallback) {

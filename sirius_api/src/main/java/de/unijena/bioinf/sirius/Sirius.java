@@ -81,9 +81,13 @@ public class Sirius {
         this.getMs2Analyzer().registerPlugin(new AdductSwitchPlugin());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin());
         this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs2Plugin());
-
-
+        this.getMs2Analyzer().registerPlugin(new UseLossMassDeviationScoringPlugin());
         this.getMs2Analyzer().registerPlugin(new TreeMotifPlugin());
+
+        this.getMs2Analyzer().registerPlugin(new PredefinedPeakPlugin());
+        this.getMs2Analyzer().registerPlugin(new ElGordoPlugin());
+        this.getMs2Analyzer().registerPlugin(new AminoAcidPlugin());
+        this.getMs2Analyzer().registerPlugin(new AdductNeutralizationPlugin());
     }
 
     public Sirius(@NotNull Profile profile, @NotNull PeriodicTable table) {
@@ -694,6 +698,8 @@ public class Sirius {
                 if (adductSettings != null && possibleAdducts.hasOnlyPlainIonizationsWithoutModifications()) {
                     //todo check if it makes sense to use the detectables
                     usedIonTypes = adductSettings.getDetectable(possibleAdducts.getIonModes());
+                    usedIonTypes.addAll(adductSettings.getEnforced(possibleAdducts.getIonModes()));
+                    usedIonTypes.addAll(adductSettings.getFallback(possibleAdducts.getIonModes()));
                 } else {
                     //there seem to be some information from the preprocessing
                     usedIonTypes = possibleAdducts.getAdducts();

@@ -68,7 +68,6 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
                 //new MassFeatures(),
                 new CandlistSizeFeatures(scored_array_covscore), //this
 
-
                 //these are bio features and can have a filtered list as input
                 new FptLengthFeatureHit(scored_array_covscore_filtered),
 
@@ -82,7 +81,6 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
                 new DistanceFeatures(scored_array_covscore,scored_array_covscore_filtered,1),
 
 
-
                 new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array,scored_array_filtered),
                 new ScoreFeatures<>(ScoringMethodFactory.getCSIFingerIdScoringMethod(performance).getScoring(),scored_array_covscore,scored_array_covscore_filtered),
                 new ScoreFeatures<>(covscore, scored_array, scored_array_filtered),
@@ -92,6 +90,8 @@ public class CombinedFeatureCreatorBIODISTANCE extends CombinedFeatureCreator {
                 //new LogPvalueFeatures(scored_array_covscore,scored_array_covscore_filtered),
                 new LogPvalueKDEFeatures(scored_array, scored_array_filtered),
                 new LogPvalueKDEFeatures(scored_array_covscore, scored_array_covscore_filtered),
+                new SqrtPvalueKDEFeatures(scored_array_covscore,scored_array_covscore_filtered),
+                new Sqrt3PvalueKDEFeatures(scored_array_covscore,scored_array_covscore_filtered),
                 new PvalueScoreDiffScorerFeatures<>(scored_array_covscore, scored_array_covscore_filtered, scored_array[0], covscore),
                 new TanimotoDistanceFeatures(scored_array, scored_array_filtered, 1),
                 new TanimotoToPredFeatures(scored_array, scored_array_filtered)

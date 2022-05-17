@@ -23,22 +23,23 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 
-import java.io.BufferedInputStream;
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.function.Consumer;
-
+@NotThreadSafe
 public interface ProjectReader extends ProjectIO {
     public <A> A textFile(String relativePath, IOFunctions.IOFunction<BufferedReader, A> func)  throws IOException;
-    public <A> A binaryFile(String relativePath, IOFunctions.IOFunction<BufferedInputStream, A> func)  throws IOException;
+    public <A> A binaryFile(String relativePath, IOFunctions.IOFunction<InputStream, A> func)  throws IOException;
 
     /*
     This methods might be redundant (as they are just special textfiles) but we might later use different ways to serialize key/value or
     tables, e.g. when using databases
      */
     public default Map<String,String> keyValues(String relativePath) throws IOException {
-        return textFile(relativePath, (r)-> FileUtils.readKeyValues(r));
+        return textFile(relativePath, FileUtils::readKeyValues);
     }
 
     public default int[] intVector(String relativePath) throws IOException {
@@ -60,5 +61,4 @@ public interface ProjectReader extends ProjectIO {
     public static interface ForContainer<S extends ProjectSpaceContainerId,T extends ProjectSpaceContainer<S>> {
         public void readAllComponents(ProjectReader reader, T container, IOFunctions.ClassValueConsumer consumer)  throws IOException;
     }
-
 }

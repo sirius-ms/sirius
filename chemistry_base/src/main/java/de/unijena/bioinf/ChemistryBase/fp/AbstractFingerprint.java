@@ -89,6 +89,8 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
     }
 
     public static byte[] convertToBinary(short[] data) {
+        if (data == null)
+            return null;
         final ByteBuffer buffer = ByteBuffer.allocate(data.length * 2);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         for (short val : data)
@@ -98,6 +100,8 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
     }
 
     public static byte[] convertToBinary(double[] data) {
+        if (data == null)
+            return null;
         final ByteBuffer buffer = ByteBuffer.allocate(data.length * 8);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         for (double val : data)

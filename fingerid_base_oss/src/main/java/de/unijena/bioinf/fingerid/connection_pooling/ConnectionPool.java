@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.fingerid.connection_pooling;
 
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
@@ -124,6 +125,20 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
         this(connector, Integer.MAX_VALUE);
     }
 
+
+    public <R> R withConnection(IOFunctions.IOFunction<T, R> doWith) throws IOException, InterruptedException {
+        try(PooledConnection<T> pooled = orderConnection()){
+            return doWith.apply(pooled.connection);
+        }
+    }
+
+    public void withConnection(IOFunctions.IOConsumer<T> doWith) throws IOException, InterruptedException {
+        try(PooledConnection<T> pooled = orderConnection()){
+            doWith.accept(pooled.connection);
+        }
+    }
+
+
     public PooledConnection<T> orderConnection() throws InterruptedException, IOException {
         if (shutdown)
             throw new IllegalStateException("Connection pool is closed and does not accept new requests.");
@@ -220,29 +235,6 @@ public class ConnectionPool<T> implements Closeable, AutoCloseable {
         }
     }
 
-
-    /*
-     * This will refresh all idling connections. This method might be called regularly for e.g. database connections
-     * to avoid that a database connection (that is idling for a long time) is dying.
-     */
-    /*
-    public void refreshAllIdlingConnections(TObjectProcedure<T> refreshOperation) {
-        final ArrayList<T> refreshedConnections = new ArrayList<>();
-        while (!freeConnections.isEmpty()) {
-            final T c = freeConnections.poll();
-            if (c != null) {
-                refreshOperation.execute(c);
-                refreshedConnections.add(c);
-            }
-        }
-        freeConnections.addAll(refreshedConnections);
-        connectionLock.lock();
-        try {
-            noFreeConnectionsLeft.signalAll(); // we might get new capacity free
-        } finally {
-            connectionLock.unlock();
-        }
-    }*/
 
     private PooledConnection<T> waitForNewConnectionComesIn() throws InterruptedException, IOException {
 //        System.out.println(Thread.currentThread().getName() + " waits for connection of " + connector.getClass().getName());

@@ -37,6 +37,7 @@ public abstract class Fingerprint extends AbstractFingerprint {
     public abstract short[] toIndizesArray();
 
     public static ArrayFingerprint fromOneZeroString(FingerprintVersion version, String fp) {
+        fp = fp.trim();
         if (fp.length() != version.size()) throw new RuntimeException("Fingerprint version does not match given string: " + version.size() + " bits vs. " + fp.length());
         TShortArrayList indizes = new TShortArrayList(400);
         for (int k=0; k < fp.length(); ++k) {
