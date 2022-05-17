@@ -108,10 +108,6 @@ public enum Format {
         init();
     }
 
-    public Storage getBlobStorage(){
-        return storage;
-    }
-
     public String getName() {
         return storage.getName();
     }
