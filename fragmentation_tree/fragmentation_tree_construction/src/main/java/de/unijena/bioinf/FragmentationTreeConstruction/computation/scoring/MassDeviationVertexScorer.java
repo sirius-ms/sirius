@@ -37,6 +37,7 @@ import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
 import org.apache.commons.math3.special.Erf;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Kai Dührkop
@@ -81,8 +82,14 @@ public class MassDeviationVertexScorer implements DecompositionScorer<MassDeviat
     public double score(MolecularFormula formula, Ionization ion,double realMass, Deviation dev) {
         final double theoreticalMass = ion.addToMass(formula.getMass());
         final double sd = dev.absoluteFor(realMass);
-        return weight * Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
-
+        double score = weight * Math.log(Erf.erfc(Math.abs(realMass-theoreticalMass)/(sd * sqrt2)));
+        // prevent infeasible exceptions if the vertex is, for whatever reason, above the allowed
+        // ppm
+        if (score < -100) {
+            LoggerFactory.getLogger(MassDeviationVertexScorer.class).warn("Vertex " + realMass + " has a too large mass deviation of " + Math.abs(realMass-theoreticalMass) + " for molecular formula " + formula + " (" + ion + ").");
+            score = -100;
+        }
+        return score;
     }
 
     public NormalDistribution getDistribution(double peakMz, double peakIntensity, ProcessedInput input) {

@@ -23,6 +23,7 @@ package de.unijena.bioinf.lcms.align;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
+import de.unijena.bioinf.model.lcms.IonConnection;
 import de.unijena.bioinf.model.lcms.Scan;
 import gnu.trove.list.array.TDoubleArrayList;
 
@@ -38,6 +39,8 @@ public class AlignedFeatures {
 
     protected double peakHeight, peakWidth;
 
+    protected ArrayList<IonConnection<AlignedFeatures>> connections = new ArrayList<>();
+
     AlignedFeatures(double mass, double rt, ProcessedSample representativeFeature, Map<ProcessedSample, FragmentedIon> features, double rtLeft, double rtRight) {
         this.features = features;
         this.mass = mass;
@@ -47,6 +50,10 @@ public class AlignedFeatures {
         this.rtRight = rtRight;
         this.chargeState = features.values().stream().mapToInt(x->x.getChargeState()).max().orElse(0);
         calculate();
+    }
+
+    public void addConnection(AlignedFeatures other, IonConnection.ConnectionType type, float weight) {
+        connections.add(new IonConnection<>(this, other, weight, type));
     }
 
     public Optional<AlignedFeatures> without(Set<ProcessedSample> samples) {
@@ -177,10 +184,19 @@ public class AlignedFeatures {
         return new AlignedFeatures(Statistics.robustAverage(masses.toArray()), Statistics.robustAverage(rts.toArray()), ltic>rtic? representativeFeature : otherSample , copy, rt, otherSample.getRecalibratedRT(other.getRetentionTime()));
     }
 
+    public int getNumberOfIntensiveFeatures(double intensityThreshold) {
+        int count=0;
+        for (var x : features.entrySet()) {
+            if (x.getValue().getIntensity() >= intensityThreshold)
+                ++count;
+        }
+        return count;
+    }
+
     public int getNumberOfIntensiveFeatures() {
         int count=0;
         for (var x : features.entrySet()) {
-            if (x.getValue().getIntensity() > x.getKey().ms1NoiseModel.getSignalLevel(x.getValue().getSegment().getApexScanNumber(),x.getValue().getMass()))
+            if (x.getValue().getIntensity() >= x.getKey().ms1NoiseModel.getSignalLevel(x.getValue().getSegment().getApexScanNumber(),x.getValue().getMass()))
                 ++count;
         }
         return count;

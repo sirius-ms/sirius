@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -222,5 +223,13 @@ public class JenaMsWriter implements DataWriter<Ms2Experiment> {
             writer.write(o.toString());
             writer.newLine();
         }
+    }
+
+    public String writeToString(Ms2Experiment experiment) throws IOException {
+        final StringWriter sw = new StringWriter();
+        try (final BufferedWriter bw = new BufferedWriter(sw)) {
+            write(bw, experiment);
+        }
+        return sw.toString();
     }
 }

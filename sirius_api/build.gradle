@@ -30,6 +30,7 @@ dependencies {
     compile project(':fragmentation_tree:ft_gurobi')
     compile project(':utils')
     compile project(':spectral_alignment')
+    compile project(':elgordo')
     compile project(':tree_motif_search')
     testCompile project(':io')
 }

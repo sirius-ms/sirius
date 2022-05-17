@@ -114,6 +114,11 @@ public class AbstractChemicalDatabaseSynchronousExecutor implements AbstractChem
     }
 
     @Override
+    public String getChemDbDate() {
+        return null;
+    }
+
+    @Override
     public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture<Boolean> future = new ChemicalDatabaseFuture<>(executor, "containsFormula", new Class<?>[]{Long.class, MolecularFormula.class}, new Object[]{filter, formula});
         return future.get();

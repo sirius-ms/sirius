@@ -222,6 +222,11 @@ public class ExtendedFingerprintVersion extends FingerprintVersion {
 
     @Override
     public boolean compatible(FingerprintVersion fingerprintVersion) {
+        return identical(fingerprintVersion);
+    }
+
+    @Override
+    public boolean identical(FingerprintVersion fingerprintVersion) {
         return this == fingerprintVersion;
     }
 }

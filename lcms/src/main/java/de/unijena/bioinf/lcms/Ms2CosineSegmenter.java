@@ -42,6 +42,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,38 +52,6 @@ public class Ms2CosineSegmenter {
 
     public Ms2CosineSegmenter() {
         cosine = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(20)));
-    }
-
-    public IsolationWindow learnIsolationWindow(LCMSProccessingInstance instance, ProcessedSample sample) {
-        final TDoubleArrayList widths = new TDoubleArrayList();
-        for (Scan s : sample.run.getScans()) {
-            if (s.getPrecursor()!=null) {
-                // check how many intensive peaks we see after the precursor
-                final SimpleSpectrum spec = sample.storage.getScan(s);
-                int K = Spectrums.getFirstPeakGreaterOrEqualThan(spec, s.getPrecursor().getMass());
-                double noiseLevel = sample.ms2NoiseModel.getSignalLevel(s.getIndex(), s.getPrecursor().getMass())/2d;
-                double maxMass = 0d;
-                for (int i=K; i < spec.size(); ++i) {
-                    if (spec.getIntensityAt(i)>noiseLevel) {
-                        final double mz = spec.getMzAt(i)-s.getPrecursor().getMass();
-                        if (mz>=17.5)
-                            break; // we often see H2O gains...
-                        maxMass = Math.max(maxMass, mz);
-                        if (maxMass>10) {
-                            LoggerFactory.getLogger(getClass()).debug(")/");
-//                            System.err.println(")/");
-                        }
-                    }
-                }
-                if (maxMass>0.5) {
-                    widths.add(maxMass);
-                }
-            }
-        }
-        widths.sort();
-        if (widths.size()>3) {
-            return new IsolationWindow(0d, widths.get((int)(widths.size()*0.9)));
-        } else return new IsolationWindow(0,0.5d);
     }
 
     protected static class Ms2Scan {
@@ -102,6 +71,7 @@ public class Ms2CosineSegmenter {
         }
     }
 
+
     /**
      * iterates over all MS/MS spectra in the run. Search for the corresponding MS1 feature. Outputs a list
      * of detected features together with their MS/MS. Sometimes we see two MS/MS of different but consecutive features
@@ -114,7 +84,6 @@ public class Ms2CosineSegmenter {
         final ArrayList<FragmentedIon> ions = new ArrayList<>();
         // group all MSMS scans into chromatographic peaks
         final HashMap<MutableChromatographicPeak, ArrayList<Ms2Scan>> scansPerPeak = new HashMap<>();
-        IsolationWindow isolationWindow = null;
         Scan lastMs1 = null;
         // go over each MS/MS scan and pick the preceeding MS scan
         for (Scan s : sample.run) {
@@ -127,21 +96,15 @@ public class Ms2CosineSegmenter {
                     LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan without preceeding MS1 scan is not supported yet.");
                     continue;
                 }
+
+                final IsolationWindow window = sample.getMs2IsolationWindowOrLearnDefault(s, instance);
+
                 // now do feature detection at the expected mass of the precursor in the MS1 scan
-                Optional<ChromatographicPeak> detectedFeature = sample.builder.detect(lastMs1, s.getPrecursor().getMass());
-                final IsolationWindow window;
+                Optional<ChromatographicPeak> detectedFeature = sample.builder.detect(lastMs1, s.getPrecursor().getMass(), window);
                 if (detectedFeature.isEmpty()) {
                     LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("No MS1 feature belonging to MS/MS " + s);
                 } else {
                     final MutableChromatographicPeak F = detectedFeature.get().mutate();
-                    if (s.getPrecursor().getIsolationWindow().isUndefined()) {
-                        if (isolationWindow == null) {
-                            LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("No isolation window defined. We have to estimate it from data.");
-                            isolationWindow = learnIsolationWindow(instance, sample);
-                            LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("Estimate isolation window: " + isolationWindow);
-                        }
-                        window = isolationWindow;
-                    } else window = s.getPrecursor().getIsolationWindow();
                     // we might also see chimerics. So let us check that now
                     List<ChimericDetector.Chimeric> chromatographicPeaks = new ChimericDetector(window).searchChimerics(sample, lastMs1, s.getPrecursor(), F);
                     // calculate how much percent of the intensity which is gonna fragment is chimeric
@@ -161,7 +124,7 @@ public class Ms2CosineSegmenter {
 
         TLongArrayList medianWidthOfPeaks = new TLongArrayList();
         for (ChromatographicPeak peak : scansPerPeak.keySet()) {
-            for (ChromatographicPeak.Segment s : peak.getSegments()) {
+            for (ChromatographicPeak.Segment s : peak.getSegments().values()) {
                 medianWidthOfPeaks.add(s.fwhm());
             }
         }
@@ -201,7 +164,7 @@ public class Ms2CosineSegmenter {
                     // instrument shot into noise, OR we shoot that many MS2 scans that we do not see the "end of the MS1"
                     // to allow the latter one, we check if we have a proper fwhm end. If not, we check if the retention
                     // time difference between the MS2 and the apex is small enough
-                    for (ChromatographicPeak.Segment seg : entry.getKey().segments.descendingSet()) {
+                    for (ChromatographicPeak.Segment seg : entry.getKey().segments.descendingMap().values()) {
                         if (s.getIndex() > seg.getEndScanNumber()) {
                             if (seg.getFwhmEndIndex() == seg.getApexIndex()) {
                                 LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("MS2 scan outside of an segment of an chromatographic peak because of BAD PEAK SHAPE");
@@ -222,7 +185,7 @@ public class Ms2CosineSegmenter {
                     }
                     scans.add(s);
                 } else {
-                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).warn("MS2 scan outside of an segment of an chromatographic peak");
+                    LoggerFactory.getLogger(Ms2CosineSegmenter.class).debug("MS2 scan outside of an segment of an chromatographic peak");
                     ++numberOfScansOutside;
                 }
             }
@@ -368,7 +331,7 @@ public class Ms2CosineSegmenter {
         return rejected;
     }
 
-    private CosineQuery prepareForCosine(ProcessedSample sample, Scan scan) {
+    public CosineQuery prepareForCosine(ProcessedSample sample, Scan scan) {
         return prepareForCosine(sample, new MergedSpectrum(scan, sample.storage.getScan(scan), scan.getPrecursor(), sample.ms2NoiseModel.getNoiseLevel(scan.getIndex(),scan.getPrecursor().getMass())));
     }
     private CosineQuery prepareForCosine(ProcessedSample sample, MergedSpectrum orig) {
@@ -381,8 +344,17 @@ public class Ms2CosineSegmenter {
         final SimpleSpectrum spec = Spectrums.extractMostIntensivePeaks(buffer,6,100);
         return new CosineQuery(orig, spec);
     }
+    private CosineQuery prepareForCosine(MergedSpectrum orig) {
+        final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(orig);
+        Spectrums.cutByMassThreshold(buffer,orig.getPrecursor().getMass()-20);
+        final double noiseLevel = orig.getNoiseLevel();
+        Spectrums.applyBaseline(buffer, noiseLevel);
+        if (buffer.isEmpty()) return null;
+        final SimpleSpectrum spec = Spectrums.extractMostIntensivePeaks(buffer,6,100);
+        return new CosineQuery(orig, spec);
+    }
 
-    protected static class CosineQuery {
+    public static class CosineQuery {
         private final double selfNorm;
         private final SimpleSpectrum spectrum;
         private final MergedSpectrum originalSpectrum;
@@ -391,6 +363,10 @@ public class Ms2CosineSegmenter {
             this.spectrum = spectrum;
             this.originalSpectrum = orig;
             this.selfNorm = new IntensityWeightedSpectralAlignment(new Deviation(20)).score(spectrum,spectrum).similarity;
+        }
+
+        public MergedSpectrum getOriginalSpectrum() {
+            return originalSpectrum;
         }
 
         public SpectralSimilarity cosine(CosineQuery other) {
@@ -412,7 +388,7 @@ public class Ms2CosineSegmenter {
         return after / (before+after);
     }
 
-    public MergedSpectrum mergeViaClustering(ProcessedSample sample, CosineQuery[] cosines) {
+    public MergedSpectrum mergeViaClustering(@Nullable  ProcessedSample sample, CosineQuery[] cosines) {
 
         final double[][] matrix = new double[cosines.length][cosines.length];
         for (int i=0; i < matrix.length; ++i) {
@@ -438,7 +414,7 @@ public class Ms2CosineSegmenter {
                 break outerLoop;
             } else {
                 MergedSpectrum merged = merge(cosines[maxI].originalSpectrum, cosines[maxJ].originalSpectrum);
-                cosines[maxI] = prepareForCosine(sample, merged);
+                cosines[maxI] = sample!=null ? prepareForCosine(sample, merged) : prepareForCosine(merged);
                 --n;
                 for (int k=0; k <= n; ++k) {
                     if (indizes[k]==maxJ) {

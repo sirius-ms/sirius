@@ -27,6 +27,7 @@ import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.lcms.InMemoryStorage;
 import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.ProcessedSample;
+import de.unijena.bioinf.lcms.ionidentity.AdductResolver;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.Feature;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
@@ -35,7 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.util.Iterator;
 
 public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
@@ -43,30 +44,31 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
     protected Iterator<FragmentedIon> ions;
     protected ProcessedSample sample;
     protected LCMSProccessingInstance instance;
+    protected int counter = 0;
 
+    protected abstract boolean setNewSource(BufferedReader sourceReader, URI source);
 
-    protected abstract boolean setNewSource(BufferedReader sourceReader, URL sourceURL);
-
-    protected abstract LCMSRun parseToLCMSRun(BufferedReader sourceReader, URL sourceURL) throws IOException;
+    protected abstract LCMSRun parseToLCMSRun(BufferedReader sourceReader, URI source) throws IOException;
 
     @Override
-    public Ms2Experiment parse(BufferedReader sourceReader, URL sourceURL) throws IOException {
+    public Ms2Experiment parse(BufferedReader sourceReader, URI source) throws IOException {
         try {
-            if (setNewSource(sourceReader, sourceURL)) {
+            if (setNewSource(sourceReader, source)) {
                 instance = new LCMSProccessingInstance();
                 inMemoryStorage = new InMemoryStorage();
-                final LCMSRun run = parseToLCMSRun(sourceReader, sourceURL);
+                final LCMSRun run = parseToLCMSRun(sourceReader, source);
                 sample = instance.addSample(run, inMemoryStorage);
                 instance.detectFeatures(sample);
 
-                ions = Iterators.filter(sample.ions.iterator(), i -> i!=null && Math.abs(i.getChargeState()) <= 1
+                ions = Iterators.filter(sample.ions.iterator(), i -> i != null && Math.abs(i.getChargeState()) <= 1
                         // TODO: kaidu: maybe we can add some parameter for that? But Marcus SpectralQuality is not flexible enough for this
-                        && i.getMsMsQuality().betterThan(Quality.BAD) );
+                        && i.getMsMsQuality().betterThan(Quality.BAD));
             }
-
             if (ions.hasNext()) {
-                Feature feature = instance.makeFeature(sample, ions.next(), false);
-                return feature.toMsExperiment();
+                final FragmentedIon ion = ions.next();
+                AdductResolver.resolve(instance, ion);
+                Feature feature = instance.makeFeature(sample, ion, false);
+                return feature.toMsExperiment(sample.run.getIdentifier() + "_" + String.valueOf(counter++));
             } else {
                 instance = null;
                 inMemoryStorage = null;
@@ -75,14 +77,14 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
                 return null;
             }
         } catch (Throwable e) {
-            LoggerFactory.getLogger(AbstractMzParser.class).error("Error while parsing " + sourceURL + ": " + e.getMessage());
-            if (e instanceof InvalidInputData){
+            LoggerFactory.getLogger(AbstractMzParser.class).error("Error while parsing " + source + ": " + e.getMessage());
+            if (e instanceof InvalidInputData) {
                 return null;
-            } else  if (e instanceof IOException) {
-                throw (IOException)e;
+            } else if (e instanceof IOException) {
+                throw (IOException) e;
             } else {
                 throw new IOException(e);
             }
         }
-        }
+    }
 }

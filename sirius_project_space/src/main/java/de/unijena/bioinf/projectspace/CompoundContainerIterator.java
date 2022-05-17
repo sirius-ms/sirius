@@ -21,7 +21,6 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -70,6 +69,8 @@ public class CompoundContainerIterator implements Iterator<CompoundContainer> {
                     return true;
                 }
             } catch (IOException e) {
+                e.printStackTrace();
+                LoggerFactory.getLogger(getClass()).debug("Could not parse Compound with ID '" + cid.getDirectoryName() + "' Skipping it!", e);
                 LoggerFactory.getLogger(getClass()).error("Could not parse Compound with ID '" + cid.getDirectoryName() + "' Skipping it!");
                 return hasNext();
             }

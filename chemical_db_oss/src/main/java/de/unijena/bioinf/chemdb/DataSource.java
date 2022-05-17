@@ -22,11 +22,12 @@ package de.unijena.bioinf.chemdb;
 
 import java.util.Arrays;
 import java.util.Locale;
-
+// BIO FLAG IS: 4294434748
 //ATTENTION Do not use `:{}[];` in the String here because that might break parsing
 //Names: names should be descriptive and short because they have to be rendered in the GUI
 //Flags/BitSets: Every bit that is set in our postgres db should also represented as DataSource here
 public enum DataSource {
+
     ALL("All included DBs", 0, null, null, null),
     ALL_BUT_INSILICO("All but combinatorial DBs", 2|makeBIOFLAG(), null, null, null),
     PUBCHEM("PubChem", 2, "compound_id","pubchem", "https://pubchem.ncbi.nlm.nih.gov/compound/%s"),
@@ -57,7 +58,9 @@ public enum DataSource {
     PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, 0, false),
     PUBCHEMANNOTATIONFOOD("PubChem class - food", 134217728,  null,null,null, 0, false),
 
-    //everything with flags greater equal to 2**32 are databases of artificial structures.
+    LIPID("Lipid", 4294967296L, null, null, "https://www.lipidmaps.org/databases/lmsd/%s"), //flag for  El Gordo/Lipid candidates
+/*"https://www.lipidmaps.org/rest/compound/abbrev/%s/all/txt"*/ //todo we need to add lipid maps Ids to Chemical DB
+    //everything with flags greater equal to 2**33 are databases of artificial structures.
     KEGGMINE("KEGG Mine", 8589934592L, null,null, null, 8589934592L | 256L, true),
     ECOCYCMINE("EcoCyc Mine", 17179869184L, null,null, null, 17179869184L | 2048L, true),
     YMDBMINE("YMDB Mine", 34359738368L, null,null, null, 34359738368L | 65536L, true);
@@ -104,7 +107,7 @@ public enum DataSource {
     }
 
     public static boolean isBioOnly(long flags) {
-        return flags != 0 && (flags & BIO.flag) == flags;
+        return flags != 0 && (flags & BIO.flag) != 0;
     }
 
     public boolean isBioOnly() {

@@ -28,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.Trace;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -150,11 +149,11 @@ public class Feature implements Annotated<DataAnnotation> {
         return annotations;
     }
 
-    public Ms2Experiment toMsExperiment() {
+    public Ms2Experiment toMsExperiment(String name) {
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         final Trace peak = traceset.getIonTrace().getMonoisotopicPeak();
         int apex = traceset.getScanIds()[peak.getAbsoluteIndexApex()];
-        exp.setName(String.valueOf(apex));
+        exp.setName(name);
         exp.setPrecursorIonType(ionType);
         exp.setMergedMs1Spectrum(Spectrums.mergeSpectra(getCorrelatedFeatures()));
         final ArrayList<MutableMs2Spectrum> ms2Spectra = new ArrayList<>();
@@ -179,16 +178,15 @@ public class Feature implements Annotated<DataAnnotation> {
         // deprecated
         //exp.setAnnotation(Quantification.class, new Quantification(Collections.singletonMap(origin.identifier, intensity)));
         exp.setAnnotation(CompoundQuality.class,quality);
-        exp.setSource(new SpectrumFileSource(origin.source.getUrl()));
+        exp.setSource(new SpectrumFileSource(origin.source.getURI()));
 
         final Set<PrecursorIonType> ionTypes = getPossibleAdductTypes();
-        exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(LCMSProccessingInstance.POSSIBLE_ADDUCTS_KEY,new PossibleAdducts(ionTypes));
+        exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new).put(DetectedAdducts.Keys.LCMS_ALIGN,new PossibleAdducts(ionTypes));
 
         // add trace information
         exp.setAnnotation(LCMSPeakInformation.class, new LCMSPeakInformation(new CoelutingTraceSet[]{getTraceset()}));
-
+        // add instrument annotation
+        exp.setAnnotation(MsInstrumentation.class, origin.instrument);
         return exp;
     }
-
-
 }

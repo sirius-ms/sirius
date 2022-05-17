@@ -76,6 +76,7 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
     protected String host, username, password;
     protected Properties connectionProps;
 
+    //todo we should save the database import dat in the sql db. or is this already somewhere
 
     /**
      * initialize a chemical database connection using default values for password and username
@@ -307,7 +308,9 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
                 final long flag = set.getLong(2);
                 if (!ChemDBs.inFilter(flag, filter)) continue;
                 final FormulaCandidate fc = new FormulaCandidate(MolecularFormula.parseOrThrow(set.getString(1)), ionType, set.getLong(2));
-                list.add(fc);
+                if (ionType.isApplicableToNeutralFormula(fc.formula)) {
+                    list.add(fc);
+                }
             }
         } catch (SQLException e) {
             throw new ChemicalDatabaseException(e);
@@ -561,7 +564,7 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
                         }
                     }
                 }
-                candidate.setLinks(buffer.toArray(new DBLink[buffer.size()]));
+                candidate.setLinks(buffer);
                 buffer.clear();
             }
 
@@ -708,13 +711,13 @@ public class ChemicalDatabase implements AbstractChemicalDatabase, PooledDB<Conn
     }
 
 
-    private Fingerprint parseFingerprint(ResultSet result, int index) throws SQLException {
+    public static Fingerprint parseFingerprint(ResultSet result, int index) throws SQLException {
         try (final ResultSet fp = result.getArray(index).getResultSet()) {
             return parseFingerprint(fp);
         }
     }
 
-    private Fingerprint parseFingerprint(ResultSet fp) throws SQLException {
+    public static Fingerprint parseFingerprint(ResultSet fp) throws SQLException {
         TShortArrayList shorts = new TShortArrayList();
         while (fp.next()) {
             final short s = fp.getShort(2);

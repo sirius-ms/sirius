@@ -20,12 +20,22 @@
 
 package de.unijena.bioinf.ChemistryBase.algorithm;
 
-public class BitsetOps {
+public final class BitsetOps {
 
     public static void set(long[] vec, int index) {
         int word = index/64;
         int bit = index%64;
         vec[word] |= 1L<<bit;
+    }
+
+    public static long maskFor(int index) {
+        return (1L<<index);
+    }
+
+    public static boolean get(long[] vec, int index) {
+        int word = index/64;
+        int bit = index%64;
+        return (vec[word] & (1L<<bit))!=0;
     }
 
     public static void clear(long[] vec, int index) {
@@ -96,6 +106,9 @@ public class BitsetOps {
         if (value) return set(vec,index);
         else return clear(vec,index);
     }
+    public static boolean get(long vec, int index) {
+        return (vec & (1L<<index)) != 0;
+    }
     public static int numberOfCommonBits(long a, long b) {
         return Long.bitCount(a&b);
     }
@@ -107,6 +120,11 @@ public class BitsetOps {
     }
 
 
+    public static long difference(long a, long b) {
+        return a & ~b;
+    }
 
-
+    public static int cardinality(long bitset) {
+        return Long.bitCount(bitset);
+    }
 }

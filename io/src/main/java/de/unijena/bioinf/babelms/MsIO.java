@@ -66,7 +66,7 @@ public class MsIO {
 
     public static FTree readTreeFromFile(File file) throws IOException {
         try (BufferedReader br = FileUtils.getReader(file)) {
-            return new FTJsonReader().parse(br, file.toURI().toURL());
+            return new FTJsonReader().parse(br, file.toURI());
         }
     }
 
