@@ -37,8 +37,9 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 - for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.0.1-SNAPSHOT/sirius-5.0.1-SNAPSHOT-linux64-headless.zip)
 - for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.0.1-SNAPSHOT/sirius-5.0.1-SNAPSHOT-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.0.1-SNAPSHOT/sirius-5.0.1-SNAPSHOT-osx64-headless.zip)
 
-
 <!--end download-->
+All (previous) releases can be found [here](https://github.com/boecker-lab/sirius/releases).
+Further, there are **signed** installers provided by Bright Giant [here](https://github.com/bright-giant/sirius/releases).
 
 ### [Installation](https://boecker-lab.github.io/docs.sirius.github.io/install)
 For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
