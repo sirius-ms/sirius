@@ -29,16 +29,16 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -52,7 +52,6 @@ import java.util.stream.IntStream;
  */
 public class InstanceBean extends Instance implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
-    public final AtomicBoolean computeLock = new AtomicBoolean(false);
 
     @Override
     public HiddenChangeSupport pcs() {
@@ -61,7 +60,6 @@ public class InstanceBean extends Instance implements SiriusPCS {
 
     //Project-space listener
     private List<ContainerListener.Defined> listeners;
-
 
     //todo best hit property change is needed.
     // e.g. if the scoring changes from sirius to zodiac
@@ -75,14 +73,12 @@ public class InstanceBean extends Instance implements SiriusPCS {
         super(compoundContainer, spaceManager);
     }
 
+    //todo these listeners should be project wide to dramatically reduce number of listeners
     private List<ContainerListener.Defined> configureListeners() {
         final List<ContainerListener.Defined> listeners = new ArrayList<>(3);
 
-        listeners.add(projectSpace().defineCompoundListener().onUpdate().onlyFor(Ms2Experiment.class).thenDo((event -> {
-            if (!event.getAffectedID().equals(getID()))
-                return;
-            pcs.firePropertyChange("instance.ms2Experiment", null, event.getAffectedComponent(Ms2Experiment.class));
-        })));
+        listeners.add(projectSpace().defineCompoundListener().onUpdate().onlyFor(Ms2Experiment.class).onlyFor(getID()).thenDo((event ->
+                pcs.firePropertyChange("instance.ms2Experiment", null, event.getAffectedComponent(Ms2Experiment.class)))));
 
         listeners.add(projectSpace().defineFormulaResultListener().onCreate().thenDo((event -> {
             if (!event.getAffectedID().getParentId().equals(getID()))
@@ -101,30 +97,36 @@ public class InstanceBean extends Instance implements SiriusPCS {
     }
 
     protected void addToCache() {
-        ((GuiProjectSpaceManager) getProjectSpaceManager()).ringBuffer.add(this);
+        synchronized (spaceManager){
+            ((GuiProjectSpaceManager) spaceManager).ringBuffer.add(this);
+        }
     }
 
 
     @Override
-    public synchronized void deleteFormulaResults() {
+    public synchronized void deleteFormulaResults(@Nullable Collection<FormulaResultId> ridToRemove) {
         List<ContainerListener.Defined> changed = List.of();
         try {
             changed = unregisterProjectSpaceListeners();
-            List<FormulaResultId> old = getResults().stream().map(FormulaResultBean::getID).collect(Collectors.toList());
-            List<FormulaResultId> nu = List.of();
-
             //load contain methods to ensure that it is available
             final CompoundContainer ccache = loadCompoundContainer();
-            List<FormulaResultId> rid = List.copyOf(ccache.getResults().values());
 
-            ccache.getResults().clear();
+            List<FormulaResultId> old = getResults().stream().map(FormulaResultBean::getID).collect(Collectors.toList());
+            List<FormulaResultId> nu = new ArrayList<>(old);
+            ArrayList<FormulaResultId> remove = new ArrayList<>(old);
+            if (ridToRemove != null){
+                remove.retainAll(new HashSet<>(ridToRemove));
+                nu.removeAll(ridToRemove);
+            }
+
+//            remove.forEach(ccache::removeResult);
             clearFormulaResultsCache();
 
             pcs.firePropertyChange("instance.clearFormulaResults", old.isEmpty() ? nu : old, nu);
 
-            rid.forEach(v -> {
+            remove.forEach(v -> {
                 try {
-                    projectSpace().deleteFormulaResult(v);
+                    projectSpace().deleteFormulaResult(ccache, v);
                 } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
                 }
@@ -133,7 +135,6 @@ public class InstanceBean extends Instance implements SiriusPCS {
             changed.forEach(ContainerListener.Defined::register);
         }
     }
-
 
 
     public List<ContainerListener.Defined> registerProjectSpaceListeners() {
@@ -184,32 +185,16 @@ public class InstanceBean extends Instance implements SiriusPCS {
         return getID().getIonMass().orElse(Double.NaN);
     }
 
-    // Computing State
-    public boolean isComputing() {
-        return computeLock.get();
-    }
-
-    public void setComputing(boolean computing, boolean noChangeEvent) {
-        if (noChangeEvent)
-            computeLock.set(computing);
-        else
-            setComputing(computing);
-    }
-
-    /*@Override
-    public synchronized void clearCompoundCache() {
-        if (!isComputing())
-            super.clearCompoundCache();
-    }
-
-    @Override
-    public synchronized void clearFormulaResultsCache() {
-        if (!isComputing())
-            super.clearFormulaResultsCache();
-    }*/
 
     public void setComputing(boolean computing) {
-        pcs.firePropertyChange("computeState", computeLock.getAndSet(computing), computeLock.get());
+        if (computing)
+            flag(CompoundContainerId.Flag.COMPUTING);
+        else
+            unFlag(CompoundContainerId.Flag.COMPUTING);
+    }
+
+    public boolean isComputing() {
+        return hasFlag(CompoundContainerId.Flag.COMPUTING);
     }
 
     private MutableMs2Experiment getMutableExperiment() {

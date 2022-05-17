@@ -36,6 +36,10 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Created by fleisch on 15.05.17.
@@ -49,11 +53,14 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
 
     protected ObservableElementList<E> elementList;
     protected DefaultEventSelectionModel<E> elementListSelectionModel;
+    protected DefaultEventSelectionModel<E> topLevelSelectionModel;
 
     private final ArrayList<E> elementData = new ArrayList<>();
     private final BasicEventList<E> basicElementList = new BasicEventList<>(elementData);
 
-    protected D data = null;
+    private final ReadWriteLock dataLock = new ReentrantReadWriteLock();
+    private D data = null;
+
     public final DataSelectionStrategy selectionType;
 
     public ActionList(Class<E> cls) {
@@ -64,15 +71,16 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
         selectionType = strategy;
         elementList = new ObservableElementList<>(basicElementList, GlazedLists.beanConnector(cls));
         elementListSelectionModel = new DefaultEventSelectionModel<>(elementList);
+        topLevelSelectionModel = elementListSelectionModel;
         elementListSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 
         elementListSelectionModel.addListSelectionListener(e -> {
             if (!elementListSelectionModel.getValueIsAdjusting()) {
                 if (elementListSelectionModel.isSelectionEmpty() || elementList == null || elementList.isEmpty())
-                    notifyListeners(data, null, elementList, elementListSelectionModel);
+                    readDataByConsumer(data -> notifyListeners(data, null, elementList, elementListSelectionModel));
                 else
-                    notifyListeners(data, elementList.get(elementListSelectionModel.getMinSelectionIndex()), elementList, elementListSelectionModel);
+                    readDataByConsumer(data -> notifyListeners(data, elementList.get(elementListSelectionModel.getMinSelectionIndex()), elementList, elementListSelectionModel));
             }
         });
 
@@ -81,7 +89,7 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
                 if (!elementListSelectionModel.isSelectionEmpty() && elementList != null && !elementList.isEmpty()) {
                     while (listChanges.next()) {
                         if (elementListSelectionModel.getMinSelectionIndex() == listChanges.getIndex()) {
-                            notifyListeners(data, elementList.get(listChanges.getIndex()), elementList, elementListSelectionModel);
+                            readDataByConsumer(data -> notifyListeners(data, elementList.get(listChanges.getIndex()), elementList, elementListSelectionModel));
                             return;
                         }
                     }
@@ -92,17 +100,33 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
 
     protected boolean refillElementsEDT(final Collection<E> toFillIn) throws InvocationTargetException, InterruptedException {
         AtomicBoolean ret = new AtomicBoolean();
-        Jobs.runEDTAndWait(() -> ret.set(refillElements(toFillIn)));
+        Jobs.runEDTAndWait(() -> {
+            ret.set(refillElements(toFillIn));
+            if (!toFillIn.isEmpty())
+                try { // dirty hack to ensure this does not crash
+                    topLevelSelectionModel.setSelectionInterval(0, 0);
+                } catch (Exception e) {
+                    topLevelSelectionModel.clearSelection();
+                    //ignore
+                }
+        });
         return ret.get();
     }
 
     protected boolean refillElements(final Collection<E> toFillIn) {
         if (SiriusGlazedLists.refill(basicElementList, elementData, toFillIn)) {
-            notifyListeners(data, getSelectedElement(), elementList, elementListSelectionModel); //todo I do really don get wgy we need this to refresh the filter gui stuff
+            readDataByConsumer(data -> notifyListeners(data, getSelectedElement(), elementList, elementListSelectionModel));
             return true;
         }
         return false;
-//        return SiriusGlazedLists.refill(basicElementList, elementData, toFillIn);
+    }
+
+    public void setTopLevelSelectionModel(DefaultEventSelectionModel<E> topLevelSelectionModel) {
+        this.topLevelSelectionModel = topLevelSelectionModel;
+    }
+
+    public DefaultEventSelectionModel<E> getTopLevelSelectionModel() {
+        return topLevelSelectionModel;
     }
 
     @NotNull
@@ -113,10 +137,6 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
     @Nullable
     public E getSelectedElement() {
         return elementListSelectionModel.isSelectionEmpty() ? null : elementList.get(elementListSelectionModel.getMinSelectionIndex());
-    }
-
-    public D getData() {
-        return data;
     }
 
     public ObservableElementList<E> getElementList() {
@@ -138,6 +158,42 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
     protected void notifyListeners(D data, E element, List<E> sre, ListSelectionModel selections) {
         for (ActiveElementChangedListener<E, D> listener : listeners) {
             listener.resultsChanged(data, element, sre, selections);
+        }
+    }
+
+    public void readDataByConsumer(Consumer<D> readData){
+        dataLock.readLock().lock();
+        try{
+            readData.accept(data);
+        }finally {
+            dataLock.readLock().unlock();
+        }
+    }
+
+    public <R> R readDataByFunction(Function<D,R> readData){
+        dataLock.readLock().lock();
+        try{
+            return readData.apply(data);
+        }finally {
+            dataLock.readLock().unlock();
+        }
+    }
+
+    public void writeData(Consumer<D> writeData){
+        dataLock.writeLock().lock();
+        try{
+            writeData.accept(data);
+        }finally {
+            dataLock.writeLock().unlock();
+        }
+    }
+
+    protected void setData(D data) {
+        dataLock.writeLock().lock();
+        try{
+            this.data = data;
+        }finally {
+            dataLock.writeLock().unlock();
         }
     }
 }

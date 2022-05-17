@@ -40,8 +40,8 @@ import de.unijena.bioinf.ms.middleware.spectrum.AnnotatedSpectrum;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
+import de.unijena.bioinf.projectspace.CompoundContainer;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -99,7 +99,7 @@ public class CompoundController extends BaseApiController {
         try {
             final SiriusProjectSpace space = projectSpace(pid);
             final CompoundContainer c = space.getCompound(cid);
-            if (!c.getResults().isEmpty()) {
+            if (c.hasResults()) {
                 SScored<FormulaResult, ? extends FormulaScore> scoredTopHit =
                         space.getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), FormulaScoring.class).get(0);
 

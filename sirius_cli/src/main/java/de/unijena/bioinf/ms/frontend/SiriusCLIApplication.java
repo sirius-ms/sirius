@@ -29,7 +29,7 @@ import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.webapi.ProxyManager;
+import de.unijena.bioinf.webapi.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -89,10 +89,7 @@ public class SiriusCLIApplication {
     public static Runnable shutdownWebservice() {
         return () -> {
             try {
-                ApplicationCore.WEB_API.shutdownJobWatcher();
-                ApplicationCore.DEFAULT_LOGGER.info("Try to delete leftover jobs on web server...");
-                ApplicationCore.WEB_API.deleteClientAndJobs();
-                ApplicationCore.DEFAULT_LOGGER.info("...Job deletion Done!");
+                ApplicationCore.WEB_API.shutdown();
             } catch (IOException e) {
                 LoggerFactory.getLogger(SiriusCLIApplication.class).warn("Could not clean up Server data! " + e.getMessage());
                 LoggerFactory.getLogger(SiriusCLIApplication.class).debug("Could not clean up Server data!", e);
@@ -103,7 +100,7 @@ public class SiriusCLIApplication {
     public static void run(String[] args, WorkFlowSupplier supplier) {
         try {
             if (RUN != null)
-                throw new IllegalStateException("Aplication can only run Once!");
+                throw new IllegalStateException("Application can only run Once!");
             measureTime("init Run");
             RUN = new Run(supplier.make());
             measureTime("Start Parse args");

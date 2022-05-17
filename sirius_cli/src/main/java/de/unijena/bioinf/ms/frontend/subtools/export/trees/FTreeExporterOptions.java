@@ -49,7 +49,7 @@ public class FTreeExporterOptions implements StandaloneTool<FTreeExporterWorkflo
     @CommandLine.Option(names = "--all", description = "Export all trees instead of only the top ranked trees.")
     public boolean exportAllTrees;
 
-    @CommandLine.Option(names = {"--output"}, description = "Specify the output destination directory.")
+    @CommandLine.Option(names = {"--output", "-o"}, description = "Specify the output destination directory.")
     public void setOutput(File outputFile) {
         output = outputFile.toPath();
     }

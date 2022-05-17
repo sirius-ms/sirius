@@ -45,16 +45,21 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     private FilterRangeSlider<StructureList,FingerprintCandidateBean, Set<FormulaResultBean>> logPSlider;
     private FilterRangeSlider<StructureList,FingerprintCandidateBean, Set<FormulaResultBean>> tanimotoSlider;
     private DBFilterPanel dbFilterPanel;
+    private LipidLabel lipidLabel;
+
 
     public CandidateListView(StructureList source) {
         super(source);
+        source.setTopLevelSelectionModel(getFilteredSelectionModel());
     }
 
 
     @Override
     protected JPanel getNorth() {
         final JPanel north = super.getNorth();
-        north.add(dbFilterPanel, BorderLayout.SOUTH);
+        north.add(dbFilterPanel, BorderLayout.CENTER);
+        lipidLabel = new LipidLabel(source);
+        north.add(lipidLabel, BorderLayout.SOUTH); //tpd
         return north;
     }
 

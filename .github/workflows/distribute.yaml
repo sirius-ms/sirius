@@ -13,9 +13,18 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
+      MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
+      MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
+      MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
+      MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
+      WIN_INSTALLER_CERTIFICATE_PW: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}
+      WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}
+      #          LINUX_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Zulu JDK 15
+      - name: Set up Zulu JDK
         uses: actions/setup-java@v1
         with:
           java-version: '15' # The JDK version to make available on the path.
@@ -27,12 +36,44 @@ jobs:
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
+
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_APP_IDENTITY_ID != '') }}
+        name: Import Apple APP Code-signing ID and p12
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
+          p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
+          p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
+
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_IDENTITY_ID != '') }}
+        name: Import Apple Installer Code-signing ID and p12
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          create-keychain: false
+          keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
+          p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
+          p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+
+      - if: matrix.os == 'macos-latest'
+        name: Check Identities
+        run: /usr/bin/security find-identity
+
+      - if: ${{ (matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest') && (env.GENERIC_INSTALLER_CERTIFICATE != '') }}
+        name: Load generic installer codesign cert
+        id: generic_codesign_cert
+        uses: timheuer/base64-to-file@v1.1
+        with:
+          fileName: 'generic_installer_cert.p12'
+          encodedString: ${{ env.GENERIC_INSTALLER_CERTIFICATE }}
+
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
+        env:
+          WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_cli_single_os
-          arguments: clean publishSiriusPublicationToMavenLocal
+          arguments: clean publishSiriusPublicationToMavenLocal -P de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }} -P de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }} -P de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }} -P de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE=${{ steps.generic_codesign_cert.outputs.filePath }}
       - name: Upload multiOS Source
         uses: actions/upload-artifact@v2
         with:
@@ -55,9 +96,17 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
+      MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
+      MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
+      MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
+      MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
+      WIN_INSTALLER_CERTIFICATE_PW: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}
+      WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Zulu JDK-FX 15
+      - name: Set up Zulu JDK-FX
         uses: actions/setup-java@v1
         with:
           java-version: '15' # The JDK version to make available on the path.
@@ -69,13 +118,45 @@ jobs:
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
+
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_APP_IDENTITY_ID != '') }}
+        name: Import Apple APP Code-signing ID and p12
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
+          p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
+          p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
+
+      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_IDENTITY_ID != '') }}
+        name: Import Apple Installer Code-signing ID and p12
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          create-keychain: false
+          keychain-password: ${{ secrets.MACOS_TMP_KEYCHAIN_PWD }}
+          p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
+          p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+
+      - if: matrix.os == 'macos-latest'
+        name: Check Identities
+        run: /usr/bin/security find-identity
+
+      - if: ${{ (matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest') && (env.GENERIC_INSTALLER_CERTIFICATE != '') }}
+        name: Load generic installer codesign cert
+        id: generic_codesign_cert
+        uses: timheuer/base64-to-file@v1.1
+        with:
+          fileName: 'generic_installer_cert.p12'
+          encodedString: ${{ env.GENERIC_INSTALLER_CERTIFICATE }}
+
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
+        env:
+          WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
         with:
           gradle-version: 6.9
           build-root-directory: sirius_dist/sirius_gui_single_os
-          arguments: clean publishSiriusPublicationToMavenLocal
-      - name: Upload Zip Distributions
+          arguments: clean publishSiriusPublicationToMavenLocal -P de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }} -P de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }} -P de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }} -P de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE=${{ steps.generic_codesign_cert.outputs.filePath }}
+      - name: Upload Distributions
         uses: actions/upload-artifact@v2
         with:
           retention-days: 1
@@ -86,12 +167,14 @@ jobs:
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
             ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
+
+
   distMulti:
     needs: distCLI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Zulu JDK 15
+      - name: Set up Zulu JDK
         uses: actions/setup-java@v1
         with:
           java-version: '15' # The JDK version to make available on the path.
@@ -142,8 +225,9 @@ jobs:
             sirius-${{ steps.sirius_version.outputs.value }}-Windows-x86-64-headless-img
             sirius-${{ steps.sirius_version.outputs.value }}-macOS-x86-64-headless-img
 
+
   release:
-    needs: [distCLI, distGUI, distMulti]
+    needs: [ distCLI, distGUI, distMulti]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -170,4 +254,4 @@ jobs:
           prerelease: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
           allowUpdates: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
           draft: ${{ env.GITHUB_REF_SLUG == 'stable' && 'false' || 'true' }}
-          token: ${{ secrets.ACTIONS_PERSONAL_KEY }}
+          token: ${{ secrets.GITHUB_TOKEN }}

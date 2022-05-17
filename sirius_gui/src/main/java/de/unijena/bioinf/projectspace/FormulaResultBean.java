@@ -31,7 +31,6 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateFingerprintsGUI;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesGUI;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 
 import java.util.ArrayList;
@@ -71,7 +70,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         //this is used to detect a new tree as well as a new zodiac score
         listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FormulaScoring.class).
                 thenDo((event -> {
-                    if (!event.id.equals(fid))
+                    if (!event.getAffectedID().equals(fid))
                         return;
                     FormulaScoring fScores = (FormulaScoring) event.getAffectedComponent(FormulaScoring.class).orElse(null);
                     pcs.firePropertyChange("formulaResult.formulaScore", null, fScores);
@@ -79,7 +78,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
         listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FTree.class).
                 thenDo((event -> {
-                    if (!event.id.equals(fid))
+                    if (!event.getAffectedID().equals(fid))
                         return;
                     FTree ftree = (FTree) event.getAffectedComponent(FTree.class).orElse(null);
                     pcs.firePropertyChange("formulaResult.ftree", null, ftree);
@@ -87,7 +86,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
         listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
                 thenDo((event -> {
-                    if (!event.id.equals(fid))
+                    if (!event.getAffectedID().equals(fid))
                         return;
                     FingerprintResult fpRes = (FingerprintResult) event.getAffectedComponent(FingerprintResult.class).orElse(null);
                     pcs.firePropertyChange("formulaResult.fingerprint", null, fpRes);
@@ -95,7 +94,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
         listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(FBCandidates.class).
                 thenDo((event -> {
-                    if (!event.id.equals(fid))
+                    if (!event.getAffectedID().equals(fid))
                         return;
                     FBCandidates fbRes = (FBCandidates) event.getAffectedComponent(FBCandidates.class).orElse(null);
                     pcs.firePropertyChange("formulaResult.fingerid", null, fbRes);
@@ -103,7 +102,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
         listeners.add(parent.projectSpace().defineFormulaResultListener().onUpdate().onlyFor(CanopusResult.class).
                 thenDo((event -> {
-                    if (!event.id.equals(fid))
+                    if (!event.getAffectedID().equals(fid))
                         return;
                     CanopusResult cRes = (CanopusResult) event.getAffectedComponent(CanopusResult.class).orElse(null);
                     pcs.firePropertyChange("formulaResult.canopus", null, cRes);
@@ -128,6 +127,10 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
     public FormulaResultId getID() {
         return fid;
+    }
+
+    public InstanceBean getInstance() {
+        return parent;
     }
 
     @SafeVarargs

@@ -26,9 +26,8 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.projectspace.sirius.CompoundContainer;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -38,7 +37,6 @@ import java.util.stream.Collectors;
 public class Instance {
     @NotNull
     protected final ProjectSpaceManager spaceManager;
-
     private CompoundContainer compoundCache;
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
@@ -103,7 +101,7 @@ public class Instance {
     public final synchronized Optional<FormulaResult> loadFormulaResult(FormulaResultId fid, Class<? extends DataAnnotation>... components) {
         try {
             if (!formulaResultCache.containsKey(fid)) {
-                if (!compoundCache.contains(fid)) { // fid may have been deleted du to this thread waited for the lock
+                if (!compoundCache.containsResult(fid)) { // fid may have been deleted du to this thread waited for the lock
                     LoggerFactory.getLogger(getClass()).debug("FID '" + fid + "' may have been deleted by another thread, or the cached project-space was bypassed.");
                     return Optional.empty();
                 }
@@ -154,7 +152,7 @@ public class Instance {
     @SafeVarargs
     public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(List<Class<? extends FormulaScore>> rankingScoreTypes, Class<? extends DataAnnotation>... components) {
         try {
-            if (!formulaResultCache.keySet().containsAll(compoundCache.getResults().values())) {
+            if (!formulaResultCache.keySet().containsAll(compoundCache.getResultsRO().values())) {
                 final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = projectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreTypes, components);
                 formulaResultCache = returnList.stream().collect(Collectors.toMap(r -> r.getCandidate().getId(), SScored::getCandidate));
                 return returnList;
@@ -203,7 +201,7 @@ public class Instance {
         try {
             if (!formulaResultCache.containsKey(result.getId())) {
                 formulaResultCache.put(result.getId(), result);
-                compoundCache.getResults().put(result.getId().fileName(), result.getId());
+                compoundCache.results.put(result.getId().fileName(), result.getId());
             }
             //refresh cache to actual object state?
             final FormulaResult rs = formulaResultCache.get(result.getId());
@@ -241,7 +239,7 @@ public class Instance {
             deleteFormulaResults();
         } else {
             //update cache, load data from disc
-            List<FormulaResultId> rid = List.copyOf(loadCompoundContainer().getResults().values());
+            List<FormulaResultId> rid = List.copyOf(loadCompoundContainer().getResultsRO().values());
             //remove components from cached formula results
             formulaResultCache.forEach((k, v) -> List.of(components).forEach(v::removeAnnotation));
             //remove components from ALL formula results on disc
@@ -253,24 +251,27 @@ public class Instance {
                 }
             });
         }
-
-
-
-
-
-
     }
 
     public synchronized void deleteFormulaResults() {
-        //load contain methods to ensure that it is available
-        List<FormulaResultId> rid = List.copyOf(loadCompoundContainer().getResults().values());
+        deleteFormulaResults((List<FormulaResultId>) null);
+    }
 
-        compoundCache.getResults().clear();
+    public synchronized void deleteFormulaResults(@NotNull FormulaResultId... ridToRemove) {
+        deleteFormulaResults(Set.of(ridToRemove));
+    }
+
+    public synchronized void deleteFormulaResults(@Nullable Collection<FormulaResultId> ridToRemove) {
+        //load contain methods to ensure that it is available
+        List<FormulaResultId> rid = new ArrayList<>(loadCompoundContainer().getResultsRO().values());
+        if (ridToRemove != null)
+            rid.retainAll(new HashSet<>(ridToRemove));
+
         clearFormulaResultsCache();
 
         rid.forEach(v -> {
             try {
-                projectSpace().deleteFormulaResult(v);
+                projectSpace().deleteFormulaResult(compoundCache, v);
             } catch (IOException e) {
                 LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
             }
@@ -298,7 +299,7 @@ public class Instance {
 
     @SafeVarargs
     public final synchronized void clearFormulaResultsCache(Class<? extends DataAnnotation>... components) {
-        clearFormulaResultsCache(compoundCache.getResults().values(), components);
+        clearFormulaResultsCache(compoundCache.getResultsRO().values(), components);
     }
 
     @SafeVarargs
@@ -333,4 +334,40 @@ public class Instance {
             });
         }
     }
+
+    /**
+     * Add the given flag (set to true)
+     *
+     * @param flag flag to add
+     * @return true if value has changed
+     */
+    public boolean flag(@NotNull CompoundContainerId.Flag flag) {
+        return projectSpace().flag(getID(), flag);
+    }
+
+    /**
+     * Remove the given flag (set to false)
+     *
+     * @param flag flag to remove
+     * @return true if value has changed
+     */
+    public boolean unFlag(@NotNull CompoundContainerId.Flag flag) {
+        return projectSpace().unFlag(getID(), flag);
+    }
+
+    /**
+     * Flip state of the given flag
+     *
+     * @param flag flag to flip
+     * @return new Value of the given flag
+     */
+    public boolean flipFlag(@NotNull CompoundContainerId.Flag flag) {
+        return projectSpace().flipFlag(getID(), flag);
+    }
+
+    public boolean hasFlag(@NotNull CompoundContainerId.Flag flag) {
+        return getID().hasFlag(flag);
+    }
+
+
 }

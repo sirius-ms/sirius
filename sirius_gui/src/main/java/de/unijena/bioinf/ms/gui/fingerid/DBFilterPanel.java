@@ -23,12 +23,14 @@ import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,6 +50,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
 
     public DBFilterPanel(StructureList sourceList) {
         setLayout(new WrapLayout(FlowLayout.LEFT, 5, 1));
+        setBorder(BorderFactory.createEmptyBorder(0, 0, GuiUtils.SMALL_GAP, 0));
         this.checkboxes = new ArrayList<>(CustomDataSources.size());
         for (CustomDataSources.Source source : CustomDataSources.sources()) {
             if (!BLACK_LIST.contains(source.name()))

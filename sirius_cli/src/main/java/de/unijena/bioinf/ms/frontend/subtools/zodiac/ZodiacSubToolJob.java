@@ -44,8 +44,8 @@ import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
-import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
+import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.quality_assessment.TreeQualityEvaluator;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
@@ -70,13 +70,13 @@ public class ZodiacSubToolJob extends DataSetJob {
     double forcedCandidatesPerIonizationRatio;
 
     public ZodiacSubToolJob(ZodiacOptions cliOptions, @NotNull JobSubmitter jobSubmitter) {
-        super(in -> !in.loadCompoundContainer().getResults().isEmpty(), jobSubmitter); //check whether the compound has formula results or not
+        super(in -> in.loadCompoundContainer().hasResults(), jobSubmitter); //check whether the compound has formula results or not
         this.cliOptions = cliOptions;
     }
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer().hasResult() && inst.loadFormulaResults(FormulaScoring.class).stream().anyMatch(res -> res.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class));
+        return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(FormulaScoring.class).stream().anyMatch(res -> res.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class));
     }
 
     @Override

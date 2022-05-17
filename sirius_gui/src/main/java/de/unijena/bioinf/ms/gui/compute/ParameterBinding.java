@@ -43,7 +43,7 @@ public class ParameterBinding extends HashMap<String, Supplier<String>> {
         final List<String> out = new ArrayList<>(size() * 2);
         forEach((k, v) -> {
             final String value = v.get();
-            if (value != null) { //todo hack to destinguish between config und non config parameters
+            if (value != null) { // hack to destinguish between config und non config parameters
                 if ("~true".equalsIgnoreCase(value)){
                     out.add("--" + k);
                 }else if (!"~false".equalsIgnoreCase(value)){

@@ -28,7 +28,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
-import de.unijena.bioinf.projectspace.sirius.FormulaResultRankingScore;
+import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -117,5 +117,4 @@ public class AddConfigsJob extends InstanceJob {
     public String getToolName() {
         return "Config Job";
     }
-
 }

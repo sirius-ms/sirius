@@ -20,6 +20,6 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 @FunctionalInterface
-public interface Workflow extends Runnable{
-    default void cancel(){}
+public interface Workflow extends Runnable {
+    default void cancel() {}
 }

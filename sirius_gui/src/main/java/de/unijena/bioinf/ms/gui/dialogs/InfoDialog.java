@@ -40,6 +40,10 @@ public class InfoDialog extends WarningDialog {
         super(owner, title, messageProvider, propertyKey);
     }
 
+    protected InfoDialog(Window owner, String title, Supplier<String> messageProvider, String propertyKey, boolean setVisible) {
+        super(owner, title, messageProvider, propertyKey, setVisible);
+    }
+
     @Override
     protected Icon makeDialogIcon() {
         return UIManager.getIcon("OptionPane.informationIcon");

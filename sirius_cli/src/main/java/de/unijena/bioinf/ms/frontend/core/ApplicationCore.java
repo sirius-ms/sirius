@@ -20,13 +20,18 @@
 package de.unijena.bioinf.ms.frontend.core;
 
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
+import de.unijena.bioinf.auth.AuthService;
+import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import de.unijena.bioinf.sirius.SiriusFactory;
-import de.unijena.bioinf.utils.errorReport.ErrorReporter;
+import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.webapi.rest.ProxyManager;
+import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.jbibtex.BibTeXDatabase;
@@ -34,22 +39,20 @@ import org.jbibtex.BibTeXParser;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import oshi.SystemInfo;
-import oshi.hardware.HardwareAbstractionLayer;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Handler;
 import java.util.logging.LogManager;
 import java.util.logging.SimpleFormatter;
+
+import static de.unijena.bioinf.ms.frontend.core.Workspace.*;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -57,10 +60,13 @@ import java.util.logging.SimpleFormatter;
 public abstract class ApplicationCore {
     public static final Logger DEFAULT_LOGGER;
 
-    public static final Path WORKSPACE;
+
+    public static final Path TOKEN_FILE;
+
     public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
-    public static final WebAPI WEB_API;
-    @NotNull public static final BibtexManager BIBTEX;
+    public static final WebAPI<?> WEB_API;
+    @NotNull
+    public static final BibtexManager BIBTEX;
 
     private static final boolean TIME = false;
     private static long t1;
@@ -80,57 +86,10 @@ public abstract class ApplicationCore {
             t1 = System.currentTimeMillis();
         measureTime("Start AppCore");
         try {
-            System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
-
+            //init static block (does not work via static import Oo)
+            Path it = WORKSPACE;
             final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
-            final String[] versionParts = version.split("[.]");
-            //#################### start init workspace ################################
-            measureTime("Start init Workspace");
-            final String home = System.getProperty("user.home");
-            String defaultFolderName = PropertyManager.getProperty("de.unijena.bioinf.sirius.ws.default.name", null, ".sirius");
-            if (versionParts != null && versionParts.length > 1)
-                defaultFolderName = defaultFolderName + "-" + versionParts[0] + "." + versionParts[1];
-
-            final Path DEFAULT_WORKSPACE = Paths.get(home).resolve(defaultFolderName);
-            final Map<String, String> env = System.getenv();
-            final String ws = env.get("SIRIUS_WORKSPACE");
-            if (ws != null) {
-                Path wsDir = Paths.get(ws);
-                if (Files.isDirectory(wsDir)) {
-                    WORKSPACE = wsDir;
-                } else if (Files.notExists(wsDir)) {
-                    try {
-                        Files.createDirectories(wsDir);
-                    } catch (IOException e) {
-                        System.err.println("Could not create Workspace set in environment variable! Falling back to default Workspace - " + DEFAULT_WORKSPACE.toString());
-                        e.printStackTrace();
-                        wsDir = DEFAULT_WORKSPACE;
-                    } finally {
-                        WORKSPACE = wsDir;
-                    }
-                } else {
-                    System.err.println("WARNING: " + wsDir.toString() + " is not a directory! Falling back to default Workspace - " + DEFAULT_WORKSPACE.toString());
-                    WORKSPACE = DEFAULT_WORKSPACE;
-                }
-            } else {
-                WORKSPACE = DEFAULT_WORKSPACE;
-            }
-
-            if (Files.notExists(WORKSPACE)) {
-                try {
-                    Files.createDirectories(WORKSPACE);
-                } catch (IOException e) {
-                    System.err.println("Could NOT create Workspace");
-                    e.printStackTrace();
-                    System.exit(1);
-                }
-            }
-
             // create ws files
-            Path loggingPropFile = WORKSPACE.resolve("logging.properties");
-            Path siriusPropsFile = WORKSPACE.resolve("sirius.properties");
-            Path customProfileFile = WORKSPACE.resolve("custom.config");
-            Path versionFile = WORKSPACE.resolve("version");
             try {
                 if (Files.exists(versionFile)) {
                     List<String> lines = Files.readAllLines(versionFile);
@@ -209,8 +168,8 @@ public abstract class ApplicationCore {
                 final StringWriter buff = new StringWriter();
                 PropertyManager.DEFAULTS.write(buff);
                 String[] lines = buff.toString().split(System.lineSeparator());
-                try (BufferedWriter w = Files.newBufferedWriter(customProfileFile,StandardCharsets.UTF_8)) {
-                    for(String line : lines){
+                try (BufferedWriter w = Files.newBufferedWriter(customProfileFile, StandardCharsets.UTF_8)) {
+                    for (String line : lines) {
                         w.write(line.startsWith("#") ? line : "#" + line);
                         w.newLine();
                     }
@@ -273,21 +232,32 @@ public abstract class ApplicationCore {
             measureTime("DONE init Configs, start Hardware Check");
 
 
-            HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
-            int cores = hardware.getProcessor().getPhysicalProcessorCount();
-            PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(cores));
-            PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(hardware.getProcessor().getLogicalProcessorCount()));
+//            HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
+//            int cores = hardware.getProcessor().getPhysicalProcessorCount();
+            int threads = Runtime.getRuntime().availableProcessors();
+            PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(Math.max(1, threads / 2)));
+            PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.threads", String.valueOf(threads));
             DEFAULT_LOGGER.info("CPU check done. " + PropertyManager.getNumberOfCores() + " cores that handle " + PropertyManager.getNumberOfThreads() + " threads were found.");
             measureTime("DONE  Hardware Check, START init bug reporting");
 
 
             //bug reporting
-            ErrorReporter.INIT_PROPS(PropertyManager.asProperties());
-            DEFAULT_LOGGER.info("Bug reporter initialized.");
+//            ErrorReporter.INIT_PROPS(PropertyManager.asProperties());
+//            DEFAULT_LOGGER.info("Bug reporter initialized.");
 
             measureTime("DONE init bug reporting, START init WebAPI");
+            TOKEN_FILE = WORKSPACE.resolve(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.tokenFile", null, ".rtoken"));
 
-            WEB_API = new WebAPI();
+            AuthService service = AuthServices.createDefault(PropertyManager.getProperty("de.unijena.bioinf.sirius.security.audience"), TOKEN_FILE, ProxyManager.getSirirusHttpAsyncClient());
+            Subscription sub = null; //web connection
+            try {
+                sub = service.getToken().map(Tokens::getActiveSubscription).orElse(null);
+            } catch (Exception e) {
+                LoggerFactory.getLogger(ApplicationCore.class).warn("Error when refreshing token: " + e.getMessage() + " Cleaning login information. Please re-login!");
+                LoggerFactory.getLogger(ApplicationCore.class).debug("Error when refreshing token", e);
+                AuthServices.clearRefreshToken(service, TOKEN_FILE); // in case token is corrupted or the account has been deleted
+            }
+            WEB_API = new RestAPI(service, sub);
             DEFAULT_LOGGER.info("Web API initialized.");
             measureTime("DONE init  init WebAPI");
 

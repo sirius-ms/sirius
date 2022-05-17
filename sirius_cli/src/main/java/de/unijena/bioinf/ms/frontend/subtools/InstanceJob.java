@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.projectspace.IncompatibleFingerprintDataException;
 import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,6 +137,10 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
 
     }
 
+    protected void checkFingerprintCompatibilityOrThrow() throws TimeoutException, InterruptedException, IncompatibleFingerprintDataException {
+        if (!checkFingerprintCompatibility())
+            throw new IncompatibleFingerprintDataException();
+    }
     protected boolean checkFingerprintCompatibility() throws TimeoutException, InterruptedException {
         return input.getProjectSpaceManager().checkAndFixDataFiles(this::checkForInterruption);
     }

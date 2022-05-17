@@ -21,49 +21,62 @@ package de.unijena.bioinf.ms.frontend.io;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
+import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FileChooserPanel extends JPanel {
-    public final JTextField field = new JTextField();
+    public final PlaceholderTextField field = new PlaceholderTextField(20);
     public final JButton changeDir = Buttons.getFileChooserButton16("Choose file or directory");
 
     public FileChooserPanel() {
-        this("", 2, JFileChooser.OPEN_DIALOG);
+        this("", JFileChooser.FILES_AND_DIRECTORIES, JFileChooser.OPEN_DIALOG);
     }
 
     public FileChooserPanel(String currentPath) {
-        this(currentPath, 2, JFileChooser.OPEN_DIALOG);
+        this(currentPath, JFileChooser.FILES_AND_DIRECTORIES, JFileChooser.OPEN_DIALOG);
     }
 
     public FileChooserPanel(int fileChooserMode) {
         this("", fileChooserMode, JFileChooser.OPEN_DIALOG);
     }
+
     public FileChooserPanel(int fileChooserMode, int dialogMode) {
         this("", fileChooserMode, dialogMode);
     }
 
     public FileChooserPanel(String currentPath, int fileChooserMode) {
-        this(currentPath,fileChooserMode, JFileChooser.OPEN_DIALOG);
+        this(currentPath, currentPath, fileChooserMode, JFileChooser.OPEN_DIALOG);
 
     }
+
     public FileChooserPanel(String currentPath, int fileChooserMode, int dialogMode) {
+        this(currentPath, currentPath, fileChooserMode, dialogMode);
+    }
+
+    public FileChooserPanel(String currentPathChooser, String currentPathTextField, int fileChooserMode, int dialogMode) {
+
         super();
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
 
-        final JFileChooser fileChooser = new JFileChooser(currentPath);
+        Path current = Path.of(currentPathChooser);
+        if (!Files.isDirectory(current))
+            current = current.getParent();
+
+        final JFileChooser fileChooser = new JFileChooser(current.toFile());
         fileChooser.setDialogType(dialogMode);
         fileChooser.setFileSelectionMode(fileChooserMode);
 
-        field.setText(currentPath);
+        field.setText(currentPathTextField);
+
         add(field);
         add(changeDir);
         changeDir.addActionListener(e -> {
@@ -78,7 +91,10 @@ public class FileChooserPanel extends JPanel {
     }
 
     public String getFilePath() {
-        return field.getText();
+        String it = field.getText();
+        if (it == null || it.isBlank())
+            return null;
+        return it;
     }
 
     @Override

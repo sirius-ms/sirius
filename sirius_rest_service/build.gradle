@@ -11,8 +11,8 @@ buildscript {
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
-sourceCompatibility = 11
-targetCompatibility = 11
+sourceCompatibility = 13
+targetCompatibility = 13
 
 repositories {
     mavenLocal()
@@ -28,7 +28,7 @@ repositories {
         url "https://www.xypron.de/repository" //glpk repo
     }
     maven {
-        url "http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
+        url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
     }
 }
 
@@ -64,8 +64,7 @@ dependencies {
     // expose operational information about the running application via /actuator
     compile("org.springframework.boot:spring-boot-starter-actuator")
 
-//    compile "info.picocli:picocli-spring-boot-starter:4.0.1"
-    compile 'it.unimi.dsi:fastutil:8.3.0' //replaces old spring version
+    compile 'it.unimi.dsi:fastutil:8.5.6' //replaces old spring version
     ////////////////////////////////////////////////////
 
 
@@ -135,12 +134,8 @@ artifactory {
             else
                 repoKey = 'libs-release-local'
 
-            username = System.getenv("ARTIFACTORY_USERNAME") != null
-                    ? System.getenv("ARTIFACTORY_USERNAME")
-                    : System.properties['de.unijena.bioinf.build.artifactory.username']
-            password = System.getenv("ARTIFACTORY_TOKEN") != null
-                    ? System.getenv("ARTIFACTORY_TOKEN")
-                    : System.properties['de.unijena.bioinf.build.artifactory.password']
+            username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
+            password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
         }
         defaults {
             publications('mavenJava')

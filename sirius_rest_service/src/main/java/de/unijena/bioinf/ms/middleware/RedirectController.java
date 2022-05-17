@@ -32,6 +32,6 @@ import springfox.documentation.annotations.ApiIgnore;
 public class RedirectController {
     @RequestMapping(path = {"/", "/api"})
     public String swaggerRoot() {
-        return "redirect:/swagger-ui.html";
+        return "redirect:/actuator/health";
     }
 }

@@ -25,8 +25,6 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.gui.actions.ShowJobsDialogAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
 import javafx.application.Platform;
@@ -44,6 +42,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+
+import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class Jobs {
     public static final SwingJobManager MANAGER = (SwingJobManager) SiriusJobs.getGlobalJobManager();
@@ -243,25 +243,30 @@ public class Jobs {
         @Override
         protected Boolean compute() throws Exception {
             //todo progress? maybe move to CLI to have progress there to?
-            synchronized (ACTIVE_COMPUTATIONS) { //todo this is a bit hacky but much mor efficient than listening to the job states
-                ACTIVE_COMPUTATIONS.add(this);
-                ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
-                SiriusActions.SUMMARY_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
-                SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
+            try {
+                synchronized (ACTIVE_COMPUTATIONS) { //todo this is a bit hacky but much mor efficient than listening to the job states
+                    ACTIVE_COMPUTATIONS.add(this);
+                    ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
+                    SiriusActions.SUMMARIZE_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
+                    SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
+                }
+                checkForInterruption();
+
+                MF.ps().setComputing(compoundsToProcess,true);
+
+                checkForInterruption();
+                if (computation instanceof ProgressJJob)
+                    ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
+                logInfo(command);
+                computation.run();
+                return true;
+            } finally {
+                runInBackgroundAndLoad(MF, "Writing Results to disk...", () -> {
+                    MF.ps().projectSpace().flush(); //todo improve flushing strategy
+                    System.gc(); //hint for the gc to collect som trash after computations
+                    return true;
+                });
             }
-            checkForInterruption();
-            {
-                compoundsToProcess.forEach(c -> c.setComputing(true, true));
-                final Set<InstanceBean> upt = new HashSet<>(compoundsToProcess);
-                runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
-            }
-            checkForInterruption();
-            if (computation instanceof ProgressJJob)
-                ((ProgressJJob<?>) computation).addJobProgressListener(this::updateProgress);
-            logInfo(command);
-            computation.run();
-            System.gc(); //hint for the gc to collect som trash after computations
-            return true;
         }
 
         @Override
@@ -272,17 +277,19 @@ public class Jobs {
 
         @Override
         protected void cleanup() {
+            //todo flush ps?
             synchronized (ACTIVE_COMPUTATIONS) {
                 ACTIVE_COMPUTATIONS.remove(this);
                 ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(!ACTIVE_COMPUTATIONS.isEmpty());
-                SiriusActions.SUMMARY_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
+                SiriusActions.SUMMARIZE_WS.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
                 SiriusActions.EXPORT_FBMN.getInstance().setEnabled(ACTIVE_COMPUTATIONS.isEmpty());
             }
-            {
+            MF.ps().setComputing(compoundsToProcess,false);
+            /*{
                 compoundsToProcess.forEach(c -> c.setComputing(false, true));
                 final Set<InstanceBean> upt = new HashSet<>(compoundsToProcess);
                 runEDTLater(() -> SiriusGlazedLists.multiUpdate(MainFrame.MF.getCompoundList().getCompoundList(), upt));
-            }
+            }*/
             super.cleanup();
         }
     }

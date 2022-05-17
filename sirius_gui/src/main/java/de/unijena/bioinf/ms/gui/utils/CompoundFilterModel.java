@@ -18,7 +18,13 @@ package de.unijena.bioinf.ms.gui.utils;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * This model stores the filter criteria for a compound list
@@ -33,6 +39,12 @@ public class CompoundFilterModel implements SiriusPCS {
     private double currentMaxMz;
     private double currentMinRt;
     private double currentMaxRt;
+
+    //
+    private boolean[] peakShapeQualities = new boolean[]{true,true,true};
+
+    private Set<PrecursorIonType> adducts = Set.of();
+    private LipidFilter lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
 
     /*
     min/max possible values
@@ -66,6 +78,49 @@ public class CompoundFilterModel implements SiriusPCS {
         this.maxMz = maxMz;
         this.minRt = minRt;
         this.maxRt = maxRt;
+    }
+
+    public void fireUpdateCompleted() {
+        //as long as we do not treat changes differently, we only have to listen to this event after performing all updates
+        pcs.firePropertyChange("filterUpdateCompleted", null, this);
+    }
+
+    public boolean isPeakShapeFilterEnabled() {
+        for (boolean val : peakShapeQualities) {
+            if (!val) return true;
+        }
+        return false;
+    }
+
+    public boolean isLipidFilterEnabled() {
+        return lipidFilter != LipidFilter.KEEP_ALL_COMPOUNDS;
+    }
+
+    public LipidFilter getLipidFilter() {
+        return lipidFilter;
+    }
+
+    public void setLipidFilter(LipidFilter value) {
+        LipidFilter oldValue = lipidFilter;
+        lipidFilter = value;
+        pcs.firePropertyChange("setLipidFilter", oldValue, value);
+    }
+
+    public void setPeakShapeQuality(LCMSCompoundSummary.Quality quality, boolean value) {
+        boolean oldValue = peakShapeQualities[quality.ordinal()];
+        peakShapeQualities[quality.ordinal()] = value;
+        pcs.firePropertyChange("setPeakShapeQuality", oldValue, value);
+    }
+    public void setPeakShapeQuality(int quality, boolean value) {
+        boolean oldValue = peakShapeQualities[quality];
+        peakShapeQualities[quality] = value;
+        pcs.firePropertyChange("setPeakShapeQuality", oldValue, value);
+    }
+    public boolean getPeakShapeQuality(LCMSCompoundSummary.Quality quality) {
+        return peakShapeQualities[quality.ordinal()];
+    }
+    public boolean getPeakShapeQuality(int quality) {
+        return peakShapeQualities[quality];
     }
 
     public void setCurrentMinMz(double currentMinMz) {
@@ -137,6 +192,9 @@ public class CompoundFilterModel implements SiriusPCS {
     public boolean isActive(){
         if (currentMinMz != minMz || currentMaxMz != maxMz ||
                 currentMinRt != minRt || currentMaxRt != maxRt) return true;
+        if (!adducts.isEmpty()) return true;
+        if (isPeakShapeFilterEnabled() || isLipidFilterEnabled()) return true;
+
         return false;
     }
 
@@ -146,6 +204,14 @@ public class CompoundFilterModel implements SiriusPCS {
 
     public boolean isMaxRtFilterActive() {
         return currentMaxRt != maxRt;
+    }
+
+    public void setAdducts(Set<PrecursorIonType> adducts) {
+        this.adducts = adducts;
+    }
+
+    public Set<PrecursorIonType> getAdducts() {
+        return Collections.unmodifiableSet(adducts);
     }
 
     @Override
@@ -159,5 +225,13 @@ public class CompoundFilterModel implements SiriusPCS {
         setCurrentMaxMz(maxMz);
         setCurrentMinRt(minRt);
         setCurrentMaxRt(maxRt);
+        Arrays.fill(peakShapeQualities,true);
+        lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
+        adducts = Set.of();
+    }
+
+
+    public enum LipidFilter {
+        KEEP_ALL_COMPOUNDS, ANY_LIPID_CLASS_DETECTED, NO_LIPID_CLASS_DETECTED
     }
 }

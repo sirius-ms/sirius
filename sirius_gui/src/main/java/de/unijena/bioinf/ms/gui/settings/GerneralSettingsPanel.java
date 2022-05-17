@@ -19,11 +19,11 @@
 
 package de.unijena.bioinf.ms.gui.settings;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
@@ -44,39 +44,56 @@ import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
  */
 public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPanel {
     private Properties props;
+    final JSpinner scalingSpinner;
+    final int scaling;
+
     final FileChooserPanel db;
     final JComboBox<String> solver;
+    private boolean restartRequired = false;
 
     public GerneralSettingsPanel(Properties properties) {
         super();
         this.props = properties;
+        add(new JXTitledSeparator("Graphical User Interface"));
+        scaling = Integer.parseInt(props.getProperty("sun.java2d.uiScale", System.getProperty("sun.java2d.uiScale", "1")));
+
+        SpinnerNumberModel model = new SpinnerNumberModel(scaling, 1, 5, 1);
+        scalingSpinner = new JSpinner(model);
+        scalingSpinner.setToolTipText(GuiUtils.formatToolTip("Set scaling factor of the Graphical User Interface"));
+        addNamed("Scaling Factor", scalingSpinner);
 
         add(new JXTitledSeparator("ILP solver"));
-        Vector<String> items = new Vector<>(Arrays.asList("clp,cplex,gurobi,glpk", "cplex,gurobi,clp,glpk", "cplex,clp,glpk", "gurobi,clp,glpk", "clp,glpk","glpk,clp", "gurobi", "cplex", "clp", "glpk"));
+        Vector<String> items = new Vector<>(Arrays.asList("clp,cplex,gurobi,glpk", "cplex,gurobi,clp,glpk", "cplex,clp,glpk", "gurobi,clp,glpk", "clp,glpk", "glpk,clp", "gurobi", "cplex", "clp", "glpk"));
         String selected = props.getProperty("de.unijena.bioinf.sirius.treebuilder.solvers");
         if (!items.contains(selected))
             items.add(selected);
         solver = new JComboBox<>(items);
         solver.setSelectedItem(selected);
-        solver.setToolTipText("Choose the allowed solvers and in which order they should be checked. Note that glpk is part of Sirius whereas the others not");
+        solver.setToolTipText(GuiUtils.formatToolTip("Choose the allowed solvers and in which order they should be checked. Note that glpk is part of Sirius whereas the others not"));
         add(new JLabel("Allowed solvers:"), solver);
 
         add(new JXTitledSeparator("CSI:FingerID"));
         String p = props.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
         db = new FileChooserPanel(p, JFileChooser.DIRECTORIES_ONLY);
-        db.setToolTipText("Specify the directory where CSI:FingerID should store the compound candidates.");
+        db.setToolTipText(GuiUtils.formatToolTip("Specify the directory where CSI:FingerID should store the compound candidates."));
         add(new JLabel("Database cache:"), db);
         JButton clearDBCache = new JButton("Clear cache");
         clearDBCache.addActionListener(evt -> {
             Jobs.runInBackgroundAndLoad(MF, "Clearing database cache...", () -> {
                 try {
-                    FileUtils.deleteDirContentRecursively(SearchableDatabases.getRESTDatabaseCacheDirectory().toPath());
+                    SearchableDatabases.getWebDatabaseCacheStorage().clear();
                 } catch (IOException e) {
+                    LoggerFactory.getLogger(getClass()).error("Error when clearing DB cache", e);
                     new StacktraceDialog(MF, "Error when clearing DB cache", e);
                 }
             });
         });
         addNamed("", clearDBCache);
+    }
+
+    @Override
+    public boolean restartRequired() {
+        return restartRequired;
     }
 
     @Override
@@ -86,23 +103,17 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {
             props.setProperty("de.unijena.bioinf.sirius.fingerID.cache", dir.toAbsolutePath().toString());
-            Jobs.runInBackgroundAndLoad(MF, () -> {
-                //todo do we need to invalidate chache somehow
+            //todo do we need to invalidate chache somehow
+            /*Jobs.runInBackgroundAndLoad(MF, () -> {
                 System.out.println("WaRN Check if we have to do something???");
-            });
+            });*/
         } else {
             LoggerFactory.getLogger(this.getClass()).warn("Specified path is not a directory (" + dir.toString() + "). Directory not Changed!");
         }
-    }
-
-    private SpinnerNumberModel createTimeoutModel() {
-        String seconds = props.getProperty("de.unijena.bioinf.sirius.treebuilder.timeout", "1800");
-
-        SpinnerNumberModel model = new SpinnerNumberModel();
-        model.setValue(Integer.valueOf(seconds));
-
-
-        return model;
+        if (scaling != (int) scalingSpinner.getValue()) {
+            props.setProperty("sun.java2d.uiScale", String.valueOf((int) scalingSpinner.getValue()));
+            restartRequired = true;
+        }
     }
 
     @Override
