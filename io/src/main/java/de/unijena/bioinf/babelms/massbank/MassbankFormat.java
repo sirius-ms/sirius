@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 /**
  * MassBankRecordFormat as described in
- * {@see <a href="https://github.com/MassBank/MassBank-web/blob/main/Documentation/MassBankRecordFormat.md">http://google.com</a>}
+ * @see <a href="https://github.com/MassBank/MassBank-web/blob/main/Documentation/MassBankRecordFormat.md">http://google.com</a>
  */
 public enum MassbankFormat {
     ACCESSION(),
