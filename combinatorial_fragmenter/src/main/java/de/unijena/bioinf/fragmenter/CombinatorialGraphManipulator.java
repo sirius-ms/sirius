@@ -92,7 +92,7 @@ public class CombinatorialGraphManipulator {
         for (CombinatorialNode node : graph.nodes) {
             removeFromList(node.outgoingEdges, x->x.target.state==0);
         }
-        LoggerFactory.getLogger(CombinatorialGraphManipulator.class).warn("Remove "+(size-graph.numberOfNodes()) + " of " + graph.numberOfNodes() + " nodes");
+        //LoggerFactory.getLogger(CombinatorialGraphManipulator.class).warn("Remove "+(size-graph.numberOfNodes()) + " of " + graph.numberOfNodes() + " nodes");
 
 
     }
