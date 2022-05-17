@@ -24,17 +24,10 @@ package de.unijena.bioinf.babelms.json;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.data.JDKDocument;
-import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
-import de.unijena.bioinf.ChemistryBase.data.JacksonDocument;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.babelms.descriptor.Descriptor;
@@ -46,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -80,50 +72,60 @@ public class FTJsonWriter {
         factory.enable(JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS);
         try {
             final JsonGenerator generator = factory.createGenerator(writer);
-            generator.useDefaultPrettyPrinter();
-            generator.writeStartObject();
+            tree2json(tree, precursorMass, generator);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-            final PrecursorIonType generalIonType = tree.getAnnotationOrNull(PrecursorIonType.class);
-            final FragmentAnnotation<PrecursorIonType> ionPerFragment = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
-            if (generalIonType != null) {
-                final MolecularFormula formula = tree.getRoot().getFormula();
-                final PrecursorIonType fragmentIon = getFragmentIon(ionPerFragment, tree.getRoot(), generalIonType);
-                final MolecularFormula neutral = fragmentIon.measuredNeutralMoleculeToNeutralMolecule(formula);
-                generator.writeStringField("molecularFormula", neutral.toString());
-                generator.writeStringField("root", formula.toString());
+    protected void tree2json(@NotNull FTree tree, @Nullable Double precursorMass, @NotNull final JsonGenerator generator) throws IOException {
+        generator.useDefaultPrettyPrinter();
+        generator.writeStartObject();
+
+        final PrecursorIonType generalIonType = tree.getAnnotationOrNull(PrecursorIonType.class);
+        final FragmentAnnotation<PrecursorIonType> ionPerFragment = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
+        final FragmentAnnotation<AnnotatedPeak> anoPeak = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
+        if (generalIonType != null) {
+            final MolecularFormula formula = tree.getRoot().getFormula();
+            final PrecursorIonType fragmentIon = getFragmentIon(ionPerFragment, tree.getRoot(), generalIonType);
+            final MolecularFormula neutral = fragmentIon.measuredNeutralMoleculeToNeutralMolecule(formula);
+            generator.writeStringField("molecularFormula", neutral.toString());
+            generator.writeStringField("root", formula.toString());
+        } else {
+            final String f = tree.getRoot().getFormula().toString();
+            generator.writeStringField("molecularFormula", f);
+            generator.writeStringField("root", f);
+        }
+        generator.writeFieldName("annotations");
+        generator.writeStartObject();
+
+        final JDKDocument jdkDocument = new JDKDocument();
+
+        for (Class<DataAnnotation> anot : tree.annotations()) {
+            Descriptor<DataAnnotation> d = registry.get(FTree.class, anot);
+            if (d != null) {
+                final Map<String, Object> stringObjectMap = jdkDocument.newDictionary();
+                d.write(jdkDocument,stringObjectMap, tree.getAnnotationOrThrow(anot));
+                writeSimpleMap(generator, jdkDocument, stringObjectMap);
             } else {
-                final String f = tree.getRoot().getFormula().toString();
-                generator.writeStringField("molecularFormula", f);
-                generator.writeStringField("root", f);
+                //hardCodedAnnotations(generator tree);
             }
-            generator.writeFieldName("annotations");
+        }
+        generator.writeEndObject();
+
+        generator.writeFieldName("fragments");
+        generator.writeStartArray();
+
+        final List<FragmentAnnotation<DataAnnotation>> fragmentAnnotations = tree.getFragmentAnnotations();
+        for (Fragment f : tree.getFragments()) {
+
             generator.writeStartObject();
 
-            final JDKDocument jdkDocument = new JDKDocument();
+            generator.writeNumberField("id", f.getVertexId());
+            generator.writeStringField("molecularFormula", f.getFormula().toString());
+            if (f.getIonization()!=null)generator.writeStringField("ion", f.getIonization().toString());
 
-            for (Class<DataAnnotation> anot : tree.annotations()) {
-                Descriptor<DataAnnotation> d = registry.get(FTree.class, anot);
-                if (d != null) {
-                    final Map<String, Object> stringObjectMap = jdkDocument.newDictionary();
-                    d.write(jdkDocument,stringObjectMap, tree.getAnnotationOrThrow(anot));
-                    writeSimpleMap(generator, jdkDocument, stringObjectMap);
-                } else {
-                    //hardCodedAnnotations(generator tree);
-                }
-            }
-            generator.writeEndObject();
-
-            generator.writeFieldName("fragments");
-            generator.writeStartArray();
-
-            final List<FragmentAnnotation<DataAnnotation>> fragmentAnnotations = tree.getFragmentAnnotations();
-            for (Fragment f : tree.getFragments()) {
-
-                generator.writeStartObject();
-
-                generator.writeNumberField("id", f.getVertexId());
-                generator.writeStringField("molecularFormula", f.getFormula().toString());
-
+            if (anoPeak.get(f).isMeasured()) {
                 Deviation dev = tree.getMassError(f);
                 if (f.isRoot() && precursorMass != null && dev.equals(Deviation.NULL_DEVIATION))
                     dev = tree.getMassErrorTo(f, precursorMass);
@@ -134,57 +136,52 @@ public class FTJsonWriter {
 
                 generator.writeStringField("massDeviation", dev.toString());
                 generator.writeStringField("recalibratedMassDeviation", rdev.toString());
-
-
-                for (FragmentAnnotation<DataAnnotation> fano : fragmentAnnotations) {
-                    final Map<String,Object> fragment = jdkDocument.newDictionary();
-                    if (fano.get(f) != null) {
-                        Descriptor<DataAnnotation> d = registry.get(Fragment.class, fano.getAnnotationType());
-                        if (d != null) {
-                            d.write(jdkDocument, fragment, fano.get(f));
-                            writeSimpleMap(generator,jdkDocument,fragment);
-                        }
-                    }
-                }
-
-                generator.writeEndObject();
             }
 
-            generator.writeEndArray();
-
-            generator.writeFieldName("losses");
-            generator.writeStartArray();
-            final List<LossAnnotation<DataAnnotation>> lossAnnotations = tree.getLossAnnotations();
-            for (Loss l : tree.losses()) {
-
-                generator.writeStartObject();
-
-                generator.writeNumberField("source", l.getSource().getVertexId());
-                generator.writeNumberField("target", l.getTarget().getVertexId());
-                generator.writeStringField("molecularFormula", l.getFormula().toString());
-                for (LossAnnotation<DataAnnotation> lano : lossAnnotations) {
-                    if (lano.get(l)!=null) {
-                        Descriptor<DataAnnotation> d = registry.get(Loss.class, lano.getAnnotationType());
-                        if (d != null) {
-                            Map<String,Object> map = jdkDocument.newDictionary();
-                            d.write(jdkDocument, map, lano.get(l));
-                            writeSimpleMap(generator,jdkDocument,map);
-                        }
+            for (FragmentAnnotation<DataAnnotation> fano : fragmentAnnotations) {
+                final Map<String,Object> fragment = jdkDocument.newDictionary();
+                if (fano.get(f) != null) {
+                    Descriptor<DataAnnotation> d = registry.get(Fragment.class, fano.getAnnotationType());
+                    if (d != null) {
+                        d.write(jdkDocument, fragment, fano.get(f));
+                        writeSimpleMap(generator,jdkDocument,fragment);
                     }
                 }
-
-                generator.writeEndObject();
             }
-            generator.writeEndArray();
 
             generator.writeEndObject();
-
-            generator.flush();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
 
+        generator.writeEndArray();
+
+        generator.writeFieldName("losses");
+        generator.writeStartArray();
+        final List<LossAnnotation<DataAnnotation>> lossAnnotations = tree.getLossAnnotations();
+        for (Loss l : tree.losses()) {
+
+            generator.writeStartObject();
+
+            generator.writeNumberField("source", l.getSource().getVertexId());
+            generator.writeNumberField("target", l.getTarget().getVertexId());
+            generator.writeStringField("molecularFormula", l.getFormula().toString());
+            for (LossAnnotation<DataAnnotation> lano : lossAnnotations) {
+                if (lano.get(l)!=null) {
+                    Descriptor<DataAnnotation> d = registry.get(Loss.class, lano.getAnnotationType());
+                    if (d != null) {
+                        Map<String,Object> map = jdkDocument.newDictionary();
+                        d.write(jdkDocument, map, lano.get(l));
+                        writeSimpleMap(generator,jdkDocument,map);
+                    }
+                }
+            }
+
+            generator.writeEndObject();
+        }
+        generator.writeEndArray();
+
+        generator.writeEndObject();
+
+        generator.flush();
     }
 
     private void writeSimpleMap(JsonGenerator generator, JDKDocument doc, Map<String, Object> stringObjectMap) throws IOException {

@@ -23,9 +23,11 @@ package de.unijena.bioinf.lcms.align;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.lcms.quality.Quality;
+import de.unijena.bioinf.model.lcms.ChromatographicPeak;
 import de.unijena.bioinf.model.lcms.FragmentedIon;
 import de.unijena.bioinf.model.lcms.GapFilledIon;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.apache.commons.math3.distribution.LaplaceDistribution;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -131,6 +133,39 @@ public class Cluster {
         return new Cluster(alf.toArray(new AlignedFeatures[0]), score, left, right,mergedSamples);
     }
 
+    public Cluster deleteDuplicateRows() {
+        final AlignedFeatures[] features = getFeatures().clone();
+        final List<AlignedFeatures> processed = new ArrayList<>();
+        Arrays.sort(features, Comparator.comparingDouble((AlignedFeatures f)->-f.getFeatures().size()).thenComparingDouble((AlignedFeatures f)->-f.getRepresentativeIon().getIntensity()));
+        final HashMap<ChromatographicPeak.Segment, AlignedFeatures> segSet = new HashMap<>();
+        AlignedFeatures largestOne = null;
+        for (AlignedFeatures f : features) {
+            int novel = 0;
+            for (FragmentedIon i : f.getFeatures().values()) {
+                if (!segSet.containsKey(i.getSegment())) {
+                    ++novel;
+                    segSet.put(i.getSegment(), f);
+                } else {
+                    AlignedFeatures g = segSet.get(i.getSegment());
+                    if (largestOne==null || g.getFeatures().size()>largestOne.getFeatures().size()) largestOne = g;
+                }
+            }
+            if (novel <= Math.floor(f.getFeatures().size()*0.5)) {
+                // 1. rejoin features into largets one
+                for (Map.Entry<ProcessedSample, FragmentedIon> e : f.getFeatures().entrySet()) {
+                    if (!largestOne.getFeatures().containsKey(e.getKey()) && segSet.get(e.getValue().getSegment())==f) {
+                        largestOne.getFeatures().put(e.getKey(), e.getValue());
+                    }
+                }
+                // delete row
+                continue;
+            }
+
+            processed.add(f);
+        }
+        return new Cluster(processed.toArray(AlignedFeatures[]::new), score, left, right, mergedSamples);
+    }
+
     public Cluster deleteRowsWithNoMsMs() {
         final ArrayList<AlignedFeatures> alf = new ArrayList<>();
         outerloop:
@@ -153,7 +188,7 @@ public class Cluster {
         return new Cluster(alf.toArray(new AlignedFeatures[0]), score, left, right,mergedSamples);
     }
 
-    public double estimateError() {
+    public double estimateError(boolean onlyGoodFeatures) {
         final TDoubleArrayList values = new TDoubleArrayList();
         final TDoubleArrayList buf = new TDoubleArrayList();
         final int thr = Math.max(2,Math.min(10,(int)Math.ceil(this.mergedSamples.size()*0.2)));
@@ -161,9 +196,9 @@ public class Cluster {
         for (AlignedFeatures f : features) {
             final ArrayList<ProcessedSample> xs = new ArrayList<>(f.features.keySet());
             for (int i=0; i < xs.size(); ++i) {
-                if (f.features.get(xs.get(i)).getPeakShape().getPeakShapeQuality().betterThan(Quality.BAD)) {
+                if (f.features.get(xs.get(i)).getPeakShape().getPeakShapeQuality().betterThan(Quality.DECENT)) {
                     for (int j=0; j < i; ++j) {
-                        if (f.features.get(xs.get(j)).getPeakShape().getPeakShapeQuality().betterThan(Quality.BAD)) {
+                        if (f.features.get(xs.get(j)).getPeakShape().getPeakShapeQuality().betterThan(Quality.DECENT)) {
                             buf.add(Math.abs(xs.get(i).getRecalibratedRT(f.features.get(xs.get(i)).getRetentionTime()) - xs.get(j).getRecalibratedRT(f.features.get(xs.get(j)).getRetentionTime())));
                         }
                     }
@@ -177,13 +212,21 @@ public class Cluster {
         }
         values.sort();
         double mean = 0d;
-        int k=(int)(values.size()*0.25), n =(int)(values.size()*0.9);
+        int k=1, n=values.size()-1;//(int)(values.size()*0.25), n =(int)(values.size()*0.9);
         for (int i=k; i < n; ++i) {
             mean += values.getQuick(i);
         }
-        System.out.println("USED " + count + " features for error estimation. Mean error is " + (mean/(n-k)));
-        return (mean/(n-k));
+        final double error = mean / (n - k);
+        System.out.println("USED " + count + " features for error estimation. Mean error is " + error);
+        if (error <= 0) return 1d;
+        return error;
     }
+
+
+    public LaplaceDistribution estimateLaplaceError() {
+        return new LaplaceDistribution(0, estimateError(true));
+    }
+
     public double estimatePeakShapeError() {
         final TDoubleArrayList values = new TDoubleArrayList();
 

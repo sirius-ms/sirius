@@ -1,15 +1,16 @@
 package de.unijena.bioinf.lcms.debuggui;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
 import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.io.lcms.MzXMLParser;
-import de.unijena.bioinf.lcms.InMemoryStorage;
-import de.unijena.bioinf.lcms.LCMSProccessingInstance;
-import de.unijena.bioinf.lcms.ProcessedSample;
+import de.unijena.bioinf.lcms.*;
+import de.unijena.bioinf.lcms.ionidentity.CorrelationGroupScorer;
 import de.unijena.bioinf.lcms.peakshape.*;
 import de.unijena.bioinf.model.lcms.*;
+import gnu.trove.list.array.TDoubleArrayList;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -19,35 +20,50 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Locale;
 
 public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
-
+    boolean showadducts = true; boolean showraw=true;
     int offset = 0;
     SpecViewer specViewer;
     ProcessedSample sample;
     LCMSProccessingInstance instance;
+    JComboBox<SavitzkyGolayFilter> filterBox;
+
+    SavitzkyGolayFilter[] filters = new SavitzkyGolayFilter[]{
+            SavitzkyGolayFilter.Window1Polynomial1,
+            SavitzkyGolayFilter.Window2Polynomial2,
+            SavitzkyGolayFilter.Window32Polynomial2,
+            SavitzkyGolayFilter.Window3Polynomial3,
+            SavitzkyGolayFilter.Window4Polynomial2,
+            SavitzkyGolayFilter.Window4Polynomial3,
+            SavitzkyGolayFilter.Window8Polynomial2,
+            SavitzkyGolayFilter.Window16Polynomial2,
+            SavitzkyGolayFilter.Window32Polynomial2,
+            SavitzkyGolayFilter.Window32Polynomial3
+    };
 
     public GUI(LCMSProccessingInstance i, ProcessedSample sample) {
         instance = i;
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new BorderLayout());
         sample.ions.sort(Comparator.comparingDouble(FragmentedIon::getMass));
+        /*
         for (offset=0; offset < sample.ions.size(); ++offset) {
             if (sample.ions.get(offset).getMass()>=625)
                 break;
         }
+         */
         specViewer = new SpecViewer(sample.ions.get(offset));
         this.sample = sample;
 
@@ -74,6 +90,40 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
             }
         });
 
+        JCheckBox ad = new JCheckBox("Show adducts");
+        ad.setSelected(showadducts);
+        ad.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                boolean v = ad.isSelected();
+                if (v!=showadducts) {
+                    showadducts = v;
+                    specViewer.repaint();
+                }
+            }
+        });
+
+        JCheckBox raw = new JCheckBox("show raw");
+        raw.setSelected(showraw);
+        ad.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                boolean v = raw.isSelected();
+                if (v!=showraw) {
+                    showraw = v;
+                    specViewer.repaint();
+                }
+            }
+        });
+
+        filterBox = new JComboBox<>(filters);
+        filterBox.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                specViewer.repaint();
+            }
+        });
+
         getContentPane().add(left,BorderLayout.WEST);
         getContentPane().add(right,BorderLayout.EAST);
 
@@ -90,7 +140,15 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
         final Box verticalBox = Box.createVerticalBox();
         verticalBox.add(slider);
-        verticalBox.add(info);
+        final Box horBox = Box.createHorizontalBox();
+        verticalBox.add(horBox);
+        horBox.add(info);
+        horBox.add(Box.createHorizontalStrut(8));
+        horBox.add(ad);
+        horBox.add(Box.createHorizontalStrut(8));
+        horBox.add(raw);
+        horBox.add(Box.createHorizontalStrut(8));
+        horBox.add(filterBox);
 
         getContentPane().add(verticalBox,BorderLayout.SOUTH);
 
@@ -109,17 +167,87 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
                         groups.add(xs.get(k));
                     }
                 }
+                System.out.println("n = " + groups.size());
                 if (groups.size()<=5)
                     break;
                 // cosine
-                groups.sort((u,v)->Double.compare(u.getCosine(),v.getCosine()));
+                groups.sort(Comparator.comparingDouble(CorrelationGroup::getCosine));
                 System.out.printf("Median cosine = %f\n", groups.get(groups.size()/2).getCosine() );
+                System.out.printf("Avg cosine = %f\n", groups.stream().mapToDouble(CorrelationGroup::getCosine).average().getAsDouble() );
+
                 System.out.printf("15%% quantile = %f\n", groups.get((int)(groups.size()*0.15)).getCosine() );
                 // correlation
-                groups.sort((u,v)->Double.compare(u.getCorrelation(),v.getCorrelation()));
-                System.out.printf("Median cosine = %f\n", groups.get(groups.size()/2).getCorrelation() );
+                groups.sort(Comparator.comparingDouble(CorrelationGroup::getCorrelation));
+                System.out.printf("Median correlation = %f\n", groups.get(groups.size()/2).getCorrelation() );
+                System.out.printf("Avg correlation = %f\n", groups.stream().mapToDouble(CorrelationGroup::getCorrelation).average().getAsDouble() );
                 System.out.printf("15%% quantile = %f\n", groups.get((int)(groups.size()*0.15)).getCorrelation() );
+                // maximum likelihood
+                groups.sort(Comparator.comparingDouble(u -> u.score));
+                System.out.printf("median ML = %f\n", groups.get(groups.size()/2).score );
+                System.out.printf("Avg ML = %f\n", groups.stream().mapToDouble(x->x.score).average().getAsDouble() );
+                System.out.printf("15%% quantile = %f\n", groups.get((int)(groups.size()*0.15)).score );
+
+                // LENGTH
+                System.out.printf("Average Length = %f\n", groups.stream().mapToInt(x->x.getNumberOfCorrelatedPeaks()).average().getAsDouble());
             }
+        }
+        System.out.println("================== DECOY ===============================");
+        {
+            // compare with random correlations
+            final ArrayList<FragmentedIon> A = new ArrayList<>(sample.ions), B = new ArrayList<>(sample.ions);
+            TDoubleArrayList cosines = new TDoubleArrayList(), correlations = new TDoubleArrayList(), mls = new TDoubleArrayList();
+            double avgLen = 0d;
+            int counter = 0;
+            while (counter < 5000) {
+                Collections.shuffle(A);
+                Collections.shuffle(B);
+                for (int k = 0; k < A.size(); ++k) {
+                    final ChromatographicPeak.Segment a = A.get(k).getSegment();
+                    final ChromatographicPeak.Segment b = B.get(k).getSegment();
+                    final TDoubleArrayList as = new TDoubleArrayList(), bs = new TDoubleArrayList();
+                    final Range<Integer> l = a.calculateFWHM(0.15);
+                    final Range<Integer> r = b.calculateFWHM(0.15);
+                    int lenL = Math.min(a.getApexIndex()-l.lowerEndpoint(), b.getApexIndex()-r.lowerEndpoint());
+                    int lenR = Math.min(l.upperEndpoint()-a.getApexIndex(), r.upperEndpoint()-b.getApexIndex());
+                    if (lenL>=1 && lenR >= 1 && (lenL+lenR)>=4) {
+                        ++counter;
+                        avgLen += (lenL+lenR);
+                        as.add(a.getApexIntensity());
+                        bs.add(b.getApexIntensity());
+                        for (int x=1; x  <lenR; ++x) {
+                            as.add(a.getPeak().getIntensityAt(a.getApexIndex()+x));
+                            bs.add(b.getPeak().getIntensityAt(b.getApexIndex()+x));
+                        }
+                        for (int x=1; x  <lenL; ++x) {
+                            as.insert(0,a.getPeak().getIntensityAt(a.getApexIndex()-x));
+                            bs.insert(0, b.getPeak().getIntensityAt(b.getApexIndex()-x));
+                        }
+
+                        cosines.add(CorrelatedPeakDetector.cosine(as,bs));
+                        correlations.add(CorrelatedPeakDetector.pearson(as,bs));
+                        mls.add(new CorrelationGroupScorer().predictProbability(as,bs));
+                    }
+                }
+            }
+            avgLen /= counter;
+            // cosine
+            cosines.sort();
+            System.out.printf("Median cosine = %f\n", cosines.get(cosines.size()/2));
+            System.out.printf("Avg cosine = %f\n", cosines.sum()/cosines.size());
+            System.out.printf("15%% quantile = %f\n", cosines.get((int)(cosines.size()*0.15)));
+            // correlation
+            correlations.sort();
+            System.out.printf("Median correlation = %f\n", correlations.get(correlations.size()/2));
+            System.out.printf("Avg correlation = %f\n", correlations.sum()/correlations.size());
+            System.out.printf("15%% quantile = %f\n", correlations.get((int)(correlations.size()*0.15)));
+            // maximum likelihood
+            mls.sort();
+            System.out.printf("Median ml = %f\n", mls.get(mls.size()/2));
+            System.out.printf("Avg ml = %f\n", mls.sum()/mls.size());
+            System.out.printf("15%% quantile = %f\n", mls.get((int)(mls.size()*0.15)));
+
+            System.out.printf("Average Length = %f\n", avgLen);
+
         }
 
         setVisible(true);
@@ -127,11 +255,12 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
     public static void main(String[] args) {
 
-        final File mzxmlFile = new File("/home/kaidu/Downloads/test2/").listFiles()[0];
+        final File mzxmlFile = new File("/home/kaidu/analysis/lcms/examples/E_M27_posPFP_01.mzml");
+                //new File("/home/kaidu/analysis/lcms/examples").listFiles()[0];
         InMemoryStorage storage= new InMemoryStorage();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         try {
-            final LCMSRun parse = (mzxmlFile.getName().endsWith(".mzML") ? new MzMLParser() : new MzXMLParser()).parse(mzxmlFile, storage);
+            final LCMSRun parse = (mzxmlFile.getName().toLowerCase(Locale.US).endsWith(".mzml") ? new MzMLParser() : new MzXMLParser()).parse(mzxmlFile, storage);
             final ProcessedSample sample = i.addSample(parse, storage);
 
             i.detectFeatures(sample);
@@ -175,7 +304,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
     }
 
     private void info() {
-        final Ms2Experiment exp = instance.makeFeature(sample,specViewer.ion,false).toMsExperiment();
+        final Ms2Experiment exp = instance.makeFeature(sample,specViewer.ion,false).toMsExperiment("");
         final StringWriter s = new StringWriter();
         try (final BufferedWriter bw = new BufferedWriter(s)) {
             new JenaMsWriter().write(bw,exp);
@@ -264,7 +393,7 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
                     int posY = 700 - (int)(intensityValue/deltaInt);
                     g.drawLine(-4, posY, 4, posY);
                     if (k % 5 == 0) {
-                        g.drawString(String.format(Locale.US, "%d", (int)(intensityValue)), 8, posY);
+                        g.drawString(String.valueOf((long)(intensityValue)), 8, posY);
                     }
                 }
             }
@@ -287,6 +416,22 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
             ChromatographicPeak.Segment prev = null;
             Point2D prevPoint = null;
             boolean prevWasSeg = false;
+
+            ///
+            double[] values = new double[ion.getPeak().numberOfScans()];
+            for (int k=0; k < ion.getPeak().numberOfScans(); ++k) {
+                values[k] = ion.getPeak().getIntensityAt(k);
+            }
+            //
+            final SavitzkyGolayFilter filter = smooth(values);
+            final int GAPS = filter.getNumberOfDataPointsPerSide();
+            {
+                double[] xs = new double[values.length + GAPS*2];
+                System.arraycopy(values, 0, xs, GAPS, values.length);
+                values = xs;
+            }
+            double[] smoothed = filter.apply(values);
+
             for (int k=0; k < ion.getPeak().numberOfScans(); ++k) {
                 final double xx = (ion.getPeak().getRetentionTimeAt(k)-start)/deltaRT;
                 final double yy = ion.getPeak().getIntensityAt(k)/deltaInt;
@@ -294,7 +439,9 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
                 Point2D dp = new Point((int)xx, 700-(int)yy);
                 g.setColor(Color.BLACK);
                 if (prevPoint!=null && s!=prev) {
+                    g.setStroke(new BasicStroke(3f));
                     g.drawLine((int)prevPoint.getX(), 700, (int)prevPoint.getX(), 0);
+                    g.setStroke(new BasicStroke(1f));
                 }
                 prev = s;
                 if (prevPoint!=null) {
@@ -309,8 +456,34 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
                     g.setColor(Color.BLACK);
                     prevWasSeg = false;
                 }
-                g.fillOval((int)xx-5, 700 - ((int)yy-5), 10, 10);
+                if (showraw) g.fillOval((int)xx-5, 700 - ((int)yy-5), 10, 10);
             }
+
+            prevPoint=null;
+            for (int k=0; k < ion.getPeak().numberOfScans(); ++k) {
+                final int VI = k+GAPS;
+                final double xx = (ion.getPeak().getRetentionTimeAt(k)-start)/deltaRT;
+                final double yy = smoothed[VI]/deltaInt;
+                final ChromatographicPeak.Segment s = ion.getPeak().getSegmentForScanId(ion.getPeak().getScanNumberAt(k)).orElse(null);
+                Point2D dp = new Point((int)xx, 700-(int)yy);
+                g.setStroke(new BasicStroke(3f));
+                g.setColor(Color.BLUE);
+                g.setStroke(new BasicStroke(1f));
+                if (prevPoint!=null) {
+                    g.drawLine((int)prevPoint.getX(), (int)prevPoint.getY(), (int)dp.getX(), (int)dp.getY());
+                    if (VI > 0 && VI+1 < values.length) {
+                        double a = smoothed[VI-1],b = smoothed[VI], c=smoothed[VI+1];
+                        if (b > a && b > c && filter.getDegree()>= 2) {
+                            final double deriv = filter.computeSecondOrderDerivative(values, VI);
+                            //g.drawString(String.format(Locale.US, "%.4f", deriv), (int)dp.getX(), (int)dp.getY());
+
+
+                        }
+                    }
+                }
+                prevPoint = dp;
+            }
+            g.setColor(Color.BLACK);
 
             // draw noise line
             {
@@ -353,7 +526,9 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
                     int posX = (int) Math.round((retentionTime - start) / deltaRT);
                     int posY = (int) Math.round(prec / deltaInt);
                     g.setColor(Color.BLUE);
-                    g.fillOval((int) posX - 5, 700 - ((int) posY - 5), 10, 10);
+                    if (showraw) g.fillOval((int) posX - 5, 700 - ((int) posY - 5), 10, 10);
+                    g.drawLine(posX, 0, posX, 700);
+                    System.out.println("MSMS at " + retentionTime + " with intensity = " + prec);
 
                 }
             }
@@ -362,46 +537,47 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
             g.setFont(medium);
             g.drawString(ion.getSegment().toString(), 50,800);
             g.drawString(String.valueOf(ion.getMass()), 50, 850);
-
-            // draw correlated peaks
-            for (CorrelationGroup c : ion.getIsotopes()) {
-                final ChromatographicPeak.Segment rightSegment = c.getRightSegment();
-                final ChromatographicPeak p = c.getRight();
-                prevPoint = null;
-                for (int i=rightSegment.getStartIndex(); i < rightSegment.getEndIndex(); ++i) {
-                    final long rt = p.getRetentionTimeAt(i);
-                    final double intens = p.getIntensityAt(i);
-                    int posX = (int)Math.round((rt-start)/deltaRT);
-                    int posY = (int)Math.round(intens/deltaInt);
-                    g.setColor(Color.GREEN);
-                    g.fillOval((int)posX-5, 700 - ((int)posY-5), 10, 10);
-                    if (prevPoint != null) {
-                        g.drawLine((int)prevPoint.getX(), (int)prevPoint.getY(), posX, 700-posY);
+            if (showadducts) {
+                // draw correlated peaks
+                for (CorrelationGroup c : ion.getIsotopes()) {
+                    final ChromatographicPeak.Segment rightSegment = c.getRightSegment();
+                    final ChromatographicPeak p = c.getRight();
+                    prevPoint = null;
+                    for (int i = rightSegment.getStartIndex(); i < rightSegment.getEndIndex(); ++i) {
+                        final long rt = p.getRetentionTimeAt(i);
+                        final double intens = p.getIntensityAt(i);
+                        int posX = (int) Math.round((rt - start) / deltaRT);
+                        int posY = (int) Math.round(intens / deltaInt);
+                        g.setColor(Color.GREEN);
+                        g.fillOval((int) posX - 5, 700 - ((int) posY - 5), 10, 10);
+                        if (prevPoint != null) {
+                            g.drawLine((int) prevPoint.getX(), (int) prevPoint.getY(), posX, 700 - posY);
+                        }
+                        prevPoint = new Point(posX, 700 - posY);
                     }
-                    prevPoint = new Point(posX,700-posY);
-                }
 
-            }
-            for (CorrelatedIon c : ion.getAdducts()) {
-                final ChromatographicPeak.Segment rightSegment = c.correlation.getRightSegment();
-                final ChromatographicPeak p = c.correlation.getRight();
-                prevPoint = null;
-                for (int i=rightSegment.getStartIndex(); i < rightSegment.getEndIndex(); ++i) {
-                    final long rt = p.getRetentionTimeAt(i);
-                    final double intens = p.getIntensityAt(i);
-                    int posX = (int)Math.round((rt-start)/deltaRT);
-                    int posY = (int)Math.round(intens/deltaInt);
-                    g.setColor(Color.MAGENTA);
-                    g.fillOval((int)posX-5, 700 - ((int)posY-5), 10, 10);
-                    if (prevPoint != null) {
-                        g.drawLine((int)prevPoint.getX(), (int)prevPoint.getY(), posX, 700-posY);
-                    }
-                    prevPoint = new Point(posX,700-posY);
                 }
-                if (c.correlation.getAnnotation()!=null) {
-                    int yyy = (int) Math.round(p.getIntensityAt(rightSegment.getApexIndex()) / deltaInt) - 16;
-                    int xxx = (int) Math.round((p.getRetentionTimeAt(rightSegment.getApexIndex()) - start) / deltaRT);
-                    g.drawString(String.format(Locale.US, "%s %d %%, %d %%",c.correlation.getAnnotation() , (int)Math.round(100*c.correlation.getCorrelation()), (int)Math.round(100*c.correlation.getCosine())), xxx, 700 - yyy);
+                for (CorrelatedIon c : ion.getAdducts()) {
+                    final ChromatographicPeak.Segment rightSegment = c.correlation.getRightSegment();
+                    final ChromatographicPeak p = c.correlation.getRight();
+                    prevPoint = null;
+                    for (int i = rightSegment.getStartIndex(); i < rightSegment.getEndIndex(); ++i) {
+                        final long rt = p.getRetentionTimeAt(i);
+                        final double intens = p.getIntensityAt(i);
+                        int posX = (int) Math.round((rt - start) / deltaRT);
+                        int posY = (int) Math.round(intens / deltaInt);
+                        g.setColor(Color.MAGENTA);
+                        g.fillOval((int) posX - 5, 700 - ((int) posY - 5), 10, 10);
+                        if (prevPoint != null) {
+                            g.drawLine((int) prevPoint.getX(), (int) prevPoint.getY(), posX, 700 - posY);
+                        }
+                        prevPoint = new Point(posX, 700 - posY);
+                    }
+                    if (c.correlation.getAnnotation() != null) {
+                        int yyy = (int) Math.round(p.getIntensityAt(rightSegment.getApexIndex()) / deltaInt) - 16;
+                        int xxx = (int) Math.round((p.getRetentionTimeAt(rightSegment.getApexIndex()) - start) / deltaRT);
+                        g.drawString(String.format(Locale.US, "%s %d %%, %d %%", c.correlation.getAnnotation(), (int) Math.round(100 * c.correlation.getCorrelation()), (int) Math.round(100 * c.correlation.score)), xxx, 700 - yyy);
+                    }
                 }
             }
 
@@ -428,6 +604,19 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
 
 
         }
+    }
+
+    private SavitzkyGolayFilter smooth(double[] smoothedFunction) {
+        /*
+        if (smoothedFunction.length < 10) {
+            return SavitzkyGolayFilter.Window1Polynomial1;
+        } else if (smoothedFunction.length < 30) {
+            return SavitzkyGolayFilter.Window2Polynomial2;
+        } else if (smoothedFunction.length < 60){
+            return SavitzkyGolayFilter.Window3Polynomial3;
+        } else return SavitzkyGolayFilter.Window4Polynomial3;
+         */
+        return (SavitzkyGolayFilter)filterBox.getSelectedItem();
     }
 
 }

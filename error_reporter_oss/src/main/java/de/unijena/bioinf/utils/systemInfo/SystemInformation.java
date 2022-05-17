@@ -209,7 +209,7 @@ public class SystemInformation {
         outputStream.write("Processes: " + os.getProcessCount() + ", Threads: " + os.getThreadCount());
         outputStream.write(System.lineSeparator());
         // Sort by highest CPU
-        List<OSProcess> procs = os.getProcesses(5, OperatingSystem.ProcessSort.CPU);
+        List<OSProcess> procs = os.getProcesses();
 
         outputStream.write("   PID  %CPU %MEM       VSZ       RSS Name");
         outputStream.write(System.lineSeparator());

@@ -51,6 +51,8 @@ public class TanimotoDistanceFeatures implements FeatureCreator {
     private int feature_size;
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
+    int min_quartil=1;
+    int max_quartil=99;
 
     public TanimotoDistanceFeatures(Scored<FingerprintCandidate>[] rankedCandidates,Scored<FingerprintCandidate>[] rankedCandidates_filtered,int... distances){
 
@@ -67,16 +69,26 @@ public class TanimotoDistanceFeatures implements FeatureCreator {
     }
 
     @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
+    }
+
+    @Override
     public double[] computeFeatures(@Nullable ParameterStore ignored) {
         double[] scores =  new double[feature_size];
 
         int pos = 0;
 
         for (int j = 0; j < distances.length; j++) {
-            int additional_shift=0;
-            while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
-                additional_shift+=1;
-            }
+            //   int additional_shift=0;
+            // while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
+            //   additional_shift+=1;
+            //}
 
             scores[pos++] = rankedCandidates_filtered[0].getCandidate().getFingerprint().tanimoto(rankedCandidates_filtered[distances[j]].getCandidate().getFingerprint());
         }
@@ -88,6 +100,16 @@ public class TanimotoDistanceFeatures implements FeatureCreator {
     @Override
     public int getFeatureSize() {
         return distances.length;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+        max_quartil=quartil;
     }
 
     @Override

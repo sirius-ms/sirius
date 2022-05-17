@@ -22,10 +22,7 @@ package de.unijena.bioinf.model.lcms;
 
 import com.google.common.collect.Range;
 
-import java.util.HashSet;
-import java.util.NavigableSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public interface ChromatographicPeak {
 
@@ -36,7 +33,7 @@ public interface ChromatographicPeak {
     public long getRetentionTimeAt(int k);
     public int getScanNumberAt(int k);
     public Range<Long> getRetentionTime();
-    public NavigableSet<Segment> getSegments();
+    public NavigableMap<Integer, Segment> getSegments();
     public ScanPoint getScanPointAt(int k);
 
     default public boolean samePeak(ChromatographicPeak other) {
@@ -49,14 +46,18 @@ public interface ChromatographicPeak {
 
     default public ScanPoint getApexPeak() {
         ScanPoint apex = null;
-        for (Segment s : getSegments()) {
-            ScanPoint p = getScanPointAt(s.apex);
+        for (int apexId : getSegments().keySet()) {
+            ScanPoint p = getScanPointAt(apexId);
             if (apex==null || p.getIntensity()>apex.getIntensity()) {
                 apex = p;
             }
         }
         return apex;
     }
+
+    public int findClosestIndexByRt(long rt);
+
+    public Optional<Segment> getSegmentWithApexId(int apexId);
 
     public ScanPoint getScanPointForScanId(int scanId);
     public default ScanPoint getRightEdge() {
@@ -71,7 +72,9 @@ public interface ChromatographicPeak {
      * @return index of the maximum
      */
     public default Optional<Segment> getSegmentForScanId(int scanId) {
-        for (Segment s : getSegments()) {
+        // in theory we can improve the worst-case runtime here
+        // but I doubt that it will be faster in average
+        for (Segment s : getSegments().values()) {
             if (scanId >= s.getStartScanNumber() && scanId <= s.getEndScanNumber())
                 return Optional.of(s);
         }
@@ -91,6 +94,7 @@ public interface ChromatographicPeak {
         return new MutableChromatographicPeak(this);
     }
 
+    /*
     public default Segment createSegmentFromIndizes(int from, int toInclusive) {
         double intens = 0d; int apx=0;
         for (int i=from; i <= toInclusive; ++i) {
@@ -101,6 +105,8 @@ public interface ChromatographicPeak {
         }
         return new Segment(this, from,apx, toInclusive);
     }
+
+     */
 
     default Set<Integer> scanNumbers() {
         final HashSet<Integer> set = new HashSet<>();
@@ -115,6 +121,19 @@ public interface ChromatographicPeak {
         protected final ChromatographicPeak peak;
         protected final int startIndex, endIndex, apex;
         protected final int fwhmStart, fwhmEnd;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Segment segment = (Segment) o;
+            return apex == segment.apex && peak.equals(segment.peak);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(peak, apex);
+        }
 
         Segment(ChromatographicPeak peak, int startIndex, int apex, int endIndex) {
             this.peak = peak;
@@ -142,7 +161,7 @@ public interface ChromatographicPeak {
         }
 
         public String toString() {
-            return "Segment(" + peak.getScanNumberAt(startIndex) + " ... " + peak.getScanNumberAt(endIndex) + "), " + (endIndex-startIndex+1) + " spans from " + (retentiomTimeSpan().lowerEndpoint()/60000d) + " .. " + (retentiomTimeSpan().upperEndpoint()/60000d)  +  " min over " + retentionTimeWidth()/1000d + " seconds.";
+            return "Segment(" + peak.getScanNumberAt(startIndex) + " ... " + peak.getScanNumberAt(endIndex) + "), apex = " + peak.getScanNumberAt(apex)+  ", " + (endIndex-startIndex+1) + " spans from " + (retentionTimeSpan().lowerEndpoint()/60000d) + " .. " + (retentionTimeSpan().upperEndpoint()/60000d)  +  " min over " + retentionTimeWidth()/1000d + " seconds.";
         }
 
         public long fwhm() {
@@ -165,6 +184,21 @@ public interface ChromatographicPeak {
 
         public int getFwhmEndIndex() {
             return fwhmEnd;
+        }
+
+        public Range<Integer> calculateFWHMMinPeaks(double threshold, int minPeaks) {
+            Range<Integer> range = calculateFWHM(threshold);
+            int a = range.lowerEndpoint(), b = range.upperEndpoint();
+            if (b-a+1 >= minPeaks) return range;
+            // extend range until it reaches minPeaks
+            while (b-a+1 < minPeaks) {
+                double intLeft = (a > startIndex) ? peak.getIntensityAt(a-1) : Double.NEGATIVE_INFINITY;
+                double intRight = (b < endIndex) ? peak.getIntensityAt(b+1) : Double.NEGATIVE_INFINITY;
+                if (Double.isFinite(intLeft) && intLeft>intRight) --a;
+                else if (Double.isFinite(intRight)) ++b;
+                else break;
+            }
+            return Range.closed(a,b);
         }
 
         public Range<Integer> calculateFWHM(double threshold) {
@@ -213,7 +247,7 @@ public interface ChromatographicPeak {
             return peak.getRetentionTimeAt(endIndex)-peak.getRetentionTimeAt(startIndex);
         }
 
-        public Range<Long> retentiomTimeSpan() {
+        public Range<Long> retentionTimeSpan() {
             return Range.closed(peak.getRetentionTimeAt(startIndex), peak.getRetentionTimeAt(endIndex));
         }
 

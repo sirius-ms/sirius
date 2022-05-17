@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  * Created by Marcus Ludwig on 09.03.16.
  */
 public class CombinedFeatureCreator implements FeatureCreator {
-    public List<FeatureCreator> featureCreators;
+    public ArrayList<FeatureCreator> featureCreators;
     protected int featureCount;
     protected double[] computed_features;
 
@@ -47,7 +47,7 @@ public class CombinedFeatureCreator implements FeatureCreator {
             this(Arrays.stream(featureCreators).collect(Collectors.toList()));
     }
 
-    private CombinedFeatureCreator(List<FeatureCreator> featureCreators){
+    private CombinedFeatureCreator(ArrayList<FeatureCreator> featureCreators){
         this.featureCreators = featureCreators;
         this.featureCount = featureCreators.stream().mapToInt(FeatureCreator::getFeatureSize).sum();
     }
@@ -57,6 +57,16 @@ public class CombinedFeatureCreator implements FeatureCreator {
 
     @Override
     public int weight_direction() {
+        return 0;
+    }
+
+    @Override
+    public int min_quartil() {
+        return 0;
+    }
+
+    @Override
+    public int max_quartil() {
         return 0;
     }
 
@@ -74,6 +84,16 @@ public class CombinedFeatureCreator implements FeatureCreator {
     @Override
     public int getFeatureSize() {
         return featureCount;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+
     }
 
     @Override

@@ -27,6 +27,7 @@ import org.xml.sax.InputSource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 
 public class MzXmlExperimentParser extends AbstractMzParser {
@@ -34,7 +35,7 @@ public class MzXmlExperimentParser extends AbstractMzParser {
     protected BufferedReader currentSource;
 
     @Override
-    protected boolean setNewSource(BufferedReader sourceReader, URL sourceURL) {
+    protected boolean setNewSource(BufferedReader sourceReader, URI source) {
         if (currentSource == null) {
             if (sourceReader == null) {
                 return false;
@@ -50,8 +51,8 @@ public class MzXmlExperimentParser extends AbstractMzParser {
     }
 
     @Override
-    protected LCMSRun parseToLCMSRun(BufferedReader sourceReader, URL sourceURL) throws IOException {
+    protected LCMSRun parseToLCMSRun(BufferedReader sourceReader, URI source) throws IOException {
         final MzXMLParser parser = new MzXMLParser();
-        return parser.parse(new DataSource(sourceURL), new InputSource(currentSource), inMemoryStorage);
+        return parser.parse(new DataSource(source), new InputSource(currentSource), inMemoryStorage);
     }
 }

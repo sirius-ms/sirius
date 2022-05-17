@@ -62,6 +62,9 @@ public enum PredictorType {
     public int toCharge(){
         return positive ? 1 :-1;
     }
+    public String toChargeString(){
+        return positive ? "pos" :"neg";
+    }
 
     public String toBitsAsString() {
         return String.valueOf(toBits());

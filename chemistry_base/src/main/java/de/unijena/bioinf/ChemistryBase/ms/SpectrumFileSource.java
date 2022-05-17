@@ -20,10 +20,10 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import java.net.URL;
+import java.net.URI;
 
 public class SpectrumFileSource extends SourceLocation {
-    public SpectrumFileSource(URL value) {
+    public SpectrumFileSource(URI value) {
         super(value);
     }
 }

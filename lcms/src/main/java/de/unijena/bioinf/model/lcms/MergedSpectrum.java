@@ -36,6 +36,7 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
     protected List<Scan> scans;
     protected double noiseLevel;
     protected double dotProduct, cosine;
+    protected double tic = Double.NaN;
 
     public MergedSpectrum(Scan scan, Spectrum<? extends Peak> spectrum, Precursor precursor, double noiseLevel) {
         super(new ArrayList<>());
@@ -75,6 +76,7 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
     public void applyNoiseFiltering() {
         int min = (int)Math.floor(scans.size()*0.2);
         this.peaks.removeIf(x->x.getIntensity()<noiseLevel || x.getSourcePeaks().length < min);
+        tic = Double.NaN;
     }
 
     public double getNoiseLevel() {
@@ -83,6 +85,7 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
 
     public void setNoiseLevel(double noiseLevel) {
         this.noiseLevel = noiseLevel;
+        tic = Double.NaN;
     }
 
     public List<Scan> getScans() {
@@ -90,7 +93,9 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
     }
 
     public double totalTic() {
-        return Spectrums.calculateTIC(this, Range.closed(0d,precursor.getMass()-20), noiseLevel);
+        if (Double.isFinite(tic)) return tic;
+        tic = Spectrums.calculateTIC(this, Range.closed(0d,precursor.getMass()-20), noiseLevel);
+        return tic;
     }
 
     public double getNorm() {

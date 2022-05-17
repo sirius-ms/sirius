@@ -20,20 +20,22 @@
 
 package de.unijena.bioinf.model.lcms;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.lcms.ionidentity.AdductMassDifference;
 
 public class CorrelationGroup {
-    protected ChromatographicPeak left, right;
+    protected MutableChromatographicPeak left, right;
     protected ChromatographicPeak.Segment leftSegment, rightSegment;
-    protected int start, end;
+    protected int startScanNumber, endScanNumber, length;
     protected double correlation, kl, cosine;
 
     protected String annotation;
 
     // for adduct types
-    protected PrecursorIonType leftType, rightType;
+    protected AdductMassDifference adductAssignment;
 
-    public CorrelationGroup(ChromatographicPeak left, ChromatographicPeak right, ChromatographicPeak.Segment leftSegment, ChromatographicPeak.Segment rightSegment, int start, int end, double correlation, double kl, double cosine) {
+    public double score;
+
+    public CorrelationGroup(MutableChromatographicPeak left, MutableChromatographicPeak right, ChromatographicPeak.Segment leftSegment, ChromatographicPeak.Segment rightSegment, int startScanNumber, int endScanNumber, int length, double correlation, double kl, double cosine, double score) {
         this.left = left;
         this.right = right;
         this.leftSegment = leftSegment;
@@ -41,8 +43,17 @@ public class CorrelationGroup {
         this.correlation = correlation;
         this.kl = kl;
         this.cosine = cosine;
-        this.start = start;
-        this.end = end;
+        this.startScanNumber = startScanNumber;
+        this.endScanNumber = endScanNumber;
+        this.length = length;
+        this.score = score;
+    }
+
+    public int getStartScanNumber() {
+        return startScanNumber;
+    }
+    public int getEndScanNumber() {
+        return endScanNumber;
     }
 
     public double getCosine() {
@@ -53,11 +64,11 @@ public class CorrelationGroup {
         return kl;
     }
 
-    public ChromatographicPeak getLeft() {
+    public MutableChromatographicPeak getLeft() {
         return left;
     }
 
-    public ChromatographicPeak getRight() {
+    public MutableChromatographicPeak getRight() {
         return right;
     }
 
@@ -70,7 +81,7 @@ public class CorrelationGroup {
     }
 
     public int getNumberOfCorrelatedPeaks() {
-        return end-start+1;
+        return length;
     }
 
     public double getCorrelation() {
@@ -78,7 +89,7 @@ public class CorrelationGroup {
     }
 
     public CorrelationGroup invert() {
-        return new CorrelationGroup(right,left,rightSegment,leftSegment,start,end, correlation,kl,cosine);
+        return new CorrelationGroup(right,left,rightSegment,leftSegment,startScanNumber,endScanNumber, length, correlation,kl,cosine, score);
     }
 
     public String getAnnotation() {
@@ -89,24 +100,22 @@ public class CorrelationGroup {
         this.annotation = annotation;
     }
 
-    public PrecursorIonType getLeftType() {
-        return leftType;
+    public AdductMassDifference getAdductAssignment() {
+        return adductAssignment;
     }
 
-    public void setLeftType(PrecursorIonType leftType) {
-        this.leftType = leftType;
-    }
-
-    public PrecursorIonType getRightType() {
-        return rightType;
-    }
-
-    public void setRightType(PrecursorIonType rightType) {
-        this.rightType = rightType;
+    public void setAdductAssignment(AdductMassDifference adductAssignment) {
+        this.adductAssignment = adductAssignment;
     }
 
     @Override
     public String toString() {
         return getNumberOfCorrelatedPeaks() + " peaks with correlation = " + correlation;
+    }
+
+    public CorrelationGroup ensureLargeToSmall() {
+        if (leftSegment.getStartScanNumber()>= rightSegment.getStartScanNumber() && leftSegment.getEndScanNumber() <= rightSegment.getEndScanNumber()) {
+            return invert();
+        } else return this;
     }
 }

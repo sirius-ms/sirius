@@ -37,6 +37,8 @@ import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 public class FptLengthDiffFeatures implements FeatureCreator {
 
     Scored<FingerprintCandidate>[] ranked_candidates;
+    int min_quartil=1;
+    int max_quartil=99;
 
     public FptLengthDiffFeatures(Scored<FingerprintCandidate>[] candidates) {
         ranked_candidates = candidates;
@@ -45,6 +47,16 @@ public class FptLengthDiffFeatures implements FeatureCreator {
     @Override
     public int weight_direction() {
         return 0;
+    }
+
+    @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
     }
 
     @Override
@@ -58,6 +70,16 @@ public class FptLengthDiffFeatures implements FeatureCreator {
     @Override
     public int getFeatureSize() {
         return 1;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+        max_quartil=quartil;
     }
 
     @Override

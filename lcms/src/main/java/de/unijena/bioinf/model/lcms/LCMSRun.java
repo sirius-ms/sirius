@@ -49,10 +49,7 @@ public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
         this.processings = EnumSet.noneOf(MsDataProcessing.class);
         this.scans = new TreeMap<>();
         this.annotations = new Annotated.Annotations();
-        String name = new File(source.getUrl().getFile()).getName();
-        //int li = name.lastIndexOf('.');
-        //if (li>=0) name = name.substring(0,li);
-        this.identifier = name;
+        this.identifier = new File(source.getURI()).getName();
     }
 
     public MsDataSourceReference getReference() {

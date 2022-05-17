@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ShortBuffer;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -474,6 +475,11 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
     public short[] copyToBuffer() {
         return buffer().clone();
     }
+
+    public void copyToBuffer(ShortBuffer buffer) {
+        buffer.put(buffer());
+    }
+
 
     /**
      * a formula is subtractable from another formula, if for each element in the

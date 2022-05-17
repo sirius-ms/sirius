@@ -24,8 +24,8 @@ public interface FingerprintData<F extends FingerprintVersion> {
     MaskedFingerprintVersion getFingerprintVersion();
     F getBaseFingerprintVersion();
 
-    default boolean compatible(FingerprintData<F> other){
-        return getFingerprintVersion().compatible(other.getFingerprintVersion())
-                && getBaseFingerprintVersion().compatible(other.getBaseFingerprintVersion());
+    default boolean identical(FingerprintData<F> other){
+        return getFingerprintVersion().identical(other.getFingerprintVersion())
+                && getBaseFingerprintVersion().identical(other.getBaseFingerprintVersion());
     }
 }

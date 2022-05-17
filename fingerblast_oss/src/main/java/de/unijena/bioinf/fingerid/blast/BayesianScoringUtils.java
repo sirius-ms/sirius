@@ -20,10 +20,13 @@
 
 package de.unijena.bioinf.fingerid.blast;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.exceptions.InsufficientDataException;
 import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.utils.PrimsSpanningTree;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
@@ -36,6 +39,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 public class BayesianScoringUtils {
@@ -93,13 +98,15 @@ public class BayesianScoringUtils {
 
     private static final int DEFAULT_MIN_NUM_INFORMATIVE_PROPERTIES_MF_SPECIFIC_SCORING = 10; //sanity check, usually the number of informative properties should be much higher. 0 informative properties will result in Platt scoring. Hoever, it is possible that all structure candidates are super similar and hence, can only be differentiated by a small number of properties
 
+    private final JobManager jobManager;
+
 
     /**
      * these transformations are used in case there are not enough training examples for a specific molecular formula. Hopefully these transformation result in similar structures which are useful to train scoring and tree topology
      */
     private final Set<MolecularFormula> biotransformations;
 
-    private BayesianScoringUtils(MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, Set<MolecularFormula> biotransformations, int minNumStructuresTopologyMfSpecificScoring, int minNumStructuresTopologySameMf, int minNumStructuresTopologyIncludingBiotransformations, int minNumInformativePropertiesMfSpecificScoring, boolean useCorrelationScoring) {
+    private BayesianScoringUtils(MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, Set<MolecularFormula> biotransformations, int minNumStructuresTopologyMfSpecificScoring, int minNumStructuresTopologySameMf, int minNumStructuresTopologyIncludingBiotransformations, int minNumInformativePropertiesMfSpecificScoring, boolean useCorrelationScoring, JobManager jobManager) {
         this.maskedFingerprintVersion = maskedFingerprintVersion;
         this.trainingData = trainingData;
         this.biotransformations = biotransformations;
@@ -111,16 +118,25 @@ public class BayesianScoringUtils {
 
         this.pseudoCount = calculatePseudoCount(trainingData.predictionPerformances);
         this.useCorrelationScoring = useCorrelationScoring;
+
+        this.jobManager = jobManager;
     }
 
     public static BayesianScoringUtils getInstance(MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, boolean useCorrelationScoring) {
+        return getInstance(maskedFingerprintVersion, trainingData, useCorrelationScoring, SiriusJobs.getGlobalJobManager());
+    }
+
+    public static BayesianScoringUtils getInstance(MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, boolean useCorrelationScoring, JobManager jobManager) {
         return new BayesianScoringUtils(maskedFingerprintVersion, trainingData, Arrays.stream(bioTransformationsBelow100).map(MolecularFormula::parseOrThrow).collect(Collectors.toSet()),
-                DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_MF_SPECIFIC_SCORING, DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_SAME_MF, DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_INCLUDING_BIOTRANSFORMATIONS, DEFAULT_MIN_NUM_INFORMATIVE_PROPERTIES_MF_SPECIFIC_SCORING, useCorrelationScoring);
+                DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_MF_SPECIFIC_SCORING, DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_SAME_MF, DEFAULT_MIN_NUM_STRUCTURES_TOPOLOGY_INCLUDING_BIOTRANSFORMATIONS, DEFAULT_MIN_NUM_INFORMATIVE_PROPERTIES_MF_SPECIFIC_SCORING, useCorrelationScoring, jobManager);
     }
 
     public static BayesianScoringUtils getInstance(MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, int minNumStructuresTopologyMfSpecificScoring, int minNumStructuresTopologySameMf, int minNumStructuresTopologyWithBiotransformations, int minNumInformativePropertiesMfSpecificScoring, boolean useCorrelationScoring) {
+        return getInstance(maskedFingerprintVersion, trainingData, minNumStructuresTopologyMfSpecificScoring, minNumStructuresTopologySameMf, minNumStructuresTopologyWithBiotransformations, minNumInformativePropertiesMfSpecificScoring, useCorrelationScoring, SiriusJobs.getGlobalJobManager());
+    }
+    public static BayesianScoringUtils getInstance(MaskedFingerprintVersion maskedFingerprintVersion, BayesnetScoringTrainingData trainingData, int minNumStructuresTopologyMfSpecificScoring, int minNumStructuresTopologySameMf, int minNumStructuresTopologyWithBiotransformations, int minNumInformativePropertiesMfSpecificScoring, boolean useCorrelationScoring, JobManager jobManager) {
         return new BayesianScoringUtils(maskedFingerprintVersion, trainingData, Arrays.stream(bioTransformationsBelow100).map(MolecularFormula::parseOrThrow).collect(Collectors.toSet()),
-                minNumStructuresTopologyMfSpecificScoring, minNumStructuresTopologySameMf, minNumStructuresTopologyWithBiotransformations, minNumInformativePropertiesMfSpecificScoring, useCorrelationScoring);
+                minNumStructuresTopologyMfSpecificScoring, minNumStructuresTopologySameMf, minNumStructuresTopologyWithBiotransformations, minNumInformativePropertiesMfSpecificScoring, useCorrelationScoring, jobManager);
     }
 
     public static double calculatePseudoCount(PredictionPerformance[] performances) {
@@ -200,18 +216,39 @@ public class BayesianScoringUtils {
 
 
     /**
-     * Computes the Bayesian Network Scoring specific for this molecular formula
+     * Computes the Bayesian Network Scoring specific for this molecular formula. Use createScoringComputationJob instead which allows parallelization
      * @param formula for which the tree will be computed
      * @return BayesnetScoring with Covariance Tree
      * @throws ChemicalDatabaseException if a db exceptions happens
      * @throws InsufficientDataException  if there are not enough candidates in the Database to compute the scoring
      */
+    @Deprecated
     public BayesnetScoring computeScoring(MolecularFormula formula, @NotNull AbstractChemicalDatabase chemdb) throws InsufficientDataException, ChemicalDatabaseException {
         //compute tree edges (relative indices)
         List<int[]> treeStructure = computeTreeTopology(formula, minNumInformativePropertiesMfSpecificScoring, chemdb);
         if (treeStructure.size() < 3)
             throw new InsufficientDataException("Tree has less than 3 nodes.");
         return estimateScoring(formula, treeStructure);
+    }
+
+    /**
+     * Computes the Bayesian Network Scoring specific for this molecular formula
+     * @param formula for which the tree will be computed
+     * @return BayesnetScoring with Covariance Tree
+     * @throws ChemicalDatabaseException if a db exceptions happens
+     * @throws InsufficientDataException  if there are not enough candidates in the Database to compute the scoring
+     */
+    public MasterJJob<BayesnetScoring> createScoringComputationJob(MolecularFormula formula, @NotNull AbstractChemicalDatabase chemdb, int numThreads) throws InsufficientDataException, ChemicalDatabaseException {
+        return new BasicMasterJJob<BayesnetScoring>(JJob.JobType.CPU) {
+            @Override
+            protected BayesnetScoring compute() throws Exception {
+                //compute tree edges (relative indices)
+                List<int[]> treeStructure = computeTreeTopologyParallel(formula, minNumInformativePropertiesMfSpecificScoring, chemdb, this, numThreads);
+                if (treeStructure.size() < 3)
+                    throw new InsufficientDataException("Tree has less than 3 nodes.");
+                return estimateScoring(formula, treeStructure);
+            }
+        };
     }
 
     @Deprecated
@@ -230,14 +267,14 @@ public class BayesianScoringUtils {
         //1. if enough data, compute tree topology solely based on candidates with same MF
         if (isSufficientDataToCreateTreeTopology(candidates)) {
             try {
-                return computeTreeTopologyOrThrow(candidates, minNumInformativeProperties, formula);
+                return computeTreeTopologyOrThrow(candidates, minNumInformativeProperties);
             } catch (InsufficientDataException e) {
-                Log.info("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula:  "+formula, e);
+                Log.info("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula '" + formula + "'. Trying with additional biotransformations.");
             }
 
         }
 
-        //2. if it is was insufficient data, compute tree topology based on candidates with same MF or biotransformations
+        //2. if it was insufficient data, compute tree topology based on candidates with same MF or biotransformations
         if (USE_BIOTRANSFORMATIONS_FOR_TREE_TOPOLOGY && candidates.size()>=minNumStructuresTopologySameMf) {
             startTime = System.currentTimeMillis();
             Set<MolecularFormula> transformationMFs = applyBioTransformations(formula, false);
@@ -253,7 +290,51 @@ public class BayesianScoringUtils {
             }
             try {
                 List<FingerprintCandidate> combined = combine(candidates, transformationCandidates, 1);
-                return computeTreeTopologyOrThrow(combined, minNumInformativeProperties, formula);
+                return computeTreeTopologyOrThrow(combined, minNumInformativeProperties);
+            } catch (InsufficientDataException e) {
+                throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula or biotransformations: "+formula, e);
+            }
+
+
+        } else {
+            throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula "+formula);
+        }
+    }
+
+    private List<int[]> computeTreeTopologyParallel(MolecularFormula formula, int minNumInformativeProperties, @NotNull AbstractChemicalDatabase chemdb, MasterJJob masterJJob, int numThreads) throws ChemicalDatabaseException, InsufficientDataException, ExecutionException {
+        long startTime = System.currentTimeMillis();
+        List<FingerprintCandidate> candidates = new ArrayList<>();
+        masterJJob.submitJob(new LookupStructuresAndFingerprintsByFormulaJob(chemdb, formula, candidates)).awaitResult();
+        long endTime = System.currentTimeMillis();
+        Log.debug("retrieving candidates took "+(endTime-startTime)/1000+" seconds");
+
+        //1. if enough data, compute tree topology solely based on candidates with same MF
+        if (isSufficientDataToCreateTreeTopology(candidates)) {
+            try {
+                return computeTreeTopologyOrThrowParallel(candidates, minNumInformativeProperties, masterJJob, numThreads);
+            } catch (InsufficientDataException e) {
+                Log.info("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula '" + formula + "'. Trying with additional biotransformations.");
+            }
+
+        }
+
+        //2. if it is was insufficient data, compute tree topology based on candidates with same MF or biotransformations
+        if (USE_BIOTRANSFORMATIONS_FOR_TREE_TOPOLOGY && candidates.size()>=minNumStructuresTopologySameMf) {
+            startTime = System.currentTimeMillis();
+            Set<MolecularFormula> transformationMFs = applyBioTransformations(formula, false);
+            List<FingerprintCandidate> transformationCandidates = new ArrayList<>();
+            for (MolecularFormula transformationMF : transformationMFs) {
+                masterJJob.submitJob(new LookupStructuresAndFingerprintsByFormulaJob(chemdb, transformationMF, transformationCandidates)).awaitResult();
+            }
+            endTime = System.currentTimeMillis();
+            Log.debug("retrieving candidates with biotransformations took "+(endTime-startTime)/1000+" seconds");
+
+            if (!isSufficientDataToCreateTreeTopology(candidates, transformationCandidates)){
+                throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology for molecular formula "+formula);
+            }
+            try {
+                List<FingerprintCandidate> combined = combine(candidates, transformationCandidates, 1);
+                return computeTreeTopologyOrThrowParallel(combined, minNumInformativeProperties, masterJJob, numThreads);
             } catch (InsufficientDataException e) {
                 throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula or biotransformations: "+formula, e);
             }
@@ -265,7 +346,7 @@ public class BayesianScoringUtils {
     }
 
 
-//    private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = 35132;
+    //    private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = 35132;
     private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = DataSource.BIO.flag();
 
     /**
@@ -279,7 +360,7 @@ public class BayesianScoringUtils {
         long endTime = System.currentTimeMillis();
         Log.debug("retrieving "+candidates.size()+" structures took " + (endTime - startTime) / 1000 + " seconds");
         try {
-            return computeTreeTopologyOrThrow(candidates, MIN_NUM_INFORMATIVE_PROPERTIES_DEFAULT_SCORING, MolecularFormula.emptyFormula());
+            return computeTreeTopologyOrThrow(candidates, MIN_NUM_INFORMATIVE_PROPERTIES_DEFAULT_SCORING);
         } catch (InsufficientDataException e) {
             throw new RuntimeException("Insufficient data to compute topology of default Bayesian Network Scoring", e);
         }
@@ -292,7 +373,7 @@ public class BayesianScoringUtils {
      * @return list of edges with relative fingerprint indices
      * @throws ChemicalDatabaseException
      */
-    private List<int[]> computeTreeTopologyOrThrow(List<FingerprintCandidate>  candidates, int minNumInformativeProperties, MolecularFormula formula) throws InsufficientDataException {
+    private List<int[]> computeTreeTopologyOrThrow(List<FingerprintCandidate>  candidates, int minNumInformativeProperties) throws InsufficientDataException {
         if (candidates.size()==0) throw new InsufficientDataException("No structure with fingerprints provided");
 
         long startTime = System.currentTimeMillis();
@@ -308,29 +389,45 @@ public class BayesianScoringUtils {
         List<int[]> edges = treeEdgesAndRoot.edges;
         edges = mapPropertyIndex(edges, mutualInformationAndIndices.usedProperties);
 
-
         //don't append properties to tree which are not informative. This are added as 'unconnected' nodes in BayesnetScoring anyways
-//        final boolean appendUnusedPropertiesToRoot = false;
-//        if (appendUnusedPropertiesToRoot) {
-//            int root =  mutualInformationAndIndices.usedProperties[treeEdgesAndRoot.root];
-//            int[] usedProperties = mutualInformationAndIndices.usedProperties; //are sorted
-//            int idx = 0;
-//            for (int relPropIdx = 0; relPropIdx < maskedFingerprintVersion.size(); relPropIdx++) {
-//                if (idx<usedProperties.length && usedProperties[idx]==relPropIdx) {
-//                    ++idx;
-//                } else {
-//                    //not used so far
-//                    edges.add(new int[]{root, relPropIdx});
-//
-//                }
-//
-//            }
-//        }
 
         endTime = System.currentTimeMillis();
         Log.debug("computing spanning tree  took "+(endTime-startTime)/1000+" seconds");
         return edges;
 
+    }
+
+    /**
+     *
+     * @param candidates
+     * @param minNumInformativeProperties the candidate list needs at least this number of informative properties for a tree topology to be computed.
+     * @return list of edges with relative fingerprint indices
+     * @throws ChemicalDatabaseException
+     */
+    private List<int[]> computeTreeTopologyOrThrowParallel(List<FingerprintCandidate>  candidates, int minNumInformativeProperties, MasterJJob masterJJob, int numThreads) throws InsufficientDataException, ExecutionException {
+        if (candidates.size()==0) throw new InsufficientDataException("No structure with fingerprints provided");
+
+        long startTime = System.currentTimeMillis();
+
+        List<Fingerprint> maskedFingerprints = candidates.stream().map(c-> maskedFingerprintVersion.mask(c.getFingerprint())).collect(Collectors.toList());
+
+        MasterJJob<MutualInformationAndIndices> mutualInfoJJob = createMutualInfoJJob(maskedFingerprints, 1.0, minNumInformativeProperties, numThreads);
+        MutualInformationAndIndices mutualInformationAndIndices = masterJJob.submitSubJob(mutualInfoJJob).awaitResult();
+
+        long endTime = System.currentTimeMillis();
+        Log.debug("computing mutual info took "+(endTime-startTime)/1000+" seconds");
+        startTime = endTime;
+
+        //edges are absolute indices
+        TreeEdgesAndRoot treeEdgesAndRoot = computeSpanningTree(mutualInformationAndIndices.mutualInfo, true);
+        List<int[]> edges = treeEdgesAndRoot.edges;
+        edges = mapPropertyIndex(edges, mutualInformationAndIndices.usedProperties);
+
+        //don't append properties to tree which are not informative. This are added as 'unconnected' nodes in BayesnetScoring anyways
+
+        endTime = System.currentTimeMillis();
+        Log.debug("computing spanning tree  took "+(endTime-startTime)/1000+" seconds");
+        return edges;
     }
 
     private List<int[]> mapPropertyIndex(List<int[]> edges, int[] usedProperties) {
@@ -438,24 +535,30 @@ public class BayesianScoringUtils {
 
 
     private List<FingerprintCandidate> getFingerprints(long mask, ChemicalDatabase sqlChemDB) throws ChemicalDatabaseException {
-        final Set<String> keys;
+        final List<FingerprintCandidate> keys;
         try {
             keys = sqlChemDB.useConnection(connection -> {
-                            final Set<String> k = new HashSet<>();
-                            try (PreparedStatement st = connection.connection.prepareStatement(String.format("SELECT inchi_key_1, inchi FROM structures  WHERE flags&%d>0", mask))) {
-                                try (ResultSet set = st.executeQuery()) {
-                                    while (set.next()) k.add(set.getString(1));
-                                }
-                            }
-                            return k;
-                        });
-            Log.debug("Number of structures for estimating Bayesian scoring tree topology: "+keys.size());
+                connection.connection.setNetworkTimeout(Runnable::run,300000);
+                final List<FingerprintCandidate> k = new ArrayList<>();
+                try (PreparedStatement st = connection.connection.prepareStatement(String.format("SELECT s.inchi_key_1, s.inchi, f.fingerprint FROM structures s INNER JOIN fingerprints f ON s.inchi_key_1=f.inchi_key_1 AND s.flags&%d>0 AND f.fp_id=%s", mask, ChemicalDatabase.FINGERPRINT_ID))) {
+                    try (ResultSet set = st.executeQuery()) {
+                        while (set.next()) {
+                            k.add(new FingerprintCandidate(
+                                    InChIs.newInChI(set.getString(1), set.getString(2)),
+                                    ChemicalDatabase.parseFingerprint(set, 3))
+                            );
+                        }
+                    }
+                }
+                return k;
+            });
+            Log.debug("Number of structures for estimating Bayesian scoring tree topology: " + keys.size());
         } catch (IOException | SQLException | InterruptedException e) {
             e.printStackTrace();
             throw new ChemicalDatabaseException(e.getMessage());
         }
 
-        return sqlChemDB.lookupManyFingerprintsByInchis(keys);
+        return keys;
     }
 
 
@@ -522,7 +625,7 @@ public class BayesianScoringUtils {
      * @param maxAllowedImbalance value in [0.5, 1] which indicates how imbalanced a property can be to be assumed as informative. E.g. 0.95 mean the ratio of positive examples is allowed to be between 5% and 95%
      * @return indices of informative properties, relative indices based on maskedFingerprintVersion, and mutualInformation matrix of these informative properties
      */
-    private MutualInformationAndIndices mutualInfoBetweenProperties(List<Fingerprint> fingerprints, double maxAllowedImbalance, int minNumInformativeProperties) throws InsufficientDataException {
+    MutualInformationAndIndices mutualInfoBetweenProperties(List<Fingerprint> fingerprints, double maxAllowedImbalance, int minNumInformativeProperties) throws InsufficientDataException {
         //todo parallelize?
         final int numOfExamples = fingerprints.size();
         final int numOfProperties = fingerprints.get(0).getFingerprintVersion().size();
@@ -574,6 +677,85 @@ public class BayesianScoringUtils {
         return new MutualInformationAndIndices(mutualInfo, informativePropertiesArray);
     }
 
+    /**
+     *
+     * @param fingerprints these are the already masked fingerprints
+     * @param maxAllowedImbalance value in [0.5, 1] which indicates how imbalanced a property can be to be assumed as informative. E.g. 0.95 mean the ratio of positive examples is allowed to be between 5% and 95%
+     * @return indices of informative properties, relative indices based on maskedFingerprintVersion, and mutualInformation matrix of these informative properties
+     */
+    MasterJJob<MutualInformationAndIndices> createMutualInfoJJob(List<Fingerprint> fingerprints, double maxAllowedImbalance, int minNumInformativeProperties, int numThreads) {
+        return new BasicMasterJJob<MutualInformationAndIndices>(JJob.JobType.CPU) {
+            @Override
+            protected MutualInformationAndIndices compute() throws Exception {
+                long start = System.currentTimeMillis();
+                final int numOfExamples = fingerprints.size();
+                final int numOfProperties = fingerprints.get(0).getFingerprintVersion().size();
+                int maxAllowedImbalanceAbsoluteCount = (int)Math.ceil(maxAllowedImbalance*numOfExamples);
+
+                BitSet[] bitSets = new BitSet[numOfProperties];
+
+                for (int i = 0; i < numOfProperties; i++) {
+                    final BitSet bitSet = new BitSet(numOfExamples);
+                    bitSets[i] = bitSet;
+                }
+
+                int fingerprintIdx = 0;
+                for (Fingerprint fingerprint : fingerprints) {
+                    //iterate over active properties
+                    for (FPIter fpIter : fingerprint.presentFingerprints()) {
+                        if (fpIter.isSet()){
+                            //iterator reports absolute indices.
+                            final int relIndex = fingerprint.getFingerprintVersion().getRelativeIndexOf(fpIter.getIndex());
+                            bitSets[relIndex].set(fingerprintIdx);
+                        }
+                    }
+                    ++fingerprintIdx;
+                }
+
+                TIntArrayList informativeProperties = new TIntArrayList();
+                for (int j = 0; j < bitSets.length; j++) {
+                    BitSet property = bitSets[j];
+                    int card = property.cardinality();
+                    if (card!=0 && card!=numOfExamples && card<=maxAllowedImbalanceAbsoluteCount && (numOfExamples-card)<=maxAllowedImbalanceAbsoluteCount){
+                        // properties with all 0 or 1 are never informative
+                        informativeProperties.add(j);
+                    }
+                }
+
+                int[] informativePropertiesArray = informativeProperties.toArray();
+
+                Log.debug(informativePropertiesArray.length+" of "+numOfProperties+" properties are informative");
+                if (informativePropertiesArray.length<minNumInformativeProperties){
+                    throw new InsufficientDataException("to few informative properties: "+informativePropertiesArray.length);
+                }
+
+                BitSet[] selectedProperties = new BitSet[informativePropertiesArray.length];
+                for (int i = 0; i < informativePropertiesArray.length; i++) {
+                    selectedProperties[i] = bitSets[informativePropertiesArray[i]];
+                }
+
+                logDebug("finished processing properties after "+(System.currentTimeMillis()-start));
+
+                double[][] mutualInfo =  mutualInfoParallel(selectedProperties, numOfExamples, this, numThreads);
+                return new MutualInformationAndIndices(mutualInfo, informativePropertiesArray);
+            }
+        };
+    }
+
+    private double[][] mutualInfoParallel(BitSet[] propertyBitSets, int lengthOfBitset, MasterJJob masterJJob, int numThreads) throws ExecutionException {
+        final int numOfProperties = propertyBitSets.length;
+
+        double[] entropy = entropyParallel(propertyBitSets, lengthOfBitset, masterJJob, numThreads);
+        double[][] condEntropyLowerTraiangle = conditionalEntropyRowsParallel(propertyBitSets, lengthOfBitset, masterJJob, numThreads);
+        double[][] mutualInfo = new double[numOfProperties][numOfProperties];
+        for (int i = 0; i < numOfProperties; i++) {
+            for (int j = i; j < numOfProperties; j++) {
+                mutualInfo[i][j] = mutualInfo[j][i] =  entropy[i]-condEntropyLowerTraiangle[j][i];
+            }
+        }
+        return mutualInfo;
+    }
+
 
     private double[][] mutualInfo(BitSet[] propertyBitSets, int lengthOfBitset){
         final int numOfProperties = propertyBitSets.length;
@@ -615,6 +797,45 @@ public class BayesianScoringUtils {
         return entropy;
     }
 
+    private double[] entropyParallel(BitSet[] propertyBitSets, int numOfExamples, MasterJJob masterJJob, int cpuThreads) throws ExecutionException {
+        final int numOfProperties = propertyBitSets.length;
+//        final double l = numOfExamples;
+
+        double[] entropy = new double[numOfProperties];
+        TIntArrayList alwaysSet = new TIntArrayList();
+        TIntArrayList neverSet = new TIntArrayList();
+
+        long start = System.currentTimeMillis();
+
+        List<Integer> allIndices = getListWithAllIntegers(numOfProperties);
+        ConcurrentLinkedQueue<Integer> candidatesQueue = new ConcurrentLinkedQueue<>(allIndices);
+        List<BasicJJob> jobs = new ArrayList<>();
+        for (int i = 0; i < cpuThreads; i++) {
+            EntropyCalculationWorker job = new EntropyCalculationWorker(candidatesQueue, propertyBitSets, entropy, numOfExamples, alwaysSet, neverSet, numOfProperties);
+            jobs.add(job);
+            masterJJob.submitSubJob(job);
+        }
+        masterJJob.logDebug("running "+jobs.size()+" workers to compute entropy");
+
+        for (BasicJJob job : jobs) {
+            job.awaitResult();
+        }
+        masterJJob.logDebug("finished computing edges after "+(System.currentTimeMillis()-start));
+
+        masterJJob.logDebug("warning: contains "+neverSet.size()+ "missing states. properties never set");
+        masterJJob.logDebug("warning: contains "+alwaysSet.size()+"missing states. properties always set");
+        return entropy;
+    }
+
+    @NotNull
+    private List<Integer> getListWithAllIntegers(int numOfProperties) {
+        List<Integer> allIndices = new ArrayList<>(numOfProperties);
+        for (int i = 0; i < numOfProperties; i++) {
+            allIndices.add(i);
+        }
+        return allIndices;
+    }
+
 
     private double[][]  conditionalEntropyRows(BitSet[] propertyBitSets, int numOfExamples){
         final int numOfProperties = propertyBitSets.length;
@@ -652,7 +873,32 @@ public class BayesianScoringUtils {
         return condEntropy;
     }
 
-    private class MutualInformationAndIndices {
+    private double[][]  conditionalEntropyRowsParallel(BitSet[] propertyBitSets, int numOfExamples, MasterJJob masterJJob, int cpuThreads) throws ExecutionException {
+        final int numOfProperties = propertyBitSets.length;
+
+        final double[][] condEntropyTriangle = new double[numOfProperties][numOfProperties];
+
+        long start = System.currentTimeMillis();
+
+        List<Integer> allIndices = getListWithAllIntegers(numOfProperties);
+        ConcurrentLinkedQueue<Integer> candidatesQueue = new ConcurrentLinkedQueue<>(allIndices);
+        List<BasicJJob> jobs = new ArrayList<>();
+        for (int i = 0; i < cpuThreads; i++) {
+            ConditionalEntropyCalculationWorker job = new ConditionalEntropyCalculationWorker(candidatesQueue, propertyBitSets, condEntropyTriangle, numOfExamples, numOfProperties);
+            jobs.add(job);
+            masterJJob.submitSubJob(job);
+        }
+        masterJJob.logDebug("running "+jobs.size()+" workers to compute conditional entropy");
+
+        for (BasicJJob job : jobs) {
+            job.awaitResult();
+        }
+        masterJJob.logDebug("finished computing conditional entropy after "+(System.currentTimeMillis()-start));
+
+        return condEntropyTriangle;
+    }
+
+    protected class MutualInformationAndIndices {
         final double[][] mutualInfo;
         final int[] usedProperties;
 
@@ -672,4 +918,136 @@ public class BayesianScoringUtils {
         }
     }
 
+    protected class EntropyCalculationWorker extends BasicJJob {
+        private final ConcurrentLinkedQueue<Integer> remainingProperties;
+        private final BitSet[] propertyBitSets;
+        private final double[] entropyArray;
+        private final double numOfExamplesDouble;
+        private final TIntArrayList alwaysSet;
+        private final TIntArrayList neverSet;
+
+        protected final int totalNumProperties;
+
+        private EntropyCalculationWorker(ConcurrentLinkedQueue<Integer> remainingProperties, BitSet[] propertyBitSets, double[] entropyArray, double numOfExamplesDouble, TIntArrayList alwaysSet, TIntArrayList neverSet, int totalNumProperties) {
+            this.remainingProperties = remainingProperties;
+            this.propertyBitSets = propertyBitSets;
+            this.entropyArray = entropyArray;
+            this.numOfExamplesDouble = numOfExamplesDouble;
+            this.alwaysSet = alwaysSet;
+            this.neverSet = neverSet;
+            this.totalNumProperties = totalNumProperties;
+        }
+
+
+        @Override
+        protected Object compute() throws Exception {
+            final int propertiesPerPercentagePoint = (int)Math.max(1, Math.floor(totalNumProperties /100d));
+            while (!remainingProperties.isEmpty()){
+                Integer i = remainingProperties.poll();
+                if (i==null) continue;
+
+                double prob_ones = propertyBitSets[i].cardinality();
+                double prob_zeros = numOfExamplesDouble-prob_ones; //assert
+                prob_ones /= numOfExamplesDouble;
+                prob_zeros /= numOfExamplesDouble; //assert
+                if (prob_ones==0d) {
+                    synchronized (neverSet){
+                        neverSet.add(i);
+                    }
+                } else if (prob_zeros==0d) {
+                    synchronized (alwaysSet) {
+                        alwaysSet.add(i);
+                    }
+                }
+
+                entropyArray[i] = -prob_ones*Math.log(prob_ones)-prob_zeros*Math.log(prob_zeros);
+
+
+                int computedIndices = (totalNumProperties - remainingProperties.size());
+                if (computedIndices %propertiesPerPercentagePoint==0 && totalNumProperties >0) {
+                    logDebug(String.format("%d / %d (%d %%)", computedIndices, totalNumProperties, (computedIndices *100)/ totalNumProperties));
+                }
+
+            }
+            return null;
+        }
+    }
+
+    protected class ConditionalEntropyCalculationWorker extends BasicJJob {
+        private final ConcurrentLinkedQueue<Integer> remainingProperties;
+        private final BitSet[] propertyBitSets;
+        private final double[][] condEntropyTriangle;
+        private final int numOfExamples;
+        private final double l;
+
+        protected final int totalNumProperties;
+
+        private ConditionalEntropyCalculationWorker(ConcurrentLinkedQueue<Integer> remainingProperties, BitSet[] propertyBitSets, double[][] condEntropyTriangle, int numOfExamples, int totalNumProperties) {
+            this.remainingProperties = remainingProperties;
+            this.propertyBitSets = propertyBitSets;
+            this.condEntropyTriangle = condEntropyTriangle;
+            this.numOfExamples = numOfExamples;
+            this.l = numOfExamples;
+            this.totalNumProperties = totalNumProperties;
+        }
+
+
+        @Override
+        protected Object compute() throws Exception {
+            final int propertiesPerPercentagePoint = (int)Math.max(1, Math.floor(totalNumProperties /100d));
+            while (!remainingProperties.isEmpty()){
+                Integer i = remainingProperties.poll();
+                if (i==null) continue;
+                for (int j = 0; j <= i; j++) {
+                    final BitSet row1 = propertyBitSets[i];
+                    final BitSet row2 = propertyBitSets[j];
+
+                    final BitSet and = (BitSet)row1.clone();
+                    and.and(row2);
+                    final double p_II = and.cardinality()/ l; //sum(col1.*col2)/l
+
+                    final BitSet notXandY = (BitSet)row2.clone();
+                    notXandY.andNot(row1);
+                    final double p_oI = notXandY.cardinality()/ l; //sum((1.-col1).*col2)/l
+
+                    final BitSet xAndNotY = (BitSet)row1.clone();
+                    xAndNotY.andNot(row2);
+                    final double p_Io = xAndNotY.cardinality()/ l; //sum(col1.*(1.-col2))/l
+
+                    final BitSet notXAndNotY = (BitSet)row1.clone();
+                    notXAndNotY.flip(0, numOfExamples);
+                    notXAndNotY.andNot(row2);
+                    final double p_oo = notXAndNotY.cardinality()/ l;  //sum((1.-col1).*(1.-col2))/l
+
+                    // H(j|i)
+                    condEntropyTriangle[i][j] = (p_II==0.0 ? 0.0 : (p_II*Math.log((p_II+p_Io)/p_II))) + (p_Io==0.0 ? 0.0 : (p_Io*Math.log((p_II+p_Io)/p_Io))) + (p_oI==0.0 ? 0.0 : (p_oI*Math.log((p_oI+p_oo)/p_oI))) + (p_oo==0.0 ? 0.0 : (p_oo*Math.log((p_oI+p_oo)/p_oo)));
+                }
+
+                int computedIndices = (totalNumProperties - remainingProperties.size());
+                if (computedIndices %propertiesPerPercentagePoint==0 && totalNumProperties >0) {
+                    logDebug(String.format("%d / %d (%d %%)", computedIndices, totalNumProperties, (computedIndices *100)/ totalNumProperties));
+                }
+
+            }
+            return null;
+        }
+    }
+
+    protected static class LookupStructuresAndFingerprintsByFormulaJob extends BasicJJob<Object> {
+
+        final AbstractChemicalDatabase chemdb;
+        final MolecularFormula formula;
+        final List<FingerprintCandidate> candidatesListToFill;
+
+        public LookupStructuresAndFingerprintsByFormulaJob(@NotNull AbstractChemicalDatabase chemdb, MolecularFormula formula, List<FingerprintCandidate> candidatesListToFill) {
+            super(JobType.REMOTE);
+            this.chemdb = chemdb;
+            this.formula = formula;
+            this.candidatesListToFill = candidatesListToFill;
+        }
+        @Override
+        protected Object compute() throws Exception {
+            return chemdb.lookupStructuresAndFingerprintsByFormula(formula, candidatesListToFill);
+        }
+    }
 }

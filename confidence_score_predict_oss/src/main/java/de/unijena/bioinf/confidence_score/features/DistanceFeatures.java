@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  *
  *
-computes distance features, max distance is variable, so are scorers. Top scoring hit is FIXED at this point!
+ computes distance features, max distance is variable, so are scorers. Top scoring hit is FIXED at this point!
 
 
  */
@@ -48,6 +48,8 @@ computes distance features, max distance is variable, so are scorers. Top scorin
 public class DistanceFeatures implements FeatureCreator {
     private int[] distances;
     private int feature_size;
+    int min_quartil=1;
+    int max_quartil=99;
     Scored<FingerprintCandidate>[] rankedCandidates;
     Scored<FingerprintCandidate>[] rankedCandidates_filtered;
 
@@ -66,6 +68,16 @@ public class DistanceFeatures implements FeatureCreator {
     }
 
     @Override
+    public int min_quartil() {
+        return min_quartil;
+    }
+
+    @Override
+    public int max_quartil() {
+        return max_quartil;
+    }
+
+    @Override
     public double[] computeFeatures(@Nullable ParameterStore ignored) {
         double[] scores =  new double[feature_size];
 
@@ -73,13 +85,13 @@ public class DistanceFeatures implements FeatureCreator {
         int pos = 0;
         int additional_shift=0;
 
-            for (int j = 0; j < distances.length; j++) {
-                while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
-                    additional_shift+=1;
-                }
+        //   for (int j = 0; j < distances.length; j++) {
+        //     while (rankedCandidates_filtered[distances[j]+additional_shift].getCandidate().getFingerprint().toOneZeroString().equals(rankedCandidates_filtered[0].getCandidate().getFingerprint().toOneZeroString())){
+        //       additional_shift+=1;
+        // }
 
-                scores[pos++] = topHit - rankedCandidates_filtered[distances[j]+additional_shift].getScore();
-            }
+        scores[pos++] = topHit - rankedCandidates_filtered[1].getScore();
+        //}
 
         assert pos == scores.length;
         return scores;
@@ -88,6 +100,16 @@ public class DistanceFeatures implements FeatureCreator {
     @Override
     public int getFeatureSize() {
         return distances.length;
+    }
+
+    @Override
+    public void setMinQuartil(int quartil) {
+        min_quartil=quartil;
+    }
+
+    @Override
+    public void setMaxQuartil(int quartil) {
+        max_quartil=quartil;
     }
 
     @Override

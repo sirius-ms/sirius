@@ -26,10 +26,11 @@ dependencies {
 	//project
     compile project(':fingerid_base_oss')
     compile project(':chemistry_base')
+    compile project(':blob-storage')
     compile project(':io')
 
     // REST
-    compile "org.apache.httpcomponents:httpclient:4.5.1"
+    compile "org.apache.httpcomponents:httpclient:$httpclient_version"
 
 	// external
 //	compile group: 'javax.json', name: 'javax.json-api', version:"$json_version"

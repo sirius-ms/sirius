@@ -23,8 +23,6 @@ package de.unijena.bioinf.fingerid.utils;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
 
-import java.nio.file.Path;
-
 /**
  * All version numbers are directly taken from the build. So there is no more redundant data. Note that version a.b.c-SNAPSHOT lower than a.b.c
  */
@@ -43,16 +41,8 @@ public class FingerIDProperties {
         return fingeridFullVersion().split("[.]")[0];
     }
 
-    public static String fingeridWebHost() {
+    public static String siriusFallbackWebHost() {
         return PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.host");
-    }
-
-    public static String fingeridWebPort() {
-        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.web.port");
-    }
-
-    public static String databaseDate() {
-        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date");
     }
 
     public static String siriusVersion() {
@@ -63,6 +53,9 @@ public class FingerIDProperties {
         return siriusVersion();
     }
 
+    public static String databaseDate() {
+        return PropertyManager.getProperty("de.unijena.bioinf.fingerid.db.date");
+    }
 
     public static String gcsChemDBName() {
         return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.name");
@@ -72,14 +65,15 @@ public class FingerIDProperties {
         return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.flavor", null, "default");
     }
 
-    public static String gcsChemDBBucketName() {
-        return gcsChemDBName() + "_" + databaseDate() + "_" + gcsChemDBFlavor();
+    public static String defaultChemDBBucket(){
+        return PropertyManager.getProperty("de.unijena.bioinf.stores.chemdb.bucket");
     }
-    public static String gcsChemDBCredentials() {
-        return PropertyManager.getProperty("de.unijena.bioinf.chemdb.gcs.credentials");
+    public static String chemDBStorePropertyPrefix(){
+        return "de.unijena.bioinf.stores.chemdb";
     }
 
-    public static Path gcsChemDBCredentialsPath() {
-        return Path.of(System.getProperty("user.home")).resolve(gcsChemDBCredentials());
+    public static String customDBStorePropertyPrefix(){
+        return "de.unijena.bioinf.stores.customdb";
     }
+
 }

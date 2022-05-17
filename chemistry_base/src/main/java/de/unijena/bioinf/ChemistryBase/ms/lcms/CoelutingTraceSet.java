@@ -51,7 +51,7 @@ public class CoelutingTraceSet {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY) @NotNull protected final CompoundReport[] reports;
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public CoelutingTraceSet(@JsonProperty(value="ionTrace", access = JsonProperty.Access.WRITE_ONLY) CompoundTrace trace, @JsonProperty(value="retentionTimes", access = JsonProperty.Access.WRITE_ONLY) long[] retentionTimes, @JsonProperty(value="scanIds", access = JsonProperty.Access.WRITE_ONLY) int[] scanIds, @JsonProperty(value="noiseLevels", access = JsonProperty.Access.WRITE_ONLY) float[] noiselevels, @JsonProperty(value="ms2ScanIds", access = JsonProperty.Access.WRITE_ONLY) int[] ms2Scans, @JsonProperty(value="ms2RetentionTimes", access = JsonProperty.Access.WRITE_ONLY) long[] ms2RetentionTimes, @JsonProperty(value="reports", access = JsonProperty.Access.WRITE_ONLY) CompoundReport[] reports) {
+    public CoelutingTraceSet(@JsonProperty(value="ionTrace", access = JsonProperty.Access.WRITE_ONLY) CompoundTrace trace, @JsonProperty(value="retentionTimes", access = JsonProperty.Access.WRITE_ONLY) long[] retentionTimes, @JsonProperty(value="scanIds", access = JsonProperty.Access.WRITE_ONLY) int[] scanIds, @JsonProperty(value="noiseLevels", access = JsonProperty.Access.WRITE_ONLY) float[] noiselevels, @JsonProperty(value="ms2ScanIds", access = JsonProperty.Access.WRITE_ONLY) int[] ms2Scans, @JsonProperty(value="ms2RetentionTimes", access = JsonProperty.Access.WRITE_ONLY) long[] ms2RetentionTimes/*, @JsonProperty(value="reports", access = JsonProperty.Access.WRITE_ONLY) CompoundReport[] reports*/) {
         this.sampleName = "";
         this.sampleRef = new MsDataSourceReference((URI)null,null,null,null);
         this.ionTrace = trace;
@@ -60,7 +60,7 @@ public class CoelutingTraceSet {
         this.noiseLevels = noiselevels==null ? new float[0] : noiselevels;
         this.ms2ScanIds = ms2Scans==null ? new int[0] : ms2Scans;
         this.ms2RetentionTimes = ms2RetentionTimes==null ? new long[0] : ms2RetentionTimes;
-        this.reports = reports==null ? new CompoundReport[0] : reports;
+        this.reports = null;//reports==null ? new CompoundReport[0] : reports;
     }
 
 

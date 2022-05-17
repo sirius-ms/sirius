@@ -135,7 +135,7 @@ public class ExamplePreparationUtils {
             if (p.size()!=1) throw new IllegalArgumentException("tree file unambiguously specified: "+treePref);
 
             final BufferedReader reader = Files.newBufferedReader(p.get(0));
-            final FTree tree = (new FTJsonReader()).parse(reader, p.get(0).toUri().toURL());
+            final FTree tree = (new FTJsonReader()).parse(reader, p.get(0).toUri());
             if (!tree.getAnnotationOrThrow(Score.class).asMap().containsKey("total")) throw new NoSuchElementException("total score");
             tree.setTreeWeight(tree.getAnnotationOrThrow(Score.class).get("total"));
             trees.add(tree);

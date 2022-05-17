@@ -22,7 +22,6 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
-import de.unijena.bioinf.projectspace.sirius.FormulaResult;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -30,25 +29,30 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static de.unijena.bioinf.projectspace.sirius.SiriusLocations.SCORES;
+import static de.unijena.bioinf.projectspace.SiriusLocations.SCORES;
 
 public class FormulaScoringSerializer implements ComponentSerializer<FormulaResultId, FormulaResult, FormulaScoring> {
     @Override
     public FormulaScoring read(ProjectReader reader, FormulaResultId id, FormulaResult container) throws IOException {
-        final Map<String,String> kv = reader.keyValues(SCORES.relFilePath(id));
-        final FormulaScoring scoring = new FormulaScoring();
-        for (String key : kv.keySet()) {
-            final Class<? extends FormulaScore> s = (Class<? extends FormulaScore>) Score.resolve(key);
-            double value;
-            try {
-                value = Double.parseDouble(kv.get(key));
-            } catch (NumberFormatException e) {
-                LoggerFactory.getLogger(getClass()).warn("Could not parse score value '" + key + ":" + kv.get(key) + "'. Setting value to " + FormulaScore.NA());
-                value = FormulaScore.NA(s).score();
+        try {
+            final Map<String, String> kv = reader.keyValues(SCORES.relFilePath(id));
+            final FormulaScoring scoring = new FormulaScoring();
+            for (String key : kv.keySet()) {
+                final Class<? extends FormulaScore> s = (Class<? extends FormulaScore>) Score.resolve(key);
+                double value;
+                try {
+                    value = Double.parseDouble(kv.get(key));
+                } catch (NumberFormatException e) {
+                    LoggerFactory.getLogger(getClass()).warn("Could not parse score value '" + key + ":" + kv.get(key) + "'. Setting value to " + FormulaScore.NA());
+                    value = FormulaScore.NA(s).score();
+                }
+                scoring.addAnnotation(s, value);
             }
-            scoring.addAnnotation(s, value);
+            return scoring;
+        } catch (IOException e) {
+            LoggerFactory.getLogger(FormulaScoringSerializer.class).error("Cannot read formula scoring of " + id.getParentId().toString() + " (" + id.toString() + ")");
+            throw e;
         }
-        return scoring;
     }
 
     @Override

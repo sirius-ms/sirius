@@ -28,6 +28,8 @@ public abstract class FingerprintVersion {
     public abstract MolecularProperty getMolecularProperty(int index);
     public abstract int size();
     public abstract boolean compatible(FingerprintVersion fingerprintVersion);
+    //todo maybe use equals?
+    public abstract boolean identical(FingerprintVersion fingerprintVersion);
 
     public int getRelativeIndexOf(int absoluteIndex) {
         return absoluteIndex;
