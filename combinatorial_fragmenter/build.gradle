@@ -22,3 +22,12 @@ task DataProcessing_FatJar(type: Jar) {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
+
+task CollectAllBondTypes(type: Jar){
+    manifest {
+        attributes 'Main-Class': 'de.unijena.bioinf.fragmenter.IterateThroughMolecule'
+    }
+    archiveBaseName = "AllBondTypesCollector"
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
