@@ -72,11 +72,11 @@ public class DirectedBondTypeScoring implements CombinatorialFragmenterScoring{
         CombinatorialFragment targetFragment = edge.target.fragment;
 
         if(targetFragment.isRealFragment()){
-            return scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) + (edge.getCut2() != null ? scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) : 0);
+            return scoreBond(edge.getCut1(), edge.getDirectionOfFirstCut()) + (edge.getCut2() != null ? scoreBond(edge.getCut2(), edge.getDirectionOfSecondCut()) : 0d);
         }else{
             int hydrogenDiff = Math.abs(targetFragment.hydrogenRearrangements(sourceFragment.getFormula()));
             if(hydrogenDiff == 0){
-                return 0.0;
+                return 0d;
             }else{
                 double score = hydrogenDiff * Math.log(hydrogenRearrangementProb);
                 return Double.isNaN(score) ? -(1.0E6) : score;
@@ -90,7 +90,7 @@ public class DirectedBondTypeScoring implements CombinatorialFragmenterScoring{
             String currentLine = fileReader.readLine();
 
             while(currentLine != null){
-                if(currentLine.startsWith(">bondSores")){
+                if(currentLine.startsWith(">bondScores")){
                     currentLine = fileReader.readLine();
                     while(currentLine != null && currentLine.charAt(0) != '>'){
                         String[] bondInformation = currentLine.split(" ");
