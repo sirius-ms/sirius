@@ -61,7 +61,7 @@ public class AnnotateFragmentationTree {
 
         @Override
         protected ArrayList<Entry> compute() throws Exception {
-            final PriorizedFragmenter fragmenter = new PriorizedFragmenter(graph, scoring.getScoringFor(graph, tree));
+            final PriorizedFragmenter fragmenter = new PriorizedFragmenter(graph, scoring);
 
             final HashMap<MolecularFormula, List<Fragment>> formulas = new HashMap<>();
             for (Fragment f : tree.getFragmentsWithoutRoot()) {

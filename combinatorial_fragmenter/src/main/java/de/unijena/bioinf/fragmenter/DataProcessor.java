@@ -154,6 +154,13 @@ public class DataProcessor {
         }
     }
 
+    private void unreference(MolecularGraph molecule, FTree fTree, CombinatorialFragmenterScoring scoring, CombinatorialSubtreeCalculator subtreeCalc){
+        molecule = null;
+        fTree = null;
+        scoring = null;
+        subtreeCalc = null;
+    }
+
     public void run(CombinatorialFragmenter.Callback2 fragmentationConstraint) throws InterruptedException {
         // INITIALISATION:
         // Initialise the ExecutorService:
@@ -171,13 +178,14 @@ public class DataProcessor {
                 try {
                     MolecularGraph molecule = this.readMolecule(fileName + ".ms");
                     FTree fTree = this.readFTree(fileName + ".json");
-                    EMFragmenterScoring scoring = new EMFragmenterScoring(molecule);
+                    DirectedBondTypeScoring scoring = new DirectedBondTypeScoring(molecule);
 
                     CriticalPathSubtreeCalculator subtreeCalc = new CriticalPathSubtreeCalculator(fTree, molecule, scoring, true);
                     subtreeCalc.initialize(fragmentationConstraint);
                     subtreeCalc.computeSubtree();
 
                     CombinatorialSubtreeCalculatorJsonWriter.writeResultsToFile(subtreeCalc, new File(this.outputDir, fileName + ".json"));
+                    this.unreference(molecule, fTree, scoring, subtreeCalc);
                 }catch (CDKException | UnknownElementException | IOException e) {
                     System.out.println("An error occurred during processing instance "+fileName);
                     File resultFile = new File(this.outputDir, fileName + ".json");
@@ -205,19 +213,20 @@ public class DataProcessor {
     }
 
     public static void main(String[] args){
-        EMFragmenterScoring.rearrangementProb = 1.0; // don't punish hydrogen rearrangements at first
         try{
-            File spectraDir = new File(args[0]);
-            File fTreeDir = new File(args[1]);
-            File outputDir = new File(args[2]);
-            int fragmentationDepth = Integer.parseInt(args[3]);
-            int numPartitions = Integer.parseInt(args[4]);
-            int idxPartition = Integer.parseInt(args[5]);
+            File scoringFile = new File(args[0]);
+            File spectraDir = new File(args[1]);
+            File fTreeDir = new File(args[2]);
+            File outputDir = new File(args[3]);
+            int fragmentationDepth = Integer.parseInt(args[4]);
+            int numPartitions = Integer.parseInt(args[5]);
+            int idxPartition = Integer.parseInt(args[6]);
 
+            DirectedBondTypeScoring.loadScoringFromFile(scoringFile);
             DataProcessor dataProcessor = new DataProcessor(spectraDir, fTreeDir, outputDir, numPartitions, idxPartition);
             promptEnterKeyToContinue("The DataProcessor is initialised. Press ENTER to start processing...");
             dataProcessor.run(node -> node.depth < fragmentationDepth);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
     }
