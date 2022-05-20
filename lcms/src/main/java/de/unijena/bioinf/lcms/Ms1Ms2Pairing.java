@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
  * This class maps MS/MS compounds to an MS1 run.
  * Use this procedure when you have MS1 scans without MS/MS and
  * MS/MS scans without or with low quality MS1
+ *
+ * TODO: implement prevent merging collision energies!!!
+ *
  */
 public class Ms1Ms2Pairing {
 
@@ -190,7 +193,7 @@ public class Ms1Ms2Pairing {
         final List<FragmentedIon> ions = new ArrayList<>();
         for (Target t : targets) {
             if (t.correspondingFeature!=null) {
-                ions.add(instance.createMs2Ion(ms1, t.spectrum, t.correspondingFeature.getPeak().mutate(), t.correspondingFeature));
+                ions.add(instance.createMs2Ion(ms1, t.spectrum.toCollisionEnergyGroup(), t.correspondingFeature.getPeak().mutate(), t.correspondingFeature));
 
             }
         }

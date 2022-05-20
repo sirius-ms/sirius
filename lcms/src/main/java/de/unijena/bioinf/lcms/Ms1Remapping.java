@@ -22,6 +22,7 @@ package de.unijena.bioinf.lcms;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
@@ -81,7 +82,7 @@ public class Ms1Remapping {
                             if (s.isPresent()) {
                                 final Scan ms2Scan = experiment2Scan(experiments[I], ms2Spectra[I], s.get(), retentionTimes[I]);
                                 FragmentedIon ion = new FragmentedIon(
-                                        ms2Scan.getPolarity(), ms2Scan,experiment2querySpectrum(experiments[I], ms2Spectra[I], s.get(),s.get().getApexRt() ), Quality.GOOD,
+                                        ms2Scan.getPolarity(),new Scan[]{ms2Scan}, new CollisionEnergy[]{ms2Scan.getCollisionEnergy()}, experiment2querySpectrum(experiments[I], ms2Spectra[I], s.get(),s.get().getApexRt() ), Quality.GOOD,
                                         peak.mutate(), s.get(), new Scan[0]
                                 );
                                 final CorrelatedPeakDetector detector = new CorrelatedPeakDetector(in.detectableIonTypes);
@@ -122,7 +123,7 @@ public class Ms1Remapping {
         return new Scan(
                 -1,
                 e.getPrecursorIonType().getCharge()>0 ? Polarity.POSITIVE : Polarity.NEGATIVE,
-                rt, 0d, ms2spec.size(), Spectrums.calculateTIC(ms2spec), true, new Precursor(-1, e.getIonMass(), apex.getApexIntensity(), e.getPrecursorIonType().getCharge(), null)
+                rt, CollisionEnergy.none(), ms2spec.size(), Spectrums.calculateTIC(ms2spec), true, new Precursor(-1, e.getIonMass(), apex.getApexIntensity(), e.getPrecursorIonType().getCharge(), null)
         );
     }
     private static CosineQuerySpectrum experiment2querySpectrum(Ms2Experiment e, SimpleSpectrum ms2spec, ChromatographicPeak.Segment apex, long rt) {

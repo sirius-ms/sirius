@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.model.lcms;
 
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+
 /**
  * A spectrum which can be tracked back to a Scan within an LCMS source file
  */
@@ -44,14 +46,14 @@ public class Scan {
 
     private final double TIC;
     private final int numberOfPeaks;
-    private final double collisionEnergy;
+    private final CollisionEnergy collisionEnergy;
     private final boolean centroided;
 
-    public Scan(int index, Polarity polarity, long retentionTime, double collisionEnergy, int numberOfPeaks, double TIC, boolean centroided) {
+    public Scan(int index, Polarity polarity, long retentionTime, CollisionEnergy collisionEnergy, int numberOfPeaks, double TIC, boolean centroided) {
         this(index,polarity,retentionTime,collisionEnergy,numberOfPeaks,TIC,centroided,null);
     }
 
-    public Scan(int index, Polarity polarity, long retentionTime, double collisionEnergy, int numberOfPeaks, double TIC, boolean centroided, Precursor precursor) {
+    public Scan(int index, Polarity polarity, long retentionTime, CollisionEnergy collisionEnergy, int numberOfPeaks, double TIC, boolean centroided, Precursor precursor) {
         this.index = index;
         this.retentionTime = retentionTime;
         this.collisionEnergy=collisionEnergy;
@@ -98,10 +100,11 @@ public class Scan {
         return retentionTime;
     }
 
-    public double getCollisionEnergy(){return collisionEnergy;}
+    public CollisionEnergy getCollisionEnergy(){return collisionEnergy;}
 
     @Override
     public String toString() {
         return precursor!=null ? ("MS/MS " + index + ", m/z = " + precursor.getMass()) : "MS " + index;
     }
+
 }
