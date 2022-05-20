@@ -34,6 +34,7 @@ import de.unijena.bioinf.webapi.rest.ProxyManager;
 import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jbibtex.BibTeXDatabase;
 import org.jbibtex.BibTeXParser;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +89,7 @@ public abstract class ApplicationCore {
         try {
             //init static block (does not work via static import Oo)
             Path it = WORKSPACE;
-            final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
+            final String version = VERSION();
             // create ws files
             try {
                 if (Files.exists(versionFile)) {
@@ -281,6 +282,14 @@ public abstract class ApplicationCore {
 
     public static String VERSION_STRING() {
         return PropertyManager.getProperty("de.unijena.bioinf.sirius.versionString");
+    }
+
+    public static String VERSION() {
+        return PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
+    }
+
+    public static DefaultArtifactVersion VERSION_OBJ() {
+        return new DefaultArtifactVersion(VERSION());
     }
 }
 
