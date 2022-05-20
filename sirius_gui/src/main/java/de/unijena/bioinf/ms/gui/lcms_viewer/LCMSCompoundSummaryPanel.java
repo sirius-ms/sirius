@@ -50,7 +50,7 @@ public class LCMSCompoundSummaryPanel extends JPanel {
 
     private void updateContent() {
         removeAll();
-        if (this.traceSet!=null) {
+        if (this.traceSet!=null && experiment != null) {
 
             final LCMSCompoundSummary summary = new LCMSCompoundSummary(traceSet, traceSet.getIonTrace(), experiment);
 

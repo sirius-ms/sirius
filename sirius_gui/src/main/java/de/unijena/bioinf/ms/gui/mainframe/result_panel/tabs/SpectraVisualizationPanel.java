@@ -228,9 +228,9 @@ public class SpectraVisualizationPanel
 				MutableMs2Spectrum spectrum = experiment.getMs2Spectra().get(ce_index);
 				FTree ftree = Optional.ofNullable(sre).flatMap(FormulaResultBean::getFragTree).orElse(null);
 				if (ftree != null)
-					jsonSpectra = spectraWriter.ms2JSON(spectrum, ftree);
+					jsonSpectra = spectraWriter.ms2JSON(experiment.getExperiment(), spectrum, ftree);
 				else
-					jsonSpectra = spectraWriter.ms2JSON(spectrum);
+					jsonSpectra = spectraWriter.ms2JSON(experiment.getExperiment(), spectrum);
 			}
 		} else {
 			LoggerFactory.getLogger(getClass()).warn("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
